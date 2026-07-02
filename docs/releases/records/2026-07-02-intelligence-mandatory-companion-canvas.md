@@ -16,6 +16,7 @@ Intelligence now treats the right-side companion canvas as part of the answer co
 
 - `global-control-lane`: Updates shared Intelligence synthesis and companion-canvas prompting for `/api/intelligence/ask`.
 - `public-demo`: Improves SkyHarbor / Airline Demo and Industrial / Morgan Street CIO demo consistency by making companion tabs mandatory and removing “when useful” softeners from demo addenda.
+- `global-control-lane`: Updates the shared aVa chat shell handoff so Intelligence can keep suggested chips visible as contextual follow-ups after a prior question.
 
 ## Client Applicability
 
@@ -39,12 +40,21 @@ Intelligence now treats the right-side companion canvas as part of the answer co
   - Removes “When useful” from Airline Demo CTO prompt addendum.
 - `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`
   - Removes “When useful” from Industrial / Morgan Street CIO prompt addendum.
+- `src/lib/intelligence/binding/all-tenants.json`
+  - Reframes SkyHarbor and Industrial / Morgan Street first-screen suggested questions around CTO/CIO demo decision moments.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`
+  - Changes Intelligence suggested chips from static-only starters to adaptive follow-ups after the user’s prior question.
+- `src/components/ava-chat/AvaChatShell.tsx`
+  - Exposes the existing AgentDock keep-visible suggestions behavior for focused aVa surfaces.
 - Targeted tests updated for mandatory canvas behavior.
 
 ## QA / Validation
 
 - Passed: `npx jest src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts --runInBand`
 - Passed: `npx eslint src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/tabbed-response.ts src/lib/intelligence/ask/skyharbor-cto-readiness-source.ts src/lib/intelligence/ask/industrial-cio-backoffice-source.ts src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts`
+- Passed after adaptive suggestions update: `npx jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand`
+- Passed after adaptive suggestions update: `npx eslint src/components/ava-chat/AvaChatShell.tsx src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx`
+- Passed after adaptive suggestions update: `npm run release:check`
 - Not run yet: Production ACA deploy and signed-in 50-question trace/browser audit. This release record will be updated or supplemented after production proof.
 
 ## Deployment Authority
