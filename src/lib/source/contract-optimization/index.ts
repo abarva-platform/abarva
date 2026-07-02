@@ -3,6 +3,7 @@ export {
   buildSkyHarborAmsExistingContractInput,
 } from "./mve-profile";
 export { buildContractOptimizationBriefMarkdown } from "./brief";
+export { isSkyHarborContractOptimizationEvent } from "./eligibility";
 export { toContractOptimizationPersistenceRows } from "./persistence";
 
 export type {

@@ -7,6 +7,11 @@ import {
 } from "../../src/lib/source/contract-optimization";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 
+const DEFAULT_TENANT_KEY = "skyharbor";
+const DEFAULT_SOURCE_EVENT_CODE = "SKYH-AMS-CONTRACT-OPT-2026";
+const DEFAULT_SOURCE_EVENT_NAME =
+  "SkyHarbor AMS Contract Optimization and Renewal Decision";
+
 function databaseUrl(): string {
   const url =
     process.env.ABARVA_AZURE_DATABASE_URL ||
@@ -21,17 +26,16 @@ function databaseUrl(): string {
 }
 
 function shouldApply(): boolean {
-  return process.argv.includes("--apply") || process.env.SOURCE_CONTRACT_OPTIMIZATION_APPLY === "true";
+  return (
+    process.argv.includes("--apply") ||
+    process.env.SOURCE_CONTRACT_OPTIMIZATION_APPLY === "true"
+  );
 }
 
 async function main() {
-  const input = buildSkyHarborAmsExistingContractInput({
-    tenantKey: process.env.TENANT_KEY || "skyharbor-air",
-    sourceEventId:
-      process.env.SOURCE_EVENT_ID || "skyh-ams-contract-optimization-2026",
-  });
-  const profile = buildContractOptimizationMveProfile(input);
-  const rows = toContractOptimizationPersistenceRows(profile);
+  const tenantKey = process.env.TENANT_KEY || DEFAULT_TENANT_KEY;
+  const sourceEventCode =
+    process.env.SOURCE_EVENT_CODE || DEFAULT_SOURCE_EVENT_CODE;
   const apply = shouldApply();
 
   const client = new Client(
@@ -41,39 +45,43 @@ async function main() {
 
   try {
     await client.query("begin");
+    await assertRequiredTables(client);
 
-    const tables = await client.query<{ table_name: string }>(
-      `
-        select table_name
-        from information_schema.tables
-        where table_schema = 'public'
-          and table_name = any($1::text[])
-        order by table_name
-      `,
-      [
-        [
-          "source_contract_optimization_profiles",
-          "source_contract_optimization_findings",
-          "source_contract_optimization_levers",
-        ],
-      ],
-    );
-
-    if (tables.rowCount !== 3) {
-      throw new Error(
-        `Contract optimization tables missing. Found ${tables.rows
-          .map((row) => row.table_name)
-          .join(", ") || "none"}. Run migrations first.`,
-      );
+    const sourceEvent = await ensureSourceEvent({
+      client,
+      apply,
+      tenantKey,
+      sourceEventCode,
+    });
+    if (apply) {
+      await ensureSourceParticipants({
+        client,
+        tenantKey,
+        sourceEventId: sourceEvent.id,
+      });
     }
+
+    const input = buildSkyHarborAmsExistingContractInput({
+      tenantKey,
+      sourceEventId: process.env.SOURCE_EVENT_ID || sourceEvent.id,
+    });
+    const profile = buildContractOptimizationMveProfile(input);
+    const rows = toContractOptimizationPersistenceRows(profile);
 
     if (apply) {
       await client.query(
         `
           delete from public.source_contract_optimization_profiles
-          where tenant_key = $1 and source_event_id = $2
+          where tenant_key = $1 and source_event_id = any($2::text[])
         `,
-        [rows.profile.tenant_key, rows.profile.source_event_id],
+        [
+          rows.profile.tenant_key,
+          [
+            rows.profile.source_event_id,
+            sourceEventCode,
+            "skyh-ams-contract-optimization-2026",
+          ],
+        ],
       );
 
       const insertedProfile = await client.query<{ id: string }>(
@@ -223,6 +231,11 @@ async function main() {
         {
           event: "source_contract_optimization_load",
           apply,
+          sourceEvent: {
+            id: sourceEvent.id,
+            code: sourceEventCode,
+            ensured: sourceEvent.ensured,
+          },
           tenantKey: rows.profile.tenant_key,
           sourceEventId: rows.profile.source_event_id,
           syntheticDemo: rows.profile.synthetic_demo,
@@ -249,6 +262,207 @@ async function main() {
   } finally {
     await client.end();
   }
+}
+
+async function assertRequiredTables(client: Client): Promise<void> {
+  const tables = await client.query<{ table_name: string }>(
+    `
+      select table_name
+      from information_schema.tables
+      where table_schema = 'public'
+        and table_name = any($1::text[])
+      order by table_name
+    `,
+    [
+      [
+        "source_events",
+        "source_event_participants",
+        "source_contract_optimization_profiles",
+        "source_contract_optimization_findings",
+        "source_contract_optimization_levers",
+      ],
+    ],
+  );
+  const foundTables = new Set(tables.rows.map((row) => row.table_name));
+  for (const tableName of [
+    "source_events",
+    "source_contract_optimization_profiles",
+    "source_contract_optimization_findings",
+    "source_contract_optimization_levers",
+  ]) {
+    if (foundTables.has(tableName)) continue;
+    throw new Error(
+      `Contract optimization table ${tableName} missing. Found ${tables.rows
+        .map((row) => row.table_name)
+        .join(", ") || "none"}. Run migrations first.`,
+    );
+  }
+}
+
+async function ensureSourceEvent(args: {
+  client: Client;
+  apply: boolean;
+  tenantKey: string;
+  sourceEventCode: string;
+}): Promise<{ id: string; ensured: boolean }> {
+  const existing = await args.client.query<{ id: string }>(
+    `
+      select id
+      from public.source_events
+      where client_key = $1 and lower(event_code) = lower($2)
+      order by updated_at desc
+      limit 1
+    `,
+    [args.tenantKey, args.sourceEventCode],
+  );
+  const existingId = existing.rows[0]?.id;
+  if (!args.apply) {
+    return { id: existingId ?? args.sourceEventCode, ensured: Boolean(existingId) };
+  }
+
+  const nowIso = new Date().toISOString();
+  const payload: Array<string | number> = [
+    args.tenantKey,
+    args.sourceEventCode,
+    DEFAULT_SOURCE_EVENT_NAME,
+    "managed_service",
+    "responses",
+    "active",
+    72_000_000,
+    "Incumbent AMS renewal decision: validate whether to renew as-is, renegotiate with enforceable cure conditions, or prepare an RFP fallback before the renewal notice window.",
+    "Existing application managed services contract optimization across invoices, SLA economics, staffing commitments, change orders, operational workload, and renewal leverage.",
+    "VP IT Operations / Procurement commercial lead",
+    nowIso,
+  ];
+
+  if (existingId) {
+    await args.client.query(
+      `
+        update public.source_events
+        set event_name = $3,
+            event_type = $4,
+            current_stage_key = $5,
+            lifecycle_state = $6,
+            estimated_value_usd = $7,
+            trigger_description = $8,
+            scope_description = $9,
+            decision_owner = $10,
+            current_stage_entered_at = coalesce(current_stage_entered_at, $11::timestamptz),
+            value_at_stake_low_usd = 5800000,
+            value_at_stake_high_usd = 7400000,
+            lead_agent = 'sentinel',
+            classified_category = 'ams',
+            updated_at = $11::timestamptz
+        where client_key = $1 and lower(event_code) = lower($2)
+      `,
+      payload,
+    );
+    return { id: existingId, ensured: true };
+  }
+
+  const inserted = await args.client.query<{ id: string }>(
+    `
+      insert into public.source_events (
+        client_key,
+        event_code,
+        event_name,
+        event_type,
+        current_stage_key,
+        lifecycle_state,
+        estimated_value_usd,
+        trigger_description,
+        scope_description,
+        decision_owner,
+        current_stage_entered_at,
+        value_at_stake_low_usd,
+        value_at_stake_high_usd,
+        lead_agent,
+        classified_category,
+        created_at,
+        updated_at
+      ) values (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::timestamptz,
+        5800000, 7400000, 'sentinel', 'ams', $11::timestamptz, $11::timestamptz
+      )
+      returning id
+    `,
+    payload,
+  );
+  const id = inserted.rows[0]?.id;
+  if (!id) throw new Error("Source event insert did not return an id.");
+  return { id, ensured: true };
+}
+
+async function ensureSourceParticipants(args: {
+  client: Client;
+  tenantKey: string;
+  sourceEventId: string;
+}): Promise<void> {
+  const participantTable = await args.client.query<{ exists: boolean }>(
+    `
+      select exists (
+        select 1
+        from information_schema.tables
+        where table_schema = 'public'
+          and table_name = 'source_event_participants'
+      ) as exists
+    `,
+  );
+  if (!participantTable.rows[0]?.exists) return;
+
+  await args.client.query(
+    `
+      insert into public.source_event_participants (
+        client_key,
+        source_event_id,
+        source_event_row_id,
+        user_id,
+        user_name,
+        role,
+        approval_authority,
+        source_access_level,
+        can_view_financial,
+        can_upload_source_artifacts,
+        can_generate_sourcing_artifacts,
+        can_publish_sourcing_artifacts,
+        can_approve_source_stages,
+        can_approve_award,
+        notify_on,
+        updated_at
+      )
+      select
+        $1,
+        $2,
+        $2::uuid,
+        pcm.person_id::text,
+        coalesce(p.name, p.email, 'SkyHarbor source participant'),
+        'source contributor',
+        'approver',
+        'source_member',
+        true,
+        true,
+        true,
+        false,
+        true,
+        false,
+        array['source_event_update', 'approval_needed']::text[],
+        now()
+      from public.person_client_memberships pcm
+      join public.clients c on c.id = pcm.client_id
+      left join public.persons p on p.id = pcm.person_id
+      where c.key = $1
+        and pcm.person_id is not null
+      on conflict (client_key, source_event_id, user_id)
+      do update set
+        source_event_row_id = excluded.source_event_row_id,
+        source_access_level = excluded.source_access_level,
+        can_view_financial = excluded.can_view_financial,
+        can_generate_sourcing_artifacts = excluded.can_generate_sourcing_artifacts,
+        can_approve_source_stages = excluded.can_approve_source_stages,
+        updated_at = now()
+    `,
+    [args.tenantKey, args.sourceEventId],
+  );
 }
 
 main().catch((error) => {

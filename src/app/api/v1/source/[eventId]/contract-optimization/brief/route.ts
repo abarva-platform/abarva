@@ -9,6 +9,7 @@ import {
   buildContractOptimizationBriefMarkdown,
   buildContractOptimizationMveProfile,
   buildSkyHarborAmsExistingContractInput,
+  isSkyHarborContractOptimizationEvent,
 } from "@/lib/source/contract-optimization";
 import { DOCX_CONTENT_TYPE } from "@/lib/exports-shared/docx-base";
 import { PDF_CONTENT_TYPE } from "@/lib/exports-shared/pdf-base";
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       return Response.json({ ok: false, error: "not_found" }, { status: 404 });
     }
     if (
-      !shouldBindSkyHarborContractOptimization({
+      !isSkyHarborContractOptimizationEvent({
         activeClientKey: activeClient?.key,
         eventCode: event.code,
         eventName: event.name,
@@ -152,20 +153,4 @@ function fileResponse(
       "x-source-artifact-format": format,
     },
   });
-}
-
-function shouldBindSkyHarborContractOptimization(args: {
-  activeClientKey?: string | null;
-  eventCode: string;
-  eventName: string;
-}): boolean {
-  if (args.activeClientKey !== "skyharbor-air") return false;
-  const text = `${args.eventCode} ${args.eventName}`.toLowerCase();
-  return (
-    text.includes("ams") ||
-    text.includes("application managed") ||
-    text.includes("contract") ||
-    text.includes("outsourcing") ||
-    text.includes("renewal")
-  );
 }

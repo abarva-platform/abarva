@@ -28,6 +28,7 @@ import {
 import {
   buildContractOptimizationMveProfile,
   buildSkyHarborAmsExistingContractInput,
+  isSkyHarborContractOptimizationEvent,
 } from "@/lib/source/contract-optimization";
 
 export const runtime = "nodejs";
@@ -244,7 +245,7 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     vendorChallenges,
     vendorBafoPack,
   );
-  const contractOptimizationProfile = shouldBindSkyHarborContractOptimization({
+  const contractOptimizationProfile = isSkyHarborContractOptimizationEvent({
     activeClientKey: clientKey,
     eventCode: args.event.code,
     eventName: args.event.name,
@@ -475,22 +476,6 @@ async function buildEventIntakeTenantContextSnapshot(args: {
         : "Using persisted Source intake facts for this newly-created event; no uploaded or generated Source artifacts were found for the active event.",
     ],
   };
-}
-
-function shouldBindSkyHarborContractOptimization(args: {
-  activeClientKey?: string | null;
-  eventCode: string;
-  eventName: string;
-}): boolean {
-  if (args.activeClientKey !== "skyharbor-air") return false;
-  const text = `${args.eventCode} ${args.eventName}`.toLowerCase();
-  return (
-    text.includes("ams") ||
-    text.includes("application managed") ||
-    text.includes("contract") ||
-    text.includes("outsourcing") ||
-    text.includes("renewal")
-  );
 }
 
 async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
