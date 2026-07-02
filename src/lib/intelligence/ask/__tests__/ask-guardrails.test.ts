@@ -48,12 +48,12 @@ describe("Ask Intelligence guardrails", () => {
       chooseSynthesisTokenBudget(
         "Summarize the IBM dependency in one short executive paragraph.",
       ),
-    ).toBe(160);
+    ).toBe(1300);
     expect(
       chooseSynthesisTokenBudget(
         "Summarize this in one short executive paragraph.",
       ),
-    ).toBe(160);
+    ).toBe(1300);
     expect(
       chooseSynthesisTokenBudget(
         "What evidence would change your view? Keep it concise.",
@@ -63,7 +63,30 @@ describe("Ask Intelligence guardrails", () => {
       chooseSynthesisTokenBudget(
         "Build the full modernization case for the CTO, CFO, and COO.",
       ),
-    ).toBe(600);
+    ).toBe(1300);
+  });
+
+  it("makes the Intelligence companion canvas mandatory for all rich-text answers", () => {
+    const synthesizerCode = readFileSync(
+      join(__dirname, "..", "synthesizer.ts"),
+      "utf8",
+    );
+    const tabContract = readFileSync(
+      join(__dirname, "..", "..", "tabbed-response.ts"),
+      "utf8",
+    );
+
+    expect(tabContract).toContain(
+      "Always provide all five companion cards for Intelligence answers",
+    );
+    expect(synthesizerCode).toContain(
+      "Every rich-text Intelligence answer must use the tab markers above and populate all five right-canvas tabs",
+    );
+    expect(synthesizerCode).toContain(
+      'return ["Decision", "Industry Insights", "Chart", "Table", "Evidence"];',
+    );
+    expect(synthesizerCode).not.toContain("if (parsed.tabs.length === 0) return []");
+    expect(synthesizerCode).not.toContain("If the user explicitly asks for evidence");
   });
 
   it("uses deterministic followups only for explicit concise Ask requests", () => {
@@ -205,7 +228,9 @@ describe("Ask Intelligence guardrails", () => {
     it("sends the tabbed canvas contract through the active ask synthesis model path", () => {
       expect(synthesizerCode).toContain("INTELLIGENCE_TABBED_OUTPUT_CONTRACT");
       expect(synthesizerCode).toContain("ACTIVE INTELLIGENCE CANVAS RULES");
-      expect(synthesizerCode).toContain("the Evidence tab is mandatory");
+      expect(synthesizerCode).toContain("Evidence is mandatory");
+      expect(synthesizerCode).toContain("Chart is mandatory");
+      expect(synthesizerCode).toContain("Table is mandatory");
       expect(synthesizerCode).toContain(
         "Target 120-180 words before the first tab marker",
       );

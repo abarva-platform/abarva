@@ -303,7 +303,7 @@ function chooseModel(intent: AskIntent, query: string): string {
 
 export function chooseSynthesisTokenBudget(query: string): number {
   const defaultBudget = isExplicitConciseAsk(query) ? 160 : 600;
-  return chooseAdvisorTokenBudget(query, defaultBudget);
+  return Math.max(chooseAdvisorTokenBudget(query, defaultBudget), 1300);
 }
 
 function isExplicitVisualAsk(query: string): boolean {
@@ -319,46 +319,12 @@ function requiresNativeExecutiveCanvas(query: string): boolean {
 }
 
 function requiredCanvasTabsForQuery(query: string): string[] {
-  const required: string[] = [];
-  if (
-    /\b(decision|recommend|recommendation|choice|choose|prioriti[sz]e|investment|invest)\b/i.test(
-      query,
-    )
-  ) {
-    required.push("Decision");
-  }
-  if (
-    /\b(industry|benchmark|benchmarks|market|peer|peers|case stud(?:y|ies)|examples?)\b/i.test(
-      query,
-    )
-  ) {
-    required.push("Industry Insights");
-  }
-  if (
-    /\b(chart|charts|graph|graphs|visual|visuals|visuali[sz]e|plot|trend)\b/i.test(
-      query,
-    )
-  ) {
-    required.push("Chart");
-  }
-  if (
-    /\b(table|tables|matrix|comparison grid|scorecard|breakdown)\b/i.test(query)
-  ) {
-    required.push("Table");
-  }
-  if (
-    /\b(evidence|proof|source|sources|support|citation|citations|trace)\b/i.test(
-      query,
-    )
-  ) {
-    required.push("Evidence");
-  }
-  return Array.from(new Set(required));
+  void query;
+  return ["Decision", "Industry Insights", "Chart", "Table", "Evidence"];
 }
 
 function missingRequiredCanvasTabs(text: string, query: string): string[] {
   const parsed = parseIntelligenceTabbedResponse(text);
-  if (parsed.tabs.length === 0) return [];
   const present = new Set(parsed.tabs.map((tab) => tab.label));
   return requiredCanvasTabsForQuery(query).filter(
     (label) => !present.has(label),
@@ -507,12 +473,13 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
     ? `\n\n${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}
 
 ACTIVE INTELLIGENCE CANVAS RULES
-- When the question asks for a decision, investment choice, prioritization, risks, negotiation/next moves, table, chart, trend, visual, evidence, or industry context, use the tab markers above.
+- Every rich-text Intelligence answer must use the tab markers above and populate all five right-canvas tabs: Decision, Industry Insights, Chart, Table, and Evidence.
 - Put only concise advisory prose in the main answer. Target 120-180 words before the first tab marker when tabs are present. Put any Markdown table or chart-ready numeric table inside a Table or Chart tab, not in the main answer.
 - Use the right-canvas tabs as a relevant decision-support layer, not a duplicate transcript. If the exact question lacks direct chart/table data, provide a useful adjacent visual from the same function, category, operating pattern, industry pattern, benchmark, or planning assumption, and label the tab grounding honestly.
-- If the user explicitly asks for evidence, sources, proof, support, citations, or trace, the Evidence tab is mandatory. Do not spend the Evidence tab budget by expanding the main answer.
-- If the user asks for industry insight, place it in the Industry Insights tab and label it as industry context or benchmark context unless tenant evidence proves it directly.
-- Table and Chart tabs may be directly tied to the answer or adjacent to the function/category/pattern that helps the executive reason about the answer. The first line must state the boundary, for example "Function context, not direct tenant proof" or "Category view from tenant evidence."
+- Evidence is mandatory. Use it to show the most relevant tenant facts, planning assumptions, missing evidence, and executive validation point. Do not spend the Evidence tab budget by expanding the main answer.
+- Industry Insights is mandatory. Use it for the most relevant industry trend, benchmark, peer pattern, or case example and label it as industry context or benchmark context unless tenant evidence proves it directly.
+- Chart is mandatory. It may be directly tied to the answer or adjacent to the function/category/pattern that helps the executive reason about the answer. It must contain either a valid native abarva-canvas payload or a compact chart-ready Markdown table with numeric values. If not tenant evidence, use an honest grounding label and first-line boundary such as "Function context, not direct tenant proof" or "Category view from tenant evidence."
+- Table is mandatory. It may be directly tied to the answer or adjacent to the function/category/pattern that helps the executive reason about the answer. Use a compact Markdown table.
 - Use business names and executive labels. Do not expose data-product IDs, application IDs, row labels, raw field names, file names, debug labels, or implementation terms.
 - Avoid product-mechanics phrases in visible prose such as "loaded sources", "loaded tenant sources", "loaded enterprise context", "retrieved context", or "corpus was retrieved." Say "company evidence", "the enterprise record", "SkyHarbor evidence", "industry context", or "planning assumption" instead.`
     : "";
@@ -529,7 +496,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
     contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`
       : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`;
-  const rawPrompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
+  const rawPrompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
     : "";

@@ -41,34 +41,35 @@ const TAB_MARKER_RE =
 
 export const INTELLIGENCE_TABBED_OUTPUT_CONTRACT = `INTELLIGENCE COMPANION-CANVAS OUTPUT
 
-Return one main answer, then optional right-canvas companion cards using the exact markers below.
+Return one main answer, then mandatory right-canvas companion cards using the exact markers below.
 
 Main answer:
 - Put the executive answer before any tab marker.
 - Do not include tables in the main answer.
 - Do not expose raw IDs, field names, debug labels, or implementation terms.
+- Keep the main answer concise and decision-led. It should not duplicate the right-canvas tabs.
 
 Companion canvas:
 - The renderer places each marked section as a separate card on the right side. It does not rewrite your prose, tables, or chart data.
-- Use three to five cards for most strategic or analytical answers. Choose the most interesting and relevant lenses for the question; do not force a card that would be weak or repetitive.
+- Always provide all five companion cards for Intelligence answers. Do not omit a card because the question is broad, narrative, or lacks perfect tenant data.
 - The right canvas should add decision support, not duplicate the main answer. Bring useful adjacent views: exact tenant metric when available; otherwise a relevant function, category, industry, corpus-pattern, benchmark, peer-pattern, risk, value-model, assumption, or planning view with honest grounding.
-- Use these exact start markers when the card is useful:
+- Use these exact start markers, in this order:
   <<<TAB: Decision | grounding: tenant-evidence>>>
   <<<TAB: Industry Insights | grounding: industry-context>>>
   <<<TAB: Chart | grounding: tenant-evidence>>>
   <<<TAB: Table | grounding: tenant-evidence>>>
   <<<TAB: Evidence | grounding: tenant-evidence>>>
 - End each tab by starting the next tab marker or the end of the response.
-- Decision should state the choice, tradeoff, and decision required.
-- Industry Insights can be an industry signal, peer pattern, benchmark, or outside-in case example. It must be explicitly labeled as industry context or benchmark context, not tenant proof. Never say the tenant "has" an industry fact unless it is in tenant evidence.
-- Chart should appear only when you can provide chart-ready data in a compact Markdown table with numeric values. The chart may be tenant-specific, or it may be an industry trend, directional benchmark, peer-pattern map, or function/category opportunity map. If the chart is not tenant evidence, set grounding to industry-context, benchmark, corpus-pattern, function-context, or category-context and make the first line say that clearly. If no chart-ready data exists, omit the Chart tab.
-- Table should preserve a compact Markdown table when it helps the decision. The table can be directly about the answer or an adjacent function/category/pattern view that helps the CXO reason about the question.
+- Decision should state the executive choice, tradeoff, decision required, owner when known, and the next move. If the answer needs an interactive branch, put the branch choice here.
+- Industry Insights must provide the most relevant industry signal, peer pattern, benchmark, trend, or outside-in case example. It must be explicitly labeled as industry context or benchmark context, not tenant proof. Never say the tenant "has" an industry fact unless it is in tenant evidence.
+- Chart must include chart-ready data or a native abarva-canvas exhibit. It may be tenant-specific, or it may be an industry trend, directional benchmark, peer-pattern map, or function/category opportunity map. If the chart is not tenant evidence, set grounding to industry-context, benchmark, corpus-pattern, function-context, or category-context and make the first line say that clearly.
+- Table must preserve a compact Markdown table that helps the decision. The table can be directly about the answer or an adjacent function/category/pattern view that helps the CXO reason about the question.
 - If you emit any Markdown table, it must appear inside the Table tab or Chart tab, never inside the main answer, Decision tab, Industry Insights tab, or Evidence tab.
 - If the answer includes a decision plus a comparison table, put the choice and tradeoff in Decision, then start a separate <<<TAB: Table | grounding: tenant-evidence>>> marker before the table.
-- Evidence should separate tenant facts, industry/pattern context, benchmarks, planning assumptions, missing evidence, and what the executive should validate next.
+- Evidence must show the most relevant tenant facts first, then separate industry/pattern context, benchmarks, planning assumptions, missing evidence, and what the executive should validate next. Do not dump source registers or debug labels.
 
 Executive visual payload:
-- For strategic prioritization, sequencing, investment, value/readiness, transformation, gate, roadmap, risk-boundary, or proof-boundary questions, include one fenced JSON block inside the most relevant Chart, Table, Decision, or Evidence tab using this exact fence language: \`\`\`abarva-canvas
+- For strategic prioritization, sequencing, investment, value/readiness, transformation, gate, roadmap, risk-boundary, proof-boundary, broad CIO/CTO/CXO planning, or transformation questions, include one fenced JSON block inside the Chart tab using this exact fence language: \`\`\`abarva-canvas
 - For narrow factual questions, use the fenced block only when it would add decision value.
 - Do not write HTML, SVG, CSS, or arbitrary chart code. Choose one supported canvasType and provide the structured advisory data. The renderer draws the exhibit consistently.
 - Canvas selection rules:

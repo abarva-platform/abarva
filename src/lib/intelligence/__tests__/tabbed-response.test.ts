@@ -48,7 +48,7 @@ describe("Intelligence tabbed response parser", () => {
       "The right canvas should add decision support, not duplicate the main answer",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "Use three to five cards for most strategic or analytical answers",
+      "Always provide all five companion cards for Intelligence answers",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
       "peer-pattern, risk, value-model, assumption",
