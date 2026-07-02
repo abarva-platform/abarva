@@ -412,7 +412,7 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ...item,
       id: `source-event:${args.event.id}:${item.recordId}`,
       segmentId: "sourcing_artifacts",
-      sourceDoc: "source_events",
+      sourceDoc: "Source intake record",
       confidence: "high" as const,
     })),
     ...artifactContext.artifactEvidence,
@@ -452,7 +452,7 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       )
       .slice(0, 8),
     evidenceBasis: [
-      `${args.activeClientName ?? clientKey} persisted Source event: trigger, scope, value basis, decision owner and gate criteria from source_events.`,
+      `${args.activeClientName ?? clientKey} persisted Source event: trigger, scope, value basis, decision owner and gate criteria from the governed Source intake record.`,
       ...(artifactContext.artifacts.length
         ? [
             `${uploadedCount} uploaded Source evidence artifact(s), ${generatedCount} generated artifact(s), ${artifactContext.chunks.length} parsed excerpt(s), and ${artifactContext.facts.length} structured fact(s) are bound from the Source artifact registry for this event.`,

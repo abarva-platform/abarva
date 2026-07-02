@@ -113,9 +113,11 @@ describe("Source contract optimization MVE", () => {
     expect(brief).toContain("44 per month");
     expect(brief).toContain("Timing: Immediate");
     expect(brief).toContain("Timing: Before renewal notice");
+    expect(brief).toContain("Observed issue:");
     expect(brief).not.toContain("8610tickets");
     expect(brief).not.toContain("44per month");
     expect(brief).not.toContain("Value to test to Value to test");
     expect(brief).not.toMatch(/Priority: P[0-2]/);
+    expect(brief).not.toContain("Current state:");
   });
 });

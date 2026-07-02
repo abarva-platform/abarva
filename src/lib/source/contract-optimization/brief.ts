@@ -56,7 +56,7 @@ export function buildContractOptimizationBriefMarkdown(
       `### ${finding.title}`,
       "",
       `- Severity: ${finding.severity}`,
-      `- Current state: ${finding.currentState}`,
+      `- Observed issue: ${finding.currentState}`,
       `- Sourcing implication: ${finding.sourcingImplication}`,
       `- Recommended action: ${finding.recommendedAction}`,
       `- Estimated annual impact: ${money(finding.estimatedAnnualImpactUsd)}`,
