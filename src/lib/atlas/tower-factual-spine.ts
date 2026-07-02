@@ -575,7 +575,8 @@ export function isTowerFactualSpineCandidate(question: string): boolean {
       /\b(programs?|initiatives?)\b/.test(q)) ||
     /\b(value\s+gap|promised.*measured|unproven\s+value|least\s+proven)\b/.test(q) ||
     /\b(committed\s+value|value\s+has\s+been\s+proven|proven\s+so\s+far|claim(?:ed)?\s+yet|best\s+ai\s+investment\s+story)\b/.test(q) ||
-    /\b(weak\s+value\s+evidence|weakest\s+evidence|missing\s+value\s+evidence|evidence\s+gap|under[- ]?proven)\b/.test(q) ||
+    /\b(weak\s+value\s+evidence|weakest\s+evidence|missing\s+value\s+evidence|missing\s+value\s+proof|evidence\s+gap|under[- ]?proven)\b/.test(q) ||
+    /\b(no\s+measured\s+value\s+evidence|measured\s+value\s+evidence|value\s+proof\s+missing|no\s+value\s+proof|value\s+evidence.*board|strong\s+enough.*board|board\s+discussion)\b/.test(q) ||
     /\b(inspect\s+this\s+week|what\s+should\s+i\s+inspect|where\s+should\s+i\s+focus|what\s+needs\s+(my\s+)?attention|next\s+funding\s+gate)\b/.test(q) ||
     /\b(healthy.*watched.*risk|watched.*risk|group(?:ed)?\s+by\s+business\s+function|program\s+owners?|largest\s+budget\s+responsibility|foundational\s+(?:data|platform)|platform\s+work|biggest\s+blockers?)\b/.test(q) ||
     /\b(investment\s+posture|posture\s+should\s+the\s+cio|cio\s+morning\s+brief|morning\s+brief|what\s+should\s+the\s+cio\s+know|executive\s+brief|advisor\s+brief)\b/.test(q) ||
