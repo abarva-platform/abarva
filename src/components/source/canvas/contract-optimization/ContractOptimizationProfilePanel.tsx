@@ -21,12 +21,12 @@ export function ContractOptimizationProfilePanel({
     <section
       data-testid="source-contract-optimization-profile"
       style={CARD}
-      aria-label="Existing contract optimization profile"
+      aria-label="Contract optimization profile with contract baseline, optimization findings, negotiation levers, recommended path, and evidence caveats"
     >
       <div style={HEADER}>
         <div>
-          <div style={EYEBROW}>Existing contract optimization</div>
-          <h3 style={TITLE}>Minimum viable contract record</h3>
+          <div style={EYEBROW}>Contract Baseline</div>
+          <h3 style={TITLE}>Incumbent contract optimization record</h3>
           <p style={COPY}>
             Source extracts only the sourcing-critical evidence needed to decide
             whether to renegotiate, renew with cure conditions, or prepare a
@@ -54,7 +54,7 @@ export function ContractOptimizationProfilePanel({
 
       <div style={PATH}>
         <div>
-          <div style={EYEBROW}>Recommended path</div>
+          <div style={EYEBROW}>Recommended Path</div>
           <p style={PATH_LINE}>
             <strong>Immediate:</strong> {profile.recommendedPath.immediateAction}
           </p>
@@ -73,7 +73,7 @@ export function ContractOptimizationProfilePanel({
       <div style={GRID}>
         <div style={PANEL}>
           <div style={PANEL_HEAD}>
-            <div style={EYEBROW}>Optimization findings</div>
+            <div style={EYEBROW}>Optimization Findings</div>
             <p style={MINI_COPY}>Evidence-backed issues to cure before renewal.</p>
           </div>
           <div style={ROW_LIST}>
@@ -94,7 +94,7 @@ export function ContractOptimizationProfilePanel({
 
         <div style={PANEL}>
           <div style={PANEL_HEAD}>
-            <div style={EYEBROW}>Negotiation levers</div>
+            <div style={EYEBROW}>Negotiation Levers</div>
             <p style={MINI_COPY}>Buyer asks tied directly to the findings.</p>
           </div>
           <div style={ROW_LIST}>
@@ -119,7 +119,7 @@ export function ContractOptimizationProfilePanel({
 
       <div style={FOOTER}>
         <div>
-          <div style={EYEBROW}>Evidence / missing data</div>
+          <div style={EYEBROW}>Evidence Caveats</div>
           <p style={MINI_COPY}>
             {profile.contractBaseline.evidenceCount} evidence item(s) bound.
             {profile.syntheticDemo ? " Synthetic demo evidence is clearly labelled." : null}

@@ -1223,26 +1223,6 @@ export function UniversalCanvasShell({
             onRefresh={() => router.refresh()}
             advanced={advancedWorkspace}
           />
-          {(viewStage === "responses" || viewStage === "vendor_responses") &&
-          vendorResponseProfiles?.profiles?.length ? (
-            <div style={{ marginTop: 12 }}>
-              <VendorResponseProfilesPanel profileSet={vendorResponseProfiles} />
-            </div>
-          ) : null}
-          {(viewStage === "responses" || viewStage === "vendor_responses") &&
-          vendorChallengeIntelligence ? (
-            <div style={{ marginTop: 12 }}>
-              <VendorChallengeLeveragePanel
-                intelligence={vendorChallengeIntelligence}
-              />
-            </div>
-          ) : null}
-          {(viewStage === "responses" || viewStage === "vendor_responses") &&
-          vendorBafoInstructionPack ? (
-            <div style={{ marginTop: 12 }}>
-              <VendorBafoInstructionPackPanel pack={vendorBafoInstructionPack} />
-            </div>
-          ) : null}
           {(viewStage === "responses" ||
             viewStage === "vendor_responses" ||
             viewStage === "evaluation") &&
@@ -1253,9 +1233,33 @@ export function UniversalCanvasShell({
               />
             </div>
           ) : null}
+          {(viewStage === "responses" || viewStage === "vendor_responses") &&
+          !contractOptimizationProfile &&
+          vendorResponseProfiles?.profiles?.length ? (
+            <div style={{ marginTop: 12 }}>
+              <VendorResponseProfilesPanel profileSet={vendorResponseProfiles} />
+            </div>
+          ) : null}
+          {(viewStage === "responses" || viewStage === "vendor_responses") &&
+          !contractOptimizationProfile &&
+          vendorChallengeIntelligence ? (
+            <div style={{ marginTop: 12 }}>
+              <VendorChallengeLeveragePanel
+                intelligence={vendorChallengeIntelligence}
+              />
+            </div>
+          ) : null}
+          {(viewStage === "responses" || viewStage === "vendor_responses") &&
+          !contractOptimizationProfile &&
+          vendorBafoInstructionPack ? (
+            <div style={{ marginTop: 12 }}>
+              <VendorBafoInstructionPackPanel pack={vendorBafoInstructionPack} />
+            </div>
+          ) : null}
           {(viewStage === "responses" ||
             viewStage === "vendor_responses" ||
             viewStage === "evaluation") &&
+          !contractOptimizationProfile &&
           vendorEvaluationDecisionView ? (
             <div style={{ marginTop: 12 }}>
               <VendorEvaluationScorecardPanel

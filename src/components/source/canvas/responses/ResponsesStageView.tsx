@@ -43,67 +43,86 @@ export function ResponsesStageView({
 }) {
   const records = readiness?.records ?? [];
   const blocker = readiness?.blockers[0];
+  const isContractOptimization = Boolean(contractOptimizationProfile);
   return (
     <div data-testid="source-responses-stage-view" style={WRAP}>
       <section style={NEXT_CARD}>
         <div>
           <div style={EYEBROW}>Stage 4 · Responses</div>
-          <h2 style={TITLE}>Review vendor response completeness</h2>
+          <h2 style={TITLE}>
+            {isContractOptimization
+              ? "Review incumbent contract optimization"
+              : "Review vendor response completeness"}
+          </h2>
           <p style={COPY}>
-            Confirm every received response is complete, comparable, and fairly
-            handled before scoring begins.
+            {isContractOptimization
+              ? "Use the contract baseline, optimization findings, negotiation levers, recommended path, and evidence caveats before renewal action."
+              : "Confirm every received response is complete, comparable, and fairly handled before scoring begins."}
           </p>
         </div>
         <div style={ACTION_BOX}>
-          <strong>{blocker ?? "No response blocker is currently bound."}</strong>
+          <strong>
+            {isContractOptimization
+              ? "Contract optimization is evidence-bound."
+              : (blocker ?? "No response blocker is currently bound.")}
+          </strong>
           <span>
-            Uploads stay tenant-scoped. External vendor communication stays in
-            the procurement system unless explicitly configured.
+            {isContractOptimization
+              ? "Only sourcing-critical contract facts are shown here; raw files stay in the governed evidence record."
+              : "Uploads stay tenant-scoped. External vendor communication stays in the procurement system unless explicitly configured."}
           </span>
         </div>
       </section>
 
-      <div style={STATUS_ROW}>
-        {records.length === 0 ? (
-          <StatusCard
-            vendor="Awaiting response uploads"
-            status="Upload on Vendor Response Pack"
-            tone="warn"
-          />
-        ) : (
-          records.map((record) => (
-            <StatusCard
-              key={record.vendorId}
-              vendor={record.vendorName}
-              status={record.completenessStatus.replaceAll("_", " ")}
-              tone={
-                record.completenessStatus === "complete"
-                  ? "good"
-                  : record.completenessStatus === "blocked" ||
+      {!isContractOptimization ? (
+        <>
+          <div style={STATUS_ROW}>
+            {records.length === 0 ? (
+              <StatusCard
+                vendor="Awaiting response uploads"
+                status="Upload on Vendor Response Pack"
+                tone="warn"
+              />
+            ) : (
+              records.map((record) => (
+                <StatusCard
+                  key={record.vendorId}
+                  vendor={record.vendorName}
+                  status={record.completenessStatus.replaceAll("_", " ")}
+                  tone={
+                    record.completenessStatus === "complete"
+                      ? "good"
+                      : record.completenessStatus === "blocked" ||
                       record.completenessStatus === "not_comparable"
-                    ? "bad"
-                    : "warn"
-              }
-            />
-          ))
-        )}
-      </div>
+                        ? "bad"
+                        : "warn"
+                  }
+                />
+              ))
+            )}
+          </div>
 
-      <div style={GRID}>
-        <CompletenessMatrix readiness={readiness} />
-        <QnaSymmetryLog />
-      </div>
+          <div style={GRID}>
+            <CompletenessMatrix readiness={readiness} />
+            <QnaSymmetryLog />
+          </div>
+        </>
+      ) : null}
 
-      <VendorResponseProfilesPanel profileSet={profileSet} />
-      <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
-      <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />
       <ContractOptimizationProfilePanel profile={contractOptimizationProfile} />
-      <VendorEvaluationScorecardPanel
-        decisionView={evaluationDecisionView}
-        decisionBriefDocxHref={decisionBriefDocxHref}
-        decisionBriefPdfHref={decisionBriefPdfHref}
-        eventDisplayName={eventDisplayName}
-      />
+      {!isContractOptimization ? (
+        <>
+          <VendorResponseProfilesPanel profileSet={profileSet} />
+          <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
+          <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />
+          <VendorEvaluationScorecardPanel
+            decisionView={evaluationDecisionView}
+            decisionBriefDocxHref={decisionBriefDocxHref}
+            decisionBriefPdfHref={decisionBriefPdfHref}
+            eventDisplayName={eventDisplayName}
+          />
+        </>
+      ) : null}
 
       <section data-testid="source-responses-disqualification-card" style={DECISION}>
         <div style={EYEBROW}>Decision point</div>
