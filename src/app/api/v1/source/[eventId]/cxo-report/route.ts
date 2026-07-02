@@ -12,6 +12,12 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { buildSourceGenerationContext } from "@/lib/source/agent-generation/server";
+import {
+  buildContractOptimizationCxoNarrativeReport,
+  buildContractOptimizationMveProfile,
+  buildSkyHarborAmsExistingContractInput,
+  isSkyHarborContractOptimizationEvent,
+} from "@/lib/source/contract-optimization";
 import { assembleDealPack } from "@/lib/source/exports/deal-pack/assemble-deal-pack";
 import { buildSourceCxoNarrativeReport } from "@/lib/source/exports/cxo-report/source-cxo-narrative-report";
 import {
@@ -102,8 +108,27 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
 
   const generatedAt = new Date().toISOString();
   try {
-    const dealPack = await assembleDealPack(ctx, generatedAt);
-    const report = buildSourceCxoNarrativeReport(dealPack.input);
+    const isContractOptimization = isSkyHarborContractOptimizationEvent({
+      activeClientKey: activeClient?.key,
+      eventCode: ctx.event.code,
+      eventName: ctx.event.name,
+    });
+    const report = isContractOptimization
+      ? buildContractOptimizationCxoNarrativeReport({
+          tenantName: "SkyHarbor Air",
+          eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+          eventName: ctx.event.name,
+          generatedAt,
+          profile: buildContractOptimizationMveProfile(
+            buildSkyHarborAmsExistingContractInput({
+              sourceEventId: ctx.event.id,
+              tenantKey: activeClient?.key ?? "skyharbor-air",
+            }),
+          ),
+        })
+      : buildSourceCxoNarrativeReport(
+          (await assembleDealPack(ctx, generatedAt)).input,
+        );
     if (format === "pptx") {
       let renderSourceCxoNarrativePptx: (typeof import("@/lib/source/exports/cxo-report/source-cxo-narrative-pptx"))["renderSourceCxoNarrativePptx"];
       try {

@@ -9,6 +9,11 @@ import {
   buildContractOptimizationStoryPack,
   contractOptimizationStoryPromptPacket,
 } from "../story-pack";
+import {
+  buildContractOptimizationCxoNarrativeReport,
+  contractOptimizationDealPackFilename,
+  renderContractOptimizationDealPackHtml,
+} from "../cxo-exports";
 
 describe("Source contract optimization MVE", () => {
   it("turns a rich existing-contract evidence pack into a sourcing-critical profile", () => {
@@ -236,5 +241,71 @@ describe("Source contract optimization MVE", () => {
     expect(promptPacket).toHaveProperty("evidenceBasis");
     expect(promptPacket).toHaveProperty("knownGaps");
     expect(promptPacket).toHaveProperty("forbiddenClaims");
+  });
+
+  it("renders a contract-optimization-specific CXO report without RFP or BAFO lifecycle drift", () => {
+    const profile = buildContractOptimizationMveProfile(
+      buildSkyHarborAmsExistingContractInput(),
+    );
+    const report = buildContractOptimizationCxoNarrativeReport({
+      tenantName: "SkyHarbor Air",
+      eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+      eventName: "SkyHarbor Air AMS Contract Optimization",
+      generatedAt: "2026-07-02T18:30:00.000Z",
+      profile,
+    });
+    const text = JSON.stringify(report);
+
+    expect(report.verdict).toBe("Do not renew as-is");
+    expect(text.toLowerCase()).toContain("issue cure notice");
+    expect(text).toContain("preserve RFP fallback");
+    expect(text).toContain("$3.6M-$4.8M annualized");
+    expect(text).toContain("2026-09-30");
+    for (const forbidden of [
+      "targeted BAFO",
+      "Do not award yet",
+      "Award / proceed",
+      "Stage 4",
+      "scored evaluation",
+      "pricing is incomplete",
+      "pricing is not complete",
+      "vendor pricing is not comparable",
+      "Sentinel",
+      "seed gap",
+      "no vendor contracts",
+    ]) {
+      expect(text.toLowerCase()).not.toContain(forbidden.toLowerCase());
+    }
+  });
+
+  it("renders the contract optimization deal pack as an appendix, not a generic sourcing lifecycle pack", () => {
+    const profile = buildContractOptimizationMveProfile(
+      buildSkyHarborAmsExistingContractInput(),
+    );
+    const html = renderContractOptimizationDealPackHtml({
+      tenantName: "SkyHarbor Air",
+      eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+      eventName: "SkyHarbor Air AMS Contract Optimization",
+      generatedAt: "2026-07-02T18:30:00.000Z",
+      profile,
+    });
+
+    expect(html).toContain("Contract Optimization Appendix");
+    expect(html).toContain("Do not renew as-is");
+    expect(html).toContain("cure notice");
+    expect(html).toContain("Contract Baseline");
+    expect(html).toContain("Optimization Findings");
+    expect(html).toContain("Negotiation Levers");
+    expect(html).toContain("Evidence Inventory and Caveats");
+    expect(html).toContain("SKYH-AMS-CONTRACT-OPT-2026");
+    expect(html).not.toMatch(/Sentinel|Stage 0|Demand Challenge|targeted BAFO|Vendor pricing is not complete|seed gap|no vendor contracts/i);
+    expect(
+      contractOptimizationDealPackFilename({
+        eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+        generatedAt: "2026-07-02T18:30:00.000Z",
+      }),
+    ).toBe(
+      "abarva-source-contract-optimization-appendix-skyh-ams-contract-opt-2026-2026-07-02.html",
+    );
   });
 });

@@ -18,6 +18,13 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { buildSourceGenerationContext } from "@/lib/source/agent-generation/server";
+import {
+  buildContractOptimizationMveProfile,
+  buildSkyHarborAmsExistingContractInput,
+  contractOptimizationDealPackFilename,
+  isSkyHarborContractOptimizationEvent,
+  renderContractOptimizationDealPackHtml,
+} from "@/lib/source/contract-optimization";
 import { assembleDealPack } from "@/lib/source/exports/deal-pack/assemble-deal-pack";
 
 export const runtime = "nodejs";
@@ -118,6 +125,41 @@ async function handleGet(req: NextRequest, { params }: RouteCtx) {
   }
 
   const generatedAt = new Date().toISOString();
+  if (
+    isSkyHarborContractOptimizationEvent({
+      activeClientKey: activeClient?.key,
+      eventCode: ctx.event.code,
+      eventName: ctx.event.name,
+    })
+  ) {
+    const html = renderContractOptimizationDealPackHtml({
+      tenantName: "SkyHarbor Air",
+      eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+      eventName: ctx.event.name,
+      generatedAt,
+      profile: buildContractOptimizationMveProfile(
+        buildSkyHarborAmsExistingContractInput({
+          sourceEventId: ctx.event.id,
+          tenantKey: activeClient?.key ?? "skyharbor-air",
+        }),
+      ),
+    });
+    return new Response(Buffer.from(html, "utf8") as unknown as ArrayBuffer, {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "content-disposition": `attachment; filename="${contractOptimizationDealPackFilename({
+          eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+          generatedAt,
+        })}"`,
+        "cache-control": "no-store",
+        "x-source-event-code": "SKYH-AMS-CONTRACT-OPT-2026",
+        "x-source-deal-pack-format": "html",
+        "x-source-deal-pack-motion": "contract-optimization",
+      },
+    });
+  }
+
   let result;
   try {
     result = await assembleDealPack(ctx, generatedAt);

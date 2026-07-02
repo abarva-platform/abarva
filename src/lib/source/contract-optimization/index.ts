@@ -12,6 +12,11 @@ export {
   buildContractOptimizationStoryPack,
   contractOptimizationStoryPromptPacket,
 } from "./story-pack";
+export {
+  buildContractOptimizationCxoNarrativeReport,
+  contractOptimizationDealPackFilename,
+  renderContractOptimizationDealPackHtml,
+} from "./cxo-exports";
 export { isSkyHarborContractOptimizationEvent } from "./eligibility";
 export { toContractOptimizationPersistenceRows } from "./persistence";
 
