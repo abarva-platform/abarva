@@ -78,7 +78,7 @@ export function buildNexusBriefing(input: SourceAgentBriefingInput): SourceAgent
     : blockers.length > 0
       ? `${eventName} is blocked by ${blockers[0]}.`
       : bundle.liveTenantContext
-        ? `${eventName} has live Apex current-state grounding across ${formatCurrentStateAreas(bundle.liveTenantContext.currentStateAreas)}.`
+        ? `${eventName} has live ${formatLiveTenantLabel(input)} current-state grounding across ${formatCurrentStateAreas(bundle.liveTenantContext.currentStateAreas)}.`
       : `${eventName} has enough deterministic context for current-state sourcing guidance.`;
   // Prepend stage-specific focus lens when a known stageKey is present so the
   // briefing is contextually differentiated from other stages.
@@ -546,7 +546,14 @@ function formatEvidenceNotes(input: SourceAgentBriefingInput): string[] {
 function formatLiveContextSummary(input: SourceAgentBriefingInput): string {
   const live = input.contextBundle.liveTenantContext;
   if (!live) return '';
-  return `Live Apex context: ${live.inventoryRecordCount} inventory records, ${live.contextChunkCount} context chunks, ${live.embeddedContextChunkCount} embedded chunks.`;
+  return `Live ${formatLiveTenantLabel(input)} context: ${live.inventoryRecordCount} inventory records, ${live.contextChunkCount} context chunks, ${live.embeddedContextChunkCount} embedded chunks.`;
+}
+
+function formatLiveTenantLabel(input: SourceAgentBriefingInput): string {
+  const tenantName = input.contextBundle.tenant?.tenantName?.trim();
+  const activeClientName = input.contextBundle.tenant?.activeClientName?.trim();
+  const clientKey = input.contextBundle.liveTenantContext?.clientKey?.trim();
+  return tenantName || activeClientName || clientKey || 'tenant';
 }
 
 function formatCurrentStateAreas(areas: string[]): string {

@@ -41,4 +41,16 @@ describe("Source Nexus ask route tenant scoping", () => {
     expect(src).toContain("if (eventId && !liveEventDetail)");
     expect(src).toContain("No Source event found for the active client.");
   });
+
+  it("pins fallback event lookup to the already-resolved active client key", () => {
+    const src = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/app/api/v1/source/[eventId]/nexus/ask/route.ts",
+      ),
+      "utf8",
+    );
+
+    expect(src).toContain("getSourcingEvent(eventId, activeClient?.key)");
+  });
 });

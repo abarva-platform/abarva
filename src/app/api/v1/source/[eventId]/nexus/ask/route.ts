@@ -62,7 +62,7 @@ export async function POST(
       clientKey: activeClient?.key,
     });
     const fallbackLiveEventDetail = eventId
-      ? await getSourcingEvent(eventId).catch(() => null)
+      ? await getSourcingEvent(eventId, activeClient?.key).catch(() => null)
       : null;
     const apexLiveEventDetailCandidate = apexContext?.liveContext.sourceEvent
       ? sourceEventRowToDetail(
