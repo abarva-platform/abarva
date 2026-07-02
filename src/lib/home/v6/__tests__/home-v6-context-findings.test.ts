@@ -57,4 +57,33 @@ describe("Home V6 context findings", () => {
       ),
     ).toBe(true);
   });
+
+  it("does not reuse the legacy top-four Home signal headlines", () => {
+    const legacyHeadlines = [
+      "Data volume is not the blocker; governed real-time operating data products are.",
+      "Teradata/SAS/BI rationalization is a modernization move, not just a cost takeout.",
+      "Mainframe-adjacent feeds still determine how fast digital and AI can move.",
+      "Customer AI scale needs CDP and identity governance first.",
+      "Kyriba go-live is a control-evidence question, not just a project milestone.",
+      "ERP/AP/AR/GL feed quality is the largest treasury value risk.",
+      "Liquidity forecasting needs certified finance data products.",
+      "Finance AI needs close/reporting evidence before it becomes board-ready.",
+    ];
+    const browsers = [
+      getHomeV6ContextBrowser("skyharbor"),
+      getHomeV6ContextBrowser("lakeshore"),
+    ];
+
+    const visibleFindingText = browsers
+      .flatMap((browser) => buildHomeV6ContextFindings(browser))
+      .flatMap((finding) => [
+        finding.title,
+        finding.executiveFinding,
+        finding.whyItMatters,
+      ]);
+
+    for (const legacyHeadline of legacyHeadlines) {
+      expect(visibleFindingText).not.toContain(legacyHeadline);
+    }
+  });
 });
