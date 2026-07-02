@@ -20,8 +20,15 @@ import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registr
 import type { SourcingEventSummary } from "@/lib/source/types";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import type { ActivityEntry } from "@/components/source/canvas/workspace-tabs/LogTab";
+import {
+  buildContractOptimizationMveProfile,
+  buildSkyHarborAmsExistingContractInput,
+  type ContractOptimizationMveProfile,
+} from "@/lib/source/contract-optimization";
 
 // Shell uses next/navigation + Clerk hooks; mock so SSR doesn't blow up.
+let mockUser: unknown = null;
+
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -36,7 +43,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 jest.mock("@clerk/nextjs", () => ({
-  useUser: () => ({ isLoaded: true, user: null }),
+  useUser: () => ({ isLoaded: true, user: mockUser }),
   useClerk: () => ({ signOut: jest.fn() }),
   ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
   SignedIn: ({ children }: { children: React.ReactNode }) => children,
@@ -265,6 +272,7 @@ function render(
     templateByCode?: Record<string, string | null>;
     viewStage?: SourceEventArtifactState["stage"];
     vendorResponseReadiness?: SourceVendorResponseCompleteness;
+    contractOptimizationProfile?: ContractOptimizationMveProfile | null;
     activityEntries?: ActivityEntry[];
     event?: Partial<SourcingEventSummary>;
     workspaceExplorerEnabled?: boolean;
@@ -285,6 +293,7 @@ function render(
       activityEntries: options.activityEntries ?? [],
       tenantName: "Apex Retail Group",
       vendorResponseReadiness: options.vendorResponseReadiness,
+      contractOptimizationProfile: options.contractOptimizationProfile,
       workspaceExplorerEnabled: options.workspaceExplorerEnabled,
       simpleFrontEnabled: options.simpleFrontEnabled,
     }),
@@ -292,6 +301,10 @@ function render(
 }
 
 describe("UniversalCanvasShell · SSR render", () => {
+  beforeEach(() => {
+    mockUser = null;
+  });
+
   it("renders id strip with breadcrumb + title + status", () => {
     const html = render();
     expect(html).toContain("source-canvas-id-strip");
@@ -346,7 +359,7 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("collapses Sentinel by default on the Executive Decision stage", () => {
     const html = render({ viewStage: "executive_decision" });
     expect(html).toContain("agent-dock-collapsed-chip");
-    expect(html).toContain("Ava");
+    expect(html).toContain("aVa");
     expect(html).toContain("Click to expand · 3 stage-specific suggestions");
     expect(html).toContain("source-canvas-next-move-card");
   });
@@ -510,7 +523,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     // AgentDock panel replaces the legacy EventChatLane testid.
     expect(html).toContain("agent-dock-panel");
     // Scope stage (1-9) → Sentinel per canvasDockAgentForStage.
-    expect(html).toContain("Ava");
+    expect(html).toContain("aVa");
     // Three-choice catalog now renders as AgentDock suggested actions.
     expect(html).toContain("agent-dock-suggestion-c0");
     expect(html).toContain("agent-dock-suggestion-c1");
@@ -581,6 +594,39 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-responses-disqualification-card");
     expect(html).toContain("procurement system unless explicitly configured");
     expect(html).toContain("source-responses-document-workspace");
+  });
+
+  it("preserves SkyHarbor Air in the signed-in contract optimization chrome", () => {
+    mockUser = {
+      firstName: "Ava",
+      lastName: "Agent",
+      fullName: "Ava Agent",
+      publicMetadata: { role: "admin" },
+      primaryEmailAddress: { emailAddress: "agent-skyharbor@abarva.example.com" },
+      emailAddresses: [{ emailAddress: "agent-skyharbor@abarva.example.com" }],
+    };
+    const profile = buildContractOptimizationMveProfile(
+      buildSkyHarborAmsExistingContractInput({
+        sourceEventId: "evt-canvas-1",
+        tenantKey: "skyharbor",
+      }),
+    );
+    const html = render({
+      viewStage: "responses",
+      simpleFrontEnabled: true,
+      contractOptimizationProfile: profile,
+      event: {
+        code: "SKYH-AMS-CONTRACT-OPT-2026",
+        name: "SkyHarbor AMS Contract Optimization and Renewal Decision",
+        accountName: "Airline Demo",
+        currentStageKey: "responses",
+      },
+    });
+
+    expect(html).toContain("SkyHarbor Air");
+    expect(html).toContain("SkyHarbor Air AMS Outsourcing RFP");
+    expect(html).not.toContain("Ava Agent");
+    expect(html).not.toContain("Airline Demo");
   });
 
   it("renders the Evaluation stage with scorecard, dissent, and human-named BATNA", () => {
@@ -690,18 +736,18 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("renders the sticky AgentDock composer", () => {
     const html = render();
     expect(html).toContain("agent-dock-input");
-    expect(html).toContain("Ask Ava…");
+    expect(html).toContain("Ask aVa…");
     // Paperclip upload button is rendered.
     expect(html).toContain("agent-dock-attach");
   });
 
   it("uses Atlas as the lead agent on transition (stage 10) and value (stage 11)", () => {
     const transitionHtml = render({ viewStage: "transition" });
-    expect(transitionHtml).toContain("Ask Ava…");
+    expect(transitionHtml).toContain("Ask aVa…");
     expect(transitionHtml).toContain("agent-dock-panel");
 
     const valueHtml = render({ viewStage: "value" });
-    expect(valueHtml).toContain("Ask Ava…");
+    expect(valueHtml).toContain("Ask aVa…");
     expect(valueHtml).toContain("agent-dock-panel");
   });
 
@@ -976,7 +1022,7 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("renders the AgentDock empty-thread hint and suggested questions label", () => {
     const html = render();
     // Scope stage (1-9) renders the Source-branded Sentinel lane.
-    expect(html).toContain("Ask Ava anything.");
+    expect(html).toContain("Ask aVa anything.");
     // The dock surfaces the agent role under the name as the empty-state
     // subtitle (matches the AGENT_DOCK_ROLE_COPY entry for Sentinel).
     expect(html).toContain(
@@ -1053,7 +1099,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain(
       "source-canvas-document-body-generate-d01_strategy_memo",
     );
-    expect(html).toContain("Generate with Ava");
+    expect(html).toContain("Generate with aVa");
   });
 
   it("button label flips to Regenerate once a body is authored (or generated)", () => {
@@ -1065,21 +1111,21 @@ describe("UniversalCanvasShell · SSR render", () => {
         }),
       ],
     });
-    expect(html).toContain("Regenerate with Ava");
+    expect(html).toContain("Regenerate with aVa");
   });
 
   it("does NOT render Generate button on artifacts not in the prompt registry", () => {
     const html = render({
       artifactStates: [
         // d05 is not the artifact we set up here; the active will be d05_scope_memo
-        // override → fixture default code is overridden via the makeArtifactState
-        // shape. Use a code that's NOT in the registry (d04_app_inv).
-        makeArtifactState({ artifactCode: "d04_app_inv", body: null }),
+        // override -> fixture default code is overridden via the makeArtifactState
+        // shape. Use a code that's NOT in the registry.
+        makeArtifactState({ artifactCode: "d99_not_registered", body: null }),
       ],
     });
-    // d04 isn't in the prompt registry yet — Slice 1 covers d01 / d05 / d09 only.
+    // Unknown artifacts should stay manual until the prompt registry covers them.
     expect(html).not.toContain(
-      "source-canvas-document-body-generate-d04_app_inv",
+      "source-canvas-document-body-generate-d99_not_registered",
     );
   });
 
@@ -1183,7 +1229,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     );
     expect(html).toContain("source-canvas-document-tab");
     expect(html).toContain("Start with the next RFP document.");
-    expect(html).toContain("draft the required document with Ava");
+    expect(html).toContain("draft the required document with aVa");
     expect(html).toContain("ask your AbarVa lead");
     expect(html).not.toContain("npm run db:backfill:source-canvas");
   });

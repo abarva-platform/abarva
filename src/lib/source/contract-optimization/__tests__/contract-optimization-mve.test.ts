@@ -111,6 +111,10 @@ describe("Source contract optimization MVE", () => {
 
     expect(brief).toContain("8,610 tickets");
     expect(brief).toContain("44 per month");
+    expect(brief).toContain("## Decision Snapshot");
+    expect(brief).toContain("| Renewal posture | Do not renew as-is |");
+    expect(brief).toContain("### Finding 1:");
+    expect(brief).toContain("### Lever 1:");
     expect(brief).toContain("Timing: Immediate");
     expect(brief).toContain("Timing: Before renewal notice");
     expect(brief).toContain("Observed issue:");

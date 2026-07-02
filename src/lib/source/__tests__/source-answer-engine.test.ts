@@ -859,10 +859,16 @@ describe("Source answer engine", () => {
 
     expect(renewAnswer?.answerText).toContain("Do not renew as-is");
     expect(renewAnswer?.answerText).toContain("RFP fallback");
+    expect(renewAnswer?.answerText).toContain("Why this is the right path:");
+    expect(renewAnswer?.answerText).toContain(
+      "- Invoices are running above contracted baseline:",
+    );
     expect(renewAnswer?.answerText).not.toContain("Contract optimization finding");
     expect(cureAnswer?.answerText).toContain("The cure notice should preserve rights");
     expect(cureAnswer?.answerText).toContain("Invoice cure");
     expect(cureAnswer?.answerText).toContain("Change-order cure");
+    expect(cureAnswer?.answerText).toContain("\nImplication:");
+    expect(cureAnswer?.answerText).toContain("\nAction:");
     expect(missingAnswer?.answerText).toContain(
       "not enough to approve a final commercial reset",
     );
