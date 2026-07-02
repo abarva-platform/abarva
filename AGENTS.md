@@ -99,11 +99,14 @@ Do not choose a graph database or build graph visuals before fixing graph semant
 
 - `intelligence_v6.business_records` holds canonical V6 source objects.
 - `intelligence_v6.relationship_edges` holds raw V6 edge ingestion.
-- Materialized V6 graph nodes/edges must be tenant-scoped, evidence-backed, and quality-scored before use in executive UI or model prompts.
+- `intelligence_v6.relationship_types`, `intelligence_v6.graph_nodes`, `intelligence_v6.graph_edges`, and `intelligence_v6.graph_quality_reports` are the physical canonical graph substrate. They were added by migration `20260702190000_intelligence_v6_graph_physical.sql`.
+- Materialized V6 graph nodes/edges must be tenant-scoped, evidence-backed, normalized through `relationship_types`, and quality-scored before use in executive UI or model prompts.
 - Relationship types must come from a canonical dictionary; evidence notes, caveats, and V4/V6 transformation comments must not be stored as relationship verbs.
 - Azure Cosmos DB for Apache Gremlin and Apache AGE are optional future acceleration layers, not the first fix. Use them only after canonical nodes, normalized edges, relationship type dictionary, graph quality reports, tenant fencing, and source lineage are proven.
 
 When working on Home, Intelligence, Source, Moves, or Tower graph behavior, preserve this rule: Postgres owns the governed graph substrate; graph engines and visual libraries consume clean slices, they do not define the source of truth.
+
+Module adoption rule: do not replace a working module path just because the physical graph tables exist. Use the V6 graph substrate in shadow/read-only mode first, compare it with the current module read path, and adopt only when answer quality, tenant safety, and latency are same-or-better. Tower numbers remain deterministic: Tower read models and metric/fact tables own values; Claude owns narrative; the graph may explain dependency context but must never calculate spend, value, ROI, or risk metrics.
 
 ### Deployment authority and runtime invariant
 

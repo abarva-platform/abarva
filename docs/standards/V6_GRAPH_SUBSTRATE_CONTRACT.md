@@ -2,11 +2,22 @@
 
 ## Status
 
-Design standard for the AbarVa V6 enterprise graph substrate.
+Design and physical-table standard for the AbarVa V6 enterprise graph substrate.
 
 This standard exists because the current system already has graph-shaped
 storage, but the graph is fragmented across older layers and is not yet a
 single enterprise-grade V6 graph.
+
+Physical tables were introduced by migration
+`supabase/migrations/20260702190000_intelligence_v6_graph_physical.sql`:
+
+- `intelligence_v6.relationship_types`
+- `intelligence_v6.graph_nodes`
+- `intelligence_v6.graph_edges`
+- `intelligence_v6.graph_quality_reports`
+
+These tables are additive. They do not, by themselves, replace any current
+Home, Intelligence, Source, Moves, or Tower read path.
 
 ## Core Decision
 
@@ -228,6 +239,15 @@ Home, Intelligence, Source, Moves, and Tower may use graph slices only when:
 - quality score is present;
 - source lineage is available;
 - data-thin and orphan conditions remain visible to aVa.
+
+Adoption must be staged. The graph substrate may be built and quality-scored in
+shadow/read-only mode before a module consumes it. A module should switch to the
+V6 graph only when the switch preserves or improves answer quality, tenant
+safety, and latency.
+
+Tower has a stricter boundary: Tower read models, metric tables, and fact tables
+own metric values. The graph may explain dependencies, lineage, blockers, and
+ownership context, but it must not calculate spend, value, ROI, or risk metrics.
 
 ## Acceptance Criteria
 
