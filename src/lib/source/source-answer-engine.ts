@@ -175,16 +175,22 @@ export function buildSourceAnswerEngine(
     prompt: input.prompt,
     evidence: rankedEvidence,
   });
+  const contractOptimizationAnswer = buildContractOptimizationAnswer({
+    prompt: input.prompt,
+    evidence: rankedEvidence,
+  });
   const bafoInstructionAnswer = buildBafoInstructionAnswer({
     prompt: input.prompt,
     evidence: rankedEvidence,
   });
   const currentStateFindings =
     evaluationDecisionAnswer?.currentStateFindings ??
+    contractOptimizationAnswer?.currentStateFindings ??
     bafoInstructionAnswer?.currentStateFindings ??
     toCurrentStateFindings(evidence, live);
   const sourcingImplications =
     evaluationDecisionAnswer?.sourcingImplications ??
+    contractOptimizationAnswer?.sourcingImplications ??
     bafoInstructionAnswer?.sourcingImplications ??
     selectByMode(mode, playbook.eventShaping, [
     `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
@@ -223,19 +229,26 @@ export function buildSourceAnswerEngine(
         ]
       : []),
   ]);
-  const rawAnswerText = evaluationDecisionAnswer?.answerText ?? hardQuestionAnswer?.answerText ?? bafoInstructionAnswer?.answerText ?? formatAnswerText({
-    mode,
-    currentStateFindings,
-    sourcingImplications,
-    cxoGuidance,
-    riskTraps: finalRiskTraps,
-    missingData: finalMissingData,
-    confidence,
-    evidence,
-    limits,
-  });
+  const rawAnswerText =
+    evaluationDecisionAnswer?.answerText ??
+    contractOptimizationAnswer?.answerText ??
+    hardQuestionAnswer?.answerText ??
+    bafoInstructionAnswer?.answerText ??
+    formatAnswerText({
+      mode,
+      currentStateFindings,
+      sourcingImplications,
+      cxoGuidance,
+      riskTraps: finalRiskTraps,
+      missingData: finalMissingData,
+      confidence,
+      evidence,
+      limits,
+    });
   const finalCxoGuidance = evaluationDecisionAnswer
     ? evaluationDecisionAnswer.cxoGuidance
+    : contractOptimizationAnswer
+    ? contractOptimizationAnswer.cxoGuidance
     : hardQuestionAnswer
     ? [
         hardQuestionAnswer.directAnswer,
@@ -248,6 +261,7 @@ export function buildSourceAnswerEngine(
     : cxoGuidance;
   const recommendedNextAction =
     evaluationDecisionAnswer?.recommendedNextAction ??
+    contractOptimizationAnswer?.recommendedNextAction ??
     hardQuestionAnswer?.recommendedNextAction ??
     bafoInstructionAnswer?.recommendedNextAction ??
     playbook.nextAction;
@@ -267,7 +281,11 @@ export function buildSourceAnswerEngine(
   return {
     engineVersion: "source-answer-engine/v1",
     mode,
-    title: evaluationDecisionAnswer?.title ?? bafoInstructionAnswer?.title ?? `${playbook.label} answer`,
+    title:
+      evaluationDecisionAnswer?.title ??
+      contractOptimizationAnswer?.title ??
+      bafoInstructionAnswer?.title ??
+      `${playbook.label} answer`,
     answerText,
     currentStateFindings: visibleCurrentStateFindings,
     sourcingImplications: visibleSourcingImplications,
@@ -872,6 +890,227 @@ type EvaluationScoreImpact = {
   cure: string;
   decisionImpact: string;
 };
+
+type ContractOptimizationFinding = {
+  title: string;
+  excerpt: string;
+};
+
+type ContractOptimizationPath = {
+  immediateAction: string;
+  primaryPath: string;
+  fallbackPath: string;
+  doNotDo: string;
+};
+
+function buildContractOptimizationAnswer(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  const contractEvidence = args.evidence.filter((item) =>
+    /\bcontract optimization\b/i.test(item.title),
+  );
+  if (contractEvidence.length === 0) return null;
+
+  const text = args.prompt.toLowerCase();
+  const asksContractQuestion =
+    /\b(leak|money|financial exposure|exposure|renew|renegotiate|rebid|cure|notice|prove|before renewal|missing|evidence missing|vendor a)\b/.test(
+      text,
+    );
+  if (!asksContractQuestion) return null;
+
+  const path = parseContractOptimizationPath(
+    contractEvidence.find((item) => /\brecommended path\b/i.test(item.title))
+      ?.excerpt ?? "",
+  );
+  const findings = contractEvidence
+    .filter((item) => /\bfinding\b/i.test(item.title))
+    .map(parseContractOptimizationFinding);
+  const findingByText = (pattern: RegExp) =>
+    findings.find((finding) => pattern.test(`${finding.title} ${finding.excerpt}`));
+  const priceLeakage = findingByText(/\binvoice|price|baseline|variance|leakage/i);
+  const slaLeakage = findingByText(/\bsla|credit|service/i);
+  const staffingGap = findingByText(/\bstaff|fte|coverage/i);
+  const changeOrderLeakage = findingByText(/\bchange[- ]order|catalog/i);
+  const workloadMismatch = findingByText(/\bworkload|ticket|emergency|operational/i);
+
+  const exposureLine = [
+    priceLeakage ? summarizeFinding(priceLeakage) : null,
+    staffingGap ? summarizeFinding(staffingGap) : null,
+    changeOrderLeakage ? summarizeFinding(changeOrderLeakage) : null,
+    slaLeakage ? summarizeFinding(slaLeakage) : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const evidenceLine = formatContractEvidenceLine([
+    priceLeakage,
+    slaLeakage,
+    staffingGap,
+    changeOrderLeakage,
+    workloadMismatch,
+  ]);
+
+  let lead: string;
+  let body: string[];
+  let nextAction =
+    path.immediateAction ||
+    "Issue a cure and reservation-of-rights notice, then use the response to decide whether to renegotiate or launch a competitive event.";
+
+  if (/\b(renew|renegotiate|rebid)\b/.test(text)) {
+    lead =
+      "Do not renew as-is. The evidence supports renegotiating under cure conditions while preparing an RFP fallback if the incumbent cannot close the commercial and operational gaps.";
+    body = [
+      path.primaryPath ? `Primary path: ${path.primaryPath}` : "",
+      path.fallbackPath ? `Fallback path: ${path.fallbackPath}` : "",
+      path.doNotDo ? `Do not do: ${path.doNotDo}` : "",
+      exposureLine ? `Why: ${exposureLine}` : "",
+      evidenceLine,
+    ];
+    nextAction =
+      "Send the cure notice, freeze the renewal baseline until variances are classified, and prepare the fallback RFP package in parallel.";
+  } else if (/\b(cure|notice)\b/.test(text)) {
+    lead =
+      "The cure notice should preserve rights and require the incumbent to reconcile invoice variance, SLA remedies, staffing coverage, and change-order treatment before renewal pricing is accepted.";
+    body = [
+      priceLeakage
+        ? `Invoice cure: require a month-by-month variance schedule showing approved demand, recoverable leakage, pass-throughs, and catalog additions. ${summarizeFinding(priceLeakage)}`
+        : "",
+      slaLeakage
+        ? `SLA cure: require stronger credit caps, chronic-miss escalation, earn-back limits, and tower-level remedy language. ${summarizeFinding(slaLeakage)}`
+        : "",
+      staffingGap
+        ? `Staffing cure: require named coverage reconciliation by tower, shift, role, and location, with credits or scope removal for unsupported FTE. ${summarizeFinding(staffingGap)}`
+        : "",
+      changeOrderLeakage
+        ? `Change-order cure: require one-time versus recurring separation and approval evidence before any recurring item moves into baseline. ${summarizeFinding(changeOrderLeakage)}`
+        : "",
+      evidenceLine,
+    ];
+    nextAction =
+      "Draft the notice with legal, procurement, finance, and IT service owner review before the renewal notice window.";
+  } else if (/\b(vendor a|prove|before renewal)\b/.test(text)) {
+    lead =
+      "Before renewal, the incumbent must prove the current run-rate is clean, the service remedies are enforceable, staffing coverage matches the committed model, and recurring change orders are justified.";
+    body = [
+      priceLeakage
+        ? `Commercial proof: invoice variance must reconcile to approved demand or be credited. ${summarizeFinding(priceLeakage)}`
+        : "",
+      slaLeakage
+        ? `Service proof: SLA credits need stronger economics and chronic-miss language. ${summarizeFinding(slaLeakage)}`
+        : "",
+      staffingGap
+        ? `Coverage proof: missing or unverified committed staffing must be cured, credited, or removed from the baseline. ${summarizeFinding(staffingGap)}`
+        : "",
+      changeOrderLeakage
+        ? `Scope proof: recurring change orders must be cataloged and commercially normalized. ${summarizeFinding(changeOrderLeakage)}`
+        : "",
+      evidenceLine,
+    ];
+    nextAction =
+      "Hold renewal approval until the incumbent supplies the reconciliation pack and agrees to priced remedies.";
+  } else if (/\b(missing|evidence)\b/.test(text)) {
+    lead =
+      "The current evidence is strong enough to challenge renewal, but not enough to approve a final commercial reset without a reconciliation pack.";
+    body = [
+      "Missing before final renewal: application inventory with criticality, owner, ticket volume, and run cost.",
+      "Missing before final renewal: incident, request, change, and SLA performance baseline tied to the contract towers.",
+      "Missing before final renewal: rate-card, pass-through, change-order, and approval evidence that separates recoverable leakage from approved scope growth.",
+      "Missing before final renewal: retained organization design and governance model for the post-cure operating state.",
+      evidenceLine,
+    ];
+    nextAction =
+      "Request the reconciliation pack and use unresolved gaps as BAFO or rebid conditions.";
+  } else {
+    lead =
+      "The money leakage is concentrated in invoice variance, weak SLA economics, staffing coverage variance, and recurring change-order exposure.";
+    body = [
+      exposureLine,
+      workloadMismatch
+        ? `Operational pressure: ${summarizeFinding(workloadMismatch)}`
+        : "",
+      path.immediateAction ? `Immediate action: ${path.immediateAction}` : "",
+      evidenceLine,
+    ];
+    nextAction =
+      "Create a recovery schedule and require the incumbent to classify each exposure as approved demand, recoverable leakage, or future catalog item.";
+  }
+
+  const answerText = [lead, ...body.filter(Boolean), `Next action: ${nextAction}`]
+    .filter(Boolean)
+    .join("\n");
+  const currentStateFindings = [
+    priceLeakage ? summarizeFinding(priceLeakage) : "",
+    slaLeakage ? summarizeFinding(slaLeakage) : "",
+    staffingGap ? summarizeFinding(staffingGap) : "",
+    changeOrderLeakage ? summarizeFinding(changeOrderLeakage) : "",
+  ].filter(Boolean);
+
+  return {
+    title: "Contract optimization answer",
+    answerText,
+    currentStateFindings,
+    sourcingImplications: [
+      "Renewal should stay conditional until leakage, staffing, SLA, and change-order issues are either cured, credited, or moved into a competitive event.",
+      "The negotiation should convert evidence-backed issues into specific commercial asks, not a generic relationship renewal.",
+      "The buyer should prepare the RFP fallback now so the renewal deadline does not become the incumbent's leverage.",
+    ],
+    cxoGuidance: [
+      "The CIO should own service-risk acceptance and the tower-level operating model.",
+      "The CFO should own recovery, credits, baseline normalization, and any savings claim.",
+      "Procurement and legal should own cure language, reservation of rights, and the renewal/rebid decision gate.",
+    ],
+    recommendedNextAction: nextAction,
+  };
+}
+
+function parseContractOptimizationPath(
+  excerpt: string,
+): ContractOptimizationPath {
+  const clean = cleanEvidenceExcerpt(excerpt);
+  return {
+    immediateAction:
+      clean.match(/Immediate action:\s*(.*?)(?:\s+Primary path:|$)/i)?.[1]?.trim() ??
+      "",
+    primaryPath:
+      clean.match(/Primary path:\s*(.*?)(?:\s+Fallback path:|$)/i)?.[1]?.trim() ??
+      "",
+    fallbackPath:
+      clean.match(/Fallback path:\s*(.*?)(?:\s+Do not do:|$)/i)?.[1]?.trim() ??
+      "",
+    doNotDo: clean.match(/Do not do:\s*(.*)$/i)?.[1]?.trim() ?? "",
+  };
+}
+
+function parseContractOptimizationFinding(
+  item: SourceLiveTenantEvidenceItem,
+): ContractOptimizationFinding {
+  return {
+    title: formatEvidenceTitle(item.title).replace(/^Contract optimization finding\s*[-:]\s*/i, ""),
+    excerpt: cleanEvidenceExcerpt(item.excerpt),
+  };
+}
+
+function summarizeFinding(finding: ContractOptimizationFinding): string {
+  return `${finding.title}: ${finding.excerpt}`;
+}
+
+function formatContractEvidenceLine(
+  findings: Array<ContractOptimizationFinding | undefined>,
+): string {
+  const labels = findings
+    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
+    .slice(0, 4)
+    .map((finding, index) => `[${index + 1}] ${finding.title}`);
+  return labels.length ? `Evidence used: ${labels.join("; ")}.` : "";
+}
 
 function buildEvaluationDecisionAnswer(args: {
   prompt: string;

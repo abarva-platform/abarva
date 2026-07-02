@@ -226,7 +226,7 @@ export function PersistentNexusPanel({
   missionReport: SourceAgentMissionReport;
 }) {
   const { avatar, avatarBg, dotColor, subhead } = resolveAgentIdentity(event.leadAgent ?? 'aVa');
-  const agentName = event.leadAgent ?? 'aVa';
+  const agentName = 'aVa';
   const statusLine = `SCOPED · ${event.id.toUpperCase()} · ${event.currentStageLabel.toUpperCase()}`;
 
   // Context bundle: compact summary for the strip
