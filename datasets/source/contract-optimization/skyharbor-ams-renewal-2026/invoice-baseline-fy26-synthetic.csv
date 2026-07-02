@@ -1,0 +1,13 @@
+source_type,label,tenant_key,month,category,contracted_amount_usd,invoiced_amount_usd,variance_reason,evidence_reference
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-01,base run,3200000,3265000,tooling pass-through,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-02,base run,3200000,3318000,out-of-catalog environment support,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-03,base run,3200000,3280000,travel and premium coverage,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-04,base run,3200000,3352000,demand growth not cataloged,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-05,base run,3200000,3410000,change-order support,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-06,base run,3200000,3366000,tooling pass-through,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-07,base run,3200000,3378000,demand growth not cataloged,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-08,base run,3200000,3296000,out-of-catalog environment support,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-09,base run,3200000,3384000,change-order support,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-10,base run,3200000,3324000,tooling pass-through,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-11,base run,3200000,3442000,month-end premium coverage,Invoice extract Jan-Dec FY26
+synthetic_demo,Synthetic demo evidence,skyharbor-air,2026-12,base run,3200000,3390000,change-order support,Invoice extract Jan-Dec FY26

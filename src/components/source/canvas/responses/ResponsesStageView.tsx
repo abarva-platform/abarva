@@ -8,9 +8,11 @@ import type {
   VendorEvaluationDecisionView,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
+import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import { CANVAS } from "../canvas-tokens";
 import { CompletenessMatrix } from "./CompletenessMatrix";
 import { QnaSymmetryLog } from "./QnaSymmetryLog";
+import { ContractOptimizationProfilePanel } from "../contract-optimization/ContractOptimizationProfilePanel";
 import { VendorBafoInstructionPackPanel } from "./VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
 import { VendorEvaluationScorecardPanel } from "./VendorEvaluationScorecardPanel";
@@ -22,6 +24,7 @@ export function ResponsesStageView({
   challengeIntelligence,
   bafoInstructionPack,
   evaluationDecisionView,
+  contractOptimizationProfile,
   decisionBriefDocxHref,
   decisionBriefPdfHref,
   eventDisplayName,
@@ -32,6 +35,7 @@ export function ResponsesStageView({
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
+  contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   decisionBriefDocxHref?: string;
   decisionBriefPdfHref?: string;
   eventDisplayName?: string;
@@ -93,6 +97,7 @@ export function ResponsesStageView({
       <VendorResponseProfilesPanel profileSet={profileSet} />
       <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
       <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />
+      <ContractOptimizationProfilePanel profile={contractOptimizationProfile} />
       <VendorEvaluationScorecardPanel
         decisionView={evaluationDecisionView}
         decisionBriefDocxHref={decisionBriefDocxHref}

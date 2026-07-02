@@ -27,6 +27,10 @@ import {
   buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
+import {
+  buildContractOptimizationMveProfile,
+  buildSkyHarborAmsExistingContractInput,
+} from "@/lib/source/contract-optimization";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 export const dynamic = "force-dynamic";
@@ -153,6 +157,18 @@ export default async function SourceEventDetailPage({
     vendorChallengeIntelligence,
     vendorBafoInstructionPack,
   );
+  const contractOptimizationProfile = shouldBindSkyHarborContractOptimization({
+    activeClientKey: activeClient?.key,
+    eventCode: event.code,
+    eventName: event.name,
+  })
+    ? buildContractOptimizationMveProfile(
+        buildSkyHarborAmsExistingContractInput({
+          sourceEventId: event.id,
+          tenantKey: activeClient?.key ?? "skyharbor-air",
+        }),
+      )
+    : null;
   const flagScope = {
     clientKey: activeClient?.key ?? null,
     clientId: activeClient?.id ?? null,
@@ -184,9 +200,26 @@ export default async function SourceEventDetailPage({
       vendorChallengeIntelligence={vendorChallengeIntelligence}
       vendorBafoInstructionPack={vendorBafoInstructionPack}
       vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+      contractOptimizationProfile={contractOptimizationProfile}
       workspaceExplorerEnabled={workspaceExplorerEnabled}
       strategyAutoDraftEnabled={strategyAutoDraftEnabled}
       simpleFrontEnabled={simpleFrontEnabled}
     />
+  );
+}
+
+function shouldBindSkyHarborContractOptimization(args: {
+  activeClientKey?: string | null;
+  eventCode: string;
+  eventName: string;
+}): boolean {
+  if (args.activeClientKey !== "skyharbor-air") return false;
+  const text = `${args.eventCode} ${args.eventName}`.toLowerCase();
+  return (
+    text.includes("ams") ||
+    text.includes("application managed") ||
+    text.includes("contract") ||
+    text.includes("outsourcing") ||
+    text.includes("renewal")
   );
 }

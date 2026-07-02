@@ -25,6 +25,10 @@ import {
   buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
+import {
+  buildContractOptimizationMveProfile,
+  buildSkyHarborAmsExistingContractInput,
+} from "@/lib/source/contract-optimization";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -240,6 +244,18 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     vendorChallenges,
     vendorBafoPack,
   );
+  const contractOptimizationProfile = shouldBindSkyHarborContractOptimization({
+    activeClientKey: clientKey,
+    eventCode: args.event.code,
+    eventName: args.event.name,
+  })
+    ? buildContractOptimizationMveProfile(
+        buildSkyHarborAmsExistingContractInput({
+          sourceEventId: args.event.id,
+          tenantKey: clientKey,
+        }),
+      )
+    : null;
   const eventEvidence = [
     {
       recordId: "trigger",
@@ -350,6 +366,45 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       excerpt: tradeoff,
       score: 20 - index,
     })) ?? []),
+    ...(contractOptimizationProfile
+      ? [
+          {
+            recordId: "contract-optimization-recommended-path",
+            title: "Existing contract optimization recommended path",
+            excerpt: [
+              `Immediate action: ${contractOptimizationProfile.recommendedPath.immediateAction}`,
+              `Primary path: ${contractOptimizationProfile.recommendedPath.primaryPath}`,
+              `Fallback path: ${contractOptimizationProfile.recommendedPath.fallbackPath}`,
+              `Do not do: ${contractOptimizationProfile.recommendedPath.doNotDo}`,
+            ].join(" "),
+            score: 36,
+          },
+        ]
+      : []),
+    ...(contractOptimizationProfile?.findings.slice(0, 8).map((finding, index) => ({
+      recordId: `contract-optimization-finding-${finding.findingId}`,
+      title: `Contract optimization finding - ${finding.title}`,
+      excerpt: [
+        `${finding.category.replaceAll("_", " ")}: ${finding.currentState}`,
+        `Implication: ${finding.sourcingImplication}`,
+        `Recommended action: ${finding.recommendedAction}`,
+        `Evidence: ${finding.evidenceLabels.join("; ")}`,
+      ].join(" "),
+      score: 34 - index,
+    })) ?? []),
+    ...(contractOptimizationProfile?.levers.slice(0, 8).map((lever, index) => ({
+      recordId: `contract-optimization-lever-${lever.leverId}`,
+      title: `Contract optimization lever - ${lever.leverType.replaceAll("_", " ")}`,
+      excerpt: [
+        `Buyer ask: ${lever.buyerAsk}`,
+        `Negotiation language: ${lever.negotiationLanguage}`,
+        `Value basis: ${lever.valueBasis.replaceAll("_", " ")}`,
+        lever.annualImpactHighUsd
+          ? `Annual impact high: ${lever.annualImpactHighUsd}`
+          : "Annual impact: value to test before asserting savings",
+      ].join(" "),
+      score: 30 - index,
+    })) ?? []),
   ].filter((item) => item.excerpt.trim().length > 0);
   const evidence = [
     ...eventEvidence.map((item) => ({
@@ -420,6 +475,22 @@ async function buildEventIntakeTenantContextSnapshot(args: {
         : "Using persisted Source intake facts for this newly-created event; no uploaded or generated Source artifacts were found for the active event.",
     ],
   };
+}
+
+function shouldBindSkyHarborContractOptimization(args: {
+  activeClientKey?: string | null;
+  eventCode: string;
+  eventName: string;
+}): boolean {
+  if (args.activeClientKey !== "skyharbor-air") return false;
+  const text = `${args.eventCode} ${args.eventName}`.toLowerCase();
+  return (
+    text.includes("ams") ||
+    text.includes("application managed") ||
+    text.includes("contract") ||
+    text.includes("outsourcing") ||
+    text.includes("renewal")
+  );
 }
 
 async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
