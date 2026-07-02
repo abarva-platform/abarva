@@ -382,6 +382,8 @@ export interface AgentDockProps {
   initialQuote?: string;
   /** Three-or-fewer suggested actions surfaced above the composer. */
   suggestedActions?: SuggestedAction[];
+  /** Keep suggested actions visible even after an opening advisor turn exists. */
+  keepSuggestedActionsVisible?: boolean;
   /** Human-facing composer placeholder. Defaults to "Ask {agent.name}…". */
   placeholder?: string;
   thread: ChatMessage[];
@@ -587,6 +589,7 @@ export function AgentDock(props: AgentDockProps) {
     surfaceContext: rawSurfaceContext,
     initialQuote: rawInitialQuote,
     suggestedActions: rawSuggestedActions = [],
+    keepSuggestedActionsVisible = false,
     placeholder: rawPlaceholder,
     thread: rawThread,
     onMessage,
@@ -895,8 +898,11 @@ export function AgentDock(props: AgentDockProps) {
   const collapsedSummaryLabel = collapsedSummary?.label;
   const collapsedSummaryDetail = collapsedSummary?.detail;
   const visibleSuggestedActions = useMemo(
-    () => (focused && thread.length > 0 ? [] : suggestedActions),
-    [focused, suggestedActions, thread.length],
+    () =>
+      focused && thread.length > 0 && !keepSuggestedActionsVisible
+        ? []
+        : suggestedActions,
+    [focused, keepSuggestedActionsVisible, suggestedActions, thread.length],
   );
 
   // Render the chat panel inner — used by every mode (side-rail, pin-*,

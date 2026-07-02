@@ -743,5 +743,29 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       "Which AI investments are true initiatives versus Copilot, platform, or vendor-embedded spend?",
       "What evidence is missing before this dashboard is board-ready?",
     ]);
+
+    render(
+      <TowerIndexPage
+        tenantName="Lakeshore Holdings"
+        context="Tower"
+        towerToday="2026-07-01"
+        clientId="client-lakeshore"
+        initiatives={[]}
+        vendors={[]}
+        activeTab="portfolio"
+        cxoView={GOVERNED_CXO_VIEW}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "Show the holding-company IT budget by portfolio company and shared services.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Which portfolio-company CIOs should I inspect first based on spend, risk, and value proof?",
+      ),
+    ).toBeInTheDocument();
   });
 });

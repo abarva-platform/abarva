@@ -6292,6 +6292,7 @@ export function TowerIndexPage({
         surface="tower"
         variant="focused"
         preserveVisibleText
+        keepSuggestedActionsVisible
         surfaceContext={{
           clientId: clientId ?? null,
           tenantName,

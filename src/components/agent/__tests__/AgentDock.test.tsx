@@ -148,6 +148,41 @@ describe("AgentDock · default mode", () => {
     ).toHaveTextContent("Show me what is still missing for this phase.");
   });
 
+  it("can keep suggested questions visible after an opening advisor turn", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="tower"
+        variant="focused"
+        keepSuggestedActionsVisible
+        thread={[
+          {
+            id: "opening",
+            role: "agent",
+            body: "Tower has the CIO operating view ready.",
+          },
+        ]}
+        suggestedActions={[
+          {
+            id: "budget-by-portfolio",
+            label:
+              "Show the holding-company IT budget by portfolio company and shared services.",
+            body:
+              "Show the holding-company IT budget by portfolio company and shared services.",
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("agent-dock-suggestion-budget-by-portfolio"),
+    ).toHaveTextContent(
+      "Show the holding-company IT budget by portfolio company and shared services.",
+    );
+  });
+
   it("reads a stored mode preference", () => {
     window.localStorage.setItem(modeStorageKey(SURFACE), "expand");
     render(
