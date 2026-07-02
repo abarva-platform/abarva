@@ -471,8 +471,13 @@ function displayTenantName(response: HomeKnowResponse): string {
 function ensureTenantOpening(text: string, tenantName: string): string {
   const trimmed = text.trim();
   const name = tenantName.trim();
-  if (!trimmed || !name || hasTenantOpening(trimmed, name)) return trimmed;
-  return `For ${name}, ${sentenceCaseAfterComma(trimmed)}`;
+  if (!trimmed || !name) return trimmed;
+  const normalized = collapseDuplicateTenantOpening(trimmed, name);
+  if (hasTenantOpening(normalized, name)) return normalized;
+  return collapseDuplicateTenantOpening(
+    `For ${name}, ${sentenceCaseAfterComma(normalized)}`,
+    name,
+  );
 }
 
 function hasTenantOpening(text: string, tenantName: string): boolean {
@@ -480,6 +485,27 @@ function hasTenantOpening(text: string, tenantName: string): boolean {
   if (!text.trim() || !name) return false;
   const opening = text.trim().slice(0, 160);
   return opening.toLowerCase().includes(name.toLowerCase());
+}
+
+function collapseDuplicateTenantOpening(text: string, tenantName: string): string {
+  const name = tenantName.trim();
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  const genericallyCollapsed = trimmed.replace(
+    /\bFor\s+([^,\n]+),\s+For\s+\1,\s*/gi,
+    (_match, repeatedName: string) => `For ${repeatedName.trim()}, `,
+  );
+  if (!name) return genericallyCollapsed;
+  const escapedName = escapeRegExp(name);
+  const duplicateOpening = new RegExp(
+    `^(For\\s+${escapedName},\\s*){2,}`,
+    "i",
+  );
+  return genericallyCollapsed.replace(duplicateOpening, `For ${name}, `);
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function sentenceCaseAfterComma(text: string): string {

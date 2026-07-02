@@ -12,6 +12,8 @@
 
 Home’s context browser is polished for demo use after the first V6 table release. The pinned aVa questions now teach users what Home is for, the V6 preview is labeled as a source preview, and missing V6 cells render as “Needs evidence” chips instead of raw missing-data phrases.
 
+Follow-up polish also collapses repeated tenant openings in Home aVa synthesis, so a live model response such as “For Airline Demo, For Airline Demo,” is normalized before display.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Home UI copy, preview styling, and V6 gap display behavior.
@@ -30,11 +32,15 @@ Home’s context browser is polished for demo use after the first V6 table relea
 - `src/components/home/HomeSurface.tsx`: updates pinned questions, V6 preview layout, and evidence-gap display styling.
 - `src/lib/home/v6-context-browser.ts`: maps `data_thin:` cells to the user-facing label `Needs evidence`.
 - `src/components/home/__tests__/HomeSurface.test.tsx`: adds regression coverage for improved pinned questions and V6 preview/gap rendering.
+- `src/lib/home/know/home-v6-executive-synthesis.ts`: collapses repeated tenant-safe answer openings in Home aVa responses.
+- `src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts`: adds regression coverage for duplicate tenant-opening normalization.
 
 ## QA / Validation
 
 - `npx jest src/lib/home/__tests__/v6-context-browser.test.ts src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx src/components/home/know/__tests__/HomeKnowAsk.test.tsx --runInBand` passed.
 - `npx eslint src/lib/home/v6-context-browser.ts src/components/home/HomeSurface.tsx src/components/home/__tests__/HomeSurface.test.tsx` passed.
+- Follow-up aVa polish: `npx jest src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts --runInBand` passed.
+- Follow-up aVa polish: `npx eslint src/lib/home/know/home-v6-executive-synthesis.ts src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts` passed.
 - Pre-change production crawl confirmed all 19 Home dimensions render V6 rows, tables, and file chips for Industrial Demo and Airline Demo.
 
 ## Rollout Plan
