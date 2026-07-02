@@ -1391,8 +1391,8 @@ function followUpQuestionsFor(
 
   if (/kyriba|treasury|cash|liquidity|payment|sox/.test(q)) {
     return [
-      "What control evidence must close before the CFO can approve scale?",
-      "Show the gate-to-value roadmap for Treasury over the next 90 days.",
+      "What control proof must the CFO see before Treasury AI scales?",
+      "What 90-day roadmap would prove value without overcommitting capital?",
       "What assumption should we ask the executive to confirm before deciding?",
     ];
   }
@@ -1401,15 +1401,15 @@ function followUpQuestionsFor(
     return [
       "Which function should be the CIO's lighthouse use case, and why?",
       "What proof is missing before HR or Legal AI can move beyond discovery?",
-      "Show the value-readiness tradeoff across the back-office portfolio.",
+      "What value-readiness tradeoff should the CIO approve?",
     ];
   }
 
   if (/irops|crew|disruption|airline|predictive|maintenance|loyalty|passenger/.test(q)) {
     return [
-      "What has to be true before this can scale safely?",
+      "What must be true before this scales safely?",
       "Which gate, owner, and metric should the CTO approve next?",
-      "Show the value-readiness tradeoff across the airline AI portfolio.",
+      "What portfolio tradeoff should the CTO make now?",
     ];
   }
 

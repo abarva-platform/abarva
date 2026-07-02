@@ -329,6 +329,11 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         "What proof is missing before HR or Legal AI can move beyond discovery?",
       ),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "What value-readiness tradeoff should the CIO approve?",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("uses cleaned agent-answer prose in the latest-answer canvas", async () => {
