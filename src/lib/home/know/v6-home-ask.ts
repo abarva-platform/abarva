@@ -235,6 +235,8 @@ interface TopicConfig {
   handoffReason?: string;
 }
 
+const v6DatasetCache = new Map<ClientKey, V6Dataset>();
+
 const V6_DATASET_BY_CLIENT: Record<ClientKey, string> = {
   apexretail: "apex-retail-synthetic-v6",
   arcturus: "first-capital-financial-synthetic-v6",
@@ -649,6 +651,8 @@ function allCoreFiles(): string[] {
 
 function loadV6Dataset(tenantKey: string): V6Dataset {
   const appClientKey = appClientKeyForTenant(tenantKey) ?? "apexretail";
+  const cached = v6DatasetCache.get(appClientKey);
+  if (cached) return cached;
   const option = getClientOption(appClientKey);
   const datasetDir = V6_DATASET_BY_CLIENT[appClientKey];
   const datasetRoot = path.join(process.cwd(), "datasets", datasetDir);
@@ -672,7 +676,7 @@ function loadV6Dataset(tenantKey: string): V6Dataset {
     files[file] = rows;
     files[manifestFile] = rows;
   }
-  return {
+  const dataset = {
     appClientKey,
     displayName:
       canonicalClientDisplayName({
@@ -685,6 +689,8 @@ function loadV6Dataset(tenantKey: string): V6Dataset {
     manifest,
     files,
   };
+  v6DatasetCache.set(appClientKey, dataset);
+  return dataset;
 }
 
 function classifyQuestion(question: string): keyof typeof TOPICS {

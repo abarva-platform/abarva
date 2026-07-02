@@ -11,7 +11,7 @@ import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 const PROMPT_VERSION = "home-v6-executive-answer-v3";
 const DEFAULT_MODEL = "claude-sonnet-4-6";
-const DEFAULT_MAX_TOKENS = 1200;
+const DEFAULT_MAX_TOKENS = 850;
 const DEFAULT_TIMEOUT_MS = 45_000;
 
 const TECHNICAL_LANGUAGE_RE =
@@ -228,7 +228,7 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
 
 export const HOME_V6_EXECUTIVE_SYSTEM_PROMPT = `You are aVa, AbarVa's executive Home advisor.
 
-Your job is to answer the user's Home question in board-ready business language using only the provided V6 evidence packet.
+Your job is to answer the user's Home question in board-ready business language using only the provided evidence brief.
 
 Rules:
 - Produce the final user-visible answer. Do not describe the packet, dataset, rows, source files, routes, debug fields, IDs, or implementation.
@@ -253,6 +253,7 @@ Rules:
 - For non-Industrial tenants, keep the answer to 2-4 short paragraphs unless the user asks for a table or list.
 - Never use these visible phrases: V6, dataset, contract pack, usable evidence items, governed evidence areas, rows, source file, semantic, dossier, raw, debug, implementation.
 - Safe commercial wording example: "Source should validate Microsoft first as a renewal-risk candidate before any renegotiation decision." Unsafe wording example: "The first contract to reopen is Microsoft."
+- Be concise. Prefer 140-220 words for normal answers and 90-160 words for simple gap answers.
 
 Return only the final answer text.`;
 
@@ -300,21 +301,18 @@ function buildExecutivePacket(
     intent: response.intent,
     primaryDimension: response.dimensionsUsed[0] ?? "home",
     relatedDimensions: response.dimensionsUsed.slice(1),
-    deterministicAnswer: response.prose,
-    facts: response.facts.slice(0, 24).map((fact) => ({
-      label: fact.label,
-      value: fact.value,
-    })),
+    deterministicAnswer: toPromptSafeText(response.prose, 900),
+    facts: uniquePromptFacts(response.facts),
     table: response.tables[0]
       ? {
           title: response.tables[0].title,
           columns: response.tables[0].columns.map((column) => column.label),
-          rows: response.tables[0].rows.slice(0, 8),
+          rows: response.tables[0].rows.slice(0, 4),
         }
       : null,
-    gaps: response.gaps.slice(0, 8).map((gap) => ({
+    gaps: response.gaps.slice(0, 5).map((gap) => ({
       label: gap.displayLabel,
-      detail: gap.message,
+      detail: toPromptSafeText(gap.message, 220),
       severity: gap.severity,
     })),
     handoff: response.handoff
@@ -335,9 +333,11 @@ function buildExecutivePacket(
         }
       : null,
     styleContract: buildStyleContract(v6Result.tenant.displayName),
-    citations: response.citations.slice(0, 8).map((citation) => ({
-      label: citation.label,
-      excerpt: citation.excerpt,
+    citations: response.citations.slice(0, 4).map((citation) => ({
+      label: toPromptSafeText(citation.label, 120),
+      excerpt: citation.excerpt
+        ? toPromptSafeText(citation.excerpt, 180)
+        : citation.excerpt,
     })),
     proof: {
       selectedRows: v6Result.proof.selectedRows,
@@ -366,7 +366,7 @@ ${packet.primaryDimension}
 Related business areas:
 ${packet.relatedDimensions.join(", ") || "none"}
 
-Current deterministic answer to improve:
+Current answer brief to improve:
 ${packet.deterministicAnswer}
 
 Structured facts available:
@@ -390,13 +390,8 @@ ${packet.contextQuality ? JSON.stringify(packet.contextQuality, null, 2) : "None
 Required answer shape:
 ${packet.styleContract}
 
-Citation support:
+Evidence support:
 ${packet.citations.map((citation) => `- ${citation.label}: ${citation.excerpt ?? ""}`).join("\n") || "None"}
-
-Evidence packet controls:
-- Selected rows: ${packet.proof.selectedRows}
-- Selected facts: ${packet.proof.selectedFacts}
-- Retired context layers are not available.
 
 Write the final executive answer now.`;
 }
@@ -423,6 +418,38 @@ function buildStyleContract(tenantName: string): string {
     "Keep the answer to 2-4 short paragraphs unless the user asks for a table or list.",
     "If handing off, name the branch naturally: Tower for spend, value, and decisions; Source for vendors, contracts, and renewals; Intelligence for advisory options and tradeoffs; Moves for sequencing and execution.",
   ].join("\n");
+}
+
+function uniquePromptFacts(
+  facts: HomeKnowResponse["facts"],
+): Array<{ label: string; value: unknown }> {
+  const seen = new Set<string>();
+  const promptFacts: Array<{ label: string; value: unknown }> = [];
+  for (const fact of facts) {
+    const label = toPromptSafeText(fact.label, 100);
+    const value =
+      typeof fact.value === "string"
+        ? toPromptSafeText(fact.value, 180)
+        : fact.value;
+    const signature = `${label}:${String(value)}`.toLowerCase();
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    promptFacts.push({ label, value });
+    if (promptFacts.length >= 10) break;
+  }
+  return promptFacts;
+}
+
+function toPromptSafeText(value: unknown, maxLength: number): string {
+  const text = normalizeExecutiveText(String(value ?? ""))
+    .replace(/\busable\s+data asset\s+evidence items?\b/gi, "business facts")
+    .replace(/\bevidence items?\b/gi, "business facts")
+    .replace(/\bdata asset\s+contract\b/gi, "business context")
+    .replace(/\bdata asset\s+evidence\b/gi, "business evidence")
+    .replace(/\bsource evidence register\b/gi, "source register")
+    .trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
 }
 
 function validateExecutiveText(args: {

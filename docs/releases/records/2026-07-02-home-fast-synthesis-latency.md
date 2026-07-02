@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Production Home answers were correct after the CXO hardening patch, but the signed-in proof showed response times around 10 to 12 seconds for two Airline Demo questions. The root cause is that Home uses the artifact-grade Opus model by default for every executive context answer. This release moves Home V6 executive synthesis to the faster Sonnet tier by default and lowers the answer token ceiling while keeping the same V6 packet contract and visible-output validators.
+Production Home answers were correct after the CXO hardening patch, but the signed-in proof showed response times around 10 to 12 seconds for two Airline Demo questions. The first root cause is that Home uses the artifact-grade Opus model by default for every executive context answer. The second root cause is request-path overhead: Home was reparsing V6 CSV packs and sending a verbose implementation-shaped synthesis packet to Claude. This release moves Home V6 executive synthesis to the faster Sonnet tier by default, lowers the answer token ceiling, caches parsed V6 packs in-process, and compresses the Claude prompt into an executive-native evidence brief while keeping the same visible-output validators.
 
 ## Layer Impact
 
@@ -27,7 +27,8 @@ Production Home answers were correct after the CXO hardening patch, but the sign
 
 ## Changes Included
 
-- `src/lib/home/know/home-v6-executive-synthesis.ts`: default model changes from `claude-opus-4-8` to `claude-sonnet-4-6`; default max tokens changes from `1800` to `1200`.
+- `src/lib/home/know/home-v6-executive-synthesis.ts`: default model changes from `claude-opus-4-8` to `claude-sonnet-4-6`; default max tokens changes from `1800` to `850`; synthesis prompt now uses a compact executive evidence brief instead of verbose implementation-shaped evidence controls.
+- `src/lib/home/know/v6-home-ask.ts`: parsed V6 dataset packs are cached per client key inside the process to avoid repeated CSV parsing on hot Home Ask requests.
 - `src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts`: asserts the default audited Home synthesis model is `claude-sonnet-4-6`.
 - `docs/releases/records/2026-07-02-home-fast-synthesis-latency.md`: this release record.
 
@@ -74,4 +75,3 @@ Revert this release commit and redeploy the previous known-good ACA image. No sc
 ## Known Gaps
 
 This release optimizes model tier and token budget only. It does not add streaming UI, answer caching, packet precomputation, or a deterministic no-LLM fast path.
-
