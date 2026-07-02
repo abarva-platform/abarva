@@ -871,7 +871,7 @@ describe("cio tower answer contract", () => {
   });
 
   it("answers board-ready value proof questions without old brands or visible scaffolding", () => {
-    const ctx = context({
+    const baseCtx = context({
       question:
         "Which initiatives have value evidence strong enough for a board discussion?",
       contract: {
@@ -883,6 +883,16 @@ describe("cio tower answer contract", () => {
         examples: [],
       },
     });
+    const metricPackets = baseCtx.measures.map((row) =>
+      toCioTowerMetricPacket(
+        row.measure_key === "promised_value_fy26"
+          ? { ...row, value_numeric: "999000000" }
+          : row.measure_key === "measured_value_ytd"
+            ? { ...row, value_numeric: "14900000" }
+            : row,
+      ),
+    );
+    const ctx = { ...baseCtx, metricPackets };
     const output =
       __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
 
@@ -891,6 +901,9 @@ describe("cio tower answer contract", () => {
     );
     expect(output?.output.answer).toContain(
       "SkyHarbor Air should not treat budget alone as board-ready value proof.",
+    );
+    expect(output?.output.answer).toContain(
+      "Tower totals in view: promised value $999.0M, measured value $14.9M.",
     );
     expect(output?.output.answer).not.toMatch(/Nexus|Moves|Next move|Read:|Evidence:/i);
     expect(output?.output.tables?.[0]?.title).toBe(
