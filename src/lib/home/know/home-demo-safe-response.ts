@@ -18,7 +18,7 @@ export function sanitizeHomeKnowVisiblePayload<T>(value: T, key?: string): T {
   if (typeof value === "string") {
     return (key && TECHNICAL_ID_KEYS.has(key)
       ? value
-      : demoSafeClientText(value)) as T;
+      : collapseRepeatedTenantOpening(demoSafeClientText(value))) as T;
   }
 
   if (Array.isArray(value)) {
@@ -37,4 +37,11 @@ export function sanitizeHomeKnowVisiblePayload<T>(value: T, key?: string): T {
   }
 
   return value;
+}
+
+function collapseRepeatedTenantOpening(value: string): string {
+  return value.replace(
+    /\bFor\s+([^,\n]+),\s+For\s+\1,\s*/gi,
+    (_match, repeatedName: string) => `For ${repeatedName.trim()}, `,
+  );
 }
