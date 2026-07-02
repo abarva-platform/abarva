@@ -85,7 +85,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const payload: NarrativeDocxPayload = {
       tenantName: CONTRACT_OPTIMIZATION_DISPLAY.tenantName,
       eventCode: CONTRACT_OPTIMIZATION_DISPLAY.eventCode,
-      eventName: `${profile.contractName} Optimization Brief`,
+      eventName: CONTRACT_OPTIMIZATION_CONFIG.documentTitle,
       issuedBy: "AbarVa Source",
       generatedAt,
       body: markdown,
