@@ -55,6 +55,7 @@ import {
   createIntelligenceLatencyTrace,
   type IntelligenceLatencyTiming,
 } from "@/lib/intelligence/latency-trace";
+import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
 
 export type {
   AskIntent,
@@ -432,34 +433,42 @@ export async function* askIntelligence(
       return;
     }
 
-    const consultantText = await synthesizeIntelligenceConsultantText({
-      dossier: intelligenceDossier,
-      advisoryPacket,
-      tenantId:
-        opts.tenantId ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
-      userId: opts.userId,
-      onModelInput: opts.onModelInput,
-      onModelOutput: opts.onModelOutput,
-      onTiming: emitTiming,
-      latencyTraceId: trace.requestId,
-      latencyStartedAt: trace.startedAt,
-    });
-    if (consultantText && consultantText.used) {
-      let answer = "";
-      for (const chunk of chunkAskText(consultantText.text)) {
-        answer += chunk;
-        yield { type: "delta", text: chunk };
-      }
-      const followups = await generateFollowups({
-        query: trimmed,
-        answer,
-        entities: classification.entities,
-        tenantId: opts.tenantId,
+    if (isBlockingIntelligenceRepairEnabled()) {
+      const consultantText = await synthesizeIntelligenceConsultantText({
+        dossier: intelligenceDossier,
+        advisoryPacket,
+        tenantId:
+          opts.tenantId ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
         userId: opts.userId,
+        onModelInput: opts.onModelInput,
+        onModelOutput: opts.onModelOutput,
+        onTiming: emitTiming,
+        latencyTraceId: trace.requestId,
+        latencyStartedAt: trace.startedAt,
       });
-      yield { type: "followups", followups };
-      yield { type: "done" };
-      return;
+      if (consultantText && consultantText.used) {
+        let answer = "";
+        for (const chunk of chunkAskText(consultantText.text)) {
+          answer += chunk;
+          yield { type: "delta", text: chunk };
+        }
+        const followups = await generateFollowups({
+          query: trimmed,
+          answer,
+          entities: classification.entities,
+          tenantId: opts.tenantId,
+          userId: opts.userId,
+        });
+        yield { type: "followups", followups };
+        yield { type: "done" };
+        return;
+      }
+    } else {
+      emitTiming(
+        trace.mark("consultant.synthesis.skipped", {
+          reason: "live_no_repair_mode",
+        }),
+      );
     }
 
     if (isBroadCurrentStateQuestion(trimmed)) {

@@ -43,6 +43,7 @@ import {
   summarizeTextPayload,
   type IntelligenceLatencyTiming,
 } from "@/lib/intelligence/latency-trace";
+import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -601,7 +602,30 @@ ACTIVE INTELLIGENCE CANVAS RULES
         outputApproxTokens: summarizeTextPayload(text).approxTokens,
       }),
     );
+    const blockingRepairEnabled = isBlockingIntelligenceRepairEnabled();
+    emitTiming(
+      latencyTrace.mark("blocking_repairs.mode", {
+        enabled: blockingRepairEnabled,
+        attemptedCount: 0,
+      }),
+    );
+    if (!blockingRepairEnabled) {
+      emitTiming(
+        latencyTrace.mark("blocking_repairs.skipped", {
+          reason: "live_no_repair_mode",
+          attemptedCount: 0,
+          missingTabs: args.richText
+            ? missingRequiredCanvasTabs(text, args.query).join(",")
+            : "",
+          needsNativeCanvas:
+            args.richText &&
+            requiresNativeExecutiveCanvas(args.query) &&
+            !hasExecutiveCanvasPayload(text),
+        }),
+      );
+    }
     if (
+      blockingRepairEnabled &&
       args.richText &&
       isExplicitVisualAsk(args.query) &&
       !hasMarkdownDecisionTable(text)
@@ -646,7 +670,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
     const missingTabs = args.richText
       ? missingRequiredCanvasTabs(text, args.query)
       : [];
-    if (missingTabs.length > 0) {
+    if (blockingRepairEnabled && missingTabs.length > 0) {
       const requiredTabs = requiredCanvasTabsForQuery(args.query);
       const repairPrompt = [
         prompt,
@@ -757,6 +781,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
       }
     }
     if (
+      blockingRepairEnabled &&
       args.richText &&
       requiresNativeExecutiveCanvas(args.query) &&
       !hasExecutiveCanvasPayload(text)
@@ -833,7 +858,31 @@ ACTIVE INTELLIGENCE CANVAS RULES
         ]),
       );
     }
-    if (SESSION_CONTEXT_LANGUAGE_RE.test(text)) {
+    if (SESSION_CONTEXT_LANGUAGE_RE.test(text) && !blockingRepairEnabled) {
+      const sanitizeStartedAt = Date.now();
+      text = stripSessionContextLanguage(text);
+      if (SESSION_CONTEXT_LANGUAGE_RE.test(text)) {
+        text = [
+          "This is not board-ready yet.",
+          "Close four evidence gaps before treating the recommendation as board guidance.",
+          "- Current-state baseline",
+          "- Accountable owner",
+          "- Dependency or readiness gate",
+          "- Value-proof method",
+          "Next step: name the initiative or portfolio question, then verify the baseline metric, owner, readiness gate, and evidence source in one place.",
+        ].join("\n\n");
+      }
+      emitTiming(
+        latencyTrace.finish(
+          "fallback.standalone_sanitized.done",
+          sanitizeStartedAt,
+          {
+            outputChars: text.length,
+          },
+        ),
+      );
+    }
+    if (SESSION_CONTEXT_LANGUAGE_RE.test(text) && blockingRepairEnabled) {
       const standaloneRepairPrompt = [
         prompt,
         "",
@@ -1021,6 +1070,15 @@ function cleanUntabbedCanvasMainAnswer(text: string): string {
     return "The executive answer is to sequence the decision by value, readiness, and proof: scale what is already evidence-backed, certify the next wave, and hold anything whose operating data is not board-ready.";
   }
   return withoutOpenCanvasFence;
+}
+
+function stripSessionContextLanguage(text: string): string {
+  return text
+    .replace(SESSION_CONTEXT_LANGUAGE_RE, "")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function buildFallbackTabBlock(

@@ -22,6 +22,7 @@ import {
   summarizeTextPayload,
   type IntelligenceLatencyTiming,
 } from "@/lib/intelligence/latency-trace";
+import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_TOKENS = 25_000;
@@ -608,6 +609,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
     "\n\n",
   );
   const explicitVisualAsk = isExplicitVisualAsk(args.dossier.question);
+  const blockingRepairEnabled = isBlockingIntelligenceRepairEnabled();
   const latencyTrace = createIntelligenceLatencyTrace({
     requestId: args.latencyTraceId,
     startedAt: args.latencyStartedAt,
@@ -691,6 +693,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
     const requiredVisualRows = requiredVisualTableRows(args.dossier.question);
     const expectedVisualTab = expectedVisualTabId(args.dossier.question);
     if (
+      blockingRepairEnabled &&
       explicitVisualAsk &&
       !hasCanvasVisualTable(text, requiredVisualRows, expectedVisualTab)
     ) {
@@ -759,6 +762,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
       }
     }
     if (
+      blockingRepairEnabled &&
       contractValidationIssues.length === 0 &&
       requiresNativeExecutiveCanvas(args.dossier.question) &&
       !hasExecutiveCanvasPayload(text)
@@ -817,6 +821,34 @@ export async function synthesizeIntelligenceConsultantText(args: {
         text = normalizeConsultantText(rawText);
         contractValidationIssues.push("missing_native_executive_canvas");
       }
+    }
+    if (!blockingRepairEnabled) {
+      if (
+        explicitVisualAsk &&
+        !hasCanvasVisualTable(text, requiredVisualRows, expectedVisualTab)
+      ) {
+        contractValidationIssues.push(
+          `missing_model_generated_visual_tab:${expectedVisualTab}`,
+        );
+      }
+      if (
+        requiresNativeExecutiveCanvas(args.dossier.question) &&
+        !hasExecutiveCanvasPayload(text)
+      ) {
+        contractValidationIssues.push("missing_native_executive_canvas");
+      }
+      emitTiming(
+        latencyTrace.mark("consultant.blocking_repairs.skipped", {
+          reason: "live_no_repair_mode",
+          attemptedCount: 0,
+          needsVisualRepair:
+            explicitVisualAsk &&
+            !hasCanvasVisualTable(text, requiredVisualRows, expectedVisualTab),
+          needsNativeCanvasRepair:
+            requiresNativeExecutiveCanvas(args.dossier.question) &&
+            !hasExecutiveCanvasPayload(text),
+        }),
+      );
     }
     args.onModelOutput?.({
       rawText,
