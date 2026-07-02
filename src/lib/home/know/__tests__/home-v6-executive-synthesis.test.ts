@@ -609,6 +609,66 @@ describe("Home V6 executive synthesis", () => {
     ).toContain("Source-validation candidates");
   });
 
+  it("translates backend-ish raw and source-owner language into executive wording", async () => {
+    mockClaudeText(
+      "For Airline Demo, the raw asset list is not yet decision-grade because the source-owner record is incomplete.\n\nThe next evidence to validate is ownership and lineage before this becomes ready for executive sequencing.",
+    );
+    const question = "For Airline Demo, what ERP/data dependencies matter most?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "skyharbor",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("unqualified asset list");
+    expect(result.response.prose).toContain("source ownership");
+    expect(result.response.prose).not.toContain("raw");
+    expect(result.response.prose).not.toContain("source-owner record");
+    expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
+  });
+
+  it("prompts blocker and tradeoff questions to name Intelligence", async () => {
+    mockClaudeText(
+      "For Airline Demo, the blocking issue is not the budget; it is the readiness tradeoff between customer data foundation and IROPS scale.\n\nIntelligence should frame the advisory options and tradeoffs, Tower should own the value case, and Moves should sequence the execution plan.",
+    );
+    const question =
+      "For Airline Demo, what is blocking agentic IROPS from scaling?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "skyharbor",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("Intelligence");
+    expect(result.response.prose).toContain("Tower");
+    expect(result.response.prose).toContain("Moves");
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
+    ).toContain(
+      "If the user asks what is blocking, what tradeoff matters, whether to scale or hold",
+    );
+  });
+
   it("accepts executive handoff language that names recommendation and prioritization", async () => {
     mockClaudeText(
       "For Retail Demo, Home should confirm what the evidence proves, while Intelligence should own leadership judgment, prioritization, options, and the recommendation.\n\nThe advisory questions sitting on top of AI initiatives belong in Intelligence: which initiatives to sequence first, how to weigh trade-offs, and what an options-based investment case would look like. Home can ground the inventory and readiness, but Intelligence should synthesize the pattern-backed decision.\n\nThe next evidence to validate is initiative readiness detail before Intelligence produces a defensible recommendation.",
