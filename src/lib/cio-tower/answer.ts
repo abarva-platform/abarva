@@ -1459,6 +1459,28 @@ function buildValueProofGapTable(aiOnly: boolean): CioTowerVisibleTable {
   };
 }
 
+function valueProofPortfolioTotalsDisclosure(
+  context: CioTowerPromptContext,
+): string {
+  const promisedValue = context.metricPackets.find(
+    (packet) => packet.measureKey === "promised_value_fy26",
+  );
+  const measuredValue = context.metricPackets.find(
+    (packet) => packet.measureKey === "measured_value_ytd",
+  );
+  const parts = [
+    promisedValue?.valueNumeric
+      ? `promised value ${promisedValue.displayValue}`
+      : null,
+    measuredValue?.valueNumeric
+      ? `measured value ${measuredValue.displayValue}`
+      : null,
+  ].filter((part): part is string => Boolean(part));
+
+  if (parts.length === 0) return "";
+  return ` Tower totals in view: ${parts.join(", ")}.`;
+}
+
 function buildPortfolioProofGovernanceAnswer(
   context: CioTowerPromptContext,
 ): {
@@ -1506,6 +1528,7 @@ function buildPortfolioProofGovernanceAnswer(
   const firstReason =
     table.rows[0]?.[12] ?? "Review value proof before the next funding gate.";
   const subject = aiOnly ? "AI portfolio" : "portfolio";
+  const portfolioTotals = valueProofPortfolioTotalsDisclosure(context);
   const opening = asksBoardReady
     ? `${context.tenantName} should not treat budget alone as board-ready value proof. The strongest item to review first is ${firstProgram}: ${firstBudget} budget, ${firstMeasuredValue} measured value.`
     : `${context.tenantName} should hold additional scale decisions where ${subject} spend is ahead of measured value evidence. Start with ${firstProgram}: ${firstReason}`;
@@ -1515,7 +1538,7 @@ function buildPortfolioProofGovernanceAnswer(
       "Value-proof governance question answered from governed Tower initiative and value facts.",
     output: {
       version: "cio_tower_visible_answer_v1",
-      answer: `${opening} The table keeps budget, promised value, measured value, ownership, and proof quality separate so leadership can decide what is fundable, what is only promised, and what needs evidence before the next approval.`,
+      answer: `${opening}${portfolioTotals} The table keeps budget, promised value, measured value, ownership, and proof quality separate so leadership can decide what is fundable, what is only promised, and what needs evidence before the next approval.`,
       tables: [table],
       tabs: [],
       followUpQuestion: null,
