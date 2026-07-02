@@ -58,6 +58,9 @@ consulting-grade advisory story pack.
 - Broadened the contract optimization aVa intent trigger so business-impact and
   value-leakage questions use the advisory story composer instead of generic
   AMS sourcing evidence prose.
+- Hardened Source generation tenant labeling so signed-in Source exports prefer
+  the concrete event/client name over generic demo placeholders in metadata,
+  headers, filenames and deal-pack text.
 - Added Source backlog item `SRC46 — Contract optimization advisory story pack`.
 
 ## QA / Validation
@@ -73,6 +76,8 @@ consulting-grade advisory story pack.
 - PASS: live signed-in Source page/export smoke on `app.abarva.ai` confirmed the
   story-pack path is active on the Source event; follow-up label hardening
   keeps the export language aligned to the page.
+- PASS: context-binder regression confirms `SkyHarbor Air` survives when the
+  generic canonical fallback would have produced `Airline Demo`.
 
 ## Rollout Plan
 
