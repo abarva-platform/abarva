@@ -417,6 +417,11 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.getByText("CIO portfolio command center"),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
+    expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/aVa · Lakeshore Holdings/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText("Visuals").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Portfolio").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Budget").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Vendors").length).toBeGreaterThan(0);
@@ -442,6 +447,11 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("AI Platform Foundation")).toBeInTheDocument();
     expect(screen.getByText("ServiceNow AI Service Desk")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Visuals" }));
+    expect(push).toHaveBeenCalledWith("/tower?dashboard=visuals");
+    expect(
+      screen.getByText("Run versus change."),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Budget" }));
     expect(push).toHaveBeenCalledWith("/tower?dashboard=budget");
     expect(screen.getByText("Spending structure.")).toBeInTheDocument();
@@ -700,6 +710,10 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     );
 
     expect(screen.getByText("Portfolio Value Pack")).toBeInTheDocument();
+    expect(screen.getByText("Executive operating view")).toBeInTheDocument();
+    expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
+    expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
     expect(screen.getByText("Crew Recovery & Legality Modernization")).toBeInTheDocument();
     expect(screen.getByText("VP Integration")).toBeInTheDocument();
     expect(screen.getAllByText("$28.3M").length).toBeGreaterThanOrEqual(2);
