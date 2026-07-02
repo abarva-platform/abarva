@@ -65,4 +65,20 @@ describe("Source Nexus ask route tenant scoping", () => {
 
     expect(src).toContain("getSourcingEvent(eventId, activeClient?.key)");
   });
+
+  it("normalizes contract optimization exports to a client-facing SkyHarbor identity", () => {
+    const src = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/app/api/v1/source/[eventId]/contract-optimization/brief/route.ts",
+      ),
+      "utf8",
+    );
+
+    expect(src).toContain('tenantName: "SkyHarbor Air"');
+    expect(src).toContain('eventCode: "SKYH-AMS-CONTRACT-OPT-2026"');
+    expect(src).not.toContain('tenantName: activeClient?.name');
+    expect(src).not.toContain('"SKYH-AMS-RFP-2026"');
+    expect(src).not.toContain('"Airline Demo"');
+  });
 });

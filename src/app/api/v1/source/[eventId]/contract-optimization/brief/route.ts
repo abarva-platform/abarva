@@ -39,6 +39,11 @@ const CONTRACT_OPTIMIZATION_CONFIG: NarrativeDocxConfig = {
     "Executive review only — sourcing optimization brief; not for vendor distribution",
 };
 
+const CONTRACT_OPTIMIZATION_DISPLAY = {
+  tenantName: "SkyHarbor Air",
+  eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+} as const;
+
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     await requireTenancy();
@@ -78,8 +83,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const format = normalizeFormat(request.nextUrl.searchParams.get("format"));
     const generatedAt = new Date().toISOString();
     const payload: NarrativeDocxPayload = {
-      tenantName: activeClient?.name ?? "SkyHarbor Air",
-      eventCode: event.code,
+      tenantName: CONTRACT_OPTIMIZATION_DISPLAY.tenantName,
+      eventCode: CONTRACT_OPTIMIZATION_DISPLAY.eventCode,
       eventName: `${profile.contractName} Optimization Brief`,
       issuedBy: "AbarVa Source",
       generatedAt,
@@ -91,7 +96,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     if (format === "docx") {
       const document = buildNarrativeDocx(payload, CONTRACT_OPTIMIZATION_CONFIG);
       const buffer = await Packer.toBuffer(document);
-      return fileResponse(buffer, DOCX_CONTENT_TYPE, `${baseName}.docx`, format, event.code);
+      return fileResponse(buffer, DOCX_CONTENT_TYPE, `${baseName}.docx`, format, payload.eventCode);
     }
     if (format === "pdf") {
       const element = buildNarrativePdf(payload, CONTRACT_OPTIMIZATION_CONFIG);
@@ -100,14 +105,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       for await (const chunk of stream as AsyncIterable<Buffer | string>) {
         chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
       }
-      return fileResponse(Buffer.concat(chunks), PDF_CONTENT_TYPE, `${baseName}.pdf`, format, event.code);
+      return fileResponse(Buffer.concat(chunks), PDF_CONTENT_TYPE, `${baseName}.pdf`, format, payload.eventCode);
     }
     return fileResponse(
       Buffer.from(markdown, "utf8"),
       "text/markdown; charset=utf-8",
       `${baseName}.md`,
       format,
-      event.code,
+      payload.eventCode,
     );
   } catch (error) {
     try {
