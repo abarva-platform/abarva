@@ -277,6 +277,59 @@ describe("getSourcingEvent tenant scoping", () => {
     );
   });
 
+  it("returns a persisted Source row when the active client and row use same-tenant aliases", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-skyharbor",
+      name: "SkyHarbor Air",
+      industry_code: "GLOBAL_NETWORK_AIRLINE",
+      key: "skyharbor-air",
+    });
+    requireTenancy.mockResolvedValue({
+      clientId: "client-skyharbor",
+      clientKey: "skyharbor-air",
+      userId: "clerk:skyharbor-agent",
+      role: "client_admin",
+      email: "skyharbor-agent@abarva.example.com",
+    });
+    mockSourceEventsAdapter.getEventByCodeForClient.mockImplementation(
+      async (eventCode: string, clientKey: string) => {
+        if (
+          eventCode === "SKYH-AMS-CONTRACT-OPT-2026" &&
+          clientKey === "skyharbor"
+        ) {
+          return {
+            id: "2e3e5152-017c-49f6-a2b6-83385907dfc4",
+            client_key: "skyharbor",
+            event_code: "SKYH-AMS-CONTRACT-OPT-2026",
+            event_name: "SkyHarbor AMS Contract Optimization and Renewal Decision",
+            event_type: "managed_service",
+            current_stage_key: "responses",
+            lifecycle_state: "active",
+            linked_program_id: null,
+            estimated_value_usd: 18500000,
+            trigger_description: "Renewal, invoice leakage, and SLA pressure.",
+            scope_description: "AMS contract optimization and renewal decision.",
+            decision_owner: "Procurement commercial lead",
+            created_by_user_id: "skyharbor-contract-optimization",
+            created_at: "2026-07-01T00:00:00.000Z",
+            updated_at: "2026-07-01T00:00:00.000Z",
+          };
+        }
+        return null;
+      },
+    );
+
+    const event = await getSourcingEvent("SKYH-AMS-CONTRACT-OPT-2026");
+
+    expect(event?.id).toBe("2e3e5152-017c-49f6-a2b6-83385907dfc4");
+    expect(event?.accountName).toBe("SkyHarbor Air");
+    expect(canReadSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "skyharbor-air" }),
+      "skyharbor-air",
+      "2e3e5152-017c-49f6-a2b6-83385907dfc4",
+    );
+  });
+
   it("still returns the Apex seed event for an Apex active client when policy allows it", async () => {
     getActiveClientRow.mockResolvedValue({
       id: "client-apex",
