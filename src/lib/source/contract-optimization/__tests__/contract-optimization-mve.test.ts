@@ -157,6 +157,7 @@ describe("Source contract optimization MVE", () => {
     expect(brief).toContain("## Page 2: Where Value Is Leaking");
     expect(brief).toContain("## Page 3: Why It Is Happening");
     expect(brief).toContain("## Page 4: What Should Happen");
+    expect(brief).toContain("### Decision Timeline");
     expect(brief).toContain("## Page 5: Commercial Negotiation Strategy");
     expect(brief).toContain("SkyHarbor Air Application Managed Services Agreement should not be renewed under its current commercial baseline.");
     expect(brief).toContain("The contract commercial model no longer reflects today’s operating reality");

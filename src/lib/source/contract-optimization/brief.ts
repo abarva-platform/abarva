@@ -205,6 +205,8 @@ export function buildContractOptimizationBriefMarkdown(
     "",
     "## Page 4: What Should Happen",
     "",
+    "### Decision Timeline",
+    "",
     "| Step | Timing | Decision | Owner |",
     "|---|---|---|---|",
     ...storyPack.actionTimeline.map((step) =>
