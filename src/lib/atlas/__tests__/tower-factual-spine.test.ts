@@ -546,6 +546,7 @@ describe("buildTowerFactualSpineAnswer", () => {
       "Which programs have no measured value evidence?",
       "Which initiatives have value evidence strong enough for a board discussion?",
       "Which AI initiatives are still missing value proof?",
+      "Which AI initiatives should leadership hold until evidence improves?",
       "Which contracts renew soon?",
       "What should procurement challenge in the next vendor review?",
       "Which vendor relationships are tied to at-risk programs?",
