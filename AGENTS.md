@@ -93,6 +93,18 @@ Use these lanes consistently:
 
 If a PR changes release-relevant files, add or update a release record under `docs/releases/records/` using `docs/releases/templates/release-record-template.md`. The record must explain, in plain English, what changed, what layer changed, which clients are affected, what QA/validation was done, how it rolls out, how it rolls back, and what audit evidence exists. `npm run release:check` enforces this in CI; do not bypass it without explicit Anand approval.
 
+## V6 graph substrate guidance
+
+Do not choose a graph database or build graph visuals before fixing graph semantics. The canonical AbarVa graph path is Azure/Postgres first:
+
+- `intelligence_v6.business_records` holds canonical V6 source objects.
+- `intelligence_v6.relationship_edges` holds raw V6 edge ingestion.
+- Materialized V6 graph nodes/edges must be tenant-scoped, evidence-backed, and quality-scored before use in executive UI or model prompts.
+- Relationship types must come from a canonical dictionary; evidence notes, caveats, and V4/V6 transformation comments must not be stored as relationship verbs.
+- Azure Cosmos DB for Apache Gremlin and Apache AGE are optional future acceleration layers, not the first fix. Use them only after canonical nodes, normalized edges, relationship type dictionary, graph quality reports, tenant fencing, and source lineage are proven.
+
+When working on Home, Intelligence, Source, Moves, or Tower graph behavior, preserve this rule: Postgres owns the governed graph substrate; graph engines and visual libraries consume clean slices, they do not define the source of truth.
+
 ### Deployment authority and runtime invariant
 
 Only the repo-owned ACA main deploy workflow may shift shared Product/Lab web traffic. Feature-branch, local, or ad-hoc Azure commands must not mutate shared web traffic, revision weights, or the web Container App template. Preview/client environments need their own Container App or explicit environment lane; do not test a branch by writing to the shared runtime.
