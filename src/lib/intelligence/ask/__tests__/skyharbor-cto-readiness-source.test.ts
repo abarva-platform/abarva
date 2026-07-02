@@ -107,6 +107,7 @@ describe("SkyHarbor CTO readiness ask source", () => {
     expect(addendum).toContain("gateToValueRoadmap");
     expect(addendum).toContain("proofBoundary");
     expect(addendum).toContain("include initiative owner and gate");
+    expect(addendum).not.toContain("When useful");
   });
 
   it("builds a valid native sequencing canvas fallback for the airline CTO demo", () => {

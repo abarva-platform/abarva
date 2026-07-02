@@ -290,6 +290,52 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
   });
 
+  it("keeps suggested chips visible as adaptive follow-ups after the prior question", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({ type: "delta", text: "Finance answer." }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={apexPayload}
+        tenantName="Apex Retail Group"
+      />,
+    );
+
+    const askBox = screen.getByTestId("agent-dock-input");
+    fireEvent.change(askBox, {
+      target: {
+        value:
+          "How should the CIO prioritize AI and automation across HR, finance, treasury, legal, and shared services?",
+      },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(
+      await screen.findByText(
+        "Which function should be the CIO's lighthouse use case, and why?",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "What proof is missing before HR or Legal AI can move beyond discovery?",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "What value-readiness tradeoff should the CIO approve?",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("uses cleaned agent-answer prose in the latest-answer canvas", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

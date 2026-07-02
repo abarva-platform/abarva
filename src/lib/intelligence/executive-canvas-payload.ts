@@ -59,11 +59,13 @@ const EXECUTIVE_CANVAS_BLOCK_RE =
   /```(?:abarva-canvas|json\s+abarva-canvas)\s*\n([\s\S]*?)```/gim;
 
 export function hasExecutiveCanvasPayload(content: string): boolean {
+  const payloads: ExecutiveCanvasPayload[] = [];
   EXECUTIVE_CANVAS_BLOCK_RE.lastIndex = 0;
-  return (
-    EXECUTIVE_CANVAS_BLOCK_RE.test(content) ||
-    findBareExecutiveCanvasPayloads(content).length > 0
-  );
+  for (const match of content.matchAll(EXECUTIVE_CANVAS_BLOCK_RE)) {
+    const payload = parseExecutiveCanvasPayload(match[1] ?? "");
+    if (payload) payloads.push(payload);
+  }
+  return payloads.length > 0 || findBareExecutiveCanvasPayloads(content).length > 0;
 }
 
 export function extractExecutiveCanvasPayloads(

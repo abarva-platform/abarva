@@ -1371,6 +1371,69 @@ function sequencingHint(label: string): string {
   }
 }
 
+function latestUserQuestionFrom(thread: IntelligenceChatMessage[]): string {
+  return (
+    [...thread]
+      .reverse()
+      .find((turn) => turn.role === "user")
+      ?.body.replace(/\n\n\[attached:[\s\S]*$/i, "")
+      .trim() ?? ""
+  );
+}
+
+function followUpQuestionsFor(
+  tenantKey: string,
+  starterQuestions: string[],
+  latestUserQuestion: string,
+): string[] {
+  const q = latestUserQuestion.toLowerCase();
+  if (!q) return starterQuestions.slice(0, 3);
+
+  if (/hr|legal|shared services|finance|fp&a|close|back[- ]office/.test(q)) {
+    return [
+      "Which function should be the CIO's lighthouse use case, and why?",
+      "What proof is missing before HR or Legal AI can move beyond discovery?",
+      "What value-readiness tradeoff should the CIO approve?",
+    ];
+  }
+
+  if (/kyriba|treasury|cash|liquidity|payment|sox/.test(q)) {
+    return [
+      "What control proof must the CFO see before Treasury AI scales?",
+      "What 90-day roadmap would prove value without overcommitting capital?",
+      "What assumption should we ask the executive to confirm before deciding?",
+    ];
+  }
+
+  if (/irops|crew|disruption|airline|predictive|maintenance|loyalty|passenger/.test(q)) {
+    return [
+      "What must be true before this scales safely?",
+      "Which gate, owner, and metric should the CTO approve next?",
+      "What portfolio tradeoff should the CTO make now?",
+    ];
+  }
+
+  if (/governance|risk|control|trust|evidence|audit|board/.test(q)) {
+    return [
+      "What is known, assumed, missing, and decision-required?",
+      "Which proof would make this board-ready?",
+      "What should the executive approve now versus hold?",
+    ];
+  }
+
+  return tenantKey === "skyharbor-air"
+    ? [
+        "Which airline AI bet should scale now versus wait for readiness?",
+        "What decision should the CTO make next?",
+        "Show the strongest supporting canvas for this answer.",
+      ]
+    : [
+        "Which back-office AI bet should scale now versus wait for proof?",
+        "What decision should the CIO make next?",
+        "Show the strongest supporting canvas for this answer.",
+      ];
+}
+
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -1401,6 +1464,10 @@ export function IntelligenceV2Surface({
   const companionCards = useMemo(
     () => companionCardsFrom(latestIntelligenceTabs),
     [latestIntelligenceTabs],
+  );
+  const latestUserQuestion = useMemo(
+    () => latestUserQuestionFrom(thread),
+    [thread],
   );
 
   useEffect(() => {
@@ -1609,18 +1676,24 @@ export function IntelligenceV2Surface({
   }
 
   const suggestedActions = useMemo<SuggestedAction[]>(
-    () =>
-      t.suggestedQuestions.slice(0, 3).map((question, index) => ({
+    () => {
+      const questions = followUpQuestionsFor(
+        t.tenant.key,
+        t.suggestedQuestions,
+        latestUserQuestion,
+      );
+      return questions.map((question, index) => ({
         id: `intelligence-suggested-${index}`,
         label: question,
         body: question,
         onClick: () => {
           void askIntelligence(question, []);
         },
-      })),
+      }));
+    },
     // askIntelligence intentionally closes over current tenant payload.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t.suggestedQuestions, t.tenant.key],
+    [latestUserQuestion, t.suggestedQuestions, t.tenant.key],
   );
 
   return (
@@ -1631,6 +1704,7 @@ export function IntelligenceV2Surface({
         thread={thread}
         onMessage={askIntelligence}
         suggestedActions={suggestedActions}
+        keepSuggestedActionsVisible
         surfaceContext={surfaceContext}
         isBusy={busy}
         defaultLeftPercent={34}

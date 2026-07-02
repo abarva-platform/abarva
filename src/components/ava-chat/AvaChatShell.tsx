@@ -34,6 +34,7 @@ export type AvaChatShellProps = {
   ) => void | Promise<void>;
   canvas: ReactNode;
   suggestedActions?: SuggestedAction[];
+  keepSuggestedActionsVisible?: boolean;
   surfaceContext?: Record<string, unknown>;
   isBusy?: boolean;
   defaultLeftPercent?: number;
@@ -87,6 +88,7 @@ export function AvaChatShell({
   onMessage,
   canvas,
   suggestedActions,
+  keepSuggestedActionsVisible,
   surfaceContext,
   isBusy,
   defaultLeftPercent = 32,
@@ -114,6 +116,7 @@ export function AvaChatShell({
       minLeftPx={minLeftPx}
       surfaceContext={safeSurfaceContext}
       suggestedActions={safeSuggestedActions}
+      keepSuggestedActionsVisible={keepSuggestedActionsVisible}
       thread={safeThread}
       onMessage={onMessage}
       workspace={canvas}

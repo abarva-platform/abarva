@@ -32,6 +32,8 @@ import {
   advisorRequiredArtifactForQuery,
   withAdvisorSupportSources,
 } from "@/lib/intelligence/ask/advisor-composer";
+import { buildIndustrialCioBackofficeNativeCanvasBlock } from "@/lib/intelligence/ask/industrial-cio-backoffice-source";
+import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "@/lib/intelligence/ask/skyharbor-cto-readiness-source";
 import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
@@ -632,6 +634,13 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           const advisorSources = withAdvisorSupportSources(
             query,
             traceSources as AskSource[],
+          );
+          assistantText = ensureRouteMandatoryCanvasTabs(
+            assistantText,
+            query,
+            advisorSources,
+            tenantClientKey,
+            tenantId,
           );
           const tabbedResponse = parseIntelligenceTabbedResponse(assistantText);
           if (
@@ -1287,4 +1296,168 @@ function readStringArray(value: unknown): string[] | undefined {
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, 40);
+}
+
+function ensureRouteMandatoryCanvasTabs(
+  text: string,
+  query: string,
+  sources: AskSource[],
+  tenantClientKey: string | null,
+  tenantId: string | null,
+): string {
+  const parsed = parseIntelligenceTabbedResponse(text);
+  const requiredLabels = [
+    "Decision",
+    "Industry Insights",
+    "Chart",
+    "Table",
+    "Evidence",
+  ];
+  const presentLabels = new Set(parsed.tabs.map((tab) => tab.label));
+  const missing = requiredLabels.filter((label) => !presentLabels.has(label));
+  if (missing.length === 0) return text;
+
+  const mainAnswer = cleanRouteCanvasMainAnswer(
+    parsed.mainAnswer || parsed.rawText,
+  );
+  const existingTabs = parsed.tabs
+    .map(
+      (tab) =>
+        `<<<TAB: ${tab.label} | grounding: ${tab.grounding}>>>\n${tab.content}`,
+    )
+    .join("\n\n");
+  const fallbackTabs = missing.map((label) =>
+    buildRouteFallbackCanvasTab(label, {
+      query,
+      sources,
+      tenantClientKey,
+      tenantId,
+      mainAnswer,
+    }),
+  );
+
+  return [mainAnswer, existingTabs, ...fallbackTabs]
+    .filter((part) => part.trim().length > 0)
+    .join("\n\n");
+}
+
+function cleanRouteCanvasMainAnswer(text: string): string {
+  const withoutCanvas = text
+    .replace(/```(?:abarva-canvas|json\s+abarva-canvas)\s*[\s\S]*?(?:```|$)/gi, "")
+    .replace(/\n\s*Table\s*[·:-][\s\S]*$/i, "")
+    .replace(/\n\s*\|[^|\n]+\|[\s\S]*$/i, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return (
+    withoutCanvas ||
+    "Sequence the decision by value, readiness, and proof: scale what is evidence-backed, certify the next wave, and hold anything whose operating data is not board-ready."
+  );
+}
+
+function buildRouteFallbackCanvasTab(
+  label: string,
+  args: {
+    query: string;
+    sources: AskSource[];
+    tenantClientKey: string | null;
+    tenantId: string | null;
+    mainAnswer: string;
+  },
+): string {
+  if (label === "Decision") {
+    const firstSentence =
+      args.mainAnswer.split(/(?<=[.!?])\s+/).find(Boolean)?.trim() ??
+      "Sequence the decision by value, readiness, and proof.";
+    return [
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      `Executive choice: ${firstSentence}`,
+      "Decision required: name the accountable owner, baseline, and proof gate before releasing scale funding.",
+    ].join("\n");
+  }
+
+  if (label === "Industry Insights") {
+    return [
+      "<<<TAB: Industry Insights | grounding: industry-context>>>",
+      "Industry context, not tenant proof: enterprise AI value is shifting from isolated pilots to governed value-office portfolios. The strongest pattern is to fund use cases where process ownership, data lineage, control evidence, and adoption telemetry are already credible, while thinner functions run discovery before scale.",
+    ].join("\n");
+  }
+
+  if (label === "Chart") {
+    const nativeCanvas = buildRouteNativeCanvasBlock(args);
+    if (nativeCanvas) {
+      return [
+        "<<<TAB: Chart | grounding: tenant-evidence>>>",
+        "Tenant-evidence exhibit: decision sequence generated from the focused enterprise packet.",
+        nativeCanvas,
+      ].join("\n");
+    }
+    const tenantCount = args.sources.filter((source) => source.type === "TENANT")
+      .length;
+    const contextCount = Math.max(args.sources.length - tenantCount, 0);
+    return [
+      "<<<TAB: Chart | grounding: mixed>>>",
+      "Mixed context: available support for this answer.",
+      "| Support type | Count |",
+      "|---|---:|",
+      `| Tenant evidence | ${tenantCount} |`,
+      `| Industry or corpus context | ${contextCount} |`,
+    ].join("\n");
+  }
+
+  if (label === "Table") {
+    const rows = args.sources.slice(0, 5).map((source) => {
+      const name = (source.name || source.id || "Evidence").replace(/\|/g, "/");
+      const grounding =
+        source.type === "TENANT" ? "Tenant evidence" : "Pattern context";
+      return `| ${name} | ${grounding} |`;
+    });
+    return [
+      "<<<TAB: Table | grounding: tenant-evidence>>>",
+      "| Decision support | Grounding |",
+      "|---|---|",
+      ...(rows.length ? rows : ["| Enterprise packet | Tenant evidence |"]),
+    ].join("\n");
+  }
+
+  return [
+    "<<<TAB: Evidence | grounding: tenant-evidence>>>",
+    `Tenant facts used: ${args.sources
+      .filter((source) => source.type === "TENANT")
+      .slice(0, 3)
+      .map((source) => source.name || source.id)
+      .filter(Boolean)
+      .join("; ") || "tenant evidence packet"}.`,
+    `Industry or pattern context used: ${args.sources
+      .filter((source) => source.type !== "TENANT")
+      .slice(0, 3)
+      .map((source) => source.name || source.id)
+      .filter(Boolean)
+      .join("; ") || "none used"}.`,
+    "Validation point: confirm the accountable owner, baseline metric, and proof gate before using the answer as board-grade guidance.",
+  ].join("\n");
+}
+
+function buildRouteNativeCanvasBlock(args: {
+  query: string;
+  sources: AskSource[];
+  tenantClientKey: string | null;
+  tenantId: string | null;
+}): string {
+  if (
+    args.sources.some(
+      (source) => source.id === "industrial-cio-backoffice-readiness",
+    )
+  ) {
+    return buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
+      args.tenantClientKey,
+      args.tenantId,
+    ]);
+  }
+  if (args.sources.some((source) => source.id === "skyharbor-cto-readiness")) {
+    return buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
+      args.tenantClientKey,
+      args.tenantId,
+    ]);
+  }
+  return "";
 }
