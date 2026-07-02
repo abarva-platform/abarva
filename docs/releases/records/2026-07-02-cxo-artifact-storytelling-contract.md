@@ -50,6 +50,8 @@ consulting-grade advisory story pack.
   opportunity map, why-it-happened, do-nothing scenario and decision timeline.
 - Updated Source aVa contract optimization structured response parts to include
   a business-impact lens.
+- Hardened the markdown/DOCX/PDF source body so Page 4 explicitly labels the
+  executive action table as `Decision Timeline`.
 - Added Source backlog item `SRC46 — Contract optimization advisory story pack`.
 
 ## QA / Validation
@@ -62,12 +64,14 @@ consulting-grade advisory story pack.
 - PASS: `npx tsc --noEmit --pretty false`.
 - PASS: `npm run release:check`.
 - PASS: `git diff --check`.
+- PASS: live signed-in Source page/export smoke on `app.abarva.ai` confirmed the
+  story-pack path is active on the Source event; follow-up label hardening
+  keeps the export language aligned to the page.
 
 ## Rollout Plan
 
-Merge to `main`, then deploy through the approved ACA main lane when this public
-demo path is ready to be browser-proven. The change is deterministic and
-reversible; no migration is required.
+Merge to `main`, then deploy through the approved ACA main lane. The change is
+deterministic and reversible; no migration is required.
 
 ## Deployment Authority
 
@@ -91,6 +95,5 @@ is required. Exports fall back to the prior contract optimization brief shape.
 
 ## Known Gaps
 
-This implements the deterministic story-pack source used by markdown/DOCX/PDF,
-but live signed-in browser proof and full visual inspection of the generated
-DOCX/PDF pages still need to be run after deploy.
+Full visual inspection of the generated DOCX/PDF pages remains recommended
+before an external board-pack review.
