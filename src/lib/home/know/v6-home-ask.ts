@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { getClientOption, type ClientKey } from "@/lib/client-config";
+import {
+  canonicalClientDisplayName,
+  getClientOption,
+  type ClientKey,
+} from "@/lib/client-config";
 import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 
 export interface V6HomeAskInput {
@@ -670,7 +674,13 @@ function loadV6Dataset(tenantKey: string): V6Dataset {
   }
   return {
     appClientKey,
-    displayName: manifest.clientDisplayName || option.name,
+    displayName:
+      canonicalClientDisplayName({
+        key: appClientKey,
+        name: manifest.clientDisplayName || option.name,
+      }) ||
+      manifest.clientDisplayName ||
+      option.name,
     datasetDir,
     manifest,
     files,

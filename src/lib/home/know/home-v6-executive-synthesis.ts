@@ -9,7 +9,7 @@ import type {
 import type { V6HomeAskResult } from "@/lib/home/know/v6-home-ask";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
-const PROMPT_VERSION = "home-v6-executive-answer-v2";
+const PROMPT_VERSION = "home-v6-executive-answer-v3";
 const DEFAULT_MODEL = "claude-opus-4-8";
 const DEFAULT_MAX_TOKENS = 1800;
 const DEFAULT_TIMEOUT_MS = 45_000;
@@ -19,6 +19,10 @@ const TECHNICAL_LANGUAGE_RE =
 
 const EXECUTIVE_SIGNALS_RE =
   /\b(means|matters|risk|decision|owner|ownership|ready|readiness|not yet|confidence|prove|proven|evidence|recommendation|prioritization|options|leadership|change|operate|value|caveat|should not)\b/i;
+const SOURCE_COMMERCIAL_QUESTION_RE =
+  /\b(vendor|vendors|contract|contracts|supplier|suppliers|renewal|renewals|sourcing|rfp)\b/i;
+const UNSAFE_HOME_COMMERCIAL_ACTION_RE =
+  /\b(first\s+(?:contract|vendor|supplier)\s+to\s+(?:reopen|renegotiate|renew|cancel|terminate)|(?:should|must|need(?:s)?\s+to)\s+(?:reopen|renegotiate|renew|cancel|terminate)|(?:reopen|renegotiate|renew|cancel|terminate)\s+(?:the\s+)?(?:contract|vendor|supplier)|(?:contract|vendor|supplier)\s+should\s+be\s+(?:reopened|renegotiated|renewed|cancelled|terminated))\b/i;
 
 export interface HomeV6ExecutiveSynthesisResult {
   response: HomeKnowResponse;
@@ -236,6 +240,8 @@ Rules:
 - If evidence is incomplete, say exactly what is not proven and why it matters.
 - If the question belongs in Intelligence, Moves, Source, or Tower, explain the boundary naturally and name the surface that should own the next step.
 - Use answerability and context quality as decision controls: if the answer is planning-grade, data-thin, or module-owned, say that plainly in executive language and route the next step. Do not expose the words "answerability", "context quality", "score", or the raw classification labels.
+- For vendor, contract, renewal, sourcing, RFP, or partner questions asking what to renegotiate, renew, cancel, source, or negotiate first, Home must not issue the final commercial action. Home may identify Source-validation candidates from the provided evidence, but must phrase them as candidates for Source to validate. State that Source owns the commercial decision before any renegotiation, renewal, cancellation, RFP, or partner action.
+- Do not write final-action phrases such as "the first contract to reopen is", "should renegotiate", "should renew", "should cancel", "reopen this contract", "renegotiate this vendor", or equivalent commercial action language as Home's answer.
 - For Home answers, phrase follow-up as "the next evidence to validate" rather than "we recommend" unless the user explicitly asks for a recommendation.
 - Translate data-architecture and evidence-packet terms into executive language: say "data asset", "shared business definition", "source collection", "business context areas", or "business facts"; do not say dataset, semantic model, semantic layer, corpus, governed evidence areas, business records, or table unless the user asks for a table.
 - When the user asks for a table, chart, graph, or visual explanation, use the available evidence to either provide the executive table/chart/graph content if a structured artifact is available, or explain which table/chart/graph would best represent the evidence and what it would show. Do not invent numbers. If the artifact cannot be rendered from current evidence, say what evidence is missing and recommend the right visual structure.
@@ -245,6 +251,7 @@ Rules:
 - Branch choices mean: Tower for spend, value, and decisions; Source for vendors, contracts, and renewals; Intelligence for advisory options and tradeoffs; Moves for sequencing and execution.
 - For non-Industrial tenants, keep the answer to 2-4 short paragraphs unless the user asks for a table or list.
 - Never use these visible phrases: V6, dataset, contract pack, usable evidence items, governed evidence areas, rows, source file, semantic, dossier, raw, debug, implementation.
+- Safe commercial wording example: "Source should validate Microsoft first as a renewal-risk candidate before any renegotiation decision." Unsafe wording example: "The first contract to reopen is Microsoft."
 
 Return only the final answer text.`;
 
@@ -450,6 +457,12 @@ function validateExecutiveText(args: {
     /\b(we recommend|you should invest|scale this|kill this)\b/i.test(text)
   ) {
     hardIssues.push("unsupported_recommendation");
+  }
+  if (
+    SOURCE_COMMERCIAL_QUESTION_RE.test(args.response.question) &&
+    UNSAFE_HOME_COMMERCIAL_ACTION_RE.test(text)
+  ) {
+    hardIssues.push("unsafe_home_commercial_action");
   }
   return {
     hardIssues: [...new Set(hardIssues)],

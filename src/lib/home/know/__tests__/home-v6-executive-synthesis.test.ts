@@ -18,9 +18,12 @@ const mockGetAuditedAnthropicClient =
 
 describe("Home V6 executive synthesis", () => {
   const originalEnv = process.env.HOME_V6_EXECUTIVE_SYNTHESIS_ENABLED;
+  const originalRequiredEnv =
+    process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED;
 
   beforeEach(() => {
     process.env.HOME_V6_EXECUTIVE_SYNTHESIS_ENABLED = "1";
+    delete process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED;
     mockGetAuditedAnthropicClient.mockReset();
   });
 
@@ -29,6 +32,11 @@ describe("Home V6 executive synthesis", () => {
       delete process.env.HOME_V6_EXECUTIVE_SYNTHESIS_ENABLED;
     } else {
       process.env.HOME_V6_EXECUTIVE_SYNTHESIS_ENABLED = originalEnv;
+    }
+    if (originalRequiredEnv === undefined) {
+      delete process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED;
+    } else {
+      process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED = originalRequiredEnv;
     }
   });
 
@@ -558,9 +566,47 @@ describe("Home V6 executive synthesis", () => {
       mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
     ).toContain("what this means, why it matters");
     expect(result.response.safety.composerTrace?.reason).toContain(
-      "promptVersion=home-v6-executive-answer-v2",
+      "promptVersion=home-v6-executive-answer-v3",
     );
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
+  });
+
+  it("blocks Home from making final vendor renegotiation decisions", async () => {
+    process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED = "1";
+    mockClaudeText(
+      "For Industrial Demo:\n- The first contract to reopen is Microsoft.\n- The renewal risk is the highest commercial pressure point.\n- The next step is renegotiation.\n\nCaveat: Source can validate the supporting evidence later.",
+    );
+    const question =
+      "For Industrial Demo, which vendor contract should be renegotiated first?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(false);
+    expect(result.response.answerStatus).toBe("blocked");
+    expect(result.response.prose).not.toContain(
+      "The first contract to reopen is Microsoft",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "unsafe_home_commercial_action",
+    );
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
+    ).toContain("Home must not issue the final commercial action");
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
+    ).toContain("Source-validation candidates");
   });
 
   it("accepts executive handoff language that names recommendation and prioritization", async () => {
