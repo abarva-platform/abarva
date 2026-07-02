@@ -719,6 +719,8 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
     expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Run\/change, funded work/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Start here: how much are we spending/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Portfolio" }));
     expect(screen.getByText("Portfolio Value Pack")).toBeInTheDocument();
     expect(screen.getByText("Crew Recovery & Legality Modernization")).toBeInTheDocument();

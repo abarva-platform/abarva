@@ -2621,37 +2621,30 @@ type CxoCommandSection =
 const CXO_COMMAND_SECTIONS: Array<{
   key: CxoCommandSection;
   label: string;
-  description: string;
 }> = [
   {
     key: "value",
     label: "Value",
-    description: "Board numbers: budget, spend, promised value, measured value.",
   },
   {
     key: "budget",
     label: "Budget",
-    description: "Run/change, funded work, spend burn, and value realization.",
   },
   {
     key: "portfolio",
     label: "Portfolio",
-    description: "Programs, owners, blockers, value proof, and inspection reasons.",
   },
   {
     key: "benchmark",
     label: "Benchmark",
-    description: "How this portfolio compares with peer technology portfolios.",
   },
   {
     key: "evidence",
     label: "Evidence",
-    description: "Source coverage, confidence, and where to inspect the numbers.",
   },
   {
     key: "ask",
     label: "Ask aVa",
-    description: "Use the same governed measure that drives the dashboard.",
   },
 ];
 
@@ -2675,9 +2668,6 @@ function CxoGovernedCommandCenter({
     .map((measureKey) => findCxoCard(model.cards, measureKey))
     .filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
   const parityCard = model.cards.find((card) => card.measureKey === model.parityMeasureKey);
-  const activeSectionCopy = CXO_COMMAND_SECTIONS.find(
-    (section) => section.key === activeSection,
-  );
 
   return (
     <div style={{ padding: "18px 32px 34px" }}>
@@ -2686,8 +2676,8 @@ function CxoGovernedCommandCenter({
           border: `1px solid ${T.RULE_STRONG}`,
           borderRadius: 14,
           background: "#fff",
-          padding: "18px 22px",
-          marginBottom: 16,
+          padding: "14px 18px",
+          marginBottom: 14,
           boxShadow: "0 14px 30px rgba(15, 23, 42, 0.07)",
         }}
       >
@@ -2705,21 +2695,17 @@ function CxoGovernedCommandCenter({
         </div>
         <h2
           style={{
-            margin: "7px 0 0",
+            margin: "6px 0 0",
             fontFamily: T.SERIF,
-            fontSize: 25,
-            lineHeight: 1.08,
+            fontSize: 22,
+            lineHeight: 1.12,
             letterSpacing: 0,
             color: T.INK,
-            maxWidth: 960,
+            maxWidth: 860,
           }}
         >
           {model.headline}
         </h2>
-        <p style={{ margin: "8px 0 0", color: T.INK_2, maxWidth: 900, fontSize: 13.5, lineHeight: 1.45 }}>
-          Start here: how much are we spending, how much value have we promised, what has
-          been proven, and where should leadership inspect next?
-        </p>
       </section>
 
       <section
@@ -2727,24 +2713,13 @@ function CxoGovernedCommandCenter({
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-          marginBottom: 16,
+          justifyContent: "center",
+          marginBottom: 14,
           borderBottom: `1px solid ${T.RULE_STRONG}`,
           paddingBottom: 12,
         }}
       >
-        <div
-          style={{
-            color: T.INK_2,
-            fontSize: 12.5,
-            lineHeight: 1.35,
-            maxWidth: 540,
-          }}
-        >
-          {activeSectionCopy?.description}
-        </div>
-        <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "center" }}>
           {CXO_COMMAND_SECTIONS.map((section) => {
             const selected = section.key === activeSection;
             return (
@@ -2758,11 +2733,13 @@ function CxoGovernedCommandCenter({
                   borderRadius: 999,
                   background: selected ? T.INK : "#fff",
                   color: selected ? "#fff" : T.INK_2,
-                  padding: "6px 12px",
-                  fontSize: 12,
+                  padding: "5px 11px",
+                  fontSize: 11.5,
                   fontWeight: 760,
                   fontFamily: T.SANS,
                   cursor: "pointer",
+                  minWidth: 72,
+                  textAlign: "center",
                 }}
               >
                 {section.label}
