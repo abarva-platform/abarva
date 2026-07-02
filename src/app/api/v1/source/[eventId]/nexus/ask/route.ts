@@ -82,14 +82,22 @@ export async function POST(
       apexContext && apexLiveEventMatches
         ? toApexRetailLiveTenantContextSnapshot(apexContext.liveContext)
         : undefined;
-    const liveEventDetail =
+    const liveEventDetailRaw =
       apexLiveEventDetail ?? fallbackLiveEventDetail ?? undefined;
+    const liveEventDetail = normalizeSourceContractOptimizationDisplay({
+      activeClientKey: activeClient?.key,
+      eventDetail: liveEventDetailRaw,
+    });
+    const displayTenantName =
+      liveEventDetail && liveEventDetail !== liveEventDetailRaw
+        ? liveEventDetail.accountName
+        : activeClient?.name;
     const liveTenantContext =
       apexLiveTenantContext ??
       (fallbackLiveEventDetail
         ? await buildEventIntakeTenantContextSnapshot({
             activeClientKey: activeClient?.key,
-            activeClientName: activeClient?.name,
+            activeClientName: displayTenantName,
             event: fallbackLiveEventDetail,
           })
         : undefined);
@@ -129,9 +137,9 @@ export async function POST(
       tenant: apexContext?.input.tenant ?? {
         tenantId: tenancy.clientId,
         tenantKey: activeClient?.key,
-        tenantName: activeClient?.name,
+        tenantName: displayTenantName,
         activeClientId: tenancy.clientId,
-        activeClientName: activeClient?.name,
+        activeClientName: displayTenantName,
       },
       user: {
         id: tenancy.userId,
@@ -187,6 +195,29 @@ function sourceEventMatchesRequestedEvent(args: {
     value.trim().toLowerCase(),
   );
   return candidateIds.some((candidateId) => requestedAliases.has(candidateId));
+}
+
+function normalizeSourceContractOptimizationDisplay(args: {
+  activeClientKey?: string;
+  eventDetail?: SourcingEventDetail;
+}): SourcingEventDetail | undefined {
+  if (!args.eventDetail) return undefined;
+  if (
+    !isSkyHarborContractOptimizationEvent({
+      activeClientKey: args.activeClientKey,
+      eventCode: args.eventDetail.code,
+      eventName: args.eventDetail.name,
+    })
+  ) {
+    return args.eventDetail;
+  }
+
+  return {
+    ...args.eventDetail,
+    accountName: "SkyHarbor Air",
+    code: "SKYH-AMS-CONTRACT-OPT-2026",
+    name: "SkyHarbor Air AMS Contract Optimization",
+  };
 }
 
 type SourceArtifactContextRow = {
