@@ -31,6 +31,9 @@ export function buildContractOptimizationBriefMarkdown(
     (sum, lever) => sum + (lever.annualImpactHighUsd ?? 0),
     0,
   );
+  const highFindings = profile.findings.filter(
+    (finding) => finding.severity === "high",
+  ).length;
   return [
     `# ${profile.contractName} Optimization Brief`,
     "",
@@ -42,6 +45,15 @@ export function buildContractOptimizationBriefMarkdown(
     `- Evidenced high-side exposure: ${money(evidencedExposure)}`,
     `- Ready for optimization: ${profile.readyForOptimization}`,
     `- Decision owner: ${profile.recommendedPath.decisionOwnerRole}`,
+    `- High-priority findings: ${highFindings}`,
+    "",
+    "## Decision Snapshot",
+    "",
+    "| Decision area | Executive read | Action |",
+    "|---|---|---|",
+    `| Renewal posture | Do not renew as-is | ${profile.recommendedPath.immediateAction} |`,
+    `| Commercial baseline | ${money(profile.contractBaseline.currentAnnualRunRateUsd)} run rate with ${money(evidencedExposure)} high-side evidenced exposure | Reconcile invoice, staffing, SLA, and change-order drivers before renewal pricing |`,
+    `| Fallback | ${profile.recommendedPath.fallbackPath} | Keep the competitive event ready until cure evidence is received |`,
     "",
     "## Recommended Path",
     "",
@@ -52,8 +64,8 @@ export function buildContractOptimizationBriefMarkdown(
     "",
     "## Optimization Findings",
     "",
-    ...profile.findings.flatMap((finding) => [
-      `### ${finding.title}`,
+    ...profile.findings.flatMap((finding, index) => [
+      `### Finding ${index + 1}: ${finding.title}`,
       "",
       `- Severity: ${finding.severity}`,
       `- Observed issue: ${finding.currentState}`,
@@ -65,8 +77,8 @@ export function buildContractOptimizationBriefMarkdown(
     ]),
     "## Negotiation Levers",
     "",
-    ...profile.levers.flatMap((lever) => [
-      `### ${lever.buyerAsk}`,
+    ...profile.levers.flatMap((lever, index) => [
+      `### Lever ${index + 1}: ${lever.buyerAsk}`,
       "",
       `- Timing: ${urgencyLabel(lever.priority)}`,
       `- Value basis: ${lever.valueBasis.replaceAll("_", " ")}`,

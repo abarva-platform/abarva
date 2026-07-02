@@ -1289,6 +1289,7 @@ export function UniversalCanvasShell({
       }}
       topBarProps={{
         tenantName: displayEvent.accountName || tenantName,
+        preserveTenantName: Boolean(contractOptimizationProfile),
         showLocked: true,
         context: `${displayEvent.code} · ${displayEvent.name}`,
       }}

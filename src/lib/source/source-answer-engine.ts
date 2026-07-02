@@ -894,6 +894,10 @@ type EvaluationScoreImpact = {
 type ContractOptimizationFinding = {
   title: string;
   excerpt: string;
+  issue: string;
+  implication: string;
+  recommendedAction: string;
+  evidence: string;
 };
 
 type ContractOptimizationPath = {
@@ -957,14 +961,12 @@ function buildContractOptimizationAnswer(args: {
     /\bticket|emergency change|operational volume/i,
   );
 
-  const exposureLine = [
-    priceLeakage ? summarizeFinding(priceLeakage) : null,
-    staffingGap ? summarizeFinding(staffingGap) : null,
-    changeOrderLeakage ? summarizeFinding(changeOrderLeakage) : null,
-    slaLeakage ? summarizeFinding(slaLeakage) : null,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const exposureLine = formatFindingBullets([
+    priceLeakage,
+    staffingGap,
+    changeOrderLeakage,
+    slaLeakage,
+  ]);
 
   const evidenceLine = formatContractEvidenceLine([
     priceLeakage,
@@ -987,7 +989,7 @@ function buildContractOptimizationAnswer(args: {
       path.primaryPath ? `Primary path: ${path.primaryPath}` : "",
       path.fallbackPath ? `Fallback path: ${path.fallbackPath}` : "",
       path.doNotDo ? `Do not do: ${path.doNotDo}` : "",
-      exposureLine ? `Why: ${exposureLine}` : "",
+      exposureLine ? `Why this is the right path:\n${exposureLine}` : "",
       evidenceLine,
     ];
     nextAction =
@@ -997,16 +999,32 @@ function buildContractOptimizationAnswer(args: {
       "The cure notice should preserve rights and require the incumbent to reconcile invoice variance, SLA remedies, staffing coverage, and change-order treatment before renewal pricing is accepted.";
     body = [
       priceLeakage
-        ? `Invoice cure: require a month-by-month variance schedule showing approved demand, recoverable leakage, pass-throughs, and catalog additions. ${summarizeFinding(priceLeakage)}`
+        ? formatCureItem(
+            "Invoice cure",
+            "require a month-by-month variance schedule showing approved demand, recoverable leakage, pass-throughs, and catalog additions",
+            priceLeakage,
+          )
         : "",
       slaLeakage
-        ? `SLA cure: require stronger credit caps, chronic-miss escalation, earn-back limits, and tower-level remedy language. ${summarizeFinding(slaLeakage)}`
+        ? formatCureItem(
+            "SLA cure",
+            "require stronger credit caps, chronic-miss escalation, earn-back limits, and tower-level remedy language",
+            slaLeakage,
+          )
         : "",
       staffingGap
-        ? `Staffing cure: require named coverage reconciliation by tower, shift, role, and location, with credits or scope removal for unsupported FTE. ${summarizeFinding(staffingGap)}`
+        ? formatCureItem(
+            "Staffing cure",
+            "require named coverage reconciliation by tower, shift, role, and location, with credits or scope removal for unsupported FTE",
+            staffingGap,
+          )
         : "",
       changeOrderLeakage
-        ? `Change-order cure: require one-time versus recurring separation and approval evidence before any recurring item moves into baseline. ${summarizeFinding(changeOrderLeakage)}`
+        ? formatCureItem(
+            "Change-order cure",
+            "require one-time versus recurring separation and approval evidence before any recurring item moves into baseline",
+            changeOrderLeakage,
+          )
         : "",
       evidenceLine,
     ];
@@ -1017,16 +1035,32 @@ function buildContractOptimizationAnswer(args: {
       "Before renewal, the incumbent must prove the current run-rate is clean, the service remedies are enforceable, staffing coverage matches the committed model, and recurring change orders are justified.";
     body = [
       priceLeakage
-        ? `Commercial proof: invoice variance must reconcile to approved demand or be credited. ${summarizeFinding(priceLeakage)}`
+        ? formatProofItem(
+            "Commercial proof",
+            "invoice variance must reconcile to approved demand or be credited",
+            priceLeakage,
+          )
         : "",
       slaLeakage
-        ? `Service proof: SLA credits need stronger economics and chronic-miss language. ${summarizeFinding(slaLeakage)}`
+        ? formatProofItem(
+            "Service proof",
+            "SLA credits need stronger economics and chronic-miss language",
+            slaLeakage,
+          )
         : "",
       staffingGap
-        ? `Coverage proof: missing or unverified committed staffing must be cured, credited, or removed from the baseline. ${summarizeFinding(staffingGap)}`
+        ? formatProofItem(
+            "Coverage proof",
+            "missing or unverified committed staffing must be cured, credited, or removed from the baseline",
+            staffingGap,
+          )
         : "",
       changeOrderLeakage
-        ? `Scope proof: recurring change orders must be cataloged and commercially normalized. ${summarizeFinding(changeOrderLeakage)}`
+        ? formatProofItem(
+            "Scope proof",
+            "recurring change orders must be cataloged and commercially normalized",
+            changeOrderLeakage,
+          )
         : "",
       evidenceLine,
     ];
@@ -1048,9 +1082,9 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "The money leakage is concentrated in invoice variance, weak SLA economics, staffing coverage variance, and recurring change-order exposure.";
     body = [
-      exposureLine,
+      exposureLine ? `Exposure drivers:\n${exposureLine}` : "",
       workloadMismatch
-        ? `Operational pressure: ${summarizeFinding(workloadMismatch)}`
+        ? `Operational pressure: ${formatFindingBullet(workloadMismatch)}`
         : "",
       path.immediateAction ? `Immediate action: ${path.immediateAction}` : "",
       evidenceLine,
@@ -1108,16 +1142,68 @@ function parseContractOptimizationPath(
 function parseContractOptimizationFinding(
   item: SourceLiveTenantEvidenceItem,
 ): ContractOptimizationFinding {
+  const excerpt = cleanEvidenceExcerpt(item.excerpt);
+  const issue = excerpt
+    .split(/\bImplication:|\bRecommended action:|\bEvidence:/i)[0]
+    ?.trim()
+    .replace(/[.;]\s*$/, "") ?? "";
+  const implication =
+    excerpt.match(/\bImplication:\s*(.*?)(?:\s+Recommended action:|\s+Evidence:|$)/i)?.[1]?.trim() ??
+    "";
+  const recommendedAction =
+    excerpt.match(/\bRecommended action:\s*(.*?)(?:\s+Evidence:|$)/i)?.[1]?.trim() ??
+    "";
+  const evidence = excerpt.match(/\bEvidence:\s*(.*)$/i)?.[1]?.trim() ?? "";
   return {
     title: formatEvidenceTitle(item.title)
       .replace(/^Contract optimization finding\s*/i, "")
       .trim(),
-    excerpt: cleanEvidenceExcerpt(item.excerpt),
+    excerpt,
+    issue,
+    implication,
+    recommendedAction,
+    evidence,
   };
 }
 
 function summarizeFinding(finding: ContractOptimizationFinding): string {
-  return `${finding.title}: ${finding.excerpt}`;
+  return [
+    `${finding.title}: ${finding.issue || finding.excerpt}`,
+    finding.implication ? `Implication: ${finding.implication}` : "",
+    finding.recommendedAction ? `Action: ${finding.recommendedAction}` : "",
+    finding.evidence ? `Evidence: ${finding.evidence}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function formatFindingBullet(finding: ContractOptimizationFinding): string {
+  return `- ${finding.title}: ${finding.issue || finding.excerpt}`;
+}
+
+function formatFindingBullets(
+  findings: Array<ContractOptimizationFinding | undefined>,
+): string {
+  return findings
+    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
+    .map(formatFindingBullet)
+    .join("\n");
+}
+
+function formatCureItem(
+  label: string,
+  ask: string,
+  finding: ContractOptimizationFinding,
+): string {
+  return `${label}: ${ask}.\n${summarizeFinding(finding)}`;
+}
+
+function formatProofItem(
+  label: string,
+  ask: string,
+  finding: ContractOptimizationFinding,
+): string {
+  return `${label}: ${ask}.\n${summarizeFinding(finding)}`;
 }
 
 function formatContractEvidenceLine(
