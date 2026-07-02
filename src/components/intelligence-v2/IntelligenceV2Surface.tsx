@@ -1389,19 +1389,19 @@ function followUpQuestionsFor(
   const q = latestUserQuestion.toLowerCase();
   if (!q) return starterQuestions.slice(0, 3);
 
-  if (/kyriba|treasury|cash|liquidity|payment|sox/.test(q)) {
-    return [
-      "What control proof must the CFO see before Treasury AI scales?",
-      "What 90-day roadmap would prove value without overcommitting capital?",
-      "What assumption should we ask the executive to confirm before deciding?",
-    ];
-  }
-
   if (/hr|legal|shared services|finance|fp&a|close|back[- ]office/.test(q)) {
     return [
       "Which function should be the CIO's lighthouse use case, and why?",
       "What proof is missing before HR or Legal AI can move beyond discovery?",
       "What value-readiness tradeoff should the CIO approve?",
+    ];
+  }
+
+  if (/kyriba|treasury|cash|liquidity|payment|sox/.test(q)) {
+    return [
+      "What control proof must the CFO see before Treasury AI scales?",
+      "What 90-day roadmap would prove value without overcommitting capital?",
+      "What assumption should we ask the executive to confirm before deciding?",
     ];
   }
 

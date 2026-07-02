@@ -313,7 +313,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     fireEvent.change(askBox, {
       target: {
         value:
-          "How should the CIO prioritize finance and shared services automation?",
+          "How should the CIO prioritize AI and automation across HR, finance, treasury, legal, and shared services?",
       },
     });
     fireEvent.click(screen.getByTestId("agent-dock-send"));
