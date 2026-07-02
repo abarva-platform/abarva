@@ -624,7 +624,10 @@ describe("UniversalCanvasShell · SSR render", () => {
     });
 
     expect(html).toContain("SkyHarbor Air");
-    expect(html).toContain("SkyHarbor Air AMS Outsourcing RFP");
+    expect(html).toContain("SkyHarbor Air AMS Contract Optimization");
+    expect(html).toContain("SKYH-AMS-CONTRACT-OPT-2026");
+    expect(html).not.toContain("SkyHarbor Air AMS Outsourcing RFP");
+    expect(html).not.toContain("SKYH-AMS-RFP-2026");
     expect(html).not.toContain("Ava Agent");
     expect(html).not.toContain("Airline Demo");
   });

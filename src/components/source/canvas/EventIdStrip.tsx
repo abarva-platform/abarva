@@ -93,6 +93,18 @@ function normalizeEventDisplay(
     event.code.toUpperCase().startsWith('SKYH-') ||
     /skyharbor|airline demo/i.test(`${event.accountName} ${event.name}`);
   if (!isSkyHarborDemo) return event;
+  const isContractOptimization =
+    /contract[- ]?opt|contract optimization|renewal decision/i.test(
+      `${event.code} ${event.name}`,
+    );
+  if (isContractOptimization) {
+    return {
+      ...event,
+      accountName: 'SkyHarbor Air',
+      code: 'SKYH-AMS-CONTRACT-OPT-2026',
+      name: 'SkyHarbor Air AMS Contract Optimization',
+    };
+  }
   return {
     ...event,
     accountName: 'SkyHarbor Air',

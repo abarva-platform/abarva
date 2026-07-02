@@ -1,7 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
+import {
+  computeContractOptimizationExposureRollup,
+  type ContractOptimizationMveProfile,
+} from "@/lib/source/contract-optimization";
 import { CANVAS } from "../canvas-tokens";
 
 export function ContractOptimizationProfilePanel({
@@ -12,10 +15,7 @@ export function ContractOptimizationProfilePanel({
   if (!profile) return null;
   const topFindings = profile.findings.slice(0, 6);
   const topLevers = profile.levers.slice(0, 6);
-  const evidencedImpact = profile.levers.reduce(
-    (sum, lever) => sum + (lever.annualImpactHighUsd ?? 0),
-    0,
-  );
+  const exposure = computeContractOptimizationExposureRollup(profile);
 
   return (
     <section
@@ -47,7 +47,7 @@ export function ContractOptimizationProfilePanel({
         </div>
         <div style={METRICS}>
           <Metric label="Run rate" value={money(profile.contractBaseline.currentAnnualRunRateUsd)} />
-          <Metric label="Evidenced exposure" value={money(evidencedImpact)} />
+          <Metric label="Identified exposure" value={exposure.label.replace(/^approximately\s+/i, "")} />
           <Metric label="Readiness" value={profile.readyForOptimization} />
         </div>
       </div>

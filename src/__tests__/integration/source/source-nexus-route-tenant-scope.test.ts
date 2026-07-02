@@ -53,4 +53,16 @@ describe("Source Nexus ask route tenant scoping", () => {
 
     expect(src).toContain("getSourcingEvent(eventId, activeClient?.key)");
   });
+
+  it("pins contract optimization brief export lookup to the active client key", () => {
+    const src = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/app/api/v1/source/[eventId]/contract-optimization/brief/route.ts",
+      ),
+      "utf8",
+    );
+
+    expect(src).toContain("getSourcingEvent(eventId, activeClient?.key)");
+  });
 });

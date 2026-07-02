@@ -3,6 +3,7 @@ import {
   buildSkyHarborAmsExistingContractInput,
 } from "../mve-profile";
 import { buildContractOptimizationBriefMarkdown } from "../brief";
+import { computeContractOptimizationExposureRollup } from "../exposure";
 import { toContractOptimizationPersistenceRows } from "../persistence";
 
 describe("Source contract optimization MVE", () => {
@@ -59,6 +60,19 @@ describe("Source contract optimization MVE", () => {
     expect(productivityLever?.annualImpactHighUsd).toBeNull();
   });
 
+  it("rolls up identified exposure as a CXO-readable annualized range", () => {
+    const profile = buildContractOptimizationMveProfile(
+      buildSkyHarborAmsExistingContractInput(),
+    );
+    const exposure = computeContractOptimizationExposureRollup(profile);
+
+    expect(exposure.label).toBe(
+      "approximately $3.6M-$4.8M annualized, subject to vendor cure review",
+    );
+    expect(exposure.lowUsd).toBeGreaterThan(3_500_000);
+    expect(exposure.highUsd).toBeGreaterThan(4_700_000);
+  });
+
   it("keeps staffing and change-order findings defensible with denominators and evidence", () => {
     const profile = buildContractOptimizationMveProfile(
       buildSkyHarborAmsExistingContractInput(),
@@ -111,6 +125,9 @@ describe("Source contract optimization MVE", () => {
 
     expect(brief).toContain("8,610 tickets");
     expect(brief).toContain("44 per month");
+    expect(brief).toContain(
+      "Identified exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review",
+    );
     expect(brief).toContain("## Decision Snapshot");
     expect(brief).toContain("| Renewal posture | Do not renew as-is |");
     expect(brief).toContain("### Finding 1:");
