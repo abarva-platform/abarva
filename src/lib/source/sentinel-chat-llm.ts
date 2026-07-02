@@ -38,6 +38,13 @@ export function shouldUseSourceSentinelChatLlm(
 export async function maybeCreateSourceSentinelChatLlmResponse(
   input: SourceSentinelChatLlmInput,
 ): Promise<SourceNexusApiStubResponse> {
+  if (shouldPreserveDeterministicContractOptimizationAnswer(input.fallbackResponse)) {
+    return withLlmFallbackWarning(
+      input.fallbackResponse,
+      "Contract optimization uses the deterministic advisory story composer; Sentinel chat LLM was skipped to preserve the curated CXO answer.",
+    );
+  }
+
   const env = input.env ?? process.env;
   if (!shouldUseSourceSentinelChatLlm(env)) {
     return input.fallbackResponse;
@@ -305,6 +312,12 @@ function createLlmWarnings(
     );
   }
   return warnings;
+}
+
+function shouldPreserveDeterministicContractOptimizationAnswer(
+  response: SourceNexusApiStubResponse,
+): boolean {
+  return response.sourceAnswer?.title === "Contract optimization answer";
 }
 
 function withLlmFallbackWarning(
