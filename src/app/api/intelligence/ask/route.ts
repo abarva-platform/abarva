@@ -48,6 +48,10 @@ import {
 } from "@/lib/home/know/home-know-agent-answer";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
+import {
+  createIntelligenceLatencyTrace,
+  type IntelligenceLatencyTiming,
+} from "@/lib/intelligence/latency-trace";
 import "@/lib/reasoning/telemetry-init";
 
 export const runtime = "nodejs";
@@ -79,6 +83,19 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   }
+  const routeTrace = createIntelligenceLatencyTrace({
+    requestId: randomUUID(),
+  });
+  const preStreamTimings: IntelligenceLatencyTiming[] = [
+    routeTrace.mark("route.request.accepted", {
+      richText,
+      method: req.method,
+      requestedClient: requestedClient ?? surfaceContext?.clientKey ?? null,
+    }),
+  ];
+  const capturePreStreamTiming = (timing: IntelligenceLatencyTiming) => {
+    preStreamTimings.push(timing);
+  };
 
   let userContextBlock = "";
   let tenantId: string | null = null;
@@ -99,6 +116,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
   let activePersonDisplayName: string | null = null;
   let signedInTenantAliases: string[] = [];
   let includeTrace = false;
+  const authStartedAt = Date.now();
   try {
     const [person, clerkUser, client, sessionClient] = await Promise.all([
       getCurrentPerson(),
@@ -140,7 +158,16 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
   } catch (err) {
     console.warn("[ask.user-context]", err);
   }
+  capturePreStreamTiming(
+    routeTrace.finish("route.auth_tenant.done", authStartedAt, {
+      tenantId,
+      tenantClientKey,
+      userId,
+      includeTrace,
+    }),
+  );
 
+  const memoryStartedAt = Date.now();
   const memory = await prepareAskSessionMemory({
     tenantId,
     userId,
@@ -153,6 +180,13 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
     console.warn("[ask.session-memory.prepare]", err);
     return null;
   });
+  capturePreStreamTiming(
+    routeTrace.finish("route.session_memory.prepare.done", memoryStartedAt, {
+      hasSession: Boolean(memory?.sessionId),
+      priorTurnCount: memory?.priorTurnCount ?? 0,
+    }),
+  );
+  const userTurnStartedAt = Date.now();
   await appendAskSessionTurn({
     sessionId: memory?.sessionId,
     tenantId,
@@ -165,6 +199,15 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
       surfaceContext,
     },
   }).catch((err) => console.warn("[ask.session-memory.user-turn]", err));
+  capturePreStreamTiming(
+    routeTrace.finish("route.session_memory.user_turn.done", userTurnStartedAt, {
+      hasSession: Boolean(memory?.sessionId),
+    }),
+  );
+  const includeLatencyTrace = shouldIncludeIntelligenceLatencyTrace(
+    req,
+    includeTrace,
+  );
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -178,7 +221,22 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
       let traceModelInputHash: string | undefined;
+      const enqueueTiming = (timing: IntelligenceLatencyTiming) => {
+        if (!includeLatencyTrace) return;
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              type: "timing",
+              timing,
+            }) + "\n",
+          ),
+        );
+      };
       try {
+        for (const timing of preStreamTimings) {
+          enqueueTiming(timing);
+        }
+        enqueueTiming(routeTrace.mark("route.stream.start"));
         if (memory?.sessionId) {
           controller.enqueue(
             encoder.encode(
@@ -518,6 +576,9 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             );
           },
           includeAdvisoryPacketAudit: includeTrace,
+          onTiming: enqueueTiming,
+          latencyTraceId: routeTrace.requestId,
+          latencyStartedAt: routeTrace.startedAt,
         })) {
           if (event.type === "classified")
             classificationForMemory =
@@ -635,6 +696,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             query,
             traceSources as AskSource[],
           );
+          const routeCanvasStartedAt = Date.now();
           assistantText = ensureRouteMandatoryCanvasTabs(
             assistantText,
             query,
@@ -643,10 +705,17 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             tenantId,
           );
           const tabbedResponse = parseIntelligenceTabbedResponse(assistantText);
+          enqueueTiming(
+            routeTrace.finish("route.canvas_parse.done", routeCanvasStartedAt, {
+              tabCount: tabbedResponse.tabs.length,
+              hasMainAnswer: Boolean(tabbedResponse.mainAnswer.trim()),
+            }),
+          );
           if (
             tabbedResponse.tabs.length > 0 &&
             tabbedResponse.mainAnswer.trim()
           ) {
+            const composeStartedAt = Date.now();
             const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
               mode: "ANALYZE",
@@ -708,6 +777,12 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 hasExperts: false,
               },
             });
+            enqueueTiming(
+              routeTrace.finish("route.answer_compose.done", composeStartedAt, {
+                artifactCount: agentAnswer.artifacts?.length ?? 0,
+                citationCount: agentAnswer.citations?.length ?? 0,
+              }),
+            );
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -719,6 +794,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 }) + "\n",
               ),
             );
+            enqueueTiming(routeTrace.mark("route.agent_answer.enqueued"));
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -727,13 +803,23 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 }) + "\n",
               ),
             );
+            enqueueTiming(routeTrace.mark("route.done.enqueued"));
             return;
           }
+          const exhibitsStartedAt = Date.now();
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing: answerRouting,
             sources: advisorSources,
           });
+          enqueueTiming(
+            routeTrace.finish("route.structured_exhibits.done", exhibitsStartedAt, {
+              tableCount: exhibits.tables.length,
+              chartCount: exhibits.charts.length,
+              graphCount: exhibits.graphs.length,
+              citationCount: exhibits.citations.length,
+            }),
+          );
           if (
             hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0
@@ -803,6 +889,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 }) + "\n",
               ),
             );
+            enqueueTiming(routeTrace.mark("route.agent_answer.enqueued"));
           }
           controller.enqueue(
             encoder.encode(
@@ -812,6 +899,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               }) + "\n",
             ),
           );
+          enqueueTiming(routeTrace.mark("route.done.enqueued"));
         } else if (!sawStreamError) {
           sawStreamError = true;
           controller.enqueue(
@@ -824,6 +912,11 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           );
         }
       } catch (err) {
+        enqueueTiming(
+          routeTrace.mark("route.error", {
+            message: err instanceof Error ? err.message : "unknown",
+          }),
+        );
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
@@ -833,6 +926,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           ),
         );
       } finally {
+        const assistantTurnStartedAt = Date.now();
         await appendAskSessionTurn({
           sessionId: memory?.sessionId,
           tenantId,
@@ -846,6 +940,17 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
         }).catch((err) =>
           console.warn("[ask.session-memory.assistant-turn]", err),
         );
+        enqueueTiming(
+          routeTrace.finish(
+            "route.session_memory.assistant_turn.done",
+            assistantTurnStartedAt,
+            {
+              hasSession: Boolean(memory?.sessionId),
+              assistantChars: assistantText.length,
+            },
+          ),
+        );
+        enqueueTiming(routeTrace.mark("route.response.close"));
         controller.close();
       }
     },
@@ -1029,6 +1134,18 @@ function shouldIncludeIntelligenceTrace(
       allowedOperatorEmail ||
       founderOperatorName ||
       syntheticLabPersona)
+  );
+}
+
+function shouldIncludeIntelligenceLatencyTrace(
+  req: NextRequest,
+  includeTrace: boolean,
+): boolean {
+  if (includeTrace) return true;
+  if (process.env.INTELLIGENCE_LATENCY_TRACE === "1") return true;
+  return (
+    req.nextUrl.searchParams.get("latency") === "1" ||
+    req.headers.get("x-abarva-intelligence-latency") === "1"
   );
 }
 

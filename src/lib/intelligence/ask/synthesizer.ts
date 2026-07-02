@@ -38,6 +38,11 @@ import {
 } from "@/lib/intelligence/executive-canvas-payload";
 import { buildIndustrialCioBackofficeNativeCanvasBlock } from "./industrial-cio-backoffice-source";
 import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "./skyharbor-cto-readiness-source";
+import {
+  createIntelligenceLatencyTrace,
+  summarizeTextPayload,
+  type IntelligenceLatencyTiming,
+} from "@/lib/intelligence/latency-trace";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -415,6 +420,9 @@ export async function* synthesizeStream(args: {
     auditId?: string;
     route: string;
   }) => void;
+  onTiming?: (timing: IntelligenceLatencyTiming) => void;
+  latencyTraceId?: string | null;
+  latencyStartedAt?: number;
 }): AsyncGenerator<string> {
   if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
     yield "Ava synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.";
@@ -508,6 +516,24 @@ ACTIVE INTELLIGENCE CANVAS RULES
   const systemWithContinuity = cleanIntelligenceModelInputText(
     `${rawSystem}${continuityInstruction}`,
   );
+  const latencyTrace = createIntelligenceLatencyTrace({
+    requestId: args.latencyTraceId,
+    startedAt: args.latencyStartedAt,
+  });
+  const emitTiming = (timing: IntelligenceLatencyTiming) => {
+    args.onTiming?.(timing);
+  };
+  emitTiming(
+    latencyTrace.mark("prompt.constructed", {
+      systemChars: systemWithContinuity.length,
+      systemApproxTokens: summarizeTextPayload(systemWithContinuity)
+        .approxTokens,
+      userChars: prompt.length,
+      userApproxTokens: summarizeTextPayload(prompt).approxTokens,
+      sourceCount: args.sources.length,
+      richText: args.richText === true,
+    }),
+  );
 
   try {
     const model = chooseModel(args.intent, args.query);
@@ -515,6 +541,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
       system: systemWithContinuity,
       user: prompt,
     });
+    const clientStartedAt = Date.now();
     const { client, auditId } = await getAuditedAnthropicClient({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,
@@ -524,6 +551,19 @@ ACTIVE INTELLIGENCE CANVAS RULES
       dataClass: "confidential",
       metadata: { intent: args.intent },
     });
+    emitTiming(
+      latencyTrace.finish("claude.client.ready", clientStartedAt, {
+        model,
+        auditId,
+      }),
+    );
+    const primaryStartedAt = Date.now();
+    emitTiming(
+      latencyTrace.mark("claude.primary.start", {
+        model,
+        maxTokens: chooseSynthesisTokenBudget(args.query),
+      }),
+    );
     const stream = await client.messages.create({
       model,
       // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
@@ -536,19 +576,43 @@ ACTIVE INTELLIGENCE CANVAS RULES
     });
 
     let text = "";
+    let sawFirstToken = false;
     for await (const event of stream) {
       if (
         event.type === "content_block_delta" &&
         event.delta.type === "text_delta"
       ) {
+        if (!sawFirstToken) {
+          sawFirstToken = true;
+          emitTiming(
+            latencyTrace.finish("claude.primary.first_token", primaryStartedAt, {
+              model,
+            }),
+          );
+        }
         text += event.delta.text;
       }
     }
+    emitTiming(
+      latencyTrace.finish("claude.primary.stream.done", primaryStartedAt, {
+        model,
+        sawFirstToken,
+        outputChars: text.length,
+        outputApproxTokens: summarizeTextPayload(text).approxTokens,
+      }),
+    );
     if (
       args.richText &&
       isExplicitVisualAsk(args.query) &&
       !hasMarkdownDecisionTable(text)
     ) {
+      const visualRepairStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.visual.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
       const visualRepair = await client.messages.create({
         model,
         max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 900),
@@ -568,6 +632,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
         ],
       });
       const repairedText = extractMessageText(visualRepair);
+      emitTiming(
+        latencyTrace.finish("repair.visual.done", visualRepairStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+          accepted: hasMarkdownDecisionTable(repairedText),
+        }),
+      );
       if (hasMarkdownDecisionTable(repairedText)) {
         text = repairedText;
       }
@@ -598,6 +669,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
         system: systemWithContinuity,
         user: repairPrompt,
       });
+      const tabRepairStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.tabs.start", {
+          model,
+          missingTabs: missingTabs.join(","),
+        }),
+      );
       const tabRepair = await client.messages.create({
         model,
         max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1600),
@@ -610,6 +688,12 @@ ACTIVE INTELLIGENCE CANVAS RULES
         ],
       });
       const repairedText = extractMessageText(tabRepair);
+      emitTiming(
+        latencyTrace.finish("repair.tabs.done", tabRepairStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+        }),
+      );
       const repairedMissingTabs = missingRequiredCanvasTabs(
         repairedText,
         args.query,
@@ -640,6 +724,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
             system: systemWithContinuity,
             user: missingOnlyPrompt,
           });
+          const missingOnlyStartedAt = Date.now();
+          emitTiming(
+            latencyTrace.mark("repair.missing_tabs.start", {
+              model,
+              missingTabs: stillMissing.join(","),
+            }),
+          );
           const missingOnlyRepair = await client.messages.create({
             model,
             max_tokens: 900,
@@ -647,6 +738,12 @@ ACTIVE INTELLIGENCE CANVAS RULES
             messages: [{ role: "user", content: missingOnlyPrompt }],
           });
           const missingOnlyText = extractMessageText(missingOnlyRepair);
+          emitTiming(
+            latencyTrace.finish("repair.missing_tabs.done", missingOnlyStartedAt, {
+              model,
+              repairedChars: missingOnlyText.length,
+            }),
+          );
           const combinedText = [bestDraft.trim(), missingOnlyText.trim()]
             .filter(Boolean)
             .join("\n\n");
@@ -681,6 +778,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
         system: systemWithContinuity,
         user: nativeCanvasRepairPrompt,
       });
+      const nativeCanvasStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.native_canvas.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
       const nativeCanvasRepair = await client.messages.create({
         model,
         max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1800),
@@ -688,6 +792,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
         messages: [{ role: "user", content: nativeCanvasRepairPrompt }],
       });
       const repairedText = extractMessageText(nativeCanvasRepair).trim();
+      emitTiming(
+        latencyTrace.finish("repair.native_canvas.done", nativeCanvasStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+          accepted: hasExecutiveCanvasPayload(repairedText),
+        }),
+      );
       if (repairedText && hasExecutiveCanvasPayload(repairedText)) {
         text = repairedText;
       }
@@ -740,6 +851,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
         system: systemWithContinuity,
         user: standaloneRepairPrompt,
       });
+      const standaloneStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.standalone.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
       const standaloneRepair = await client.messages.create({
         model,
         max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1600),
@@ -747,6 +865,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
         messages: [{ role: "user", content: standaloneRepairPrompt }],
       });
       const repairedText = extractMessageText(standaloneRepair).trim();
+      emitTiming(
+        latencyTrace.finish("repair.standalone.done", standaloneStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+          accepted: !SESSION_CONTEXT_LANGUAGE_RE.test(repairedText),
+        }),
+      );
       if (repairedText && !SESSION_CONTEXT_LANGUAGE_RE.test(repairedText)) {
         text = repairedText;
       } else {
@@ -762,12 +887,20 @@ ACTIVE INTELLIGENCE CANVAS RULES
       }
     }
     if (args.richText) {
+      const parserStartedAt = Date.now();
       text = ensureMandatoryCompanionCanvasFallback(text, {
         query: args.query,
         sources: args.sources,
         tenantClientKey: args.tenantClientKey,
         tenantId: args.tenantId,
       });
+      emitTiming(
+        latencyTrace.finish("parser.canvas_fallback.done", parserStartedAt, {
+          outputChars: text.length,
+          hasTabs: parseIntelligenceTabbedResponse(text).tabs.length > 0,
+          hasNativeCanvas: hasExecutiveCanvasPayload(text),
+        }),
+      );
     }
     args.onModelOutput?.({
       rawText: text,
