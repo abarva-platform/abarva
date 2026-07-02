@@ -15,7 +15,7 @@ const DEFAULT_MAX_TOKENS = 1800;
 const DEFAULT_TIMEOUT_MS = 45_000;
 
 const TECHNICAL_LANGUAGE_RE =
-  /\b(V6|dataset|contract pack|usable evidence items?|governed evidence areas?|selected rows?|rows?|raw source|source file|source row|directRaw|composer|fallback|semantic|dossier|implementation-facing|debug|answerSource|home_v6|home-v6|csv|\.csv|SHA-|APP-|[A-Z]{2,}-IT-\d+)\b/i;
+  /\b(V6|dataset|contract pack|usable evidence items?|governed evidence areas?|selected rows?|rows?|raw|raw source|source file|source row|directRaw|composer|fallback|semantic|dossier|implementation-facing|debug|answerSource|home_v6|home-v6|csv|\.csv|SHA-|APP-|[A-Z]{2,}-IT-\d+)\b/i;
 
 const EXECUTIVE_SIGNALS_RE =
   /\b(means|matters|risk|decision|owner|ownership|ready|readiness|not yet|confidence|prove|proven|evidence|recommendation|prioritization|options|leadership|change|operate|value|caveat|should not)\b/i;
@@ -239,6 +239,7 @@ Rules:
 - Use named systems, vendors, programs, owners, and metrics only when they are in the packet.
 - If evidence is incomplete, say exactly what is not proven and why it matters.
 - If the question belongs in Intelligence, Moves, Source, or Tower, explain the boundary naturally and name the surface that should own the next step.
+- If the user asks what is blocking, what tradeoff matters, whether to scale or hold, or what leadership option to take, name Intelligence for advisory options and tradeoffs; also name Tower, Moves, or Source when the next step is spend/value, execution sequencing, or vendor action.
 - Use answerability and context quality as decision controls: if the answer is planning-grade, data-thin, or module-owned, say that plainly in executive language and route the next step. Do not expose the words "answerability", "context quality", "score", or the raw classification labels.
 - For vendor, contract, renewal, sourcing, RFP, or partner questions asking what to renegotiate, renew, cancel, source, or negotiate first, Home must not issue the final commercial action. Home may identify Source-validation candidates from the provided evidence, but must phrase them as candidates for Source to validate. State that Source owns the commercial decision before any renegotiation, renewal, cancellation, RFP, or partner action.
 - Do not write final-action phrases such as "the first contract to reopen is", "should renegotiate", "should renew", "should cancel", "reopen this contract", "renegotiate this vendor", or equivalent commercial action language as Home's answer.
@@ -638,6 +639,10 @@ function normalizeExecutiveText(text: string): string {
     .replace(/\bgoverned evidence areas?\b/gi, "business context areas")
     .replace(/\bbusiness records?\b/gi, "business facts")
     .replace(/\bsource signals?\b/gi, "source evidence")
+    .replace(/\bsource-owner record\b/gi, "source ownership")
+    .replace(/\bsource-owner\b/gi, "source ownership")
+    .replace(/\braw asset list\b/gi, "unqualified asset list")
+    .replace(/\braw\b/gi, "unqualified")
     .replace(/\brows?\b/gi, "lines")
     .replace(/\bdatasets?\b/gi, "data asset")
     .replace(/\bcorpus\b/gi, "source collection")
