@@ -409,4 +409,30 @@ describe('buildSourceGenerationContext', () => {
 
     expect(ctx?.tenantName).toBe('SkyHarbor Air');
   });
+
+  it('derives the Source event business label when the stored event account is also a generic demo placeholder', async () => {
+    canonicalClientDisplayName.mockReturnValue('Airline Demo');
+    getActiveClientRow.mockResolvedValue({
+      id: 'client-skyharbor',
+      key: 'skyharbor',
+      name: 'Airline Demo',
+      industry_code: 'AIRLINE',
+    });
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+      code: 'SKYH-AMS-CONTRACT-OPT-2026',
+      name: 'SkyHarbor AMS Contract Optimization and Renewal Decision',
+      accountName: 'Airline Demo',
+    });
+    isUuid.mockImplementation(
+      (value: string) => value === '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+
+    const ctx = await buildSourceGenerationContext(
+      'SKYH-AMS-CONTRACT-OPT-2026',
+    );
+
+    expect(ctx?.tenantName).toBe('SkyHarbor Air');
+  });
 });

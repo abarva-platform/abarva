@@ -61,6 +61,10 @@ consulting-grade advisory story pack.
 - Hardened Source generation tenant labeling so signed-in Source exports prefer
   the concrete event/client name over generic demo placeholders in metadata,
   headers, filenames and deal-pack text.
+- Hardened the same Source export label path for the case where both the
+  canonical client label and stored Source event account are generic demo
+  placeholders; the binder now derives the business-facing label from the
+  Source event identity before rendering export metadata.
 - Added Source backlog item `SRC46 — Contract optimization advisory story pack`.
 
 ## QA / Validation
@@ -78,6 +82,9 @@ consulting-grade advisory story pack.
   keeps the export language aligned to the page.
 - PASS: context-binder regression confirms `SkyHarbor Air` survives when the
   generic canonical fallback would have produced `Airline Demo`.
+- PASS: context-binder regression confirms `SkyHarbor Air` survives even when
+  the stored Source event account is also `Airline Demo`, using the event code
+  and event name as the business-facing export identity source.
 
 ## Rollout Plan
 
