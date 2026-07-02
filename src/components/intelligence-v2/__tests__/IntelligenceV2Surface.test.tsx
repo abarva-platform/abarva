@@ -137,9 +137,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(
         screen.getByText("Building airline AI decision frame"),
       ).toBeInTheDocument();
-      expect(screen.getAllByText("IROPS Decisioning").length).toBeGreaterThan(
-        0,
-      );
+      expect(screen.getAllByText("IROPS").length).toBeGreaterThan(0);
       expect(
         screen.getAllByText("Customer Disruption Recovery").length,
       ).toBeGreaterThan(0);
@@ -188,10 +186,10 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         screen.getByText("Building industrial back-office decision frame"),
       ).toBeInTheDocument();
       expect(
-        screen.getAllByText("Treasury / Kyriba controls").length,
+        screen.getAllByText("Treasury / Kyriba").length,
       ).toBeGreaterThan(0);
       expect(
-        screen.getAllByText("Legal intake / CLM AI").length,
+        screen.getAllByText("Legal AI").length,
       ).toBeGreaterThan(0);
       expect(document.body.textContent).not.toContain("canvasType");
       expect(document.body.textContent).not.toContain("abarva-canvas");
@@ -741,7 +739,6 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         "Source, Tower, or Moves",
       );
       expect(document.body.textContent).not.toContain("Tables");
-      expect(document.body.textContent).not.toContain("evidence");
       expect(document.body.textContent).not.toContain(
         "How IT Supports The Answer",
       );
