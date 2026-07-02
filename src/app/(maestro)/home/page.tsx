@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { AppShell } from '@/components/shell/AppShell';
 import { getActiveClientRow } from '@/lib/active-client';
 import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
+import { getHomeV6ContextBrowser } from '@/lib/home/v6-context-browser';
 import { getIntelligenceBindingPayload } from '@/lib/intelligence/binding/binding-payload';
 import { HomeSurface } from '@/components/home/HomeSurface';
 
@@ -49,6 +50,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const homeTenantKey = bindingTenantKey(activeClient?.key ?? requestedClient);
   const binding = getIntelligenceBindingPayload(homeTenantKey);
+  const v6Browser = getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
 
   return (
     <AppShell
@@ -64,6 +66,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <HomeSurface
           clientKey={activeClient?.key ?? homeTenantKey}
           payload={binding}
+          v6Browser={v6Browser}
         />
       </main>
     </AppShell>
