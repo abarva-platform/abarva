@@ -52,6 +52,9 @@ consulting-grade advisory story pack.
   a business-impact lens.
 - Hardened the markdown/DOCX/PDF source body so Page 4 explicitly labels the
   executive action table as `Decision Timeline`.
+- Preserved the curated deterministic contract optimization aVa answer instead
+  of letting the generic Source Sentinel chat LLM rewrite it into citation-first
+  prose.
 - Added Source backlog item `SRC46 — Contract optimization advisory story pack`.
 
 ## QA / Validation

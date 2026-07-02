@@ -243,6 +243,43 @@ describe("Source Sentinel chat LLM helper", () => {
     );
   });
 
+  it("preserves the curated contract optimization answer instead of sending it through the generic LLM chat path", async () => {
+    const contractFallback = {
+      ...fallbackResponse,
+      answer: "Do not renew as-is. Issue the cure notice and preserve competitive fallback.",
+      summary:
+        "Do not renew as-is. Issue the cure notice and preserve competitive fallback.",
+      sourceAnswer: fallbackResponse.sourceAnswer
+        ? {
+            ...fallbackResponse.sourceAnswer,
+            title: "Contract optimization answer",
+            answerText:
+              "Do not renew as-is. Issue the cure notice and preserve competitive fallback.",
+          }
+        : null,
+    } satisfies SourceNexusApiStubResponse;
+
+    const response = await maybeCreateSourceSentinelChatLlmResponse({
+      fallbackResponse: contractFallback,
+      tenantId: "apex-retail",
+      userId: "user-apex-source",
+      prompt: "Where is value leaking and what should we do now?",
+      event,
+      liveTenantContext,
+      env: {
+        SENTINEL_CHAT_USE_LLM: "true",
+        ANTHROPIC_API_KEY: "sk-ant-test",
+      } as unknown as NodeJS.ProcessEnv,
+    });
+
+    expect(preflightAnthropicDirectClient).not.toHaveBeenCalled();
+    expect(response.noModel).toBe(true);
+    expect(response.sourceAnswer?.answerText).toContain("Do not renew as-is");
+    expect(response.warnings).toContain(
+      "Contract optimization uses the deterministic advisory story composer; Sentinel chat LLM was skipped to preserve the curated CXO answer.",
+    );
+  });
+
   it("keeps fallback visible when the LLM flag is enabled but the key is missing", async () => {
     const response = await maybeCreateSourceSentinelChatLlmResponse({
       fallbackResponse,
