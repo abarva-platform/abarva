@@ -861,6 +861,12 @@ describe("Source answer engine", () => {
       contextBundle: skyharborContractBundle,
       userRole: "cio",
     });
+    const businessImpactAnswer = buildSourceAnswerEngine({
+      prompt:
+        "Where is value leaking, what is the business impact, and what should we do now?",
+      contextBundle: skyharborContractBundle,
+      userRole: "cio",
+    });
 
     expect(renewAnswer?.answerText).toContain("Do not renew as-is");
     expect(renewAnswer?.answerText).toContain("RFP fallback");
@@ -885,6 +891,15 @@ describe("Source answer engine", () => {
       "Financial exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review.",
     );
     expect(exposureAnswer?.responseParts.some((part) => part.type === "barChart" && part.title === "Exposure by driver")).toBe(true);
+    expect(businessImpactAnswer?.title).toBe("Contract optimization answer");
+    expect(businessImpactAnswer?.answerText).toContain(
+      "The money leakage is concentrated in invoice variance",
+    );
+    expect(businessImpactAnswer?.answerText).toContain("Immediate action:");
+    expect(businessImpactAnswer?.answerText).not.toMatch(
+      /^Existing contract optimization recommended path is cited evidence/i,
+    );
+    expect(businessImpactAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Business impact lens")).toBe(true);
     expect(missingAnswer?.answerText).toContain(
       "not enough to approve a final commercial reset",
     );
