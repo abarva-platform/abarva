@@ -13,9 +13,9 @@
 Adds the first Source slices for analyzing and optimizing an existing large
 outsourcing contract. The change defines a minimum viable extraction profile,
 structured findings, negotiation levers, recommended path, Source UI panel,
-aVa grounding, and a markdown optimization brief so Source can support renewal,
-renegotiation, rebid, and optimization decisions without becoming a generic
-document browser.
+aVa grounding, and markdown/DOCX/PDF optimization brief exports so Source can
+support renewal, renegotiation, rebid, and optimization decisions without
+becoming a generic document browser.
 
 ## Layer Impact
 
@@ -46,20 +46,25 @@ document browser.
   `docs/source/SOURCE_EXISTING_CONTRACT_OPTIMIZATION_MVE_STANDARD.md`
 - Source event UI panel for the tenant/event-guarded optimization profile.
 - Source aVa context grounding for recommended path, findings, and levers.
-- Markdown optimization brief export route for the guarded profile.
+- Markdown, DOCX, and PDF optimization brief export route for the guarded
+  profile.
+- Business-facing brief polish for metric units, owner roles, and urgency labels
+  so exported content avoids backlog-style priority terms.
 
 ## QA / Validation
 
 - PASS: focused Jest for the new contract optimization module:
   `npx jest src/lib/source/contract-optimization/__tests__/contract-optimization-mve.test.ts --runInBand`
 - PASS: focused ESLint for touched Source contract optimization files:
-  `npx eslint src/lib/source/contract-optimization/**/*.ts`
+  `npx eslint src/lib/source/contract-optimization/**/*.ts src/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel.tsx 'src/app/api/v1/source/[eventId]/contract-optimization/brief/route.ts'`
 - PASS: targeted TypeScript compile for new contract optimization files:
   `npx tsc --noEmit --pretty false --target ES2017 --lib dom,dom.iterable,esnext --module esnext --moduleResolution bundler --strict --esModuleInterop --skipLibCheck --types jest src/lib/source/contract-optimization/types.ts src/lib/source/contract-optimization/mve-profile.ts src/lib/source/contract-optimization/index.ts src/lib/source/contract-optimization/__tests__/contract-optimization-mve.test.ts`
 - PASS: release check:
   `npm run release:check`
 - PASS: architecture rules:
   `npm run audit:architecture-rules`
+- PASS: brief polish regression covers joined unit text, duplicated placeholder
+  wording, and user-facing `P0`/`P1`/`P2` labels.
 - BLOCKED: full-repo TypeScript with large heap reached existing dependency
   declaration gaps outside this slice (`js-yaml`,
   `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`).
@@ -94,7 +99,7 @@ schema cleanup is scheduled.
 
 ## Known Gaps
 
-- DOCX/PDF optimization brief renderers are not yet wired; this slice provides a
-  markdown brief route and UI export link.
+- DOCX/PDF optimization brief routes are wired, but live route download and
+  visual inspection still need to be proven after deploy.
 - Live data-plane migration has not been applied in this branch.
 - Signed-in browser proof has not been run in this branch.
