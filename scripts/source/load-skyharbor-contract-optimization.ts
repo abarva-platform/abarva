@@ -398,71 +398,99 @@ async function ensureSourceParticipants(args: {
   tenantKey: string;
   sourceEventId: string;
 }): Promise<void> {
-  const participantTable = await args.client.query<{ exists: boolean }>(
-    `
-      select exists (
-        select 1
-        from information_schema.tables
-        where table_schema = 'public'
-          and table_name = 'source_event_participants'
-      ) as exists
-    `,
-  );
-  if (!participantTable.rows[0]?.exists) return;
+  try {
+    const participantTable = await args.client.query<{ exists: boolean }>(
+      `
+        select exists (
+          select 1
+          from information_schema.tables
+          where table_schema = 'public'
+            and table_name = 'source_event_participants'
+        ) as exists
+      `,
+    );
+    if (!participantTable.rows[0]?.exists) return;
 
-  await args.client.query(
-    `
-      insert into public.source_event_participants (
-        client_key,
-        source_event_id,
-        source_event_row_id,
-        user_id,
-        user_name,
-        role,
-        approval_authority,
-        source_access_level,
-        can_view_financial,
-        can_upload_source_artifacts,
-        can_generate_sourcing_artifacts,
-        can_publish_sourcing_artifacts,
-        can_approve_source_stages,
-        can_approve_award,
-        notify_on,
-        updated_at
-      )
-      select
-        $1,
-        $2,
-        $2::uuid,
-        pcm.person_id::text,
-        coalesce(p.name, p.email, 'SkyHarbor source participant'),
-        'source contributor',
-        'approver',
-        'source_member',
-        true,
-        true,
-        true,
-        false,
-        true,
-        false,
-        array['source_event_update', 'approval_needed']::text[],
-        now()
-      from public.person_client_memberships pcm
-      join public.clients c on c.id = pcm.client_id
-      left join public.persons p on p.id = pcm.person_id
-      where c.key = $1
-        and pcm.person_id is not null
-      on conflict (client_key, source_event_id, user_id)
-      do update set
-        source_event_row_id = excluded.source_event_row_id,
-        source_access_level = excluded.source_access_level,
-        can_view_financial = excluded.can_view_financial,
-        can_generate_sourcing_artifacts = excluded.can_generate_sourcing_artifacts,
-        can_approve_source_stages = excluded.can_approve_source_stages,
-        updated_at = now()
-    `,
-    [args.tenantKey, args.sourceEventId],
-  );
+    const clientRows = await args.client.query<{ id: string }>(
+      `
+        select id::text as id
+        from public.clients
+        where tenant_key = $1
+           or slug = $1
+           or name ilike '%SkyHarbor%'
+           or name ilike '%Airline Demo%'
+        order by created_at nulls last
+        limit 4
+      `,
+      [args.tenantKey],
+    );
+    const clientIds = clientRows.rows.map((row) => row.id).filter(Boolean);
+    if (clientIds.length === 0) {
+      console.warn(
+        `[source-contract-optimization] no clients row found for participant seeding (${args.tenantKey}); continuing without participant grants`,
+      );
+      return;
+    }
+
+    await args.client.query(
+      `
+        insert into public.source_event_participants (
+          client_key,
+          source_event_id,
+          source_event_row_id,
+          user_id,
+          user_name,
+          role,
+          approval_authority,
+          source_access_level,
+          can_view_financial,
+          can_upload_source_artifacts,
+          can_generate_sourcing_artifacts,
+          can_publish_sourcing_artifacts,
+          can_approve_source_stages,
+          can_approve_award,
+          notify_on,
+          updated_at
+        )
+        select
+          $1,
+          $2,
+          $2::uuid,
+          pcm.person_id::text,
+          coalesce(p.name, p.email, 'SkyHarbor source participant'),
+          'source contributor',
+          'approver',
+          'source_member',
+          true,
+          true,
+          true,
+          false,
+          true,
+          false,
+          array['source_event_update', 'approval_needed']::text[],
+          now()
+        from public.person_client_memberships pcm
+        left join public.persons p on p.id = pcm.person_id
+        where pcm.client_id = any($3::uuid[])
+          and pcm.person_id is not null
+        on conflict (client_key, source_event_id, user_id)
+        do update set
+          source_event_row_id = excluded.source_event_row_id,
+          source_access_level = excluded.source_access_level,
+          can_view_financial = excluded.can_view_financial,
+          can_generate_sourcing_artifacts = excluded.can_generate_sourcing_artifacts,
+          can_approve_source_stages = excluded.can_approve_source_stages,
+          updated_at = now()
+      `,
+      [args.tenantKey, args.sourceEventId, clientIds],
+    );
+  } catch (error) {
+    console.warn(
+      `[source-contract-optimization] participant seeding skipped for ${args.tenantKey}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
 }
 
 main().catch((error) => {
