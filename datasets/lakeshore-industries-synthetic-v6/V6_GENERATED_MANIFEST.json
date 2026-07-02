@@ -1,6 +1,6 @@
 {
   "tenantKey": "lakeshore-industries",
-  "clientDisplayName": "Industrial Demo",
+  "clientDisplayName": "Lakeshore Holdings",
   "datasetVersion": "v6",
   "generatedAt": "2026-06-29T14:49:49.881Z",
   "sourceDataset": "datasets/lakeshore-industries-synthetic-v4",
@@ -127,5 +127,27 @@
     "files": 16,
     "rows": 2544,
     "dataThinCells": 0
+  },
+  "holdcoRealignment": {
+    "generatedAt": "2026-07-01T18:00:00Z",
+    "canonicalTenantKey": "lakeshore-industries",
+    "displayName": "Lakeshore Holdings",
+    "model": "holding_company_with_corporate_shared_services_and_portfolio_company_local_it",
+    "directItBudgetUsd": 190600000,
+    "corporateSharedServicesItBudgetUsd": 36500000,
+    "innovationItDataAiComponentUsd": 11800000,
+    "portfolioCompanyCount": 4,
+    "portfolioCompanyNames": [
+      "Northline Logistics Group",
+      "Crestpoint Marketing Services",
+      "Riverton Consumer Products",
+      "Arborfield Workplace Services"
+    ],
+    "nonAdditiveAmountTypes": [
+      "component_budget",
+      "allocated_shared_services_cost",
+      "expected_value",
+      "measured_value"
+    ]
   }
 }
