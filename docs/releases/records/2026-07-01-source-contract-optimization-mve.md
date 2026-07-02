@@ -50,6 +50,8 @@ becoming a generic document browser.
   profile.
 - Business-facing brief polish for metric units, owner roles, and urgency labels
   so exported content avoids backlog-style priority terms.
+- Private-operator-compatible load script:
+  `source:contract-optimization:load-skyharbor`.
 
 ## QA / Validation
 
@@ -65,6 +67,8 @@ becoming a generic document browser.
   `npm run audit:architecture-rules`
 - PASS: brief polish regression covers joined unit text, duplicated placeholder
   wording, and user-facing `P0`/`P1`/`P2` labels.
+- PASS: load runner compiles with the focused Source contract optimization
+  TypeScript slice.
 - BLOCKED: full-repo TypeScript with large heap reached existing dependency
   declaration gaps outside this slice (`js-yaml`,
   `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`).

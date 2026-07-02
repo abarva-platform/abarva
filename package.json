@@ -355,6 +355,7 @@
     "context:v4:load": "npx tsx scripts/jobs/load-first-capital-v2.ts",
     "context:v4:verify-live": "node scripts/context-packs/verify-v4-live-counts.cjs",
     "moves:premium-artifacts:worker": "npx tsx src/scripts/process-deliverable-queue.ts",
+    "source:contract-optimization:load-skyharbor": "npx tsx scripts/source/load-skyharbor-contract-optimization.ts --apply",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:semantic2:l3-dossiers:proof": "node scripts/ops/submit-aca-operator-job.mjs --script semantic2:l3-dossiers:proof-job",
     "context:v4:embed:postgres-only": "node scripts/context-packs/embed-v4-tenants-postgres-only.mjs"
