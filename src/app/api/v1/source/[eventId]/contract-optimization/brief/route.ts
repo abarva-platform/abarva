@@ -46,10 +46,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     if (!eventId) {
       return Response.json({ ok: false, error: "missing_event" }, { status: 400 });
     }
-    const [event, activeClient] = await Promise.all([
-      getSourcingEvent(eventId),
-      getActiveClientRow().catch(() => null),
-    ]);
+    const activeClient = await getActiveClientRow().catch(() => null);
+    const event = await getSourcingEvent(eventId, activeClient?.key);
     if (!event) {
       return Response.json({ ok: false, error: "not_found" }, { status: 404 });
     }

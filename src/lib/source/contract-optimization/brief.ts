@@ -1,4 +1,5 @@
 import type { ContractOptimizationMveProfile } from "./types";
+import { computeContractOptimizationExposureRollup } from "./exposure";
 
 const money = (value: number | null): string => {
   if (!value || !Number.isFinite(value)) return "Value to be quantified during vendor cure review";
@@ -27,10 +28,7 @@ const impactRange = (
 export function buildContractOptimizationBriefMarkdown(
   profile: ContractOptimizationMveProfile,
 ): string {
-  const evidencedExposure = profile.levers.reduce(
-    (sum, lever) => sum + (lever.annualImpactHighUsd ?? 0),
-    0,
-  );
+  const exposure = computeContractOptimizationExposureRollup(profile);
   const highFindings = profile.findings.filter(
     (finding) => finding.severity === "high",
   ).length;
@@ -42,7 +40,7 @@ export function buildContractOptimizationBriefMarkdown(
     `${profile.incumbentVendorName} should not be renewed as-is. The minimum viable sourcing record supports a controlled renegotiation path now, with a competitive RFP fallback if cure conditions remain unresolved before the renewal notice window.`,
     "",
     `- Current annual run rate: ${money(profile.contractBaseline.currentAnnualRunRateUsd)}`,
-    `- Evidenced high-side exposure: ${money(evidencedExposure)}`,
+    `- Identified exposure: ${exposure.label}`,
     `- Ready for optimization: ${profile.readyForOptimization}`,
     `- Decision owner: ${profile.recommendedPath.decisionOwnerRole}`,
     `- High-priority findings: ${highFindings}`,
@@ -52,7 +50,7 @@ export function buildContractOptimizationBriefMarkdown(
     "| Decision area | Executive read | Action |",
     "|---|---|---|",
     `| Renewal posture | Do not renew as-is | ${profile.recommendedPath.immediateAction} |`,
-    `| Commercial baseline | ${money(profile.contractBaseline.currentAnnualRunRateUsd)} run rate with ${money(evidencedExposure)} high-side evidenced exposure | Reconcile invoice, staffing, SLA, and change-order drivers before renewal pricing |`,
+    `| Commercial baseline | ${money(profile.contractBaseline.currentAnnualRunRateUsd)} run rate with identified exposure of ${exposure.label} | Reconcile invoice, staffing, SLA, and change-order drivers before renewal pricing |`,
     `| Fallback | ${profile.recommendedPath.fallbackPath} | Keep the competitive event ready until cure evidence is received |`,
     "",
     "## Recommended Path",

@@ -864,17 +864,26 @@ describe("Source answer engine", () => {
 
     expect(renewAnswer?.answerText).toContain("Do not renew as-is");
     expect(renewAnswer?.answerText).toContain("RFP fallback");
+    expect(renewAnswer?.answerText).toContain("Top 3 reasons:");
+    expect(renewAnswer?.answerText).toContain(
+      "Financial exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review.",
+    );
     expect(renewAnswer?.answerText).toContain("Why this is the right path:");
     expect(renewAnswer?.answerText).toContain(
       "- Invoices are running above contracted baseline:",
     );
     expect(renewAnswer?.answerText).not.toContain("Contract optimization finding");
     expect(cureAnswer?.answerText).toContain("The cure notice should preserve rights");
+    expect(cureAnswer?.answerText).toContain("Issues to cure first:");
     expect(cureAnswer?.answerText).toContain("Invoice cure");
     expect(cureAnswer?.answerText).toContain("Change-order cure");
     expect(cureAnswer?.answerText).toContain("\nImplication:");
     expect(cureAnswer?.answerText).toContain("\nAction:");
     expect(exposureAnswer?.answerText).not.toContain("Operational pressure: - ");
+    expect(exposureAnswer?.answerText).toContain("Top 3 drivers:");
+    expect(exposureAnswer?.answerText).toContain(
+      "Financial exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review.",
+    );
     expect(missingAnswer?.answerText).toContain(
       "not enough to approve a final commercial reset",
     );

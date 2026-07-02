@@ -30,6 +30,10 @@ import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import type { TenantContextSegment } from "./taxonomy/category-taxonomy";
 import { answerHardSourceQuestion } from "./expert-judgment/source-hard-question-answer";
 import { getSourceCorpusAnswerPatternSections } from "./source-corpus-uplift";
+import {
+  extractFindingExposureUsd,
+  formatContractOptimizationMoney,
+} from "./contract-optimization";
 
 export type SourceAnswerMode =
   | "current_state"
@@ -975,6 +979,18 @@ function buildContractOptimizationAnswer(args: {
     changeOrderLeakage,
     workloadMismatch,
   ]);
+  const topReasons = formatContractTopReasons([
+    priceLeakage,
+    slaLeakage,
+    staffingGap,
+    changeOrderLeakage,
+    workloadMismatch,
+  ]);
+  const financialExposure = formatContractFinancialExposure([
+    priceLeakage,
+    staffingGap,
+    changeOrderLeakage,
+  ]);
 
   let lead: string;
   let body: string[];
@@ -989,6 +1005,8 @@ function buildContractOptimizationAnswer(args: {
       path.primaryPath ? `Primary path: ${path.primaryPath}` : "",
       path.fallbackPath ? `Fallback path: ${path.fallbackPath}` : "",
       path.doNotDo ? `Do not do: ${path.doNotDo}` : "",
+      topReasons ? `Top 3 reasons:\n${topReasons}` : "",
+      financialExposure,
       exposureLine ? `Why this is the right path:\n${exposureLine}` : "",
       evidenceLine,
     ];
@@ -998,6 +1016,8 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "The cure notice should preserve rights and require the incumbent to reconcile invoice variance, SLA remedies, staffing coverage, and change-order treatment before renewal pricing is accepted.";
     body = [
+      topReasons ? `Issues to cure first:\n${topReasons}` : "",
+      financialExposure,
       priceLeakage
         ? formatCureItem(
             "Invoice cure",
@@ -1034,6 +1054,8 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "Before renewal, the incumbent must prove the current run-rate is clean, the service remedies are enforceable, staffing coverage matches the committed model, and recurring change orders are justified.";
     body = [
+      topReasons ? `Proof required before renewal:\n${topReasons}` : "",
+      financialExposure,
       priceLeakage
         ? formatProofItem(
             "Commercial proof",
@@ -1074,6 +1096,7 @@ function buildContractOptimizationAnswer(args: {
       "Missing before final renewal: incident, request, change, and SLA performance baseline tied to the contract towers.",
       "Missing before final renewal: rate-card, pass-through, change-order, and approval evidence that separates recoverable leakage from approved scope growth.",
       "Missing before final renewal: retained organization design and governance model for the post-cure operating state.",
+      financialExposure,
       evidenceLine,
     ];
     nextAction =
@@ -1082,6 +1105,8 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "The money leakage is concentrated in invoice variance, weak SLA economics, staffing coverage variance, and recurring change-order exposure.";
     body = [
+      financialExposure,
+      topReasons ? `Top 3 drivers:\n${topReasons}` : "",
       exposureLine ? `Exposure drivers:\n${exposureLine}` : "",
       workloadMismatch
         ? `Operational pressure:\n${formatFindingBullet(workloadMismatch)}`
@@ -1190,6 +1215,35 @@ function formatFindingBullets(
     .join("\n");
 }
 
+function formatContractTopReasons(
+  findings: Array<ContractOptimizationFinding | undefined>,
+): string {
+  return findings
+    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
+    .slice(0, 3)
+    .map(formatFindingBullet)
+    .join("\n");
+}
+
+function formatContractFinancialExposure(
+  findings: Array<ContractOptimizationFinding | undefined>,
+): string {
+  const highUsd = findings
+    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
+    .map((finding) =>
+      extractFindingExposureUsd({
+        title: finding.title,
+        currentState: finding.issue || finding.excerpt,
+      }),
+    )
+    .filter((value): value is number => Boolean(value && Number.isFinite(value)))
+    .reduce((sum, value) => sum + value, 0);
+
+  if (highUsd <= 0) return "";
+  const lowUsd = Math.round(highUsd * 0.75);
+  return `Financial exposure: approximately ${formatContractOptimizationMoney(lowUsd)}-${formatContractOptimizationMoney(highUsd)} annualized, subject to vendor cure review.`;
+}
+
 function formatCureItem(
   label: string,
   ask: string,
@@ -1213,7 +1267,7 @@ function formatContractEvidenceLine(
     .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
     .slice(0, 4)
     .map((finding, index) => `[${index + 1}] ${finding.title}`);
-  return labels.length ? `Evidence used: ${labels.join("; ")}.` : "";
+  return labels.length ? `Evidence note: ${labels.join("; ")}.` : "";
 }
 
 function buildEvaluationDecisionAnswer(args: {

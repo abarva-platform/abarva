@@ -21,6 +21,7 @@ describe("ContractOptimizationProfilePanel", () => {
     expect(html).toContain("Optimization Findings");
     expect(html).toContain("Negotiation Levers");
     expect(html).toContain("Evidence Caveats");
+    expect(html).toContain("$3.6M-$4.8M annualized");
     expect(html).toContain("Export DOCX brief");
     expect(html).toContain("Export PDF brief");
     expect(html).not.toMatch(/Vendor Response Profiles|Current state:|source_events/i);
