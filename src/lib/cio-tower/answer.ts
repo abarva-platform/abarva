@@ -167,7 +167,7 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /largest\s+(it\s+)?(program|initiative)/i,
       /rank.*(program|initiative).*budget/i,
       /top\s+AI\s+programs?/i,
-      /AI\s+(?:programs?|initiatives?).*(?:spend|value|budget)/i,
+      /AI\s+(?:programs?|initiatives?).*(?:spend|budget|value(?!\s+(?:proof|evidence)))/i,
       /best\s+AI\s+investment\s+story/i,
     ],
   },
@@ -190,6 +190,14 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /missing\s+value\s+evidence/i,
       /which\s+(programs?|initiatives?).*(not\s+proven|under[- ]?proven|no\s+evidence)/i,
       /evidence\s+gap/i,
+      /missing\s+value\s+proof/i,
+      /value\s+proof\s+missing/i,
+      /no\s+value\s+proof/i,
+      /hold.*evidence/i,
+      /evidence\s+improves/i,
+      /value\s+evidence.*board/i,
+      /strong\s+enough.*board/i,
+      /board\s+discussion/i,
     ],
   },
   {
@@ -284,6 +292,7 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /value\s+has\s+been\s+proven/i,
       /proven\s+so\s+far/i,
       /claimed\s+yet/i,
+      /value\s+proof/i,
       /value.*lag/i,
       /realized value/i,
       /where.*value/i,
@@ -1405,6 +1414,112 @@ function buildTowerPortfolioValueTable(
 
 const buildTowerTopProgramsTable = buildTowerPortfolioValueTable;
 
+function isPortfolioProofGovernanceQuestion(question: string): boolean {
+  return (
+    /missing\s+value\s+proof/i.test(question) ||
+    /value\s+proof\s+missing/i.test(question) ||
+    /no\s+value\s+proof/i.test(question) ||
+    /hold.*evidence/i.test(question) ||
+    /evidence\s+improves/i.test(question) ||
+    /value\s+evidence.*board/i.test(question) ||
+    /strong\s+enough.*board/i.test(question) ||
+    /board\s+discussion/i.test(question)
+  );
+}
+
+function buildValueProofGapTable(aiOnly: boolean): CioTowerVisibleTable {
+  return {
+    id: aiOnly ? "ai_value_proof_required" : "portfolio_value_proof_required",
+    title: aiOnly
+      ? "AI value proof needed before scale decisions"
+      : "Value proof needed before board claims",
+    columns: ["Leadership question", "Required evidence", "Current Tower answer"],
+    rows: [
+      [
+        aiOnly
+          ? "Which AI items should be held?"
+          : "Which initiatives are board-ready?",
+        "Named initiative, owner, budget, promised value, measured value, and evidence quality",
+        "Not enough governed value proof to rank safely",
+      ],
+      [
+        "Can value be claimed?",
+        "Finance-accepted measured value tied to the initiative",
+        "Treat missing measured value as a proof gap",
+      ],
+      [
+        "Can funding continue?",
+        "Budget burn, blocker, owner, and next funding gate",
+        "Inspect the value proof before approving more spend",
+      ],
+    ],
+  };
+}
+
+function buildPortfolioProofGovernanceAnswer(
+  context: CioTowerPromptContext,
+): {
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+} {
+  const aiOnly = isAiProgramQuestion(context.question);
+  const asksBoardReady =
+    /value\s+evidence.*board|strong\s+enough.*board|board\s+discussion/i.test(
+      context.question,
+    );
+  const table = buildTowerPortfolioValueTable(context.relevantFacts, 10, {
+    aiOnly,
+    mode: "weak_evidence",
+  });
+
+  if (!table) {
+    const subject = aiOnly ? "AI initiatives" : "initiatives";
+    const promisedValue = context.metricPackets.find(
+      (packet) => packet.measureKey === "promised_value_fy26",
+    );
+    const measuredValue = context.metricPackets.find(
+      (packet) => packet.measureKey === "measured_value_ytd",
+    );
+    const valueSummary =
+      promisedValue?.valueNumeric && measuredValue?.valueNumeric
+        ? ` Tower has portfolio-level promised value of ${promisedValue.displayValue} and measured value of ${measuredValue.displayValue}, but those totals do not identify which ${subject} are safe to scale or hold.`
+        : "";
+    return {
+      reason:
+        "Value-proof governance question answered as a specific governed Tower gap.",
+      output: {
+        version: "cio_tower_visible_answer_v1",
+        answer: `${context.tenantName} cannot safely rank ${subject} for this question yet.${valueSummary} Tower needs the initiative name, owner, budget, promised value, measured value, and evidence quality before it can call an item board-ready or recommend holding it. Until those fields are present, treat this as a value-proof governance gap, not an investment ranking.`,
+        tables: [buildValueProofGapTable(aiOnly)],
+        tabs: [],
+        followUpQuestion: null,
+      },
+    };
+  }
+
+  const firstProgram = table.rows[0]?.[1] ?? "the first governed initiative";
+  const firstBudget = table.rows[0]?.[3] ?? "budget gap";
+  const firstMeasuredValue = table.rows[0]?.[6] ?? "measured-value gap";
+  const firstReason =
+    table.rows[0]?.[12] ?? "Review value proof before the next funding gate.";
+  const subject = aiOnly ? "AI portfolio" : "portfolio";
+  const opening = asksBoardReady
+    ? `${context.tenantName} should not treat budget alone as board-ready value proof. The strongest item to review first is ${firstProgram}: ${firstBudget} budget, ${firstMeasuredValue} measured value.`
+    : `${context.tenantName} should hold additional scale decisions where ${subject} spend is ahead of measured value evidence. Start with ${firstProgram}: ${firstReason}`;
+
+  return {
+    reason:
+      "Value-proof governance question answered from governed Tower initiative and value facts.",
+    output: {
+      version: "cio_tower_visible_answer_v1",
+      answer: `${opening} The table keeps budget, promised value, measured value, ownership, and proof quality separate so leadership can decide what is fundable, what is only promised, and what needs evidence before the next approval.`,
+      tables: [table],
+      tabs: [],
+      followUpQuestion: null,
+    },
+  };
+}
+
 function normalizedSearchText(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
@@ -1789,6 +1904,10 @@ function buildCioTowerDeterministicMetricAnswer(
   output: CioTowerVisibleAnswerContract;
   reason: string;
 } | null {
+  if (isPortfolioProofGovernanceQuestion(context.question)) {
+    return buildPortfolioProofGovernanceAnswer(context);
+  }
+
   if (context.contract.contract_key === "tower_vendor_contract_gap") {
     return buildVendorContractGapAnswer(context);
   }

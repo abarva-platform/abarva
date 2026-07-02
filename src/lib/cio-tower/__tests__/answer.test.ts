@@ -439,6 +439,19 @@ describe("cio tower answer contract", () => {
     expect(
       matchContractKey("Which Tower claims are only directional, not proven?"),
     ).toBe("tower_evidence_trust");
+    expect(
+      matchContractKey("Which AI initiatives are still missing value proof?"),
+    ).toBe("tower_weak_value_evidence");
+    expect(
+      matchContractKey(
+        "Which AI initiatives should leadership hold until evidence improves?",
+      ),
+    ).toBe("tower_weak_value_evidence");
+    expect(
+      matchContractKey(
+        "Which initiatives have value evidence strong enough for a board discussion?",
+      ),
+    ).toBe("tower_weak_value_evidence");
   });
 
   it("does not default unmatched Tower questions to the top-program template", () => {
@@ -852,6 +865,107 @@ describe("cio tower answer contract", () => {
       __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
         contractKey: "tower_value_realization",
         metricPackets: context().metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
+  });
+
+  it("answers board-ready value proof questions without old brands or visible scaffolding", () => {
+    const ctx = context({
+      question:
+        "Which initiatives have value evidence strong enough for a board discussion?",
+      contract: {
+        contract_key: "tower_weak_value_evidence",
+        intent: "table",
+        question_family: "weak_value_evidence",
+        measure_key: "measured_value_ytd",
+        artifact_type: "table",
+        examples: [],
+      },
+    });
+    const output =
+      __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
+
+    expect(output?.reason).toBe(
+      "Value-proof governance question answered from governed Tower initiative and value facts.",
+    );
+    expect(output?.output.answer).toContain(
+      "SkyHarbor Air should not treat budget alone as board-ready value proof.",
+    );
+    expect(output?.output.answer).not.toMatch(/Nexus|Moves|Next move|Read:|Evidence:/i);
+    expect(output?.output.tables?.[0]?.title).toBe(
+      "Initiatives with weakest value evidence",
+    );
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: ctx.contract.contract_key,
+        metricPackets: ctx.metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
+  });
+
+  it("returns a specific AI value-proof gap when governed AI item detail is absent", () => {
+    const ctx = context({
+      question:
+        "Which AI initiatives should leadership hold until evidence improves?",
+      contract: {
+        contract_key: "tower_weak_value_evidence",
+        intent: "table",
+        question_family: "weak_value_evidence",
+        measure_key: "measured_value_ytd",
+        artifact_type: "table",
+        examples: [],
+      },
+      relevantFacts: [],
+    });
+    const output =
+      __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
+
+    expect(output?.reason).toBe(
+      "Value-proof governance question answered as a specific governed Tower gap.",
+    );
+    expect(output?.output.answer).toContain(
+      "SkyHarbor Air cannot safely rank AI initiatives for this question yet.",
+    );
+    expect(output?.output.answer).toContain(
+      "treat this as a value-proof governance gap, not an investment ranking.",
+    );
+    expect(output?.output.answer).not.toMatch(
+      /Nexus|Moves|Next move|Read:|Evidence:|source table|initiative-\d/i,
+    );
+    expect(output?.output.tables).toEqual([
+      {
+        id: "ai_value_proof_required",
+        title: "AI value proof needed before scale decisions",
+        columns: [
+          "Leadership question",
+          "Required evidence",
+          "Current Tower answer",
+        ],
+        rows: [
+          [
+            "Which AI items should be held?",
+            "Named initiative, owner, budget, promised value, measured value, and evidence quality",
+            "Not enough governed value proof to rank safely",
+          ],
+          [
+            "Can value be claimed?",
+            "Finance-accepted measured value tied to the initiative",
+            "Treat missing measured value as a proof gap",
+          ],
+          [
+            "Can funding continue?",
+            "Budget burn, blocker, owner, and next funding gate",
+            "Inspect the value proof before approving more spend",
+          ],
+        ],
+      },
+    ]);
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: ctx.contract.contract_key,
+        metricPackets: ctx.metricPackets,
         parsedOutput: output!.output,
       }),
     ).toEqual([]);
