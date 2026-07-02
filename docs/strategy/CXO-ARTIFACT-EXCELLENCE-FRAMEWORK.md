@@ -6,6 +6,9 @@
 consulting deliverable by combining consulting-grade storyline and exhibits with
 AbarVa's advantages: live tenant context, deterministic evidence lineage, editable
 outputs, and no-fabrication governance.
+**Storytelling contract:** use `CXO-ARTIFACT-STORYTELLING-CONTRACT.md` for the
+required executive message, value tree, root-cause explanation, action timeline,
+opportunity map, do-nothing scenario and business-impact taxonomy.
 
 ## 1. The Bar
 
@@ -54,6 +57,24 @@ as an honest gap:
 If an artifact lacks the answer, evidence, economics where applicable, challenge
 logic and next action, it is not CXO-ready.
 
+## 2.1 Advisory Story Spine
+
+For material client artifacts, "answer first" is necessary but not sufficient.
+The artifact must also explain the executive story:
+
+1. **Executive message:** three sentences or fewer.
+2. **So what:** why the issue matters now.
+3. **Where value is moving:** value tree, exposure bridge, trend or equivalent.
+4. **Why it happened:** root-cause mechanism, not just a metric label.
+5. **What should happen:** timeline, roadmap or swimlane with owners.
+6. **Options and tradeoffs:** serious alternatives and what would change the answer.
+7. **If we do nothing:** consequence path and downside of inaction.
+8. **Business impact:** every material finding maps to revenue, cost, risk, speed,
+   customer and/or compliance.
+
+This spine is defined in `CXO-ARTIFACT-STORYTELLING-CONTRACT.md` and represented
+in code by `src/lib/artifacts/cxo-storytelling-contract.ts`.
+
 ## 3. Required Exhibit Families
 
 Every artifact type must declare which exhibit families are required. A "visual" can
@@ -72,6 +93,9 @@ decision. Decoration does not count.
 | Roadmap/swimlane | Workstreams, milestones, dependencies, owners. | Moves mobilization, Source transition |
 | Commercial normalization | Apples-to-apples pricing/TCO/contract term comparison. | Source |
 | Measurement handoff | Baseline, target, metric, cadence, system of record. | Moves, Tower |
+| Value tree / opportunity map | Findings grouped into recover cash, reduce future spend, reduce risk and increase accountability. | Source, Moves, Tower |
+| Do-nothing vs act scenario | Consequence of inaction compared to recommended path. | Source, Moves, Intelligence |
+| Business impact scorecard | Impact mapped to revenue, cost, risk, speed, customer and compliance. | All material CXO artifacts |
 
 ## 4. Quality Score
 

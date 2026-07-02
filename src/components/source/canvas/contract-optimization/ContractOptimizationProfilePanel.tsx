@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import {
+  buildContractOptimizationStoryPack,
   computeContractOptimizationExposureRollup,
   type ContractOptimizationMveProfile,
 } from "@/lib/source/contract-optimization";
@@ -16,6 +17,7 @@ export function ContractOptimizationProfilePanel({
   const topFindings = profile.findings.slice(0, 6);
   const topLevers = profile.levers.slice(0, 6);
   const exposure = computeContractOptimizationExposureRollup(profile);
+  const storyPack = buildContractOptimizationStoryPack(profile);
   const exposureBars = profile.visualInsights.exposureByDriver
     .filter((driver) => driver.annualImpactHighUsd)
     .slice(0, 4);
@@ -36,11 +38,11 @@ export function ContractOptimizationProfilePanel({
       <div style={HEADER}>
         <div>
           <div style={EYEBROW}>Contract Baseline</div>
-          <h3 style={TITLE}>Incumbent contract optimization record</h3>
+          <h3 style={TITLE}>Commercial opportunity map</h3>
           <p style={COPY}>
-            Source extracts only the sourcing-critical evidence needed to decide
-            whether to renegotiate, renew with cure conditions, or prepare a
-            competitive event.
+            Source turns the existing AMS evidence into an executive story:
+            what is leaking, why it is happening, what to do now, and what
+            happens if SkyHarbor renews without a cure gate.
           </p>
           <a
             style={EXPORT_LINK}
@@ -62,6 +64,16 @@ export function ContractOptimizationProfilePanel({
         </div>
       </div>
 
+      <div style={EXEC_MESSAGE} aria-label="Executive message">
+        <div style={EYEBROW}>Executive Message</div>
+        <ol style={EXEC_LIST}>
+          {storyPack.executiveMessage.map((message) => (
+            <li key={message}>{message}</li>
+          ))}
+        </ol>
+        <p style={DECISION_ASK}>{storyPack.decisionAsk}</p>
+      </div>
+
       <div style={PATH}>
         <div>
           <div style={EYEBROW}>Recommended Path</div>
@@ -81,6 +93,19 @@ export function ContractOptimizationProfilePanel({
       </div>
 
       <div style={INSIGHT_GRID} aria-label="Executive visual insights">
+        <div style={INSIGHT_CARD}>
+          <div style={EYEBROW}>Opportunity Map</div>
+          <h4 style={INSIGHT_TITLE}>Four ways to turn evidence into value</h4>
+          <div style={QUADRANT_GRID}>
+            {storyPack.opportunityMap.map((quadrant) => (
+              <div key={quadrant.quadrant} style={QUADRANT}>
+                <strong>{quadrant.quadrant}</strong>
+                <span>{quadrant.items[0]?.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div style={INSIGHT_CARD}>
           <div style={EYEBROW}>Exposure Drivers</div>
           <h4 style={INSIGHT_TITLE}>Where value is leaking</h4>
@@ -138,6 +163,34 @@ export function ContractOptimizationProfilePanel({
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div style={STORY_GRID} aria-label="Advisory story pack">
+        <div style={PANEL}>
+          <div style={EYEBROW}>Why It Is Happening</div>
+          <p style={ROW_TEXT}>{storyPack.whyItIsHappening}</p>
+        </div>
+        <div style={PANEL}>
+          <div style={EYEBROW}>If We Do Nothing</div>
+          <p style={ROW_TEXT}>{storyPack.scenarios[0]?.commercialEffect}</p>
+          <p style={ROW_TEXT}>{storyPack.scenarios[0]?.riskEffect}</p>
+        </div>
+      </div>
+
+      <div style={PANEL}>
+        <div style={PANEL_HEAD}>
+          <div style={EYEBROW}>Decision Timeline</div>
+          <p style={MINI_COPY}>Executives need a clock, not just findings.</p>
+        </div>
+        <div style={TIMELINE}>
+          {storyPack.actionTimeline.map((step) => (
+            <div key={step.label} style={TIMELINE_STEP}>
+              <strong>{step.label}</strong>
+              <span>{step.timing}</span>
+              <p>{step.decision}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -326,6 +379,32 @@ const PATH: CSSProperties = {
   padding: 12,
 };
 
+const EXEC_MESSAGE: CSSProperties = {
+  border: `1px solid rgba(11,31,68,0.16)`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  background: "linear-gradient(135deg, rgba(11,31,68,0.04), rgba(29,158,117,0.07))",
+  padding: 13,
+  display: "grid",
+  gap: 8,
+};
+
+const EXEC_LIST: CSSProperties = {
+  margin: 0,
+  paddingLeft: 20,
+  color: CANVAS.INK,
+  fontSize: 14,
+  lineHeight: 1.48,
+};
+
+const DECISION_ASK: CSSProperties = {
+  margin: 0,
+  borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  paddingTop: 8,
+  color: CANVAS.INK,
+  fontWeight: 800,
+  fontSize: CANVAS.T_BODY_SMALL,
+};
+
 const PATH_LINE: CSSProperties = {
   margin: "7px 0 0",
   color: CANVAS.INK,
@@ -352,6 +431,25 @@ const INSIGHT_CARD: CSSProperties = {
   display: "grid",
   gap: 8,
   alignContent: "start",
+};
+
+const QUADRANT_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const QUADRANT: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  background: CANVAS.CARD,
+  padding: 9,
+  display: "grid",
+  gap: 4,
+  minHeight: 72,
+  color: CANVAS.INK,
+  fontSize: 12,
+  lineHeight: 1.25,
 };
 
 const INSIGHT_TITLE: CSSProperties = {
@@ -434,6 +532,12 @@ const GRID: CSSProperties = {
   gap: 12,
 };
 
+const STORY_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: 12,
+};
+
 const PANEL: CSSProperties = {
   border: `1px solid ${CANVAS.HAIRLINE}`,
   borderRadius: CANVAS.RADIUS_TIGHT,
@@ -446,6 +550,24 @@ const PANEL: CSSProperties = {
 const PANEL_HEAD: CSSProperties = {
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
   paddingBottom: 9,
+};
+
+const TIMELINE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+  gap: 9,
+};
+
+const TIMELINE_STEP: CSSProperties = {
+  borderLeft: `3px solid ${CANVAS.ACTIVE}`,
+  background: "rgba(29,158,117,0.05)",
+  borderRadius: 8,
+  padding: 9,
+  display: "grid",
+  gap: 4,
+  color: CANVAS.INK,
+  fontSize: 12,
+  lineHeight: 1.35,
 };
 
 const MINI_COPY: CSSProperties = {

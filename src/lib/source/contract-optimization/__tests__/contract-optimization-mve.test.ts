@@ -5,6 +5,10 @@ import {
 import { buildContractOptimizationBriefMarkdown } from "../brief";
 import { computeContractOptimizationExposureRollup } from "../exposure";
 import { toContractOptimizationPersistenceRows } from "../persistence";
+import {
+  buildContractOptimizationStoryPack,
+  contractOptimizationStoryPromptPacket,
+} from "../story-pack";
 
 describe("Source contract optimization MVE", () => {
   it("turns a rich existing-contract evidence pack into a sourcing-critical profile", () => {
@@ -149,7 +153,19 @@ describe("Source contract optimization MVE", () => {
 
     expect(brief).toContain("8,610 tickets");
     expect(brief).toContain("44 per month");
-    expect(brief).toContain("## One-Page Executive Front Sheet");
+    expect(brief).toContain("## Page 1: Executive Message");
+    expect(brief).toContain("## Page 2: Where Value Is Leaking");
+    expect(brief).toContain("## Page 3: Why It Is Happening");
+    expect(brief).toContain("## Page 4: What Should Happen");
+    expect(brief).toContain("## Page 5: Commercial Negotiation Strategy");
+    expect(brief).toContain("SkyHarbor Air Application Managed Services Agreement should not be renewed under its current commercial baseline.");
+    expect(brief).toContain("The contract commercial model no longer reflects today’s operating reality");
+    expect(brief).toContain("### Commercial Opportunity Map");
+    expect(brief).toContain("| Recover cash | Recover unsupported invoice variance");
+    expect(brief).toContain("### Root-Cause Map");
+    expect(brief).toContain("### Do-Nothing vs Renegotiate Scenario");
+    expect(brief).toContain("### Business Impact Scorecard");
+    expect(brief).toContain("Cost | Recoverable leakage and normalized baseline economics");
     expect(brief).toContain("## Strategy Consulting Exhibits");
     expect(brief).toContain("### Exhibit 1: Exposure Bridge and Buyer Action");
     expect(brief).toContain("### Exhibit 2: Invoice Variance Trend");
@@ -158,14 +174,12 @@ describe("Source contract optimization MVE", () => {
     expect(brief).toContain("| Month | Contracted | Invoiced | Variance | Variance % | Trend |");
     expect(brief).toContain("| 2026-06 | $3.2M | $3.4M | $166K | +5.2% |");
     expect(brief).toContain("| Monthly AMS tickets | 7,420 tickets | 8,610 tickets | +16.0% |");
-    expect(brief).toContain("**Recommendation:** Do not renew");
+    expect(brief).toContain("should not be renewed under its current commercial baseline");
     expect(brief).toContain("**Top findings:**");
     expect(brief).toContain("**Cure notice asks:**");
     expect(brief).toContain("**Renewal deadline:** non-renewal notice date is 2026-09-30");
-    expect(brief).toContain(
-      "Identified exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review",
-    );
-    expect(brief).toContain("## Decision Snapshot");
+    expect(brief).toContain("**Identified exposure:** approximately $3.6M-$4.8M annualized, subject to vendor cure review");
+    expect(brief).toContain("## Procurement Appendix: Decision Snapshot");
     expect(brief).toContain("- Renewal posture: do not renew as-is.");
     expect(brief).toContain("### Finding 1:");
     expect(brief).toContain("### Lever 1:");
@@ -180,5 +194,40 @@ describe("Source contract optimization MVE", () => {
     expect(brief).not.toContain("SkyHarbor Air AMS Outsourcing RFP");
     expect(brief).not.toContain("SKYH-AMS-RFP-2026");
     expect(brief).not.toContain("Airline Demo");
+  });
+
+  it("builds a validated CXO story pack and prompt packet for the contract optimizer", () => {
+    const profile = buildContractOptimizationMveProfile(
+      buildSkyHarborAmsExistingContractInput(),
+    );
+    const storyPack = buildContractOptimizationStoryPack(profile);
+    const promptPacket = contractOptimizationStoryPromptPacket(profile);
+
+    expect(storyPack.validation.ok).toBe(true);
+    expect(storyPack.executiveMessage).toHaveLength(3);
+    expect(storyPack.valueLeakageTree).toEqual([
+      "Invoice variance",
+      "Recurring change orders",
+      "Weak SLA credits",
+      "Underfilled staffing",
+      "Productivity not priced back",
+    ]);
+    expect(storyPack.opportunityMap.map((row) => row.quadrant)).toEqual([
+      "Recover cash",
+      "Reduce future spend",
+      "Reduce operational risk",
+      "Increase vendor accountability",
+    ]);
+    expect(storyPack.businessImpactScorecard.map((row) => row.category)).toEqual(
+      expect.arrayContaining(["cost", "risk", "speed", "customer", "compliance"]),
+    );
+    expect(promptPacket).toHaveProperty("executiveMessage");
+    expect(promptPacket).toHaveProperty("decisionAsk");
+    expect(promptPacket).toHaveProperty("storySpine");
+    expect(promptPacket).toHaveProperty("visualExhibits");
+    expect(promptPacket).toHaveProperty("businessImpact");
+    expect(promptPacket).toHaveProperty("evidenceBasis");
+    expect(promptPacket).toHaveProperty("knownGaps");
+    expect(promptPacket).toHaveProperty("forbiddenClaims");
   });
 });

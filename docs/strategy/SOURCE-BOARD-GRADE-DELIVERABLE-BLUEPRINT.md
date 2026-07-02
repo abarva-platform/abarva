@@ -4,6 +4,7 @@
 
 > Parent standard: `CXO-ARTIFACT-EXCELLENCE-FRAMEWORK.md`. This Source blueprint
 > specializes the cross-module CXO artifact bar for IT sourcing deliverables.
+> Storytelling contract: `CXO-ARTIFACT-STORYTELLING-CONTRACT.md`.
 
 **Date:** 2026-05-20  
 **Status:** v1 alignment blueprint - deliverable content standard before renderer
@@ -43,6 +44,36 @@ If a deliverable only summarizes content, it is not Source-grade. Source should
 behave like an expert IT sourcing advisor: it challenges demand, sizes hidden
 cost, exposes vendor traps, protects negotiation leverage, and keeps the event
 gate-governed.
+
+## 2.1 Source Advisory Story Rule
+
+Source artifacts must not stop at "facts -> insights -> recommendation." They
+must carry the full advisory chain:
+
+`evidence -> finding -> why it happened -> commercial opportunity -> business impact -> decision -> next action`
+
+For contract optimization, renewal, vendor evaluation and BAFO artifacts, the
+first five pages or screens should be:
+
+1. **Executive message:** renew / renegotiate / rebid / select / defer, with value
+   at stake and decision owner.
+2. **Where money/value is moving:** exposure bridge, value tree, invoice trend,
+   TCO waterfall or commercial normalization.
+3. **Why it happened:** commercial/operating mechanism such as stale baseline,
+   weak SLA economics, scope drift, pricing opacity or productivity not priced back.
+4. **What should happen:** timeline from current action to vendor response,
+   executive decision and fallback path.
+5. **Commercial strategy:** negotiation themes and opportunity map.
+
+The Commercial Opportunity Map should group findings into:
+
+- recover cash;
+- reduce future spend;
+- reduce operational risk;
+- increase vendor accountability.
+
+Every material Source finding should also map to the universal business-impact
+categories: revenue, cost, risk, speed, customer and compliance.
 
 ## 3. Consulting Exhibit Anatomy
 

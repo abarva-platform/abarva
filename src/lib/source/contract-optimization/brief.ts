@@ -1,5 +1,6 @@
 import type { ContractOptimizationMveProfile } from "./types";
 import { computeContractOptimizationExposureRollup } from "./exposure";
+import { buildContractOptimizationStoryPack } from "./story-pack";
 
 const money = (value: number | null): string => {
   if (!value || !Number.isFinite(value)) return "Value to be quantified during vendor cure review";
@@ -62,6 +63,9 @@ const cureNoticeAsks = (profile: ContractOptimizationMveProfile): string[] => {
         "Separate one-time change orders from recurring run-rate baseline.",
       ];
 };
+
+const impactLabel = (value: string): string =>
+  value.charAt(0).toUpperCase() + value.slice(1);
 
 const strategyConsultingExhibits = (
   profile: ContractOptimizationMveProfile,
@@ -140,6 +144,7 @@ export function buildContractOptimizationBriefMarkdown(
   profile: ContractOptimizationMveProfile,
 ): string {
   const exposure = computeContractOptimizationExposureRollup(profile);
+  const storyPack = buildContractOptimizationStoryPack(profile);
   const highFindings = profile.findings.filter(
     (finding) => finding.severity === "high",
   ).length;
@@ -148,11 +153,15 @@ export function buildContractOptimizationBriefMarkdown(
   return [
     `# ${profile.contractName} Optimization Brief`,
     "",
-    "## One-Page Executive Front Sheet",
+    "## Page 1: Executive Message",
     "",
-    `**Recommendation:** Do not renew ${profile.incumbentVendorName} as-is. Issue the cure/reservation-of-rights notice, renegotiate under defined cure conditions, and keep the competitive fallback ready until the vendor proves the run-rate, staffing, SLA, and change-order baseline.`,
+    ...storyPack.executiveMessage.map((message) => `**${message}**`),
     "",
     `**Identified exposure:** ${exposure.label}.`,
+    "",
+    `**Decision required:** ${storyPack.decisionAsk}`,
+    "",
+    `**Renewal deadline:** non-renewal notice date is ${profile.contractBaseline.renewalNoticeDate}; use this window as leverage rather than accepting the current baseline by default.`,
     "",
     "**Top findings:**",
     ...frontSheetFindings.map((finding) => `- ${finding}`),
@@ -160,27 +169,80 @@ export function buildContractOptimizationBriefMarkdown(
     "**Cure notice asks:**",
     ...frontSheetAsks.map((ask) => `- ${ask}`),
     "",
-    `**Decision required:** ${profile.recommendedPath.decisionOwnerRole} should approve the cure notice, lock the renewal baseline pending reconciliation, and preserve competitive fallback authority.`,
+    "## Page 2: Where Value Is Leaking",
     "",
-    `**Renewal deadline:** non-renewal notice date is ${profile.contractBaseline.renewalNoticeDate}; use this window as leverage rather than accepting the current baseline by default.`,
+    "The value leakage is not one isolated issue. It is a chain of commercial and operating signals that should be cured together.",
     "",
-    "## Executive Summary",
+    ...storyPack.valueLeakageTree.map((item, index) =>
+      `${index === 0 ? "" : "  "}${"↓ ".repeat(index)}${item}`,
+    ),
     "",
-    `${profile.incumbentVendorName} should not be renewed as-is. The minimum viable sourcing record supports a controlled renegotiation path now, with a competitive RFP fallback if cure conditions remain unresolved before the renewal notice window.`,
+    "### Commercial Opportunity Map",
     "",
-    `- Current annual run rate: ${money(profile.contractBaseline.currentAnnualRunRateUsd)}`,
-    `- Identified exposure: ${exposure.label}`,
-    `- Ready for optimization: ${profile.readyForOptimization}`,
-    `- Decision owner: ${profile.recommendedPath.decisionOwnerRole}`,
-    `- High-priority findings: ${highFindings}`,
+    "| Opportunity quadrant | What it means | Business impact |",
+    "|---|---|---|",
+    ...storyPack.opportunityMap.flatMap((quadrant) =>
+      quadrant.items.map((item) =>
+        `| ${md(quadrant.quadrant)} | ${md(item.title)} — ${md(item.summary)} | ${item.businessImpact.map(impactLabel).join(", ")} |`,
+      ),
+    ),
     "",
     ...strategyConsultingExhibits(profile),
     "",
-    "## Decision Snapshot",
+    "## Page 3: Why It Is Happening",
+    "",
+    storyPack.whyItIsHappening,
+    "",
+    "### Root-Cause Map",
+    "",
+    "| Symptom | Commercial mechanism | Executive implication |",
+    "|---|---|---|",
+    "| Invoice variance | Contracted run rate is being exceeded by pass-throughs, demand changes, and out-of-catalog charges. | Do not accept current invoice baseline as clean renewal pricing. |",
+    "| Recurring change orders | Exceptions can become normalized run cost when catalog, approval, and recurring status are not governed. | Separate approved scope growth from recoverable leakage before renewal. |",
+    "| Weak SLA economics | Remedies are not strong enough for airline-critical service towers. | Vendor accountability must be repriced before renewal approval. |",
+    "| Staffing coverage gaps | Priced commitments are not fully visible in observed tower coverage. | Service quality and price are not comparable until staffing is reconciled. |",
+    "| Operational pressure | Ticket, reopen, and emergency-change load is above the original model. | Demand reset and productivity glidepath must be explicit. |",
+    "",
+    "## Page 4: What Should Happen",
+    "",
+    "| Step | Timing | Decision | Owner |",
+    "|---|---|---|---|",
+    ...storyPack.actionTimeline.map((step) =>
+      `| ${md(step.label)} | ${md(step.timing)} | ${md(step.decision)} | ${md(step.ownerRole)} |`,
+    ),
+    "",
+    "### Do-Nothing vs Renegotiate Scenario",
+    "",
+    "| Path | Outcome | Commercial effect | Risk effect |",
+    "|---|---|---|---|",
+    ...storyPack.scenarios.map((scenario) =>
+      `| ${md(scenario.title)} | ${md(scenario.outcome)} | ${md(scenario.commercialEffect)} | ${md(scenario.riskEffect)} |`,
+    ),
+    "",
+    "## Page 5: Commercial Negotiation Strategy",
+    "",
+    "| Theme | Buyer ask | Evidence basis | Impact |",
+    "|---|---|---|---|",
+    ...storyPack.negotiationThemes.map((theme) =>
+      `| ${md(theme.theme)} | ${md(theme.buyerAsk)} | ${md(theme.evidenceBasis)} | ${theme.businessImpact.map(impactLabel).join(", ")} |`,
+    ),
+    "",
+    "### Business Impact Scorecard",
+    "",
+    "| Impact category | Implication | Evidence basis |",
+    "|---|---|---|",
+    ...storyPack.businessImpactScorecard.map((impact) =>
+      `| ${impactLabel(impact.category)} | ${md(impact.implication)} | ${md(impact.evidenceBasis)} |`,
+    ),
+    "",
+    "## Procurement Appendix: Decision Snapshot",
     "",
     `- Renewal posture: do not renew as-is. ${profile.recommendedPath.immediateAction}`,
     `- Commercial baseline: ${money(profile.contractBaseline.currentAnnualRunRateUsd)} run rate with identified exposure of ${exposure.label}. Reconcile invoice, staffing, SLA, and change-order drivers before renewal pricing.`,
     `- Fallback: ${profile.recommendedPath.fallbackPath} Keep the competitive event ready until cure evidence is received.`,
+    `- Ready for optimization: ${profile.readyForOptimization}`,
+    `- Decision owner: ${profile.recommendedPath.decisionOwnerRole}`,
+    `- High-priority findings: ${highFindings}`,
     "",
     "## Recommended Path",
     "",
@@ -223,5 +285,17 @@ export function buildContractOptimizationBriefMarkdown(
     profile.clientToComplete.length
       ? ""
       : "- No minimum evidence gaps detected for a draft optimization workshop.",
+    "",
+    "## CXO Story Contract Validation",
+    "",
+    storyPack.validation.ok
+      ? "- Passed: executive story spine, required visuals, business-impact mapping, prompt packet discipline, and evidence caveats are present."
+      : `- Failed: ${[
+          ...storyPack.validation.missingStoryElements,
+          ...storyPack.validation.missingBusinessImpacts,
+          ...storyPack.validation.missingExhibits,
+          ...storyPack.validation.missingPromptPacketKeys,
+          ...storyPack.validation.pageFailures,
+        ].join("; ")}`,
   ].join("\n");
 }
