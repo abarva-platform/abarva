@@ -931,7 +931,7 @@ function buildContractOptimizationAnswer(args: {
 
   const text = args.prompt.toLowerCase();
   const asksContractQuestion =
-    /\b(leak|money|financial exposure|exposure|renew|renegotiate|rebid|cure|notice|prove|before renewal|missing|evidence missing|vendor a)\b/.test(
+    /\b(leak|leaking|value leakage|money|financial exposure|exposure|business impact|what should|do now|action|renew|renegotiate|rebid|cure|notice|prove|before renewal|missing|evidence missing|vendor a)\b/.test(
       text,
     );
   if (!asksContractQuestion) return null;

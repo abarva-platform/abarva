@@ -55,6 +55,9 @@ consulting-grade advisory story pack.
 - Preserved the curated deterministic contract optimization aVa answer instead
   of letting the generic Source Sentinel chat LLM rewrite it into citation-first
   prose.
+- Broadened the contract optimization aVa intent trigger so business-impact and
+  value-leakage questions use the advisory story composer instead of generic
+  AMS sourcing evidence prose.
 - Added Source backlog item `SRC46 — Contract optimization advisory story pack`.
 
 ## QA / Validation
