@@ -1084,7 +1084,7 @@ function buildContractOptimizationAnswer(args: {
     body = [
       exposureLine ? `Exposure drivers:\n${exposureLine}` : "",
       workloadMismatch
-        ? `Operational pressure: ${formatFindingBullet(workloadMismatch)}`
+        ? `Operational pressure:\n${formatFindingBullet(workloadMismatch)}`
         : "",
       path.immediateAction ? `Immediate action: ${path.immediateAction}` : "",
       evidenceLine,
