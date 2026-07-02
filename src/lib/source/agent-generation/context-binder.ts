@@ -57,11 +57,14 @@ export async function buildSourceGenerationContext(
   }
   if (!event) return null;
 
-  const tenantName =
-    canonicalClientDisplayName({
+  const tenantName = resolveSourceGenerationTenantName({
+    activeClientName: activeClient?.name,
+    canonicalName: canonicalClientDisplayName({
       key: activeClient?.key,
       name: activeClient?.name,
-    }) ?? event.accountName;
+    }),
+    eventAccountName: event.accountName,
+  });
 
   let substrateEventId = event.id;
   if (!isUuid(substrateEventId)) {
@@ -115,6 +118,36 @@ export async function buildSourceGenerationContext(
     evidence,
     uploadedEvidence,
   };
+}
+
+function resolveSourceGenerationTenantName(args: {
+  activeClientName?: string | null;
+  canonicalName?: string | null;
+  eventAccountName?: string | null;
+}): string {
+  const activeClientName = cleanTenantLabel(args.activeClientName);
+  const canonicalName = cleanTenantLabel(args.canonicalName);
+  const eventAccountName = cleanTenantLabel(args.eventAccountName);
+
+  if (eventAccountName && isDemoPlaceholder(canonicalName)) {
+    return eventAccountName;
+  }
+
+  return canonicalName ?? activeClientName ?? eventAccountName ?? 'AbarVa Client';
+}
+
+function cleanTenantLabel(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function isDemoPlaceholder(value: string | null): boolean {
+  return Boolean(
+    value &&
+      /\b(?:retail|healthcare|financial services|clinical technology|airline|industrial)\s+demo\b/i.test(
+        value,
+      ),
+  );
 }
 
 /**

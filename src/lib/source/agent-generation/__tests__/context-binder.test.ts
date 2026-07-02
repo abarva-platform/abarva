@@ -46,6 +46,10 @@ const { getActiveClientRow } = jest.requireMock('@/lib/active-client') as {
   getActiveClientRow: jest.Mock;
 };
 
+const { canonicalClientDisplayName } = jest.requireMock('@/lib/client-config') as {
+  canonicalClientDisplayName: jest.Mock;
+};
+
 const { getAzureReadFluentClient } = jest.requireMock(
   '@/lib/data-plane/postgresCompat',
 ) as {
@@ -378,5 +382,31 @@ describe('buildSourceGenerationContext', () => {
     expect(listArtifactStatesForEvent).toHaveBeenCalledWith(
       '522eedf2-ff6b-4307-b312-3e0903c6fd42',
     );
+  });
+
+  it('uses the concrete Source event account name when canonical display is a generic demo placeholder', async () => {
+    canonicalClientDisplayName.mockReturnValue('Airline Demo');
+    getActiveClientRow.mockResolvedValue({
+      id: 'client-skyharbor',
+      key: 'skyharbor',
+      name: 'SkyHarbor Air',
+      industry_code: 'AIRLINE',
+    });
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+      code: 'SKYH-AMS-CONTRACT-OPT-2026',
+      name: 'SkyHarbor Air AMS Contract Optimization',
+      accountName: 'SkyHarbor Air',
+    });
+    isUuid.mockImplementation(
+      (value: string) => value === '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+
+    const ctx = await buildSourceGenerationContext(
+      'SKYH-AMS-CONTRACT-OPT-2026',
+    );
+
+    expect(ctx?.tenantName).toBe('SkyHarbor Air');
   });
 });
