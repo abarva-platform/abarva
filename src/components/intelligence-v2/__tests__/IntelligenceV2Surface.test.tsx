@@ -816,6 +816,13 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
               owner: "Chief Digital Officer",
               gate: "Certified customer engagement data",
             },
+            {
+              label: "HR AI operating model and shared services transformation",
+              value: 6,
+              readiness: 5,
+              risk: 5,
+              action: "Shape discovery",
+            },
           ],
         },
         {
@@ -908,6 +915,16 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(screen.getAllByText("Loyalty").length).toBeGreaterThan(0);
       expect(screen.getByText(/Value vs\. readiness/i)).toBeInTheDocument();
       expect(screen.getByText("Funding sequence")).toBeInTheDocument();
+      const researchLabels = Array.from(
+        document.querySelectorAll(".researchPointLabel"),
+      ).map((node) => node.textContent);
+      expect(researchLabels).toContain("HR AI operating model...");
+      expect(researchLabels).not.toContain(
+        "HR AI operating model and shared services transformation",
+      );
+      expect(document.querySelector(".researchPoint")).toHaveAttribute(
+        "data-label-placement",
+      );
       expect(screen.getByText("Value 8")).toBeInTheDocument();
       expect(screen.getByText("Ready 8")).toBeInTheDocument();
       expect(screen.getByText("Risk 4")).toBeInTheDocument();
@@ -1004,8 +1021,8 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(screen.getByText("Portfolio tradeoff")).toBeInTheDocument();
       expect(screen.getByText("AI portfolio value/readiness map")).toBeInTheDocument();
       expect(screen.getByText("High value + low readiness: fund the gate first")).toBeInTheDocument();
-      expect(screen.getByText("Loyalty AI")).toBeInTheDocument();
-      expect(screen.getByText("IROPS Decision Assistant")).toBeInTheDocument();
+      expect(screen.getAllByText("Loyalty AI").length).toBeGreaterThan(1);
+      expect(screen.getAllByText("IROPS Decision Assistant").length).toBeGreaterThan(1);
       expect(screen.getByText("Certified operational data product")).toBeInTheDocument();
       expect(screen.getByText("Approve the readiness sprint before scale capital.")).toBeInTheDocument();
       expect(document.body.textContent).not.toContain("canvasType");
