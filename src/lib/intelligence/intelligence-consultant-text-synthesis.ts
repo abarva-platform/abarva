@@ -17,6 +17,11 @@ import {
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
 import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
+import {
+  createIntelligenceLatencyTrace,
+  summarizeTextPayload,
+  type IntelligenceLatencyTiming,
+} from "@/lib/intelligence/latency-trace";
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_TOKENS = 25_000;
@@ -545,6 +550,9 @@ export async function synthesizeIntelligenceConsultantText(args: {
     auditId?: string;
     route: string;
   }) => void;
+  onTiming?: (timing: IntelligenceLatencyTiming) => void;
+  latencyTraceId?: string | null;
+  latencyStartedAt?: number;
 }): Promise<
   IntelligenceConsultantTextResult | IntelligenceConsultantTextFailure | null
 > {
@@ -600,6 +608,25 @@ export async function synthesizeIntelligenceConsultantText(args: {
     "\n\n",
   );
   const explicitVisualAsk = isExplicitVisualAsk(args.dossier.question);
+  const latencyTrace = createIntelligenceLatencyTrace({
+    requestId: args.latencyTraceId,
+    startedAt: args.latencyStartedAt,
+  });
+  const emitTiming = (timing: IntelligenceLatencyTiming) => {
+    args.onTiming?.(timing);
+  };
+  emitTiming(
+    latencyTrace.mark("consultant.prompt.constructed", {
+      systemChars: INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT.length,
+      systemApproxTokens: summarizeTextPayload(
+        INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT,
+      ).approxTokens,
+      userChars: user.length,
+      userApproxTokens: summarizeTextPayload(user).approxTokens,
+      maxTokens,
+      model,
+    }),
+  );
 
   args.onModelInput?.({
     system: INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT,
@@ -607,6 +634,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
   });
 
   try {
+    const clientStartedAt = Date.now();
     const { client, auditId } = await getAuditedAnthropicClient({
       tenantId,
       userId: args.userId ?? undefined,
@@ -623,6 +651,20 @@ export async function synthesizeIntelligenceConsultantText(args: {
           args.dossier.corpusPatternDossier.patternFamilies.length,
       },
     });
+    emitTiming(
+      latencyTrace.finish("consultant.claude.client.ready", clientStartedAt, {
+        model,
+        auditId,
+      }),
+    );
+    const primaryStartedAt = Date.now();
+    emitTiming(
+      latencyTrace.mark("consultant.claude.primary.start", {
+        model,
+        maxTokens,
+        timeoutMs,
+      }),
+    );
     const message = await withTimeout(
       client.messages.create({
         model,
@@ -632,8 +674,19 @@ export async function synthesizeIntelligenceConsultantText(args: {
       }),
       timeoutMs,
     );
+    emitTiming(
+      latencyTrace.finish("consultant.claude.primary.done", primaryStartedAt, {
+        model,
+      }),
+    );
     let rawText = extractAnthropicText(message);
     let text = normalizeConsultantText(rawText);
+    emitTiming(
+      latencyTrace.mark("consultant.claude.primary.output", {
+        outputChars: rawText.length,
+        outputApproxTokens: summarizeTextPayload(rawText).approxTokens,
+      }),
+    );
     const contractValidationIssues: string[] = [];
     const requiredVisualRows = requiredVisualTableRows(args.dossier.question);
     const expectedVisualTab = expectedVisualTabId(args.dossier.question);
@@ -658,6 +711,13 @@ export async function synthesizeIntelligenceConsultantText(args: {
         "Do not add source-support, evidence-register, citation, or material-used tables.",
         "Return final user-facing text only.",
       ].join("\n");
+      const visualRepairStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("consultant.repair.visual.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
       const repaired = await withTimeout(
         client.messages.create({
           model,
@@ -669,6 +729,17 @@ export async function synthesizeIntelligenceConsultantText(args: {
       );
       const repairedText = normalizeConsultantText(
         extractAnthropicText(repaired),
+      );
+      emitTiming(
+        latencyTrace.finish("consultant.repair.visual.done", visualRepairStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+          accepted: hasCanvasVisualTable(
+            repairedText,
+            requiredVisualRows,
+            expectedVisualTab,
+          ),
+        }),
       );
       if (
         hasCanvasVisualTable(
@@ -708,6 +779,13 @@ export async function synthesizeIntelligenceConsultantText(args: {
         "Preserve the recommendation, tenant facts, caveats, and any useful Markdown table. Do not expose raw JSON outside the fenced block.",
         "Do not write HTML, SVG, CSS, or arbitrary chart code. Return final user-facing text only.",
       ].join("\n");
+      const nativeRepairStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("consultant.repair.native_canvas.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
       const repaired = await withTimeout(
         client.messages.create({
           model,
@@ -719,6 +797,17 @@ export async function synthesizeIntelligenceConsultantText(args: {
       );
       const repairedText = normalizeConsultantText(
         extractAnthropicText(repaired),
+      );
+      emitTiming(
+        latencyTrace.finish(
+          "consultant.repair.native_canvas.done",
+          nativeRepairStartedAt,
+          {
+            model,
+            repairedChars: repairedText.length,
+            accepted: hasExecutiveCanvasPayload(repairedText),
+          },
+        ),
       );
       if (hasExecutiveCanvasPayload(repairedText)) {
         rawText = repairedText;

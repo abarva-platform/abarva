@@ -51,6 +51,10 @@ import {
   buildIndustrialCioBackofficeSource,
 } from "./industrial-cio-backoffice-source";
 import { canonicalClientDisplayName } from "@/lib/client-config";
+import {
+  createIntelligenceLatencyTrace,
+  type IntelligenceLatencyTiming,
+} from "@/lib/intelligence/latency-trace";
 
 export type {
   AskIntent,
@@ -108,6 +112,10 @@ export interface AskOptions {
   }) => void;
   /** Operator proof mode may stream full AdvisoryPacket audit lineage. Default streams only safe labels. */
   includeAdvisoryPacketAudit?: boolean;
+  /** Operator-only latency hook. Emits timings, never user-visible content. */
+  onTiming?: (timing: IntelligenceLatencyTiming) => void;
+  latencyTraceId?: string | null;
+  latencyStartedAt?: number;
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
@@ -168,21 +176,48 @@ export async function* askIntelligence(
   }
 
   try {
+    const trace = createIntelligenceLatencyTrace({
+      requestId: opts.latencyTraceId,
+      startedAt: opts.latencyStartedAt,
+    });
+    const emitTiming = (timing: IntelligenceLatencyTiming) => {
+      opts.onTiming?.(timing);
+    };
+    emitTiming(
+      trace.mark("ask.start", {
+        richText: opts.richText === true,
+        tenantClientKey: opts.tenantClientKey ?? opts.tenantInventoryKey,
+      }),
+    );
+    const classifyStartedAt = Date.now();
     const classification = await classifyIntent(trimmed, {
       tenantId: opts.tenantId,
       userId: opts.userId,
     });
+    emitTiming(
+      trace.finish("classification.done", classifyStartedAt, {
+        intent: classification.intent,
+        entityCount: classification.entities.length,
+      }),
+    );
     yield { type: "classified", classification };
     const questionCategory = classifyQuestionCategory(
       trimmed,
       classification.intent,
     );
 
+    const surfaceStartedAt = Date.now();
     const surfaceContext = retrieveSurfaceContextSources(
       opts.surfaceContext,
       trimmed,
     );
+    emitTiming(
+      trace.finish("retrieval.surface_context.done", surfaceStartedAt, {
+        sourceCount: surfaceContext.length,
+      }),
+    );
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
+    const tenantEnterpriseStartedAt = Date.now();
     const tenantEnterprise = await retrieveTenantEnterpriseSources(
       opts.tenant ?? opts.tenantInventoryKey,
       trimmed,
@@ -192,32 +227,73 @@ export async function* askIntelligence(
         userContextBlock: opts.userContextBlock,
       },
     );
+    emitTiming(
+      trace.finish("retrieval.tenant_enterprise.done", tenantEnterpriseStartedAt, {
+        sourceCount: tenantEnterprise.length,
+      }),
+    );
+    const tenantStructuredStartedAt = Date.now();
     const tenantStructuredFacts = await retrieveTenantStructuredFacts(
       opts.tenant ?? opts.tenantInventoryKey,
       trimmed,
     );
+    emitTiming(
+      trace.finish("retrieval.tenant_structured_facts.done", tenantStructuredStartedAt, {
+        sourceCount: tenantStructuredFacts.length,
+      }),
+    );
+    const tenantTechnologyStartedAt = Date.now();
     const tenantTechnology = await retrieveTenantTechnologySources(
       opts.tenantInventoryKey,
       trimmed,
     );
+    emitTiming(
+      trace.finish("retrieval.tenant_technology.done", tenantTechnologyStartedAt, {
+        sourceCount: tenantTechnology.length,
+      }),
+    );
+    const retailStartedAt = Date.now();
     const retailOverlay = await retrieveRetailOverlaySources(
       opts.tenant,
       trimmed,
       questionCategory,
     );
+    emitTiming(
+      trace.finish("retrieval.retail_overlay.done", retailStartedAt, {
+        sourceCount: retailOverlay.length,
+      }),
+    );
+    const routeStartedAt = Date.now();
     const routed = await route(classification.intent, classification.entities, {
       query: trimmed,
       tenantInventoryKey: opts.tenantInventoryKey,
       surfaceContext: opts.surfaceContext,
     });
+    emitTiming(
+      trace.finish("retrieval.route.done", routeStartedAt, {
+        sourceCount: routed.sources.length,
+      }),
+    );
+    const worldviewStartedAt = Date.now();
     const worldview = await retrieveWorldview(trimmed, 3, {
       tenantId: opts.tenantId,
       userId: opts.userId,
     });
+    emitTiming(
+      trace.finish("retrieval.worldview.done", worldviewStartedAt, {
+        sourceCount: worldview.sources.length,
+      }),
+    );
+    const fingerprintStartedAt = Date.now();
     const factFingerprint = await getTenantFactFingerprint({
       tenantId: opts.tenantId,
       tenantInventoryKey: opts.tenantInventoryKey,
     });
+    emitTiming(
+      trace.finish("retrieval.fact_fingerprint.done", fingerprintStartedAt, {
+        availableFamilyCount: factFingerprint?.namedEntityClasses.length ?? 0,
+      }),
+    );
     const factAvailabilityBlock =
       formatTenantFactAvailabilityBlock(factFingerprint);
 
@@ -282,6 +358,13 @@ export async function* askIntelligence(
     const sources = conciseAsk
       ? compactSourceDetailsForConciseAsk(rawSources)
       : rawSources;
+    emitTiming(
+      trace.mark("retrieval.sources_selected", {
+        rawSourceCount: rawSources.length,
+        sourceCount: sources.length,
+        sourceLimit,
+      }),
+    );
     const averageConfidence =
       sources.length > 0
         ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
@@ -317,6 +400,13 @@ export async function* askIntelligence(
         classification,
         sources,
       });
+    emitTiming(
+      trace.mark("packet.assembled", {
+        sourceCount: sources.length,
+        relatedDimensionCount: intelligenceDossier.relatedDimensions.length,
+        evidenceStrength: intelligenceDossier.tenantEvidenceDossier.confidence,
+      }),
+    );
     yield { type: "intelligence-dossier", intelligenceDossier };
     yield {
       type: "advisory-packet",
@@ -350,6 +440,9 @@ export async function* askIntelligence(
       userId: opts.userId,
       onModelInput: opts.onModelInput,
       onModelOutput: opts.onModelOutput,
+      onTiming: emitTiming,
+      latencyTraceId: trace.requestId,
+      latencyStartedAt: trace.startedAt,
     });
     if (consultantText && consultantText.used) {
       let answer = "";
@@ -425,6 +518,9 @@ export async function* askIntelligence(
       averageConfidence,
       onModelInput: opts.onModelInput,
       onModelOutput: opts.onModelOutput,
+      onTiming: emitTiming,
+      latencyTraceId: trace.requestId,
+      latencyStartedAt: trace.startedAt,
     })) {
       answer += delta;
       yield { type: "delta", text: delta };
