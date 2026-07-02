@@ -41,7 +41,7 @@ const CSS = `
 .homex .hx-select:focus{outline:2px solid rgba(34,174,234,.22);border-color:#22AEEA}
 .homex .hx-rail-h,.homex .hx-rail-g{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .homex .hx-canvas{padding:0 0 80px;max-width:none;min-width:0;min-height:100%}
-.homex .hx-body{padding:14px 40px 0;max-width:1400px;margin:0 auto}
+.homex .hx-body{padding:18px 40px 0;max-width:1360px;margin:0 auto}
 .homex .hx-ey{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hf)}
 .homex .hx-h2{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:26px;letter-spacing:-.01em;margin:8px 0 6px}
 .homex .hx-stats{display:flex;flex-wrap:wrap;gap:26px;margin:18px 0 6px;padding-bottom:18px;border-bottom:1px solid var(--hl)}
@@ -75,23 +75,33 @@ const CSS = `
 .homex .hx-asklist li{border:1px solid var(--hl);border-radius:8px;background:#fff;padding:9px 11px;color:#19233a;font-size:13px;line-height:1.35}
 .homex .hx-explain{background:#fff;border:1px solid var(--hl);border-radius:10px;padding:13px 14px;color:#4c4b43;font-size:12.5px;line-height:1.55}
 .homex .hx-explain strong{color:#171713}
-.homex .hx-tablewrap{overflow:auto;border:1px solid var(--hl);border-radius:10px;background:#fff;margin-top:12px}
+.homex .hx-preview{margin-top:26px;border-top:1px solid var(--hl);padding-top:18px}
+.homex .hx-previewIntro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:end;margin-bottom:12px}
+@media(max-width:760px){.homex .hx-previewIntro{grid-template-columns:1fr}}
+.homex .hx-previewTitle{display:grid;gap:4px}
+.homex .hx-previewTitle strong{font-family:var(--font-fraunces),Georgia,serif;font-size:18px;font-weight:500;color:var(--hi)}
+.homex .hx-previewTitle span{color:var(--hm);font-size:12.5px;line-height:1.45}
+.homex .hx-previewMeta{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+@media(max-width:760px){.homex .hx-previewMeta{justify-content:flex-start}}
+.homex .hx-tablewrap{overflow:auto;border:1px solid var(--hl);border-radius:10px;background:#fff;margin-top:10px;box-shadow:0 1px 0 rgba(20,20,18,.03)}
 .homex .hx-table{width:100%;border-collapse:collapse;min-width:640px;font-size:12.5px}
 .homex .hx-table th{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#66708a;text-align:left;background:#FAF9F5;border-bottom:1px solid var(--hl);padding:10px 12px;white-space:nowrap}
 .homex .hx-table td{border-bottom:1px solid #F0EDE5;padding:10px 12px;color:#242421;vertical-align:top;line-height:1.35}
+.homex .hx-table td:has(.hx-gapcell){background:#FFFCF6;color:#7A5A1F}
 .homex .hx-table tr:last-child td{border-bottom:0}
 .homex .hx-mini{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .homex .hx-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hl);border-radius:999px;background:#fff;padding:5px 9px;color:#55554e;font-size:12px}
 .homex .hx-chip strong{color:#1b1b18}
+.homex .hx-gapcell{display:inline-flex;align-items:center;border-radius:999px;background:#FFF5DB;color:#7A5A1F;padding:2px 8px;font-size:11.5px;font-weight:700}
 `;
 
 const CONTEXT_BROWSER_QUESTIONS = [
-  "What business context is available for this tenant?",
-  "Show the available business areas in a table.",
-  "How is our IT organization structured today?",
-  "Which systems of record are loaded?",
-  "Show vendor and contract coverage.",
-  "What fields are missing?",
+  "What context is loaded, and what can we trust?",
+  "Which areas are strongest, and which are thin?",
+  "Show the systems, data, vendors, and risks as tables.",
+  "What can aVa answer confidently from this context?",
+  "Where should I go next: Tower, Source, Intelligence, or Moves?",
+  "What evidence is missing before decisions?",
 ];
 
 const EMPTY_DIMS: BindingDimension[] = [];
@@ -630,10 +640,28 @@ function DimensionView({
         </p>
       ) : null}
       {preview ? (
-        <div className="hx-sec">
-          <div className="hx-sechead">
-            <span className="hx-ey">{preview.title}</span>
-            <span className="hx-ey">{preview.rowCount.toLocaleString()} rows</span>
+        <div className="hx-preview">
+          <div className="hx-previewIntro">
+            <div className="hx-previewTitle">
+              <div className="hx-ey">V6 source preview</div>
+              <strong>{preview.title}</strong>
+              <span>
+                First loaded rows from the source table aVa uses for this area.
+              </span>
+            </div>
+            <div className="hx-previewMeta" aria-label="V6 table coverage">
+              <span className="hx-chip">
+                <strong>{preview.rowCount.toLocaleString()}</strong> rows
+              </span>
+              <span className="hx-chip">
+                <strong>{preview.sourceCount}</strong> V6 file
+                {preview.sourceCount === 1 ? "" : "s"}
+              </span>
+              <span className="hx-chip">
+                <strong>{preview.dataThinCells.toLocaleString()}</strong>{" "}
+                evidence gaps
+              </span>
+            </div>
           </div>
           <div className="hx-tablewrap">
             <table className="hx-table">
@@ -649,7 +677,11 @@ function DimensionView({
                   <tr key={`${preview.dimension}-${rowIndex}`}>
                     {row.map((cell, cellIndex) => (
                       <td key={`${preview.dimension}-${rowIndex}-${cellIndex}`}>
-                        {cell}
+                        {cell === "Needs evidence" ? (
+                          <span className="hx-gapcell">{cell}</span>
+                        ) : (
+                          cell
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -658,14 +690,6 @@ function DimensionView({
             </table>
           </div>
           <div className="hx-mini" aria-label="V6 table coverage">
-            <span className="hx-chip">
-              <strong>{preview.sourceCount}</strong> V6 file
-              {preview.sourceCount === 1 ? "" : "s"}
-            </span>
-            <span className="hx-chip">
-              <strong>{preview.dataThinCells.toLocaleString()}</strong>{" "}
-              missing/explicitly thin cells
-            </span>
             {preview.fileNames.slice(0, 2).map((fileName) => (
               <span className="hx-chip" key={fileName}>
                 {fileName}
