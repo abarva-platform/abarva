@@ -10,7 +10,7 @@ describe("executive canvas payload extraction", () => {
       "",
       "```abarva-canvas",
       JSON.stringify({
-        canvasType: "valueReadinessMatrix",
+        canvasType: "value-readiness-matrix",
         title: "AI portfolio",
         items: [
           {
@@ -39,7 +39,7 @@ describe("executive canvas payload extraction", () => {
 
     expect(extracted.payloads).toHaveLength(1);
     expect(extracted.payloads[0]).toMatchObject({
-      canvasType: "valueReadinessMatrix",
+      canvasType: "value-readiness-matrix",
       title: "AI portfolio",
       items: [
         {
@@ -79,9 +79,9 @@ describe("executive canvas payload extraction", () => {
       "",
       JSON.stringify(
         {
-          canvasType: "investmentSequencingMap",
+          canvasType: "executive-canvas-sequencing",
           title: "Shared services AI sequence",
-          columns: [
+          lanes: [
             {
               label: "Scale now",
               items: [
@@ -114,9 +114,9 @@ describe("executive canvas payload extraction", () => {
 
     expect(extracted.payloads).toHaveLength(1);
     expect(extracted.payloads[0]).toMatchObject({
-      canvasType: "investmentSequencingMap",
+      canvasType: "executive-canvas-sequencing",
       title: "Shared services AI sequence",
-      columns: [
+      lanes: [
         {
           label: "Scale now",
           items: [
@@ -133,14 +133,16 @@ describe("executive canvas payload extraction", () => {
       "The CIO should sequence the shared-services portfolio.\n\nUse this as the board exhibit.",
     );
     expect(extracted.visibleContent).not.toContain("canvasType");
-    expect(extracted.visibleContent).not.toContain("investmentSequencingMap");
+    expect(extracted.visibleContent).not.toContain(
+      "executive-canvas-sequencing",
+    );
   });
 
   it("repairs bare canvas JSON with raw newlines inside string values", () => {
     const content = [
       "Use the decision exhibit.",
       "",
-      `{"canvasType":"investmentSequencingMap","title":"CIO AI sequence","columns":[{"label":"Hold — discovery mandate","items":[{"label":"HR AI Operating Model","value":5,"readiness":2,"risk":4,"action":"Load the missing baseline","owner":"CHRO / CIO","gate":"Workday process volumes + HR service taxonomy
+      `{"canvasType":"executive-canvas-sequencing","title":"CIO AI sequence","lanes":[{"label":"Hold — discovery mandate","items":[{"label":"HR AI Operating Model","value":5,"readiness":2,"risk":4,"action":"Load the missing baseline","owner":"CHRO / CIO","gate":"Workday process volumes + HR service taxonomy
 loaded and signed off","note":"Raw newline came from the model"}]}]}`,
       "",
       "The CIO should use this to sequence the portfolio.",
@@ -150,15 +152,15 @@ loaded and signed off","note":"Raw newline came from the model"}]}]}`,
 
     expect(extracted.payloads).toHaveLength(1);
     expect(extracted.payloads[0]).toMatchObject({
-      canvasType: "investmentSequencingMap",
+      canvasType: "executive-canvas-sequencing",
       title: "CIO AI sequence",
-      columns: [
+      lanes: [
         {
           label: "Hold — discovery mandate",
           items: [
             {
               label: "HR AI Operating Model",
-              gate: "Workday process volumes + HR service taxonomy\nloaded and signed off",
+              gate: "Workday process volumes + HR service taxonomy loaded and signed off",
             },
           ],
         },
@@ -175,7 +177,7 @@ loaded and signed off","note":"Raw newline came from the model"}]}]}`,
     const content = [
       "The answer is ready enough to show.",
       "",
-      '{"canvasType":"investmentSequencingMap","title":"Streaming canvas","columns":[{"label":"Scale now","items":[',
+      '{"canvasType":"executive-canvas-sequencing","title":"Streaming canvas","lanes":[{"label":"Scale now","items":[',
     ].join("\n");
 
     const extracted = extractExecutiveCanvasPayloads(content);
@@ -185,7 +187,9 @@ loaded and signed off","note":"Raw newline came from the model"}]}]}`,
       "The answer is ready enough to show.",
     );
     expect(extracted.visibleContent).not.toContain("canvasType");
-    expect(extracted.visibleContent).not.toContain("investmentSequencingMap");
+    expect(extracted.visibleContent).not.toContain(
+      "executive-canvas-sequencing",
+    );
   });
 
   it("removes residual standalone canvas language labels from visible content", () => {

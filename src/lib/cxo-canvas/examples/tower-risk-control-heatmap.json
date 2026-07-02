@@ -1,0 +1,21 @@
+{
+  "canvasType": "risk-control-heatmap",
+  "title": "Risk and control heatmap",
+  "items": [
+    {
+      "label": "Tenant isolation",
+      "risk": 8,
+      "readiness": 7,
+      "action": "Keep fence checks green",
+      "owner": "Platform"
+    },
+    {
+      "label": "Evidence freshness",
+      "risk": 6,
+      "readiness": 5,
+      "action": "Refresh proof bundles",
+      "owner": "Operations"
+    }
+  ],
+  "decisionRequired": "Block launch if the tenant fence or evidence freshness controls are red."
+}

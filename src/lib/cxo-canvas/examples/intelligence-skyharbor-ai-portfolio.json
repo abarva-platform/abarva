@@ -1,0 +1,44 @@
+{
+  "canvasType": "executive-canvas-sequencing",
+  "title": "Airline AI investment sequence",
+  "summary": "Scale low-risk internal use, certify recovery controls, and fund IROPS readiness before customer-impacting autonomy.",
+  "lanes": [
+    {
+      "label": "Scale now",
+      "items": [
+        {
+          "label": "Loyalty AI",
+          "value": 8,
+          "readiness": 8,
+          "risk": 4,
+          "action": "Scale now",
+          "owner": "President Loyalty",
+          "gate": "Certified engagement data"
+        }
+      ]
+    },
+    {
+      "label": "Fund readiness",
+      "items": [
+        {
+          "label": "IROPS Decisioning",
+          "value": 10,
+          "readiness": 3,
+          "risk": 8,
+          "action": "Fund readiness",
+          "owner": "COO + CDAO",
+          "gate": "Operational event store SLA"
+        }
+      ]
+    }
+  ],
+  "proofBoundary": {
+    "known": [
+      "Airline value pools map to recovery, crew, loyalty, and maintenance operations."
+    ],
+    "missing": [
+      "Signed data-product certification for regulated operational feeds."
+    ],
+    "decisionRequired": "Name the data gate owner before releasing scale capital."
+  }
+}

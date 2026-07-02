@@ -1,0 +1,11 @@
+{
+  "canvasType": "proof-boundary-card",
+  "title": "Vendor decision proof boundary",
+  "summary": "Use the loaded evidence to separate a recommendation from claims that still need signoff.",
+  "proofBoundary": {
+    "known": ["The vendor meets the baseline functional requirement."],
+    "assumed": ["Current usage volumes match the planning scenario."],
+    "missing": ["Security exception approval and finance-approved TCO."],
+    "decisionRequired": "Approve the vendor only after security and finance signoff are attached."
+  }
+}

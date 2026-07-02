@@ -943,9 +943,9 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     const mainAnswer =
       "Scale Loyalty now, certify Crew Recovery next, and fund IROPS readiness before autonomous expansion.";
     const canvasPayload = {
-      canvasType: "investmentSequencingMap",
+      canvasType: "executive-canvas-sequencing",
       title: "AI funding sequence for SkyHarbor",
-      columns: [
+      lanes: [
         {
           label: "Scale now",
           items: [
@@ -969,11 +969,17 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         },
         {
           label: "Certify then scale",
-          items: ["Crew Recovery", "Predictive Maintenance"],
+          items: [
+            { label: "Crew Recovery" },
+            { label: "Predictive Maintenance" },
+          ],
         },
         {
           label: "Fund readiness",
-          items: ["IROPS", "Customer Disruption Recovery"],
+          items: [
+            { label: "IROPS" },
+            { label: "Customer Disruption Recovery" },
+          ],
         },
       ],
       proofBoundary: {
@@ -1095,7 +1101,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     const mainAnswer =
       "The portfolio tradeoff is clear: scale Loyalty, protect Crew Recovery, and fund IROPS readiness before autonomous expansion.";
     const canvasPayload = {
-      canvasType: "valueReadinessMatrix",
+      canvasType: "value-readiness-matrix",
       title: "AI portfolio value/readiness map",
       items: [
         {
@@ -1179,8 +1185,8 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         screen.getAllByText("IROPS Decision Assistant").length,
       ).toBeGreaterThan(1);
       expect(
-        screen.getByText("Certified operational data product"),
-      ).toBeInTheDocument();
+        screen.getAllByText("Certified operational data product").length,
+      ).toBeGreaterThan(0);
       expect(
         screen.getByText("Approve the readiness sprint before scale capital."),
       ).toBeInTheDocument();
@@ -1193,7 +1199,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     const mainAnswer =
       "Do not fund scale first. Fund the gates that convert AI ideas into capital-ready initiatives.";
     const canvasPayload = {
-      canvasType: "gateToValueRoadmap",
+      canvasType: "gate-to-value-roadmap",
       title: "AI gate-to-value roadmap",
       gates: [
         {

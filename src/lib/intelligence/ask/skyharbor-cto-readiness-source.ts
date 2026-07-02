@@ -152,7 +152,7 @@ export function buildSkyHarborCtoReadinessPromptAddendum(
     "Lead with a direct point of view. Make the distinction between known SkyHarbor context, planning assumptions, industry context, and client-signoff-required claims in natural executive language.",
     "Do not claim exact ROI or board-grade value unless Finance-approved value is provided. If precision is missing, ask for values or permission to use planning assumptions.",
     "Author all right-canvas tabs using the current marker grammar: Decision, Industry Insights, Chart, Table, and Evidence. Put the governed native exhibit in the Chart tab using the abarva-canvas fenced JSON contract; do not output raw JSON outside the fenced block and do not write HTML.",
-    "Canvas selection for the Airline Demo CTO demo: funding, hold/scale, or prioritization questions should use investmentSequencingMap; portfolio tradeoff questions should use valueReadinessMatrix; 'what has to happen first' or dependency questions should use gateToValueRoadmap; trust, governance, signoff, or missing-evidence questions should use proofBoundary.",
+    "Canvas selection for the Airline Demo CTO demo: funding, hold/scale, or prioritization questions should use executive-canvas-sequencing; portfolio tradeoff questions should use value-readiness-matrix; 'what has to happen first' or dependency questions should use gate-to-value-roadmap; trust, governance, signoff, or missing-evidence questions should use proof-boundary-card.",
     "For sequencing or matrix exhibits, include initiative owner and gate when known: EVP Operations for IROPS/OCC workflow, VP Crew Operations for crew recovery, VP Data Platforms for event-store and data certification, VP Digital Products for passenger recovery, and AI Governance Lead for model-risk gates.",
     "End with a branch choice only when it helps the user continue: use planning assumptions, enter missing values, generate the evidence checklist, continue readiness-only, or ask the accountable owner for evidence.",
   ].join("\n");
@@ -170,9 +170,9 @@ export function buildSkyHarborCtoReadinessNativeCanvasBlock(
   }
   const packet = buildSkyHarborCtoReadinessPacket();
   const canvasIntent = skyHarborCanvasIntent(query);
-  if (canvasIntent === "valueReadinessMatrix") {
+  if (canvasIntent === "value-readiness-matrix") {
     return wrapSkyHarborCanvasPayload({
-      canvasType: "valueReadinessMatrix",
+      canvasType: "value-readiness-matrix",
       title: "AI Portfolio Value / Readiness Map — Airline Demo",
       items: [
         {
@@ -237,9 +237,9 @@ export function buildSkyHarborCtoReadinessNativeCanvasBlock(
       },
     });
   }
-  if (canvasIntent === "gateToValueRoadmap") {
+  if (canvasIntent === "gate-to-value-roadmap") {
     return wrapSkyHarborCanvasPayload({
-      canvasType: "gateToValueRoadmap",
+      canvasType: "gate-to-value-roadmap",
       title: "IROPS AI Gate-to-Value Roadmap — Airline Demo",
       gates: [
         {
@@ -290,9 +290,9 @@ export function buildSkyHarborCtoReadinessNativeCanvasBlock(
       },
     });
   }
-  if (canvasIntent === "proofBoundary") {
+  if (canvasIntent === "proof-boundary-card") {
     return wrapSkyHarborCanvasPayload({
-      canvasType: "proofBoundary",
+      canvasType: "proof-boundary-card",
       title: "IROPS AI Proof Boundary — Airline Demo",
       proofBoundary: {
         known: [
@@ -307,9 +307,9 @@ export function buildSkyHarborCtoReadinessNativeCanvasBlock(
     });
   }
   return wrapSkyHarborCanvasPayload({
-    canvasType: "investmentSequencingMap",
+    canvasType: "executive-canvas-sequencing",
     title: "AI Investment Sequencing — Airline Demo",
-    columns: [
+    lanes: [
       {
         label: "Scale now",
         items: [
@@ -426,32 +426,32 @@ export function buildSkyHarborCtoReadinessNativeCanvasBlock(
 function skyHarborCanvasIntent(
   query: string,
 ):
-  | "investmentSequencingMap"
-  | "valueReadinessMatrix"
-  | "gateToValueRoadmap"
-  | "proofBoundary" {
+  | "executive-canvas-sequencing"
+  | "value-readiness-matrix"
+  | "gate-to-value-roadmap"
+  | "proof-boundary-card" {
   if (
     /\b(?:what\s+has\s+to\s+happen\s+first|before|prerequisite|dependency|gate|roadmap|unlock)\b/i.test(
       query,
     )
   ) {
-    return "gateToValueRoadmap";
+    return "gate-to-value-roadmap";
   }
   if (
     /\b(?:portfolio|tradeoff|trade-off|value\s*(?:\/|vs\.?|versus)\s*readiness|readiness|high\s+value|not\s+ready)\b/i.test(
       query,
     )
   ) {
-    return "valueReadinessMatrix";
+    return "value-readiness-matrix";
   }
   if (
     /\b(?:trust|governance|proof|evidence\s+quality|assumption|missing|signoff|sign-off|validate|validated|board[-\s]?grade|board[-\s]?ready)\b/i.test(
       query,
     )
   ) {
-    return "proofBoundary";
+    return "proof-boundary-card";
   }
-  return "investmentSequencingMap";
+  return "executive-canvas-sequencing";
 }
 
 function wrapSkyHarborCanvasPayload(payload: object): string {

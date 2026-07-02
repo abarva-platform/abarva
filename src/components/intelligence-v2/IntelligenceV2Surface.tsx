@@ -27,6 +27,7 @@ import {
   type ExecutiveCanvasPayload,
   type ExecutiveCanvasProofBoundary,
 } from "@/lib/intelligence/executive-canvas-payload";
+import { CxoCanvasRenderer } from "@/lib/cxo-canvas/rendererRegistry";
 
 type Tab = string;
 
@@ -619,7 +620,12 @@ function VisualCardEnhancement({ card }: { card: ParsedIntelligenceTab }) {
   const executiveCanvas = extractExecutiveCanvasPayloads(card.content)
     .payloads[0];
   if (executiveCanvas) {
-    return <ExecutiveCanvasVisual payload={executiveCanvas} />;
+    return (
+      <CxoCanvasRenderer
+        payload={executiveCanvas}
+        context={{ surface: "intelligence", companionCardId: card.id }}
+      />
+    );
   }
   if (card.id !== "chart" && card.id !== "table") return null;
   const table = parseFirstMarkdownTable(card.content);
@@ -743,6 +749,9 @@ function VisualCardEnhancement({ card }: { card: ParsedIntelligenceTab }) {
   );
 }
 
+// Retained while Intelligence v2 finishes moving all native canvas variants to
+// the platform registry; VisualCardEnhancement now calls CxoCanvasRenderer.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ExecutiveCanvasVisual({
   payload,
 }: {
@@ -1467,9 +1476,9 @@ function fastInsightTabsFor(
       evidence:
         "Fast canvas uses the loaded SkyHarbor airline decision packet and should be treated as the initial exhibit until the advisor response finishes. The final answer may refine lanes, gates, and owners.",
       canvas: {
-        canvasType: "investmentSequencingMap",
+        canvasType: "executive-canvas-sequencing",
         title: "Building airline AI decision frame",
-        columns: [
+        lanes: [
           {
             label: "Scale now",
             items: [
@@ -1584,9 +1593,9 @@ function fastInsightTabsFor(
       evidence:
         "Fast canvas uses the loaded Industrial/Morgan Street back-office decision packet and should be treated as the initial exhibit until the advisor response finishes. The final answer may refine sequencing, gates, and owners.",
       canvas: {
-        canvasType: "investmentSequencingMap",
+        canvasType: "executive-canvas-sequencing",
         title: "Building industrial back-office decision frame",
-        columns: [
+        lanes: [
           {
             label: "Scale now",
             items: [

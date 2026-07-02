@@ -398,7 +398,8 @@
     "rss-parser": "^3.13.0",
     "server-only": "^0.0.1",
     "stripe": "^22.2.0",
-    "svix": "^1.95.1"
+    "svix": "^1.95.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",

@@ -408,9 +408,9 @@ describe("Intelligence consultant text synthesis", () => {
       "",
       "```abarva-canvas",
       JSON.stringify({
-        canvasType: "investmentSequencingMap",
+        canvasType: "executive-canvas-sequencing",
         title: "AI funding sequence",
-        columns: [
+        lanes: [
           {
             label: "Scale now",
             items: [
@@ -549,9 +549,9 @@ describe("Intelligence consultant text synthesis", () => {
       "",
       "```abarva-canvas",
       JSON.stringify({
-        canvasType: "investmentSequencingMap",
+        canvasType: "executive-canvas-sequencing",
         title: "AI funding sequence",
-        columns: [
+        lanes: [
           {
             label: "Scale now",
             items: [
@@ -617,7 +617,7 @@ describe("Intelligence consultant text synthesis", () => {
       "```abarva-canvas",
     );
     expect(result && "text" in result ? result.text : "").toContain(
-      "investmentSequencingMap",
+      "executive-canvas-sequencing",
     );
   });
 
