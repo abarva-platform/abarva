@@ -67,4 +67,15 @@ describe("home demo-safe response sanitizer", () => {
       "Airline Demo and Industrial Demo appeared in the prompt.",
     );
   });
+
+  it("collapses duplicate demo tenant openings after name sanitization", () => {
+    const safe = sanitizeHomeKnowVisiblePayload({
+      prose:
+        "For SkyHarbor Air, For SkyHarbor Air, the enterprise profile is strong enough to orient leadership.",
+    });
+
+    expect(safe.prose).toBe(
+      "For Airline Demo, the enterprise profile is strong enough to orient leadership.",
+    );
+  });
 });

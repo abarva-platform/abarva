@@ -14,6 +14,8 @@ Home’s context browser is polished for demo use after the first V6 table relea
 
 Follow-up polish also collapses repeated tenant openings in Home aVa synthesis, so a live model response such as “For Airline Demo, For Airline Demo,” is normalized before display.
 
+Final visible-payload polish applies the same collapse after demo-safe tenant-name sanitization, which is the last boundary before Home aVa text reaches the browser.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Home UI copy, preview styling, and V6 gap display behavior.
@@ -34,6 +36,8 @@ Follow-up polish also collapses repeated tenant openings in Home aVa synthesis, 
 - `src/components/home/__tests__/HomeSurface.test.tsx`: adds regression coverage for improved pinned questions and V6 preview/gap rendering.
 - `src/lib/home/know/home-v6-executive-synthesis.ts`: collapses repeated tenant-safe answer openings in Home aVa responses.
 - `src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts`: adds regression coverage for duplicate tenant-opening normalization.
+- `src/lib/home/know/home-demo-safe-response.ts`: collapses repeated tenant openings after final demo-safe visible-payload sanitization.
+- `src/lib/home/know/__tests__/home-demo-safe-response.test.ts`: adds regression coverage for the final visible-payload boundary.
 
 ## QA / Validation
 
@@ -41,6 +45,8 @@ Follow-up polish also collapses repeated tenant openings in Home aVa synthesis, 
 - `npx eslint src/lib/home/v6-context-browser.ts src/components/home/HomeSurface.tsx src/components/home/__tests__/HomeSurface.test.tsx` passed.
 - Follow-up aVa polish: `npx jest src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts --runInBand` passed.
 - Follow-up aVa polish: `npx eslint src/lib/home/know/home-v6-executive-synthesis.ts src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts` passed.
+- Final sanitizer polish: `npx jest src/lib/home/know/__tests__/home-demo-safe-response.test.ts --runInBand` passed.
+- Final sanitizer polish: `npx eslint src/lib/home/know/home-demo-safe-response.ts src/lib/home/know/__tests__/home-demo-safe-response.test.ts` passed.
 - Pre-change production crawl confirmed all 19 Home dimensions render V6 rows, tables, and file chips for Industrial Demo and Airline Demo.
 
 ## Rollout Plan
