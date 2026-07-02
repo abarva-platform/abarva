@@ -9,6 +9,15 @@ export interface HomeV6BrowserColumn {
   label: string;
 }
 
+export interface HomeV6BrowserSourceRow {
+  v6File: string;
+  rowNumber: number;
+  rowId: string;
+  label: string;
+  values: Record<string, string>;
+  knownGaps: string[];
+}
+
 export interface HomeV6BrowserPreview {
   dimension: string;
   title: string;
@@ -18,6 +27,7 @@ export interface HomeV6BrowserPreview {
   sourceCount: number;
   columns: HomeV6BrowserColumn[];
   rows: string[][];
+  sourceRows: HomeV6BrowserSourceRow[];
   knownGaps: Array<{ label: string; count: number }>;
 }
 
@@ -57,158 +67,215 @@ const V6_DATASET_BY_CLIENT: Record<ClientKey, string> = {
 };
 
 const DIMENSION_PREVIEWS: DimensionPreviewConfig[] = [
-  preview("Enterprise Profile", "Enterprise profile rows", [
-    "V6_01_enterprise_profile.csv",
-  ], [
-    col("company_name", "Company"),
-    col("industry", "Industry"),
-    col("business_model", "Business model"),
-    col("strategic_priorities", "Priorities"),
-  ]),
-  preview("Business & Operating Model", "Business functions", [
-    "V6_02_business_functions.csv",
-  ], [
-    col("function_name", "Function"),
-    col("executive_owner", "Owner"),
-    col("operating_model", "Operating model"),
-    col("critical_processes", "Critical processes"),
-  ]),
-  preview("Workforce & Personas", "Workforce personas", [
-    "V6_04_workforce_personas.csv",
-  ], [
-    col("persona_name", "Persona"),
-    col("business_area", "Area"),
-    col("population_count", "Population"),
-    col("ai_relevance", "AI relevance"),
-  ]),
-  preview("Business Metrics", "Metric definitions", [
-    "V6_14_metric_definitions.csv",
-  ], [
-    col("metric_name", "Metric"),
-    col("metric_owner", "Owner"),
-    col("unit_of_measure", "Unit"),
-    col("metric_claim_level", "Claim level"),
-  ]),
-  preview("Capabilities & Value Streams", "Capabilities by business function", [
-    "V6_02_business_functions.csv",
-  ], [
-    col("function_name", "Capability area"),
-    col("primary_kpis", "Primary KPIs"),
-    col("critical_processes", "Critical processes"),
-    col("executive_owner", "Owner"),
-  ]),
-  preview("Applications & Core Systems", "Application and system inventory", [
-    "V6_05_applications_systems.csv",
-  ], [
-    col("system_name", "System"),
-    col("business_capability", "Capability"),
-    col("system_owner", "Owner"),
-    col("criticality", "Criticality"),
-  ]),
-  preview("Infrastructure & Cloud", "Infrastructure-related system coverage", [
-    "V6_05_applications_systems.csv",
-  ], [
-    col("system_name", "Platform/system"),
-    col("lifecycle_status", "Lifecycle"),
-    col("annual_cost_usd", "Annual cost"),
-    col("data_dependencies", "Dependencies"),
-  ]),
-  preview("Data & Analytics Estate", "Data assets and analytics coverage", [
-    "V6_06_data_assets_integrations.csv",
-  ], [
-    col("data_asset_name", "Data asset"),
-    col("data_owner", "Owner"),
-    col("system_of_record", "System of record"),
-    col("governance_status", "Governance"),
-  ]),
-  preview("Integrations & Interfaces", "Data and integration dependencies", [
-    "V6_06_data_assets_integrations.csv",
-  ], [
-    col("data_asset_name", "Object"),
-    col("system_of_record", "System"),
-    col("lineage", "Lineage"),
-    col("consumers", "Consumers"),
-  ]),
-  preview("Security & Compliance", "Risk, control, and compliance coverage", [
-    "V6_11_operations_risk_controls.csv",
-  ], [
-    col("process", "Process/control area"),
-    col("process_owner", "Owner"),
-    col("severity", "Severity"),
-    col("control", "Control"),
-  ]),
-  preview("Vendors & Contracts", "Vendors and contracts", [
-    "V6_07_vendors_contracts.csv",
-  ], [
-    col("vendor_name", "Vendor"),
-    col("service", "Service"),
-    col("renewal_date", "Renewal"),
-    col("contract_risk", "Risk/gap"),
-  ]),
-  preview("IT Budget & Financials", "Spend and value records", [
-    "V6_08_spend_value.csv",
-  ], [
-    col("amount_usd", "Amount"),
-    col("amount_type", "Type"),
-    col("owner", "Owner"),
-    col("value_linkage", "Value linkage"),
-  ]),
-  preview("AI & Automation Footprint", "AI initiatives and automation footprint", [
-    "V6_10_ai_initiatives.csv",
-  ], [
-    col("use_case", "Use case"),
-    col("tool_or_model", "Tool/model"),
-    col("active_users", "Active users"),
-    col("data_readiness", "Data readiness"),
-  ]),
-  preview("Initiatives & Roadmap", "Programs and initiatives", [
-    "V6_09_programs_initiatives.csv",
-  ], [
-    col("record_name", "Program"),
-    col("phase", "Phase"),
-    col("status", "Status"),
-    col("decision_needed", "Decision needed"),
-  ]),
-  preview("Benefits Realization", "Value and benefit evidence", [
-    "V6_08_spend_value.csv",
-  ], [
-    col("record_name", "Value record"),
-    col("amount_usd", "Amount"),
-    col("amount_type", "Amount type"),
-    col("unit_economics", "Unit economics"),
-  ]),
-  preview("Risk & RAID Log", "Risks and constraints", [
-    "V6_11_operations_risk_controls.csv",
-  ], [
-    col("process", "Risk/control area"),
-    col("severity", "Severity"),
-    col("status", "Status"),
-    col("business_impact", "Business impact"),
-  ]),
-  preview("Operations & Service", "Operations and service evidence", [
-    "V6_11_operations_risk_controls.csv",
-  ], [
-    col("process", "Process"),
-    col("process_owner", "Owner"),
-    col("affected_systems", "Affected systems"),
-    col("business_impact", "Impact"),
-  ]),
-  preview("AI Governance & Policy", "AI governance and metric boundaries", [
-    "V6_10_ai_initiatives.csv",
-  ], [
-    col("use_case", "AI use case"),
-    col("risk_status", "Risk status"),
-    col("model_risk_tier", "Model risk"),
-    col("scale_hold_stop", "Scale/hold/stop"),
-  ]),
-  preview("Industry Benchmarks", "Industry corpus patterns", [
-    "V6_15_industry_corpus_patterns.csv",
-  ], [
-    col("pattern_name", "Pattern"),
-    col("industry_domain", "Domain"),
-    col("when_to_apply", "Use when"),
-    col("corpus_context_label", "Context label"),
-  ]),
+  preview(
+    "Enterprise Profile",
+    "Enterprise profile rows",
+    ["V6_01_enterprise_profile.csv"],
+    [
+      col("company_name", "Company"),
+      col("industry", "Industry"),
+      col("business_model", "Business model"),
+      col("strategic_priorities", "Priorities"),
+    ],
+  ),
+  preview(
+    "Business & Operating Model",
+    "Business functions",
+    ["V6_02_business_functions.csv"],
+    [
+      col("function_name", "Function"),
+      col("executive_owner", "Owner"),
+      col("operating_model", "Operating model"),
+      col("critical_processes", "Critical processes"),
+    ],
+  ),
+  preview(
+    "Workforce & Personas",
+    "Workforce personas",
+    ["V6_04_workforce_personas.csv"],
+    [
+      col("persona_name", "Persona"),
+      col("business_area", "Area"),
+      col("population_count", "Population"),
+      col("ai_relevance", "AI relevance"),
+    ],
+  ),
+  preview(
+    "Business Metrics",
+    "Metric definitions",
+    ["V6_14_metric_definitions.csv"],
+    [
+      col("metric_name", "Metric"),
+      col("metric_owner", "Owner"),
+      col("unit_of_measure", "Unit"),
+      col("metric_claim_level", "Claim level"),
+    ],
+  ),
+  preview(
+    "Capabilities & Value Streams",
+    "Capabilities by business function",
+    ["V6_02_business_functions.csv"],
+    [
+      col("function_name", "Capability area"),
+      col("primary_kpis", "Primary KPIs"),
+      col("critical_processes", "Critical processes"),
+      col("executive_owner", "Owner"),
+    ],
+  ),
+  preview(
+    "Applications & Core Systems",
+    "Application and system inventory",
+    ["V6_05_applications_systems.csv"],
+    [
+      col("system_name", "System"),
+      col("business_capability", "Capability"),
+      col("system_owner", "Owner"),
+      col("criticality", "Criticality"),
+    ],
+  ),
+  preview(
+    "Infrastructure & Cloud",
+    "Infrastructure-related system coverage",
+    ["V6_05_applications_systems.csv"],
+    [
+      col("system_name", "Platform/system"),
+      col("lifecycle_status", "Lifecycle"),
+      col("annual_cost_usd", "Annual cost"),
+      col("data_dependencies", "Dependencies"),
+    ],
+  ),
+  preview(
+    "Data & Analytics Estate",
+    "Data assets and analytics coverage",
+    ["V6_06_data_assets_integrations.csv"],
+    [
+      col("data_asset_name", "Data asset"),
+      col("data_owner", "Owner"),
+      col("system_of_record", "System of record"),
+      col("governance_status", "Governance"),
+    ],
+  ),
+  preview(
+    "Integrations & Interfaces",
+    "Data and integration dependencies",
+    ["V6_06_data_assets_integrations.csv"],
+    [
+      col("data_asset_name", "Object"),
+      col("system_of_record", "System"),
+      col("lineage", "Lineage"),
+      col("consumers", "Consumers"),
+    ],
+  ),
+  preview(
+    "Security & Compliance",
+    "Risk, control, and compliance coverage",
+    ["V6_11_operations_risk_controls.csv"],
+    [
+      col("process", "Process/control area"),
+      col("process_owner", "Owner"),
+      col("severity", "Severity"),
+      col("control", "Control"),
+    ],
+  ),
+  preview(
+    "Vendors & Contracts",
+    "Vendors and contracts",
+    ["V6_07_vendors_contracts.csv"],
+    [
+      col("vendor_name", "Vendor"),
+      col("service", "Service"),
+      col("renewal_date", "Renewal"),
+      col("contract_risk", "Risk/gap"),
+    ],
+  ),
+  preview(
+    "IT Budget & Financials",
+    "Spend and value records",
+    ["V6_08_spend_value.csv"],
+    [
+      col("amount_usd", "Amount"),
+      col("amount_type", "Type"),
+      col("owner", "Owner"),
+      col("value_linkage", "Value linkage"),
+    ],
+  ),
+  preview(
+    "AI & Automation Footprint",
+    "AI initiatives and automation footprint",
+    ["V6_10_ai_initiatives.csv"],
+    [
+      col("use_case", "Use case"),
+      col("tool_or_model", "Tool/model"),
+      col("active_users", "Active users"),
+      col("data_readiness", "Data readiness"),
+    ],
+  ),
+  preview(
+    "Initiatives & Roadmap",
+    "Programs and initiatives",
+    ["V6_09_programs_initiatives.csv"],
+    [
+      col("record_name", "Program"),
+      col("phase", "Phase"),
+      col("status", "Status"),
+      col("decision_needed", "Decision needed"),
+    ],
+  ),
+  preview(
+    "Benefits Realization",
+    "Value and benefit evidence",
+    ["V6_08_spend_value.csv"],
+    [
+      col("record_name", "Value record"),
+      col("amount_usd", "Amount"),
+      col("amount_type", "Amount type"),
+      col("unit_economics", "Unit economics"),
+    ],
+  ),
+  preview(
+    "Risk & RAID Log",
+    "Risks and constraints",
+    ["V6_11_operations_risk_controls.csv"],
+    [
+      col("process", "Risk/control area"),
+      col("severity", "Severity"),
+      col("status", "Status"),
+      col("business_impact", "Business impact"),
+    ],
+  ),
+  preview(
+    "Operations & Service",
+    "Operations and service evidence",
+    ["V6_11_operations_risk_controls.csv"],
+    [
+      col("process", "Process"),
+      col("process_owner", "Owner"),
+      col("affected_systems", "Affected systems"),
+      col("business_impact", "Impact"),
+    ],
+  ),
+  preview(
+    "AI Governance & Policy",
+    "AI governance and metric boundaries",
+    ["V6_10_ai_initiatives.csv"],
+    [
+      col("use_case", "AI use case"),
+      col("risk_status", "Risk status"),
+      col("model_risk_tier", "Model risk"),
+      col("scale_hold_stop", "Scale/hold/stop"),
+    ],
+  ),
+  preview(
+    "Industry Benchmarks",
+    "Industry corpus patterns",
+    ["V6_15_industry_corpus_patterns.csv"],
+    [
+      col("pattern_name", "Pattern"),
+      col("industry_domain", "Domain"),
+      col("when_to_apply", "Use when"),
+      col("corpus_context_label", "Context label"),
+    ],
+  ),
 ];
 
 export function getHomeV6ContextBrowser(
@@ -229,14 +296,25 @@ export function getHomeV6ContextBrowser(
   );
   const dimensions: HomeV6ContextBrowser["dimensions"] = {};
   for (const config of DIMENSION_PREVIEWS) {
-    const sourceRows: Array<Record<string, string>> = config.files.flatMap((fileName) => {
-      const sourcePath = path.join(datasetRoot, "templates", fileName);
-      if (!existsSync(sourcePath)) return [];
-      return parseCsv(readFileSync(sourcePath, "utf8")).map((row) => ({
-        ...row,
-        __file: fileName,
-      }) as Record<string, string>);
-    });
+    const sourceRows: Array<Record<string, string>> = config.files.flatMap(
+      (fileName) => {
+        const sourcePath = path.join(datasetRoot, "templates", fileName);
+        if (!existsSync(sourcePath)) return [];
+        return parseCsv(readFileSync(sourcePath, "utf8")).map(
+          (row, index) =>
+            ({
+              ...row,
+              __file: fileName,
+              __rowNumber: String(index + 2),
+            }) as Record<string, string>,
+        );
+      },
+    );
+    const displayRows = sourceRows
+      .filter((row) =>
+        config.columns.some((column) => hasDisplayValue(row[column.key])),
+      )
+      .slice(0, 12);
     const manifestFiles = config.files
       .map((fileName) => filesByName.get(fileName))
       .filter((file): file is NonNullable<typeof file> => Boolean(file));
@@ -252,19 +330,18 @@ export function getHomeV6ContextBrowser(
         countDataThinCells(sourceRows),
       sourceCount: config.files.length,
       columns: config.columns,
-      rows: sourceRows
-        .filter((row) =>
-          config.columns.some((column) => hasDisplayValue(row[column.key])),
-        )
+      rows: displayRows
         .slice(0, 8)
         .map((row) => config.columns.map((column) => display(row[column.key]))),
+      sourceRows: displayRows.map((row) => toSourceRow(row, config.columns)),
       knownGaps: topKnownGaps(sourceRows),
     };
   }
 
   return {
     tenantKey: appClientKey,
-    displayName: manifest.clientDisplayName || getClientOption(appClientKey).name,
+    displayName:
+      manifest.clientDisplayName || getClientOption(appClientKey).name,
     datasetDir,
     generatedAt: manifest.generatedAt,
     dimensions,
@@ -282,6 +359,39 @@ function preview(
 
 function col(key: string, label: string): HomeV6BrowserColumn {
   return { key, label };
+}
+
+function toSourceRow(
+  row: Record<string, string>,
+  columns: HomeV6BrowserColumn[],
+): HomeV6BrowserSourceRow {
+  const rowId =
+    firstDisplayValue(row.record_id, row.id, row.source_id, row.entity_id) ||
+    `${row.__file ?? "V6 row"}:${row.__rowNumber ?? "unknown"}`;
+  const label =
+    firstDisplayValue(
+      row.record_name,
+      row.company_name,
+      row.system_name,
+      row.data_asset_name,
+      row.vendor_name,
+      row.use_case,
+      row.metric_name,
+      row.pattern_name,
+      row.process,
+      row.function_name,
+      row.org_unit_name,
+    ) || rowId;
+  return {
+    v6File: row.__file ?? "unknown",
+    rowNumber: Number(row.__rowNumber ?? 0),
+    rowId,
+    label: display(label),
+    values: Object.fromEntries(
+      columns.map((column) => [column.label, display(row[column.key])]),
+    ),
+    knownGaps: collectKnownGaps(row),
+  };
 }
 
 function parseCsv(text: string): Array<Record<string, string>> {
@@ -338,10 +448,7 @@ function topKnownGaps(
 ): Array<{ label: string; count: number }> {
   const counts = new Map<string, number>();
   for (const row of rows) {
-    for (const gap of String(row.known_gaps ?? "").split("|")) {
-      const clean = gap.trim();
-      if (!clean.startsWith("data_thin:")) continue;
-      const label = humanize(clean.replace("data_thin:", ""));
+    for (const label of collectKnownGaps(row)) {
       counts.set(label, (counts.get(label) ?? 0) + 1);
     }
   }
@@ -349,6 +456,32 @@ function topKnownGaps(
     .sort((left, right) => right[1] - left[1])
     .slice(0, 4)
     .map(([label, count]) => ({ label, count }));
+}
+
+function collectKnownGaps(row: Record<string, string>): string[] {
+  const gaps = new Set<string>();
+  for (const value of Object.values(row)) {
+    const raw = String(value ?? "").trim();
+    if (!raw.startsWith("data_thin:")) continue;
+    gaps.add(humanize(raw.replace("data_thin:", "")));
+  }
+  for (const gap of String(row.known_gaps ?? "").split("|")) {
+    const clean = gap.trim();
+    if (!clean.startsWith("data_thin:")) continue;
+    gaps.add(humanize(clean.replace("data_thin:", "")));
+  }
+  return [...gaps].slice(0, 6);
+}
+
+function firstDisplayValue(
+  ...values: Array<string | undefined>
+): string | null {
+  for (const value of values) {
+    const raw = String(value ?? "").trim();
+    if (!raw || raw.startsWith("data_thin:")) continue;
+    return raw;
+  }
+  return null;
 }
 
 function hasDisplayValue(value: string | undefined): boolean {

@@ -5,7 +5,7 @@ import type {
   HomeKnowAskRequest,
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
-import { sanitizeHomeKnowVisiblePayload } from "@/lib/home/know/home-demo-safe-response";
+import { sanitizeHomeKnowVisiblePayloadWithAudit } from "@/lib/home/know/home-demo-safe-response";
 import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
 import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
 import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
@@ -46,7 +46,9 @@ export async function POST(req: NextRequest) {
     });
   });
 
-  const safeResponse = sanitizeHomeKnowVisiblePayload(response);
+  const { payload: safeResponse, audit: visibleSanitizer } =
+    sanitizeHomeKnowVisiblePayloadWithAudit(response);
+  safeResponse.safety.visibleSanitizer = visibleSanitizer;
 
   if (includeTrace) {
     console.info("[home-know.trace]", {
@@ -55,6 +57,7 @@ export async function POST(req: NextRequest) {
       intent: safeResponse.intent,
       answerStatus: safeResponse.answerStatus,
       artifactStatus: safeResponse.artifactStatus ?? null,
+      visibleSanitizer,
       composerTrace: safeResponse.safety.composerTrace ?? null,
       packetShape: {
         facts: safeResponse.facts.length,
@@ -89,6 +92,7 @@ export async function POST(req: NextRequest) {
           ...safeResponse,
           trace: {
             composerTrace: safeResponse.safety.composerTrace ?? null,
+            visibleSanitizer,
             finalPrompt:
               safeResponse.safety.composerTrace?.anthropicTrace?.finalPrompt ??
               safeResponse.safety.composerTrace?.promptSnapshot ??
@@ -121,7 +125,9 @@ async function buildV6HomeKnowResponse(input: {
     tenantDisplayName: input.tenantDisplayName,
     includeTrace: input.includeTrace,
   });
-  const response = toHomeKnowResponseFromV6(result, { question: input.question });
+  const response = toHomeKnowResponseFromV6(result, {
+    question: input.question,
+  });
   const synthesized = await applyHomeV6ExecutiveSynthesis({
     response,
     v6Result: result,

@@ -176,6 +176,14 @@ export interface HomeKnowSafety {
   usableEvidence?: boolean;
   evidenceStatus?: "usable_dossier" | "empty_dossier";
   evidenceReason?: string;
+  visibleSanitizer?: {
+    sanitizerApplied: boolean;
+    sanitizerReason: "none" | "duplicate_tenant_opening";
+    semanticLoss: false;
+    changedFields: string[];
+    beforePrefix?: string;
+    afterPrefix?: string;
+  };
   evidenceChannels?: {
     facts: number;
     tables: number;

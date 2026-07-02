@@ -22,13 +22,16 @@ import { shapeHomeKnowResponseForRender } from "@/lib/home/know/home-render-laye
 import type {
   IntelligenceBindingPayload,
   BindingDimension,
-  BindingSignal,
 } from "@/lib/intelligence/binding/binding-payload";
 import { demoSafeClientText } from "@/lib/client-config";
 import type {
   HomeV6BrowserPreview,
   HomeV6ContextBrowser,
 } from "@/lib/home/v6-context-browser";
+import {
+  buildHomeV6ContextFindings,
+  type HomeV6ContextFinding,
+} from "@/lib/home/v6/home-v6-context-findings";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -52,10 +55,19 @@ const CSS = `
 .homex .hx-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:680px){.homex .hx-grid{grid-template-columns:1fr}.homex .hx-rail,.homex .hx-body{padding-left:18px;padding-right:18px}.homex .hx-navWrap{display:grid}.homex .hx-select{width:100%;min-width:0}}
 .homex .hx-card{background:var(--hcard);border:1px solid var(--hl);border-radius:12px;padding:20px 22px}
+.homex .hx-cardTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
 .homex .hx-tags{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--hm);margin-bottom:9px}
 .homex .hx-card h3{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:19px;line-height:1.22;margin:0 0 8px}
 .homex .hx-card p{color:#3d3d36;font-size:13.5px;line-height:1.6;margin:0}
 .homex .hx-evi{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;color:var(--hm);margin-top:12px;padding-top:11px;border-top:1px solid var(--hl)}
+.homex .hx-detail{margin-top:14px;border-top:1px solid var(--hl);padding-top:12px}
+.homex .hx-detail summary{cursor:pointer;color:#0c1a3a;font-weight:750;font-size:12.5px}
+.homex .hx-detailgrid{display:grid;gap:10px;margin-top:11px}
+.homex .hx-detailblock{font-size:12.2px;line-height:1.45;color:#55554e}
+.homex .hx-detailblock strong{display:block;color:#1a1a18;margin-bottom:3px}
+.homex .hx-rowrefs{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.homex .hx-rowrefs li{border:1px solid #eee9dd;border-radius:8px;padding:8px 9px;background:#fff;color:#32322d;font-size:12px;line-height:1.35}
+.homex .hx-rowrefs code{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;color:#66708a}
 .homex .hx-cpat{background:var(--hcard);border:1px solid var(--hl);border-radius:10px;padding:14px 16px}
 .homex .hx-cpat .dom{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--hg);margin-bottom:6px}
 .homex .hx-cpat h4{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:16px;margin:0 0 5px}
@@ -92,6 +104,7 @@ const CSS = `
 .homex .hx-mini{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .homex .hx-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hl);border-radius:999px;background:#fff;padding:5px 9px;color:#55554e;font-size:12px}
 .homex .hx-chip strong{color:#1b1b18}
+.homex .hx-chipWarn{background:#FFF5DB;color:#7A5A1F;border-color:#E8D3A2}
 .homex .hx-gapcell{display:inline-flex;align-items:center;border-radius:999px;background:#FFF5DB;color:#7A5A1F;padding:2px 8px;font-size:11.5px;font-weight:700}
 `;
 
@@ -105,7 +118,6 @@ const CONTEXT_BROWSER_QUESTIONS = [
 ];
 
 const EMPTY_DIMS: BindingDimension[] = [];
-const EMPTY_SIGNALS: BindingSignal[] = [];
 
 const TECHNICAL_STRING_FIELDS = new Set([
   "id",
@@ -117,7 +129,11 @@ const TECHNICAL_STRING_FIELDS = new Set([
 ]);
 
 function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
-  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
+  if (
+    typeof value === "string" &&
+    fieldName &&
+    TECHNICAL_STRING_FIELDS.has(fieldName)
+  ) {
     return value;
   }
   if (typeof value === "string") return demoSafeClientText(value) as T;
@@ -165,37 +181,101 @@ function toneFor(trust: number): string {
   return "var(--hr)";
 }
 
-function SignalCard({ s }: { s: BindingSignal }) {
-  const lensLabel = signalLensLabel(s);
+function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
   return (
     <div className="hx-card">
-      {lensLabel ? <div className="hx-tags">Lens: {lensLabel}</div> : null}
-      <h3>{s.headline}</h3>
-      <p>{s.body}</p>
-      <div className="hx-evi">
-        {s.evidencePoints} evidence points · {s.sources} sources
+      <div className="hx-cardTop">
+        <div className="hx-tags">
+          {finding.claimBasis.replace(/_/g, " ")}
+          {finding.patternContextUsed ? " · pattern context used" : ""}
+        </div>
+        <span className="hx-badge">{finding.confidence} confidence</span>
       </div>
+      <h3>{finding.title}</h3>
+      <p>{finding.executiveFinding}</p>
+      <p style={{ marginTop: 8 }}>{finding.whyItMatters}</p>
+      <div className="hx-evi">
+        {finding.sourceRowCount.toLocaleString()} V6 rows ·{" "}
+        {finding.sourceFiles.length} source file
+        {finding.sourceFiles.length === 1 ? "" : "s"} · next:{" "}
+        {surfaceLabel(finding.recommendedSurface)}
+      </div>
+      <div className="hx-mini" aria-label="Supporting dimensions">
+        {finding.supportingDimensions.slice(0, 4).map((dimension) => (
+          <span className="hx-chip" key={dimension}>
+            {dimension}
+          </span>
+        ))}
+      </div>
+      {finding.evidenceGaps.length > 0 ? (
+        <div className="hx-mini" aria-label="Evidence gaps">
+          {finding.evidenceGaps.slice(0, 3).map((gap) => (
+            <span className="hx-chip hx-chipWarn" key={gap}>
+              Needs evidence: {gap}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <details className="hx-detail">
+        <summary>Why this appears</summary>
+        <div className="hx-detailgrid">
+          <div className="hx-detailblock">
+            <strong>Supporting V6 files</strong>
+            {finding.sourceFiles.join(", ")}
+          </div>
+          <div className="hx-detailblock">
+            <strong>Claim basis</strong>
+            {claimBasisLabel(finding.claimBasis)}
+            {finding.patternContextUsed
+              ? " Pattern context used — not tenant proof."
+              : ""}
+          </div>
+          <div className="hx-detailblock">
+            <strong>Recommended next step</strong>
+            {surfaceLabel(finding.recommendedSurface)}:{" "}
+            {finding.recommendedQuestion}
+          </div>
+          {finding.evidenceRefs.length > 0 ? (
+            <div className="hx-detailblock">
+              <strong>Representative source rows</strong>
+              <ul className="hx-rowrefs">
+                {finding.evidenceRefs.slice(0, 3).map((ref) => (
+                  <li key={`${ref.v6File}-${ref.rowId}`}>
+                    <code>
+                      {ref.v6File} · {ref.rowId}
+                    </code>
+                    <br />
+                    {ref.label}
+                    <br />
+                    {ref.claimSupported}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      </details>
     </div>
   );
 }
 
-function signalLensLabel(signal: BindingSignal): string {
-  const labels = (signal.domains ?? [])
-    .map((domain) => domain.replace(/_/g, " ").toLowerCase())
-    .map((domain) =>
-      domain
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((part) => {
-          if (["ai", "it", "erp", "bi"].includes(part)) {
-            return part.toUpperCase();
-          }
-          return part[0]?.toUpperCase() + part.slice(1);
-        })
-        .join(" "),
-    );
-  if (signal.crossDomain) labels.push("Spans multiple areas");
-  return labels.join(" · ");
+function claimBasisLabel(basis: HomeV6ContextFinding["claimBasis"]): string {
+  if (basis === "tenant_fact") return "Tenant fact from V6 rows.";
+  if (basis === "calculated") return "Calculated from V6 rows.";
+  if (basis === "abarva_assessment")
+    return "AbarVa assessment from V6 facts and gaps.";
+  if (basis === "industry_pattern") return "Industry pattern context only.";
+  return "Tenant facts plus pattern context.";
+}
+
+function surfaceLabel(
+  surface: HomeV6ContextFinding["recommendedSurface"],
+): string {
+  if (surface === "home") return "Home";
+  if (surface === "intelligence") return "Intelligence";
+  if (surface === "tower") return "Tower";
+  if (surface === "source") return "Source";
+  return "Moves";
 }
 
 type DimensionBrowserSpec = {
@@ -208,7 +288,7 @@ const DEFAULT_BROWSER_SPEC: DimensionBrowserSpec = {
   loaded: [
     "Summary records describing this part of the operating model.",
     "Source-backed facts that aVa can use when answering context questions.",
-    "Coverage and confidence signals showing whether this area is strong or thin.",
+    "Coverage and confidence indicators showing whether this area is strong or thin.",
   ],
   browse: [
     "What is known in this area",
@@ -225,7 +305,7 @@ const DEFAULT_BROWSER_SPEC: DimensionBrowserSpec = {
 const DIMENSION_BROWSER_SPECS: Record<string, DimensionBrowserSpec> = {
   "Enterprise Profile": {
     loaded: [
-      "Company shape, industry context, scale signals, operating priorities, and enterprise-level constraints.",
+      "Company shape, industry context, scale indicators, operating priorities, and enterprise-level constraints.",
       "The business backdrop aVa should use before answering module-specific questions.",
       "Known boundaries for what this demo tenant represents.",
     ],
@@ -276,12 +356,12 @@ const DIMENSION_BROWSER_SPECS: Record<string, DimensionBrowserSpec> = {
   },
   "Business Metrics": {
     loaded: [
-      "Outcome metrics, demand signals, performance indicators, and value measures that define success.",
+      "Outcome metrics, demand indicators, performance indicators, and value measures that define success.",
       "Metric context used to separate activity from provable value.",
       "Known baseline or maturity gaps where a metric cannot yet be trusted.",
     ],
     browse: [
-      "Outcome metrics and baseline signals",
+      "Outcome metrics and baselines",
       "Value measures tied to initiatives",
       "Measurement gaps and proof limits",
     ],
@@ -412,7 +492,7 @@ const DIMENSION_BROWSER_SPECS: Record<string, DimensionBrowserSpec> = {
   },
   "IT Budget & Financials": {
     loaded: [
-      "Run, change, AI/data, labor, vendor, cloud, program, and portfolio spend signals.",
+      "Run, change, AI/data, labor, vendor, cloud, program, and portfolio spend records.",
       "Finance facts used to answer spend, value, and budget allocation questions.",
       "Where amounts, time periods, or cost categories are missing or not board-grade.",
     ],
@@ -536,7 +616,7 @@ const DIMENSION_BROWSER_SPECS: Record<string, DimensionBrowserSpec> = {
       "Where external patterns should not be treated as company-specific evidence.",
     ],
     browse: [
-      "Relevant industry patterns",
+      "Industry pattern context",
       "Peer-style benchmarks and caveats",
       "Pattern context versus tenant-specific proof",
     ],
@@ -554,16 +634,15 @@ function browserSpecForDimension(dimension: string): DimensionBrowserSpec {
 
 function DimensionView({
   dim,
-  signals,
   preview,
+  findings,
 }: {
   dim: BindingDimension;
-  signals: BindingSignal[];
   preview?: HomeV6BrowserPreview | null;
+  findings: HomeV6ContextFinding[];
 }) {
-  const firstWord = dim.dimension.toLowerCase().split(" ")[0];
-  const related = signals.filter((s) =>
-    s.domains?.some((d) => d.toLowerCase().includes(firstWord)),
+  const related = findings.filter((finding) =>
+    finding.supportingDimensions.includes(dim.dimension),
   );
   const spec = browserSpecForDimension(dim.dimension);
   return (
@@ -579,7 +658,7 @@ function DimensionView({
           </div>
         </div>
         <div className="hx-stat">
-          <div className="k">Evidence points</div>
+          <div className="k">Loaded records</div>
           <div className="v">{dim.evidence.toLocaleString()}</div>
         </div>
         <div className="hx-stat">
@@ -711,11 +790,11 @@ function DimensionView({
       {related.length > 0 && (
         <div className="hx-sec">
           <div className="hx-sechead">
-            <span className="hx-ey">Findings tied to this area</span>
+            <span className="hx-ey">Context findings tied to this area</span>
           </div>
           <div className="hx-grid">
-            {related.map((s) => (
-              <SignalCard s={s} key={s.id} />
+            {related.map((finding) => (
+              <FindingCard finding={finding} key={finding.findingId} />
             ))}
           </div>
         </div>
@@ -724,62 +803,62 @@ function DimensionView({
   );
 }
 
-function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
-  const tl = payload?.trustLine;
-  const signals = (payload?.signals ?? []).slice(0, 4);
-  const corpus = (payload?.corpus ?? []).slice(0, 3);
-  const dimensionCount = payload?.context.length ?? tl?.dimensionsLoaded ?? 0;
+function Overview({
+  payload,
+  v6Browser,
+  findings,
+}: {
+  payload: IntelligenceBindingPayload | null;
+  v6Browser: HomeV6ContextBrowser | null | undefined;
+  findings: HomeV6ContextFinding[];
+}) {
+  const dimensions = Object.values(v6Browser?.dimensions ?? {});
+  const dimensionCount = dimensions.length || payload?.context.length || 0;
+  const v6Rows = dimensions.reduce(
+    (sum, dimension) => sum + dimension.rowCount,
+    0,
+  );
+  const v6Files = new Set(
+    dimensions.flatMap((dimension) => dimension.fileNames),
+  ).size;
+  const evidenceGaps = dimensions.reduce(
+    (sum, dimension) => sum + dimension.dataThinCells,
+    0,
+  );
   return (
     <div className="hx-body">
       <div className="hx-ey">Current-state context</div>
       <h2 className="hx-h2">What we know about your enterprise.</h2>
-      {tl ? (
+      {dimensionCount > 0 ? (
         <div className="hx-stats">
           <div className="hx-stat">
             <div className="k">Context areas</div>
             <div className="v">{dimensionCount}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">Evidence points</div>
-            <div className="v">{tl.evidencePoints.toLocaleString()}</div>
+            <div className="k">V6 records</div>
+            <div className="v">{v6Rows.toLocaleString()}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">Sources</div>
-            <div className="v">{tl.sources}</div>
+            <div className="k">V6 files</div>
+            <div className="v">{v6Files}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">Search-verified</div>
-            <div className="v">{tl.searchVerifiedPct}%</div>
+            <div className="k">Evidence gaps</div>
+            <div className="v">{evidenceGaps.toLocaleString()}</div>
           </div>
         </div>
       ) : null}
 
-      {signals.length > 0 && (
+      {findings.length > 0 && (
         <div className="hx-sec">
           <div className="hx-sechead">
-            <span className="hx-ey">What your context is telling you</span>
-            <span className="hx-ey">{signals.length} findings</span>
+            <span className="hx-ey">Context findings</span>
+            <span className="hx-ey">{findings.length} V6 findings</span>
           </div>
           <div className="hx-grid">
-            {signals.map((s) => (
-              <SignalCard s={s} key={s.id} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {corpus.length > 0 && (
-        <div className="hx-sec">
-          <div className="hx-sechead">
-            <span className="hx-ey">Relevant industry patterns</span>
-          </div>
-          <div className="hx-grid">
-            {corpus.map((c, i) => (
-              <div className="hx-cpat" key={`${c.patternName}-${i}`}>
-                <div className="dom">{c.domain.replace(/_/g, " ")}</div>
-                <h4>{c.patternName}</h4>
-                <p>{c.whenToApply}</p>
-              </div>
+            {findings.map((finding) => (
+              <FindingCard finding={finding} key={finding.findingId} />
             ))}
           </div>
         </div>
@@ -820,7 +899,8 @@ function messageId(prefix: string): string {
 
 function citationClass(citation: HomeKnowCitation) {
   if (citation.sourceClass === "tenant-relationship") return "graph" as const;
-  if (citation.sourceClass === "tenant-source-file") return "tenant-chunk" as const;
+  if (citation.sourceClass === "tenant-source-file")
+    return "tenant-chunk" as const;
   return "tenant-fact" as const;
 }
 
@@ -832,8 +912,7 @@ function toAvaAnswerPacket(response: HomeKnowResponse): AvaAnswerPacket {
     rows: table.rows.map((row) => {
       const normalized: Record<string, string | number | null> = {};
       Object.entries(row).forEach(([key, value]) => {
-        normalized[key] =
-          typeof value === "boolean" ? String(value) : value;
+        normalized[key] = typeof value === "boolean" ? String(value) : value;
       });
       return normalized;
     }),
@@ -848,8 +927,7 @@ function toAvaAnswerPacket(response: HomeKnowResponse): AvaAnswerPacket {
       label: point.label,
       value: point.value,
       color:
-        point.color ??
-        ["#0f5ba7", "#1f6b3a", "#d8e4f2", "#7a8ca5"][index % 4],
+        point.color ?? ["#0f5ba7", "#1f6b3a", "#d8e4f2", "#7a8ca5"][index % 4],
     })),
     citationIds: chart.citationIds,
   }));
@@ -938,8 +1016,7 @@ function toAvaAnswerPacket(response: HomeKnowResponse): AvaAnswerPacket {
       confidence: response.answerStatus === "answered" ? "high" : "medium",
       evidenceStrength:
         response.answerStatus === "answered" ? "strong" : "partial",
-      tenantGrounding:
-        response.citations.length > 0 ? "complete" : "partial",
+      tenantGrounding: response.citations.length > 0 ? "complete" : "partial",
       answerCompleteness:
         response.answerStatus === "answered" ? "complete" : "partial",
     },
@@ -985,17 +1062,21 @@ export function HomeSurface({
   clientKey?: string | null;
   v6Browser?: HomeV6ContextBrowser | null;
 }) {
-  const safePayload = useMemo(
-    () => sanitizeVisibleStrings(payload),
-    [payload],
+  const safePayload = useMemo(() => sanitizeVisibleStrings(payload), [payload]);
+  const safeV6Browser = useMemo(
+    () => sanitizeVisibleStrings(v6Browser),
+    [v6Browser],
   );
   const dims = safePayload?.context ?? EMPTY_DIMS;
-  const signals = safePayload?.signals ?? EMPTY_SIGNALS;
   const [dimKey, setDimKey] = useState<string | null>(null);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
   const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
   const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
+  const findings = useMemo(
+    () => sanitizeVisibleStrings(buildHomeV6ContextFindings(safeV6Browser)),
+    [safeV6Browser],
+  );
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)
     : null;
@@ -1093,9 +1174,9 @@ export function HomeSurface({
     () => [
       { id: "overview", label: "Overview" },
       { id: "context", label: "Context", count: dims.length },
-      { id: "signals", label: "Findings", count: signals.length },
+      { id: "findings", label: "Context findings", count: findings.length },
     ],
-    [dims.length, signals.length],
+    [dims.length, findings.length],
   );
 
   const canvas = (
@@ -1137,11 +1218,15 @@ export function HomeSurface({
           {selected ? (
             <DimensionView
               dim={selected}
-              preview={v6Browser?.dimensions[selected.dimension] ?? null}
-              signals={signals}
+              preview={safeV6Browser?.dimensions[selected.dimension] ?? null}
+              findings={findings}
             />
           ) : (
-            <Overview payload={safePayload} />
+            <Overview
+              payload={safePayload}
+              v6Browser={safeV6Browser}
+              findings={findings}
+            />
           )}
         </main>
       </div>
@@ -1166,6 +1251,7 @@ export function HomeSurface({
         clientKey,
         tenantKey,
         tabs,
+        selectedDimension: dimKey,
       }}
       thread={thread}
     />

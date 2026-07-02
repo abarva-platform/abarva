@@ -1,4 +1,7 @@
-import { sanitizeHomeKnowVisiblePayload } from "../home-demo-safe-response";
+import {
+  sanitizeHomeKnowVisiblePayload,
+  sanitizeHomeKnowVisiblePayloadWithAudit,
+} from "../home-demo-safe-response";
 
 describe("home demo-safe response sanitizer", () => {
   it("converts old tenant names in user-visible Home KNOW payload strings", () => {
@@ -69,7 +72,7 @@ describe("home demo-safe response sanitizer", () => {
   });
 
   it("collapses duplicate demo tenant openings after name sanitization", () => {
-    const safe = sanitizeHomeKnowVisiblePayload({
+    const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
       prose:
         "For SkyHarbor Air, For SkyHarbor Air, the enterprise profile is strong enough to orient leadership.",
     });
@@ -77,5 +80,32 @@ describe("home demo-safe response sanitizer", () => {
     expect(safe.prose).toBe(
       "For Airline Demo, the enterprise profile is strong enough to orient leadership.",
     );
+    expect(audit).toEqual({
+      sanitizerApplied: true,
+      sanitizerReason: "duplicate_tenant_opening",
+      semanticLoss: false,
+      changedFields: ["$.prose"],
+      beforePrefix:
+        "For Airline Demo, For Airline Demo, the enterprise profile is strong enough to orient leadership",
+      afterPrefix:
+        "For Airline Demo, the enterprise profile is strong enough to orient leadership.",
+    });
+  });
+
+  it("reports no visible sanitizer change when duplicate openings are absent", () => {
+    const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
+      prose:
+        "For Industrial Demo, the enterprise profile is strong enough to orient leadership.",
+    });
+
+    expect(safe.prose).toBe(
+      "For Industrial Demo, the enterprise profile is strong enough to orient leadership.",
+    );
+    expect(audit).toEqual({
+      sanitizerApplied: false,
+      sanitizerReason: "none",
+      semanticLoss: false,
+      changedFields: [],
+    });
   });
 });
