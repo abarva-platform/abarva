@@ -401,6 +401,52 @@ describe("cio tower answer contract", () => {
     ).toBe("tower_advisor_morning_brief");
   });
 
+  it("routes the Tower 100Q hardening families to explicit governed contracts", () => {
+    expect(matchContractKey("What do we know about run versus change spend?")).toBe(
+      "tower_run_change_split",
+    );
+    expect(matchContractKey("What is the budget trend from FY25 to FY26?")).toBe(
+      "tower_trend_it_budget",
+    );
+    expect(matchContractKey("Which programs are healthy, watched, or at risk?")).toBe(
+      "tower_inspect_this_week",
+    );
+    expect(matchContractKey("Show the programs grouped by business function.")).toBe(
+      "tower_inspect_this_week",
+    );
+    expect(
+      matchContractKey(
+        "Which programs depend on foundational data or platform work?",
+      ),
+    ).toBe("tower_inspect_this_week");
+    expect(matchContractKey("What is the committed value across the portfolio?")).toBe(
+      "tower_value_realization",
+    );
+    expect(
+      matchContractKey(
+        "What is the best AI investment story Tower can support from loaded evidence?",
+      ),
+    ).toBe("tower_top_it_programs_by_budget");
+    expect(matchContractKey("Which contracts renew soon?")).toBe(
+      "tower_vendor_contract_gap",
+    );
+    expect(
+      matchContractKey("Which vendor relationships are tied to at-risk programs?"),
+    ).toBe("tower_vendor_contract_gap");
+    expect(matchContractKey("What are the biggest Tower risks right now?")).toBe(
+      "tower_evidence_trust",
+    );
+    expect(
+      matchContractKey("Which Tower claims are only directional, not proven?"),
+    ).toBe("tower_evidence_trust");
+  });
+
+  it("does not default unmatched Tower questions to the top-program template", () => {
+    expect(matchContractKey("What is the weakest point in Tower today?")).toBe(
+      "tower_evidence_trust",
+    );
+  });
+
   it("asks Claude for a compact table when an IT budget question requests each slice", () => {
     const prompt = buildCioTowerClaudePrompt(
       context({

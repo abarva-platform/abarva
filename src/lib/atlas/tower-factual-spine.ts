@@ -574,10 +574,15 @@ export function isTowerFactualSpineCandidate(question: string): boolean {
     (/\b(top|largest|biggest|list)\b/.test(q) &&
       /\b(programs?|initiatives?)\b/.test(q)) ||
     /\b(value\s+gap|promised.*measured|unproven\s+value|least\s+proven)\b/.test(q) ||
+    /\b(committed\s+value|value\s+has\s+been\s+proven|proven\s+so\s+far|claim(?:ed)?\s+yet|best\s+ai\s+investment\s+story)\b/.test(q) ||
     /\b(weak\s+value\s+evidence|weakest\s+evidence|missing\s+value\s+evidence|evidence\s+gap|under[- ]?proven)\b/.test(q) ||
     /\b(inspect\s+this\s+week|what\s+should\s+i\s+inspect|where\s+should\s+i\s+focus|what\s+needs\s+(my\s+)?attention|next\s+funding\s+gate)\b/.test(q) ||
+    /\b(healthy.*watched.*risk|watched.*risk|group(?:ed)?\s+by\s+business\s+function|program\s+owners?|largest\s+budget\s+responsibility|foundational\s+(?:data|platform)|platform\s+work|biggest\s+blockers?)\b/.test(q) ||
     /\b(investment\s+posture|posture\s+should\s+the\s+cio|cio\s+morning\s+brief|morning\s+brief|what\s+should\s+the\s+cio\s+know|executive\s+brief|advisor\s+brief)\b/.test(q) ||
     (/\b(top|largest|biggest)\b/.test(q) && /\bvendor|contract\b/.test(q)) ||
+    /\b(contracts?\s+renew|renewals?\s+soon|vendor\s+relationships?|vendor\s+spend|vendor\s+exposure|vendor\s+concentration|procurement\s+challenge|vendor\s+review|contract\s+exposure)\b/.test(q) ||
+    /\b(source\s+evidence|dashboard\s+evidence|board[- ]grade|claims?.*directional|directional.*proven|not\s+say\s+yet|evidence\s+is\s+missing|least\s+trustworthy|biggest\s+tower\s+risks?|cleanest\s+executive\s+summary)\b/.test(q) ||
+    /\b(run\s+versus\s+change|run.*change|change.*run|capex.*opex|opex.*capex)\b/.test(q) ||
     (/\b(measured value|value proof|realized value)\b/.test(q) &&
       /\b(total|across|all)\b/.test(q)) ||
     (/\b(active pressure|pressure flags?|flags?)\b/.test(q) &&
