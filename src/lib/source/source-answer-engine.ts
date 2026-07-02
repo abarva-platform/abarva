@@ -933,13 +933,29 @@ function buildContractOptimizationAnswer(args: {
   const findings = contractEvidence
     .filter((item) => /\bfinding\b/i.test(item.title))
     .map(parseContractOptimizationFinding);
-  const findingByText = (pattern: RegExp) =>
-    findings.find((finding) => pattern.test(`${finding.title} ${finding.excerpt}`));
-  const priceLeakage = findingByText(/\binvoice|price|baseline|variance|leakage/i);
-  const slaLeakage = findingByText(/\bsla|credit|service/i);
-  const staffingGap = findingByText(/\bstaff|fte|coverage/i);
-  const changeOrderLeakage = findingByText(/\bchange[- ]order|catalog/i);
-  const workloadMismatch = findingByText(/\bworkload|ticket|emergency|operational/i);
+  const findingByText = (titlePattern: RegExp, fallbackPattern: RegExp) =>
+    findings.find((finding) => titlePattern.test(finding.title)) ??
+    findings.find((finding) => fallbackPattern.test(finding.excerpt));
+  const priceLeakage = findingByText(
+    /\binvoice|contracted baseline/i,
+    /\bprice leakage|invoice variance|above-baseline/i,
+  );
+  const slaLeakage = findingByText(
+    /\bservice credits?|sla/i,
+    /\bsla credit|chronic-miss|service-credit/i,
+  );
+  const staffingGap = findingByText(
+    /\bstaffing|coverage/i,
+    /\bstaffing variance|fte|shift coverage/i,
+  );
+  const changeOrderLeakage = findingByText(
+    /\bchange[- ]order|cataloged/i,
+    /\bchange[- ]order exposure|recurring separation/i,
+  );
+  const workloadMismatch = findingByText(
+    /\bworkload|ticket|emergency/i,
+    /\bticket|emergency change|operational volume/i,
+  );
 
   const exposureLine = [
     priceLeakage ? summarizeFinding(priceLeakage) : null,
@@ -1093,7 +1109,9 @@ function parseContractOptimizationFinding(
   item: SourceLiveTenantEvidenceItem,
 ): ContractOptimizationFinding {
   return {
-    title: formatEvidenceTitle(item.title).replace(/^Contract optimization finding\s*[-:]\s*/i, ""),
+    title: formatEvidenceTitle(item.title)
+      .replace(/^Contract optimization finding\s*/i, "")
+      .trim(),
     excerpt: cleanEvidenceExcerpt(item.excerpt),
   };
 }

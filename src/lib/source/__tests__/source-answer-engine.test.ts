@@ -797,6 +797,19 @@ describe("Source answer engine", () => {
         confidence: "high",
         score: 32,
       },
+      {
+        id: "source-event:skyh:contract-optimization-finding-change-order",
+        segmentId: "sourcing_artifacts",
+        recordId: "contract-optimization-finding-change-order",
+        title:
+          "Contract optimization finding - Change-order spend is not cleanly cataloged into the run baseline",
+        sourceType: "contextChunk",
+        sourceDoc: "Source intake record",
+        excerpt:
+          "change-order exposure: $1,152,000 of sampled exposure lacks clean catalog mapping, complete approval evidence, or one-time/recurring separation; $1,008,000 appears recurring.",
+        confidence: "high",
+        score: 31,
+      },
     ];
     const skyharborContractBundle: SourceAgentContextBundle = {
       ...contextBundle,
@@ -846,8 +859,10 @@ describe("Source answer engine", () => {
 
     expect(renewAnswer?.answerText).toContain("Do not renew as-is");
     expect(renewAnswer?.answerText).toContain("RFP fallback");
+    expect(renewAnswer?.answerText).not.toContain("Contract optimization finding");
     expect(cureAnswer?.answerText).toContain("The cure notice should preserve rights");
     expect(cureAnswer?.answerText).toContain("Invoice cure");
+    expect(cureAnswer?.answerText).toContain("Change-order cure");
     expect(missingAnswer?.answerText).toContain(
       "not enough to approve a final commercial reset",
     );
