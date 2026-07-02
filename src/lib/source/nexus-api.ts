@@ -121,8 +121,6 @@ export interface SourceNexusApiStubResponse {
   generatedAt: string;
   noModel: boolean;
   answer: string;
-  message: string;
-  text: string;
   answerStatus: SourceNexusApiAnswerStatus;
   contextScope: SourceAgentContextBundle["contextScope"] | "unknown";
   contextQuality: SourceAgentContextBundle["contextQuality"] | null;
@@ -310,8 +308,6 @@ export function createSourceNexusApiStubResponse(
     generatedAt,
     noModel: true,
     answer: summary,
-    message: summary,
-    text: summary,
     answerStatus,
     contextScope: contextResult.bundle.contextScope,
     contextQuality: contextResult.bundle.contextQuality,
@@ -515,8 +511,6 @@ function createErrorResponse(args: {
     generatedAt: args.generatedAt,
     noModel: true,
     answer: args.error.message,
-    message: args.error.message,
-    text: args.error.message,
     answerStatus: "error",
     contextScope: "unknown",
     contextQuality: null,

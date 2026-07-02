@@ -250,8 +250,6 @@ function buildLlmBackedResponse(args: {
     sourceAnswer,
     answerQuality: undefined,
     answer: args.answerText,
-    message: args.answerText,
-    text: args.answerText,
     summary: args.answerText,
     nexusSummary: args.fallbackResponse.nexusSummary
       ? {

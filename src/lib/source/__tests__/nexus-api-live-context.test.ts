@@ -107,8 +107,6 @@ describe('Source Nexus API live context', () => {
     });
     expect(response.sourceAnswer?.answerText).toContain('CXO guidance');
     expect(response.answer).toBe(response.summary);
-    expect(response.message).toBe(response.summary);
-    expect(response.text).toBe(response.summary);
     expect(response.answer).not.toMatch(/source_events|Current state:/i);
     expect(response.answerQuality).toMatchObject({
       renderable: true,
