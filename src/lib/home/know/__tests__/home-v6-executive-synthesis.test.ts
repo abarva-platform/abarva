@@ -92,6 +92,7 @@ describe("Home V6 executive synthesis", () => {
     expect(mockGetAuditedAnthropicClient).toHaveBeenCalledWith(
       expect.objectContaining({
         workflow: "home-v6-executive-answer",
+        model: "claude-sonnet-4-6",
         prompt: expect.stringContaining(HOME_V6_EXECUTIVE_SYSTEM_PROMPT),
       }),
     );
@@ -260,6 +261,9 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(true);
     expect(result.response.safety.composerTrace?.reason).toContain(
       "claudeInvoked=true",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "model=claude-sonnet-4-6",
     );
     expect(result.response.safety.composerTrace?.reason).toContain(
       "claudeSelected=false",

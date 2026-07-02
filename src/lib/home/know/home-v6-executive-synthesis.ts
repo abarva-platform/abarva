@@ -10,8 +10,8 @@ import type { V6HomeAskResult } from "@/lib/home/know/v6-home-ask";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 const PROMPT_VERSION = "home-v6-executive-answer-v3";
-const DEFAULT_MODEL = "claude-opus-4-8";
-const DEFAULT_MAX_TOKENS = 1800;
+const DEFAULT_MODEL = "claude-sonnet-4-6";
+const DEFAULT_MAX_TOKENS = 1200;
 const DEFAULT_TIMEOUT_MS = 45_000;
 
 const TECHNICAL_LANGUAGE_RE =
