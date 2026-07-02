@@ -53,13 +53,6 @@ async function main() {
       tenantKey,
       sourceEventCode,
     });
-    if (apply) {
-      await ensureSourceParticipants({
-        client,
-        tenantKey,
-        sourceEventId: sourceEvent.id,
-      });
-    }
 
     const input = buildSkyHarborAmsExistingContractInput({
       tenantKey,
@@ -225,6 +218,14 @@ async function main() {
     );
 
     await client.query(apply ? "commit" : "rollback");
+
+    if (apply) {
+      await ensureSourceParticipants({
+        client,
+        tenantKey,
+        sourceEventId: sourceEvent.id,
+      });
+    }
 
     console.log(
       JSON.stringify(
@@ -454,7 +455,7 @@ async function ensureSourceParticipants(args: {
         )
         select
           $1,
-          $2,
+          $2::text,
           $2::uuid,
           pcm.person_id::text,
           coalesce(p.name, p.email, 'SkyHarbor source participant'),

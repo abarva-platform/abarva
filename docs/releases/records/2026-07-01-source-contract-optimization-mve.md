@@ -58,8 +58,9 @@ becoming a generic document browser.
   shell plus participant grants exist before proof.
 - Participant-grant hardening for the private operator load: the loader now
   resolves SkyHarbor through the supported `clients.tenant_key` / `slug` shape
-  and treats participant seeding as non-fatal so a convenience grant mismatch
-  cannot roll back the Source event and contract optimization evidence.
+  and performs participant seeding after the Source event/profile transaction
+  commits so a convenience grant mismatch cannot roll back the Source event and
+  contract optimization evidence.
 
 ## QA / Validation
 
@@ -80,7 +81,8 @@ becoming a generic document browser.
 - PASS: follow-up live-binding fix passed focused Jest, focused ESLint,
   targeted TypeScript compile, and release check before redeploy.
 - PASS: participant-grant hardening removes the stale `clients.key` lookup that
-  failed in the live private operator run.
+  failed in the live private operator run and keeps optional participant seeding
+  outside the critical evidence transaction.
 - BLOCKED: full-repo TypeScript with large heap reached existing dependency
   declaration gaps outside this slice (`js-yaml`,
   `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`).
