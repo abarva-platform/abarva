@@ -64,6 +64,8 @@ export async function buildSourceGenerationContext(
       name: activeClient?.name,
     }),
     eventAccountName: event.accountName,
+    eventCode: event.code,
+    eventName: event.name,
   });
 
   let substrateEventId = event.id;
@@ -124,16 +126,30 @@ function resolveSourceGenerationTenantName(args: {
   activeClientName?: string | null;
   canonicalName?: string | null;
   eventAccountName?: string | null;
+  eventCode?: string | null;
+  eventName?: string | null;
 }): string {
   const activeClientName = cleanTenantLabel(args.activeClientName);
   const canonicalName = cleanTenantLabel(args.canonicalName);
   const eventAccountName = cleanTenantLabel(args.eventAccountName);
+  const eventDerivedName = inferSourceEventTenantName({
+    eventCode: args.eventCode,
+    eventName: args.eventName,
+  });
+
+  if (eventDerivedName && isDemoPlaceholder(eventAccountName)) {
+    return eventDerivedName;
+  }
 
   if (eventAccountName && isDemoPlaceholder(canonicalName)) {
     return eventAccountName;
   }
 
-  return canonicalName ?? activeClientName ?? eventAccountName ?? 'AbarVa Client';
+  if (eventDerivedName && isDemoPlaceholder(canonicalName)) {
+    return eventDerivedName;
+  }
+
+  return canonicalName ?? activeClientName ?? eventAccountName ?? eventDerivedName ?? 'AbarVa Client';
 }
 
 function cleanTenantLabel(value: string | null | undefined): string | null {
@@ -148,6 +164,15 @@ function isDemoPlaceholder(value: string | null): boolean {
         value,
       ),
   );
+}
+
+function inferSourceEventTenantName(args: {
+  eventCode?: string | null;
+  eventName?: string | null;
+}): string | null {
+  const text = `${args.eventCode ?? ''} ${args.eventName ?? ''}`;
+  if (/\bSKYH\b|SkyHarbor/i.test(text)) return 'SkyHarbor Air';
+  return null;
 }
 
 /**
