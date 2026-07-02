@@ -293,6 +293,7 @@
     "integrity:tower-stubs": "jest src/__tests__/integration/tower-subsurface-stubs.test.ts",
     "integrity:canonical-routes": "jest src/__tests__/integration/canonical-routes.test.ts",
     "qa:intelligence:apex": "node scripts/qa/intelligence-apex-submenu-qa.mjs",
+    "qa:intelligence:pressure100": "node scripts/qa/intelligence-100q-pressure.mjs",
     "qa:agent-response-shape:cipo": "npx tsx src/scripts/qa/agent-response-shape-cipo-qa.ts",
     "qa:agent-output:golden": "npx tsx src/scripts/qa/agent-output-golden-eval.ts",
     "qa:adversarial-quality": "node scripts/qa/adversarial-quality-dashboard.mjs --check",

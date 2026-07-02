@@ -27,6 +27,7 @@ import {
   type ExecutiveCanvasPayload,
   type ExecutiveCanvasProofBoundary,
 } from "@/lib/intelligence/executive-canvas-payload";
+import { buildPendingIntelligenceCanvasTabs } from "@/lib/intelligence/analytics/pending-canvas";
 import { CxoCanvasRenderer } from "@/lib/cxo-canvas/rendererRegistry";
 
 type Tab = string;
@@ -1452,6 +1453,12 @@ function fastInsightTabsFor(
   tenantKey: string,
   question: string,
 ): ParsedIntelligenceTab[] {
+  const analyticsTabs = buildPendingIntelligenceCanvasTabs({
+    tenantKey,
+    question,
+  });
+  if (analyticsTabs.length > 0) return analyticsTabs;
+
   const normalizedTenant = tenantKey.toLowerCase();
   const q = question.toLowerCase();
   if (
