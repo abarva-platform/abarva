@@ -300,11 +300,11 @@ describe("Source answer engine", () => {
       evidenceCitations: answer?.evidenceCitations,
       responseParts: answer?.responseParts,
     });
-    expect(visiblePayload).toContain("Ava has guided");
+    expect(visiblePayload).toContain("aVa has guided");
     expect(visiblePayload).not.toContain("Sentinel has guided");
     expect(answer?.responseParts[0]).toMatchObject({
       type: "metricStrip",
-      title: "Ava sourcing read",
+      title: "aVa sourcing read",
     });
   });
 
@@ -742,5 +742,117 @@ describe("Source answer engine", () => {
     expect(answer?.limits).toContain(
       "Corpus guidance is global doctrine; tenant, vendor, benchmark, and savings claims still require cited evidence.",
     );
+  });
+
+  it("answers contract optimization questions with question-specific sourcing guidance", () => {
+    const contractEvidence: SourceLiveTenantContextSnapshot["retrievedEvidence"] = [
+      {
+        id: "source-event:skyh:contract-optimization-recommended-path",
+        segmentId: "sourcing_artifacts",
+        recordId: "contract-optimization-recommended-path",
+        title: "Existing contract optimization recommended path",
+        sourceType: "contextChunk",
+        sourceDoc: "Source intake record",
+        excerpt:
+          "Immediate action: Issue a reservation-of-rights and cure notice covering invoice variance, SLA economics, staffing reconciliation, and change-order normalization before the renewal notice window closes. Primary path: Renegotiate the incumbent agreement with cure conditions, normalized run-rate baseline, stronger SLA credits, staffing true-up, and cataloged change-order controls. Fallback path: Prepare a competitive RFP if cure items remain unresolved or the incumbent cannot convert the evidence-backed levers into commercial commitments. Do not do: Do not renew as-is or treat the current run-rate as clean until leakage, staffing, SLA, and recurring change-order issues are resolved.",
+        confidence: "high",
+        score: 36,
+      },
+      {
+        id: "source-event:skyh:contract-optimization-finding-price",
+        segmentId: "sourcing_artifacts",
+        recordId: "contract-optimization-finding-price",
+        title:
+          "Contract optimization finding - Invoices are running above contracted baseline",
+        sourceType: "contextChunk",
+        sourceDoc: "Source intake record",
+        excerpt:
+          "price leakage: $791,000 of above-baseline invoice variance appears in the sampled months; annualized exposure is about $1,582,000. Implication: The incumbent commercial baseline cannot be treated as clean until pass-throughs, demand changes, and out-of-catalog charges are reconciled. Recommended action: Create a recovery and normalization schedule before renewal pricing.",
+        confidence: "high",
+        score: 34,
+      },
+      {
+        id: "source-event:skyh:contract-optimization-finding-sla",
+        segmentId: "sourcing_artifacts",
+        recordId: "contract-optimization-finding-sla",
+        title:
+          "Contract optimization finding - Service credits do not match operational criticality",
+        sourceType: "contextChunk",
+        sourceDoc: "Source intake record",
+        excerpt:
+          "sla credit leakage: 3 SLA commitment(s) show missed/weak performance economics or insufficient chronic-miss language. Implication: The buyer has operational risk without proportionate contractual remedy.",
+        confidence: "high",
+        score: 33,
+      },
+      {
+        id: "source-event:skyh:contract-optimization-finding-staffing",
+        segmentId: "sourcing_artifacts",
+        recordId: "contract-optimization-finding-staffing",
+        title:
+          "Contract optimization finding - Committed staffing and observed coverage do not fully reconcile",
+        sourceType: "contextChunk",
+        sourceDoc: "Source intake record",
+        excerpt:
+          "staffing variance: 12.0 of 114.0 committed FTE equivalent(s) are not visible in observed staffing or shift coverage. Estimated staffing value exposure is $2,220,000 annually.",
+        confidence: "high",
+        score: 32,
+      },
+    ];
+    const skyharborContractBundle: SourceAgentContextBundle = {
+      ...contextBundle,
+      tenant: {
+        tenantId: "skyharbor",
+        tenantKey: "skyharbor",
+        tenantName: "SkyHarbor Air",
+      },
+      route: "/api/v1/source/SKYH-AMS-CONTRACT-OPT-2026/nexus/ask",
+      sourcingArchetype: "managed_services",
+      sourcingEvent: {
+        ...contextBundle.sourcingEvent,
+        id: "skyh-ams-contract-opt-2026",
+        code: "SKYH-AMS-CONTRACT-OPT-2026",
+        name: "SkyHarbor Air AMS Contract Optimization",
+        accountName: "SkyHarbor Air",
+        archetype: "managed_services",
+        rigor: "strategic",
+        lifecycleStatus: "active",
+        owner: "VP IT Operations / Procurement commercial lead",
+        valueAtStakeUsd: 38_400_000,
+        currentStageKey: "responses",
+      },
+      liveTenantContext: {
+        ...liveTenantContext,
+        clientKey: "skyharbor",
+        brokerTenantKey: "skyharbor",
+        retrievedEvidence: contractEvidence,
+      },
+    };
+
+    const renewAnswer = buildSourceAnswerEngine({
+      prompt: "Should we renew, renegotiate, or rebid?",
+      contextBundle: skyharborContractBundle,
+      userRole: "cio",
+    });
+    const cureAnswer = buildSourceAnswerEngine({
+      prompt: "What should the cure notice say?",
+      contextBundle: skyharborContractBundle,
+      userRole: "cio",
+    });
+    const missingAnswer = buildSourceAnswerEngine({
+      prompt: "What evidence is missing?",
+      contextBundle: skyharborContractBundle,
+      userRole: "cio",
+    });
+
+    expect(renewAnswer?.answerText).toContain("Do not renew as-is");
+    expect(renewAnswer?.answerText).toContain("RFP fallback");
+    expect(cureAnswer?.answerText).toContain("The cure notice should preserve rights");
+    expect(cureAnswer?.answerText).toContain("Invoice cure");
+    expect(missingAnswer?.answerText).toContain(
+      "not enough to approve a final commercial reset",
+    );
+    expect(missingAnswer?.answerText).toContain("Missing before final renewal");
+    expect(renewAnswer?.answerText).not.toEqual(cureAnswer?.answerText);
+    expect(cureAnswer?.answerText).not.toEqual(missingAnswer?.answerText);
   });
 });
