@@ -36,7 +36,7 @@ Signed-in visual QA on the research-grade deploy showed Industrial Demo presenti
 
 Chart-label polish removes the remaining white bordered label pills from value/readiness plots. Initiative names now render as plain annotation text over the chart with only a subtle readability shadow, keeping the exhibit closer to the AbarVa product style and less busy for CXO demos.
 
-Chart collision guard shortens plotted initiative labels, reduces annotation type size, and places labels deterministically to the left, right, above, or below the point based on chart position. Full initiative names remain in the tooltip, accessibility label, and funding sequence.
+Chart collision guard replaces plotted initiative-name annotations with numbered chart markers and a compact key below the value/readiness plot. Full initiative names remain in the key, tooltip, accessibility label, funding sequence, and detail cards, avoiding dense-label overlap in real-world executive charts.
 
 ## Layer Impact
 
@@ -73,7 +73,7 @@ Chart collision guard shortens plotted initiative labels, reduces annotation typ
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: refines `investmentSequencingMap` into a quieter research-grade exhibit using the product palette: a value/readiness plot, compact funding-sequence spine, proof boundary, and executive metric strip.
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: promotes companion cards with governed native executive-canvas payloads above prose/table companion cards so the decision exhibit is visible first when Claude emits multiple tabs.
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: removes white bordered boxes from chart labels so initiative names render as plain text annotations on value/readiness plots.
-- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: adds chart-only label shortening, smaller annotation typography, and deterministic label placement around plotted points to reduce real-world overlap risk.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: replaces value/readiness plotted text labels with numbered markers and a full-name chart key to reduce real-world overlap risk without losing initiative names.
 - `src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx`: updates native sequencing coverage to assert the value/readiness exhibit and funding-sequence rendering.
 - `docs/demo/intelligence-executive-canvas-demo-script-2026-07-01.md`: adds SkyHarbor and Industrial/Morgan Street prompts that exercise all native exhibit families for demo proof.
 - `src/lib/client-config.ts`: collapses duplicate canonical tenant aliases after demo-safe text replacement so Intelligence chrome, prompts, and visible answers do not show stacked labels such as `Air Air`, `Holdings Holdings`, or repeated canonical tails such as `Retail Group Group`.

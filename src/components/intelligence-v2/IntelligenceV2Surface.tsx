@@ -172,16 +172,11 @@ const CSS = `
 .iv2 .researchAxis{position:absolute;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .iv2 .researchAxis.y{left:15px;top:0;bottom:0;display:flex;align-items:center;writing-mode:vertical-rl;transform:rotate(180deg)}
 .iv2 .researchAxis.x{right:42px;bottom:15px}
-.iv2 .researchPoint{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;max-width:34%}
-.iv2 .researchPoint[data-label-placement="left"]{flex-direction:row-reverse}
-.iv2 .researchPoint[data-label-placement="left"] .researchPointLabel{text-align:right}
-.iv2 .researchPoint[data-label-placement="above"]{flex-direction:column-reverse;align-items:center;gap:4px}
-.iv2 .researchPoint[data-label-placement="below"]{flex-direction:column;align-items:center;gap:4px}
-.iv2 .researchPoint[data-label-placement="above"] .researchPointLabel,.iv2 .researchPoint[data-label-placement="below"] .researchPointLabel{text-align:center;max-width:118px}
-.iv2 .researchDot{width:var(--dot,16px);height:var(--dot,16px);border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(31,107,58,.14),0 8px 18px -8px rgba(31,107,58,.55);flex:none}
+.iv2 .researchPoint{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center}
+.iv2 .researchDot{width:var(--dot,16px);height:var(--dot,16px);border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(31,107,58,.14),0 8px 18px -8px rgba(31,107,58,.55);flex:none;display:grid;place-items:center;color:#fff;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;font-weight:800;line-height:1;text-shadow:0 1px 1px rgba(0,0,0,.24)}
 .iv2 .researchPoint[data-risk="gated"] .researchDot{background:var(--amber);box-shadow:0 0 0 5px rgba(166,106,31,.13),0 8px 18px -8px rgba(166,106,31,.52)}
 .iv2 .researchPoint[data-risk="risk"] .researchDot{background:#8C4B35;box-shadow:0 0 0 5px rgba(140,75,53,.13),0 8px 18px -8px rgba(140,75,53,.52)}
-.iv2 .researchPointLabel{font-size:10.25px;font-weight:700;line-height:1.12;color:var(--ink);max-width:132px;text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .researchPointLabel{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .iv2 .researchTooltip{position:absolute;left:50%;top:calc(100% + 10px);width:220px;transform:translate(-50%,6px);background:#FFFEFB;border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 18px 38px -16px rgba(40,35,24,.36);opacity:0;visibility:hidden;transition:opacity .15s ease,transform .15s ease;z-index:8}
 .iv2 .researchPoint:hover .researchTooltip{opacity:1;visibility:visible;transform:translate(-50%,0)}
 .iv2 .researchTooltipTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:15px;line-height:1.18;font-weight:500;color:var(--ink);margin-bottom:7px}
@@ -194,6 +189,10 @@ const CSS = `
 .iv2 .researchLegendDot.gated{background:var(--amber)}
 .iv2 .researchLegendDot.risk{background:#8C4B35}
 .iv2 .researchBubbleKey{margin-left:auto;color:var(--faint);white-space:nowrap}
+.iv2 .chartKey{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;margin-top:11px;padding-top:10px;border-top:1px solid rgba(222,215,202,.82);font-size:11px;line-height:1.25;color:#3E3D36}
+.iv2 .chartKeyItem{display:flex;gap:6px;min-width:0;align-items:baseline}
+.iv2 .chartKeyNumber{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#1F6B3A;white-space:nowrap}
+.iv2 .chartKeyLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .iv2 .researchSequence{min-width:0}
 .iv2 .researchSequenceTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:19px;line-height:1.15;font-weight:500;color:var(--ink);margin:0 0 5px}
 .iv2 .researchSequenceSub{font-size:12.5px;color:var(--faint);margin:0 0 17px}
@@ -232,15 +231,10 @@ const CSS = `
 .iv2 .matrixZoneLabel{position:absolute;right:14%;top:14%;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#1F6B3A}
 .iv2 .matrixLowLabel{position:absolute;left:14%;bottom:14%;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .iv2 .matrixDivider{position:absolute;left:12%;right:12%;top:50%;border-top:1px dashed #D8D2C5}
-.iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;max-width:34%}
-.iv2 .matrixPoint[data-label-placement="left"]{flex-direction:row-reverse}
-.iv2 .matrixPoint[data-label-placement="left"] .matrixLabel{text-align:right}
-.iv2 .matrixPoint[data-label-placement="above"]{flex-direction:column-reverse;align-items:center;gap:4px}
-.iv2 .matrixPoint[data-label-placement="below"]{flex-direction:column;align-items:center;gap:4px}
-.iv2 .matrixPoint[data-label-placement="above"] .matrixLabel,.iv2 .matrixPoint[data-label-placement="below"] .matrixLabel{text-align:center;max-width:118px}
-.iv2 .matrixDot{width:var(--dot,14px);height:var(--dot,14px);border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 5px rgba(31,107,58,.14);flex:none}
+.iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center}
+.iv2 .matrixDot{width:var(--dot,14px);height:var(--dot,14px);border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 5px rgba(31,107,58,.14);flex:none;display:grid;place-items:center;color:#fff;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;font-weight:800;line-height:1;text-shadow:0 1px 1px rgba(0,0,0,.24)}
 .iv2 .matrixDot.highRisk{background:#A66A1F;box-shadow:0 0 0 4px rgba(166,106,31,.15)}
-.iv2 .matrixLabel{font-size:10.25px;font-weight:650;line-height:1.12;color:var(--ink);max-width:132px;text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .matrixLabel{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .iv2 .matrixLegend{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:11.5px}
 .iv2 .matrixLegend span{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:3px 8px}
 .iv2 .matrixItemList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -843,48 +837,52 @@ function ResearchValueReadinessPlot({
   items: Array<ExecutiveCanvasItem & { value: number; readiness: number }>;
 }) {
   return (
-    <div className="researchMatrix" aria-label="Value readiness matrix">
-      <div className="researchMatrixGrid" />
-      <div className="researchMatrixFrontier" aria-hidden="true">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-          <path
-            d="M8 88 C26 68 44 52 60 34 C72 22 82 16 92 8"
-            fill="none"
-            stroke="rgba(31,107,58,.35)"
-            strokeDasharray="3 4"
-            strokeWidth="1"
-          />
-        </svg>
-      </div>
-      <div className="researchZoneLabel">Fund first</div>
-      <div className="researchAxis y">Value at stake</div>
-      <div className="researchAxis x">Readiness today</div>
-      {items.map((item, index) => (
-        <div
-          className="researchPoint"
-          aria-label={item.label}
-          data-label-placement={chartLabelPlacement(index, item)}
-          data-risk={researchRiskTone(item.risk)}
-          key={`${item.label}-${item.value}-${item.readiness}`}
-          style={{
-            left: `${scaleScore(item.readiness)}%`,
-            top: `${100 - scaleScore(item.value)}%`,
-          }}
-        >
-          <span
-            className="researchDot"
-            style={
-              { "--dot": `${matrixDotSize(item.value)}px` } as CSSProperties
-            }
-            aria-hidden="true"
-          />
-          <span className="researchPointLabel" title={item.label}>
-            {chartDisplayLabel(item.label)}
-          </span>
-          <ResearchPointTooltip item={item} />
+    <>
+      <div className="researchMatrix" aria-label="Value readiness matrix">
+        <div className="researchMatrixGrid" />
+        <div className="researchMatrixFrontier" aria-hidden="true">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path
+              d="M8 88 C26 68 44 52 60 34 C72 22 82 16 92 8"
+              fill="none"
+              stroke="rgba(31,107,58,.35)"
+              strokeDasharray="3 4"
+              strokeWidth="1"
+            />
+          </svg>
         </div>
-      ))}
-    </div>
+        <div className="researchZoneLabel">Fund first</div>
+        <div className="researchAxis y">Value at stake</div>
+        <div className="researchAxis x">Readiness today</div>
+        {items.map((item, index) => (
+          <div
+            className="researchPoint"
+            aria-label={`${index + 1}. ${item.label}`}
+            data-risk={researchRiskTone(item.risk)}
+            key={`${item.label}-${item.value}-${item.readiness}`}
+            style={{
+              left: `${scaleScore(item.readiness)}%`,
+              top: `${100 - scaleScore(item.value)}%`,
+            }}
+          >
+            <span
+              className="researchDot"
+              style={
+                { "--dot": `${matrixDotSize(item.value)}px` } as CSSProperties
+              }
+              aria-hidden="true"
+            >
+              {index + 1}
+            </span>
+            <span className="researchPointLabel" title={item.label}>
+              {item.label}
+            </span>
+            <ResearchPointTooltip item={item} />
+          </div>
+        ))}
+      </div>
+      <ChartKey items={items} />
+    </>
   );
 }
 
@@ -919,6 +917,25 @@ function ResearchPointTooltip({
           </span>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function ChartKey({
+  items,
+}: {
+  items: Array<ExecutiveCanvasItem & { value: number; readiness: number }>;
+}) {
+  return (
+    <div className="chartKey" aria-label="Chart marker key">
+      {items.map((item, index) => (
+        <div className="chartKeyItem" key={`chart-key-${item.label}`}>
+          <span className="chartKeyNumber">{index + 1}</span>
+          <span className="chartKeyLabel" title={item.label}>
+            {item.label}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1069,8 +1086,7 @@ function ValueReadinessMatrix({
         {items.map((item, index) => (
           <div
             className="matrixPoint"
-            aria-label={item.label}
-            data-label-placement={chartLabelPlacement(index, item)}
+            aria-label={`${index + 1}. ${item.label}`}
             key={`${item.label}-${item.value}-${item.readiness}`}
             style={{
               left: `${scaleScore(item.readiness)}%`,
@@ -1083,13 +1099,16 @@ function ValueReadinessMatrix({
                 { "--dot": `${matrixDotSize(item.value)}px` } as CSSProperties
               }
               aria-hidden="true"
-            />
+            >
+              {index + 1}
+            </span>
             <span className="matrixLabel" title={item.label}>
-              {chartDisplayLabel(item.label)}
+              {item.label}
             </span>
           </div>
         ))}
       </div>
+      <ChartKey items={items} />
       <div className="matrixLegend">
         <span>High value + high readiness: scale</span>
         <span>High value + low readiness: fund the gate first</span>
@@ -1262,39 +1281,6 @@ function hasMatrixCoordinates(
 
 function scaleScore(value: number): number {
   return Math.max(14, Math.min(86, 14 + (value / 10) * 72));
-}
-
-function chartLabelPlacement(
-  index: number,
-  item: ExecutiveCanvasItem & { value: number; readiness: number },
-): "right" | "left" | "above" | "below" {
-  const x = scaleScore(item.readiness);
-  const y = 100 - scaleScore(item.value);
-  if (x > 72) return index % 2 === 0 ? "left" : "above";
-  if (x < 28) return index % 2 === 0 ? "right" : "below";
-  if (y < 28) return index % 2 === 0 ? "below" : "left";
-  if (y > 72) return index % 2 === 0 ? "above" : "right";
-  return (["right", "above", "left", "below"] as const)[index % 4];
-}
-
-function chartDisplayLabel(label: string): string {
-  const trimmed = label.trim().replace(/\s+/g, " ");
-  const maxLength = 30;
-  if (trimmed.length <= maxLength) return trimmed;
-  const compact = trimmed
-    .replace(/[,&/]/g, " ")
-    .replace(/\s+-\s+/g, " ")
-    .replace(/\b(and|the|for|with|across|program|initiative)\b/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const words = compact.split(" ").filter(Boolean);
-  let visibleWords = words.slice(0, 4);
-  while (visibleWords.length > 2 && visibleWords.join(" ").length > maxLength) {
-    visibleWords = visibleWords.slice(0, -1);
-  }
-  const candidate = visibleWords.join(" ");
-  const fallback = trimmed.slice(0, maxLength - 3).trimEnd();
-  return `${candidate.length >= 8 ? candidate : fallback}...`;
 }
 
 function matrixDotSize(value?: number): number {
