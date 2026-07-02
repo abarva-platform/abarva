@@ -117,6 +117,16 @@ const T = {
 
 const PANEL_SHADOW = "0 18px 42px rgba(15, 23, 42, 0.07)";
 
+export const TOWER_CIO_STARTER_QUESTIONS = [
+  "Show the holding-company IT budget by portfolio company and shared services.",
+  "Which funded programs have the largest gap between promised and proven value?",
+  "Which portfolio-company CIOs should I inspect first based on spend, risk, and value proof?",
+  "Where is run budget crowding out change budget across the portfolio?",
+  "Which vendors create the biggest renewal or concentration exposure this quarter?",
+  "Which AI investments are true initiatives versus Copilot, platform, or vendor-embedded spend?",
+  "What evidence is missing before this dashboard is board-ready?",
+] as const;
+
 // ─── Confidence value (cval) — solid/dashed/dotted underline by confidence ────
 type Confidence = "high" | "med" | "low";
 function cvalStyle(conf: Confidence): CSSProperties {
@@ -939,12 +949,7 @@ function buildCioDashboardModel(
       tone: "green",
     });
   }
-  const scenarioQuestions = [
-    "What would I hold if I required measured value before the next funding gate?",
-    "Which vendors should I challenge in the next renewal window?",
-    "Where is AI spend real value versus platform or vendor-embedded cost?",
-    "What three facts would change the CIO decision tomorrow?",
-  ];
+  const scenarioQuestions = [...TOWER_CIO_STARTER_QUESTIONS];
 
   return {
     initiativeCount: initiatives.length,
@@ -5961,10 +5966,10 @@ export function TowerIndexPage({
           ...cioDashboardModel.decisionActions.map((action) => action.ask),
         ].slice(0, 7)
       : (atlasObservationsView?.suggestedPrompts.slice() ?? [
-          "What tenant data is loaded?",
-          "Which programs have pressure signals?",
-          "Show renewal windows from the DB",
-          "Explain missing Tower substrate",
+          "What Tower evidence is loaded for this tenant?",
+          "Which Tower metrics are missing source evidence?",
+          "Which portfolio or vendor facts should be loaded next?",
+          "What can Tower answer today without assumptions?",
         ]);
   const [atlasSuggestions, setAtlasSuggestions] = useState<AtlasSuggestion[]>(
     initialPrompts.map((label) => ({

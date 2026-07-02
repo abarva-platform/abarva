@@ -9,7 +9,10 @@ const ROOT = process.cwd();
 const PACKAGE_ROOT = path.join(ROOT, 'tower-standardized-v1');
 const DRY_RUN = process.argv.includes('--dry-run') || !process.env.DATABASE_URL;
 const TENANT_ARG = process.argv.find((arg) => arg.startsWith('--tenant='));
-const TENANT_FILTER = TENANT_ARG ? new Set(TENANT_ARG.replace('--tenant=', '').split(',').map((s) => s.trim()).filter(Boolean)) : null;
+const TENANT_FILTER_SOURCE = TENANT_ARG?.replace('--tenant=', '') || process.env.TOWER_STANDARDIZED_TENANTS || '';
+const TENANT_FILTER = TENANT_FILTER_SOURCE
+  ? new Set(TENANT_FILTER_SOURCE.split(',').map((s) => s.trim()).filter(Boolean))
+  : null;
 
 const measureDefinitions = [
   {

@@ -5,7 +5,7 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { TowerIndexPage } from "../TowerIndexPage";
+import { TOWER_CIO_STARTER_QUESTIONS, TowerIndexPage } from "../TowerIndexPage";
 import type {
   AIInitiative,
   AIInitiativeVendorRow,
@@ -731,5 +731,17 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByText("$178.2M")).toBeInTheDocument();
     expect(screen.getByText("Crew legality and data readiness")).toBeInTheDocument();
     expect(screen.queryByText("cio_tower")).not.toBeInTheDocument();
+  });
+
+  it("uses executive-grade aVa starter questions for the CIO dock", () => {
+    expect(TOWER_CIO_STARTER_QUESTIONS).toEqual([
+      "Show the holding-company IT budget by portfolio company and shared services.",
+      "Which funded programs have the largest gap between promised and proven value?",
+      "Which portfolio-company CIOs should I inspect first based on spend, risk, and value proof?",
+      "Where is run budget crowding out change budget across the portfolio?",
+      "Which vendors create the biggest renewal or concentration exposure this quarter?",
+      "Which AI investments are true initiatives versus Copilot, platform, or vendor-embedded spend?",
+      "What evidence is missing before this dashboard is board-ready?",
+    ]);
   });
 });
