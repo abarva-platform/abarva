@@ -26,10 +26,22 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     v === null || v === undefined ? null : Number(v);
   const strOrNull = (v: unknown) =>
     typeof v === "string" && v.length ? v : null;
-  const objOrEmpty = (v: unknown): Record<string, unknown> =>
-    v && typeof v === "object" && !Array.isArray(v)
-      ? (v as Record<string, unknown>)
-      : {};
+  const jsonObjOrEmpty = (v: unknown): Record<string, unknown> => {
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      return v as Record<string, unknown>;
+    }
+    if (typeof v === "string" && v.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(v);
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  };
   return {
     id: String(row.id),
     clientId: String(row.client_id),
@@ -80,7 +92,7 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
       row.client_final_review_meeting_date,
     ),
     clientFinalStakeholderGroup: strOrNull(row.client_final_stakeholder_group),
-    clientFinalChangeSummary: objOrEmpty(row.client_final_change_summary),
+    clientFinalChangeSummary: jsonObjOrEmpty(row.client_final_change_summary),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -195,7 +207,9 @@ export async function insertSourceArtifact(
       client_final_review_meeting_date:
         row.clientFinalReviewMeetingDate ?? null,
       client_final_stakeholder_group: row.clientFinalStakeholderGroup ?? null,
-      client_final_change_summary: row.clientFinalChangeSummary ?? {},
+      client_final_change_summary: JSON.stringify(
+        row.clientFinalChangeSummary ?? {},
+      ),
       lifecycle_state: "current",
     })
     .select("*")
