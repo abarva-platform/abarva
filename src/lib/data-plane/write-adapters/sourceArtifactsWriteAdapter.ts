@@ -98,7 +98,7 @@ export interface SourceArtifactInsertColumns {
   readonly client_final_note?: string | null;
   readonly client_final_review_meeting_date?: string | null;
   readonly client_final_stakeholder_group?: string | null;
-  readonly client_final_change_summary?: Record<string, unknown>;
+  readonly client_final_change_summary?: Record<string, unknown> | string;
 }
 
 /** A write outcome — `ok:false` carries an error the helper turns into a throw. */
