@@ -111,6 +111,13 @@ const CSS = `
 .homex .hx-tab[aria-selected="true"]{color:#071629;border-bottom-color:#0A76D8}
 .homex .hx-tab:focus-visible{outline:2px solid rgba(34,174,234,.35);outline-offset:2px;border-radius:6px}
 .homex .hx-tabPanel{padding-top:14px}
+.homex .hx-gapCards{display:grid;gap:12px;margin-top:14px}
+.homex .hx-gapCard{background:#fff;border:1px solid var(--hl);border-radius:10px;padding:14px 15px}
+.homex .hx-gapCardTop{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:8px}
+.homex .hx-gapCard h3{font-family:var(--font-fraunces),Georgia,serif;font-size:17px;font-weight:500;margin:0;color:var(--hi)}
+.homex .hx-gapCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7A5A1F;background:#FFF5DB;border:1px solid #E8D3A2;border-radius:999px;padding:4px 8px;white-space:nowrap}
+.homex .hx-gapCard p{font-size:13px;line-height:1.55;color:#3d3d36;margin:7px 0 0}
+.homex .hx-gapMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#66708a;margin-top:10px}
 `;
 
 const CONTEXT_BROWSER_QUESTIONS = [
@@ -874,11 +881,35 @@ function DimensionView({
         </div>
       ) : null}
       {activeTab === "gaps" && preview?.knownGaps.length ? (
-        <div className="hx-mini" aria-label="Top missing fields">
+        <div className="hx-gapCards" aria-label="Top missing fields">
           {preview.knownGaps.map((gap) => (
-            <span className="hx-chip" key={gap.label}>
-              Missing {gap.label.toLowerCase()}: <strong>{gap.count}</strong>
-            </span>
+            <article className="hx-gapCard" key={gap.label}>
+              <div className="hx-gapCardTop">
+                <h3>{gap.label}</h3>
+                <span className="hx-gapCount">
+                  {gap.count.toLocaleString()} missing
+                </span>
+              </div>
+              <p>
+                <strong>What this means:</strong>{" "}
+                {gap.instruction
+                  ? gap.instruction
+                  : `${gap.label} was expected in the loaded source row but still needs evidence from the client source owner.`}
+              </p>
+              <p>
+                <strong>Why it matters:</strong>{" "}
+                {gap.whyItMatters ??
+                  `${gap.label} helps determine whether this context can support a decision-ready answer.`}
+              </p>
+              <p>
+                <strong>How it helps:</strong>{" "}
+                {gap.howItHelps ??
+                  `Once supplied, ${gap.label.toLowerCase()} lets aVa answer more precisely without guessing.`}
+              </p>
+              {gap.moduleUse ? (
+                <div className="hx-gapMeta">Used by: {gap.moduleUse}</div>
+              ) : null}
+            </article>
           ))}
         </div>
       ) : null}

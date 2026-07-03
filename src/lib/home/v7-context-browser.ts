@@ -177,7 +177,7 @@ export async function getHomeV7ContextBrowser(args: {
       const sourceRows = records.map((row) =>
         toSourceRow(dimension, row, displayColumns),
       );
-      const knownGaps = topKnownGaps(records);
+      const knownGaps = topKnownGaps(records, columns);
       dimensions[label] = {
         dimension: label,
         title: `${label} loaded facts`,
@@ -272,20 +272,38 @@ function countDataThinCells(rows: V7RecordRow[]): number {
   );
 }
 
-function topKnownGaps(rows: V7RecordRow[]): Array<{ label: string; count: number }> {
+function topKnownGaps(
+  rows: V7RecordRow[],
+  columns: V7ColumnRow[],
+): HomeV6ContextBrowser["dimensions"][string]["knownGaps"] {
   const counts = new Map<string, number>();
   for (const row of rows) {
-    for (const label of collectKnownGaps(row.values_json)) {
-      counts.set(label, (counts.get(label) ?? 0) + 1);
+    for (const key of collectKnownGapKeys(row.values_json)) {
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
   return [...counts.entries()]
     .sort((left, right) => right[1] - left[1])
     .slice(0, 8)
-    .map(([label, count]) => ({ label, count }));
+    .map(([columnName, count]) => {
+      const meta = columns.find((column) => column.column_name === columnName);
+      const label = humanize(meta?.client_field || columnName);
+      return {
+        label,
+        count,
+        instruction: cleanMetadata(meta?.client_instruction),
+        moduleUse: cleanMetadata(meta?.module_use),
+        whyItMatters: gapWhyItMatters(label, meta?.module_use),
+        howItHelps: gapHowItHelps(label, meta?.module_use),
+      };
+    });
 }
 
 function collectKnownGaps(record: JsonRecord): string[] {
+  return collectKnownGapKeys(record).map(humanize);
+}
+
+function collectKnownGapKeys(record: JsonRecord): string[] {
   const gaps: string[] = [];
   for (const [key, value] of Object.entries(record)) {
     const text = String(value ?? "").trim();
@@ -295,10 +313,31 @@ function collectKnownGaps(record: JsonRecord): string[] {
       /^data_thin:/i.test(text) ||
       /needs evidence|evidence_gap|not client validated/i.test(text)
     ) {
-      gaps.push(humanize(key));
+      gaps.push(key);
     }
   }
   return [...new Set(gaps)];
+}
+
+function cleanMetadata(value: string | null | undefined): string | null {
+  const text = display(value);
+  return text === "Needs evidence" ? null : text;
+}
+
+function gapWhyItMatters(label: string, moduleUse: string | null | undefined): string {
+  const use = cleanMetadata(moduleUse);
+  if (use) {
+    return `${label} is part of the ${use.toLowerCase()} evidence contract. Without it, aVa can show that the row exists but should qualify conclusions that depend on this field.`;
+  }
+  return `${label} is needed to turn the loaded row from inventory context into decision-ready evidence. Without it, aVa should keep the answer caveated.`;
+}
+
+function gapHowItHelps(label: string, moduleUse: string | null | undefined): string {
+  const use = cleanMetadata(moduleUse);
+  if (use) {
+    return `Once supplied, ${label.toLowerCase()} helps ${use.toLowerCase()} answer more precise questions, route follow-ups, and separate confirmed facts from assumptions.`;
+  }
+  return `Once supplied, ${label.toLowerCase()} helps Home answer more precisely and helps downstream modules use the row without guessing.`;
 }
 
 function clientLabel(columns: V7ColumnRow[], column: string): string {

@@ -28,7 +28,14 @@ export interface HomeV6BrowserPreview {
   columns: HomeV6BrowserColumn[];
   rows: string[][];
   sourceRows: HomeV6BrowserSourceRow[];
-  knownGaps: Array<{ label: string; count: number }>;
+  knownGaps: Array<{
+    label: string;
+    count: number;
+    instruction?: string | null;
+    moduleUse?: string | null;
+    whyItMatters?: string | null;
+    howItHelps?: string | null;
+  }>;
 }
 
 export interface HomeV6ContextBrowser {
