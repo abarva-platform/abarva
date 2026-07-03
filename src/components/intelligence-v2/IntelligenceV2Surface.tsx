@@ -886,9 +886,6 @@ function ResearchValueReadinessPlot({
             >
               {index + 1}
             </span>
-            <span className="researchPointLabel" title={item.label}>
-              {item.label}
-            </span>
             <ResearchPointTooltip item={item} />
           </div>
         ))}
@@ -1115,9 +1112,6 @@ function ValueReadinessMatrix({
               aria-hidden="true"
             >
               {index + 1}
-            </span>
-            <span className="matrixLabel" title={item.label}>
-              {item.label}
             </span>
           </div>
         ))}

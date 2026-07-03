@@ -54,6 +54,44 @@ describe("CXO canvas renderer", () => {
     expect(document.body.textContent).not.toContain("canvasType");
   });
 
+  it("keeps long initiative names out of the plotted point labels", () => {
+    render(
+      <CxoCanvasRenderer
+        payload={{
+          canvasType: "executive-canvas-sequencing",
+          title: "AI funding sequence",
+          lanes: [
+            {
+              label: "Fund readiness",
+              items: [
+                {
+                  label:
+                    "Enterprise HR AI operating model and shared services transformation",
+                  value: 9,
+                  readiness: 4,
+                  risk: 8,
+                  action: "Fund the operating-model gate first",
+                },
+              ],
+            },
+          ],
+        }}
+        context={{ surface: "intelligence" }}
+      />,
+    );
+
+    const point = document.querySelector(".researchPoint");
+    expect(point).toBeInTheDocument();
+    expect(point?.textContent).toBe("1");
+    expect(point).toHaveAttribute(
+      "aria-label",
+      expect.stringContaining("Enterprise HR AI operating model"),
+    );
+    expect(screen.getByLabelText("Chart number key")).toHaveTextContent(
+      "Enterprise HR AI operating model and shared services transformation",
+    );
+  });
+
   it("normalizes legacy canvas names without leaking raw JSON", () => {
     const result = validateCxoCanvasPayload({
       canvasType: "investmentSequencingMap",
