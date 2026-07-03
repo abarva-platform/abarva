@@ -17,11 +17,14 @@
 import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
-} from '@/lib/data-plane/postgresCompat';
-import { canonicalTenantKey } from '@/lib/tenant-keys';
-import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
-import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
-import type { DataPlane } from './types';
+} from "@/lib/data-plane/postgresCompat";
+import { canonicalTenantKey } from "@/lib/tenant-keys";
+import {
+  createTxSession,
+  type TxSessionRunner,
+} from "../read-adapters/azureSession";
+import { resolveDataPlane } from "../read-adapters/resolveDataPlane";
+import type { DataPlane } from "./types";
 
 // --- write input ------------------------------------------------------------
 
@@ -85,6 +88,17 @@ export interface SourceArtifactInsertColumns {
   readonly supersedes_artifact_id?: string | null;
   readonly lifecycle_state?: string;
   readonly blob_sha256?: string | null;
+  readonly is_client_final?: boolean;
+  readonly is_current_authoritative?: boolean;
+  readonly source_generated_artifact_id?: string | null;
+  readonly client_final_uploaded_by?: string | null;
+  readonly client_final_uploaded_at?: string | null;
+  readonly client_final_accepted_by?: string | null;
+  readonly client_final_accepted_at?: string | null;
+  readonly client_final_note?: string | null;
+  readonly client_final_review_meeting_date?: string | null;
+  readonly client_final_stakeholder_group?: string | null;
+  readonly client_final_change_summary?: Record<string, unknown>;
 }
 
 /** A write outcome — `ok:false` carries an error the helper turns into a throw. */
@@ -124,14 +138,14 @@ export function createSupabaseSourceArtifactsWriteAdapter(
   getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): SourceArtifactsWriteAdapter {
   return {
-    name: 'supabase',
+    name: "supabase",
 
     async insertArtifact(columns, selectColumns) {
       void canonicalTenantKey(columns.tenant_key);
       const { id, ...rest } = columns;
       const row = id ? { id, ...rest } : { ...rest };
       const { data, error } = await getClient()
-        .from('source_artifacts')
+        .from("source_artifacts")
         .insert(row)
         .select(selectColumns)
         .single();
@@ -149,31 +163,42 @@ export function createSupabaseSourceArtifactsWriteAdapter(
  * `BEGIN`/`COMMIT` transaction. The session is injectable for tests.
  */
 export function createAzureSourceArtifactsWriteAdapter(
-  session: TxSessionRunner = createTxSession('abarva-data-plane-source-artifacts-write'),
+  session: TxSessionRunner = createTxSession(
+    "abarva-data-plane-source-artifacts-write",
+  ),
 ): SourceArtifactsWriteAdapter {
   return {
-    name: 'azure-postgres',
+    name: "azure-postgres",
 
     async insertArtifact(columns, selectColumns) {
       void canonicalTenantKey(columns.tenant_key);
       try {
         // Build the column list dynamically so an optional `id` is honored.
-        const entries = Object.entries(columns).filter(([, v]) => v !== undefined);
+        const entries = Object.entries(columns).filter(
+          ([, v]) => v !== undefined,
+        );
         const colNames = entries.map(([k]) => k);
         const placeholders = entries.map((_, i) => `$${i + 1}`);
         const values = entries.map(([, v]) => v);
         const returning = selectColumns;
         const rows = await session((run) =>
           run<Record<string, unknown>>(
-            `INSERT INTO source_artifacts (${colNames.join(', ')}) `
-              + `VALUES (${placeholders.join(', ')}) RETURNING ${returning}`,
+            `INSERT INTO source_artifacts (${colNames.join(", ")}) ` +
+              `VALUES (${placeholders.join(", ")}) RETURNING ${returning}`,
             values,
           ),
         );
-        if (!rows[0]) return { ok: false, error: 'source_artifacts insert returned no row' };
+        if (!rows[0])
+          return {
+            ok: false,
+            error: "source_artifacts insert returned no row",
+          };
         return { ok: true, data: rows[0] };
       } catch (err) {
-        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
       }
     },
   };
@@ -189,7 +214,7 @@ export function selectSourceArtifactsWriteAdapter(
   plane?: DataPlane,
 ): SourceArtifactsWriteAdapter {
   const target = plane ?? resolveDataPlane();
-  return target === 'azure-postgres'
+  return target === "azure-postgres"
     ? createAzureSourceArtifactsWriteAdapter()
     : createSupabaseSourceArtifactsWriteAdapter();
 }

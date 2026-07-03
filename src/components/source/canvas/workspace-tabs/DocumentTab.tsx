@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { UploadEventDocumentButton } from "./UploadEventDocumentButton";
+import { AcceptClientFinalButton } from "./AcceptClientFinalButton";
 import {
   specByCode,
   type SourceArtifactSpec,
@@ -160,8 +161,8 @@ export function DocumentTab({
           Start with the next {SOURCE_STAGE_LABELS[stage]} document.
         </p>
         <p style={EMPTY_BODY_STYLE}>
-          When this stage is ready, draft the required document with aVa or
-          ask your AbarVa lead to load the event facts before using it for an
+          When this stage is ready, draft the required document with aVa or ask
+          your AbarVa lead to load the event facts before using it for an
           executive decision, vendor communication, or approval.
         </p>
       </div>
@@ -261,6 +262,11 @@ export function DocumentTab({
               </header>
               <ArtifactBodyEditor
                 artifact={active}
+                eventId={eventId}
+                artifactName={artifactDisplayName(
+                  active.artifactCode,
+                  activeSpec.name,
+                )}
                 templateBody={templateBody}
                 authoredBody={authoredBody}
                 bodyIsAuthored={bodyIsAuthored}
@@ -315,6 +321,7 @@ export function DocumentTab({
                     false)
                 }
                 reasoning={reasoningByCode?.[active.artifactCode]}
+                onClientFinalAccepted={onRegistryUploaded}
               />
               {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
                 <VendorPricingSubmissionsPanel
@@ -400,6 +407,9 @@ function RegistryDocumentsShelf({
                   <span>{doc.sourceFormat}</span>
                   <span style={DOT_STYLE}>·</span>
                   <span>{formatFileSize(doc.sizeBytes)}</span>
+                  {doc.isClientFinal ? (
+                    <span style={CLIENT_FINAL_BADGE_STYLE}>Client Final</span>
+                  ) : null}
                   {doc.sourceOrigin === "generated" ? (
                     <span style={REGISTRY_SHELF_BADGE_STYLE}>AI Draft</span>
                   ) : null}
@@ -414,11 +424,14 @@ function RegistryDocumentsShelf({
                     {doc.originalName}
                   </a>
                 ) : (
-                  <span style={REGISTRY_DOC_NAME_STYLE}>{doc.originalName}</span>
+                  <span style={REGISTRY_DOC_NAME_STYLE}>
+                    {doc.originalName}
+                  </span>
                 )}
                 <span style={REGISTRY_DOC_META_STYLE}>
                   {formatDocumentFamily(doc.artifactFamily)} · parse{" "}
                   {doc.parseStatus} · approval {doc.approvalState}
+                  {doc.isCurrentAuthoritative ? " · authoritative" : ""}
                 </span>
                 <span style={REGISTRY_DOC_ACTIONS_STYLE}>
                   {detailHref ? (
@@ -470,6 +483,8 @@ function formatFileSize(bytes: number): string {
 
 interface ArtifactBodyEditorProps {
   artifact: SourceEventArtifactState;
+  eventId?: string;
+  artifactName: string;
   templateBody: string | null;
   authoredBody: string | null;
   bodyIsAuthored: boolean;
@@ -497,10 +512,13 @@ interface ArtifactBodyEditorProps {
   exportOptionsHidden: boolean;
   /** Reasoning envelope from the last source advisor generation call. */
   reasoning?: { status: string; envelope?: unknown };
+  onClientFinalAccepted?: () => void;
 }
 
 function ArtifactBodyEditor({
   artifact,
+  eventId,
+  artifactName,
   templateBody,
   authoredBody,
   bodyIsAuthored,
@@ -516,6 +534,7 @@ function ArtifactBodyEditor({
   pdfDownloadHref,
   exportOptionsHidden,
   reasoning,
+  onClientFinalAccepted,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -594,6 +613,7 @@ function ArtifactBodyEditor({
 
   const isGenerated =
     artifact.bodyGenerationMetadata !== null && bodyIsAuthored;
+  const clientFinal = readClientFinalMetadata(artifact.bodyGenerationMetadata);
 
   return (
     <div style={READER_WRAP_STYLE}>
@@ -635,6 +655,14 @@ function ArtifactBodyEditor({
             >
               {bodyIsAuthored ? "Edit body" : "Author content"}
             </button>
+          ) : null}
+          {eventId ? (
+            <AcceptClientFinalButton
+              eventId={eventId}
+              artifactCode={artifact.artifactCode}
+              artifactName={artifactName}
+              onAccepted={onClientFinalAccepted}
+            />
           ) : null}
           {xlsxDownloadHref ? (
             <a
@@ -693,6 +721,23 @@ function ArtifactBodyEditor({
           ) : null}
         </div>
       </div>
+      {clientFinal ? (
+        <div
+          style={CLIENT_FINAL_BANNER_STYLE}
+          data-testid={`source-canvas-client-final-banner-${artifact.artifactCode}`}
+        >
+          <strong>
+            Client Final accepted — this version is authoritative.
+          </strong>
+          <span>
+            {clientFinal.fileName ? ` ${clientFinal.fileName}` : ""}
+            {clientFinal.acceptedAt
+              ? ` · accepted ${formatShortDate(clientFinal.acceptedAt)}`
+              : ""}
+          </span>
+          {clientFinal.note ? <span>{clientFinal.note}</span> : null}
+        </div>
+      ) : null}
       {generationError ? (
         <div
           role="alert"
@@ -703,7 +748,10 @@ function ArtifactBodyEditor({
         </div>
       ) : null}
       {reasoning && reasoning.status !== "disabled" ? (
-        <ReasoningBanner reasoning={reasoning} artifactCode={artifact.artifactCode} />
+        <ReasoningBanner
+          reasoning={reasoning}
+          artifactCode={artifact.artifactCode}
+        />
       ) : null}
       {exportOptionsHidden ? (
         <div style={EXPORT_EMPTY_NOTE_STYLE}>
@@ -723,14 +771,44 @@ function ArtifactBodyEditor({
           style={UNAUTHORED_BODY_STYLE}
           data-testid="source-canvas-document-body"
         >
-          <strong>No client-authored body yet.</strong> Use Generate with
-          aVa, Author content, or upload evidence before this document is
-          treated as review-ready. The starter content is kept out of the main
-          workspace so it is not mistaken for approved event content.
+          <strong>No client-authored body yet.</strong> Use Generate with aVa,
+          Author content, or upload evidence before this document is treated as
+          review-ready. The starter content is kept out of the main workspace so
+          it is not mistaken for approved event content.
         </div>
       ) : null}
     </div>
   );
+}
+
+interface ClientFinalMetadata {
+  fileName?: string;
+  acceptedAt?: string;
+  note?: string;
+}
+
+function readClientFinalMetadata(
+  metadata: Record<string, unknown> | null,
+): ClientFinalMetadata | null {
+  const value = metadata?.clientFinal;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  return {
+    fileName: typeof record.fileName === "string" ? record.fileName : undefined,
+    acceptedAt:
+      typeof record.acceptedAt === "string" ? record.acceptedAt : undefined,
+    note: typeof record.note === "string" ? record.note : undefined,
+  };
+}
+
+function formatShortDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 interface ReasoningEnvelopeShape {
@@ -783,7 +861,10 @@ function ReasoningBanner({
           {missing ? `: ${missing}` : ""}
         </span>
       ) : claimCount > 0 ? (
-        <span style={REASONING_DETAIL_STYLE}> — {claimCount} claim{claimCount !== 1 ? "s" : ""} grounded</span>
+        <span style={REASONING_DETAIL_STYLE}>
+          {" "}
+          — {claimCount} claim{claimCount !== 1 ? "s" : ""} grounded
+        </span>
       ) : null}
     </div>
   );
@@ -846,15 +927,13 @@ type SectionVerificationMetadata = {
   requiredSections?: unknown;
 };
 
-function sectionVerificationView(artifact: SourceEventArtifactState):
-  | {
-      label: string;
-      title: string;
-      color: string;
-      border: string;
-      background: string;
-    }
-  | null {
+function sectionVerificationView(artifact: SourceEventArtifactState): {
+  label: string;
+  title: string;
+  color: string;
+  border: string;
+  background: string;
+} | null {
   const raw = artifact.bodyGenerationMetadata?.sectionVerification;
   if (!raw || typeof raw !== "object") return null;
   const verification = raw as SectionVerificationMetadata;
@@ -1386,6 +1465,28 @@ const READER_BUTTONS_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
+};
+
+const CLIENT_FINAL_BANNER_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  border: "1px solid rgba(15,118,110,0.25)",
+  background: "rgba(15,118,110,0.06)",
+  padding: "10px 12px",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  color: "#0f766e",
+  lineHeight: 1.45,
+};
+
+const CLIENT_FINAL_BADGE_STYLE: CSSProperties = {
+  border: "1px solid rgba(15,118,110,0.22)",
+  borderRadius: 999,
+  background: "rgba(15,118,110,0.08)",
+  color: "#0f766e",
+  fontWeight: 800,
+  padding: "2px 7px",
 };
 
 const GENERATION_ERROR_STYLE: CSSProperties = {
