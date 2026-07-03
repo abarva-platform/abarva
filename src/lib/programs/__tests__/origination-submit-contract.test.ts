@@ -14,7 +14,10 @@ describe('origination submit insert contract', () => {
   it('writes legacy-compatible engagement fields required by older live schemas', () => {
     expect(source).toContain('buildEngagementGraphNodeId(input.programName)');
     expect(source).toContain('graph_node_id: graphNodeId');
-    expect(source).toContain('solution: input.programName');
+    expect(source).toContain('let legacySolutionSlot = input.programName');
+    expect(source).toContain('solution: legacySolutionSlot');
+    expect(source).toContain('idx_engagements_one_active');
+    expect(source).toContain('engagementInsertPayload.solution = legacySolutionSlot');
     expect(source).toContain('value_projected_low_usd: parsedValueRange?.low ?? null');
     expect(source).toContain('value_projected_high_usd: parsedValueRange?.high ?? null');
     expect(source).toContain('value_verified_status: parsedValueRange ? "pending" : null');
