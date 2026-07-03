@@ -305,6 +305,55 @@ describe("source access policy", () => {
     ).resolves.toBe(true);
   });
 
+  it("grants known same-tenant agent roster logins full Source proof scope", async () => {
+    setupRows({});
+    const { loadUserSourceAccessPolicy, canReadSourceEvent } =
+      await import("../source-access-policy");
+    const agentTenancy = {
+      clientId: "client-lakeshore",
+      userId: "clerk:user_lakeshore_agent",
+      role: "client_viewer",
+      email: "lakeshore-agent@abarva.example.com",
+    };
+
+    const policy = await loadUserSourceAccessPolicy(agentTenancy, {
+      activeClientKey: "lakeshore-holdings",
+    });
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.sourceScope).toBe("all_client_source_events");
+    expect(policy.sourceEventIdsAllowed).toBeNull();
+    await expect(
+      canReadSourceEvent(
+        agentTenancy,
+        "lakeshore-holdings",
+        "lake-source-event-1",
+      ),
+    ).resolves.toBe(true);
+  });
+
+  it("does not grant agent roster logins Source scope outside their tenant", async () => {
+    setupRows({});
+    const { loadUserSourceAccessPolicy, canReadSourceEvent } =
+      await import("../source-access-policy");
+    const agentTenancy = {
+      clientId: "client-apex",
+      userId: "clerk:user_lakeshore_agent",
+      role: "client_viewer",
+      email: "lakeshore-agent@abarva.example.com",
+    };
+
+    const policy = await loadUserSourceAccessPolicy(agentTenancy, {
+      activeClientKey: "apexretail",
+    });
+
+    expect(policy.accessLevel).toBe("no_source_access");
+    expect(policy.sourceEventIdsAllowed).toEqual([]);
+    await expect(
+      canReadSourceEvent(agentTenancy, "apexretail", "apex-source-event-1"),
+    ).resolves.toBe(false);
+  });
+
   it("restricts source members to assigned source event ids", async () => {
     setupRows({
       person_client_memberships: {
