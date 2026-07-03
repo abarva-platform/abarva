@@ -239,10 +239,94 @@ const SKYHARBOR_VENDOR_PACKAGES: VendorResponsePackageFixture[] = [
   },
 ];
 
-function isSkyHarborAmsEvent(event: VendorResponseProfileEventRef): boolean {
-  return [event.id, event.code, event.name, event.accountName]
+function isAmsVendorResponseMveEvent(
+  event: VendorResponseProfileEventRef,
+): boolean {
+  const text = [event.id, event.code, event.name, event.accountName]
     .filter((value): value is string => Boolean(value))
-    .some((value) => /skyh|skyharbor/i.test(value));
+    .join(" ")
+    .toLowerCase();
+  return (
+    /\b(skyh|skyharbor)\b/.test(text) ||
+    (/\b(lake|lakeshore)\b/.test(text) &&
+      /\b(shared[- ]?services|ams|managed[- ]?services|application[- ]?managed)\b/.test(
+        text,
+      ))
+  );
+}
+
+function tenantKeyForVendorResponseEvent(
+  event: VendorResponseProfileEventRef,
+): string {
+  const text = [event.id, event.code, event.name, event.accountName]
+    .filter((value): value is string => Boolean(value))
+    .join(" ")
+    .toLowerCase();
+  if (/\b(lake|lakeshore)\b/.test(text)) return "lakeshore";
+  if (/\b(skyh|skyharbor)\b/.test(text)) return "skyharbor-air";
+  return "demo-ams";
+}
+
+function defaultEventNameForVendorResponseEvent(
+  event: VendorResponseProfileEventRef,
+): string {
+  const text = [event.id, event.code, event.name, event.accountName]
+    .filter((value): value is string => Boolean(value))
+    .join(" ")
+    .toLowerCase();
+  if (/\b(lake|lakeshore)\b/.test(text)) {
+    return "Lakeshore Shared Services AMS";
+  }
+  return "SkyHarbor AMS Outsourcing";
+}
+
+function adaptVendorPackageForEvent(
+  pkg: VendorResponsePackageFixture,
+  event: VendorResponseProfileEventRef,
+): VendorResponsePackageFixture {
+  const text = [event.id, event.code, event.name, event.accountName]
+    .filter((value): value is string => Boolean(value))
+    .join(" ")
+    .toLowerCase();
+  if (!/\b(lake|lakeshore)\b/.test(text)) {
+    return { ...pkg, sourceEventId: event.id };
+  }
+
+  const adaptText = (value: string): string =>
+    value
+      .replace(/\bAirline Operations Support\b/g, "Corporate Shared Services Support")
+      .replace(/\bairline-critical apps\b/gi, "business-critical shared-services applications")
+      .replace(/\bairline-critical operations\b/gi, "shared-services operations")
+      .replace(/\bairline operations scope\b/gi, "corporate shared-services scope")
+      .replace(/\bIROPS and airport operations coverage\b/gi, "Finance, HR, Legal, Procurement, Treasury, and Compliance coverage")
+      .replace(/\bIROPS coverage claim\b/gi, "Shared-services coverage claim")
+      .replace(/\bservices that matter to airline operations\b/gi, "business-critical shared services");
+
+  return {
+    ...pkg,
+    sourceEventId: event.id,
+    tenantKey: "lakeshore",
+    packageSummary: adaptText(pkg.packageSummary),
+    sectionMap: pkg.sectionMap.map((section) => ({
+      ...section,
+      rfpSection: adaptText(section.rfpSection),
+      notes: adaptText(section.notes),
+    })),
+    exhibits: pkg.exhibits.map((exhibit) => ({
+      ...exhibit,
+      issue: exhibit.issue ? adaptText(exhibit.issue) : exhibit.issue,
+    })),
+    pricingSummary: {
+      ...pkg.pricingSummary,
+      pricingBasis: adaptText(pkg.pricingSummary.pricingBasis),
+    },
+    extractionCards: pkg.extractionCards.map((card) => ({
+      ...card,
+      extractedValue: adaptText(card.extractedValue),
+      finding: adaptText(card.finding),
+      recommendedAction: adaptText(card.recommendedAction),
+    })),
+  };
 }
 
 function completeness(sectionMap: VendorResponseSectionMapRow[]) {
@@ -359,15 +443,14 @@ function buildProfile(pkg: VendorResponsePackageFixture): VendorResponseProfile 
 export function buildVendorResponseMveProfiles(
   event: VendorResponseProfileEventRef,
 ): VendorResponseProfileSet | null {
-  if (!isSkyHarborAmsEvent(event)) return null;
-  const profiles = SKYHARBOR_VENDOR_PACKAGES.map((pkg) => ({
-    ...pkg,
-    sourceEventId: event.id,
-  })).map(buildProfile);
+  if (!isAmsVendorResponseMveEvent(event)) return null;
+  const profiles = SKYHARBOR_VENDOR_PACKAGES.map((pkg) =>
+    adaptVendorPackageForEvent(pkg, event),
+  ).map(buildProfile);
   return {
     sourceEventId: event.id,
-    tenantKey: "skyharbor-air",
-    eventName: event.name ?? "SkyHarbor AMS Outsourcing",
+    tenantKey: tenantKeyForVendorResponseEvent(event),
+    eventName: event.name ?? defaultEventNameForVendorResponseEvent(event),
     generatedAt: GENERATED_AT,
     profileCount: profiles.length,
     profiles,

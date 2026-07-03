@@ -457,6 +457,24 @@ describe("vendor response MVE profiles", () => {
       }),
     ).toBeNull();
   });
+
+  it("builds shared-services AMS profiles for Lakeshore without airline language", () => {
+    const set = buildVendorResponseMveProfiles({
+      id: "18439aee-9889-4e97-a444-4d9e43a85bd5",
+      code: "LAKE-SHARED-SERVICES-AMS-2026",
+      name: "Lakeshore Shared Services AMS",
+      accountName: "Lakeshore Holdings",
+    });
+
+    expect(set).toBeTruthy();
+    expect(set!.tenantKey).toBe("lakeshore");
+    expect(set!.eventName).toBe("Lakeshore Shared Services AMS");
+    expect(set!.profiles).toHaveLength(3);
+    const profileText = JSON.stringify(set);
+    expect(profileText).toMatch(/Corporate Shared Services Support/);
+    expect(profileText).toMatch(/Finance, HR, Legal, Procurement, Treasury, and Compliance coverage/);
+    expect(profileText).not.toMatch(/Airline Operations Support|IROPS|airport operations|airline-critical/i);
+  });
 });
 
 describe("vendor challenge log and commercial leverage seeds", () => {
