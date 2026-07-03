@@ -71,14 +71,16 @@ function fakeSupabase(row: Record<string, unknown> | null = { id: "row-1" }): {
 
 function fakeTxSession(
   handler: (sql: string, params: readonly unknown[]) => unknown[],
-): { session: TxSessionRunner; statements: string[] } {
+): { session: TxSessionRunner; statements: string[]; paramSets: unknown[][] } {
   const statements: string[] = [];
+  const paramSets: unknown[][] = [];
   const session: TxSessionRunner = async (fn) =>
     fn(async <R>(sql: string, params: unknown[]) => {
       statements.push(sql);
+      paramSets.push(params);
       return handler(sql, params) as R[];
     });
-  return { session, statements };
+  return { session, statements, paramSets };
 }
 
 // --- selection --------------------------------------------------------------
@@ -492,6 +494,27 @@ describe("azure source write adapter", () => {
     expect(statements[0]).toContain("body = $1");
     expect(statements[0]).toContain("body_format = $2");
     expect(statements[0]).toContain("WHERE id = $3");
+  });
+
+  it("updateArtifactBody serializes JSONB body-generation metadata", async () => {
+    const { session, statements, paramSets } = fakeTxSession((sql) =>
+      sql.includes("RETURNING") ? [{ id: "art-1" }] : [],
+    );
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.updateArtifactBody({
+      artifactRowId: "art-1",
+      columns: {
+        status: "approved",
+        body_generation_metadata: {
+          clientFinal: { artifactId: "final-1" },
+        },
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain("status = $1");
+    expect(statements[0]).toContain("body_generation_metadata = $2::jsonb");
+    expect(paramSets[0][1]).toBe('{"clientFinal":{"artifactId":"final-1"}}');
   });
 
   it("insertParticipant treats a unique-violation as a benign no-op", async () => {

@@ -429,6 +429,23 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err ?? "unknown");
 }
 
+const SOURCE_ARTIFACT_BODY_JSONB_COLUMNS = new Set([
+  "body_generation_metadata",
+]);
+
+function sourceArtifactBodyAssignment(column: string, index: number): string {
+  const placeholder = `$${index}`;
+  return SOURCE_ARTIFACT_BODY_JSONB_COLUMNS.has(column)
+    ? `${column} = ${placeholder}::jsonb`
+    : `${column} = ${placeholder}`;
+}
+
+function sourceArtifactBodyValue(column: string, value: unknown): unknown {
+  return SOURCE_ARTIFACT_BODY_JSONB_COLUMNS.has(column) && value !== null
+    ? JSON.stringify(value ?? {})
+    : value;
+}
+
 /**
  * Build the Azure Postgres source write adapter. Mirrors the Supabase row
  * semantics statement-for-statement; the `applyApproval` write runs both
@@ -518,7 +535,8 @@ export function createAzureSourceWriteAdapter(
             ],
           ),
         );
-        if (!rows[0]?.id) return fail("approval record insert did not return an id");
+        if (!rows[0]?.id)
+          return fail("approval record insert did not return an id");
         return ok({ id: rows[0].id });
       } catch (err) {
         return fail(errMessage(err));
@@ -614,8 +632,12 @@ export function createAzureSourceWriteAdapter(
     async updateArtifactBody(input) {
       try {
         const keys = Object.keys(input.columns);
-        const assignments = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
-        const values = keys.map((k) => input.columns[k]);
+        const assignments = keys
+          .map((k, i) => sourceArtifactBodyAssignment(k, i + 1))
+          .join(", ");
+        const values = keys.map((k) =>
+          sourceArtifactBodyValue(k, input.columns[k]),
+        );
         const rows = await session((run) =>
           run<Record<string, unknown>>(
             `UPDATE source_event_artifact_states
