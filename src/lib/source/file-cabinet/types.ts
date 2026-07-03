@@ -1,22 +1,36 @@
 // Source File Cabinet / Artifact Vault — types.
 
-export type ArtifactGroup = 'generated' | 'upload' | 'template' | 'session' | 'approval';
+export type ArtifactGroup =
+  | "generated"
+  | "upload"
+  | "template"
+  | "session"
+  | "approval";
 
 export type ArtifactStatus =
-  | 'draft'
-  | 'preliminary'
-  | 'issue_ready'
-  | 'client_to_complete'
-  | 'legal_review_required'
-  | 'procurement_review_required'
-  | 'approved'
-  | 'superseded'
-  | 'retired'
-  | 'blocked';
+  | "draft"
+  | "preliminary"
+  | "issue_ready"
+  | "client_to_complete"
+  | "legal_review_required"
+  | "procurement_review_required"
+  | "approved"
+  | "client_final"
+  | "superseded"
+  | "retired"
+  | "blocked";
 
-export type ArtifactLifecycle = 'current' | 'superseded' | 'retired';
+export type ArtifactLifecycle = "current" | "superseded" | "retired";
 
-export type ArtifactFileFormat = 'docx' | 'xlsx' | 'pptx' | 'pdf' | 'html' | 'md' | 'csv' | 'json';
+export type ArtifactFileFormat =
+  | "docx"
+  | "xlsx"
+  | "pptx"
+  | "pdf"
+  | "html"
+  | "md"
+  | "csv"
+  | "json";
 
 export interface SourceArtifactRecord {
   id: string;
@@ -55,6 +69,17 @@ export interface SourceArtifactRecord {
   supersededByArtifactId: string | null;
   lifecycleState: ArtifactLifecycle;
   blobSha256: string | null;
+  isClientFinal: boolean;
+  isCurrentAuthoritative: boolean;
+  sourceGeneratedArtifactId: string | null;
+  clientFinalUploadedBy: string | null;
+  clientFinalUploadedAt: string | null;
+  clientFinalAcceptedBy: string | null;
+  clientFinalAcceptedAt: string | null;
+  clientFinalNote: string | null;
+  clientFinalReviewMeetingDate: string | null;
+  clientFinalStakeholderGroup: string | null;
+  clientFinalChangeSummary: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -84,6 +109,17 @@ export interface PersistArtifactInput {
   missingInputs?: string[];
   clientCompleteItems?: string[];
   assumptions?: string[];
+  isClientFinal?: boolean;
+  isCurrentAuthoritative?: boolean;
+  sourceGeneratedArtifactId?: string | null;
+  clientFinalUploadedBy?: string | null;
+  clientFinalUploadedAt?: string | null;
+  clientFinalAcceptedBy?: string | null;
+  clientFinalAcceptedAt?: string | null;
+  clientFinalNote?: string | null;
+  clientFinalReviewMeetingDate?: string | null;
+  clientFinalStakeholderGroup?: string | null;
+  clientFinalChangeSummary?: Record<string, unknown>;
 }
 
 export interface ListArtifactsFilter {
@@ -94,16 +130,16 @@ export interface ListArtifactsFilter {
 }
 
 const CONTENT_TYPES: Record<ArtifactFileFormat, string> = {
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  pdf: 'application/pdf',
-  html: 'text/html; charset=utf-8',
-  md: 'text/markdown; charset=utf-8',
-  csv: 'text/csv; charset=utf-8',
-  json: 'application/json',
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  pdf: "application/pdf",
+  html: "text/html; charset=utf-8",
+  md: "text/markdown; charset=utf-8",
+  csv: "text/csv; charset=utf-8",
+  json: "application/json",
 };
 
 export function contentTypeFor(format: ArtifactFileFormat): string {
-  return CONTENT_TYPES[format] ?? 'application/octet-stream';
+  return CONTENT_TYPES[format] ?? "application/octet-stream";
 }

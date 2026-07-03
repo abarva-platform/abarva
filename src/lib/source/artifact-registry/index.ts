@@ -93,6 +93,7 @@ export interface RegisterSourceArtifactInput {
     sourcingStage?: string | null;
     artifactGroup: ArtifactGroup;
     artifactType: string;
+    artifactFamily?: string | null;
     title: string;
     description?: string | null;
     fileName: string;
@@ -114,6 +115,17 @@ export interface RegisterSourceArtifactInput {
     assumptions?: string[];
     supersedesArtifactId?: string | null;
     blobSha256?: string | null;
+    isClientFinal?: boolean;
+    isCurrentAuthoritative?: boolean;
+    sourceGeneratedArtifactId?: string | null;
+    clientFinalUploadedBy?: string | null;
+    clientFinalUploadedAt?: string | null;
+    clientFinalAcceptedBy?: string | null;
+    clientFinalAcceptedAt?: string | null;
+    clientFinalNote?: string | null;
+    clientFinalReviewMeetingDate?: string | null;
+    clientFinalStakeholderGroup?: string | null;
+    clientFinalChangeSummary?: Record<string, unknown>;
   };
 }
 
@@ -158,6 +170,17 @@ interface SourceArtifactRow {
   disclosure_classification: unknown;
   evidence_state: SourceArtifactEvidenceState;
   approval_state: SourceArtifactApprovalState;
+  is_client_final?: boolean | null;
+  is_current_authoritative?: boolean | null;
+  source_generated_artifact_id?: string | null;
+  client_final_uploaded_by?: string | null;
+  client_final_uploaded_at?: string | null;
+  client_final_accepted_by?: string | null;
+  client_final_accepted_at?: string | null;
+  client_final_note?: string | null;
+  client_final_review_meeting_date?: string | null;
+  client_final_stakeholder_group?: string | null;
+  client_final_change_summary?: Record<string, unknown> | null;
   cited_source_artifact_ids?: string[] | null;
   version: number | string;
   supersedes_artifact_version_id: string | null;
@@ -192,6 +215,17 @@ const SELECT_COLUMNS = [
   "disclosure_classification",
   "evidence_state",
   "approval_state",
+  "is_client_final",
+  "is_current_authoritative",
+  "source_generated_artifact_id",
+  "client_final_uploaded_by",
+  "client_final_uploaded_at",
+  "client_final_accepted_by",
+  "client_final_accepted_at",
+  "client_final_note",
+  "client_final_review_meeting_date",
+  "client_final_stakeholder_group",
+  "client_final_change_summary",
   "cited_source_artifact_ids",
   "version",
   "supersedes_artifact_version_id",
@@ -203,6 +237,12 @@ const SELECT_COLUMNS = [
 ].join(", ");
 
 function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
+  const changeSummary =
+    row.client_final_change_summary &&
+    typeof row.client_final_change_summary === "object" &&
+    !Array.isArray(row.client_final_change_summary)
+      ? row.client_final_change_summary
+      : {};
   return {
     id: row.id,
     tenantKey: row.tenant_key,
@@ -232,6 +272,17 @@ function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
       : {}),
     evidenceState: row.evidence_state,
     approvalState: row.approval_state,
+    isClientFinal: row.is_client_final === true,
+    isCurrentAuthoritative: row.is_current_authoritative === true,
+    sourceGeneratedArtifactId: row.source_generated_artifact_id ?? null,
+    clientFinalUploadedBy: row.client_final_uploaded_by ?? null,
+    clientFinalUploadedAt: row.client_final_uploaded_at ?? null,
+    clientFinalAcceptedBy: row.client_final_accepted_by ?? null,
+    clientFinalAcceptedAt: row.client_final_accepted_at ?? null,
+    clientFinalNote: row.client_final_note ?? null,
+    clientFinalReviewMeetingDate: row.client_final_review_meeting_date ?? null,
+    clientFinalStakeholderGroup: row.client_final_stakeholder_group ?? null,
+    clientFinalChangeSummary: changeSummary,
     citedSourceArtifactIds: Array.isArray(row.cited_source_artifact_ids)
       ? row.cited_source_artifact_ids.map(String)
       : [],
@@ -315,6 +366,8 @@ export async function registerSourceArtifactUpload(
             sourcing_stage: input.fileCabinet.sourcingStage ?? null,
             artifact_group: input.fileCabinet.artifactGroup,
             artifact_type: input.fileCabinet.artifactType,
+            artifact_family:
+              input.fileCabinet.artifactFamily ?? input.artifactFamily,
             title: input.fileCabinet.title,
             description: input.fileCabinet.description ?? null,
             file_name: input.fileCabinet.fileName,
@@ -340,6 +393,26 @@ export async function registerSourceArtifactUpload(
               input.fileCabinet.supersedesArtifactId ?? null,
             lifecycle_state: "current",
             blob_sha256: input.fileCabinet.blobSha256 ?? input.sha256,
+            is_client_final: input.fileCabinet.isClientFinal ?? false,
+            is_current_authoritative:
+              input.fileCabinet.isCurrentAuthoritative ?? false,
+            source_generated_artifact_id:
+              input.fileCabinet.sourceGeneratedArtifactId ?? null,
+            client_final_uploaded_by:
+              input.fileCabinet.clientFinalUploadedBy ?? null,
+            client_final_uploaded_at:
+              input.fileCabinet.clientFinalUploadedAt ?? null,
+            client_final_accepted_by:
+              input.fileCabinet.clientFinalAcceptedBy ?? null,
+            client_final_accepted_at:
+              input.fileCabinet.clientFinalAcceptedAt ?? null,
+            client_final_note: input.fileCabinet.clientFinalNote ?? null,
+            client_final_review_meeting_date:
+              input.fileCabinet.clientFinalReviewMeetingDate ?? null,
+            client_final_stakeholder_group:
+              input.fileCabinet.clientFinalStakeholderGroup ?? null,
+            client_final_change_summary:
+              input.fileCabinet.clientFinalChangeSummary ?? {},
           }
         : {}),
     },

@@ -6,14 +6,14 @@
 // history is opt-in. The DB client is injectable so versioning/mapping is unit-tested
 // without the data plane.
 
-import 'server-only';
+import "server-only";
 
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type {
   ArtifactGroup,
   ListArtifactsFilter,
   SourceArtifactRecord,
-} from './types';
+} from "./types";
 
 type DbClient = ReturnType<typeof getAzureWriteFluentClient>;
 
@@ -22,8 +22,14 @@ function arr(v: unknown): string[] {
 }
 
 function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
-  const numOrNull = (v: unknown) => (v === null || v === undefined ? null : Number(v));
-  const strOrNull = (v: unknown) => (typeof v === 'string' && v.length ? v : null);
+  const numOrNull = (v: unknown) =>
+    v === null || v === undefined ? null : Number(v);
+  const strOrNull = (v: unknown) =>
+    typeof v === "string" && v.length ? v : null;
+  const objOrEmpty = (v: unknown): Record<string, unknown> =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? (v as Record<string, unknown>)
+      : {};
   return {
     id: String(row.id),
     clientId: String(row.client_id),
@@ -36,12 +42,12 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     title: String(row.title),
     description: strOrNull(row.description),
     fileName: String(row.file_name),
-    fileFormat: row.file_format as SourceArtifactRecord['fileFormat'],
+    fileFormat: row.file_format as SourceArtifactRecord["fileFormat"],
     blobContainer: String(row.blob_container),
     blobPath: String(row.blob_path),
     fileSize: numOrNull(row.file_size),
     version: Number(row.version ?? 1),
-    status: row.status as SourceArtifactRecord['status'],
+    status: row.status as SourceArtifactRecord["status"],
     generatedBy: strOrNull(row.generated_by),
     generatedAt: String(row.generated_at),
     sourceBasis: strOrNull(row.source_basis),
@@ -59,8 +65,22 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     assumptions: arr(row.assumptions),
     supersedesArtifactId: strOrNull(row.supersedes_artifact_id),
     supersededByArtifactId: strOrNull(row.superseded_by_artifact_id),
-    lifecycleState: row.lifecycle_state as SourceArtifactRecord['lifecycleState'],
+    lifecycleState:
+      row.lifecycle_state as SourceArtifactRecord["lifecycleState"],
     blobSha256: strOrNull(row.blob_sha256),
+    isClientFinal: row.is_client_final === true,
+    isCurrentAuthoritative: row.is_current_authoritative === true,
+    sourceGeneratedArtifactId: strOrNull(row.source_generated_artifact_id),
+    clientFinalUploadedBy: strOrNull(row.client_final_uploaded_by),
+    clientFinalUploadedAt: strOrNull(row.client_final_uploaded_at),
+    clientFinalAcceptedBy: strOrNull(row.client_final_accepted_by),
+    clientFinalAcceptedAt: strOrNull(row.client_final_accepted_at),
+    clientFinalNote: strOrNull(row.client_final_note),
+    clientFinalReviewMeetingDate: strOrNull(
+      row.client_final_review_meeting_date,
+    ),
+    clientFinalStakeholderGroup: strOrNull(row.client_final_stakeholder_group),
+    clientFinalChangeSummary: objOrEmpty(row.client_final_change_summary),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -74,14 +94,17 @@ export async function getCurrentArtifacts(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<SourceArtifactRecord[]> {
   const { data, error } = await db
-    .from('source_artifacts')
-    .select('*')
-    .eq('source_event_id', sourceEventId)
-    .eq('artifact_type', artifactType)
-    .eq('artifact_group', artifactGroup)
-    .eq('lifecycle_state', 'current');
-  if (error) throw new Error(`source_artifacts current read failed: ${error.message}`);
-  return (Array.isArray(data) ? data : []).map((r) => rowToRecord(r as Record<string, unknown>));
+    .from("source_artifacts")
+    .select("*")
+    .eq("source_event_id", sourceEventId)
+    .eq("artifact_type", artifactType)
+    .eq("artifact_group", artifactGroup)
+    .eq("lifecycle_state", "current");
+  if (error)
+    throw new Error(`source_artifacts current read failed: ${error.message}`);
+  return (Array.isArray(data) ? data : []).map((r) =>
+    rowToRecord(r as Record<string, unknown>),
+  );
 }
 
 export interface InsertArtifactRow {
@@ -113,6 +136,17 @@ export interface InsertArtifactRow {
   assumptions: string[];
   supersedesArtifactId: string | null;
   blobSha256: string | null;
+  isClientFinal?: boolean;
+  isCurrentAuthoritative?: boolean;
+  sourceGeneratedArtifactId?: string | null;
+  clientFinalUploadedBy?: string | null;
+  clientFinalUploadedAt?: string | null;
+  clientFinalAcceptedBy?: string | null;
+  clientFinalAcceptedAt?: string | null;
+  clientFinalNote?: string | null;
+  clientFinalReviewMeetingDate?: string | null;
+  clientFinalStakeholderGroup?: string | null;
+  clientFinalChangeSummary?: Record<string, unknown>;
 }
 
 export async function insertSourceArtifact(
@@ -120,7 +154,7 @@ export async function insertSourceArtifact(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<SourceArtifactRecord> {
   const { data, error } = await db
-    .from('source_artifacts')
+    .from("source_artifacts")
     .insert({
       client_id: row.clientId,
       tenant_key: row.tenantKey,
@@ -150,11 +184,24 @@ export async function insertSourceArtifact(
       assumptions: row.assumptions,
       supersedes_artifact_id: row.supersedesArtifactId,
       blob_sha256: row.blobSha256,
-      lifecycle_state: 'current',
+      is_client_final: row.isClientFinal ?? false,
+      is_current_authoritative: row.isCurrentAuthoritative ?? false,
+      source_generated_artifact_id: row.sourceGeneratedArtifactId ?? null,
+      client_final_uploaded_by: row.clientFinalUploadedBy ?? null,
+      client_final_uploaded_at: row.clientFinalUploadedAt ?? null,
+      client_final_accepted_by: row.clientFinalAcceptedBy ?? null,
+      client_final_accepted_at: row.clientFinalAcceptedAt ?? null,
+      client_final_note: row.clientFinalNote ?? null,
+      client_final_review_meeting_date:
+        row.clientFinalReviewMeetingDate ?? null,
+      client_final_stakeholder_group: row.clientFinalStakeholderGroup ?? null,
+      client_final_change_summary: row.clientFinalChangeSummary ?? {},
+      lifecycle_state: "current",
     })
-    .select('*')
+    .select("*")
     .single();
-  if (error) throw new Error(`source_artifacts insert failed: ${error.message}`);
+  if (error)
+    throw new Error(`source_artifacts insert failed: ${error.message}`);
   return rowToRecord(data as Record<string, unknown>);
 }
 
@@ -167,14 +214,20 @@ export async function supersedePriorVersions(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<void> {
   const { error } = await db
-    .from('source_artifacts')
-    .update({ lifecycle_state: 'superseded', status: 'superseded', superseded_by_artifact_id: newArtifactId, updated_at: new Date().toISOString() })
-    .eq('source_event_id', sourceEventId)
-    .eq('artifact_type', artifactType)
-    .eq('artifact_group', artifactGroup)
-    .eq('lifecycle_state', 'current')
-    .neq('id', newArtifactId);
-  if (error) throw new Error(`source_artifacts supersede failed: ${error.message}`);
+    .from("source_artifacts")
+    .update({
+      lifecycle_state: "superseded",
+      status: "superseded",
+      superseded_by_artifact_id: newArtifactId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("source_event_id", sourceEventId)
+    .eq("artifact_type", artifactType)
+    .eq("artifact_group", artifactGroup)
+    .eq("lifecycle_state", "current")
+    .neq("id", newArtifactId);
+  if (error)
+    throw new Error(`source_artifacts supersede failed: ${error.message}`);
 }
 
 /** All artifacts for an event (File Cabinet). Current-only unless includeHistory. */
@@ -185,16 +238,18 @@ export async function listSourceArtifacts(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<SourceArtifactRecord[]> {
   let q = db
-    .from('source_artifacts')
-    .select('*')
-    .eq('source_event_id', sourceEventId)
-    .eq('client_id', clientId);
-  if (!filter.includeHistory) q = q.eq('lifecycle_state', 'current');
-  if (filter.artifactGroup) q = q.eq('artifact_group', filter.artifactGroup);
-  if (filter.status) q = q.eq('status', filter.status);
-  const { data, error } = await q.order('created_at', { ascending: false });
+    .from("source_artifacts")
+    .select("*")
+    .eq("source_event_id", sourceEventId)
+    .eq("client_id", clientId);
+  if (!filter.includeHistory) q = q.eq("lifecycle_state", "current");
+  if (filter.artifactGroup) q = q.eq("artifact_group", filter.artifactGroup);
+  if (filter.status) q = q.eq("status", filter.status);
+  const { data, error } = await q.order("created_at", { ascending: false });
   if (error) throw new Error(`source_artifacts list failed: ${error.message}`);
-  return (Array.isArray(data) ? data : []).map((r) => rowToRecord(r as Record<string, unknown>));
+  return (Array.isArray(data) ? data : []).map((r) =>
+    rowToRecord(r as Record<string, unknown>),
+  );
 }
 
 export async function getSourceArtifact(
@@ -203,10 +258,10 @@ export async function getSourceArtifact(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<SourceArtifactRecord | null> {
   const { data, error } = await db
-    .from('source_artifacts')
-    .select('*')
-    .eq('id', id)
-    .eq('client_id', clientId)
+    .from("source_artifacts")
+    .select("*")
+    .eq("id", id)
+    .eq("client_id", clientId)
     .maybeSingle();
   if (error) throw new Error(`source_artifacts get failed: ${error.message}`);
   return data ? rowToRecord(data as Record<string, unknown>) : null;

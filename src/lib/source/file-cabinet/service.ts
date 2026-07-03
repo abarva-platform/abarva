@@ -5,19 +5,19 @@
 // version) → return the record for the File Cabinet. Collaborators are injectable so the
 // versioning/upload orchestration is unit-tested without Blob/DB.
 
-import 'server-only';
+import "server-only";
 
-import { createHash } from 'node:crypto';
+import { createHash } from "node:crypto";
 import {
   getCurrentArtifacts as defaultGetCurrent,
   insertSourceArtifact as defaultInsert,
   supersedePriorVersions as defaultSupersede,
-} from './repository';
+} from "./repository";
 import {
   locationForGroup as defaultLocationForGroup,
   uploadArtifactBytes as defaultUpload,
-} from './blob-store';
-import type { PersistArtifactInput, SourceArtifactRecord } from './types';
+} from "./blob-store";
+import type { PersistArtifactInput, SourceArtifactRecord } from "./types";
 
 export interface PersistArtifactDeps {
   getCurrent?: typeof defaultGetCurrent;
@@ -42,7 +42,11 @@ export async function persistSourceArtifact(
   const upload = deps.upload ?? defaultUpload;
   const buildLocation = deps.locationForGroup ?? defaultLocationForGroup;
 
-  const prior = await getCurrent(input.sourceEventId, input.artifactType, input.artifactGroup);
+  const prior = await getCurrent(
+    input.sourceEventId,
+    input.artifactType,
+    input.artifactGroup,
+  );
   const priorMaxVersion = prior.reduce((m, p) => Math.max(m, p.version), 0);
   const version = priorMaxVersion + 1;
   const priorId = prior.length ? prior[0].id : null;
@@ -57,7 +61,7 @@ export async function persistSourceArtifact(
     ...(input.artifactFamily ? { artifactFamily: input.artifactFamily } : {}),
   });
 
-  const sha = createHash('sha256').update(input.bytes).digest('hex');
+  const sha = createHash("sha256").update(input.bytes).digest("hex");
   await upload(location, input.bytes, input.fileFormat, {
     tenantKey: input.tenantKey,
     sourceEventId: input.sourceEventId,
@@ -81,7 +85,7 @@ export async function persistSourceArtifact(
     blobPath: location.path,
     fileSize: input.bytes.length,
     version,
-    status: input.status ?? 'draft',
+    status: input.status ?? "draft",
     generatedBy: input.generatedBy ?? null,
     sourceBasis: input.sourceBasis ?? null,
     confidence: input.confidence ?? null,
@@ -94,10 +98,26 @@ export async function persistSourceArtifact(
     assumptions: input.assumptions ?? [],
     supersedesArtifactId: priorId,
     blobSha256: sha,
+    isClientFinal: input.isClientFinal ?? false,
+    isCurrentAuthoritative: input.isCurrentAuthoritative ?? false,
+    sourceGeneratedArtifactId: input.sourceGeneratedArtifactId ?? null,
+    clientFinalUploadedBy: input.clientFinalUploadedBy ?? null,
+    clientFinalUploadedAt: input.clientFinalUploadedAt ?? null,
+    clientFinalAcceptedBy: input.clientFinalAcceptedBy ?? null,
+    clientFinalAcceptedAt: input.clientFinalAcceptedAt ?? null,
+    clientFinalNote: input.clientFinalNote ?? null,
+    clientFinalReviewMeetingDate: input.clientFinalReviewMeetingDate ?? null,
+    clientFinalStakeholderGroup: input.clientFinalStakeholderGroup ?? null,
+    clientFinalChangeSummary: input.clientFinalChangeSummary ?? {},
   });
 
   if (priorId) {
-    await supersede(input.sourceEventId, input.artifactType, input.artifactGroup, record.id);
+    await supersede(
+      input.sourceEventId,
+      input.artifactType,
+      input.artifactGroup,
+      record.id,
+    );
   }
 
   return record;

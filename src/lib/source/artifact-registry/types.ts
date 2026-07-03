@@ -115,6 +115,17 @@ export interface SourceArtifactRegistryRecord {
   dataClassification: SourceDataClassification;
   evidenceState: SourceArtifactEvidenceState;
   approvalState: SourceArtifactApprovalState;
+  isClientFinal?: boolean;
+  isCurrentAuthoritative?: boolean;
+  sourceGeneratedArtifactId?: string | null;
+  clientFinalUploadedBy?: string | null;
+  clientFinalUploadedAt?: string | null;
+  clientFinalAcceptedBy?: string | null;
+  clientFinalAcceptedAt?: string | null;
+  clientFinalNote?: string | null;
+  clientFinalReviewMeetingDate?: string | null;
+  clientFinalStakeholderGroup?: string | null;
+  clientFinalChangeSummary?: Record<string, unknown>;
   citedSourceArtifactIds?: string[];
   /**
    * GAP-9 · artifact-level disclosure-classification flag. Distinct from
