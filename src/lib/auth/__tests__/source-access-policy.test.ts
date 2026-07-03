@@ -311,7 +311,7 @@ describe("source access policy", () => {
       await import("../source-access-policy");
     const agentTenancy = {
       clientId: "client-lakeshore",
-      userId: "clerk:user_lakeshore_agent",
+      userId: "65b59d7c-071c-41d7-b2b9-e52f7b45f81a",
       role: "client_viewer",
       email: "lakeshore-agent@abarva.example.com",
     };
