@@ -70,37 +70,37 @@ export default async function SourceArtifactPage({
         style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}
       >
         <SentinelAgentColumn
-        quote={`Artifact state: ${artifactState}. Workflow status: ${artifact.status.replaceAll("_", " ")}. Source: ${provenanceLabel}. Evidence chain: ${artifact.sections.length} entries.`}
-        agentContext={`Sentinel · ${artifact.title} · ${event.name}`}
-        actions={[
-          {
-            letter: "A",
-            text: "Show evidence",
-            detail: "Review evidence references for this artifact",
-          },
-          {
-            letter: "B",
-            text: "Show version history",
-            detail: "Open artifact version provenance for context",
-          },
-          {
-            letter: "C",
-            text: "Explain missing inputs",
-            detail: "See which evidence items are still needed",
-          },
-        ]}
-      />
-      <SourceWorkingPane>
-        <SourceArtifactDrawer
-          artifact={artifact}
-          provenance={{
-            createdFrom: provenanceSource,
-            storeKey: `source-artifact:${eventId}:${artifactId}`,
-            freshness: artifact.updatedAt,
-            evidenceLedgerEntryId: artifact.id,
-          }}
+          quote={`Artifact state: ${artifactState}. Workflow status: ${artifact.status.replaceAll("_", " ")}. Source: ${provenanceLabel}. Evidence chain: ${artifact.sections.length} entries.`}
+          agentContext={`Artifact review · ${artifact.title} · ${event.name}`}
+          actions={[
+            {
+              letter: "A",
+              text: "Show evidence",
+              detail: "Review evidence references for this artifact",
+            },
+            {
+              letter: "B",
+              text: "Show version history",
+              detail: "Open artifact version provenance for context",
+            },
+            {
+              letter: "C",
+              text: "Explain missing inputs",
+              detail: "See which evidence items are still needed",
+            },
+          ]}
         />
-      </SourceWorkingPane>
+        <SourceWorkingPane>
+          <SourceArtifactDrawer
+            artifact={artifact}
+            provenance={{
+              createdFrom: provenanceSource,
+              storeKey: `source-artifact:${eventId}:${artifactId}`,
+              freshness: artifact.updatedAt,
+              evidenceLedgerEntryId: artifact.id,
+            }}
+          />
+        </SourceWorkingPane>
       </main>
     </AppShell>
   );

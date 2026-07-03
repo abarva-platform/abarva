@@ -34,8 +34,8 @@ interface SourceEventAgentCanvasProps {
 }
 
 const AVA_EVENT_AGENT = {
-  initials: 'Av',
-  name: 'Ava',
+  initials: 'aV',
+  name: 'aVa',
   role: 'End-to-end sourcing assistant',
 } as const;
 

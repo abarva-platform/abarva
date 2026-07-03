@@ -66,21 +66,21 @@ export default async function SourceValuePage() {
         style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}
       >
         <SentinelAgentColumn
-        quote={quote}
-        agentContext={`Sentinel · Source value ledger · ${activeClientDisplayName}`}
-        actions={[
-          { letter: 'A', text: 'Show assumptions', detail: 'Value projections and their evidence basis' },
-          { letter: 'B', text: 'Show evidence gaps', detail: 'Value claims missing audit confirmation' },
-          { letter: 'C', text: 'Explain value confidence', detail: 'Confidence breakdown by source and tier' },
-        ]}
-      />
-      <SourceWorkingPane>
-        <SourceValueLedger
-          snapshot={ledger.snapshot}
-          canViewFinancialValues={canViewFinancialValues}
-          isDegraded={ledger.isDegraded}
+          quote={quote}
+          agentContext={`Value ledger review · ${activeClientDisplayName}`}
+          actions={[
+            { letter: 'A', text: 'Show assumptions', detail: 'Value projections and their evidence basis' },
+            { letter: 'B', text: 'Show evidence gaps', detail: 'Value claims missing audit confirmation' },
+            { letter: 'C', text: 'Explain value confidence', detail: 'Confidence breakdown by source and tier' },
+          ]}
         />
-      </SourceWorkingPane>
+        <SourceWorkingPane>
+          <SourceValueLedger
+            snapshot={ledger.snapshot}
+            canViewFinancialValues={canViewFinancialValues}
+            isDegraded={ledger.isDegraded}
+          />
+        </SourceWorkingPane>
       </main>
     </AppShell>
   );
