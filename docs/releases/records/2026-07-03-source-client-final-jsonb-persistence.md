@@ -40,6 +40,7 @@ This release fixes the Source client-final acceptance path after live proof foun
 - `src/lib/source/file-cabinet/__tests__/repository.test.ts`: adds a regression proving File Cabinet insert payloads remain valid and the returned record maps the summary back into an object.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: binds File Cabinet authority metadata into Source aVa context, including client-final, current-authoritative, Blob-backed, version, lifecycle, and lineage fields.
 - `src/lib/source/source-answer-engine.ts`: adds a deterministic artifact-governance answer path for final RFP version, vendor issuance, generated-draft lineage, and stage-advance questions.
+- `src/lib/source/source-answer-engine.ts`: polishes the user-facing artifact-governance answer so vendor-issuance and draft-history questions answer directly, and replaces machine-style `yes/no` authority flags with business-facing final-version language.
 - `src/lib/source/__tests__/nexus-api-live-context.test.ts`: adds a regression proving aVa answers `Which RFP version is final?` from client-final File Cabinet lineage instead of generic vendor-evaluation advice.
 
 ## QA / Validation
@@ -49,6 +50,7 @@ This release fixes the Source client-final acceptance path after live proof foun
 - Pass: focused ESLint on changed files.
 - Pass: full TypeScript compile with `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit`.
 - Pass: `npm run release:check`.
+- Pass: PR #4380 CI passed before merge, including Typecheck + reasoning-layer tests, release record and impact note, ESLint, browser smoke, public axe accessibility, and hygiene gate.
 - Pending deploy: live signed-in SkyHarbor client-final proof and aVa governance proof will run after deploy.
 
 ## Rollout Plan

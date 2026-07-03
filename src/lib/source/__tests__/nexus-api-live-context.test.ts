@@ -568,7 +568,7 @@ describe("Source Nexus API live context", () => {
       /AbarVa generated .*RFP_Package-69d8180c\.docx/i,
     );
     expect(response.summary).toMatch(/client uploaded .*Client Final/i);
-    expect(response.summary).toMatch(/current authoritative=yes/i);
+    expect(response.summary).toMatch(/current authoritative version/i);
     expect(response.summary).not.toMatch(/Vendor A|BAFO|risk-adjusted lead/i);
     expect(response.summary).not.toMatch(
       /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/i,

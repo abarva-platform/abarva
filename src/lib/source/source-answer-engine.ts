@@ -997,7 +997,7 @@ function buildArtifactGovernanceAnswer(args: {
   let lead: string;
   if (/\b(vendors? receive)\b/.test(text)) {
     lead = artifactIsReady
-      ? `Vendors should receive ${finalName}, the client-final ${finalVersion} of the RFP pack.`
+      ? `Vendor issuance should use the client-final artifact: ${finalName}, ${finalVersion} of the RFP pack.`
       : `${finalName} is the strongest available RFP artifact, but a client-final authoritative file is not fully confirmed from the artifact registry.`;
   } else if (/\b(generate|generated|client upload|uploaded)\b/.test(text)) {
     lead = clientFinal
@@ -1019,11 +1019,11 @@ function buildArtifactGovernanceAnswer(args: {
 
   const lineage = clientFinal
     ? generatedDraft
-      ? `Lineage: AbarVa generated ${draftName}; the client uploaded ${finalName}; the client-final version supersedes the generated draft for vendor issuance.`
+      ? `Lineage: AbarVa generated ${draftName}; the client uploaded ${finalName}; the client-final version supersedes the generated draft for vendor issuance, while the generated draft remains preserved in history.`
       : `Lineage: ${finalName} is marked client-final; the prior generated draft is not visible in the current answer evidence slice.`
     : `Lineage: ${draftName} remains available, but the client-final handoff is not confirmed.`;
   const authority = clientFinal
-    ? `Authority: ${finalName} is marked client-final=${clientFinal.isClientFinal ? "yes" : "no"}, current authoritative=${clientFinal.isCurrentAuthoritative ? "yes" : "no"}, Blob-backed=${clientFinal.isBlobBacked ? "yes" : "no"}, status ${clientFinal.status}, lifecycle ${clientFinal.lifecycle}.`
+    ? `Authority: ${finalName} is the accepted client-final artifact, current authoritative version, and stored file of record; registry status is ${clientFinal.status} with ${clientFinal.lifecycle} lifecycle.`
     : "Authority: no client-final authoritative RFP artifact is confirmed.";
   const gate = artifactIsReady
     ? "Gate implication: the artifact-version requirement can use the client-final file, but Source still needs any remaining stage criteria and human approval before external issuance."
