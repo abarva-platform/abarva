@@ -8,7 +8,7 @@ import { StrategicMovePhaseClient } from "../StrategicMovePhaseClient";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
-function makeMove(): StrategicMove {
+function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
   return {
     id: "49c77bca-471d-4398-8b13-fa8ed1487597",
     displayCode: "RETAIL-LAKESHORE-2026",
@@ -39,6 +39,7 @@ function makeMove(): StrategicMove {
     mapLabel: "Finance modernization",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-06-27T00:00:00Z",
+    ...overrides,
   };
 }
 
@@ -117,5 +118,37 @@ describe("StrategicMovePhaseClient operating layer", () => {
     expect(screen.getAllByText(/Sponsor: To be assigned/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Sponsor: Unassigned/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/SPONSOR: UNASSIGNED/i)).not.toBeInTheDocument();
+  });
+
+  it("renders P0 capture details from the nested origination charter scaffold", () => {
+    render(
+      <StrategicMovePhaseClient
+        move={makeMove({
+          name: "Kyriba treasury rollout value realization",
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          charter: {
+            scaffold: {
+              problem_statement:
+                "Kyriba go-live needs bank connectivity, SAP feeds, signer controls, and SOX evidence before it is value-ready.",
+              sponsor_candidate: "CFO and Treasurer accountable, CIO consulted",
+              value_hypothesis:
+                "Reduce manual cash positioning work and improve liquidity visibility.",
+              scope_boundary:
+                "In: Kyriba, bank connectivity, SAP/AP/AR/GL feeds, payment controls. Out: SAP replacement.",
+              evidence_family:
+                "Cash visibility baseline, bank account inventory, payment formats, signer matrix, SOX control evidence.",
+            },
+          },
+        })}
+        phaseNum={0}
+      />,
+    );
+
+    expect(screen.getAllByText(/5 of 5 captured/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/bank connectivity, SAP feeds/i)).toBeInTheDocument();
+    expect(screen.getByText(/CFO and Treasurer accountable/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cash visibility baseline/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Work with Ava in the chat pane to populate this section/i)).not.toBeInTheDocument();
   });
 });
