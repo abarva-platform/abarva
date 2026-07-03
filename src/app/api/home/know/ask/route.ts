@@ -32,19 +32,29 @@ export async function POST(req: NextRequest) {
 
   const tenantKey =
     tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null;
+  let v7FallbackReason: string | null = null;
   const response = await buildV7HomeKnowResponse({
     question: payload.question,
     tenantKey,
     tenantDisplayName: tenant?.displayName ?? null,
     includeTrace,
-  }).catch(() =>
-    buildV6HomeKnowResponse({
+  }).catch((error) => {
+    v7FallbackReason =
+      error instanceof Error ? error.message : String(error ?? "unknown");
+    if (includeTrace) {
+      console.warn("[home-know.v7-fallback]", {
+        route: "/api/home/know/ask",
+        tenantKey,
+        reason: v7FallbackReason,
+      });
+    }
+    return buildV6HomeKnowResponse({
       question: payload.question,
       tenantKey,
       tenantDisplayName: tenant?.displayName ?? null,
       includeTrace,
-    }),
-  ).catch((error): Promise<HomeKnowResponse> | HomeKnowResponse =>
+    });
+  }).catch((error): Promise<HomeKnowResponse> | HomeKnowResponse =>
     blockedHomeKnowResponse({
       question: payload.question,
       tenantKey: tenantKey ?? "unknown",
@@ -58,6 +68,18 @@ export async function POST(req: NextRequest) {
   const { payload: safeResponse, audit: visibleSanitizer } =
     sanitizeHomeKnowVisiblePayloadWithAudit(response);
   restoreV7ClientNamesInPlace(safeResponse);
+  if (v7FallbackReason && safeResponse.safety.composerTrace) {
+    safeResponse.safety.composerTrace = {
+      ...safeResponse.safety.composerTrace,
+      fallbackUsed: true,
+      reason: [
+        safeResponse.safety.composerTrace.reason,
+        `V7 request-time fallback: ${v7FallbackReason}`,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    };
+  }
   safeResponse.safety.visibleSanitizer = visibleSanitizer;
 
   if (includeTrace) {
@@ -102,6 +124,7 @@ export async function POST(req: NextRequest) {
           ...safeResponse,
           trace: {
             composerTrace: safeResponse.safety.composerTrace ?? null,
+            v7FallbackReason,
             visibleSanitizer,
             finalPrompt:
               safeResponse.safety.composerTrace?.anthropicTrace?.finalPrompt ??
