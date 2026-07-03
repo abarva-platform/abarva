@@ -374,7 +374,7 @@ export async function loadUserSourceAccessPolicy(
     }
   }
 
-  if (!isUuidLike(ctx.userId) && isKnownAgentClientLoginEmail(ctx.email)) {
+  if (isKnownAgentClientLoginEmail(ctx.email)) {
     // Automation identities are tenant-rostered proof users. They are not
     // usually event participants, but they must be able to verify the Source
     // runtime for their own pinned tenant. The same-tenant guard preserves the
