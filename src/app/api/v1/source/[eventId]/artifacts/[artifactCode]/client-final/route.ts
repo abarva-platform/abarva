@@ -110,7 +110,8 @@ async function getArtifactState(args: {
   tenantKey: string;
   artifactCode: string;
 }): Promise<SourceEventArtifactStateRow | null> {
-  const { data, error } = await getAzureReadFluentClient()
+  const client = getAzureReadFluentClient();
+  const { data, error } = await client
     .from("source_event_artifact_states")
     .select("*")
     .eq("source_event_id", args.eventId)
@@ -118,7 +119,21 @@ async function getArtifactState(args: {
     .eq("artifact_code", args.artifactCode)
     .maybeSingle();
   if (error) throw error;
-  return (data as SourceEventArtifactStateRow | null) ?? null;
+  const strictMatch = (data as SourceEventArtifactStateRow | null) ?? null;
+  if (strictMatch) return strictMatch;
+
+  // Older Source events were scaffolded before tenant_key normalization was
+  // consistent across source_event_artifact_states. The event row above is
+  // already client-scoped, so this fallback stays inside the same tenant fence
+  // while allowing client-final acceptance on legacy generated artifacts.
+  const { data: fallbackData, error: fallbackError } = await client
+    .from("source_event_artifact_states")
+    .select("*")
+    .eq("source_event_id", args.eventId)
+    .eq("artifact_code", args.artifactCode)
+    .maybeSingle();
+  if (fallbackError) throw fallbackError;
+  return (fallbackData as SourceEventArtifactStateRow | null) ?? null;
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
