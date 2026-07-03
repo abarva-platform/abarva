@@ -191,6 +191,23 @@ function toneFor(trust: number): string {
   return "var(--hr)";
 }
 
+function dimensionOptionLabel(
+  dimension: BindingDimension,
+  preview?: HomeV6BrowserPreview | null,
+): string {
+  if (!preview) return `${dimension.dimension} · ${dimension.trust}% answerability`;
+  const rowLabel = `${preview.rowCount.toLocaleString()} row${
+    preview.rowCount === 1 ? "" : "s"
+  }`;
+  const gapLabel =
+    preview.dataThinCells > 0
+      ? `${preview.dataThinCells.toLocaleString()} evidence gap${
+          preview.dataThinCells === 1 ? "" : "s"
+        }`
+      : "0 evidence gaps";
+  return `${dimension.dimension} · ${rowLabel} · ${gapLabel}`;
+}
+
 function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
   return (
     <div className="hx-card">
@@ -676,16 +693,25 @@ function DimensionView({
           <div className="v">{dim.sources}</div>
         </div>
         <div className="hx-stat" style={{ minWidth: 140 }}>
-          <div className="k">Coverage</div>
-          <div className="v">{dim.trust}%</div>
-          <div className="hx-meter">
-            <span
-              style={{
-                width: `${Math.max(0, Math.min(100, dim.trust))}%`,
-                background: toneFor(dim.trust),
-              }}
-            />
-          </div>
+          {preview ? (
+            <>
+              <div className="k">Evidence gaps</div>
+              <div className="v">{preview.dataThinCells.toLocaleString()}</div>
+            </>
+          ) : (
+            <>
+              <div className="k">Answerability</div>
+              <div className="v">{dim.trust}%</div>
+              <div className="hx-meter">
+                <span
+                  style={{
+                    width: `${Math.max(0, Math.min(100, dim.trust))}%`,
+                    background: toneFor(dim.trust),
+                  }}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
       <div className="hx-browser">
@@ -718,8 +744,9 @@ function DimensionView({
         <aside className="hx-explain" aria-label="What the numbers mean">
           <strong>How to read the numbers:</strong> evidence points are loaded,
           source-backed context items aVa can use in answers. Sources are the
-          distinct loaded files or source families behind this area. Coverage is
-          an answerability score, not a guarantee that every field is complete.
+          distinct loaded files or source families behind this area. Evidence
+          gaps are fields explicitly marked as needing evidence before they
+          should support final decisions.
         </aside>
       </div>
       {dim.flag ? (
@@ -1215,7 +1242,10 @@ export function HomeSurface({
                 <option value="">Overview</option>
                 {dims.map((d) => (
                   <option key={d.dimension} value={d.dimension}>
-                    {d.dimension} · {d.trust}% coverage
+                    {dimensionOptionLabel(
+                      d,
+                      safeV6Browser?.dimensions[d.dimension] ?? null,
+                    )}
                   </option>
                 ))}
               </select>
