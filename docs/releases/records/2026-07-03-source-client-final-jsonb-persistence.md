@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing the client-final change summary into artifact metadata rows. The change serializes that JSONB metadata at the shared source-artifacts registry and File Cabinet insert boundaries and keeps reads tolerant of either parsed JSON or serialized JSON.
+This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing JSONB artifact metadata rows. The change serializes JSONB metadata at the shared source-artifacts registry, File Cabinet insert, and artifact-state update boundaries and keeps reads tolerant of either parsed JSON or serialized JSON.
 
 ## Layer Impact
 
@@ -29,12 +29,14 @@ This release fixes the Source client-final acceptance path after live proof foun
 - `src/lib/source/artifact-registry/index.ts`: serializes `client_final_change_summary` for source-artifacts registry inserts and parses it defensively when rows are read back.
 - `src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts`: permits the serialized client-final metadata payload shape at the write-adapter boundary.
 - `src/lib/source/artifact-registry/__tests__/artifact-registry.test.ts`: adds a regression proving registry inserts serialize client-final JSONB metadata.
+- `src/lib/data-plane/write-adapters/sourceWriteAdapter.ts`: serializes artifact-state `body_generation_metadata` for Azure/Postgres JSONB updates.
+- `src/lib/data-plane/write-adapters/__tests__/source-write-adapter.test.ts`: adds a regression proving artifact-state JSONB metadata updates are cast and serialized.
 - `src/lib/source/file-cabinet/repository.ts`: serializes `client_final_change_summary` for File Cabinet inserts and parses it defensively when rows are read back.
 - `src/lib/source/file-cabinet/__tests__/repository.test.ts`: adds a regression proving File Cabinet insert payloads remain valid and the returned record maps the summary back into an object.
 
 ## QA / Validation
 
-- Pass: focused Jest for Source File Cabinet repository.
+- Pass: focused Jest for Source File Cabinet, Source artifact registry, and Source write adapter JSONB handling.
 - Pass: focused ESLint on changed files.
 - Pass: full TypeScript compile with `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit`.
 - Pass: `npm run release:check`.
