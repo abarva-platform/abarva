@@ -638,6 +638,119 @@ describe("Source answer engine", () => {
     },
   );
 
+  it("does not let client-final RFP authority hijack vendor advancement questions", () => {
+    const sharedEvidence = [
+      {
+        id: "source-artifact:client-final",
+        segmentId: "sourcing_artifacts",
+        recordId: "client-final",
+        title: "RFP Package - Client Final",
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_artifacts",
+        excerpt:
+          'Artifact authority record: "Client Final - Lakeshore Shared Services AMS RFP Pack.docx" is a client-final upload. Artifact type: d09_rfp_pack; stage: rfp; status: client_final; lifecycle: current; version: 4. Authority: clientFinal=true; currentAuthoritative=true; blobBacked=true. Lineage: links to the prior generated draft; supersedes a prior artifact version. Client-final note: Client legal/procurement edits accepted after review; this version is final for vendor issuance. Client-final stakeholder group: Sourcing steering committee.',
+        confidence: "high" as const,
+        score: 90,
+      },
+      {
+        id: "source-artifact:generated-draft",
+        segmentId: "sourcing_artifacts",
+        recordId: "generated-draft",
+        title: "RFP Package",
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_artifacts",
+        excerpt:
+          'Artifact authority record: "RFP_Package-lakeshore.docx" is an AbarVa-generated draft. Artifact type: d09_rfp_pack; stage: rfp; status: superseded; lifecycle: superseded; version: 1. Authority: clientFinal=false; currentAuthoritative=false; blobBacked=true. Lineage: has been superseded by a later artifact version.',
+        confidence: "high" as const,
+        score: 70,
+      },
+      {
+        id: "source-event:lake:eval-a",
+        segmentId: "sourcing_artifacts",
+        recordId: "vendor-a-evaluation-summary",
+        title: "Vendor A evaluation summary",
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_events",
+        excerpt:
+          "Rank 1; weighted score 7.4/10; recommendation advance to bafo. Risk-adjusted leader at 7.4/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies. Finalist posture: Preferred BAFO lead: advance, but require sharper commercial remedies before award. Tradeoffs: Best continuity and transition risk posture. Needs stronger productivity price-down, SLA credit economics, and transition fee holdbacks. Conditions: improve productivity credits and transition fee holdbacks.",
+        confidence: "high" as const,
+        score: 30,
+      },
+      {
+        id: "source-event:lake:eval-b",
+        segmentId: "sourcing_artifacts",
+        recordId: "vendor-b-evaluation-summary",
+        title: "Vendor B evaluation summary",
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_events",
+        excerpt:
+          "Rank 3; weighted score 6.6/10; recommendation hold until clarified. Lowest-cost price benchmark at 6.6/10, but coverage staffing, retained effort, pass-through exposure, and productivity economics must close before it can be treated as a preferred finalist. Finalist posture: Price benchmark only: hold from preferred-finalist status unless BAFO cures the named staffing, retained-effort, pass-through, and productivity gaps. Tradeoffs: Best apparent normalized TCO. Highest execution risk because productivity, staffing coverage, and retained-client effort remain conditional. Conditions: reconcile proposed coverage model to staffing table; include retained effort in normalized TCO.",
+        confidence: "high" as const,
+        score: 29,
+      },
+      {
+        id: "source-event:lake:eval-c",
+        segmentId: "sourcing_artifacts",
+        recordId: "vendor-c-evaluation-summary",
+        title: "Vendor C evaluation summary",
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_events",
+        excerpt:
+          "Rank 2; weighted score 7.2/10; recommendation advance with conditions. Service-quality specialist at 7.2/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead. Finalist posture: Conditional finalist: advance if corporate shared-services scope and transition timing are normalized. Tradeoffs: Best SLA remedy posture and clean evidence discipline. Narrower base scope and slower transition make the headline price less directly comparable. Conditions: normalize optional corporate tower and accelerated transition option.",
+        confidence: "high" as const,
+        score: 28,
+      },
+      {
+        id: "source-event:lake:finalist",
+        segmentId: "sourcing_artifacts",
+        recordId: "evaluation-finalist-recommendation",
+        title: "Finalist recommendation",
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_events",
+        excerpt:
+          "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist. Keep Vendor B as the price benchmark only; it should not become a preferred finalist unless BAFO cures staffing coverage, retained-effort, pass-through, and productivity-credit gaps.",
+        confidence: "high" as const,
+        score: 24,
+      },
+    ];
+    const contextWithClientFinalAndEvaluation: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        embeddedContextChunkCount: 0,
+        retrievedEvidence: sharedEvidence,
+      },
+    };
+
+    const vendorAnswer = buildSourceAnswerEngine({
+      prompt: "Which vendor should advance and why?",
+      contextBundle: contextWithClientFinalAndEvaluation,
+      userRole: "cio",
+    });
+
+    expect(vendorAnswer?.title).toBe("Evaluation scorecard answer");
+    expect(vendorAnswer?.answerText).toContain(
+      "Advance Vendor A as the risk-adjusted lead and Vendor C",
+    );
+    expect(vendorAnswer?.answerText).toContain("Vendor B");
+    expect(vendorAnswer?.answerText).not.toContain("final RFP version");
+    expect(vendorAnswer?.answerText).not.toContain("client-final artifact");
+
+    const rfpFinalityAnswer = buildSourceAnswerEngine({
+      prompt: "Which RFP version is final?",
+      contextBundle: contextWithClientFinalAndEvaluation,
+      userRole: "cio",
+    });
+
+    expect(rfpFinalityAnswer?.title).toBe("Artifact authority answer");
+    expect(rfpFinalityAnswer?.answerText).toContain(
+      "Client Final - Lakeshore Shared Services AMS RFP Pack.docx is the final RFP version of record",
+    );
+    expect(rfpFinalityAnswer?.answerText).not.toContain(
+      "Advance Vendor A as the risk-adjusted lead",
+    );
+  });
+
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
     const answer = buildSourceAnswerEngine({
       prompt: "How should the CIO shape the CDP sourcing event?",
