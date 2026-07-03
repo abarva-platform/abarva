@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
 
   const { payload: safeResponse, audit: visibleSanitizer } =
     sanitizeHomeKnowVisiblePayloadWithAudit(response);
+  restoreV7ClientNamesInPlace(safeResponse);
   safeResponse.safety.visibleSanitizer = visibleSanitizer;
 
   if (includeTrace) {
@@ -262,6 +263,76 @@ function shouldLogHomeKnowTrace(req: NextRequest): boolean {
     process.env.ABARVA_HOME_KNOW_TRACE === "1" ||
     req.headers.get("x-abarva-debug-home-know") === "1"
   );
+}
+
+const V7_CLIENT_NAME_BY_TENANT: Record<string, string> = {
+  "apex-retail": "Apex Retail Group",
+  "first-capital": "First Capital Financial",
+  "first-capital-financial": "First Capital Financial",
+  "lakeshore-holdings": "Lakeshore Holdings",
+  "lakeshore-industries": "Lakeshore Holdings",
+  "meridian-health": "Meridian Health",
+  "skyharbor-air": "SkyHarbor Air Group",
+};
+
+const TECHNICAL_VISIBLE_KEYS = new Set([
+  "client",
+  "clientKey",
+  "dimensionId",
+  "from",
+  "id",
+  "recordId",
+  "route",
+  "sourceIds",
+  "tenantId",
+  "tenantKey",
+  "to",
+]);
+
+function restoreV7ClientNamesInPlace(response: HomeKnowResponse) {
+  if (response.safety.composerTrace?.composer !== "home_v7_dataset_contract") {
+    return;
+  }
+  const clientName = V7_CLIENT_NAME_BY_TENANT[response.tenantKey];
+  if (!clientName) return;
+  restoreV7ClientNames(response, clientName);
+}
+
+function restoreV7ClientNames(value: unknown, clientName: string, key?: string) {
+  if (typeof value === "string") {
+    return key && TECHNICAL_VISIBLE_KEYS.has(key)
+      ? value
+      : replaceDemoClientNames(value, clientName);
+  }
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      value[index] = restoreV7ClientNames(value[index], clientName);
+    }
+    return value;
+  }
+  if (value && typeof value === "object") {
+    for (const [childKey, childValue] of Object.entries(value)) {
+      (value as Record<string, unknown>)[childKey] = restoreV7ClientNames(
+        childValue,
+        clientName,
+        childKey,
+      );
+    }
+  }
+  return value;
+}
+
+function replaceDemoClientNames(value: string, clientName: string) {
+  const possessive = clientName.endsWith("s") ? `${clientName}'` : `${clientName}'s`;
+  return value
+    .replace(
+      /^(Airline|Retail|Financial Services|Healthcare|Industrial) Demo's\b/i,
+      possessive,
+    )
+    .replace(
+      /\b(Airline|Retail|Financial Services|Healthcare|Industrial) Demo\b/g,
+      clientName,
+    );
 }
 
 async function parsePayload(req: NextRequest): Promise<HomeKnowAskRequest> {
