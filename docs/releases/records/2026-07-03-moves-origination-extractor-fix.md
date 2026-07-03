@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Strategic Moves origination could answer the user in chat but fail to fill the required P0 checklist, leaving the Promote button disabled. This release makes the fallback extractor deterministic for clearly labeled Move briefs, so fields such as sponsor, scope, evidence family, value hypothesis, and foundation readiness are captured even when Claude does not emit the structured artifact.
+Strategic Moves origination could answer the user in chat but fail to fill the required P0 checklist, leaving the Promote button disabled. It could also accept a stale `brief-progress` artifact even when the user explicitly supplied different sponsor/scope facts. This release makes the fallback extractor deterministic for clearly labeled Move briefs and reconciles it after every chat turn, so fields such as sponsor, scope, evidence family, value hypothesis, and foundation readiness stay aligned to the user's supplied P0 brief.
 
 ## Layer Impact
 
@@ -29,6 +29,8 @@ Strategic Moves origination could answer the user in chat but fail to fill the r
 
 - `src/app/api/v1/programs/originate/extract-brief/route.ts`
 - `src/app/api/v1/programs/originate/extract-brief/extract-brief-deterministic.test.ts`
+- `src/components/strategic-moves/StrategicMoveOriginateClient.tsx`
+- `src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx`
 
 ## QA / Validation
 

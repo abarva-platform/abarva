@@ -257,10 +257,6 @@ export function StrategicMoveOriginateClient({
         let pendingBuffer = "";
         let committedVisible = "";
         const seenArtifacts = new Set<string>();
-        // #5 deterministic capture: if the turn emits no brief-progress artifact
-        // we reconcile the scaffold from a structured extraction afterward.
-        let gotBriefProgress = false;
-
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -274,7 +270,6 @@ export function StrategicMoveOriginateClient({
             const key = JSON.stringify(a);
             if (!seenArtifacts.has(key)) {
               seenArtifacts.add(key);
-              if (a.type === "brief-progress") gotBriefProgress = true;
               handleArtifact(a);
             }
           }
@@ -302,7 +297,6 @@ export function StrategicMoveOriginateClient({
             const key = JSON.stringify(a);
             if (!seenArtifacts.has(key)) {
               seenArtifacts.add(key);
-              if (a.type === "brief-progress") gotBriefProgress = true;
               handleArtifact(a);
             }
           }
@@ -322,52 +316,45 @@ export function StrategicMoveOriginateClient({
           ),
         );
 
-        // #5 deterministic capture: the model sometimes narrates a capture
-        // ("the brief is ready") without emitting a brief-progress artifact,
-        // leaving the scaffold at 0/7 and Promote disabled. When no artifact
-        // arrived this turn, reconcile the scaffold from a model-independent
-        // structured extraction over the conversation instead of relying on
-        // the chat turn to emit it. Best-effort; only fills empty fields.
-        if (!gotBriefProgress) {
-          try {
-            const reconcileRes = await fetch(
-              "/api/v1/programs/originate/extract-brief",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  conversation: [
-                    ...conversationHistory,
-                    { role: "user", content: message },
-                    { role: "assistant", content: committedVisible },
-                  ],
-                }),
-              },
-            );
-            if (reconcileRes.ok) {
-              const data = (await reconcileRes.json().catch(() => ({}))) as {
-                fields?: Record<string, string>;
-              };
-              if (data.fields && Object.keys(data.fields).length > 0) {
-                setBrief((prev) => {
-                  const nextFields = { ...prev.fields };
-                  for (const def of SCAFFOLD_DEFS) {
-                    const v = data.fields?.[def.id];
-                    if (
-                      typeof v === "string" &&
-                      v.trim() &&
-                      !nextFields[def.id].trim()
-                    ) {
-                      nextFields[def.id] = v.trim();
-                    }
+        // Deterministic capture reconciliation: brief-progress artifacts keep
+        // the UI responsive, but user-provided labeled P0 fields are the source
+        // of truth when they conflict. Reconcile after every turn so an artifact
+        // cannot leave Promote disabled or overwrite explicit sponsor/scope
+        // details with older context.
+        try {
+          const reconcileRes = await fetch(
+            "/api/v1/programs/originate/extract-brief",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                conversation: [
+                  ...conversationHistory,
+                  { role: "user", content: message },
+                  { role: "assistant", content: committedVisible },
+                ],
+              }),
+            },
+          );
+          if (reconcileRes.ok) {
+            const data = (await reconcileRes.json().catch(() => ({}))) as {
+              fields?: Record<string, string>;
+            };
+            if (data.fields && Object.keys(data.fields).length > 0) {
+              setBrief((prev) => {
+                const nextFields = { ...prev.fields };
+                for (const def of SCAFFOLD_DEFS) {
+                  const v = data.fields?.[def.id];
+                  if (typeof v === "string" && v.trim()) {
+                    nextFields[def.id] = v.trim();
                   }
-                  return { ...prev, fields: nextFields };
-                });
-              }
+                }
+                return { ...prev, fields: nextFields };
+              });
             }
-          } catch {
-            // best-effort; manual scaffold + chat remain available
           }
+        } catch {
+          // best-effort; manual scaffold + chat remain available
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Agent error";

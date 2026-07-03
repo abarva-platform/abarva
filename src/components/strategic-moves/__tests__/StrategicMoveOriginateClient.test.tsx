@@ -59,6 +59,36 @@ function mockFetchWithChatArtifact(artifactText: string) {
   return fetchMock;
 }
 
+function mockFetchWithChatArtifactAndExtraction(
+  artifactText: string,
+  fields: Record<string, string>,
+) {
+  const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url === "/api/chat/agent") {
+      return {
+        ok: true,
+        status: 200,
+        body: makeMockBody(artifactText),
+      };
+    }
+    if (url === "/api/v1/programs/originate/extract-brief") {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ fields }),
+      };
+    }
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true }),
+    };
+  });
+  (global as { fetch: unknown }).fetch = fetchMock;
+  return fetchMock;
+}
+
 describe("StrategicMoveOriginateClient", () => {
   beforeAll(() => {
     (global as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder =
@@ -148,5 +178,93 @@ describe("StrategicMoveOriginateClient", () => {
       "/api/chat/agent",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+
+  it("lets deterministic extraction override stale brief-progress artifact fields", async () => {
+    const staleArtifact =
+      "Captured all fields with a stale sponsor. [[artifact:brief-progress]]" +
+      JSON.stringify({
+        fieldsTotal: 7,
+        fieldsFilled: 7,
+        fields: [
+          {
+            id: "problem-statement",
+            label: "What's the bet / hypothesis",
+            status: "filled",
+            value: "Treasury visibility risk.",
+          },
+          {
+            id: "archetype",
+            label: "Archetype classification",
+            status: "filled",
+            value: "Platform modernization",
+          },
+          {
+            id: "sponsor-candidate",
+            label: "Sponsor candidate",
+            status: "filled",
+            value: "Dr. Anita Krishnamurthy",
+          },
+          {
+            id: "scope-boundary",
+            label: "Scope / boundary",
+            status: "filled",
+            value: "Bank connectivity.",
+          },
+          {
+            id: "evidence-family",
+            label: "Evidence family selection",
+            status: "filled",
+            value: "Treasury and controls.",
+          },
+          {
+            id: "value-hypothesis",
+            label: "Value hypothesis seed",
+            status: "filled",
+            value: "Cleaner cash visibility.",
+          },
+          {
+            id: "foundation-readiness",
+            label: "Foundation readiness",
+            status: "filled",
+            value: "Kyriba rollout underway.",
+          },
+        ],
+      }) +
+      "[[/artifact]]";
+    const extractionFields = {
+      "problem-statement":
+        "Treasury visibility and payment-control risk across banks and SAP feeds.",
+      archetype: "Treasury modernization and finance-controls move.",
+      "sponsor-candidate": "CFO and Treasurer, with CIO support.",
+      "scope-boundary":
+        "Treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence.",
+      "evidence-family":
+        "Finance systems, treasury operations, risk and controls, vendor/contracts, data readiness.",
+      "value-hypothesis":
+        "Faster cash visibility and cleaner payment-control evidence.",
+      "foundation-readiness":
+        "Kyriba rollout is underway, but bank connectivity and SOX evidence need validation.",
+    };
+    mockFetchWithChatArtifactAndExtraction(staleArtifact, extractionFields);
+
+    render(<StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />);
+
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText(/describe the outcome/i), {
+        target: { value: "Create the Kyriba treasury Move." },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ready to promote")).toBeInTheDocument();
+    });
+    expect(screen.getByText("CFO and Treasurer, with CIO support."))
+      .toBeInTheDocument();
+    expect(screen.queryByText("Dr. Anita Krishnamurthy")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /promote to p1 charter/i }),
+    ).toBeEnabled();
   });
 });
