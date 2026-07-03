@@ -36,6 +36,16 @@ export interface HomeV6ContextBrowser {
   displayName: string;
   datasetDir: string;
   generatedAt: string;
+  contractLabel?: string;
+  bindingContext?: Array<{
+    dimension: string;
+    status: string;
+    description: string;
+    evidence: number;
+    sources: number;
+    trust: number;
+    flag?: string;
+  }>;
   dimensions: Record<string, HomeV6BrowserPreview>;
 }
 

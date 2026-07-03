@@ -663,10 +663,12 @@ function DimensionView({
   dim,
   preview,
   findings,
+  sourceLabel,
 }: {
   dim: BindingDimension;
   preview?: HomeV6BrowserPreview | null;
   findings: HomeV6ContextFinding[];
+  sourceLabel: string;
 }) {
   const related = findings.filter((finding) =>
     finding.supportingDimensions.includes(dim.dimension),
@@ -758,18 +760,19 @@ function DimensionView({
         <div className="hx-preview">
           <div className="hx-previewIntro">
             <div className="hx-previewTitle">
-              <div className="hx-ey">V6 source preview</div>
+              <div className="hx-ey">{sourceLabel} source preview</div>
               <strong>{preview.title}</strong>
               <span>
-                Loaded source rows with their V6 lineage and available fields.
+                Loaded source rows with their {sourceLabel} lineage and
+                available fields.
               </span>
             </div>
-            <div className="hx-previewMeta" aria-label="V6 table coverage">
+            <div className="hx-previewMeta" aria-label={`${sourceLabel} table coverage`}>
               <span className="hx-chip">
                 <strong>{preview.rowCount.toLocaleString()}</strong> rows
               </span>
               <span className="hx-chip">
-                <strong>{preview.sourceCount}</strong> V6 file
+                <strong>{preview.sourceCount}</strong> {sourceLabel} file
                 {preview.sourceCount === 1 ? "" : "s"}
               </span>
               <span className="hx-chip">
@@ -804,7 +807,7 @@ function DimensionView({
               </tbody>
             </table>
           </div>
-          <div className="hx-mini" aria-label="V6 table coverage">
+          <div className="hx-mini" aria-label={`${sourceLabel} table coverage`}>
             {preview.fileNames.slice(0, 2).map((fileName) => (
               <span className="hx-chip" key={fileName}>
                 {fileName}
@@ -843,10 +846,12 @@ function Overview({
   payload,
   v6Browser,
   findings,
+  sourceLabel,
 }: {
   payload: IntelligenceBindingPayload | null;
   v6Browser: HomeV6ContextBrowser | null | undefined;
   findings: HomeV6ContextFinding[];
+  sourceLabel: string;
 }) {
   const dimensions = Object.values(v6Browser?.dimensions ?? {});
   const dimensionCount = dimensions.length || payload?.context.length || 0;
@@ -872,11 +877,11 @@ function Overview({
             <div className="v">{dimensionCount}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">V6 records</div>
+            <div className="k">{sourceLabel} records</div>
             <div className="v">{v6Rows.toLocaleString()}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">V6 files</div>
+            <div className="k">{sourceLabel} files</div>
             <div className="v">{v6Files}</div>
           </div>
           <div className="hx-stat">
@@ -1103,7 +1108,8 @@ export function HomeSurface({
     () => sanitizeVisibleStrings(v6Browser),
     [v6Browser],
   );
-  const dims = safePayload?.context ?? EMPTY_DIMS;
+  const dims = safeV6Browser?.bindingContext ?? safePayload?.context ?? EMPTY_DIMS;
+  const sourceLabel = safeV6Browser?.contractLabel ?? "V6";
   const [dimKey, setDimKey] = useState<string | null>(null);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
@@ -1259,12 +1265,14 @@ export function HomeSurface({
               dim={selected}
               preview={safeV6Browser?.dimensions[selected.dimension] ?? null}
               findings={findings}
+              sourceLabel={sourceLabel}
             />
           ) : (
             <Overview
               payload={safePayload}
               v6Browser={safeV6Browser}
               findings={findings}
+              sourceLabel={sourceLabel}
             />
           )}
         </main>

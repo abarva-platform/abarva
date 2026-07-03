@@ -9,6 +9,8 @@ import { sanitizeHomeKnowVisiblePayloadWithAudit } from "@/lib/home/know/home-de
 import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
 import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
 import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
+import { answerHomeKnowFromV7 } from "@/lib/home/know/v7-home-ask";
+import { toHomeKnowResponseFromV7 } from "@/lib/home/know/v7-home-know-response";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const runtime = "nodejs";
@@ -30,21 +32,28 @@ export async function POST(req: NextRequest) {
 
   const tenantKey =
     tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null;
-  const response = await buildV6HomeKnowResponse({
+  const response = await buildV7HomeKnowResponse({
     question: payload.question,
     tenantKey,
     tenantDisplayName: tenant?.displayName ?? null,
     includeTrace,
-  }).catch((error): Promise<HomeKnowResponse> | HomeKnowResponse => {
-    return blockedHomeKnowResponse({
+  }).catch(() =>
+    buildV6HomeKnowResponse({
+      question: payload.question,
+      tenantKey,
+      tenantDisplayName: tenant?.displayName ?? null,
+      includeTrace,
+    }),
+  ).catch((error): Promise<HomeKnowResponse> | HomeKnowResponse =>
+    blockedHomeKnowResponse({
       question: payload.question,
       tenantKey: tenantKey ?? "unknown",
       reason:
         error instanceof Error
-          ? `V6 Home contract unavailable: ${error.message}`
-          : "V6 Home contract unavailable.",
-    });
-  });
+          ? `V7 and V6 Home contracts unavailable: ${error.message}`
+          : "V7 and V6 Home contracts unavailable.",
+    }),
+  );
 
   const { payload: safeResponse, audit: visibleSanitizer } =
     sanitizeHomeKnowVisiblePayloadWithAudit(response);
@@ -111,6 +120,21 @@ export async function POST(req: NextRequest) {
       status: safeResponse.answerStatus === "blocked" ? 503 : 200,
     },
   );
+}
+
+async function buildV7HomeKnowResponse(input: {
+  question: string;
+  tenantKey: string | null;
+  tenantDisplayName: string | null;
+  includeTrace: boolean;
+}): Promise<HomeKnowResponse> {
+  const result = await answerHomeKnowFromV7({
+    question: input.question,
+    tenantKey: input.tenantKey ?? "apexretail",
+    tenantDisplayName: input.tenantDisplayName,
+    includeTrace: input.includeTrace,
+  });
+  return toHomeKnowResponseFromV7(result, { question: input.question });
 }
 
 async function buildV6HomeKnowResponse(input: {
