@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import { requireTenancy, tenancyErrorResponse } from "../../../../_intel-auth";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import {
   createSourceNexusApiStubResponse,
   normalizeSourceNexusApiRequestBody,
@@ -52,7 +52,13 @@ export async function POST(
     }
 
     const normalizedBody = normalizeSourceNexusApiRequestBody(bodyResult.body);
-    const activeClient = await getActiveClientRow().catch(() => null);
+    const activeClient =
+      (await getActiveClientRow(tenancy.clientKey).catch(() => null)) ?? {
+        id: tenancy.clientId,
+        name: tenancy.clientKey,
+        industry_code: null,
+        key: tenancy.clientKey,
+      };
     const apexContext = await loadApexRetailSourceIntelligence({
       eventId,
       userId: tenancy.userId,

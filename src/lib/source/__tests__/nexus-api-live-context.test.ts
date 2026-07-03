@@ -574,4 +574,117 @@ describe("Source Nexus API live context", () => {
       /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/i,
     );
   });
+
+  it("preserves vendor evaluation answers through the live quality gate", () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: "LAKE-SHARED-SERVICES-AMS-2026",
+      prompt: "Which vendor should advance and why?",
+      tenant: {
+        tenantId: "client-lakeshore",
+        tenantKey: "lakeshore",
+        tenantName: "Lakeshore Holdings",
+        activeClientId: "client-lakeshore",
+        activeClientName: "Lakeshore Holdings",
+      },
+      user: { id: "user-lakeshore-source" },
+      userRole: "procurementLeader",
+      liveEventDetail: sourceEventRowToDetail(
+        {
+          ...liveEventRow,
+          id: "lake-shared-services-ams-2026",
+          client_key: "lakeshore",
+          event_code: "LAKE-SHARED-SERVICES-AMS-2026",
+          event_name: "Lakeshore Shared Services AMS",
+          event_type: "managed_services",
+          current_stage_key: "evaluation",
+          estimated_value_usd: 18_000_000,
+          trigger_description:
+            "Lakeshore needs a shared-services AMS partner across Finance, HR, Legal, Procurement, Treasury, and Compliance.",
+          scope_description:
+            "Evaluate Vendor A, Vendor B, and Vendor C for a four-year shared-services AMS event.",
+          decision_owner: "CIO and CPO",
+        },
+        "Lakeshore Holdings",
+      ),
+      liveTenantContext: {
+        clientKey: "lakeshore",
+        brokerTenantKey: "lakeshore",
+        inventoryRecordCount: 0,
+        contextChunkCount: 4,
+        embeddedContextChunkCount: 0,
+        sourceEventFound: true,
+        segments: [
+          {
+            segmentId: "sourcing_artifacts",
+            inventoryRecords: 0,
+            contextChunks: 4,
+            embeddedChunks: 0,
+          },
+        ],
+        currentStateAreas: ["Sourcing Artifacts"],
+        evidenceBasis: [
+          "Vendor MVE profiles, normalized evaluation scorecard, and BAFO score-impact scenarios are bound from Source artifacts.",
+        ],
+        retrievedEvidence: [
+          {
+            id: "source-event:lake:vendor-a-evaluation-summary",
+            segmentId: "sourcing_artifacts",
+            recordId: "vendor-a-evaluation-summary",
+            title: "Vendor A evaluation summary",
+            sourceType: "contextChunk",
+            sourceDoc: "Source evaluation artifact",
+            excerpt:
+              "Rank 1; weighted score 7.4/10; recommendation advance conditional. Vendor A is the lower-risk continuity option with stronger transition posture. Finalist posture: risk-adjusted lead for BAFO. Tradeoffs: safer continuity, mid-pack price, stronger scope fit. Conditions: tighten productivity credits and SLA remedies.",
+            confidence: "high",
+            score: 30,
+          },
+          {
+            id: "source-event:lake:vendor-c-evaluation-summary",
+            segmentId: "sourcing_artifacts",
+            recordId: "vendor-c-evaluation-summary",
+            title: "Vendor C evaluation summary",
+            sourceType: "contextChunk",
+            sourceDoc: "Source evaluation artifact",
+            excerpt:
+              "Rank 2; weighted score 7.2/10; recommendation advance conditional. Vendor C has stronger service-accountability economics but narrower shared-services scope. Finalist posture: conditional service-accountability finalist. Tradeoffs: stronger SLA economics, narrower coverage. Conditions: cure scope caveats and transition dependencies.",
+            confidence: "high",
+            score: 29,
+          },
+          {
+            id: "source-event:lake:vendor-b-evaluation-summary",
+            segmentId: "sourcing_artifacts",
+            recordId: "vendor-b-evaluation-summary",
+            title: "Vendor B evaluation summary",
+            sourceType: "contextChunk",
+            sourceDoc: "Source evaluation artifact",
+            excerpt:
+              "Rank 3; weighted score 6.6/10; recommendation price benchmark. Vendor B is cheapest but remains conditional until automation, staffing, retained-effort, and pass-through economics are cured. Finalist posture: price challenger only. Tradeoffs: lowest TCO, highest evidence risk. Conditions: cure staffing and productivity economics before scoring credit.",
+            confidence: "high",
+            score: 28,
+          },
+          {
+            id: "source-event:lake:evaluation-finalist-recommendation",
+            segmentId: "sourcing_artifacts",
+            recordId: "evaluation-finalist-recommendation",
+            title: "Finalist recommendation",
+            sourceType: "contextChunk",
+            sourceDoc: "Source evaluation artifact",
+            excerpt:
+              "Advance Vendor A and Vendor C to targeted BAFO; retain Vendor B as a price benchmark unless it cures automation, staffing, retained-effort, pass-through, and productivity-credit gaps.",
+            confidence: "high",
+            score: 27,
+          },
+        ],
+        warnings: [],
+      },
+    });
+
+    expect(response.ok).toBe(true);
+    expect(response.sourceAnswer?.title).toBe("Evaluation scorecard answer");
+    expect(response.summary).toContain("Advance Vendor A");
+    expect(response.summary).toContain("Vendor C");
+    expect(response.summary).toContain("Vendor B");
+    expect(response.summary).toContain("BAFO");
+    expect(response.summary).not.toMatch(/Client Final|final RFP version/i);
+  });
 });

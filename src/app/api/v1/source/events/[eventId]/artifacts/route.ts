@@ -7,10 +7,15 @@
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { artifactDisplayName } from '@/lib/source/artifact-display-names';
+import {
+  listSourceArtifactsForSourceEventId,
+  type SourceArtifactRegistryRecord,
+} from '@/lib/source/artifact-registry';
 import { listArtifactStatesForEvent } from '@/lib/source/canvas-substrate/queries';
 import { specByCode } from '@/lib/source/canonical-specs';
 import { listSourceArtifacts } from '@/lib/source/file-cabinet/repository';
-import type { ArtifactGroup, ArtifactStatus, SourceArtifactRecord } from '@/lib/source/file-cabinet/types';
+import type { ArtifactFileFormat, ArtifactGroup, ArtifactStatus, SourceArtifactRecord } from '@/lib/source/file-cabinet/types';
+import { tenantAliasesFor } from '@/lib/tenant/aliases';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,7 +48,20 @@ export async function GET(req: NextRequest, ctxParam: { params: Promise<{ eventI
       groupParam,
       statusParam,
     });
-    const visibleArtifacts = [...artifacts, ...generatedStateArtifacts];
+    const registryArtifacts = await listRegistryArtifactFallbacks({
+      sourceEventId: eventId,
+      clientId: ctx.clientId,
+      tenantKey: ctx.clientKey ?? ctx.clientId,
+      existingArtifacts: [...artifacts, ...generatedStateArtifacts],
+      includeHistory,
+      groupParam,
+      statusParam,
+    });
+    const visibleArtifacts = [
+      ...artifacts,
+      ...generatedStateArtifacts,
+      ...registryArtifacts,
+    ];
 
     // group for the File Cabinet UI
     const grouped: Record<string, typeof visibleArtifacts> = { generated: [], upload: [], template: [], session: [], approval: [] };
@@ -148,6 +166,171 @@ async function listGeneratedArtifactStateFallbacks(args: {
     });
   }
   return fallbackArtifacts;
+}
+
+async function listRegistryArtifactFallbacks(args: {
+  sourceEventId: string;
+  clientId: string;
+  tenantKey: string;
+  existingArtifacts: SourceArtifactRecord[];
+  includeHistory: boolean;
+  groupParam: string | null;
+  statusParam: string | null;
+}): Promise<SourceArtifactRecord[]> {
+  const existingIds = new Set(args.existingArtifacts.map((artifact) => artifact.id));
+  const existingSourceBasis = new Set(
+    args.existingArtifacts
+      .map((artifact) => artifact.sourceBasis)
+      .filter((basis): basis is string => Boolean(basis)),
+  );
+  const allowedTenantAliases = new Set(
+    tenantAliasesFor(args.tenantKey)
+      .concat(args.tenantKey)
+      .map((alias) => alias.trim().toLowerCase()),
+  );
+  const registryRows = await listSourceArtifactsForSourceEventId(args.sourceEventId).catch(
+    (error) => {
+      console.warn('[source-file-cabinet] registry artifact fallback failed', {
+        sourceEventId: args.sourceEventId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return [] as SourceArtifactRegistryRecord[];
+    },
+  );
+
+  return registryRows
+    .filter((artifact) =>
+      allowedTenantAliases.has(artifact.tenantKey.trim().toLowerCase()),
+    )
+    .filter((artifact) => !existingIds.has(artifact.id))
+    .filter(
+      (artifact) =>
+        !existingSourceBasis.has(`source_artifacts:${artifact.id}`) &&
+        !existingSourceBasis.has(`source-artifact:${artifact.id}`),
+    )
+    .filter((artifact) => args.includeHistory || !artifact.deletedAt)
+    .map((artifact) => registryArtifactToFileCabinetRecord(artifact, args))
+    .filter((artifact): artifact is SourceArtifactRecord => Boolean(artifact))
+    .filter(
+      (artifact) =>
+        !args.groupParam || artifact.artifactGroup === args.groupParam,
+    )
+    .filter((artifact) => !args.statusParam || artifact.status === args.statusParam);
+}
+
+function registryArtifactToFileCabinetRecord(
+  artifact: SourceArtifactRegistryRecord,
+  args: {
+    sourceEventId: string;
+    clientId: string;
+    tenantKey: string;
+  },
+): SourceArtifactRecord | null {
+  const group = mapRegistryArtifactGroup(artifact.sourceOrigin);
+  if (!group) return null;
+  const status = mapRegistryArtifactStatus(artifact);
+  const title =
+    artifactDisplayName(artifact.artifactKind) ||
+    artifact.originalName ||
+    artifact.artifactKind;
+
+  return {
+    id: artifact.id,
+    clientId: args.clientId,
+    tenantKey: artifact.tenantKey || args.tenantKey,
+    sourceEventId: args.sourceEventId,
+    sourcingStage: artifact.stageKey,
+    artifactGroup: group,
+    artifactType: artifact.artifactKind,
+    artifactFamily: artifact.artifactFamily,
+    title,
+    description:
+      group === 'generated'
+        ? 'Generated Source deliverable persisted in the Source artifact registry.'
+        : 'Uploaded Source evidence persisted in the Source artifact registry.',
+    fileName: artifact.originalName || `${artifact.artifactKind}.${artifact.sourceFormat}`,
+    fileFormat: mapRegistryFileFormat(artifact.sourceFormat),
+    blobContainer: 'source-artifacts',
+    blobPath: artifact.blobUri || `registry://source_artifacts/${artifact.id}`,
+    fileSize: Number.isFinite(artifact.sizeBytes) ? artifact.sizeBytes : null,
+    version: artifact.version || 1,
+    status,
+    generatedBy: artifact.sourceOrigin === 'generated' ? artifact.createdBy : null,
+    generatedAt: artifact.createdAt,
+    sourceBasis: `source_artifacts:${artifact.id}`,
+    confidence:
+      artifact.isCurrentAuthoritative || artifact.parseStatus === 'parsed'
+        ? 'high'
+        : 'medium',
+    citationReady:
+      artifact.evidenceState === 'cited' ||
+      artifact.parseStatus === 'parsed' ||
+      artifact.sourceOrigin === 'generated',
+    evidenceFamiliesUsed: [artifact.artifactFamily].filter(Boolean),
+    sourceRegisterId: artifact.id,
+    contextBundleTraceId: null,
+    approvalState: artifact.approvalState,
+    approvedBy: artifact.validatedBy,
+    approvedAt: null,
+    maestroOverrideId: null,
+    missingInputs: [],
+    clientCompleteItems: [],
+    assumptions: [],
+    supersedesArtifactId: artifact.supersedesArtifactVersionId,
+    supersededByArtifactId: null,
+    lifecycleState: artifact.deletedAt ? 'retired' : 'current',
+    blobSha256: artifact.sha256 || null,
+    isClientFinal: artifact.isClientFinal === true,
+    isCurrentAuthoritative: artifact.isCurrentAuthoritative === true,
+    sourceGeneratedArtifactId: artifact.sourceGeneratedArtifactId ?? null,
+    clientFinalUploadedBy: artifact.clientFinalUploadedBy ?? null,
+    clientFinalUploadedAt: artifact.clientFinalUploadedAt ?? null,
+    clientFinalAcceptedBy: artifact.clientFinalAcceptedBy ?? null,
+    clientFinalAcceptedAt: artifact.clientFinalAcceptedAt ?? null,
+    clientFinalNote: artifact.clientFinalNote ?? null,
+    clientFinalReviewMeetingDate: artifact.clientFinalReviewMeetingDate ?? null,
+    clientFinalStakeholderGroup: artifact.clientFinalStakeholderGroup ?? null,
+    clientFinalChangeSummary: artifact.clientFinalChangeSummary ?? {},
+    createdAt: artifact.createdAt,
+    updatedAt: artifact.updatedAt,
+  };
+}
+
+function mapRegistryArtifactGroup(
+  origin: SourceArtifactRegistryRecord['sourceOrigin'],
+): ArtifactGroup | null {
+  if (origin === 'generated') return 'generated';
+  if (origin === 'uploaded' || origin === 'reuploaded' || origin === 'imported') {
+    return 'upload';
+  }
+  if (origin === 'note_capture') return 'session';
+  return null;
+}
+
+function mapRegistryArtifactStatus(
+  artifact: SourceArtifactRegistryRecord,
+): ArtifactStatus {
+  if (artifact.isClientFinal) return 'client_final';
+  if (artifact.approvalState === 'approved' || artifact.approvalState === 'locked') {
+    return 'approved';
+  }
+  if (artifact.deletedAt) return 'retired';
+  if (artifact.evidenceState === 'challenged' || artifact.parseStatus === 'needs_review') {
+    return 'preliminary';
+  }
+  if (artifact.parseStatus === 'failed') return 'blocked';
+  return artifact.sourceOrigin === 'generated' ? 'draft' : 'preliminary';
+}
+
+function mapRegistryFileFormat(
+  format: SourceArtifactRegistryRecord['sourceFormat'],
+): ArtifactFileFormat {
+  if (format === 'markdown') return 'md';
+  if (format === 'txt') return 'md';
+  if (format === 'unknown' || format === 'image' || format === 'audio' || format === 'video') {
+    return 'json';
+  }
+  return format;
 }
 
 function mapArtifactStateStatus(status: string): ArtifactStatus {

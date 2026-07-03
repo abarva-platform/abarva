@@ -9,6 +9,9 @@ jest.mock('@/lib/auth/tenancy', () => ({
 jest.mock('@/lib/source/canvas-substrate/queries', () => ({
   listArtifactStatesForEvent: jest.fn(async () => []),
 }));
+jest.mock('@/lib/source/artifact-registry', () => ({
+  listSourceArtifactsForSourceEventId: jest.fn(async () => []),
+}));
 jest.mock('@/lib/source/canonical-specs', () => ({
   specByCode: jest.fn((code: string) =>
     code === 'd24_decision_brief'
@@ -28,6 +31,7 @@ jest.mock('@/lib/source/file-cabinet/repository', () => ({
 
 import { GET } from '../route';
 import { listArtifactStatesForEvent } from '@/lib/source/canvas-substrate/queries';
+import { listSourceArtifactsForSourceEventId } from '@/lib/source/artifact-registry';
 
 function req(url: string): import('next/server').NextRequest {
   return { url } as unknown as import('next/server').NextRequest;
@@ -36,6 +40,7 @@ function req(url: string): import('next/server').NextRequest {
 beforeEach(() => {
   listArgs = [];
   jest.mocked(listArtifactStatesForEvent).mockResolvedValue([]);
+  jest.mocked(listSourceArtifactsForSourceEventId).mockResolvedValue([]);
 });
 
 describe('GET /api/v1/source/events/[eventId]/artifacts', () => {
@@ -95,6 +100,110 @@ describe('GET /api/v1/source/events/[eventId]/artifacts', () => {
       artifactGroup: 'generated',
       artifactType: 'd24_decision_brief',
       sourceBasis: 'source_event_artifact_states:state-24',
+    });
+  });
+  it('falls back to tenant-scoped artifact registry rows when File Cabinet projection is absent', async () => {
+    jest.mocked(listSourceArtifactsForSourceEventId).mockResolvedValue([
+      {
+        id: 'registry-generated-1',
+        tenantKey: 'skyharbor-air',
+        sourceEventId: 'evt-1',
+        sourceEventRowId: null,
+        stageKey: 'evaluation',
+        artifactFamily: 'decision_brief',
+        artifactKind: 'd24_decision_brief',
+        sourceOrigin: 'generated',
+        sourceFormat: 'markdown',
+        originalName: 'D24 Decision Brief.md',
+        blobUri: 'az://source-artifacts/skyharbor/evt-1/d24.md',
+        uploaderUserId: 'u1',
+        mimeType: 'text/markdown',
+        sizeBytes: 2048,
+        sha256: 'abc123',
+        parseStatus: 'parsed',
+        embeddingStatus: 'not_applicable',
+        graphStatus: 'not_applicable',
+        classificationStatus: 'classified',
+        dataClassification: 'Internal',
+        evidenceState: 'cited',
+        approvalState: 'approved',
+        isClientFinal: false,
+        isCurrentAuthoritative: false,
+        sourceGeneratedArtifactId: null,
+        clientFinalUploadedBy: null,
+        clientFinalUploadedAt: null,
+        clientFinalAcceptedBy: null,
+        clientFinalAcceptedAt: null,
+        clientFinalNote: null,
+        clientFinalReviewMeetingDate: null,
+        clientFinalStakeholderGroup: null,
+        clientFinalChangeSummary: {},
+        citedSourceArtifactIds: [],
+        version: 1,
+        supersedesArtifactVersionId: null,
+        createdBy: 'aVa',
+        validatedBy: null,
+        createdAt: '2026-07-03T00:00:00.000Z',
+        updatedAt: '2026-07-03T00:00:00.000Z',
+        deletedAt: null,
+      },
+      {
+        id: 'wrong-tenant-generated',
+        tenantKey: 'lakeshore-holdings',
+        sourceEventId: 'evt-1',
+        sourceEventRowId: null,
+        stageKey: 'evaluation',
+        artifactFamily: 'decision_brief',
+        artifactKind: 'd24_decision_brief',
+        sourceOrigin: 'generated',
+        sourceFormat: 'markdown',
+        originalName: 'Wrong Tenant.md',
+        blobUri: 'az://source-artifacts/lakeshore/evt-1/d24.md',
+        uploaderUserId: 'u1',
+        mimeType: 'text/markdown',
+        sizeBytes: 2048,
+        sha256: 'def456',
+        parseStatus: 'parsed',
+        embeddingStatus: 'not_applicable',
+        graphStatus: 'not_applicable',
+        classificationStatus: 'classified',
+        dataClassification: 'Internal',
+        evidenceState: 'cited',
+        approvalState: 'approved',
+        isClientFinal: false,
+        isCurrentAuthoritative: false,
+        sourceGeneratedArtifactId: null,
+        clientFinalUploadedBy: null,
+        clientFinalUploadedAt: null,
+        clientFinalAcceptedBy: null,
+        clientFinalAcceptedAt: null,
+        clientFinalNote: null,
+        clientFinalReviewMeetingDate: null,
+        clientFinalStakeholderGroup: null,
+        clientFinalChangeSummary: {},
+        citedSourceArtifactIds: [],
+        version: 1,
+        supersedesArtifactVersionId: null,
+        createdBy: 'aVa',
+        validatedBy: null,
+        createdAt: '2026-07-03T00:00:00.000Z',
+        updatedAt: '2026-07-03T00:00:00.000Z',
+        deletedAt: null,
+      },
+    ]);
+
+    const res = await GET(req('https://x/api?group=generated'), { params: Promise.resolve({ eventId: 'evt-1' }) });
+
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as Record<string, unknown>;
+    const grouped = json.grouped as Record<string, Array<Record<string, unknown>>>;
+    expect(grouped.generated.map((item) => item.id)).toEqual(['a1', 'registry-generated-1']);
+    expect(grouped.generated[1]).toMatchObject({
+      artifactGroup: 'generated',
+      artifactType: 'd24_decision_brief',
+      fileFormat: 'md',
+      sourceBasis: 'source_artifacts:registry-generated-1',
+      sourceRegisterId: 'registry-generated-1',
     });
   });
 });

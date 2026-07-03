@@ -10,12 +10,12 @@
 
 ## Plain-English Summary
 
-Source aVa now keeps Lakeshore vendor-advisory questions on the vendor evaluation and BAFO evidence path instead of letting client-final RFP governance answers take over. The Source File Cabinet listing also surfaces linked generated artifact-state rows as generated deliverables, so older generated artifacts remain visible beside the client-final authoritative upload.
+Source aVa now keeps Lakeshore vendor-advisory questions on the vendor evaluation and BAFO evidence path instead of letting client-final RFP governance answers take over. Specialized Source answers are preserved through the live answer-quality layer, the ask route uses the authenticated Source tenancy context for deterministic client binding, and the Source File Cabinet listing surfaces generated/uploaded registry artifacts when durable cabinet projections are absent.
 
 ## Layer Impact
 
 - `global-control-lane`: shared Source answer routing and Source File Cabinet API behavior change for all clients.
-- `client-data-lane`: no schema or data mutation; the File Cabinet API reads existing generated artifact-state rows when linked registry artifacts are present.
+- `client-data-lane`: no schema or data mutation; the File Cabinet API reads existing generated artifact-state rows and Source artifact registry rows for the active tenant/event.
 
 ## Client Applicability
 
@@ -28,13 +28,16 @@ Source aVa now keeps Lakeshore vendor-advisory questions on the vendor evaluatio
 ## Changes Included
 
 - `src/lib/source/source-answer-engine.ts`: prioritizes evaluation and BAFO answers before artifact-governance answers; artifact governance no longer hijacks vendor advancement questions.
-- `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows into the File Cabinet generated group when durable File Cabinet rows are absent.
+- `src/lib/source/nexus-api.ts`: preserves specialized evaluation, BAFO, artifact-authority, and contract-optimization Source answers through the live answer-quality layer so the user-visible response stays advisory-specific.
+- `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: uses the richer authenticated Source tenancy context and stable client key when resolving the active Source event.
+- `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows and tenant-scoped Source artifact registry rows into the File Cabinet generated/upload/session groups when durable File Cabinet rows are absent.
 - `src/lib/source/__tests__/source-answer-engine.test.ts`: regression for vendor advancement vs. final RFP authority.
-- `src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts`: regression for generated artifact-state File Cabinet visibility.
+- `src/lib/source/__tests__/nexus-api-live-context.test.ts`: regression that the live API response preserves Vendor A/B/C evaluation answers through the quality gate.
+- `src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts`: regression for generated artifact-state and Source artifact registry File Cabinet visibility.
 
 ## QA / Validation
 
-- Pass — focused Jest: `source-answer-engine.test.ts` and Source File Cabinet route tests, 50 tests passed.
+- Pass — focused Jest: `source-answer-engine.test.ts`, `nexus-api-live-context.test.ts`, and Source File Cabinet route tests, 57 tests passed across targeted runs.
 - Pass — touched-file ESLint.
 - Pass — TypeScript: `tsc --noEmit --project tsconfig.json` with `NODE_OPTIONS=--max-old-space-size=8192`.
 - Pending — live signed-in Lakeshore Source aVa/browser proof after deployment.
