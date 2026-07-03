@@ -108,6 +108,29 @@ export interface SourceArtifactWriteOutcome<T> {
   readonly error?: string;
 }
 
+const SOURCE_ARTIFACT_JSONB_COLUMNS = new Set([
+  "disclosure_classification",
+  "evidence_families_used",
+  "missing_inputs",
+  "client_complete_items",
+  "assumptions",
+  "client_final_change_summary",
+]);
+
+function sourceArtifactPlaceholder(column: string, index: number): string {
+  const placeholder = `$${index}`;
+  return SOURCE_ARTIFACT_JSONB_COLUMNS.has(column)
+    ? `${placeholder}::jsonb`
+    : placeholder;
+}
+
+function sourceArtifactValue(column: string, value: unknown): unknown {
+  if (!SOURCE_ARTIFACT_JSONB_COLUMNS.has(column)) return value;
+  if (value === null) return null;
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
+}
+
 // --- adapter contract -------------------------------------------------------
 
 /** The source-artifacts write adapter for one physical data plane. */
@@ -178,8 +201,12 @@ export function createAzureSourceArtifactsWriteAdapter(
           ([, v]) => v !== undefined,
         );
         const colNames = entries.map(([k]) => k);
-        const placeholders = entries.map((_, i) => `$${i + 1}`);
-        const values = entries.map(([, v]) => v);
+        const placeholders = entries.map(([column], i) =>
+          sourceArtifactPlaceholder(column, i + 1),
+        );
+        const values = entries.map(([column, v]) =>
+          sourceArtifactValue(column, v),
+        );
         const returning = selectColumns;
         const rows = await session((run) =>
           run<Record<string, unknown>>(
