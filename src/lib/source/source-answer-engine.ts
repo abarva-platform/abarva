@@ -175,10 +175,6 @@ export function buildSourceAnswerEngine(
       ...live.warnings,
     ].join("\n"),
   );
-  const artifactGovernanceAnswer = buildArtifactGovernanceAnswer({
-    prompt: input.prompt,
-    evidence: rankedEvidence,
-  });
   const evaluationDecisionAnswer = buildEvaluationDecisionAnswer({
     prompt: input.prompt,
     evidence: rankedEvidence,
@@ -191,24 +187,31 @@ export function buildSourceAnswerEngine(
     prompt: input.prompt,
     evidence: rankedEvidence,
   });
+  const artifactGovernanceAnswer = buildArtifactGovernanceAnswer({
+    prompt: input.prompt,
+    evidence: rankedEvidence,
+    vendorOrBafoAnswerAlreadyMatched: Boolean(
+      evaluationDecisionAnswer ?? bafoInstructionAnswer,
+    ),
+  });
   const currentStateFindings =
-    artifactGovernanceAnswer?.currentStateFindings ??
     evaluationDecisionAnswer?.currentStateFindings ??
-    contractOptimizationAnswer?.currentStateFindings ??
     bafoInstructionAnswer?.currentStateFindings ??
+    artifactGovernanceAnswer?.currentStateFindings ??
+    contractOptimizationAnswer?.currentStateFindings ??
     toCurrentStateFindings(evidence, live);
   const sourcingImplications =
-    artifactGovernanceAnswer?.sourcingImplications ??
     evaluationDecisionAnswer?.sourcingImplications ??
-    contractOptimizationAnswer?.sourcingImplications ??
     bafoInstructionAnswer?.sourcingImplications ??
+    artifactGovernanceAnswer?.sourcingImplications ??
+    contractOptimizationAnswer?.sourcingImplications ??
     selectByMode(mode, playbook.eventShaping, [
       `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
     ]);
   const cxoGuidance =
-    artifactGovernanceAnswer?.cxoGuidance ??
     evaluationDecisionAnswer?.cxoGuidance ??
     bafoInstructionAnswer?.cxoGuidance ??
+    artifactGovernanceAnswer?.cxoGuidance ??
     selectByMode(mode, playbook.cxoGuidance, [
       "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
     ]);
@@ -244,11 +247,11 @@ export function buildSourceAnswerEngine(
       : []),
   ]);
   const rawAnswerText =
-    artifactGovernanceAnswer?.answerText ??
     evaluationDecisionAnswer?.answerText ??
+    bafoInstructionAnswer?.answerText ??
+    artifactGovernanceAnswer?.answerText ??
     contractOptimizationAnswer?.answerText ??
     hardQuestionAnswer?.answerText ??
-    bafoInstructionAnswer?.answerText ??
     formatAnswerText({
       mode,
       currentStateFindings,
@@ -260,28 +263,25 @@ export function buildSourceAnswerEngine(
       evidence,
       limits,
     });
-  const finalCxoGuidance = evaluationDecisionAnswer
-    ? evaluationDecisionAnswer.cxoGuidance
-    : artifactGovernanceAnswer
-      ? artifactGovernanceAnswer.cxoGuidance
-      : contractOptimizationAnswer
-        ? contractOptimizationAnswer.cxoGuidance
-        : hardQuestionAnswer
-          ? [
-              hardQuestionAnswer.directAnswer,
-              hardQuestionAnswer.sourcingJudgment,
-              hardQuestionAnswer.whatWouldChangeTheAnswer,
-              ...corpusExpertLens,
-            ]
-          : bafoInstructionAnswer
-            ? bafoInstructionAnswer.cxoGuidance
-            : cxoGuidance;
+  const finalCxoGuidance =
+    evaluationDecisionAnswer?.cxoGuidance ??
+    bafoInstructionAnswer?.cxoGuidance ??
+    artifactGovernanceAnswer?.cxoGuidance ??
+    contractOptimizationAnswer?.cxoGuidance ??
+    (hardQuestionAnswer
+      ? [
+          hardQuestionAnswer.directAnswer,
+          hardQuestionAnswer.sourcingJudgment,
+          hardQuestionAnswer.whatWouldChangeTheAnswer,
+          ...corpusExpertLens,
+        ]
+      : cxoGuidance);
   const recommendedNextAction =
-    artifactGovernanceAnswer?.recommendedNextAction ??
     evaluationDecisionAnswer?.recommendedNextAction ??
+    bafoInstructionAnswer?.recommendedNextAction ??
+    artifactGovernanceAnswer?.recommendedNextAction ??
     contractOptimizationAnswer?.recommendedNextAction ??
     hardQuestionAnswer?.recommendedNextAction ??
-    bafoInstructionAnswer?.recommendedNextAction ??
     playbook.nextAction;
   const evidenceCitations = evidence.map(toAnswerCitation);
   const answerText = toAvaVisibleText(rawAnswerText);
@@ -302,10 +302,10 @@ export function buildSourceAnswerEngine(
     engineVersion: "source-answer-engine/v1",
     mode,
     title:
-      artifactGovernanceAnswer?.title ??
       evaluationDecisionAnswer?.title ??
-      contractOptimizationAnswer?.title ??
       bafoInstructionAnswer?.title ??
+      artifactGovernanceAnswer?.title ??
+      contractOptimizationAnswer?.title ??
       `${playbook.label} answer`,
     answerText,
     currentStateFindings: visibleCurrentStateFindings,
@@ -949,6 +949,7 @@ type ArtifactGovernanceRecord = {
 function buildArtifactGovernanceAnswer(args: {
   prompt: string;
   evidence: SourceLiveTenantEvidenceItem[];
+  vendorOrBafoAnswerAlreadyMatched?: boolean;
 }): {
   title: string;
   answerText: string;
@@ -958,11 +959,21 @@ function buildArtifactGovernanceAnswer(args: {
   recommendedNextAction: string;
 } | null {
   const text = args.prompt.toLowerCase();
-  const asksArtifactGovernance =
-    /\b(final|authoritative|version|vendors? receive|client upload|uploaded final|generated final|generated draft|draft history|artifact lineage|which rfp|rfp version|advance)\b/.test(
+  if (args.vendorOrBafoAnswerAlreadyMatched) return null;
+  const asksVendorDecision =
+    /\b(vendor|supplier|provider|bidder|finalist|bafo|scorecard|evaluation|rank|ranking|cheapest|lowest|riskiest|riskier|advance)\b/.test(
       text,
     ) &&
-    /\b(rfp|artifact|version|draft|final|vendors?|stage|lineage)\b/.test(text);
+    !/\b(rfp version|which rfp|final rfp|client[- ]?final|authoritative|artifact lineage|draft history|generated draft|uploaded final|client upload|vendors? receive)\b/.test(
+      text,
+    );
+  if (asksVendorDecision) return null;
+
+  const asksArtifactGovernance =
+    /\b(final|authoritative|version|vendors? receive|client upload|uploaded final|generated final|generated draft|draft history|artifact lineage|which rfp|rfp version|rfp final|client[- ]?final)\b/.test(
+      text,
+    ) &&
+    /\b(rfp|artifact|version|draft|final|vendors?|lineage)\b/.test(text);
   if (!asksArtifactGovernance) return null;
 
   const records = args.evidence
