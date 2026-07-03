@@ -97,6 +97,128 @@ function applyBriefProgressArtifact(
   return next;
 }
 
+const INLINE_FIELD_LABELS: Array<{
+  id: ScaffoldFieldId;
+  labels: string[];
+}> = [
+  {
+    id: "problem-statement",
+    labels: ["business problem", "problem statement", "problem"],
+  },
+  { id: "archetype", labels: ["archetype", "classification"] },
+  {
+    id: "sponsor-candidate",
+    labels: ["sponsor candidate", "sponsor"],
+  },
+  { id: "scope-boundary", labels: ["scope", "scope boundary"] },
+  {
+    id: "evidence-family",
+    labels: ["evidence family", "evidence families", "evidence"],
+  },
+  {
+    id: "value-hypothesis",
+    labels: ["value hypothesis", "value", "outcome hypothesis"],
+  },
+  {
+    id: "foundation-readiness",
+    labels: ["foundation readiness", "readiness"],
+  },
+];
+
+const INLINE_LABEL_PATTERN = INLINE_FIELD_LABELS.flatMap(({ labels }) => labels)
+  .sort((a, b) => b.length - a.length)
+  .map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  .join("|");
+
+function compactInlineValue(value: string): string {
+  return value.replace(/\s+/g, " ").replace(/^[-–—:;,\s]+/, "").trim();
+}
+
+function inlineArchetype(text: string): string {
+  if (/\b(kyriba|treasury|cash visibility|payment|bank connectivity|sox)\b/i.test(text)) {
+    return "Treasury modernization and finance-controls move.";
+  }
+  if (/\b(vendor|contract|renewal|sourcing|commercial)\b/i.test(text)) {
+    return "Vendor and commercial optimization move.";
+  }
+  if (/\b(ai|agent|copilot|automation|model)\b/i.test(text)) {
+    return "AI-enabled operating-model change.";
+  }
+  if (/\b(data|integration|platform|analytics|lakehouse)\b/i.test(text)) {
+    return "Data readiness and platform modernization move.";
+  }
+  return "";
+}
+
+function inlineMoveName(text: string): string {
+  const quoted = text.match(/\bstrategic\s+move\s+named\s+["“]([^"”]{3,160})["”]/i);
+  if (quoted?.[1]) return quoted[1].trim();
+  const named = text.match(/\bmove\s+named\s+([^.;\n]{3,160})/i);
+  return named?.[1]?.trim() ?? "";
+}
+
+function extractInlineP0Fields(text: string): {
+  programName: string;
+  fields: Partial<Record<ScaffoldFieldId, string>>;
+} {
+  const fields: Partial<Record<ScaffoldFieldId, string>> = {};
+  const matches = Array.from(
+    text.matchAll(new RegExp(`\\b(${INLINE_LABEL_PATTERN})\\s*:`, "gi")),
+  ).filter((match) => {
+    const before = text
+      .slice(Math.max(0, (match.index ?? 0) - 7), match.index ?? 0)
+      .toLowerCase();
+    return !before.endsWith("out of ");
+  });
+
+  for (let i = 0; i < matches.length; i += 1) {
+    const match = matches[i];
+    const label = match[1]?.toLowerCase();
+    const mapped = INLINE_FIELD_LABELS.find(({ labels }) =>
+      labels.some((candidate) => candidate.toLowerCase() === label),
+    );
+    if (!mapped || fields[mapped.id]) continue;
+    const start = (match.index ?? 0) + match[0].length;
+    const end = matches[i + 1]?.index ?? text.length;
+    const value = compactInlineValue(text.slice(start, end));
+    if (value) fields[mapped.id] = value;
+  }
+
+  if (!fields["problem-statement"]) {
+    const sentence = compactInlineValue(text)
+      .split(/(?<=[.!?])\s+/)
+      .find((part) => /\b(kyriba|treasury|business problem|strategic move)\b/i.test(part));
+    if (sentence) fields["problem-statement"] = compactInlineValue(sentence);
+  }
+  if (!fields.archetype) {
+    const archetype = inlineArchetype(text);
+    if (archetype) fields.archetype = archetype;
+  }
+
+  return { programName: inlineMoveName(text), fields };
+}
+
+function mergeInlineCapture(
+  prev: BriefState,
+  capture: ReturnType<typeof extractInlineP0Fields>,
+): BriefState {
+  if (!capture.programName && Object.keys(capture.fields).length === 0) {
+    return prev;
+  }
+  const nextFields = { ...prev.fields };
+  for (const def of SCAFFOLD_DEFS) {
+    const value = capture.fields[def.id];
+    if (typeof value === "string" && value.trim()) {
+      nextFields[def.id] = value.trim();
+    }
+  }
+  return {
+    ...prev,
+    programName: prev.programName || capture.programName,
+    fields: nextFields,
+  };
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -225,6 +347,8 @@ export function StrategicMoveOriginateClient({
       if (!messageOverride) setComposer("");
       setStreaming(true);
       setSubmitError(null);
+      const inlineCapture = extractInlineP0Fields(message);
+      setBrief((prev) => mergeInlineCapture(prev, inlineCapture));
 
       try {
         const conversationHistory = turnsRef.current

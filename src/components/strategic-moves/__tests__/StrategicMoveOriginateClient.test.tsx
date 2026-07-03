@@ -267,4 +267,35 @@ describe("StrategicMoveOriginateClient", () => {
       screen.getByRole("button", { name: /promote to p1 charter/i }),
     ).toBeEnabled();
   });
+
+  it("fills the scaffold directly from a complete labeled user prompt when artifacts and extraction are empty", async () => {
+    mockFetchWithChatArtifactAndExtraction("", {});
+
+    render(<StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />);
+
+    const prompt = `Create a strategic Move named "Kyriba Treasury Controls Proof" for Lakeshore Holdings' Kyriba treasury rollout. The business problem is treasury visibility and payment-control risk across banks, SAP feeds, signers, payment formats, and SOX evidence. Sponsor candidate: CFO and Treasurer, with CIO support. Scope: treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence; out of scope: changing the ERP core in this move. Evidence family: finance systems, treasury operations, risk and controls, vendor/contracts, data readiness. Value hypothesis: faster cash visibility, lower manual reconciliation effort, cleaner payment-control evidence, and better board confidence. Foundation readiness: Kyriba rollout is underway, but data lineage, bank connectivity inventory, signer controls, and SOX evidence need validation.`;
+
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText(/describe the outcome/i), {
+        target: { value: prompt },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ready to promote")).toBeInTheDocument();
+    });
+    expect(screen.getByDisplayValue("Kyriba Treasury Controls Proof"))
+      .toBeInTheDocument();
+    expect(screen.getByText("CFO and Treasurer, with CIO support."))
+      .toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Treasury modernization and finance-controls move.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /promote to p1 charter/i }),
+    ).toBeEnabled();
+  });
 });
