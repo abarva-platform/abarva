@@ -125,8 +125,9 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
 
     const gaps = buildGaps(rows);
     const table = buildTable(rows, config);
+    const displayName = runRow.tenant_name || input.tenantDisplayName || profile.displayName;
     const paragraphs = buildParagraphs({
-      displayName: input.tenantDisplayName || runRow.tenant_name || profile.displayName,
+      displayName,
       run: runRow,
       config,
       topicKey,
@@ -176,7 +177,7 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
       tenant: {
         appClientKey: profile.appClientKey,
         canonicalKey: profile.canonicalKey,
-        displayName: input.tenantDisplayName || runRow.tenant_name || profile.displayName,
+        displayName,
         datasetDir: runRow.source_dataset,
       },
       user: { signedIn: Boolean(input.userId) },
@@ -329,21 +330,25 @@ function buildParagraphs(args: {
     .map((row) => display(row.record_name) || display(firstMeaningfulValue(row.values_json)))
     .filter((value) => value !== 'Needs evidence')
     .slice(0, 6);
-  const base = `${args.displayName} has ${args.rows.length} inspectable V7 ${humanize(args.config.primaryDimension).toLowerCase()} records selected from ${args.config.primaryDimension}.`;
+  const dimensionLabel = humanize(args.config.primaryDimension).toLowerCase();
+  const sampleSentence = samples.length
+    ? `${args.displayName}'s loaded ${dimensionLabel} context shows ${joinList(samples)}.`
+    : `${args.displayName}'s loaded ${dimensionLabel} context is present, but the preview rows need stronger client-readable names.`;
   return [
-    `${base} Representative loaded facts include ${joinList(samples)}.`,
-    `The broader V7 tenant pack has ${formatNumber(args.run.row_count)} business records, ${formatNumber(args.run.field_count)} field facts, ${formatNumber(args.run.graph_node_count)} graph nodes, ${formatNumber(args.run.relationship_edge_count)} graph edges, and ${formatNumber(args.run.chunk_count)} retrieval chunks.`,
+    `${sampleSentence} Home can use this as current-state evidence while keeping source confidence and validation boundaries visible.`,
+    `Behind this view, the governed context pack includes ${formatNumber(args.run.row_count)} business records, ${formatNumber(args.run.field_count)} field facts, ${formatNumber(args.run.graph_node_count)} graph nodes, ${formatNumber(args.run.relationship_edge_count)} graph edges, and ${formatNumber(args.run.chunk_count)} retrieval chunks.`,
     args.config.handoffTarget
       ? `${surfaceName(args.config.handoffTarget)} should take over when the user wants decisions, recommendations, or execution moves; Home should stay focused on loaded facts and evidence boundaries.`
       : args.gaps[0]
         ? `Important evidence gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
-        : 'No explicit V7 evidence gap appears in the selected preview records, but client validation is still required before board-grade use.',
+        : 'No explicit evidence gap appears in the selected preview records, but client validation is still required before board-grade use.',
   ];
 }
 
 function visibleQualityGate(text: string) {
   const issues: string[] = [];
   if (/intelligence_v7\.record_fields|record_key|chunk_key|source_row_number|values_json/i.test(text)) issues.push('raw_internal_marker');
+  if (/\bv7_\d+_/i.test(text)) issues.push('raw_dimension_key');
   if (/semantic2|enterprise_context_|datasets\//i.test(text)) issues.push('stale_layer_marker');
   return { passed: issues.length === 0, issues, visibleAnswerContract: { passed: issues.length === 0, issues } };
 }
