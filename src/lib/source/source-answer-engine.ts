@@ -1841,6 +1841,8 @@ function buildEvaluationDecisionAnswer(args: {
   } else if (/\badvance\b/.test(text)) {
     leadSentence =
       "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist; keep Vendor B as a price benchmark unless it cures its staffing, retained-effort, pass-through, and productivity-credit gaps before BAFO.";
+  } else if (/\b(scorecard|evaluation|rank|ranking)\b/.test(text)) {
+    leadSentence = `The evaluation scorecard ranks ${leading.vendorName} first on a risk-adjusted basis, with Vendor C close behind as the service-accountability challenger and Vendor B retained as the price benchmark until its commercial and staffing gaps are cured.`;
   } else if (/\btradeoffs?\b/.test(text)) {
     leadSentence =
       "The executive tradeoff is continuity versus price versus service accountability: Vendor A is safer, Vendor B is cheaper, and Vendor C has stronger SLA economics but narrower scope.";
