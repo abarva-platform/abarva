@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing JSONB artifact metadata rows. The change serializes and casts JSONB metadata at the shared source-artifacts registry, File Cabinet insert, source-artifacts Azure write adapter, and artifact-state update boundaries, and keeps reads tolerant of either parsed JSON or serialized JSON. It also hardens Source artifact download headers so client-final filenames with punctuation or non-ASCII characters can be streamed from Blob without response-header failures.
+This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing JSONB artifact metadata rows. The change serializes and casts JSONB metadata at the shared source-artifacts registry, File Cabinet insert, source-artifacts Azure write adapter, and artifact-state update boundaries, and keeps reads tolerant of either parsed JSON or serialized JSON. It also hardens Source artifact download headers so client-final filenames with punctuation or non-ASCII characters can be streamed from Blob without response-header failures, and teaches Source aVa to answer client-final authority, final-version, vendor-issuance, and lineage questions from the File Cabinet artifact authority chain.
 
 ## Layer Impact
 
@@ -38,14 +38,18 @@ This release fixes the Source client-final acceptance path after live proof foun
 - `src/lib/data-plane/write-adapters/__tests__/source-write-adapter.test.ts`: adds a regression proving artifact-state JSONB metadata updates are cast and serialized.
 - `src/lib/source/file-cabinet/repository.ts`: serializes `client_final_change_summary` for File Cabinet inserts and parses it defensively when rows are read back.
 - `src/lib/source/file-cabinet/__tests__/repository.test.ts`: adds a regression proving File Cabinet insert payloads remain valid and the returned record maps the summary back into an object.
+- `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: binds File Cabinet authority metadata into Source aVa context, including client-final, current-authoritative, Blob-backed, version, lifecycle, and lineage fields.
+- `src/lib/source/source-answer-engine.ts`: adds a deterministic artifact-governance answer path for final RFP version, vendor issuance, generated-draft lineage, and stage-advance questions.
+- `src/lib/source/__tests__/nexus-api-live-context.test.ts`: adds a regression proving aVa answers `Which RFP version is final?` from client-final File Cabinet lineage instead of generic vendor-evaluation advice.
 
 ## QA / Validation
 
 - Pass: focused Jest for Source File Cabinet, Source artifact registry, source-artifacts write adapter, Source write adapter JSONB handling, and Source artifact download headers.
+- Pass: focused Jest for Source Nexus/aVa live context artifact-governance answer routing.
 - Pass: focused ESLint on changed files.
 - Pass: full TypeScript compile with `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit`.
 - Pass: `npm run release:check`.
-- Not run: live signed-in SkyHarbor client-final proof will run after deploy.
+- Pending deploy: live signed-in SkyHarbor client-final proof and aVa governance proof will run after deploy.
 
 ## Rollout Plan
 
@@ -73,4 +77,4 @@ Rollback the ACA web app to the prior healthy revision or revert the File Cabine
 
 ## Known Gaps
 
-This follow-up only fixes client-final JSONB metadata persistence. It does not change client-final governance copy, UI flow, gate semantics, or export resolution.
+This release does not change Source UI layout or gate semantics. It changes persistence, download safety, export resolution, and the aVa answer path for artifact-authority questions.

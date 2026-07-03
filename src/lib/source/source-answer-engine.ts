@@ -175,6 +175,10 @@ export function buildSourceAnswerEngine(
       ...live.warnings,
     ].join("\n"),
   );
+  const artifactGovernanceAnswer = buildArtifactGovernanceAnswer({
+    prompt: input.prompt,
+    evidence: rankedEvidence,
+  });
   const evaluationDecisionAnswer = buildEvaluationDecisionAnswer({
     prompt: input.prompt,
     evidence: rankedEvidence,
@@ -188,20 +192,26 @@ export function buildSourceAnswerEngine(
     evidence: rankedEvidence,
   });
   const currentStateFindings =
+    artifactGovernanceAnswer?.currentStateFindings ??
     evaluationDecisionAnswer?.currentStateFindings ??
     contractOptimizationAnswer?.currentStateFindings ??
     bafoInstructionAnswer?.currentStateFindings ??
     toCurrentStateFindings(evidence, live);
   const sourcingImplications =
+    artifactGovernanceAnswer?.sourcingImplications ??
     evaluationDecisionAnswer?.sourcingImplications ??
     contractOptimizationAnswer?.sourcingImplications ??
     bafoInstructionAnswer?.sourcingImplications ??
     selectByMode(mode, playbook.eventShaping, [
-    `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
-  ]);
-  const cxoGuidance = evaluationDecisionAnswer?.cxoGuidance ?? bafoInstructionAnswer?.cxoGuidance ?? selectByMode(mode, playbook.cxoGuidance, [
-    "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
-  ]);
+      `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
+    ]);
+  const cxoGuidance =
+    artifactGovernanceAnswer?.cxoGuidance ??
+    evaluationDecisionAnswer?.cxoGuidance ??
+    bafoInstructionAnswer?.cxoGuidance ??
+    selectByMode(mode, playbook.cxoGuidance, [
+      "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
+    ]);
   const riskTraps = selectByMode(mode, playbook.riskTraps, [
     "Do not let vendor demos substitute for baseline evidence, integration ownership, pricing normalization, or transition accountability.",
   ]);
@@ -234,6 +244,7 @@ export function buildSourceAnswerEngine(
       : []),
   ]);
   const rawAnswerText =
+    artifactGovernanceAnswer?.answerText ??
     evaluationDecisionAnswer?.answerText ??
     contractOptimizationAnswer?.answerText ??
     hardQuestionAnswer?.answerText ??
@@ -251,19 +262,22 @@ export function buildSourceAnswerEngine(
     });
   const finalCxoGuidance = evaluationDecisionAnswer
     ? evaluationDecisionAnswer.cxoGuidance
-    : contractOptimizationAnswer
-    ? contractOptimizationAnswer.cxoGuidance
-    : hardQuestionAnswer
-    ? [
-        hardQuestionAnswer.directAnswer,
-        hardQuestionAnswer.sourcingJudgment,
-        hardQuestionAnswer.whatWouldChangeTheAnswer,
-        ...corpusExpertLens,
-      ]
-    : bafoInstructionAnswer
-      ? bafoInstructionAnswer.cxoGuidance
-    : cxoGuidance;
+    : artifactGovernanceAnswer
+      ? artifactGovernanceAnswer.cxoGuidance
+      : contractOptimizationAnswer
+        ? contractOptimizationAnswer.cxoGuidance
+        : hardQuestionAnswer
+          ? [
+              hardQuestionAnswer.directAnswer,
+              hardQuestionAnswer.sourcingJudgment,
+              hardQuestionAnswer.whatWouldChangeTheAnswer,
+              ...corpusExpertLens,
+            ]
+          : bafoInstructionAnswer
+            ? bafoInstructionAnswer.cxoGuidance
+            : cxoGuidance;
   const recommendedNextAction =
+    artifactGovernanceAnswer?.recommendedNextAction ??
     evaluationDecisionAnswer?.recommendedNextAction ??
     contractOptimizationAnswer?.recommendedNextAction ??
     hardQuestionAnswer?.recommendedNextAction ??
@@ -271,8 +285,10 @@ export function buildSourceAnswerEngine(
     playbook.nextAction;
   const evidenceCitations = evidence.map(toAnswerCitation);
   const answerText = toAvaVisibleText(rawAnswerText);
-  const visibleCurrentStateFindings = currentStateFindings.map(toAvaVisibleText);
-  const visibleSourcingImplications = sourcingImplications.map(toAvaVisibleText);
+  const visibleCurrentStateFindings =
+    currentStateFindings.map(toAvaVisibleText);
+  const visibleSourcingImplications =
+    sourcingImplications.map(toAvaVisibleText);
   const visibleCxoGuidance = finalCxoGuidance.map(toAvaVisibleText);
   const visibleRiskTraps = finalRiskTraps.map(toAvaVisibleText);
   const visibleMissingData = finalMissingData.map(toAvaVisibleText);
@@ -286,6 +302,7 @@ export function buildSourceAnswerEngine(
     engineVersion: "source-answer-engine/v1",
     mode,
     title:
+      artifactGovernanceAnswer?.title ??
       evaluationDecisionAnswer?.title ??
       contractOptimizationAnswer?.title ??
       bafoInstructionAnswer?.title ??
@@ -671,9 +688,7 @@ function toCurrentStateFindings(
   evidence: SourceLiveTenantEvidenceItem[],
   live: SourceLiveTenantContextSnapshot,
 ): string[] {
-  const findings = evidence
-    .slice(0, 4)
-    .map(formatCurrentStateFinding);
+  const findings = evidence.slice(0, 4).map(formatCurrentStateFinding);
   if (findings.length > 0) return findings;
   return live.evidenceBasis
     .slice(0, 4)
@@ -750,9 +765,7 @@ function inferMissingData(
     ...(hasSegment("vendor_contracts")
       ? []
       : ["Current vendor contract and renewal baseline."]),
-    ...(hasSegment("it_financials")
-      ? []
-      : ["IT financial baseline."]),
+    ...(hasSegment("it_financials") ? [] : ["IT financial baseline."]),
     ...(hasSegment("it_landscape")
       ? []
       : ["Application and infrastructure scope baseline."]),
@@ -850,7 +863,9 @@ function formatAnswerText(args: {
 }): string {
   const evidenceLabels = args.evidence
     .slice(0, 4)
-    .map((item, index) => `[${index + 1}] ${formatBusinessEvidenceLabel(item)}`);
+    .map(
+      (item, index) => `[${index + 1}] ${formatBusinessEvidenceLabel(item)}`,
+    );
   const body = [
     joinSentences(args.currentStateFindings),
     `What it means for sourcing: ${joinSentences(args.sourcingImplications)}`,
@@ -911,6 +926,183 @@ type ContractOptimizationPath = {
   fallbackPath: string;
   doNotDo: string;
 };
+
+type ArtifactGovernanceRecord = {
+  fileName: string;
+  artifactType: string;
+  stage: string;
+  status: string;
+  lifecycle: string;
+  version: string;
+  isClientFinal: boolean;
+  isCurrentAuthoritative: boolean;
+  isBlobBacked: boolean;
+  isGeneratedDraft: boolean;
+  linksToGeneratedDraft: boolean;
+  supersedesPriorVersion: boolean;
+  supersededByLaterVersion: boolean;
+  note: string | null;
+  stakeholderGroup: string | null;
+  evidence: SourceLiveTenantEvidenceItem;
+};
+
+function buildArtifactGovernanceAnswer(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  const text = args.prompt.toLowerCase();
+  const asksArtifactGovernance =
+    /\b(final|authoritative|version|vendors? receive|client upload|uploaded final|generated final|generated draft|draft history|artifact lineage|which rfp|rfp version|advance)\b/.test(
+      text,
+    ) &&
+    /\b(rfp|artifact|version|draft|final|vendors?|stage|lineage)\b/.test(text);
+  if (!asksArtifactGovernance) return null;
+
+  const records = args.evidence
+    .filter((item) => /\bArtifact authority record:/i.test(item.excerpt))
+    .map(parseArtifactGovernanceRecord)
+    .filter((record): record is ArtifactGovernanceRecord => Boolean(record));
+  if (records.length === 0) return null;
+
+  const clientFinal =
+    records.find(
+      (record) => record.isClientFinal && record.isCurrentAuthoritative,
+    ) ??
+    records.find((record) => record.isClientFinal) ??
+    records.find((record) => record.isCurrentAuthoritative);
+  const generatedDraft =
+    records.find(
+      (record) => record.isGeneratedDraft && record.supersededByLaterVersion,
+    ) ?? records.find((record) => record.isGeneratedDraft);
+  if (!clientFinal && !generatedDraft) return null;
+
+  const finalName = clientFinal?.fileName ?? "the current RFP artifact";
+  const finalVersion =
+    clientFinal?.version && clientFinal.version !== "unknown"
+      ? `version ${clientFinal.version}`
+      : "the current version";
+  const draftName = generatedDraft?.fileName ?? "the AbarVa-generated draft";
+  const artifactIsReady =
+    Boolean(clientFinal?.isClientFinal) &&
+    Boolean(clientFinal?.isCurrentAuthoritative) &&
+    Boolean(clientFinal?.isBlobBacked);
+
+  let lead: string;
+  if (/\b(vendors? receive)\b/.test(text)) {
+    lead = artifactIsReady
+      ? `Vendors should receive ${finalName}, the client-final ${finalVersion} of the RFP pack.`
+      : `${finalName} is the strongest available RFP artifact, but a client-final authoritative file is not fully confirmed from the artifact registry.`;
+  } else if (/\b(generate|generated|client upload|uploaded)\b/.test(text)) {
+    lead = clientFinal
+      ? `AbarVa generated the working draft; the client uploaded ${finalName} as the final artifact of record.`
+      : `The current evidence shows ${draftName}, but does not confirm a client-uploaded final artifact.`;
+  } else if (/\b(history|lineage)\b/.test(text)) {
+    lead = clientFinal
+      ? `${finalName} is the current authoritative RFP artifact, and ${draftName} remains preserved in history for lineage.`
+      : `${draftName} is visible in the artifact lineage; a client-final authoritative version is not confirmed.`;
+  } else if (/\b(advance|stage)\b/.test(text)) {
+    lead = artifactIsReady
+      ? `The RFP artifact finality condition is satisfied: ${finalName} is client-final, current authoritative, and Blob-backed.`
+      : `Do not advance on artifact finality alone yet; the registry does not fully confirm a Blob-backed client-final authoritative RFP.`;
+  } else {
+    lead = clientFinal
+      ? `${finalName} is the final RFP version of record.`
+      : `${draftName} is the available RFP draft; a client-final authoritative RFP is not confirmed.`;
+  }
+
+  const lineage = clientFinal
+    ? generatedDraft
+      ? `Lineage: AbarVa generated ${draftName}; the client uploaded ${finalName}; the client-final version supersedes the generated draft for vendor issuance.`
+      : `Lineage: ${finalName} is marked client-final; the prior generated draft is not visible in the current answer evidence slice.`
+    : `Lineage: ${draftName} remains available, but the client-final handoff is not confirmed.`;
+  const authority = clientFinal
+    ? `Authority: ${finalName} is marked client-final=${clientFinal.isClientFinal ? "yes" : "no"}, current authoritative=${clientFinal.isCurrentAuthoritative ? "yes" : "no"}, Blob-backed=${clientFinal.isBlobBacked ? "yes" : "no"}, status ${clientFinal.status}, lifecycle ${clientFinal.lifecycle}.`
+    : "Authority: no client-final authoritative RFP artifact is confirmed.";
+  const gate = artifactIsReady
+    ? "Gate implication: the artifact-version requirement can use the client-final file, but Source still needs any remaining stage criteria and human approval before external issuance."
+    : "Gate implication: hold stage advancement until the client-final file is accepted and mapped as authoritative.";
+  const note = clientFinal?.note
+    ? `Review note: ${clientFinal.note}`
+    : clientFinal?.stakeholderGroup
+      ? `Review note: accepted by ${clientFinal.stakeholderGroup}.`
+      : "";
+
+  return {
+    title: "Artifact authority answer",
+    answerText: [lead, lineage, authority, gate, note]
+      .filter(Boolean)
+      .join("\n"),
+    currentStateFindings: [
+      clientFinal
+        ? `${finalName} is the current client-final RFP artifact.`
+        : "No client-final authoritative RFP artifact is confirmed.",
+      generatedDraft
+        ? `${draftName} remains preserved as generated draft history.`
+        : "Prior generated draft lineage is not visible in the current evidence slice.",
+    ],
+    sourcingImplications: [
+      artifactIsReady
+        ? "Vendor issuance should use the client-final artifact rather than the generated draft."
+        : "Vendor issuance should stay blocked until the accepted client-final artifact is authoritative.",
+      "The generated draft is evidence of AbarVa acceleration; the uploaded client-final is the buyer-controlled deliverable of record.",
+    ],
+    cxoGuidance: [
+      "Treat AbarVa output as the working draft and the uploaded client-final as the governed artifact of record.",
+      "Do not bypass remaining Source gate criteria or named human approval just because the final file exists.",
+    ],
+    recommendedNextAction: artifactIsReady
+      ? "Use the client-final RFP for downstream issuance and keep the generated draft in history for audit lineage."
+      : "Accept a client-final RFP artifact and confirm it is current authoritative before issuing to vendors.",
+  };
+}
+
+function parseArtifactGovernanceRecord(
+  item: SourceLiveTenantEvidenceItem,
+): ArtifactGovernanceRecord | null {
+  const excerpt = item.excerpt;
+  const fileName =
+    excerpt.match(/Artifact authority record: "([^"]+)"/i)?.[1]?.trim() ??
+    item.title;
+  if (!fileName) return null;
+
+  return {
+    fileName,
+    artifactType:
+      excerpt.match(/Artifact type:\s*([^;]+)/i)?.[1]?.trim() ?? "unknown",
+    stage: excerpt.match(/stage:\s*([^;]+)/i)?.[1]?.trim() ?? "unknown",
+    status: excerpt.match(/status:\s*([^;]+)/i)?.[1]?.trim() ?? "unknown",
+    lifecycle: excerpt.match(/lifecycle:\s*([^;]+)/i)?.[1]?.trim() ?? "unknown",
+    version: excerpt.match(/version:\s*([^.;]+)/i)?.[1]?.trim() ?? "unknown",
+    isClientFinal: /clientFinal=true/i.test(excerpt),
+    isCurrentAuthoritative: /currentAuthoritative=true/i.test(excerpt),
+    isBlobBacked: /blobBacked=true/i.test(excerpt),
+    isGeneratedDraft: /\ban AbarVa-generated draft\b/i.test(excerpt),
+    linksToGeneratedDraft: /links to the prior generated draft/i.test(excerpt),
+    supersedesPriorVersion: /supersedes a prior artifact version/i.test(
+      excerpt,
+    ),
+    supersededByLaterVersion:
+      /has been superseded by a later artifact version/i.test(excerpt),
+    note:
+      excerpt
+        .match(
+          /Client-final note:\s*([^]+?)(?: Client-final stakeholder group:|$)/i,
+        )?.[1]
+        ?.trim() ?? null,
+    stakeholderGroup:
+      excerpt
+        .match(/Client-final stakeholder group:\s*([^.]*)/i)?.[1]
+        ?.trim() ?? null,
+    evidence: item,
+  };
+}
 
 function buildContractOptimizationAnswer(args: {
   prompt: string;
@@ -1006,7 +1198,13 @@ function buildContractOptimizationAnswer(args: {
     ];
     extraResponseParts = buildContractOptimizationResponseParts({
       view: "decision",
-      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+      findings: [
+        priceLeakage,
+        slaLeakage,
+        staffingGap,
+        changeOrderLeakage,
+        workloadMismatch,
+      ],
     });
     nextAction =
       "Send the cure notice, freeze the renewal baseline until variances are classified, and prepare the fallback RFP package in parallel.";
@@ -1048,7 +1246,13 @@ function buildContractOptimizationAnswer(args: {
     ];
     extraResponseParts = buildContractOptimizationResponseParts({
       view: "cure",
-      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+      findings: [
+        priceLeakage,
+        slaLeakage,
+        staffingGap,
+        changeOrderLeakage,
+        workloadMismatch,
+      ],
     });
     nextAction =
       "Draft the notice with legal, procurement, finance, and IT service owner review before the renewal notice window.";
@@ -1090,7 +1294,13 @@ function buildContractOptimizationAnswer(args: {
     ];
     extraResponseParts = buildContractOptimizationResponseParts({
       view: "proof",
-      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+      findings: [
+        priceLeakage,
+        slaLeakage,
+        staffingGap,
+        changeOrderLeakage,
+        workloadMismatch,
+      ],
     });
     nextAction =
       "Hold renewal approval until the incumbent supplies the reconciliation pack and agrees to priced remedies.";
@@ -1105,7 +1315,13 @@ function buildContractOptimizationAnswer(args: {
     ];
     extraResponseParts = buildContractOptimizationResponseParts({
       view: "gaps",
-      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+      findings: [
+        priceLeakage,
+        slaLeakage,
+        staffingGap,
+        changeOrderLeakage,
+        workloadMismatch,
+      ],
     });
     nextAction =
       "Request the reconciliation pack and use unresolved gaps as BAFO or rebid conditions.";
@@ -1122,13 +1338,23 @@ function buildContractOptimizationAnswer(args: {
     ];
     extraResponseParts = buildContractOptimizationResponseParts({
       view: "leakage",
-      findings: [priceLeakage, staffingGap, changeOrderLeakage, slaLeakage, workloadMismatch],
+      findings: [
+        priceLeakage,
+        staffingGap,
+        changeOrderLeakage,
+        slaLeakage,
+        workloadMismatch,
+      ],
     });
     nextAction =
       "Create a recovery schedule and require the incumbent to classify each exposure as approved demand, recoverable leakage, or future catalog item.";
   }
 
-  const answerText = [lead, ...body.filter(Boolean), `Next action: ${nextAction}`]
+  const answerText = [
+    lead,
+    ...body.filter(Boolean),
+    `Next action: ${nextAction}`,
+  ]
     .filter(Boolean)
     .join("\n");
   const currentStateFindings = [
@@ -1173,7 +1399,9 @@ function buildContractOptimizationResponseParts(args: {
       }),
     }))
     .filter(
-      (row): row is { finding: ContractOptimizationFinding; exposureUsd: number } =>
+      (
+        row,
+      ): row is { finding: ContractOptimizationFinding; exposureUsd: number } =>
         row.exposureUsd !== null && Number.isFinite(row.exposureUsd),
     );
   const tableTitle =
@@ -1215,7 +1443,9 @@ function buildContractOptimizationResponseParts(args: {
       ],
       [
         "Risk",
-        findings.some((finding) => /sla|staffing|service|coverage/i.test(finding.title))
+        findings.some((finding) =>
+          /sla|staffing|service|coverage/i.test(finding.title),
+        )
           ? "Weak remedies, staffing gaps, and service pressure keep operational risk with the buyer."
           : "Risk posture depends on the vendor proof pack.",
         "Use to decide whether renewal can proceed with conditions or needs competitive fallback.",
@@ -1238,11 +1468,16 @@ function buildContractOptimizationResponseParts(args: {
     type: "table",
     title: tableTitle,
     columns: ["Area", "What the executive should ask for", "Evidence basis"],
-    rows: findings.slice(0, 5).map((finding) => [
-      finding.title,
-      finding.recommendedAction || finding.implication || "Resolve before renewal approval.",
-      finding.evidence || "Evidence captured in the contract optimization profile.",
-    ]),
+    rows: findings
+      .slice(0, 5)
+      .map((finding) => [
+        finding.title,
+        finding.recommendedAction ||
+          finding.implication ||
+          "Resolve before renewal approval.",
+        finding.evidence ||
+          "Evidence captured in the contract optimization profile.",
+      ]),
     caption:
       "The table keeps the advisory answer tied to the sourcing-critical extraction record.",
   });
@@ -1255,11 +1490,13 @@ function parseContractOptimizationPath(
   const clean = cleanEvidenceExcerpt(excerpt);
   return {
     immediateAction:
-      clean.match(/Immediate action:\s*(.*?)(?:\s+Primary path:|$)/i)?.[1]?.trim() ??
-      "",
+      clean
+        .match(/Immediate action:\s*(.*?)(?:\s+Primary path:|$)/i)?.[1]
+        ?.trim() ?? "",
     primaryPath:
-      clean.match(/Primary path:\s*(.*?)(?:\s+Fallback path:|$)/i)?.[1]?.trim() ??
-      "",
+      clean
+        .match(/Primary path:\s*(.*?)(?:\s+Fallback path:|$)/i)?.[1]
+        ?.trim() ?? "",
     fallbackPath:
       clean.match(/Fallback path:\s*(.*?)(?:\s+Do not do:|$)/i)?.[1]?.trim() ??
       "",
@@ -1271,16 +1508,21 @@ function parseContractOptimizationFinding(
   item: SourceLiveTenantEvidenceItem,
 ): ContractOptimizationFinding {
   const excerpt = cleanEvidenceExcerpt(item.excerpt);
-  const issue = excerpt
-    .split(/\bImplication:|\bRecommended action:|\bEvidence:/i)[0]
-    ?.trim()
-    .replace(/[.;]\s*$/, "") ?? "";
+  const issue =
+    excerpt
+      .split(/\bImplication:|\bRecommended action:|\bEvidence:/i)[0]
+      ?.trim()
+      .replace(/[.;]\s*$/, "") ?? "";
   const implication =
-    excerpt.match(/\bImplication:\s*(.*?)(?:\s+Recommended action:|\s+Evidence:|$)/i)?.[1]?.trim() ??
-    "";
+    excerpt
+      .match(
+        /\bImplication:\s*(.*?)(?:\s+Recommended action:|\s+Evidence:|$)/i,
+      )?.[1]
+      ?.trim() ?? "";
   const recommendedAction =
-    excerpt.match(/\bRecommended action:\s*(.*?)(?:\s+Evidence:|$)/i)?.[1]?.trim() ??
-    "";
+    excerpt
+      .match(/\bRecommended action:\s*(.*?)(?:\s+Evidence:|$)/i)?.[1]
+      ?.trim() ?? "";
   const evidence = excerpt.match(/\bEvidence:\s*(.*)$/i)?.[1]?.trim() ?? "";
   return {
     title: formatEvidenceTitle(item.title)
@@ -1313,7 +1555,9 @@ function formatContractTopReasons(
   findings: Array<ContractOptimizationFinding | undefined>,
 ): string {
   return findings
-    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
+    .filter((finding): finding is ContractOptimizationFinding =>
+      Boolean(finding),
+    )
     .slice(0, 3)
     .map(formatFindingBullet)
     .join("\n");
@@ -1323,14 +1567,18 @@ function formatContractFinancialExposure(
   findings: Array<ContractOptimizationFinding | undefined>,
 ): string {
   const highUsd = findings
-    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
+    .filter((finding): finding is ContractOptimizationFinding =>
+      Boolean(finding),
+    )
     .map((finding) =>
       extractFindingExposureUsd({
         title: finding.title,
         currentState: finding.issue || finding.excerpt,
       }),
     )
-    .filter((value): value is number => Boolean(value && Number.isFinite(value)))
+    .filter((value): value is number =>
+      Boolean(value && Number.isFinite(value)),
+    )
     .reduce((sum, value) => sum + value, 0);
 
   if (highUsd <= 0) return "";
@@ -1350,7 +1598,9 @@ function formatContractEvidenceLine(
   findings: Array<ContractOptimizationFinding | undefined>,
 ): string {
   const labels = findings
-    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
+    .filter((finding): finding is ContractOptimizationFinding =>
+      Boolean(finding),
+    )
     .slice(0, 4)
     .map((finding, index) => `[${index + 1}] ${finding.title}`);
   return labels.length ? `Evidence note: ${labels.join("; ")}.` : "";
@@ -1371,7 +1621,10 @@ function buildEvaluationDecisionAnswer(args: {
   const looksEvaluationSpecific =
     /\b(leading|leader|cheapest|lowest|highest transition risk|transition risk|advance to bafo|advance|executive tradeoffs?|tradeoffs?|scorecard|evaluation|rank|ranking)\b/.test(
       text,
-    ) && !/\b(what should go into bafo|bafo asks?|bafo questions?|draft the bafo)\b/.test(text);
+    ) &&
+    !/\b(what should go into bafo|bafo asks?|bafo questions?|draft the bafo)\b/.test(
+      text,
+    );
   if (!looksEvaluationSpecific) return null;
 
   const summaries = args.evidence
@@ -1388,20 +1641,25 @@ function buildEvaluationDecisionAnswer(args: {
     .map(parseEvaluationScoreImpact)
     .filter((impact): impact is EvaluationScoreImpact => Boolean(impact));
   const finalistRecommendation =
-    args.evidence.find((item) => /\bfinalist recommendation\b/i.test(item.title))
-      ?.excerpt ?? "";
+    args.evidence.find((item) =>
+      /\bfinalist recommendation\b/i.test(item.title),
+    )?.excerpt ?? "";
   const leading = sorted[0];
-  const cheapest = findVendorFromComparison(args.evidence, "Normalized 5-year TCO") ??
+  const cheapest =
+    findVendorFromComparison(args.evidence, "Normalized 5-year TCO") ??
     summaries.find((summary) => summary.vendorName === "Vendor B") ??
     leading;
   const transitionRisk =
-    findVendorFromComparison(args.evidence, "Transition risk", /highest risk/i) ??
+    findVendorFromComparison(
+      args.evidence,
+      "Transition risk",
+      /highest risk/i,
+    ) ??
     summaries.find((summary) => summary.vendorName === "Vendor B") ??
     sorted.at(-1) ??
     leading;
 
-  let leadSentence =
-    `${leading.vendorName} is leading on a risk-adjusted basis, not because it is cheapest, but because it has the strongest continuity, scope, and transition posture.`;
+  let leadSentence = `${leading.vendorName} is leading on a risk-adjusted basis, not because it is cheapest, but because it has the strongest continuity, scope, and transition posture.`;
   if (/\bcheapest|lowest|tco|cost\b/.test(text)) {
     leadSentence = `${cheapest.vendorName} is cheapest on normalized 5-year TCO, but the lower price is conditional until retained effort, pass-throughs, and productivity economics are closed.`;
   } else if (/\bhighest transition risk|transition risk\b/.test(text)) {
@@ -1457,15 +1715,16 @@ function parseEvaluationSummary(
     excerpt.match(/recommendation\s+([a-z ]+)\./i)?.[1]?.trim() ??
     "conditional";
   const sentenceAfterRecommendation =
-    excerpt.match(/recommendation\s+[a-z ]+\.\s*(.*?)(?:\s+Tradeoffs:|$)/i)?.[1]?.trim() ??
-    excerpt;
+    excerpt
+      .match(/recommendation\s+[a-z ]+\.\s*(.*?)(?:\s+Tradeoffs:|$)/i)?.[1]
+      ?.trim() ?? excerpt;
   const tradeoffs =
-    excerpt.match(/Tradeoffs:\s*(.*?)(?:\s+Conditions:|$)/i)?.[1]?.trim() ??
-    "";
+    excerpt.match(/Tradeoffs:\s*(.*?)(?:\s+Conditions:|$)/i)?.[1]?.trim() ?? "";
   const conditions = excerpt.match(/Conditions:\s*(.*)$/i)?.[1]?.trim() ?? "";
   const finalistPosture =
-    excerpt.match(/Finalist posture:\s*(.*?)(?:\s+Tradeoffs:|$)/i)?.[1]?.trim() ??
-    "";
+    excerpt
+      .match(/Finalist posture:\s*(.*?)(?:\s+Tradeoffs:|$)/i)?.[1]
+      ?.trim() ?? "";
   return {
     vendorName,
     rank,
@@ -1487,7 +1746,10 @@ function parseEvaluationScoreImpact(
   const movement = excerpt.match(
     /Score movement:\s*([0-9]+(?:\.[0-9]+)?)\s+to\s+([0-9]+(?:\.[0-9]+)?).*?delta\s+\+?([0-9]+(?:\.[0-9]+)?)/i,
   );
-  const cure = excerpt.match(/BAFO cure:\s*(.*?)(?:\s+Required evidence:|$)/i)?.[1]?.trim() ?? "";
+  const cure =
+    excerpt
+      .match(/BAFO cure:\s*(.*?)(?:\s+Required evidence:|$)/i)?.[1]
+      ?.trim() ?? "";
   const decisionImpact =
     excerpt.match(/Decision impact:\s*(.*)$/i)?.[1]?.trim() ?? "";
   return {
@@ -1543,11 +1805,12 @@ function findVendorFromComparison(
     const costs = vendorNames
       .map((vendorName) => {
         const clause = excerpt.match(
-          new RegExp(`${vendorName.replace(" ", "\\s+")}:\\s*\\$([0-9.]+)M`, "i"),
+          new RegExp(
+            `${vendorName.replace(" ", "\\s+")}:\\s*\\$([0-9.]+)M`,
+            "i",
+          ),
         );
-        return clause
-          ? { vendorName, cost: Number(clause[1]) }
-          : null;
+        return clause ? { vendorName, cost: Number(clause[1]) } : null;
       })
       .filter((value): value is { vendorName: string; cost: number } =>
         Boolean(value),
@@ -1581,7 +1844,11 @@ function buildBafoInstructionAnswer(args: {
   cxoGuidance: string[];
   recommendedNextAction: string;
 } | null {
-  if (!/\b(bafo|best and final|best-and-final|what should go into)\b/i.test(args.prompt)) {
+  if (
+    !/\b(bafo|best and final|best-and-final|what should go into)\b/i.test(
+      args.prompt,
+    )
+  ) {
     return null;
   }
 
@@ -1608,7 +1875,7 @@ function buildBafoInstructionAnswer(args: {
   const highestRiskVendor =
     byVendor.get("Vendor B") && byVendor.get("Vendor B")!.length > 0
       ? "Vendor B"
-      : vendorSummaries[0]?.split(":")[0] ?? "the conditional vendor";
+      : (vendorSummaries[0]?.split(":")[0] ?? "the conditional vendor");
 
   return {
     title: "BAFO instruction answer",
@@ -1641,7 +1908,9 @@ function parseBafoInstructionAsk(
   const vendorName = item.title.match(/\bVendor\s+[A-Z]\b/)?.[0];
   if (!vendorName) return null;
   const excerpt = cleanEvidenceExcerpt(item.excerpt);
-  const questionMatch = excerpt.match(/^[^:]+:\s*(.*?)(?:\s+Required response:|$)/i);
+  const questionMatch = excerpt.match(
+    /^[^:]+:\s*(.*?)(?:\s+Required response:|$)/i,
+  );
   const requiredResponseMatch = excerpt.match(
     /Required response:\s*(.*?)(?:\s+Scoring holdback:|$)/i,
   );
@@ -1651,8 +1920,12 @@ function parseBafoInstructionAsk(
   return {
     vendorName,
     question,
-    requiredResponse: requiredResponseMatch?.[1]?.trim() ?? "Structured BAFO exhibit with pricing, scope, owner, dependency, and effective date.",
-    scoringHoldback: scoringHoldbackMatch?.[1]?.trim() ?? "Hold scoring until the commitment is evidenced.",
+    requiredResponse:
+      requiredResponseMatch?.[1]?.trim() ??
+      "Structured BAFO exhibit with pricing, scope, owner, dependency, and effective date.",
+    scoringHoldback:
+      scoringHoldbackMatch?.[1]?.trim() ??
+      "Hold scoring until the commitment is evidenced.",
   };
 }
 
@@ -1692,7 +1965,7 @@ function formatEvidenceCitationExcerpt(
 function buildAvaResponseParts(args: {
   mode: SourceAnswerMode;
   answerText: string;
-  confidence: SourceAnswerEngineOutput['confidence'];
+  confidence: SourceAnswerEngineOutput["confidence"];
   currentStateFindings: string[];
   sourcingImplications: string[];
   cxoGuidance: string[];
@@ -1707,26 +1980,30 @@ function buildAvaResponseParts(args: {
 }): AgentResponsePart[] {
   const parts: AgentResponsePart[] = [
     {
-      type: 'metricStrip',
-      title: 'aVa sourcing read',
+      type: "metricStrip",
+      title: "aVa sourcing read",
       metrics: [
-        { label: 'Lens', value: formatMode(args.mode), tone: 'info' },
-        { label: 'Confidence', value: args.confidence, tone: confidenceTone(args.confidence) },
+        { label: "Lens", value: formatMode(args.mode), tone: "info" },
         {
-          label: 'Support',
-          value: String(args.evidenceCitations.length),
-          tone: args.evidenceCitations.length > 0 ? 'good' : 'warning',
+          label: "Confidence",
+          value: args.confidence,
+          tone: confidenceTone(args.confidence),
         },
         {
-          label: 'Open inputs',
+          label: "Support",
+          value: String(args.evidenceCitations.length),
+          tone: args.evidenceCitations.length > 0 ? "good" : "warning",
+        },
+        {
+          label: "Open inputs",
           value: String(args.missingData.length),
-          tone: args.missingData.length > 0 ? 'warning' : 'good',
+          tone: args.missingData.length > 0 ? "warning" : "good",
         },
       ],
     },
     {
-      type: 'text',
-      title: 'Advisor answer',
+      type: "text",
+      title: "Advisor answer",
       text: args.answerText,
     },
   ];
@@ -1735,44 +2012,51 @@ function buildAvaResponseParts(args: {
     parts.push(...args.extraResponseParts);
   }
 
-  if (args.currentStateFindings.length > 0 || args.sourcingImplications.length > 0) {
+  if (
+    args.currentStateFindings.length > 0 ||
+    args.sourcingImplications.length > 0
+  ) {
     parts.push({
-      type: 'table',
-      title: 'Decision signals and sourcing implications',
-      columns: ['Signal', 'So what for sourcing'],
+      type: "table",
+      title: "Decision signals and sourcing implications",
+      columns: ["Signal", "So what for sourcing"],
       rows: zipRows(args.currentStateFindings, args.sourcingImplications),
-      caption: 'This keeps each recommendation tied to a visible sourcing signal.',
+      caption:
+        "This keeps each recommendation tied to a visible sourcing signal.",
     });
   }
 
   if (args.deliveryModelGate) {
     parts.push({
-      type: 'table',
-      title: 'Delivery-model gate',
-      columns: ['Decision item', 'aVa read'],
+      type: "table",
+      title: "Delivery-model gate",
+      columns: ["Decision item", "aVa read"],
       rows: [
-        ['Recommended model', args.deliveryModelGate.recommendedModelLabel],
-        ['Gate status', args.deliveryModelGate.gateStatus.replace(/_/g, ' ')],
-        ['Confidence', args.deliveryModelGate.confidence],
+        ["Recommended model", args.deliveryModelGate.recommendedModelLabel],
+        ["Gate status", args.deliveryModelGate.gateStatus.replace(/_/g, " ")],
+        ["Confidence", args.deliveryModelGate.confidence],
         [
-          'Open questions',
-          args.deliveryModelGate.openQuestions.map((q) => q.question).join(' ') || 'None recorded.',
+          "Open questions",
+          args.deliveryModelGate.openQuestions
+            .map((q) => q.question)
+            .join(" ") || "None recorded.",
         ],
       ],
-      caption: 'This prevents an RFP from being shaped before build/buy/partner/SI is explicit.',
+      caption:
+        "This prevents an RFP from being shaped before build/buy/partner/SI is explicit.",
     });
   }
 
   if (args.shouldCostEstimate) {
     parts.push({
-      type: 'barChart',
-      title: 'TCO iceberg by should-cost layer',
-      unit: 'usd',
+      type: "barChart",
+      title: "TCO iceberg by should-cost layer",
+      unit: "usd",
       bars: args.shouldCostEstimate.icebergLayers.slice(0, 8).map((layer) => ({
         label: layer.label,
         value: layer.point,
-        displayValue: `$${Math.round(layer.point).toLocaleString('en-US')}`,
-        tone: layer.visible ? 'info' : 'warning',
+        displayValue: `$${Math.round(layer.point).toLocaleString("en-US")}`,
+        tone: layer.visible ? "info" : "warning",
       })),
       caption: args.shouldCostEstimate.headline,
     });
@@ -1780,40 +2064,46 @@ function buildAvaResponseParts(args: {
 
   if (args.proposalNormalization) {
     parts.push({
-      type: 'table',
-      title: 'Proposal normalization posture',
-      columns: ['Dimension', 'Divergence', 'Buyer blind spot'],
-      rows: args.proposalNormalization.rows.slice(0, 6).map((row) => [
-        row.label,
-        row.divergence.replace(/_/g, ' '),
-        row.buyerBlindSpot ?? 'No submitted proposal data yet.',
-      ]),
+      type: "table",
+      title: "Proposal normalization posture",
+      columns: ["Dimension", "Divergence", "Buyer blind spot"],
+      rows: args.proposalNormalization.rows
+        .slice(0, 6)
+        .map((row) => [
+          row.label,
+          row.divergence.replace(/_/g, " "),
+          row.buyerBlindSpot ?? "No submitted proposal data yet.",
+        ]),
       caption: args.proposalNormalization.recommendedNextAction,
     });
   }
 
   if (args.riskTraps.length > 0 || args.missingData.length > 0) {
     parts.push({
-      type: 'table',
-      title: 'Risks and missing inputs',
-      columns: ['Risk or missing input', 'Treatment'],
+      type: "table",
+      title: "Risks and missing inputs",
+      columns: ["Risk or missing input", "Treatment"],
       rows: [
-        ...args.riskTraps.slice(0, 4).map((risk) => [
-          risk,
-          'Resolve before award logic or pricing normalization is treated as final.',
-        ]),
-        ...args.missingData.slice(0, 4).map((gap) => [
-          gap,
-          'Keep visible as an open input; do not fabricate around it.',
-        ]),
+        ...args.riskTraps
+          .slice(0, 4)
+          .map((risk) => [
+            risk,
+            "Resolve before award logic or pricing normalization is treated as final.",
+          ]),
+        ...args.missingData
+          .slice(0, 4)
+          .map((gap) => [
+            gap,
+            "Keep visible as an open input; do not fabricate around it.",
+          ]),
       ],
     });
   }
 
   if (args.evidenceCitations.length > 0) {
     parts.push({
-      type: 'citations',
-      title: 'Evidence used',
+      type: "citations",
+      title: "Evidence used",
       citations: args.evidenceCitations.slice(0, 5).map((citation) => ({
         label: citation.label,
         excerpt: citation.excerpt,
@@ -1823,8 +2113,8 @@ function buildAvaResponseParts(args: {
   }
 
   parts.push({
-    type: 'nextAction',
-    label: 'Recommended next action',
+    type: "nextAction",
+    label: "Recommended next action",
     detail: args.recommendedNextAction,
     confidence: args.confidence,
   });
@@ -1835,17 +2125,17 @@ function buildAvaResponseParts(args: {
 function zipRows(left: string[], right: string[]): string[][] {
   const size = Math.max(left.length, right.length, 1);
   return Array.from({ length: size }, (_, index) => [
-    left[index] ?? 'No additional current-state signal.',
-    right[index] ?? 'No additional implication recorded.',
+    left[index] ?? "No additional current-state signal.",
+    right[index] ?? "No additional implication recorded.",
   ]);
 }
 
 function confidenceTone(
-  confidence: SourceAnswerEngineOutput['confidence'],
-): 'good' | 'warning' | 'danger' {
-  if (confidence === 'high') return 'good';
-  if (confidence === 'medium') return 'warning';
-  return 'danger';
+  confidence: SourceAnswerEngineOutput["confidence"],
+): "good" | "warning" | "danger" {
+  if (confidence === "high") return "good";
+  if (confidence === "medium") return "warning";
+  return "danger";
 }
 
 function eventName(bundle: SourceAgentContextBundle): string {
@@ -1877,14 +2167,20 @@ function cleanEvidenceExcerpt(excerpt: string): string {
     .replace(/[.。]?$/, ".");
 }
 
-function formatBusinessEvidenceLabel(item: SourceLiveTenantEvidenceItem): string {
+function formatBusinessEvidenceLabel(
+  item: SourceLiveTenantEvidenceItem,
+): string {
   const title = formatEvidenceTitle(item.title);
   if (/\bVendor\s+[A-Z]\b/i.test(title)) return title;
   if (/finalist recommendation/i.test(title)) return "Finalist recommendation";
   if (/normalized vendor comparison/i.test(title)) {
-    return title.replace(/normalized vendor comparison\s*[-:]\s*/i, "Vendor comparison: ");
+    return title.replace(
+      /normalized vendor comparison\s*[-:]\s*/i,
+      "Vendor comparison: ",
+    );
   }
-  if (item.segmentId === "sourcing_artifacts") return title || "Sourcing evidence";
+  if (item.segmentId === "sourcing_artifacts")
+    return title || "Sourcing evidence";
   return `${formatSegmentLabel(item.segmentId)} - ${title}`;
 }
 
@@ -1900,7 +2196,10 @@ function toAvaVisibleText(value: string): string {
     .replace(/\bSourcing Artifacts\b/g, "Sourcing evidence")
     .replace(/\bSource Artifacts\b/g, "Sourcing evidence")
     .replace(/\bsource_events\b/g, "sourcing record")
-    .replace(/\bSource artifact registry\/chunk\/fact evidence\b/gi, "governed sourcing evidence")
+    .replace(
+      /\bSource artifact registry\/chunk\/fact evidence\b/gi,
+      "governed sourcing evidence",
+    )
     .replace(/\bSource artifact registry\b/gi, "governed sourcing evidence")
     .replace(/\bsource rows?\b/gi, "source evidence")
     .replace(/\s{2,}/g, " ")
