@@ -223,15 +223,34 @@ function normalizeSourceContractOptimizationDisplay(args: {
 type SourceArtifactContextRow = {
   id: string;
   source_event_id: string;
+  title: string | null;
   stage_key: string | null;
   artifact_family: string | null;
   artifact_kind: string | null;
   source_origin: string | null;
   source_format: string | null;
   original_name: string | null;
+  file_name: string | null;
+  file_format: string | null;
+  blob_uri: string | null;
+  blob_container: string | null;
+  blob_path: string | null;
+  version: number | string | null;
+  status: string | null;
   parse_status: string | null;
   evidence_state: string | null;
   approval_state: string | null;
+  lifecycle_state: string | null;
+  blob_sha256: string | null;
+  is_client_final: boolean | null;
+  is_current_authoritative: boolean | null;
+  source_generated_artifact_id: string | null;
+  supersedes_artifact_id: string | null;
+  superseded_by_artifact_id: string | null;
+  client_final_uploaded_at: string | null;
+  client_final_accepted_at: string | null;
+  client_final_note: string | null;
+  client_final_stakeholder_group: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -359,17 +378,19 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ].join(" "),
       score: 30 - index,
     })) ?? []),
-    ...(vendorEvaluationView?.scoreImprovementScenarios.map((scenario, index) => ({
-      recordId: `${scenario.vendorId}-score-impact`,
-      title: `${scenario.vendorName} score impact scenario`,
-      excerpt: [
-        `Score movement: ${scenario.currentScore.toFixed(1)} to ${scenario.potentialScore.toFixed(1)} if cured; delta +${scenario.scoreDelta.toFixed(1)}.`,
-        `BAFO cure: ${scenario.bafoCure}`,
-        `Required evidence: ${scenario.requiredEvidence}`,
-        `Decision impact: ${scenario.decisionImpact}`,
-      ].join(" "),
-      score: 27 - index,
-    })) ?? []),
+    ...(vendorEvaluationView?.scoreImprovementScenarios.map(
+      (scenario, index) => ({
+        recordId: `${scenario.vendorId}-score-impact`,
+        title: `${scenario.vendorName} score impact scenario`,
+        excerpt: [
+          `Score movement: ${scenario.currentScore.toFixed(1)} to ${scenario.potentialScore.toFixed(1)} if cured; delta +${scenario.scoreDelta.toFixed(1)}.`,
+          `BAFO cure: ${scenario.bafoCure}`,
+          `Required evidence: ${scenario.requiredEvidence}`,
+          `Decision impact: ${scenario.decisionImpact}`,
+        ].join(" "),
+        score: 27 - index,
+      }),
+    ) ?? []),
     ...(vendorEvaluationView
       ? [
           {
@@ -413,17 +434,19 @@ async function buildEventIntakeTenantContextSnapshot(args: {
           },
         ]
       : []),
-    ...(contractOptimizationProfile?.findings.slice(0, 8).map((finding, index) => ({
-      recordId: `contract-optimization-finding-${finding.findingId}`,
-      title: `Contract optimization finding - ${finding.title}`,
-      excerpt: [
-        `${finding.category.replaceAll("_", " ")}: ${finding.currentState}`,
-        `Implication: ${finding.sourcingImplication}`,
-        `Recommended action: ${finding.recommendedAction}`,
-        `Evidence: ${finding.evidenceLabels.join("; ")}`,
-      ].join(" "),
-      score: 34 - index,
-    })) ?? []),
+    ...(contractOptimizationProfile?.findings
+      .slice(0, 8)
+      .map((finding, index) => ({
+        recordId: `contract-optimization-finding-${finding.findingId}`,
+        title: `Contract optimization finding - ${finding.title}`,
+        excerpt: [
+          `${finding.category.replaceAll("_", " ")}: ${finding.currentState}`,
+          `Implication: ${finding.sourcingImplication}`,
+          `Recommended action: ${finding.recommendedAction}`,
+          `Evidence: ${finding.evidenceLabels.join("; ")}`,
+        ].join(" "),
+        score: 34 - index,
+      })) ?? []),
     ...(contractOptimizationProfile?.levers.slice(0, 8).map((lever, index) => ({
       recordId: `contract-optimization-lever-${lever.leverId}`,
       title: `Contract optimization lever - ${lever.leverType.replaceAll("_", " ")}`,
@@ -456,7 +479,10 @@ async function buildEventIntakeTenantContextSnapshot(args: {
   ).length;
   const segmentCounts = new Map<string, number>();
   for (const item of evidence) {
-    segmentCounts.set(item.segmentId, (segmentCounts.get(item.segmentId) ?? 0) + 1);
+    segmentCounts.set(
+      item.segmentId,
+      (segmentCounts.get(item.segmentId) ?? 0) + 1,
+    );
   }
   const segments = Array.from(segmentCounts.entries()).map(
     ([segmentId, contextChunks]) => ({
@@ -531,15 +557,34 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
       [
         "id",
         "source_event_id",
+        "title",
         "stage_key",
         "artifact_family",
         "artifact_kind",
         "source_origin",
         "source_format",
         "original_name",
+        "file_name",
+        "file_format",
+        "blob_uri",
+        "blob_container",
+        "blob_path",
+        "version",
+        "status",
         "parse_status",
         "evidence_state",
         "approval_state",
+        "lifecycle_state",
+        "blob_sha256",
+        "is_client_final",
+        "is_current_authoritative",
+        "source_generated_artifact_id",
+        "supersedes_artifact_id",
+        "superseded_by_artifact_id",
+        "client_final_uploaded_at",
+        "client_final_accepted_at",
+        "client_final_note",
+        "client_final_stakeholder_group",
         "created_at",
         "updated_at",
       ].join(","),
@@ -555,61 +600,77 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
     });
     return { artifacts: [], chunks: [], facts: [], artifactEvidence: [] };
   }
-  const artifacts = ((artifactRows as SourceArtifactContextRow[] | null) ?? []).filter(
-    (artifact) => artifact.id,
-  );
+  const artifacts = (
+    (artifactRows as SourceArtifactContextRow[] | null) ?? []
+  ).filter((artifact) => artifact.id);
   const artifactIds = artifacts.map((artifact) => artifact.id);
   if (!artifactIds.length) {
     return { artifacts, chunks: [], facts: [], artifactEvidence: [] };
   }
 
-  const [{ data: chunkRows, error: chunkError }, { data: factRows, error: factError }] =
-    await Promise.all([
-      db
-        .from("source_artifact_chunks")
-        .select("artifact_id, chunk_id, chunk_text, chunk_kind, confidence")
-        .in("artifact_id", artifactIds)
-        .order("created_at", { ascending: false })
-        .limit(50),
-      db
-        .from("source_artifact_facts")
-        .select("artifact_id, fact_type, fact_key, fact_value, confidence")
-        .in("artifact_id", artifactIds)
-        .order("created_at", { ascending: false })
-        .limit(80),
-    ]);
+  const [
+    { data: chunkRows, error: chunkError },
+    { data: factRows, error: factError },
+  ] = await Promise.all([
+    db
+      .from("source_artifact_chunks")
+      .select("artifact_id, chunk_id, chunk_text, chunk_kind, confidence")
+      .in("artifact_id", artifactIds)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    db
+      .from("source_artifact_facts")
+      .select("artifact_id, fact_type, fact_key, fact_value, confidence")
+      .in("artifact_id", artifactIds)
+      .order("created_at", { ascending: false })
+      .limit(80),
+  ]);
   if (chunkError) {
-    console.warn("[source-nexus-ask] Source artifact chunk context load failed", {
-      sourceEventId,
-      message: chunkError.message,
-    });
+    console.warn(
+      "[source-nexus-ask] Source artifact chunk context load failed",
+      {
+        sourceEventId,
+        message: chunkError.message,
+      },
+    );
   }
   if (factError) {
-    console.warn("[source-nexus-ask] Source artifact fact context load failed", {
-      sourceEventId,
-      message: factError.message,
-    });
+    console.warn(
+      "[source-nexus-ask] Source artifact fact context load failed",
+      {
+        sourceEventId,
+        message: factError.message,
+      },
+    );
   }
-  const chunks = ((chunkRows as SourceArtifactChunkContextRow[] | null) ?? [])
-    .filter((chunk) => chunk.artifact_id && chunk.chunk_text);
-  const facts = ((factRows as SourceArtifactFactContextRow[] | null) ?? [])
-    .filter((fact) => fact.artifact_id);
+  const chunks = (
+    (chunkRows as SourceArtifactChunkContextRow[] | null) ?? []
+  ).filter((chunk) => chunk.artifact_id && chunk.chunk_text);
+  const facts = (
+    (factRows as SourceArtifactFactContextRow[] | null) ?? []
+  ).filter((fact) => fact.artifact_id);
   const artifactNameById = new Map(
-    artifacts.map((artifact) => [artifact.id, artifact.original_name ?? artifact.id]),
+    artifacts.map((artifact) => [
+      artifact.id,
+      artifact.original_name ?? artifact.id,
+    ]),
   );
   const artifactEvidence = [
     ...artifacts.map((artifact, index) => ({
       id: `source-artifact:${artifact.id}`,
       segmentId: inferSourceArtifactSegment(artifact),
       recordId: artifact.id,
-      title: artifact.original_name ?? "Source artifact",
+      title:
+        artifact.title ??
+        artifact.file_name ??
+        artifact.original_name ??
+        "Source artifact",
       sourceDoc: "source_artifacts",
-      excerpt: [
-        `${artifact.source_origin ?? "artifact"} ${artifact.artifact_family ?? "other"} evidence for ${artifact.stage_key ?? "source"} stage.`,
-        `Format: ${artifact.source_format ?? "unknown"}; parse: ${artifact.parse_status ?? "unknown"}; evidence state: ${artifact.evidence_state ?? "unknown"}; approval: ${artifact.approval_state ?? "unknown"}.`,
-      ].join(" "),
+      excerpt: formatSourceArtifactAuthorityExcerpt(artifact),
       confidence:
-        artifact.parse_status === "parsed" || artifact.source_origin === "generated"
+        artifact.is_current_authoritative === true ||
+        artifact.parse_status === "parsed" ||
+        artifact.source_origin === "generated"
           ? ("high" as const)
           : ("medium" as const),
       score: scoreSourceArtifactEvidence(artifact, index, "artifact"),
@@ -636,14 +697,63 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
       sourceDoc: "source_artifact_facts",
       excerpt: `${fact.fact_type ?? "artifact_fact"} ${fact.fact_key ?? ""}: ${summarizeFactValue(fact.fact_value)}`,
       confidence: confidenceFromNumber(fact.confidence),
-      score: scoreSourceArtifactEvidence(
-        artifacts.find((artifact) => artifact.id === fact.artifact_id),
-        index,
-        "fact",
-      ) - (fact.fact_type === "artifact_summary" ? 18 : 0),
+      score:
+        scoreSourceArtifactEvidence(
+          artifacts.find((artifact) => artifact.id === fact.artifact_id),
+          index,
+          "fact",
+        ) - (fact.fact_type === "artifact_summary" ? 18 : 0),
     })),
   ];
   return { artifacts, chunks, facts, artifactEvidence };
+}
+
+function formatSourceArtifactAuthorityExcerpt(
+  artifact: SourceArtifactContextRow,
+): string {
+  const displayName =
+    artifact.file_name ??
+    artifact.original_name ??
+    artifact.title ??
+    "Source artifact";
+  const hasBlob =
+    Boolean(artifact.blob_container && artifact.blob_path) ||
+    Boolean(artifact.blob_uri);
+  const status = artifact.status ?? artifact.parse_status ?? "unknown";
+  const version = artifact.version ?? "unknown";
+  const current = artifact.is_current_authoritative === true;
+  const clientFinal = artifact.is_client_final === true;
+  const generatedDraft =
+    artifact.source_origin === "generated" &&
+    artifact.artifact_kind === "d09_rfp_pack";
+  const lineage = [
+    artifact.source_generated_artifact_id
+      ? "links to the prior generated draft"
+      : null,
+    artifact.supersedes_artifact_id
+      ? "supersedes a prior artifact version"
+      : null,
+    artifact.superseded_by_artifact_id
+      ? "has been superseded by a later artifact version"
+      : null,
+  ]
+    .filter(Boolean)
+    .join("; ");
+
+  return [
+    `Artifact authority record: "${displayName}" is ${clientFinal ? "a client-final upload" : generatedDraft ? "an AbarVa-generated draft" : `${artifact.source_origin ?? "a Source"} artifact`}.`,
+    `Artifact type: ${artifact.artifact_kind ?? "unknown"}; stage: ${artifact.stage_key ?? "unknown"}; status: ${status}; lifecycle: ${artifact.lifecycle_state ?? "unknown"}; version: ${version}.`,
+    `Authority: clientFinal=${clientFinal ? "true" : "false"}; currentAuthoritative=${current ? "true" : "false"}; blobBacked=${hasBlob ? "true" : "false"}.`,
+    lineage ? `Lineage: ${lineage}.` : "",
+    artifact.client_final_note
+      ? `Client-final note: ${artifact.client_final_note}`
+      : "",
+    artifact.client_final_stakeholder_group
+      ? `Client-final stakeholder group: ${artifact.client_final_stakeholder_group}.`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function scoreSourceArtifactEvidence(
@@ -662,6 +772,8 @@ function scoreSourceArtifactEvidence(
 
   let score = 18;
   if (isUploaded) score += 24;
+  if (artifact.is_client_final === true) score += 30;
+  if (artifact.is_current_authoritative === true) score += 30;
   if (isParsed) score += 8;
   if (isBusinessEvidence) score += 10;
   if (isFactBearing) score += 6;
@@ -696,25 +808,49 @@ function inferSourceArtifactSegment(
     .toLowerCase()
     .replace(/[_/.-]+/g, " ");
 
-  if (/\b(agreement|contract|vendor|change[-_ ]?order|amendment|commercial)\b/.test(text)) {
+  if (
+    /\b(agreement|contract|vendor|change[-_ ]?order|amendment|commercial)\b/.test(
+      text,
+    )
+  ) {
     return "vendor_contracts";
   }
-  if (/\b(ticket|servicenow|sla|service[-_ ]?level|blackout|ops|operation|incident|request|change)\b/.test(text)) {
+  if (
+    /\b(ticket|servicenow|sla|service[-_ ]?level|blackout|ops|operation|incident|request|change)\b/.test(
+      text,
+    )
+  ) {
     return "operating_telemetry";
   }
-  if (/\b(finance|financial|budget|cost|run[-_ ]?vs[-_ ]?change|rate|pricing)\b/.test(text)) {
+  if (
+    /\b(finance|financial|budget|cost|run[-_ ]?vs[-_ ]?change|rate|pricing)\b/.test(
+      text,
+    )
+  ) {
     return "it_financials";
   }
   if (/\b(security|compliance|risk|control|ciso|audit)\b/.test(text)) {
     return "compliance";
   }
-  if (/\b(evaluation|weight|transition|dependency|sponsor|authorization|roadmap|program)\b/.test(text)) {
+  if (
+    /\b(evaluation|weight|transition|dependency|sponsor|authorization|roadmap|program)\b/.test(
+      text,
+    )
+  ) {
     return "program_inventory";
   }
-  if (/\b(application|app|scope|tower|service[-_ ]?catalog|data[-_ ]?center|infrastructure|network|topology|circuit|cmdb)\b/.test(text)) {
+  if (
+    /\b(application|app|scope|tower|service[-_ ]?catalog|data[-_ ]?center|infrastructure|network|topology|circuit|cmdb)\b/.test(
+      text,
+    )
+  ) {
     return "it_landscape";
   }
-  if (/\b(generated|rfp[_ -]?package|response[_ -]?checklist|preview|source\\.md|artifact)\b/.test(text)) {
+  if (
+    /\b(generated|rfp[_ -]?package|response[_ -]?checklist|preview|source\\.md|artifact)\b/.test(
+      text,
+    )
+  ) {
     return "sourcing_artifacts";
   }
 
