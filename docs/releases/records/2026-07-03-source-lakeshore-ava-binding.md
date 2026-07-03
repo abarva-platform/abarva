@@ -18,6 +18,8 @@ Second follow-up live proof confirmed the main vendor-advancement answer, then e
 
 Third follow-up live proof reached 20/20 HTTP 200 and zero `not_found`, but still found demo-script phrasing gaps for event overview, procurement review before release, artifact inventory, Vendor C rationale, Vendor-B-before-scoring BAFO asks, stage blockers, and final sourcing recommendation. This release adds deterministic Source answer lanes for event overview and stage readiness, routes Vendor C/final recommendation language to the evaluation scorecard, routes before-scoring vendor asks to BAFO, and narrows artifact authority so "final recommendation" is not mistaken for "final RFP version."
 
+Fourth follow-up live proof confirmed the demo routing fixes for the early questions, but a longer signed-in run still returned intermittent `not_found` after 11 successful aVa calls. This release now resolves persisted Source events at the ask boundary from the already-authenticated active client key and tenant alias family before falling back to the broader generic resolver. The change keeps the cross-tenant fence intact while avoiding a duplicate active-client/policy lookup that could make a valid same-tenant event disappear during a long demo crawl.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source answer routing and Source File Cabinet API behavior change for all clients.
@@ -37,6 +39,8 @@ Third follow-up live proof reached 20/20 HTTP 200 and zero `not_found`, but stil
 - `src/lib/source/nexus-api.ts`: preserves specialized evaluation, BAFO, artifact-authority, and contract-optimization Source answers through the live answer-quality layer so the user-visible response stays advisory-specific.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: uses the richer authenticated Source tenancy context and stable client key when resolving the active Source event.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: retries the same tenant-scoped event lookup briefly for Source aVa asks so transient read misses do not become false `not_found` responses.
+- `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: resolves persisted Source events from the already-known active client key/name before falling back to the broader resolver, preventing long-run advisor sessions from losing a valid same-tenant event.
+- `src/lib/source/queries.ts`: exports a tenant-keyed persisted Source event resolver that checks the row's `client_key` against the active tenant alias family before converting it to the Source event detail shape.
 - `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows and tenant-scoped Source artifact registry rows into the File Cabinet generated/upload/session groups when durable File Cabinet rows are absent.
 - `src/lib/source/source-answer-engine.ts`: routes risk/conditional vendor questions to the evaluation scorecard answer instead of the generic AMS answer lane.
 - `src/lib/source/source-answer-engine.ts`: adds event-overview and stage-readiness answers for Lakeshore demo questions, routes Vendor C/final sourcing recommendation to evaluation, routes vendor-before-scoring asks to BAFO, and keeps artifact authority limited to real RFP/artifact finality questions.
@@ -48,9 +52,10 @@ Third follow-up live proof reached 20/20 HTTP 200 and zero `not_found`, but stil
 
 ## QA / Validation
 
-- Pass — focused Jest: `proposal-intelligence.test.ts`, `source-answer-engine.test.ts`, `nexus-api-live-context.test.ts`, and Source File Cabinet route tests, 76 tests passed across the latest targeted vendor/advisor run.
+- Pass — focused Jest: `source-answer-engine.test.ts` and `queries-tenant-scope.test.ts`, 61 tests passed for the latest resolved-client event lookup patch.
 - Pass — touched-file ESLint.
-- Pass — TypeScript: `tsc --noEmit --project tsconfig.json` with `NODE_OPTIONS=--max-old-space-size=8192`.
+- Pass — TypeScript: `npx tsc --noEmit`.
+- Pass — release check: `npm run release:check`.
 - Pending — live signed-in Lakeshore Source aVa/browser proof after deployment.
 
 ## Rollout Plan
