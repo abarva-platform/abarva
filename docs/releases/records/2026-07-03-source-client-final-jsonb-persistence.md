@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing JSONB artifact metadata rows. The change serializes JSONB metadata at the shared source-artifacts registry, File Cabinet insert, and artifact-state update boundaries and keeps reads tolerant of either parsed JSON or serialized JSON.
+This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing JSONB artifact metadata rows. The change serializes and casts JSONB metadata at the shared source-artifacts registry, File Cabinet insert, source-artifacts Azure write adapter, and artifact-state update boundaries, and keeps reads tolerant of either parsed JSON or serialized JSON.
 
 ## Layer Impact
 
@@ -27,7 +27,8 @@ This release fixes the Source client-final acceptance path after live proof foun
 ## Changes Included
 
 - `src/lib/source/artifact-registry/index.ts`: serializes `client_final_change_summary` for source-artifacts registry inserts and parses it defensively when rows are read back.
-- `src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts`: permits the serialized client-final metadata payload shape at the write-adapter boundary.
+- `src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts`: serializes and casts JSONB `source_artifacts` metadata columns for Azure/Postgres inserts, including disclosure flags, evidence families, missing inputs, client-complete items, assumptions, and client-final change summaries.
+- `src/lib/data-plane/write-adapters/__tests__/slice-3f-shared-helper-write-adapters.test.ts`: adds a regression proving Azure/Postgres `source_artifacts` inserts use JSONB casts and serialized JSON metadata.
 - `src/lib/source/artifact-registry/__tests__/artifact-registry.test.ts`: adds a regression proving registry inserts serialize client-final JSONB metadata.
 - `src/lib/data-plane/write-adapters/sourceWriteAdapter.ts`: serializes artifact-state `body_generation_metadata` for Azure/Postgres JSONB updates.
 - `src/lib/data-plane/write-adapters/__tests__/source-write-adapter.test.ts`: adds a regression proving artifact-state JSONB metadata updates are cast and serialized.
@@ -36,7 +37,7 @@ This release fixes the Source client-final acceptance path after live proof foun
 
 ## QA / Validation
 
-- Pass: focused Jest for Source File Cabinet, Source artifact registry, and Source write adapter JSONB handling.
+- Pass: focused Jest for Source File Cabinet, Source artifact registry, source-artifacts write adapter, and Source write adapter JSONB handling.
 - Pass: focused ESLint on changed files.
 - Pass: full TypeScript compile with `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit`.
 - Pass: `npm run release:check`.
