@@ -130,6 +130,14 @@ function archetypeDisplay(move: StrategicMove): string {
   return charterScaffoldText(move, "archetype") ?? move.archetype;
 }
 
+export function moveDetailParticipantRows(move: StrategicMove): StrategicMove["participants"] {
+  const hasCapturedSponsor = Boolean(charterScaffoldText(move, "sponsor_candidate"));
+  return move.participants.filter((participant) => {
+    if (!hasCapturedSponsor) return true;
+    return participant.role.trim().toLowerCase() !== "sponsor";
+  });
+}
+
 function verifiedFallback(phase: number): string {
   if (phase >= 5) return "— tracked (pending)";
   return "— pending verification";
@@ -363,7 +371,7 @@ function OverviewContent({
               {archetypeLabel}
             </span>
           </div>
-          {move.participants.slice(0, 3).map((participant) => (
+          {moveDetailParticipantRows(move).slice(0, 3).map((participant) => (
             <div className={styles.kvPair} key={participant.personId}>
               <span className={styles.kvK}>{formatRole(participant.role)}</span>
               <span className={styles.kvV}>{participant.name}</span>
