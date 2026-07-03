@@ -1,6 +1,7 @@
 // SRC-S4 · SRC-DTL-ARTIFACT — Artifact drawer with buyer-safe maturity indicator.
 // T09: Added section-tier border-left, seeded version history, sign-offs panel.
 // No upload, parsing, workflow automation, or approval runtime.
+import type { ReactNode } from "react";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import type {
   SourceArtifactDetail,
@@ -79,6 +80,267 @@ function htmlToPlainText(value: string): string {
     .trim();
 }
 
+function stripMarkdownForSummary(value: string): string {
+  const lines = value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !/^\|/.test(line))
+    .filter((line) => !/^[-:| ]+$/.test(line));
+
+  return lines
+    .join(" ")
+    .replace(/^#{1,6}\s+/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function summarizeArtifactText(value: string): string {
+  const cleaned = stripMarkdownForSummary(value);
+  if (cleaned.length <= 360) return cleaned;
+  return `${cleaned.slice(0, 357).trim()}...`;
+}
+
+function isMarkdownTableDivider(line: string): boolean {
+  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+}
+
+function isMarkdownTableRow(line: string): boolean {
+  return /^\s*\|.+\|\s*$/.test(line);
+}
+
+function parseMarkdownTableRow(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const pattern = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text))) {
+    if (match.index > cursor) nodes.push(text.slice(cursor, match.index));
+    const token = match[0];
+    const value = token.slice(2, -2);
+    if (token.startsWith("**")) {
+      nodes.push(
+        <strong key={`${match.index}-strong`} style={{ fontWeight: 750 }}>
+          {value}
+        </strong>,
+      );
+    } else {
+      nodes.push(
+        <code
+          key={`${match.index}-code`}
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: "0.92em",
+            background: SHELL.PAPER_SOFT,
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 4,
+            padding: "0 4px",
+          }}
+        >
+          {token.slice(1, -1)}
+        </code>,
+      );
+    }
+    cursor = match.index + token.length;
+  }
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return nodes;
+}
+
+function renderMarkdownTable(lines: string[], key: string) {
+  const [headerLine, , ...bodyLines] = lines;
+  const headers = parseMarkdownTableRow(headerLine);
+  const rows = bodyLines.filter(isMarkdownTableRow).map(parseMarkdownTableRow);
+  return (
+    <div
+      key={key}
+      style={{
+        width: "100%",
+        overflowX: "auto",
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 10,
+        background: SHELL.CARD_WHITE,
+      }}
+      data-testid="source-artifact-markdown-table"
+    >
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          minWidth: Math.max(620, headers.length * 150),
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+          lineHeight: 1.4,
+        }}
+      >
+        <thead>
+          <tr>
+            {headers.map((header, index) => (
+              <th
+                key={`${header}-${index}`}
+                scope="col"
+                style={{
+                  padding: "10px 12px",
+                  textAlign: index === 0 ? "left" : "center",
+                  color: SHELL.INK,
+                  background: SHELL.PAPER_SOFT,
+                  borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+                  fontWeight: 750,
+                  verticalAlign: "bottom",
+                }}
+              >
+                {renderInlineMarkdown(header)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={`row-${rowIndex}`}>
+              {headers.map((_, colIndex) => (
+                <td
+                  key={`cell-${rowIndex}-${colIndex}`}
+                  style={{
+                    padding: "10px 12px",
+                    textAlign: colIndex === 0 ? "left" : "center",
+                    borderTop:
+                      rowIndex === 0 ? "none" : `1px solid ${SHELL.CARD_LINE}`,
+                    color: colIndex === 0 ? SHELL.INK : SHELL.INK_MID,
+                    fontWeight: row[colIndex]?.includes("**") ? 700 : 500,
+                    verticalAlign: "top",
+                  }}
+                >
+                  {renderInlineMarkdown(row[colIndex] ?? "")}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function renderArtifactMarkdownBody(body: string): ReactNode[] {
+  const lines = body.split(/\r?\n/);
+  const nodes: ReactNode[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index]?.trim() ?? "";
+    if (!line) {
+      index += 1;
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.+)$/);
+    if (heading) {
+      const level = heading[1].length;
+      nodes.push(
+        <div
+          key={`heading-${index}`}
+          style={{
+            fontFamily: level <= 2 ? SHELL.SERIF : SHELL.SANS,
+            fontSize: level <= 2 ? 22 : 16,
+            lineHeight: 1.2,
+            fontWeight: 750,
+            color: SHELL.INK,
+            marginTop: nodes.length ? 14 : 0,
+            marginBottom: 4,
+          }}
+        >
+          {renderInlineMarkdown(heading[2].trim())}
+        </div>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (
+      isMarkdownTableRow(line) &&
+      index + 1 < lines.length &&
+      isMarkdownTableDivider(lines[index + 1] ?? "")
+    ) {
+      const tableLines = [lines[index], lines[index + 1]];
+      index += 2;
+      while (index < lines.length && isMarkdownTableRow(lines[index] ?? "")) {
+        tableLines.push(lines[index]);
+        index += 1;
+      }
+      nodes.push(renderMarkdownTable(tableLines, `table-${index}`));
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (index < lines.length && /^[-*]\s+/.test(lines[index]?.trim() ?? "")) {
+        items.push((lines[index] ?? "").trim().replace(/^[-*]\s+/, ""));
+        index += 1;
+      }
+      nodes.push(
+        <ul
+          key={`list-${index}`}
+          style={{
+            margin: "4px 0 4px 18px",
+            padding: 0,
+            color: SHELL.INK,
+            display: "grid",
+            gap: 6,
+          }}
+        >
+          {items.map((item, itemIndex) => (
+            <li key={`${item}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+
+    const paragraph: string[] = [line];
+    index += 1;
+    while (index < lines.length) {
+      const next = lines[index]?.trim() ?? "";
+      if (
+        !next ||
+        /^(#{1,6})\s+/.test(next) ||
+        /^[-*]\s+/.test(next) ||
+        (isMarkdownTableRow(next) &&
+          index + 1 < lines.length &&
+          isMarkdownTableDivider(lines[index + 1] ?? ""))
+      ) {
+        break;
+      }
+      paragraph.push(next);
+      index += 1;
+    }
+    nodes.push(
+      <p
+        key={`paragraph-${index}`}
+        style={{
+          margin: 0,
+          color: SHELL.INK,
+          maxWidth: 980,
+        }}
+      >
+        {renderInlineMarkdown(paragraph.join(" "))}
+      </p>,
+    );
+  }
+
+  return nodes;
+}
+
 // ─── Seeded sign-off data ─────────────────────────────────────────────────────
 
 type SignOffStatus = "complete" | "pending" | "not_required";
@@ -91,13 +353,13 @@ interface SignOff {
 
 const SEEDED_SIGN_OFFS: SignOff[] = [
   {
-    role: "Steward",
+    role: "Governance reviewer",
     status: "pending",
     note: "Governance review not yet initiated",
   },
-  { role: "Ava", status: "complete", note: "Executive content verified" },
+  { role: "aVa", status: "complete", note: "Executive content verified" },
   { role: "Procurement Lead", status: "pending", note: "Awaiting BAFO close" },
-  { role: "Ava", status: "complete", note: "Evidence chain attested" },
+  { role: "aVa", status: "complete", note: "Evidence chain attested" },
 ];
 
 const SIGN_OFF_COLORS: Record<SignOffStatus, { dot: string; text: string }> = {
@@ -480,7 +742,7 @@ export function SourceArtifactDrawer({
       >
         {isFullHtmlDocument(artifact.summary)
           ? htmlToPlainText(artifact.summary).slice(0, 240)
-          : artifact.summary}
+          : summarizeArtifactText(artifact.summary)}
       </div>
       {provenance ? (
         <div style={sourceInsetCard} data-testid="provenance-panel">
@@ -549,10 +811,11 @@ export function SourceArtifactDrawer({
                   fontSize: 14,
                   lineHeight: 1.55,
                   color: SHELL.INK,
-                  whiteSpace: "pre-wrap",
+                  display: "grid",
+                  gap: 12,
                 }}
               >
-                {section.body}
+                {renderArtifactMarkdownBody(section.body)}
               </div>
             )}
           </div>
@@ -626,7 +889,7 @@ export function SourceArtifactDrawer({
                 id="artifact-custom-input"
                 type="text"
                 readOnly
-                placeholder="Ask Ava about this artifact, evidence chain, or source version..."
+                placeholder="Ask aVa about this artifact, evidence chain, or source version..."
                 style={{
                   border: "1px solid " + SHELL.BLUE_LINE,
                   borderRadius: 8,
