@@ -42,6 +42,12 @@ type SourceNexusRouteContext = {
   params: Promise<{ eventId?: string }>;
 };
 
+const SOURCE_ASK_EVENT_CACHE_TTL_MS = 10 * 60 * 1000;
+const sourceAskEventCache = new Map<
+  string,
+  { event: SourcingEventDetail; cachedAt: number }
+>();
+
 export async function POST(
   request: NextRequest,
   { params }: SourceNexusRouteContext,
@@ -249,6 +255,17 @@ async function getSourcingEventForAskWithRetry(
     tenancy: Awaited<ReturnType<typeof requireTenancy>>;
   },
 ): Promise<SourcingEventDetail | null> {
+  const cacheKey = `${args.activeClientKey.trim().toLowerCase()}:${eventId
+    .trim()
+    .toLowerCase()}`;
+  const cached = sourceAskEventCache.get(cacheKey);
+  if (
+    cached &&
+    Date.now() - cached.cachedAt < SOURCE_ASK_EVENT_CACHE_TTL_MS
+  ) {
+    return cached.event;
+  }
+
   const retryDelaysMs = [0, 150, 450];
 
   for (const delayMs of retryDelaysMs) {
@@ -262,14 +279,26 @@ async function getSourcingEventForAskWithRetry(
       tenancy: args.tenancy,
       enforceSourcePolicy: false,
     }).catch(() => null);
-    if (event) return event;
+    if (event) {
+      sourceAskEventCache.set(cacheKey, { event, cachedAt: Date.now() });
+      return event;
+    }
 
     const seededOrPolicyEvent = await getSourcingEvent(
       eventId,
       args.activeClientKey,
     ).catch(() => null);
-    if (seededOrPolicyEvent) return seededOrPolicyEvent;
+    if (seededOrPolicyEvent) {
+      sourceAskEventCache.set(cacheKey, {
+        event: seededOrPolicyEvent,
+        cachedAt: Date.now(),
+      });
+      return seededOrPolicyEvent;
+    }
   }
+
+  const staleCached = sourceAskEventCache.get(cacheKey);
+  if (staleCached) return staleCached.event;
 
   return null;
 }

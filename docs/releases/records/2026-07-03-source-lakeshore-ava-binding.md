@@ -20,6 +20,8 @@ Third follow-up live proof reached 20/20 HTTP 200 and zero `not_found`, but stil
 
 Fourth follow-up live proof confirmed the demo routing fixes for the early questions, but a longer signed-in run still returned intermittent `not_found` after 11 successful aVa calls. This release now resolves persisted Source events at the ask boundary from the already-authenticated active client key and tenant alias family before falling back to the broader generic resolver. The change keeps the cross-tenant fence intact while avoiding a duplicate active-client/policy lookup that could make a valid same-tenant event disappear during a long demo crawl.
 
+Fifth follow-up live proof confirmed the correct production revision was serving traffic, but the final demo crawl still exposed two product gaps: vendor and BAFO questions could miss the perfect parsed row titles and then fall back to artifact governance or generic AMS language, and long sessions could still lose the same already-resolved event after several successful calls. This release adds a tenant-keyed ask-boundary event cache for resolved Source events, gives event-overview and stage-readiness answers precedence over artifact governance, and adds evidence-gated evaluation/BAFO fallback lanes that require Vendor A/B/C plus the relevant scorecard, decision, BAFO, challenge, or leverage artifacts before answering.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source answer routing and Source File Cabinet API behavior change for all clients.
@@ -40,10 +42,12 @@ Fourth follow-up live proof confirmed the demo routing fixes for the early quest
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: uses the richer authenticated Source tenancy context and stable client key when resolving the active Source event.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: retries the same tenant-scoped event lookup briefly for Source aVa asks so transient read misses do not become false `not_found` responses.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: resolves persisted Source events from the already-known active client key/name before falling back to the broader resolver, preventing long-run advisor sessions from losing a valid same-tenant event.
+- `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: caches successfully resolved Source events by active client key and event id for the ask boundary so a long same-tenant demo session cannot lose the event after earlier successful reads.
 - `src/lib/source/queries.ts`: exports a tenant-keyed persisted Source event resolver that checks the row's `client_key` against the active tenant alias family before converting it to the Source event detail shape.
 - `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows and tenant-scoped Source artifact registry rows into the File Cabinet generated/upload/session groups when durable File Cabinet rows are absent.
 - `src/lib/source/source-answer-engine.ts`: routes risk/conditional vendor questions to the evaluation scorecard answer instead of the generic AMS answer lane.
 - `src/lib/source/source-answer-engine.ts`: adds event-overview and stage-readiness answers for Lakeshore demo questions, routes Vendor C/final sourcing recommendation to evaluation, routes vendor-before-scoring asks to BAFO, and keeps artifact authority limited to real RFP/artifact finality questions.
+- `src/lib/source/source-answer-engine.ts`: adds evidence-gated evaluation and BAFO fallback lanes when generated artifacts are present but not parsed under the exact row-title shape expected by the stricter extractor.
 - `src/lib/source/proposal-intelligence/mve-profile.ts`: recognizes Lakeshore shared-services AMS events as valid vendor-response MVE events and adapts the Vendor A/B/C profile text to corporate shared-services scope.
 - `src/lib/source/proposal-intelligence/__tests__/proposal-intelligence.test.ts`: regression proving Lakeshore gets three MVE vendor profiles without airline/IROPS language.
 - `src/lib/source/__tests__/source-answer-engine.test.ts`: regression for vendor advancement vs. final RFP authority, plus risk/conditional/Vendor C/final recommendation phrasing.
@@ -52,7 +56,7 @@ Fourth follow-up live proof confirmed the demo routing fixes for the early quest
 
 ## QA / Validation
 
-- Pass — focused Jest: `source-answer-engine.test.ts` and `queries-tenant-scope.test.ts`, 61 tests passed for the latest resolved-client event lookup patch.
+- Pass — focused Jest: `source-answer-engine.test.ts` and `queries-tenant-scope.test.ts`, 64 tests passed for the latest ask-boundary cache and advisor-lane fallback patch.
 - Pass — touched-file ESLint.
 - Pass — TypeScript: `npx tsc --noEmit`.
 - Pass — release check: `npm run release:check`.
