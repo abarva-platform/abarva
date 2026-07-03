@@ -360,7 +360,8 @@ describe("HomeSurface — real React Context Explorer", () => {
       screen.getByRole("option", { name: /IT systems landscape/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole("option", { name: /82% coverage/ }).length,
+      screen.getAllByRole("option", { name: /\d+ rows? · \d+ evidence gaps?/ })
+        .length,
     ).toBeGreaterThan(0);
     expect(
       screen.queryByText("Applications, integrations, systems of record"),
@@ -381,8 +382,7 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(
       screen.getByText("Applications, integrations, systems of record"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Coverage")).toBeInTheDocument();
-    expect(screen.getByText("82%")).toBeInTheDocument();
+    expect(screen.getByText("Answerability")).toBeInTheDocument();
   });
 
   it("explains what vendor and contract context means in browse mode", () => {
@@ -414,6 +414,10 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByText(/evidence points are loaded/)).toBeInTheDocument();
     expect(screen.getByText("Vendors and contracts")).toBeInTheDocument();
     expect(screen.getByText("V6 source preview")).toBeInTheDocument();
+    expect(screen.getByText("Evidence gaps")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Evidence gaps are fields explicitly marked/),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         "Loaded source rows with their V6 lineage and available fields.",
