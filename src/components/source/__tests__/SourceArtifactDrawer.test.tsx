@@ -151,14 +151,81 @@ describe("SourceArtifactDrawer · shell", () => {
     expect(html).toContain("Draft artifact shell only");
   });
 
-  it("uses Nexus language for the disabled artifact prompt", () => {
+  it("uses aVa language for the disabled artifact prompt", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
     );
     expect(html).toContain(
-      "Ask Ava about this artifact, evidence chain, or source version",
+      "Ask aVa about this artifact, evidence chain, or source version",
     );
     expect(html).not.toContain("Ask Sentinel about this artifact");
+  });
+
+  it("renders generated markdown tables as responsive HTML tables instead of raw pipe text", () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceArtifactDrawer, {
+        artifact: {
+          ...BASE_ARTIFACT,
+          title: "Normalized Evaluation Scorecard",
+          summary:
+            "# Normalized Evaluation Scorecard\n\n| Category | Weight | Vendor A | Vendor B |\n|---|---:|---:|---:|\n| Commercial value | 20% | 7.0 | 8.3 |",
+          sections: [
+            {
+              label: "Weighted Scorecard",
+              body: [
+                "# Weighted Scorecard",
+                "",
+                "| Category | Weight | Vendor A | Vendor B |",
+                "|---|---:|---:|---:|",
+                "| Commercial value | 20% | 7.0 | 8.3 |",
+                "| **Total** | **100%** | **7.4** | **6.6** |",
+              ].join("\n"),
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(html).toContain("<table");
+    expect(html).toContain("Commercial value");
+    expect(html).toContain("Vendor A");
+    expect(html).not.toContain("| Category | Weight | Vendor A | Vendor B |");
+    expect(html).not.toContain("|---|---:");
+  });
+
+  it("renders generated MVE profile sections with headings, lists, and tables", () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceArtifactDrawer, {
+        artifact: {
+          ...BASE_ARTIFACT,
+          title: "Vendor Response MVE Profiles",
+          summary:
+            "# Vendor Response MVE Profiles\n\nSource extracts only sourcing-critical signals.\n\n| Area | Vendor A | Vendor B |\n|---|---|---|\n| Role | Risk-adjusted lead | Price benchmark |",
+          sections: [
+            {
+              label: "Minimum Viable Extraction Profiles",
+              body: [
+                "## Minimum Viable Extraction Profiles",
+                "",
+                "Source extracts only sourcing-critical signals.",
+                "",
+                "- Completeness",
+                "- Claims and evidence",
+                "",
+                "| Area | Vendor A | Vendor B |",
+                "|---|---|---|",
+                "| Role | Risk-adjusted lead | Price benchmark |",
+              ].join("\n"),
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(html).toContain("Minimum Viable Extraction Profiles");
+    expect(html).toContain("<ul");
+    expect(html).toContain("<table");
+    expect(html).not.toContain("| Area | Vendor A | Vendor B |");
   });
 });
 
