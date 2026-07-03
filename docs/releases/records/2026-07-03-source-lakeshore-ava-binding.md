@@ -16,6 +16,8 @@ Follow-up live proof found one remaining binding gap: the vendor MVE profile bui
 
 Second follow-up live proof confirmed the main vendor-advancement answer, then exposed two demo-risk edges: plain-English questions such as "Which vendor is riskiest?" and "Why is Vendor B conditional?" were still falling through to the generic AMS answer lane, and a long signed-in run intermittently returned `not_found` after earlier successful event reads. This release widens the evaluation-answer classifier for risk/conditional vendor phrasings and retries the same tenant-scoped Source event read briefly at the ask boundary before returning the existing safe `not_found` response.
 
+Third follow-up live proof reached 20/20 HTTP 200 and zero `not_found`, but still found demo-script phrasing gaps for event overview, procurement review before release, artifact inventory, Vendor C rationale, Vendor-B-before-scoring BAFO asks, stage blockers, and final sourcing recommendation. This release adds deterministic Source answer lanes for event overview and stage readiness, routes Vendor C/final recommendation language to the evaluation scorecard, routes before-scoring vendor asks to BAFO, and narrows artifact authority so "final recommendation" is not mistaken for "final RFP version."
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source answer routing and Source File Cabinet API behavior change for all clients.
@@ -37,9 +39,10 @@ Second follow-up live proof confirmed the main vendor-advancement answer, then e
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: retries the same tenant-scoped event lookup briefly for Source aVa asks so transient read misses do not become false `not_found` responses.
 - `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows and tenant-scoped Source artifact registry rows into the File Cabinet generated/upload/session groups when durable File Cabinet rows are absent.
 - `src/lib/source/source-answer-engine.ts`: routes risk/conditional vendor questions to the evaluation scorecard answer instead of the generic AMS answer lane.
+- `src/lib/source/source-answer-engine.ts`: adds event-overview and stage-readiness answers for Lakeshore demo questions, routes Vendor C/final sourcing recommendation to evaluation, routes vendor-before-scoring asks to BAFO, and keeps artifact authority limited to real RFP/artifact finality questions.
 - `src/lib/source/proposal-intelligence/mve-profile.ts`: recognizes Lakeshore shared-services AMS events as valid vendor-response MVE events and adapts the Vendor A/B/C profile text to corporate shared-services scope.
 - `src/lib/source/proposal-intelligence/__tests__/proposal-intelligence.test.ts`: regression proving Lakeshore gets three MVE vendor profiles without airline/IROPS language.
-- `src/lib/source/__tests__/source-answer-engine.test.ts`: regression for vendor advancement vs. final RFP authority, plus risk/conditional vendor phrasing.
+- `src/lib/source/__tests__/source-answer-engine.test.ts`: regression for vendor advancement vs. final RFP authority, plus risk/conditional/Vendor C/final recommendation phrasing.
 - `src/lib/source/__tests__/nexus-api-live-context.test.ts`: regression that the live API response preserves Vendor A/B/C evaluation answers through the quality gate.
 - `src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts`: regression for generated artifact-state and Source artifact registry File Cabinet visibility.
 

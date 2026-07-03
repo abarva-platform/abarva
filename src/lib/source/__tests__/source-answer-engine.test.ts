@@ -506,7 +506,9 @@ describe("Source answer engine", () => {
     ["Which vendor has the highest transition risk?", "Vendor B carries the highest transition risk"],
     ["Which vendor is riskiest?", "Vendor B carries the highest transition risk"],
     ["Why is Vendor B conditional?", "Vendor B is conditional because"],
+    ["Why should Vendor C remain in the process?", "Vendor C should remain in the process"],
     ["Which vendor should advance to BAFO?", "Advance Vendor A as the risk-adjusted lead and Vendor C"],
+    ["What is the final recommendation for the sourcing team?", "Vendor A is leading"],
     ["What are the executive tradeoffs?", "continuity versus price versus service accountability"],
   ])(
     "answers evaluation scorecard question: %s",

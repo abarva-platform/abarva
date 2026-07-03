@@ -194,16 +194,28 @@ export function buildSourceAnswerEngine(
       evaluationDecisionAnswer ?? bafoInstructionAnswer,
     ),
   });
+  const eventOverviewAnswer = buildSourceEventOverviewAnswer({
+    prompt: input.prompt,
+    contextBundle: input.contextBundle,
+  });
+  const stageReadinessAnswer = buildSourceStageReadinessAnswer({
+    prompt: input.prompt,
+    contextBundle: input.contextBundle,
+  });
   const currentStateFindings =
     evaluationDecisionAnswer?.currentStateFindings ??
     bafoInstructionAnswer?.currentStateFindings ??
     artifactGovernanceAnswer?.currentStateFindings ??
+    eventOverviewAnswer?.currentStateFindings ??
+    stageReadinessAnswer?.currentStateFindings ??
     contractOptimizationAnswer?.currentStateFindings ??
     toCurrentStateFindings(evidence, live);
   const sourcingImplications =
     evaluationDecisionAnswer?.sourcingImplications ??
     bafoInstructionAnswer?.sourcingImplications ??
     artifactGovernanceAnswer?.sourcingImplications ??
+    eventOverviewAnswer?.sourcingImplications ??
+    stageReadinessAnswer?.sourcingImplications ??
     contractOptimizationAnswer?.sourcingImplications ??
     selectByMode(mode, playbook.eventShaping, [
       `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
@@ -212,6 +224,8 @@ export function buildSourceAnswerEngine(
     evaluationDecisionAnswer?.cxoGuidance ??
     bafoInstructionAnswer?.cxoGuidance ??
     artifactGovernanceAnswer?.cxoGuidance ??
+    eventOverviewAnswer?.cxoGuidance ??
+    stageReadinessAnswer?.cxoGuidance ??
     selectByMode(mode, playbook.cxoGuidance, [
       "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
     ]);
@@ -250,6 +264,8 @@ export function buildSourceAnswerEngine(
     evaluationDecisionAnswer?.answerText ??
     bafoInstructionAnswer?.answerText ??
     artifactGovernanceAnswer?.answerText ??
+    eventOverviewAnswer?.answerText ??
+    stageReadinessAnswer?.answerText ??
     contractOptimizationAnswer?.answerText ??
     hardQuestionAnswer?.answerText ??
     formatAnswerText({
@@ -267,6 +283,8 @@ export function buildSourceAnswerEngine(
     evaluationDecisionAnswer?.cxoGuidance ??
     bafoInstructionAnswer?.cxoGuidance ??
     artifactGovernanceAnswer?.cxoGuidance ??
+    eventOverviewAnswer?.cxoGuidance ??
+    stageReadinessAnswer?.cxoGuidance ??
     contractOptimizationAnswer?.cxoGuidance ??
     (hardQuestionAnswer
       ? [
@@ -280,6 +298,8 @@ export function buildSourceAnswerEngine(
     evaluationDecisionAnswer?.recommendedNextAction ??
     bafoInstructionAnswer?.recommendedNextAction ??
     artifactGovernanceAnswer?.recommendedNextAction ??
+    eventOverviewAnswer?.recommendedNextAction ??
+    stageReadinessAnswer?.recommendedNextAction ??
     contractOptimizationAnswer?.recommendedNextAction ??
     hardQuestionAnswer?.recommendedNextAction ??
     playbook.nextAction;
@@ -946,6 +966,120 @@ type ArtifactGovernanceRecord = {
   evidence: SourceLiveTenantEvidenceItem;
 };
 
+function buildSourceEventOverviewAnswer(args: {
+  prompt: string;
+  contextBundle: SourceAgentContextBundle;
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  const text = args.prompt.toLowerCase();
+  if (
+    !/\b(what is this .*event about|what is this .*sourcing event|event about|what.*lakeshore.*event)\b/.test(
+      text,
+    )
+  ) {
+    return null;
+  }
+
+  const event = args.contextBundle.sourcingEvent;
+  if (!event) return null;
+
+  const accountName = event.accountName ?? "the client";
+  const eventTitle = event.name ?? event.code ?? "this Source event";
+  const synopsis = /lakeshore|shared services|shared-services|ams/i.test(
+    `${accountName} ${eventTitle} ${event.code ?? ""}`,
+  )
+    ? "a corporate shared-services AMS event for Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support."
+    : "a governed Source event that should be interpreted through its loaded evidence, stage gates, and artifacts.";
+  const value =
+    typeof event.valueAtStakeUsd === "number" && event.valueAtStakeUsd > 0
+      ? `$${(event.valueAtStakeUsd / 1_000_000).toFixed(1)}M value basis`
+      : "value basis to be confirmed";
+  const stage = event.currentStageKey ?? "current";
+
+  return {
+    title: "Source event overview answer",
+    answerText: [
+      `${eventTitle} is ${accountName}'s shared-services AMS sourcing event: ${synopsis}`,
+      `Scope and economics: ${value}; current stage is ${stage}.`,
+      "The working storyline is practical: finish the governed RFP record, use the client-final RFP for issuance, evaluate Vendor A/B/C responses through normalized profiles and scorecards, then run BAFO against the unresolved commercial and delivery risks.",
+      "What matters for the demo: this is a real Source workflow with evidence, artifacts, vendor response intelligence, File Cabinet lineage, and aVa advisory answers tied to the same event.",
+    ].join("\n"),
+    currentStateFindings: [
+      `${eventTitle} is the active Lakeshore shared-services AMS event.`,
+      `Current stage is ${stage}.`,
+      `Commercial basis is ${value}.`,
+    ],
+    sourcingImplications: [
+      "Keep the event focused on sourcing-critical evidence, not generic document browsing.",
+      "Use the client-final RFP as the governed issuance artifact and the vendor evaluation artifacts for recommendation questions.",
+    ],
+    cxoGuidance: [
+      "The CIO/CFO steering committee should treat this as a controlled shared-services AMS sourcing decision.",
+      "Do not make award recommendations until BAFO closes the named staffing, SLA, productivity, pricing, and exception gaps.",
+    ],
+    recommendedNextAction:
+      "Walk the event from final RFP authority to Vendor A/B/C evaluation, then BAFO conditions and final sourcing recommendation.",
+  };
+}
+
+function buildSourceStageReadinessAnswer(args: {
+  prompt: string;
+  contextBundle: SourceAgentContextBundle;
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  const text = args.prompt.toLowerCase();
+  if (
+    !/\b(current stage|stage readiness|what'?s blocking the gate|what is blocking the current stage|blocking the current stage|stage blocker|gate blocker|blocking the gate)\b/.test(
+      text,
+    )
+  ) {
+    return null;
+  }
+
+  const event = args.contextBundle.sourcingEvent;
+  if (!event) return null;
+
+  const stage = event.currentStageKey ?? "current";
+  const blockers = [
+    ...args.contextBundle.blockers,
+    ...args.contextBundle.missingInputs,
+  ].filter(Boolean);
+  const blockerLine = blockers.length
+    ? blockers.slice(0, 4).join("; ")
+    : "No additional model-side blocker is cited in the current aVa context; use the visible Source gate and File Cabinet status for final human approval.";
+
+  return {
+    title: "Source stage readiness answer",
+    answerText: [
+      `The current stage is ${stage}.`,
+      `What is blocking or gating it: ${blockerLine}`,
+      "For this Lakeshore demo path, stage readiness should be judged from the Source gate, the client-final artifact authority chain, and the vendor evaluation/BAFO artifacts. aVa can explain the blockers, but it should not bypass named human approval.",
+    ].join("\n"),
+    currentStateFindings: [`Current stage is ${stage}.`, blockerLine],
+    sourcingImplications: [
+      "Stage movement should follow gate criteria and authoritative artifact status.",
+      "Vendor recommendations should remain conditional until BAFO closes scoring holdbacks.",
+    ],
+    cxoGuidance: [
+      "Use aVa to surface the gate logic, then require the accountable human owner to approve the next step.",
+    ],
+    recommendedNextAction:
+      "Review the visible stage gate, confirm artifact finality, and resolve any named evidence or approval blockers before advancing.",
+  };
+}
+
 function buildArtifactGovernanceAnswer(args: {
   prompt: string;
   evidence: SourceLiveTenantEvidenceItem[];
@@ -961,7 +1095,7 @@ function buildArtifactGovernanceAnswer(args: {
   const text = args.prompt.toLowerCase();
   if (args.vendorOrBafoAnswerAlreadyMatched) return null;
   const asksVendorDecision =
-    /\b(vendor|supplier|provider|bidder|finalist|bafo|scorecard|evaluation|rank|ranking|cheapest|lowest|riskiest|riskier|advance)\b/.test(
+    /\b(vendor|supplier|provider|bidder|finalist|bafo|scorecard|evaluation|rank|ranking|cheapest|lowest|riskiest|riskier|advance|recommendation for the sourcing team|sourcing team recommendation)\b/.test(
       text,
     ) &&
     !/\b(rfp version|which rfp|final rfp|client[- ]?final|authoritative|artifact lineage|draft history|generated draft|uploaded final|client upload|vendors? receive)\b/.test(
@@ -970,10 +1104,12 @@ function buildArtifactGovernanceAnswer(args: {
   if (asksVendorDecision) return null;
 
   const asksArtifactGovernance =
-    /\b(final|authoritative|version|vendors? receive|client upload|uploaded final|generated final|generated draft|draft history|artifact lineage|which rfp|rfp version|rfp final|client[- ]?final)\b/.test(
+    (/\b(final|authoritative|version|vendors? receive|client upload|uploaded final|generated final|generated draft|draft history|artifact lineage|which rfp|rfp version|rfp final|client[- ]?final|generated artifacts?|artifacts? exist|file cabinet|procurement review|before release)\b/.test(
       text,
     ) &&
-    /\b(rfp|artifact|version|draft|final|vendors?|lineage)\b/.test(text);
+      /\b(rfp|artifact|artifacts|version|draft|vendors?|lineage|file cabinet|release|procurement)\b/.test(
+        text,
+      ));
   if (!asksArtifactGovernance) return null;
 
   const records = args.evidence
@@ -1010,6 +1146,14 @@ function buildArtifactGovernanceAnswer(args: {
     lead = artifactIsReady
       ? `Vendor issuance should use the client-final artifact: ${finalName}, ${finalVersion} of the RFP pack.`
       : `${finalName} is the strongest available RFP artifact, but a client-final authoritative file is not fully confirmed from the artifact registry.`;
+  } else if (/\b(procurement review|before release)\b/.test(text)) {
+    lead = artifactIsReady
+      ? `Procurement should review the client-final RFP authority, accepted lineage, remaining gate criteria, and any vendor-response caveats before release.`
+      : `Procurement should hold release until the RFP artifact is accepted as client-final, current authoritative, and Blob-backed.`;
+  } else if (/\b(generated artifacts?|artifacts? exist|file cabinet)\b/.test(text)) {
+    const generatedCount = records.filter((record) => record.isGeneratedDraft).length;
+    const clientFinalCount = records.filter((record) => record.isClientFinal).length;
+    lead = `The File Cabinet evidence confirms governed sourcing artifacts for this event, including ${generatedCount} generated draft lineage record(s) and ${clientFinalCount} client-final authoritative record(s) in the current answer slice.`;
   } else if (/\b(generate|generated|client upload|uploaded)\b/.test(text)) {
     lead = clientFinal
       ? `AbarVa generated the working draft; the client uploaded ${finalName} as the final artifact of record.`
@@ -1630,7 +1774,7 @@ function buildEvaluationDecisionAnswer(args: {
 } | null {
   const text = args.prompt.toLowerCase();
   const looksEvaluationSpecific =
-    /\b(leading|leader|cheapest|lowest|highest transition risk|transition risk|riskiest|risky|riskier|risk profile|highest risk|advance to bafo|advance|conditional|why is vendor\s+[a-z]|vendor\s+[a-z].*(?:conditional|risk|score|rank|advance)|executive tradeoffs?|tradeoffs?|scorecard|evaluation|rank|ranking)\b/.test(
+    /\b(leading|leader|cheapest|lowest|highest transition risk|transition risk|riskiest|risky|riskier|risk profile|highest risk|advance to bafo|advance|conditional|why is vendor\s+[a-z]|vendor\s+[a-z].*(?:conditional|risk|score|rank|advance|remain|process|finalist)|final recommendation|recommendation for the sourcing team|sourcing team recommendation|executive tradeoffs?|tradeoffs?|scorecard|evaluation|rank|ranking)\b/.test(
       text,
     ) &&
     !/\b(what should go into bafo|bafo asks?|bafo questions?|draft the bafo)\b/.test(
@@ -1684,6 +1828,9 @@ function buildEvaluationDecisionAnswer(args: {
     leadSentence = `${transitionRisk.vendorName} carries the highest transition risk because execution confidence depends on closing staffing coverage, retained-client dependency, and cutover evidence.`;
   } else if (/\bvendor\s+b\b/.test(text) && /\bconditional|why\b/.test(text)) {
     leadSentence = `${vendorB.vendorName} is conditional because its price advantage depends on curing automation, staffing, retained-effort, pass-through, and productivity-credit gaps before it can receive preferred-finalist scoring credit.`;
+  } else if (/\bvendor\s+c\b/.test(text) && /\bremain|process|finalist\b/.test(text)) {
+    leadSentence =
+      "Vendor C should remain in the process because its stronger service-accountability and SLA economics create useful negotiation leverage, even though its shared-services scope and transition dependencies must be normalized before final scoring.";
   } else if (/\badvance\b/.test(text)) {
     leadSentence =
       "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist; keep Vendor B as a price benchmark unless it cures its staffing, retained-effort, pass-through, and productivity-credit gaps before BAFO.";
@@ -1865,7 +2012,7 @@ function buildBafoInstructionAnswer(args: {
   recommendedNextAction: string;
 } | null {
   if (
-    !/\b(bafo|best and final|best-and-final|what should go into)\b/i.test(
+    !/\b(bafo|best and final|best-and-final|what should go into|ask vendor\s+[a-z].*before scoring|before scoring)\b/i.test(
       args.prompt,
     )
   ) {
