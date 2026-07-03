@@ -68,7 +68,7 @@ export async function POST(
       clientKey: activeClient?.key,
     });
     const fallbackLiveEventDetail = eventId
-      ? await getSourcingEvent(eventId, activeClient?.key).catch(() => null)
+      ? await getSourcingEventForAskWithRetry(eventId, activeClient?.key)
       : null;
     const apexLiveEventDetailCandidate = apexContext?.liveContext.sourceEvent
       ? sourceEventRowToDetail(
@@ -224,6 +224,26 @@ function normalizeSourceContractOptimizationDisplay(args: {
     code: "SKYH-AMS-CONTRACT-OPT-2026",
     name: "SkyHarbor Air AMS Contract Optimization",
   };
+}
+
+async function getSourcingEventForAskWithRetry(
+  eventId: string,
+  activeClientKey?: string | null,
+): Promise<SourcingEventDetail | null> {
+  const retryDelaysMs = [0, 150, 450];
+
+  for (const delayMs of retryDelaysMs) {
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    const event = await getSourcingEvent(eventId, activeClientKey).catch(
+      () => null,
+    );
+    if (event) return event;
+  }
+
+  return null;
 }
 
 type SourceArtifactContextRow = {

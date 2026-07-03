@@ -1630,7 +1630,7 @@ function buildEvaluationDecisionAnswer(args: {
 } | null {
   const text = args.prompt.toLowerCase();
   const looksEvaluationSpecific =
-    /\b(leading|leader|cheapest|lowest|highest transition risk|transition risk|advance to bafo|advance|executive tradeoffs?|tradeoffs?|scorecard|evaluation|rank|ranking)\b/.test(
+    /\b(leading|leader|cheapest|lowest|highest transition risk|transition risk|riskiest|risky|riskier|risk profile|highest risk|advance to bafo|advance|conditional|why is vendor\s+[a-z]|vendor\s+[a-z].*(?:conditional|risk|score|rank|advance)|executive tradeoffs?|tradeoffs?|scorecard|evaluation|rank|ranking)\b/.test(
       text,
     ) &&
     !/\b(what should go into bafo|bafo asks?|bafo questions?|draft the bafo)\b/.test(
@@ -1669,12 +1669,21 @@ function buildEvaluationDecisionAnswer(args: {
     summaries.find((summary) => summary.vendorName === "Vendor B") ??
     sorted.at(-1) ??
     leading;
+  const vendorB =
+    summaries.find((summary) => summary.vendorName === "Vendor B") ??
+    transitionRisk;
 
   let leadSentence = `${leading.vendorName} is leading on a risk-adjusted basis, not because it is cheapest, but because it has the strongest continuity, scope, and transition posture.`;
   if (/\bcheapest|lowest|tco|cost\b/.test(text)) {
     leadSentence = `${cheapest.vendorName} is cheapest on normalized 5-year TCO, but the lower price is conditional until retained effort, pass-throughs, and productivity economics are closed.`;
-  } else if (/\bhighest transition risk|transition risk\b/.test(text)) {
+  } else if (
+    /\b(highest transition risk|transition risk|riskiest|risky|riskier|highest risk|risk profile)\b/.test(
+      text,
+    )
+  ) {
     leadSentence = `${transitionRisk.vendorName} carries the highest transition risk because execution confidence depends on closing staffing coverage, retained-client dependency, and cutover evidence.`;
+  } else if (/\bvendor\s+b\b/.test(text) && /\bconditional|why\b/.test(text)) {
+    leadSentence = `${vendorB.vendorName} is conditional because its price advantage depends on curing automation, staffing, retained-effort, pass-through, and productivity-credit gaps before it can receive preferred-finalist scoring credit.`;
   } else if (/\badvance\b/.test(text)) {
     leadSentence =
       "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist; keep Vendor B as a price benchmark unless it cures its staffing, retained-effort, pass-through, and productivity-credit gaps before BAFO.";
