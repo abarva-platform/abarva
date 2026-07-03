@@ -29,10 +29,145 @@ const FIELD_IDS = [
   "foundation-readiness",
 ] as const;
 
+type FieldId = (typeof FIELD_IDS)[number];
+
 const MODEL = "claude-haiku-4-5-20251001";
 
 interface Body {
   conversation?: Array<{ role?: string; content?: string }>;
+}
+
+const LABEL_TO_FIELD: Array<{ field: FieldId; labels: string[] }> = [
+  {
+    field: "problem-statement",
+    labels: ["business problem", "problem statement", "problem", "bet", "hypothesis"],
+  },
+  { field: "archetype", labels: ["archetype", "classification"] },
+  {
+    field: "sponsor-candidate",
+    labels: ["sponsor candidate", "sponsor", "owner"],
+  },
+  { field: "scope-boundary", labels: ["scope", "scope boundary", "boundary"] },
+  {
+    field: "evidence-family",
+    labels: ["evidence family", "evidence families", "evidence"],
+  },
+  {
+    field: "value-hypothesis",
+    labels: ["value hypothesis", "value", "outcome hypothesis"],
+  },
+  {
+    field: "foundation-readiness",
+    labels: ["foundation readiness", "readiness", "foundation"],
+  },
+];
+
+const ALL_LABELS = LABEL_TO_FIELD.flatMap(({ labels }) => labels)
+  .sort((a, b) => b.length - a.length)
+  .map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  .join("|");
+
+function compact(value: string): string {
+  return value.replace(/\s+/g, " ").replace(/^[-–—:;,\s]+/, "").trim();
+}
+
+function stripConversationRolePrefix(value: string): string {
+  return value
+    .replace(/^(USER|ASSISTANT|SYSTEM):\s*/i, "")
+    .replace(/\s+(USER|ASSISTANT|SYSTEM):[\s\S]*$/i, "")
+    .trim();
+}
+
+function firstSentenceMatching(text: string, patterns: RegExp[]): string {
+  const sentences = compact(text)
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => compact(stripConversationRolePrefix(s)))
+    .filter(Boolean);
+  return (
+    sentences.find((sentence) => patterns.some((pattern) => pattern.test(sentence))) ??
+    ""
+  );
+}
+
+function deriveProblemStatement(text: string): string {
+  const move = firstSentenceMatching(text, [
+    /strategic move/i,
+    /kyriba/i,
+    /treasury/i,
+    /business problem/i,
+  ]);
+  const risk = firstSentenceMatching(text, [
+    /risk/i,
+    /visibility/i,
+    /control/i,
+    /manual/i,
+  ]);
+  return compact([move, risk].filter(Boolean).join(" "));
+}
+
+function deriveArchetype(text: string): string {
+  if (/\b(kyriba|treasury|cash visibility|payment|bank connectivity|sox)\b/i.test(text)) {
+    return "Treasury modernization and finance-controls move.";
+  }
+  if (/\b(vendor|contract|renewal|sourcing|commercial)\b/i.test(text)) {
+    return "Vendor and commercial optimization move.";
+  }
+  if (/\b(ai|agent|copilot|automation|model)\b/i.test(text)) {
+    return "AI-enabled operating-model change.";
+  }
+  if (/\b(data|integration|platform|analytics|lakehouse)\b/i.test(text)) {
+    return "Data readiness and platform modernization move.";
+  }
+  return "";
+}
+
+export function extractDeterministicBriefFields(
+  conversationText: string,
+): Record<FieldId, string> {
+  const fields: Partial<Record<FieldId, string>> = {};
+  const matches = Array.from(
+    conversationText.matchAll(new RegExp(`\\b(${ALL_LABELS})\\s*:`, "gi")),
+  ).filter((match) => {
+    const before = conversationText
+      .slice(Math.max(0, (match.index ?? 0) - 7), match.index ?? 0)
+      .toLowerCase();
+    return !before.endsWith("out of ");
+  });
+
+  for (let i = 0; i < matches.length; i += 1) {
+    const match = matches[i];
+    const rawLabel = match[1]?.toLowerCase();
+    const start = (match.index ?? 0) + match[0].length;
+    const end = matches[i + 1]?.index ?? conversationText.length;
+    const mapped = LABEL_TO_FIELD.find(({ labels }) =>
+      labels.some((label) => label.toLowerCase() === rawLabel),
+    );
+    if (!mapped || fields[mapped.field]) continue;
+
+    const value = compact(
+      stripConversationRolePrefix(conversationText.slice(start, end)),
+    );
+    if (value) fields[mapped.field] = value;
+  }
+
+  if (!fields["problem-statement"]) {
+    const problem = deriveProblemStatement(conversationText);
+    if (problem) fields["problem-statement"] = problem;
+  }
+
+  if (!fields.archetype) {
+    const archetype = deriveArchetype(conversationText);
+    if (archetype) fields.archetype = archetype;
+  }
+
+  const complete: Record<FieldId, string> = {} as Record<FieldId, string>;
+  for (const id of FIELD_IDS) {
+    const value = fields[id];
+    if (typeof value === "string" && value.trim()) {
+      complete[id] = value.trim();
+    }
+  }
+  return complete;
 }
 
 function extractionPrompt(conversationText: string): string {
@@ -70,9 +205,11 @@ export async function POST(req: NextRequest) {
       .join("\n\n")
       .slice(0, 24000);
 
+    const deterministicFields = extractDeterministicBriefFields(conversationText);
+
     if (!conversationText || !process.env.ANTHROPIC_API_KEY) {
       // Graceful no-op: the manual scaffold + chat still work.
-      return Response.json({ fields: {} });
+      return Response.json({ fields: deterministicFields });
     }
 
     const prompt = extractionPrompt(conversationText);
@@ -98,19 +235,21 @@ export async function POST(req: NextRequest) {
       .map((b) => (b as { text: string }).text)
       .join("");
     const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return Response.json({ fields: {} });
+    if (!match) return Response.json({ fields: deterministicFields });
 
     let parsed: Record<string, unknown> = {};
     try {
       parsed = JSON.parse(match[0]) as Record<string, unknown>;
     } catch {
-      return Response.json({ fields: {} });
+      return Response.json({ fields: deterministicFields });
     }
 
-    const fields: Record<string, string> = {};
+    const fields: Record<string, string> = { ...deterministicFields };
     for (const id of FIELD_IDS) {
       const v = parsed[id];
-      if (typeof v === "string" && v.trim()) fields[id] = v.trim();
+      if (!fields[id] && typeof v === "string" && v.trim()) {
+        fields[id] = v.trim();
+      }
     }
     return Response.json({ fields });
   } catch (err) {
