@@ -16,7 +16,13 @@ export type SourceLifecycleRoutingState =
 
 export interface SourceEventRouteMatch {
   eventId: string;
-  section: "canvas" | "approval" | "value" | "summary" | "other";
+  section:
+    | "canvas"
+    | "approval"
+    | "file_cabinet"
+    | "value"
+    | "summary"
+    | "other";
 }
 
 export interface SourceLifecycleRouteInput {
@@ -49,6 +55,8 @@ export function parseSourceEventRoute(pathname: string): SourceEventRouteMatch |
   const section =
     rawSection === "approval"
       ? "approval"
+      : rawSection === "file-cabinet"
+        ? "file_cabinet"
       : rawSection === "value"
         ? "value"
         : rawSection === "summary"
@@ -80,7 +88,9 @@ export function resolveSourceLifecycleRoute(
     state === "waiting_on_co_approver" ||
     state === "draft_revision"
   ) {
-    if (match.section === "approval") return { type: "allow" };
+    if (match.section === "approval" || match.section === "file_cabinet") {
+      return { type: "allow" };
+    }
     return { type: "redirect", destination: approvalPath, status: 302 };
   }
 

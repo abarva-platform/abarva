@@ -17,6 +17,10 @@ describe("source lifecycle routing guard", () => {
       eventId: "event-123",
       section: "value",
     });
+    expect(parseSourceEventRoute("/source/events/event-123/file-cabinet")).toEqual({
+      eventId: "event-123",
+      section: "file_cabinet",
+    });
     expect(parseSourceEventRoute("/source/events")).toBeNull();
   });
 
@@ -42,6 +46,17 @@ describe("source lifecycle routing guard", () => {
         lifecycleState: "draft_revision",
         currentStageKey: "strategy",
         pathname: "/source/events/SRC-100/approval",
+      }),
+    ).toEqual({ type: "allow" });
+  });
+
+  it("allows waiting events to render the read-only File Cabinet", () => {
+    expect(
+      resolveSourceLifecycleRoute({
+        eventId: "SRC-100",
+        lifecycleState: "waiting_on_client",
+        currentStageKey: "strategy",
+        pathname: "/source/events/SRC-100/file-cabinet",
       }),
     ).toEqual({ type: "allow" });
   });
