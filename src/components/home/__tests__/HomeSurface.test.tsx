@@ -420,7 +420,7 @@ describe("HomeSurface — real React Context Explorer", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Loaded source rows with their V6 lineage and available fields.",
+        "Actual loaded rows from the source file, shown with client-friendly column names and V6 lineage.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("90")).toBeInTheDocument();

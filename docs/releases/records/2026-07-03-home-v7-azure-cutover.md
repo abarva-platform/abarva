@@ -33,7 +33,7 @@ Home now prefers the governed V7 Azure context schema for the Context Explorer a
 - `src/app/api/home/know/ask/route.ts`: tries V7 deterministic Home KNOW before V6 fallback.
 - `src/lib/home/know/v7-home-ask.ts`: deterministic V7 answer engine over `intelligence_v7`.
 - `src/lib/home/know/v7-home-know-response.ts`: maps V7 answers into the shared Home KNOW response contract.
-- `src/components/home/HomeSurface.tsx`: labels the active source as V7 or V6 and uses V7 dimensions when available.
+- `src/components/home/HomeSurface.tsx`: labels the active source as V7 or V6, uses V7 dimensions when available, suppresses stale V6 findings on V7 pages, and exposes explicit right-canvas tabs for Summary, Data, Gaps, and Questions.
 - `docs/build/V7_SCHEMA_VOLUMETRICS_INSIGHTS_20260703.md`: published schema, volumetrics, and product insight evidence.
 - `/Users/anand/Downloads/abarva-v7-schema-volumetrics-insights-20260703.html`: browser-openable copy of the V7 evidence report.
 
@@ -42,8 +42,10 @@ Home now prefers the governed V7 Azure context schema for the Context Explorer a
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false`.
 - Pass: `./node_modules/.bin/eslint 'src/app/(maestro)/home/page.tsx' src/app/api/home/know/ask/route.ts src/components/home/HomeSurface.tsx src/lib/home/v6-context-browser.ts src/lib/home/v7-context-browser.ts src/lib/home/know/home-know-contract.ts src/lib/home/know/v7-home-ask.ts src/lib/home/know/v7-home-know-response.ts src/lib/home/know/__tests__/v7-home-ask.test.ts src/lib/home/__tests__/v7-context-browser.test.ts`.
 - Pass: `./node_modules/.bin/jest src/lib/home/know/__tests__/v7-home-ask.test.ts src/lib/home/__tests__/v7-context-browser.test.ts src/lib/home/know/__tests__/v6-home-know-response.test.ts src/lib/home/__tests__/v6-context-browser.test.ts --runInBand`.
+- Pass: `npx jest src/components/home/__tests__/HomeSurface.test.tsx --runInBand`.
 - Pass: V7 Azure load readback summary reports 120 source files, 21,385 business records, 628,080 field facts, 12,721 graph nodes, 5,700 edges, and 3,900 chunks.
-- Pending: deployed ACA browser proof after this candidate image is built and routed.
+- Pass: deployed ACA browser/API proof on revision `ca-abarva-web-lab-eastus--0000242` showed 5/5 tenants and 40/40 Home Ask questions on `home_v7_dataset_contract`, with no V7 fallback and no internal-ID or synthetic filename leakage.
+- Pending: deployed ACA browser proof for the right-canvas Summary/Data/Gaps/Questions tabs after this follow-up image is built and routed.
 
 ## Rollout Plan
 
@@ -70,7 +72,9 @@ Rollback by moving ACA ingress traffic back to the prior healthy web revision. N
 - `/Users/anand/Downloads/abarva-v7-azure-load-20260703/v7-azure-validation-summary.html`.
 - `/Users/anand/Downloads/abarva-v7-azure-load-20260703/v7-azure-validation-summary.json`.
 - Focused TypeScript, ESLint, and Jest outputs from the release worktree.
-- Post-deploy ACA revision/image/traffic proof to be added after deployment.
+- `/Users/anand/Downloads/abarva-v7-home-proof-20260703/report.html`.
+- `/Users/anand/Downloads/abarva-v7-home-quality-lakeshore-20260703/report.html`.
+- Post-deploy ACA revision/image/traffic proof for the tabbed-canvas follow-up to be added after deployment.
 
 ## Known Gaps
 

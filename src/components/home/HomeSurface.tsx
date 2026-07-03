@@ -106,6 +106,11 @@ const CSS = `
 .homex .hx-chip strong{color:#1b1b18}
 .homex .hx-chipWarn{background:#FFF5DB;color:#7A5A1F;border-color:#E8D3A2}
 .homex .hx-gapcell{display:inline-flex;align-items:center;border-radius:999px;background:#FFF5DB;color:#7A5A1F;padding:2px 8px;font-size:11.5px;font-weight:700}
+.homex .hx-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 4px;border-bottom:1px solid var(--hl)}
+.homex .hx-tab{border:0;border-bottom:2px solid transparent;background:transparent;color:#55554e;font:inherit;font-size:13px;font-weight:700;padding:10px 12px 9px;cursor:pointer}
+.homex .hx-tab[aria-selected="true"]{color:#071629;border-bottom-color:#0A76D8}
+.homex .hx-tab:focus-visible{outline:2px solid rgba(34,174,234,.35);outline-offset:2px;border-radius:6px}
+.homex .hx-tabPanel{padding-top:14px}
 `;
 
 const CONTEXT_BROWSER_QUESTIONS = [
@@ -670,6 +675,9 @@ function DimensionView({
   findings: HomeV6ContextFinding[];
   sourceLabel: string;
 }) {
+  const [activeTab, setActiveTab] = useState<
+    "summary" | "data" | "gaps" | "questions"
+  >("summary");
   const related = findings.filter((finding) =>
     finding.supportingDimensions.includes(dim.dimension),
   );
@@ -716,7 +724,33 @@ function DimensionView({
           )}
         </div>
       </div>
-      <div className="hx-browser">
+      <div className="hx-tabs" role="tablist" aria-label="Dimension canvas tabs">
+        {[
+          ["summary", "Summary"],
+          ["data", "Data"],
+          ["gaps", "Gaps"],
+          ["questions", "Questions"],
+        ].map(([id, label]) => (
+          <button
+            aria-selected={activeTab === id}
+            className="hx-tab"
+            id={`home-dimension-tab-${id}`}
+            key={id}
+            onClick={() =>
+              setActiveTab(id as "summary" | "data" | "gaps" | "questions")
+            }
+            role="tab"
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div
+        className="hx-browser"
+        role="tabpanel"
+        style={{ display: activeTab === "summary" ? undefined : "none" }}
+      >
         <section className="hx-panel" aria-label="What is loaded">
           <h3>What is loaded here</h3>
           <ul className="hx-list">
@@ -734,7 +768,13 @@ function DimensionView({
           </ul>
         </section>
       </div>
-      <div className="hx-browser" style={{ marginTop: 16 }}>
+      <div
+        className="hx-browser"
+        style={{
+          display: activeTab === "summary" ? undefined : "none",
+          marginTop: 16,
+        }}
+      >
         <section className="hx-panel" aria-label="Available detail types">
           <h3>Detail types available</h3>
           <ul className="hx-list">
@@ -751,20 +791,27 @@ function DimensionView({
           should support final decisions.
         </aside>
       </div>
-      {dim.flag ? (
+      {activeTab === "gaps" && dim.flag ? (
         <p style={{ color: "var(--ham)", fontSize: 13, marginTop: 14 }}>
           ⚑ {dim.flag}
         </p>
       ) : null}
       {preview ? (
-        <div className="hx-preview">
+        <div
+          className="hx-preview"
+          role="tabpanel"
+          style={{
+            display: activeTab === "data" ? undefined : "none",
+            marginTop: 14,
+          }}
+        >
           <div className="hx-previewIntro">
             <div className="hx-previewTitle">
               <div className="hx-ey">{sourceLabel} source preview</div>
               <strong>{preview.title}</strong>
               <span>
-                Loaded source rows with their {sourceLabel} lineage and
-                available fields.
+                Actual loaded rows from the source file, shown with
+                client-friendly column names and {sourceLabel} lineage.
               </span>
             </div>
             <div className="hx-previewMeta" aria-label={`${sourceLabel} table coverage`}>
@@ -826,7 +873,36 @@ function DimensionView({
           ) : null}
         </div>
       ) : null}
-      {related.length > 0 && (
+      {activeTab === "gaps" && preview?.knownGaps.length ? (
+        <div className="hx-mini" aria-label="Top missing fields">
+          {preview.knownGaps.map((gap) => (
+            <span className="hx-chip" key={gap.label}>
+              Missing {gap.label.toLowerCase()}: <strong>{gap.count}</strong>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {activeTab === "gaps" && !preview?.knownGaps.length ? (
+        <p className="hx-hint">
+          No repeated missing-field pattern appears in the preview rows.
+        </p>
+      ) : null}
+      {activeTab === "questions" ? (
+        <section
+          className="hx-panel"
+          style={{ marginTop: 14 }}
+          aria-label="How to browse this context"
+          role="tabpanel"
+        >
+          <h3>Ask aVa about this area</h3>
+          <ul className="hx-asklist">
+            {spec.ask.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {activeTab === "gaps" && related.length > 0 && (
         <div className="hx-sec">
           <div className="hx-sechead">
             <span className="hx-ey">Context findings tied to this area</span>
@@ -1116,8 +1192,11 @@ export function HomeSurface({
   const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
   const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
   const findings = useMemo(
-    () => sanitizeVisibleStrings(buildHomeV6ContextFindings(safeV6Browser)),
-    [safeV6Browser],
+    () =>
+      sourceLabel === "V6"
+        ? sanitizeVisibleStrings(buildHomeV6ContextFindings(safeV6Browser))
+        : [],
+    [safeV6Browser, sourceLabel],
   );
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)
