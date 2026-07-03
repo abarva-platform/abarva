@@ -16,7 +16,11 @@ import {
 } from "@/lib/source/adapters/apex-retail-adapter";
 import type { SourceLiveTenantContextSnapshot } from "@/lib/source/agent-context";
 import type { SourcingEventDetail } from "@/lib/source/types";
-import { getSourcingEvent, sourceEventRowToDetail } from "@/lib/source/queries";
+import {
+  getSourcingEvent,
+  getSourcingEventForResolvedClient,
+  sourceEventRowToDetail,
+} from "@/lib/source/queries";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
@@ -59,16 +63,27 @@ export async function POST(
         industry_code: null,
         key: tenancy.clientKey,
       };
+    const activeClientKey = (
+      activeClient.key ??
+      tenancy.clientKey ??
+      "unknown"
+    ).trim();
+    const activeClientName =
+      (activeClient.name ?? activeClientKey).trim() || activeClientKey;
     const apexContext = await loadApexRetailSourceIntelligence({
       eventId,
       userId: tenancy.userId,
       prompt: normalizedBody.prompt,
       selectedAttachmentIds: normalizedBody.selectedAttachmentIds,
       clientId: tenancy.clientId,
-      clientKey: activeClient?.key,
+      clientKey: activeClientKey,
     });
     const fallbackLiveEventDetail = eventId
-      ? await getSourcingEventForAskWithRetry(eventId, activeClient?.key)
+      ? await getSourcingEventForAskWithRetry(eventId, {
+          activeClientKey,
+          activeClientName,
+          tenancy,
+        })
       : null;
     const apexLiveEventDetailCandidate = apexContext?.liveContext.sourceEvent
       ? sourceEventRowToDetail(
@@ -97,12 +112,12 @@ export async function POST(
     const displayTenantName =
       liveEventDetail && liveEventDetail !== liveEventDetailRaw
         ? liveEventDetail.accountName
-        : activeClient?.name;
+        : activeClientName;
     const liveTenantContext =
       apexLiveTenantContext ??
       (fallbackLiveEventDetail
         ? await buildEventIntakeTenantContextSnapshot({
-            activeClientKey: activeClient?.key,
+            activeClientKey,
             activeClientName: displayTenantName,
             event: fallbackLiveEventDetail,
           })
@@ -142,7 +157,7 @@ export async function POST(
       eventId,
       tenant: apexContext?.input.tenant ?? {
         tenantId: tenancy.clientId,
-        tenantKey: activeClient?.key,
+        tenantKey: activeClientKey,
         tenantName: displayTenantName,
         activeClientId: tenancy.clientId,
         activeClientName: displayTenantName,
@@ -228,7 +243,11 @@ function normalizeSourceContractOptimizationDisplay(args: {
 
 async function getSourcingEventForAskWithRetry(
   eventId: string,
-  activeClientKey?: string | null,
+  args: {
+    activeClientKey: string;
+    activeClientName: string;
+    tenancy: Awaited<ReturnType<typeof requireTenancy>>;
+  },
 ): Promise<SourcingEventDetail | null> {
   const retryDelaysMs = [0, 150, 450];
 
@@ -237,10 +256,19 @@ async function getSourcingEventForAskWithRetry(
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    const event = await getSourcingEvent(eventId, activeClientKey).catch(
-      () => null,
-    );
+    const event = await getSourcingEventForResolvedClient(eventId, {
+      activeClientKey: args.activeClientKey,
+      activeClientName: args.activeClientName,
+      tenancy: args.tenancy,
+      enforceSourcePolicy: false,
+    }).catch(() => null);
     if (event) return event;
+
+    const seededOrPolicyEvent = await getSourcingEvent(
+      eventId,
+      args.activeClientKey,
+    ).catch(() => null);
+    if (seededOrPolicyEvent) return seededOrPolicyEvent;
   }
 
   return null;

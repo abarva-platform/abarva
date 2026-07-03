@@ -529,6 +529,42 @@ async function getPersistedSourceEventRow(
   return null;
 }
 
+export async function getSourcingEventForResolvedClient(
+  eventId: string,
+  args: {
+    activeClientKey: string;
+    activeClientName: string;
+    tenancy?: Awaited<ReturnType<typeof requireTenancy>> | null;
+    enforceSourcePolicy?: boolean;
+  },
+): Promise<SourcingEventDetail | null> {
+  const persistedEvent = await getPersistedSourceEventRow(
+    eventId,
+    args.activeClientKey,
+  );
+  if (!persistedEvent) return null;
+
+  if (
+    !sourceEventBelongsToClientAlias(
+      persistedEvent.client_key,
+      args.activeClientKey,
+    )
+  ) {
+    return null;
+  }
+
+  if (args.enforceSourcePolicy !== false && args.tenancy) {
+    const canRead = await canReadSourceEvent(
+      args.tenancy,
+      args.activeClientKey,
+      persistedEvent.id,
+    ).catch(() => false);
+    if (!canRead) return null;
+  }
+
+  return sourceEventRowToDetail(persistedEvent, args.activeClientName);
+}
+
 export async function resolveSourceEventUuidForClient(
   eventId: string,
   clientKey: string,
