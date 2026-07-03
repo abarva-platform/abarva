@@ -32,6 +32,7 @@ type Row = {
   classification_status: 'pending' | 'classified';
   data_classification: 'Confidential';
   disclosure_classification?: unknown;
+  client_final_change_summary?: Record<string, unknown> | string | null;
   evidence_state: 'unparsed' | 'parsed_uncited';
   approval_state: 'draft' | 'approved';
   version: number | string;
@@ -246,9 +247,11 @@ describe('registerSourceArtifactUpload', () => {
 
     const rec: SourceArtifactRegistryRecord = await registerSourceArtifactUpload(baseInput);
 
-    expect(insertCaptures).toHaveLength(1);
-    expect(insertCaptures[0].table).toBe('source_artifacts');
-    expect(insertCaptures[0].payload).toMatchObject({
+    const sourceArtifactInserts = insertCaptures.filter(
+      (capture) => capture.table === 'source_artifacts',
+    );
+    expect(sourceArtifactInserts).toHaveLength(1);
+    expect(sourceArtifactInserts[0].payload).toMatchObject({
       tenant_key: 'apex-retail',
       source_event_id: 'apex-retail-ams-outsourcing-2026',
       stage_key: 'orals_bafo',
@@ -323,6 +326,63 @@ describe('registerSourceArtifactUpload', () => {
       lifecycle_state: 'current',
       supersedes_artifact_id: 'prior-artifact',
       blob_sha256: 'c'.repeat(64),
+    });
+  });
+
+  it('serializes client-final File Cabinet JSONB metadata for registry inserts', async () => {
+    nextSingle = async () => ({
+      data: {
+        ...baseRow,
+        client_final_change_summary:
+          '{"summary":"Client final accepted","changeAnalysisCompleted":false}',
+      },
+      error: null,
+    });
+
+    const rec = await registerSourceArtifactUpload({
+      ...baseInput,
+      artifactId: 'client-final-1',
+      artifactKind: 'd09_rfp_pack',
+      fileCabinet: {
+        clientId: 'client-skyh',
+        sourcingStage: 'responses',
+        artifactGroup: 'approval',
+        artifactType: 'd09_rfp_pack',
+        artifactFamily: 'proposal',
+        title: 'RFP Pack — Client Final',
+        description: 'Client-approved final artifact of record.',
+        fileName: 'rfp-final.docx',
+        fileFormat: 'docx',
+        blobContainer: 'source-artifacts',
+        blobPath: 'skyharbor-air/event-1/client-final-1/rfp-final.docx',
+        fileSize: 1024,
+        version: 4,
+        status: 'client_final',
+        generatedBy: null,
+        sourceBasis: 'client-final:state-1',
+        citationReady: true,
+        supersedesArtifactId: 'generated-1',
+        blobSha256: 'd'.repeat(64),
+        isClientFinal: true,
+        isCurrentAuthoritative: true,
+        sourceGeneratedArtifactId: 'generated-1',
+        clientFinalChangeSummary: {
+          summary: 'Client final accepted',
+          changeAnalysisCompleted: false,
+        },
+      },
+    });
+
+    const sourceArtifactInserts = insertCaptures.filter(
+      (capture) => capture.table === 'source_artifacts',
+    );
+    expect(sourceArtifactInserts).toHaveLength(1);
+    expect(sourceArtifactInserts[0].payload.client_final_change_summary).toBe(
+      '{"summary":"Client final accepted","changeAnalysisCompleted":false}',
+    );
+    expect(rec.clientFinalChangeSummary).toMatchObject({
+      summary: 'Client final accepted',
+      changeAnalysisCompleted: false,
     });
   });
 

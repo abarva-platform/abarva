@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing the client-final change summary into the File Cabinet metadata row. The change serializes that JSONB metadata at the shared File Cabinet insert boundary and keeps reads tolerant of either parsed JSON or serialized JSON.
+This release fixes the Source client-final acceptance path after live proof found that the uploaded client-final artifact reached the API route and Blob storage, but failed while writing the client-final change summary into artifact metadata rows. The change serializes that JSONB metadata at the shared source-artifacts registry and File Cabinet insert boundaries and keeps reads tolerant of either parsed JSON or serialized JSON.
 
 ## Layer Impact
 
@@ -26,8 +26,11 @@ This release fixes the Source client-final acceptance path after live proof foun
 
 ## Changes Included
 
-- `src/lib/source/file-cabinet/repository.ts`: serializes `client_final_change_summary` for insert and parses it defensively when rows are read back.
-- `src/lib/source/file-cabinet/__tests__/repository.test.ts`: adds a regression proving the client-final metadata insert payload is valid and the returned record maps the summary back into an object.
+- `src/lib/source/artifact-registry/index.ts`: serializes `client_final_change_summary` for source-artifacts registry inserts and parses it defensively when rows are read back.
+- `src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts`: permits the serialized client-final metadata payload shape at the write-adapter boundary.
+- `src/lib/source/artifact-registry/__tests__/artifact-registry.test.ts`: adds a regression proving registry inserts serialize client-final JSONB metadata.
+- `src/lib/source/file-cabinet/repository.ts`: serializes `client_final_change_summary` for File Cabinet inserts and parses it defensively when rows are read back.
+- `src/lib/source/file-cabinet/__tests__/repository.test.ts`: adds a regression proving File Cabinet insert payloads remain valid and the returned record maps the summary back into an object.
 
 ## QA / Validation
 

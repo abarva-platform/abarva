@@ -180,7 +180,7 @@ interface SourceArtifactRow {
   client_final_note?: string | null;
   client_final_review_meeting_date?: string | null;
   client_final_stakeholder_group?: string | null;
-  client_final_change_summary?: Record<string, unknown> | null;
+  client_final_change_summary?: Record<string, unknown> | string | null;
   cited_source_artifact_ids?: string[] | null;
   version: number | string;
   supersedes_artifact_version_id: string | null;
@@ -237,12 +237,23 @@ const SELECT_COLUMNS = [
 ].join(", ");
 
 function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
-  const changeSummary =
-    row.client_final_change_summary &&
-    typeof row.client_final_change_summary === "object" &&
-    !Array.isArray(row.client_final_change_summary)
-      ? row.client_final_change_summary
-      : {};
+  const changeSummary = (() => {
+    const raw = row.client_final_change_summary;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      return raw;
+    }
+    if (typeof raw === "string" && raw.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  })();
   return {
     id: row.id,
     tenantKey: row.tenant_key,
@@ -411,8 +422,9 @@ export async function registerSourceArtifactUpload(
               input.fileCabinet.clientFinalReviewMeetingDate ?? null,
             client_final_stakeholder_group:
               input.fileCabinet.clientFinalStakeholderGroup ?? null,
-            client_final_change_summary:
+            client_final_change_summary: JSON.stringify(
               input.fileCabinet.clientFinalChangeSummary ?? {},
+            ),
           }
         : {}),
     },
