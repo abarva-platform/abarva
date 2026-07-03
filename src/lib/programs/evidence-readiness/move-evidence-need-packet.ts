@@ -218,24 +218,86 @@ const FINANCE_AP_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
   },
 };
 
+const TREASURY_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
+  current_state_process: {
+    exampleTemplate: "Treasury operating process packet",
+    exampleContent: [
+      "Cash positioning, liquidity forecast, payment approval, and bank connectivity workflow notes",
+      "Three to five real treasury operating examples with source system, owner, timing, exception, and resolution path",
+      "Control checkpoints, signer rules, payment-format handling, cutover dependencies, and SOX evidence expectations",
+    ],
+    whyItMatters:
+      "AbarVa cannot produce a credible treasury readiness or value plan until it knows how cash visibility, payments, approvals, bank connectivity, and controls work today.",
+    nextAction:
+      "Upload treasury process notes, bank connectivity plan, payment approval matrix, signer/control evidence, or Kyriba implementation workshop output.",
+  },
+  it_systems_landscape: {
+    exampleTemplate: "Treasury systems and bank-connectivity map",
+    exampleContent: [
+      "Kyriba, SAP/AP/AR/GL, bank portals, payment hubs, reporting tools, and integration ownership",
+      "Bank connectivity matrix with file/API type, frequency, format, control owner, and exception handling",
+      "Known breakpoints such as stale SAP feeds, manual cash-positioning workarounds, signer gaps, and payment format exceptions",
+    ],
+    whyItMatters:
+      "The architecture and cutover plan must show the actual treasury systems, bank interfaces, control boundaries, and owner handoffs.",
+    nextAction:
+      "Upload a treasury systems inventory, bank connectivity matrix, SAP feed map, payment format inventory, or architecture diagram.",
+  },
+  kpi_baseline: {
+    exampleTemplate: "Treasury outcome baseline",
+    exampleContent: [
+      "Cash visibility timeliness, forecast accuracy, manual cash-positioning effort, payment exception volume, and bank connectivity completion",
+      "Metric definitions, reporting period, source system, owner, and CFO/Treasurer validation status",
+      "Current workaround volume, close/reporting dependency, cutover readiness, and control-evidence status",
+    ],
+    whyItMatters:
+      "Tower metrics, adoption gates, and value proof need measured treasury baselines before go-live can be treated as business value.",
+    nextAction:
+      "Upload treasury KPI extracts, cash visibility baseline, forecast accuracy history, payment exception reports, or an owner-attested measurement worksheet.",
+  },
+  cost_baseline: {
+    exampleTemplate: "Treasury cost and value baseline",
+    exampleContent: [
+      "Manual treasury effort, bank connectivity implementation cost, vendor/support cost, rework risk, and delayed go-live exposure",
+      "Run-rate assumptions, finance validation status, implementation partner estimate, and control remediation cost",
+      "Value-driver definitions for labor reduction, liquidity visibility, payment-risk reduction, and avoided cutover delay",
+    ],
+    whyItMatters:
+      "The business case needs traceable treasury cost and value assumptions before it becomes funding-grade.",
+    nextAction:
+      "Upload finance baseline, treasury effort model, Kyriba implementation estimate, bank connectivity cost view, or value-estimate worksheet.",
+  },
+};
+
 function lower(value: string): string {
   return value.toLowerCase();
 }
 
-function isFinanceBackOfficeMove(moveName: string): boolean {
+function isTreasuryMove(moveName: string): boolean {
+  const text = lower(moveName);
+  return [
+    "kyriba",
+    "treasury",
+    "cash visibility",
+    "cash positioning",
+    "liquidity",
+    "bank connectivity",
+    "payment format",
+    "signer",
+    "payment control",
+    "tms",
+  ].some((token) => text.includes(token));
+}
+
+function isApInvoiceMove(moveName: string): boolean {
   const text = lower(moveName);
   return [
     "invoice",
     "ap ",
     "accounts payable",
     "payable",
-    "finance",
     "procurement",
     "close",
-    "kyriba",
-    "treasury",
-    "back-office",
-    "back office",
     "exception",
   ].some((token) => text.includes(token));
 }
@@ -263,10 +325,11 @@ function familyGuidance(
   MoveEvidenceNeedPacket,
   "exampleTemplate" | "exampleContent" | "whyItMatters" | "nextAction"
 > {
-  const useFinanceSpecific = isFinanceBackOfficeMove(moveName);
-  const finance = useFinanceSpecific ? FINANCE_AP_EXAMPLES[familyId] : null;
+  const treasury = isTreasuryMove(moveName) ? TREASURY_EXAMPLES[familyId] : null;
+  const finance = !treasury && isApInvoiceMove(moveName) ? FINANCE_AP_EXAMPLES[familyId] : null;
   const generic = GENERIC_EXAMPLES[familyId];
   return (
+    treasury ??
     finance ??
     generic ?? {
       exampleTemplate: "Evidence packet",

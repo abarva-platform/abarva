@@ -436,9 +436,17 @@ function charterText(
   charter: Record<string, unknown> | null,
   keys: string[],
 ): string | null {
+  const scaffold =
+    charter?.scaffold && typeof charter.scaffold === "object"
+      ? (charter.scaffold as Record<string, unknown>)
+      : null;
   for (const k of keys) {
     const v = charter?.[k];
     if (typeof v === "string" && v.trim()) return v.trim();
+    const scaffoldValue = scaffold?.[k];
+    if (typeof scaffoldValue === "string" && scaffoldValue.trim()) {
+      return scaffoldValue.trim();
+    }
   }
   return null;
 }

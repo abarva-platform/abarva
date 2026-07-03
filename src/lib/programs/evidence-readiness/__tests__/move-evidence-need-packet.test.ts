@@ -52,7 +52,7 @@ function readiness(): DiscoveryEvidenceReadiness {
 }
 
 describe("buildMoveEvidenceNeedPackets", () => {
-  it("turns generic readiness gaps into artifact-specific client actions", () => {
+  it("turns AP invoice readiness gaps into AP-specific client actions", () => {
     const packets = buildMoveEvidenceNeedPackets({
       moveId: "move-1",
       moveName: "Finance back-office invoice exception automation",
@@ -75,5 +75,34 @@ describe("buildMoveEvidenceNeedPackets", () => {
     expect(packets[1]?.exampleContent.join(" ")).toMatch(
       /duplicate payment rate/i,
     );
+  });
+
+  it("turns Kyriba treasury readiness gaps into treasury-specific client actions", () => {
+    const packets = buildMoveEvidenceNeedPackets({
+      moveId: "move-1",
+      moveName: "Kyriba treasury rollout value realization",
+      currentPhase: 0,
+      readiness: readiness(),
+    });
+
+    expect(packets).toHaveLength(2);
+    expect(packets[0]?.nextAction).toMatch(/bank connectivity plan/i);
+    expect(packets[0]?.exampleContent.join(" ")).toMatch(/cash positioning/i);
+    expect(packets[0]?.exampleContent.join(" ")).toMatch(/SOX evidence/i);
+    expect(packets[1]?.exampleContent.join(" ")).toMatch(/forecast accuracy/i);
+    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(/duplicate payment rate/i);
+  });
+
+  it("keeps generic finance moves out of AP invoice language unless the move is AP/invoice-specific", () => {
+    const packets = buildMoveEvidenceNeedPackets({
+      moveId: "move-1",
+      moveName: "Finance reporting evidence readiness",
+      currentPhase: 2,
+      readiness: readiness(),
+    });
+
+    expect(packets[0]?.nextAction).toMatch(/current-state process document/i);
+    expect(packets[0]?.exampleContent.join(" ")).not.toMatch(/AP invoice/i);
+    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(/duplicate payment rate/i);
   });
 });
