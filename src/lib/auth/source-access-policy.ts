@@ -7,7 +7,10 @@ import {
   type HoldingGroupClientProfile,
   loadHoldingGroupClientProfile,
 } from "@/lib/auth/holding-group-policy";
-import { inferClientKeyFromEmail } from "@/lib/client-config";
+import {
+  inferClientKeyFromEmail,
+  isKnownAgentClientLoginEmail,
+} from "@/lib/client-config";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
@@ -361,6 +364,34 @@ export async function loadUserSourceAccessPolicy(
         sourceEventIdsAllowed: null,
         canViewFinancialData: false,
         canAdminUsers: true,
+        canCreateSourceEvents: true,
+        canApproveSourceStages: true,
+        canApproveAward: true,
+        canUploadSourceArtifacts: true,
+        canGenerateSourcingArtifacts: true,
+        canPublishSourcingArtifacts: true,
+      });
+    }
+  }
+
+  if (!isUuidLike(ctx.userId) && isKnownAgentClientLoginEmail(ctx.email)) {
+    // Automation identities are tenant-rostered proof users. They are not
+    // usually event participants, but they must be able to verify the Source
+    // runtime for their own pinned tenant. The same-tenant guard preserves the
+    // cross-tenant fence: an agent email never grants scope outside its roster
+    // client alias family.
+    const inferredAgentClientKey = inferClientKeyFromEmail(ctx.email);
+    if (
+      inferredAgentClientKey &&
+      sameTenantAliasFamily(inferredAgentClientKey, opts.activeClientKey)
+    ) {
+      return buildPolicy({
+        ctx,
+        activeClientKey: opts.activeClientKey,
+        accessLevel: "client_admin",
+        sourceEventIdsAllowed: null,
+        canViewFinancialData: false,
+        canAdminUsers: false,
         canCreateSourceEvents: true,
         canApproveSourceStages: true,
         canApproveAward: true,
