@@ -12,6 +12,8 @@
 
 Intelligence now has a read-only V7 dossier retriever. When the authenticated tenant has a validated `intelligence_v7` pack, aVa sends Claude compact business-language V7 sources before older tenant/corpus fallback layers. This makes V7 the preferred substrate for executive advisory answers while preserving graceful fallback if V7 is unavailable.
 
+This release also hardens the Intelligence streaming route so Claude tab-routing control markers are not forwarded in visible `delta` text while the full raw model output is still retained server-side for final tab/canvas parsing.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Intelligence ask assembly and source retrieval behavior for tenants with V7 packs.
@@ -30,12 +32,17 @@ Intelligence now has a read-only V7 dossier retriever. When the authenticated te
 - Added `src/lib/intelligence/ask/retrievers/v7-dossier.ts`.
 - Wired `retrieveV7DossierSources` into `src/lib/intelligence/ask/index.ts` before older tenant/corpus source layers.
 - Added `src/lib/intelligence/ask/retrievers/v7-dossier.test.ts`.
+- Sanitized Intelligence streamed `delta` events so `<<<TAB:` / `grounding:` markers are not visible while the final parsed answer still preserves tabs and canvas content.
+- Added route regression coverage for streamed tab-marker sanitization.
 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/intelligence/ask/retrievers/v7-dossier.test.ts --runInBand`
+- Pass: `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts --runInBand -t "does not stream raw tab routing markers"`
 - Pass: `npx eslint src/lib/intelligence/ask/index.ts src/lib/intelligence/ask/retrievers/v7-dossier.ts src/lib/intelligence/ask/retrievers/v7-dossier.test.ts`
-- Not run: Signed-in browser proof on `https://app.abarva.ai/intelligence`.
+- Pass: `npx eslint src/app/api/intelligence/ask/route.ts src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts`
+- Pass: Signed-in SkyHarbor browser/API proof on `https://app.abarva.ai/intelligence` captured `retrieval.v7_dossier.done` with three V7 sources after deployment.
+- Known test-suite note: the broader legacy `route.telemetry.test.ts` suite has unrelated existing failures around structured artifact/expert-chip expectations; this release validates the focused marker-stream regression only.
 - Not run: Full 25-question Lakeshore/SkyHarbor Intelligence comparison after deploy.
 
 ## Rollout Plan
@@ -54,7 +61,8 @@ Revert the V7 retriever import/call in `src/lib/intelligence/ask/index.ts` or re
 
 - Local validation commands listed above.
 - V7 load validation artifact supplied separately: `/Users/anand/Downloads/abarva-v7-azure-load-20260703/v7-azure-validation-summary.json`.
-- Pending: PR URL, CI, ACA revision, image digest, signed-in browser proof, and 25-question comparison report.
+- PR #4383 merged to `main`; follow-up stream-safety patch pending this release record update.
+- Pending: final follow-up PR URL, CI, ACA revision, image digest, and 25-question comparison report.
 
 ## Context Ingestion Evidence
 
@@ -67,12 +75,12 @@ Revert the V7 retriever import/call in `src/lib/intelligence/ask/index.ts` or re
 - Review/approval queue: Not applicable to this release.
 - Client data-plane commit: Already completed outside this release for `intelligence_v7`; this release only reads it.
 - Embedding/search refresh: Not run in this release.
-- Live signed-in retrieval or answer QA: Not run yet.
+- Live signed-in retrieval or answer QA: Pass for SkyHarbor smoke; proof captured under `/Users/anand/Projects/nexus/proof/intelligence-v7-dossier-deploy-20260703T1912Z/`.
 
 Path classification: DB read adapter activation only. No new ingestion, upload, parsing, embedding, or data mutation.
 
 ## Known Gaps
 
-- V7 is active as a preferred Intelligence source layer only after deployment.
-- V7 answer quality uplift still needs browser-visible proof.
+- V7 is active as a preferred Intelligence source layer after ACA traffic points at a revision containing this release.
+- V7 answer quality uplift has SkyHarbor smoke proof; broader 25-question tenant comparison is still pending.
 - V7 external benchmark and industry pattern rows remain synthetic demo context until replaced or supplemented with approved corpus citations.

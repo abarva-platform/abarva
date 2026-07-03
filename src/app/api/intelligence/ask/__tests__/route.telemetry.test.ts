@@ -389,6 +389,69 @@ describe("POST /api/intelligence/ask telemetry", () => {
     ]);
   });
 
+  it("does not stream raw tab routing markers while preserving the final parsed answer", async () => {
+    jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
+      yield {
+        type: "sources",
+        sources: [
+          {
+            type: "TENANT",
+            id: "SKY-IROPS-001",
+            name: "SkyHarbor IROPS readiness packet",
+            detail:
+              "Crew legality, PNR events, and operational freshness require owner signoff before autonomous scale.",
+          },
+        ],
+      };
+      yield {
+        type: "delta",
+        text: [
+          "Scale airport-turn and baggage recovery first; gate IROPS and crew recovery until data certification is signed.",
+          "",
+          "<<<TAB: Decision | grounding: tenant-evidence>>>",
+          "Decision required: assign CDAO gate authority.",
+          "",
+          "<<<TAB: Table | grounding: tenant-evidence>>>",
+          "| Initiative | Posture |",
+          "|---|---|",
+          "| IROPS Decision Assistant | Fund readiness |",
+        ].join("\n"),
+      };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "For SkyHarbor, where should we fund IROPS AI next?",
+        client: "skyharbor",
+        richText: true,
+      }) as never,
+    );
+    const text = await readResponseText(response);
+    const events = text
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const streamedDelta = events.find((event) => event.type === "delta")?.text;
+    const agentAnswer = events.find(
+      (event) => event.type === "agent-answer",
+    )?.answer;
+
+    expect(streamedDelta).toBe(
+      "Scale airport-turn and baggage recovery first; gate IROPS and crew recovery until data certification is signed.",
+    );
+    expect(streamedDelta).not.toContain("<<<TAB:");
+    expect(streamedDelta).not.toContain("grounding:");
+    expect(agentAnswer.directAnswer).toBe(streamedDelta);
+    expect(agentAnswer.directAnswer).not.toContain("<<<TAB:");
+    expect(agentAnswer.decisionFrame.intelligenceTabs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "decision" }),
+        expect.objectContaining({ id: "table" }),
+      ]),
+    );
+  });
+
   it("emits typed relationship graphs instead of dropping graph-shaped answers", async () => {
     jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
       yield {
