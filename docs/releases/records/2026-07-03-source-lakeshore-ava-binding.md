@@ -28,6 +28,8 @@ Seventh follow-up live proof reached 20/20 HTTP 200 and zero `not_found` for the
 
 Eighth follow-up live proof confirmed the signed-in Lakeshore event page now renders correctly and the aVa API passes 20/20 questions, but visual QA showed the File Cabinet URL still redirected to the approval page while the event waited for intake approval. The artifact API already returned the correct 39 records. This release keeps the working canvas gated, but allows the read-only File Cabinet route during waiting states so reviewers can inspect generated, uploaded, and client-final artifact lineage before approving the event.
 
+Ninth follow-up live proof reached the File Cabinet page and 19/20 aVa literal validations; the remaining answer correctly returned Vendor A/B/C rankings and score movements but did not lead with the requested scorecard framing. This release makes explicit evaluation-scorecard questions open with a scorecard sentence while preserving the same vendor ranking, BAFO, and score-impact logic.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source answer routing and Source File Cabinet API behavior change for all clients.
@@ -54,6 +56,7 @@ Eighth follow-up live proof confirmed the signed-in Lakeshore event page now ren
 - `src/lib/source/queries.ts`: exports a tenant-keyed persisted Source event resolver that checks the row's `client_key` against the active tenant alias family before converting it to the Source event detail shape.
 - `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows and tenant-scoped Source artifact registry rows into the File Cabinet generated/upload/session groups when durable File Cabinet rows are absent.
 - `src/lib/source/source-answer-engine.ts`: routes risk/conditional vendor questions to the evaluation scorecard answer instead of the generic AMS answer lane.
+- `src/lib/source/source-answer-engine.ts`: leads explicit evaluation-scorecard questions with scorecard framing before the existing Vendor A/B/C ranking and score-movement analysis.
 - `src/lib/source/source-answer-engine.ts`: adds event-overview and stage-readiness answers for Lakeshore demo questions, routes Vendor C/final sourcing recommendation to evaluation, routes vendor-before-scoring asks to BAFO, and keeps artifact authority limited to real RFP/artifact finality questions.
 - `src/lib/source/source-answer-engine.ts`: adds evidence-gated evaluation and BAFO fallback lanes when generated artifacts are present but not parsed under the exact row-title shape expected by the stricter extractor.
 - `src/lib/source/proposal-intelligence/mve-profile.ts`: recognizes Lakeshore shared-services AMS events as valid vendor-response MVE events and adapts the Vendor A/B/C profile text to corporate shared-services scope.
@@ -67,11 +70,12 @@ Eighth follow-up live proof confirmed the signed-in Lakeshore event page now ren
 ## QA / Validation
 
 - Pass — focused Jest: `source-access-policy.test.ts`, `source-answer-engine.test.ts`, and `queries-tenant-scope.test.ts`, 82 tests passed for the latest agent-roster Source policy and advisor-lane fallback patch.
-- Pending — final live signed-in Lakeshore Source page proof after UUID-backed agent policy deployment.
+- Pass — signed-in Lakeshore event page and File Cabinet page proof on ACA revision `ca-abarva-web-lab-eastus--mc3493730`; File Cabinet API returned 39 artifacts: 9 generated, 29 uploaded, 1 approval/client-final.
+- Pass with follow-up — signed-in Lakeshore aVa proof returned 20/20 HTTP 200 and zero `not_found`; 19/20 literal validations passed before the scorecard-lead polish.
 - Pass — touched-file ESLint.
 - Pass — TypeScript: `npx tsc --noEmit`.
 - Pass — release check: `npm run release:check`.
-- Pending — live signed-in Lakeshore Source aVa/browser proof after deployment.
+- Pending — final signed-in Lakeshore Source aVa proof after scorecard-lead polish deployment.
 
 ## Rollout Plan
 
