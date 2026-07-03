@@ -23,7 +23,7 @@ import {
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
 import { MoveToSourceHandoffCta } from "./MoveToSourceHandoffCta";
-import { sponsorDisplayName, sponsorDisplayWithRole } from "./sponsor-display";
+import { sponsorDisplayWithRole } from "./sponsor-display";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import type { MoveToSourceHandoffResult } from "@/lib/programs/source-trigger/move-to-source-handoff";
 
@@ -105,6 +105,29 @@ function tabHref(moveId: string, tab: Tab, presentationMode: boolean): string {
 
 function formatRole(role: string): string {
   return role.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function charterScaffoldText(
+  move: StrategicMove,
+  key: "sponsor_candidate" | "archetype",
+): string | null {
+  const scaffold = move.charter?.scaffold;
+  if (!scaffold || typeof scaffold !== "object" || Array.isArray(scaffold)) {
+    return null;
+  }
+  const value = (scaffold as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function sponsorCandidateDisplay(move: StrategicMove): string {
+  return (
+    charterScaffoldText(move, "sponsor_candidate") ??
+    sponsorDisplayWithRole(move.sponsor, formatRole)
+  );
+}
+
+function archetypeDisplay(move: StrategicMove): string {
+  return charterScaffoldText(move, "archetype") ?? move.archetype;
 }
 
 function verifiedFallback(phase: number): string {
@@ -247,6 +270,9 @@ function OverviewContent({
   handoff?: MoveToSourceHandoffResult | null;
   linkedSourceEvent?: LinkedSourceEvent | null;
 }) {
+  const sponsorLabel = sponsorCandidateDisplay(move);
+  const archetypeLabel = archetypeDisplay(move);
+
   return (
     <div className={styles.detailBody}>
       <div
@@ -325,9 +351,7 @@ function OverviewContent({
           <div className={styles.detailSectionTitle}>Sponsor &amp; team</div>
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Sponsor</span>
-            <span className={styles.kvV}>
-              {sponsorDisplayWithRole(move.sponsor, formatRole)}
-            </span>
+            <span className={styles.kvV}>{sponsorLabel}</span>
           </div>
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Tenant</span>
@@ -336,7 +360,7 @@ function OverviewContent({
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Archetype</span>
             <span className={`${styles.kvV} ${styles.kvVMono}`}>
-              {move.archetype}
+              {archetypeLabel}
             </span>
           </div>
           {move.participants.slice(0, 3).map((participant) => (
@@ -802,6 +826,8 @@ function RightPane({
   const displayTenantName = copy?.tenantName ?? move.tenant.name;
   const displayCode = copy?.displayCode ?? move.displayCode;
   const displayTitle = copy?.moveTitle ?? move.name;
+  const sponsorLabel = sponsorCandidateDisplay(move);
+  const archetypeLabel = archetypeDisplay(move);
 
   return (
     <article
@@ -826,8 +852,7 @@ function RightPane({
               <p className={styles.presentationSubtitle}>{copy.moveSubtitle}</p>
             ) : null}
             <div className={styles.detailId}>
-              {move.archetype} &middot; Sponsor:{" "}
-              {sponsorDisplayName(move.sponsor).toUpperCase()}
+              {archetypeLabel} &middot; Sponsor: {sponsorLabel.toUpperCase()}
             </div>
             {copy ? (
               <div className={styles.presentationBadge}>{copy.disclosure}</div>

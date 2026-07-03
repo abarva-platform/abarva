@@ -485,8 +485,14 @@ function buildOriginationCharter(
       : {}),
     scaffold: {
       problem_statement: input.problemStatement,
-      archetype: programArchetype,
-      sponsor_candidate: `${sponsor.name}${sponsor.role ? ` · ${sponsor.role}` : ""}`,
+      archetype: input.classification ?? programArchetype,
+      resolved_program_archetype: programArchetype,
+      // Preserve the P0 scaffold label exactly as captured. Role-level sponsor
+      // candidates such as "CFO + Treasurer" may intentionally not resolve to
+      // named people yet; the resolved sponsor person is stored separately for
+      // approval/permission plumbing.
+      sponsor_candidate: input.sponsor,
+      resolved_sponsor_candidate: `${sponsor.name}${sponsor.role ? ` · ${sponsor.role}` : ""}`,
       scope_boundary: input.scopeBoundary ?? null,
       evidence_family: input.evidenceFamily ?? null,
       value_hypothesis: input.targetOutcome ?? null,
