@@ -755,6 +755,172 @@ describe("Source answer engine", () => {
     );
   });
 
+  it("answers Lakeshore event-overview questions before artifact-authority governance", () => {
+    const contextWithLakeshoreEvent: SourceAgentContextBundle = {
+      ...contextBundle,
+      tenant: {
+        tenantId: "lakeshore",
+        tenantKey: "lakeshore",
+        tenantName: "Lakeshore Holdings",
+      },
+      sourcingEvent: {
+        ...contextBundle.sourcingEvent,
+        id: "lake-shared-services-ams-2026",
+        code: "LAKE-SHARED-SERVICES-AMS-2026",
+        name: "Lakeshore Shared Services AMS Sourcing Event",
+        accountName: "Lakeshore Holdings",
+        archetype: "managed_services",
+        rigor: "strategic",
+        lifecycleStatus: "active",
+        owner: "CIO Office",
+        currentStageKey: "responses",
+        valueAtStakeUsd: 18_000_000,
+      },
+      liveTenantContext: {
+        ...liveTenantContext,
+        retrievedEvidence: [
+          {
+            id: "source-artifact:client-final",
+            segmentId: "sourcing_artifacts",
+            recordId: "client-final",
+            title: "RFP Package - Client Final",
+            sourceType: "contextChunk",
+            sourceDoc: "source_artifacts",
+            excerpt:
+              'Artifact authority record: "Client Final - Lakeshore Shared Services AMS RFP Pack.docx" is a client-final upload and current authoritative RFP.',
+            confidence: "high",
+            score: 80,
+          },
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "What is this Lakeshore sourcing event about?",
+      contextBundle: contextWithLakeshoreEvent,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("Source event overview answer");
+    expect(answer?.answerText).toContain(
+      "Lakeshore Shared Services AMS Sourcing Event",
+    );
+    expect(answer?.answerText).toContain("Vendor A/B/C");
+    expect(answer?.answerText).not.toContain("final RFP version of record");
+  });
+
+  it("falls back to vendor advisory when Lakeshore evaluation artifacts are present but summary row titles are not", () => {
+    const contextWithLakeshoreEvaluationArtifacts: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        embeddedContextChunkCount: 0,
+        retrievedEvidence: [
+          {
+            id: "source-artifact:lake-d24",
+            segmentId: "sourcing_artifacts",
+            recordId: "D24_Decision_Brief",
+            title: "D24 Decision Brief",
+            sourceType: "contextChunk",
+            sourceDoc: "source_artifacts",
+            excerpt:
+              "Lakeshore D24 decision brief references Vendor A, Vendor B, Vendor C, a weighted scorecard, normalized vendor comparison, BAFO conditions, and finalist recommendation.",
+            confidence: "high",
+            score: 40,
+          },
+          {
+            id: "source-artifact:lake-mve",
+            segmentId: "sourcing_artifacts",
+            recordId: "Vendor_Response_MVE_Profiles",
+            title: "Vendor Response MVE Profiles",
+            sourceType: "contextChunk",
+            sourceDoc: "source_artifacts",
+            excerpt:
+              "Vendor A continuity option; Vendor B price challenger with staffing and productivity gaps; Vendor C service-accountability option with SLA economics and scope caveats.",
+            confidence: "high",
+            score: 39,
+          },
+          {
+            id: "source-artifact:client-final",
+            segmentId: "sourcing_artifacts",
+            recordId: "client-final",
+            title: "RFP Package - Client Final",
+            sourceType: "contextChunk",
+            sourceDoc: "source_artifacts",
+            excerpt:
+              'Artifact authority record: "Client Final - Lakeshore Shared Services AMS RFP Pack.docx" is a client-final upload and current authoritative RFP.',
+            confidence: "high",
+            score: 90,
+          },
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "Which vendor should advance and why?",
+      contextBundle: contextWithLakeshoreEvaluationArtifacts,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("Evaluation scorecard answer");
+    expect(answer?.answerText).toContain("Advance Vendor A");
+    expect(answer?.answerText).toContain("Vendor C");
+    expect(answer?.answerText).toContain("Vendor B");
+    expect(answer?.answerText).toContain("targeted BAFO");
+    expect(answer?.answerText).not.toContain("final RFP version");
+    expect(answer?.answerText).not.toContain("client-final artifact");
+  });
+
+  it("falls back to BAFO advisory when Lakeshore challenge and leverage artifacts are present but instruction row titles are not", () => {
+    const contextWithLakeshoreBafoArtifacts: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        embeddedContextChunkCount: 0,
+        retrievedEvidence: [
+          {
+            id: "source-artifact:lake-bafo",
+            segmentId: "sourcing_artifacts",
+            recordId: "BAFO_Instruction_Pack",
+            title: "BAFO Pack",
+            sourceType: "contextChunk",
+            sourceDoc: "source_artifacts",
+            excerpt:
+              "BAFO pack covers Vendor A, Vendor B, and Vendor C with pricing workbook, staffing model, SLA commitment, transition plan, productivity commitment, assumptions, and exclusions.",
+            confidence: "high",
+            score: 40,
+          },
+          {
+            id: "source-artifact:lake-challenge",
+            segmentId: "sourcing_artifacts",
+            recordId: "Challenge_Log_and_Commercial_Leverage",
+            title: "Challenge Log and Commercial Leverage Seeds",
+            sourceType: "contextChunk",
+            sourceDoc: "source_artifacts",
+            excerpt:
+              "Vendor A needs productivity credit and transition fee holdback. Vendor B needs staffing coverage, retained-client effort, tooling pass-through, and productivity credit evidence. Vendor C needs scope, SLA economics, and transition normalization.",
+            confidence: "high",
+            score: 39,
+          },
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "What should we ask Vendor B before scoring?",
+      contextBundle: contextWithLakeshoreBafoArtifacts,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("BAFO instruction answer");
+    expect(answer?.answerText).toContain("Before scoring Vendor B");
+    expect(answer?.answerText).toContain("staffing coverage");
+    expect(answer?.answerText).toContain("retained-client effort");
+    expect(answer?.answerText).toContain("revised pricing workbook");
+    expect(answer?.answerText).not.toContain("source_artifacts");
+    expect(answer?.answerText).not.toContain("Sourcing Artifacts");
+  });
+
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
     const answer = buildSourceAnswerEngine({
       prompt: "How should the CIO shape the CDP sourcing event?",

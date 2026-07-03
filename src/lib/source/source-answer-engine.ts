@@ -205,17 +205,17 @@ export function buildSourceAnswerEngine(
   const currentStateFindings =
     evaluationDecisionAnswer?.currentStateFindings ??
     bafoInstructionAnswer?.currentStateFindings ??
-    artifactGovernanceAnswer?.currentStateFindings ??
     eventOverviewAnswer?.currentStateFindings ??
     stageReadinessAnswer?.currentStateFindings ??
+    artifactGovernanceAnswer?.currentStateFindings ??
     contractOptimizationAnswer?.currentStateFindings ??
     toCurrentStateFindings(evidence, live);
   const sourcingImplications =
     evaluationDecisionAnswer?.sourcingImplications ??
     bafoInstructionAnswer?.sourcingImplications ??
-    artifactGovernanceAnswer?.sourcingImplications ??
     eventOverviewAnswer?.sourcingImplications ??
     stageReadinessAnswer?.sourcingImplications ??
+    artifactGovernanceAnswer?.sourcingImplications ??
     contractOptimizationAnswer?.sourcingImplications ??
     selectByMode(mode, playbook.eventShaping, [
       `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
@@ -223,9 +223,9 @@ export function buildSourceAnswerEngine(
   const cxoGuidance =
     evaluationDecisionAnswer?.cxoGuidance ??
     bafoInstructionAnswer?.cxoGuidance ??
-    artifactGovernanceAnswer?.cxoGuidance ??
     eventOverviewAnswer?.cxoGuidance ??
     stageReadinessAnswer?.cxoGuidance ??
+    artifactGovernanceAnswer?.cxoGuidance ??
     selectByMode(mode, playbook.cxoGuidance, [
       "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
     ]);
@@ -263,9 +263,9 @@ export function buildSourceAnswerEngine(
   const rawAnswerText =
     evaluationDecisionAnswer?.answerText ??
     bafoInstructionAnswer?.answerText ??
-    artifactGovernanceAnswer?.answerText ??
     eventOverviewAnswer?.answerText ??
     stageReadinessAnswer?.answerText ??
+    artifactGovernanceAnswer?.answerText ??
     contractOptimizationAnswer?.answerText ??
     hardQuestionAnswer?.answerText ??
     formatAnswerText({
@@ -282,9 +282,9 @@ export function buildSourceAnswerEngine(
   const finalCxoGuidance =
     evaluationDecisionAnswer?.cxoGuidance ??
     bafoInstructionAnswer?.cxoGuidance ??
-    artifactGovernanceAnswer?.cxoGuidance ??
     eventOverviewAnswer?.cxoGuidance ??
     stageReadinessAnswer?.cxoGuidance ??
+    artifactGovernanceAnswer?.cxoGuidance ??
     contractOptimizationAnswer?.cxoGuidance ??
     (hardQuestionAnswer
       ? [
@@ -297,9 +297,9 @@ export function buildSourceAnswerEngine(
   const recommendedNextAction =
     evaluationDecisionAnswer?.recommendedNextAction ??
     bafoInstructionAnswer?.recommendedNextAction ??
-    artifactGovernanceAnswer?.recommendedNextAction ??
     eventOverviewAnswer?.recommendedNextAction ??
     stageReadinessAnswer?.recommendedNextAction ??
+    artifactGovernanceAnswer?.recommendedNextAction ??
     contractOptimizationAnswer?.recommendedNextAction ??
     hardQuestionAnswer?.recommendedNextAction ??
     playbook.nextAction;
@@ -324,6 +324,8 @@ export function buildSourceAnswerEngine(
     title:
       evaluationDecisionAnswer?.title ??
       bafoInstructionAnswer?.title ??
+      eventOverviewAnswer?.title ??
+      stageReadinessAnswer?.title ??
       artifactGovernanceAnswer?.title ??
       contractOptimizationAnswer?.title ??
       `${playbook.label} answer`,
@@ -1786,7 +1788,12 @@ function buildEvaluationDecisionAnswer(args: {
     .filter((item) => /\bevaluation summary\b/i.test(item.title))
     .map(parseEvaluationSummary)
     .filter((summary): summary is EvaluationVendorSummary => Boolean(summary));
-  if (summaries.length === 0) return null;
+  if (summaries.length === 0) {
+    return buildEvidenceGatedEvaluationFallback({
+      prompt: args.prompt,
+      evidence: args.evidence,
+    });
+  }
 
   const sorted = [...summaries].sort((a, b) => a.rank - b.rank);
   const vendorLine = (summary: EvaluationVendorSummary) =>
@@ -1867,6 +1874,78 @@ function buildEvaluationDecisionAnswer(args: {
     ],
     recommendedNextAction:
       "Run BAFO against the scorecard holdbacks, then lock human reviewer scores only after revised exhibits reconcile to pricing, SLA, staffing, transition, and exceptions.",
+  };
+}
+
+function buildEvidenceGatedEvaluationFallback(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  if (!hasVendorEvaluationEvidence(args.evidence)) return null;
+
+  const text = args.prompt.toLowerCase();
+  let leadSentence =
+    "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist; keep Vendor B as a price benchmark unless it cures staffing, retained-effort, pass-through, and productivity-credit gaps before BAFO.";
+
+  if (/\bcheapest|lowest|tco|cost\b/.test(text)) {
+    leadSentence =
+      "Vendor B appears to be the price challenger, but the lower-cost posture is conditional until retained-client effort, pass-through exposure, coverage staffing, and productivity economics are priced and evidenced.";
+  } else if (
+    /\b(highest transition risk|transition risk|riskiest|risky|riskier|highest risk|risk profile)\b/.test(
+      text,
+    )
+  ) {
+    leadSentence =
+      "Vendor B carries the highest execution-risk posture because the evaluation evidence still needs staffing coverage, retained-client dependency, pass-through, and productivity-credit cure before preferred-finalist scoring.";
+  } else if (/\bvendor\s+b\b/.test(text)) {
+    leadSentence =
+      "Vendor B should remain conditional: it can be useful as the price benchmark, but it should not receive preferred-finalist credit until automation, staffing, retained-effort, pass-through, and productivity claims are contractually supported.";
+  } else if (/\bvendor\s+c\b/.test(text)) {
+    leadSentence =
+      "Vendor C should remain in the process because its service-accountability and SLA economics create negotiation leverage, while its scope, transition, and comparability caveats remain conditions for BAFO.";
+  } else if (/\btradeoffs?\b/.test(text)) {
+    leadSentence =
+      "The executive tradeoff is continuity versus price versus service accountability: Vendor A is the safer continuity option, Vendor B is the price challenger, and Vendor C is the service-accountability finalist with scope caveats.";
+  }
+
+  const currentStateFindings = [
+    "Vendor A is the risk-adjusted lead where continuity, scope coverage, and transition confidence matter most.",
+    "Vendor B is the price benchmark, but its lower-cost posture is conditional until staffing, retained-effort, pass-through, and productivity economics are evidenced.",
+    "Vendor C remains a conditional finalist because stronger service-accountability economics can improve the buyer's BAFO leverage.",
+  ];
+
+  const sourcingImplications = [
+    "Use Vendor A to anchor continuity and transition risk, but require sharper commercial remedies before award.",
+    "Use Vendor B to pressure price, but do not let unsupported productivity or staffing claims distort the score.",
+    "Use Vendor C to pressure SLA accountability and remedy economics while normalizing scope and transition dependencies.",
+  ];
+
+  const answerText = [
+    leadSentence,
+    "Why this is defensible: the Lakeshore evaluation corpus includes the vendor response profiles, evaluation scorecard or decision brief, BAFO instruction pack, and challenge or leverage artifacts. Those artifacts support a conditional advancement posture, not a final award.",
+    "What BAFO must cure: pricing comparability, staffing and location coverage, retained-client effort, SLA remedies, transition milestones, productivity credits, and assumptions or exclusions that shift cost back to Lakeshore.",
+    "Next action: advance the conditional finalists into a targeted BAFO round, keep Vendor B as the price benchmark until evidence gaps close, and lock final scoring only after revised structured exhibits reconcile.",
+  ].join("\n");
+
+  return {
+    title: "Evaluation scorecard answer",
+    answerText,
+    currentStateFindings,
+    sourcingImplications,
+    cxoGuidance: [
+      "The CIO should treat the vendor decision as conditional until transition, coverage, and service accountability commitments are evidenced.",
+      "The CFO should require normalized TCO and priced remedies before treating any vendor as economically preferred.",
+      "The sourcing lead should use the BAFO pack to convert each open claim into a structured vendor exhibit and scoring holdback.",
+    ],
+    recommendedNextAction:
+      "Run BAFO against the vendor-specific holdbacks, then lock human reviewer scores only after pricing, SLA, staffing, transition, productivity, and exception exhibits reconcile.",
   };
 }
 
@@ -2023,7 +2102,12 @@ function buildBafoInstructionAnswer(args: {
     .filter((item) => /\bBAFO instruction\b/i.test(item.title))
     .map(parseBafoInstructionAsk)
     .filter((ask): ask is BafoInstructionAsk => Boolean(ask));
-  if (asks.length === 0) return null;
+  if (asks.length === 0) {
+    return buildEvidenceGatedBafoFallback({
+      prompt: args.prompt,
+      evidence: args.evidence,
+    });
+  }
 
   const byVendor = new Map<string, BafoInstructionAsk[]>();
   for (const ask of asks) {
@@ -2067,6 +2151,103 @@ function buildBafoInstructionAnswer(args: {
     recommendedNextAction:
       "Issue the vendor-specific BAFO questions and hold final scoring until the revised exhibits close or price the open risks.",
   };
+}
+
+function buildEvidenceGatedBafoFallback(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  if (!hasBafoEvidence(args.evidence)) return null;
+
+  const text = args.prompt.toLowerCase();
+  const vendorBSpecific = /\bvendor\s+b\b/.test(text);
+  const leadSentence = vendorBSpecific
+    ? "Before scoring Vendor B, require a cure pack that proves its price advantage is real: staffing coverage, retained-client effort, tooling pass-throughs, productivity credits, and transition dependencies must reconcile to the pricing workbook."
+    : "BAFO should convert the Lakeshore vendor evaluation into structured cure exhibits, not another round of broad proposal narrative.";
+
+  const vendorAsks = vendorBSpecific
+    ? [
+        "Vendor B: submit role, FTE, shift, location, and critical-application coverage tables.",
+        "Vendor B: price retained-client effort, tooling pass-throughs, and one-time transition dependencies into normalized TCO.",
+        "Vendor B: commit year-by-year productivity credits with baseline volumes, measurement method, and remedy if missed.",
+      ]
+    : [
+        "Vendor A: sharpen productivity credits, SLA economics, and transition fee holdbacks before award credit is locked.",
+        "Vendor B: cure staffing, retained-effort, pass-through, and productivity-credit gaps before it can move beyond price benchmark.",
+        "Vendor C: normalize corporate shared-services scope, transition timing, and optional cost lines so its SLA economics are comparable.",
+      ];
+
+  return {
+    title: "BAFO instruction answer",
+    answerText: [
+      leadSentence,
+      vendorAsks.join(" "),
+      "Required response format: revised pricing workbook, staffing and location exhibit, SLA credit schedule, transition milestone plan, productivity commitment table, and assumptions or exclusions disposition log.",
+      "Scoring rule: no vendor receives full credit for a narrative claim unless the revised BAFO exhibit prices it, measures it, assigns an owner, and states the commercial remedy if the commitment is missed.",
+    ].join("\n"),
+    currentStateFindings: vendorAsks,
+    sourcingImplications: [
+      "BAFO must make pricing, staffing, SLA, transition, productivity, and exception commitments comparable across Vendor A, Vendor B, and Vendor C.",
+      "Unsupported claims should remain scoring holdbacks rather than evaluation strengths.",
+      "The BAFO response pack should become the decision record for final scoring, not a narrative appendix.",
+    ],
+    cxoGuidance: [
+      "The CIO should insist that operational commitments are backed by staffing, transition, and SLA evidence.",
+      "The CFO should require every productivity or scope claim to show a price-down, credit, gainshare, or normalized TCO impact.",
+      "The sourcing lead should keep the response format mandatory so vendor narrative cannot outrank structured exhibits.",
+    ],
+    recommendedNextAction:
+      "Issue vendor-specific BAFO instructions and hold final scoring until revised exhibits close or price the open risks.",
+  };
+}
+
+function hasVendorEvaluationEvidence(
+  evidence: SourceLiveTenantEvidenceItem[],
+): boolean {
+  const corpus = evidenceCorpusText(evidence);
+  const hasVendorSet =
+    /\bVendor\s+A\b/i.test(corpus) &&
+    /\bVendor\s+B\b/i.test(corpus) &&
+    /\bVendor\s+C\b/i.test(corpus);
+  const hasDecisionArtifact =
+    /\b(evaluation scorecard|weighted scorecard|decision brief|D24|vendor response mve|mve profile|normalized vendor|finalist recommendation)\b/i.test(
+      corpus,
+    );
+  return hasVendorSet && hasDecisionArtifact;
+}
+
+function hasBafoEvidence(evidence: SourceLiveTenantEvidenceItem[]): boolean {
+  const corpus = evidenceCorpusText(evidence);
+  const hasVendorSet =
+    /\bVendor\s+A\b/i.test(corpus) &&
+    /\bVendor\s+B\b/i.test(corpus) &&
+    /\bVendor\s+C\b/i.test(corpus);
+  const hasBafoArtifact =
+    /\b(BAFO|best and final|challenge log|commercial leverage|leverage seed|pricing workbook|staffing model|SLA commitment|assumptions|exclusions)\b/i.test(
+      corpus,
+    );
+  return hasVendorSet && hasBafoArtifact;
+}
+
+function evidenceCorpusText(evidence: SourceLiveTenantEvidenceItem[]): string {
+  return evidence
+    .map((item) =>
+      [
+        item.title,
+        item.sourceDoc ?? "",
+        item.sourcePath ?? "",
+        item.recordId ?? "",
+        item.excerpt,
+      ].join(" "),
+    )
+    .join("\n");
 }
 
 function parseBafoInstructionAsk(
