@@ -5,6 +5,7 @@ import { generateFollowups } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
 import { retrieveRetailOverlaySources } from "./retrievers/retail-overlay";
+import { retrieveV7DossierSources } from "./retrievers/v7-dossier";
 import {
   retrieveTenantEnterpriseSources,
   retrieveTenantStructuredFacts,
@@ -218,6 +219,19 @@ export async function* askIntelligence(
       }),
     );
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
+    const v7DossierStartedAt = Date.now();
+    const v7Dossier = await retrieveV7DossierSources(trimmed, {
+      tenantInventoryKey:
+        opts.tenant?.appClientKey ??
+        opts.tenantInventoryKey ??
+        opts.tenantClientKey,
+      surfaceContext: opts.surfaceContext,
+    });
+    emitTiming(
+      trace.finish("retrieval.v7_dossier.done", v7DossierStartedAt, {
+        sourceCount: v7Dossier.sources.length,
+      }),
+    );
     const tenantEnterpriseStartedAt = Date.now();
     const tenantEnterprise = await retrieveTenantEnterpriseSources(
       opts.tenant ?? opts.tenantInventoryKey,
@@ -349,6 +363,7 @@ export async function* askIntelligence(
       ...(industrialCioSource ? [industrialCioSource] : []),
       ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
+      ...v7Dossier.sources,
       ...tenantStructuredFacts,
       ...tenantEnterprise,
       ...tenantTechnology,
