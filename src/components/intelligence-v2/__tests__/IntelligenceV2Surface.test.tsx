@@ -352,6 +352,106 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
   });
 
+  it("retries once when the Intelligence stream completes without an answer", async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: streamFromLines([""]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: streamFromLines([
+          JSON.stringify({
+            type: "agent-answer",
+            answer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "lakeshore-holdings",
+              question:
+                "Which AI bets should be treated as enterprise transformation versus tactical automation?",
+              intent: "decision_canvas",
+              status: "answered",
+              directAnswer:
+                "Lakeshore should treat Kyriba and the finance semantic layer as transformation bets, while ServiceNow finance support remains tactical automation.",
+              prose:
+                "Lakeshore should treat Kyriba and the finance semantic layer as transformation bets, while ServiceNow finance support remains tactical automation.",
+              artifacts: [],
+              citations: [],
+              decisionFrame: {
+                intelligenceTabs: [
+                  {
+                    id: "decision",
+                    label: "Decision",
+                    grounding: "tenant-evidence",
+                    content: "Transformation gets gate-based capital release.",
+                  },
+                  {
+                    id: "industry_insights",
+                    label: "Industry Insights",
+                    grounding: "industry-context",
+                    content: "Pattern context only.",
+                  },
+                  {
+                    id: "chart",
+                    label: "Chart",
+                    grounding: "tenant-evidence",
+                    content: "Chart support.",
+                  },
+                  {
+                    id: "table",
+                    label: "Table",
+                    grounding: "tenant-evidence",
+                    content: "Table support.",
+                  },
+                  {
+                    id: "evidence",
+                    label: "Evidence",
+                    grounding: "tenant-evidence",
+                    content: "Evidence support.",
+                  },
+                ],
+              },
+            },
+          }),
+          JSON.stringify({ type: "done" }),
+          "",
+        ]),
+      });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={{
+          ...apexPayload,
+          tenant: {
+            key: "lakeshore-holdings",
+            displayName: "Lakeshore Holdings",
+            industry: "Industrial",
+          },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: {
+        value:
+          "Which AI bets should be treated as enterprise transformation versus tactical automation?",
+      },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(
+      await screen.findByText(/Kyriba and the finance semantic layer/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/could not produce a grounded Intelligence answer/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("runs suggested questions through the same chat shell instead of an old centered ask lane", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

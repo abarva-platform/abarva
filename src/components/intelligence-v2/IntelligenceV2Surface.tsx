@@ -1828,31 +1828,6 @@ export function IntelligenceV2Surface({
     setBusy(true);
 
     try {
-      const response = await fetch("/api/intelligence/ask", {
-        method: "POST",
-        headers: {
-          Accept: "application/x-ndjson",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q,
-          client: t.tenant.key,
-          format: "rich",
-          surfaceContext,
-          attachmentIds: attachments.map((attachment) => attachment.id),
-        }),
-      });
-      if (!response.ok || !response.body) {
-        throw new Error(`Intelligence request failed (${response.status})`);
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let answerText = "";
-      let structuredAnswer: AvaAnswerPacket | null = null;
-      let sawTabPacketDuringStream = false;
-
       function updateAgentTurn(
         body: string,
         agentAnswer?: AvaAnswerPacket | null,
@@ -1892,95 +1867,129 @@ export function IntelligenceV2Surface({
         );
       }
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const event = JSON.parse(line) as {
-            type?: string;
-            delta?: string;
-            text?: string;
-            answer?: AvaAnswerPacket;
-            error?: string;
-            telemetryEventId?: string;
-          };
-          if (event.type === "error") {
-            throw new Error(event.error ?? "Intelligence stream error");
-          }
-          if (event.type === "agent-answer" && event.answer) {
-            const packetBody = answerBodyFromPacket(event.answer);
-            const packetTabs = parseIntelligenceTabbedResponse(
-              packetBody || answerText,
-            ).tabs;
-            const directAnswer = visibleIntelligenceMainAnswer(
-              event.answer.directAnswer?.trim() || answerText.trim(),
-            );
-            const prose = visibleIntelligenceMainAnswer(
-              event.answer.prose?.trim() ||
-                event.answer.directAnswer?.trim() ||
-                answerText.trim(),
-            );
-            const decisionFrame =
-              packetTabs.length > 0
-                ? {
-                    ...(event.answer.decisionFrame ?? {}),
-                    intelligenceTabs: packetTabs,
-                  }
-                : event.answer.decisionFrame;
-            structuredAnswer = {
-              ...event.answer,
-              directAnswer,
-              prose,
-              ...(decisionFrame ? { decisionFrame } : null),
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const response = await fetch("/api/intelligence/ask", {
+          method: "POST",
+          headers: {
+            Accept: "application/x-ndjson",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            q,
+            client: t.tenant.key,
+            format: "rich",
+            surfaceContext,
+            attachmentIds: attachments.map((attachment) => attachment.id),
+          }),
+        });
+        if (!response.ok || !response.body) {
+          throw new Error(`Intelligence request failed (${response.status})`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let answerText = "";
+        let structuredAnswer: AvaAnswerPacket | null = null;
+        let sawTabPacketDuringStream = false;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const event = JSON.parse(line) as {
+              type?: string;
+              delta?: string;
+              text?: string;
+              answer?: AvaAnswerPacket;
+              error?: string;
+              telemetryEventId?: string;
             };
-            updateAgentTurn(packetBody || answerText.trim(), structuredAnswer);
-            continue;
-          }
-          const delta = eventText(event);
-          if (delta) {
-            answerText += delta;
-            const displayText = structuredAnswer
-              ? answerBodyFromPacket(structuredAnswer)
-              : answerText;
-            sawTabPacketDuringStream =
-              sawTabPacketDuringStream || /^\s*<<<TAB:/im.test(displayText);
-            updateAgentTurn(
-              sawTabPacketDuringStream
-                ? visibleIntelligenceMainAnswer(displayText)
-                : displayText,
-              structuredAnswer,
-            );
-          }
-          if (event.type === "done" && event.telemetryEventId) {
-            setThread((prev) =>
-              prev.map((turn) =>
-                turn.id === agentId
-                  ? { ...turn, feedbackEventId: event.telemetryEventId }
-                  : turn,
-              ),
-            );
+            if (event.type === "error") {
+              throw new Error(event.error ?? "Intelligence stream error");
+            }
+            if (event.type === "agent-answer" && event.answer) {
+              const packetBody = answerBodyFromPacket(event.answer);
+              const packetTabs = parseIntelligenceTabbedResponse(
+                packetBody || answerText,
+              ).tabs;
+              const directAnswer = visibleIntelligenceMainAnswer(
+                event.answer.directAnswer?.trim() || answerText.trim(),
+              );
+              const prose = visibleIntelligenceMainAnswer(
+                event.answer.prose?.trim() ||
+                  event.answer.directAnswer?.trim() ||
+                  answerText.trim(),
+              );
+              const decisionFrame =
+                packetTabs.length > 0
+                  ? {
+                      ...(event.answer.decisionFrame ?? {}),
+                      intelligenceTabs: packetTabs,
+                    }
+                  : event.answer.decisionFrame;
+              structuredAnswer = {
+                ...event.answer,
+                directAnswer,
+                prose,
+                ...(decisionFrame ? { decisionFrame } : null),
+              };
+              updateAgentTurn(
+                packetBody || answerText.trim(),
+                structuredAnswer,
+              );
+              continue;
+            }
+            const delta = eventText(event);
+            if (delta) {
+              answerText += delta;
+              const displayText = structuredAnswer
+                ? answerBodyFromPacket(structuredAnswer)
+                : answerText;
+              sawTabPacketDuringStream =
+                sawTabPacketDuringStream || /^\s*<<<TAB:/im.test(displayText);
+              updateAgentTurn(
+                sawTabPacketDuringStream
+                  ? visibleIntelligenceMainAnswer(displayText)
+                  : displayText,
+                structuredAnswer,
+              );
+            }
+            if (event.type === "done" && event.telemetryEventId) {
+              setThread((prev) =>
+                prev.map((turn) =>
+                  turn.id === agentId
+                    ? { ...turn, feedbackEventId: event.telemetryEventId }
+                    : turn,
+                ),
+              );
+            }
           }
         }
-      }
 
-      if (answerText.trim() && sawTabPacketDuringStream) {
+        if (answerText.trim() && sawTabPacketDuringStream) {
+          updateAgentTurn(
+            (structuredAnswer ? answerBodyFromPacket(structuredAnswer) : "") ||
+              answerText.trim(),
+            structuredAnswer,
+          );
+          break;
+        }
+        if (!answerText.trim() && structuredAnswer) {
+          updateAgentTurn(
+            answerBodyFromPacket(structuredAnswer),
+            structuredAnswer,
+          );
+          break;
+        }
+        if (answerText.trim()) break;
+        if (attempt === 0) continue;
         updateAgentTurn(
-          (structuredAnswer ? answerBodyFromPacket(structuredAnswer) : "") ||
-            answerText.trim(),
-          structuredAnswer,
-        );
-      } else if (!answerText.trim() && structuredAnswer) {
-        updateAgentTurn(
-          answerBodyFromPacket(structuredAnswer),
-          structuredAnswer,
-        );
-      } else if (!answerText.trim() && !structuredAnswer) {
-        updateAgentTurn(
-          "I could not produce a grounded Intelligence answer for that request yet.",
+          "aVa did not receive a complete Intelligence answer from the stream. Please retry the question.",
         );
       }
     } catch (error) {

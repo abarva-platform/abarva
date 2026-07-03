@@ -326,6 +326,7 @@ async function runQuestion(browser, question, ordinal) {
   let finalAnswer = "";
   let companionTabs = [];
   let nativeCanvasPayloads = [];
+  let apiResponseEvents = [];
   let repairCallsAttempted = 0;
 
   try {
@@ -377,12 +378,12 @@ async function runQuestion(browser, question, ordinal) {
       : null;
 
     const responseBodies = await Promise.allSettled(apiCaptures);
-    const parsedResponses = responseBodies
+    apiResponseEvents = responseBodies
       .filter((entry) => entry.status === "fulfilled")
       .flatMap((entry) => entry.value.events);
-    finalAnswer = extractFinalAnswer(parsedResponses, finalText);
-    companionTabs = extractCompanionTabs(parsedResponses, finalText);
-    nativeCanvasPayloads = extractCanvasPayloads(parsedResponses);
+    finalAnswer = extractFinalAnswer(apiResponseEvents, finalText);
+    companionTabs = extractCompanionTabs(apiResponseEvents, finalText);
+    nativeCanvasPayloads = extractCanvasPayloads(apiResponseEvents);
     repairCallsAttempted = networkEvents.filter((event) =>
       String(event.url ?? "").includes("repair"),
     ).length;
@@ -447,6 +448,7 @@ async function runQuestion(browser, question, ordinal) {
     consoleWarnings: consoleLog.filter((entry) => entry.type === "warning"),
     pageErrors,
     networkEvents,
+    apiResponseEvents,
     repairCallsAttempted,
     analyticsClaudeAlignment: classifyAnalyticsClaudeAlignment({
       question,
@@ -730,6 +732,7 @@ function scoreResult({
       consoleWarningCount: consoleLog.filter((entry) => entry.type === "warning").length,
       pageErrorCount: pageErrors.length,
       repairCallsAttempted,
+      fallbackAnswer: isFallbackAnswer(finalAnswer),
       fiveTabPresence: companionTabs.length >= 5,
       nativeCanvasPresent: nativeCanvasPayloads.length > 0 || /executive-canvas|Opportunity Map|Decision Table/.test(finalText),
       noUsefulProgress: !timings.fastCanvasVisibleAt && !timings.firstModelTokenAt,
@@ -741,6 +744,7 @@ function classifyResult(score, { visibleLeaks, pageErrors, timings, companionTab
   if (
     visibleLeaks.length > 0 ||
     pageErrors.length > 0 ||
+    score.technical.fallbackAnswer ||
     companionTabs.length < 5 ||
     repairCallsAttempted > 0
   ) {
@@ -789,6 +793,12 @@ function classifyAnalyticsClaudeAlignment({ question, fastCanvasSnapshot, finalA
 function findLeaks(text) {
   return LEAK_PATTERNS.filter((pattern) => pattern.re.test(text)).map(
     (pattern) => pattern.label,
+  );
+}
+
+function isFallbackAnswer(text) {
+  return /could not produce a grounded Intelligence answer|did not receive a complete Intelligence answer|could not complete that request/i.test(
+    text ?? "",
   );
 }
 
@@ -856,6 +866,10 @@ async function writeQuestionArtifacts(result) {
       null,
       2,
     )}\n`,
+  );
+  await fs.writeFile(
+    path.join(qDir, "api-response-events.json"),
+    `${JSON.stringify(result.apiResponseEvents ?? [], null, 2)}\n`,
   );
 }
 
