@@ -605,6 +605,14 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           }
           if (event.type === "delta" && event.text) {
             assistantText += event.text;
+            const displayText = displaySafeIntelligenceDelta(event.text);
+            if (!displayText.trim()) continue;
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({ ...event, text: displayText }) + "\n",
+              ),
+            );
+            continue;
           }
           if (event.type === "error") sawStreamError = true;
           if (event.type === "done") continue;
@@ -990,6 +998,19 @@ function intelligenceSourcesFromCitations(
   return sources;
 }
 
+function displaySafeIntelligenceDelta(text: string): string {
+  if (!text.includes("<<<TAB:") && !text.includes("grounding:")) {
+    return text;
+  }
+
+  const parsed = parseIntelligenceTabbedResponse(text);
+  if (parsed.mainAnswer.trim()) {
+    return parsed.mainAnswer;
+  }
+
+  return text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
+}
+
 function recordIntelligenceTelemetry(input: {
   startedAt: number;
   tenantId: string | null;
@@ -1082,7 +1103,7 @@ function shouldIncludeIntelligenceTrace(
   user: Awaited<ReturnType<typeof currentUser>>,
   person: Awaited<ReturnType<typeof getCurrentPerson>>,
 ): boolean {
-  if (req.headers.get("x-abarva-debug-intel") !== "1") return false;
+  if (req.headers?.get("x-abarva-debug-intel") !== "1") return false;
   const email =
     user?.primaryEmailAddress?.emailAddress ??
     user?.emailAddresses?.[0]?.emailAddress ??
@@ -1144,8 +1165,8 @@ function shouldIncludeIntelligenceLatencyTrace(
   if (includeTrace) return true;
   if (process.env.INTELLIGENCE_LATENCY_TRACE === "1") return true;
   return (
-    req.nextUrl.searchParams.get("latency") === "1" ||
-    req.headers.get("x-abarva-intelligence-latency") === "1"
+    req.nextUrl?.searchParams.get("latency") === "1" ||
+    req.headers?.get("x-abarva-intelligence-latency") === "1"
   );
 }
 
