@@ -12,6 +12,8 @@
 
 Source aVa now keeps Lakeshore vendor-advisory questions on the vendor evaluation and BAFO evidence path instead of letting client-final RFP governance answers take over. Specialized Source answers are preserved through the live answer-quality layer, the ask route uses the authenticated Source tenancy context for deterministic client binding, and the Source File Cabinet listing surfaces generated/uploaded registry artifacts when durable cabinet projections are absent.
 
+Follow-up live proof found one remaining binding gap: the vendor MVE profile builder only recognized the SkyHarbor AMS event shape, so the Lakeshore shared-services AMS event did not receive Vendor A/B/C profiles, challenge logs, BAFO instructions, or evaluation summaries in the aVa context packet. This release now recognizes the shared-services AMS event shape and adapts the synthetic vendor profile language so Lakeshore answers use corporate shared-services wording rather than airline wording.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source answer routing and Source File Cabinet API behavior change for all clients.
@@ -31,13 +33,15 @@ Source aVa now keeps Lakeshore vendor-advisory questions on the vendor evaluatio
 - `src/lib/source/nexus-api.ts`: preserves specialized evaluation, BAFO, artifact-authority, and contract-optimization Source answers through the live answer-quality layer so the user-visible response stays advisory-specific.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: uses the richer authenticated Source tenancy context and stable client key when resolving the active Source event.
 - `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows and tenant-scoped Source artifact registry rows into the File Cabinet generated/upload/session groups when durable File Cabinet rows are absent.
+- `src/lib/source/proposal-intelligence/mve-profile.ts`: recognizes Lakeshore shared-services AMS events as valid vendor-response MVE events and adapts the Vendor A/B/C profile text to corporate shared-services scope.
+- `src/lib/source/proposal-intelligence/__tests__/proposal-intelligence.test.ts`: regression proving Lakeshore gets three MVE vendor profiles without airline/IROPS language.
 - `src/lib/source/__tests__/source-answer-engine.test.ts`: regression for vendor advancement vs. final RFP authority.
 - `src/lib/source/__tests__/nexus-api-live-context.test.ts`: regression that the live API response preserves Vendor A/B/C evaluation answers through the quality gate.
 - `src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts`: regression for generated artifact-state and Source artifact registry File Cabinet visibility.
 
 ## QA / Validation
 
-- Pass — focused Jest: `source-answer-engine.test.ts`, `nexus-api-live-context.test.ts`, and Source File Cabinet route tests, 57 tests passed across targeted runs.
+- Pass — focused Jest: `proposal-intelligence.test.ts`, `source-answer-engine.test.ts`, `nexus-api-live-context.test.ts`, and Source File Cabinet route tests, 76 tests passed across the latest targeted vendor/advisor run.
 - Pass — touched-file ESLint.
 - Pass — TypeScript: `tsc --noEmit --project tsconfig.json` with `NODE_OPTIONS=--max-old-space-size=8192`.
 - Pending — live signed-in Lakeshore Source aVa/browser proof after deployment.
