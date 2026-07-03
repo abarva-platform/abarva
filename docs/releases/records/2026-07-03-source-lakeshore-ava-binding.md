@@ -26,6 +26,8 @@ Sixth follow-up live proof used a freshly minted `agent-lakeshore` Clerk state a
 
 Seventh follow-up live proof reached 20/20 HTTP 200 and zero `not_found` for the Lakeshore aVa API, but the signed-in browser event page still rendered `404 Item unavailable`. The root cause was narrower than the API path: the Source page enforces the Source access policy, and the same-tenant agent roster proof grant was still limited to non-UUID Clerk ids. Live Clerk sessions can be provisioned to UUID person ids, so this release applies the same same-tenant roster-agent guard to provisioned UUID users while keeping the inferred-client cross-tenant fence.
 
+Eighth follow-up live proof confirmed the signed-in Lakeshore event page now renders correctly and the aVa API passes 20/20 questions, but visual QA showed the File Cabinet URL still redirected to the approval page while the event waited for intake approval. The artifact API already returned the correct 39 records. This release keeps the working canvas gated, but allows the read-only File Cabinet route during waiting states so reviewers can inspect generated, uploaded, and client-final artifact lineage before approving the event.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source answer routing and Source File Cabinet API behavior change for all clients.
@@ -48,6 +50,7 @@ Seventh follow-up live proof reached 20/20 HTTP 200 and zero `not_found` for the
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: resolves persisted Source events from the already-known active client key/name before falling back to the broader resolver, preventing long-run advisor sessions from losing a valid same-tenant event.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`: caches successfully resolved Source events by active client key and event id for the ask boundary so a long same-tenant demo session cannot lose the event after earlier successful reads.
 - `src/lib/auth/source-access-policy.ts`: grants known same-tenant Clerk agent roster logins all-client Source proof scope for their own tenant alias family only, including provisioned UUID-backed agent sessions.
+- `src/lib/source/lifecycle-routing-guard.ts`: allows pending/waiting Source events to render the read-only File Cabinet route while continuing to redirect the working canvas to approval.
 - `src/lib/source/queries.ts`: exports a tenant-keyed persisted Source event resolver that checks the row's `client_key` against the active tenant alias family before converting it to the Source event detail shape.
 - `src/app/api/v1/source/events/[eventId]/artifacts/route.ts`: bridges linked generated artifact-state rows and tenant-scoped Source artifact registry rows into the File Cabinet generated/upload/session groups when durable File Cabinet rows are absent.
 - `src/lib/source/source-answer-engine.ts`: routes risk/conditional vendor questions to the evaluation scorecard answer instead of the generic AMS answer lane.
@@ -57,6 +60,7 @@ Seventh follow-up live proof reached 20/20 HTTP 200 and zero `not_found` for the
 - `src/lib/source/proposal-intelligence/__tests__/proposal-intelligence.test.ts`: regression proving Lakeshore gets three MVE vendor profiles without airline/IROPS language.
 - `src/lib/source/__tests__/source-answer-engine.test.ts`: regression for vendor advancement vs. final RFP authority, plus risk/conditional/Vendor C/final recommendation phrasing.
 - `src/lib/auth/__tests__/source-access-policy.test.ts`: regression proving UUID-backed same-tenant agent roster Source access is allowed and cross-tenant agent access remains denied.
+- `src/lib/source/__tests__/lifecycle-routing-guard.test.ts`: regression proving waiting events may render `/file-cabinet` while the main canvas remains gated.
 - `src/lib/source/__tests__/nexus-api-live-context.test.ts`: regression that the live API response preserves Vendor A/B/C evaluation answers through the quality gate.
 - `src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts`: regression for generated artifact-state and Source artifact registry File Cabinet visibility.
 
