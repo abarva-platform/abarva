@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release prevents the Intelligence page from treating an empty model stream as a usable answer. If the `/api/intelligence/ask` stream completes without either visible model text or an `agent-answer` packet, the UI retries once before showing an explicit incomplete-stream message. The 100-question pressure harness now records parsed API response events per question and marks fallback answer text as a technical failure, so a fast canvas alone cannot be scored as a successful executive answer.
+This release prevents the Intelligence page from treating an empty model stream as a usable answer. If the `/api/intelligence/ask` stream completes without either visible model text or an `agent-answer` packet, the UI retries once before showing an explicit incomplete-stream message. The 100-question pressure harness now records parsed API response events per question and marks fallback answer text as a technical failure, so a fast canvas alone cannot be scored as a successful executive answer. The native CXO canvas also avoids overlap-prone chart labels by rendering numbered plot markers with a separate initiative key.
 
 ## Layer Impact
 
@@ -31,8 +31,13 @@ This release prevents the Intelligence page from treating an empty model stream 
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`
   - Retries once when the Intelligence stream returns no delta text and no `agent-answer`.
   - Replaces the ambiguous grounded-answer fallback with an explicit incomplete-stream retry message after the retry fails.
+  - Keeps value/readiness chart points as numeric markers instead of plotting long initiative names inside the chart.
 - `src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx`
   - Adds a regression proving an empty first stream retries and renders a valid second `agent-answer`.
+- `src/lib/cxo-canvas/rendererRegistry.tsx`
+  - Moves executive sequencing chart labels into a controlled number key so long initiative names do not overlap on the plot.
+- `src/lib/cxo-canvas/__tests__/cxo-canvas-renderer.test.tsx`
+  - Adds a regression proving long initiative names stay out of plotted point text and remain available in the chart key.
 - `scripts/qa/intelligence-100q-pressure.mjs`
   - Saves `api-response-events.json` for each question.
   - Marks fallback answer text as a technical failure.
@@ -41,6 +46,7 @@ This release prevents the Intelligence page from treating an empty model stream 
 
 - Pass: `npx jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand -t "retries once when the Intelligence stream completes without an answer"`
 - Pass: `npx jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand`
+- Pass: `npx jest src/lib/cxo-canvas/__tests__/cxo-canvas-renderer.test.tsx --runInBand`
 - Pass: `npx eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx scripts/qa/intelligence-100q-pressure.mjs`
 - Pass: `npm run qa:intelligence:pressure100 -- --dry-run --out-dir /Users/anand/Projects/nexus/proof/intelligence-100q-harness-dryrun-after-empty-stream-fix-20260703`
 

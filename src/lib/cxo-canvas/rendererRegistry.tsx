@@ -54,24 +54,20 @@ function ExecutiveSequencingCanvas({ payload }: { payload: CxoCanvasPayload }) {
       <style>{CXO_CANVAS_CSS}</style>
       <CanvasHeader eyebrow="Executive sequencing" payload={payload} />
       <div className="researchGrid">
-        <div className="researchMatrix" aria-label="Value vs. readiness">
-          <div className="matrixTitle">Value vs. readiness</div>
-          <div className="matrixAxis matrixAxisY">Value</div>
-          <div className="matrixAxis matrixAxisX">Readiness</div>
-          {plotItems.map((item, index) => (
-            <ResearchPoint
-              key={`${item.label}-${index}`}
-              item={item}
-              index={index}
-            />
-          ))}
-          <div className="chartKey">
-            {plotItems.slice(0, 4).map((item, index) => (
-              <span key={`${item.label}-key`}>
-                <b>{index + 1}</b> {item.label}
-              </span>
+        <div className="researchVisualPanel">
+          <div className="researchMatrix" aria-label="Value vs. readiness">
+            <div className="matrixTitle">Value vs. readiness</div>
+            <div className="matrixAxis matrixAxisY">Value</div>
+            <div className="matrixAxis matrixAxisX">Readiness</div>
+            {plotItems.map((item, index) => (
+              <ResearchPoint
+                key={`${item.label}-${index}`}
+                item={item}
+                index={index}
+              />
             ))}
           </div>
+          <ChartNumberKey items={plotItems} />
         </div>
         <div className="sequenceGrid" aria-label="Funding sequence">
           <h4>Funding sequence</h4>
@@ -265,7 +261,20 @@ function ResearchPoint({
       aria-label={`${index + 1}. ${item.label}; Value ${value}; Ready ${readiness}; Risk ${risk}`}
     >
       <span className="researchDot">{index + 1}</span>
-      <span className="researchLabel">{item.label}</span>
+    </div>
+  );
+}
+
+function ChartNumberKey({ items }: { items: CxoCanvasItem[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="chartNumberKey" aria-label="Chart number key">
+      {items.map((item, index) => (
+        <div className="chartNumberKeyItem" key={`${item.label}-key`}>
+          <span>{index + 1}</span>
+          <strong title={item.label}>{item.label}</strong>
+        </div>
+      ))}
     </div>
   );
 }
@@ -431,6 +440,10 @@ const CXO_CANVAS_CSS = `
   gap: 14px;
   grid-template-columns: minmax(280px, 1fr) minmax(220px, 0.72fr);
 }
+.researchVisualPanel {
+  display: grid;
+  gap: 10px;
+}
 .researchMatrix {
   aspect-ratio: 1.25 / 1;
   background:
@@ -473,10 +486,8 @@ const CXO_CANVAS_CSS = `
 .researchPoint {
   align-items: center;
   display: flex;
-  gap: 6px;
   position: absolute;
   transform: translate(-50%, 50%);
-  white-space: nowrap;
 }
 .researchDot {
   align-items: center;
@@ -492,32 +503,35 @@ const CXO_CANVAS_CSS = `
   justify-content: center;
   width: 28px;
 }
-.researchLabel {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  max-width: 170px;
-  overflow: hidden;
-  padding: 4px 6px;
-  text-overflow: ellipsis;
+.chartNumberKey {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
-.chartKey {
-  background: rgba(255, 255, 255, 0.92);
-  border-top: 1px solid rgba(15, 23, 42, 0.1);
-  bottom: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  left: 0;
-  padding: 8px 10px;
-  position: absolute;
-  right: 0;
-}
-.chartKey span {
+.chartNumberKeyItem {
+  align-items: center;
   color: #334155;
+  display: grid;
   font-size: 12px;
+  gap: 7px;
+  grid-template-columns: 24px minmax(0, 1fr);
+}
+.chartNumberKeyItem span {
+  align-items: center;
+  background: #0f766e;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+}
+.chartNumberKeyItem strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sequenceGrid,
 .matrixQuadrant,
