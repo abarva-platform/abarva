@@ -36,6 +36,7 @@ import {
 import type { DeliverableFormat } from "@/lib/programs/exports/types";
 import { resolveAuthoritativeArtifact } from "@/lib/source/client-final-artifacts";
 import { downloadArtifactBytes } from "@/lib/source/file-cabinet/blob-store";
+import { artifactContentDisposition } from "@/lib/source/file-cabinet/content-disposition";
 import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
 import {
   contentTypeFor,
@@ -285,7 +286,10 @@ async function streamFileCabinetRecord(
     status: 200,
     headers: {
       "content-type": contentTypeFor(record.fileFormat),
-      "content-disposition": `${disposition}; filename="${record.fileName.replace(/"/g, "")}"`,
+      "content-disposition": artifactContentDisposition(
+        disposition,
+        record.fileName,
+      ),
       "content-length": String(bytes.length),
       "cache-control": "private, no-store",
       "x-source-artifact-id": record.id,
