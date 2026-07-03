@@ -122,7 +122,7 @@ function toHomeKnowCitation(
     sourceFile: citation.label,
     sourceRowNumber: null,
     recordId: null,
-    excerpt: `${citation.count} V7 evidence item${
+    excerpt: `${citation.count} source evidence item${
       citation.count === 1 ? "" : "s"
     } selected from ${label.toLowerCase()}.`,
     confidence: "high",
@@ -149,7 +149,7 @@ function toHomeKnowTable(result: V7HomeAskResult): HomeKnowTable | null {
       Object.fromEntries(row.map((cell, index) => [`c${index}`, cell])),
     ),
     citationIds,
-    note: "V7 Azure schema evidence. Evidence gaps stay visible instead of becoming confidence scores.",
+    note: "Current governed source evidence. Evidence gaps stay visible instead of becoming confidence scores.",
   };
 }
 
@@ -183,7 +183,7 @@ function toHomeKnowGaps(
   return result.answer.gaps.map((gap, index) => ({
     id: `home-v7-gap-${index + 1}`,
     dimensionId: publicDimensionId(result.answer.primaryDimension),
-    objectType: "v7_evidence_gap",
+    objectType: "source_evidence_gap",
     expectedField: slug(gap.label),
     displayLabel: gap.label,
     severity: index === 0 ? "high" : "medium",
@@ -289,16 +289,16 @@ function citationId(index = 0): string {
 
 function businessEvidenceLabel(value: string): string {
   const fileName = value.split("/").pop() ?? value;
-  return `${humanize(fileName)} evidence`;
+  return `${humanize(fileName)} source file`;
 }
 
 function publicDimensionId(value: string): string {
-  return slug(value);
+  return slug(humanize(value));
 }
 
 function humanize(value: string): string {
   return value
-    .replace(/^v7_\d+_/, "")
+    .replace(/^v7_\d+_/i, "")
     .replace(/\.csv$/i, "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (match) => match.toUpperCase());
