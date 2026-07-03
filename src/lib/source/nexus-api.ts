@@ -291,7 +291,9 @@ export function createSourceNexusApiStubResponse(
     : undefined;
   const renderedSourceAnswer =
     sourceAnswer && answerQuality
-      ? { ...sourceAnswer, answerText: answerQuality.answerText }
+      ? shouldPreserveSourceAnswerText(sourceAnswer)
+        ? sourceAnswer
+        : { ...sourceAnswer, answerText: answerQuality.answerText }
       : sourceAnswer;
   const summary = intakeGuidance
     ? formatIntakeGuidanceSummary(intakeGuidance)
@@ -371,6 +373,17 @@ export function createSourceNexusApiStubResponse(
     summary,
     intakeGuidance,
   };
+}
+
+function shouldPreserveSourceAnswerText(
+  sourceAnswer: SourceAnswerEngineOutput,
+): boolean {
+  return [
+    "Evaluation scorecard answer",
+    "BAFO instruction answer",
+    "Artifact authority answer",
+    "Contract optimization answer",
+  ].includes(sourceAnswer.title);
 }
 
 function evaluateSourceAnswerQuality(args: {
