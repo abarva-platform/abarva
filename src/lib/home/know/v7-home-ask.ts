@@ -68,23 +68,23 @@ const V7_DISPLAY_NAME_BY_TENANT: Record<string, string> = {
 
 const TOPICS: Record<string, V7TopicConfig> = {
   loaded_context: topic('loaded_context', 'v7_01_enterprise_profile', ['v7_13_source_evidence_registry'], ['Record', 'Industry/model', 'Priority/context'], ['company_name', 'industry', 'strategic_priorities']),
-  business_areas: topic('business_areas', 'v7_02_business_functions', ['v7_03_org_ownership'], ['Business area', 'Executive owner', 'Critical processes'], ['business_function_name', 'executive_owner', 'critical_processes']),
-  it_org: topic('it_org', 'v7_03_org_ownership', ['v7_02_business_functions'], ['IT/domain area', 'Leader role', 'Decision rights'], ['org_unit_name', 'role_title', 'decision_rights']),
-  apps_systems: topic('apps_systems', 'v7_05_applications_systems', ['v7_18_function_system_data_vendor_bridge', 'v7_06_data_assets_integrations'], ['System', 'Owner', 'Criticality', 'Lifecycle'], ['system_name', 'system_owner', 'criticality', 'lifecycle_status']),
-  infrastructure: topic('infrastructure', 'v7_24_infrastructure_cloud_estate', ['v7_05_applications_systems'], ['Platform', 'Hosting', 'Provider', 'Criticality'], ['platform_name', 'hosting_model', 'provider', 'criticality']),
+  business_areas: topic('business_areas', 'v7_02_business_functions', ['v7_03_org_ownership'], ['Business area', 'Executive owner', 'Critical processes'], ['function_name', 'executive_owner', 'critical_processes_structured']),
+  it_org: topic('it_org', 'v7_03_org_ownership', ['v7_02_business_functions'], ['Org area', 'Leader role', 'Decision rights'], ['org_unit', 'leader_role', 'decision_rights']),
+  apps_systems: topic('apps_systems', 'v7_05_applications_systems', ['v7_18_function_system_data_vendor_bridge', 'v7_06_data_assets_integrations'], ['System', 'Owner', 'Criticality', 'Lifecycle'], ['system_name', 'technical_owner', 'criticality', 'lifecycle_status']),
+  infrastructure: topic('infrastructure', 'v7_24_infrastructure_cloud_estate', ['v7_05_applications_systems'], ['Estate item', 'Hosting', 'Technology/vendor', 'Criticality'], ['estate_item_name', 'hosting_deployment_model', 'key_technologies_vendors', 'criticality']),
   data_estate: topic('data_estate', 'v7_06_data_assets_integrations', ['v7_05_applications_systems', 'v7_20_chunk_retrieval_registry'], ['Data asset', 'Owner', 'Integration', 'Governance'], ['data_asset_name', 'data_owner', 'integration_type', 'governance_status']),
   relationships: topic('relationships', 'v7_12_relationships_graph_edges', ['v7_21_graph_registry_relationship_dictionary'], ['From', 'Relationship', 'To', 'Strength'], ['from_object_ref', 'relationship_type', 'to_object_ref', 'relationship_strength']),
-  vendors_contracts: topic('vendors_contracts', 'v7_07_vendors_contracts', ['v7_08_spend_value'], ['Vendor', 'Service', 'Renewal', 'Contract risk'], ['vendor_name', 'service_category', 'renewal_date', 'contract_risk']),
-  budget_spend: topic('budget_spend', 'v7_08_spend_value', ['v7_01_enterprise_profile'], ['Spend record', 'Amount', 'Type', 'Owner'], ['spend_id', 'amount_usd', 'amount_type', 'owner']),
-  programs: topic('programs', 'v7_09_programs_initiatives_business_priorities', ['v7_22_operational_evidence_process_intelligence'], ['Program/priority', 'Sponsor', 'Status', 'Value'], ['program_name', 'sponsor', 'status', 'value_hypothesis']),
-  ai_footprint: topic('ai_footprint', 'v7_10_ai_initiatives', ['v7_16_expert_lenses'], ['Use case/tool', 'Users', 'Adoption', 'Readiness'], ['use_case', 'licensed_users', 'active_users', 'data_readiness']),
+  vendors_contracts: topic('vendors_contracts', 'v7_07_vendors_contracts', ['v7_08_spend_value'], ['Vendor', 'Service', 'Renewal', 'Contract risk'], ['vendor_name', 'vendor_category', 'renewal_date', 'contract_risk']),
+  budget_spend: topic('budget_spend', 'v7_08_spend_value', ['v7_01_enterprise_profile'], ['Spend area', 'Amount', 'Type', 'Owner'], ['service_tower_or_function', 'amount_usd', 'amount_type', 'spend_owner']),
+  programs: topic('programs', 'v7_09_programs_initiatives_business_priorities', ['v7_22_operational_evidence_process_intelligence'], ['Program/priority', 'Sponsor', 'Status', 'Outcome'], ['priority_name', 'business_sponsor', 'current_status', 'target_outcome']),
+  ai_footprint: topic('ai_footprint', 'v7_10_ai_initiatives', ['v7_16_expert_lenses'], ['Use case/tool', 'Users', 'Adoption', 'Readiness'], ['ai_use_case', 'licensed_users', 'active_users', 'data_readiness']),
   operations: topic('operations', 'v7_11_operations_risk_controls', ['v7_22_operational_evidence_process_intelligence'], ['Process/control', 'Severity/status', 'Affected systems', 'Impact'], ['process', 'severity', 'affected_systems', 'business_impact']),
   metrics: topic('metrics', 'v7_14_metric_definitions', ['v7_15_industry_market_knowledge_patterns'], ['Metric', 'Definition', 'Owner', 'Cadence'], ['metric_name', 'metric_definition', 'metric_owner', 'cadence']),
   source_trail: topic('source_trail', 'v7_13_source_evidence_registry', ['v7_20_chunk_retrieval_registry'], ['Evidence', 'Type', 'Location', 'Strength'], ['evidence_title', 'evidence_type', 'source_location', 'evidence_confidence']),
-  handoff_intelligence: topic('handoff_intelligence', 'v7_16_expert_lenses', ['v7_15_industry_market_knowledge_patterns'], ['Lens', 'Expertise', 'Action', 'Boundary'], ['lens_name', 'expertise_area', 'recommended_actions', 'claim_boundary'], 'intelligence', 'Intelligence owns advisory synthesis and pattern-backed executive recommendations.'),
+  handoff_intelligence: topic('handoff_intelligence', 'v7_16_expert_lenses', ['v7_15_industry_market_knowledge_patterns'], ['Lens', 'Expertise', 'Action', 'Boundary'], ['expert_lens_name', 'lens_domain', 'decision_criteria', 'caveats'], 'intelligence', 'Intelligence owns advisory synthesis and pattern-backed executive recommendations.'),
   handoff_source: topic('handoff_source', 'v7_07_vendors_contracts', ['v7_13_source_evidence_registry'], ['Vendor/evidence', 'Renewal/type', 'Risk', 'Source basis'], ['vendor_name', 'renewal_date', 'contract_risk', 'source_basis'], 'source', 'Source owns sourcing events, vendor evidence, renewal decisions, and partner tradeoffs.'),
-  handoff_moves: topic('handoff_moves', 'v7_09_programs_initiatives_business_priorities', ['v7_12_relationships_graph_edges'], ['Program', 'Phase/status', 'Owner', 'Move relevance'], ['program_name', 'phase', 'owner', 'move_relevance'], 'moves', 'Moves owns governed change framing, ownership, sequencing, and mobilization.'),
-  handoff_tower: topic('handoff_tower', 'v7_10_ai_initiatives', ['v7_08_spend_value'], ['Use case', 'Readiness', 'Value', 'Decision'], ['use_case', 'data_readiness', 'measured_value_usd', 'scale_hold_stop'], 'tower', 'Tower owns portfolio execution, spend, adoption, readiness, and value tracking.'),
+  handoff_moves: topic('handoff_moves', 'v7_09_programs_initiatives_business_priorities', ['v7_12_relationships_graph_edges'], ['Program', 'Status', 'Owner', 'Move relevance'], ['priority_name', 'current_status', 'technology_sponsor', 'stage_gate'], 'moves', 'Moves owns governed change framing, ownership, sequencing, and mobilization.'),
+  handoff_tower: topic('handoff_tower', 'v7_10_ai_initiatives', ['v7_08_spend_value'], ['Use case', 'Readiness', 'Value', 'Decision'], ['ai_use_case', 'data_readiness', 'measured_value_usd', 'scale_hold_stop_recommendation'], 'tower', 'Tower owns portfolio execution, spend, adoption, readiness, and value tracking.'),
 };
 
 const defaultSession = createDefaultSession('home-v7-know-ask');
@@ -350,8 +350,26 @@ function buildParagraphs(args: {
   rows: V7RecordRow[];
   gaps: Array<{ label: string; impact: string }>;
 }) {
+  const preferredSampleColumns = [
+    'estate_item_name',
+    'system_name',
+    'function_name',
+    'org_unit',
+    'vendor_name',
+    'priority_name',
+    'ai_use_case',
+    'process_control_name',
+    'data_asset_name',
+    'metric_name',
+    'expert_lens_name',
+    'evidence_title',
+    'relationship_type',
+    'service_tower_or_function',
+    'company_name',
+    'client_display_name',
+  ];
   const samples = args.rows
-    .map((row) => display(row.record_name) || display(firstMeaningfulValue(row.values_json)))
+    .map((row) => display(firstPreferredValue(row.values_json, preferredSampleColumns)) || display(row.record_name) || display(firstMeaningfulValue(row.values_json)))
     .filter((value) => value !== 'Needs evidence')
     .slice(0, 6);
   const dimensionLabel = humanize(args.config.primaryDimension).toLowerCase();
@@ -390,10 +408,19 @@ function firstMeaningfulValue(record: Record<string, unknown>): string {
   return '';
 }
 
+function firstPreferredValue(record: Record<string, unknown>, columns: string[]): string {
+  for (const column of columns) {
+    const displayed = display(record[column]);
+    if (displayed !== 'Needs evidence') return displayed;
+  }
+  return '';
+}
+
 function display(value: unknown): string {
   const text = String(value ?? '').trim();
   if (!text || /^data_thin:/i.test(text) || /^needs evidence$/i.test(text)) return 'Needs evidence';
   if (/^(synthetic_demo|v4_synthetic_pack|static_snapshot|confidential)$/i.test(text)) return 'Needs evidence';
+  if (/\.(csv|json|jsonl|xlsx|xls|docx|pdf)$/i.test(text)) return 'Needs evidence';
   return text.replace(/_/g, ' ').replace(/\|/g, ', ').replace(/\s+/g, ' ').trim();
 }
 
