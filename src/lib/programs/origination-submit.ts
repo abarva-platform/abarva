@@ -797,49 +797,69 @@ export async function submitOriginationBrief(
     );
   }
 
-  const { data: inserted, error: insertError } = await sb
+  let legacySolutionSlot = input.programName;
+  const engagementInsertPayload = {
+    graph_node_id: graphNodeId,
+    client_id: tenancy.clientId,
+    industry_code: industryCode,
+    function_code: derived.functionCode,
+    objective_code: derived.objectiveCode,
+    topic_code: derived.topicCode,
+    name: input.programName,
+    // Legacy compatibility: the original engagement engine used `solution`
+    // as the required display field and production schemas still enforce one
+    // active row per client × solution. New Programs code reads `name`, so on
+    // duplicate legacy slots we keep the visible name and make only the slot
+    // collision-safe.
+    solution: legacySolutionSlot,
+    sponsor_person_id: sponsor.id,
+    co_sponsor_person_id: coSponsor?.id ?? null,
+    maestro_person_id: lead.id,
+    status: "draft",
+    lifecycle_state: "submitted_for_approval",
+    current_phase: 0,
+    value_projected_low_usd: parsedValueRange?.low ?? null,
+    value_projected_high_usd: parsedValueRange?.high ?? null,
+    value_verified_status: parsedValueRange ? "pending" : null,
+    value_currency: "USD",
+    value_assumptions_jsonb: valueAssumptions,
+    program_archetype: programArchetype,
+    origin_source: "user_initiated" as OriginSource,
+    origin_source_ref: null,
+    maestro_oversight_level: "partial",
+    founder_approval_required: false,
+    data_residency_region: null,
+    retention_policy_years: 7,
+    charter: charterToWrite,
+    // Function-identity spine · first-class column. Dual-written with
+    // `charter.functionPackKey` (above) — the column is the queryable,
+    // indexable source of truth; the charter copy keeps a rollback to the
+    // pre-column code harmless. `null` when no pack cleared the floor.
+    function_pack_key: functionPackIdentity?.functionPackKey ?? null,
+    function_pack_confidence:
+      functionPackIdentity?.functionPackConfidence ?? null,
+  };
+
+  let { data: inserted, error: insertError } = await sb
     .from("engagements")
-    .insert({
-      graph_node_id: graphNodeId,
-      client_id: tenancy.clientId,
-      industry_code: industryCode,
-      function_code: derived.functionCode,
-      objective_code: derived.objectiveCode,
-      topic_code: derived.topicCode,
-      name: input.programName,
-      // Legacy compatibility: the original engagement engine used `solution`
-      // as the required display field. New Programs code reads `name`, but
-      // production schemas can still enforce `solution`.
-      solution: input.programName,
-      sponsor_person_id: sponsor.id,
-      co_sponsor_person_id: coSponsor?.id ?? null,
-      maestro_person_id: lead.id,
-      status: "draft",
-      lifecycle_state: "submitted_for_approval",
-      current_phase: 0,
-      value_projected_low_usd: parsedValueRange?.low ?? null,
-      value_projected_high_usd: parsedValueRange?.high ?? null,
-      value_verified_status: parsedValueRange ? "pending" : null,
-      value_currency: "USD",
-      value_assumptions_jsonb: valueAssumptions,
-      program_archetype: programArchetype,
-      origin_source: "user_initiated" as OriginSource,
-      origin_source_ref: null,
-      maestro_oversight_level: "partial",
-      founder_approval_required: false,
-      data_residency_region: null,
-      retention_policy_years: 7,
-      charter: charterToWrite,
-      // Function-identity spine · first-class column. Dual-written with
-      // `charter.functionPackKey` (above) — the column is the queryable,
-      // indexable source of truth; the charter copy keeps a rollback to the
-      // pre-column code harmless. `null` when no pack cleared the floor.
-      function_pack_key: functionPackIdentity?.functionPackKey ?? null,
-      function_pack_confidence:
-        functionPackIdentity?.functionPackConfidence ?? null,
-    })
+    .insert(engagementInsertPayload)
     .select("id, name")
     .single();
+
+  if (
+    insertError &&
+    /idx_engagements_one_active|duplicate key value violates unique constraint/i.test(
+      insertError.message,
+    )
+  ) {
+    legacySolutionSlot = `${input.programName} · ${new Date().toISOString()}`;
+    engagementInsertPayload.solution = legacySolutionSlot;
+    ({ data: inserted, error: insertError } = await sb
+      .from("engagements")
+      .insert(engagementInsertPayload)
+      .select("id, name")
+      .single());
+  }
 
   if (insertError || !inserted) {
     throw new OriginationSubmitError(
