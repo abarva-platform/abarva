@@ -371,7 +371,7 @@ export function SourceValueLedger({
                     id="value-custom-input"
                     type="text"
                     readOnly
-                    placeholder="Ask Ava about this value ledger, gate, event, or evidence..."
+                    placeholder="Ask aVa about this value ledger, gate, event, or evidence..."
                     style={{
                       fontFamily: SHELL.SANS,
                       fontSize: 14,

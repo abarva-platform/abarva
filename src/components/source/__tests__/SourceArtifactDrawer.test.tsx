@@ -245,7 +245,7 @@ describe("SourceArtifactDrawer · hygiene", () => {
     );
   });
 
-  it("artifact route has updated Sentinel voice format", () => {
+  it("artifact route has business-safe aVa side-rail language", () => {
     const src = readFileSync(
       join(
         process.cwd(),
@@ -258,5 +258,32 @@ describe("SourceArtifactDrawer · hygiene", () => {
     expect(src).toContain("Evidence chain:");
     expect(src).not.toContain("Artifact tier:");
     expect(src).not.toContain("Provenance:");
+    expect(src).not.toContain("Sentinel ·");
+    expect(src).toContain("Artifact review ·");
+  });
+
+  it("Source shell rail uses aVa naming rather than stale internal agent labels", () => {
+    const railSrc = readFileSync(
+      join(process.cwd(), "src/components/source/SentinelAgentColumn.tsx"),
+      "utf8",
+    );
+    const scorecardSrc = readFileSync(
+      join(
+        process.cwd(),
+        "src/app/(maestro)/source/events/[eventId]/scorecard/page.tsx",
+      ),
+      "utf8",
+    );
+    const valueSrc = readFileSync(
+      join(process.cwd(), "src/app/(maestro)/source/value/page.tsx"),
+      "utf8",
+    );
+
+    expect(railSrc).toContain("name: 'aVa'");
+    expect(railSrc).toContain("role: 'Source advisor'");
+    expect(railSrc).not.toContain("name: 'Ava'");
+    expect(railSrc).not.toContain("role: 'Validator'");
+    expect(scorecardSrc).not.toContain("Sentinel ·");
+    expect(valueSrc).not.toContain("Sentinel ·");
   });
 });

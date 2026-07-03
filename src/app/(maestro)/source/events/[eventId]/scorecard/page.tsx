@@ -49,7 +49,7 @@ export default async function SourceEventScorecardPage({
       <main data-testid="source-scorecard-layout" style={SCORECARD_LAYOUT_STYLE}>
         <SentinelAgentColumn
           quote={`Scorecard at ${event.scorecard?.approvalState ?? 'default_generated'}. ${approvedCriteriaCount} criteria approved · ${pendingCriteriaCount} pending review. Locks when all criteria reach 'approved'.`}
-          agentContext={`Sentinel · ${event.name} · Scorecard`}
+          agentContext={`Scorecard review · ${event.name}`}
           actions={[
             { letter: 'A', text: 'Review approval blockers', detail: 'Criteria pending approval or still carrying blocked status' },
             { letter: 'B', text: 'Inspect rationale gaps', detail: 'Criteria where deterministic rationale is still incomplete' },

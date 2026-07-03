@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import type { AgentAction } from '@/components/shell/AgentColumn';
 
-const SENTINEL = { initials: 'Av', name: 'Ava', role: 'Validator' };
+const SOURCE_AVA = { initials: 'aV', name: 'aVa', role: 'Source advisor' };
 
 const DEFAULT_ACTIONS: AgentAction[] = [
   {
@@ -35,7 +35,7 @@ interface SentinelAgentColumnProps {
 }
 
 export function SentinelAgentColumn({
-  quote = 'Source workspace ready. Paper aesthetic active. Ava listening.',
+  quote = 'Source workspace ready. aVa is ready to help review evidence, risks, and next actions.',
   synthesisNode,
   provenanceSlot,
   agentContext,
@@ -45,7 +45,7 @@ export function SentinelAgentColumn({
 }: SentinelAgentColumnProps) {
   return (
     <AgentColumn
-      agent={SENTINEL}
+      agent={SOURCE_AVA}
       quote={quote}
       synthesisNode={synthesisNode}
       provenanceSlot={provenanceSlot}
