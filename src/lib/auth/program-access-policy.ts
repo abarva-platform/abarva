@@ -269,7 +269,8 @@ async function resolvePolicyPersonId(ctx: TenancyCtx): Promise<string | null> {
     .eq("email", normalizedEmail)
     .maybeSingle();
 
-  return (data as { id?: string | null } | null)?.id ?? null;
+  const personId = (data as { id?: string | null } | null)?.id ?? null;
+  return personId && isUuidLike(personId) ? personId : null;
 }
 
 function inferAccessLevel(

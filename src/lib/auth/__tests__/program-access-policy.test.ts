@@ -390,4 +390,43 @@ describe("program access policy", () => {
     await expect(canReadProgram(ctx, "sky-move-1")).resolves.toBe(true);
     await expect(canReadProgram(ctx, "other-move")).resolves.toBe(false);
   });
+
+  it("ignores legacy non-UUID person ids returned from email lookup", async () => {
+    setupRows({
+      persons: { id: "Anand Sundaram" },
+      person_client_memberships: {
+        role: "client_viewer",
+        access_level: "program_member",
+        financial_visibility: false,
+      },
+      engagement_participants: [
+        {
+          engagement_id: "legacy-row-should-not-be-queried",
+          approval_authority: "contributor",
+          program_access_level: "program_member",
+          can_view_financial: false,
+          can_upload: true,
+          can_generate_deliverables: true,
+          can_publish_deliverables: false,
+          can_approve_phase_gates: false,
+        },
+      ],
+    });
+    const { loadUserProgramAccessPolicy } =
+      await import("../program-access-policy");
+
+    const policy = await loadUserProgramAccessPolicy({
+      clientId: "client-lakeshore",
+      clientKey: "lakeshore",
+      userId: "clerk:user_demo_lakeshore",
+      clerkUserId: "user_demo_lakeshore",
+      role: "client_viewer",
+      tenantRole: "tenant_admin",
+      email: "anand.sundaram+lakeshore@thesundaram.com",
+    });
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.programIdsAllowed).toBeNull();
+    expect(policy.canCreatePrograms).toBe(true);
+  });
 });
