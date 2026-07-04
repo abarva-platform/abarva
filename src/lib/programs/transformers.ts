@@ -148,6 +148,24 @@ function colorForId(id: string): string {
   return AVATAR_COLORS[hashStringToInt(id) % AVATAR_COLORS.length];
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuidLike(value: string | null | undefined): value is string {
+  return UUID_RE.test(value ?? "");
+}
+
+function legacyPersonFromLabel(label: string, fallbackClientName?: string): PersonRef {
+  return {
+    id: label,
+    name: label.trim() || "—",
+    title: "",
+    initials: initialsOf(label),
+    avatarColor: colorForId(label),
+    clientName: fallbackClientName,
+  };
+}
+
 // ── Gate criteria — single source of truth, evaluated against real state ──
 //
 // Gate criteria are the canonical `GATE_RULES` checks in `governance.ts`,
@@ -247,6 +265,9 @@ async function resolvePerson(
   fallbackClientName?: string,
 ): Promise<PersonRef> {
   if (!userId) return placeholderPerson();
+  if (!isUuidLike(userId)) {
+    return legacyPersonFromLabel(userId, fallbackClientName);
+  }
   const p = await azureRead.maybeSingle<{
     id: string;
     name: string | null;
@@ -292,19 +313,32 @@ async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
     where: { engagement_id: engagementId },
   });
   const personIds = Array.from(
-    new Set(rows.map((r) => r.user_id).filter(Boolean)),
+    new Set(rows.map((r) => r.user_id).filter(isUuidLike)),
   );
-  if (personIds.length === 0) return [];
-  const persons = await azureRead.select<{
-    id: string;
-    name: string | null;
-    role: string | null;
-    email: string | null;
-  }>({
-    table: "persons",
-    columns: ["id", "name", "role", "email"],
-    where: { id: { op: "in", value: personIds } },
-  });
+  const legacyRows = rows.filter((r) => r.user_id && !isUuidLike(r.user_id));
+  const persons =
+    personIds.length === 0
+      ? []
+      : await azureRead
+          .select<{
+            id: string;
+            name: string | null;
+            role: string | null;
+            email: string | null;
+          }>({
+            table: "persons",
+            columns: ["id", "name", "role", "email"],
+            where: { id: { op: "in", value: personIds } },
+          })
+          .catch(
+            () =>
+              [] as Array<{
+                id: string;
+                name: string | null;
+                role: string | null;
+                email: string | null;
+              }>,
+          );
   const personById = new Map<
     string,
     { id: string; name: string | null; role: string | null }
@@ -313,7 +347,7 @@ async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
     personById.set(p.id, { id: p.id, name: p.name, role: p.role });
   }
 
-  return rows
+  const resolvedRows = rows
     .filter((r) => personById.has(r.user_id))
     .map((r) => {
       const p = personById.get(r.user_id)!;
@@ -326,6 +360,14 @@ async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
         role: authorityToViewerRole(r.approval_authority),
       } satisfies ParticipantRef;
     });
+  return [
+    ...resolvedRows,
+    ...legacyRows.map((r) => ({
+      ...legacyPersonFromLabel(r.user_id),
+      title: r.role ?? "",
+      role: authorityToViewerRole(r.approval_authority),
+    })),
+  ];
 }
 
 async function resolveSponsorAndLead(
