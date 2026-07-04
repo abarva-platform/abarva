@@ -12,6 +12,7 @@ import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { formatSourceFinancialValue } from "@/lib/source/financial-display";
+import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
 import { getSourcingEvent, type SourceEventRow } from "@/lib/source/queries";
 
 export const metadata = { title: "Source · Event Approval · AbarVa" };
@@ -125,6 +126,12 @@ async function loadPersistedEventRow(
 }
 
 function buildCapturedFacts(row: SourceEventRow): IntakeFact[] {
+  const scopeSummary = parseSourceScopeDescription(row.scope_description);
+  const valueTarget =
+    scopeSummary.valueTarget ??
+    (row.estimated_value_usd && row.estimated_value_usd > 0
+      ? formatSourceFinancialValue(row.estimated_value_usd, true)
+      : "Value target pending.");
   return [
     {
       id: "trigger",
@@ -139,20 +146,19 @@ function buildCapturedFacts(row: SourceEventRow): IntakeFact[] {
     {
       id: "scope-boundary",
       label: "Scope boundary",
-      value: row.scope_description ?? "Scope boundary not captured yet.",
+      value:
+        scopeSummary.scopeBoundary ?? "Scope boundary not captured yet.",
     },
     {
       id: "value-target",
       label: "Value or savings target",
-      value:
-        row.estimated_value_usd && row.estimated_value_usd > 0
-          ? formatSourceFinancialValue(row.estimated_value_usd, true)
-          : "Value target pending.",
+      value: valueTarget,
     },
     {
       id: "baseline-owner",
       label: "Minimum data / baseline owner",
       value:
+        scopeSummary.baselineOwner ??
         "Baseline owner pending. Confirm who owns the minimum evidence before external use.",
     },
   ];

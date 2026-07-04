@@ -383,6 +383,7 @@ function shouldPreserveSourceAnswerText(
     "BAFO instruction answer",
     "Artifact authority answer",
     "Contract optimization answer",
+    "Structured Source evidence answer",
   ].includes(sourceAnswer.title);
 }
 

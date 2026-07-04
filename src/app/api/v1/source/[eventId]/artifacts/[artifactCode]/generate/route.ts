@@ -667,6 +667,7 @@ export async function generateSourceArtifactDraft(
       string,
       unknown
     >,
+    status: artifactRow.status === "not_started" ? "drafting" : artifactRow.status,
     updated_at: nowIso,
   };
   if (artifactRow.tier === "stub") update.tier = "outline";
@@ -685,7 +686,7 @@ export async function generateSourceArtifactDraft(
     );
   }
 
-  const view: SourceEventArtifactState = artifactStateRowToView(
+  let view: SourceEventArtifactState = artifactStateRowToView(
     bodyWrite.data as unknown as SourceEventArtifactStateRow,
   );
 
@@ -698,6 +699,7 @@ export async function generateSourceArtifactDraft(
   let registryArtifact: SourceArtifactRegistryRecord | null = null;
   const registryArtifacts: SourceArtifactRegistryRecord[] = [];
   let renderErrors: string[] = [];
+  let registryPersistError: string | null = null;
   try {
     const spec = specByCode(artifactCode);
     const family = spec?.family ?? "other";
@@ -840,13 +842,51 @@ export async function generateSourceArtifactDraft(
       }
     }
   } catch (registryError) {
-    console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] registry persist failed",
+    registryPersistError =
       registryError instanceof Error
         ? registryError.message
-        : String(registryError),
+        : String(registryError);
+    console.error(
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] registry persist failed",
+      registryPersistError,
     );
   }
+
+  if (!registryArtifact) {
+    return Response.json(
+      {
+        error: "registry_persist_failed",
+        detail:
+          registryPersistError ??
+          "Generated artifact body was created, but the primary File Cabinet artifact was not persisted.",
+        artifact: view,
+        renderErrors,
+      },
+      { status: 502 },
+    );
+  }
+
+  const linkedWrite = await sourceWrite.updateArtifactBody({
+    artifactRowId: artifactRow.id,
+    columns: {
+      linked_artifact_id: registryArtifact.id,
+      updated_at: nowIso,
+    },
+  });
+  if (!linkedWrite.ok || !linkedWrite.data) {
+    return Response.json(
+      {
+        error: "linked_artifact_update_failed",
+        detail:
+          linkedWrite.error ??
+          "Generated artifact was persisted, but the canvas state did not link to it.",
+      },
+      { status: 500 },
+    );
+  }
+  view = artifactStateRowToView(
+    linkedWrite.data as unknown as SourceEventArtifactStateRow,
+  );
 
   const activityWrite = await sourceWrite.insertActivityLog({
     eventId: ctx.event.id,

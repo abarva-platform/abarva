@@ -1237,7 +1237,7 @@ function buildArtifactGovernanceAnswer(args: {
 
   const lineage = clientFinal
     ? generatedDraft
-      ? `Lineage: the AbarVa-generated draft is ${draftName}; the client uploaded ${finalName}; the File Cabinet marks the client-final version as superseding the generated draft for vendor issuance, while the generated draft remains preserved in history.`
+      ? `Lineage: AbarVa generated the draft as ${draftName}; the client uploaded ${finalName}; the File Cabinet marks the client-final version as superseding the generated draft for vendor issuance, while the generated draft remains preserved in history.`
       : `Lineage: ${finalName} is marked client-final; the prior generated draft is not visible in the current answer evidence slice.`
     : `Lineage: ${draftName} remains available, but the client-final handoff is not confirmed.`;
   const authority = clientFinal

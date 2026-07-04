@@ -31,7 +31,10 @@ import {
   listSourceArtifacts,
   supersedePriorVersions,
 } from "@/lib/source/file-cabinet/repository";
-import type { ArtifactFileFormat } from "@/lib/source/file-cabinet/types";
+import type {
+  ArtifactFileFormat,
+  SourceArtifactRecord,
+} from "@/lib/source/file-cabinet/types";
 import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type { SourceStageKey } from "@/lib/source/types";
@@ -222,6 +225,39 @@ export async function POST(request: Request, { params }: RouteContext) {
     return sensitiveUploadRejectedResponse(dataProtection);
   }
 
+  let siblingArtifacts: SourceArtifactRecord[];
+  let previousGenerated: SourceArtifactRecord | null;
+  let previousAuthoritative: SourceArtifactRecord | null;
+  try {
+    const allArtifacts = await listSourceArtifacts(event.id, client.id, {
+      includeHistory: true,
+    });
+    siblingArtifacts = allArtifacts.filter(
+      (artifact) => artifact.artifactType === artifactCode,
+    );
+    previousGenerated =
+      resolveAuthoritativeArtifact(
+        siblingArtifacts.filter(
+          (artifact) => artifact.artifactGroup === "generated",
+        ),
+      ) ?? null;
+    previousAuthoritative = resolveAuthoritativeArtifact(siblingArtifacts);
+  } catch (error) {
+    return jsonError(
+      500,
+      "file_cabinet_read_failed",
+      error instanceof Error ? error.message : "file cabinet read failed",
+    );
+  }
+
+  if (!previousGenerated) {
+    return jsonError(
+      409,
+      "generated_draft_required",
+      "Generate and persist an AbarVa draft before accepting a client-final version.",
+    );
+  }
+
   const sha256 = createHash("sha256").update(buffer).digest("hex");
   const artifactId = randomUUID();
   let blobUri: string;
@@ -265,20 +301,6 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   try {
-    const allArtifacts = await listSourceArtifacts(event.id, client.id, {
-      includeHistory: true,
-    });
-    const siblingArtifacts = allArtifacts.filter(
-      (artifact) => artifact.artifactType === artifactCode,
-    );
-    const previousGenerated =
-      resolveAuthoritativeArtifact(
-        siblingArtifacts.filter(
-          (artifact) => artifact.artifactGroup === "generated",
-        ),
-      ) ?? null;
-    const previousAuthoritative =
-      resolveAuthoritativeArtifact(siblingArtifacts);
     const nextVersion =
       Math.max(0, ...siblingArtifacts.map((artifact) => artifact.version)) + 1;
     const spec = specByCode(artifactCode);

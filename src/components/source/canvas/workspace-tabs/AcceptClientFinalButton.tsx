@@ -6,6 +6,7 @@ interface AcceptClientFinalButtonProps {
   eventId: string;
   artifactCode: string;
   artifactName: string;
+  hasGeneratedDraft?: boolean;
   onAccepted?: () => void;
 }
 
@@ -13,6 +14,7 @@ export function AcceptClientFinalButton({
   eventId,
   artifactCode,
   artifactName,
+  hasGeneratedDraft = true,
   onAccepted,
 }: AcceptClientFinalButtonProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -68,15 +70,32 @@ export function AcceptClientFinalButton({
     <div style={WRAP_STYLE}>
       <button
         type="button"
+        disabled={!hasGeneratedDraft}
         onClick={() => {
+          if (!hasGeneratedDraft) return;
           setOpen((value) => !value);
           setError(null);
         }}
-        style={BUTTON_STYLE}
+        style={{
+          ...BUTTON_STYLE,
+          opacity: hasGeneratedDraft ? 1 : 0.55,
+          cursor: hasGeneratedDraft ? "pointer" : "not-allowed",
+        }}
         data-testid={`source-accept-client-final-toggle-${artifactCode}`}
+        title={
+          hasGeneratedDraft
+            ? undefined
+            : "Generate and persist an AbarVa draft before accepting a client-final version."
+        }
       >
         Accept Client Final
       </button>
+      {!hasGeneratedDraft ? (
+        <p style={COPY_STYLE}>
+          Generate and persist the AbarVa draft first; then upload the
+          client-approved final as the authoritative version.
+        </p>
+      ) : null}
       {open ? (
         <form
           onSubmit={handleSubmit}
