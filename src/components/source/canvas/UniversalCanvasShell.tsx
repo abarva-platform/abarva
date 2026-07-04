@@ -1370,7 +1370,7 @@ export function UniversalCanvasShell({
 }
 
 const LAKESHORE_CASE_STUDY_CHOICES = [
-  "What is this Lakeshore sourcing event about?",
+  "What is this Lakeshore shared-services AMS event about?",
   "Which RFP version is final?",
   "Which vendor should advance and why?",
   "What should go into BAFO?",
@@ -1409,7 +1409,8 @@ function CaseStudyCoherenceBanner({
         <p style={CASE_STUDY_BANNER_TEXT_STYLE}>
           You are reviewing the prepared Lakeshore RFP, vendor evaluation,
           BAFO, and decision artifacts for the {viewLabel} walkthrough. The
-          governance rail still records the formal event stage as {currentLabel}
+          governance rail still records the formal event stage as {" "}
+          {currentLabel}{" "}
           until a named human clears the gate.
         </p>
       </div>

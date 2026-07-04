@@ -47,6 +47,14 @@ const EXPORT_READY_ARTIFACTS: Record<string, Array<'docx' | 'xlsx' | 'pdf'>> = {
   d24_decision_brief: ['pdf', 'docx'],
 };
 
+const EXPORT_READY_DISPLAY: Record<string, string> = {
+  d09_rfp_pack: 'RFP Pack',
+  d11_response_checklist: 'Response Control Pack',
+  d16_scorecard: 'Evaluation Scorecard',
+  d22_bafo_question_pack: 'BAFO Question Pack',
+  d24_decision_brief: 'Executive Decision Brief',
+};
+
 function Chip({ text, color }: { text: string; color?: string }) {
   return <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: `${color ?? '#6b6b6b'}1a`, color: color ?? '#6b6b6b' }}>{text}</span>;
 }
@@ -109,10 +117,12 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <tbody>
-                {items.map((a) => (
+                {items.map((a) => {
+                  const exportReadyType = exportReadyArtifactType(a);
+                  return (
                   <tr key={a.id} style={{ borderTop: '1px solid #efece5', opacity: a.lifecycleState === 'current' ? 1 : 0.6 }}>
                     <td style={{ padding: '9px 14px' }}>
-                      <div style={{ fontWeight: 600 }}>{a.title}</div>
+                      <div style={{ fontWeight: 600 }}>{exportReadyType ? EXPORT_READY_DISPLAY[exportReadyType] : a.title}</div>
                       <div style={{ color: '#9a9a9a', fontSize: 11 }}>{fileCabinetMeta(a)}</div>
                       {a.missingInputs.length > 0 && <div style={{ color: '#8a6d1a', fontSize: 11, marginTop: 2 }}>Missing: {a.missingInputs.slice(0, 4).join(', ')}</div>}
                     </td>
@@ -128,10 +138,10 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                       >
                         {a.fileFormat === 'html' ? 'Preview' : 'Download'}
                       </a>
-                      {EXPORT_READY_ARTIFACTS[a.artifactType]?.map((format) => (
+                      {exportReadyType ? EXPORT_READY_ARTIFACTS[exportReadyType]?.map((format) => (
                         <a
                           key={format}
-                          href={`/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(a.artifactType)}/render?format=${format}`}
+                          href={`/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(exportReadyType)}/render?format=${format}`}
                           download
                           style={{
                             marginLeft: 8,
@@ -147,10 +157,10 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                         >
                           {format.toUpperCase()}
                         </a>
-                      ))}
+                      )) : null}
                     </td>
                   </tr>
-                ))}
+                );})}
               </tbody>
             </table>
           </section>
@@ -162,14 +172,26 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
 
 function fileCabinetMeta(artifact: Artifact): string {
   const stage = artifact.sourcingStage ? ` · ${artifact.sourcingStage}` : '';
+  const exportReadyType = exportReadyArtifactType(artifact);
   if (artifact.isClientFinal && artifact.isCurrentAuthoritative) {
     return `${artifact.fileName} · Client-approved final · authoritative${stage}`;
   }
-  if (EXPORT_READY_ARTIFACTS[artifact.artifactType]) {
+  if (exportReadyType) {
     return `${artifact.fileName} · Export-ready deliverable${stage}`;
   }
   if (artifact.artifactGroup === 'upload') {
     return `${artifact.fileName} · Uploaded evidence${stage}`;
   }
   return `${artifact.fileName} · ${artifact.fileFormat.toUpperCase()}${stage}`;
+}
+
+function exportReadyArtifactType(artifact: Artifact): string | null {
+  if (EXPORT_READY_ARTIFACTS[artifact.artifactType]) return artifact.artifactType;
+  const haystack = `${artifact.artifactType} ${artifact.title} ${artifact.fileName}`.toLowerCase();
+  if (/\bd09[_-]?rfp[_-]?(pack|package)\b|rfp[_-]?pack/.test(haystack)) return 'd09_rfp_pack';
+  if (/\bd11[_-]?(response[_-]?(checklist|control[_-]?pack)|vendor[_-]?response[_-]?control[_-]?pack)\b|response[_-]?control[_-]?pack/.test(haystack)) return 'd11_response_checklist';
+  if (/\bd16[_-]?scorecard\b|evaluation[_-]?scorecard/.test(haystack)) return 'd16_scorecard';
+  if (/\bd22[_-]?bafo[_-]?question[_-]?pack\b|bafo[_-]?(instruction|question)[_-]?pack/.test(haystack)) return 'd22_bafo_question_pack';
+  if (/\bd24[_-]?decision[_-]?brief\b|decision[_-]?brief/.test(haystack)) return 'd24_decision_brief';
+  return null;
 }

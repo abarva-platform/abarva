@@ -120,6 +120,16 @@ describe("Source format router (Slice 8.1 foundations)", () => {
   });
 
   it("normalizes user-facing artifact aliases before dispatch", () => {
+    expect(canonicalArtifactCodeFor("d09_rfp_package")).toBe(
+      "d09_rfp_pack",
+    );
+    expect(kindForArtifactCode("d09_rfp_package")).toBe("rfp-package");
+    expect(canonicalArtifactCodeFor("d11_response_control_pack")).toBe(
+      "d11_response_checklist",
+    );
+    expect(kindForArtifactCode("d11_response_control_pack")).toBe(
+      "response-checklist",
+    );
     expect(canonicalArtifactCodeFor("d16")).toBe("d16_scorecard");
     expect(kindForArtifactCode("d16")).toBe("scorecard");
     expect(canonicalArtifactCodeFor("evaluation-scorecard")).toBe(
