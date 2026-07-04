@@ -1209,8 +1209,8 @@ function buildArtifactGovernanceAnswer(args: {
       : `The current evidence shows ${draftName}, but does not confirm a client-uploaded final artifact.`;
   } else if (/\b(history|lineage)\b/.test(text)) {
     lead = clientFinal
-      ? `${finalName} is the current authoritative RFP artifact, and ${draftName} remains preserved in history for lineage.`
-      : `${draftName} is visible in the artifact lineage; a client-final authoritative version is not confirmed.`;
+      ? `${finalName} is the current authoritative RFP artifact in the File Cabinet, and ${draftName} remains preserved in history for lineage.`
+      : `${draftName} is visible in the File Cabinet artifact lineage; a client-final authoritative version is not confirmed.`;
   } else if (/\b(advance|stage)\b/.test(text)) {
     lead = artifactIsReady
       ? `The RFP artifact finality condition is satisfied: ${finalName} is client-final, current authoritative, and Blob-backed.`
@@ -1223,7 +1223,7 @@ function buildArtifactGovernanceAnswer(args: {
 
   const lineage = clientFinal
     ? generatedDraft
-      ? `Lineage: AbarVa generated ${draftName}; the client uploaded ${finalName}; the client-final version supersedes the generated draft for vendor issuance, while the generated draft remains preserved in history.`
+      ? `Lineage: AbarVa generated ${draftName}; the client uploaded ${finalName}; the File Cabinet marks the client-final version as superseding the generated draft for vendor issuance, while the generated draft remains preserved in history.`
       : `Lineage: ${finalName} is marked client-final; the prior generated draft is not visible in the current answer evidence slice.`
     : `Lineage: ${draftName} remains available, but the client-final handoff is not confirmed.`;
   const authority = clientFinal
