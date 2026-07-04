@@ -75,8 +75,10 @@ describe("getHomeV7ContextBrowser", () => {
     expect(browser?.contractLabel).toBe("V7");
     expect(browser?.bindingContext).toHaveLength(1);
     expect(browser?.bindingContext?.[0]?.dimension).toBe("Applications Systems");
+    expect(browser?.bindingContext?.[0]?.description).not.toMatch(/V7_|\.csv|V7 uses/);
     const preview = browser?.dimensions["Applications Systems"];
     expect(preview?.rowCount).toBe(200);
+    expect(preview?.title).toBe("Applications Systems loaded records");
     expect(preview?.columns.map((column) => column.label)).toContain("System");
     expect(preview?.rows[0]).toContain("SkyOps Recovery Platform");
     expect(JSON.stringify(preview)).not.toContain("internal-key-hidden");

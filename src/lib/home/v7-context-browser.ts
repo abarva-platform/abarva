@@ -180,7 +180,7 @@ export async function getHomeV7ContextBrowser(args: {
       const knownGaps = topKnownGaps(records, columns);
       dimensions[label] = {
         dimension: label,
-        title: `${label} loaded facts`,
+        title: `${label} loaded records`,
         fileNames: [dimension.dimension_file],
         rowCount: dimension.record_count,
         dataThinCells: countDataThinCells(records),
@@ -197,7 +197,7 @@ export async function getHomeV7ContextBrowser(args: {
       bindingContext.push({
         dimension: label,
         status: dimension.record_count > 0 ? "loaded" : "not loaded",
-        description: `${label} from ${dimension.dimension_file}. V7 uses actual loaded rows, client-friendly column metadata, source lineage, chunks, and graph relationships.`,
+        description: `${label} records with client-friendly fields, readable preview values, source support, and relationship coverage.`,
         evidence: dimension.record_count,
         sources: Math.max(1, dimension.source_files),
         trust: scoreFromCount(dimension.record_count),
