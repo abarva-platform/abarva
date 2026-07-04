@@ -51,6 +51,10 @@ import {
   extractProgramEvidenceFromUploadBuffer,
   recordProgramEvidence,
 } from "@/lib/programs/evidence-ingestion";
+import {
+  classifyUploadedMoveEvidence,
+  mergeMoveEvidenceClassification,
+} from "@/lib/programs/uploaded-move-evidence-classification";
 import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
 import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
@@ -306,18 +310,34 @@ export async function POST(
   let evidenceWarning: string | null = null;
   let evidenceParseMethod: string | null = null;
   let evidenceWarnings: string[] = [];
+  let evidenceWhatFound: string[] = [];
+  let evidenceWhereUsed: string[] = [];
   let discoveryReceipt: ExtractionReceipt | null = null;
   try {
-    const evidence = await extractProgramEvidenceFromUploadBuffer({
+    const rawEvidence = await extractProgramEvidenceFromUploadBuffer({
       filename,
       mimeType,
       buffer,
       cacheScope: tenantKey,
     });
+    const classification = classifyUploadedMoveEvidence({
+      filename,
+      phase: effectivePhase ?? null,
+      extractedText: rawEvidence.extractedText,
+      originalEvidenceType: rawEvidence.evidenceType,
+    });
+    const evidence = mergeMoveEvidenceClassification({
+      evidence: rawEvidence,
+      classification,
+      filename,
+    });
     evidenceParseMethod = evidence.extractedStructured.parse_method;
     evidenceWarnings = evidence.extractedStructured.warnings;
+    evidenceWhatFound = classification.whatFound;
+    evidenceWhereUsed = classification.whereUsed;
     evidenceId = await recordProgramEvidence(ctx, {
       ...evidence,
+      evidenceType: rawEvidence.evidenceType,
       tenantKey,
       programId,
       attachmentId: record.id,
@@ -363,6 +383,8 @@ export async function POST(
             status: "captured",
             parseMethod: evidenceParseMethod,
             warnings: evidenceWarnings,
+            whatFound: evidenceWhatFound,
+            whereUsed: evidenceWhereUsed,
           }
         : { id: null, status: "not_captured", warning: evidenceWarning },
       discovery: discoveryReceipt ?? undefined,

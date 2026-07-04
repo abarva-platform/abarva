@@ -2205,6 +2205,32 @@
   color: #1e7e34;
 }
 
+.qualityBarList {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qualityBarList li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--abarva-slate);
+}
+
+.qualityBarDot {
+  width: 6px;
+  height: 6px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: var(--canon-teal, #2f7d63);
+}
+
 .nextActionStrip {
   margin-top: 10px;
   font-family: var(--abarva-sans);
