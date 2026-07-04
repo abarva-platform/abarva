@@ -33,6 +33,7 @@ Adds the first structured Source evidence layer for existing-contract optimizati
 - Runtime read path: Source File Cabinet artifacts API includes `structuredEvidence`.
 - Runtime UI: `src/components/source/FileCabinetPanel.tsx` shows structured evidence coverage, metrics, and supported findings.
 - aVa binding: `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` and `src/lib/source/source-answer-engine.ts` bind persisted structured evidence into sourcing answers.
+- Recording readiness doctrine: `docs/source/SOURCE_RECORDING_READINESS_GATE.md` defines the signed-in buyer-journey proof required before any Source recording-ready claim.
 - Tests: `src/lib/source/contract-evidence/__tests__/*`
 - Tests: `src/lib/source/__tests__/source-answer-engine.test.ts`
 - Smoke script: `scripts/source/smoke-contract-evidence-persistence.mjs`
@@ -41,6 +42,7 @@ Adds the first structured Source evidence layer for existing-contract optimizati
 
 - `jest src/lib/source/contract-evidence/__tests__ src/lib/source/__tests__/source-answer-engine.test.ts --runInBand` — Pass, `61/61` tests. Existing duplicate manual mock warnings are unrelated to this change.
 - `npx tsx scripts/source/smoke-contract-evidence-persistence.mjs` — Pass, writes a template/persistence proof bundle to Downloads.
+- This smoke is intentionally narrow. It proves structured-evidence payload/template plumbing, not full Source recording readiness. Full recording readiness requires the signed-in buyer-journey gate in `docs/source/SOURCE_RECORDING_READINESS_GATE.md`.
 - Touched-file ESLint covering contract evidence, Source aVa route, File Cabinet API/UI, import route, and Source answer engine — Pass.
 - `npm run release:check` — Pass.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` — Pass. Default heap hit Node out-of-memory before reporting type errors.
@@ -73,3 +75,5 @@ Library rollback is a normal git revert. Migration rollback would drop the three
 ## Known Gaps
 
 Live migration apply, signed-in browser proof, and a real persisted runtime evidence pack are still required before claiming production availability. The code path is wired and locally validated, but not yet live-proven in Azure/Postgres in this branch.
+
+Source recording readiness is also not claimed by this smoke. The next recording-readiness proof must start from a fresh signed-in Source event and complete the buyer journey with intake, reload checks, PDF/DOCX/XLSX/CSV uploads, evidence visibility, artifact generation/download, client-final upload, approval, stage advancement, prior-stage context carryover, screenshots, and reconciliation between aVa language, canvas state, File Cabinet state, and database-backed workflow state.
