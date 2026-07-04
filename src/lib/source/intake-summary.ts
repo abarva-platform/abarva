@@ -142,8 +142,46 @@ function readField(
   parsed: Map<string, string>,
   key: string,
 ): string | undefined {
-  const value = parsed.get(key)?.trim();
+  const value = normalizeFieldValue(parsed.get(key), key);
   return value ? value : undefined;
+}
+
+function normalizeFieldValue(
+  raw: string | undefined,
+  key: string,
+): string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+
+  const lines = value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .flatMap((line) => {
+      const canonical = splitCanonicalSummaryLabel(line);
+      if (!canonical) return [line];
+      if (canonical.key !== key) return [];
+      return [canonical.value];
+    });
+  const unique = Array.from(new Set(lines));
+  return unique.join("\n").trim() || undefined;
+}
+
+function splitCanonicalSummaryLabel(
+  line: string,
+): { key: string; value: string } | null {
+  const match = line.match(
+    /^(Scope boundary|Value target|Baseline owner|Category)\s*[:–—-]\s*(.+)$/i,
+  );
+  if (!match) return null;
+  const label = match[1]?.trim().toLowerCase();
+  const value = match[2]?.trim();
+  if (!value) return null;
+  if (label === SCOPE_LABEL.toLowerCase()) return { key: "scopeBoundary", value };
+  if (label === VALUE_LABEL.toLowerCase()) return { key: "valueTarget", value };
+  if (label === BASELINE_LABEL.toLowerCase()) return { key: "baselineOwner", value };
+  if (label === CATEGORY_LABEL.toLowerCase()) return { key: "category", value };
+  return null;
 }
 
 function rawPlainScope(raw: string | null | undefined): string | undefined {

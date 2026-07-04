@@ -25,7 +25,6 @@ import {
   type SourceIntakeShape,
 } from "@/lib/source/intake-intent";
 import {
-  buildSourceScopeDescription,
   parseSourceIntakeText,
 } from "@/lib/source/intake-summary";
 import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
@@ -656,14 +655,10 @@ export function SourceOriginatePage({
         eventType: inferEventType(intake.scopeBoundary, selectedCategory),
         triggerDescription: intake.trigger,
         decisionOwner: intake.decisionOwner || undefined,
-        scopeDescription: buildSourceScopeDescription({
-          scopeBoundary: intake.scopeBoundary,
-          valueTarget: intake.valueTarget,
-          baselineOwner: intake.baselineOwner,
-          category: selectedCategory?.label,
-        }),
+        scopeDescription: intake.scopeBoundary || undefined,
         valueTargetDescription: intake.valueTarget || undefined,
         baselineOwnerDescription: intake.baselineOwner || undefined,
+        categoryLabel: selectedCategory?.label,
         estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
       }),
     });
