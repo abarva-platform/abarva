@@ -1004,6 +1004,84 @@ function CharterWorkflow({
     workflow,
   ]);
 
+  // Advance gate: finalize capture (mark the phase modules completed) then
+  // approve the gate and advance the Move. This is the P1–P5 equivalent of the
+  // P0 "Approve brief" button — the phase workspace otherwise had no advance
+  // trigger, so a Move could not move past its gate through the UI even with the
+  // gate deliverable signed off. Reuses the signed-in phase-capture (complete)
+  // + phase-gate-approval routes; the server still enforces the gate.
+  const [advancing, setAdvancing] = useState(false);
+  const [advanceError, setAdvanceError] = useState<string | null>(null);
+  const advanceGate = useCallback(async () => {
+    setAdvancing(true);
+    setAdvanceError(null);
+    try {
+      // 1. Finalize capture — flips the phase capture modules to `completed`
+      //    (Save leaves them `in_progress`), which phase-gate-approval requires.
+      const finalizeRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-capture`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phase: phaseNum, complete: true }),
+        },
+      );
+      const finalize = (await finalizeRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        missing?: string[];
+        error?: string;
+        detail?: string;
+      };
+      if (!finalizeRes.ok || !finalize.ok) {
+        throw new Error(
+          finalize.missing?.length
+            ? `Capture incomplete — still missing: ${finalize.missing.join(", ")}`
+            : finalize.detail || finalize.error || `Finalize failed (HTTP ${finalizeRes.status})`,
+        );
+      }
+      // 2. Approve the gate and advance.
+      const advanceRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-gate-approval`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: phaseNum,
+            rationale: `P${phaseNum} capture complete and gate deliverable signed off; advancing to P${phaseNum + 1}.`,
+          }),
+        },
+      );
+      const advance = (await advanceRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        newPhase?: number;
+        gate?: { failedChecks?: Array<{ severity: string; reason?: string; check: string }> };
+        detail?: string;
+        error?: string;
+      };
+      if (!advanceRes.ok || !advance.ok) {
+        const hard = advance.gate?.failedChecks
+          ?.filter((c) => c.severity === "hard")
+          .map((c) => c.reason || c.check)
+          .join("; ");
+        throw new Error(
+          hard || advance.detail || advance.error || `Advance failed (HTTP ${advanceRes.status})`,
+        );
+      }
+      const newPhase = advance.newPhase ?? phaseNum + 1;
+      // Land the operator on the phase they just advanced into.
+      window.location.assign(`/strategic-moves/${move.id}/phase/${newPhase}`);
+    } catch (err) {
+      setAdvanceError(err instanceof Error ? err.message : "Advance failed");
+      setAdvancing(false);
+    }
+  }, [move.id, phaseNum]);
+
+  // Advance is available once the gate record is approved (signed off), for the
+  // advanceable phases P1–P4 (P5 hands off to Tower via a separate path).
+  const canAdvance = approved && phaseNum >= 1 && phaseNum <= 4 && !advancing;
+
   // Derived enable/disable:
   //  • Save: enabled unless a save is in flight.
   //  • Approve: enabled only when all sections are saved AND a deliverableId
@@ -1261,6 +1339,48 @@ function CharterWorkflow({
           </div>
         </div>
       </section>
+
+      {/* Advance to the next phase — the P1–P4 equivalent of P0 "Approve brief". */}
+      {phaseNum >= 1 && phaseNum <= 4 && (
+        <section
+          id={`ws-canvas-p${phaseNum}-advance`}
+          className={styles.detailSection}
+        >
+          <div className={styles.detailSectionTitle}>
+            Advance gate &mdash; P{phaseNum} &rarr; P{phaseNum + 1}
+          </div>
+          <div
+            className={`${styles.charterStep} ${approved ? styles.charterStepActive : ""}`}
+            id={`ws-canvas-p${phaseNum}-step-advance`}
+          >
+            <span className={styles.charterStepNum}>4 · Advance</span>
+            <button
+              type="button"
+              className={styles.charterPrimaryBtn}
+              onClick={() => void advanceGate()}
+              disabled={!canAdvance}
+            >
+              {advancing
+                ? "Advancing…"
+                : `Approve gate & advance to P${phaseNum + 1}`}
+            </button>
+            {advanceError && (
+              <span className={styles.charterStepError}>{advanceError}</span>
+            )}
+            {!advanceError && !approved && (
+              <span className={styles.charterStepHint}>
+                Approve the record first.
+              </span>
+            )}
+            {!advanceError && approved && !advancing && (
+              <span className={styles.charterStepHint}>
+                Finalizes capture, approves the gate, and moves this Move to P
+                {phaseNum + 1}.
+              </span>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }
