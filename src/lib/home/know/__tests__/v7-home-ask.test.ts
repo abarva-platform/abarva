@@ -3,7 +3,7 @@ import { answerHomeKnowFromV7 } from '../v7-home-ask';
 
 function fakeSession(): SessionRunner {
   return async (fn) =>
-    fn(async <R>(sql: string) => {
+    fn(async <R>(sql: string, params: unknown[] = []) => {
       if (sql.includes('from intelligence_v7.tenant_pack_runs')) {
         return [{
           tenant_key: 'skyharbor-air',
@@ -19,9 +19,36 @@ function fakeSession(): SessionRunner {
         }] as R[];
       }
       if (sql.includes('group by source_file')) {
-        return [{ source_file: 'V7_05_applications_systems.csv', count: 2 }] as R[];
+        const dimension = params[2];
+        return [{
+          source_file:
+            dimension === 'v7_01_enterprise_profile'
+              ? 'V7_01_enterprise_profile.csv'
+              : 'V7_05_applications_systems.csv',
+          count: 2,
+        }] as R[];
       }
       if (sql.includes('from intelligence_v7.business_records')) {
+        if (params[2] === 'v7_01_enterprise_profile') {
+          return [
+            {
+              record_name: 'Lakeshore Holdings',
+              source_file: 'V7_01_enterprise_profile.csv',
+              source_row_number: 2,
+              source_artifact_name: 'V7_01_enterprise_profile.csv',
+              source_validation_status: 'validated',
+              values_json: {
+                company_name: 'Lakeshore Holdings',
+                industry: 'Industrial holdco',
+                revenue_usd: '7120000000',
+                employee_count: '11800',
+                total_direct_technology_budget_usd: '190600000',
+                entity_scope: 'holding company',
+                parent_entity_name: 'Needs evidence',
+              },
+            },
+          ] as R[];
+        }
         return [
           {
             record_name: 'SkyOps Recovery Platform',
@@ -72,9 +99,29 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.proof.answerSource.claudeInvoked).toBe(false);
     expect(result.answer.primaryDimension).toBe('v7_05_applications_systems');
     expect(result.answer.directAnswer).toMatch(/SkyOps Recovery Platform/i);
-    expect(result.answer.directAnswer).toMatch(/5,473 business records/i);
+    expect(result.answer.directAnswer).toMatch(/supporting material is broad enough/i);
+    expect(result.answer.directAnswer).not.toMatch(/field facts|graph nodes|retrieval chunks/i);
     expect(result.answer.table?.headers).toEqual(['System', 'Owner', 'Criticality', 'Lifecycle']);
     expect(JSON.stringify(result)).not.toMatch(/record_key|chunk_key|values_json|source_row_number/i);
     expect('trace' in result ? result.trace?.modelCall.provider : null).toBe('none');
+  });
+
+  it('routes company profile questions to Enterprise Profile with compact values', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'lakeshore',
+      tenantDisplayName: 'Lakeshore Holdings',
+      question:
+        'What is Lakeshore Holdings company profile: revenue, employees, portfolio companies, and IT budget?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.answer.primaryDimension).toBe('v7_01_enterprise_profile');
+    expect(result.answer.directAnswer).toMatch(/Lakeshore Holdings/i);
+    expect(result.answer.directAnswer).toMatch(/\$7\.12B revenue/i);
+    expect(result.answer.directAnswer).toMatch(/11,800 employees/i);
+    expect(result.answer.directAnswer).toMatch(/\$190\.6M direct technology budget/i);
+    expect(result.answer.directAnswer).not.toMatch(/data assets integrations|field facts|V7_/i);
   });
 });

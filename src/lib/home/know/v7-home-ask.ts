@@ -59,7 +59,7 @@ const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
 };
 
 const TOPICS: Record<string, V7TopicConfig> = {
-  loaded_context: topic('loaded_context', 'v7_01_enterprise_profile', ['v7_13_source_evidence_registry'], ['Record', 'Industry/model', 'Priority/context'], ['company_name', 'industry', 'strategic_priorities']),
+  loaded_context: topic('loaded_context', 'v7_01_enterprise_profile', ['v7_13_source_evidence_registry'], ['Enterprise', 'Industry/model', 'Revenue', 'Employees', 'IT budget'], ['company_name', 'industry', 'revenue_usd', 'employee_count', 'total_direct_technology_budget_usd']),
   business_areas: topic('business_areas', 'v7_02_business_functions', ['v7_03_org_ownership'], ['Business area', 'Executive owner', 'Critical processes'], ['function_name', 'executive_owner', 'critical_processes_structured']),
   it_org: topic('it_org', 'v7_03_org_ownership', ['v7_02_business_functions'], ['Org area', 'Leader role', 'Decision rights'], ['org_unit', 'leader_role', 'decision_rights']),
   apps_systems: topic('apps_systems', 'v7_05_applications_systems', ['v7_18_function_system_data_vendor_bridge', 'v7_06_data_assets_integrations'], ['System', 'Owner', 'Criticality', 'Lifecycle'], ['system_name', 'technical_owner', 'criticality', 'lifecycle_status']),
@@ -154,10 +154,10 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
       table,
       branchOptions: config.relatedDimensions.map((dimensionKey) => ({
         label: humanize(dimensionKey),
-        summary: `Inspect the related V7 ${humanize(dimensionKey).toLowerCase()} records and graph links.`,
+        summary: `Inspect the related ${humanize(dimensionKey).toLowerCase()} records and graph links.`,
         dimensionKey,
       })),
-      followUpQuestion: 'Which V7 dimension should aVa inspect next?',
+      followUpQuestion: 'Which context area should aVa inspect next?',
       answerBoundary: {
         canAnswer: [
           'Answer from intelligence_v7 business records, source lineage, graph edges, and registered field facts.',
@@ -288,6 +288,7 @@ function tenantDisplayNameFor(input: {
 
 function classifyQuestion(question: string): keyof typeof TOPICS {
   const q = question.toLowerCase();
+  if (/company profile|enterprise profile|revenue|employees?|portfolio compan|company size|business profile/.test(q)) return 'loaded_context';
   if (/business areas|business functions|available business|organization structure/.test(q)) return 'business_areas';
   if (/technology leaders|it organization|it org|structured today|roles|accountability/.test(q)) return 'it_org';
   if (/application|core systems|systems context|apps|erp|sap|mainframe/.test(q)) return 'apps_systems';
@@ -329,7 +330,7 @@ function buildGaps(rows: V7RecordRow[]) {
   }
   return [...gaps.entries()].slice(0, 6).map(([label, count]) => ({
     label: humanize(label),
-    impact: `${count} loaded V7 ${count === 1 ? 'record needs' : 'records need'} stronger client evidence for this field.`,
+    impact: `${count} loaded ${count === 1 ? 'record needs' : 'records need'} stronger client evidence for this field.`,
     remediation: `Confirm ${humanize(label).toLowerCase()} from the client source owner or source file.`,
   }));
 }
@@ -365,17 +366,52 @@ function buildParagraphs(args: {
     .filter((value) => value !== 'Needs evidence')
     .slice(0, 6);
   const dimensionLabel = humanize(args.config.primaryDimension).toLowerCase();
+  if (args.config.primaryDimension === 'v7_01_enterprise_profile') {
+    return buildEnterpriseProfileParagraphs({
+      displayName: args.displayName,
+      row: args.rows[0]?.values_json ?? {},
+      gaps: args.gaps,
+    });
+  }
   const sampleSentence = samples.length
     ? `${args.displayName}'s loaded ${dimensionLabel} context shows ${joinList(samples)}.`
     : `${args.displayName}'s loaded ${dimensionLabel} context is present, but the preview rows need stronger client-readable names.`;
   return [
     `${sampleSentence} Home can use this as current-state evidence while keeping source confidence and validation boundaries visible.`,
-    `Behind this view, the governed context pack includes ${formatNumber(args.run.row_count)} business records, ${formatNumber(args.run.field_count)} field facts, ${formatNumber(args.run.graph_node_count)} graph nodes, ${formatNumber(args.run.relationship_edge_count)} graph edges, and ${formatNumber(args.run.chunk_count)} retrieval chunks.`,
+    'The supporting material is broad enough for orientation and current-state discovery, but Home still keeps validation gaps visible before board-grade use.',
     args.config.handoffTarget
       ? `${surfaceName(args.config.handoffTarget)} should take over when the user wants decisions, recommendations, or execution moves; Home should stay focused on loaded facts and evidence boundaries.`
       : args.gaps[0]
         ? `Important evidence gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
         : 'No explicit evidence gap appears in the selected preview records, but client validation is still required before board-grade use.',
+  ];
+}
+
+function buildEnterpriseProfileParagraphs(args: {
+  displayName: string;
+  row: Record<string, unknown>;
+  gaps: Array<{ label: string; impact: string }>;
+}): string[] {
+  const company = display(args.row.company_name);
+  const industry = display(args.row.industry);
+  const revenue = formatUsd(args.row.revenue_usd);
+  const employees = formatCount(args.row.employee_count);
+  const budget = formatUsd(args.row.total_direct_technology_budget_usd);
+  const scope = display(args.row.entity_scope);
+  const companyName = company === 'Needs evidence' ? args.displayName : company;
+  const profileParts = [
+    industry !== 'Needs evidence' ? `${industry}` : null,
+    revenue ? `${revenue} revenue` : null,
+    employees ? `${employees} employees` : null,
+    budget ? `${budget} direct technology budget` : null,
+  ].filter((part): part is string => Boolean(part));
+
+  return [
+    `${companyName}'s enterprise profile shows ${joinList(profileParts)}${scope !== 'Needs evidence' ? ` across the ${scope}` : ''}. Home should treat this as the opening company profile, not as a final financial filing.`,
+    'The profile is useful for sizing the technology estate, comparing operating-company complexity, and deciding which Home dimensions to inspect next.',
+    args.gaps[0]
+      ? `Important evidence gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
+      : 'No explicit profile gap appears in the selected preview row, but client validation is still required before board-grade use.',
   ];
 }
 
@@ -416,19 +452,52 @@ function display(value: unknown): string {
   return text.replace(/_/g, ' ').replace(/\|/g, ', ').replace(/\s+/g, ' ').trim();
 }
 
+function formatUsd(value: unknown): string | null {
+  const number = parseNumber(value);
+  if (number === null) return null;
+  const abs = Math.abs(number);
+  if (abs >= 1_000_000_000) return `$${trimCompact(number / 1_000_000_000)}B`;
+  if (abs >= 1_000_000) return `$${trimCompact(number / 1_000_000)}M`;
+  if (abs >= 1_000) return `$${trimCompact(number / 1_000)}K`;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(number);
+}
+
+function formatCount(value: unknown): string | null {
+  const number = parseNumber(value);
+  if (number === null) return null;
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
+    number,
+  );
+}
+
+function parseNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().replace(/[$,\s]/g, '');
+  if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function trimCompact(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: Math.abs(value) >= 10 ? 1 : 2,
+  }).format(value);
+}
+
 function humanize(value: string): string {
   return value.replace(/^v7_\d+_/, '').replace(/_/g, ' ').replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
 function joinList(values: string[]): string {
   const clean = values.filter(Boolean).slice(0, 8);
-  if (!clean.length) return 'no evidence-ready values in the selected V7 rows';
+  if (!clean.length) return 'no evidence-ready values in the selected rows';
   if (clean.length === 1) return clean[0]!;
   return `${clean.slice(0, -1).join(', ')}, and ${clean[clean.length - 1]}`;
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US').format(value);
 }
 
 function surfaceName(value: string): string {
