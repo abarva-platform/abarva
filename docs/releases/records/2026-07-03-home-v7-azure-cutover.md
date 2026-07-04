@@ -33,7 +33,10 @@ Home now prefers the governed V7 Azure context schema for the Context Explorer a
 - `src/app/api/home/know/ask/route.ts`: tries V7 deterministic Home KNOW before V6 fallback.
 - `src/lib/home/know/v7-home-ask.ts`: deterministic V7 answer engine over `intelligence_v7`.
 - `src/lib/home/know/v7-home-know-response.ts`: maps V7 answers into the shared Home KNOW response contract.
-- `src/components/home/HomeSurface.tsx`: labels the active source as V7 or V6, uses V7 dimensions when available, suppresses stale V6 findings on V7 pages, and exposes explicit right-canvas tabs for Summary, Data, Gaps, and Questions.
+- `src/components/home/HomeSurface.tsx`: uses V7 dimensions when available, suppresses stale V6 findings on V7 pages, exposes explicit right-canvas tabs for Summary, Data, Gaps, and Questions, formats loaded data previews with compact executive values, and hides internal lineage columns, raw row IDs, and version-prefixed file names from the canvas.
+- `src/components/home/know/HomeKnowAnswerRenderer.tsx` and `src/components/agent-answer/AgentAnswerRenderer.tsx`: format numeric strings in money, percent, and count columns so aVa answer tables show values such as `$36.5M` instead of raw database numbers like `36500000`.
+- `src/lib/home/know/home-consultant-text-synthesis.ts`: tightens the Claude Home synthesis prompt and normalizer so synthesized answers stay plain-text, avoid markdown emphasis, and do not end with labeled `Branch:` lines.
+- `src/lib/home/know/v7-home-ask.ts`, `src/lib/home/know/v7-home-know-response.ts`, and `src/app/api/home/know/ask/route.ts`: remove duplicate V7 tenant display-name dictionaries from the Home path so tenant display truth remains in the canonical registry and loaded V7 pack metadata.
 - `docs/build/V7_SCHEMA_VOLUMETRICS_INSIGHTS_20260703.md`: published schema, volumetrics, and product insight evidence.
 - `/Users/anand/Downloads/abarva-v7-schema-volumetrics-insights-20260703.html`: browser-openable copy of the V7 evidence report.
 
@@ -43,6 +46,11 @@ Home now prefers the governed V7 Azure context schema for the Context Explorer a
 - Pass: `./node_modules/.bin/eslint 'src/app/(maestro)/home/page.tsx' src/app/api/home/know/ask/route.ts src/components/home/HomeSurface.tsx src/lib/home/v6-context-browser.ts src/lib/home/v7-context-browser.ts src/lib/home/know/home-know-contract.ts src/lib/home/know/v7-home-ask.ts src/lib/home/know/v7-home-know-response.ts src/lib/home/know/__tests__/v7-home-ask.test.ts src/lib/home/__tests__/v7-context-browser.test.ts`.
 - Pass: `./node_modules/.bin/jest src/lib/home/know/__tests__/v7-home-ask.test.ts src/lib/home/__tests__/v7-context-browser.test.ts src/lib/home/know/__tests__/v6-home-know-response.test.ts src/lib/home/__tests__/v6-context-browser.test.ts --runInBand`.
 - Pass: `npx jest src/components/home/__tests__/HomeSurface.test.tsx --runInBand`.
+- Pass: `npx eslint src/components/home/HomeSurface.tsx src/components/home/know/HomeKnowAnswerRenderer.tsx src/components/agent-answer/AgentAnswerRenderer.tsx src/lib/home/know/home-consultant-text-synthesis.ts src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx`.
+- Pass: `npx jest src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/lib/home/__tests__/v7-context-browser.test.ts --runInBand` (24 tests; existing duplicate manual mock warnings only).
+- Pass: `npm run audit:control-plane-purity:check`.
+- Pass: `npx eslint src/app/api/home/know/ask/route.ts src/lib/home/know/v7-home-ask.ts src/lib/home/know/v7-home-know-response.ts src/components/home/HomeSurface.tsx src/components/home/know/HomeKnowAnswerRenderer.tsx src/components/agent-answer/AgentAnswerRenderer.tsx src/lib/home/know/home-consultant-text-synthesis.ts src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx`.
+- Pass: `npx jest src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/lib/home/__tests__/v7-context-browser.test.ts src/lib/home/know/__tests__/v7-home-ask.test.ts --runInBand` (25 tests; existing duplicate manual mock warnings only).
 - Pass: V7 Azure load readback summary reports 120 source files, 21,385 business records, 628,080 field facts, 12,721 graph nodes, 5,700 edges, and 3,900 chunks.
 - Pass: deployed ACA browser/API proof on revision `ca-abarva-web-lab-eastus--0000242` showed 5/5 tenants and 40/40 Home Ask questions on `home_v7_dataset_contract`, with no V7 fallback and no internal-ID or synthetic filename leakage.
 - Pending: deployed ACA browser proof for the right-canvas Summary/Data/Gaps/Questions tabs after this follow-up image is built and routed.
@@ -74,6 +82,7 @@ Rollback by moving ACA ingress traffic back to the prior healthy web revision. N
 - Focused TypeScript, ESLint, and Jest outputs from the release worktree.
 - `/Users/anand/Downloads/abarva-v7-home-proof-20260703/report.html`.
 - `/Users/anand/Downloads/abarva-v7-home-quality-lakeshore-20260703/report.html`.
+- `/Users/anand/Downloads/abarva-v7-home-quality-lakeshore-20260703/quality-audit-from-evidence/quality-audit.html`.
 - Post-deploy ACA revision/image/traffic proof for the tabbed-canvas follow-up to be added after deployment.
 
 ## Known Gaps

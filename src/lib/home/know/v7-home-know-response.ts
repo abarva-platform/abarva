@@ -13,16 +13,6 @@ import type { answerHomeKnowFromV7 } from "@/lib/home/know/v7-home-ask";
 
 type V7HomeAskResult = Awaited<ReturnType<typeof answerHomeKnowFromV7>>;
 
-const CLIENT_FRIENDLY_NAME_BY_TENANT: Record<string, string> = {
-  "apex-retail": "Apex Retail Group",
-  "first-capital": "First Capital Financial",
-  "first-capital-financial": "First Capital Financial",
-  "lakeshore-holdings": "Lakeshore Holdings",
-  "lakeshore-industries": "Lakeshore Holdings",
-  "meridian-health": "Meridian Health",
-  "skyharbor-air": "SkyHarbor Air Group",
-};
-
 export function toHomeKnowResponseFromV7(
   result: V7HomeAskResult,
   input?: { question?: string | null },
@@ -49,7 +39,7 @@ export function toHomeKnowResponseFromV7(
       table,
       gaps,
     }),
-    prose: clientFriendlyProse(answer.directAnswer, result.tenant.canonicalKey),
+    prose: clientFriendlyProse(answer.directAnswer, result.tenant.displayName),
     dimensionsUsed: [
       publicDimensionId(answer.primaryDimension),
       ...answer.relatedDimensions
@@ -302,13 +292,23 @@ function businessEvidenceLabel(value: string): string {
   return `${humanize(fileName)} source file`;
 }
 
-function clientFriendlyProse(value: string, tenantKey: string): string {
-  const clientName = CLIENT_FRIENDLY_NAME_BY_TENANT[tenantKey];
+function clientFriendlyProse(
+  value: string,
+  clientName: string | null | undefined,
+): string {
   if (!clientName) return value;
-  const possessive = clientName.endsWith("s") ? `${clientName}'` : `${clientName}'s`;
+  const possessive = clientName.endsWith("s")
+    ? `${clientName}'`
+    : `${clientName}'s`;
   return value
-    .replace(/^(Airline|Retail|Financial Services|Healthcare|Industrial) Demo's\b/i, possessive)
-    .replace(/\b(Airline|Retail|Financial Services|Healthcare|Industrial) Demo\b/g, clientName);
+    .replace(
+      /^(Airline|Retail|Financial Services|Healthcare|Industrial) Demo's\b/i,
+      possessive,
+    )
+    .replace(
+      /\b(Airline|Retail|Financial Services|Healthcare|Industrial) Demo\b/g,
+      clientName,
+    );
 }
 
 function publicDimensionId(value: string): string {

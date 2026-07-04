@@ -298,6 +298,41 @@ describe("HomeKnowAnswerRenderer", () => {
     expect(container.textContent).toContain("For Lakeshore Holdings:");
   });
 
+  it("formats numeric strings in money columns as compact executive values", () => {
+    render(
+      <HomeKnowAnswerRenderer
+        response={{
+          ...baseResponse,
+          prose: "The spend table is available.",
+          tables: [
+            {
+              id: "spend",
+              title: "Spend Value evidence",
+              dimensionId: "spend_value",
+              columns: [
+                { key: "spend_record", label: "Spend record" },
+                { key: "amount_usd", label: "Amount" },
+                { key: "owner", label: "Owner" },
+              ],
+              rows: [
+                {
+                  spend_record: "Corporate IT budget",
+                  amount_usd: "36500000",
+                  owner: "Corporate Shared Services IT",
+                },
+              ],
+              citationIds: [],
+            },
+          ],
+          citations: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("$36.5M")).toBeInTheDocument();
+    expect(screen.queryByText("36500000")).not.toBeInTheDocument();
+  });
+
   it("shapes citation and coverage-table labels before rendering", () => {
     const response: HomeKnowResponse = {
       ...baseResponse,

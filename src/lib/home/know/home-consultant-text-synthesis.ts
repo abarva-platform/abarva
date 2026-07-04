@@ -23,7 +23,7 @@ import type { DossierSection } from "@/lib/semantic-dossiers/types";
 const DEFAULT_MODEL = "claude-opus-4-8";
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_TOKENS = 25_000;
-const PROMPT_VERSION = "home_consultant_text_synthesis_v3_label_free";
+const PROMPT_VERSION = "home_consultant_text_synthesis_v4_polished_plain_text";
 const HOME_SYNTHESIS_CACHE_MAX_ENTRIES = 250;
 const HOME_SYNTHESIS_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
 
@@ -97,6 +97,7 @@ Do not mention "semantic," "curated semantic," "typed facts," "loaded facts," "f
 Say "available materials," "source support," "available records," "operational patterns," or "source-supported operating connections" when those ideas matter.
 For finance close, Treasury, Kyriba, HR, Legal, or other adjacent functions, lead with operational-process source-support insufficiency when the supplied material does not include function-specific work-item/process material.
 Do not mention pattern family or experts in Home.
+Do not end with a labeled "Branch:" or "Branch choices:" line. If routing is useful, write one natural final sentence such as "For next-step work, use Tower for value, Source for vendor exposure, and Moves for sequencing."
 
 Return only the final user-facing answer text. Use short paragraphs. No markdown headings. No bullets unless the question asks for a list.`;
 
@@ -584,6 +585,7 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/^\s*here is\s+/i, "")
     .replace(/\bwhat the loaded context can say\b\s*:?\s*/gi, "")
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move|Next):\s*/gi, "$1")
+    .replace(/(^|\n)\s*(?:\*\*)?Branch(?: choices| here| next)?(?:\*\*)?\s*:?\s*/gi, "$1For next-step work, ")
     .replace(/\bdeterministic\b/gi, "available")
     .replace(RAW_ID_REPLACE, "source reference"));
 }
@@ -756,7 +758,7 @@ If the source support allows partial structure, describe that structure and the 
 If the question asks what to do, explain what Home can show and hand off to the correct advisory surface.
 If the question asks about finance close, Treasury, Kyriba, HR, Legal, or another function where operational process evidence is missing, lead with that operational-process evidence insufficiency before discussing adjacent context.
 
-Return plain text only.`;
+Return plain text only. Do not use markdown emphasis, markdown tables, or labeled Branch lines.`;
 }
 
 function summarizeSections(sections: DossierSection[]): string {

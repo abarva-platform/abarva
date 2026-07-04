@@ -203,6 +203,102 @@ function toneFor(trust: number): string {
   return "var(--hr)";
 }
 
+function formatPreviewCell(
+  cell: string,
+  column: HomeV6BrowserPreview["columns"][number],
+): string {
+  if (cell === "Needs evidence") return cell;
+  const structured = formatStructuredPreviewText(cell);
+  const numeric = parsePreviewNumber(structured);
+  const key = column.key.toLowerCase();
+  const label = column.label.toLowerCase();
+  const name = `${key} ${label}`;
+  if (
+    numeric !== null &&
+    /\b(usd|amount|budget|cost|spend|revenue|value|rate)\b/.test(name)
+  ) {
+    return formatCompactUsd(numeric);
+  }
+  if (
+    numeric !== null &&
+    /\b(percent|percentage|pct|share|ratio)\b/.test(name)
+  ) {
+    return formatCompactPercent(numeric);
+  }
+  if (
+    numeric !== null &&
+    /\b(count|employees?|users?|population|records?|volume|number)\b/.test(
+      name,
+    )
+  ) {
+    return numeric.toLocaleString();
+  }
+  return structured;
+}
+
+function formatStructuredPreviewText(value: string): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (!/:\s*[\w$-]+/.test(normalized)) return normalized;
+  return normalized
+    .split(/\s*,\s*/)
+    .map((part) => {
+      const match = part.match(/^(.+?):\s*(.+)$/);
+      if (!match) return part;
+      const label = humanizePreviewLabel(match[1] ?? "");
+      const rawValue = (match[2] ?? "").trim();
+      const number = parsePreviewNumber(rawValue);
+      const displayValue =
+        number !== null && /\busd\b/i.test(label)
+          ? formatCompactUsd(number)
+          : number !== null
+            ? number.toLocaleString()
+            : rawValue.replace(/_/g, " ");
+      return `${label.replace(/\bUsd\b/g, "USD")}: ${displayValue}`;
+    })
+    .join("; ");
+}
+
+function humanizePreviewLabel(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase())
+    .trim();
+}
+
+function parsePreviewNumber(value: string): number | null {
+  const normalized = value.trim().replace(/[$,\s]/g, "");
+  if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatCompactUsd(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000)
+    return `$${trimCompactNumber(value / 1_000_000_000)}B`;
+  if (abs >= 1_000_000) return `$${trimCompactNumber(value / 1_000_000)}M`;
+  if (abs >= 1_000) return `$${trimCompactNumber(value / 1_000)}K`;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatCompactPercent(value: number): string {
+  const normalized = Math.abs(value) <= 1 ? value : value / 100;
+  return new Intl.NumberFormat("en-US", {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(normalized);
+}
+
+function trimCompactNumber(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: Math.abs(value) >= 10 ? 1 : 2,
+  }).format(value);
+}
+
 function dimensionOptionLabel(
   dimension: BindingDimension,
   preview?: HomeV6BrowserPreview | null,
@@ -234,7 +330,7 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
       <p>{finding.executiveFinding}</p>
       <p style={{ marginTop: 8 }}>{finding.whyItMatters}</p>
       <div className="hx-evi">
-        {finding.sourceRowCount.toLocaleString()} V6 rows ·{" "}
+        {finding.sourceRowCount.toLocaleString()} supporting rows ·{" "}
         {finding.sourceFiles.length} source file
         {finding.sourceFiles.length === 1 ? "" : "s"} · next:{" "}
         {surfaceLabel(finding.recommendedSurface)}
@@ -259,8 +355,8 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
         <summary>Why this appears</summary>
         <div className="hx-detailgrid">
           <div className="hx-detailblock">
-            <strong>Supporting V6 files</strong>
-            {finding.sourceFiles.join(", ")}
+            <strong>Supporting source files</strong>
+            {finding.sourceFiles.map(clientFacingFileName).join(", ")}
           </div>
           <div className="hx-detailblock">
             <strong>Claim basis</strong>
@@ -276,14 +372,10 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
           </div>
           {finding.evidenceRefs.length > 0 ? (
             <div className="hx-detailblock">
-              <strong>Representative source rows</strong>
+              <strong>Representative source support</strong>
               <ul className="hx-rowrefs">
-                {finding.evidenceRefs.slice(0, 3).map((ref) => (
-                  <li key={`${ref.v6File}-${ref.rowId}`}>
-                    <code>
-                      {ref.v6File} · {ref.rowId}
-                    </code>
-                    <br />
+                {finding.evidenceRefs.slice(0, 3).map((ref, index) => (
+                  <li key={`${ref.v6File}-${ref.label}-${index}`}>
                     {ref.label}
                     <br />
                     {ref.claimSupported}
@@ -299,12 +391,28 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
 }
 
 function claimBasisLabel(basis: HomeV6ContextFinding["claimBasis"]): string {
-  if (basis === "tenant_fact") return "Tenant fact from V6 rows.";
-  if (basis === "calculated") return "Calculated from V6 rows.";
+  if (basis === "tenant_fact") return "Tenant fact from source rows.";
+  if (basis === "calculated") return "Calculated from source rows.";
   if (basis === "abarva_assessment")
-    return "AbarVa assessment from V6 facts and gaps.";
+    return "AbarVa assessment from available facts and gaps.";
   if (basis === "industry_pattern") return "Industry pattern context only.";
   return "Tenant facts plus pattern context.";
+}
+
+function clientFacingFileName(value: string): string {
+  return value
+    .replace(/^V\d+_/i, "")
+    .replace(/\.csv$/i, "")
+    .replace(/[_-]+/g, " ");
+}
+
+function isLineageColumn(
+  column: HomeV6BrowserPreview["columns"][number],
+): boolean {
+  return (
+    /^__/.test(column.key) ||
+    /^(loaded record|source family|basis|source basis)$/i.test(column.label)
+  );
 }
 
 function surfaceLabel(
@@ -675,12 +783,10 @@ function DimensionView({
   dim,
   preview,
   findings,
-  sourceLabel,
 }: {
   dim: BindingDimension;
   preview?: HomeV6BrowserPreview | null;
   findings: HomeV6ContextFinding[];
-  sourceLabel: string;
 }) {
   const [activeTab, setActiveTab] = useState<
     "summary" | "data" | "gaps" | "questions"
@@ -689,6 +795,15 @@ function DimensionView({
     finding.supportingDimensions.includes(dim.dimension),
   );
   const spec = browserSpecForDimension(dim.dimension);
+  const visiblePreviewColumns = preview
+    ? preview.columns
+        .map((column, index) => ({ column, index }))
+        .filter(({ column }) => !isLineageColumn(column))
+    : [];
+  const previewColumnsForTable =
+    visiblePreviewColumns.length > 0
+      ? visiblePreviewColumns
+      : (preview?.columns.map((column, index) => ({ column, index })) ?? []);
   return (
     <div className="hx-body">
       <div className="hx-ey">Loaded context dimension</div>
@@ -740,6 +855,7 @@ function DimensionView({
         ].map(([id, label]) => (
           <button
             aria-selected={activeTab === id}
+            aria-controls={`home-dimension-panel-${id}`}
             className="hx-tab"
             id={`home-dimension-tab-${id}`}
             key={id}
@@ -755,8 +871,10 @@ function DimensionView({
       </div>
       <div
         className="hx-browser"
+        aria-labelledby="home-dimension-tab-summary"
+        hidden={activeTab !== "summary"}
+        id="home-dimension-panel-summary"
         role="tabpanel"
-        style={{ display: activeTab === "summary" ? undefined : "none" }}
       >
         <section className="hx-panel" aria-label="What is loaded">
           <h3>What is loaded here</h3>
@@ -777,8 +895,9 @@ function DimensionView({
       </div>
       <div
         className="hx-browser"
+        aria-labelledby="home-dimension-tab-summary"
+        hidden={activeTab !== "summary"}
         style={{
-          display: activeTab === "summary" ? undefined : "none",
           marginTop: 16,
         }}
       >
@@ -806,27 +925,29 @@ function DimensionView({
       {preview ? (
         <div
           className="hx-preview"
+          aria-labelledby="home-dimension-tab-data"
+          hidden={activeTab !== "data"}
+          id="home-dimension-panel-data"
           role="tabpanel"
           style={{
-            display: activeTab === "data" ? undefined : "none",
             marginTop: 14,
           }}
         >
           <div className="hx-previewIntro">
             <div className="hx-previewTitle">
-              <div className="hx-ey">{sourceLabel} source preview</div>
+              <div className="hx-ey">Loaded data preview</div>
               <strong>{preview.title}</strong>
               <span>
                 Actual loaded rows from the source file, shown with
-                client-friendly column names and {sourceLabel} lineage.
+                client-friendly column names and readable values.
               </span>
             </div>
-            <div className="hx-previewMeta" aria-label={`${sourceLabel} table coverage`}>
+            <div className="hx-previewMeta" aria-label="Loaded data coverage">
               <span className="hx-chip">
                 <strong>{preview.rowCount.toLocaleString()}</strong> rows
               </span>
               <span className="hx-chip">
-                <strong>{preview.sourceCount}</strong> {sourceLabel} file
+                <strong>{preview.sourceCount}</strong> source file
                 {preview.sourceCount === 1 ? "" : "s"}
               </span>
               <span className="hx-chip">
@@ -839,7 +960,7 @@ function DimensionView({
             <table className="hx-table">
               <thead>
                 <tr>
-                  {preview.columns.map((column) => (
+                  {previewColumnsForTable.map(({ column }) => (
                     <th key={column.key}>{column.label}</th>
                   ))}
                 </tr>
@@ -847,24 +968,30 @@ function DimensionView({
               <tbody>
                 {preview.rows.map((row, rowIndex) => (
                   <tr key={`${preview.dimension}-${rowIndex}`}>
-                    {row.map((cell, cellIndex) => (
-                      <td key={`${preview.dimension}-${rowIndex}-${cellIndex}`}>
+                    {previewColumnsForTable.map(({ column, index }) => {
+                      const cell = row[index] ?? "";
+                      return (
+                        <td key={`${preview.dimension}-${rowIndex}-${column.key}`}>
                         {cell === "Needs evidence" ? (
                           <span className="hx-gapcell">{cell}</span>
                         ) : (
-                          cell
+                          formatPreviewCell(
+                            cell,
+                            column,
+                          )
                         )}
                       </td>
-                    ))}
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="hx-mini" aria-label={`${sourceLabel} table coverage`}>
+          <div className="hx-mini" aria-label="Source files">
             {preview.fileNames.slice(0, 2).map((fileName) => (
               <span className="hx-chip" key={fileName}>
-                {fileName}
+                {clientFacingFileName(fileName)}
               </span>
             ))}
           </div>
@@ -881,7 +1008,13 @@ function DimensionView({
         </div>
       ) : null}
       {activeTab === "gaps" && preview?.knownGaps.length ? (
-        <div className="hx-gapCards" aria-label="Top missing fields">
+        <div
+          className="hx-gapCards"
+          aria-label="Top missing fields"
+          aria-labelledby="home-dimension-tab-gaps"
+          id="home-dimension-panel-gaps"
+          role="tabpanel"
+        >
           {preview.knownGaps.map((gap) => (
             <article className="hx-gapCard" key={gap.label}>
               <div className="hx-gapCardTop">
@@ -914,7 +1047,12 @@ function DimensionView({
         </div>
       ) : null}
       {activeTab === "gaps" && !preview?.knownGaps.length ? (
-        <p className="hx-hint">
+        <p
+          className="hx-hint"
+          aria-labelledby="home-dimension-tab-gaps"
+          id="home-dimension-panel-gaps"
+          role="tabpanel"
+        >
           No repeated missing-field pattern appears in the preview rows.
         </p>
       ) : null}
@@ -923,6 +1061,8 @@ function DimensionView({
           className="hx-panel"
           style={{ marginTop: 14 }}
           aria-label="How to browse this context"
+          aria-labelledby="home-dimension-tab-questions"
+          id="home-dimension-panel-questions"
           role="tabpanel"
         >
           <h3>Ask aVa about this area</h3>
@@ -953,12 +1093,10 @@ function Overview({
   payload,
   v6Browser,
   findings,
-  sourceLabel,
 }: {
   payload: IntelligenceBindingPayload | null;
   v6Browser: HomeV6ContextBrowser | null | undefined;
   findings: HomeV6ContextFinding[];
-  sourceLabel: string;
 }) {
   const dimensions = Object.values(v6Browser?.dimensions ?? {});
   const dimensionCount = dimensions.length || payload?.context.length || 0;
@@ -984,11 +1122,11 @@ function Overview({
             <div className="v">{dimensionCount}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">{sourceLabel} records</div>
+            <div className="k">Loaded records</div>
             <div className="v">{v6Rows.toLocaleString()}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">{sourceLabel} files</div>
+            <div className="k">Source files</div>
             <div className="v">{v6Files}</div>
           </div>
           <div className="hx-stat">
@@ -1002,7 +1140,7 @@ function Overview({
         <div className="hx-sec">
           <div className="hx-sechead">
             <span className="hx-ey">Context findings</span>
-            <span className="hx-ey">{findings.length} V6 findings</span>
+            <span className="hx-ey">{findings.length} findings</span>
           </div>
           <div className="hx-grid">
             {findings.map((finding) => (
@@ -1375,14 +1513,12 @@ export function HomeSurface({
               dim={selected}
               preview={safeV6Browser?.dimensions[selected.dimension] ?? null}
               findings={findings}
-              sourceLabel={sourceLabel}
             />
           ) : (
             <Overview
               payload={safePayload}
               v6Browser={safeV6Browser}
               findings={findings}
-              sourceLabel={sourceLabel}
             />
           )}
         </main>

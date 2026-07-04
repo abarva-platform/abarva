@@ -58,14 +58,6 @@ const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
   skyharbor: 'skyharbor-air',
 };
 
-const V7_DISPLAY_NAME_BY_TENANT: Record<string, string> = {
-  'apex-retail': 'Apex Retail Group',
-  'first-capital-financial': 'First Capital Financial',
-  'lakeshore-industries': 'Lakeshore Holdings',
-  'meridian-health': 'Meridian Health',
-  'skyharbor-air': 'SkyHarbor Air Group',
-};
-
 const TOPICS: Record<string, V7TopicConfig> = {
   loaded_context: topic('loaded_context', 'v7_01_enterprise_profile', ['v7_13_source_evidence_registry'], ['Record', 'Industry/model', 'Priority/context'], ['company_name', 'industry', 'strategic_priorities']),
   business_areas: topic('business_areas', 'v7_02_business_functions', ['v7_03_org_ownership'], ['Business area', 'Executive owner', 'Critical processes'], ['function_name', 'executive_owner', 'critical_processes_structured']),
@@ -291,7 +283,7 @@ function tenantDisplayNameFor(input: {
 }) {
   const loadedName = display(input.runName);
   if (loadedName !== 'Needs evidence' && !/\bdemo\b/i.test(loadedName)) return loadedName;
-  return V7_DISPLAY_NAME_BY_TENANT[input.tenantKey] ?? input.inputName ?? input.profileName ?? humanize(input.tenantKey);
+  return input.inputName ?? input.profileName ?? humanize(input.tenantKey);
 }
 
 function classifyQuestion(question: string): keyof typeof TOPICS {
