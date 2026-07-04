@@ -720,7 +720,7 @@ function toCurrentStateFindings(
 function formatCurrentStateFinding(item: SourceLiveTenantEvidenceItem): string {
   const segmentLabel = formatSegmentLabel(item.segmentId);
   if (isStructuredRowExcerpt(item.excerpt)) {
-    return `${formatEvidenceTitle(item.title)} is cited evidence for this sourcing read.`;
+    return `Supporting detail: ${formatEvidenceTitle(item.title)}.`;
   }
   if (item.segmentId === "sourcing_artifacts") {
     return cleanEvidenceExcerpt(item.excerpt);
@@ -888,8 +888,17 @@ function formatAnswerText(args: {
     .map(
       (item, index) => `[${index + 1}] ${formatBusinessEvidenceLabel(item)}`,
     );
+  const executiveLead = buildExecutiveSourceLead({
+    mode: args.mode,
+    sourcingImplications: args.sourcingImplications,
+    cxoGuidance: args.cxoGuidance,
+    currentStateFindings: args.currentStateFindings,
+  });
   const body = [
-    joinSentences(args.currentStateFindings),
+    executiveLead,
+    args.currentStateFindings.length
+      ? `Current picture: ${joinSentences(args.currentStateFindings)}`
+      : "",
     `What it means for sourcing: ${joinSentences(args.sourcingImplications)}`,
     `CXO guidance: ${joinSentences(args.cxoGuidance)}`,
     args.riskTraps.length
@@ -904,6 +913,38 @@ function formatAnswerText(args: {
     .filter(Boolean)
     .join("\n");
   return body;
+}
+
+function buildExecutiveSourceLead(args: {
+  mode: SourceAnswerMode;
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  currentStateFindings: string[];
+}): string {
+  if (args.mode === "missing_data") {
+    return "The answer is not decision-ready yet; aVa can show the known sourcing context and the specific gaps that must be closed before the event advances.";
+  }
+  if (args.mode === "risk_traps") {
+    return "The main sourcing risk is not one missing file; it is making a vendor or commercial decision before scope, price, service, transition, and accountability evidence reconcile.";
+  }
+  if (args.mode === "cxo_guidance" || args.mode === "expert_sourcing") {
+    return (
+      args.cxoGuidance[0] ??
+      "The executive posture should be evidence-led: keep the recommendation conditional until the commercial, delivery, risk, and approval record supports it."
+    );
+  }
+  if (args.mode === "event_shaping") {
+    return (
+      args.sourcingImplications[0] ??
+      "Shape the sourcing event around the outcome, scope, comparable vendor response structure, commercial baseline, and named decision gates."
+    );
+  }
+  return (
+    args.currentStateFindings.find(
+      (finding) => !finding.toLowerCase().startsWith("supporting detail:"),
+    ) ??
+    "aVa can describe the current sourcing picture from the available event context and supporting artifacts, then separate what is known from what still needs buyer confirmation."
+  );
 }
 
 type BafoInstructionAsk = {
@@ -2307,7 +2348,7 @@ function formatEvidenceCitationExcerpt(
   item: SourceLiveTenantEvidenceItem,
 ): string {
   if (isStructuredRowExcerpt(item.excerpt)) {
-    return `${formatEvidenceTitle(item.title)} is cited evidence for this sourcing read.`;
+    return `Supporting detail: ${formatEvidenceTitle(item.title)}.`;
   }
   return cleanEvidenceExcerpt(item.excerpt);
 }

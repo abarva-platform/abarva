@@ -91,6 +91,36 @@ describe("Source decision brief export payload", () => {
     expectNoForbiddenTerms(payload.body);
   });
 
+  it("uses the active client and event identity for non-SkyHarbor D24 exports", () => {
+    const payload = buildDecisionBriefPayloadFromContext(
+      makeContext({
+        tenantKey: "lakeshore",
+        tenantName: "Lakeshore Holdings",
+        event: {
+          ...makeContext().event,
+          id: "lake-shared-services-ams-2026",
+          code: "LAKE-SHARED-SERVICES-AMS-2026",
+          name: "Lakeshore Shared Services AMS Sourcing Event",
+          owner: "CIO Office",
+        },
+      }),
+      "2026-07-01T12:00:00.000Z",
+    );
+
+    expect(payload.bodyIsAuthored).toBe(true);
+    expect(payload.tenantName).toBe("Lakeshore Holdings");
+    expect(payload.eventCode).toBe("LAKE-SHARED-SERVICES-AMS-2026");
+    expect(payload.eventName).toBe(
+      "Lakeshore Shared Services AMS Sourcing Event Decision Brief",
+    );
+    expect(payload.body).toContain("Prepared for Lakeshore Holdings.");
+    expect(payload.body).toContain(
+      "# Lakeshore Shared Services AMS Sourcing Event Decision Brief",
+    );
+    expect(payload.body).not.toContain("Aviation Client");
+    expect(payload.body).not.toContain("AMS RFP Decision Brief");
+  });
+
   it("blocks D24 export instead of falling back to a scaffold when no decision view or authored body exists", () => {
     expect(() =>
       buildDecisionBriefPayloadFromContext(

@@ -1,9 +1,15 @@
+jest.mock("server-only", () => ({}));
+
 import {
   getAllowedFormats,
   getDefaultFormat,
   listAllKinds,
   routeFormat,
 } from "../format-router";
+import {
+  canonicalArtifactCodeFor,
+  kindForArtifactCode,
+} from "../spec-builder";
 import {
   ARTIFACT_CODE_TO_KIND,
   KIND_TO_ARTIFACT_CODE,
@@ -110,6 +116,22 @@ describe("Source format router (Slice 8.1 foundations)", () => {
     );
     expect(KIND_TO_ARTIFACT_CODE["pricing-comparison"]).toBe(
       "d19_pricing_workbook",
+    );
+  });
+
+  it("normalizes user-facing artifact aliases before dispatch", () => {
+    expect(canonicalArtifactCodeFor("d16")).toBe("d16_scorecard");
+    expect(kindForArtifactCode("d16")).toBe("scorecard");
+    expect(canonicalArtifactCodeFor("evaluation-scorecard")).toBe(
+      "d16_scorecard",
+    );
+    expect(kindForArtifactCode("d22")).toBe("bafo-question-pack");
+    expect(canonicalArtifactCodeFor("bafo-question-pack")).toBe(
+      "d22_bafo_question_pack",
+    );
+    expect(kindForArtifactCode("d24")).toBe("decision-brief");
+    expect(canonicalArtifactCodeFor("executive_decision")).toBe(
+      "d24_decision_brief",
     );
   });
 });
