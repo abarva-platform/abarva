@@ -1,0 +1,145 @@
+{
+  "version": "2026-07-04",
+  "purpose": "Governed product release factory contract for AbarVa Product Dev, Product Preview, Product Prod, and stamped client private data planes.",
+  "principles": [
+    "product_environments_are_the_factory",
+    "client_environments_are_stamped_private_deployments",
+    "no_client_snowflakes_by_default",
+    "promote_immutable_product_releases_not_random_branches",
+    "same_product_engine_private_client_data_private_client_config",
+    "database_migrations_are_first_class_release_artifacts",
+    "feature_flags_prevent_client_code_forks",
+    "every_promotion_produces_release_evidence"
+  ],
+  "productReleaseChannels": [
+    {
+      "key": "dev",
+      "environmentKey": "product-dev",
+      "subscriptionName": "sub-abarva-product-dev-eus-001",
+      "subscriptionId": "fbea9ee2-ccdd-49fc-808b-22897f2db56b",
+      "purpose": "Fast engineering integration, feature validation, schema testing, and non-client synthetic/demo data.",
+      "allowedData": ["synthetic", "fixture", "engineering-test"],
+      "exitGate": "dev_ready"
+    },
+    {
+      "key": "preview",
+      "environmentKey": "product-preview",
+      "subscriptionName": "sub-abarva-product-preview-eus-001",
+      "subscriptionId": "0cd743d3-ea51-43e3-97e2-723b9f34fb21",
+      "purpose": "Release candidate validation, full regression, demo/client proof, and migration rehearsal.",
+      "allowedData": ["synthetic", "pilot-reference", "client-approved-redacted"],
+      "exitGate": "preview_ready"
+    },
+    {
+      "key": "prod",
+      "environmentKey": "product-prod",
+      "subscriptionName": "sub-abarva-product-prod-eus-001",
+      "subscriptionId": "1c67651b-4c57-49e8-9934-7dd660cdbd3b",
+      "purpose": "Certified golden product baseline and source of approved releases for client private data planes.",
+      "allowedData": ["production-control-plane", "client-routing-metadata"],
+      "exitGate": "product_prod_certified"
+    }
+  ],
+  "clientReleaseChannels": [
+    {
+      "key": "client-preprod",
+      "purpose": "Client-specific release validation, private-data dry run, integration proof, and UAT.",
+      "receives": "certified_product_release_plus_client_config"
+    },
+    {
+      "key": "client-prod",
+      "purpose": "Live client operations on a certified product release with private data and private config.",
+      "receives": "client_preprod_approved_release"
+    }
+  ],
+  "promotionPath": [
+    "feature_branch",
+    "pull_request",
+    "product_dev_deploy",
+    "dev_ready_gate",
+    "merge_to_main",
+    "product_preview_release_candidate",
+    "preview_ready_gate",
+    "product_prod_certification",
+    "certified_release_tag",
+    "client_preprod_deploy",
+    "client_uat_and_data_plane_validation",
+    "client_prod_deploy"
+  ],
+  "releaseManifestRequiredFields": [
+    "release_version",
+    "git_commit_sha",
+    "container_image_digest",
+    "migration_version",
+    "config_version",
+    "prompt_pack_version",
+    "artifact_template_version",
+    "feature_flags",
+    "test_results",
+    "deployment_timestamp",
+    "approver",
+    "rollback_target"
+  ],
+  "gates": {
+    "dev_ready": [
+      "pr_merged_or_approved",
+      "build_passed",
+      "unit_tests_passed",
+      "typecheck_passed",
+      "lint_passed",
+      "migrations_applied_cleanly",
+      "api_health_passed",
+      "basic_user_journey_passed"
+    ],
+    "preview_ready": [
+      "full_smoke_passed",
+      "source_moves_intelligence_tower_passed",
+      "tenant_isolation_passed",
+      "artifact_generation_passed",
+      "rollback_documented_or_tested",
+      "release_notes_generated",
+      "known_issues_documented"
+    ],
+    "product_prod_certified": [
+      "preview_passed",
+      "release_version_assigned",
+      "database_migration_approved",
+      "secrets_config_verified",
+      "observability_verified",
+      "rollback_target_known"
+    ],
+    "client_preprod_ready": [
+      "product_prod_baseline_exists",
+      "client_config_validated",
+      "client_secrets_resolved",
+      "client_data_connections_tested",
+      "migrations_dry_run",
+      "client_feature_flags_set",
+      "uat_checklist_prepared"
+    ],
+    "client_prod_ready": [
+      "client_preprod_passed",
+      "client_sponsor_uat_approval_captured",
+      "data_backup_confirmed",
+      "rollback_plan_confirmed",
+      "release_evidence_stored",
+      "post_deploy_validation_passed"
+    ]
+  },
+  "currentOperationalBar": {
+    "statusVocabulary": ["release_operational", "provisioned_not_operational", "not_provisioned", "unknown"],
+    "releaseOperationalRequires": [
+      "current_or_approved_image",
+      "api_health_passed",
+      "app_boot_passed",
+      "env_vars_verified",
+      "key_vault_references_verified",
+      "postgres_connection_verified",
+      "storage_access_verified",
+      "search_access_verified",
+      "observability_verified",
+      "auth_callback_verified",
+      "basic_tenant_load_verified"
+    ]
+  }
+}

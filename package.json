@@ -171,6 +171,8 @@
     "azure:ingestion:e2e-smoke": "npx tsx src/scripts/azure-ingestion-e2e-smoke.ts",
     "azure:servicebus:dlq-drill": "npx tsx src/scripts/azure-servicebus-dlq-drill.ts",
     "azure:resource:parity": "node scripts/azure/verify-resource-parity.mjs",
+    "azure:product-release-operational:audit": "node scripts/azure/audit-product-release-operational-readiness.mjs",
+    "azure:product-release-operational:audit:strict": "node scripts/azure/audit-product-release-operational-readiness.mjs --strict",
     "azure:environment-factory:verify": "node scripts/azure/verify-environment-factory-scaffold.mjs",
     "azure:environment-vending:verify": "node scripts/azure/verify-environment-vending-ledger.mjs",
     "azure:environment-rbac:verify": "node scripts/azure/verify-environment-rbac-model.mjs",
