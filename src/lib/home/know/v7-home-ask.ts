@@ -330,7 +330,7 @@ function buildGaps(rows: V7RecordRow[]) {
   }
   return [...gaps.entries()].slice(0, 6).map(([label, count]) => ({
     label: humanize(label),
-    impact: `${count} loaded ${count === 1 ? 'record needs' : 'records need'} stronger client evidence for this field.`,
+    impact: `${count} ${count === 1 ? 'entry needs' : 'entries need'} stronger client evidence for this field.`,
     remediation: `Confirm ${humanize(label).toLowerCase()} from the client source owner or source file.`,
   }));
 }
@@ -383,7 +383,7 @@ function buildParagraphs(args: {
       ? `${surfaceName(args.config.handoffTarget)} should take over when the user wants decisions, recommendations, or execution moves; Home should stay focused on loaded facts and evidence boundaries.`
       : args.gaps[0]
         ? `Important evidence gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
-        : 'No explicit evidence gap appears in the selected preview records, but client validation is still required before board-grade use.',
+        : 'No explicit evidence gap appears in the selected fields, but client validation is still required before board-grade use.',
   ];
 }
 
@@ -411,7 +411,7 @@ function buildEnterpriseProfileParagraphs(args: {
     'The profile is useful for sizing the technology estate, comparing operating-company complexity, and deciding which Home dimensions to inspect next.',
     args.gaps[0]
       ? `Important evidence gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
-      : 'No explicit profile gap appears in the selected preview row, but client validation is still required before board-grade use.',
+      : 'No explicit profile gap appears in the selected fields, but client validation is still required before board-grade use.',
   ];
 }
 

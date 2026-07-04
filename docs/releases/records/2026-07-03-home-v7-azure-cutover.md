@@ -38,6 +38,7 @@ Home now prefers the governed V7 Azure context schema for the Context Explorer a
 - `src/lib/home/know/home-consultant-text-synthesis.ts`: tightens the Claude Home synthesis prompt and normalizer so synthesized answers stay plain-text, avoid markdown emphasis, and do not end with labeled `Branch:` lines.
 - `src/lib/home/know/v7-home-ask.ts`, `src/lib/home/know/v7-home-know-response.ts`, and `src/app/api/home/know/ask/route.ts`: remove duplicate V7 tenant display-name dictionaries from the Home path so tenant display truth remains in the canonical registry and loaded V7 pack metadata.
 - `src/lib/home/v7-context-browser.ts` and `src/lib/home/know/v7-home-ask.ts`: remove versioned source-file wording from the canvas summary, route company-profile questions to Enterprise Profile, and replace raw pack volumetrics in deterministic prose with executive-readable sizing language.
+- `src/lib/home/know/v7-home-ask.ts`: remove implementation wording such as selected preview row/records from user-facing deterministic prose so Home KNOW passes the visible-answer contract.
 - `docs/build/V7_SCHEMA_VOLUMETRICS_INSIGHTS_20260703.md`: published schema, volumetrics, and product insight evidence.
 - `/Users/anand/Downloads/abarva-v7-schema-volumetrics-insights-20260703.html`: browser-openable copy of the V7 evidence report.
 
@@ -54,6 +55,8 @@ Home now prefers the governed V7 Azure context schema for the Context Explorer a
 - Pass: `npx jest src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/lib/home/__tests__/v7-context-browser.test.ts src/lib/home/know/__tests__/v7-home-ask.test.ts --runInBand` (25 tests; existing duplicate manual mock warnings only).
 - Pass: `npx eslint src/lib/home/v7-context-browser.ts src/lib/home/know/v7-home-ask.ts src/lib/home/__tests__/v7-context-browser.test.ts src/lib/home/know/__tests__/v7-home-ask.test.ts src/components/home/HomeSurface.tsx`.
 - Pass: `npx jest src/lib/home/know/__tests__/v7-home-ask.test.ts src/lib/home/__tests__/v7-context-browser.test.ts src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx --runInBand` (26 tests; existing duplicate manual mock warnings only).
+- Pass: `npx eslint src/lib/home/know/v7-home-ask.ts src/lib/home/know/__tests__/v7-home-ask.test.ts`.
+- Pass: `npx jest src/lib/home/know/__tests__/v7-home-ask.test.ts --runInBand` (2 tests; existing duplicate manual mock warnings only).
 - Pass: V7 Azure load readback summary reports 120 source files, 21,385 business records, 628,080 field facts, 12,721 graph nodes, 5,700 edges, and 3,900 chunks.
 - Pass: deployed ACA browser/API proof on revision `ca-abarva-web-lab-eastus--0000242` showed 5/5 tenants and 40/40 Home Ask questions on `home_v7_dataset_contract`, with no V7 fallback and no internal-ID or synthetic filename leakage.
 - Pending: deployed ACA browser proof for the right-canvas Summary/Data/Gaps/Questions tabs after this follow-up image is built and routed.
