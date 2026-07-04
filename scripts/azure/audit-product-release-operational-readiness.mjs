@@ -99,10 +99,46 @@ function parseImageTimestamp(image) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function imageAgeDays(image) {
-  const timestamp = parseImageTimestamp(image);
+function ageDaysFromTimestamp(timestamp) {
   if (!timestamp) return null;
   return Math.floor((Date.now() - timestamp.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+function imageAgeDays(image) {
+  return ageDaysFromTimestamp(parseImageTimestamp(image));
+}
+
+function parseAcrDigestImage(image) {
+  const match = String(image ?? '').match(/^(?<registry>[a-z0-9]+)\.azurecr\.io\/(?<repository>.+)@(?<digest>sha256:[a-f0-9]{64})$/i);
+  return match?.groups ?? null;
+}
+
+function acrManifestMetadata(subscriptionId, image) {
+  const parsed = parseAcrDigestImage(image);
+  if (!parsed) return null;
+  const result = tryAz([
+    'acr',
+    'manifest',
+    'show-metadata',
+    '--subscription',
+    subscriptionId,
+    '--registry',
+    parsed.registry,
+    '--name',
+    `${parsed.repository}@${parsed.digest}`,
+    '--query',
+    '{digest:digest,createdTime:createdTime,lastUpdateTime:lastUpdateTime,tags:tags}',
+    '-o',
+    'json',
+  ]);
+  return result.ok ? { ok: true, value: result.value } : { ok: false, error: result.error };
+}
+
+function manifestAgeDays(metadata) {
+  const timestamp = metadata?.createdTime ?? metadata?.lastUpdateTime;
+  if (!timestamp) return null;
+  const parsed = new Date(timestamp);
+  return Number.isNaN(parsed.getTime()) ? null : ageDaysFromTimestamp(parsed);
 }
 
 function requestJson(url) {
@@ -260,18 +296,31 @@ async function auditEnvironment(environment) {
         : fail('webApp.externalFqdn', 'Container App does not expose an external FQDN.', { external: value.external, fqdn: value.fqdn }),
     );
 
-    const ageDays = imageAgeDays(value.templateImage);
     if (String(value.templateImage ?? '').includes('@sha256:')) {
       checks.push(pass('webApp.imageDigestPinned', 'Container App is using a digest-pinned image.', { image: value.templateImage }));
     } else {
       checks.push(attention('webApp.imageDigestPinned', 'Container App is using a tag rather than a digest-pinned image.', { image: value.templateImage }));
     }
-    if (ageDays === null) {
+
+    const tagAgeDays = imageAgeDays(value.templateImage);
+    const manifestMetadata = tagAgeDays === null ? acrManifestMetadata(environment.subscriptionId, value.templateImage) : null;
+    const manifestDays = manifestMetadata?.ok ? manifestAgeDays(manifestMetadata.value) : null;
+    const ageDays = tagAgeDays ?? manifestDays;
+    const freshnessEvidence = manifestMetadata?.ok
+      ? { image: value.templateImage, ageDays, source: 'acrManifest', manifest: manifestMetadata.value }
+      : { image: value.templateImage, ageDays };
+
+    if (ageDays === null && manifestMetadata?.ok === false) {
+      checks.push(attention('webApp.imageFreshness', 'Image freshness could not be resolved from tag or ACR manifest metadata; freshness must be approved manually.', {
+        image: value.templateImage,
+        manifestError: manifestMetadata.error,
+      }));
+    } else if (ageDays === null) {
       checks.push(attention('webApp.imageFreshness', 'Image timestamp could not be parsed; freshness must be approved manually.', { image: value.templateImage }));
     } else if (ageDays <= MAX_IMAGE_AGE_DAYS) {
-      checks.push(pass('webApp.imageFreshness', `Image tag timestamp is ${ageDays} day(s) old.`, { image: value.templateImage, ageDays }));
+      checks.push(pass('webApp.imageFreshness', `Image timestamp is ${ageDays} day(s) old.`, freshnessEvidence));
     } else {
-      checks.push(attention('webApp.imageFreshness', `Image tag timestamp is ${ageDays} day(s) old; refresh or approve stale baseline before promotion.`, { image: value.templateImage, ageDays }));
+      checks.push(attention('webApp.imageFreshness', `Image timestamp is ${ageDays} day(s) old; refresh or approve stale baseline before promotion.`, freshnessEvidence));
     }
 
     if (NO_HEALTH) {
