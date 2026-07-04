@@ -26,6 +26,37 @@ interface Artifact {
   sourcingStage: string | null;
 }
 
+interface StructuredEvidenceFamily {
+  family: string;
+  label: string;
+  rowCount: number;
+  acceptedRows: number;
+  status: 'loaded' | 'partial' | 'missing';
+}
+
+interface StructuredEvidenceMetric {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+  family: string;
+  confidence: number;
+}
+
+interface StructuredEvidenceSummary {
+  manifests: Array<{
+    evidencePackName: string;
+    validationStatus: string;
+    rowCount: number;
+    coveredRequiredFamilyCount: number;
+    requiredFamilyCount: number;
+  }>;
+  families: StructuredEvidenceFamily[];
+  metrics: StructuredEvidenceMetric[];
+  findings: Array<{ key: string; label: string; evidence: string; implication: string }>;
+  userFacingSummary: string;
+}
+
 const NAVY = '#0C1A3A';
 const GROUP_LABELS: Record<string, string> = {
   generated: 'Generated Deliverables',
@@ -62,6 +93,7 @@ function Chip({ text, color }: { text: string; color?: string }) {
 export function FileCabinetPanel({ eventId, eventName }: { eventId: string; eventName?: string }) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [grouped, setGrouped] = useState<Record<string, Artifact[]>>({});
+  const [structuredEvidence, setStructuredEvidence] = useState<StructuredEvidenceSummary | null>(null);
   const [includeHistory, setIncludeHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,10 +103,16 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
     setError(null);
     try {
       const res = await fetch(`/api/v1/source/events/${eventId}/artifacts${includeHistory ? '?includeHistory=1' : ''}`);
-      const data = (await res.json()) as { artifacts?: Artifact[]; grouped?: Record<string, Artifact[]>; detail?: string };
+      const data = (await res.json()) as {
+        artifacts?: Artifact[];
+        grouped?: Record<string, Artifact[]>;
+        structuredEvidence?: StructuredEvidenceSummary;
+        detail?: string;
+      };
       if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
       setArtifacts(data.artifacts ?? []);
       setGrouped(data.grouped ?? {});
+      setStructuredEvidence(data.structuredEvidence ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to load file cabinet');
     } finally {
@@ -105,6 +143,41 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
         <div style={{ color: '#706D66', fontSize: 13, padding: 16, background: '#fff', border: '1px solid #e4e1da', borderRadius: 8 }}>
           No artifacts yet. Generated deliverables, uploaded evidence, and approval records will appear here automatically.
         </div>
+      )}
+
+      {!loading && !error && structuredEvidence && structuredEvidence.manifests.length > 0 && (
+        <section style={{ background: '#fff', border: '1px solid #d9e7dd', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 14px', background: '#edf7f0', fontWeight: 600, fontSize: 13, color: NAVY }}>
+            Structured evidence <span style={{ color: '#5f7f69', fontWeight: 400 }}>({structuredEvidence.families.length} areas)</span>
+          </div>
+          <div style={{ padding: '12px 14px', display: 'grid', gap: 12 }}>
+            <p style={{ margin: 0, color: '#3f4b5f', fontSize: 13 }}>{structuredEvidence.userFacingSummary}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+              {structuredEvidence.families.map((family) => (
+                <div key={family.family} style={{ border: '1px solid #e5e9e4', borderRadius: 8, padding: 10 }}>
+                  <div style={{ fontSize: 12, color: '#6f7b8d' }}>{family.label}</div>
+                  <div style={{ fontWeight: 700, color: NAVY }}>{family.acceptedRows}/{family.rowCount} records</div>
+                  <div style={{ marginTop: 4 }}><Chip text={family.status} color={family.status === 'loaded' ? '#1f7a3d' : '#8a6d1a'} /></div>
+                </div>
+              ))}
+            </div>
+            {structuredEvidence.metrics.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {structuredEvidence.metrics.slice(0, 6).map((metric) => (
+                  <div key={metric.key} style={{ border: '1px solid #e5e1d7', borderRadius: 8, padding: '8px 10px', minWidth: 170 }}>
+                    <div style={{ fontSize: 11, color: '#7d756b' }}>{metric.label}</div>
+                    <div style={{ color: NAVY, fontWeight: 700 }}>{formatStructuredEvidenceMetric(metric)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {structuredEvidence.findings.length > 0 && (
+              <div style={{ borderTop: '1px solid #edf0ea', paddingTop: 10, color: '#3f4b5f', fontSize: 13 }}>
+                <strong style={{ color: NAVY }}>Supported finding:</strong> {structuredEvidence.findings[0]?.label} — {structuredEvidence.findings[0]?.implication}
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       {!loading && !error && ['generated', 'upload', 'template', 'session', 'approval'].map((group) => {
@@ -168,6 +241,12 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
       })}
     </div>
   );
+}
+
+function formatStructuredEvidenceMetric(metric: StructuredEvidenceMetric): string {
+  if (metric.unit === 'USD') return `$${Math.round(metric.value).toLocaleString('en-US')}`;
+  if (metric.unit === 'FTE') return `${metric.value.toLocaleString('en-US')} FTE`;
+  return `${metric.value.toLocaleString('en-US')} ${metric.unit}`;
 }
 
 function fileCabinetMeta(artifact: Artifact): string {

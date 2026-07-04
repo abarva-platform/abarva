@@ -183,6 +183,10 @@ export function buildSourceAnswerEngine(
     prompt: input.prompt,
     evidence: rankedEvidence,
   });
+  const structuredEvidenceAnswer = buildStructuredEvidenceAnswer({
+    prompt: input.prompt,
+    evidence: rankedEvidence,
+  });
   const bafoInstructionAnswer = buildBafoInstructionAnswer({
     prompt: input.prompt,
     evidence: rankedEvidence,
@@ -208,6 +212,7 @@ export function buildSourceAnswerEngine(
     eventOverviewAnswer?.currentStateFindings ??
     stageReadinessAnswer?.currentStateFindings ??
     artifactGovernanceAnswer?.currentStateFindings ??
+    structuredEvidenceAnswer?.currentStateFindings ??
     contractOptimizationAnswer?.currentStateFindings ??
     toCurrentStateFindings(evidence, live);
   const sourcingImplications =
@@ -216,6 +221,7 @@ export function buildSourceAnswerEngine(
     eventOverviewAnswer?.sourcingImplications ??
     stageReadinessAnswer?.sourcingImplications ??
     artifactGovernanceAnswer?.sourcingImplications ??
+    structuredEvidenceAnswer?.sourcingImplications ??
     contractOptimizationAnswer?.sourcingImplications ??
     selectByMode(mode, playbook.eventShaping, [
       `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
@@ -226,6 +232,7 @@ export function buildSourceAnswerEngine(
     eventOverviewAnswer?.cxoGuidance ??
     stageReadinessAnswer?.cxoGuidance ??
     artifactGovernanceAnswer?.cxoGuidance ??
+    structuredEvidenceAnswer?.cxoGuidance ??
     selectByMode(mode, playbook.cxoGuidance, [
       "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
     ]);
@@ -266,6 +273,7 @@ export function buildSourceAnswerEngine(
     eventOverviewAnswer?.answerText ??
     stageReadinessAnswer?.answerText ??
     artifactGovernanceAnswer?.answerText ??
+    structuredEvidenceAnswer?.answerText ??
     contractOptimizationAnswer?.answerText ??
     hardQuestionAnswer?.answerText ??
     formatAnswerText({
@@ -285,6 +293,7 @@ export function buildSourceAnswerEngine(
     eventOverviewAnswer?.cxoGuidance ??
     stageReadinessAnswer?.cxoGuidance ??
     artifactGovernanceAnswer?.cxoGuidance ??
+    structuredEvidenceAnswer?.cxoGuidance ??
     contractOptimizationAnswer?.cxoGuidance ??
     (hardQuestionAnswer
       ? [
@@ -300,6 +309,7 @@ export function buildSourceAnswerEngine(
     eventOverviewAnswer?.recommendedNextAction ??
     stageReadinessAnswer?.recommendedNextAction ??
     artifactGovernanceAnswer?.recommendedNextAction ??
+    structuredEvidenceAnswer?.recommendedNextAction ??
     contractOptimizationAnswer?.recommendedNextAction ??
     hardQuestionAnswer?.recommendedNextAction ??
     playbook.nextAction;
@@ -327,6 +337,7 @@ export function buildSourceAnswerEngine(
       eventOverviewAnswer?.title ??
       stageReadinessAnswer?.title ??
       artifactGovernanceAnswer?.title ??
+      structuredEvidenceAnswer?.title ??
       contractOptimizationAnswer?.title ??
       `${playbook.label} answer`,
     answerText,
@@ -354,7 +365,10 @@ export function buildSourceAnswerEngine(
       deliveryModelGate,
       shouldCostEstimate,
       proposalNormalization,
-      extraResponseParts: contractOptimizationAnswer?.extraResponseParts ?? [],
+      extraResponseParts:
+        structuredEvidenceAnswer?.extraResponseParts ??
+        contractOptimizationAnswer?.extraResponseParts ??
+        [],
     }),
     categoryStrategy,
     deliveryModelGate,
@@ -1306,6 +1320,247 @@ function parseArtifactGovernanceRecord(
         ?.trim() ?? null,
     evidence: item,
   };
+}
+
+function buildStructuredEvidenceAnswer(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+  extraResponseParts: AgentResponsePart[];
+} | null {
+  const structuredEvidence = args.evidence.filter(
+    (item) => item.sourceDoc === "Source structured evidence",
+  );
+  if (structuredEvidence.length === 0) return null;
+
+  const prompt = args.prompt.toLowerCase();
+  const asksEvidenceQuestion =
+    /\b(structured evidence|evidence loaded|loaded evidence|what evidence|evidence pack|metrics?|calculated|finding|findings|missing evidence|sla|invoice|staffing|change[- ]?order|contract baseline|renewal terms)\b/.test(
+      prompt,
+    );
+  const asksVendorDecision =
+    /\b(which vendor|vendor should|advance|bafo|rank|scorecard|evaluation|finalist)\b/.test(
+      prompt,
+    );
+  const asksArtifactFinality =
+    /\b(final rfp|which rfp|client[- ]?final|authoritative|vendors? receive|artifact lineage)\b/.test(
+      prompt,
+    );
+  if (!asksEvidenceQuestion || asksVendorDecision || asksArtifactFinality) {
+    return null;
+  }
+
+  const families = structuredEvidence
+    .filter((item) => item.title.startsWith("Structured evidence - "))
+    .map(parseStructuredEvidenceFamily)
+    .filter(
+      (family): family is StructuredEvidenceFamilyRecord => Boolean(family),
+    );
+  const metrics = structuredEvidence
+    .filter((item) => item.title.startsWith("Calculated metric - "))
+    .map(parseStructuredEvidenceMetric)
+    .filter(
+      (metric): metric is StructuredEvidenceMetricRecord => Boolean(metric),
+    );
+  const findings = structuredEvidence
+    .filter((item) => item.title.startsWith("Supported finding - "))
+    .map(parseStructuredEvidenceFinding)
+    .filter(
+      (finding): finding is StructuredEvidenceFindingRecord =>
+        Boolean(finding),
+    );
+
+  const strongestFamilies = families
+    .filter((family) => family.status === "loaded")
+    .slice(0, 4);
+  const lead =
+    strongestFamilies.length > 0
+      ? `This event has sourcing-critical evidence loaded for ${formatList(strongestFamilies.map((family) => family.label))}.`
+      : "This event has a structured evidence pack, but the coverage is still partial.";
+  const metricLine =
+    metrics.length > 0
+      ? `The calculated sourcing metrics include ${formatList(
+          metrics.slice(0, 4).map((metric) => `${metric.label}: ${metric.value}`),
+        )}.`
+      : "No calculated sourcing metrics are available yet.";
+  const findingLine =
+    findings.length > 0
+      ? `The strongest supported finding is ${findings[0].label}: ${findings[0].implication}`
+      : "No advisory finding has been calculated yet; load the contract baseline, invoice, SLA, staffing, change-order, and renewal evidence before treating this as decision-grade.";
+  const missingFamilies = families
+    .filter((family) => family.status === "missing")
+    .map((family) => family.label);
+  const gapLine =
+    missingFamilies.length > 0
+      ? `Open evidence gap: ${formatList(missingFamilies)}.`
+      : "No required evidence area is marked missing in the current evidence pack.";
+  const nextAction =
+    findings.length > 0
+      ? "Use these metrics to draft the cure, renegotiation, or sourcing challenge language; keep raw files as lineage, not as the operating layer."
+      : "Complete the missing evidence areas before using this event for renewal or negotiation advice.";
+
+  return {
+    title: "Structured Source evidence answer",
+    answerText: [lead, metricLine, findingLine, gapLine, `Next action: ${nextAction}`].join(
+      "\n",
+    ),
+    currentStateFindings: [
+      lead,
+      metrics[0] ? `${metrics[0].label}: ${metrics[0].value}.` : "",
+      findings[0] ? `${findings[0].label}: ${findings[0].implication}` : "",
+    ].filter(Boolean),
+    sourcingImplications: [
+      "Source can now reason from persisted sourcing evidence, not only uploaded files or temporary parse output.",
+      "Metrics and findings should drive cure language, negotiation levers, BAFO questions, or renewal decisions only when the required evidence areas are covered.",
+    ],
+    cxoGuidance: [
+      "Treat raw files as lineage and audit support; use the structured sourcing evidence for decisions, analytics, and aVa answers.",
+      "If a required evidence area is missing, keep the recommendation caveated instead of inventing a contract, invoice, staffing, SLA, or change-order fact.",
+    ],
+    recommendedNextAction: nextAction,
+    extraResponseParts: buildStructuredEvidenceResponseParts({
+      families,
+      metrics,
+      findings,
+    }),
+  };
+}
+
+type StructuredEvidenceFamilyRecord = {
+  label: string;
+  acceptedRecords: number;
+  totalRecords: number;
+  status: string;
+};
+
+type StructuredEvidenceMetricRecord = {
+  label: string;
+  value: string;
+  numericValue: number | null;
+};
+
+type StructuredEvidenceFindingRecord = {
+  label: string;
+  evidence: string;
+  implication: string;
+};
+
+function parseStructuredEvidenceFamily(
+  item: SourceLiveTenantEvidenceItem,
+): StructuredEvidenceFamilyRecord | null {
+  const label = item.title.replace(/^Structured evidence\s*-\s*/i, "").trim();
+  if (!label) return null;
+  const countMatch = item.excerpt.match(
+    /:\s*([\d,]+)\s+accepted evidence record\(s\) out of\s+([\d,]+)/i,
+  );
+  const statusMatch = item.excerpt.match(/status\s+([a-z_ -]+)\.?$/i);
+  return {
+    label,
+    acceptedRecords: Number((countMatch?.[1] ?? "0").replace(/,/g, "")),
+    totalRecords: Number((countMatch?.[2] ?? "0").replace(/,/g, "")),
+    status: statusMatch?.[1]?.trim() ?? "loaded",
+  };
+}
+
+function parseStructuredEvidenceMetric(
+  item: SourceLiveTenantEvidenceItem,
+): StructuredEvidenceMetricRecord | null {
+  const label = item.title.replace(/^Calculated metric\s*-\s*/i, "").trim();
+  const value = item.excerpt
+    .match(/^[^:]+:\s*(.*?)(?:,\s*calculated from|\.?$)/i)?.[1]
+    ?.trim();
+  if (!label || !value) return null;
+  const numericValue = Number(value.replace(/[$,%\s,]|FTE/gi, ""));
+  return {
+    label,
+    value,
+    numericValue: Number.isFinite(numericValue) ? numericValue : null,
+  };
+}
+
+function parseStructuredEvidenceFinding(
+  item: SourceLiveTenantEvidenceItem,
+): StructuredEvidenceFindingRecord | null {
+  const label = item.title.replace(/^Supported finding\s*-\s*/i, "").trim();
+  if (!label) return null;
+  const [evidence = item.excerpt, implication = "Use this as sourcing evidence."] =
+    item.excerpt.split(/(?<=\.)\s+(?=This supports|This metric)/i);
+  return {
+    label,
+    evidence: cleanEvidenceExcerpt(evidence),
+    implication: cleanEvidenceExcerpt(implication),
+  };
+}
+
+function buildStructuredEvidenceResponseParts(args: {
+  families: StructuredEvidenceFamilyRecord[];
+  metrics: StructuredEvidenceMetricRecord[];
+  findings: StructuredEvidenceFindingRecord[];
+}): AgentResponsePart[] {
+  const parts: AgentResponsePart[] = [];
+  if (args.metrics.length > 0) {
+    const chartableMetrics = args.metrics.filter(
+      (metric) => metric.numericValue !== null && metric.numericValue > 0,
+    );
+    if (chartableMetrics.length > 0) {
+      parts.push({
+        type: "barChart",
+        title: "Calculated sourcing metrics",
+        bars: chartableMetrics.slice(0, 5).map((metric) => ({
+          label: metric.label,
+          value: metric.numericValue ?? 0,
+          displayValue: metric.value,
+          tone: "warning",
+        })),
+        caption:
+          "Metrics come from persisted sourcing evidence records for this event.",
+      });
+    }
+  }
+
+  if (args.families.length > 0) {
+    parts.push({
+      type: "table",
+      title: "Evidence coverage",
+      columns: ["Evidence area", "Coverage", "Status"],
+      rows: args.families.map((family) => [
+        family.label,
+        `${family.acceptedRecords}/${family.totalRecords} accepted`,
+        family.status,
+      ]),
+      caption:
+        "Coverage shows which sourcing-critical evidence areas are available for decisions.",
+    });
+  }
+
+  if (args.findings.length > 0) {
+    parts.push({
+      type: "table",
+      title: "Supported findings",
+      columns: ["Finding", "Evidence", "Sourcing implication"],
+      rows: args.findings.slice(0, 5).map((finding) => [
+        finding.label,
+        finding.evidence,
+        finding.implication,
+      ]),
+      caption:
+        "Findings are generated from persisted evidence metrics, not raw document browsing.",
+    });
+  }
+  return parts;
+}
+
+function formatList(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
 
 function buildContractOptimizationAnswer(args: {

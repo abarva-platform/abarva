@@ -16,6 +16,8 @@ import { specByCode } from '@/lib/source/canonical-specs';
 import { listSourceArtifacts } from '@/lib/source/file-cabinet/repository';
 import type { ArtifactFileFormat, ArtifactGroup, ArtifactStatus, SourceArtifactRecord } from '@/lib/source/file-cabinet/types';
 import { tenantAliasesFor } from '@/lib/tenant/aliases';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import { loadContractEvidenceRuntimeSummary } from '@/lib/source/contract-evidence';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,6 +98,11 @@ export async function GET(req: NextRequest, ctxParam: { params: Promise<{ eventI
     // group for the File Cabinet UI
     const grouped: Record<string, typeof visibleArtifacts> = { generated: [], upload: [], template: [], session: [], approval: [] };
     for (const a of visibleArtifacts) (grouped[a.artifactGroup] ??= []).push(a);
+    const structuredEvidence = await loadContractEvidenceRuntimeSummary({
+      db: getAzureReadFluentClient(),
+      tenantKey: ctx.clientKey ?? ctx.clientId,
+      sourceEventId: eventId,
+    });
 
     return Response.json({
       sourceEventId: eventId,
@@ -103,6 +110,7 @@ export async function GET(req: NextRequest, ctxParam: { params: Promise<{ eventI
       includeHistory,
       artifacts: visibleArtifacts,
       grouped,
+      structuredEvidence,
     });
   } catch (err) {
     try {
