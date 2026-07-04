@@ -65,7 +65,7 @@ export async function requireTenancy(): Promise<TenancyCtx> {
       clientKey: client.key,
       clientName: (client as { name?: string | null }).name ?? null,
     });
-    if (provisioned) {
+    if (provisioned && isUuidLike(provisioned.personId)) {
       resolvedUserId = provisioned.personId;
       resolvedRole = provisioned.role;
     }
