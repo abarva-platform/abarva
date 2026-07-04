@@ -18,6 +18,9 @@ interface Artifact {
   status: string;
   lifecycleState: string;
   generatedAt: string;
+  fileSize?: number | null;
+  isClientFinal?: boolean;
+  isCurrentAuthoritative?: boolean;
   citationReady: boolean;
   missingInputs: string[];
   sourcingStage: string | null;
@@ -35,6 +38,13 @@ const STATUS_COLOR: Record<string, string> = {
   issue_ready: '#1f7a3d', approved: '#1f7a3d', preliminary: '#8a6d1a', draft: '#6b6b6b',
   client_to_complete: '#1d5e87', legal_review_required: '#8a6d1a', procurement_review_required: '#8a6d1a',
   pricing_review_required: '#8a6d1a', blocked: '#b3261e', superseded: '#9a9a9a', retired: '#9a9a9a',
+};
+const EXPORT_READY_ARTIFACTS: Record<string, Array<'docx' | 'xlsx' | 'pdf'>> = {
+  d09_rfp_pack: ['docx', 'pdf'],
+  d11_response_checklist: ['xlsx', 'docx', 'pdf'],
+  d16_scorecard: ['xlsx', 'docx', 'pdf'],
+  d22_bafo_question_pack: ['docx', 'xlsx', 'pdf'],
+  d24_decision_brief: ['pdf', 'docx'],
 };
 
 function Chip({ text, color }: { text: string; color?: string }) {
@@ -103,7 +113,7 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                   <tr key={a.id} style={{ borderTop: '1px solid #efece5', opacity: a.lifecycleState === 'current' ? 1 : 0.6 }}>
                     <td style={{ padding: '9px 14px' }}>
                       <div style={{ fontWeight: 600 }}>{a.title}</div>
-                      <div style={{ color: '#9a9a9a', fontSize: 11 }}>{a.fileName} · {a.fileFormat.toUpperCase()}{a.sourcingStage ? ` · ${a.sourcingStage}` : ''}</div>
+                      <div style={{ color: '#9a9a9a', fontSize: 11 }}>{fileCabinetMeta(a)}</div>
                       {a.missingInputs.length > 0 && <div style={{ color: '#8a6d1a', fontSize: 11, marginTop: 2 }}>Missing: {a.missingInputs.slice(0, 4).join(', ')}</div>}
                     </td>
                     <td style={{ padding: '9px 8px', whiteSpace: 'nowrap' }}><Chip text={`v${a.version}`} color="#1d5e87" /></td>
@@ -118,6 +128,26 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                       >
                         {a.fileFormat === 'html' ? 'Preview' : 'Download'}
                       </a>
+                      {EXPORT_READY_ARTIFACTS[a.artifactType]?.map((format) => (
+                        <a
+                          key={format}
+                          href={`/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(a.artifactType)}/render?format=${format}`}
+                          download
+                          style={{
+                            marginLeft: 8,
+                            color: NAVY,
+                            background: '#fff',
+                            border: '1px solid #d9d5cc',
+                            padding: '5px 10px',
+                            borderRadius: 5,
+                            textDecoration: 'none',
+                            fontSize: 12,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {format.toUpperCase()}
+                        </a>
+                      ))}
                     </td>
                   </tr>
                 ))}
@@ -128,4 +158,18 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
       })}
     </div>
   );
+}
+
+function fileCabinetMeta(artifact: Artifact): string {
+  const stage = artifact.sourcingStage ? ` · ${artifact.sourcingStage}` : '';
+  if (artifact.isClientFinal && artifact.isCurrentAuthoritative) {
+    return `${artifact.fileName} · Client-approved final · authoritative${stage}`;
+  }
+  if (EXPORT_READY_ARTIFACTS[artifact.artifactType]) {
+    return `${artifact.fileName} · Export-ready deliverable${stage}`;
+  }
+  if (artifact.artifactGroup === 'upload') {
+    return `${artifact.fileName} · Uploaded evidence${stage}`;
+  }
+  return `${artifact.fileName} · ${artifact.fileFormat.toUpperCase()}${stage}`;
 }

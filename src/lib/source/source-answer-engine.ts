@@ -1034,27 +1034,33 @@ function buildSourceEventOverviewAnswer(args: {
 
   const accountName = event.accountName ?? "the client";
   const eventTitle = event.name ?? event.code ?? "this Source event";
-  const synopsis = /lakeshore|shared services|shared-services|ams/i.test(
+  const isLakeshoreSharedServices = /lakeshore|shared services|shared-services|ams/i.test(
     `${accountName} ${eventTitle} ${event.code ?? ""}`,
-  )
-    ? "a corporate shared-services AMS event for Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support."
-    : "a governed Source event that should be interpreted through its loaded evidence, stage gates, and artifacts.";
+  );
+  const synopsis = isLakeshoreSharedServices
+    ? "covering Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support."
+    : "that should be interpreted through its loaded evidence, stage gates, and artifacts.";
   const value =
     typeof event.valueAtStakeUsd === "number" && event.valueAtStakeUsd > 0
       ? `$${(event.valueAtStakeUsd / 1_000_000).toFixed(1)}M value basis`
       : "value basis to be confirmed";
   const stage = event.currentStageKey ?? "current";
+  const lead = isLakeshoreSharedServices
+    ? `Lakeshore is preparing a 4-5 year, $15M-$20M shared-services AMS sourcing event ${synopsis}`
+    : `${eventTitle} is ${accountName}'s governed Source event ${synopsis}`;
 
   return {
     title: "Source event overview answer",
     answerText: [
-      `${eventTitle} is ${accountName}'s shared-services AMS sourcing event: ${synopsis}`,
+      lead,
       `Scope and economics: ${value}; current stage is ${stage}.`,
       "The working storyline is practical: finish the governed RFP record, use the client-final RFP for issuance, evaluate Vendor A/B/C responses through normalized profiles and scorecards, then run BAFO against the unresolved commercial and delivery risks.",
       "What matters for the demo: this is a real Source workflow with evidence, artifacts, vendor response intelligence, File Cabinet lineage, and aVa advisory answers tied to the same event.",
     ].join("\n"),
     currentStateFindings: [
-      `${eventTitle} is the active Lakeshore shared-services AMS event.`,
+      isLakeshoreSharedServices
+        ? "Lakeshore is preparing a shared-services AMS sourcing event for corporate functions."
+        : `${eventTitle} is the active Source event.`,
       `Current stage is ${stage}.`,
       `Commercial basis is ${value}.`,
     ],

@@ -99,6 +99,9 @@ describe('GET /api/v1/source/events/[eventId]/artifacts', () => {
       title: 'D24 Decision Brief',
       artifactGroup: 'generated',
       artifactType: 'd24_decision_brief',
+      fileFormat: 'pdf',
+      fileName: 'D24 Executive Decision Brief.pdf',
+      status: 'issue_ready',
       sourceBasis: 'source_event_artifact_states:state-24',
     });
   });

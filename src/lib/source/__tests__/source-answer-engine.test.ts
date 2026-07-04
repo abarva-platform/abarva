@@ -358,6 +358,40 @@ describe("Source answer engine", () => {
     expect(visiblePayload).not.toContain("RFP-R1,Transition");
   });
 
+  it("opens the Lakeshore sourcing event overview with executive business context", () => {
+    const lakeshoreContext: SourceAgentContextBundle = {
+      ...contextBundle,
+      tenant: {
+        tenantId: "lakeshore",
+        tenantKey: "lakeshore",
+        tenantName: "Lakeshore Holdings",
+      },
+      sourcingEvent: {
+        ...contextBundle.sourcingEvent!,
+        id: "18439aee-9889-4e97-a444-4d9e43a85bd5",
+        code: "LAKE-SHARED-SERVICES-AMS-2026",
+        name: "Lakeshore Shared Services AMS Sourcing Event",
+        accountName: "Lakeshore Holdings",
+        archetype: "managed_service",
+        currentStageKey: "strategy",
+        valueAtStakeUsd: 18_000_000,
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "What is this Lakeshore sourcing event about?",
+      contextBundle: lakeshoreContext,
+      userRole: "cio",
+    });
+
+    expect(answer?.answerText.split("\n")[0]).toBe(
+      "Lakeshore is preparing a 4-5 year, $15M-$20M shared-services AMS sourcing event covering Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support.",
+    );
+    expect(answer?.answerText).toContain("client-final RFP");
+    expect(answer?.answerText).toContain("Vendor A/B/C");
+    expect(answer?.answerText).not.toContain("is Lakeshore Holdings's");
+  });
+
   it("answers BAFO questions from vendor-specific instructions instead of generic current-state prose", () => {
     const contextWithBafoInstructions: SourceAgentContextBundle = {
       ...contextBundle,
@@ -805,8 +839,8 @@ describe("Source answer engine", () => {
     });
 
     expect(answer?.title).toBe("Source event overview answer");
-    expect(answer?.answerText).toContain(
-      "Lakeshore Shared Services AMS Sourcing Event",
+    expect(answer?.answerText.split("\n")[0]).toBe(
+      "Lakeshore is preparing a 4-5 year, $15M-$20M shared-services AMS sourcing event covering Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support.",
     );
     expect(answer?.answerText).toContain("Vendor A/B/C");
     expect(answer?.answerText).not.toContain("final RFP version of record");

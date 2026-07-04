@@ -25,6 +25,28 @@ import { VendorResponsePackPanel } from "./VendorResponsePackPanel";
 const VENDOR_SUBMISSIONS_CODES: ReadonlySet<string> = new Set([
   "d19_pricing_workbook",
 ]);
+const EXPORT_READY_ARTIFACTS: Record<
+  string,
+  { label: string; formats: Array<"docx" | "xlsx" | "pdf"> }
+> = {
+  d09_rfp_pack: { label: "RFP Pack", formats: ["docx", "pdf"] },
+  d11_response_checklist: {
+    label: "Response Control Pack",
+    formats: ["xlsx", "docx", "pdf"],
+  },
+  d16_scorecard: {
+    label: "Evaluation Scorecard",
+    formats: ["xlsx", "docx", "pdf"],
+  },
+  d22_bafo_question_pack: {
+    label: "BAFO Question Pack",
+    formats: ["docx", "xlsx", "pdf"],
+  },
+  d24_decision_brief: {
+    label: "Decision Brief",
+    formats: ["pdf", "docx"],
+  },
+};
 
 interface DocumentTabProps {
   /** Source event id; used by the vendor-submissions panel for API calls. */
@@ -404,14 +426,21 @@ function RegistryDocumentsShelf({
                 <span style={REGISTRY_DOC_TOPLINE_STYLE}>
                   <span>{SOURCE_STAGE_LABELS[doc.stageKey]}</span>
                   <span style={DOT_STYLE}>·</span>
-                  <span>{doc.sourceFormat}</span>
+                  <span>{formatDocumentType(doc)}</span>
                   <span style={DOT_STYLE}>·</span>
-                  <span>{formatFileSize(doc.sizeBytes)}</span>
+                  <span>{formatDocumentSize(doc)}</span>
                   {doc.isClientFinal ? (
                     <span style={CLIENT_FINAL_BADGE_STYLE}>Client Final</span>
                   ) : null}
+                  {doc.isCurrentAuthoritative ? (
+                    <span style={AUTHORITATIVE_BADGE_STYLE}>Authoritative</span>
+                  ) : null}
                   {doc.sourceOrigin === "generated" ? (
-                    <span style={REGISTRY_SHELF_BADGE_STYLE}>AI Draft</span>
+                    <span style={REGISTRY_SHELF_BADGE_STYLE}>
+                      {EXPORT_READY_ARTIFACTS[doc.artifactKind]
+                        ? "Export Ready"
+                        : "Generated Draft"}
+                    </span>
                   ) : null}
                 </span>
                 {detailHref ? (
@@ -429,11 +458,24 @@ function RegistryDocumentsShelf({
                   </span>
                 )}
                 <span style={REGISTRY_DOC_META_STYLE}>
-                  {formatDocumentFamily(doc.artifactFamily)} · parse{" "}
-                  {doc.parseStatus} · approval {doc.approvalState}
-                  {doc.isCurrentAuthoritative ? " · authoritative" : ""}
+                  {formatRegistryDocumentMeta(doc)}
                 </span>
                 <span style={REGISTRY_DOC_ACTIONS_STYLE}>
+                  {eventId && EXPORT_READY_ARTIFACTS[doc.artifactKind]
+                    ? EXPORT_READY_ARTIFACTS[doc.artifactKind].formats.map(
+                        (format) => (
+                          <a
+                            key={format}
+                            href={`/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(doc.artifactKind)}/render?format=${format}`}
+                            data-testid={`source-canvas-registry-doc-export-${doc.id}-${format}`}
+                            style={REGISTRY_DOC_ACTION_STYLE}
+                            download
+                          >
+                            {format.toUpperCase()}
+                          </a>
+                        ),
+                      )
+                    : null}
                   {detailHref ? (
                     <a
                       href={detailHref}
@@ -471,6 +513,36 @@ function formatDocumentFamily(
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function formatDocumentType(doc: SourceArtifactRegistryRecord): string {
+  const exportReady = EXPORT_READY_ARTIFACTS[doc.artifactKind];
+  if (exportReady) return exportReady.label;
+  return doc.sourceFormat.toUpperCase();
+}
+
+function formatDocumentSize(doc: SourceArtifactRegistryRecord): string {
+  if (EXPORT_READY_ARTIFACTS[doc.artifactKind]) {
+    return "Rendered export available";
+  }
+  return formatFileSize(doc.sizeBytes);
+}
+
+function formatRegistryDocumentMeta(doc: SourceArtifactRegistryRecord): string {
+  const family = formatDocumentFamily(doc.artifactFamily);
+  if (doc.isClientFinal && doc.isCurrentAuthoritative) {
+    return `${family} · client-approved final · used as version of record`;
+  }
+  if (EXPORT_READY_ARTIFACTS[doc.artifactKind]) {
+    return `${family} · reviewable deliverable · export surfaces available`;
+  }
+  if (doc.sourceOrigin === "uploaded" || doc.sourceOrigin === "reuploaded") {
+    return `${family} · uploaded evidence · ${doc.approvalState.replace(/_/g, " ")}`;
+  }
+  if (doc.sourceOrigin === "note_capture") {
+    return `${family} · session evidence`;
+  }
+  return `${family} · ${doc.approvalState.replace(/_/g, " ")}`;
 }
 
 function formatFileSize(bytes: number): string {
@@ -1487,6 +1559,13 @@ const CLIENT_FINAL_BADGE_STYLE: CSSProperties = {
   color: "#0f766e",
   fontWeight: 800,
   padding: "2px 7px",
+};
+
+const AUTHORITATIVE_BADGE_STYLE: CSSProperties = {
+  ...CLIENT_FINAL_BADGE_STYLE,
+  color: "#1d4ed8",
+  background: "rgba(29,78,216,0.08)",
+  border: "1px solid rgba(29,78,216,0.22)",
 };
 
 const GENERATION_ERROR_STYLE: CSSProperties = {

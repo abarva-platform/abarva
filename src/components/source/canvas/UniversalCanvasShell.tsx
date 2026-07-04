@@ -127,6 +127,7 @@ import type {
 } from "@/lib/source/canvas-substrate";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import {
   type AttachmentRef,
@@ -405,6 +406,7 @@ export function UniversalCanvasShell({
     undefined,
   );
   const [promotePending, setPromotePending] = useState(false);
+  const isLakeshoreDemoCaseStudy = isLakeshoreSharedServicesDemoEvent(event);
 
   // Per-event artifact state lives in client state so "Mark complete"
   // can update optimistically. Server-loaded props are the source of
@@ -1000,12 +1002,15 @@ export function UniversalCanvasShell({
   // (B4 semantics preserved from the prior chat lane).
   const suggestedActions: SuggestedAction[] = useMemo(
     () =>
-      threeChoicesForStage(viewStage).map((choice, i) => ({
+      (isLakeshoreDemoCaseStudy
+        ? LAKESHORE_CASE_STUDY_CHOICES
+        : threeChoicesForStage(viewStage)
+      ).map((choice, i) => ({
         id: `c${i}`,
         label: choice,
         body: choice,
       })),
-    [viewStage],
+    [isLakeshoreDemoCaseStudy, viewStage],
   );
 
   const initialTab: WorkspaceTabKey = "document";
@@ -1345,6 +1350,12 @@ export function UniversalCanvasShell({
                 style={WORKSPACE_WRAPPER_STYLE}
               >
                 <div style={WORKSPACE_INNER_STYLE}>
+                  {isLakeshoreDemoCaseStudy ? (
+                    <CaseStudyCoherenceBanner
+                      currentStage={event.currentStageKey}
+                      viewStage={viewStage}
+                    />
+                  ) : null}
                   {simpleFrontWorkspace ?? advancedWorkspace}
                 </div>
               </div>
@@ -1355,6 +1366,57 @@ export function UniversalCanvasShell({
         <CanvasTour />
       </main>
     </AppShell>
+  );
+}
+
+const LAKESHORE_CASE_STUDY_CHOICES = [
+  "What is this Lakeshore sourcing event about?",
+  "Which RFP version is final?",
+  "Which vendor should advance and why?",
+  "What should go into BAFO?",
+  "What should the CIO and CFO worry about?",
+  "Show artifact lineage.",
+];
+
+function isLakeshoreSharedServicesDemoEvent(
+  event: Pick<SourcingEventSummary, "code" | "name" | "accountName">,
+): boolean {
+  return (
+    /LAKE-SHARED-SERVICES-AMS-2026/i.test(event.code) ||
+    /Lakeshore Shared Services AMS/i.test(event.name) ||
+    (/lakeshore/i.test(event.accountName) &&
+      /shared services|shared-services|ams/i.test(event.name))
+  );
+}
+
+function CaseStudyCoherenceBanner({
+  currentStage,
+  viewStage,
+}: {
+  currentStage: SourceStageKey;
+  viewStage: SourceStageKey;
+}) {
+  const currentLabel = SOURCE_STAGE_LABELS[currentStage] ?? currentStage;
+  const viewLabel = SOURCE_STAGE_LABELS[viewStage] ?? viewStage;
+  return (
+    <section
+      data-testid="source-lakeshore-case-study-banner"
+      aria-label="Case-study review context"
+      style={CASE_STUDY_BANNER_STYLE}
+    >
+      <div>
+        <strong>Case-study review view</strong>
+        <p style={CASE_STUDY_BANNER_TEXT_STYLE}>
+          You are reviewing the prepared Lakeshore RFP, vendor evaluation,
+          BAFO, and decision artifacts for the {viewLabel} walkthrough. The
+          governance rail still records the formal event stage as {currentLabel}
+          until a named human clears the gate.
+        </p>
+      </div>
+      <Link href="#stage-gate-checklist" style={CASE_STUDY_BANNER_LINK_STYLE}>
+        Review governance gate
+      </Link>
+    </section>
   );
 }
 
@@ -1732,6 +1794,36 @@ const WORKSPACE_INNER_STYLE: CSSProperties = {
   flexDirection: "column",
   minHeight: 0,
   overflow: "hidden",
+};
+
+const CASE_STUDY_BANNER_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 18,
+  margin: "0 0 12px",
+  padding: "14px 16px",
+  border: "1px solid rgba(29,78,216,0.18)",
+  borderRadius: 10,
+  background: "rgba(29,78,216,0.045)",
+  color: CANVAS.INK,
+  fontFamily: CANVAS.SANS,
+};
+
+const CASE_STUDY_BANNER_TEXT_STYLE: CSSProperties = {
+  maxWidth: 880,
+  margin: "5px 0 0",
+  fontSize: 13,
+  lineHeight: 1.45,
+  color: CANVAS.INK_SOFT,
+};
+
+const CASE_STUDY_BANNER_LINK_STYLE: CSSProperties = {
+  flex: "0 0 auto",
+  color: "#1d4ed8",
+  fontSize: 12,
+  fontWeight: 700,
+  textDecoration: "none",
 };
 
 const WORKSPACE_CHIPS_ROW_STYLE: CSSProperties = {
