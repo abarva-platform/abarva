@@ -174,6 +174,8 @@ async function renderArtifact(
       sourceEventId: ctx.event.id,
       clientId: activeClient.id,
       artifactCode: canonicalArtifactCode,
+      requestedArtifactCode: artifactCode,
+      eventCode: ctx.event.code,
       requestedFormat,
     });
     if (clientFinalResponse) return clientFinalResponse;
@@ -248,6 +250,8 @@ async function streamClientFinalIfAvailable(args: {
   sourceEventId: string;
   clientId: string;
   artifactCode: string;
+  requestedArtifactCode: string;
+  eventCode: string;
   requestedFormat: DeliverableFormat;
 }): Promise<Response | null> {
   const requestedFileFormat = deliverableFormatToFileFormat(
@@ -266,7 +270,11 @@ async function streamClientFinalIfAvailable(args: {
   );
   if (!authoritative || !authoritative.isClientFinal) return null;
   if (authoritative.fileFormat !== requestedFileFormat) return null;
-  return streamFileCabinetRecord(authoritative);
+  return streamFileCabinetRecord(authoritative, {
+    eventCode: args.eventCode,
+    artifactCode: args.artifactCode,
+    requestedArtifactCode: args.requestedArtifactCode,
+  });
 }
 
 function deliverableFormatToFileFormat(
@@ -285,6 +293,11 @@ function deliverableFormatToFileFormat(
 
 async function streamFileCabinetRecord(
   record: SourceArtifactRecord,
+  audit: {
+    eventCode: string;
+    artifactCode: string;
+    requestedArtifactCode: string;
+  },
 ): Promise<Response> {
   const bytes = await downloadArtifactBytes({
     bucket: record.blobContainer,
@@ -302,6 +315,11 @@ async function streamFileCabinetRecord(
       "content-length": String(bytes.length),
       "cache-control": "private, no-store",
       "x-source-artifact-id": record.id,
+      "x-source-artifact-code": audit.artifactCode,
+      ...(audit.requestedArtifactCode !== audit.artifactCode
+        ? { "x-source-requested-artifact-code": audit.requestedArtifactCode }
+        : {}),
+      "x-source-event-code": audit.eventCode,
       "x-source-artifact-version": String(record.version),
       "x-source-artifact-format": record.fileFormat,
       "x-source-artifact-authoritative": "client-final",

@@ -78,6 +78,7 @@ const ARTIFACT_CODE_ALIASES: Record<string, string> = {
   vendor_responses: "d13_vendor_responses",
   "vendor-response-pack": "d13_vendor_responses",
   d16: "d16_scorecard",
+  d16_evaluation_scorecard: "d16_scorecard",
   scorecard: "d16_scorecard",
   evaluation_scorecard: "d16_scorecard",
   "evaluation-scorecard": "d16_scorecard",
