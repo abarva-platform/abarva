@@ -64,6 +64,9 @@ interface PendingAttachment {
   status: AttachmentStatus;
   attachmentId?: string;
   feedbackCount?: number;
+  whatFound?: string[];
+  whereUsed?: string[];
+  parseMethod?: string | null;
   errorMsg?: string;
 }
 
@@ -166,6 +169,194 @@ interface CanvasSection {
   id: string;
   label: string;
   placeholder: string;
+}
+
+interface PhaseUploadGuidance {
+  title: string;
+  whyItMatters: string;
+  recommendedUploads: string[];
+  expectedLearning: string[];
+  finalUpload?: string;
+}
+
+const PHASE_UPLOAD_GUIDANCE: Record<number, PhaseUploadGuidance> = {
+  2: {
+    title: "Upload evidence to understand current state",
+    whyItMatters:
+      "AbarVa uses this evidence to separate symptoms from root causes before design starts.",
+    recommendedUploads: [
+      "work or activity data",
+      "baseline metrics",
+      "systems and data source list",
+      "policy or control rules",
+      "current-state workshop notes",
+      "final current-state view",
+    ],
+    expectedLearning: [
+      "volumes, aging, and cycle-time baseline",
+      "missing intake or data-quality patterns",
+      "systems and handoffs involved",
+      "root-cause candidates and evidence gaps",
+    ],
+    finalUpload: "Upload Final Current-State View after the review session.",
+  },
+  3: {
+    title: "Upload evidence to choose the approach",
+    whyItMatters:
+      "AbarVa compares solution options before architecture, so the team chooses a path deliberately.",
+    recommendedUploads: [
+      "approved P2 final",
+      "solution options or decision matrix",
+      "human and AI work split",
+      "architecture constraints",
+      "solution workshop notes",
+      "final solution design",
+    ],
+    expectedLearning: [
+      "selected approach and rejected options",
+      "tradeoffs, controls, and decision rationale",
+      "human, AI, and exception responsibilities",
+      "what P4 must review before committing",
+    ],
+    finalUpload: "Upload Final Solution Design after the approach is agreed.",
+  },
+  4: {
+    title: "Upload evidence to build the plan",
+    whyItMatters:
+      "AbarVa turns the approved solution into workstreams, economics, owners, risks, and Tower metrics.",
+    recommendedUploads: [
+      "approved P3 final",
+      "roadmap workstreams",
+      "business case model",
+      "value assumptions",
+      "finance review notes",
+      "Tower metric definitions",
+      "final plan",
+    ],
+    expectedLearning: [
+      "revised value assumptions and caveats",
+      "workstreams, dependencies, and owners",
+      "pilot timeline and readiness risks",
+      "Tower metrics and measurement owners",
+    ],
+    finalUpload: "Upload Final Plan after Finance and delivery review.",
+  },
+  5: {
+    title: "Upload evidence to prepare execution",
+    whyItMatters:
+      "AbarVa checks whether the plan can move from workshop agreement to owned execution.",
+    recommendedUploads: [
+      "approved P4 final",
+      "RACI or owner matrix",
+      "launch readiness checklist",
+      "training or change plan",
+      "approval conditions",
+      "final execution handoff",
+    ],
+    expectedLearning: [
+      "named owners and governance cadence",
+      "launch readiness and open decisions",
+      "handoff risks and acceptance criteria",
+      "Tower measurement readiness",
+    ],
+    finalUpload:
+      "Upload Final Execution Handoff when owners and readiness are confirmed.",
+  },
+};
+
+export function UploadGuidanceCard({ phaseNum }: { phaseNum: number }) {
+  const guidance = PHASE_UPLOAD_GUIDANCE[phaseNum];
+  if (!guidance) return null;
+  return (
+    <section
+      id={`ws-canvas-p${phaseNum}-upload-guidance`}
+      className={styles.detailSection}
+    >
+      <div className={styles.detailSectionTitle}>What to upload</div>
+      <div style={{ display: "grid", gap: 10 }}>
+        <div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              color: "var(--abarva-ink)",
+            }}
+          >
+            {guidance.title}
+          </div>
+          <div
+            style={{
+              marginTop: 3,
+              fontSize: 12,
+              color: "var(--abarva-slate)",
+              lineHeight: 1.5,
+            }}
+          >
+            {guidance.whyItMatters}
+          </div>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            gap: 12,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: "var(--abarva-ink)",
+                marginBottom: 5,
+              }}
+            >
+              Recommended files
+            </div>
+            <ul className={styles.qualityBarList}>
+              {guidance.recommendedUploads.map((item) => (
+                <li key={item}>
+                  <span className={styles.qualityBarDot} aria-hidden />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: "var(--abarva-ink)",
+                marginBottom: 5,
+              }}
+            >
+              What AbarVa should learn
+            </div>
+            <ul className={styles.qualityBarList}>
+              {guidance.expectedLearning.map((item) => (
+                <li key={item}>
+                  <span className={styles.qualityBarDot} aria-hidden />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {guidance.finalUpload && (
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--abarva-slate)",
+              fontWeight: 700,
+            }}
+          >
+            {guidance.finalUpload}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
@@ -1266,6 +1457,11 @@ export function StrategicMovePhaseClient({
         }
         const data = (await res.json()) as {
           attachmentId: string;
+          evidence?: {
+            parseMethod?: string | null;
+            whatFound?: string[];
+            whereUsed?: string[];
+          };
           review?: { extractedFeedback?: Array<{ requestedChange: string }> };
         };
         const feedbackCount = data.review?.extractedFeedback?.length ?? 0;
@@ -1277,6 +1473,9 @@ export function StrategicMovePhaseClient({
                   status: "done",
                   attachmentId: data.attachmentId,
                   feedbackCount,
+                  parseMethod: data.evidence?.parseMethod ?? null,
+                  whatFound: data.evidence?.whatFound ?? [],
+                  whereUsed: data.evidence?.whereUsed ?? [],
                 }
               : a,
           ),
@@ -1671,6 +1870,22 @@ export function StrategicMovePhaseClient({
                         ? "✓"
                         : "✗"}{" "}
                     {a.name}
+                    {a.status === "done" &&
+                      a.whatFound &&
+                      a.whatFound.length > 0 && (
+                        <span style={{ opacity: 0.75 }}>
+                          {" "}
+                          · found: {a.whatFound.slice(0, 2).join(", ")}
+                        </span>
+                      )}
+                    {a.status === "done" &&
+                      a.whereUsed &&
+                      a.whereUsed.length > 0 && (
+                        <span style={{ opacity: 0.75 }}>
+                          {" "}
+                          · used in: {a.whereUsed.slice(0, 2).join(", ")}
+                        </span>
+                      )}
                   </span>
                 ))}
               </div>
@@ -1810,6 +2025,8 @@ export function StrategicMovePhaseClient({
                 ))}
               </div>
             </section>
+
+            <UploadGuidanceCard phaseNum={phaseNum} />
 
             {/* Gate criteria panel */}
             <CollapsePanel
