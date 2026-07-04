@@ -15,9 +15,23 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import { ensurePhaseGateDeliverable } from "@/lib/programs/mutations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// The gate deliverable each phase's Save → Approve → Generate sequence signs
+// off. Mirrors PHASE_WORKFLOW in StrategicMovePhaseClient and the *_signed_off
+// gate checks in governance.ts (e.g. P1 `charter_signed_off` reads a
+// `deliverables_v2` row of type `charter`). P0's gate deliverable is the
+// origination brief, created by the originate flow — not this path.
+const PHASE_GATE_DELIVERABLE: Record<number, { typeKey: string; title: string }> = {
+  1: { typeKey: "charter", title: "Program Charter" },
+  2: { typeKey: "discovery_report", title: "Discovery & Diagnosis Report" },
+  3: { typeKey: "design_spec", title: "Solution Design Specification" },
+  4: { typeKey: "business_case", title: "Business Case" },
+  5: { typeKey: "tower_handoff_plan", title: "Tower Handoff Plan" },
+};
 
 function parsePhase(value: string | null | undefined): number | null {
   if (value === null || value === undefined || value === "") return 0;
@@ -238,6 +252,34 @@ export async function POST(
       evidenceRefs: moduleKeys,
     });
 
+    // Once every required section is captured, ensure the phase gate deliverable
+    // exists so the workspace Approve step (sign-off) can act on it. Without this
+    // the client's Save → Approve → Generate sequence dead-ends: Approve is gated
+    // on a `deliverableId` the Save response never returned, so no Move could
+    // advance past its gate through the primary UI. Best-effort: a failure here
+    // must not fail the capture write (the fields are already persisted).
+    const gate = PHASE_GATE_DELIVERABLE[phase];
+    let recordCreated = false;
+    let deliverableId: string | undefined;
+    let recordError: string | undefined;
+    if (gate && evaluation.complete) {
+      try {
+        const content = evaluation.sections
+          .map((section) => `## ${section.label}\n${section.value}`)
+          .join("\n\n");
+        const result = await ensurePhaseGateDeliverable(
+          ctx,
+          programId,
+          { deliverableTypeKey: gate.typeKey, title: gate.title, content },
+          { supabase: sb },
+        );
+        deliverableId = result.deliverableId;
+        recordCreated = result.created;
+      } catch (err) {
+        recordError = err instanceof Error ? err.message : "record creation failed";
+      }
+    }
+
     return Response.json({
       ok: true,
       programId,
@@ -246,12 +288,15 @@ export async function POST(
       savedFields: evaluation.sections
         .filter((section) => section.complete)
         .map((section) => section.key),
-      recordCreated: false,
+      allSaved: evaluation.complete,
+      recordCreated,
+      ...(deliverableId ? { deliverableId } : {}),
+      ...(recordError ? { recordError } : {}),
       capture: evaluation,
       generationEligibility: {
-        captureComplete: evaluation.complete && markComplete,
+        captureComplete: evaluation.complete,
         gateApprovalRequired: true,
-        nextAction: evaluation.complete && markComplete
+        nextAction: evaluation.complete
           ? "Approve the phase gate."
           : "Complete all required capture sections.",
       },

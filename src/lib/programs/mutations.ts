@@ -528,6 +528,93 @@ export async function publishDeliverable(
   return Boolean(data);
 }
 
+/**
+ * Create-or-find the phase gate deliverable record (charter, discovery_report,
+ * design_spec, …) that the phase workspace Save → Approve → Generate sequence
+ * signs off. The signed-in phase-capture Save path calls this when all required
+ * capture sections are present, so the returned `deliverableId` lets the client
+ * enable "Approve" and the sign-off route (which requires `in_review`) succeed.
+ *
+ * Idempotent and non-destructive: if a deliverable of this type already exists
+ * for the Move it is returned untouched (so a re-save never resets a `signed_off`
+ * record back to a draft/in_review state, and never bumps its version). A newly
+ * created record is written directly in `in_review` so Approve works without a
+ * separate publish step. Content is optional; the gate and sign-off read only
+ * `deliverables_v2` (type + status), so a hollow record still satisfies the gate.
+ */
+export async function ensurePhaseGateDeliverable(
+  ctx: TenancyCtx,
+  programId: string,
+  input: { deliverableTypeKey: string; title: string; content?: string },
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<{ deliverableId: string; status: string; created: boolean }> {
+  assertTenancy(ctx);
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
+  const deliverableTypeKey = input.deliverableTypeKey.trim();
+  const title = input.title.trim();
+  if (!deliverableTypeKey)
+    throw new Error("[ensurePhaseGateDeliverable] deliverableTypeKey is required");
+  if (!title) throw new Error("[ensurePhaseGateDeliverable] title is required");
+
+  await ensureDeliverableType(sb, deliverableTypeKey);
+
+  const { data: existing, error: existingError } = await sb
+    .from("deliverables_v2")
+    .select("id, status")
+    .eq("engagement_id", programId)
+    .eq("deliverable_type_key", deliverableTypeKey)
+    .maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) {
+    const row = existing as { id: string; status: string };
+    return { deliverableId: row.id, status: row.status, created: false };
+  }
+
+  const { data: created, error } = await sb
+    .from("deliverables_v2")
+    .insert({
+      engagement_id: programId,
+      deliverable_type_key: deliverableTypeKey,
+      title,
+      // Created directly in `in_review` so the phase Approve step (sign-off,
+      // which requires `in_review`) can act on it without a publish hop.
+      status: "in_review",
+      current_version: 1,
+      created_by: ctx.userId,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const deliverableId = (created as { id: string }).id;
+
+  const content = input.content?.trim();
+  if (content) {
+    const { error: versionError } = await sb.from("deliverable_versions").insert({
+      deliverable_id: deliverableId,
+      version: 1,
+      content,
+      structured_data: {
+        source: "phase_capture",
+        generated_by: "phase_capture_route",
+      },
+    });
+    if (versionError) throw versionError;
+  }
+
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId,
+    engagementId: programId,
+    action: "deliverable_drafted",
+    fromState: "new_deliverable",
+    toState: "in_review",
+    rationale: title,
+    evidenceRefs: [deliverableId],
+  });
+
+  return { deliverableId, status: "in_review", created: true };
+}
+
 export async function signOffDeliverable(
   ctx: TenancyCtx,
   programId: string,
