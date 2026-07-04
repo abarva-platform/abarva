@@ -787,6 +787,7 @@ describe("Source answer engine", () => {
     expect(rfpFinalityAnswer?.answerText).toContain(
       "Client Final - Lakeshore Shared Services AMS RFP Pack.docx is the final RFP version of record",
     );
+    expect(rfpFinalityAnswer?.answerText).toContain("AbarVa-generated");
     expect(rfpFinalityAnswer?.answerText).toContain("File Cabinet");
     expect(rfpFinalityAnswer?.answerText).not.toContain(
       "Advance Vendor A as the risk-adjusted lead",
