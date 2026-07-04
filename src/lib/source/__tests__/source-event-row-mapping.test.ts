@@ -1,4 +1,4 @@
-import { SOURCE_STAGE_ORDER } from "../constants";
+import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from "../constants";
 import {
   sourceEventRowToDetail,
   sourceEventRowToSummary,
@@ -25,6 +25,14 @@ const baseRow: SourceEventRow = {
 };
 
 describe("Source persisted event row mapping", () => {
+  it("normalizes mixed-case stage query values for browser demo links", () => {
+    expect(normalizeSourceStageKey("Responses")).toBe("responses");
+    expect(normalizeSourceStageKey("Executive_Decision")).toBe(
+      "executive_decision",
+    );
+    expect(normalizeSourceStageKey(" RFP ")).toBe("rfp");
+  });
+
   it("maps a persisted source_events row into the portfolio summary contract", () => {
     const summary = sourceEventRowToSummary(baseRow, "Apex Retail Group");
 

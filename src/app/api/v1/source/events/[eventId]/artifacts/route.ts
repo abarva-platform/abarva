@@ -21,6 +21,36 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const GROUPS: ArtifactGroup[] = ['generated', 'upload', 'template', 'session', 'approval'];
+const EXPORT_READY_ARTIFACTS: Record<
+  string,
+  { fileFormat: ArtifactFileFormat; fileName: string; status: ArtifactStatus }
+> = {
+  d09_rfp_pack: {
+    fileFormat: 'docx',
+    fileName: 'D09 Client RFP Pack.docx',
+    status: 'issue_ready',
+  },
+  d11_response_checklist: {
+    fileFormat: 'xlsx',
+    fileName: 'D11 Vendor Response Control Pack.xlsx',
+    status: 'issue_ready',
+  },
+  d16_scorecard: {
+    fileFormat: 'xlsx',
+    fileName: 'D16 Normalized Evaluation Scorecard.xlsx',
+    status: 'issue_ready',
+  },
+  d22_bafo_question_pack: {
+    fileFormat: 'docx',
+    fileName: 'D22 BAFO Question Pack.docx',
+    status: 'issue_ready',
+  },
+  d24_decision_brief: {
+    fileFormat: 'pdf',
+    fileName: 'D24 Executive Decision Brief.pdf',
+    status: 'issue_ready',
+  },
+};
 
 export async function GET(req: NextRequest, ctxParam: { params: Promise<{ eventId: string }> }) {
   try {
@@ -109,7 +139,8 @@ async function listGeneratedArtifactStateFallbacks(args: {
     if (existingSourceBasis.has(`source_event_artifact_states:${state.id}`)) continue;
     if (!args.includeHistory && state.status === 'superseded') continue;
     const spec = specByCode(state.artifactCode);
-    const status = mapArtifactStateStatus(state.status);
+    const exportReady = EXPORT_READY_ARTIFACTS[state.artifactCode];
+    const status = exportReady?.status ?? mapArtifactStateStatus(state.status);
     if (args.statusParam && args.statusParam !== status) continue;
     const title = artifactDisplayName(state.artifactCode, spec?.name);
     const updatedAt = state.bodyUpdatedAt ?? state.updatedAt;
@@ -123,18 +154,20 @@ async function listGeneratedArtifactStateFallbacks(args: {
       artifactType: state.artifactCode,
       artifactFamily: state.family,
       title,
-      description: spec?.description ?? 'Generated Source deliverable.',
-      fileName: `${state.artifactCode}.md`,
-      fileFormat: 'md',
+      description: exportReady
+        ? `${title} is export-ready from the governed render path. The inline markdown body is retained as source lineage.`
+        : (spec?.description ?? 'Generated Source deliverable.'),
+      fileName: exportReady?.fileName ?? `${state.artifactCode}.md`,
+      fileFormat: exportReady?.fileFormat ?? 'md',
       blobContainer: 'source-artifacts',
       blobPath: `inline://source-event-artifact-state/${state.id}`,
-      fileSize: state.body ? Buffer.byteLength(state.body, 'utf8') : null,
+      fileSize: exportReady ? null : (state.body ? Buffer.byteLength(state.body, 'utf8') : null),
       version: 1,
       status,
       generatedBy: state.bodyAuthoredBy,
       generatedAt: updatedAt,
       sourceBasis: `source_event_artifact_states:${state.id}`,
-      confidence: null,
+      confidence: exportReady ? 'high' : null,
       citationReady: Boolean(state.body?.trim()),
       evidenceFamiliesUsed: [],
       sourceRegisterId: state.linkedArtifactId,

@@ -58,8 +58,12 @@ export default async function SourceEventDetailPage({
   const normalizedView = stageParam
     ? normalizeSourceStageKey(stageParam)
     : null;
+  const isLakeshoreDemoCaseStudy =
+    /LAKE-SHARED-SERVICES-AMS-2026/i.test(event.code) ||
+    /Lakeshore Shared Services AMS/i.test(event.name);
   const viewStage: SourceStageKey =
     normalizedView ??
+    (isLakeshoreDemoCaseStudy ? "responses" : null) ??
     (SOURCE_STAGE_ORDER.includes(event.currentStageKey)
       ? event.currentStageKey
       : "strategy");
