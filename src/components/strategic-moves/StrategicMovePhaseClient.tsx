@@ -39,6 +39,7 @@ import {
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import { deliverableBelongsToPhase } from "@/lib/programs/phase-deliverables";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
@@ -359,7 +360,27 @@ export function UploadGuidanceCard({ phaseNum }: { phaseNum: number }) {
   );
 }
 
+// The phase-workflow capture cards (P1–P5) are DERIVED from the canonical
+// phase-capture contract (`getPhaseCaptureSections`) so that each card's `id`
+// IS the exact server field key. This is load-bearing: the Save step posts
+// `{ [sectionSaveKey(id)]: value }` to POST .../phase-capture, and the route
+// (evaluatePhaseCapture) only counts fields whose key matches a contract
+// section key. When these were hand-authored with drifted ids (e.g. "sponsor"
+// vs the contract's "sponsor_commitment"), every Save persisted 0 fields,
+// Approve never enabled, and no Move could advance past its gate. Deriving
+// from the contract makes that drift structurally impossible — the card set,
+// labels, and keys are one source of truth. See phase-capture-contract.ts.
+function contractCanvasSections(phase: number): CanvasSection[] {
+  return getPhaseCaptureSections(phase).map((section) => ({
+    id: section.key,
+    label: section.label,
+    placeholder: section.description,
+  }));
+}
+
 const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
+  // P0 capture is owned by the originate flow (StrategicMoveOriginateClient);
+  // these cards are the phase-workspace read-only view and are not the Save path.
   0: [
     {
       id: "seed",
@@ -392,141 +413,22 @@ const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
         "Current-state documents, datasets, interviews, and baselines P1/P2 must collect",
     },
   ],
-  1: [
-    {
-      id: "sponsor",
-      label: "Sponsor commitment",
-      placeholder:
-        "Confirm sponsor identity, commitment level, and decision rights",
-    },
-    {
-      id: "stakeholders",
-      label: "Stakeholders",
-      placeholder: "Map who has decision rights, contributes, and can block",
-    },
-    {
-      id: "success-metrics",
-      label: "Success metrics",
-      placeholder: "Lock the primary measurable metric and baseline path",
-    },
-    {
-      id: "value-range",
-      label: "Value range",
-      placeholder:
-        "Preliminary value range with stated assumptions (PRELIMINARY_ESTIMATE)",
-    },
-    {
-      id: "scope",
-      label: "Scope",
-      placeholder: "Charter scope — more precise than the P0 scope boundary",
-    },
-  ],
-  2: [
-    {
-      id: "baseline",
-      label: "Current-state baseline",
-      placeholder:
-        "Document current metrics, process state, and pain points — attest with owner",
-    },
-    {
-      id: "rootcause",
-      label: "Root cause analysis",
-      placeholder:
-        "Identify root causes underpinning the problem this move addresses",
-    },
-    {
-      id: "datareadiness",
-      label: "Data & readiness assessment",
-      placeholder:
-        "Assess data foundation readiness — access, quality, governance, AI-readiness",
-    },
-    {
-      id: "decision",
-      label: "P2 decision",
-      placeholder:
-        "Continue to P3 or discontinue — requires gate evaluation first",
-    },
-  ],
-  3: [
-    {
-      id: "design",
-      label: "Target state design",
-      placeholder:
-        "Future workflow, AI/agent placement, human ownership, capability being built",
-    },
-    {
-      id: "operatingmodel",
-      label: "Operating model shift",
-      placeholder:
-        "Who works differently — roles, handoffs, responsibilities — Today → Tomorrow",
-    },
-    {
-      id: "rootcause-trace",
-      label: "Root cause → design trace",
-      placeholder:
-        "Every design element must trace to a P2 root cause (hard requirement)",
-    },
-    {
-      id: "risks",
-      label: "Risks & tradeoffs",
-      placeholder: "5–7 named risks with likelihood, impact, and mitigation",
-    },
-  ],
-  4: [
-    {
-      id: "roadmap",
-      label: "Execution roadmap",
-      placeholder:
-        "Workstreams, estimates, timeline, milestones, dependencies, RACI",
-    },
-    {
-      id: "businesscase",
-      label: "Business case",
-      placeholder:
-        "ROM estimate, org-specific rate card, ROI summary — requires sponsor approval",
-    },
-    {
-      id: "valueplan",
-      label: "Value plan",
-      placeholder:
-        "Measurement contract: committed outcomes and how they will be measured",
-    },
-    {
-      id: "towermetric",
-      label: "Tower monitoring plan",
-      placeholder:
-        "Measurable signals Tower tracks post-handoff — must be drafted at mid-P4",
-    },
-  ],
-  5: [
-    {
-      id: "raci",
-      label: "Delivery RACI",
-      placeholder:
-        "Named delivery leads for every workstream — people, not roles",
-    },
-    {
-      id: "handoffpack",
-      label: "Tower handoff package",
-      placeholder:
-        "All phase artifacts assembled: roadmap, monitoring plan, value framework, risk register, RACI, change plan",
-    },
-    {
-      id: "tower-acceptance",
-      label: "Tower acceptance",
-      placeholder:
-        "Explicit Tower acceptance required — acknowledged ≠ accepted",
-    },
-  ],
+  // P1–P5: canonical contract sections. Do NOT hand-author ids here — they must
+  // equal the contract keys or Save silently persists nothing.
+  1: contractCanvasSections(1),
+  2: contractCanvasSections(2),
+  3: contractCanvasSections(3),
+  4: contractCanvasSections(4),
+  5: contractCanvasSections(5),
 };
 
 // ── Phase capture → save-key + gate-deliverable + orchestrate-key mapping ─────
 //
-// The capture cards (section ids) map onto the snake_case keys the phase-capture
-// backend (POST .../phase-capture) accepts: the section id with hyphens→
-// underscores (e.g. "success-metrics" → "success_metrics", "rootcause-trace" →
-// "rootcause_trace"). No per-phase save-key table is needed — the transform is
-// uniform across phases and matches PHASE_CAPTURE.fields in the route.
+// For P1–P5 the capture-card ids ARE the canonical phase-capture contract keys
+// (see contractCanvasSections above), so sectionSaveKey is effectively identity
+// and the Save payload keys always match evaluatePhaseCapture in the route. The
+// hyphen→underscore transform below is retained only for the P0 read-only cards
+// (whose ids are still hyphenated) and as a defensive no-op for the P1–P5 keys.
 //
 // `deliverableTypeKey` is the deliverable type the phase gate checks signed_off
 // against (verified against governance.ts) — used to seed reload state from the
@@ -593,33 +495,38 @@ const SECTION_CHARTER_KEYS: Record<string, string[]> = {
   ],
   "scope-boundary": ["scope_boundary", "scopeBoundary", "initial_scope"],
   "evidence-family": ["evidence_family", "evidenceFamily"],
-  // P1
-  sponsor: [
+  // P1 — keyed by canonical phase-capture contract keys (the card ids). Each
+  // list probes the charter JSONB variants so the P0→P1 carry still pre-fills.
+  sponsor_commitment: [
     "sponsor_commitment",
     "sponsorCommitment",
     "sponsor_candidate",
     "sponsorCandidate",
     "sponsor",
   ],
-  stakeholders: ["stakeholders", "stakeholder_map", "stakeholderMap"],
-  "success-metrics": [
+  scope_boundary: [
+    "scope_boundary",
+    "scopeBoundary",
+    "charter_scope",
+    "charterScope",
+    "scope",
+    "initial_scope",
+  ],
+  success_criteria: [
+    "success_criteria",
+    "successCriteria",
     "success_metrics",
     "successMetrics",
     "primary_metric",
     "primaryMetric",
   ],
-  "value-range": [
-    "value_range",
-    "valueRange",
-    "value_hypothesis",
-    "valueHypothesis",
-  ],
-  scope: [
-    "scope",
-    "charter_scope",
-    "charterScope",
-    "scope_boundary",
-    "scopeBoundary",
+  stakeholder_map: ["stakeholder_map", "stakeholderMap", "stakeholders"],
+  decision_rights: ["decision_rights", "decisionRights"],
+  evidence_plan: [
+    "evidence_plan",
+    "evidencePlan",
+    "evidence_family",
+    "evidenceFamily",
   ],
 };
 
@@ -667,20 +574,21 @@ function sectionCapturedContent(
 ): string | null {
   const fromCharter = charterText(move.charter, sectionCharterKeys(sectionId));
   switch (sectionId) {
-    case "sponsor":
+    // "sponsor_commitment"/"stakeholder_map" are the canonical P1 card ids;
+    // the hyphenated ids are the P0 read-only cards.
+    case "sponsor_commitment":
     case "sponsor-candidate":
       if (move.sponsor?.name) {
         return `${move.sponsor.name} — ${move.sponsor.role}`;
       }
       return fromCharter;
-    case "stakeholders":
+    case "stakeholder_map":
       if (move.participants.length > 0) {
         return move.participants
           .map((p) => `${p.name} (${p.role})`)
           .join(" · ");
       }
       return fromCharter;
-    case "value-range":
     case "value-hypothesis": {
       if (fromCharter) return fromCharter;
       const projected = move.valueAtStake.projected;
