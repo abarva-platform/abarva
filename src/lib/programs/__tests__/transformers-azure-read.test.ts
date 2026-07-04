@@ -27,6 +27,9 @@ const maybeSingleMock = azureRead.maybeSingle as jest.MockedFunction<typeof azur
 const selectMock = azureRead.select as jest.MockedFunction<typeof azureRead.select>;
 const countMock = azureRead.count as jest.MockedFunction<typeof azureRead.count>;
 
+const sponsorUuid = '00000000-0000-4000-8000-000000000101';
+const leadUuid = '00000000-0000-4000-8000-000000000102';
+
 const baseProgram: ProgramCore = {
   id: 'eng-1',
   clientId: 'client-apex',
@@ -73,8 +76,8 @@ describe('program transformers azureRead reads', () => {
     selectMock.mockImplementation(async (request) => {
       if (request.table === 'engagement_participants') {
         return [
-          { user_id: 'person-sponsor', approval_authority: 'sponsor', role: 'Sponsor' },
-          { user_id: 'person-lead', approval_authority: 'approver', role: 'Lead' },
+          { user_id: sponsorUuid, approval_authority: 'sponsor', role: 'Sponsor' },
+          { user_id: leadUuid, approval_authority: 'approver', role: 'Lead' },
         ] as never;
       }
       return [] as never;
@@ -82,11 +85,11 @@ describe('program transformers azureRead reads', () => {
 
     maybeSingleMock.mockImplementation(async (request) => {
       if (request.table === 'clients') return { name: 'Apex Retail Group' } as never;
-      if (request.table === 'persons' && request.where?.id === 'person-sponsor') {
-        return { id: 'person-sponsor', name: 'Avery Chen', role: 'COO' } as never;
+      if (request.table === 'persons' && request.where?.id === sponsorUuid) {
+        return { id: sponsorUuid, name: 'Avery Chen', role: 'COO' } as never;
       }
-      if (request.table === 'persons' && request.where?.id === 'person-lead') {
-        return { id: 'person-lead', name: 'Sam Rivera', role: 'VP Delivery' } as never;
+      if (request.table === 'persons' && request.where?.id === leadUuid) {
+        return { id: leadUuid, name: 'Sam Rivera', role: 'VP Delivery' } as never;
       }
       if (request.table === 'pattern_match_logs') return { pattern_key: 'retail-oms-01' } as never;
       if (request.table === 'deliverables_v2') return { title: 'Planning charter', status: 'draft' } as never;
@@ -104,13 +107,13 @@ describe('program transformers azureRead reads', () => {
     expect(summary).toMatchObject({
       id: 'eng-1',
       name: 'Modernize merchandise planning',
-      clientName: 'Apex Retail Group',
+      clientName: 'Retail Demo',
       patternKey: 'retail-oms-01',
       patternName: 'Retail OMS modernization',
       charterSummary: 'Planning charter',
       attentionBadge: { label: '1 critical flag', variant: 'danger' },
-      sponsorPerson: { id: 'person-sponsor', name: 'Avery Chen', title: 'COO' },
-      leadPerson: { id: 'person-lead', name: 'Sam Rivera', title: 'VP Delivery' },
+      sponsorPerson: { id: sponsorUuid, name: 'Avery Chen', title: 'COO' },
+      leadPerson: { id: leadUuid, name: 'Sam Rivera', title: 'VP Delivery' },
     });
     expect(selectMock).toHaveBeenCalledWith(expect.objectContaining({
       table: 'engagement_participants',
@@ -120,5 +123,34 @@ describe('program transformers azureRead reads', () => {
       table: 'maestro_oversight_flags',
       where: expect.objectContaining({ engagement_id: 'eng-1', severity: 'critical' }),
     }));
+  });
+
+  it('does not query uuid-typed persons.id with legacy participant display names', async () => {
+    selectMock.mockImplementation(async (request) => {
+      if (request.table === 'engagement_participants') {
+        return [
+          { user_id: 'Anand Sundaram', approval_authority: 'sponsor', role: 'Sponsor' },
+          { user_id: 'Portfolio Lead', approval_authority: 'approver', role: 'Lead' },
+        ] as never;
+      }
+      return [] as never;
+    });
+
+    const summary = await buildProgramSummary(baseProgram);
+
+    expect(summary.sponsorPerson).toMatchObject({
+      id: 'Anand Sundaram',
+      name: 'Anand Sundaram',
+    });
+    expect(summary.leadPerson).toMatchObject({
+      id: 'Portfolio Lead',
+      name: 'Portfolio Lead',
+    });
+    expect(maybeSingleMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        table: 'persons',
+        where: { id: 'Anand Sundaram' },
+      }),
+    );
   });
 });
