@@ -132,6 +132,12 @@ describe("Source format router (Slice 8.1 foundations)", () => {
     );
     expect(canonicalArtifactCodeFor("d16")).toBe("d16_scorecard");
     expect(kindForArtifactCode("d16")).toBe("scorecard");
+    expect(canonicalArtifactCodeFor("d16_evaluation_scorecard")).toBe(
+      "d16_scorecard",
+    );
+    expect(kindForArtifactCode("d16_evaluation_scorecard")).toBe(
+      "scorecard",
+    );
     expect(canonicalArtifactCodeFor("evaluation-scorecard")).toBe(
       "d16_scorecard",
     );

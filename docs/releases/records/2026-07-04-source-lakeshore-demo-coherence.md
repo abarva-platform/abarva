@@ -33,6 +33,7 @@ This release makes the Lakeshore Source case-study demo coherent on screen. The 
 - Source suggested questions for the Lakeshore case-study event now focus on event summary, final RFP authority, vendor recommendation, BAFO, CIO/CFO concerns, and artifact lineage.
 - Source event document shelf and File Cabinet display D09/D11/D16/D22/D24 as export-ready/client-final artifacts instead of raw parser/markdown stub details.
 - Follow-up live-proof hardening: D09/D11 alternate render names now resolve (`d09_rfp_package`, `d11_response_control_pack`), and generated File Cabinet/canvas rows infer export-ready type from file names when persisted metadata is generic.
+- Final live-proof hardening: D16 alternate render name now resolves (`d16_evaluation_scorecard`), and client-final passthrough downloads carry Source audit headers (`x-source-event-code`, canonical/requested artifact code) so export proof can verify event identity even when serving an authoritative uploaded file.
 - Follow-up UI polish: the Lakeshore case-study governance banner no longer renders the formal stage label against adjacent text, and the first suggested prompt names the shared-services AMS event directly.
 - Source aVa event overview answer now opens with the approved CXO-facing Lakeshore sourcing context.
 - Focused tests added/updated for stage normalization, File Cabinet export-ready projection, and Lakeshore overview answer wording.
@@ -45,6 +46,7 @@ This release makes the Lakeshore Source case-study demo coherent on screen. The 
 - Pass: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit`.
 - Pass: `npm run release:check` locally.
 - Partial live proof before follow-up: deployed revision `ca-abarva-web-lab-eastus--m8276983b` passed aVa 6/6 and D16/D22/D24 exports, but exposed D09/D11 alias 404s and raw generated File Cabinet rows. This follow-up closes those exact defects; final live proof is pending merge/deploy of the follow-up.
+- Partial live proof after follow-up: deployed revision `ca-abarva-web-lab-eastus--mb29af449` passed default page and Responses stage checks and D09/D11/D22/D24 export checks, but exposed a missing D16 user-facing alias and missing client-final audit headers. This final follow-up closes those exact defects; final live proof is pending merge/deploy of the final follow-up.
 
 ## Rollout Plan
 
