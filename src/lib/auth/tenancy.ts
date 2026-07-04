@@ -12,6 +12,12 @@ export class TenancyError extends Error {
   }
 }
 
+function isUuidLike(value: string | null | undefined): value is string {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value ?? "",
+  );
+}
+
 export async function requireTenancy(): Promise<TenancyCtx> {
   // Auth helpers (Clerk) can throw on missing/invalid session rather than returning null.
   const [person, user] = await Promise.all([
@@ -21,8 +27,8 @@ export async function requireTenancy(): Promise<TenancyCtx> {
     throw new TenancyError("unauthenticated");
   });
   const userId =
-    person?.id ??
-    user?.personId ??
+    (isUuidLike(person?.id) ? person?.id : null) ??
+    (isUuidLike(user?.personId) ? user?.personId : null) ??
     (user?.clerkUserId ? `clerk:${user.clerkUserId}` : null);
   if (!userId) throw new TenancyError("unauthenticated");
   // Fix B: distinguish a retryable tenant-lookup outage from a real "no client". A DB blip
