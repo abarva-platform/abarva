@@ -32,16 +32,19 @@ This release makes the Lakeshore Source case-study demo coherent on screen. The 
 - Universal Source canvas displays a demo-safe governance banner for the Lakeshore case-study event, explaining prepared artifacts versus formal gate state.
 - Source suggested questions for the Lakeshore case-study event now focus on event summary, final RFP authority, vendor recommendation, BAFO, CIO/CFO concerns, and artifact lineage.
 - Source event document shelf and File Cabinet display D09/D11/D16/D22/D24 as export-ready/client-final artifacts instead of raw parser/markdown stub details.
+- Follow-up live-proof hardening: D09/D11 alternate render names now resolve (`d09_rfp_package`, `d11_response_control_pack`), and generated File Cabinet/canvas rows infer export-ready type from file names when persisted metadata is generic.
+- Follow-up UI polish: the Lakeshore case-study governance banner no longer renders the formal stage label against adjacent text, and the first suggested prompt names the shared-services AMS event directly.
 - Source aVa event overview answer now opens with the approved CXO-facing Lakeshore sourcing context.
 - Focused tests added/updated for stage normalization, File Cabinet export-ready projection, and Lakeshore overview answer wording.
 
 ## QA / Validation
 
-- Pass: `npm test -- --runTestsByPath src/lib/source/__tests__/source-answer-engine.test.ts src/lib/source/__tests__/source-event-row-mapping.test.ts src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts --runInBand` (`3` suites / `65` tests). Jest emitted pre-existing duplicate mock warnings but exited successfully.
+- Pass: `npm test -- --runTestsByPath src/lib/source/exports/__tests__/format-router.test.ts src/lib/source/__tests__/source-answer-engine.test.ts src/lib/source/__tests__/source-event-row-mapping.test.ts src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts --runInBand` (`4` suites / `75` tests). Jest emitted pre-existing duplicate mock warnings but exited successfully.
 - Pass: `npx eslint src/app/(maestro)/source/events/[eventId]/page.tsx src/app/api/v1/source/events/[eventId]/artifacts/route.ts src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts src/components/source/FileCabinetPanel.tsx src/components/source/canvas/UniversalCanvasShell.tsx src/components/source/canvas/workspace-tabs/DocumentTab.tsx src/lib/source/constants.ts src/lib/source/source-answer-engine.ts src/lib/source/__tests__/source-answer-engine.test.ts src/lib/source/__tests__/source-event-row-mapping.test.ts`.
+- Pass: follow-up scoped ESLint for `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts`, Source export spec builder, Source format-router test, Source File Cabinet, Universal Canvas shell, and Document tab.
 - Pass: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit`.
-- Pending: `npm run release:check` after this record rewrite.
-- Pending: Live signed-in Source browser proof after merge/deploy.
+- Pass: `npm run release:check` locally.
+- Partial live proof before follow-up: deployed revision `ca-abarva-web-lab-eastus--m8276983b` passed aVa 6/6 and D16/D22/D24 exports, but exposed D09/D11 alias 404s and raw generated File Cabinet rows. This follow-up closes those exact defects; final live proof is pending merge/deploy of the follow-up.
 
 ## Rollout Plan
 
