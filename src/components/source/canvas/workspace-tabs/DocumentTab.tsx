@@ -413,6 +413,7 @@ function RegistryDocumentsShelf({
       ) : (
         <div style={REGISTRY_GRID_STYLE}>
           {documents.map((doc) => {
+            const exportReadyKind = exportReadyArtifactKind(doc);
             const detailHref = eventId
               ? `/source/events/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(doc.id)}`
               : undefined;
@@ -437,7 +438,7 @@ function RegistryDocumentsShelf({
                   ) : null}
                   {doc.sourceOrigin === "generated" ? (
                     <span style={REGISTRY_SHELF_BADGE_STYLE}>
-                      {EXPORT_READY_ARTIFACTS[doc.artifactKind]
+                      {exportReadyKind
                         ? "Export Ready"
                         : "Generated Draft"}
                     </span>
@@ -461,12 +462,12 @@ function RegistryDocumentsShelf({
                   {formatRegistryDocumentMeta(doc)}
                 </span>
                 <span style={REGISTRY_DOC_ACTIONS_STYLE}>
-                  {eventId && EXPORT_READY_ARTIFACTS[doc.artifactKind]
-                    ? EXPORT_READY_ARTIFACTS[doc.artifactKind].formats.map(
+                  {eventId && exportReadyKind
+                    ? EXPORT_READY_ARTIFACTS[exportReadyKind].formats.map(
                         (format) => (
                           <a
                             key={format}
-                            href={`/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(doc.artifactKind)}/render?format=${format}`}
+                            href={`/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(exportReadyKind)}/render?format=${format}`}
                             data-testid={`source-canvas-registry-doc-export-${doc.id}-${format}`}
                             style={REGISTRY_DOC_ACTION_STYLE}
                             download
@@ -516,13 +517,16 @@ function formatDocumentFamily(
 }
 
 function formatDocumentType(doc: SourceArtifactRegistryRecord): string {
-  const exportReady = EXPORT_READY_ARTIFACTS[doc.artifactKind];
+  const exportReadyKind = exportReadyArtifactKind(doc);
+  const exportReady = exportReadyKind
+    ? EXPORT_READY_ARTIFACTS[exportReadyKind]
+    : null;
   if (exportReady) return exportReady.label;
   return doc.sourceFormat.toUpperCase();
 }
 
 function formatDocumentSize(doc: SourceArtifactRegistryRecord): string {
-  if (EXPORT_READY_ARTIFACTS[doc.artifactKind]) {
+  if (exportReadyArtifactKind(doc)) {
     return "Rendered export available";
   }
   return formatFileSize(doc.sizeBytes);
@@ -530,10 +534,11 @@ function formatDocumentSize(doc: SourceArtifactRegistryRecord): string {
 
 function formatRegistryDocumentMeta(doc: SourceArtifactRegistryRecord): string {
   const family = formatDocumentFamily(doc.artifactFamily);
+  const exportReadyKind = exportReadyArtifactKind(doc);
   if (doc.isClientFinal && doc.isCurrentAuthoritative) {
     return `${family} · client-approved final · used as version of record`;
   }
-  if (EXPORT_READY_ARTIFACTS[doc.artifactKind]) {
+  if (exportReadyKind) {
     return `${family} · reviewable deliverable · export surfaces available`;
   }
   if (doc.sourceOrigin === "uploaded" || doc.sourceOrigin === "reuploaded") {
@@ -543,6 +548,37 @@ function formatRegistryDocumentMeta(doc: SourceArtifactRegistryRecord): string {
     return `${family} · session evidence`;
   }
   return `${family} · ${doc.approvalState.replace(/_/g, " ")}`;
+}
+
+function exportReadyArtifactKind(
+  doc: SourceArtifactRegistryRecord,
+): string | null {
+  if (EXPORT_READY_ARTIFACTS[doc.artifactKind]) return doc.artifactKind;
+  const haystack = `${doc.artifactKind} ${doc.originalName}`.toLowerCase();
+  if (/\bd09[_-]?rfp[_-]?(pack|package)\b|rfp[_-]?pack/.test(haystack)) {
+    return "d09_rfp_pack";
+  }
+  if (
+    /\bd11[_-]?(response[_-]?(checklist|control[_-]?pack)|vendor[_-]?response[_-]?control[_-]?pack)\b|response[_-]?control[_-]?pack/.test(
+      haystack,
+    )
+  ) {
+    return "d11_response_checklist";
+  }
+  if (/\bd16[_-]?scorecard\b|evaluation[_-]?scorecard/.test(haystack)) {
+    return "d16_scorecard";
+  }
+  if (
+    /\bd22[_-]?bafo[_-]?question[_-]?pack\b|bafo[_-]?(instruction|question)[_-]?pack/.test(
+      haystack,
+    )
+  ) {
+    return "d22_bafo_question_pack";
+  }
+  if (/\bd24[_-]?decision[_-]?brief\b|decision[_-]?brief/.test(haystack)) {
+    return "d24_decision_brief";
+  }
+  return null;
 }
 
 function formatFileSize(bytes: number): string {
