@@ -106,6 +106,18 @@ const CSS = `
 .homex .hx-chip strong{color:#1b1b18}
 .homex .hx-chipWarn{background:#FFF5DB;color:#7A5A1F;border-color:#E8D3A2}
 .homex .hx-gapcell{display:inline-flex;align-items:center;border-radius:999px;background:#FFF5DB;color:#7A5A1F;padding:2px 8px;font-size:11.5px;font-weight:700}
+.homex .hx-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 4px;border-bottom:1px solid var(--hl)}
+.homex .hx-tab{border:0;border-bottom:2px solid transparent;background:transparent;color:#55554e;font:inherit;font-size:13px;font-weight:700;padding:10px 12px 9px;cursor:pointer}
+.homex .hx-tab[aria-selected="true"]{color:#071629;border-bottom-color:#0A76D8}
+.homex .hx-tab:focus-visible{outline:2px solid rgba(34,174,234,.35);outline-offset:2px;border-radius:6px}
+.homex .hx-tabPanel{padding-top:14px}
+.homex .hx-gapCards{display:grid;gap:12px;margin-top:14px}
+.homex .hx-gapCard{background:#fff;border:1px solid var(--hl);border-radius:10px;padding:14px 15px}
+.homex .hx-gapCardTop{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:8px}
+.homex .hx-gapCard h3{font-family:var(--font-fraunces),Georgia,serif;font-size:17px;font-weight:500;margin:0;color:var(--hi)}
+.homex .hx-gapCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7A5A1F;background:#FFF5DB;border:1px solid #E8D3A2;border-radius:999px;padding:4px 8px;white-space:nowrap}
+.homex .hx-gapCard p{font-size:13px;line-height:1.55;color:#3d3d36;margin:7px 0 0}
+.homex .hx-gapMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#66708a;margin-top:10px}
 `;
 
 const CONTEXT_BROWSER_QUESTIONS = [
@@ -191,6 +203,102 @@ function toneFor(trust: number): string {
   return "var(--hr)";
 }
 
+function formatPreviewCell(
+  cell: string,
+  column: HomeV6BrowserPreview["columns"][number],
+): string {
+  if (cell === "Needs evidence") return cell;
+  const structured = formatStructuredPreviewText(cell);
+  const numeric = parsePreviewNumber(structured);
+  const key = column.key.toLowerCase();
+  const label = column.label.toLowerCase();
+  const name = `${key} ${label}`;
+  if (
+    numeric !== null &&
+    /\b(usd|amount|budget|cost|spend|revenue|value|rate)\b/.test(name)
+  ) {
+    return formatCompactUsd(numeric);
+  }
+  if (
+    numeric !== null &&
+    /\b(percent|percentage|pct|share|ratio)\b/.test(name)
+  ) {
+    return formatCompactPercent(numeric);
+  }
+  if (
+    numeric !== null &&
+    /\b(count|employees?|users?|population|records?|volume|number)\b/.test(
+      name,
+    )
+  ) {
+    return numeric.toLocaleString();
+  }
+  return structured;
+}
+
+function formatStructuredPreviewText(value: string): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (!/:\s*[\w$-]+/.test(normalized)) return normalized;
+  return normalized
+    .split(/\s*,\s*/)
+    .map((part) => {
+      const match = part.match(/^(.+?):\s*(.+)$/);
+      if (!match) return part;
+      const label = humanizePreviewLabel(match[1] ?? "");
+      const rawValue = (match[2] ?? "").trim();
+      const number = parsePreviewNumber(rawValue);
+      const displayValue =
+        number !== null && /\busd\b/i.test(label)
+          ? formatCompactUsd(number)
+          : number !== null
+            ? number.toLocaleString()
+            : rawValue.replace(/_/g, " ");
+      return `${label.replace(/\bUsd\b/g, "USD")}: ${displayValue}`;
+    })
+    .join("; ");
+}
+
+function humanizePreviewLabel(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase())
+    .trim();
+}
+
+function parsePreviewNumber(value: string): number | null {
+  const normalized = value.trim().replace(/[$,\s]/g, "");
+  if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatCompactUsd(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000)
+    return `$${trimCompactNumber(value / 1_000_000_000)}B`;
+  if (abs >= 1_000_000) return `$${trimCompactNumber(value / 1_000_000)}M`;
+  if (abs >= 1_000) return `$${trimCompactNumber(value / 1_000)}K`;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatCompactPercent(value: number): string {
+  const normalized = Math.abs(value) <= 1 ? value : value / 100;
+  return new Intl.NumberFormat("en-US", {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(normalized);
+}
+
+function trimCompactNumber(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: Math.abs(value) >= 10 ? 1 : 2,
+  }).format(value);
+}
+
 function dimensionOptionLabel(
   dimension: BindingDimension,
   preview?: HomeV6BrowserPreview | null,
@@ -222,7 +330,7 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
       <p>{finding.executiveFinding}</p>
       <p style={{ marginTop: 8 }}>{finding.whyItMatters}</p>
       <div className="hx-evi">
-        {finding.sourceRowCount.toLocaleString()} V6 rows ·{" "}
+        {finding.sourceRowCount.toLocaleString()} supporting rows ·{" "}
         {finding.sourceFiles.length} source file
         {finding.sourceFiles.length === 1 ? "" : "s"} · next:{" "}
         {surfaceLabel(finding.recommendedSurface)}
@@ -247,8 +355,8 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
         <summary>Why this appears</summary>
         <div className="hx-detailgrid">
           <div className="hx-detailblock">
-            <strong>Supporting V6 files</strong>
-            {finding.sourceFiles.join(", ")}
+            <strong>Supporting source files</strong>
+            {finding.sourceFiles.map(clientFacingFileName).join(", ")}
           </div>
           <div className="hx-detailblock">
             <strong>Claim basis</strong>
@@ -264,14 +372,10 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
           </div>
           {finding.evidenceRefs.length > 0 ? (
             <div className="hx-detailblock">
-              <strong>Representative source rows</strong>
+              <strong>Representative source support</strong>
               <ul className="hx-rowrefs">
-                {finding.evidenceRefs.slice(0, 3).map((ref) => (
-                  <li key={`${ref.v6File}-${ref.rowId}`}>
-                    <code>
-                      {ref.v6File} · {ref.rowId}
-                    </code>
-                    <br />
+                {finding.evidenceRefs.slice(0, 3).map((ref, index) => (
+                  <li key={`${ref.v6File}-${ref.label}-${index}`}>
                     {ref.label}
                     <br />
                     {ref.claimSupported}
@@ -287,12 +391,28 @@ function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
 }
 
 function claimBasisLabel(basis: HomeV6ContextFinding["claimBasis"]): string {
-  if (basis === "tenant_fact") return "Tenant fact from V6 rows.";
-  if (basis === "calculated") return "Calculated from V6 rows.";
+  if (basis === "tenant_fact") return "Tenant fact from source rows.";
+  if (basis === "calculated") return "Calculated from source rows.";
   if (basis === "abarva_assessment")
-    return "AbarVa assessment from V6 facts and gaps.";
+    return "AbarVa assessment from available facts and gaps.";
   if (basis === "industry_pattern") return "Industry pattern context only.";
   return "Tenant facts plus pattern context.";
+}
+
+function clientFacingFileName(value: string): string {
+  return value
+    .replace(/^V\d+_/i, "")
+    .replace(/\.csv$/i, "")
+    .replace(/[_-]+/g, " ");
+}
+
+function isLineageColumn(
+  column: HomeV6BrowserPreview["columns"][number],
+): boolean {
+  return (
+    /^__/.test(column.key) ||
+    /^(loaded record|source family|basis|source basis)$/i.test(column.label)
+  );
 }
 
 function surfaceLabel(
@@ -668,10 +788,22 @@ function DimensionView({
   preview?: HomeV6BrowserPreview | null;
   findings: HomeV6ContextFinding[];
 }) {
+  const [activeTab, setActiveTab] = useState<
+    "summary" | "data" | "gaps" | "questions"
+  >("summary");
   const related = findings.filter((finding) =>
     finding.supportingDimensions.includes(dim.dimension),
   );
   const spec = browserSpecForDimension(dim.dimension);
+  const visiblePreviewColumns = preview
+    ? preview.columns
+        .map((column, index) => ({ column, index }))
+        .filter(({ column }) => !isLineageColumn(column))
+    : [];
+  const previewColumnsForTable =
+    visiblePreviewColumns.length > 0
+      ? visiblePreviewColumns
+      : (preview?.columns.map((column, index) => ({ column, index })) ?? []);
   return (
     <div className="hx-body">
       <div className="hx-ey">Loaded context dimension</div>
@@ -714,7 +846,36 @@ function DimensionView({
           )}
         </div>
       </div>
-      <div className="hx-browser">
+      <div className="hx-tabs" role="tablist" aria-label="Dimension canvas tabs">
+        {[
+          ["summary", "Summary"],
+          ["data", "Data"],
+          ["gaps", "Gaps"],
+          ["questions", "Questions"],
+        ].map(([id, label]) => (
+          <button
+            aria-selected={activeTab === id}
+            aria-controls={`home-dimension-panel-${id}`}
+            className="hx-tab"
+            id={`home-dimension-tab-${id}`}
+            key={id}
+            onClick={() =>
+              setActiveTab(id as "summary" | "data" | "gaps" | "questions")
+            }
+            role="tab"
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div
+        className="hx-browser"
+        aria-labelledby="home-dimension-tab-summary"
+        hidden={activeTab !== "summary"}
+        id="home-dimension-panel-summary"
+        role="tabpanel"
+      >
         <section className="hx-panel" aria-label="What is loaded">
           <h3>What is loaded here</h3>
           <ul className="hx-list">
@@ -732,7 +893,14 @@ function DimensionView({
           </ul>
         </section>
       </div>
-      <div className="hx-browser" style={{ marginTop: 16 }}>
+      <div
+        className="hx-browser"
+        aria-labelledby="home-dimension-tab-summary"
+        hidden={activeTab !== "summary"}
+        style={{
+          marginTop: 16,
+        }}
+      >
         <section className="hx-panel" aria-label="Available detail types">
           <h3>Detail types available</h3>
           <ul className="hx-list">
@@ -749,27 +917,37 @@ function DimensionView({
           should support final decisions.
         </aside>
       </div>
-      {dim.flag ? (
+      {activeTab === "gaps" && dim.flag ? (
         <p style={{ color: "var(--ham)", fontSize: 13, marginTop: 14 }}>
           ⚑ {dim.flag}
         </p>
       ) : null}
       {preview ? (
-        <div className="hx-preview">
+        <div
+          className="hx-preview"
+          aria-labelledby="home-dimension-tab-data"
+          hidden={activeTab !== "data"}
+          id="home-dimension-panel-data"
+          role="tabpanel"
+          style={{
+            marginTop: 14,
+          }}
+        >
           <div className="hx-previewIntro">
             <div className="hx-previewTitle">
-              <div className="hx-ey">V6 source preview</div>
+              <div className="hx-ey">Loaded data preview</div>
               <strong>{preview.title}</strong>
               <span>
-                Loaded source rows with their V6 lineage and available fields.
+                Actual loaded rows from the source file, shown with
+                client-friendly column names and readable values.
               </span>
             </div>
-            <div className="hx-previewMeta" aria-label="V6 table coverage">
+            <div className="hx-previewMeta" aria-label="Loaded data coverage">
               <span className="hx-chip">
                 <strong>{preview.rowCount.toLocaleString()}</strong> rows
               </span>
               <span className="hx-chip">
-                <strong>{preview.sourceCount}</strong> V6 file
+                <strong>{preview.sourceCount}</strong> source file
                 {preview.sourceCount === 1 ? "" : "s"}
               </span>
               <span className="hx-chip">
@@ -782,7 +960,7 @@ function DimensionView({
             <table className="hx-table">
               <thead>
                 <tr>
-                  {preview.columns.map((column) => (
+                  {previewColumnsForTable.map(({ column }) => (
                     <th key={column.key}>{column.label}</th>
                   ))}
                 </tr>
@@ -790,24 +968,30 @@ function DimensionView({
               <tbody>
                 {preview.rows.map((row, rowIndex) => (
                   <tr key={`${preview.dimension}-${rowIndex}`}>
-                    {row.map((cell, cellIndex) => (
-                      <td key={`${preview.dimension}-${rowIndex}-${cellIndex}`}>
+                    {previewColumnsForTable.map(({ column, index }) => {
+                      const cell = row[index] ?? "";
+                      return (
+                        <td key={`${preview.dimension}-${rowIndex}-${column.key}`}>
                         {cell === "Needs evidence" ? (
                           <span className="hx-gapcell">{cell}</span>
                         ) : (
-                          cell
+                          formatPreviewCell(
+                            cell,
+                            column,
+                          )
                         )}
                       </td>
-                    ))}
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="hx-mini" aria-label="V6 table coverage">
+          <div className="hx-mini" aria-label="Source files">
             {preview.fileNames.slice(0, 2).map((fileName) => (
               <span className="hx-chip" key={fileName}>
-                {fileName}
+                {clientFacingFileName(fileName)}
               </span>
             ))}
           </div>
@@ -823,7 +1007,73 @@ function DimensionView({
           ) : null}
         </div>
       ) : null}
-      {related.length > 0 && (
+      {activeTab === "gaps" && preview?.knownGaps.length ? (
+        <div
+          className="hx-gapCards"
+          aria-label="Top missing fields"
+          aria-labelledby="home-dimension-tab-gaps"
+          id="home-dimension-panel-gaps"
+          role="tabpanel"
+        >
+          {preview.knownGaps.map((gap) => (
+            <article className="hx-gapCard" key={gap.label}>
+              <div className="hx-gapCardTop">
+                <h3>{gap.label}</h3>
+                <span className="hx-gapCount">
+                  {gap.count.toLocaleString()} missing
+                </span>
+              </div>
+              <p>
+                <strong>What this means:</strong>{" "}
+                {gap.instruction
+                  ? gap.instruction
+                  : `${gap.label} was expected in the loaded source row but still needs evidence from the client source owner.`}
+              </p>
+              <p>
+                <strong>Why it matters:</strong>{" "}
+                {gap.whyItMatters ??
+                  `${gap.label} helps determine whether this context can support a decision-ready answer.`}
+              </p>
+              <p>
+                <strong>How it helps:</strong>{" "}
+                {gap.howItHelps ??
+                  `Once supplied, ${gap.label.toLowerCase()} lets aVa answer more precisely without guessing.`}
+              </p>
+              {gap.moduleUse ? (
+                <div className="hx-gapMeta">Used by: {gap.moduleUse}</div>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      ) : null}
+      {activeTab === "gaps" && !preview?.knownGaps.length ? (
+        <p
+          className="hx-hint"
+          aria-labelledby="home-dimension-tab-gaps"
+          id="home-dimension-panel-gaps"
+          role="tabpanel"
+        >
+          No repeated missing-field pattern appears in the preview rows.
+        </p>
+      ) : null}
+      {activeTab === "questions" ? (
+        <section
+          className="hx-panel"
+          style={{ marginTop: 14 }}
+          aria-label="How to browse this context"
+          aria-labelledby="home-dimension-tab-questions"
+          id="home-dimension-panel-questions"
+          role="tabpanel"
+        >
+          <h3>Ask aVa about this area</h3>
+          <ul className="hx-asklist">
+            {spec.ask.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {activeTab === "gaps" && related.length > 0 && (
         <div className="hx-sec">
           <div className="hx-sechead">
             <span className="hx-ey">Context findings tied to this area</span>
@@ -872,11 +1122,11 @@ function Overview({
             <div className="v">{dimensionCount}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">V6 records</div>
+            <div className="k">Loaded records</div>
             <div className="v">{v6Rows.toLocaleString()}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">V6 files</div>
+            <div className="k">Source files</div>
             <div className="v">{v6Files}</div>
           </div>
           <div className="hx-stat">
@@ -890,7 +1140,7 @@ function Overview({
         <div className="hx-sec">
           <div className="hx-sechead">
             <span className="hx-ey">Context findings</span>
-            <span className="hx-ey">{findings.length} V6 findings</span>
+            <span className="hx-ey">{findings.length} findings</span>
           </div>
           <div className="hx-grid">
             {findings.map((finding) => (
@@ -1103,15 +1353,19 @@ export function HomeSurface({
     () => sanitizeVisibleStrings(v6Browser),
     [v6Browser],
   );
-  const dims = safePayload?.context ?? EMPTY_DIMS;
+  const dims = safeV6Browser?.bindingContext ?? safePayload?.context ?? EMPTY_DIMS;
+  const sourceLabel = safeV6Browser?.contractLabel ?? "V6";
   const [dimKey, setDimKey] = useState<string | null>(null);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
   const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
   const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
   const findings = useMemo(
-    () => sanitizeVisibleStrings(buildHomeV6ContextFindings(safeV6Browser)),
-    [safeV6Browser],
+    () =>
+      sourceLabel === "V6"
+        ? sanitizeVisibleStrings(buildHomeV6ContextFindings(safeV6Browser))
+        : [],
+    [safeV6Browser, sourceLabel],
   );
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)

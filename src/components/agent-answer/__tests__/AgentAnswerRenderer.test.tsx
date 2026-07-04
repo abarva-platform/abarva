@@ -83,12 +83,31 @@ describe("AgentAnswerRenderer", () => {
 
     const tableNode = screen.getByRole("table");
     expect(within(tableNode).getByText("Category")).toBeInTheDocument();
-    expect(within(tableNode).getByText("$1,200,000")).toBeInTheDocument();
+    expect(within(tableNode).getByText("$1.2M")).toBeInTheDocument();
     expect(within(tableNode).getByText("42%")).toBeInTheDocument();
     expect(
       screen.getByText("Includes run-cost categories only."),
     ).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+  });
+
+  it("formats numeric strings in inferred money columns", () => {
+    const table: AnswerTable = {
+      id: "table-strings",
+      title: "IT budget",
+      columns: [
+        { key: "spend_record", label: "Spend record" },
+        { key: "amount_usd", label: "Amount" },
+      ],
+      rows: [{ spend_record: "Corporate budget", amount_usd: "36500000" }],
+      citationIds: [],
+    };
+
+    render(<DataTable table={table} citations={[]} />);
+
+    const tableNode = screen.getByRole("table");
+    expect(within(tableNode).getByText("$36.5M")).toBeInTheDocument();
+    expect(within(tableNode).queryByText("36500000")).not.toBeInTheDocument();
   });
 
   it("renders typed relationship graphs through the canonical answer renderer", () => {

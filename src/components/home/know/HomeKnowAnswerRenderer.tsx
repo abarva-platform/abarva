@@ -144,20 +144,18 @@ function formatValue(
 ): string {
   if (value === null || value === undefined) return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
+  const numericValue =
+    typeof value === "number" ? value : parseNumericValue(value);
+  const inferredFormat = inferredColumnFormat(column);
+  if (numericValue !== null && inferredFormat) {
+    return formatNumericValue(numericValue, inferredFormat);
+  }
   if (typeof value === "string") return sanitizeHomeText(value);
   switch (column?.format) {
     case "currency":
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      }).format(value);
+      return formatCompactUsd(value);
     case "percent": {
-      const normalized = Math.abs(value) <= 1 ? value : value / 100;
-      return new Intl.NumberFormat("en-US", {
-        style: "percent",
-        maximumFractionDigits: 1,
-      }).format(normalized);
+      return formatPercent(value);
     }
     case "number":
       return new Intl.NumberFormat("en-US", {
@@ -173,13 +171,78 @@ function formatValue(
   }
 }
 
+function parseNumericValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().replace(/[$,\s]/g, "");
+  if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function inferredColumnFormat(
+  column?: HomeKnowTableColumn,
+): "currency" | "percent" | "number" | null {
+  if (!column) return null;
+  if (column.format === "currency" || column.format === "percent" || column.format === "number") {
+    return column.format;
+  }
+  const key = column.key.toLowerCase();
+  const label = column.label.toLowerCase();
+  const name = `${key} ${label}`;
+  if (/\b(usd|amount|budget|cost|spend|revenue|value|rate)\b/.test(name)) {
+    return "currency";
+  }
+  if (/\b(percent|percentage|pct|share|ratio)\b/.test(name)) return "percent";
+  if (/\b(count|employees?|users?|population|records?|volume|number)\b/.test(name)) {
+    return "number";
+  }
+  return null;
+}
+
+function formatNumericValue(
+  value: number,
+  format: "currency" | "percent" | "number",
+): string {
+  if (format === "currency") return formatCompactUsd(value);
+  if (format === "percent") return formatPercent(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
+}
+
+function formatCompactUsd(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) return `$${trimNumber(value / 1_000_000_000)}B`;
+  if (abs >= 1_000_000) return `$${trimNumber(value / 1_000_000)}M`;
+  if (abs >= 1_000) return `$${trimNumber(value / 1_000)}K`;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatPercent(value: number): string {
+  const normalized = Math.abs(value) <= 1 ? value : value / 100;
+  return new Intl.NumberFormat("en-US", {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(normalized);
+}
+
+function trimNumber(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: Math.abs(value) >= 10 ? 1 : 2,
+  }).format(value);
+}
+
 function alignmentClass(column: HomeKnowTableColumn): string {
   if (column.align === "right") return "right";
   if (column.align === "center") return "center";
   if (
     column.format === "number" ||
     column.format === "currency" ||
-    column.format === "percent"
+    column.format === "percent" ||
+    Boolean(inferredColumnFormat(column))
   )
     return "right";
   return "";

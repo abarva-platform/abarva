@@ -339,13 +339,17 @@ describe("HomeSurface — real React Context Explorer", () => {
     ).toBeInTheDocument();
     // V6-backed context findings replace the legacy Intelligence signal cards.
     expect(screen.getByText("Context findings")).toBeInTheDocument();
-    expect(screen.getByText("4 V6 findings")).toBeInTheDocument();
+    expect(screen.getByText("4 findings")).toBeInTheDocument();
     expect(
       screen.getByText("System and data readiness are the main context gate."),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Why this appears")[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/V6 rows ·/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/supporting rows ·/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Needs evidence:/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByText("Why this appears")[0]);
+    expect(screen.getAllByText("Representative source support")[0]).toBeInTheDocument();
+    expect(screen.queryByText(/V6_05_applications_systems\.csv/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/APP-001/)).not.toBeInTheDocument();
     expect(
       screen.queryByText("SHOULD NOT RENDER LEGACY SIGNAL"),
     ).not.toBeInTheDocument();
@@ -353,7 +357,8 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByText("2 context areas loaded")).toBeInTheDocument();
     expect(screen.queryByText("Business areas · 8")).not.toBeInTheDocument();
     expect(screen.getByText("Context areas")).toBeInTheDocument();
-    expect(screen.getByText("V6 records")).toBeInTheDocument();
+    expect(screen.getByText("Loaded records")).toBeInTheDocument();
+    expect(screen.getByText("Source files")).toBeInTheDocument();
     expect(screen.queryByText("Evidence points")).not.toBeInTheDocument();
     expect(screen.queryByText(/Lens:/)).not.toBeInTheDocument();
     expect(
@@ -413,24 +418,84 @@ describe("HomeSurface — real React Context Explorer", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/evidence points are loaded/)).toBeInTheDocument();
     expect(screen.getByText("Vendors and contracts")).toBeInTheDocument();
-    expect(screen.getByText("V6 source preview")).toBeInTheDocument();
+    expect(screen.getByText("Loaded data preview")).toBeInTheDocument();
     expect(screen.getByText("Evidence gaps")).toBeInTheDocument();
     expect(
       screen.getByText(/Evidence gaps are fields explicitly marked/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Loaded source rows with their V6 lineage and available fields.",
+        "Actual loaded rows from the source file, shown with client-friendly column names and readable values.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("90")).toBeInTheDocument();
     expect(screen.getByText("rows")).toBeInTheDocument();
-    expect(screen.getByText("VND-001 - Kyriba")).toBeInTheDocument();
-    expect(screen.getByText("apex/vendors-contracts.csv")).toBeInTheDocument();
-    expect(screen.getByText("synthetic demo")).toBeInTheDocument();
     expect(screen.getByText("Kyriba")).toBeInTheDocument();
     expect(screen.getByText("Treasury")).toBeInTheDocument();
     expect(screen.getByText("Needs evidence")).toBeInTheDocument();
-    expect(screen.getByText("V6_07_vendors_contracts.csv")).toBeInTheDocument();
+    expect(screen.getByText("07 vendors contracts")).toBeInTheDocument();
+    expect(screen.queryByText("VND-001 - Kyriba")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("apex/vendors-contracts.csv"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("synthetic demo")).not.toBeInTheDocument();
+  });
+
+  it("renders dimension canvas tabs as actual tab controls", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "Vendors & Contracts" },
+    });
+
+    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+    expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("tabpanel", { name: "Data" }),
+    ).toBeInTheDocument();
+  });
+
+  it("formats raw numeric preview cells for CXO readability", () => {
+    const payloadWithBenefits = {
+      ...payload,
+      context: [
+        ...payload.context,
+        {
+          dimension: "Benefits Realization",
+          status: "LOADED",
+          description: "Value and benefit evidence",
+          evidence: 50,
+          sources: 1,
+          trust: 74,
+          flag: null,
+        },
+      ],
+    } as unknown as IntelligenceBindingPayload;
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payloadWithBenefits}
+        v6Browser={v6Browser}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "Benefits Realization" },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+
+    expect(screen.getByText("$1M")).toBeInTheDocument();
+    expect(screen.queryByText("1000000")).not.toBeInTheDocument();
   });
 });
