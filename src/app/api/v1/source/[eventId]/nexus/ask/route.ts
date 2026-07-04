@@ -34,6 +34,10 @@ import {
   buildSkyHarborAmsExistingContractInput,
   isSkyHarborContractOptimizationEvent,
 } from "@/lib/source/contract-optimization";
+import {
+  formatMetricValue as formatContractEvidenceMetricValue,
+  loadContractEvidenceRuntimeSummary,
+} from "@/lib/source/contract-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -365,6 +369,11 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ? APEX_RETAIL_BROKER_TENANT_KEY
       : clientKey;
   const artifactContext = await loadSourceEventArtifactContext(args.event.id);
+  const structuredEvidenceContext = await loadContractEvidenceRuntimeSummary({
+    db: getAzureReadFluentClient(),
+    tenantKey: clientKey,
+    sourceEventId: args.event.id,
+  });
   const vendorProfiles = buildVendorResponseMveProfiles({
     id: args.event.id,
     code: args.event.code,
@@ -543,13 +552,41 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ].join(" "),
       score: 30 - index,
     })) ?? []),
+    ...structuredEvidenceContext.families.map((family, index) => ({
+      recordId: `structured-evidence-family-${family.family}`,
+      title: `Structured evidence - ${family.label}`,
+      excerpt: `${family.label}: ${family.acceptedRows} accepted evidence record(s) out of ${family.rowCount}; status ${family.status}.`,
+      score: 38 - index,
+      segmentId: structuredEvidenceSegmentForFamily(family.family),
+      sourceDoc: "Source structured evidence",
+    })),
+    ...structuredEvidenceContext.metrics.map((metric, index) => ({
+      recordId: `structured-evidence-metric-${metric.key}`,
+      title: `Calculated metric - ${metric.label}`,
+      excerpt: `${metric.label}: ${formatContractEvidenceMetricValue(metric)}, calculated from ${
+        structuredEvidenceContext.families.find(
+          (family) => family.family === metric.family,
+        )?.label ?? "structured evidence"
+      }.`,
+      score: 37 - index,
+      segmentId: structuredEvidenceSegmentForFamily(metric.family),
+      sourceDoc: "Source structured evidence",
+    })),
+    ...structuredEvidenceContext.findings.map((finding, index) => ({
+      recordId: `structured-evidence-finding-${finding.key}`,
+      title: `Supported finding - ${finding.label}`,
+      excerpt: `${finding.evidence} ${finding.implication}`,
+      score: 39 - index,
+      segmentId: structuredEvidenceSegmentForFamily(finding.evidenceFamily),
+      sourceDoc: "Source structured evidence",
+    })),
   ].filter((item) => item.excerpt.trim().length > 0);
   const evidence = [
     ...eventEvidence.map((item) => ({
       ...item,
       id: `source-event:${args.event.id}:${item.recordId}`,
-      segmentId: "sourcing_artifacts",
-      sourceDoc: "Source intake record",
+      segmentId: sourceEventEvidenceSegment(item),
+      sourceDoc: sourceEventEvidenceDoc(item),
       confidence: "high" as const,
     })),
     ...artifactContext.artifactEvidence,
@@ -598,6 +635,9 @@ async function buildEventIntakeTenantContextSnapshot(args: {
             `${uploadedCount} uploaded Source evidence artifact(s), ${generatedCount} generated artifact(s), ${artifactContext.chunks.length} parsed excerpt(s), and ${artifactContext.facts.length} structured fact(s) are bound from the Source artifact registry for this event.`,
           ]
         : []),
+      ...(structuredEvidenceContext.manifests.length
+        ? [structuredEvidenceContext.userFacingSummary]
+        : []),
     ],
     retrievedEvidence: evidence.map((item) => ({
       id: item.id,
@@ -614,8 +654,32 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       artifactContext.artifacts.length
         ? "Using persisted Source event facts plus Source artifact registry/chunk/fact evidence for this event; raw blob contents are not exposed unless parsed into governed Source evidence."
         : "Using persisted Source intake facts for this newly-created event; no uploaded or generated Source artifacts were found for the active event.",
+      ...structuredEvidenceContext.warnings,
     ],
   };
+}
+
+function structuredEvidenceSegmentForFamily(family: string): string {
+  if (/invoice|price|spend/i.test(family)) return "it_financials";
+  if (/sla|ticket|staffing|change_order/i.test(family)) {
+    return "operating_telemetry";
+  }
+  if (/contract|renewal/i.test(family)) return "vendor_contracts";
+  return "uploaded_source_evidence";
+}
+
+function sourceEventEvidenceSegment(item: unknown): string {
+  const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+  return typeof record.segmentId === "string"
+    ? record.segmentId
+    : "sourcing_artifacts";
+}
+
+function sourceEventEvidenceDoc(item: unknown): string {
+  const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+  return typeof record.sourceDoc === "string"
+    ? record.sourceDoc
+    : "Source intake record";
 }
 
 async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{

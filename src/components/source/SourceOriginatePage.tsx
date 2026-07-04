@@ -24,6 +24,10 @@ import {
   type IntakeFieldId,
   type SourceIntakeShape,
 } from "@/lib/source/intake-intent";
+import {
+  buildSourceScopeDescription,
+  parseSourceIntakeText,
+} from "@/lib/source/intake-summary";
 import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
 type SubmitState =
   | { status: "idle" }
@@ -609,6 +613,36 @@ export function SourceOriginatePage({
     setIntake((current) => ({ ...current, [fieldId]: value }));
   }
 
+  const patchIntakeFromText = useCallback((text: string) => {
+    const parsed = parseSourceIntakeText(text);
+    const entries = Object.entries(parsed).filter(
+      (entry): entry is [IntakeFieldId, string] =>
+        typeof entry[1] === "string" && entry[1].trim().length > 0,
+    );
+    if (entries.length === 0) return;
+    setSubmitState({ status: "idle" });
+    setDraftSaved(false);
+    setIntake((current) => {
+      const next = { ...current };
+      const newlyFilled: IntakeFieldId[] = [];
+      for (const [fieldId, value] of entries) {
+        const incoming = value.trim();
+        if (incoming && next[fieldId] !== incoming) {
+          next[fieldId] = incoming;
+          newlyFilled.push(fieldId);
+        }
+      }
+      if (newlyFilled.length > 0) {
+        setChatFilledFields((prev) => {
+          const merged = new Set(prev);
+          for (const id of newlyFilled) merged.add(id);
+          return merged;
+        });
+      }
+      return next;
+    });
+  }, []);
+
   async function createEvent() {
     if (!canCreate) return;
     setSubmitState({ status: "submitting" });
@@ -622,15 +656,14 @@ export function SourceOriginatePage({
         eventType: inferEventType(intake.scopeBoundary, selectedCategory),
         triggerDescription: intake.trigger,
         decisionOwner: intake.decisionOwner || undefined,
-        scopeDescription:
-          [
-            intake.scopeBoundary && `Scope boundary: ${intake.scopeBoundary}`,
-            intake.valueTarget && `Value basis: ${intake.valueTarget}`,
-            intake.baselineOwner && `Baseline owner: ${intake.baselineOwner}`,
-            selectedCategory && `Category: ${selectedCategory.label}`,
-          ]
-            .filter(Boolean)
-            .join("\n") || undefined,
+        scopeDescription: buildSourceScopeDescription({
+          scopeBoundary: intake.scopeBoundary,
+          valueTarget: intake.valueTarget,
+          baselineOwner: intake.baselineOwner,
+          category: selectedCategory?.label,
+        }),
+        valueTargetDescription: intake.valueTarget || undefined,
+        baselineOwnerDescription: intake.baselineOwner || undefined,
         estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
       }),
     });
@@ -1032,6 +1065,7 @@ export function SourceOriginatePage({
           intakeShape={intakeShape}
           intakeFields={intakeFields}
           capturedFacts={capturedFacts}
+          onIntakeText={patchIntakeFromText}
         />
         <SourceOnboardingTour
           active={tourActive}
@@ -1067,6 +1101,7 @@ function SourceOriginateDock({
   intakeShape,
   intakeFields,
   capturedFacts,
+  onIntakeText,
 }: {
   clientName: string;
   clientKey: string;
@@ -1074,6 +1109,7 @@ function SourceOriginateDock({
   intakeShape: SourceIntakeShape | null;
   intakeFields: IntakeFieldDefinition[];
   capturedFacts: CapturedFact[];
+  onIntakeText?: (text: string) => void;
 }) {
   const pageState = useAtlasPageState();
 
@@ -1107,7 +1143,9 @@ function SourceOriginateDock({
             .map((a) => `${a.file_name} (${a.id})`)
             .join("; ")}]`
         : "";
-    pageState.ask((trimmed + fileNote).trim());
+    const message = (trimmed + fileNote).trim();
+    onIntakeText?.(message);
+    pageState.ask(message);
   };
 
   // Intent-shaped intake: the conversation starts already pointed at the

@@ -127,7 +127,10 @@ import type {
 } from "@/lib/source/canvas-substrate";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
-import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import {
+  SOURCE_STAGE_LABELS,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import {
   type AttachmentRef,
@@ -1117,47 +1120,64 @@ export function UniversalCanvasShell({
     },
   ];
 
+  const decisionBriefState = artifactStateMap.d24_decision_brief;
+  const hasDecisionBriefDraft = isArtifactDraftVisible(decisionBriefState);
+  const hasAdvisoryExportReadiness =
+    isLakeshoreDemoCaseStudy ||
+    hasDecisionBriefDraft ||
+    isStageAtOrAfter(event.currentStageKey, "executive_decision");
+  const hasValueExportReadiness =
+    isLakeshoreDemoCaseStudy || isStageAtOrAfter(event.currentStageKey, "value");
+
   const exportItems = [
-    {
-      key: "decision-brief-docx",
-      label: "Decision Brief DOCX",
-      href: decisionBriefDocxHref,
-      testId: "source-canvas-decision-brief-docx",
-      download: true,
-    },
-    {
-      key: "decision-brief-pdf",
-      label: "Decision Brief PDF",
-      href: decisionBriefPdfHref,
-      testId: "source-canvas-decision-brief-pdf",
-      download: true,
-    },
-    {
-      key: "cxo-report-html",
-      label: "CXO Report",
-      href: `/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=html`,
-      testId: "source-canvas-cxo-report-html",
-      external: true,
-    },
-    {
-      key: "cxo-report-pptx",
-      label: "Download PPTX",
-      href: `/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=pptx`,
-      testId: "source-canvas-cxo-report-pptx",
-      download: true,
-    },
-    {
-      key: "deal-pack",
-      label: "Download Deal Pack",
-      href: `/api/v1/source/${encodeURIComponent(event.id)}/deal-pack?format=html`,
-      testId: "source-canvas-deal-pack-download",
-    },
-    {
-      key: "value-proof",
-      label: "Value Proof",
-      href: `/source/events/${event.id}/value`,
-      testId: "source-canvas-value-proof-link",
-    },
+    ...(hasAdvisoryExportReadiness
+      ? [
+          {
+            key: "decision-brief-docx",
+            label: "Decision Brief DOCX",
+            href: decisionBriefDocxHref,
+            testId: "source-canvas-decision-brief-docx",
+            download: true,
+          },
+          {
+            key: "decision-brief-pdf",
+            label: "Decision Brief PDF",
+            href: decisionBriefPdfHref,
+            testId: "source-canvas-decision-brief-pdf",
+            download: true,
+          },
+          {
+            key: "cxo-report-html",
+            label: "CXO Report",
+            href: `/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=html`,
+            testId: "source-canvas-cxo-report-html",
+            external: true,
+          },
+          {
+            key: "cxo-report-pptx",
+            label: "Download PPTX",
+            href: `/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=pptx`,
+            testId: "source-canvas-cxo-report-pptx",
+            download: true,
+          },
+          {
+            key: "deal-pack",
+            label: "Download Deal Pack",
+            href: `/api/v1/source/${encodeURIComponent(event.id)}/deal-pack?format=html`,
+            testId: "source-canvas-deal-pack-download",
+          },
+        ]
+      : []),
+    ...(hasValueExportReadiness
+      ? [
+          {
+            key: "value-proof",
+            label: "Value Proof",
+            href: `/source/events/${event.id}/value`,
+            testId: "source-canvas-value-proof-link",
+          },
+        ]
+      : []),
     ...(decisionThreadId
       ? [
           {
@@ -1381,12 +1401,24 @@ const LAKESHORE_CASE_STUDY_CHOICES = [
 function isLakeshoreSharedServicesDemoEvent(
   event: Pick<SourcingEventSummary, "code" | "name" | "accountName">,
 ): boolean {
-  return (
-    /LAKE-SHARED-SERVICES-AMS-2026/i.test(event.code) ||
-    /Lakeshore Shared Services AMS/i.test(event.name) ||
-    (/lakeshore/i.test(event.accountName) &&
-      /shared services|shared-services|ams/i.test(event.name))
+  return /^LAKE-SHARED-SERVICES-AMS-2026$/i.test(event.code.trim());
+}
+
+function isArtifactDraftVisible(
+  artifact: SourceEventArtifactState | undefined,
+): boolean {
+  return Boolean(
+    artifact?.body?.trim() ||
+      artifact?.linkedArtifactId ||
+      artifact?.status === "approved" ||
+      artifact?.status === "locked",
   );
+}
+
+function isStageAtOrAfter(current: SourceStageKey, target: SourceStageKey) {
+  const currentIndex = SOURCE_STAGE_ORDER.indexOf(current);
+  const targetIndex = SOURCE_STAGE_ORDER.indexOf(target);
+  return currentIndex >= 0 && targetIndex >= 0 && currentIndex >= targetIndex;
 }
 
 function CaseStudyCoherenceBanner({

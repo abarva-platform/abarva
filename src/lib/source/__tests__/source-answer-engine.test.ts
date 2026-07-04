@@ -1232,4 +1232,99 @@ describe("Source answer engine", () => {
     expect(renewAnswer?.answerText).not.toEqual(cureAnswer?.answerText);
     expect(cureAnswer?.answerText).not.toEqual(missingAnswer?.answerText);
   });
+
+  it("answers persisted contract evidence questions from structured Source evidence", () => {
+    const contextWithContractEvidence: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        retrievedEvidence: [
+          {
+            id: "source-event:lakeshore:structured-evidence-family-invoice",
+            segmentId: "it_financials",
+            recordId: "structured-evidence-family-invoice_exception",
+            title: "Structured evidence - Invoice exceptions",
+            sourceType: "contextChunk",
+            sourceDoc: "Source structured evidence",
+            excerpt:
+              "Invoice exceptions: 14 accepted evidence record(s) out of 14; status loaded.",
+            confidence: "high",
+            score: 39,
+          },
+          {
+            id: "source-event:lakeshore:structured-evidence-family-staffing",
+            segmentId: "operating_telemetry",
+            recordId: "structured-evidence-family-staffing_model",
+            title: "Structured evidence - Staffing model",
+            sourceType: "contextChunk",
+            sourceDoc: "Source structured evidence",
+            excerpt:
+              "Staffing model: 6 accepted evidence record(s) out of 6; status loaded.",
+            confidence: "high",
+            score: 38,
+          },
+          {
+            id: "source-event:lakeshore:structured-evidence-metric-invoice",
+            segmentId: "it_financials",
+            recordId:
+              "structured-evidence-metric-invoice_exception_exposure_usd",
+            title: "Calculated metric - Invoice exception exposure",
+            sourceType: "contextChunk",
+            sourceDoc: "Source structured evidence",
+            excerpt:
+              "Invoice exception exposure: $540,000, calculated from Invoice exceptions.",
+            confidence: "high",
+            score: 37,
+          },
+          {
+            id: "source-event:lakeshore:structured-evidence-finding-invoice",
+            segmentId: "it_financials",
+            recordId: "structured-evidence-finding-invoice_leakage",
+            title: "Supported finding - Invoice leakage",
+            sourceType: "contextChunk",
+            sourceDoc: "Source structured evidence",
+            excerpt:
+              "Invoice exception exposure: $540,000. This supports a recovery or cure discussion before renewal or renegotiation.",
+            confidence: "high",
+            score: 36,
+          },
+          ...liveTenantContext.retrievedEvidence,
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "What evidence is loaded and what calculated findings can we use?",
+      contextBundle: contextWithContractEvidence,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("Structured Source evidence answer");
+    expect(answer?.answerText).toContain(
+      "sourcing-critical evidence loaded for Invoice exceptions and Staffing model",
+    );
+    expect(answer?.answerText).toContain(
+      "Invoice exception exposure: $540,000",
+    );
+    expect(answer?.answerText).toContain("Invoice leakage");
+    expect(answer?.answerText).not.toContain("source_contract");
+    expect(answer?.answerText).not.toContain("raw document browsing");
+    expect(
+      answer?.responseParts.some(
+        (part) =>
+          part.type === "barChart" &&
+          part.title === "Calculated sourcing metrics",
+      ),
+    ).toBe(true);
+    expect(
+      answer?.responseParts.some(
+        (part) => part.type === "table" && part.title === "Evidence coverage",
+      ),
+    ).toBe(true);
+    expect(
+      answer?.responseParts.some(
+        (part) => part.type === "table" && part.title === "Supported findings",
+      ),
+    ).toBe(true);
+  });
 });

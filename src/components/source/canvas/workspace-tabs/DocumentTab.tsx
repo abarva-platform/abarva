@@ -207,6 +207,9 @@ export function DocumentTab({
   const body = authoredBody ?? templateBody;
   const authoredBodyCanExport = Boolean(authoredBody?.trim());
   const bodyIsAuthored = authoredBodyCanExport;
+  const hasGeneratedDraft = active
+    ? hasGeneratedDraftForArtifact(active, registryArtifacts)
+    : false;
 
   return (
     <div data-testid="source-canvas-document-tab" style={DOCUMENT_TAB_STYLE}>
@@ -292,6 +295,7 @@ export function DocumentTab({
                 templateBody={templateBody}
                 authoredBody={authoredBody}
                 bodyIsAuthored={bodyIsAuthored}
+                hasGeneratedDraft={Boolean(hasGeneratedDraft)}
                 onSaveBody={onSaveBody}
                 pending={bodyPendingByCode?.[active.artifactCode] ?? false}
                 stage={stage}
@@ -596,6 +600,7 @@ interface ArtifactBodyEditorProps {
   templateBody: string | null;
   authoredBody: string | null;
   bodyIsAuthored: boolean;
+  hasGeneratedDraft: boolean;
   onSaveBody?: (code: string, body: string) => Promise<void>;
   pending: boolean;
   stage: SourceStageKey;
@@ -630,6 +635,7 @@ function ArtifactBodyEditor({
   templateBody,
   authoredBody,
   bodyIsAuthored,
+  hasGeneratedDraft,
   onSaveBody,
   pending,
   onGenerateArtifact,
@@ -769,6 +775,7 @@ function ArtifactBodyEditor({
               eventId={eventId}
               artifactCode={artifact.artifactCode}
               artifactName={artifactName}
+              hasGeneratedDraft={hasGeneratedDraft}
               onAccepted={onClientFinalAccepted}
             />
           ) : null}
@@ -843,6 +850,10 @@ function ArtifactBodyEditor({
               ? ` · accepted ${formatShortDate(clientFinal.acceptedAt)}`
               : ""}
           </span>
+          <span>
+            File Cabinet treats this client-final upload as the authoritative
+            version for downstream Source work.
+          </span>
           {clientFinal.note ? <span>{clientFinal.note}</span> : null}
         </div>
       ) : null}
@@ -893,6 +904,7 @@ interface ClientFinalMetadata {
   fileName?: string;
   acceptedAt?: string;
   note?: string;
+  sourceGeneratedArtifactId?: string;
 }
 
 function readClientFinalMetadata(
@@ -906,7 +918,25 @@ function readClientFinalMetadata(
     acceptedAt:
       typeof record.acceptedAt === "string" ? record.acceptedAt : undefined,
     note: typeof record.note === "string" ? record.note : undefined,
+    sourceGeneratedArtifactId:
+      typeof record.sourceGeneratedArtifactId === "string"
+        ? record.sourceGeneratedArtifactId
+        : undefined,
   };
+}
+
+function hasGeneratedDraftForArtifact(
+  artifact: SourceEventArtifactState,
+  registryArtifacts: readonly SourceArtifactRegistryRecord[],
+): boolean {
+  const clientFinal = readClientFinalMetadata(artifact.bodyGenerationMetadata);
+  if (clientFinal?.sourceGeneratedArtifactId || clientFinal?.fileName)
+    return true;
+  return registryArtifacts.some(
+    (doc) =>
+      doc.artifactKind === artifact.artifactCode &&
+      doc.sourceOrigin === "generated",
+  );
 }
 
 function formatShortDate(value: string): string {
