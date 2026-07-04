@@ -31,6 +31,7 @@ import { renderSourceDeliverable } from "@/lib/source/exports/dispatch";
 import { eventCodeFromSpec } from "@/lib/source/exports/metadata";
 import {
   buildSourceDeliverableSpec,
+  canonicalArtifactCodeFor,
   kindForArtifactCode,
 } from "@/lib/source/exports/spec-builder";
 import type { DeliverableFormat } from "@/lib/programs/exports/types";
@@ -168,18 +169,23 @@ async function renderArtifact(
   }
 
   if (requestedFormat && variantParam !== "comparison" && activeClient) {
+    const canonicalArtifactCode = canonicalArtifactCodeFor(artifactCode);
     const clientFinalResponse = await streamClientFinalIfAvailable({
       sourceEventId: ctx.event.id,
       clientId: activeClient.id,
-      artifactCode,
+      artifactCode: canonicalArtifactCode,
       requestedFormat,
     });
     if (clientFinalResponse) return clientFinalResponse;
   }
 
   // Resolve artifact code → kind after the event/auth boundary.
-  const kind = kindForArtifactCode(
+  const canonicalArtifactCode = canonicalArtifactCodeFor(
     artifactCode,
+    variantParam === "comparison" ? "comparison" : "template",
+  );
+  const kind = kindForArtifactCode(
+    canonicalArtifactCode,
     variantParam === "comparison" ? "comparison" : "template",
   );
   if (!kind) {
@@ -225,7 +231,10 @@ async function renderArtifact(
     headers: {
       "content-type": result.contentType,
       "cache-control": "no-store",
-      "x-source-artifact-code": artifactCode,
+      "x-source-artifact-code": canonicalArtifactCode,
+      ...(canonicalArtifactCode !== artifactCode
+        ? { "x-source-requested-artifact-code": artifactCode }
+        : {}),
       "x-source-event-code": responseEventCode,
       "x-source-artifact-format": result.format,
       "x-source-artifact-kind": kind,

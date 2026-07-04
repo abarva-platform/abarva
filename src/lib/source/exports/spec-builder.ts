@@ -55,6 +55,42 @@ const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
   "renewal-decision": "dx7_renewal_decision",
 };
 
+const ARTIFACT_CODE_ALIASES: Record<string, string> = {
+  d01: "d01_strategy_memo",
+  strategy_memo: "d01_strategy_memo",
+  "strategy-memo": "d01_strategy_memo",
+  d05: "d05_scope_memo",
+  scope_memo: "d05_scope_memo",
+  "scope-memo": "d05_scope_memo",
+  d09: "d09_rfp_pack",
+  rfp_package: "d09_rfp_pack",
+  rfp_pack: "d09_rfp_pack",
+  "rfp-package": "d09_rfp_pack",
+  d11: "d11_response_checklist",
+  response_checklist: "d11_response_checklist",
+  "response-checklist": "d11_response_checklist",
+  d13: "d13_vendor_responses",
+  vendor_response_pack: "d13_vendor_responses",
+  vendor_responses: "d13_vendor_responses",
+  "vendor-response-pack": "d13_vendor_responses",
+  d16: "d16_scorecard",
+  scorecard: "d16_scorecard",
+  evaluation_scorecard: "d16_scorecard",
+  "evaluation-scorecard": "d16_scorecard",
+  d22: "d22_bafo_question_pack",
+  bafo_question_pack: "d22_bafo_question_pack",
+  bafo_pack: "d22_bafo_question_pack",
+  "bafo-question-pack": "d22_bafo_question_pack",
+  d24: "d24_decision_brief",
+  decision_brief: "d24_decision_brief",
+  executive_decision: "d24_decision_brief",
+  executive_award_recommendation: "d24_decision_brief",
+  "decision-brief": "d24_decision_brief",
+  d27: "d27_selection_memo",
+  selection_memo: "d27_selection_memo",
+  "selection-memo": "d27_selection_memo",
+};
+
 // Narrative kinds use the shared NarrativeDocxPayload shape. The
 // lifecycle wave (demand-challenge / sourcing-approach / vendor-risk-
 // pack) reuses the same shape but with substrate-grounded scaffold
@@ -249,15 +285,29 @@ export async function buildSourceDeliverableSpec(
 }
 
 /** Translate a canonical artifact code to the dispatcher's kind. */
+export function canonicalArtifactCodeFor(
+  artifactCode: string,
+  variant?: "template" | "comparison",
+): string {
+  if (artifactCode === "d19_pricing_workbook") {
+    return variant === "comparison"
+      ? "d19_pricing_workbook"
+      : "d19_pricing_workbook";
+  }
+  const normalized = artifactCode.trim().toLowerCase();
+  return ARTIFACT_CODE_ALIASES[normalized] ?? artifactCode;
+}
+
 export function kindForArtifactCode(
   artifactCode: string,
   variant?: "template" | "comparison",
 ): SourceDeliverableKind | null {
-  if (artifactCode === "d19_pricing_workbook") {
+  const canonicalArtifactCode = canonicalArtifactCodeFor(artifactCode, variant);
+  if (canonicalArtifactCode === "d19_pricing_workbook") {
     return variant === "comparison" ? "pricing-comparison" : "pricing-template";
   }
   for (const [k, code] of Object.entries(KIND_TO_ARTIFACT_CODE)) {
-    if (code === artifactCode) return k as SourceDeliverableKind;
+    if (code === canonicalArtifactCode) return k as SourceDeliverableKind;
   }
   return null;
 }

@@ -51,12 +51,20 @@ export const DECISION_BRIEF_FORBIDDEN_PATTERNS = [
   /canonicalization_pending/i,
 ] as const;
 
-const DISPLAY_EVENT = {
+const SKYHARBOR_SAFE_DISPLAY = {
   accountName: "Aviation Client",
   code: "SKYH-AMS-RFP-2026",
   name: "AMS Outsourcing RFP",
   title: "AMS RFP Decision Brief",
   subtitle: "Vendor comparison, BAFO posture, and executive decision recommendation",
+};
+
+type DecisionBriefDisplay = {
+  accountName: string;
+  code: string;
+  name: string;
+  title: string;
+  subtitle: string;
 };
 
 export function buildDecisionBriefPayloadFromContext(
@@ -80,6 +88,7 @@ export function buildDecisionBriefPayloadFromContext(
 
   if (profiles && challengeIntelligence && bafoPack && decisionView) {
     const body = buildEvaluationDecisionBriefMarkdown({
+      display,
       decisionView,
       challengeIntelligence,
       bafoPack,
@@ -90,7 +99,7 @@ export function buildDecisionBriefPayloadFromContext(
     return {
       tenantName: display.accountName,
       eventCode: display.code,
-      eventName: DISPLAY_EVENT.title,
+      eventName: display.title,
       issuedBy: "AbarVa Source",
       generatedAt,
       body,
@@ -106,7 +115,7 @@ export function buildDecisionBriefPayloadFromContext(
     return {
       tenantName: display.accountName,
       eventCode: display.code,
-      eventName: DISPLAY_EVENT.title,
+      eventName: display.title,
       issuedBy: "AbarVa Source",
       generatedAt,
       body: authoredBody,
@@ -121,7 +130,7 @@ export function buildDecisionBriefPayloadFromContext(
 
 export function normalizeDecisionBriefEventDisplay(
   ctx: Pick<SourceGenerationContext, "tenantName" | "event">,
-): { accountName: string; code: string; name: string } {
+): DecisionBriefDisplay {
   const raw = [
     ctx.tenantName,
     ctx.event.code,
@@ -133,20 +142,22 @@ export function normalizeDecisionBriefEventDisplay(
 
   if (raw.includes("skyh") || raw.includes("airline demo")) {
     return {
-      accountName: DISPLAY_EVENT.accountName,
-      code: DISPLAY_EVENT.code,
-      name: DISPLAY_EVENT.name,
+      ...SKYHARBOR_SAFE_DISPLAY,
     };
   }
 
+  const eventName = ctx.event.name?.trim() || ctx.event.code;
   return {
     accountName: ctx.tenantName,
     code: ctx.event.code,
-    name: ctx.event.name,
+    name: eventName,
+    title: `${eventName} Decision Brief`,
+    subtitle: "Vendor comparison, BAFO posture, and executive decision recommendation",
   };
 }
 
 export function buildEvaluationDecisionBriefMarkdown(args: {
+  display?: DecisionBriefDisplay;
   decisionView: VendorEvaluationDecisionView;
   challengeIntelligence: VendorChallengeIntelligence;
   bafoPack: VendorBafoInstructionPack;
@@ -156,16 +167,17 @@ export function buildEvaluationDecisionBriefMarkdown(args: {
   const orderedSummaries = [...args.decisionView.vendorSummaries].sort(
     (a, b) => a.rank - b.rank,
   );
+  const display = args.display ?? SKYHARBOR_SAFE_DISPLAY;
   const vendorLabels = new Map(
     args.profiles.map((profile) => [profile.vendorId, displayVendor(profile)]),
   );
 
   const body = [
-    `# ${DISPLAY_EVENT.title}`,
+    `# ${display.title}`,
     "",
-    `_${DISPLAY_EVENT.subtitle}_`,
+    `_${display.subtitle}_`,
     "",
-    `Prepared for ${DISPLAY_EVENT.accountName}. Generated ${args.generatedAt}.`,
+    `Prepared for ${display.accountName}. Generated ${args.generatedAt}.`,
     "",
     "## Executive Recommendation",
     "",
@@ -457,8 +469,8 @@ function cleanList(items: string[], limit: number): string {
 
 function cleanText(value: string): string {
   return value
-    .replace(/\bSkyHarbor Air\b/gi, DISPLAY_EVENT.accountName)
-    .replace(/\bSkyHarbor\b/gi, DISPLAY_EVENT.accountName)
+    .replace(/\bSkyHarbor Air\b/gi, SKYHARBOR_SAFE_DISPLAY.accountName)
+    .replace(/\bSkyHarbor\b/gi, SKYHARBOR_SAFE_DISPLAY.accountName)
     .replace(/\bSteward\b/gi, "governance")
     .replace(/\bAtlas\b/gi, "aVa")
     .replace(/\bSentinel\b/gi, "aVa")

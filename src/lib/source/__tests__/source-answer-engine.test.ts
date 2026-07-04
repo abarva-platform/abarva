@@ -338,8 +338,9 @@ describe("Source answer engine", () => {
     });
 
     expect(answer?.answerText).toContain(
-      "17 RFP Risk Register APPROVED.csv is cited evidence for this sourcing read",
+      "Supporting detail: 17 RFP Risk Register APPROVED.csv",
     );
+    expect(answer?.answerText).not.toContain("is cited evidence");
     expect(answer?.answerText).not.toContain("risk_id,risk_category");
     expect(answer?.answerText).not.toContain("RFP-R1,Transition");
     const visiblePayload = JSON.stringify({
@@ -349,8 +350,9 @@ describe("Source answer engine", () => {
       responseParts: answer?.responseParts,
     });
     expect(visiblePayload).toContain(
-      "17 RFP Risk Register APPROVED.csv is cited evidence for this sourcing read",
+      "Supporting detail: 17 RFP Risk Register APPROVED.csv",
     );
+    expect(visiblePayload).not.toContain("is cited evidence");
     expect(visiblePayload).not.toContain("risk_id,risk_category");
     expect(visiblePayload).not.toContain("blocking_gate,evidence_basis");
     expect(visiblePayload).not.toContain("RFP-R1,Transition");
