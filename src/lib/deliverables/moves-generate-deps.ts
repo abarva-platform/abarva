@@ -200,6 +200,51 @@ export function createMovesGenerateArtifactDeps(
         }
         return decisions;
       },
+      async loadPhaseCapture(moveId, phase) {
+        // The operator's saved phase capture: one program_modules row per
+        // section, state_jsonb = { capture_section_key, label, value, … }.
+        const modules = await getModuleState(ctx, moveId).catch(() => []);
+        const byKey = new Map<string, string>();
+        const parts: string[] = [];
+        for (const mod of modules) {
+          if (mod.phaseNumber !== phase) continue;
+          const st = (mod.state ?? {}) as Record<string, unknown>;
+          const value =
+            typeof st.value === "string" ? st.value.trim() : "";
+          if (!value) continue;
+          const key =
+            typeof st.capture_section_key === "string"
+              ? st.capture_section_key
+              : mod.moduleKey;
+          byKey.set(key, value);
+          const heading =
+            (typeof st.label === "string" && st.label) ||
+            mod.moduleName ||
+            key;
+          parts.push(`## ${heading}\n${value}`);
+        }
+        if (parts.length === 0) return null;
+        const digest: PhaseDigest = { currentState: parts.join("\n\n") };
+        // Structured P2 fields the diagnostic prompt + metric inference expect.
+        const baseline = byKey.get("baseline_metrics");
+        if (baseline) {
+          digest.baselineMetrics = {
+            [`Operator-attested baseline (P${phase} capture)`]: baseline,
+          };
+        }
+        const gaps = byKey.get("gaps_root_causes");
+        if (gaps) {
+          digest.gaps = [gaps];
+          digest.rootCauses = [gaps];
+        }
+        const recommendation = byKey.get("recommendation");
+        if (recommendation) {
+          digest.humanApprovalNotes = [
+            `Operator recommendation (P${phase} capture): ${recommendation}`,
+          ];
+        }
+        return digest;
+      },
     },
     gateSources: {
       async captureComplete(moveId, phase) {

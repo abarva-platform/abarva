@@ -96,6 +96,57 @@ describe("assembleMoveSolutionContext (Slice 1)", () => {
     );
   });
 
+  it("binds the operator's saved phase capture (currentState merged, gaps carried) so the diagnosis is not lost", async () => {
+    const out = await assembleMoveSolutionContext(
+      { moveId: "m1", tenantKey: "lakeshore", targetPhase: 2 },
+      sources({
+        loadPriorDigests: async () => [],
+        retrieveCurrentState: async () => "", // broker empty — capture is the only diagnosis
+        loadPhaseCapture: async () => ({
+          currentState:
+            "## Current-state findings (operator capture)\nIntake is manual and fragmented; median cycle 18.4 days.",
+          baselineMetrics: {
+            "Operator-attested baseline (P2 capture)":
+              "cycle time 18.4 days; missing-field rate 42%",
+          },
+          gaps: ["No single intake front door; 42% missing-field rate"],
+          rootCauses: ["No single intake front door; 42% missing-field rate"],
+        }),
+      }),
+    );
+    // Even with an empty broker result, the operator's capture binds the context.
+    expect(out.currentStateBound).toBe(true);
+    expect(out.context.currentState).toMatch(/manual and fragmented/);
+    expect(out.context.currentState).not.toMatch(/DATA GAP/);
+    expect(out.context.gaps).toEqual([
+      "No single intake front door; 42% missing-field rate",
+    ]);
+    expect(out.context.baselineMetrics).toBeDefined();
+  });
+
+  it("merges the broker current state with the operator capture (neither is dropped)", async () => {
+    const out = await assembleMoveSolutionContext(
+      { moveId: "m1", tenantKey: "lakeshore", targetPhase: 2 },
+      sources({
+        loadPriorDigests: async () => [],
+        retrieveCurrentState: async () => "Broker estate: SharePoint + shared drive",
+        loadPhaseCapture: async () => ({
+          currentState: "Operator capture: obligations not owned",
+        }),
+      }),
+    );
+    expect(out.context.currentState).toMatch(/Broker estate/);
+    expect(out.context.currentState).toMatch(/Operator capture/);
+  });
+
+  it("is a no-op when no loadPhaseCapture source is supplied (back-compat)", async () => {
+    const out = await assembleMoveSolutionContext(
+      { moveId: "m1", tenantKey: "t", targetPhase: 2 },
+      sources(), // no loadPhaseCapture
+    );
+    expect(out.context.currentState).toMatch(/Epic Clarity/);
+  });
+
   it("carries concrete P2 evidence specificity forward into P3 draft shaping", async () => {
     const out = await assembleMoveSolutionContext(
       { moveId: "m1", tenantKey: "lakeshore", targetPhase: 3 },

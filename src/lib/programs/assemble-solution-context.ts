@@ -26,6 +26,17 @@ export interface SolutionContextSources {
   loadPriorDigests: (moveId: string) => Promise<PhaseDigest[]>;
   /** Approved gate decisions for the move. */
   loadDecisions: (moveId: string) => Promise<SolutionDecision[]>;
+  /**
+   * The operator's saved phase capture for the target phase
+   * (`program_modules.state_jsonb`, the "N of N" section content). Optional so
+   * existing callers/tests keep working; when present it binds the diagnosis the
+   * operator actually entered so the mandated sections are not left empty and the
+   * model does not emit `[DATA GAP]`.
+   */
+  loadPhaseCapture?: (
+    moveId: string,
+    phase: number,
+  ) => Promise<PhaseDigest | null>;
 }
 
 export interface AssembledContext {
@@ -73,9 +84,41 @@ export async function assembleMoveSolutionContext(
     (
       await sources.retrieveCurrentState(args.tenantKey, query, args.moveId)
     )?.trim() ?? "";
-  const currentStateBound =
+  let currentStateBound =
     currentState.length > 0 && !currentState.startsWith("[MISSING");
   if (currentStateBound) ctx = applyPhaseDigest(ctx, { currentState });
+
+  // 2b) fold the operator's saved phase capture. This is the diagnosis the
+  // operator actually entered in the phase form (current-state findings, baseline
+  // metrics, gaps/root causes, …). It is stored in program_modules but was never
+  // bound here, so the mandated sections had no supporting context and the model
+  // wrote `[DATA GAP]`. Merge its currentState with the broker result (do not
+  // overwrite either) and carry its structured fields (baselineMetrics, gaps, …).
+  if (sources.loadPhaseCapture) {
+    const capture = await sources
+      .loadPhaseCapture(args.moveId, args.targetPhase)
+      .catch(() => null);
+    if (capture) {
+      const { currentState: captureCurrentState, ...captureRest } = capture;
+      const mergedCurrentState = [ctx.currentState, captureCurrentState]
+        .map((s) => s?.trim())
+        .filter(Boolean)
+        .join("\n\n");
+      ctx = applyPhaseDigest(ctx, {
+        ...captureRest,
+        ...(mergedCurrentState ? { currentState: mergedCurrentState } : {}),
+      });
+      // The operator's capture is real bound context: it lets the P2 metric
+      // inference run and satisfies the diagnosis-present readiness checks.
+      if (
+        mergedCurrentState.length > 0 ||
+        captureRest.baselineMetrics ||
+        (captureRest.gaps && captureRest.gaps.length > 0)
+      ) {
+        currentStateBound = true;
+      }
+    }
+  }
 
   // Promote concrete P2 evidence into first-class prompt fields so the model does
   // not have to hunt through raw CSV/XLSX excerpts for the facts that should drive
