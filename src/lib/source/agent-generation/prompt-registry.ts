@@ -323,6 +323,72 @@ Tone: formal procurement style. Vendor-facing — assume the reader is a sales e
       return lines.join('\n');
     },
   },
+
+  d24_decision_brief: {
+    artifactCode: 'd24_decision_brief',
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: 5000,
+    upstreamRequired: [],
+    upstreamOptional: [
+      'd01_strategy_memo',
+      'd02_value_target',
+      'd05_scope_memo',
+      'd16_scorecard',
+      'd19_pricing_workbook',
+      'd22_bafo_question_pack',
+    ],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Atlas Decision Brief (artifact d24_decision_brief) — the board-grade recommendation that closes the event. It synthesizes the whole event chain into one defensible call.
+
+Required structural sections:
+## §1 · Recommendation
+## §2 · Why this vendor
+## §3 · Tradeoff card
+## §4 · Finalist comparison
+## §5 · Counter-recommendation
+## §6 · Required sign-offs
+
+Ground every claim in the upstream artifacts bound below, cited by code:
+- §1 recommendation must be conditional (which vendor, conditional on what).
+- §4 finalist comparison must draw normalized TCO from the pricing workbook (d19) and the capability/security/transition scores from the scorecard (d16). Build the comparison table from those numbers — do NOT invent vendor names, scores, or prices that are not present in the bound upstream.
+- §3 value posture draws from the value target (d02); scope boundaries from d05; the mandate from d01.
+- §5 counter-recommendation states the runner-up case honestly so the brief is not a one-sided pitch.
+- §6 lists the required sign-offs (sponsor commitment, Steward sign-off, Sentinel risk attestation).
+
+If the scorecard (d16) or pricing workbook (d19) has not been authored, DO NOT fabricate a comparison. State plainly that the finalist comparison cannot be completed until those artifacts exist, list exactly what is missing, and give a conditional recommendation only to the extent the available evidence supports it. Tone: decisive but honest about evidence gaps. 800-1600 words.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Tenant: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Estimated value at stake: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : null,
+        '',
+        '— UPSTREAM EVENT CHAIN —',
+        '',
+      ].filter((line): line is string => line !== null);
+
+      const bind = (code: string, label: string, driverNote: string) => {
+        lines.push(`${label} (${code})${driverNote ? ` — ${driverNote}` : ''}:`);
+        lines.push(upstream[code] ?? '(NOT YET AUTHORED — do not fabricate; surface as a gap)');
+        lines.push('');
+      };
+
+      bind('d01_strategy_memo', 'Sourcing Strategy Memo', 'the mandate for §2');
+      bind('d02_value_target', 'Value Target Brief', 'the value posture for §3');
+      bind('d05_scope_memo', 'Scope Memo', 'scope boundaries');
+      bind('d16_scorecard', 'Evaluation Scorecard', 'capability/security/transition scores for §4');
+      bind('d19_pricing_workbook', 'Pricing Workbook', 'normalized TCO for §4');
+      bind('d22_bafo_question_pack', 'BAFO Question Pack', 'open concessions/clarifications');
+
+      lines.push('Draft the Atlas Decision Brief per the system prompt requirements.');
+      return lines.join('\n');
+    },
+  },
 };
 
 export function getPromptTemplate(
