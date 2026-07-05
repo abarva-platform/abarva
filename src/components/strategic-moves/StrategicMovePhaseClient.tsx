@@ -41,6 +41,11 @@ import type { StrategicMove } from "@/lib/programs/types.ui";
 import { deliverableBelongsToPhase } from "@/lib/programs/phase-deliverables";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import {
+  parseDiagnosisFacts,
+  serializeDiagnosisFacts,
+  type DiagnosisFact,
+} from "@/lib/programs/diagnosis-facts";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
@@ -180,6 +185,8 @@ interface CanvasSection {
   id: string;
   label: string;
   placeholder: string;
+  /** `"facts"` → render a structured metric·value·source table (see diagnosis-facts). */
+  structured?: "facts";
 }
 
 interface PhaseUploadGuidance {
@@ -385,6 +392,7 @@ function contractCanvasSections(phase: number): CanvasSection[] {
     id: section.key,
     label: section.label,
     placeholder: section.description,
+    ...(section.structured ? { structured: section.structured } : {}),
   }));
 }
 
@@ -690,6 +698,84 @@ type GenState =
       blockers?: string[];
     }
   | { status: "error"; message: string };
+
+// Structured facts editor — metric · value · source rows, serialized to JSON in
+// the section value. Local state (seeded once from the loaded value) so typing
+// never fights a trim/re-parse round-trip. The parent remounts on capture-load,
+// which re-seeds it.
+function FactsEditor({
+  initial,
+  onChange,
+  idBase,
+}: {
+  initial: string;
+  onChange: (serialized: string) => void;
+  idBase: string;
+}) {
+  const [rows, setRows] = useState<DiagnosisFact[]>(() => {
+    const parsed = parseDiagnosisFacts(initial);
+    return parsed.length ? parsed : [{ metric: "", value: "", source: "" }];
+  });
+  const commit = (next: DiagnosisFact[]) => {
+    setRows(next);
+    onChange(serializeDiagnosisFacts(next));
+  };
+  const setCell = (i: number, patch: Partial<DiagnosisFact>) =>
+    commit(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  return (
+    <div className={styles.factsEditor} id={idBase}>
+      <div className={styles.factsHeadRow}>
+        <span>Metric</span>
+        <span>Value</span>
+        <span>Source / evidence</span>
+        <span aria-hidden />
+      </div>
+      {rows.map((row, i) => (
+        <div className={styles.factsRow} key={i}>
+          <input
+            className={styles.factsInput}
+            value={row.metric}
+            placeholder="e.g. Intake cycle time"
+            onChange={(e) => setCell(i, { metric: e.target.value })}
+          />
+          <input
+            className={styles.factsInput}
+            value={row.value}
+            placeholder="e.g. 18.4 days"
+            onChange={(e) => setCell(i, { value: e.target.value })}
+          />
+          <input
+            className={styles.factsInput}
+            value={row.source}
+            placeholder="e.g. Intake work queue"
+            onChange={(e) => setCell(i, { source: e.target.value })}
+          />
+          <button
+            type="button"
+            className={styles.factsRemove}
+            aria-label="Remove fact"
+            onClick={() =>
+              commit(
+                rows.length > 1
+                  ? rows.filter((_, j) => j !== i)
+                  : [{ metric: "", value: "", source: "" }],
+              )
+            }
+          >
+            &times;
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className={styles.factsAdd}
+        onClick={() => commit([...rows, { metric: "", value: "", source: "" }])}
+      >
+        + Add fact
+      </button>
+    </div>
+  );
+}
 
 function CharterWorkflow({
   move,
@@ -1439,23 +1525,38 @@ function CharterWorkflow({
               >
                 {section.placeholder}
               </div>
-              <textarea
-                id={`ws-canvas-p${phaseNum}-${section.id}-input`}
-                className={styles.captureTextarea}
-                rows={3}
-                value={val}
-                placeholder={section.placeholder}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    [section.id]: e.target.value,
-                  }))
-                }
-                spellCheck
-              />
-              {content !== null && !val.trim() && (
-                <div className={styles.captureContent}>{content}</div>
+              {section.structured === "facts" ? (
+                <FactsEditor
+                  idBase={`ws-canvas-p${phaseNum}-${section.id}-input`}
+                  initial={val}
+                  onChange={(serialized) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      [section.id]: serialized,
+                    }))
+                  }
+                />
+              ) : (
+                <textarea
+                  id={`ws-canvas-p${phaseNum}-${section.id}-input`}
+                  className={styles.captureTextarea}
+                  rows={3}
+                  value={val}
+                  placeholder={section.placeholder}
+                  onChange={(e) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      [section.id]: e.target.value,
+                    }))
+                  }
+                  spellCheck
+                />
               )}
+              {section.structured !== "facts" &&
+                content !== null &&
+                !val.trim() && (
+                  <div className={styles.captureContent}>{content}</div>
+                )}
             </details>
           </section>
         );
