@@ -1024,7 +1024,40 @@ function CharterWorkflow({
       return;
     }
     setApproveError(null);
-    // 1. Generate (sets gen state + polls to completion). genSucceededRef is
+    // 1. Finalize the capture. Save leaves the phase modules `in_progress`, but
+    //    the generation gate (assertPhaseReadyForGeneration → captureComplete)
+    //    only counts modules that are `completed`. Without this, generation is
+    //    blocked as "capture incomplete" even at "N of N saved" — and, because a
+    //    pre-gate DRAFT is only allowed when capture is complete, the gate
+    //    blocker fires too ("no generation until the gate is approved"). This
+    //    flip is what makes the just-saved record generatable, and it mirrors the
+    //    finalize step advanceGate already runs.
+    const finalizeRes = await fetch(
+      `/api/v1/programs/${move.id}/phase-capture`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase: phaseNum, complete: true }),
+      },
+    );
+    const finalize = (await finalizeRes.json().catch(() => ({}))) as {
+      ok?: boolean;
+      missing?: string[];
+      error?: string;
+      detail?: string;
+    };
+    if (!finalizeRes.ok || !finalize.ok) {
+      setApproveError(
+        finalize.missing?.length
+          ? `Capture incomplete — still missing: ${finalize.missing.join(", ")}`
+          : finalize.detail ||
+              finalize.error ||
+              `Could not finalize capture (HTTP ${finalizeRes.status})`,
+      );
+      return;
+    }
+    // 2. Generate (sets gen state + polls to completion). genSucceededRef is
     //    true only when the run finished `succeeded` (a clean deliverable).
     await generateArtifact();
     if (!genSucceededRef.current) {
@@ -1032,10 +1065,10 @@ function CharterWorkflow({
       // sign off a deliverable that wasn't cleanly generated.
       return;
     }
-    // 2. Sign off the freshly-generated deliverable (sign-off route accepts
+    // 3. Sign off the freshly-generated deliverable (sign-off route accepts
     //    `draft`). Reuses approveRecord so the sign-off request stays in one place.
     await approveRecord();
-  }, [deliverableId, generateArtifact, approveRecord]);
+  }, [deliverableId, move.id, phaseNum, generateArtifact, approveRecord]);
 
   // Advance gate: finalize capture (mark the phase modules completed) then
   // approve the gate and advance the Move. This is the P1–P5 equivalent of the
