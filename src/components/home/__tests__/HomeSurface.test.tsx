@@ -565,8 +565,11 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(
       screen.getByText(/Readable fields: Function, Executive owner\./),
     ).toBeInTheDocument();
+    // Examples are built from the actual Data-tab row cells (Function,
+    // Executive owner), not a separate row-label heuristic that can surface a
+    // source filename or boilerplate note for dimensions with no natural name.
     expect(
-      screen.getByText(/Examples in this tenant: Finance Operations\./),
+      screen.getByText(/Examples in this tenant: Finance Operations — CFO\./),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(

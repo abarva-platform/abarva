@@ -805,9 +805,24 @@ function generatedSpecFromPreview(
   const fields = preview.columns
     .filter((column) => !isLineageColumn(column))
     .map((column) => column.label);
-  const examples = preview.sourceRows
-    .map((row) => row.label)
-    .filter((label) => label && label !== "Needs evidence")
+  // Build examples from the SAME preview columns/formatting shown in the Data
+  // tab (the first couple of non-blank cells per row), rather than a separate
+  // row-labeling heuristic. Dimensions with no natural "name" field (rate
+  // cards, registries) don't have a reliable single label, and guessing one
+  // from an arbitrary column can surface a source filename or a boilerplate
+  // caveat note instead of a real business example.
+  const examples = preview.rows
+    .map((row) =>
+      row
+        .map((cell, index) => ({ cell, column: preview.columns[index] }))
+        .filter(({ cell }) => cell && cell !== "Needs evidence")
+        .slice(0, 2)
+        .map(({ cell, column }) =>
+          column ? formatPreviewCell(cell, column) : cell,
+        )
+        .join(" — "),
+    )
+    .filter(Boolean)
     .slice(0, 3);
   const rowLabel = `${preview.rowCount.toLocaleString()} loaded record${
     preview.rowCount === 1 ? "" : "s"
