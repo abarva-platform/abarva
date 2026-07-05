@@ -162,7 +162,7 @@ function normalizeDimensionKey(value: unknown): string {
 async function readV7TowerRecords(tenantKey: string): Promise<V7TowerRecordRow[]> {
   const rows = await azureRead.query<V7TowerRecordRow>(
     `select lower(r.dimension_key) as dimension_key, r.record_key, r.record_name, r.source_file,
-       r.source_row_number, r.as_of_date, r.period_end,
+       r.source_row_number, r.source_as_of_date as as_of_date, null::date as period_end,
        r.source_artifact_name, r.source_validation_status, r.values_json
      from intelligence_v7.business_records r
      where r.tenant_key = $1 and lower(r.dimension_key) = any($2::text[])

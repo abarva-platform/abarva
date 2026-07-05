@@ -93,6 +93,10 @@ describe('V7 Tower projection', () => {
       { missingTable: 'empty' },
     );
     expect(queryMock.mock.calls[0][0]).not.toContain('latest_run');
+    expect(queryMock.mock.calls[0][0]).toContain('r.source_as_of_date as as_of_date');
+    expect(queryMock.mock.calls[0][0]).toContain('null::date as period_end');
+    expect(queryMock.mock.calls[0][0]).not.toContain('r.as_of_date');
+    expect(queryMock.mock.calls[0][0]).not.toContain('r.period_end');
     expect(projection.source).toBe('intelligence_v7');
     expect(projection.initiatives).toHaveLength(2);
     expect(projection.initiatives[0]).toMatchObject({
