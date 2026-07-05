@@ -30,6 +30,7 @@ import {
 } from "@/lib/tower/tower-budget-rollups";
 import { listMaterializedTowerReadModelForClient } from "@/lib/tower/tower-materialized-read-model";
 import { resolveTowerToday } from "@/lib/tower/today-resolution";
+import { loadV7TowerProjection } from "@/lib/tower/v7-tower-projection";
 import {
   canonicalTenantDisplayName,
   canonicalTenantKey,
@@ -330,7 +331,7 @@ export async function buildAtlasTowerCurrentState(input: {
     listInitiativesForClient(input.clientId),
     listVendorsForClient(input.clientId),
   ]);
-  const [materialized, loadedBudgetRollups] = await Promise.all([
+  const [materialized, loadedBudgetRollups, v7Projection] = await Promise.all([
     listMaterializedTowerReadModelForClient({
       clientId: input.clientId,
       tenantKey: client.tenantKey,
@@ -343,21 +344,48 @@ export async function buildAtlasTowerCurrentState(input: {
       clientId: input.clientId,
       tenantKey: client.tenantKey,
     }).catch(() => []),
+    loadV7TowerProjection({
+      tenantKeyCandidates: [
+        client.tenantKey,
+        client.clientName,
+        input.clientKey,
+        input.clientId,
+      ],
+    }).catch(() => ({
+      tenantKey: null,
+      source: "empty" as const,
+      initiatives: [],
+      vendors: [],
+      metricPackets: [],
+    })),
   ]);
-  const towerInitiatives = materialized.initiatives.length
+  const materializedHasProgramValue = materialized.initiatives.some(
+    (initiative) =>
+      (initiative.committedAnnualUsd ?? 0) > 0 ||
+      (initiative.committedTotalUsd ?? 0) > 0 ||
+      (initiative.measuredValueUsd ?? 0) > 0,
+  );
+  const materializedHasVendorValue = materialized.vendors.some(
+    (vendor) => (vendor.contractValueUsd ?? 0) > 0 || Boolean(vendor.renewalDate),
+  );
+  const towerInitiatives = materialized.initiatives.length && materializedHasProgramValue
     ? materialized.initiatives
+    : v7Projection.initiatives.length
+      ? v7Projection.initiatives
     : initiatives;
-  const towerVendors = materialized.vendors.length
+  const towerVendors = materialized.vendors.length && materializedHasVendorValue
     ? materialized.vendors
+    : v7Projection.vendors.length
+      ? v7Projection.vendors
     : vendors;
-  const budgetRollups = materialized.initiatives.length
+  const budgetRollups = towerInitiatives.length
     ? resolveTowerBudgetRollups(
         loadedBudgetRollups,
         shapeTowerBudgetRollupsFromInitiatives(towerInitiatives),
       )
     : loadedBudgetRollups;
   const [supporting, bandMetrics, pressuresView] = await Promise.all([
-    listSupportingRows(initiatives),
+    listSupportingRows(towerInitiatives),
     Promise.resolve(
       buildTowerBandMetrics(
         towerInitiatives,
