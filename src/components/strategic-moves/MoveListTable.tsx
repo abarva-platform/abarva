@@ -9,7 +9,7 @@ import {
   moveValue,
   relativeTime,
 } from "./move-list-format";
-import { sponsorDisplayName } from "./sponsor-display";
+import { conciseSponsorLabel } from "./sponsor-display";
 import { demoSafeClientText } from "@/lib/client-config";
 
 function statusDotClass(color: StrategicMove["statusColor"]): string {
@@ -109,7 +109,7 @@ export function MoveListTable({
           const moveName = demoSafeClientText(move.name);
           const moveCode = demoSafeClientText(move.displayCode);
           const statusText = demoSafeClientText(move.status.text);
-          const sponsorName = demoSafeClientText(sponsorDisplayName(move.sponsor));
+          const sponsorName = demoSafeClientText(conciseSponsorLabel(move.sponsor));
           const archiveReason = move.archiveReason
             ? demoSafeClientText(move.archiveReason)
             : "";
