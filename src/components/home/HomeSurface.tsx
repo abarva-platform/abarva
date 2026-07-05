@@ -405,7 +405,9 @@ function claimBasisLabel(basis: HomeV6ContextFinding["claimBasis"]): string {
 
 function clientFacingFileName(value: string): string {
   return value
-    .replace(/^V\d+_/i, "")
+    // Strip the version prefix AND the file ordinal (e.g. "V7_04_") so the
+    // sequence number does not read as a count (e.g. "04 workforce personas").
+    .replace(/^v\d+[_-](?:\d+[_-])?/i, "")
     .replace(/\.csv$/i, "")
     .replace(/[_-]+/g, " ");
 }
@@ -807,14 +809,16 @@ function generatedSpecFromPreview(
     .map((row) => row.label)
     .filter((label) => label && label !== "Needs evidence")
     .slice(0, 3);
-  const files = preview.fileNames.map(clientFacingFileName).join(", ");
   const rowLabel = `${preview.rowCount.toLocaleString()} loaded record${
     preview.rowCount === 1 ? "" : "s"
+  }`;
+  const sourceLabel = `${preview.sourceCount.toLocaleString()} source file${
+    preview.sourceCount === 1 ? "" : "s"
   }`;
   const gapLabels = preview.knownGaps.slice(0, 3).map((gap) => gap.label);
   return {
     loaded: [
-      files ? `${rowLabel} from ${files}.` : `${rowLabel} in this area.`,
+      `${rowLabel} across ${sourceLabel}.`,
       fields.length
         ? `Readable fields: ${fields.join(", ")}.`
         : "Source-backed facts aVa can use when answering context questions.",
@@ -1013,6 +1017,14 @@ function DimensionView({
               </span>
             </div>
           </div>
+          <p
+            style={{ color: "var(--hf)", fontSize: 12, margin: "0 2px 8px" }}
+          >
+            Showing the first {preview.rows.length.toLocaleString()} of{" "}
+            {preview.rowCount.toLocaleString()} loaded row
+            {preview.rowCount === 1 ? "" : "s"}, grouped by entity. Evidence-gap
+            counts are measured across the full dimension.
+          </p>
           <div className="hx-tablewrap">
             <table className="hx-table">
               <thead>
@@ -1045,14 +1057,6 @@ function DimensionView({
               </tbody>
             </table>
           </div>
-          <p
-            style={{ color: "var(--hf)", fontSize: 12, margin: "8px 2px 0" }}
-          >
-            Preview shows the first {preview.rows.length.toLocaleString()} of{" "}
-            {preview.rowCount.toLocaleString()} loaded row
-            {preview.rowCount === 1 ? "" : "s"}. Evidence-gap counts are measured
-            across the full dimension.
-          </p>
           <div className="hx-mini" aria-label="Source files">
             {preview.fileNames.slice(0, 2).map((fileName) => (
               <span className="hx-chip" key={fileName}>

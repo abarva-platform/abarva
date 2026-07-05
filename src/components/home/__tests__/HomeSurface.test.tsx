@@ -433,7 +433,9 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByText("Kyriba")).toBeInTheDocument();
     expect(screen.getByText("Treasury")).toBeInTheDocument();
     expect(screen.getByText("Needs evidence")).toBeInTheDocument();
-    expect(screen.getByText("07 vendors contracts")).toBeInTheDocument();
+    // Source-file ordinal ("07") is stripped so it does not read as a count.
+    expect(screen.getByText("vendors contracts")).toBeInTheDocument();
+    expect(screen.queryByText("07 vendors contracts")).not.toBeInTheDocument();
     expect(screen.queryByText("VND-001 - Kyriba")).not.toBeInTheDocument();
     expect(
       screen.queryByText("apex/vendors-contracts.csv"),
@@ -554,10 +556,12 @@ describe("HomeSurface — real React Context Explorer", () => {
       target: { value: "Business Functions" },
     });
 
-    // Data-derived, dimension-specific — NOT the generic default copy.
+    // Data-derived, dimension-specific — NOT the generic default copy, and the
+    // source file's ordinal ("02") must not leak in as a count.
     expect(
-      screen.getByText(/25 loaded records from 02 business functions\./),
+      screen.getByText(/25 loaded records across 1 source file\./),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/02 business functions/)).not.toBeInTheDocument();
     expect(
       screen.getByText(/Readable fields: Function, Executive owner\./),
     ).toBeInTheDocument();
