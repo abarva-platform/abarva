@@ -293,6 +293,47 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     });
   });
 
+  it("submits raw intake fields once so approval readback can render clean facts", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        event: { id: "event-123" },
+        eventUrl: "/source/events/event-123?stage=Strategy",
+      }),
+    });
+    global.fetch = fetchMock;
+
+    render(
+      createElement(SourceOriginatePage, {
+        clientName: "Lakeshore Holdings",
+        clientShortName: "Lakeshore",
+        clientKey: "lakeshore",
+      }),
+    );
+    fireEvent.click(screen.getByTestId("emit-source-brief-progress"));
+    fireEvent.click(screen.getByTestId("source-intake-open-event"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const request = fetchMock.mock.calls[0]?.[1] as { body?: string };
+    const payload = JSON.parse(request.body ?? "{}") as {
+      scopeDescription?: string;
+      valueTargetDescription?: string;
+      baselineOwnerDescription?: string;
+    };
+
+    expect(payload.scopeDescription).toBe(
+      "In: AMS, cloud operations, Epic integration support. Out: deskside and security operations.",
+    );
+    expect(payload.scopeDescription).not.toContain("Value target:");
+    expect(payload.scopeDescription).not.toContain("Baseline owner:");
+    expect(payload.valueTargetDescription).toBe(
+      "$8M run-rate savings and higher platform reliability.",
+    );
+    expect(payload.baselineOwnerDescription).toBe(
+      "Finance owns spend baseline; ServiceNow owner owns ticket-volume extract.",
+    );
+  });
+
   it("names integration-fabric events as a clean commercial-control event instead of echoing the scope clause", () => {
     expect(
       buildEventName("Apex Retail", {
