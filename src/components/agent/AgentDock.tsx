@@ -2,12 +2,9 @@
 
 // AgentDock · shared chat-dock foundation for every agent surface.
 //
-// Five toggleable modes per surface, persisted in localStorage:
-//   side-rail   — resizable column (default)
-//   pin-bottom  — full-width strip at viewport bottom (~120 → 480px)
-//   pin-top     — mirror of pin-bottom anchored below the AppTopBar
-//   expand      — modal overlay 80% viewport, workspace dimmed behind
-//   collapsed   — floating 56×56 chip bottom-right with agent initials
+// Five toggleable modes per surface, persisted in localStorage. The full
+// mode model stays in the component, but the visible chrome is intentionally
+// sparse: end users get expand and close, not a row of layout-debug controls.
 //
 // Composer behavior is identical across modes: auto-grow textarea up to
 // ~6 rows / 160px, Enter submits, Shift+Enter inserts newline, paperclip
@@ -43,7 +40,9 @@ import {
 import { CANVAS } from '@/components/source/canvas/canvas-tokens';
 import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
 import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
+import { AvaWordmark } from '@/components/brand/AvaWordmark';
 import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
+import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
@@ -301,6 +300,7 @@ export function AgentDock(props: AgentDockProps) {
     defaultLeftPercent = 38,
     isAgentBusy: isAgentBusyOverride,
   } = props;
+  const displayAgentName = 'aVa';
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show
@@ -539,9 +539,8 @@ export function AgentDock(props: AgentDockProps) {
         {/* Header */}
         <div style={HEADER_STYLE}>
           <div style={AGENT_ROW_STYLE}>
-            <span style={AVATAR_STYLE}>{agent.initials}</span>
+            <AvaWordmark tone="light" style={AGENT_WORDMARK_STYLE} />
             <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
-              <span style={AGENT_NAME_STYLE}>{agent.name}</span>
               <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
             </div>
           </div>
@@ -564,7 +563,7 @@ export function AgentDock(props: AgentDockProps) {
         <div style={THREAD_STYLE} data-testid="agent-dock-thread">
           {thread.length === 0 ? (
             <div style={EMPTY_STATE_STYLE}>
-              <p style={EMPTY_TITLE_STYLE}>Ask {agent.name} anything.</p>
+              <p style={EMPTY_TITLE_STYLE}>Ask {displayAgentName} anything.</p>
               <p style={EMPTY_SUBTITLE_STYLE}>
                 {agent.role}
               </p>
@@ -577,10 +576,14 @@ export function AgentDock(props: AgentDockProps) {
                 style={turn.role === 'user' ? USER_TURN_STYLE : AGENT_TURN_STYLE}
               >
                 {turn.role === 'agent' ? (
-                  <div style={AGENT_BYLINE_STYLE}>{agent.name}</div>
+                  <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
                 ) : null}
                 <div style={BUBBLE_STYLE}>
-                  {turn.role === 'agent' ? shapeAgentResponseForSurface(surface, turn.body) : turn.body}
+                  {turn.role === 'agent' ? (
+                    <AgentMarkdown text={turn.body} />
+                  ) : (
+                    turn.body
+                  )}
                 </div>
                 {turn.role === 'agent' && turn.feedbackEventId ? (
                   <div style={FEEDBACK_ROW_STYLE}>
@@ -607,7 +610,7 @@ export function AgentDock(props: AgentDockProps) {
               aria-live="polite"
               style={AGENT_TURN_STYLE}
             >
-              <div style={AGENT_BYLINE_STYLE}>{agent.name}</div>
+              <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
               <div style={{ ...BUBBLE_STYLE, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <AgentBusyThrobber />
                 <span style={{ fontStyle: 'italic', opacity: 0.75 }}>
@@ -658,7 +661,7 @@ export function AgentDock(props: AgentDockProps) {
         <form
           onSubmit={submit}
           style={INPUT_FORM_STYLE}
-          aria-label={`Ask ${agent.name}`}
+          aria-label={`Ask ${displayAgentName}`}
           data-testid="agent-dock-form"
         >
           <button
@@ -690,7 +693,7 @@ export function AgentDock(props: AgentDockProps) {
             value={draft}
             onChange={(e) => onChangeDraft(e.target.value)}
             onKeyDown={onComposerKeyDown}
-            placeholder={`Ask ${agent.name}…`}
+            placeholder={`Ask ${displayAgentName}…`}
             rows={1}
             spellCheck
             disabled={submitting}
@@ -746,13 +749,15 @@ export function AgentDock(props: AgentDockProps) {
         {workspace}
         <button
           type="button"
-          aria-label={`Restore ${agent.name} chat`}
+          aria-label={`Restore ${displayAgentName} chat`}
           data-testid="agent-dock-collapsed-chip"
           onClick={() => setMode(lastRichMode === 'collapsed' ? 'side-rail' : lastRichMode)}
           onDoubleClick={() => setMode(lastRichMode === 'collapsed' ? 'side-rail' : lastRichMode)}
           style={COLLAPSED_CHIP_STYLE}
         >
-          <span style={COLLAPSED_CHIP_INITIALS_STYLE}>{agent.initials}</span>
+          <span style={COLLAPSED_CHIP_INITIALS_STYLE}>
+            <AvaWordmark tone="light" style={{ width: 42 }} />
+          </span>
         </button>
       </>
     );
@@ -812,7 +817,7 @@ export function AgentDock(props: AgentDockProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`${agent.name} expanded chat`}
+        aria-label={`${displayAgentName} expanded chat`}
         data-testid="agent-dock-expand-overlay"
         style={EXPAND_OVERLAY_STYLE}
       >
@@ -833,57 +838,39 @@ interface ModePickerProps {
 function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
   return (
     <div
-      role="radiogroup"
-      aria-label="Dock mode"
+      aria-label="Chat window actions"
       data-testid="agent-dock-mode-picker"
       style={MODE_PICKER_STYLE}
     >
-      <ModeButton
-        mode="side-rail"
-        active={mode === 'side-rail'}
-        onClick={() => onChange('side-rail')}
-        aria-label="Dock as side rail"
-        title="Side rail"
-        dockId={dockId}
-      >
-        <SideRailIcon />
-      </ModeButton>
-      <ModeButton
-        mode="pin-bottom"
-        active={mode === 'pin-bottom'}
-        onClick={() => onChange('pin-bottom')}
-        aria-label="Pin to bottom"
-        title="Pin to bottom"
-        dockId={dockId}
-      >
-        <ArrowDownIcon />
-      </ModeButton>
-      <ModeButton
-        mode="pin-top"
-        active={mode === 'pin-top'}
-        onClick={() => onChange('pin-top')}
-        aria-label="Pin to top"
-        title="Pin to top"
-        dockId={dockId}
-      >
-        <ArrowUpIcon />
-      </ModeButton>
-      <ModeButton
-        mode="expand"
-        active={mode === 'expand'}
-        onClick={() => onChange('expand')}
-        aria-label="Expand to overlay"
-        title="Expand"
-        dockId={dockId}
-      >
-        <MaximizeIcon />
-      </ModeButton>
+      {mode === 'expand' ? (
+        <ModeButton
+          mode="side-rail"
+          active={false}
+          onClick={() => onChange('side-rail')}
+          aria-label="Return to page"
+          title="Return to page"
+          dockId={dockId}
+        >
+          <SideRailIcon />
+        </ModeButton>
+      ) : (
+        <ModeButton
+          mode="expand"
+          active={false}
+          onClick={() => onChange('expand')}
+          aria-label="Expand chat"
+          title="Expand chat"
+          dockId={dockId}
+        >
+          <MaximizeIcon />
+        </ModeButton>
+      )}
       <ModeButton
         mode="collapsed"
-        active={mode === 'collapsed'}
+        active={false}
         onClick={() => onChange('collapsed')}
-        aria-label="Collapse to chip"
-        title="Collapse"
+        aria-label="Close chat"
+        title="Close chat"
         dockId={dockId}
       >
         <CloseIcon />
@@ -914,8 +901,6 @@ function ModeButton({
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={active}
       aria-label={ariaLabel}
       title={title}
       onClick={onClick}
@@ -1010,22 +995,6 @@ function SideRailIcon() {
     </svg>
   );
 }
-function ArrowDownIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <polyline points="19 12 12 19 5 12" />
-    </svg>
-  );
-}
-function ArrowUpIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="12" y1="19" x2="12" y2="5" />
-      <polyline points="5 12 12 5 19 12" />
-    </svg>
-  );
-}
 function MaximizeIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1111,35 +1080,19 @@ const HEADER_STYLE: CSSProperties = {
 const AGENT_ROW_STYLE: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 10,
+  gap: 12,
   minWidth: 0,
 };
 
-const AVATAR_STYLE: CSSProperties = {
-  width: 28,
-  height: 28,
-  borderRadius: 999,
-  background: CANVAS.INK,
-  color: '#fff',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontFamily: CANVAS.SERIF,
-  fontSize: 14,
-  fontWeight: 500,
+const AGENT_WORDMARK_STYLE: CSSProperties = {
+  width: 62,
+  height: 'auto',
   flexShrink: 0,
-};
-
-const AGENT_NAME_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 14,
-  fontWeight: 600,
-  color: CANVAS.INK,
 };
 
 const AGENT_ROLE_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
-  fontSize: 11,
+  fontSize: 12,
   color: CANVAS.INK_SOFT,
   lineHeight: 1.3,
 };
@@ -1252,7 +1205,6 @@ const BUBBLE_STYLE: CSSProperties = {
   fontSize: 14,
   lineHeight: 1.6,
   color: CANVAS.INK,
-  whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
   maxWidth: '100%',
 };
@@ -1404,6 +1356,7 @@ const INPUT_STYLE: CSSProperties = {
   resize: 'none',
   minHeight: 40,
   maxHeight: 160,
+  overflowY: 'hidden',
   outline: 'none',
 };
 
@@ -1508,6 +1461,9 @@ const COLLAPSED_CHIP_STYLE: CSSProperties = {
 };
 
 const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   fontFamily: CANVAS.SERIF,
   fontSize: 18,
   fontWeight: 500,
