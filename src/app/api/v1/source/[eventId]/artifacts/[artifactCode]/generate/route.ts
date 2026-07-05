@@ -582,6 +582,7 @@ export async function generateSourceArtifactDraft(
   });
 
   let qualityGate: SourceArtifactQualityGateMetadata | undefined;
+  let qualityGateFailedDetail: string | null = null;
   if (requiresQualityGate) {
     const qualityResult = await runConsultingGradeQualityGate({
       artifactCode,
@@ -599,20 +600,32 @@ export async function generateSourceArtifactDraft(
       requestStartedAtMs: isWorkerCall ? Date.now() : startedAt,
     });
     if (!qualityResult.ok) {
-      return Response.json(
-        {
-          error: qualityResult.error,
-          detail: qualityResult.detail,
-          qualityGate: qualityResult.qualityGate ?? null,
-          // Include the artifact row ID so callers can enqueue an async worker
-          // retry without needing a separate lookup.
-          artifactId: artifactRow.id,
-        },
-        { status: qualityResult.status },
-      );
+      if (
+        qualityResult.error !== "quality_gate_failed" ||
+        !qualityResult.qualityGate
+      ) {
+        return Response.json(
+          {
+            error: qualityResult.error,
+            detail: qualityResult.detail,
+            qualityGate: qualityResult.qualityGate ?? null,
+            // Include the artifact row ID so callers can enqueue an async worker
+            // retry without needing a separate lookup.
+            artifactId: artifactRow.id,
+          },
+          { status: qualityResult.status },
+        );
+      }
+      // Preserve quality-failed drafts as reviewable artifacts. Clients still
+      // need a durable draft to review, edit, supersede with a client-final
+      // document, and audit later; discarding it breaks the authority chain.
+      body = qualityResult.body ?? body;
+      qualityGate = qualityResult.qualityGate;
+      qualityGateFailedDetail = qualityResult.detail;
+    } else {
+      body = qualityResult.body;
+      qualityGate = qualityResult.qualityGate;
     }
-    body = qualityResult.body;
-    qualityGate = qualityResult.qualityGate;
   }
 
   // Persist body + provenance.
@@ -667,7 +680,11 @@ export async function generateSourceArtifactDraft(
       string,
       unknown
     >,
-    status: artifactRow.status === "not_started" ? "drafting" : artifactRow.status,
+    status: qualityGateFailedDetail
+      ? "needs_review"
+      : artifactRow.status === "not_started"
+        ? "drafting"
+        : artifactRow.status,
     updated_at: nowIso,
   };
   if (artifactRow.tier === "stub") update.tier = "outline";
@@ -973,6 +990,8 @@ export async function generateSourceArtifactDraft(
 
   return Response.json({
     ok: true,
+    qualityGateFailed: Boolean(qualityGateFailedDetail),
+    detail: qualityGateFailedDetail,
     artifact: view,
     registryArtifact,
     registryArtifacts,
@@ -995,6 +1014,7 @@ type QualityGateResult =
       error: string;
       detail: string;
       status: number;
+      body?: string;
       qualityGate?: SourceArtifactQualityGateMetadata;
     };
 
@@ -1054,6 +1074,7 @@ async function runConsultingGradeQualityGate(args: {
         "Skipped automatic rewrite because the synchronous request budget was nearly exhausted; regenerate after strengthening the upstream evidence or artifact prompt.",
       ].join(" "),
       status: 422,
+      body: args.body,
       qualityGate,
     };
   }
@@ -1154,6 +1175,7 @@ async function runConsultingGradeQualityGate(args: {
       error: "quality_gate_failed",
       detail: qualityGate.finalSummary,
       status: 422,
+      body: rewrittenBody,
       qualityGate,
     };
   }
