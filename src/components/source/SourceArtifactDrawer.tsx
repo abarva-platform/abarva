@@ -244,6 +244,17 @@ function renderArtifactMarkdownBody(body: string): ReactNode[] {
       continue;
     }
 
+    if (/^[-*_]{3,}$/.test(line)) {
+      nodes.push(
+        <hr
+          key={`hr-${index}`}
+          style={{ border: "none", borderTop: "1px solid #E5E4E0", margin: "12px 0" }}
+        />,
+      );
+      index += 1;
+      continue;
+    }
+
     const heading = line.match(/^(#{1,6})\s+(.+)$/);
     if (heading) {
       const level = heading[1].length;
