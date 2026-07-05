@@ -405,7 +405,8 @@ function deriveGapLine(args: {
   if (assessment?.reason && assessment.displayState !== "pending_review") {
     return assessment.reason;
   }
-  return `Needs human review · ${humanReviewAction(def)}`;
+  // missingInputs is empty — data is present; user just needs to confirm
+  return `Data present — confirm to clear · ${humanReviewAction(def)}`;
 }
 
 function compactOwnerLabel(ownerRole: string): string {
@@ -534,7 +535,9 @@ function CriterionRow({
                 onClick={() => onOpenCriterion(state.criterionId)}
                 data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
                 style={{
-                  ...ROW_GHOST_BUTTON_STYLE,
+                  ...(view.missingInputs.length === 0
+                    ? ROW_PRIMARY_BUTTON_STYLE
+                    : ROW_GHOST_BUTTON_STYLE),
                   opacity: pending ? 0.55 : 1,
                 }}
               >

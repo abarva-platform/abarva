@@ -6,6 +6,7 @@ import {
   type SourceArtifactSpec,
 } from "@/lib/source/canonical-specs";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate";
+import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import {
   artifactDisplayName,
   artifactStatusDisplayName,
@@ -14,6 +15,7 @@ import { CANVAS } from "../canvas-tokens";
 
 interface StrategyStageViewProps {
   artifacts: SourceEventArtifactState[];
+  registryArtifacts?: SourceArtifactRegistryRecord[];
   selectedCode?: string;
   onSelectCode?: (code: string) => void;
   documentWorkspace: ReactNode;
@@ -30,13 +32,23 @@ const STRATEGY_PURPOSE_BY_CODE: Record<string, string> = {
 
 export function StrategyStageView({
   artifacts,
+  registryArtifacts = [],
   selectedCode,
   onSelectCode,
   documentWorkspace,
 }: StrategyStageViewProps) {
   const ordered = orderStrategyArtifacts(artifacts);
-  const hasAnyAuthoredBody = ordered.some((artifact) =>
-    Boolean(artifact.body?.trim()),
+  // A "draft" exists if the artifact has an authored body OR if the registry
+  // has a generated document for this code (e.g. auto-drafted strategy memo
+  // stored in source_artifacts but not yet promoted back into the state body).
+  // registry record.artifactKind == artifact_code in source_event_artifact_states
+  const registryCodeSet = new Set(
+    registryArtifacts.map((r) => r.artifactKind).filter(Boolean),
+  );
+  const hasAnyAuthoredBody = ordered.some(
+    (artifact) =>
+      Boolean(artifact.body?.trim()) ||
+      registryCodeSet.has(artifact.artifactCode),
   );
 
   return (
@@ -62,6 +74,7 @@ export function StrategyStageView({
               artifact={artifact}
               spec={specByCode(artifact.artifactCode)}
               selected={artifact.artifactCode === selectedCode}
+              hasRegistryDraft={registryCodeSet.has(artifact.artifactCode)}
               onOpen={() => onSelectCode?.(artifact.artifactCode)}
             />
           ))}
@@ -93,17 +106,22 @@ function StrategyDeliverableCard({
   artifact,
   spec,
   selected,
+  hasRegistryDraft = false,
   onOpen,
 }: {
   artifact: SourceEventArtifactState;
   spec: SourceArtifactSpec | undefined;
   selected: boolean;
+  hasRegistryDraft?: boolean;
   onOpen: () => void;
 }) {
   const hasBody = Boolean(artifact.body?.trim());
+  const hasDraft = hasBody || hasRegistryDraft;
   const requirementLabel =
     artifact.requirementLevel === "optional" ? "Optional" : "Required";
-  const statusLabel = artifactStatusDisplayName(artifact);
+  const statusLabel = hasRegistryDraft && !hasBody
+    ? "Draft exists (generated)"
+    : artifactStatusDisplayName(artifact);
   return (
     <button
       type="button"
@@ -135,9 +153,9 @@ function StrategyDeliverableCard({
         <span
           style={{
             ...STATUS_TAG_STYLE,
-            color: hasBody ? "#2E7D32" : CANVAS.INK_SOFT,
-            borderColor: hasBody ? "rgba(46,125,50,0.28)" : CANVAS.HAIRLINE,
-            background: hasBody ? "rgba(46,125,50,0.08)" : "#fff",
+            color: hasDraft ? "#2E7D32" : CANVAS.INK_SOFT,
+            borderColor: hasDraft ? "rgba(46,125,50,0.28)" : CANVAS.HAIRLINE,
+            background: hasDraft ? "rgba(46,125,50,0.08)" : "#fff",
           }}
         >
           {statusLabel}

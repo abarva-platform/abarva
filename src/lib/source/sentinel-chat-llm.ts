@@ -178,6 +178,7 @@ export function buildSourceSentinelChatSystemPrompt(args: {
     "3. Never fabricate vendor names, numbers, contract dates, owners, savings, or tool names.",
     "4. Be brief and executive-readable: answer first, then evidence, then next action.",
     "5. Keep any draft output clearly marked as a draft requiring human review before use.",
+    "6. Do NOT enumerate or repeat the open gate criteria listed above in your answers unless the user has specifically asked about gate status. Use them as background context only.",
     "",
     composeRuntimeOutputDisciplineBlock("Source"),
   ].join("\n");

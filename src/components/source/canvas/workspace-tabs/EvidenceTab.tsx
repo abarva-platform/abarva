@@ -46,7 +46,7 @@ export function EvidenceTab({
           Evidence readiness · {SOURCE_STAGE_LABELS[stage]}
         </div>
         <h2 style={TITLE_STYLE}>
-          {totals.usable} of {states.length} sources at usable evidence
+          {totals.usable} of {states.length} required evidence items at usable
         </h2>
         <p style={SUBLINE_STYLE}>
           The seven-state ramp drives gate-criterion auto-promotion. Sources
