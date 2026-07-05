@@ -89,6 +89,7 @@ import {
   composeStewardSystemPrompt,
   isStewardVoiceDoctrineEnabled,
 } from "@/lib/agent/voice-doctrine/steward";
+import { VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT } from "@/lib/agent/visible-answer-contract";
 // Wave 3 PR-3 · TrustSpine grounding for the Steward chat dock.
 // Pulls live tenant posture (substrate, connectors, isolation,
 // governance) and threads it into the system prompt so Steward can

@@ -26,6 +26,9 @@ export const VISIBLE_ANSWER_CONTRACT_PROMPT = [
   "Write like a human senior advisor: direct, concise, specific, and willing to disagree. Avoid report prose, compliance language, and product terminology.",
 ].join("\n");
 
+// Alias used by the chat agent route for system-prompt composition.
+export const VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT = VISIBLE_ANSWER_CONTRACT_PROMPT;
+
 export interface VisibleAnswerViolation {
   id: string;
   excerpt: string;
