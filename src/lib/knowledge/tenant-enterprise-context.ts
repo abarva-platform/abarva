@@ -609,14 +609,19 @@ async function readKeywordContextChunkSource(
     .map((term) => `%${term}%`);
   if (patterns.length === 0) return null;
 
-  // Pull a wide candidate pool ordered by recency (newest first) so that
-  // freshly-loaded context is guaranteed to be a candidate and is not crowded
-  // out of a small LIMIT by the large pre-existing corpus. Relevance ranking
-  // (rankChunks) then selects the best matches from this pool. NOTE: we order
-  // by updated_at only — NOT by classification_source — because the legacy
-  // corpus defaults classification_source to 'OPERATOR_CONFIRMED' while fresh
-  // Admin uploads are 'NEEDS_CLASSIFICATION' until triaged; ordering confirmed
-  // rows first would therefore bury exactly the newly-loaded rows we need.
+  // Pull a wide candidate pool so that freshly-loaded context is guaranteed to
+  // be a candidate and is not crowded out by the large pre-existing corpus.
+  // Relevance ranking (rankChunks) then selects the best matches from this pool.
+  // The LIMIT must cover a whole tenant's chunk set — a broad keyword like
+  // "status" matches nearly every chunk, so a small LIMIT ordered by recency
+  // fills entirely with older corpus rows before reaching newly-loaded uploads.
+  // 1500 aligns with the tenant-wide bound used by retrieveEnterpriseContextChunks
+  // (enterprise-context/retrieval.ts, LIMIT 1200) and covers typical tenants in
+  // full so ranking — not the fetch cap — decides what surfaces. NOTE: we order
+  // by updated_at only — NOT by classification_source — because the legacy corpus
+  // defaults classification_source to 'OPERATOR_CONFIRMED' while fresh Admin
+  // uploads are 'NEEDS_CLASSIFICATION' until triaged; ordering confirmed rows
+  // first would bury exactly the newly-loaded rows we need.
   const rows = await run<EnterpriseContextChunkRow>(
     `SELECT chunk_id, chunk_text, source_segment_id, source_doc
        FROM enterprise_context_chunks
@@ -628,7 +633,7 @@ async function readKeywordContextChunkSource(
       ORDER BY
         updated_at DESC NULLS LAST,
         chunk_id ASC
-      LIMIT 240`,
+      LIMIT 1500`,
     [clientId, patterns],
   );
   const chunks: ContextChunk[] = rows.map((row) => ({
