@@ -40,6 +40,18 @@ export function moveValue(move: StrategicMove): number {
 }
 
 /**
+ * Lifecycle % complete for a Move — how far it has advanced through the five
+ * delivery phases (P1…P5). `currentPhase` is the phase the Move is IN, so the
+ * count of passed gates equals it: P0 = 0%, P1 = 20%, … P5 (→ Tower) = 100%.
+ * A single truthful portfolio-level signal; per-phase gate detail lives in the
+ * phase workbench.
+ */
+export function moveLifecyclePct(move: StrategicMove): number {
+  const phase = Math.max(0, Math.min(5, move.currentPhase));
+  return Math.round((phase / 5) * 100);
+}
+
+/**
  * Human "last activity" label from an ISO timestamp, relative to `now`
  * (injected so this stays pure/testable). Returns "—" for missing/invalid.
  */

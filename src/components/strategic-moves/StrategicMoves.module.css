@@ -3053,3 +3053,33 @@
   font-size: 13px;
   color: var(--canon-gray-600);
 }
+
+/* Moves-list lifecycle % meter (phase column) */
+.phaseLabelText {
+  display: block;
+}
+.lifecycleMeter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.lifecycleTrack {
+  flex: 0 1 88px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--canon-gray-300, #d8d6cf);
+  overflow: hidden;
+}
+.lifecycleFill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--abarva-ink-black);
+}
+.lifecyclePct {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--canon-gray-600, #6e6a62);
+  font-variant-numeric: tabular-nums;
+  min-width: 26px;
+}
