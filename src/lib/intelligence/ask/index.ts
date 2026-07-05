@@ -57,6 +57,8 @@ import {
   type IntelligenceLatencyTiming,
 } from "@/lib/intelligence/latency-trace";
 import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
+import { buildCompanionCanvasPayload } from "./companion-canvas-engine";
+import type { CompanionCanvasPayload } from "./companion-canvas";
 
 export type {
   AskIntent,
@@ -74,7 +76,8 @@ export interface AskEvent {
     | "done"
     | "error"
     | "intelligence-dossier"
-    | "advisory-packet";
+    | "advisory-packet"
+    | "canvas";
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
@@ -84,6 +87,8 @@ export interface AskEvent {
   /** Question-specific advisory packet passed into the Intelligence synthesizer. */
   intelligenceDossier?: IntelligenceDossier;
   advisoryPacket?: AdvisoryPacket;
+  /** Structured companion canvas payload (flag-gated). Emitted after the answer stream. */
+  canvas?: CompanionCanvasPayload;
 }
 
 export interface AskOptions {
@@ -118,6 +123,15 @@ export interface AskOptions {
   onTiming?: (timing: IntelligenceLatencyTiming) => void;
   latencyTraceId?: string | null;
   latencyStartedAt?: number;
+  /**
+   * Companion-canvas feature. The ROUTE computes
+   * `isFeatureEnabled({ clientKey, clientId }, 'intelligence_companion_canvas')`
+   * and passes the result here — do NOT compute Clerk/tenant flags in this
+   * generator. When true, the answer streams answer-only (true streaming) and
+   * a structured `canvas` event is emitted after the answer completes. When
+   * falsy, the path is unchanged.
+   */
+  companionCanvasEnabled?: boolean;
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
@@ -518,9 +532,14 @@ export async function* askIntelligence(
     // sanitize is also redundant — hollow openers, markdown, and the word
     // cap are already applied at the synthesizer entry. Pass chunks
     // through unchanged.
+    const companionCanvasEnabled = opts.companionCanvasEnabled === true;
+    const coverageReportBlock = formatCoverageReportForPrompt(coverageReport);
     let answer = "";
     for await (const delta of synthesizeStream({
       richText: opts.richText,
+      // Companion-canvas turns stream answer-only (true streaming); the
+      // structured canvas is authored separately below. Flag off → unchanged.
+      answerOnlyStreaming: companionCanvasEnabled,
       query: trimmed,
       sources,
       intent: classification.intent,
@@ -537,7 +556,7 @@ export async function* askIntelligence(
           .filter(Boolean)
           .join("\n\n") || undefined,
       factAvailabilityBlock: groundedFactBlock,
-      coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
+      coverageReportBlock,
       intelligenceDossier,
       averageConfidence,
       onModelInput: opts.onModelInput,
@@ -548,6 +567,41 @@ export async function* askIntelligence(
     })) {
       answer += delta;
       yield { type: "delta", text: delta };
+    }
+
+    // Companion canvas (flag-gated). Author the structured five-lens payload
+    // AFTER the answer stream so it is adjacent to the delivered answer. Never
+    // fatal: a failure leaves the answer already streamed, no canvas emitted.
+    if (companionCanvasEnabled) {
+      const canvasStartedAt = Date.now();
+      try {
+        const canvas = await buildCompanionCanvasPayload({
+          query: trimmed,
+          intent: classification.intent,
+          answer,
+          sources,
+          tenantClientKey: opts.tenantClientKey ?? null,
+          tenantId: opts.tenantId ?? null,
+          userId: opts.userId,
+          factAvailabilityBlock: groundedFactBlock,
+          coverageReportBlock,
+        });
+        emitTiming(
+          trace.finish("companion_canvas.built", canvasStartedAt, {
+            tenantThin: canvas.meta.tenantThin,
+            unverified: canvas.meta.unverified,
+            canvasType: canvas.meta.canvasType ?? "none",
+            evidenceTileCount: canvas.tabs.evidence.length,
+          }),
+        );
+        yield { type: "canvas", canvas };
+      } catch (err) {
+        emitTiming(
+          trace.mark("companion_canvas.failed", {
+            message: err instanceof Error ? err.message : "unknown",
+          }),
+        );
+      }
     }
 
     const followups = await generateFollowups({

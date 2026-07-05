@@ -19,6 +19,10 @@ import {
   detectOffTenantMention,
 } from "./tenant-identity-pin";
 import {
+  createRollingLeakDetector,
+  prescreenSourcesForLeak,
+} from "./tenant-stream-guard";
+import {
   buildIntelligenceAdvisorComposerBlock,
   chooseAdvisorTokenBudget,
   chooseAdvisorWordCap,
@@ -409,6 +413,23 @@ export async function* synthesizeStream(args: {
    */
   richText?: boolean;
   /**
+   * ANSWER-ONLY TRUE STREAMING (companion canvas feature · flag-gated upstream).
+   *
+   * When TRUE the synthesizer:
+   *   - builds the SAME system prompt EXCEPT it omits the mandatory
+   *     five-tab / decision-canvas contract (answer-only, crisp executive
+   *     prose), while keeping the tenant identity pin and every safety frame;
+   *   - allows light Markdown (rich-text behavior);
+   *   - yields `event.delta.text` LIVE inside the model stream loop — this is
+   *     real streaming, not the accumulate-then-spray path;
+   *   - skips the blocking repair passes and the final `chunkAskText` spray;
+   *   - runs a rolling leak detector on each delta and aborts with a refusal
+   *     if a cross-tenant leak trips.
+   *
+   * When FALSY the path is 100% unchanged — byte-identical to today.
+   */
+  answerOnlyStreaming?: boolean;
+  /**
    * Observability hook · invoked with the EXACT system + user content sent to
    * the model, right before the model call. The agent-trace spine hashes this
    * to prove Claude is downstream of retrieval. Must not mutate the args.
@@ -473,15 +494,22 @@ export async function* synthesizeStream(args: {
   const rolePrompt = isExplicitConciseAsk(args.query)
     ? CONCISE_SYSTEM_PROMPT
     : SYSTEM_PROMPT;
+  // Answer-only true-streaming (companion canvas). Light markdown, crisp
+  // executive prose, NO five-tab / decision-canvas contract, NO advisor
+  // artifact obligations — those move to the parallel companion-canvas engine.
+  const answerOnly = args.answerOnlyStreaming === true;
+  // Light-markdown behavior is enabled for rich-text callers AND for the
+  // answer-only stream (which always renders Markdown on the client).
+  const lightMarkdown = args.richText === true || answerOnly;
   // Rich-text surfaces (e.g. the v2 Lens, which renders Markdown) opt in to
   // light formatting. Placed AFTER the role prompt so it overrides the earlier
   // "plain text only" convention. Empty for every plain-text caller.
-  const richTextAddendum = args.richText
+  const richTextAddendum = lightMarkdown
     ? `\n\nRICH-TEXT SURFACE OVERRIDE: This answer is rendered as Markdown — this overrides the "plain text only" convention above. You MAY use: a blank line between paragraphs; **bold** on the single most decision-relevant figure or verb in a paragraph (sparingly — not every line); a compact GitHub-flavored Markdown table when the user asks for a table, chart, visual, comparison, ranked list, spend/cost/budget breakdown, owner/risk/next-move matrix, or three or more comparable rows; and short "- " bullet lists where they genuinely aid scanning. Do NOT use Markdown headings (#). If you emit a table, it MUST be a valid GitHub-flavored Markdown table with the header row, separator row, and every data row on separate lines. Never emit inline pipe-table fragments inside a paragraph. Keep the table to roughly 3-5 columns and 2-6 rows, and include only cited tenant/corpus values or clearly labeled planning ranges.
 
 VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually, plot, trend, dependency map, relationship map, upstream/downstream map, or network, emit a compact GitHub-flavored Markdown data table when the retrieved evidence supports at least two comparable rows or two connected nodes. For charts, include one text label column and one exact numeric value column (for example "Initiative | Value"). For relationship graphs, include explicit edge rows with "From | Relationship | To | Evidence" or "Source | Relationship | Target | Evidence". Do not describe a visual only in prose when the data exists. If the data is not connected enough for a real chart or graph, say the specific missing evidence in one short caveat and do not fabricate a visual. Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
     : "";
-  const decisionCanvasAddendum = args.richText
+  const decisionCanvasAddendum = args.richText && !answerOnly
     ? `\n\n${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}
 
 ACTIVE INTELLIGENCE CANVAS RULES
@@ -502,14 +530,19 @@ ACTIVE INTELLIGENCE CANVAS RULES
     sources: args.sources,
     richText: args.richText,
   });
-  const advisorComposerAddendum = advisorComposer
+  const advisorComposerAddendum = advisorComposer && !answerOnly
     ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
+    : "";
+  const answerOnlyDirective = answerOnly
+    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a single, crisp executive answer in light Markdown prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — a separate decision companion handles the structured signals, decision frame, exhibit, industry context, and next moves. Keep to the length discipline above (single-issue ~100-120 words, multi-item up to ~180). Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.`
     : "";
   const rawSystem =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`
-      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`;
-  const rawPrompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
+      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
+  const rawPrompt = answerOnly
+    ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with a single crisp executive answer in light Markdown. Do not emit right-canvas tab markers or a canvas payload.`
+    : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
     : "";
@@ -538,6 +571,25 @@ ACTIVE INTELLIGENCE CANVAS RULES
 
   try {
     const model = chooseModel(args.intent, args.query);
+    // Pre-generation source pre-screen (defense-in-depth) — answer-only path
+    // ONLY, so the flag-off path stays byte-identical. If retrieval is
+    // contaminated with another tenant's identity, refuse BEFORE any tokens
+    // reach the client (the answer-only path yields deltas live, so the
+    // once-at-the-end post-response guard cannot un-send them).
+    if (answerOnly) {
+      const sourcePrescreen = prescreenSourcesForLeak(
+        args.sources,
+        args.tenantClientKey ?? args.tenantId ?? null,
+      );
+      if (sourcePrescreen.contaminated) {
+        yield [
+          "I stopped before answering. The retrieved context mixed another organization's data with your session, and I will not surface mixed-tenant content.",
+          "",
+          "Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory and retrieval state for this client.",
+        ].join("\n");
+        return;
+      }
+    }
     args.onModelInput?.({
       system: systemWithContinuity,
       user: prompt,
@@ -575,6 +627,76 @@ ACTIVE INTELLIGENCE CANVAS RULES
       messages: [{ role: "user", content: prompt }],
       stream: true,
     });
+
+    // ANSWER-ONLY TRUE STREAMING PATH.
+    //
+    // Yield each model delta LIVE as it arrives — real time-to-first-token —
+    // then return. No blocking repair passes, no final chunkAskText spray. A
+    // rolling leak detector runs on every delta; if it trips, we yield a
+    // refusal and stop. onModelOutput is fired with the accumulated text for
+    // the trace spine (best-effort — never blocks the stream).
+    if (answerOnly) {
+      const rollingGuard = createRollingLeakDetector(
+        args.tenantClientKey ?? args.tenantId ?? null,
+      );
+      let streamedText = "";
+      let sawAnswerOnlyFirstToken = false;
+      for await (const event of stream) {
+        if (
+          event.type === "content_block_delta" &&
+          event.delta.type === "text_delta"
+        ) {
+          const chunk = event.delta.text;
+          if (!chunk) continue;
+          if (!sawAnswerOnlyFirstToken) {
+            sawAnswerOnlyFirstToken = true;
+            emitTiming(
+              latencyTrace.finish(
+                "claude.primary.first_token",
+                primaryStartedAt,
+                { model, answerOnlyStreaming: true },
+              ),
+            );
+          }
+          const verdict = rollingGuard.push(chunk);
+          if (verdict.abort) {
+            emitTiming(
+              latencyTrace.mark("answer_only.rolling_leak.aborted", { model }),
+            );
+            if (verdict.refusalText) {
+              yield verdict.refusalText;
+            }
+            args.onModelOutput?.({
+              rawText: streamedText,
+              text: streamedText,
+              model,
+              auditId,
+              route: "intelligence-ask-synthesis-answer-only",
+            });
+            return;
+          }
+          streamedText += chunk;
+          yield chunk;
+        }
+      }
+      emitTiming(
+        latencyTrace.finish("claude.primary.stream.done", primaryStartedAt, {
+          model,
+          sawFirstToken: sawAnswerOnlyFirstToken,
+          answerOnlyStreaming: true,
+          outputChars: streamedText.length,
+          outputApproxTokens: summarizeTextPayload(streamedText).approxTokens,
+        }),
+      );
+      args.onModelOutput?.({
+        rawText: streamedText,
+        text: streamedText,
+        model,
+        auditId,
+        route: "intelligence-ask-synthesis-answer-only",
+      });
+      return;
+    }
 
     let text = "";
     let sawFirstToken = false;

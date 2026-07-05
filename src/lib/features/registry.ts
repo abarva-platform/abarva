@@ -84,9 +84,17 @@ export type FeatureFlagKey =
   | "home_know_llm_synthesis"
   | "home_know_claude_synthesis"
   | "deliverable_structured_exhibits"
-  | "deliverable_quality_contract";
+  | "deliverable_quality_contract"
+  | "intelligence_companion_canvas";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "intelligence_companion_canvas",
+    summary:
+      "Live per-question companion canvas on Intelligence: streams the executive answer on the left (true token streaming, no companion contract on that call), and emits a structured five-lens canvas (Signals/Decision/Picture/Industry/Next Moves) as a `canvas` event that the SentinelChat right rail renders. Default OFF — legacy inline-prose behavior stays until set. Env: ABARVA_FEATURE_INTELLIGENCE_COMPANION_CANVAS_ENABLED_TENANTS.",
+    policy: "tenant",
+    includeTenants: ["lakeshore"],
+  },
   {
     key: "home_know_claude_synthesis",
     summary:
