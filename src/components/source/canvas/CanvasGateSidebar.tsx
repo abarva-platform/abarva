@@ -6,13 +6,16 @@ import type {
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
 } from '@/lib/source/canvas-substrate';
-import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
+import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
 import { CANVAS } from './canvas-tokens';
 
 interface CanvasGateSidebarProps {
   fromStage: SourceStageKey;
+  /** Gate criteria for the currently viewed stage. */
   states: SourceEventGateCriterion[];
+  /** All gate criteria across every stage — used for the phase progress strip. */
+  allCriteria: SourceEventGateCriterion[];
   onChangeCriterionState?: (
     criterionId: string,
     next: SourceEventGateCriterionState,
@@ -22,48 +25,18 @@ interface CanvasGateSidebarProps {
   promotePending?: boolean;
 }
 
-type OwnerRole =
-  | 'sourcing-lead'
-  | 'sponsor'
-  | 'ea-council'
-  | 'steward'
-  | 'sentinel'
-  | 'atlas'
-  | 'finance'
-  | 'legal';
-
-const ROLE_LABELS: Record<OwnerRole, string> = {
-  'sourcing-lead': 'Sourcing Lead',
-  sponsor: 'Sponsor',
-  'ea-council': 'EA Council',
-  steward: 'Steward',
-  sentinel: 'Sentinel',
-  atlas: 'Atlas',
-  finance: 'Finance',
-  legal: 'Legal',
-};
-
-// Stable display order for owner groups.
-const ROLE_ORDER: OwnerRole[] = [
-  'sourcing-lead',
-  'sponsor',
-  'steward',
-  'ea-council',
-  'legal',
-  'finance',
-  'atlas',
-  'sentinel',
-];
-
 /**
- * Always-visible left sidebar for the canvas. Shows gate criteria grouped by
- * owner role (category) — each group has a live "X/N" tally and a compact
- * checklist below it. Gate tab in EventWorkspace is removed when this sidebar
- * is present.
+ * Always-visible left sidebar for the canvas.
+ *
+ * Top: compact per-stage progress strip (Strategy 3/5, Scope 0/4…) — always
+ * updated as criteria are marked met.
+ *
+ * Bottom: gate checklist for the current stage with Mark met / Reopen / Advance.
  */
 export function CanvasGateSidebar({
   fromStage,
   states,
+  allCriteria,
   onChangeCriterionState,
   pendingByCriterionId,
   onPromoteStage,
@@ -79,24 +52,15 @@ export function CanvasGateSidebar({
       ? SOURCE_STAGE_LABELS[targetStage as SourceStageKey]
       : 'Closed';
 
-  // Group by ownerRole from the canonical spec, preserving ROLE_ORDER.
-  const grouped = ROLE_ORDER.reduce<
-    { role: OwnerRole; label: string; items: SourceEventGateCriterion[] }[]
-  >((acc, role) => {
-    const items = ordered.filter((s) => {
-      const def = criterionById(s.criterionId);
-      return def?.ownerRole === role;
-    });
-    if (items.length > 0) acc.push({ role, label: ROLE_LABELS[role], items });
-    return acc;
-  }, []);
-
-  // Anything with an unrecognised / missing ownerRole falls into an Other bucket.
-  const assignedIds = new Set(grouped.flatMap((g) => g.items.map((s) => s.criterionId)));
-  const unassigned = ordered.filter((s) => !assignedIds.has(s.criterionId));
-  if (unassigned.length > 0) {
-    grouped.push({ role: 'steward', label: 'Other', items: unassigned });
-  }
+  // Build per-stage totals for the progress strip.
+  const phaseRows = SOURCE_STAGE_ORDER.map((stage) => {
+    const stageCriteria = allCriteria.filter((c) => c.fromStage === stage);
+    if (stageCriteria.length === 0) return null;
+    const stageMet = stageCriteria.filter(
+      (c) => c.state === 'met' || c.state === 'waived',
+    ).length;
+    return { stage, label: SOURCE_STAGE_LABELS[stage], total: stageCriteria.length, met: stageMet };
+  }).filter(Boolean) as { stage: SourceStageKey; label: string; total: number; met: number }[];
 
   return (
     <aside
@@ -104,63 +68,126 @@ export function CanvasGateSidebar({
       aria-label={`Gate checklist: advance from ${SOURCE_STAGE_LABELS[fromStage]} to ${targetLabel}`}
       style={SIDEBAR_STYLE}
     >
-      {/* ── Overall progress header ── */}
+      {/* ── Phase progress strip ── */}
+      {phaseRows.length > 0 ? (
+        <div style={PHASE_STRIP_STYLE}>
+          {phaseRows.map(({ stage, label, total: t, met: m }) => {
+            const isCurrent = stage === fromStage;
+            const isDone = m === t;
+            return (
+              <div
+                key={stage}
+                style={{
+                  ...PHASE_ROW_STYLE,
+                  background: isCurrent ? 'rgba(12,26,58,0.04)' : 'transparent',
+                }}
+              >
+                <span
+                  style={{
+                    ...PHASE_LABEL_STYLE,
+                    color: isCurrent ? CANVAS.INK : CANVAS.INK_MUTED,
+                    fontWeight: isCurrent ? 600 : 400,
+                  }}
+                >
+                  {label}
+                </span>
+                <span
+                  style={{
+                    ...PHASE_TALLY_STYLE,
+                    color: isDone ? CANVAS.ACTIVE : isCurrent ? CANVAS.INK : CANVAS.INK_MUTED,
+                  }}
+                >
+                  {m}/{t}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {/* ── Current gate header ── */}
       <div style={HEAD_STYLE}>
         <div style={HEAD_EYEBROW_STYLE}>To advance to {targetLabel}</div>
         <div style={HEAD_PROGRESS_STYLE}>
           <span style={HEAD_COUNT_STYLE}>{met} of {total}</span>
           <span style={HEAD_UNIT_STYLE}> complete</span>
         </div>
-        {/* Thin overall progress bar */}
-        {total > 0 ? (
-          <div style={PROGRESS_TRACK_STYLE} aria-hidden>
-            <div
-              style={{
-                ...PROGRESS_FILL_STYLE,
-                width: `${Math.round((met / total) * 100)}%`,
-                background: allMet ? CANVAS.ACTIVE : CANVAS.INK,
-              }}
-            />
-          </div>
-        ) : null}
       </div>
 
-      {/* ── Grouped criteria ── */}
-      {total === 0 ? (
-        <p style={EMPTY_STYLE}>No gate criteria for this stage.</p>
-      ) : (
-        grouped.map(({ role, label, items }) => {
-          const groupMet = items.filter(
-            (s) => s.state === 'met' || s.state === 'waived',
-          ).length;
-          const groupAllMet = groupMet === items.length;
-          return (
-            <div key={role}>
-              <div style={GROUP_HEAD_STYLE} aria-label={`${label}: ${groupMet} of ${items.length}`}>
-                <span style={GROUP_LABEL_STYLE}>{label}</span>
+      {/* ── Criterion checklist ── */}
+      <ul style={LIST_STYLE} role="list">
+        {total === 0 ? (
+          <li style={EMPTY_STYLE}>No gate criteria for this stage.</li>
+        ) : (
+          ordered.map((s) => {
+            const def = criterionById(s.criterionId);
+            const isMet = s.state === 'met' || s.state === 'waived';
+            const pending = pendingByCriterionId?.[s.criterionId] ?? false;
+            const dotColor = isMet
+              ? CANVAS.ACTIVE
+              : s.state === 'not_met'
+                ? CANVAS.BLOCKED
+                : CANVAS.GRAY;
+
+            return (
+              <li
+                key={s.criterionId}
+                style={ROW_STYLE}
+                data-testid={`source-canvas-gate-sidebar-${s.criterionId}`}
+              >
                 <span
+                  aria-hidden
                   style={{
-                    ...GROUP_TALLY_STYLE,
-                    color: groupAllMet ? CANVAS.ACTIVE : CANVAS.INK_MUTED,
+                    ...DOT_STYLE,
+                    background: isMet ? dotColor : 'transparent',
+                    border: isMet ? 'none' : `1.5px solid ${dotColor}`,
                   }}
-                >
-                  {groupMet}/{items.length}
-                </span>
-              </div>
-              <ul style={LIST_STYLE} role="list">
-                {items.map((s) => (
-                  <CriterionRow
-                    key={s.criterionId}
-                    state={s}
-                    pending={pendingByCriterionId?.[s.criterionId] ?? false}
-                    onChangeCriterionState={onChangeCriterionState}
-                  />
-                ))}
-              </ul>
-            </div>
-          );
-        })
-      )}
+                />
+                <div style={ROW_BODY_STYLE}>
+                  <div
+                    style={{
+                      ...ROW_TITLE_STYLE,
+                      color: isMet ? CANVAS.INK_MUTED : CANVAS.INK,
+                    }}
+                  >
+                    {def?.title ?? s.criterionId}
+                    {def?.severity === 'hard' ? (
+                      <span style={HARD_TAG_STYLE}> hard</span>
+                    ) : null}
+                  </div>
+                  {onChangeCriterionState && s.state !== 'waived' ? (
+                    isMet ? (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => void onChangeCriterionState(s.criterionId, 'pending')}
+                        style={{ ...BTN_GHOST_STYLE, opacity: pending ? 0.55 : 1 }}
+                        data-testid={`source-canvas-gate-sidebar-reopen-${s.criterionId}`}
+                      >
+                        {pending ? 'Reopening…' : 'Reopen'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => void onChangeCriterionState(s.criterionId, 'met')}
+                        style={{ ...BTN_PRIMARY_STYLE, opacity: pending ? 0.55 : 1 }}
+                        data-testid={`source-canvas-gate-sidebar-mark-met-${s.criterionId}`}
+                      >
+                        {pending ? 'Saving…' : 'Mark met →'}
+                      </button>
+                    )
+                  ) : (
+                    s.state === 'waived' ? (
+                      <span style={WAIVED_LABEL_STYLE}>Waived</span>
+                    ) : null
+                  )}
+                </div>
+              </li>
+            );
+          })
+        )}
+      </ul>
 
       {/* ── Advance footer ── */}
       <div style={FOOT_STYLE}>
@@ -188,83 +215,6 @@ export function CanvasGateSidebar({
   );
 }
 
-// ── CriterionRow ─────────────────────────────────────────────────────────────
-
-interface CriterionRowProps {
-  state: SourceEventGateCriterion;
-  pending: boolean;
-  onChangeCriterionState?: (
-    criterionId: string,
-    next: SourceEventGateCriterionState,
-  ) => Promise<void>;
-}
-
-function CriterionRow({ state: s, pending, onChangeCriterionState }: CriterionRowProps) {
-  const def = criterionById(s.criterionId);
-  const isMet = s.state === 'met' || s.state === 'waived';
-  const dotColor = isMet
-    ? CANVAS.ACTIVE
-    : s.state === 'not_met'
-      ? CANVAS.BLOCKED
-      : CANVAS.GRAY;
-
-  return (
-    <li
-      style={ROW_STYLE}
-      data-testid={`source-canvas-gate-sidebar-${s.criterionId}`}
-    >
-      <span
-        aria-hidden
-        style={{
-          ...DOT_STYLE,
-          background: isMet ? dotColor : 'transparent',
-          border: isMet ? 'none' : `1.5px solid ${dotColor}`,
-        }}
-      />
-      <div style={ROW_BODY_STYLE}>
-        <div
-          style={{
-            ...ROW_TITLE_STYLE,
-            color: isMet ? CANVAS.INK_MUTED : CANVAS.INK,
-          }}
-        >
-          {def?.title ?? s.criterionId}
-          {def?.severity === 'hard' ? (
-            <span style={HARD_TAG_STYLE}> hard</span>
-          ) : null}
-        </div>
-        {onChangeCriterionState && s.state !== 'waived' ? (
-          isMet ? (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => void onChangeCriterionState(s.criterionId, 'pending')}
-              style={{ ...BTN_GHOST_STYLE, opacity: pending ? 0.55 : 1 }}
-              data-testid={`source-canvas-gate-sidebar-reopen-${s.criterionId}`}
-            >
-              {pending ? 'Reopening…' : 'Reopen'}
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => void onChangeCriterionState(s.criterionId, 'met')}
-              style={{ ...BTN_PRIMARY_STYLE, opacity: pending ? 0.55 : 1 }}
-              data-testid={`source-canvas-gate-sidebar-mark-met-${s.criterionId}`}
-            >
-              {pending ? 'Saving…' : 'Mark met →'}
-            </button>
-          )
-        ) : (
-          s.state === 'waived' ? (
-            <span style={WAIVED_LABEL_STYLE}>Waived</span>
-          ) : null
-        )}
-      </div>
-    </li>
-  );
-}
-
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const SIDEBAR_STYLE: CSSProperties = {
@@ -278,8 +228,37 @@ const SIDEBAR_STYLE: CSSProperties = {
   overflowY: 'auto',
 };
 
+const PHASE_STRIP_STYLE: CSSProperties = {
+  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  flexShrink: 0,
+  paddingTop: 4,
+  paddingBottom: 4,
+};
+
+const PHASE_ROW_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '5px 16px',
+};
+
+const PHASE_LABEL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
+  transition: 'color 150ms',
+};
+
+const PHASE_TALLY_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 600,
+  letterSpacing: '0.04em',
+  transition: 'color 200ms',
+};
+
 const HEAD_STYLE: CSSProperties = {
-  padding: '14px 16px 12px',
+  padding: '12px 16px 10px',
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
   flexShrink: 0,
 };
@@ -313,50 +292,11 @@ const HEAD_UNIT_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
 };
 
-const PROGRESS_TRACK_STYLE: CSSProperties = {
-  marginTop: 8,
-  height: 2,
-  background: 'rgba(12,26,58,0.08)',
-  borderRadius: 1,
-  overflow: 'hidden',
-};
-
-const PROGRESS_FILL_STYLE: CSSProperties = {
-  height: '100%',
-  borderRadius: 1,
-  transition: 'width 250ms ease',
-};
-
-const GROUP_HEAD_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '8px 16px 5px',
-  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
-  background: 'rgba(12,26,58,0.02)',
-};
-
-const GROUP_LABEL_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  letterSpacing: '0.11em',
-  textTransform: 'uppercase',
-  fontWeight: 700,
-  color: CANVAS.INK_SOFT,
-};
-
-const GROUP_TALLY_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: '0.04em',
-  transition: 'color 200ms',
-};
-
 const LIST_STYLE: CSSProperties = {
   listStyle: 'none',
   padding: 0,
   margin: 0,
+  flex: 1,
 };
 
 const EMPTY_STYLE: CSSProperties = {
@@ -371,7 +311,7 @@ const ROW_STYLE: CSSProperties = {
   gridTemplateColumns: 'auto 1fr',
   gap: 10,
   alignItems: 'start',
-  padding: '10px 16px',
+  padding: '11px 16px',
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
 };
 

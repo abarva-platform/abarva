@@ -630,6 +630,7 @@ export function UniversalCanvasShell({
           <CanvasGateSidebar
             fromStage={viewStage}
             states={stageCriteria}
+            allCriteria={liveGateCriterionStates}
             onChangeCriterionState={handleCriterionStateChange}
             pendingByCriterionId={pendingCriterionByCriterionId}
             onPromoteStage={handlePromoteStage}
