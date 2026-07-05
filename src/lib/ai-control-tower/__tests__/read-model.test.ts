@@ -2,6 +2,7 @@ import {
   emptyAiControlTowerReadModel,
   getAiControlTowerReadModel,
 } from '../read-model';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { getControlTowerLensProjection } from '@/lib/tower/control-tower-lens-projection';
 import type { ControlTowerLensProjection } from '@/lib/tower/control-tower-lens-projection';
 import type {
@@ -13,6 +14,7 @@ jest.mock('@/lib/data-plane/azureRead', () => ({
   azureRead: {
     maybeSingle: jest.fn(async () => null),
     select: jest.fn(async () => []),
+    query: jest.fn(async () => []),
   },
 }));
 
@@ -23,6 +25,7 @@ jest.mock('@/lib/tower/control-tower-lens-projection', () => ({
 const mockGetProjection = getControlTowerLensProjection as jest.MockedFunction<
   typeof getControlTowerLensProjection
 >;
+const mockedAzureRead = azureRead as jest.Mocked<typeof azureRead>;
 
 function projectionInitiative(
   overrides: Partial<AiControlTowerInitiativeRead> = {},
@@ -98,6 +101,10 @@ function buildProjection(
 }
 
 beforeEach(() => {
+  jest.clearAllMocks();
+  mockedAzureRead.maybeSingle.mockResolvedValue(null);
+  mockedAzureRead.select.mockResolvedValue([]);
+  mockedAzureRead.query.mockResolvedValue([]);
   mockGetProjection.mockReset();
   mockGetProjection.mockResolvedValue(null);
 });
@@ -136,6 +143,91 @@ describe('ai-control-tower read model', () => {
     // Derived lenses (functions/kpis) are computed from the projected rows.
     expect(model.functions.some((row) => row.name === 'Technology')).toBe(true);
     expect(model.kpis.find((kpi) => kpi.key === 'spend')?.value).not.toBe('$0');
+  });
+
+  it('maps validated V7 Lakeshore records into Tower ahead of context projection gaps', async () => {
+    mockGetProjection.mockResolvedValue(buildProjection({ initiatives: [], spend: [] }));
+    mockedAzureRead.query.mockResolvedValue([
+      {
+        dimension_key: 'v7_09_programs_initiatives_business_priorities',
+        record_key: 'LAK-INIT-001',
+        record_name: 'Kyriba global cash and payments rollout',
+        source_file: 'V7_09_programs_initiatives.csv',
+        source_row_number: 2,
+        as_of_date: '2026-07-03',
+        period_end: '2026-07-03',
+        source_artifact_name: 'Programs and initiatives',
+        source_validation_status: 'validated',
+        values_json: {
+          program_id: 'LAK-INIT-001',
+          program_name: 'Kyriba global cash and payments rollout',
+          business_function: 'Treasury',
+          business_owner: 'Treasurer',
+          executive_sponsor: 'CFO',
+          phase: 'build',
+          budget_usd: 42_000_000,
+          expected_value_usd: 86_000_000,
+          realized_value_usd: 18_900_000,
+          value_basis: 'cash visibility, payment control, and working-capital benefits',
+        },
+      },
+      {
+        dimension_key: 'v7_10_ai_initiatives',
+        record_key: 'LAK-AI-004',
+        record_name: 'Automated close and finance reporting semantic layer',
+        source_file: 'V7_10_ai_initiatives.csv',
+        source_row_number: 5,
+        as_of_date: '2026-07-03',
+        period_end: '2026-07-03',
+        source_artifact_name: 'AI initiatives',
+        source_validation_status: 'validated',
+        values_json: {
+          ai_initiative_id: 'LAK-AI-004',
+          use_case: 'Automated close and finance reporting semantic layer',
+          business_process: 'Finance',
+          value_hypothesis: 46_000_000,
+          measured_value_usd: 21_160_000,
+          production_status: 'build',
+          data_readiness: 'SOX/control evidence and source citation gap',
+          scale_hold_stop: 'hold_until_evidence_or_risk_cleared',
+        },
+      },
+      {
+        dimension_key: 'v7_07_vendors_contracts',
+        record_key: 'LAK-VEN-002',
+        record_name: 'SAP',
+        source_file: 'V7_07_vendors_contracts.csv',
+        source_row_number: 3,
+        as_of_date: '2026-07-03',
+        period_end: '2026-07-03',
+        source_artifact_name: 'Vendors and contracts',
+        source_validation_status: 'validated',
+        values_json: {
+          vendor_id: 'LAK-VEN-002',
+          vendor_name: 'SAP',
+          contract_id: 'SAP-2026',
+          service: 'finance_treasury',
+          annual_cost_usd: 12_500_000,
+          renewal_date: '2026-08-07',
+        },
+      },
+    ]);
+
+    const model = await getAiControlTowerReadModel({
+      clientId: 'client-lakeshore',
+      clientKey: 'lakeshore',
+      tenantName: 'Lakeshore Holdings',
+    });
+
+    expect(model.source).toBe('intelligence_v7');
+    expect(mockGetProjection).not.toHaveBeenCalled();
+    expect(model.rowCounts.initiatives).toBeGreaterThanOrEqual(2);
+    expect(model.rowCounts.benefits).toBeGreaterThanOrEqual(2);
+    expect(model.rowCounts.spend).toBeGreaterThanOrEqual(2);
+    expect(model.kpis.find((kpi) => kpi.key === 'value')?.value).not.toBe('$0');
+    expect(model.kpis.find((kpi) => kpi.key === 'spend')?.value).not.toBe('$0');
+    expect(model.spend.some((row) => row.renewalDate === '2026-08-07')).toBe(true);
+    expect(model.sourceDisclosure).toMatch(/validated V7 intelligence substrate/i);
   });
 
   it('falls back to today’s behavior unchanged when the projection is null (graceful degradation)', async () => {
