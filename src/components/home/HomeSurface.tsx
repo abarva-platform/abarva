@@ -85,6 +85,10 @@ const CSS = `
 .homex .hx-list li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:#1f7a4b}
 .homex .hx-asklist{display:grid;gap:8px;margin:0;padding:0;list-style:none}
 .homex .hx-asklist li{border:1px solid var(--hl);border-radius:8px;background:#fff;padding:9px 11px;color:#19233a;font-size:13px;line-height:1.35}
+.homex .hx-askbtn{display:flex;width:100%;text-align:left;align-items:center;gap:9px;border:1px solid var(--hl);border-radius:8px;background:#fff;padding:10px 12px;color:#19233a;font:inherit;font-size:13px;line-height:1.35;cursor:pointer}
+.homex .hx-askbtn:hover{border-color:#0A76D8;background:#F7FBFF}
+.homex .hx-askbtn:focus-visible{outline:2px solid rgba(34,174,234,.35);outline-offset:2px}
+.homex .hx-askbtn::before{content:"›";color:#0A76D8;font-weight:800}
 .homex .hx-explain{background:#fff;border:1px solid var(--hl);border-radius:10px;padding:13px 14px;color:#4c4b43;font-size:12.5px;line-height:1.55}
 .homex .hx-explain strong{color:#171713}
 .homex .hx-preview{margin-top:26px;border-top:1px solid var(--hl);padding-top:18px}
@@ -215,7 +219,7 @@ function formatPreviewCell(
   const name = `${key} ${label}`;
   if (
     numeric !== null &&
-    /\b(usd|amount|budget|cost|spend|revenue|value|rate)\b/.test(name)
+    /\b(usd|amount|budget|cost|spend|revenue|price)\b/.test(name)
   ) {
     return formatCompactUsd(numeric);
   }
@@ -775,18 +779,71 @@ const DIMENSION_BROWSER_SPECS: Record<string, DimensionBrowserSpec> = {
   },
 };
 
-function browserSpecForDimension(dimension: string): DimensionBrowserSpec {
-  return DIMENSION_BROWSER_SPECS[dimension] ?? DEFAULT_BROWSER_SPEC;
+// Curated specs are keyed by the V6-era display labels. The live V7 pack uses
+// different `dimension_label` strings (e.g. "Business Functions",
+// "Applications & Systems"), so almost every dimension used to fall through to
+// the generic DEFAULT_BROWSER_SPEC and every Summary read identically. When
+// there is no curated match, derive the Summary from the actual loaded slice so
+// it is specific to this dimension.
+function browserSpecForDimension(
+  dimension: string,
+  preview?: HomeV6BrowserPreview | null,
+): DimensionBrowserSpec {
+  const curated = DIMENSION_BROWSER_SPECS[dimension];
+  if (curated) return curated;
+  if (preview) return generatedSpecFromPreview(dimension, preview);
+  return DEFAULT_BROWSER_SPEC;
+}
+
+function generatedSpecFromPreview(
+  dimension: string,
+  preview: HomeV6BrowserPreview,
+): DimensionBrowserSpec {
+  const area = dimension.toLowerCase();
+  const fields = preview.columns
+    .filter((column) => !isLineageColumn(column))
+    .map((column) => column.label);
+  const examples = preview.sourceRows
+    .map((row) => row.label)
+    .filter((label) => label && label !== "Needs evidence")
+    .slice(0, 3);
+  const files = preview.fileNames.map(clientFacingFileName).join(", ");
+  const rowLabel = `${preview.rowCount.toLocaleString()} loaded record${
+    preview.rowCount === 1 ? "" : "s"
+  }`;
+  const gapLabels = preview.knownGaps.slice(0, 3).map((gap) => gap.label);
+  return {
+    loaded: [
+      files ? `${rowLabel} from ${files}.` : `${rowLabel} in this area.`,
+      fields.length
+        ? `Readable fields: ${fields.join(", ")}.`
+        : "Source-backed facts aVa can use when answering context questions.",
+      examples.length
+        ? `Examples in this tenant: ${examples.join("; ")}.`
+        : "Coverage and confidence indicators show whether this area is strong or thin.",
+    ],
+    browse:
+      fields.length > 0 ? fields.slice(0, 6) : DEFAULT_BROWSER_SPEC.browse,
+    ask: [
+      `What ${area} is loaded for this tenant?`,
+      gapLabels.length
+        ? `Which ${area} fields still need evidence (${gapLabels.join(", ")})?`
+        : `What can we answer confidently about ${area}?`,
+      `Show ${area} as a table.`,
+    ],
+  };
 }
 
 function DimensionView({
   dim,
   preview,
   findings,
+  onAsk,
 }: {
   dim: BindingDimension;
   preview?: HomeV6BrowserPreview | null;
   findings: HomeV6ContextFinding[];
+  onAsk?: (question: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<
     "summary" | "data" | "gaps" | "questions"
@@ -794,7 +851,7 @@ function DimensionView({
   const related = findings.filter((finding) =>
     finding.supportingDimensions.includes(dim.dimension),
   );
-  const spec = browserSpecForDimension(dim.dimension);
+  const spec = browserSpecForDimension(dim.dimension, preview);
   const visiblePreviewColumns = preview
     ? preview.columns
         .map((column, index) => ({ column, index }))
@@ -988,6 +1045,14 @@ function DimensionView({
               </tbody>
             </table>
           </div>
+          <p
+            style={{ color: "var(--hf)", fontSize: 12, margin: "8px 2px 0" }}
+          >
+            Preview shows the first {preview.rows.length.toLocaleString()} of{" "}
+            {preview.rowCount.toLocaleString()} loaded row
+            {preview.rowCount === 1 ? "" : "s"}. Evidence-gap counts are measured
+            across the full dimension.
+          </p>
           <div className="hx-mini" aria-label="Source files">
             {preview.fileNames.slice(0, 2).map((fileName) => (
               <span className="hx-chip" key={fileName}>
@@ -1060,15 +1125,31 @@ function DimensionView({
         <section
           className="hx-panel"
           style={{ marginTop: 14 }}
-          aria-label="How to browse this context"
+          aria-label="Ask aVa about this area"
           aria-labelledby="home-dimension-tab-questions"
           id="home-dimension-panel-questions"
           role="tabpanel"
         >
           <h3>Ask aVa about this area</h3>
+          <p style={{ color: "var(--hm)", fontSize: 12.5, margin: "0 0 12px" }}>
+            Questions are scoped to {dim.dimension}. Select one to run it against
+            the loaded context in the aVa panel.
+          </p>
           <ul className="hx-asklist">
             {spec.ask.map((item) => (
-              <li key={item}>{item}</li>
+              <li key={item} style={{ border: 0, padding: 0, background: "none" }}>
+                {onAsk ? (
+                  <button
+                    className="hx-askbtn"
+                    onClick={() => onAsk(item)}
+                    type="button"
+                  >
+                    {item}
+                  </button>
+                ) : (
+                  item
+                )}
+              </li>
             ))}
           </ul>
         </section>
@@ -1513,6 +1594,7 @@ export function HomeSurface({
               dim={selected}
               preview={safeV6Browser?.dimensions[selected.dimension] ?? null}
               findings={findings}
+              onAsk={askHomeKnow}
             />
           ) : (
             <Overview
