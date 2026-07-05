@@ -23,6 +23,8 @@ interface EventWorkspaceProps {
   defaultTab?: WorkspaceTabKey;
   nextMove?: StageNextMoveView;
   onNextMoveAdvance?: () => void;
+  onDraftWithSentinel?: (code: string) => void;
+  workspaceHref?: string;
 }
 
 /**
@@ -35,6 +37,8 @@ export function EventWorkspace({
   defaultTab,
   nextMove,
   onNextMoveAdvance,
+  onDraftWithSentinel,
+  workspaceHref,
 }: EventWorkspaceProps) {
   const [active, setActive] = useState<WorkspaceTabKey>(
     defaultTab ?? tabs[0]?.key ?? "document",
@@ -43,6 +47,10 @@ export function EventWorkspace({
   const handleNextMoveAction = (target: StageNextMoveActionTarget) => {
     if (target === "advance") {
       onNextMoveAdvance?.();
+      return;
+    }
+    if (target === "document" && workspaceHref) {
+      window.location.assign(workspaceHref);
       return;
     }
     if (tabs.some((tab) => tab.key === target)) {
@@ -61,7 +69,13 @@ export function EventWorkspace({
         <div style={NEXT_MOVE_WRAP_STYLE}>
           <StageNextMoveCard
             nextMove={nextMove}
-            onPrimary={() => handleNextMoveAction(nextMove.primaryTarget)}
+            onPrimary={() => {
+              if (nextMove.draftArtifactCode && onDraftWithSentinel) {
+                onDraftWithSentinel(nextMove.draftArtifactCode);
+              } else {
+                handleNextMoveAction(nextMove.primaryTarget);
+              }
+            }}
             onSecondary={
               nextMove.secondaryTarget
                 ? () => handleNextMoveAction(nextMove.secondaryTarget!)

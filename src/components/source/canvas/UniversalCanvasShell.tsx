@@ -1246,6 +1246,8 @@ export function UniversalCanvasShell({
       defaultTab={initialTab}
       nextMove={nextMove}
       onNextMoveAdvance={handleNextMoveAdvance}
+      onDraftWithSentinel={handleDraftWithSentinel}
+      workspaceHref={workspaceHref}
     />
   );
 
