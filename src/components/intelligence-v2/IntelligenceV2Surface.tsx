@@ -27,6 +27,7 @@ import {
   type ExecutiveCanvasPayload,
   type ExecutiveCanvasProofBoundary,
 } from "@/lib/intelligence/executive-canvas-payload";
+import type { CxoCanvasSignal } from "@/lib/cxo-canvas/canvasTypes";
 import { buildPendingIntelligenceCanvasTabs } from "@/lib/intelligence/analytics/pending-canvas";
 import { CxoCanvasRenderer } from "@/lib/cxo-canvas/rendererRegistry";
 
@@ -124,6 +125,33 @@ const CSS = `
 .iv2 .companionCard.wide:has(.nativeCanvas) .companionKicker{padding:16px 18px 0}
 .iv2 .companionCard.wide:has(.nativeCanvas) .companionCardTitle{padding:0 18px}
 .iv2 .companionCard.wide:has(.nativeCanvas) .companionBody{padding:0 18px 18px}
+/* Companion canvas — two-zone honesty model */
+.iv2 .canvasZones{display:grid;gap:22px}
+.iv2 .canvasZone{display:grid;gap:12px}
+.iv2 .zoneHead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;border-bottom:1px solid #e4e1d9;padding-bottom:8px}
+.iv2 .zoneLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#0f766e;font-weight:700}
+.iv2 .zoneLabel span{color:#9ca3af;font-weight:600;margin-left:8px}
+.iv2 .zoneCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af}
+.iv2 .signalGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:640px){.iv2 .signalGrid{grid-template-columns:1fr}}
+.iv2 .signalTile{background:#fff;border:1px solid #e4e1d9;border-radius:8px;border-left-width:3px;padding:13px 14px;display:grid;gap:6px;min-width:0}
+.iv2 .signalTile.measured{border-left-color:#0f766e}
+.iv2 .signalTile.benchmark{border-left-color:#b45309;background:#fffdf9}
+.iv2 .signalTile.expected_uncaptured{border-style:dashed;border-color:#9ca3af;border-left-color:#9ca3af;background:#fbfaf7}
+.iv2 .signalTile.none{border-left-color:#e4e1d9;background:#fbfaf7;padding:11px 14px}
+.iv2 .signalLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#6B6B63;line-height:1.3;overflow-wrap:anywhere}
+.iv2 .signalValue{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;line-height:1.05;color:#1A1A18;overflow-wrap:anywhere}
+.iv2 .signalTile.benchmark .signalValue{font-size:19px;color:#8a5415}
+.iv2 .signalUncaptured{font-style:italic;font-size:13px;color:#9ca3af;line-height:1.3}
+.iv2 .signalContext{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.03em;color:#9ca3af;line-height:1.4;overflow-wrap:anywhere}
+.iv2 .signalTile.benchmark .signalContext{color:#b45309}
+.iv2 .signalWhy{font-size:12px;line-height:1.5;color:#4a4a44;overflow-wrap:anywhere}
+.iv2 .signalLoad{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.02em;color:#0f766e;font-weight:600;margin-top:1px;overflow-wrap:anywhere}
+.iv2 .signalLoad::before{content:"↳";font-size:12px;line-height:1}
+.iv2 .estimatedBand{display:flex;align-items:center;gap:8px;border:1px solid rgba(180,83,9,.32);background:#fdf6ec;border-radius:8px;padding:9px 13px;font-size:12px;color:#8a5415}
+.iv2 .estimatedBand .dot{width:8px;height:8px;border-radius:50%;background:#b45309;flex:none}
+.iv2 .estimatedBand b{color:#8a5415;font-weight:650}
+.iv2 .signalsEmpty{font-size:12.5px;color:#9ca3af;font-style:italic;padding:2px 0}
 .iv2 .nativeCanvas{box-sizing:border-box;width:100%;border:1px solid #D7D0C4;border-radius:12px;background:linear-gradient(180deg,#FFFDF9 0%,#F6F2EA 100%);padding:18px;margin:0 0 14px;display:grid;gap:16px;box-shadow:0 18px 42px rgba(40,35,24,.09)}
 .iv2 .nativeCanvasHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid rgba(215,208,196,.9);padding-bottom:12px}
 .iv2 .nativeCanvasTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:23px;line-height:1.08;font-weight:500;color:#171713}
@@ -488,6 +516,142 @@ function companionCardsFrom(tabs: ParsedIntelligenceTab[]): CompanionCard[] {
         hasExecutiveCanvasPayload(item.content) ||
         item.content.length > 520,
     }));
+}
+
+// ── Companion canvas: two-zone honesty model ─────────────────────────────────
+// The right canvas collapses to two zones when the answer carries a structured
+// `abarva-canvas` payload with `signals`:
+//   ZONE 1 · SIGNALS      — honesty tiles derived from payload.signals
+//   ZONE 2 · THE PICTURE  — the single executive-canvas exhibit (unchanged)
+// Older answers (no signals) fall back to the legacy companion-card grid.
+
+/**
+ * The exhibit payload for a set of companion cards: the first card that carries
+ * an executive-canvas block IS the picture. Signals + confidence + proof
+ * boundary all ride on this same payload (it extends CxoCanvasPayload).
+ */
+function exhibitPayloadFrom(
+  cards: ParsedIntelligenceTab[],
+): ExecutiveCanvasPayload | null {
+  for (const card of cards) {
+    const payload = extractExecutiveCanvasPayloads(card.content).payloads[0];
+    if (payload) return payload;
+  }
+  return null;
+}
+
+/** The card that owns the exhibit, so the rest can fold into the left answer. */
+function exhibitCardFrom(
+  cards: ParsedIntelligenceTab[],
+): ParsedIntelligenceTab | null {
+  for (const card of cards) {
+    if (hasExecutiveCanvasPayload(card.content)) return card;
+  }
+  return null;
+}
+
+function signalsFrom(
+  payload: ExecutiveCanvasPayload | null,
+): CxoCanvasSignal[] {
+  const signals = payload?.signals;
+  if (!Array.isArray(signals)) return [];
+  return signals.filter(
+    (signal): signal is CxoCanvasSignal =>
+      Boolean(signal) &&
+      typeof signal.label === "string" &&
+      typeof signal.whyItMatters === "string",
+  );
+}
+
+/**
+ * Should ZONE 2 wear the "Estimated — connect data to confirm" band? True when
+ * the exhibit leans on inference: an inference-provenance signal, a signal that
+ * governs the decision but isn't instrumented, or a low stated confidence.
+ */
+function isInferenceGrounded(
+  payload: ExecutiveCanvasPayload | null,
+  signals: CxoCanvasSignal[],
+): boolean {
+  if (!payload) return false;
+  if (typeof payload.confidence === "number" && payload.confidence < 0.5) {
+    return true;
+  }
+  return signals.some(
+    (signal) =>
+      signal.provenance === "inference" ||
+      signal.state === "expected_uncaptured",
+  );
+}
+
+function SignalTile({ signal }: { signal: CxoCanvasSignal }) {
+  const state = signal.state;
+  if (state === "none") {
+    return (
+      <div className="signalTile none">
+        <div className="signalLabel">{signal.label}</div>
+        <div className="signalWhy">{signal.whyItMatters}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`signalTile ${state}`}>
+      <div className="signalLabel">{signal.label}</div>
+      {state === "measured" && signal.value ? (
+        <div className="signalValue">{signal.value}</div>
+      ) : null}
+      {state === "benchmark" ? (
+        <>
+          {signal.value ? (
+            <div className="signalValue">{signal.value}</div>
+          ) : null}
+          <div className="signalContext">
+            {signal.context
+              ? signal.context
+              : "industry range · your value not captured"}
+          </div>
+        </>
+      ) : null}
+      {state === "expected_uncaptured" ? (
+        <>
+          <div className="signalUncaptured">Not instrumented</div>
+          {signal.loadHint ? (
+            <div className="signalLoad">{signal.loadHint}</div>
+          ) : (
+            <div className="signalLoad">Load to Source</div>
+          )}
+        </>
+      ) : null}
+      {state === "measured" && signal.context ? (
+        <div className="signalContext">{signal.context}</div>
+      ) : null}
+      <div className="signalWhy">{signal.whyItMatters}</div>
+    </div>
+  );
+}
+
+function SignalsZone({ signals }: { signals: CxoCanvasSignal[] }) {
+  return (
+    <section className="canvasZone">
+      <div className="zoneHead">
+        <div className="zoneLabel">
+          Signals<span>What we know · what we don&rsquo;t</span>
+        </div>
+        <div className="zoneCount">
+          {signals.length} {signals.length === 1 ? "signal" : "signals"}
+        </div>
+      </div>
+      {signals.length > 0 ? (
+        <div className="signalGrid">
+          {signals.map((signal, index) => (
+            <SignalTile key={`${signal.label}-${index}`} signal={signal} />
+          ))}
+        </div>
+      ) : (
+        <div className="signalsEmpty">No governing signals surfaced.</div>
+      )}
+    </section>
+  );
 }
 
 type MarkdownTable = {
@@ -1776,6 +1940,24 @@ export function IntelligenceV2Surface({
     () => companionCardsFrom(latestIntelligenceTabs),
     [latestIntelligenceTabs],
   );
+  const exhibitPayload = useMemo(
+    () => exhibitPayloadFrom(latestIntelligenceTabs),
+    [latestIntelligenceTabs],
+  );
+  const exhibitCard = useMemo(
+    () => exhibitCardFrom(latestIntelligenceTabs),
+    [latestIntelligenceTabs],
+  );
+  const canvasSignals = useMemo(
+    () => signalsFrom(exhibitPayload),
+    [exhibitPayload],
+  );
+  // Two-zone mode: the answer carries a structured signals honesty model.
+  const twoZoneMode = canvasSignals.length > 0;
+  const exhibitInference = useMemo(
+    () => isInferenceGrounded(exhibitPayload, canvasSignals),
+    [exhibitPayload, canvasSignals],
+  );
   const latestUserQuestion = useMemo(
     () => latestUserQuestionFrom(thread),
     [thread],
@@ -2080,7 +2262,53 @@ export function IntelligenceV2Surface({
                 )}
                 {latestAnswer &&
                   companionCards.length > 0 &&
-                  tab === "companion" && (
+                  tab === "companion" &&
+                  (twoZoneMode ? (
+                    <div className="companionPanel">
+                      <div className="companionHead">
+                        <div className="companionTitle">Decision canvas</div>
+                        <div className="companionCount">
+                          Signals · The picture
+                        </div>
+                      </div>
+                      <div className="canvasZones">
+                        {/* ZONE 1 · SIGNALS — honesty tiles */}
+                        <SignalsZone signals={canvasSignals} />
+                        {/* ZONE 2 · THE PICTURE — the single exhibit */}
+                        {exhibitPayload ? (
+                          <section className="canvasZone">
+                            <div className="zoneHead">
+                              <div className="zoneLabel">
+                                The picture
+                                <span>How the decision resolves</span>
+                              </div>
+                            </div>
+                            {exhibitInference ? (
+                              <div className="estimatedBand">
+                                <span className="dot" />
+                                <span>
+                                  <b>Estimated</b> — connect data to confirm.
+                                </span>
+                              </div>
+                            ) : null}
+                            <div className="tabMarkdown companionBody">
+                              {exhibitCard ? (
+                                <VisualCardEnhancement card={exhibitCard} />
+                              ) : (
+                                <CxoCanvasRenderer
+                                  payload={exhibitPayload}
+                                  context={{
+                                    surface: "intelligence",
+                                    companionCardId: "the-picture",
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </section>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : (
                     <div className="companionPanel">
                       <div className="companionHead">
                         <div className="companionTitle">Decision canvas</div>
@@ -2115,7 +2343,7 @@ export function IntelligenceV2Surface({
                         ))}
                       </div>
                     </div>
-                  )}
+                  ))}
               </div>
             </div>
           </div>

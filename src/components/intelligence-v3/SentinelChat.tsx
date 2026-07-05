@@ -35,6 +35,8 @@ import {
 import type { ChatMessage } from "./types";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import type { CompanionCanvasPayload } from "@/lib/intelligence/ask/companion-canvas";
+import { CompanionCanvas } from "./CompanionCanvas";
 
 const LEGACY_STORAGE_KEY = "abarva.intelligence.chat-mode";
 const LEGACY_MIGRATED_FLAG = "abarva.intelligence.chat-mode.migrated";
@@ -64,6 +66,22 @@ interface Props {
    * filtering per-tab attachment scoping work.
    */
   surfaceContext?: Record<string, unknown>;
+  /**
+   * Companion-canvas hook · fires whenever the structured decision
+   * companion payload (or its loading state) changes. Hosts that own
+   * their own right rail (e.g. IntelligenceMap) render <CompanionCanvas>
+   * themselves from this. Optional — omitting it is a no-op.
+   */
+  onCompanionCanvas?: (
+    payload: CompanionCanvasPayload | null,
+    loading: boolean,
+  ) => void;
+  /**
+   * When true, SentinelChat renders <CompanionCanvas> itself in a right
+   * column inside its own layout. Default (unset/false) keeps behavior
+   * IDENTICAL to today — the host owns the right pane.
+   */
+  renderInlineCompanionCanvas?: boolean;
 }
 
 /**
@@ -81,6 +99,8 @@ export function SentinelChat({
   conversation,
   workspace,
   surfaceContext,
+  onCompanionCanvas,
+  renderInlineCompanionCanvas,
 }: Props) {
   // Run the legacy → new key migration once per browser. Idempotent —
   // the migrated flag prevents repeated overwrites if the user later
@@ -137,8 +157,24 @@ export function SentinelChat({
     [dockThread, localTurns],
   );
 
+  // Companion-canvas · structured decision companion emitted as a `canvas`
+  // stream event. `companionLoading` is true from question-submit until the
+  // canvas (or `done`) arrives, so the panel can render its progressive
+  // skeleton.
+  const [companionCanvas, setCompanionCanvas] =
+    useState<CompanionCanvasPayload | null>(null);
+  const [companionLoading, setCompanionLoading] = useState(false);
+
+  // Notify embedders whenever the payload or loading state changes.
+  useEffect(() => {
+    onCompanionCanvas?.(companionCanvas, companionLoading);
+  }, [companionCanvas, companionLoading, onCompanionCanvas]);
+
   const handleMessage = async (text: string, attachments: AttachmentRef[]) => {
     if (text.trim().length === 0 && attachments.length === 0) return;
+    // New question · clear any prior companion canvas and open its skeleton.
+    setCompanionCanvas(null);
+    setCompanionLoading(true);
     const body =
       attachments.length > 0
         ? text
@@ -203,6 +239,7 @@ export function SentinelChat({
             telemetryEventId?: string;
             sources?: AskSource[];
             answer?: AvaAnswerPacket;
+            canvas?: CompanionCanvasPayload | null;
           };
           const delta = event.delta ?? event.text;
           if (
@@ -240,16 +277,25 @@ export function SentinelChat({
               ),
             );
           }
+          if (event.type === "canvas") {
+            // Structured decision companion. Null is a legal payload
+            // (no exhibit for this question) — pass it through.
+            setCompanionCanvas(event.canvas ?? null);
+            setCompanionLoading(false);
+          }
           if (event.type === "error")
             throw new Error(event.error ?? "Ava stream error");
-          if (event.type === "done" && event.telemetryEventId) {
-            setLocalTurns((prev) =>
-              prev.map((turn) =>
-                turn.id === agentTurnId
-                  ? { ...turn, feedbackEventId: event.telemetryEventId }
-                  : turn,
-              ),
-            );
+          if (event.type === "done") {
+            setCompanionLoading(false);
+            if (event.telemetryEventId) {
+              setLocalTurns((prev) =>
+                prev.map((turn) =>
+                  turn.id === agentTurnId
+                    ? { ...turn, feedbackEventId: event.telemetryEventId }
+                    : turn,
+                ),
+              );
+            }
           }
         }
       }
@@ -266,7 +312,11 @@ export function SentinelChat({
           ),
         );
       }
+      // Stream closed · ensure the companion skeleton never hangs even if
+      // the server emitted neither a `canvas` nor a `done` event.
+      setCompanionLoading(false);
     } catch (error) {
+      setCompanionLoading(false);
       setLocalTurns((prev) =>
         prev.map((turn) =>
           turn.id === agentTurnId
@@ -288,7 +338,7 @@ export function SentinelChat({
   // Without a workspace, the dock has nothing to dock against — render
   // it alone in side-rail mode (back-compat for any caller still on
   // the old API). New code should always pass workspace.
-  const safeWorkspace = workspace ?? (
+  const baseWorkspace = workspace ?? (
     <div
       style={{
         padding: 32,
@@ -298,6 +348,39 @@ export function SentinelChat({
       }}
       aria-hidden="true"
     />
+  );
+
+  // Opt-in · SentinelChat owns the right rail and renders the companion
+  // canvas alongside the host workspace. Default (prop unset) is IDENTICAL
+  // to today: just `baseWorkspace`.
+  const safeWorkspace = renderInlineCompanionCanvas ? (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 360px)",
+        gap: 0,
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <div style={{ minWidth: 0, minHeight: 0, overflow: "auto" }}>
+        {baseWorkspace}
+      </div>
+      <div
+        style={{
+          borderLeft: "1px solid #e4e1d9",
+          background: "#F8F7F4",
+          padding: 16,
+          minHeight: 0,
+          overflow: "hidden",
+          display: "flex",
+        }}
+      >
+        <CompanionCanvas canvas={companionCanvas} loading={companionLoading} />
+      </div>
+    </div>
+  ) : (
+    baseWorkspace
   );
 
   return (

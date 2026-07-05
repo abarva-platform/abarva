@@ -47,6 +47,7 @@ import {
   shouldUseHomeKnowAgentAnswer,
 } from "@/lib/home/know/home-know-agent-answer";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 import {
   createIntelligenceLatencyTrace,
@@ -531,6 +532,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           );
           return;
         }
+        const companionCanvasEnabled = isFeatureEnabled(
+          { clientKey: tenantClientKey, clientId: tenantId },
+          "intelligence_companion_canvas",
+        );
         for await (const event of askIntelligence(query, {
           userContextBlock,
           tenantId,
@@ -540,6 +545,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           userId,
           tenantInventoryKey,
           surfaceContext,
+          companionCanvasEnabled,
           conversationContextBlock: memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
@@ -705,13 +711,19 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             traceSources as AskSource[],
           );
           const routeCanvasStartedAt = Date.now();
-          assistantText = ensureRouteMandatoryCanvasTabs(
-            assistantText,
-            query,
-            advisorSources,
-            tenantClientKey,
-            tenantId,
-          );
+          // Companion-canvas flag ON → the answer streamed answer-only and a
+          // structured `canvas` event already carries the five lenses. Skip the
+          // legacy tab injection so we don't emit a contradictory second
+          // canvas. Flag OFF → unchanged legacy behavior.
+          if (!companionCanvasEnabled) {
+            assistantText = ensureRouteMandatoryCanvasTabs(
+              assistantText,
+              query,
+              advisorSources,
+              tenantClientKey,
+              tenantId,
+            );
+          }
           const tabbedResponse = parseIntelligenceTabbedResponse(assistantText);
           enqueueTiming(
             routeTrace.finish("route.canvas_parse.done", routeCanvasStartedAt, {

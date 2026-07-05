@@ -84,9 +84,17 @@ export type FeatureFlagKey =
   | "home_know_llm_synthesis"
   | "home_know_claude_synthesis"
   | "deliverable_structured_exhibits"
-  | "deliverable_quality_contract";
+  | "deliverable_quality_contract"
+  | "intelligence_companion_canvas";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "intelligence_companion_canvas",
+    summary:
+      "[Superseded by the v2 reconcile — kept OFF] Earlier answer-only-streaming + v3 SentinelChat companion-canvas experiment. It stripped the right-canvas tabs, which conflicts with the live IntelligenceV2Surface (which parses the canvas out of those tabs). The shipped reconcile instead enriches v2's existing canvas via the tabbed-response DATA RICHNESS mandate. Leave OFF (includeTenants empty) until true-streaming is re-scoped to keep the tabs. Env: ABARVA_FEATURE_INTELLIGENCE_COMPANION_CANVAS_ENABLED_TENANTS.",
+    policy: "tenant",
+    includeTenants: [],
+  },
   {
     key: "home_know_claude_synthesis",
     summary:
