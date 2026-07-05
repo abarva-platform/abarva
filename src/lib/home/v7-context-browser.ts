@@ -162,8 +162,35 @@ export async function getHomeV7ContextBrowser(args: {
           [tenantKey, contractVersion, dimensionKeys],
         )
       : [];
+    // Evidence-gap posture is computed over the FULL dimension, not the capped
+    // preview window, so the "evidence gaps" count and the top-missing-field
+    // cards reflect the whole loaded dimension instead of the first 12 rows.
+    const gapRows = dimensionKeys.length
+      ? await run<{
+          dimension_key: string;
+          column_name: string;
+          gap_count: number;
+        }>(
+          `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
+           from intelligence_v7.business_records r
+           cross join lateral jsonb_each_text(r.values_json) kv
+           where r.tenant_key = $1
+             and r.contract_version = $2
+             and r.dimension_key = any($3::text[])
+             and (
+               kv.value is null
+               or btrim(kv.value) = ''
+               or kv.value ~* 'needs evidence|evidence_gap|not client validated'
+               or kv.value ~* '^data_thin:'
+             )
+           group by r.dimension_key, kv.key`,
+          [tenantKey, contractVersion, dimensionKeys],
+        )
+      : [];
+
     const columnsByDimension = groupBy(allColumns, (column) => column.dimension_key);
     const recordsByDimension = groupBy(allRecords, (record) => record.dimension_key);
+    const gapStatsByDimension = buildGapStats(gapRows);
 
     const dimensions: HomeV6ContextBrowser["dimensions"] = {};
     const bindingContext: NonNullable<HomeV6ContextBrowser["bindingContext"]> = [];
@@ -177,13 +204,18 @@ export async function getHomeV7ContextBrowser(args: {
       const sourceRows = records.map((row) =>
         toSourceRow(dimension, row, displayColumns),
       );
-      const knownGaps = topKnownGaps(records, columns);
+      // Prefer full-dimension gap stats; fall back to the preview sample only
+      // if the aggregate query returned nothing for this dimension.
+      const gapStats = gapStatsByDimension.get(dimension.dimension_key) ?? null;
+      const knownGaps = gapStats
+        ? knownGapsFromStats(gapStats.perColumn, columns)
+        : topKnownGaps(records, columns);
       dimensions[label] = {
         dimension: label,
         title: `${label} loaded records`,
         fileNames: [dimension.dimension_file],
         rowCount: dimension.record_count,
-        dataThinCells: countDataThinCells(records),
+        dataThinCells: gapStats ? gapStats.total : countDataThinCells(records),
         sourceCount: Math.max(1, dimension.source_files),
         columns: displayColumns,
         rows: records
@@ -283,6 +315,60 @@ function topKnownGaps(
     }
   }
   return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 8)
+    .map(([columnName, count]) => {
+      const meta = columns.find((column) => column.column_name === columnName);
+      const label = humanize(meta?.client_field || columnName);
+      return {
+        label,
+        count,
+        instruction: cleanMetadata(meta?.client_instruction),
+        moduleUse: cleanMetadata(meta?.module_use),
+        whyItMatters: gapWhyItMatters(label, meta?.module_use),
+        howItHelps: gapHowItHelps(label, meta?.module_use),
+      };
+    });
+}
+
+interface DimensionGapStats {
+  total: number;
+  perColumn: Map<string, number>;
+}
+
+function buildGapStats(
+  rows: Array<{ dimension_key?: string; column_name?: string; gap_count?: number }>,
+): Map<string, DimensionGapStats> {
+  const stats = new Map<string, DimensionGapStats>();
+  for (const row of rows) {
+    // Defensive: a stubbed/mismatched session may return rows without the
+    // aggregate shape. Skip anything that is not a real gap-count row.
+    if (
+      !row ||
+      typeof row.dimension_key !== "string" ||
+      typeof row.column_name !== "string" ||
+      typeof row.gap_count !== "number" ||
+      !Number.isFinite(row.gap_count)
+    ) {
+      continue;
+    }
+    const entry =
+      stats.get(row.dimension_key) ?? { total: 0, perColumn: new Map() };
+    entry.total += row.gap_count;
+    entry.perColumn.set(
+      row.column_name,
+      (entry.perColumn.get(row.column_name) ?? 0) + row.gap_count,
+    );
+    stats.set(row.dimension_key, entry);
+  }
+  return stats;
+}
+
+function knownGapsFromStats(
+  perColumn: Map<string, number>,
+  columns: V7ColumnRow[],
+): HomeV6ContextBrowser["dimensions"][string]["knownGaps"] {
+  return [...perColumn.entries()]
     .sort((left, right) => right[1] - left[1])
     .slice(0, 8)
     .map(([columnName, count]) => {

@@ -498,4 +498,95 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByText("$1M")).toBeInTheDocument();
     expect(screen.queryByText("1000000")).not.toBeInTheDocument();
   });
+
+  it("derives a dimension-specific summary for V7 labels with no curated spec", () => {
+    // "Business Functions" is a live V7 dimension_label that has no curated
+    // DIMENSION_BROWSER_SPECS entry (those use V6-era names). The Summary must
+    // be built from the loaded slice, not fall back to generic default copy.
+    const v7Browser = {
+      tenantKey: "lakeshore",
+      displayName: "Lakeshore Holdings",
+      datasetDir: "lakeshore",
+      generatedAt: "2026-07-03T00:00:00.000Z",
+      contractLabel: "V7",
+      bindingContext: [
+        {
+          dimension: "Business Functions",
+          status: "loaded",
+          description: "Business Functions records with client-friendly fields.",
+          evidence: 25,
+          sources: 1,
+          trust: 74,
+        },
+      ],
+      dimensions: {
+        "Business Functions": {
+          dimension: "Business Functions",
+          title: "Business Functions loaded records",
+          fileNames: ["V7_02_business_functions.csv"],
+          rowCount: 25,
+          dataThinCells: 14,
+          sourceCount: 1,
+          columns: [
+            { key: "function_name", label: "Function" },
+            { key: "executive_owner", label: "Executive owner" },
+          ],
+          rows: [["Finance Operations", "CFO"]],
+          sourceRows: [
+            {
+              v6File: "V7_02_business_functions.csv",
+              rowNumber: 2,
+              rowId: "Source row 2",
+              label: "Finance Operations",
+              values: { Function: "Finance Operations", "Executive owner": "CFO" },
+              knownGaps: [],
+            },
+          ],
+          knownGaps: [{ label: "Executive owner", count: 6 }],
+        },
+      },
+    } satisfies HomeV6ContextBrowser;
+
+    render(
+      <HomeSurface clientKey="lakeshore" payload={null} v6Browser={v7Browser} />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "Business Functions" },
+    });
+
+    // Data-derived, dimension-specific — NOT the generic default copy.
+    expect(
+      screen.getByText(/25 loaded records from 02 business functions\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Readable fields: Function, Executive owner\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Examples in this tenant: Finance Operations\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Summary records describing this part of the operating model.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("makes the Questions tab click-to-ask instead of dead duplicate text", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "Vendors & Contracts" },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Questions" }));
+
+    const askButton = screen.getByRole("button", {
+      name: "Which renewals or vendors need attention?",
+    });
+    expect(askButton).toBeInTheDocument();
+  });
 });
