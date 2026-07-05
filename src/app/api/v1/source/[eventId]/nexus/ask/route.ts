@@ -17,6 +17,8 @@ import type { SourceLiveTenantContextSnapshot } from '@/lib/source/agent-context
 import type { SourcingEventDetail } from '@/lib/source/types';
 import { getSourcingEvent, sourceEventRowToDetail } from '@/lib/source/queries';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
+import { composeSentinelSystemPrompt } from '@/lib/agent/voice-doctrine/sentinel';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -84,7 +86,7 @@ export async function POST(
       });
     }
 
-    const response = createSourceNexusApiStubResponse({
+    const stubInput = {
       ...normalizedBody,
       eventId,
       tenant: apexContext?.input.tenant ?? {
@@ -94,12 +96,25 @@ export async function POST(
         activeClientId: tenancy.clientId,
         activeClientName: activeClient?.name,
       },
-      user: {
-        id: tenancy.userId,
-      },
+      user: { id: tenancy.userId },
       liveEventDetail,
       liveTenantContext,
-    });
+    };
+
+    // Build context + deterministic briefing (always needed for fallback + suggested actions).
+    const stubResponse = createSourceNexusApiStubResponse(stubInput);
+
+    // Attempt a real Claude call. Falls back to stub summary on any failure.
+    const claudeSummary = await callSentinelWithClaude({
+      prompt: normalizedBody.prompt ?? '',
+      briefingContext: stubResponse.summary ?? '',
+      tenantKey: activeClient?.key ?? null,
+      tenantId: tenancy.clientId,
+    }).catch(() => null);
+
+    const response = claudeSummary
+      ? { ...stubResponse, summary: claudeSummary, noModel: false }
+      : stubResponse;
 
     return Response.json(response, { status: response.httpStatus });
   } catch (error) {
@@ -263,6 +278,57 @@ async function linkAttachmentsToEvent(args: {
     tenantId,
     eventId,
   });
+}
+
+/**
+ * Call Claude with Sentinel voice for Source canvas chat.
+ * Returns the answer string, or throws so the caller can fall back to stub.
+ */
+async function callSentinelWithClaude(args: {
+  prompt: string;
+  briefingContext: string;
+  tenantKey: string | null;
+  tenantId: string;
+}): Promise<string> {
+  if (!args.prompt.trim()) throw new Error('empty prompt');
+
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: args.tenantId,
+    workflow: 'source-canvas-chat',
+    model: 'claude-sonnet-4-6',
+    prompt: args.prompt,
+    dataClass: 'confidential',
+    metadata: { surface: 'source', tenantKey: args.tenantKey ?? 'unknown' },
+  });
+  if (!preflight.ok) throw new Error(`egress blocked: ${preflight.reason}`);
+
+  const systemPrompt = composeSentinelSystemPrompt({
+    mode: 'tenant',
+    tenantKey: args.tenantKey,
+    surface: '/source',
+    vectorIndexPending: false,
+    worldviewPending: false,
+    worldviewHitsPresent: false,
+  });
+
+  const userMessage = args.briefingContext
+    ? `${args.briefingContext}\n\nUser question: ${args.prompt}`
+    : args.prompt;
+
+  const msg = await preflight.client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 512,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const text = msg.content
+    .filter((b) => b.type === 'text')
+    .map((b) => (b as { type: 'text'; text: string }).text)
+    .join('');
+
+  if (!text.trim()) throw new Error('empty Claude response');
+  return text;
 }
 
 async function parseSourceNexusRequestBody(
