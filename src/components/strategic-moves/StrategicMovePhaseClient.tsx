@@ -43,8 +43,11 @@ import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
-import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
-import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import {
+  AgentDock,
+  type AttachmentRef,
+  type ChatMessage,
+} from "@/components/agent/AgentDock";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 import { conciseSponsorLabel } from "./sponsor-display";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -1452,25 +1455,19 @@ export function StrategicMovePhaseClient({
       text: config.firstMessage(move),
     },
   ]);
-  const [composer, setComposer] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
+  // Attachment review feedback is surfaced in the canvas (Gate readiness copy
+  // below). Uploads now flow through <AgentDock>'s own attachment pipeline
+  // (/api/v1/agent/attachments), so this legacy per-phase review counter is
+  // no longer populated here; kept as an empty baseline for the canvas read.
+  const [attachments] = useState<PendingAttachment[]>([]);
 
   const turnsRef = useRef<ChatTurn[]>(turns);
   turnsRef.current = turns;
-  const threadRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const reviewFeedbackCount = attachments.reduce(
     (sum, attachment) => sum + (attachment.feedbackCount ?? 0),
     0,
   );
-
-  // Auto-scroll thread
-  useEffect(() => {
-    if (threadRef.current) {
-      threadRef.current.scrollTop = threadRef.current.scrollHeight;
-    }
-  }, [turns]);
 
   const updateTurns = useCallback(
     (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
@@ -1482,100 +1479,18 @@ export function StrategicMovePhaseClient({
     [],
   );
 
-  const handleFileSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      e.target.value = "";
-      if (!file) return;
-      const pendingId = `att-${Date.now()}`;
-      setAttachments((prev) => [
-        ...prev,
-        { id: pendingId, name: file.name, status: "uploading" },
-      ]);
-      try {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("phase", String(phaseNum));
-        fd.append("purpose", "artifact_review");
-        fd.append(
-          "artifactType",
-          PHASE_CANONICAL_KEYS[phaseNum]?.[0] ?? "phase_artifact",
-        );
-        const res = await fetch(`/api/programs/workspace/${move.id}/upload`, {
-          method: "POST",
-          body: fd,
-        });
-        if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as {
-            error?: string;
-          };
-          throw new Error(body.error ?? `HTTP ${res.status}`);
-        }
-        const data = (await res.json()) as {
-          attachmentId: string;
-          evidence?: {
-            parseMethod?: string | null;
-            whatFound?: string[];
-            whereUsed?: string[];
-          };
-          review?: { extractedFeedback?: Array<{ requestedChange: string }> };
-        };
-        const feedbackCount = data.review?.extractedFeedback?.length ?? 0;
-        setAttachments((prev) =>
-          prev.map((a) =>
-            a.id === pendingId
-              ? {
-                  ...a,
-                  status: "done",
-                  attachmentId: data.attachmentId,
-                  feedbackCount,
-                  parseMethod: data.evidence?.parseMethod ?? null,
-                  whatFound: data.evidence?.whatFound ?? [],
-                  whereUsed: data.evidence?.whereUsed ?? [],
-                }
-              : a,
-          ),
-        );
-        if (feedbackCount > 0) {
-          updateTurns((prev) => [
-            ...prev,
-            {
-              id: generateTurnId(),
-              role: "assistant",
-              agentName: "Nexus",
-              text:
-                `I parsed **${feedbackCount}** review feedback item${feedbackCount === 1 ? "" : "s"} from **${file.name}**. ` +
-                "Use **Regenerate artifact** after triage to apply approved changes into the next version.",
-            },
-          ]);
-        }
-      } catch (err) {
-        setAttachments((prev) =>
-          prev.map((a) =>
-            a.id === pendingId
-              ? {
-                  ...a,
-                  status: "error",
-                  errorMsg:
-                    err instanceof Error ? err.message : "upload failed",
-                }
-              : a,
-          ),
-        );
-      }
-    },
-    [move.id, phaseNum, updateTurns],
-  );
-
   const send = useCallback(
-    async (messageOverride?: string) => {
-      const message = (messageOverride ?? composer).trim();
+    async (messageOverride?: string, dockAttachments?: AttachmentRef[]) => {
+      const message = (messageOverride ?? "").trim();
       if (!message || streaming) return;
 
-      const doneAttachments = attachments.filter((a) => a.status === "done");
+      // AgentDock forwards already-uploaded attachment refs on submit; forward
+      // their ids to the agent route in the same `attachmentIds` shape the
+      // route already expects.
+      const refs = dockAttachments ?? [];
       const attachmentSuffix =
-        doneAttachments.length > 0
-          ? `\n\n[Attached: ${doneAttachments.map((a) => a.name).join(", ")}]`
+        refs.length > 0
+          ? `\n\n[Attached: ${refs.map((a) => a.file_name).join(", ")}]`
           : "";
       const fullMessage = message + attachmentSuffix;
 
@@ -1590,8 +1505,6 @@ export function StrategicMovePhaseClient({
           text: "",
         },
       ]);
-      if (!messageOverride) setComposer("");
-      setAttachments([]);
       setStreaming(true);
 
       // A hung request must never brick the dock: abort after 3 minutes so
@@ -1624,9 +1537,7 @@ export function StrategicMovePhaseClient({
               moveDisplayCode: move.displayCode,
               moveName: move.name,
               phaseLabel: config.label,
-              attachmentIds: doneAttachments
-                .map((a) => a.attachmentId)
-                .filter(Boolean),
+              attachmentIds: refs.map((a) => a.id).filter(Boolean),
             },
           }),
         });
@@ -1710,15 +1621,7 @@ export function StrategicMovePhaseClient({
         setStreaming(false);
       }
     },
-    [
-      composer,
-      streaming,
-      attachments,
-      move,
-      phaseNum,
-      config.label,
-      updateTurns,
-    ],
+    [streaming, move, phaseNum, config.label, updateTurns],
   );
 
   const hardGateCount = gateItemsWithStatus.filter(
@@ -1845,6 +1748,23 @@ export function StrategicMovePhaseClient({
       PHASE_CANONICAL_KEYS[phaseNum],
     ),
   ).length;
+
+  // Map the phase chat thread → AgentDock ChatMessage[]. While streaming, the
+  // trailing empty assistant turn is kept as a "…" placeholder so the dock's
+  // busy affordance stays visible.
+  const dockThread: ChatMessage[] = turns.map((turn) => ({
+    id: turn.id,
+    role: turn.role === "assistant" ? "agent" : "user",
+    body:
+      turn.text ||
+      (streaming && turn.role === "assistant" ? "…" : turn.text),
+  }));
+  const dockSuggestedActions = config.suggestedPrompts.map((prompt, i) => ({
+    id: String(i),
+    label: prompt,
+    body: prompt,
+  }));
+
   return (
     <div id={`ws-phase-p${phaseNum}-page`} className={styles.page}>
       {/* Phase context bar */}
@@ -1867,166 +1787,30 @@ export function StrategicMovePhaseClient({
         </Link>
       </div>
 
-      {/* Two-pane shell */}
-      <section id={`ws-phase-p${phaseNum}-grid`} className={styles.detailShell}>
-        {/* Chat pane */}
-        <aside id={`ws-chat-p${phaseNum}`} className={styles.chatPane}>
-          <div className={styles.chatHead}>
-            <div className={styles.agentRow}>
-              <div className={styles.agentAvatar} aria-hidden>
-                &#10022;
-              </div>
-              <div>
-                <div className={styles.agentName}>Ava</div>
-                <div className={styles.agentStatus}>
-                  <span className={styles.agentStatusDot} aria-hidden />
-                  {move.displayCode} &middot; {config.shortLabel}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Chat thread */}
-          <div
-            id={`ws-chat-p${phaseNum}-thread`}
-            className={styles.chatThread}
-            ref={threadRef}
-          >
-            {turns.map((turn) => (
-              <div
-                key={turn.id}
-                className={
-                  turn.role === "assistant"
-                    ? styles.bubbleNexus
-                    : styles.bubbleUser
-                }
-              >
-                {turn.role === "assistant" && turn.text ? (
-                  <AgentMarkdown text={turn.text} />
-                ) : (
-                  turn.text ||
-                  (streaming && turn.role === "assistant" ? "…" : "")
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Suggested prompts */}
-          <div className={styles.startFromBlock}>
-            <div className={styles.suggestedPrompts}>
-              {config.suggestedPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  className={styles.promptChip}
-                  type="button"
-                  onClick={() => void send(prompt)}
-                  disabled={streaming}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Chat input */}
-          <div id={`ws-chat-p${phaseNum}-input`} className={styles.chatInput}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.json"
-              style={{ display: "none" }}
-              onChange={(e) => void handleFileSelect(e)}
-            />
-            {attachments.length > 0 && (
-              <div className={styles.attachmentStrip}>
-                {attachments.map((a) => (
-                  <span
-                    key={a.id}
-                    className={`${styles.attachmentChip} ${
-                      a.status === "done"
-                        ? styles.attachmentChipDone
-                        : a.status === "error"
-                          ? styles.attachmentChipError
-                          : ""
-                    }`}
-                    title={
-                      a.status === "error"
-                        ? (a.errorMsg ?? "upload failed")
-                        : a.name
-                    }
-                  >
-                    {a.status === "uploading"
-                      ? "⏳"
-                      : a.status === "done"
-                        ? "✓"
-                        : "✗"}{" "}
-                    {a.name}
-                    {a.status === "done" &&
-                      a.whatFound &&
-                      a.whatFound.length > 0 && (
-                        <span style={{ opacity: 0.75 }}>
-                          {" "}
-                          · found: {a.whatFound.slice(0, 2).join(", ")}
-                        </span>
-                      )}
-                    {a.status === "done" &&
-                      a.whereUsed &&
-                      a.whereUsed.length > 0 && (
-                        <span style={{ opacity: 0.75 }}>
-                          {" "}
-                          · used in: {a.whereUsed.slice(0, 2).join(", ")}
-                        </span>
-                      )}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className={styles.inputRow}>
-              <button
-                className={styles.uploadBtn}
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={streaming}
-                aria-label="Attach file"
-                title="Attach file"
-              >
-                &#x1F4CE;
-              </button>
-              <AvaAskMark className={styles.avaComposerMark} />
-              <textarea
-                id={`ws-chat-p${phaseNum}-input-field`}
-                rows={1}
-                value={composer}
-                onChange={(e) => setComposer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void send();
-                  }
-                }}
-                placeholder={
-                  streaming
-                    ? "Ava is responding… you can type your next message"
-                    : `Ask Ava about ${move.displayCode} ${config.label}…`
-                }
-                spellCheck
-              />
-              <button
-                id={`ws-chat-p${phaseNum}-send-btn`}
-                className={styles.sendBtn}
-                type="button"
-                onClick={() => void send()}
-                disabled={streaming || !composer.trim()}
-                aria-label="Send"
-              >
-                &#8593;
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        {/* Canvas pane */}
-        <article id={`ws-canvas-p${phaseNum}`} className={styles.rightPane}>
+      {/* Chat (AgentDock) + phase canvas. AgentDock owns the 6 dock modes
+          (side-rail left/right, pin top/bottom, expand, collapsed); the phase
+          canvas is passed as its workspace pane. */}
+      <AgentDock
+        agent={{
+          initials: "Av",
+          mark: "ava",
+          name: "Ava",
+          role: config.shortLabel,
+        }}
+        surface={`/strategic-moves/${move.id}/phase/${phaseNum}`}
+        defaultMode="side-rail"
+        isAgentBusy={streaming}
+        thread={dockThread}
+        suggestedActions={dockSuggestedActions}
+        onMessage={(text, dockAttachments) => void send(text, dockAttachments)}
+        surfaceContext={{
+          moveId: move.id,
+          phase: phaseNum,
+          displayCode: move.displayCode,
+        }}
+        workspace={
+          /* Canvas pane */
+          <article id={`ws-canvas-p${phaseNum}`} className={styles.rightPane}>
           {/* Canvas head */}
           <div className={styles.detailHead}>
             <div className={styles.detailHeadTop}>
@@ -2507,7 +2291,8 @@ export function StrategicMovePhaseClient({
             </CollapsePanel>
           </div>
         </article>
-      </section>
+        }
+      />
     </div>
   );
 }
