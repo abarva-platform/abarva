@@ -682,6 +682,18 @@ describe("Source answer engine", () => {
   it("does not let client-final RFP authority hijack vendor advancement questions", () => {
     const sharedEvidence = [
       {
+        id: "source-artifact:scope-client-final",
+        segmentId: "sourcing_artifacts",
+        recordId: "scope-client-final",
+        title: "Scope Memo - Client Final",
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_artifacts",
+        excerpt:
+          'Artifact authority record: "Lakeshore Client Final Scope Memo.docx" is a client-final upload. Artifact type: d05_scope_memo; stage: scope; status: client_final; lifecycle: current; version: 2. Authority: clientFinal=true; currentAuthoritative=true; blobBacked=true. Lineage: links to the prior generated draft; supersedes a prior artifact version. Client-final note: Scope memo accepted after client review.',
+        confidence: "high" as const,
+        score: 95,
+      },
+      {
         id: "source-artifact:client-final",
         segmentId: "sourcing_artifacts",
         recordId: "client-final",
@@ -791,6 +803,23 @@ describe("Source answer engine", () => {
     expect(rfpFinalityAnswer?.answerText).toContain("File Cabinet");
     expect(rfpFinalityAnswer?.answerText).not.toContain(
       "Advance Vendor A as the risk-adjusted lead",
+    );
+    expect(rfpFinalityAnswer?.answerText).not.toContain(
+      "Lakeshore Client Final Scope Memo.docx is the final RFP",
+    );
+
+    const scopeFinalityAnswer = buildSourceAnswerEngine({
+      prompt: "Which scope memo version is final?",
+      contextBundle: contextWithClientFinalAndEvaluation,
+      userRole: "cio",
+    });
+
+    expect(scopeFinalityAnswer?.title).toBe("Artifact authority answer");
+    expect(scopeFinalityAnswer?.answerText).toContain(
+      "Lakeshore Client Final Scope Memo.docx is the final Scope Memo version of record",
+    );
+    expect(scopeFinalityAnswer?.answerText).not.toContain(
+      "Client Final - Lakeshore Shared Services AMS RFP Pack.docx is the final Scope Memo",
     );
   });
 

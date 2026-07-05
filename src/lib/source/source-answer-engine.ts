@@ -1181,19 +1181,30 @@ function buildArtifactGovernanceAnswer(args: {
     .filter((record): record is ArtifactGovernanceRecord => Boolean(record));
   if (records.length === 0) return null;
 
+  const requestedArtifactType = inferRequestedArtifactAuthorityType(text);
+  const scopedRecords = requestedArtifactType
+    ? records.filter((record) => record.artifactType === requestedArtifactType)
+    : records;
+  const answerRecords = scopedRecords.length > 0 ? scopedRecords : records;
+
   const clientFinal =
-    records.find(
+    answerRecords.find(
       (record) => record.isClientFinal && record.isCurrentAuthoritative,
     ) ??
-    records.find((record) => record.isClientFinal) ??
-    records.find((record) => record.isCurrentAuthoritative);
+    answerRecords.find((record) => record.isClientFinal) ??
+    answerRecords.find((record) => record.isCurrentAuthoritative);
   const generatedDraft =
-    records.find(
+    answerRecords.find(
       (record) => record.isGeneratedDraft && record.supersededByLaterVersion,
-    ) ?? records.find((record) => record.isGeneratedDraft);
+    ) ?? answerRecords.find((record) => record.isGeneratedDraft);
   if (!clientFinal && !generatedDraft) return null;
 
-  const finalName = clientFinal?.fileName ?? "the current RFP artifact";
+  const artifactLabel = getArtifactAuthorityLabel(
+    requestedArtifactType ?? clientFinal?.artifactType ?? generatedDraft?.artifactType,
+  );
+  const artifactLabelLower = artifactLabel.toLowerCase();
+  const finalName =
+    clientFinal?.fileName ?? `the current ${artifactLabelLower} artifact`;
   const finalVersion =
     clientFinal?.version && clientFinal.version !== "unknown"
       ? `version ${clientFinal.version}`
@@ -1208,14 +1219,14 @@ function buildArtifactGovernanceAnswer(args: {
   if (/\b(vendors? receive)\b/.test(text)) {
     lead = artifactIsReady
       ? `Vendor issuance should use the client-final artifact: ${finalName}, ${finalVersion} of the RFP pack.`
-      : `${finalName} is the strongest available RFP artifact, but a client-final authoritative file is not fully confirmed from the artifact registry.`;
+      : `${finalName} is the strongest available ${artifactLabelLower} artifact, but a client-final authoritative file is not fully confirmed from the artifact registry.`;
   } else if (/\b(procurement review|before release)\b/.test(text)) {
     lead = artifactIsReady
-      ? `Procurement should review the client-final RFP authority, accepted lineage, remaining gate criteria, and any vendor-response caveats before release.`
-      : `Procurement should hold release until the RFP artifact is accepted as client-final, current authoritative, and Blob-backed.`;
+      ? `Procurement should review the client-final ${artifactLabelLower} authority, accepted lineage, remaining gate criteria, and any vendor-response caveats before release.`
+      : `Procurement should hold release until the ${artifactLabelLower} artifact is accepted as client-final, current authoritative, and Blob-backed.`;
   } else if (/\b(generated artifacts?|artifacts? exist|file cabinet)\b/.test(text)) {
-    const generatedCount = records.filter((record) => record.isGeneratedDraft).length;
-    const clientFinalCount = records.filter((record) => record.isClientFinal).length;
+    const generatedCount = answerRecords.filter((record) => record.isGeneratedDraft).length;
+    const clientFinalCount = answerRecords.filter((record) => record.isClientFinal).length;
     lead = `The File Cabinet evidence confirms governed sourcing artifacts for this event, including ${generatedCount} generated draft lineage record(s) and ${clientFinalCount} client-final authoritative record(s) in the current answer slice.`;
   } else if (/\b(generate|generated|client upload|uploaded)\b/.test(text)) {
     lead = clientFinal
@@ -1223,21 +1234,21 @@ function buildArtifactGovernanceAnswer(args: {
       : `The current evidence shows ${draftName}, but does not confirm a client-uploaded final artifact.`;
   } else if (/\b(history|lineage)\b/.test(text)) {
     lead = clientFinal
-      ? `${finalName} is the current authoritative RFP artifact in the File Cabinet, and ${draftName} remains preserved in history for lineage.`
+      ? `${finalName} is the current authoritative ${artifactLabelLower} artifact in the File Cabinet, and ${draftName} remains preserved in history for lineage.`
       : `${draftName} is visible in the File Cabinet artifact lineage; a client-final authoritative version is not confirmed.`;
   } else if (/\b(advance|stage)\b/.test(text)) {
     lead = artifactIsReady
       ? `The RFP artifact finality condition is satisfied: ${finalName} is client-final, current authoritative, and Blob-backed.`
-      : `Do not advance on artifact finality alone yet; the registry does not fully confirm a Blob-backed client-final authoritative RFP.`;
+      : `Do not advance on artifact finality alone yet; the registry does not fully confirm a Blob-backed client-final authoritative ${artifactLabelLower}.`;
   } else {
     lead = clientFinal
-      ? `${finalName} is the final RFP version of record.`
-      : `${draftName} is the available RFP draft; a client-final authoritative RFP is not confirmed.`;
+      ? `${finalName} is the final ${artifactLabel} version of record.`
+      : `${draftName} is the available ${artifactLabelLower} draft; a client-final authoritative ${artifactLabelLower} is not confirmed.`;
   }
 
   const lineage = clientFinal
     ? generatedDraft
-      ? `Lineage: AbarVa generated the draft as ${draftName}; the client uploaded ${finalName}; the File Cabinet marks the client-final version as superseding the generated draft for vendor issuance, while the generated draft remains preserved in history.`
+      ? `Lineage: AbarVa-generated draft ${draftName} remains preserved; the client uploaded ${finalName}; the File Cabinet marks the client-final version as superseding the generated draft for vendor issuance, while the generated draft remains preserved in history.`
       : `Lineage: ${finalName} is marked client-final; the prior generated draft is not visible in the current answer evidence slice.`
     : `Lineage: ${draftName} remains available, but the client-final handoff is not confirmed.`;
   const authority = clientFinal
@@ -1259,8 +1270,8 @@ function buildArtifactGovernanceAnswer(args: {
       .join("\n"),
     currentStateFindings: [
       clientFinal
-        ? `${finalName} is the current client-final RFP artifact.`
-        : "No client-final authoritative RFP artifact is confirmed.",
+        ? `${finalName} is the current client-final ${artifactLabelLower} artifact.`
+        : `No client-final authoritative ${artifactLabelLower} artifact is confirmed.`,
       generatedDraft
         ? `${draftName} remains preserved as generated draft history.`
         : "Prior generated draft lineage is not visible in the current evidence slice.",
@@ -1276,9 +1287,34 @@ function buildArtifactGovernanceAnswer(args: {
       "Do not bypass remaining Source gate criteria or named human approval just because the final file exists.",
     ],
     recommendedNextAction: artifactIsReady
-      ? "Use the client-final RFP for downstream issuance and keep the generated draft in history for audit lineage."
-      : "Accept a client-final RFP artifact and confirm it is current authoritative before issuing to vendors.",
+      ? `Use the client-final ${artifactLabelLower} for downstream issuance and keep the generated draft in history for audit lineage.`
+      : `Accept a client-final ${artifactLabelLower} artifact and confirm it is current authoritative before issuing to vendors.`,
   };
+}
+
+function inferRequestedArtifactAuthorityType(text: string): string | null {
+  if (
+    /\b(rfp|request for proposal|vendor issuance|vendors? receive|release package)\b/.test(
+      text,
+    )
+  ) {
+    return "d09_rfp_pack";
+  }
+  if (/\b(scope memo|scope document|scope version|scope pack)\b/.test(text)) {
+    return "d05_scope_memo";
+  }
+  return null;
+}
+
+function getArtifactAuthorityLabel(artifactType?: string | null): string {
+  switch (artifactType) {
+    case "d05_scope_memo":
+      return "Scope Memo";
+    case "d09_rfp_pack":
+      return "RFP";
+    default:
+      return "artifact";
+  }
 }
 
 function parseArtifactGovernanceRecord(
