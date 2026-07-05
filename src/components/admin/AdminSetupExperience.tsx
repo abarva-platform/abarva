@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 
 import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
+import { ClassificationTriageQueue } from "@/components/admin/context-layer/ClassificationTriageQueue";
 import type { LoadStudioView } from "@/lib/admin/setup-load-studio-view";
 
 type AdminSetupTab =
@@ -245,8 +246,8 @@ function LoadedFilesTable({ files }: { files: LoadedSourceFile[] }) {
   );
 }
 
-function DataArea(props: AdminSetupExperienceProps) {
-  const [pane, setPane] = useState<DataPane>("load");
+function DataArea(props: AdminSetupExperienceProps & { initialPane?: DataPane }) {
+  const [pane, setPane] = useState<DataPane>(props.initialPane ?? "load");
   const [loadMode, setLoadMode] = useState<LoadMode>("package");
   const { clientId, tenantKey, tenantName, sourceFiles, view } = props;
 
@@ -334,6 +335,40 @@ function DataArea(props: AdminSetupExperienceProps) {
               <span>{view.metrics[3]?.value ?? "—"}</span>
             </div>
           </div>
+          {/*
+            Classification confirm queue. Loaded rows land as
+            NEEDS_CLASSIFICATION / lifecycle 'review' and are NOT retrievable
+            until an operator classifies them here — this is the step that
+            makes loaded context answerable. Previously the only UI for it
+            (ClassificationTriageQueue at /admin/context-layer/triage) was
+            orphaned by the /admin/* -> /admin route consolidation in proxy.ts,
+            so classify regressed out of the new Setup shell. Surfaced here in
+            the canon Data > Confirm pane where the Overview "Confirm uncertain
+            mappings" CTA already routes.
+          */}
+          <div
+            style={{
+              margin: "18px 0 10px",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            <strong
+              style={{
+                fontFamily: "Georgia, serif",
+                fontSize: 18,
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
+              Confirm what AbarVa understood
+            </strong>
+            <p style={{ margin: 0, color: "#6b665c", fontSize: 14, lineHeight: 1.6 }}>
+              Classify each loaded record below to make its context answerable.
+              Records stay in review — not retrievable — until confirmed. When
+              the queue is clear, prove it with a cited question in Intelligence.
+            </p>
+          </div>
+          <ClassificationTriageQueue />
           <LoadedFilesTable files={sourceFiles} />
         </div>
       ) : null}
@@ -352,8 +387,13 @@ function DataArea(props: AdminSetupExperienceProps) {
   );
 }
 
-function Overview(props: AdminSetupExperienceProps & { openData: () => void }) {
-  const { view, tenantName, sourceFiles, openData } = props;
+function Overview(
+  props: AdminSetupExperienceProps & {
+    openData: () => void;
+    openConfirm: () => void;
+  },
+) {
+  const { view, tenantName, sourceFiles, openData, openConfirm } = props;
   const loadedDimensions = view.readiness.length;
   const blockerMetric = view.metrics.find(
     (metric) => metric.label === "Needs attention",
@@ -444,9 +484,9 @@ function Overview(props: AdminSetupExperienceProps & { openData: () => void }) {
           <SetupRow
             state={sourceFiles.length ? "active" : "waiting"}
             title="Confirm uncertain mappings"
-            detail="AbarVa should ask for missing context instead of exposing schema jargon."
-            action="Open data"
-            onClick={openData}
+            detail="Classify loaded records so their context becomes answerable — they stay in review until confirmed."
+            action="Confirm"
+            onClick={openConfirm}
           />
           <SetupRow
             state={loadedDimensions ? "active" : "waiting"}
@@ -497,6 +537,18 @@ function SimplePanel({
 
 export function AdminSetupExperience(props: AdminSetupExperienceProps) {
   const [tab, setTab] = useState<AdminSetupTab>("overview");
+  // Which Data sub-pane to open when jumping into the Data section. Lets the
+  // Overview "Confirm uncertain mappings" CTA land directly on the classify
+  // queue instead of the default Load pane.
+  const [dataInitialPane, setDataInitialPane] = useState<DataPane>("load");
+  const openData = () => {
+    setDataInitialPane("load");
+    setTab("data");
+  };
+  const openConfirm = () => {
+    setDataInitialPane("confirm");
+    setTab("data");
+  };
   const activeNav = useMemo(
     () => navItems.find((item) => item.id === tab),
     [tab],
@@ -953,18 +1005,18 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
             <div className="setup-top-actions">
               <GhostButton>Help</GhostButton>
               {tab !== "data" ? (
-                <PrimaryButton onClick={() => setTab("data")}>
-                  Add data
-                </PrimaryButton>
+                <PrimaryButton onClick={openData}>Add data</PrimaryButton>
               ) : null}
             </div>
           </div>
 
           {tab === "overview" ? (
-            <Overview {...props} openData={() => setTab("data")} />
+            <Overview {...props} openData={openData} openConfirm={openConfirm} />
           ) : null}
 
-          {tab === "data" ? <DataArea {...props} /> : null}
+          {tab === "data" ? (
+            <DataArea {...props} initialPane={dataInitialPane} />
+          ) : null}
 
           {tab === "users" ? (
             <SimplePanel
