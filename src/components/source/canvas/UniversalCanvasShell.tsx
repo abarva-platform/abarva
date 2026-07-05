@@ -231,6 +231,7 @@ function renderStageDocumentContent({
   decisionBriefDocxHref,
   decisionBriefPdfHref,
   eventDisplayName,
+  registryArtifacts,
   criteria,
   evidence,
   activityEntries,
@@ -256,11 +257,13 @@ function renderStageDocumentContent({
   decisionBriefDocxHref?: string;
   decisionBriefPdfHref?: string;
   eventDisplayName?: string;
+  registryArtifacts?: SourceArtifactRegistryRecord[];
 }) {
   if (viewStage === "strategy") {
     return (
       <StrategyStageView
         artifacts={stageArtifacts}
+        registryArtifacts={registryArtifacts}
         selectedCode={selectedDocCode}
         onSelectCode={onSelectCode}
         documentWorkspace={documentTabContent}
@@ -405,6 +408,30 @@ export function UniversalCanvasShell({
   );
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const messageSequenceRef = useRef(0);
+
+  // Persist aVa chat history for this event across stage navigation.
+  // Key is event-scoped so switching events always starts fresh.
+  const chatStorageKey = `source-chat-${event.id}`;
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(chatStorageKey);
+      if (raw) {
+        const parsed: ChatMessage[] = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) setThread(parsed);
+      }
+    } catch {
+      // sessionStorage unavailable or corrupt — start fresh
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatStorageKey]);
+  useEffect(() => {
+    if (thread.length === 0) return;
+    try {
+      sessionStorage.setItem(chatStorageKey, JSON.stringify(thread));
+    } catch {
+      // quota exceeded or unavailable — ignore
+    }
+  }, [chatStorageKey, thread]);
   const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(
     undefined,
   );
@@ -1080,6 +1107,7 @@ export function UniversalCanvasShell({
         criteria: stageCriteria,
         evidence: stageEvidence,
         activityEntries,
+        registryArtifacts: registryArtifactsState,
       }),
     },
     {
@@ -1375,6 +1403,28 @@ export function UniversalCanvasShell({
                       currentStage={event.currentStageKey}
                       viewStage={viewStage}
                     />
+                  ) : null}
+                  {viewStage !== event.currentStageKey ? (
+                    <div
+                      data-testid="source-canvas-preview-banner"
+                      style={{
+                        marginBottom: 14,
+                        padding: "10px 14px",
+                        background: "#FFF8F0",
+                        border: "1px solid #F5C98A",
+                        borderRadius: 8,
+                        fontFamily: "var(--font-sans, system-ui)",
+                        fontSize: 13,
+                        lineHeight: 1.5,
+                        color: "#7A4A00",
+                      }}
+                    >
+                      <strong>Previewing{" "}
+                      {SOURCE_STAGE_LABELS[viewStage] ?? viewStage}.</strong>{" "}
+                      You are in the{" "}
+                      {SOURCE_STAGE_LABELS[event.currentStageKey] ?? event.currentStageKey}{" "}
+                      stage. Clear all gate criteria there before working this stage.
+                    </div>
                   ) : null}
                   {simpleFrontWorkspace ?? advancedWorkspace}
                 </div>
