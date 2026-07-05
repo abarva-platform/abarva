@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower could show value and renewal "gap" states when its older AI Control Tower refresh tables or context projection did not contain Tower-shaped rows, even though the validated V7 intelligence substrate contained spend, initiative value, measured AI value, vendor renewal, and evidence records. This release adds a V7-to-Tower bridge so Tower reads the validated V7 substrate before falling back to older projections or synthetic demo states. It also fixes the live Lakeshore masking case where partial old Tower spend rows existed and caused the read model to stop before checking V7.
+Tower could show value and renewal "gap" states when its older AI Control Tower refresh tables, CIO Tower metric tables, materialized Tower read-model tables, or context projection did not contain Tower-shaped rows, even though the validated V7 intelligence substrate contained spend, initiative value, measured AI value, vendor renewal, and evidence records. This release adds a V7-to-Tower bridge so Tower reads the validated V7 substrate before falling back to older projections or synthetic demo states. It also fixes the live Lakeshore masking case where partial old Tower spend rows existed and caused the first read-model path to stop before checking V7, and the visible `/tower` page path still ignored V7.
 
 ## Layer Impact
 
@@ -33,9 +33,20 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
   - Gives V7 precedence over the older context projection so V7-loaded tenants do not show false gap states.
   - Supplements partial committed Tower rows with V7 records instead of treating any old spend row as a complete Tower substrate.
   - Ignores `data_thin:*` placeholders as executive-facing values.
+- `src/lib/tower/v7-tower-projection.ts`
+  - Adds a read-only V7 projection for the visible Tower dashboard path.
+  - Maps V7 program, AI initiative, vendor contract, and spend/value records into the existing Tower UI initiative/vendor/metric-packet contracts.
+  - Canonicalizes the app's `lakeshore-holdings` tenant alias to the loaded V7 key `lakeshore-industries`.
+- `src/lib/atlas/tower-grounding.ts`
+  - Uses the V7 Tower projection when the older materialized Tower page rows are empty or lack program/vendor value.
+  - Runs supporting-row, band-metric, pressure, and 2x2 logic against the V7-backed visible Tower state.
+- `src/lib/cio-tower/metric-packet-store.ts`
+  - Supplements missing CIO Tower metric packets from V7-derived runtime packets so the KPI strip does not show false value gaps.
 - `src/lib/ai-control-tower/__tests__/read-model.test.ts`
   - Adds a Lakeshore V7 regression test proving value, spend, benefits, and renewal date are mapped instead of rendering false empty/gap states.
   - Adds a regression for the live failure mode: committed spend rows exist, portfolio/value/vendor rows are missing, and V7 must fill the missing Tower model slices.
+- `src/lib/tower/__tests__/v7-tower-projection.test.ts`
+  - Adds a visible-page seam regression proving Lakeshore V7 records produce Tower initiatives, vendor renewal exposure, and non-gap metric packets.
 
 ## QA / Validation
 
@@ -43,6 +54,8 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
 - Pass: `npx jest src/lib/ai-control-tower/__tests__/read-model.test.ts --runInBand -t "maps validated V7"`
 - Pass: `npx jest src/lib/ai-control-tower/__tests__/read-model.test.ts --runInBand -t "supplements partial"`
 - Pass: `npx jest src/lib/ai-control-tower/__tests__/read-model.test.ts --runInBand`
+- Pass: `npx eslint src/lib/tower/v7-tower-projection.ts src/lib/atlas/tower-grounding.ts src/lib/cio-tower/metric-packet-store.ts src/lib/tower/__tests__/v7-tower-projection.test.ts`
+- Pass: `npx jest src/lib/tower/__tests__/v7-tower-projection.test.ts --runInBand`
 - Pass: `npm run release:check`
 
 ## Rollout Plan
@@ -62,7 +75,8 @@ Revert this release commit to restore the previous Tower read-model order. No mi
 - Local lint output listed above.
 - Targeted V7 regression output listed above.
 - First deployed bridge proof showed ACA deployment succeeded but signed-in Lakeshore `/tower` still rendered false gaps because old partial Tower rows masked V7. This record now includes the follow-up hotfix and regression coverage for that masking path.
-- Post-deploy audit still required after the hotfix: active ACA revision/image digest plus signed-in browser proof that Lakeshore Tower no longer renders false `gap` states when V7 records exist.
+- The follow-up visible-page binding is required because signed-in browser proof after the first hotfix still showed false `gap` states on `/tower`.
+- Post-deploy audit still required after the visible-page binding: active ACA revision/image digest plus signed-in browser proof that Lakeshore Tower no longer renders false `gap` states when V7 records exist.
 
 ## Context Ingestion Evidence
 
@@ -77,8 +91,8 @@ No new ingestion is performed by this release. It consumes existing V7 records a
 - Review/approval queue: Not applicable.
 - Client data-plane commit: Existing V7 load, not part of this release.
 - Embedding/search refresh: Not applicable.
-- Live signed-in retrieval or answer QA: First bridge deployment failed signed-in Lakeshore Tower proof; hotfix browser proof still required.
+- Live signed-in retrieval or answer QA: First bridge deployment and first hotfix deployment failed signed-in Lakeshore Tower proof for the visible page; visible-page binding browser proof still required.
 
 ## Known Gaps
 
-- Hotfix production/browser proof has not been run yet.
+- Visible-page V7 binding production/browser proof has not been run yet.

@@ -5,6 +5,7 @@ import {
   type CioTowerMetricPacket,
   type CioTowerMetricResultLike,
 } from '@/lib/cio-tower/metric-packet';
+import { loadV7TowerProjection } from '@/lib/tower/v7-tower-projection';
 
 export async function loadCioTowerMetricPackets(tenantKey: string | readonly string[]): Promise<CioTowerMetricPacket[]> {
   const tenantKeys = Array.isArray(tenantKey) ? tenantKey : [tenantKey];
@@ -26,5 +27,22 @@ export async function loadCioTowerMetricPackets(tenantKey: string | readonly str
     [canonicalTenantKeys],
     { missingTable: 'empty' },
   );
-  return rows.map(toCioTowerMetricPacket);
+  const packets = rows.map(toCioTowerMetricPacket);
+  const hasPortfolioValue =
+    packets.some((packet) => packet.measureKey === 'initiative_budget_fy26' && packet.valueNumeric !== null) &&
+    packets.some((packet) => packet.measureKey === 'measured_value_ytd' && packet.valueNumeric !== null);
+  if (hasPortfolioValue) return packets;
+
+  const v7Projection = await loadV7TowerProjection({
+    tenantKeyCandidates: tenantKeys,
+  }).catch(() => null);
+  if (!v7Projection || v7Projection.source !== 'intelligence_v7') return packets;
+
+  const byMeasure = new Map(packets.map((packet) => [packet.measureKey, packet]));
+  for (const packet of v7Projection.metricPackets) {
+    if (!byMeasure.get(packet.measureKey)?.valueNumeric && packet.valueNumeric !== null) {
+      byMeasure.set(packet.measureKey, packet);
+    }
+  }
+  return Array.from(byMeasure.values());
 }
