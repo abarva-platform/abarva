@@ -35,9 +35,25 @@ jest.mock("@/lib/tower/tower-budget-rollups", () => ({
   shapeTowerBudgetRollupsFromInitiatives: jest.fn(() => []),
 }));
 
+const mockLoadV7TowerProjection = jest.fn(async (_arg: unknown) => ({
+  tenantKey: null,
+  source: "empty",
+  initiatives: [],
+  vendors: [],
+  metricPackets: [],
+}));
+
+jest.mock("@/lib/tower/v7-tower-projection", () => ({
+  loadV7TowerProjection: (arg: unknown) => mockLoadV7TowerProjection(arg),
+}));
+
 import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 
 describe("buildAtlasTowerCurrentState client labels", () => {
+  beforeEach(() => {
+    mockLoadV7TowerProjection.mockClear();
+  });
+
   it("canonicalizes legacy demo client labels before Tower prompts use them", async () => {
     const state = await buildAtlasTowerCurrentState({
       clientId: "client-skyharbor",
@@ -46,5 +62,28 @@ describe("buildAtlasTowerCurrentState client labels", () => {
 
     expect(state.client.clientName).toBe("SkyHarbor Air");
     expect(state.client.clientName).not.toBe("Airline Demo");
+  });
+
+  it("passes active-client tenant candidates into the V7 Tower projection", async () => {
+    await buildAtlasTowerCurrentState({
+      clientId: "client-lakeshore",
+      clientKey: "industrial-demo",
+      clientName: "Lakeshore Holdings",
+      tenantKeyCandidates: [
+        "industrial-demo",
+        "Lakeshore Holdings",
+        "client-lakeshore",
+      ],
+    });
+
+    expect(mockLoadV7TowerProjection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantKeyCandidates: expect.arrayContaining([
+          "industrial-demo",
+          "Lakeshore Holdings",
+          "client-lakeshore",
+        ]),
+      }),
+    );
   });
 });
