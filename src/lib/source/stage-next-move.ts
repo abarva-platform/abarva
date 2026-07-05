@@ -36,6 +36,11 @@ export interface StageNextMoveView {
    * place ("Draft with aVa") instead of navigating away.
    */
   draftArtifactCode?: string;
+  /**
+   * aVa orientation message shown once when the user first opens this stage
+   * with an empty chat thread. Explains what to do and why.
+   */
+  stageOrientation?: string;
 }
 
 export interface ResolveStageNextMoveInput {
@@ -52,6 +57,8 @@ type StageDraftConfig = {
   draftedGateTitle?: string;
   evidenceTitle?: string;
   evidencePrimary?: string;
+  // Shown by aVa once when the user first opens a fresh stage (empty chat thread).
+  stageOrientation?: string;
 };
 
 const STAGE_DRAFT_CONFIG: Partial<Record<SourceStageKey, StageDraftConfig>> = {
@@ -59,27 +66,33 @@ const STAGE_DRAFT_CONFIG: Partial<Record<SourceStageKey, StageDraftConfig>> = {
     artifactCodes: ["d01_strategy_memo"],
     draftTitle: "Draft your Sourcing Strategy Memo",
     draftBody:
-      "aVa drafts from the event facts: why now, scope, value target, archetype, and rigor. You review before anything external uses it.",
+      "I'll draft the memo from your intake facts — trigger, scope, value target, archetype, and rigor level. Takes about 60 seconds. You review before anything leaves this workspace.",
     draftPrimary: "Draft with aVa",
     draftedGateTitle: "Clear gates: sponsor sign-off, value target, archetype",
+    stageOrientation:
+      "You're at **Strategy** — the stage that establishes why this event exists, what it covers, and how it will be run before any vendor sees it.\n\n**What to do here:**\n\n1. **Click 'Draft with aVa' above.** I'll build the Sourcing Strategy Memo from your intake facts in about 60 seconds. You review and refine before it goes anywhere.\n\n2. **Review the draft in the Document tab.** Request edits on anything that doesn't match your intent — scope boundary, value target, decision authority.\n\n3. **Clear 3 gate criteria in the left sidebar:**\n   - *Sourcing strategy memo signed by sponsor* — the decision owner (CIO in this case) has reviewed and approved\n   - *Value target set with range and confidence band* — the savings or outcome target is documented with a range\n   - *Archetype confirmed* — the sourcing type and rigor level are locked\n\n4. **Advance to Scope** unlocks when all 3 are green.\n\nStart with **Draft with aVa** — the memo is the anchor for everything that follows.",
   },
   scope: {
     artifactCodes: ["d04_app_inv", "d05_scope_memo"],
     draftTitle: "Build the application inventory",
     draftBody:
-      "Confirm what is in scope, what is out, and which baseline sources support the boundary before RFP work begins.",
+      "Lock exactly what's in and what's out — apps, towers, services, carve-outs — with named evidence sources. The Scope Memo becomes the RFP's foundation; vendors can only respond to what you define here.",
     draftPrimary: "Open scope documents",
     draftedGateTitle: "Clear scope gates before RFP drafting",
     evidenceTitle: "Request the missing scope evidence",
     evidencePrimary: "Open evidence",
+    stageOrientation:
+      "You're at **Scope** — this stage draws the hard boundary that the RFP will be built on. Vendors respond only to what's defined here, so vagueness now becomes ambiguity in proposals.\n\n**What to do here:**\n\n1. **Open Scope Documents** (button above). Start with the Application Inventory — list every app, assign in/out, and name the baseline source (ticket data, CMDB, asset register).\n\n2. **Draft the Scope Memo.** Once the inventory is shaped, the memo locks the boundary in writing: what services are in scope, what's carved out, and why.\n\n3. **Upload baseline evidence** if you have it — current ticket volumes, SLA history, cloud spend breakdowns. These fill gaps in the memo and feed the RFP.\n\n4. **Clear scope gate criteria** in the left sidebar — scope boundary approved, app inventory signed off — then advance to RFP.\n\nThe most common mistake at this stage: leaving the application inventory vague. If a vendor can't tell whether something is in scope, they'll assume it is and price accordingly.",
   },
   rfp: {
     artifactCodes: ["d09_rfp_pack", "d11_response_checklist"],
     draftTitle: "Draft the RFP and response-control pack",
     draftBody:
-      "Prepare the vendor-facing requirements and the structured response package vendors must complete, so proposals arrive comparable, evidence-backed, and negotiation-ready.",
+      "I'll build the vendor-facing requirements and the structured response pack vendors must complete — so proposals arrive comparable, evidence-backed, and ready for scoring.",
     draftPrimary: "Draft with aVa",
     draftedGateTitle: "Sponsor/procurement sign-off required before release",
+    stageOrientation:
+      "You're at **RFP** — the stage that puts your sourcing event in front of vendors. What you send defines what comes back.\n\n**What to do here:**\n\n1. **Click 'Draft with aVa' above.** I'll build the RFP and response-control pack from your Strategy and Scope outputs. The response-control pack tells vendors exactly how to structure their proposals so you can compare apples to apples.\n\n2. **Review both documents.** Check that requirements are precise — vague requirements invite vague responses. SLA terms, pricing structure, transition obligations, and liability caps should all be explicit.\n\n3. **Get sponsor and procurement sign-off** (gate criteria) before the RFP goes to vendors. Once it's out, changes are difficult.\n\n4. **Release to vendors** — the procurement lead owns vendor communications from this point.\n\nThe RFP's quality determines how much leverage you have in evaluation. An RFP that requires structured pricing and specific SLA evidence gives you far more to work with than an open-ended one.",
   },
   responses: {
     artifactCodes: ["d11_response_checklist"],
@@ -221,6 +234,7 @@ export function resolveStageNextMove({
       gateSummary: buildGateSummary(gates),
       nextStage,
       draftArtifactCode: config.artifactCodes[0],
+      stageOrientation: config.stageOrientation,
     };
   }
 

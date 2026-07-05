@@ -865,6 +865,22 @@ export function UniversalCanvasShell({
     artifactStateMap,
   ]);
 
+  // Stage orientation: when the user first opens a fresh event (empty chat
+  // thread, no session history), aVa greets with a plain-language explanation
+  // of what to do at this stage and why. Fires once per event per browser
+  // session (the ref + sessionStorage guard it).
+  const orientationFiredRef = useRef(false);
+  useEffect(() => {
+    if (orientationFiredRef.current) return;
+    if (thread.length > 0) return; // session history already loaded
+    const orientation = nextMove.stageOrientation;
+    if (!orientation) return;
+    orientationFiredRef.current = true;
+    setThread([{ id: "orientation-0", role: "agent", body: orientation }]);
+  // nextMove changes on every render; the ref guard makes this fire once.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextMove.stageOrientation, thread.length]);
+
   const handleArtifactBodySave = async (
     code: string,
     body: string,
