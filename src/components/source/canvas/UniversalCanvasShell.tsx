@@ -1377,9 +1377,9 @@ export function UniversalCanvasShell({
             fromStage={viewStage}
             states={stageCriteria}
             allCriteria={liveGateCriterionStates}
-            onChangeCriterionState={handleCriterionStateChange}
+            onChangeCriterionState={(cid, next) => handleCriterionStateChange(cid, next, '')}
             pendingByCriterionId={pendingCriterionByCriterionId}
-            onPromoteStage={handlePromoteStage}
+            onPromoteStage={(stage) => handlePromoteStage(stage, `Advanced from gate sidebar to ${stage}`)}
             promotePending={promotePending}
           />
           <div style={WORKSPACE_COLUMN_STYLE}>
@@ -1422,7 +1422,7 @@ export function UniversalCanvasShell({
             <AvaBottomBar
               agentName={displayAgentName(dockAgent)}
               thread={thread}
-              onMessage={handleAgentMessage}
+              onMessage={(text) => handleAgentMessage(text, [])}
               suggestedActions={suggestedActions}
             />
           </div>
