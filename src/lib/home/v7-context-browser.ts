@@ -211,7 +211,7 @@ export async function getHomeV7ContextBrowser(args: {
       const columns = columnsByDimension.get(dimension.dimension_key) ?? [];
       const records = recordsByDimension.get(dimension.dimension_key) ?? [];
 
-      const label = dimension.dimension_label;
+      const label = friendlyDimensionLabel(dimension.dimension_key, dimension.dimension_label);
       const displayColumns = previewColumns(dimension, columns, records);
       const sourceRows = records.map((row) =>
         toSourceRow(dimension, row, displayColumns),
@@ -336,7 +336,7 @@ function toSourceRow(
     label:
       meaningfulLabel(display(row.record_name)) ||
       meaningfulLabel(display(firstMeaningfulValue(row.values_json))) ||
-      `${dimension.dimension_label} source row ${row.source_row_number}`,
+      `${friendlyDimensionLabel(dimension.dimension_key, dimension.dimension_label)} source row ${row.source_row_number}`,
     values: Object.fromEntries(
       columns.map((column) => [
         column.label,
@@ -577,7 +577,51 @@ function gapHowItHelps(label: string, moduleUse: string | null | undefined): str
   return `Once supplied, ${label.toLowerCase()} helps Home answer more precisely and helps downstream modules use the row without guessing.`;
 }
 
+// Plain-English overrides for dimension display names that would otherwise
+// read as database/engineering jargon to an average CXO ("Chunk / Retrieval
+// Registry", "Graph Registry / Relationship Dictionary"...). Applied on top of
+// the authored dimension_label; dimensions not listed here keep their
+// existing label (most V7 labels are already plain business language).
+const FRIENDLY_DIMENSION_LABELS: Record<string, string> = {
+  v7_12_relationships_graph_edges: "System & Business Relationships",
+  v7_13_source_evidence_registry: "Source Documents & Evidence",
+  v7_15_industry_market_knowledge_patterns: "Industry & Market Patterns",
+  v7_18_function_system_data_vendor_bridge: "Cross-Function Dependencies",
+  v7_20_chunk_retrieval_registry: "AI Search Coverage",
+  v7_21_graph_registry_relationship_dictionary: "Relationship Types Reference",
+  v7_22_operational_evidence_process_intelligence: "Operational Evidence",
+  v7_23_external_benchmark_market_corpus: "Industry Benchmarks",
+};
+
+function friendlyDimensionLabel(dimensionKey: string, dimensionLabel: string): string {
+  return FRIENDLY_DIMENSION_LABELS[dimensionKey] ?? dimensionLabel;
+}
+
+// Plain-English overrides for column labels that would otherwise read as
+// database/graph-engineering jargon ("Edge Type", "Object Ref", "Semantic
+// Tags"...) regardless of what column_registry.client_field says. Keyed by
+// the raw column_name so the override applies everywhere that column appears,
+// across every dimension.
+const FRIENDLY_COLUMN_LABELS: Record<string, string> = {
+  entity_name: "Company / Unit",
+  parent_entity_name: "Parent Company",
+  edge_type: "Relationship Type",
+  allowed_from: "From",
+  allowed_to: "To",
+  inverse_label: "Reverse Relationship",
+  function_ref: "Function",
+  object_ref: "Connected To",
+  source_artifact_ref: "Source Document",
+  semantic_tags: "Topics",
+  retrieval_eligibility: "Searchable by aVa",
+  business_or_it_org: "Org Type (Business/IT)",
+  capture_level: "Detail Level",
+  loaded_cost_multiplier: "Cost Multiplier",
+};
+
 function clientLabel(columns: V7ColumnRow[], column: string): string {
+  const friendly = FRIENDLY_COLUMN_LABELS[column];
+  if (friendly) return friendly;
   const meta = columns.find((item) => item.column_name === column);
   return humanize(meta?.client_field || column);
 }
@@ -623,13 +667,18 @@ function isInternalOnlyColumn(column: string): boolean {
 }
 
 // Columns that must never be auto-selected as preview fillers: internal keys,
-// generic structural fields shared by every dimension, provenance/lineage, and
-// relationship-reference pointers. Columns explicitly listed in PREVIEW_COLUMNS
-// bypass this (they are chosen before the fallback runs).
+// generic structural fields shared by every dimension, provenance/lineage,
+// relationship-reference pointers, and raw identifiers (chunk_id and any
+// other *_id column). Raw ids are internal row identifiers, not a business
+// fact a CXO should see rendered as a data column. Columns explicitly listed
+// in PREVIEW_COLUMNS bypass this check (they are chosen before the fallback
+// runs), so a dimension can still deliberately show its own id column if a
+// human author decides to.
 function isNonPreviewColumn(column: string): boolean {
   return (
     isInternalOnlyColumn(column) ||
     /_refs?$/i.test(column) ||
+    /_id$/i.test(column) ||
     /^(entity_scope|parent_entity_name|used_by_entities|shared_service_flag|budget_ownership_model|known_gaps|data_provider_name|data_provider_role|source_artifact_type|source_artifact_name|capture_method|extraction_method|generated_by|validated_by|source_validation_status|source_as_of_date)$/i.test(
       column,
     )

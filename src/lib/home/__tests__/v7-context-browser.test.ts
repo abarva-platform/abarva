@@ -167,6 +167,112 @@ function routingSession(opts: {
     });
 }
 
+function chunkRegistrySession(): SessionRunner {
+  const dim = "v7_20_chunk_retrieval_registry";
+  return async (fn) =>
+    fn(async <R>(sql: string, params: unknown[]) => {
+      if (sql.includes("from intelligence_v7.tenant_pack_runs")) {
+        return [
+          {
+            tenant_key: params[0],
+            tenant_name: "Lakeshore Holdings",
+            contract_version: "v7.0.0-synthetic-depth-v2-20260703",
+            source_dataset: "lakeshore",
+            load_status: "validated",
+            file_count: 24,
+            row_count: 500,
+            field_count: 1000,
+            graph_node_count: 10,
+            relationship_edge_count: 10,
+            chunk_count: 500,
+            loaded_at: "2026-07-03T00:00:00.000Z",
+          },
+        ] as R[];
+      }
+      if (sql.includes("from intelligence_v7.dimension_registry")) {
+        return [
+          {
+            dimension_key: dim,
+            dimension_file: "V7_20_chunk_retrieval_registry.csv",
+            // Raw authored label — this is the jargon string that must be
+            // overridden for the CXO-facing display everywhere it's used.
+            dimension_label: "Chunk / Retrieval Registry",
+            column_count: 8,
+            record_count: 500,
+            source_files: 1,
+          },
+        ] as R[];
+      }
+      if (sql.includes("from intelligence_v7.column_registry")) {
+        return [
+          { dimension_key: dim, column_name: "source_artifact_ref", client_field: "Source artifact ref", client_instruction: "", module_use: "" },
+          { dimension_key: dim, column_name: "semantic_tags", client_field: "Semantic tags", client_instruction: "", module_use: "" },
+          { dimension_key: dim, column_name: "retrieval_eligibility", client_field: "Retrieval eligibility", client_instruction: "", module_use: "" },
+          { dimension_key: dim, column_name: "chunk_id", client_field: "Chunk id", client_instruction: "", module_use: "" },
+          { dimension_key: dim, column_name: "entity_name", client_field: "Entity name", client_instruction: "", module_use: "" },
+        ] as R[];
+      }
+      if (sql.includes("from intelligence_v7.business_records")) {
+        return [
+          {
+            dimension_key: dim,
+            record_key: "hidden",
+            record_name: null,
+            source_file: "V7_20_chunk_retrieval_registry.csv",
+            source_row_number: 2,
+            source_artifact_name: "application-inventory.xlsx",
+            source_validation_status: "validated",
+            values_json: {
+              source_artifact_ref: "application-inventory.xlsx",
+              semantic_tags: "industrial holdco; corporate finance",
+              retrieval_eligibility: "eligible",
+              chunk_id: "lakeshore-industries-v2-chunk-00003",
+              entity_name: "Lakeshore Holdings",
+            },
+          },
+        ] as R[];
+      }
+      return [] as R[];
+    });
+}
+
+describe("getHomeV7ContextBrowser — plain-English labels for CXO readability", () => {
+  it("renames jargon dimension labels and column headers to plain English", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "lakeshore",
+      session: chunkRegistrySession(),
+    });
+
+    // The dropdown/header/binding-context label is the friendly override, not
+    // the raw authored "Chunk / Retrieval Registry" string.
+    expect(browser?.bindingContext?.[0]?.dimension).toBe("AI Search Coverage");
+    const preview = browser?.dimensions["AI Search Coverage"];
+    expect(preview).toBeDefined();
+
+    const labels = preview!.columns.map((column) => column.label);
+    expect(labels).toContain("Source Document");
+    expect(labels).toContain("Topics");
+    expect(labels).toContain("Searchable by aVa");
+    expect(labels).toContain("Company / Unit");
+    // Raw jargon/DB-derived labels must not leak through.
+    expect(labels).not.toContain("Source Artifact Ref");
+    expect(labels).not.toContain("Semantic Tags");
+    expect(labels).not.toContain("Retrieval Eligibility");
+    expect(labels).not.toContain("Entity Name");
+  });
+
+  it("never surfaces a raw chunk_id (or any *_id column) as a preview column", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "lakeshore",
+      session: chunkRegistrySession(),
+    });
+    const preview = browser?.dimensions["AI Search Coverage"];
+    const keys = preview!.columns.map((column) => column.key);
+    expect(keys).not.toContain("chunk_id");
+    expect(JSON.stringify(preview)).not.toContain("lakeshore-industries-v2-chunk-00003");
+  });
+});
+
 describe("getHomeV7ContextBrowser — evidence-gap scoping", () => {
   it("counts gaps from the Required+Recommended required_level contract query", async () => {
     const browser = await getHomeV7ContextBrowser({
