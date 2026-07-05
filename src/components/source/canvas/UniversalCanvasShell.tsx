@@ -138,6 +138,8 @@ import {
   type SuggestedAction,
 } from "@/components/agent/AgentDock";
 import { SentinelChatProportional } from "./SentinelChatProportional";
+import { CanvasGateSidebar } from "./CanvasGateSidebar";
+import { AvaBottomBar } from "./AvaBottomBar";
 import { EventIdStrip } from "./EventIdStrip";
 import { EventStepRail } from "./EventStepRail";
 import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
@@ -1370,68 +1372,60 @@ export function UniversalCanvasShell({
             />
           ) : null}
         </div>
-        <div style={SPLITTER_WRAPPER_STYLE}>
-          <SentinelChatProportional
-            agent={{
-              initials: displayAgentInitials(dockAgent),
-              name: displayAgentName(dockAgent),
-              role: AGENT_DOCK_ROLE_COPY[dockAgent],
-            }}
-            stage={viewStage}
-            artifacts={stageArtifacts}
-            surface="source/events/canvas"
-            surfaceContext={{
-              sourceEventId: event.id,
-              sourceEventCode: event.code,
-              viewStage,
-            }}
-            suggestedActions={suggestedActions}
-            thread={thread}
-            onMessage={handleAgentMessage}
-            workspace={
-              // Audit M2: CanvasContextStrip removed — it restated Readiness,
-              // Artifacts, and Evidence counts already shown in the tab badges
-              // (Gate N/M, Document N, Evidence N/M). One status conveyor.
-              // The wrapper div keeps data-testid for E2E probes.
-              <div
-                data-testid="source-canvas-context-strip"
-                style={WORKSPACE_WRAPPER_STYLE}
-              >
-                <div style={WORKSPACE_INNER_STYLE}>
-                  {isLakeshoreDemoCaseStudy ? (
-                    <CaseStudyCoherenceBanner
-                      currentStage={event.currentStageKey}
-                      viewStage={viewStage}
-                    />
-                  ) : null}
-                  {viewStage !== event.currentStageKey ? (
-                    <div
-                      data-testid="source-canvas-preview-banner"
-                      style={{
-                        marginBottom: 14,
-                        padding: "10px 14px",
-                        background: "#FFF8F0",
-                        border: "1px solid #F5C98A",
-                        borderRadius: 8,
-                        fontFamily: "var(--font-sans, system-ui)",
-                        fontSize: 13,
-                        lineHeight: 1.5,
-                        color: "#7A4A00",
-                      }}
-                    >
-                      <strong>Previewing{" "}
-                      {SOURCE_STAGE_LABELS[viewStage] ?? viewStage}.</strong>{" "}
-                      You are in the{" "}
-                      {SOURCE_STAGE_LABELS[event.currentStageKey] ?? event.currentStageKey}{" "}
-                      stage. Clear all gate criteria there before working this stage.
-                    </div>
-                  ) : null}
-                  {simpleFrontWorkspace ?? advancedWorkspace}
-                </div>
-              </div>
-            }
-            minLeftPx={280}
+        <div style={CANVAS_BODY_STYLE}>
+          <CanvasGateSidebar
+            fromStage={viewStage}
+            states={stageCriteria}
+            allCriteria={liveGateCriterionStates}
+            onChangeCriterionState={handleCriterionStateChange}
+            pendingByCriterionId={pendingCriterionByCriterionId}
+            onPromoteStage={handlePromoteStage}
+            promotePending={promotePending}
           />
+          <div style={WORKSPACE_COLUMN_STYLE}>
+            <div
+              data-testid="source-canvas-context-strip"
+              style={WORKSPACE_WRAPPER_STYLE}
+            >
+              <div style={WORKSPACE_INNER_STYLE}>
+                {isLakeshoreDemoCaseStudy ? (
+                  <CaseStudyCoherenceBanner
+                    currentStage={event.currentStageKey}
+                    viewStage={viewStage}
+                  />
+                ) : null}
+                {viewStage !== event.currentStageKey ? (
+                  <div
+                    data-testid="source-canvas-preview-banner"
+                    style={{
+                      marginBottom: 14,
+                      padding: "10px 14px",
+                      background: "#FFF8F0",
+                      border: "1px solid #F5C98A",
+                      borderRadius: 8,
+                      fontFamily: "var(--font-sans, system-ui)",
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                      color: "#7A4A00",
+                    }}
+                  >
+                    <strong>Previewing{" "}
+                    {SOURCE_STAGE_LABELS[viewStage] ?? viewStage}.</strong>{" "}
+                    You are in the{" "}
+                    {SOURCE_STAGE_LABELS[event.currentStageKey] ?? event.currentStageKey}{" "}
+                    stage. Clear all gate criteria there before working this stage.
+                  </div>
+                ) : null}
+                {simpleFrontWorkspace ?? advancedWorkspace}
+              </div>
+            </div>
+            <AvaBottomBar
+              agentName={displayAgentName(dockAgent)}
+              thread={thread}
+              onMessage={handleAgentMessage}
+              suggestedActions={suggestedActions}
+            />
+          </div>
         </div>
         <CanvasTour />
       </main>
@@ -1859,6 +1853,22 @@ const CONTAINER_STYLE: CSSProperties = {
 const SPLITTER_WRAPPER_STYLE: CSSProperties = {
   flex: 1,
   display: "flex",
+  minHeight: 0,
+  overflow: "hidden",
+};
+
+const CANVAS_BODY_STYLE: CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "row",
+  minHeight: 0,
+  overflow: "hidden",
+};
+
+const WORKSPACE_COLUMN_STYLE: CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
   minHeight: 0,
   overflow: "hidden",
 };

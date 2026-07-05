@@ -288,7 +288,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         eventId: persistedEvent.id,
         clientKey: effectiveClientKey,
         stageKey,
-        lifecycleState: stageKey === "value" ? "completed" : "active",
+        lifecycleState: "active",
         updatedAtIso: nowIso,
       });
 
