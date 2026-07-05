@@ -1143,78 +1143,8 @@ function CharterWorkflow({
 
   return (
     <>
-      {/* Editable capture cards */}
-      {capturedSections.map(({ section, content }) => {
-        const val = values[section.id] ?? "";
-        const isSaved = val.trim().length > 0;
-        return (
-          <section
-            key={section.id}
-            id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
-            className={styles.detailSection}
-          >
-            <details
-              open={isCaptureCardOpen(section.id)}
-              onToggle={(e) => {
-                const isOpen = (e.currentTarget as HTMLDetailsElement).open;
-                setOpenCaptureCards((prev) =>
-                  (prev[section.id] ?? true) === isOpen
-                    ? prev
-                    : { ...prev, [section.id]: isOpen },
-                );
-              }}
-            >
-              <summary className={styles.captureCardSummary}>
-                <span
-                  className={styles.detailSectionTitle}
-                  style={{ marginBottom: 0 }}
-                >
-                  {section.label}
-                </span>
-                <span
-                  className={
-                    isSaved
-                      ? styles.captureBadgeDone
-                      : styles.captureBadgePending
-                  }
-                >
-                  {isSaved ? "✓ Captured" : "Not captured"}
-                </span>
-              </summary>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "var(--abarva-slate)",
-                  fontStyle: "italic",
-                  lineHeight: 1.5,
-                  padding: "4px 0 2px",
-                }}
-              >
-                {section.placeholder}
-              </div>
-              <textarea
-                id={`ws-canvas-p${phaseNum}-${section.id}-input`}
-                className={styles.captureTextarea}
-                rows={3}
-                value={val}
-                placeholder={section.placeholder}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    [section.id]: e.target.value,
-                  }))
-                }
-                spellCheck
-              />
-              {content !== null && !val.trim() && (
-                <div className={styles.captureContent}>{content}</div>
-              )}
-            </details>
-          </section>
-        );
-      })}
-
-      {/* Ordered Save → Approve → Generate sequence */}
+      {/* Ordered Save → Build-and-approve sequence — rendered FIRST (above the
+          capture cards) so the action is visible without scrolling past inputs. */}
       <section
         id={`ws-canvas-p${phaseNum}-charter-sequence`}
         className={styles.detailSection}
@@ -1332,6 +1262,78 @@ function CharterWorkflow({
           </div>
         </div>
       </section>
+
+      {/* Editable capture cards */}
+      {capturedSections.map(({ section, content }) => {
+        const val = values[section.id] ?? "";
+        const isSaved = val.trim().length > 0;
+        return (
+          <section
+            key={section.id}
+            id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+            className={styles.detailSection}
+          >
+            <details
+              open={isCaptureCardOpen(section.id)}
+              onToggle={(e) => {
+                const isOpen = (e.currentTarget as HTMLDetailsElement).open;
+                setOpenCaptureCards((prev) =>
+                  (prev[section.id] ?? true) === isOpen
+                    ? prev
+                    : { ...prev, [section.id]: isOpen },
+                );
+              }}
+            >
+              <summary className={styles.captureCardSummary}>
+                <span
+                  className={styles.detailSectionTitle}
+                  style={{ marginBottom: 0 }}
+                >
+                  {section.label}
+                </span>
+                <span
+                  className={
+                    isSaved
+                      ? styles.captureBadgeDone
+                      : styles.captureBadgePending
+                  }
+                >
+                  {isSaved ? "✓ Captured" : "Not captured"}
+                </span>
+              </summary>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--abarva-slate)",
+                  fontStyle: "italic",
+                  lineHeight: 1.5,
+                  padding: "4px 0 2px",
+                }}
+              >
+                {section.placeholder}
+              </div>
+              <textarea
+                id={`ws-canvas-p${phaseNum}-${section.id}-input`}
+                className={styles.captureTextarea}
+                rows={3}
+                value={val}
+                placeholder={section.placeholder}
+                onChange={(e) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    [section.id]: e.target.value,
+                  }))
+                }
+                spellCheck
+              />
+              {content !== null && !val.trim() && (
+                <div className={styles.captureContent}>{content}</div>
+              )}
+            </details>
+          </section>
+        );
+      })}
+
 
       {/* Advance to the next phase — the P1–P4 equivalent of P0 "Approve brief". */}
       {phaseNum >= 1 && phaseNum <= 4 && (

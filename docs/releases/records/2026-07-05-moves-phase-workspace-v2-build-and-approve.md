@@ -1,4 +1,4 @@
-# 2026-07-05-moves-phase-workspace-v2-build-and-approve — Build-and-approve (Moves phase workspace v2, slice 4) — HELD for live verification
+# 2026-07-05-moves-phase-workspace-v2-build-and-approve — Build-and-approve + action-first layout (Moves phase workspace v2, slice 4)
 
 ## Release ID
 
@@ -6,11 +6,15 @@
 
 ## Status
 
-`draft` — **do not merge or deploy until live-verified.** Built and CI-green this session, but the browser MCP was unavailable so the flow could not be exercised end-to-end. This is a functional change to the capture→advance path; it must be clicked through on a live phase before it ships.
+`candidate` — verified live on the Lakeshore Move before merge (browser reconnected).
 
 ## Plain-English Summary
 
-Fourth slice of the Moves phase-workspace redesign, and the one that closes the governance hole you flagged: a Move could advance past a phase with a gate deliverable that was **signed off but never generated** (the charter that "advanced without being built").
+Fourth slice of the Moves phase-workspace redesign. Two things:
+
+**(a) Action-first layout.** Inside the (top-of-page) capture panel, the workflow steps (Save → Build-and-approve → Advance) rendered *below* the seven capture cards, so you still scrolled past all the inputs to reach the action. The workflow sequence now renders **first**, above the cards — you see what to do the moment the phase opens.
+
+**(b) Build-and-approve.** Closes the governance hole where a Move could advance past a phase with a gate deliverable **signed off but never generated** (the charter that "advanced without being built"), and fixes the live "Approve record → not_found" error (a `draft` deliverable that the old `in_review`-only sign-off couldn't act on).
 
 Root cause was a status-machine tangle: the old flow was Save → Approve → Generate as three separate steps. **Approve signed off the raw capture record** (never generated), and **Generate afterward reset the deliverable to `draft`** and un-signed it — so "generated AND signed off" was unreachable, and the gate rewarded *not* generating.
 
