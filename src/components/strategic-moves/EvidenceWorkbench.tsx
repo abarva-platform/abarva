@@ -74,7 +74,11 @@ export interface EvidenceWorkbenchProps {
   gatePct: number;
   selectedEvidenceId: string | null;
   onSelectEvidence: (id: string) => void;
+  /** Opens the file picker to upload evidence in place. */
   onAddEvidence: () => void;
+  /** Transient upload status message, shown under the Add-evidence button. */
+  evidenceUploadNote?: string;
+  evidenceUploadState?: "idle" | "uploading" | "done" | "error";
   gateHeading: string;
   gateSubhead: string;
   gateProgressLabel: string;
@@ -145,6 +149,8 @@ export function EvidenceWorkbench(props: EvidenceWorkbenchProps) {
     selectedEvidenceId,
     onSelectEvidence,
     onAddEvidence,
+    evidenceUploadNote,
+    evidenceUploadState,
     gateHeading,
     gateSubhead,
     gateProgressLabel,
@@ -222,9 +228,23 @@ export function EvidenceWorkbench(props: EvidenceWorkbenchProps) {
             </div>
           ))}
 
-          <button type="button" className={`${styles.btnLine} ${styles.btnSm} ${styles.addEv}`} onClick={onAddEvidence}>
+          <button
+            type="button"
+            className={`${styles.btnLine} ${styles.btnSm} ${styles.addEv}`}
+            onClick={onAddEvidence}
+            disabled={evidenceUploadState === "uploading"}
+          >
             + Add evidence
           </button>
+          {evidenceUploadNote ? (
+            <div
+              className={`${styles.uploadNote} ${
+                evidenceUploadState === "error" ? styles.uploadNoteError : ""
+              }`}
+            >
+              {evidenceUploadNote}
+            </div>
+          ) : null}
 
           <div className={styles.legend}>
             <span className={styles.li}><span className={`${styles.sdot} ${styles.dMissing}`} /> Missing</span>
