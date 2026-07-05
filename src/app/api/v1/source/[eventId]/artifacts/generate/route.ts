@@ -22,6 +22,10 @@ import {
   type SourceArtifactFamily,
   type SourceDataClassification,
 } from '@/lib/source/artifact-registry';
+import {
+  getCurrentArtifacts,
+  supersedePriorVersions,
+} from '@/lib/source/file-cabinet/repository';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -149,6 +153,10 @@ function safeFilename(title: string, artifactId: string): string {
   return `${safe || 'source-generated-artifact'}-${artifactId.slice(0, 8)}.md`;
 }
 
+function displayTitle(title: string): string {
+  return title.replace(/\s*[—-]\s*AbarVa Draft\s*$/i, '').trim() || title;
+}
+
 export async function POST(request: Request, { params }: GenerateRouteContext) {
   let tenancy: Awaited<ReturnType<typeof requireTenancy>>;
   try {
@@ -207,6 +215,22 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
   });
   if (!scope) return jsonError(403, 'forbidden_event');
 
+  const artifactFamily = parseArtifactFamily(body.artifactFamily, scope.stageKey);
+  const artifactKind = parseOptionalString(body.artifactKind) ?? 'generated_source_artifact';
+  let fileCabinetVersion = 1;
+  let supersedesArtifactId: string | null = null;
+  try {
+    const prior = await getCurrentArtifacts(scope.eventId, artifactKind, 'generated');
+    fileCabinetVersion = prior.reduce((max, item) => Math.max(max, item.version), 0) + 1;
+    supersedesArtifactId = prior[0]?.id ?? null;
+  } catch (error) {
+    console.error('[POST /api/v1/source/:eventId/artifacts/generate] file cabinet prior-version read failed', {
+      eventId: scope.eventId,
+      artifactKind,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+
   const artifactId = randomUUID();
   const filename = safeFilename(title, artifactId);
   let blobUri: string;
@@ -258,8 +282,8 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
       sourceEventId: scope.eventId,
       sourceEventRowId: scope.sourceEventRowId,
       stageKey: scope.stageKey,
-      artifactFamily: parseArtifactFamily(body.artifactFamily, scope.stageKey),
-      artifactKind: parseOptionalString(body.artifactKind) ?? 'generated_source_artifact',
+      artifactFamily,
+      artifactKind,
       sourceOrigin: 'generated',
       sourceFormat: 'markdown',
       originalName: filename,
@@ -270,7 +294,37 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
       sha256,
       dataClassification,
       createdBy: tenancy.userId,
+      ...(supersedesArtifactId ? { supersedesArtifactVersionId: supersedesArtifactId } : {}),
+      fileCabinet: {
+        clientId: activeClient.id,
+        sourcingStage: scope.stageKey,
+        artifactGroup: 'generated',
+        artifactType: artifactKind,
+        artifactFamily,
+        title: displayTitle(title),
+        description: 'Generated Source draft preserved for client review, downstream lineage, and client-final supersession.',
+        fileName: filename,
+        fileFormat: 'md',
+        blobContainer: STORAGE_BUCKET,
+        blobPath: blobUri,
+        fileSize: buffer.byteLength,
+        version: fileCabinetVersion,
+        status: 'draft',
+        generatedBy: tenancy.userId,
+        sourceBasis: `generated-source-artifact:${artifactId}`,
+        confidence: 'draft',
+        citationReady: false,
+        evidenceFamiliesUsed: [artifactFamily],
+        missingInputs: [],
+        clientCompleteItems: [],
+        assumptions: [],
+        supersedesArtifactId,
+        blobSha256: sha256,
+      },
     });
+    if (supersedesArtifactId) {
+      await supersedePriorVersions(scope.eventId, artifactKind, 'generated', artifact.id);
+    }
 
     return Response.json({
       ok: true,
