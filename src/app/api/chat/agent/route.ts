@@ -1228,6 +1228,8 @@ export async function POST(request: Request) {
     "",
     artifactInstructions,
     "",
+    VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT,
+    "",
     // PR-R / CXO grounding · tenant current-state block for all
     // canonical agents on tenant-scoped surfaces.
     agentTenantContextBlock,
@@ -1318,12 +1320,12 @@ export async function POST(request: Request) {
           "- Do not mention UUIDs, database IDs, person IDs, or internal lookup mechanics in user-facing prose. Say 'I'll confirm Sarah Chen and Rick Stewart in Meridian's people records' rather than 'I'll get their UUIDs'.",
           "- ORIGINATION PEOPLE RULES: a program submission needs at least one sponsor resolved in the active tenant's people records. The signed-in user can be the program owner/lead when appropriate because they are already registered. If the user names a new sponsor or lead who is not yet registered, offer to register that person as a placeholder inside the active tenant only; explain that tenant admin approval will review the placeholder before the program becomes active.",
           "- PHASE ADVANCE APPROVALS: if the user explicitly says a sponsor/admin approves a phase gate and USER ACCESS POLICY says 'Can approve gates: yes', call advance_phase with self_approve_if_authorized=true. If the policy does not grant approval rights, do not self-approve; create/request approval and say which approver must act.",
-          "- LIFECYCLE LABEL DISCIPLINE: never call P4 'Build', P5 'Activate', or P6 'Operate'. The locked labels are P4 Execution Roadmap, P5 Approval & Mobilization, and P6 Tower Handoff. If you need to mention external execution, say execution happens outside AbarVa and P4 builds the executable roadmap only.",
+          "- LIFECYCLE LABEL DISCIPLINE: use AbarVa phase language in user-facing prose: P0 Originate, P1 Frame, P2 Decode, P3 Compose, P4 Commit, P5 Mobilize. Never call P4 'Build', P5 'Activate', or P6 'Operate'. If you need to mention external execution, say execution happens outside AbarVa and P4 Commit builds the executable roadmap and value contract.",
           "- DELIVERABLE PERSISTENCE DISCIPLINE: for phase deliverables, do not generate a huge hidden complete_deliverable payload. Save bounded executive-grade content: either a concise markdown artifact under 6,000 characters or the tool's content_outline array with the key sections, decisions, gate proofs, risks, and follow-ups. Then summarize what was saved in chat. Never spend a turn silently composing a full consulting deck inside tool JSON.",
           "- DELIVERABLE FAILURE HONESTY: if complete_deliverable or complete_deliverables fails, do not say 'nothing is lost' unless a durable draft row was actually persisted. Say the draft remains visible in this conversation but is not saved yet, name the platform error if available, and offer one retry after the platform fix.",
           "- P0 DELIVERABLE KEY DISCIPLINE: when saving the accepted P0 seed, use deliverable_type_key='origination_brief'. Do not save a P0 seed, program brief, or origination package as discovery_report; discovery_report is reserved for P1 after current-state evidence is gathered.",
           "- BASELINE FIDELITY DISCIPLINE: when generating or saving deliverables, preserve exact non-financial baseline values, units, sources, grain, methods, owners, and dates from uploaded evidence or signed prior deliverables. Do not replace them with benchmark, peer, demo, or model-inferred numbers. If evidence conflicts, name the conflict and use the latest uploaded/signed evidence as controlling. If the value is missing, write 'missing' and ask for evidence; never invent operational metrics.",
-          "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Approval & Mobilization packages: business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and tower_handoff_plan.",
+          "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Mobilize packages: business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and tower_handoff_plan.",
           "- P6 COMPLETION DISCIPLINE: if the user asks to complete P6 setup, close Tower Handoff, or finish the program after the Tower execution tracking contract is signed, call complete_program. Do not treat 'already at P6' as complete; completion is a lifecycle_state write.",
           "- P4 MILESTONE PERSISTENCE: when drafting an execution roadmap with critical milestones, save the roadmap deliverable and then call create_milestones so P4→P5 gate checks can read structured milestone rows. Do not rely on milestone prose inside the roadmap alone.",
           "- During origination, emit `brief-progress` artifacts as fields become known so the right rail updates while the chat continues.",
@@ -1384,6 +1386,13 @@ export async function POST(request: Request) {
           "- Let the right pane carry progress, gates, evidence, blockers, and next-step prep. In prose, summarize what changed and the one next missing field.",
           "- If emitting sourcing-stage-progress artifacts, emit valid JSON only; never expose artifact syntax in prose.",
           "- When commit_source_event succeeds, do not vaguely say 'pending approval'. Name the event code, say it is visible in the Source operating queue and /source/events approval queue, and state: tenant admin approves the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
+          // Source intake mode: tell the agent which exact field IDs to use when
+          // emitting brief-progress artifacts so the right-panel boxes update.
+          ...(surfaceContext.sourceIntakeMode === true
+            ? [
+                "- INTAKE MODE ACTIVE: The practitioner is building a new sourcing event on this canvas. After every turn that captures intake information, emit a `brief-progress` artifact with fields mapped to EXACTLY these 5 camelCase ids (the right panel ONLY updates on an exact match): \"trigger\" (why now — contract expiry, renewal date, cost pressure, service issue, merger, or other trigger), \"decisionOwner\" (name or role of the person who approves the final sourcing decision), \"scopeBoundary\" (which IT services, platforms, software, cloud, or delivery towers are in or out of scope), \"valueTarget\" (estimated contract value, savings target, or value basis), \"baselineOwner\" (who owns vendor spend data, commercial benchmarks, or baseline evidence). Set status to \"filled\" with the extracted value when you have it; set status to \"empty\" otherwise. Emit the artifact on every reply that adds or refines at least one field.",
+              ]
+            : []),
         ]
       : []),
     agentQualityAnswerKeyBlock,
