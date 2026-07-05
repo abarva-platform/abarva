@@ -1,6 +1,12 @@
 import "server-only";
 
 import { streamAgentTurn } from "@/lib/agent/stream";
+import {
+  parseDiagnosisFacts,
+  isStructuredFactsValue,
+  factsToBaselineMetrics,
+  factsToPromptText,
+} from "@/lib/programs/diagnosis-facts";
 import type { GenerateArtifactDeps } from "@/lib/deliverables/generate-artifact";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
@@ -221,16 +227,24 @@ export function createMovesGenerateArtifactDeps(
             (typeof st.label === "string" && st.label) ||
             mod.moduleName ||
             key;
-          parts.push(`## ${heading}\n${value}`);
+          // Structured facts (baseline) are stored as JSON — render them as
+          // readable "metric: value (source: …)" lines, not raw JSON, so the
+          // model sees clean provenance-tagged facts.
+          const rendered =
+            key === "baseline_metrics" && isStructuredFactsValue(value)
+              ? factsToPromptText(parseDiagnosisFacts(value))
+              : value;
+          parts.push(`## ${heading}\n${rendered}`);
         }
         if (parts.length === 0) return null;
         const digest: PhaseDigest = { currentState: parts.join("\n\n") };
         // Structured P2 fields the diagnostic prompt + metric inference expect.
         const baseline = byKey.get("baseline_metrics");
         if (baseline) {
-          digest.baselineMetrics = {
-            [`Operator-attested baseline (P${phase} capture)`]: baseline,
-          };
+          const metrics = factsToBaselineMetrics(parseDiagnosisFacts(baseline));
+          digest.baselineMetrics = Object.keys(metrics).length
+            ? metrics
+            : { [`Operator-attested baseline (P${phase} capture)`]: baseline };
         }
         const gaps = byKey.get("gaps_root_causes");
         if (gaps) {

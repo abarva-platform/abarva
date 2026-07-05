@@ -3,6 +3,12 @@ export interface PhaseCaptureSection {
   label: string;
   description: string;
   required: boolean;
+  /**
+   * When `"facts"`, this section is captured as structured metric·value·source
+   * rows (stored as JSON in the value) rather than free text — see
+   * `diagnosis-facts.ts`. The workspace renders a facts table for it.
+   */
+  structured?: "facts";
 }
 
 export interface PhaseCaptureSectionStatus extends PhaseCaptureSection {
@@ -117,6 +123,7 @@ const P2_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   {
     key: "baseline_metrics",
     label: "Baseline metrics",
+    structured: "facts",
     description: "Cycle time, effort, volume, cost, quality, control, or experience baselines.",
     required: true,
   },
