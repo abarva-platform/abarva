@@ -18,6 +18,7 @@ type JsonRecord = Record<string, unknown>;
 
 export type AiControlTowerReadSource =
   | 'ai_control_data_plane'
+  | 'ai_control_data_plane_plus_intelligence_v7'
   | 'intelligence_v7'
   | 'context_projection'
   | 'first_capital_local_synthetic_fallback'
@@ -753,6 +754,42 @@ function buildRowsFromV7Records(records: V7TowerRecordRow[]): AiControlTowerRead
   };
 }
 
+function hasMaterialTowerRows(rows: AiControlTowerReadRows): boolean {
+  return rows.initiatives.length > 0 ||
+    rows.usage.length > 0 ||
+    rows.benefits.length > 0 ||
+    rows.spend.length > 0 ||
+    rows.risks.length > 0 ||
+    rows.actions.length > 0;
+}
+
+function hasCompletePortfolioTowerRows(rows: AiControlTowerReadRows): boolean {
+  return rows.initiatives.length > 0 &&
+    rows.benefits.length > 0 &&
+    rows.spend.length > 0;
+}
+
+function mergeTowerRows(
+  primary: AiControlTowerReadRows,
+  supplement: AiControlTowerReadRows,
+): AiControlTowerReadRows {
+  return {
+    refreshRun: primary.refreshRun ?? supplement.refreshRun,
+    sources: [...primary.sources, ...supplement.sources],
+    initiatives: [...primary.initiatives, ...supplement.initiatives],
+    usage: [...primary.usage, ...supplement.usage],
+    productivity: [...primary.productivity, ...supplement.productivity],
+    dora: [...primary.dora, ...supplement.dora],
+    agents: [...primary.agents, ...supplement.agents],
+    benefits: [...primary.benefits, ...supplement.benefits],
+    spend: [...primary.spend, ...supplement.spend],
+    risks: [...primary.risks, ...supplement.risks],
+    actions: [...primary.actions, ...supplement.actions],
+    evidence: [...primary.evidence, ...supplement.evidence],
+    facts: [...primary.facts, ...supplement.facts],
+  };
+}
+
 async function readV7TowerRows(args: {
   clientKey?: string | null;
   tenantName?: string | null;
@@ -1437,6 +1474,8 @@ function buildModel(args: {
   const sourceDisclosure =
     args.source === 'ai_control_data_plane'
       ? 'Read from committed AI Control Tower data-plane tables.'
+      : args.source === 'ai_control_data_plane_plus_intelligence_v7'
+        ? 'Read from committed AI Control Tower rows, supplemented by the validated V7 intelligence substrate where the Tower portfolio rows were partial.'
       : args.source === 'intelligence_v7'
         ? 'Read from the validated V7 intelligence substrate and mapped into the Tower portfolio model.'
       : args.source === 'context_projection'
@@ -1542,9 +1581,13 @@ export async function getAiControlTowerReadModel(args: {
     clientId: args.clientId,
     clientKey: args.clientKey,
   });
-  const hasDataPlaneRows = Boolean(rows.refreshRun) &&
-    (rows.initiatives.length > 0 || rows.usage.length > 0 || rows.benefits.length > 0 || rows.spend.length > 0);
-  if (hasDataPlaneRows) {
+  const hasDataPlaneRows = Boolean(rows.refreshRun) && hasMaterialTowerRows(rows);
+  const v7Rows = await readV7TowerRows({
+    clientKey: args.clientKey,
+    tenantName: args.tenantName,
+  });
+  const hasV7Rows = hasMaterialTowerRows(v7Rows);
+  if (hasDataPlaneRows && hasCompletePortfolioTowerRows(rows)) {
     return buildModel({
       rows,
       clientId: args.clientId ?? text(rows.refreshRun?.client_id) ?? null,
@@ -1554,16 +1597,16 @@ export async function getAiControlTowerReadModel(args: {
     });
   }
 
-  const v7Rows = await readV7TowerRows({
-    clientKey: args.clientKey,
-    tenantName: args.tenantName,
-  });
-  const hasV7Rows =
-    v7Rows.initiatives.length > 0 ||
-    v7Rows.usage.length > 0 ||
-    v7Rows.benefits.length > 0 ||
-    v7Rows.spend.length > 0 ||
-    v7Rows.risks.length > 0;
+  if (hasDataPlaneRows && hasV7Rows) {
+    return buildModel({
+      rows: mergeTowerRows(rows, v7Rows),
+      clientId: args.clientId ?? text(rows.refreshRun?.client_id) ?? null,
+      clientKey: args.clientKey ?? text(rows.refreshRun?.client_key) ?? null,
+      tenantName: args.tenantName ?? 'AbarVa Client',
+      source: 'ai_control_data_plane_plus_intelligence_v7',
+    });
+  }
+
   if (hasV7Rows) {
     return buildModel({
       rows: v7Rows,

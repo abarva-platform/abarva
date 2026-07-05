@@ -230,6 +230,88 @@ describe('ai-control-tower read model', () => {
     expect(model.sourceDisclosure).toMatch(/validated V7 intelligence substrate/i);
   });
 
+  it('supplements partial committed Tower rows with V7 instead of showing false gaps', async () => {
+    mockedAzureRead.maybeSingle.mockResolvedValue({
+      id: 'refresh-lakeshore',
+      client_id: 'client-lakeshore',
+      client_key: 'lakeshore',
+      reporting_period_end: '2026-07-03',
+    });
+    mockedAzureRead.select.mockImplementation(async ({ table }) => {
+      if (table === 'ai_control_spend_contracts') {
+        return [
+          {
+            spend_key: 'legacy-cloud-spend',
+            vendor: 'Microsoft',
+            product_or_service: 'Azure estate',
+            spend_type: 'run',
+            monthly_spend_usd: 1_000_000,
+            annualized_spend_usd: 12_000_000,
+            evidence_state: 'committed',
+          },
+        ];
+      }
+      return [];
+    });
+    mockedAzureRead.query.mockResolvedValue([
+      {
+        dimension_key: 'v7_09_programs_initiatives_business_priorities',
+        record_key: 'lak-prog-kyriba',
+        record_name: 'Kyriba global cash and payments rollout',
+        source_file: 'lakeshore_v7_programs.csv',
+        source_row_number: 11,
+        as_of_date: '2026-07-03',
+        period_end: '2026-07-03',
+        source_artifact_name: 'Programs and priorities',
+        source_validation_status: 'validated',
+        values_json: {
+          program_id: 'LAK-PROG-001',
+          program_name: 'Kyriba global cash and payments rollout',
+          business_function: 'Treasury and payments',
+          budget_usd: 42_000_000,
+          expected_value_usd: 86_000_000,
+          finance_attested_value_usd: 18_900_000,
+          business_owner: 'VP Treasury',
+        },
+      },
+      {
+        dimension_key: 'v7_07_vendors_contracts',
+        record_key: 'lak-sap-renewal',
+        record_name: 'SAP finance renewal',
+        source_file: 'lakeshore_v7_vendor_contracts.csv',
+        source_row_number: 21,
+        as_of_date: '2026-07-03',
+        period_end: '2026-07-03',
+        source_artifact_name: 'Vendors and contracts',
+        source_validation_status: 'validated',
+        values_json: {
+          vendor_id: 'LAK-VEN-002',
+          vendor_name: 'SAP',
+          contract_id: 'SAP-2026',
+          service: 'finance_treasury',
+          annual_cost_usd: 12_500_000,
+          renewal_date: '2026-08-07',
+        },
+      },
+    ]);
+
+    const model = await getAiControlTowerReadModel({
+      clientId: 'client-lakeshore',
+      clientKey: 'lakeshore',
+      tenantName: 'Lakeshore Holdings',
+    });
+
+    expect(model.source).toBe('ai_control_data_plane_plus_intelligence_v7');
+    expect(mockGetProjection).not.toHaveBeenCalled();
+    expect(model.rowCounts.initiatives).toBeGreaterThanOrEqual(1);
+    expect(model.rowCounts.benefits).toBeGreaterThanOrEqual(1);
+    expect(model.rowCounts.spend).toBeGreaterThanOrEqual(3);
+    expect(model.kpis.find((kpi) => kpi.key === 'value')?.value).not.toBe('$0');
+    expect(model.spend.some((row) => row.vendor === 'Microsoft')).toBe(true);
+    expect(model.spend.some((row) => row.renewalDate === '2026-08-07')).toBe(true);
+    expect(model.sourceDisclosure).toMatch(/supplemented by the validated V7 intelligence substrate/i);
+  });
+
   it('falls back to today’s behavior unchanged when the projection is null (graceful degradation)', async () => {
     mockGetProjection.mockResolvedValue(null);
 

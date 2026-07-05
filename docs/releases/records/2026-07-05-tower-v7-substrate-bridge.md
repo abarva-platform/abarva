@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower could show value and renewal "gap" states when its older AI Control Tower refresh tables or context projection did not contain Tower-shaped rows, even though the validated V7 intelligence substrate contained spend, initiative value, measured AI value, vendor renewal, and evidence records. This release adds a V7-to-Tower bridge so Tower reads the validated V7 substrate before falling back to older projections or synthetic demo states.
+Tower could show value and renewal "gap" states when its older AI Control Tower refresh tables or context projection did not contain Tower-shaped rows, even though the validated V7 intelligence substrate contained spend, initiative value, measured AI value, vendor renewal, and evidence records. This release adds a V7-to-Tower bridge so Tower reads the validated V7 substrate before falling back to older projections or synthetic demo states. It also fixes the live Lakeshore masking case where partial old Tower spend rows existed and caused the read model to stop before checking V7.
 
 ## Layer Impact
 
@@ -31,14 +31,18 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
   - Adds `intelligence_v7` as a Tower read source.
   - Maps V7 program, AI initiative, spend/value, vendor contract, operational risk, evidence, and fact records into the existing Tower read-model contract.
   - Gives V7 precedence over the older context projection so V7-loaded tenants do not show false gap states.
+  - Supplements partial committed Tower rows with V7 records instead of treating any old spend row as a complete Tower substrate.
   - Ignores `data_thin:*` placeholders as executive-facing values.
 - `src/lib/ai-control-tower/__tests__/read-model.test.ts`
   - Adds a Lakeshore V7 regression test proving value, spend, benefits, and renewal date are mapped instead of rendering false empty/gap states.
+  - Adds a regression for the live failure mode: committed spend rows exist, portfolio/value/vendor rows are missing, and V7 must fill the missing Tower model slices.
 
 ## QA / Validation
 
 - Pass: `npx eslint src/lib/ai-control-tower/read-model.ts src/lib/ai-control-tower/__tests__/read-model.test.ts`
 - Pass: `npx jest src/lib/ai-control-tower/__tests__/read-model.test.ts --runInBand -t "maps validated V7"`
+- Pass: `npx jest src/lib/ai-control-tower/__tests__/read-model.test.ts --runInBand -t "supplements partial"`
+- Pass: `npx jest src/lib/ai-control-tower/__tests__/read-model.test.ts --runInBand`
 - Pass: `npm run release:check`
 
 ## Rollout Plan
@@ -57,7 +61,8 @@ Revert this release commit to restore the previous Tower read-model order. No mi
 
 - Local lint output listed above.
 - Targeted V7 regression output listed above.
-- Post-deploy audit still required: active ACA revision/image digest plus signed-in browser proof that Lakeshore Tower no longer renders false `gap` states when V7 records exist.
+- First deployed bridge proof showed ACA deployment succeeded but signed-in Lakeshore `/tower` still rendered false gaps because old partial Tower rows masked V7. This record now includes the follow-up hotfix and regression coverage for that masking path.
+- Post-deploy audit still required after the hotfix: active ACA revision/image digest plus signed-in browser proof that Lakeshore Tower no longer renders false `gap` states when V7 records exist.
 
 ## Context Ingestion Evidence
 
@@ -72,8 +77,8 @@ No new ingestion is performed by this release. It consumes existing V7 records a
 - Review/approval queue: Not applicable.
 - Client data-plane commit: Existing V7 load, not part of this release.
 - Embedding/search refresh: Not applicable.
-- Live signed-in retrieval or answer QA: Not run yet for this release candidate.
+- Live signed-in retrieval or answer QA: First bridge deployment failed signed-in Lakeshore Tower proof; hotfix browser proof still required.
 
 ## Known Gaps
 
-- Production/browser proof has not been run yet.
+- Hotfix production/browser proof has not been run yet.
