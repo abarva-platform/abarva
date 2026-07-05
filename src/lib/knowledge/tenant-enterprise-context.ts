@@ -454,13 +454,23 @@ async function retrieveStructuredTenantSources(
     /\b(data\s*(?:&|and)\s*analytics|data\s+landscape|analytics\s+landscape|data\s+estate|data\s+platforms?|analytics\s+platforms?|platforms?|owners?|loaded\s+context|current\s+data|warehouse|lakehouse|\bbi\b|business\s+intelligence|reporting|dashboards?|semantic\s+layer|etl|elt|snowflake|databricks|tableau|power\s*bi)\b/.test(
       normalized,
     );
+  // The keyword loaded-context retriever is domain-agnostic: it must run for
+  // ANY substantive question (e.g. legal contract intake, HR, finance ops),
+  // not only the IT/CIO vocabulary the wants* gates recognize. Otherwise
+  // freshly-loaded tenant context that doesn't use IT phrasing is never read
+  // back — "loaded but not retrievable". Only short-circuit when there is no
+  // usable keyword token AND no domain gate matched.
+  const hasKeywordTokens = tokenize(normalized).some(
+    (term) => term.length >= 5,
+  );
   if (
     !wantsProfile &&
     !wantsApps &&
     !wantsVendors &&
     !wantsInitiatives &&
     !wantsEngineeringProductivity &&
-    !wantsContextChunks
+    !wantsContextChunks &&
+    !hasKeywordTokens
   )
     return [];
 
@@ -484,6 +494,8 @@ async function retrieveStructuredTenantSources(
         wantsEngineeringProductivity
           ? readEngineeringProductivitySource(run, tenantKey, clientId)
           : Promise.resolve(null),
+        // Always attempt the loaded-context retriever (returns null fast when
+        // no chunk matches), so ingestion -> retrieval holds for every domain.
         readKeywordContextChunkSource(run, tenantKey, clientId, query),
       ]);
       return results.filter((source): source is TenantEnterpriseSource =>
@@ -580,10 +592,16 @@ async function readKeywordContextChunkSource(
 ): Promise<TenantEnterpriseSource | null> {
   const patterns = tokenize(query)
     .filter((term) => term.length >= 5)
-    .slice(0, 8)
+    .slice(0, 12)
     .map((term) => `%${term}%`);
   if (patterns.length === 0) return null;
 
+  // Pull a wide candidate pool ordered by recency (newest first) so that
+  // freshly-loaded / operator-confirmed context is guaranteed to be a
+  // candidate and is not crowded out of a small LIMIT by the large
+  // pre-existing corpus. Relevance ranking (rankChunks) then selects the
+  // best matches from this pool. Operator-confirmed rows are surfaced ahead
+  // of still-in-review rows for the same recency.
   const rows = await run<EnterpriseContextChunkRow>(
     `SELECT chunk_id, chunk_text, source_segment_id, source_doc
        FROM enterprise_context_chunks
@@ -593,9 +611,10 @@ async function readKeywordContextChunkSource(
           OR source_doc ILIKE ANY($2::text[])
         )
       ORDER BY
-        CASE WHEN source_doc ILIKE ANY($2::text[]) THEN 0 ELSE 1 END,
+        CASE WHEN classification_source = 'OPERATOR_CONFIRMED' THEN 0 ELSE 1 END,
+        updated_at DESC NULLS LAST,
         chunk_id ASC
-      LIMIT 18`,
+      LIMIT 240`,
     [clientId, patterns],
   );
   const chunks: ContextChunk[] = rows.map((row) => ({
