@@ -155,8 +155,12 @@ function readPayload(row: V7TowerRecordRow): JsonRecord {
   return row.values_json && typeof row.values_json === 'object' ? row.values_json : {};
 }
 
+function normalizeDimensionKey(value: unknown): string {
+  return text(value).toLowerCase();
+}
+
 async function readV7TowerRecords(tenantKey: string): Promise<V7TowerRecordRow[]> {
-  return azureRead.query<V7TowerRecordRow>(
+  const rows = await azureRead.query<V7TowerRecordRow>(
     `with latest_run as (
        select contract_version
        from intelligence_v7.tenant_pack_runs
@@ -164,17 +168,21 @@ async function readV7TowerRecords(tenantKey: string): Promise<V7TowerRecordRow[]
        order by loaded_at desc
        limit 1
      )
-     select r.dimension_key, r.record_key, r.record_name, r.source_file,
+     select lower(r.dimension_key) as dimension_key, r.record_key, r.record_name, r.source_file,
        r.source_row_number::int, r.as_of_date::text, r.period_end::text,
        r.source_artifact_name, r.source_validation_status, r.values_json
      from intelligence_v7.business_records r
      join latest_run lr on lr.contract_version = r.contract_version
-     where r.tenant_key = $1 and r.dimension_key = any($2::text[])
+     where r.tenant_key = $1 and lower(r.dimension_key) = any($2::text[])
      order by r.dimension_key, r.source_row_number nulls last, r.record_key
      limit 1200`,
     [tenantKey, [...V7_TOWER_DIMENSIONS]],
     { missingTable: 'empty' },
   ).catch(() => []);
+  return rows.map((row) => ({
+    ...row,
+    dimension_key: normalizeDimensionKey(row.dimension_key),
+  }));
 }
 
 function initiativeFromProgram(row: V7TowerRecordRow): AIInitiative {

@@ -16,7 +16,7 @@ describe('V7 Tower projection', () => {
   it('maps Lakeshore V7 records into visible Tower initiatives, vendors, and metrics', async () => {
     queryMock.mockResolvedValue([
       {
-        dimension_key: 'v7_09_programs_initiatives_business_priorities',
+        dimension_key: 'V7_09_programs_initiatives_business_priorities',
         record_key: 'LAK-INIT-001',
         record_name: 'Kyriba global cash and payments rollout',
         source_file: 'lakeshore_programs.csv',
@@ -38,7 +38,7 @@ describe('V7 Tower projection', () => {
         },
       },
       {
-        dimension_key: 'v7_07_vendors_contracts',
+        dimension_key: 'V7_07_vendors_contracts',
         record_key: 'LAK-VEN-002',
         record_name: 'SAP finance platform renewal',
         source_file: 'lakeshore_vendors.csv',
@@ -63,7 +63,7 @@ describe('V7 Tower projection', () => {
     });
 
     expect(queryMock).toHaveBeenCalledWith(
-      expect.stringContaining('intelligence_v7.business_records'),
+      expect.stringContaining('lower(r.dimension_key) = any($2::text[])'),
       expect.arrayContaining(['lakeshore-industries']),
       { missingTable: 'empty' },
     );
