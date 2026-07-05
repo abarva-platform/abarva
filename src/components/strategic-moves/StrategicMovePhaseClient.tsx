@@ -1760,7 +1760,7 @@ export function StrategicMovePhaseClient({
   const autoOpenPanel: PanelKey = capturesIncomplete
     ? "capture"
     : hardGapCount > 0
-      ? "readiness"
+      ? "gate"
       : "generate";
   const nextActionText = firstUnfilled
     ? `Next: work with Ava to capture — ${firstUnfilled.label}`
@@ -2197,7 +2197,7 @@ export function StrategicMovePhaseClient({
             {/* Gate criteria panel */}
             <CollapsePanel
               id={`ws-canvas-p${phaseNum}-gate-collapse`}
-              title="Gate criteria"
+              title="Gate readiness"
               meta={
                 gateItemsWithStatus.length > 0
                   ? `— ${totalGateDone} of ${gateItemsWithStatus.length} met (${hardGateDone} of ${hardGateCount} hard)`
@@ -2277,66 +2277,48 @@ export function StrategicMovePhaseClient({
                   </ul>
                 )}
               </section>
-            </CollapsePanel>
 
-            {/* Phase operating layer: missing evidence, draft boundary, blockers */}
-            {hasEvidenceNeedPackets && (
-              <CollapsePanel
-                id={`ws-canvas-p${phaseNum}-needs-collapse`}
-                title="What We Need Before This Phase Is Final"
-                meta={`— ${evidenceNeedPackets.length} item${evidenceNeedPackets.length === 1 ? "" : "s"}`}
-                open={isPanelOpen("needs")}
-                onOpenChange={(open) => setPanelOpen("needs", open)}
-              >
-                <MoveEvidenceNeedsPanel
-                  packets={evidenceNeedPackets}
-                  title="What We Need Next"
-                  compact
-                />
-                <div
-                  data-testid="moves-phase-review-feedback-loop"
-                  style={{
-                    marginTop: 10,
-                    padding: "9px 12px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(27,43,92,0.14)",
-                    background: "rgba(27,43,92,0.04)",
-                    fontSize: 12,
-                    color: "var(--abarva-slate)",
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <strong>Review feedback loop:</strong>{" "}
-                  {reviewFeedbackCount > 0
-                    ? `${reviewFeedbackCount} requested edit${
-                        reviewFeedbackCount === 1 ? "" : "s"
-                      } parsed from uploaded review files. Re-run this phase to create the next artifact version with the approved changes.`
-                    : "Upload client comments or review notes with the paperclip. AbarVa will extract requested edits, show them here, and the next phase run becomes the regenerated version."}
-                </div>
-              </CollapsePanel>
-            )}
+              {/* Merged into Gate readiness: what evidence is still needed */}
+              {hasEvidenceNeedPackets && (
+                <>
+                  <MoveEvidenceNeedsPanel
+                    packets={evidenceNeedPackets}
+                    title="What we need next"
+                    compact
+                  />
+                  <div
+                    data-testid="moves-phase-review-feedback-loop"
+                    style={{
+                      marginTop: 10,
+                      padding: "9px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(27,43,92,0.14)",
+                      background: "rgba(27,43,92,0.04)",
+                      fontSize: 12,
+                      color: "var(--abarva-slate)",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <strong>Review feedback loop:</strong>{" "}
+                    {reviewFeedbackCount > 0
+                      ? `${reviewFeedbackCount} requested edit${
+                          reviewFeedbackCount === 1 ? "" : "s"
+                        } parsed from uploaded review files. Re-run this phase to create the next artifact version with the approved changes.`
+                      : "Upload client comments or review notes with the paperclip. AbarVa will extract requested edits, show them here, and the next phase run becomes the regenerated version."}
+                  </div>
+                </>
+              )}
 
-            {/* Current-state readiness panel (estate-derived instruments) */}
-            {isCurrentPhase &&
-              readiness &&
-              readiness.instruments.length > 0 && (
-                <CollapsePanel
-                  id={`ws-canvas-p${phaseNum}-readiness-collapse`}
-                  title="Current-state readiness"
-                  meta={`— ${readiness.coverageScore}% collected${
-                    hardGapCount > 0
-                      ? ` · ${hardGapCount} hard gap${hardGapCount > 1 ? "s" : ""}`
-                      : ""
-                  }`}
-                  open={isPanelOpen("readiness")}
-                  onOpenChange={(open) => setPanelOpen("readiness", open)}
-                >
+              {/* Merged into Gate readiness: estate-derived current-state readiness */}
+              {isCurrentPhase &&
+                readiness &&
+                readiness.instruments.length > 0 && (
                   <CurrentStateReadinessPanel
                     readiness={readiness}
                     programId={move.id}
                   />
-                </CollapsePanel>
-              )}
+                )}
+            </CollapsePanel>
 
             {/* Where to start (estate-derived recommendation) */}
             {isCurrentPhase &&
