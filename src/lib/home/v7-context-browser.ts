@@ -282,13 +282,26 @@ function previewColumns(
       records.some((record) => record.values_json[column] !== undefined),
   );
   const preferredSet = new Set(preferredSelected);
+  // A fallback candidate must actually have data in the rows being rendered —
+  // otherwise an auto-filled 6th column can be a near-empty field ("Needs
+  // evidence" in every visible row), which is worse than showing fewer columns.
+  // This checks the SAME records used for the render, not a static assumption
+  // about the dimension's schema, so it stays correct even if the loaded data
+  // differs from what the CSV template implies.
+  const hasSignalInPreview = (column: string) =>
+    records.some((record) => display(record.values_json[column]) !== "Needs evidence");
   // Fill any remaining slots with real business columns only — never generic
   // structural (entity_scope, shared_service_flag…), provenance/lineage, or
   // relationship-reference columns. Columns explicitly listed in PREVIEW_COLUMNS
   // are always honored (e.g. *_ref columns for the relationships dimension).
   const fallback = columns
     .map((column) => column.column_name)
-    .filter((column) => !preferredSet.has(column) && !isNonPreviewColumn(column));
+    .filter(
+      (column) =>
+        !preferredSet.has(column) &&
+        !isNonPreviewColumn(column) &&
+        hasSignalInPreview(column),
+    );
   const selected = [...preferredSelected, ...fallback]
     .filter((column) => !isInternalOnlyColumn(column))
     .slice(0, 6);
@@ -296,6 +309,19 @@ function previewColumns(
     key: column,
     label: clientLabel(columns, column),
   }));
+}
+
+// A source-file name (e.g. "v7-synthetic-depth-pass-v2.csv") is never a useful
+// "example" or record label — it is the same for every row in a dimension and
+// tells the reader nothing about the business record. Used to reject
+// record_name / firstMeaningfulValue results that are actually filenames.
+function isFilenameLike(value: string): boolean {
+  return /\.(csv|json|jsonl|yaml|yml|xlsx|docx|pdf)$/i.test(value.trim());
+}
+
+function meaningfulLabel(value: string): string {
+  if (value === "Needs evidence" || isFilenameLike(value)) return "";
+  return value;
 }
 
 function toSourceRow(
@@ -308,8 +334,8 @@ function toSourceRow(
     rowNumber: row.source_row_number,
     rowId: `Source row ${row.source_row_number}`,
     label:
-      display(row.record_name) ||
-      display(firstMeaningfulValue(row.values_json)) ||
+      meaningfulLabel(display(row.record_name)) ||
+      meaningfulLabel(display(firstMeaningfulValue(row.values_json))) ||
       `${dimension.dimension_label} source row ${row.source_row_number}`,
     values: Object.fromEntries(
       columns.map((column) => [
@@ -558,7 +584,10 @@ function clientLabel(columns: V7ColumnRow[], column: string): string {
 
 function firstMeaningfulValue(record: JsonRecord): string {
   for (const [key, value] of Object.entries(record)) {
-    if (isInternalOnlyColumn(key)) continue;
+    // Skip structural/provenance/reference columns too, not just internal
+    // keys — otherwise this can return entity_scope, source_artifact_name, or
+    // a similar non-business value as the "first meaningful" field.
+    if (isNonPreviewColumn(key)) continue;
     const displayed = display(value);
     if (displayed && displayed !== "Needs evidence") return displayed;
   }
