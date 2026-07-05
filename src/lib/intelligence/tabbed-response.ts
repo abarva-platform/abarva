@@ -96,7 +96,18 @@ Executive visual payload:
 Grounding:
 - Clearly distinguish tenant facts, industry context, corpus/pattern context, benchmarks, planning assumptions, and missing evidence.
 - Chart and Table should use tenant evidence when the tenant packet contains the needed facts. When industry trend, benchmark, corpus-pattern, function, category, or planning-assumption data is more useful, use it, but say so in the tab marker grounding and in the first line of the tab.
-- Accepted grounding labels include tenant-evidence, function-context, category-context, industry-context, corpus-pattern, benchmark, and mixed.`;
+- Accepted grounding labels include tenant-evidence, function-context, category-context, industry-context, corpus-pattern, benchmark, and mixed.
+
+DATA RICHNESS, RELEVANCE & HONESTY MANDATE (mandatory on every question):
+- Every companion card must be RICH and SPECIFIC. Thin, generic, or padded cards are a contract violation — regenerate before returning.
+- Evidence tab: surface AT LEAST 4 specific signal items that most govern THIS decision for THIS tenant. Each item must be a named metric with a concrete value, an explicit industry range, or a named missing metric — never a vague label ("various KPIs"), a round-number placeholder, or empty scaffold. For each item, state its honest grounding:
+    measured -> mine the tenant SOURCES hard; if a real relevant figure exists you MUST surface it with its named system/owner. Richness = extracting real tenant numbers, never inventing them.
+    benchmark -> a concrete industry RANGE (e.g. "12-15%"), never a fake decimal, labeled industry-context, with "your value: not captured".
+    uncaptured -> name the missing metric, why it governs the decision, and a SPECIFIC load hint (what to ingest). No generic "load more data".
+- Chart / abarva-canvas exhibit: MUST contain AT LEAST 3 real, specific, labeled elements (lane items, matrix items, gates, or proof-boundary entries), each grounded in tenant evidence or a clearly-labeled industry/planning pattern. No empty axes, single-item exhibits, or placeholder boxes. If tenant evidence is thin, the exhibit is still SPECIFIC (real named industry structure) and its grounding says so.
+- RELEVANCE GATE: every card element must trace to the question's decision AND to a named tenant system/initiative or a specific industry benchmark. Reject generic content that could apply to any company.
+- RICH NEVER MEANS FABRICATED: maximum relevant specificity extracted from real evidence, never maximum invention. NEVER state a tenant number that is not in the tenant SOURCES. When evidence is thin, richness shows up as specific benchmarks, named gaps, and concrete load hints — not vague prose and not invented figures.
+- SELF-CHECK before returning — the answer is INVALID and must be regenerated if any of: Evidence has < 4 specific items; the Chart exhibit has < 3 substantive labeled elements; any element is generic/valueless/vague; any element fails the relevance gate; any tenant number appears that is not in the SOURCES.`;
 
 function normalizeTabId(label: string): IntelligenceTabId | null {
   const normalized = label.trim().toLowerCase();

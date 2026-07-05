@@ -91,9 +91,9 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "intelligence_companion_canvas",
     summary:
-      "Live per-question companion canvas on Intelligence: streams the executive answer on the left (true token streaming, no companion contract on that call), and emits a structured five-lens canvas (Signals/Decision/Picture/Industry/Next Moves) as a `canvas` event that the SentinelChat right rail renders. Default OFF — legacy inline-prose behavior stays until set. Env: ABARVA_FEATURE_INTELLIGENCE_COMPANION_CANVAS_ENABLED_TENANTS.",
+      "[Superseded by the v2 reconcile — kept OFF] Earlier answer-only-streaming + v3 SentinelChat companion-canvas experiment. It stripped the right-canvas tabs, which conflicts with the live IntelligenceV2Surface (which parses the canvas out of those tabs). The shipped reconcile instead enriches v2's existing canvas via the tabbed-response DATA RICHNESS mandate. Leave OFF (includeTenants empty) until true-streaming is re-scoped to keep the tabs. Env: ABARVA_FEATURE_INTELLIGENCE_COMPANION_CANVAS_ENABLED_TENANTS.",
     policy: "tenant",
-    includeTenants: ["lakeshore"],
+    includeTenants: [],
   },
   {
     key: "home_know_claude_synthesis",
