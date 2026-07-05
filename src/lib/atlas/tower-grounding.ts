@@ -322,6 +322,8 @@ async function listSupportingRows(
 export async function buildAtlasTowerCurrentState(input: {
   clientId: string;
   clientKey?: string | null;
+  clientName?: string | null;
+  tenantKeyCandidates?: readonly (string | null | undefined)[];
   surfaceContext?: Record<string, unknown>;
 }): Promise<AtlasTowerCurrentState> {
   const todayIso = resolveTowerToday();
@@ -346,9 +348,11 @@ export async function buildAtlasTowerCurrentState(input: {
     }).catch(() => []),
     loadV7TowerProjection({
       tenantKeyCandidates: [
+        ...(input.tenantKeyCandidates ?? []),
         client.tenantKey,
         client.clientName,
         input.clientKey,
+        input.clientName,
         input.clientId,
       ],
     }).catch(() => ({

@@ -67,7 +67,15 @@ export function buildDeliverableRequest(
       requiresDecisionSection: true,
       requiresRecommendation: true,
       requiresRiskTable: true,
-      requiresSourceRegister: true,
+      // A source register is a register OF governed evidence. Require it only
+      // when there is governed evidence to register — with an empty bundle there
+      // is nothing to cite, so blocking on a missing register is a false gate
+      // (it made, e.g., a P1 charter on a Move with no ingested evidence
+      // impossible to sign off even though the charter is grounded in the
+      // human-entered capture). When evidence IS present the register stays
+      // mandatory, so grounded deliverables (a discovery report with real
+      // evidence) are unchanged and must still cite what they were built on.
+      requiresSourceRegister: evidence.length > 0,
       requiresClientCompleteChecklistWhenGaps: true,
       tone: 'board_grade_consulting',
     },

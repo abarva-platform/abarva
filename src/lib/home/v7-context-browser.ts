@@ -62,31 +62,37 @@ const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
   skyharbor: "skyharbor-air",
 };
 
+// Preview columns per dimension, using the ACTUAL column names in the loaded V7
+// data (verified against the v2 synthetic dataset + live column_registry). An
+// earlier version referenced an assumed schema, so ~13 dimensions had all
+// preferred columns missing and fell back to generic shared columns
+// (entity_scope, shared_service_flag, budget_ownership_model), making the Data
+// preview useless. Every column below is present and populated in the data.
 const PREVIEW_COLUMNS: Record<string, string[]> = {
-  v7_01_enterprise_profile: ["company_name", "industry", "revenue_usd", "employee_count", "total_direct_technology_budget_usd"],
-  v7_02_business_functions: ["entity_name", "function_name", "executive_owner", "business_capability", "critical_processes_structured"],
+  v7_01_enterprise_profile: ["company_name", "industry", "revenue_usd", "employee_count", "total_direct_technology_budget_usd", "strategic_priorities"],
+  v7_02_business_functions: ["entity_name", "function_name", "executive_owner", "business_capability", "function_criticality"],
   v7_03_org_ownership: ["entity_name", "org_unit", "leader_role", "reports_to_role", "decision_rights"],
-  v7_04_workforce_personas: ["entity_name", "persona_name", "business_area", "population_count", "ai_relevance"],
-  v7_05_applications_systems: ["entity_name", "system_name", "system_category", "system_owner", "criticality"],
+  v7_04_workforce_personas: ["entity_name", "persona_name", "role_family", "population_count", "change_readiness"],
+  v7_05_applications_systems: ["entity_name", "system_name", "system_category", "criticality", "business_owner"],
   v7_06_data_assets_integrations: ["entity_name", "data_asset_name", "system_of_record", "integration_type", "data_owner"],
-  v7_07_vendors_contracts: ["entity_name", "vendor_name", "service_category", "renewal_date", "contract_risk"],
-  v7_08_spend_value: ["entity_name", "amount_usd", "amount_type", "owner", "value_linkage"],
-  v7_09_programs_initiatives_business_priorities: ["entity_name", "program_name", "business_priority", "sponsor", "status"],
-  v7_10_ai_initiatives: ["entity_name", "use_case", "tool_or_model", "active_users", "data_readiness"],
-  v7_11_operations_risk_controls: ["entity_name", "process", "risk_name", "status", "control_owner"],
-  v7_12_relationships_graph_edges: ["from_object_ref", "relationship_type", "to_object_ref", "relationship_strength", "evidence_basis"],
-  v7_13_source_evidence_registry: ["evidence_title", "evidence_type", "source_location", "evidence_owner", "evidence_confidence"],
-  v7_14_metric_definitions: ["metric_name", "metric_definition", "metric_owner", "cadence", "source_basis"],
-  v7_15_industry_market_knowledge_patterns: ["pattern_name", "industry_segment", "recommended_actions", "source_basis", "recommended_use"],
-  v7_16_expert_lenses: ["lens_name", "expertise_area", "recommended_actions", "claim_boundary", "module_use"],
-  v7_17_client_rate_card_cost_basis: ["tower", "role", "location", "rate_basis", "blended_rate_usd"],
-  v7_18_function_system_data_vendor_bridge: ["entity_name", "business_function", "system_name", "data_asset_name", "vendor_name"],
-  v7_19_service_tower_managed_services_scope: ["tower_name", "scope_area", "delivery_model", "service_owner", "pricing_basis"],
-  v7_20_chunk_retrieval_registry: ["source_artifact_ref", "dimension", "semantic_tags", "retrieval_eligibility", "chunk_purpose"],
-  v7_21_graph_registry_relationship_dictionary: ["relationship_type", "from_type", "to_type", "client_friendly_definition", "module_use"],
-  v7_22_operational_evidence_process_intelligence: ["process_name", "event_source", "volume_metric", "bottleneck_signal", "process_owner"],
-  v7_23_external_benchmark_market_corpus: ["benchmark_name", "industry_segment", "source_basis", "recommended_use", "caveat"],
-  v7_24_infrastructure_cloud_estate: ["entity_name", "platform_name", "hosting_model", "provider", "volumetric_summary"],
+  v7_07_vendors_contracts: ["entity_name", "vendor_name", "vendor_category", "annual_cost_usd", "renewal_date", "contract_risk"],
+  v7_08_spend_value: ["entity_name", "amount_usd", "spend_category", "run_change", "spend_owner"],
+  v7_09_programs_initiatives_business_priorities: ["entity_name", "priority_name", "priority_type", "business_sponsor", "current_status"],
+  v7_10_ai_initiatives: ["entity_name", "ai_use_case", "tool_or_model", "active_users", "production_status"],
+  v7_11_operations_risk_controls: ["entity_name", "process_control_name", "risk_category", "severity", "status"],
+  v7_12_relationships_graph_edges: ["from_object_ref", "relationship_type", "to_object_ref", "relationship_strength"],
+  v7_13_source_evidence_registry: ["entity_name", "source_artifact_uri", "validation_status", "sensitivity"],
+  v7_14_metric_definitions: ["metric_name", "metric_definition", "metric_owner", "unit", "target_value"],
+  v7_15_industry_market_knowledge_patterns: ["pattern_name", "industry_domain", "recommended_actions"],
+  v7_16_expert_lenses: ["expert_lens_name", "lens_domain", "question_families", "decision_criteria"],
+  v7_17_client_rate_card_cost_basis: ["service_tower", "role_family", "seniority", "delivery_location", "rate_usd_per_hour"],
+  v7_18_function_system_data_vendor_bridge: ["function_ref", "dependency_type", "object_ref", "role_in_function", "criticality_to_function"],
+  v7_19_service_tower_managed_services_scope: ["service_tower", "scope_item", "included_services", "sla", "pricing_unit"],
+  v7_20_chunk_retrieval_registry: ["source_artifact_ref", "dimension", "semantic_tags", "retrieval_eligibility"],
+  v7_21_graph_registry_relationship_dictionary: ["edge_type", "allowed_from", "allowed_to", "inverse_label", "evidence_required"],
+  v7_22_operational_evidence_process_intelligence: ["process", "work_item_type", "volume", "cycle_time", "bottleneck"],
+  v7_23_external_benchmark_market_corpus: ["benchmark_name", "industry", "geography", "range_low", "range_high"],
+  v7_24_infrastructure_cloud_estate: ["estate_item_name", "infrastructure_category", "hosting_deployment_model", "criticality", "primary_location_region"],
 };
 
 const defaultSession = createDefaultSession("home-v7-context-browser");
@@ -147,18 +153,27 @@ export async function getHomeV7ContextBrowser(args: {
       : [];
     const allRecords = dimensionKeys.length
       ? await run<V7RecordRow>(
+          // Preview rows are grouped by entity (the operating company/owner)
+          // so the table is scannable by who-owns-what rather than raw load
+          // order. Dimensions without an entity_name fall back to source order.
           `select dimension_key, record_key, record_name, source_file, source_row_number::int,
             source_artifact_name, source_validation_status, values_json
            from (
             select r.*,
-              row_number() over (partition by r.dimension_key order by r.source_row_number asc) as preview_rank
+              row_number() over (
+                partition by r.dimension_key
+                order by nullif(btrim(r.values_json->>'entity_name'), '') asc nulls last,
+                         r.source_row_number asc
+              ) as preview_rank
             from intelligence_v7.business_records r
             where r.tenant_key = $1
               and r.contract_version = $2
               and r.dimension_key = any($3::text[])
            ) ranked
            where preview_rank <= 12
-           order by dimension_key, source_row_number asc`,
+           order by dimension_key,
+                    nullif(btrim(values_json->>'entity_name'), '') asc nulls last,
+                    source_row_number asc`,
           [tenantKey, contractVersion, dimensionKeys],
         )
       : [];
@@ -261,22 +276,52 @@ function previewColumns(
 ): HomeV6BrowserColumn[] {
   const preferred = PREVIEW_COLUMNS[dimension.dimension_key] ?? [];
   const available = new Set(columns.map((column) => column.column_name));
-  const selected = [
-    ...preferred.filter(
+  const preferredSelected = preferred.filter(
+    (column) =>
+      available.has(column) ||
+      records.some((record) => record.values_json[column] !== undefined),
+  );
+  const preferredSet = new Set(preferredSelected);
+  // A fallback candidate must actually have data in the rows being rendered —
+  // otherwise an auto-filled 6th column can be a near-empty field ("Needs
+  // evidence" in every visible row), which is worse than showing fewer columns.
+  // This checks the SAME records used for the render, not a static assumption
+  // about the dimension's schema, so it stays correct even if the loaded data
+  // differs from what the CSV template implies.
+  const hasSignalInPreview = (column: string) =>
+    records.some((record) => display(record.values_json[column]) !== "Needs evidence");
+  // Fill any remaining slots with real business columns only — never generic
+  // structural (entity_scope, shared_service_flag…), provenance/lineage, or
+  // relationship-reference columns. Columns explicitly listed in PREVIEW_COLUMNS
+  // are always honored (e.g. *_ref columns for the relationships dimension).
+  const fallback = columns
+    .map((column) => column.column_name)
+    .filter(
       (column) =>
-        available.has(column) ||
-        records.some((record) => record.values_json[column] !== undefined),
-    ),
-    ...columns
-      .map((column) => column.column_name)
-      .filter((column) => !preferred.includes(column)),
-  ]
+        !preferredSet.has(column) &&
+        !isNonPreviewColumn(column) &&
+        hasSignalInPreview(column),
+    );
+  const selected = [...preferredSelected, ...fallback]
     .filter((column) => !isInternalOnlyColumn(column))
     .slice(0, 6);
   return selected.map((column) => ({
     key: column,
     label: clientLabel(columns, column),
   }));
+}
+
+// A source-file name (e.g. "v7-synthetic-depth-pass-v2.csv") is never a useful
+// "example" or record label — it is the same for every row in a dimension and
+// tells the reader nothing about the business record. Used to reject
+// record_name / firstMeaningfulValue results that are actually filenames.
+function isFilenameLike(value: string): boolean {
+  return /\.(csv|json|jsonl|yaml|yml|xlsx|docx|pdf)$/i.test(value.trim());
+}
+
+function meaningfulLabel(value: string): string {
+  if (value === "Needs evidence" || isFilenameLike(value)) return "";
+  return value;
 }
 
 function toSourceRow(
@@ -289,8 +334,8 @@ function toSourceRow(
     rowNumber: row.source_row_number,
     rowId: `Source row ${row.source_row_number}`,
     label:
-      display(row.record_name) ||
-      display(firstMeaningfulValue(row.values_json)) ||
+      meaningfulLabel(display(row.record_name)) ||
+      meaningfulLabel(display(firstMeaningfulValue(row.values_json))) ||
       `${dimension.dimension_label} source row ${row.source_row_number}`,
     values: Object.fromEntries(
       columns.map((column) => [
@@ -376,34 +421,65 @@ const NON_EVIDENCE_COLUMNS = [
   "kpi_source_ref",
 ];
 
-// Load per-column business-evidence-gap counts over the full dimension,
-// excluding internal, provenance/lineage, and relationship-reference columns.
+// Load per-column business-evidence-gap counts over the full dimension.
 //
-// An earlier revision also tried a `column_registry.required_level` contract
-// query, but in the live V7 schema it returned zero rows for every dimension
-// (required columns populated and/or a column_name↔jsonb-key join mismatch that
-// cannot be diagnosed without direct DB access). That silently reverted every
-// dimension to the inflated preview-sample count. The denylist below is
-// deterministic and was validated directly against the live V7 CSVs
-// (Business Functions 30→5, Vendors 88→13, Applications 259→124).
+// Primary path uses the authored `intelligence_v7.column_registry.required_level`
+// contract: a cell counts as an evidence gap only when its column is
+// Required- or Recommended-level (Optional/System/derived columns are ignored).
+// Verified live 2026-07-05 (VNet probe): required_level is populated, column
+// names join cleanly to the jsonb keys (34/34), and strictly-Required fields
+// have 0 blanks — so the surfaced gaps are Recommended-level blanks like
+// parent_entity_name.
+//
+// The provenance/reference exclusions are kept ALONGSIDE the contract as
+// belt-and-suspenders: some caveat columns (e.g. validated_by = "not client
+// validated") are Recommended-level but carry the same synthetic caveat on
+// every row, and must not be counted 25x as missing business fields.
+//
+// If the contract query fails (registry/required_level unavailable for a
+// contract), it falls back to the same predicate without the required_level
+// join. The session is autocommit, so a failed primary query does not poison
+// the connection.
 async function loadGapRows(
   run: SqlRunner,
   args: { tenantKey: string; contractVersion: string; dimensionKeys: string[] },
 ): Promise<GapRow[]> {
   const { tenantKey, contractVersion, dimensionKeys } = args;
-  return run<GapRow>(
-    `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
-     from intelligence_v7.business_records r
-     cross join lateral jsonb_each_text(r.values_json) kv
-     where r.tenant_key = $1
-       and r.contract_version = $2
-       and r.dimension_key = any($3::text[])
-       and kv.key <> all($4::text[])
-       and kv.key !~* '(_ref|_refs)$'
-       and ${GAP_VALUE_PREDICATE}
-     group by r.dimension_key, kv.key`,
-    [tenantKey, contractVersion, dimensionKeys, NON_EVIDENCE_COLUMNS],
-  );
+  const params = [tenantKey, contractVersion, dimensionKeys, NON_EVIDENCE_COLUMNS];
+  try {
+    return await run<GapRow>(
+      `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
+       from intelligence_v7.business_records r
+       cross join lateral jsonb_each_text(r.values_json) kv
+       join intelligence_v7.column_registry cr
+         on cr.contract_version = r.contract_version
+        and cr.dimension_key = r.dimension_key
+        and cr.column_name = kv.key
+       where r.tenant_key = $1
+         and r.contract_version = $2
+         and r.dimension_key = any($3::text[])
+         and cr.required_level ~* '^(required|recommended)'
+         and kv.key <> all($4::text[])
+         and kv.key !~* '(_ref|_refs)$'
+         and ${GAP_VALUE_PREDICATE}
+       group by r.dimension_key, kv.key`,
+      params,
+    );
+  } catch {
+    return run<GapRow>(
+      `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
+       from intelligence_v7.business_records r
+       cross join lateral jsonb_each_text(r.values_json) kv
+       where r.tenant_key = $1
+         and r.contract_version = $2
+         and r.dimension_key = any($3::text[])
+         and kv.key <> all($4::text[])
+         and kv.key !~* '(_ref|_refs)$'
+         and ${GAP_VALUE_PREDICATE}
+       group by r.dimension_key, kv.key`,
+      params,
+    );
+  }
 }
 
 interface DimensionGapStats {
@@ -508,7 +584,10 @@ function clientLabel(columns: V7ColumnRow[], column: string): string {
 
 function firstMeaningfulValue(record: JsonRecord): string {
   for (const [key, value] of Object.entries(record)) {
-    if (isInternalOnlyColumn(key)) continue;
+    // Skip structural/provenance/reference columns too, not just internal
+    // keys — otherwise this can return entity_scope, source_artifact_name, or
+    // a similar non-business value as the "first meaningful" field.
+    if (isNonPreviewColumn(key)) continue;
     const displayed = display(value);
     if (displayed && displayed !== "Needs evidence") return displayed;
   }
@@ -527,16 +606,34 @@ function display(value: unknown): string {
   return text.replace(/_/g, " ").replace(/\|/g, ", ").replace(/\s+/g, " ").trim();
 }
 
+// Common acronyms that title-casing would otherwise mangle ("Usd", "Ai", "Sla").
+const LABEL_ACRONYMS = /\b(usd|ai|kpi|sla|it|hr|erp|hcm|api|sso|rbac|rls|dr|roi|sql|etl|ui|ux)\b/gi;
+
 function humanize(value: string): string {
   return value
     .replace(/^v7_\d+_/, "")
     .replace(/\.csv$/i, "")
     .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (match) => match.toUpperCase());
+    .replace(/\b\w/g, (match) => match.toUpperCase())
+    .replace(LABEL_ACRONYMS, (match) => match.toUpperCase());
 }
 
 function isInternalOnlyColumn(column: string): boolean {
   return /^(tenant_key|record_key|source_file_key|created_at|updated_at)$/i.test(column);
+}
+
+// Columns that must never be auto-selected as preview fillers: internal keys,
+// generic structural fields shared by every dimension, provenance/lineage, and
+// relationship-reference pointers. Columns explicitly listed in PREVIEW_COLUMNS
+// bypass this (they are chosen before the fallback runs).
+function isNonPreviewColumn(column: string): boolean {
+  return (
+    isInternalOnlyColumn(column) ||
+    /_refs?$/i.test(column) ||
+    /^(entity_scope|parent_entity_name|used_by_entities|shared_service_flag|budget_ownership_model|known_gaps|data_provider_name|data_provider_role|source_artifact_type|source_artifact_name|capture_method|extraction_method|generated_by|validated_by|source_validation_status|source_as_of_date)$/i.test(
+      column,
+    )
+  );
 }
 
 function scoreFromCount(value: number): number {

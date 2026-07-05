@@ -291,6 +291,44 @@ describe("buildDeliverableRequest", () => {
     expect(req.audience.length).toBeGreaterThan(0); // module default applied
     expect(req.outputFormats).toContain("docx");
   });
+
+  it("requires a source register when governed evidence is present", () => {
+    const req = buildDeliverableRequest(
+      {
+        module: "moves",
+        useCaseArchetype: "CONTRACT_OBLIGATION_CONTROL",
+        deliverableType: "discovery_report",
+        decisionContext: "approve discovery gate",
+        clientDisplayName: "Lakeshore Holdings",
+        initiativeDisplayName: "Contract Control",
+      },
+      evidence,
+      [{ citationNumber: 1, label: "SLA", evidenceFamily: "sla_baseline", confidence: "high" }],
+    );
+    expect(req.qualityBar.requiresSourceRegister).toBe(true);
+  });
+
+  it("does NOT require a source register when there is no governed evidence to register", () => {
+    // A source register is a register OF governed evidence; with an empty bundle
+    // there is nothing to cite, so the quality gate must not block on its absence
+    // (e.g. a P1 charter grounded only in human-entered capture).
+    const req = buildDeliverableRequest(
+      {
+        module: "moves",
+        useCaseArchetype: "CONTRACT_OBLIGATION_CONTROL",
+        deliverableType: "charter",
+        decisionContext: "approve charter gate",
+        clientDisplayName: "Lakeshore Holdings",
+        initiativeDisplayName: "Contract Control",
+      },
+      [],
+      [],
+    );
+    expect(req.qualityBar.requiresSourceRegister).toBe(false);
+    // The rest of the board-grade bar is unchanged.
+    expect(req.qualityBar.requiresRecommendation).toBe(true);
+    expect(req.qualityBar.requiresDecisionSection).toBe(true);
+  });
 });
 
 describe("runDeliverableForTenant", () => {

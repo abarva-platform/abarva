@@ -155,26 +155,26 @@ function readPayload(row: V7TowerRecordRow): JsonRecord {
   return row.values_json && typeof row.values_json === 'object' ? row.values_json : {};
 }
 
+function normalizeDimensionKey(value: unknown): string {
+  return text(value).toLowerCase();
+}
+
 async function readV7TowerRecords(tenantKey: string): Promise<V7TowerRecordRow[]> {
-  return azureRead.query<V7TowerRecordRow>(
-    `with latest_run as (
-       select contract_version
-       from intelligence_v7.tenant_pack_runs
-       where tenant_key = $1 and load_status in ('loaded', 'validated')
-       order by loaded_at desc
-       limit 1
-     )
-     select r.dimension_key, r.record_key, r.record_name, r.source_file,
-       r.source_row_number::int, r.as_of_date::text, r.period_end::text,
+  const rows = await azureRead.query<V7TowerRecordRow>(
+    `select lower(r.dimension_key) as dimension_key, r.record_key, r.record_name, r.source_file,
+       r.source_row_number, r.source_as_of_date as as_of_date, null::date as period_end,
        r.source_artifact_name, r.source_validation_status, r.values_json
      from intelligence_v7.business_records r
-     join latest_run lr on lr.contract_version = r.contract_version
-     where r.tenant_key = $1 and r.dimension_key = any($2::text[])
+     where r.tenant_key = $1 and lower(r.dimension_key) = any($2::text[])
      order by r.dimension_key, r.source_row_number nulls last, r.record_key
      limit 1200`,
     [tenantKey, [...V7_TOWER_DIMENSIONS]],
     { missingTable: 'empty' },
   ).catch(() => []);
+  return rows.map((row) => ({
+    ...row,
+    dimension_key: normalizeDimensionKey(row.dimension_key),
+  }));
 }
 
 function initiativeFromProgram(row: V7TowerRecordRow): AIInitiative {
@@ -258,9 +258,64 @@ function initiativeFromAi(row: V7TowerRecordRow): AIInitiative {
   };
 }
 
+function initiativeFromSpend(row: V7TowerRecordRow): AIInitiative | null {
+  const payload = readPayload(row);
+  const amount = firstNumber(payload, ['amount_usd', 'annualized_spend_usd', 'annual_cost_usd', 'budget_usd']);
+  if (amount === null || amount <= 0) return null;
+  const program = firstText(payload, ['program_ref', 'program_name', 'initiative_name'], 'IT spend portfolio');
+  const tower = firstText(payload, ['service_tower_or_function', 'business_function', 'function_name'], 'Portfolio');
+  const vendor = firstText(payload, ['vendor_ref', 'vendor_name', 'supplier_name']);
+  const system = firstText(payload, ['system_ref', 'system_name', 'application_name']);
+  const id = firstText(
+    payload,
+    ['spend_id', 'initiative_id', 'program_id', 'record_id'],
+    row.record_key,
+  );
+  const nameParts = [program, tower, vendor || system].filter(Boolean);
+  return {
+    initiativeId: id,
+    displayId: id,
+    name: nameParts.join(' · '),
+    description: firstText(
+      payload,
+      ['value_linkage', 'unit_economics', 'allocation_basis'],
+      'Loaded from V7 spend and value ledger.',
+    ),
+    primaryCategoryId: normalizeAlias(tower),
+    primaryCategoryName: tower,
+    secondaryCategoryId: normalizeAlias(firstText(payload, ['spend_category', 'amount_type'], 'spend')),
+    secondaryCategoryName: firstText(payload, ['spend_category', 'amount_type'], 'Spend'),
+    primaryGoalId: normalizeAlias(program),
+    primaryGoalName: program,
+    stage: normalizeStage(firstText(payload, ['run_change', 'program_ref', 'amount_type'])),
+    stageDetail: firstText(payload, ['run_change', 'capex_opex', 'finance_validation_status']) || null,
+    ownerName: firstText(payload, ['spend_owner', 'business_owner', 'commercial_owner'], 'Loaded owner role'),
+    ownerTitle: firstText(payload, ['spend_owner', 'business_owner', 'commercial_owner'], 'Loaded owner role'),
+    ownerFunction: tower,
+    committedAnnualUsd: amount,
+    committedTotalUsd: amount,
+    measuredValueUsd: null,
+    statusFlag: normalizeStatus(firstText(payload, ['finance_validation_status', 'known_gaps', 'run_change'])),
+    statusSummary: firstText(
+      payload,
+      ['finance_validation_status', 'value_linkage', 'known_gaps'],
+      'Loaded from V7 spend and value ledger.',
+    ),
+    confidenceLevel: normalizeConfidence(firstText(payload, ['source_validation_status', 'finance_validation_status'], row.source_validation_status ?? 'MED')),
+    alignedCallout: false,
+    alignedRationale: null,
+    loadedViaTemplate: 'intelligence_v7_spend_value',
+    portfolioCompany: firstText(payload, ['portfolio_company', 'entity_name', 'business_unit']) || null,
+    operatingCompany: firstText(payload, ['operating_company', 'entity_name']) || null,
+    legalEntity: firstText(payload, ['legal_entity']) || null,
+    businessUnit: firstText(payload, ['business_unit', 'entity_name']) || null,
+    businessFunction: tower,
+  };
+}
+
 function vendorFromContract(row: V7TowerRecordRow, fallback?: AIInitiative): AIInitiativeVendorRow | null {
   const payload = readPayload(row);
-  const vendor = firstText(payload, ['vendor_name', 'supplier_name', 'vendor'], text(row.record_name));
+  const vendor = firstText(payload, ['vendor_name', 'supplier_name', 'vendor', 'vendor_ref'], text(row.record_name));
   if (!vendor) return null;
   const id = firstText(payload, ['contract_id', 'vendor_id', 'supplier_id'], row.record_key);
   return {
@@ -349,8 +404,12 @@ export async function loadV7TowerProjection(args: {
   const aiInitiatives = records
     .filter((row) => row.dimension_key === 'v7_10_ai_initiatives')
     .map(initiativeFromAi);
+  const spendInitiatives = records
+    .filter((row) => row.dimension_key === 'v7_08_spend_value')
+    .map(initiativeFromSpend)
+    .filter((row): row is AIInitiative => Boolean(row));
   const initiativeById = new Map<string, AIInitiative>();
-  for (const row of [...initiatives, ...aiInitiatives]) {
+  for (const row of [...initiatives, ...aiInitiatives, ...spendInitiatives]) {
     if (!initiativeById.has(row.initiativeId)) initiativeById.set(row.initiativeId, row);
   }
   const mergedInitiatives = Array.from(initiativeById.values());

@@ -45,12 +45,18 @@ import { PhaseRail } from "./PhaseRail";
 import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
 import {
   AgentDock,
+  modeStorageKey,
   type AttachmentRef,
   type ChatMessage,
 } from "@/components/agent/AgentDock";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
+import { EvidenceWorkbench } from "./EvidenceWorkbench";
 import { conciseSponsorLabel } from "./sponsor-display";
-import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import type {
+  MoveEvidenceNeedPacket,
+  MoveEvidenceNeedStatus,
+  MoveEvidenceNeedPriority,
+} from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -691,6 +697,13 @@ function CharterWorkflow({
   capturedSections,
   isCaptureCardOpen,
   setOpenCaptureCards,
+  workbench = false,
+  gateItems,
+  evidenceNeedPackets,
+  statusColor,
+  sponsorLine,
+  onAddEvidence,
+  onAskAva,
 }: {
   move: StrategicMove;
   phaseNum: number;
@@ -700,6 +713,16 @@ function CharterWorkflow({
   setOpenCaptureCards: React.Dispatch<
     React.SetStateAction<Record<string, boolean>>
   >;
+  // Workbench mode (P2–P5): render the EvidenceWorkbench with the existing
+  // capture UI embedded as its `captureSlot`. All optional so the P1 call site
+  // is unchanged.
+  workbench?: boolean;
+  gateItems?: StrategicMove["gateCriteria"];
+  evidenceNeedPackets?: MoveEvidenceNeedPacket[];
+  statusColor?: StrategicMove["statusColor"];
+  sponsorLine?: string;
+  onAddEvidence?: () => void;
+  onAskAva?: () => void;
 }) {
   const workflow = PHASE_WORKFLOW[phaseNum];
   const sectionIds = useMemo(
@@ -1177,7 +1200,28 @@ function CharterWorkflow({
     }`;
   };
 
-  return (
+  // Workbench evidence selection (used only in workbench mode; hooks run
+  // unconditionally so they stay above any early return).
+  const wbPackets = (evidenceNeedPackets ?? []).filter(
+    (p) => p.status !== "not_applicable",
+  );
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!workbench) return;
+    setSelectedEvidenceId((cur) =>
+      cur && wbPackets.some((p) => p.familyId === cur)
+        ? cur
+        : (wbPackets[0]?.familyId ?? null),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workbench, evidenceNeedPackets]);
+
+  // The existing capture UI (Save → Build-and-approve → Advance + section
+  // cards). In workbench mode it becomes the EvidenceWorkbench `captureSlot`;
+  // otherwise it is returned as-is (P1 + non-current phases, unchanged).
+  const captureCards = (
     <>
       {/* Ordered Save → Build-and-approve sequence — rendered FIRST (above the
           capture cards) so the action is visible without scrolling past inputs. */}
@@ -1414,6 +1458,211 @@ function CharterWorkflow({
       )}
     </>
   );
+
+  if (!workbench) {
+    return captureCards;
+  }
+
+  // ── Workbench mode: map REAL move data + actions → EvidenceWorkbench props ──
+  const EV_STATUS_LABEL: Record<MoveEvidenceNeedStatus, string> = {
+    missing: "Missing",
+    partial: "Partial",
+    covered: "Covered",
+    waived: "Waived",
+    not_applicable: "N/A",
+  };
+  const groupOrder: Array<[MoveEvidenceNeedPriority, string]> = [
+    ["required", "Required"],
+    ["recommended", "Recommended"],
+    ["optional", "Optional"],
+  ];
+  const evidenceGroups = groupOrder.flatMap(([key, label]) => {
+    const rows = wbPackets
+      .filter((p) => p.priority === key)
+      .map((p) => ({
+        id: p.familyId,
+        name: p.evidenceSlot,
+        status: p.status,
+        statusLabel: EV_STATUS_LABEL[p.status],
+      }));
+    return rows.length ? [{ key, label, rows }] : [];
+  });
+  const evReady = wbPackets.filter(
+    (p) => p.status === "covered" || p.status === "waived",
+  ).length;
+
+  const selPacket =
+    wbPackets.find((p) => p.familyId === selectedEvidenceId) ?? null;
+  const lineageFor = (
+    status: MoveEvidenceNeedStatus,
+  ): Array<{ label: string; meta?: string; done: boolean }> => {
+    if (status === "covered")
+      return [
+        { label: "Uploaded", done: true },
+        { label: "Extracted & classified", done: true },
+        { label: "Ingested to context", done: true },
+        { label: "Cited in deliverable", meta: "on next build", done: false },
+      ];
+    if (status === "partial")
+      return [
+        { label: "Uploaded", done: true },
+        { label: "Extraction pending", done: false },
+        { label: "Ingest to context", done: false },
+        { label: "Cite in deliverable", done: false },
+      ];
+    if (status === "waived")
+      return [{ label: "Waived by owner", meta: "caveat carried", done: true }];
+    return [
+      { label: "Requested", done: true },
+      { label: "Upload evidence", done: false },
+      { label: "Ingest to context", done: false },
+      { label: "Cite in deliverable", done: false },
+    ];
+  };
+  const detail = selPacket
+    ? {
+        name: selPacket.evidenceSlot,
+        status: selPacket.status,
+        statusLabel: EV_STATUS_LABEL[selPacket.status],
+        whyItMatters: selPacket.whyItMatters,
+        nextAction: selPacket.nextAction,
+        acceptedFormats: selPacket.acceptedFormats,
+        evidenceTitles: selPacket.evidenceTitles,
+        lineage: lineageFor(selPacket.status),
+      }
+    : null;
+
+  const items = gateItems ?? [];
+  const isReport = (label: string) =>
+    /signed off|report|charter|deliverable/i.test(label);
+  const genBusy = gen.status === "generating" || approving;
+  const buildLabel = genBusy
+    ? "label" in gen && gen.label
+      ? gen.label
+      : "Building…"
+    : "Build report";
+  const reportCrit = items.find((c) => isReport(c.label));
+  // The critical thing left to enable "Build report", in plain English.
+  let buildReason: string | undefined;
+  if (!allSaved) {
+    buildReason = `Save all ${canvasSections.length} inputs first — ${filledNow}/${canvasSections.length} captured.`;
+  } else if (!deliverableId) {
+    buildReason = "Save the record to create the deliverable.";
+  } else if (approving) {
+    buildReason = "Signing off…";
+  }
+  // Unmet HARD gate criteria — these must all clear before the phase can advance.
+  const hardBlockers = items.filter(
+    (c) => !c.completed && c.severity === "hard",
+  );
+  const steps = items.map((c) => {
+    const base = {
+      id: c.id,
+      label: c.label,
+      done: c.completed,
+      hard: c.severity === "hard",
+    };
+    if (c.completed) return base;
+    if (reportCrit && c.id === reportCrit.id) {
+      return {
+        ...base,
+        action: {
+          label: buildLabel,
+          onClick: () => {
+            void buildAndApprove();
+          },
+          kind: "primary" as const,
+          disabled: !canBuildApprove || genBusy,
+          reason: buildReason,
+        },
+      };
+    }
+    if (c.severity === "hard" && onAddEvidence) {
+      return {
+        ...base,
+        action: {
+          label: "Add evidence",
+          onClick: onAddEvidence,
+          kind: "ghost" as const,
+        },
+      };
+    }
+    return base;
+  });
+  steps.sort((a, b) => Number(b.done) - Number(a.done));
+  const doneCount = items.filter((c) => c.completed).length;
+  const nextPhase = phaseNum + 1;
+  // Advance is enabled ONLY when every hard gate criterion is met — the same
+  // rule the server enforces on the advance POST — so the button never looks
+  // ready before it is. (The prior `canAdvance` gated only on the deliverable
+  // being signed off, letting the button enable while hard evidence was still
+  // missing and relying on a server rejection.)
+  const wbCanAdvance =
+    phaseNum >= 2 &&
+    phaseNum <= 4 &&
+    hardBlockers.length === 0 &&
+    !advancing;
+  const advance =
+    phaseNum >= 2 && phaseNum <= 4
+      ? {
+          label: `Advance to P${nextPhase}`,
+          onClick: () => {
+            void advanceGate();
+          },
+          disabled: !wbCanAdvance,
+          note: wbCanAdvance
+            ? "All gate criteria met — ready to advance."
+            : `Complete first: ${hardBlockers.map((c) => c.label).join("; ")}`,
+        }
+      : null;
+
+  // Live % complete: gate = phase-completion signal; evidence = required needs.
+  const gatePct = items.length
+    ? Math.round((doneCount / items.length) * 100)
+    : 0;
+  const requiredPackets = wbPackets.filter((p) => p.priority === "required");
+  const requiredCovered = requiredPackets.filter(
+    (p) => p.status === "covered" || p.status === "waived",
+  ).length;
+  const evidencePct = requiredPackets.length
+    ? Math.round((requiredCovered / requiredPackets.length) * 100)
+    : wbPackets.length
+      ? Math.round((evReady / wbPackets.length) * 100)
+      : 100;
+
+  return (
+    <EvidenceWorkbench
+      moveName={move.name}
+      displayCode={move.displayCode}
+      tenantName={move.tenant.name}
+      sponsorLine={sponsorLine ?? ""}
+      phaseNum={phaseNum}
+      phaseLabel=""
+      statusColor={statusColor ?? move.statusColor}
+      evidenceGroups={evidenceGroups}
+      evidenceReadyLabel={`${evReady} of ${wbPackets.length} in`}
+      evidencePct={evidencePct}
+      gatePct={gatePct}
+      selectedEvidenceId={selectedEvidenceId}
+      onSelectEvidence={setSelectedEvidenceId}
+      onAddEvidence={onAddEvidence ?? (() => {})}
+      gateHeading={
+        phaseNum <= 4 ? `To advance to P${nextPhase}` : "To hand off to Tower"
+      }
+      gateSubhead={`${doneCount} of ${items.length} gate criteria met`}
+      gateProgressLabel={`${doneCount} of ${items.length}`}
+      gateSteps={steps}
+      advance={advance}
+      diagnosisTitle="Diagnosis"
+      diagnosis={[]}
+      errorText={approveError ?? advanceError ?? saveError ?? null}
+      detail={detail}
+      onOpenEvidenceFile={onAddEvidence ?? (() => {})}
+      onAskAvaAboutSelected={onAskAva ?? (() => {})}
+      onViewDossier={() => {}}
+      captureSlot={captureCards}
+    />
+  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -1446,6 +1695,24 @@ export function StrategicMovePhaseClient({
   // phase is not the current one, there is no active gate to render.
   const isCurrentPhase = move.currentPhase === phaseNum;
   const gateItemsWithStatus = isCurrentPhase ? move.gateCriteria : [];
+
+  // Evidence Workbench: P2–P5 of the CURRENT phase get the evidence-first
+  // surface (chat recedes to a collapsed dock). P0/P1 + non-current phases keep
+  // the existing chat-resident canvas.
+  const useWorkbench = isCurrentPhase && phaseNum >= 2 && phaseNum <= 5;
+  const dockSurface = `/strategic-moves/${move.id}/phase/${phaseNum}`;
+  const [dockRemount, setDockRemount] = useState(0);
+  const openAva = useCallback(() => {
+    try {
+      window.localStorage.setItem(modeStorageKey(dockSurface), "side-rail");
+    } catch {
+      /* localStorage may be unavailable */
+    }
+    setDockRemount((n) => n + 1);
+  }, [dockSurface]);
+  const goAddEvidence = useCallback(() => {
+    window.location.assign(`/strategic-moves/${move.id}?tab=cabinet`);
+  }, [move.id]);
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
@@ -1797,8 +2064,9 @@ export function StrategicMovePhaseClient({
           name: "Ava",
           role: config.shortLabel,
         }}
+        key={`dock-${dockRemount}`}
         surface={`/strategic-moves/${move.id}/phase/${phaseNum}`}
-        defaultMode="side-rail"
+        defaultMode={useWorkbench ? "collapsed" : "side-rail"}
         isAgentBusy={streaming}
         thread={dockThread}
         suggestedActions={dockSuggestedActions}
@@ -1809,6 +2077,26 @@ export function StrategicMovePhaseClient({
           displayCode: move.displayCode,
         }}
         workspace={
+          useWorkbench ? (
+            <CharterWorkflow
+              key={serverCapture ? "wb-loaded" : "wb-loading"}
+              workbench
+              move={move}
+              phaseNum={phaseNum}
+              canvasSections={canvasSections}
+              capturedSections={capturedSections}
+              isCaptureCardOpen={isCaptureCardOpen}
+              setOpenCaptureCards={setOpenCaptureCards}
+              gateItems={gateItemsWithStatus}
+              evidenceNeedPackets={evidenceNeedPackets}
+              statusColor={move.statusColor}
+              sponsorLine={`${config.label} — Sponsor: ${conciseSponsorLabel(
+                move.sponsor,
+              )}`}
+              onAddEvidence={goAddEvidence}
+              onAskAva={openAva}
+            />
+          ) : (
           /* Canvas pane */
           <article id={`ws-canvas-p${phaseNum}`} className={styles.rightPane}>
           {/* Canvas head */}
@@ -2291,6 +2579,7 @@ export function StrategicMovePhaseClient({
             </CollapsePanel>
           </div>
         </article>
+          )
         }
       />
     </div>
