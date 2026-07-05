@@ -92,6 +92,7 @@ describe('V7 Tower projection', () => {
       expect.arrayContaining(['lakeshore-industries']),
       { missingTable: 'empty' },
     );
+    expect(queryMock.mock.calls[0][0]).not.toContain('latest_run');
     expect(projection.source).toBe('intelligence_v7');
     expect(projection.initiatives).toHaveLength(2);
     expect(projection.initiatives[0]).toMatchObject({

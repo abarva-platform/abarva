@@ -39,6 +39,7 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
   - Canonicalizes the app's `lakeshore-holdings` tenant alias to the loaded V7 key `lakeshore-industries`.
   - Normalizes V7 dimension keys case-insensitively so loaded `V7_09...` / `V7_10...` records are not missed by lowercase runtime filters.
   - Projects `V7_08_spend_value` rows into Tower initiative rows, because Lakeshore's V7 monetary envelope is carried in the spend/value ledger rather than only in the priority/program rows.
+  - Reads V7 Tower records directly from `intelligence_v7.business_records` so a brittle run-status join or runtime cast cannot hide already-loaded tenant records from the visible Tower page.
 - `src/lib/atlas/tower-grounding.ts`
   - Uses the V7 Tower projection when the older materialized Tower page rows are empty or lack program/vendor value.
   - Runs supporting-row, band-metric, pressure, and 2x2 logic against the V7-backed visible Tower state.
@@ -51,6 +52,7 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
   - Adds a visible-page seam regression proving Lakeshore V7 records produce Tower initiatives, vendor renewal exposure, and non-gap metric packets.
   - Covers uppercase V7 dimension keys matching the Azure-loaded file naming style.
   - Covers V7 spend/value rows creating committed-value program rows and vendor exposure.
+  - Guards against reintroducing the brittle `latest_run` join in the visible-page projection.
 
 ## QA / Validation
 
@@ -82,6 +84,7 @@ Revert this release commit to restore the previous Tower read-model order. No mi
 - The follow-up visible-page binding is required because signed-in browser proof after the first hotfix still showed false `gap` states on `/tower`.
 - Signed-in browser proof after the visible-page binding still showed false gaps because the Azure-loaded V7 dimension keys use `V7_...` casing while the runtime projection filtered only lowercase `v7_...` keys. This record now includes the case-insensitive dimension-key fix.
 - Signed-in browser proof after the case-insensitive deploy still showed false gaps because the visible Tower projection did not turn `V7_08_spend_value` into Tower initiative/program rows. This record now includes the spend/value-to-program projection.
+- The visible projection now reads directly from loaded V7 business records for the selected tenant/dimensions so read-model availability is tied to actual committed V7 records, not a secondary run-status filter.
 - Post-deploy audit still required after the visible-page binding: active ACA revision/image digest plus signed-in browser proof that Lakeshore Tower no longer renders false `gap` states when V7 records exist.
 
 ## Context Ingestion Evidence
