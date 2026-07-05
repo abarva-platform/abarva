@@ -285,22 +285,35 @@ export async function retrieveTenantEnterpriseSources(
     userContextBlock?: string | null;
   } = {},
 ): Promise<TenantEnterpriseSource[]> {
-  if (!tenantKey || !isTenantEnterpriseQuestion(query)) return [];
+  if (!tenantKey) return [];
   const canonicalTenantKey = normalizeTenantEnterpriseKey(tenantKey);
   if (!canonicalTenantKey) return [];
 
-  const segments = selectTenantEnterpriseSegments(query);
-  if (segments.length === 0) return [];
+  // The loaded-context keyword retriever (inside retrieveStructuredTenantSources)
+  // is domain-agnostic and must run for ANY tenant question, so operator-loaded
+  // context is retrievable regardless of whether the query uses enterprise/IT
+  // vocabulary (e.g. legal contract intake, HR, finance ops). Only the
+  // segment- and leadership-oriented readers stay gated behind the enterprise
+  // question classifier. Without this, freshly-loaded context is committed but
+  // never read back ("loaded but not retrievable").
+  const isEnterprise = isTenantEnterpriseQuestion(query);
+  const segments = isEnterprise ? selectTenantEnterpriseSegments(query) : [];
 
   try {
     const adapter = getTenantDataAdapter();
     const tenantQueryKeys = tenantAliasesFor(canonicalTenantKey);
     const [directReportSource, cLevelSource, structuredSources, grouped] =
       await Promise.all([
-        retrieveDirectReportsSource(canonicalTenantKey, query, opts).catch(
-          () => null,
-        ),
-        retrieveCLevelLeaderSource(canonicalTenantKey, query).catch(() => null),
+        isEnterprise
+          ? retrieveDirectReportsSource(canonicalTenantKey, query, opts).catch(
+              () => null,
+            )
+          : Promise.resolve(null),
+        isEnterprise
+          ? retrieveCLevelLeaderSource(canonicalTenantKey, query).catch(
+              () => null,
+            )
+          : Promise.resolve(null),
         retrieveStructuredTenantSources(canonicalTenantKey, query).catch(
           () => [],
         ),
@@ -597,11 +610,13 @@ async function readKeywordContextChunkSource(
   if (patterns.length === 0) return null;
 
   // Pull a wide candidate pool ordered by recency (newest first) so that
-  // freshly-loaded / operator-confirmed context is guaranteed to be a
-  // candidate and is not crowded out of a small LIMIT by the large
-  // pre-existing corpus. Relevance ranking (rankChunks) then selects the
-  // best matches from this pool. Operator-confirmed rows are surfaced ahead
-  // of still-in-review rows for the same recency.
+  // freshly-loaded context is guaranteed to be a candidate and is not crowded
+  // out of a small LIMIT by the large pre-existing corpus. Relevance ranking
+  // (rankChunks) then selects the best matches from this pool. NOTE: we order
+  // by updated_at only — NOT by classification_source — because the legacy
+  // corpus defaults classification_source to 'OPERATOR_CONFIRMED' while fresh
+  // Admin uploads are 'NEEDS_CLASSIFICATION' until triaged; ordering confirmed
+  // rows first would therefore bury exactly the newly-loaded rows we need.
   const rows = await run<EnterpriseContextChunkRow>(
     `SELECT chunk_id, chunk_text, source_segment_id, source_doc
        FROM enterprise_context_chunks
@@ -611,7 +626,6 @@ async function readKeywordContextChunkSource(
           OR source_doc ILIKE ANY($2::text[])
         )
       ORDER BY
-        CASE WHEN classification_source = 'OPERATOR_CONFIRMED' THEN 0 ELSE 1 END,
         updated_at DESC NULLS LAST,
         chunk_id ASC
       LIMIT 240`,
