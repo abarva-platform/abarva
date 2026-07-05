@@ -179,10 +179,151 @@ const GENERIC_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
 ] as const;
 
+// P3 — Compose: choose the future-state approach before locking architecture.
+const P3_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
+  {
+    key: "solution_approach",
+    label: "Solution approach & options",
+    description: "The chosen future-state approach and the alternatives weighed against it.",
+    required: true,
+  },
+  {
+    key: "operating_model",
+    label: "Operating model & work split",
+    description: "How humans and AI split the redesigned work; roles and accountability.",
+    required: true,
+  },
+  {
+    key: "process_design",
+    label: "Process / workflow design",
+    description: "The redesigned end-to-end workflow, decision points, and exception handling.",
+    required: true,
+  },
+  {
+    key: "controls_governance",
+    label: "Controls & AI governance",
+    description: "Controls, risk treatment, and AI/data-rights governance for the approach.",
+    required: true,
+  },
+  {
+    key: "architecture_integration",
+    label: "Architecture & integration",
+    description: "Target systems, integration, and data flows — or the explicit assumptions and open questions.",
+    required: true,
+  },
+  {
+    key: "evidence_confidence",
+    label: "Evidence confidence",
+    description: "Which design choices are evidence-backed vs assumed, and what still needs validation.",
+    required: true,
+  },
+  {
+    key: "recommendation",
+    label: "Recommended approach",
+    description: "The recommended approach and the rationale for choosing it at this gate.",
+    required: true,
+  },
+] as const;
+
+// P4 — Commit: turn the approach into a funded, sequenced plan.
+const P4_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
+  {
+    key: "roadmap_sequencing",
+    label: "Roadmap & sequencing",
+    description: "The 30/60/90 (or phased) roadmap and the sequencing logic behind it.",
+    required: true,
+  },
+  {
+    key: "estimates_capacity",
+    label: "Estimates & capacity",
+    description: "Effort, cost, and capacity estimates with the method and key assumptions stated.",
+    required: true,
+  },
+  {
+    key: "value_plan",
+    label: "Value plan & business case",
+    description: "Baseline → target value, the mechanism, and the claim rules (no unsupported savings).",
+    required: true,
+  },
+  {
+    key: "risks_dependencies",
+    label: "Risks & dependencies",
+    description: "Delivery risks, dependencies, and mitigations that could change the plan.",
+    required: true,
+  },
+  {
+    key: "funding_governance",
+    label: "Funding ask & governance",
+    description: "What is being funded, the decision requested, and the governance cadence.",
+    required: true,
+  },
+  {
+    key: "handoff_plan",
+    label: "Source / Tower handoff",
+    description: "How work and value-proof metrics hand off to Source and Tower.",
+    required: true,
+  },
+  {
+    key: "recommendation",
+    label: "Recommendation to fund",
+    description: "Human rationale for funding and advancing to mobilization.",
+    required: true,
+  },
+] as const;
+
+// P5 — Mobilize: prepare to execute and prove value.
+const P5_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
+  {
+    key: "mobilization_plan",
+    label: "Mobilization plan & RACI",
+    description: "The mobilization plan with named owners (RACI), not role placeholders.",
+    required: true,
+  },
+  {
+    key: "launch_readiness",
+    label: "Launch readiness",
+    description: "Entry criteria, environments, access, and go/no-go readiness for launch.",
+    required: true,
+  },
+  {
+    key: "value_proof_rules",
+    label: "Value-proof rules & metrics",
+    description: "How value is measured and what counts as realized vs forecast vs unsupported.",
+    required: true,
+  },
+  {
+    key: "first_90_days",
+    label: "First 90 days & milestones",
+    description: "The first-90-days plan, milestones, and early proof points.",
+    required: true,
+  },
+  {
+    key: "governance_cadence",
+    label: "Governance & Tower cadence",
+    description: "Reporting, governance, and Tower measurement cadence after launch.",
+    required: true,
+  },
+  {
+    key: "risks_open_items",
+    label: "Open risks & client-to-complete",
+    description: "Remaining risks, caveats, and items the client must close before/at launch.",
+    required: true,
+  },
+  {
+    key: "recommendation",
+    label: "Recommendation to launch",
+    description: "Human rationale for launching and handing off to Tower.",
+    required: true,
+  },
+] as const;
+
 export function getPhaseCaptureSections(phase: number): readonly PhaseCaptureSection[] {
   if (phase === 0) return P0_CAPTURE_SECTIONS;
   if (phase === 1) return P1_CAPTURE_SECTIONS;
   if (phase === 2) return P2_CAPTURE_SECTIONS;
+  if (phase === 3) return P3_CAPTURE_SECTIONS;
+  if (phase === 4) return P4_CAPTURE_SECTIONS;
+  if (phase === 5) return P5_CAPTURE_SECTIONS;
   return GENERIC_CAPTURE_SECTIONS;
 }
 
