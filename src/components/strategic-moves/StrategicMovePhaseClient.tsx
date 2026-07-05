@@ -1701,10 +1701,50 @@ export function StrategicMovePhaseClient({
   ).length;
   const totalGateDone = gateItemsWithStatus.filter((g) => g.completed).length;
 
+  // ── Truthful capture state ────────────────────────────────────────────────
+  // The phase-capture inputs are persisted to program_modules (via the Save
+  // path), but sectionCapturedContent only reads the origination charter — so
+  // saved P1–P5 inputs rendered as "not captured" (the workspace lied about the
+  // user's own data). Load the real capture values for this phase and prefer
+  // them; fall back to the charter-derived carry for sections not yet saved.
+  const [serverCapture, setServerCapture] = useState<Record<
+    string,
+    string
+  > | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/v1/programs/${move.id}/phase-capture?phase=${phaseNum}`, {
+      credentials: "include",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (cancelled) return;
+        const sections = j?.capture?.sections;
+        if (!Array.isArray(sections)) {
+          setServerCapture({});
+          return;
+        }
+        const map: Record<string, string> = {};
+        for (const s of sections) {
+          if (typeof s?.value === "string" && s.value.trim())
+            map[s.key] = s.value;
+        }
+        setServerCapture(map);
+      })
+      .catch(() => {
+        if (!cancelled) setServerCapture({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [move.id, phaseNum]);
+
   // ── Progressive disclosure: derived capture state + auto-expand machine ────
   const capturedSections = canvasSections.map((section) => ({
     section,
-    content: sectionCapturedContent(move, section.id),
+    content: serverCapture?.[section.id]?.trim()
+      ? serverCapture[section.id]
+      : sectionCapturedContent(move, section.id),
   }));
   const filledCount = capturedSections.filter((c) => c.content !== null).length;
   const firstUnfilled =
@@ -2072,21 +2112,6 @@ export function StrategicMovePhaseClient({
                 id={`ws-canvas-p${phaseNum}-gate-panel`}
                 className={styles.detailSection}
               >
-                <div className={styles.detailSectionTitle}>
-                  {config.label.toUpperCase()} &middot; Gate criteria
-                  {gateItemsWithStatus.length > 0 && (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontWeight: 400,
-                        textTransform: "none",
-                      }}
-                    >
-                      &mdash; {totalGateDone} of {gateItemsWithStatus.length}{" "}
-                      met ({hardGateDone} of {hardGateCount} hard)
-                    </span>
-                  )}
-                </div>
                 {gateItemsWithStatus.length === 0 ? (
                   <p
                     style={{
@@ -2259,6 +2284,7 @@ export function StrategicMovePhaseClient({
             >
               {PHASE_WORKFLOW[phaseNum] && canvasSections.length > 0 ? (
                 <CharterWorkflow
+                  key={serverCapture ? "capture-loaded" : "capture-loading"}
                   move={move}
                   phaseNum={phaseNum}
                   canvasSections={canvasSections}
@@ -2426,9 +2452,6 @@ export function StrategicMovePhaseClient({
                 id={`ws-canvas-p${phaseNum}-artifact-shelf`}
                 className={styles.detailSection}
               >
-                <div className={styles.detailSectionTitle}>
-                  {config.label} &middot; Artifacts
-                </div>
                 {move.deliverables.filter((d) =>
                   deliverableBelongsToPhase(
                     d.typeKey,
