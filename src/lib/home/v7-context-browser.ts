@@ -385,34 +385,65 @@ const NON_EVIDENCE_COLUMNS = [
   "kpi_source_ref",
 ];
 
-// Load per-column business-evidence-gap counts over the full dimension,
-// excluding internal, provenance/lineage, and relationship-reference columns.
+// Load per-column business-evidence-gap counts over the full dimension.
 //
-// An earlier revision also tried a `column_registry.required_level` contract
-// query, but in the live V7 schema it returned zero rows for every dimension
-// (required columns populated and/or a column_name↔jsonb-key join mismatch that
-// cannot be diagnosed without direct DB access). That silently reverted every
-// dimension to the inflated preview-sample count. The denylist below is
-// deterministic and was validated directly against the live V7 CSVs
-// (Business Functions 30→5, Vendors 88→13, Applications 259→124).
+// Primary path uses the authored `intelligence_v7.column_registry.required_level`
+// contract: a cell counts as an evidence gap only when its column is
+// Required- or Recommended-level (Optional/System/derived columns are ignored).
+// Verified live 2026-07-05 (VNet probe): required_level is populated, column
+// names join cleanly to the jsonb keys (34/34), and strictly-Required fields
+// have 0 blanks — so the surfaced gaps are Recommended-level blanks like
+// parent_entity_name.
+//
+// The provenance/reference exclusions are kept ALONGSIDE the contract as
+// belt-and-suspenders: some caveat columns (e.g. validated_by = "not client
+// validated") are Recommended-level but carry the same synthetic caveat on
+// every row, and must not be counted 25x as missing business fields.
+//
+// If the contract query fails (registry/required_level unavailable for a
+// contract), it falls back to the same predicate without the required_level
+// join. The session is autocommit, so a failed primary query does not poison
+// the connection.
 async function loadGapRows(
   run: SqlRunner,
   args: { tenantKey: string; contractVersion: string; dimensionKeys: string[] },
 ): Promise<GapRow[]> {
   const { tenantKey, contractVersion, dimensionKeys } = args;
-  return run<GapRow>(
-    `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
-     from intelligence_v7.business_records r
-     cross join lateral jsonb_each_text(r.values_json) kv
-     where r.tenant_key = $1
-       and r.contract_version = $2
-       and r.dimension_key = any($3::text[])
-       and kv.key <> all($4::text[])
-       and kv.key !~* '(_ref|_refs)$'
-       and ${GAP_VALUE_PREDICATE}
-     group by r.dimension_key, kv.key`,
-    [tenantKey, contractVersion, dimensionKeys, NON_EVIDENCE_COLUMNS],
-  );
+  const params = [tenantKey, contractVersion, dimensionKeys, NON_EVIDENCE_COLUMNS];
+  try {
+    return await run<GapRow>(
+      `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
+       from intelligence_v7.business_records r
+       cross join lateral jsonb_each_text(r.values_json) kv
+       join intelligence_v7.column_registry cr
+         on cr.contract_version = r.contract_version
+        and cr.dimension_key = r.dimension_key
+        and cr.column_name = kv.key
+       where r.tenant_key = $1
+         and r.contract_version = $2
+         and r.dimension_key = any($3::text[])
+         and cr.required_level ~* '^(required|recommended)'
+         and kv.key <> all($4::text[])
+         and kv.key !~* '(_ref|_refs)$'
+         and ${GAP_VALUE_PREDICATE}
+       group by r.dimension_key, kv.key`,
+      params,
+    );
+  } catch {
+    return run<GapRow>(
+      `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
+       from intelligence_v7.business_records r
+       cross join lateral jsonb_each_text(r.values_json) kv
+       where r.tenant_key = $1
+         and r.contract_version = $2
+         and r.dimension_key = any($3::text[])
+         and kv.key <> all($4::text[])
+         and kv.key !~* '(_ref|_refs)$'
+         and ${GAP_VALUE_PREDICATE}
+       group by r.dimension_key, kv.key`,
+      params,
+    );
+  }
 }
 
 interface DimensionGapStats {
