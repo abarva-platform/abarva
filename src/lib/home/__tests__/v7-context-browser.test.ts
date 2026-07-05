@@ -85,13 +85,11 @@ describe("getHomeV7ContextBrowser", () => {
   });
 });
 
-// A routing session that answers each query family and lets a test control the
-// required-field-contract probe and which gap query "wins".
+// A routing session that answers each query family. `gapBehavior` controls what
+// the full-dimension denylist gap query returns (or whether it throws).
 function routingSession(opts: {
-  requiredLevelExists: boolean;
-  requiredContractCount: number;
-  requiredGapRows: Array<{ column_name: string; gap_count: number }>;
-  denylistGapRows: Array<{ column_name: string; gap_count: number }>;
+  gapBehavior: "rows" | "empty" | "throw";
+  denylistGapRows?: Array<{ column_name: string; gap_count: number }>;
 }): SessionRunner {
   const dim = "v7_02_business_functions";
   return async (fn) =>
@@ -126,22 +124,16 @@ function routingSession(opts: {
           },
         ] as R[];
       }
-      // required-field-contract probe
-      if (sql.includes("count(*)::int as n")) {
-        if (!opts.requiredLevelExists) {
-          throw Object.assign(new Error('column "required_level" does not exist'), {
-            code: "42703",
-          });
-        }
-        return [{ n: opts.requiredContractCount }] as R[];
-      }
-      // required-field gap query (joins column_registry, filters required_level)
-      if (sql.includes("cr.required_level ~* '^required'")) {
-        return opts.requiredGapRows.map((r) => ({ dimension_key: dim, ...r })) as R[];
-      }
-      // provenance-denylist gap query
+      // full-dimension provenance-denylist gap query
       if (sql.includes("kv.key <> all($4::text[])")) {
-        return opts.denylistGapRows.map((r) => ({ dimension_key: dim, ...r })) as R[];
+        if (opts.gapBehavior === "throw") {
+          throw new Error("gap aggregate failed");
+        }
+        if (opts.gapBehavior === "empty") return [] as R[];
+        return (opts.denylistGapRows ?? []).map((r) => ({
+          dimension_key: dim,
+          ...r,
+        })) as R[];
       }
       if (sql.includes("from intelligence_v7.column_registry")) {
         return [
@@ -168,36 +160,38 @@ function routingSession(opts: {
 }
 
 describe("getHomeV7ContextBrowser — evidence-gap scoping", () => {
-  it("uses the required-field contract when column_registry.required_level is populated", async () => {
+  it("counts full-dimension gaps from the provenance-denylist query", async () => {
     const browser = await getHomeV7ContextBrowser({
       tenantKey: "lakeshore",
       session: routingSession({
-        requiredLevelExists: true,
-        requiredContractCount: 42,
-        requiredGapRows: [{ column_name: "executive_owner", gap_count: 2 }],
+        gapBehavior: "rows",
         denylistGapRows: [{ column_name: "parent_entity_name", gap_count: 5 }],
       }),
     });
     const preview = browser?.dimensions["Business Functions"];
-    // Required-field query wins: 2 real required-field gaps, NOT the denylist's 5.
-    expect(preview?.dataThinCells).toBe(2);
-    expect(preview?.knownGaps.map((gap) => gap.label)).toContain("Executive Owner");
-    expect(preview?.knownGaps.map((gap) => gap.label)).not.toContain("Parent Entity Name");
-  });
-
-  it("falls back to the provenance denylist when required_level is absent", async () => {
-    const browser = await getHomeV7ContextBrowser({
-      tenantKey: "lakeshore",
-      session: routingSession({
-        requiredLevelExists: false,
-        requiredContractCount: 0,
-        requiredGapRows: [{ column_name: "executive_owner", gap_count: 2 }],
-        denylistGapRows: [{ column_name: "parent_entity_name", gap_count: 5 }],
-      }),
-    });
-    const preview = browser?.dimensions["Business Functions"];
-    // Probe threw (column absent) → denylist path used.
     expect(preview?.dataThinCells).toBe(5);
     expect(preview?.knownGaps.map((gap) => gap.label)).toContain("Parent Entity Name");
+  });
+
+  it("shows 0 gaps (NOT the preview sample) when the full-dimension query returns none", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "lakeshore",
+      session: routingSession({ gapBehavior: "empty" }),
+    });
+    const preview = browser?.dimensions["Business Functions"];
+    // Regression guard: an empty full-dimension result must read as 0, not fall
+    // back to the <=12-row sample (which would count the blank parent_entity_name).
+    expect(preview?.dataThinCells).toBe(0);
+    expect(preview?.knownGaps).toHaveLength(0);
+  });
+
+  it("falls back to the preview sample only when the gap aggregate throws", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "lakeshore",
+      session: routingSession({ gapBehavior: "throw" }),
+    });
+    const preview = browser?.dimensions["Business Functions"];
+    // Sample of the one preview row: parent_entity_name is blank → 1 gap.
+    expect(preview?.dataThinCells).toBe(1);
   });
 });
