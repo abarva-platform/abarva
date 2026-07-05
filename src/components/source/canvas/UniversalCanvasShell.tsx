@@ -231,6 +231,7 @@ function renderStageDocumentContent({
   decisionBriefDocxHref,
   decisionBriefPdfHref,
   eventDisplayName,
+  registryArtifacts,
   criteria,
   evidence,
   activityEntries,
