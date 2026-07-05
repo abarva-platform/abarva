@@ -47,7 +47,7 @@ export function EvidenceTab({ stage, states }: EvidenceTabProps) {
             ['Loaded', CANVAS.WAITING, 'File ingested, not yet parsed'],
             ['Not Requested', CANVAS.GRAY, 'Known source, not yet pulled'],
             ['Stale', CANVAS.BLOCKED, 'Older than freshness window'],
-            ['Low Confidence', CANVAS.BLOCKED, 'Sentinel-flagged'],
+            ['Low Confidence', CANVAS.BLOCKED, 'Flagged for review'],
           ] as const
         ).map(([label, color, desc]) => (
           <div key={label} style={LEGEND_ITEM_STYLE}>

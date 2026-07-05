@@ -102,21 +102,19 @@ import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registr
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import { canvasDockAgentForStage } from '@/lib/source/portfolio-derivations';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
-import {
-  AgentDock,
-  type AttachmentRef,
-  type ChatMessage,
-  type SuggestedAction,
-} from '@/components/agent/AgentDock';
+import type { AttachmentRef, ChatMessage, SuggestedAction } from '@/components/agent/AgentDock';
 import { EventIdStrip } from './EventIdStrip';
 import { EventStepRail } from './EventStepRail';
 import { EventWorkspace, type WorkspaceTabKey } from './EventWorkspace';
 import { CANVAS } from './canvas-tokens';
+import { CanvasGateSidebar } from './CanvasGateSidebar';
+import { AvaBottomBar } from './AvaBottomBar';
 import { DocumentTab } from './workspace-tabs/DocumentTab';
-import { GateTab } from './workspace-tabs/GateTab';
 import { EvidenceTab } from './workspace-tabs/EvidenceTab';
 import { LogTab, type ActivityEntry } from './workspace-tabs/LogTab';
 import { threeChoicesForStage } from './canvas-three-choices';
+import { SourceAvaDecisionExperience } from '@/components/source/SourceAvaDecisionExperience';
+import type { DecisionPackageModel } from '@/lib/source/proposal-intelligence/decision-package';
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -135,25 +133,23 @@ interface UniversalCanvasShellProps {
   activityEntries: ActivityEntry[];
   tenantName: string;
   decisionThreadId?: string | null;
+  proposalDecisionPackage?: DecisionPackageModel | null;
 }
 
 /**
- * Top-level universal sourcing canvas. Renders the id strip, step rail, and
- * the shared `<AgentDock>` (chat lane on the left, workspace on the right
- * by default — five toggleable dock modes per surface).
+ * Top-level universal sourcing canvas. Three-column layout:
+ *   Left  (276px)  — CanvasGateSidebar: always-visible gate criteria checklist
+ *   Center (flex)  — EventWorkspace: Document / Evidence / Log tabs
+ *   Bottom         — AvaBottomBar: aVa composer + expandable thread panel
  *
  * Reads real data from the canvas substrate — pre-filtered to the stage being
- * viewed. Chat goes through the existing source Sentinel/Atlas runtime at
- * `/api/v1/source/[eventId]/nexus/ask`; AgentDock paperclip uploads carry
- * the event id so the route can stamp `agent_attachment.linked_event_id`
- * before invoking the deterministic stub. The runtime itself is unchanged.
+ * viewed. Chat goes through the source Sentinel/Atlas runtime at
+ * `/api/v1/source/[eventId]/nexus/ask`. The runtime itself is unchanged.
  *
- * Stage→agent mapping is binary at the dock surface:
- *   stages 1–9 (Strategy → Selection)  → Sentinel
+ * Stage→agent mapping is binary internally:
+ *   stages 1–9 (Strategy → Selection)  → Sentinel, presented as aVa Source
  *   stages 10–11 (Transition, Value)   → Atlas
- * (`canvasDockAgentForStage`). Specialist agents (Nexus, Steward) still
- * lead their respective workflows via tool calls invoked by the front
- * agent — they don't host the chat surface here.
+ * (`canvasDockAgentForStage`).
  */
 export function UniversalCanvasShell({
   event,
@@ -166,6 +162,7 @@ export function UniversalCanvasShell({
   activityEntries,
   tenantName,
   decisionThreadId = null,
+  proposalDecisionPackage = null,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -508,7 +505,7 @@ export function UniversalCanvasShell({
     }
   };
 
-  // Three-choice catalog mapped to AgentDock SuggestedActions. Click pre-fills
+  // Three-choice catalog mapped to AvaBottomBar chips. Click pre-fills
   // the composer rather than auto-submitting so the user can edit first
   // (B4 semantics preserved from the prior chat lane).
   const suggestedActions: SuggestedAction[] = useMemo(
@@ -521,7 +518,7 @@ export function UniversalCanvasShell({
     [viewStage],
   );
 
-  const initialTab: WorkspaceTabKey = 'document';
+  const initialTab: WorkspaceTabKey = proposalDecisionPackage ? 'decision' : 'document';
   const tabs = [
     {
       key: 'document' as WorkspaceTabKey,
@@ -566,21 +563,21 @@ export function UniversalCanvasShell({
         />
       ),
     },
-    {
-      key: 'gate' as WorkspaceTabKey,
-      label: 'Gate',
-      badge: `${contextBundle.metCriteria}/${contextBundle.totalCriteria}`,
-      content: (
-        <GateTab
-          fromStage={viewStage}
-          states={stageCriteria}
-          onChangeCriterionState={handleCriterionStateChange}
-          pendingByCriterionId={pendingCriterionByCriterionId}
-          onPromoteStage={handlePromoteStage}
-          promotePending={promotePending}
-        />
-      ),
-    },
+    ...(proposalDecisionPackage
+      ? [
+          {
+            key: 'decision' as WorkspaceTabKey,
+            label: 'aVa Decision',
+            badge: 'live',
+            content: (
+              <SourceAvaDecisionExperience
+                model={proposalDecisionPackage}
+                eventId={event.id}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       key: 'evidence' as WorkspaceTabKey,
       label: 'Evidence',
@@ -629,34 +626,26 @@ export function UniversalCanvasShell({
             viewStage={viewStage}
           />
         </div>
-        <div style={SPLITTER_WRAPPER_STYLE}>
-          <AgentDock
-            agent={{
-              initials: displayAgentInitials(dockAgent),
-              name: displayAgentName(dockAgent),
-              role: AGENT_DOCK_ROLE_COPY[dockAgent],
-            }}
-            surface="source/events/canvas"
-            defaultMode="side-rail"
-            surfaceContext={{
-              sourceEventId: event.id,
-              sourceEventCode: event.code,
-              viewStage,
-            }}
-            suggestedActions={suggestedActions}
-            thread={thread}
-            onMessage={handleAgentMessage}
-            workspace={
-              <CanvasContextStrip
-                stageKey={viewStage}
-                contextBundle={contextBundle}
-              >
-                <EventWorkspace tabs={tabs} defaultTab={initialTab} />
-              </CanvasContextStrip>
-            }
-            defaultLeftPercent={45}
-            minLeftPx={320}
+        <div style={CANVAS_BODY_STYLE}>
+          <CanvasGateSidebar
+            fromStage={viewStage}
+            states={stageCriteria}
+            onChangeCriterionState={handleCriterionStateChange}
+            pendingByCriterionId={pendingCriterionByCriterionId}
+            onPromoteStage={handlePromoteStage}
+            promotePending={promotePending}
           />
+          <div style={WORKSPACE_COLUMN_STYLE}>
+            <CanvasContextStrip stageKey={viewStage} contextBundle={contextBundle}>
+              <EventWorkspace tabs={tabs} defaultTab={initialTab} />
+            </CanvasContextStrip>
+            <AvaBottomBar
+              agentName={displayAgentName()}
+              thread={thread}
+              onMessage={(text) => handleAgentMessage(text, [])}
+              suggestedActions={suggestedActions}
+            />
+          </div>
         </div>
         <CanvasTour />
       </main>
@@ -664,21 +653,8 @@ export function UniversalCanvasShell({
   );
 }
 
-// Eyebrow copy under the agent name in the dock header. Action verbs the
-// user can ask for, not abstract role descriptions. Mirrors the previous
-// EventChatLane.AGENT_DESCRIPTION map (Sentinel + Atlas only — the canvas
-// dock is a binary surface; see `canvasDockAgentForStage`).
-const AGENT_DOCK_ROLE_COPY: Record<'Sentinel' | 'Atlas', string> = {
-  Sentinel: 'Drafts artifacts, surfaces evidence, flags gaps before they cost you.',
-  Atlas: 'Frames the executive brief, ranks finalists, locks the decision.',
-};
-
-function displayAgentName(agent: 'Sentinel' | 'Atlas'): string {
-  return agent === 'Sentinel' ? 'Sentinel Source' : agent;
-}
-
-function displayAgentInitials(agent: 'Sentinel' | 'Atlas'): string {
-  return agent === 'Sentinel' ? 'SS' : agent[0];
+function displayAgentName(): string {
+  return 'aVa';
 }
 
 interface CanvasContextStripProps {
@@ -692,10 +668,7 @@ interface CanvasContextStripProps {
   children: ReactNode;
 }
 
-// Stage label + readiness/artifact counts that previously lived inside the
-// chat lane header. AgentDock owns the chat chrome now, so the workspace
-// pane absorbs this strip — same data, same testid surface, just hosted by
-// the right pane instead of the chat one.
+// Stage label + readiness/artifact counts shown above the EventWorkspace tabs.
 function CanvasContextStrip({ stageKey, contextBundle, children }: CanvasContextStripProps) {
   const stageLabel = SOURCE_STAGE_LABELS[stageKey];
   return (
@@ -809,10 +782,18 @@ const DOSSIER_LINK_STYLE: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-const SPLITTER_WRAPPER_STYLE: CSSProperties = {
+const CANVAS_BODY_STYLE: CSSProperties = {
   flex: 1,
   display: 'flex',
   minHeight: 0,
+  overflow: 'hidden',
+};
+
+const WORKSPACE_COLUMN_STYLE: CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
   overflow: 'hidden',
 };
 

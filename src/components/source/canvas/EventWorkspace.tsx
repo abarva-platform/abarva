@@ -3,7 +3,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { CANVAS } from './canvas-tokens';
 
-export type WorkspaceTabKey = 'document' | 'gate' | 'evidence' | 'log';
+export type WorkspaceTabKey = 'document' | 'decision' | 'gate' | 'evidence' | 'log';
 
 interface WorkspaceTab {
   key: WorkspaceTabKey;
