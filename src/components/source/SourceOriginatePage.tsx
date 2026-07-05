@@ -355,6 +355,14 @@ function explicitDraftKey(clientKey: string): string {
   return `abarva.source.originate.explicit-draft.${clientKey}`;
 }
 
+function createSourceEventRequestId(): string {
+  const randomId = globalThis.crypto?.randomUUID?.();
+  if (randomId) return randomId;
+  return `source-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
+}
+
 function inferEventType(
   scopeBoundary: string,
   selectedCategory?: SourceCategory | null,
@@ -512,6 +520,7 @@ export function SourceOriginatePage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tourActive = searchParams?.get("tour") === "1";
+  const [creationRequestId] = useState(() => createSourceEventRequestId());
 
   // Iteration-2 punch-list: `/source/new?intent=...` must reshape the intake.
   // When a known intent is present we swap in a tailored field set, a
@@ -659,6 +668,7 @@ export function SourceOriginatePage({
         valueTargetDescription: intake.valueTarget || undefined,
         baselineOwnerDescription: intake.baselineOwner || undefined,
         categoryLabel: selectedCategory?.label,
+        creationRequestId,
         estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
       }),
     });
