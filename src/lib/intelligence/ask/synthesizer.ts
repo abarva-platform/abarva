@@ -384,6 +384,51 @@ function formatSourcesBlock(sources: AskSource[]): string {
     .join("\n\n");
 }
 
+/**
+ * Reconcile live-streamed bytes against the final (possibly repaired) answer.
+ *
+ * The Intelligence client APPENDS every streamed delta — it cannot replace what
+ * it already rendered. So for a given terminal answer `finalText`, the bytes we
+ * still need to emit are exactly `finalText` minus the prefix we already sent
+ * live (`liveStreamedText`). This function returns those remainder bytes and
+ * guarantees `liveStreamedText + remainder === finalText` in the common case,
+ * with a documented, loss-free fallback when a repair rewrote the streamed
+ * prefix:
+ *
+ *   1. Nothing streamed live (liveStreamedText === "") → the whole finalText is
+ *      the remainder (this is today's behavior; byte-identical).
+ *   2. finalText starts with liveStreamedText (the normal case — the pre-tab
+ *      main answer survived repair unchanged) → emit only the suffix
+ *      finalText.slice(liveStreamedText.length). No duplication, no loss.
+ *   3. A repair diverged the streamed prefix from finalText (rare — the tab /
+ *      native-canvas / standalone repairs reassign the whole `text`). We cannot
+ *      un-send the already-streamed bytes, so append-only byte-equality is
+ *      physically impossible for that streamed region. To lose NO final content
+ *      we emit finalText.slice(commonPrefixLen) — a resync that continues from
+ *      the last byte both strings agree on. The user sees the streamed prefix,
+ *      then the diverged tail of the repaired answer; the complete final answer
+ *      is still delivered (no content lost), only its earliest bytes may differ
+ *      from the repaired version. `diverged` is returned so callers can trace it.
+ */
+export function reconcileStreamRemainder(
+  liveStreamedText: string,
+  finalText: string,
+): { remainder: string; diverged: boolean } {
+  if (liveStreamedText.length === 0) {
+    return { remainder: finalText, diverged: false };
+  }
+  if (finalText.startsWith(liveStreamedText)) {
+    return { remainder: finalText.slice(liveStreamedText.length), diverged: false };
+  }
+  // Diverged: emit from the longest common prefix so no final content is lost.
+  let common = 0;
+  const max = Math.min(liveStreamedText.length, finalText.length);
+  while (common < max && liveStreamedText[common] === finalText[common]) {
+    common += 1;
+  }
+  return { remainder: finalText.slice(common), diverged: true };
+}
+
 export async function* synthesizeStream(args: {
   query: string;
   sources: AskSource[];
@@ -700,6 +745,43 @@ ACTIVE INTELLIGENCE CANVAS RULES
 
     let text = "";
     let sawFirstToken = false;
+    // ── LIVE MAIN-ANSWER STREAMING (rich-text, non-answerOnly path) ──────────
+    //
+    // The executive main answer is everything BEFORE the first `<<<TAB:`
+    // marker. We stream that prefix token-by-token as it arrives so the left
+    // answer paints in ~1-2s instead of after full generation + repairs.
+    // Once the first `<<<TAB:` marker appears we STOP live-streaming and keep
+    // accumulating silently; the tabs + canvas are finalized (and repaired)
+    // after the stream completes, then the remainder is emitted at the end.
+    //
+    // Invariant we protect: the client APPENDS deltas, so the concatenation of
+    // {liveStreamedText} + {final remainder emit} MUST equal the final repaired
+    // answer, byte-for-byte. We only ever live-stream a byte-exact prefix of
+    // `text`, and never a byte that could belong to the marker (we hold back
+    // any trailing suffix that is itself a proper prefix of `<<<TAB:`). At the
+    // terminal emit points below we reconcile against the final (possibly
+    // repaired) text via `reconcileStreamRemainder`, which guarantees no
+    // duplication and no loss even if a repair rewrote the pre-tab prefix.
+    //
+    // Live streaming is gated on `args.richText === true` ONLY. The plain-text
+    // path stays byte-identical: its final output is sanitized/reworded
+    // (sanitizeAskSynthesis → applyPartialEvidencePolicy → enforceDecisionGrade
+    // → chunkAskText), so the raw stream is NOT a prefix of it and must not be
+    // streamed live. The answerOnly path returned above and is untouched.
+    const liveMainAnswerStreaming = args.richText === true;
+    const TAB_MARKER = "<<<TAB:";
+    let liveStreamedText = "";
+    let liveStreamingStopped = false;
+    // Rolling cross-tenant leak guard for the LIVE-streamed main answer. The
+    // once-at-the-end post-response guards (detectCrossTenantIdentityLeak /
+    // detectOffTenantMention) still run on the full text below and are NOT
+    // removed; this per-chunk detector exists because live streaming means the
+    // main-answer prefix reaches the client before those end guards run, so a
+    // leak in the streamed prefix must be caught mid-stream. Same detectors,
+    // earlier timing — identical policy.
+    const liveRollingGuard = liveMainAnswerStreaming
+      ? createRollingLeakDetector(args.tenantClientKey ?? args.tenantId ?? null)
+      : null;
     for await (const event of stream) {
       if (
         event.type === "content_block_delta" &&
@@ -714,6 +796,82 @@ ACTIVE INTELLIGENCE CANVAS RULES
           );
         }
         text += event.delta.text;
+        if (liveMainAnswerStreaming && !liveStreamingStopped) {
+          const markerIndex = text.indexOf(TAB_MARKER);
+          if (markerIndex >= 0) {
+            // First `<<<TAB:` marker seen. Stream everything up to (but not
+            // including) the marker, then stop live-streaming permanently.
+            if (markerIndex > liveStreamedText.length) {
+              const emit = text.slice(liveStreamedText.length, markerIndex);
+              const verdict = liveRollingGuard?.push(emit);
+              if (verdict?.abort) {
+                emitTiming(
+                  latencyTrace.mark("live_main_answer.rolling_leak.aborted", {
+                    model,
+                  }),
+                );
+                if (verdict.refusalText) {
+                  yield verdict.refusalText;
+                }
+                args.onModelOutput?.({
+                  rawText: text,
+                  text,
+                  model,
+                  auditId,
+                  route: "intelligence-ask-synthesis-live-aborted",
+                });
+                return;
+              }
+              liveStreamedText = text.slice(0, markerIndex);
+              yield emit;
+            }
+            liveStreamingStopped = true;
+            emitTiming(
+              latencyTrace.mark("live_main_answer.tab_marker_seen", {
+                model,
+                mainAnswerChars: liveStreamedText.length,
+              }),
+            );
+          } else {
+            // No marker yet. Hold back the longest trailing suffix of `text`
+            // that is a proper prefix of `<<<TAB:` (e.g. a delta ending in
+            // "<<<T") so we never stream a byte that later turns out to be the
+            // start of the marker. Stream everything before that safe boundary.
+            let holdBack = 0;
+            const maxHold = Math.min(TAB_MARKER.length - 1, text.length);
+            for (let n = maxHold; n > 0; n -= 1) {
+              if (TAB_MARKER.startsWith(text.slice(text.length - n))) {
+                holdBack = n;
+                break;
+              }
+            }
+            const safeEnd = text.length - holdBack;
+            if (safeEnd > liveStreamedText.length) {
+              const emit = text.slice(liveStreamedText.length, safeEnd);
+              const verdict = liveRollingGuard?.push(emit);
+              if (verdict?.abort) {
+                emitTiming(
+                  latencyTrace.mark("live_main_answer.rolling_leak.aborted", {
+                    model,
+                  }),
+                );
+                if (verdict.refusalText) {
+                  yield verdict.refusalText;
+                }
+                args.onModelOutput?.({
+                  rawText: text,
+                  text,
+                  model,
+                  auditId,
+                  route: "intelligence-ask-synthesis-live-aborted",
+                });
+                return;
+              }
+              liveStreamedText = text.slice(0, safeEnd);
+              yield emit;
+            }
+          }
+        }
       }
     }
     emitTiming(
@@ -722,6 +880,9 @@ ACTIVE INTELLIGENCE CANVAS RULES
         sawFirstToken,
         outputChars: text.length,
         outputApproxTokens: summarizeTextPayload(text).approxTokens,
+        liveMainAnswerStreaming,
+        liveStreamedChars: liveStreamedText.length,
+        liveTabMarkerSeen: liveStreamingStopped,
       }),
     );
     const blockingRepairEnabled = isBlockingIntelligenceRepairEnabled();
@@ -1119,7 +1280,29 @@ ACTIVE INTELLIGENCE CANVAS RULES
 
     const tabbedResponse = parseIntelligenceTabbedResponse(text);
     if (tabbedResponse.tabs.length > 0 && tabbedResponse.mainAnswer.trim()) {
-      yield text;
+      // Emit the remainder from where live streaming stopped. `text` is the
+      // final (repaired) answer; `liveStreamedText` is the exact prefix already
+      // sent. reconcileStreamRemainder guarantees
+      // {liveStreamedText} + {remainder} === text with no duplication/loss.
+      // If nothing was streamed live (plain-text path, or no delta reached the
+      // pre-tab region), remainder === text — byte-identical to today's
+      // `yield text`.
+      const { remainder, diverged } = reconcileStreamRemainder(
+        liveStreamedText,
+        text,
+      );
+      if (diverged) {
+        emitTiming(
+          latencyTrace.mark("live_main_answer.repair_diverged", {
+            model,
+            liveStreamedChars: liveStreamedText.length,
+            finalChars: text.length,
+          }),
+        );
+      }
+      if (remainder) {
+        yield remainder;
+      }
       return;
     }
 
@@ -1141,7 +1324,28 @@ ACTIVE INTELLIGENCE CANVAS RULES
       args.sources,
     );
     const decisionGrade = enforceDecisionGradeAnswer(evidenceDisciplined);
-    for (const chunk of chunkAskText(decisionGrade)) {
+    // No-tab-marker fallback + reconciliation. This branch is reached when the
+    // final text has no parseable tabs. `decisionGrade` is the final answer.
+    // If nothing was streamed live (plain-text path, or rich-text where no
+    // pre-tab content was emitted), liveStreamedText === "" and the remainder
+    // is the whole `decisionGrade` — chunked exactly as today (byte-identical).
+    // If a rich-text main answer WAS streamed live but the sanitize/evidence/
+    // decision-grade transforms reworded the prefix, reconcileStreamRemainder
+    // emits from the longest common prefix so no final content is lost.
+    const { remainder, diverged } = reconcileStreamRemainder(
+      liveStreamedText,
+      decisionGrade,
+    );
+    if (diverged) {
+      emitTiming(
+        latencyTrace.mark("live_main_answer.no_tab_fallback_diverged", {
+          model,
+          liveStreamedChars: liveStreamedText.length,
+          finalChars: decisionGrade.length,
+        }),
+      );
+    }
+    for (const chunk of chunkAskText(remainder)) {
       yield chunk;
     }
   } catch (err) {

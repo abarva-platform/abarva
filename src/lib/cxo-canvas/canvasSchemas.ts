@@ -87,6 +87,28 @@ const cxoCanvasGateSchema = z
   })
   .strip();
 
+const cxoCanvasSignalSchema = z
+  .object({
+    label: cleanText,
+    state: z.enum(["measured", "benchmark", "expected_uncaptured", "none"]),
+    value: optionalCleanText,
+    context: optionalCleanText,
+    provenance: z
+      .enum(["enterprise-evidence", "industry-context", "inference"])
+      .default("inference"),
+    whyItMatters: cleanText,
+    loadHint: optionalCleanText,
+  })
+  .strip()
+  .transform((value) => {
+    // Honesty guard: strip any value off a non-measured tile so a fabricated
+    // number can never render as a measured tenant fact.
+    if (value.state !== "measured" && value.state !== "benchmark") {
+      return { ...value, value: undefined };
+    }
+    return value;
+  });
+
 const cxoCanvasProofBoundarySchema = z
   .object({
     known: z.array(cleanText).optional(),
@@ -124,6 +146,7 @@ const cxoCanvasPayloadSchema = z
     items: z.array(cxoCanvasItemSchema).optional(),
     lanes: z.array(cxoCanvasLaneSchema).optional(),
     metrics: z.array(cxoCanvasMetricSchema).optional(),
+    signals: z.array(cxoCanvasSignalSchema).optional(),
     gates: z.array(cxoCanvasGateSchema).optional(),
     proofBoundary: cxoCanvasProofBoundarySchema.optional(),
     decisionRequired: optionalCleanText,
@@ -140,6 +163,7 @@ const cxoCanvasPayloadSchema = z
     if (value.items?.length) payload.items = value.items;
     if (value.lanes?.length) payload.lanes = value.lanes;
     if (value.metrics?.length) payload.metrics = value.metrics;
+    if (value.signals?.length) payload.signals = value.signals;
     if (value.gates?.length) payload.gates = value.gates;
     if (value.proofBoundary) payload.proofBoundary = value.proofBoundary;
     if (value.decisionRequired)

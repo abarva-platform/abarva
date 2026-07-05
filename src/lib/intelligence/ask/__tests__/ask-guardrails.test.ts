@@ -244,8 +244,11 @@ describe("Ask Intelligence guardrails", () => {
       expect(synthesizerCode).toMatch(
         /const\s+tabbedResponse\s*=\s*parseIntelligenceTabbedResponse\(text\);/,
       );
+      // Live main-answer streaming: the tabbed happy path now emits the
+      // reconciled remainder (liveStreamedText + remainder === final text)
+      // instead of `yield text`. The full tabbed output is still preserved.
       expect(synthesizerCode).toMatch(
-        /if\s*\(\s*tabbedResponse\.tabs\.length\s*>\s*0[\s\S]*?yield\s+text;\s*return;/,
+        /if\s*\(\s*tabbedResponse\.tabs\.length\s*>\s*0[\s\S]*?reconcileStreamRemainder\([\s\S]*?yield\s+remainder;/,
       );
     });
 

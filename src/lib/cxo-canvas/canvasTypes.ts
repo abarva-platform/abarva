@@ -70,6 +70,36 @@ export interface CxoCanvasProofBoundary {
   decisionRequired?: string;
 }
 
+/**
+ * Signals honesty model — "one row per governing metric" tiles for the Signals
+ * zone. `state` is the core honesty distinction: a tile may legally have NO
+ * value (`expected_uncaptured`) rather than a fabricated number.
+ */
+export type CxoCanvasSignalState =
+  | "measured" // tenant evidence carries the value
+  | "benchmark" // no tenant value; an industry range stands in
+  | "expected_uncaptured" // governs the decision but isn't instrumented
+  | "none";
+
+export type CxoCanvasSignalProvenance =
+  | "enterprise-evidence"
+  | "industry-context"
+  | "inference";
+
+export interface CxoCanvasSignal {
+  label: string;
+  state: CxoCanvasSignalState;
+  /** OPTIONAL — omit when unmeasured. Never fabricate a tenant number. */
+  value?: string;
+  /** Trend / benchmark note / "no benchmark available". */
+  context?: string;
+  provenance: CxoCanvasSignalProvenance;
+  /** REQUIRED even when `value` is absent — keeps a gap useful. */
+  whyItMatters: string;
+  /** What to ingest to light this up → Source hook. */
+  loadHint?: string;
+}
+
 export interface CxoCanvasPayload {
   canvasType: CxoCanvasType;
   title: string;
@@ -77,6 +107,8 @@ export interface CxoCanvasPayload {
   items?: CxoCanvasItem[];
   lanes?: CxoCanvasLane[];
   metrics?: CxoCanvasMetric[];
+  /** Signals-zone honesty tiles (>=4 mandated by the tabbed-response contract). */
+  signals?: CxoCanvasSignal[];
   gates?: CxoCanvasGate[];
   proofBoundary?: CxoCanvasProofBoundary;
   decisionRequired?: string;
