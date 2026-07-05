@@ -550,17 +550,150 @@ function exhibitCardFrom(
   return null;
 }
 
+/** Short tile label from a proof-boundary sentence ("Treasury / Kyriba: …" → "Treasury / Kyriba"). */
+function labelFromSentence(sentence: string): string {
+  const trimmed = sentence.trim();
+  const colon = trimmed.indexOf(":");
+  if (colon > 0 && colon <= 42) return trimmed.slice(0, colon).trim();
+  const dash = trimmed.indexOf(" — ");
+  if (dash > 0 && dash <= 42) return trimmed.slice(0, dash).trim();
+  const words = trimmed.split(/\s+/).slice(0, 6).join(" ");
+  return words.length < trimmed.length ? `${words}…` : words;
+}
+
+function extractLeadNumber(text: string): string | undefined {
+  const m = text.match(/(\$[\d.,]+\s?[MBK%]?|\d+(?:\.\d+)?\s?%|\b\d+\/\d+\b)/);
+  return m ? m[1] : undefined;
+}
+
+/**
+ * Signals for the Signals zone. Prefer the model's native `signals` array; when
+ * it is absent we DERIVE a full, honest set from the exhibit's own structured
+ * content — there is no "old version" fallback. proofBoundary maps cleanly onto
+ * the honesty model: known → measured, missing → uncaptured, assumed → benchmark.
+ */
 function signalsFrom(
   payload: ExecutiveCanvasPayload | null,
 ): CxoCanvasSignal[] {
-  const signals = payload?.signals;
-  if (!Array.isArray(signals)) return [];
-  return signals.filter(
-    (signal): signal is CxoCanvasSignal =>
-      Boolean(signal) &&
-      typeof signal.label === "string" &&
-      typeof signal.whyItMatters === "string",
-  );
+  const native = Array.isArray(payload?.signals)
+    ? payload!.signals!.filter(
+        (signal): signal is CxoCanvasSignal =>
+          Boolean(signal) &&
+          typeof signal.label === "string" &&
+          typeof signal.whyItMatters === "string",
+      )
+    : [];
+  if (native.length > 0) return native.slice(0, 6);
+
+  if (!payload) return [];
+  const derived: CxoCanvasSignal[] = [];
+
+  for (const metric of payload.metrics ?? []) {
+    if (!metric?.label) continue;
+    derived.push({
+      label: metric.label,
+      state: "measured",
+      value: String(metric.value),
+      provenance: "enterprise-evidence",
+      whyItMatters: metric.note ?? "Current-state metric for this decision.",
+    });
+  }
+  for (const known of payload.proofBoundary?.known ?? []) {
+    derived.push({
+      label: labelFromSentence(known),
+      state: "measured",
+      value: extractLeadNumber(known),
+      provenance: "enterprise-evidence",
+      whyItMatters: known,
+    });
+  }
+  for (const assumed of payload.proofBoundary?.assumed ?? []) {
+    derived.push({
+      label: labelFromSentence(assumed),
+      state: "benchmark",
+      value: extractLeadNumber(assumed),
+      context: "planning assumption · not tenant-proven",
+      provenance: "industry-context",
+      whyItMatters: assumed,
+    });
+  }
+  for (const missing of payload.proofBoundary?.missing ?? []) {
+    const label = labelFromSentence(missing);
+    derived.push({
+      label,
+      state: "expected_uncaptured",
+      provenance: "inference",
+      whyItMatters: missing,
+      loadHint: `Load: ${label}`,
+    });
+  }
+  if (derived.length === 0) {
+    for (const lane of payload.lanes ?? []) {
+      for (const item of lane.items ?? []) {
+        if (!item?.label) continue;
+        derived.push({
+          label: item.label,
+          state: "measured",
+          value:
+            typeof item.value === "number" ? `${item.value}/10` : undefined,
+          context: lane.label,
+          provenance: "inference",
+          whyItMatters:
+            item.action ?? item.gate ?? item.note ?? "Portfolio candidate.",
+        });
+      }
+    }
+  }
+  // Rank so the zone leads with what we know, then gaps.
+  const order: Record<CxoCanvasSignal["state"], number> = {
+    measured: 0,
+    benchmark: 1,
+    expected_uncaptured: 2,
+    none: 3,
+  };
+  return derived.sort((a, b) => order[a.state] - order[b.state]).slice(0, 6);
+}
+
+/**
+ * Last-resort Signals when an answer has no structured exhibit at all (rare —
+ * narrow factual questions). Derive honest tiles from the Evidence/Decision tab
+ * prose so the Signals zone is never empty. There is no legacy-card fallback.
+ */
+function signalsFromCards(tabs: ParsedIntelligenceTab[]): CxoCanvasSignal[] {
+  const source =
+    tabs.find((tab) => tab.id === "evidence") ??
+    tabs.find((tab) => tab.id === "decision");
+  if (!source) return [];
+  const industry =
+    source.grounding === "industry-context" ||
+    source.grounding === "benchmark";
+  const lines = source.content
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[*_`>#|]/g, " ")
+    .split(/\n|(?<=[.;])\s+/)
+    .map((line) => line.replace(/^[\s\-•]+/, "").replace(/\s+/g, " ").trim())
+    .filter((line) => line.length > 14)
+    .slice(0, 5);
+  return lines.map((line) => {
+    const num = extractLeadNumber(line);
+    const uncaptured =
+      /\b(missing|not captured|not instrumented|no baseline|unknown|load |uncaptured|to be (loaded|certified))\b/i.test(
+        line,
+      );
+    const signal: CxoCanvasSignal = {
+      label: labelFromSentence(line),
+      state: uncaptured ? "expected_uncaptured" : num ? "measured" : "none",
+      provenance: uncaptured
+        ? "inference"
+        : industry
+          ? "industry-context"
+          : "enterprise-evidence",
+      whyItMatters: line,
+    };
+    if (!uncaptured && num) signal.value = num;
+    if (uncaptured) signal.loadHint = "Load to Source";
+    return signal;
+  });
 }
 
 /**
@@ -1948,12 +2081,15 @@ export function IntelligenceV2Surface({
     () => exhibitCardFrom(latestIntelligenceTabs),
     [latestIntelligenceTabs],
   );
-  const canvasSignals = useMemo(
-    () => signalsFrom(exhibitPayload),
-    [exhibitPayload],
-  );
-  // Two-zone mode: the answer carries a structured signals honesty model.
-  const twoZoneMode = canvasSignals.length > 0;
+  const canvasSignals = useMemo(() => {
+    const fromExhibit = signalsFrom(exhibitPayload);
+    return fromExhibit.length > 0
+      ? fromExhibit
+      : signalsFromCards(latestIntelligenceTabs);
+  }, [exhibitPayload, latestIntelligenceTabs]);
+  // The two zones are the ONLY canvas rendering — no legacy-card fallback.
+  // Whenever there is a companion answer, we render Signals + The picture.
+  const twoZoneMode = companionCards.length > 0 || canvasSignals.length > 0;
   const exhibitInference = useMemo(
     () => isInferenceGrounded(exhibitPayload, canvasSignals),
     [exhibitPayload, canvasSignals],
