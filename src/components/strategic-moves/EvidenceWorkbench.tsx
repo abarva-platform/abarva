@@ -38,6 +38,8 @@ export interface WorkbenchGateStep {
     onClick: () => void;
     kind: "primary" | "ghost";
     disabled?: boolean;
+    /** Shown next to a disabled action — the critical thing left to enable it. */
+    reason?: string;
   };
 }
 export interface WorkbenchDiagnosisRow {
@@ -66,6 +68,10 @@ export interface EvidenceWorkbenchProps {
   statusColor: "green" | "amber" | "red" | "teal";
   evidenceGroups: WorkbenchEvidenceGroup[];
   evidenceReadyLabel: string;
+  /** 0–100, live: share of required evidence that is covered/waived. */
+  evidencePct: number;
+  /** 0–100, live: share of gate criteria met (the phase-completion signal). */
+  gatePct: number;
   selectedEvidenceId: string | null;
   onSelectEvidence: (id: string) => void;
   onAddEvidence: () => void;
@@ -110,6 +116,20 @@ function safeStatus(
   return s === "not_applicable" ? "missing" : s;
 }
 
+/** A live progress meter: a filled track + the % value. */
+function Meter({ pct, label }: { pct: number; label?: string }) {
+  const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+  return (
+    <div className={styles.meter}>
+      {label ? <span className={styles.meterLbl}>{label}</span> : null}
+      <div className={styles.meterTrack}>
+        <div className={styles.meterFill} style={{ width: `${clamped}%` }} />
+      </div>
+      <span className={`${styles.meterPct} ${styles.num}`}>{clamped}%</span>
+    </div>
+  );
+}
+
 export function EvidenceWorkbench(props: EvidenceWorkbenchProps) {
   const {
     moveName,
@@ -120,6 +140,8 @@ export function EvidenceWorkbench(props: EvidenceWorkbenchProps) {
     statusColor,
     evidenceGroups,
     evidenceReadyLabel,
+    evidencePct,
+    gatePct,
     selectedEvidenceId,
     onSelectEvidence,
     onAddEvidence,
@@ -161,6 +183,9 @@ export function EvidenceWorkbench(props: EvidenceWorkbenchProps) {
         <div className={styles.railWrap}>
           <PhaseRail current={phaseNum} status={statusColor} />
         </div>
+        <div className={styles.phaseProgress}>
+          <Meter pct={gatePct} label="Phase complete" />
+        </div>
       </div>
 
       <div className={styles.grid}>
@@ -169,6 +194,9 @@ export function EvidenceWorkbench(props: EvidenceWorkbenchProps) {
           <div className={styles.colHead}>
             <span className={styles.lbl}>Evidence</span>
             <span className={`${styles.count} ${styles.num}`}>{evidenceReadyLabel}</span>
+          </div>
+          <div className={styles.evidenceProgress}>
+            <Meter pct={evidencePct} />
           </div>
 
           {evidenceGroups.map((group) => (
@@ -231,15 +259,20 @@ export function EvidenceWorkbench(props: EvidenceWorkbenchProps) {
                   {step.done ? (
                     <span className={styles.doneTag}>Done</span>
                   ) : step.action ? (
-                    <div className={styles.act}>
-                      <button
-                        type="button"
-                        className={step.action.kind === "primary" ? `${styles.btn} ${styles.btnSm}` : `${styles.btnLine} ${styles.btnSm}`}
-                        onClick={step.action.onClick}
-                        disabled={step.action.disabled}
-                      >
-                        {step.action.label}
-                      </button>
+                    <div className={styles.actWrap}>
+                      <div className={styles.act}>
+                        <button
+                          type="button"
+                          className={step.action.kind === "primary" ? `${styles.btn} ${styles.btnSm}` : `${styles.btnLine} ${styles.btnSm}`}
+                          onClick={step.action.onClick}
+                          disabled={step.action.disabled}
+                        >
+                          {step.action.label}
+                        </button>
+                      </div>
+                      {step.action.disabled && step.action.reason ? (
+                        <span className={styles.reason}>{step.action.reason}</span>
+                      ) : null}
                     </div>
                   ) : (
                     <span />
