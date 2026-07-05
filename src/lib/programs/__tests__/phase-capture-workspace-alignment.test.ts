@@ -55,14 +55,29 @@ describe("phase-capture workspace ↔ contract key alignment", () => {
     );
   });
 
-  it("P3–P5 share the generic capture binder", () => {
-    for (const phase of [3, 4, 5]) {
-      expect(getPhaseCaptureSections(phase).map((s) => s.key)).toEqual([
-        "phase_decisions",
-        "evidence_used",
-        "open_questions",
-        "approval_rationale",
-      ]);
+  it("P3–P5 each have a phase-specific capture contract (not the generic binder)", () => {
+    const p3 = getPhaseCaptureSections(3).map((s) => s.key);
+    const p4 = getPhaseCaptureSections(4).map((s) => s.key);
+    const p5 = getPhaseCaptureSections(5).map((s) => s.key);
+    // Phase-specific first sections
+    expect(p3[0]).toBe("solution_approach");
+    expect(p4[0]).toBe("roadmap_sequencing");
+    expect(p5[0]).toBe("mobilization_plan");
+    // Depth matches P2 (7 sections), and each closes with a recommendation.
+    for (const keys of [p3, p4, p5]) {
+      expect(keys).toHaveLength(7);
+      expect(keys[keys.length - 1]).toBe("recommendation");
     }
+    // No longer the generic binder.
+    expect(p3).not.toContain("phase_decisions");
+  });
+
+  it("phase 6+ still falls back to the generic capture binder", () => {
+    expect(getPhaseCaptureSections(6).map((s) => s.key)).toEqual([
+      "phase_decisions",
+      "evidence_used",
+      "open_questions",
+      "approval_rationale",
+    ]);
   });
 });
