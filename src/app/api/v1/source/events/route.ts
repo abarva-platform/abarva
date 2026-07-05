@@ -20,6 +20,7 @@ interface CreateSourceEventBody {
   valueTargetDescription?: string;
   baselineOwnerDescription?: string;
   categoryLabel?: string;
+  creationRequestId?: string;
   linkedProgramId?: string;
   estimatedValueUsd?: number;
 }
@@ -120,6 +121,7 @@ export async function POST(request: Request) {
       linkedProgramId: parseOptionalString(body.linkedProgramId),
       estimatedValueUsd: parseOptionalNumber(body.estimatedValueUsd),
       createdByUserId: tenancy.userId,
+      creationRequestId: parseOptionalString(body.creationRequestId),
     });
 
     if (tenancy.userId) {

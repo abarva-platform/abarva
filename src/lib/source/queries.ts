@@ -90,9 +90,14 @@ export interface CreateSourcingEventInput {
   linkedProgramId?: string;
   estimatedValueUsd?: number;
   createdByUserId?: string;
+  creationRequestId?: string;
 }
 
-function generateEventCode(clientKey: string, eventName: string): string {
+function generateEventCode(
+  clientKey: string,
+  eventName: string,
+  creationRequestId?: string,
+): string {
   const prefix = clientKey
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "")
@@ -101,6 +106,8 @@ function generateEventCode(clientKey: string, eventName: string): string {
     ? getClientOption(clientKey)
     : null;
   const clientPrefixes = buildClientEventNamePrefixes(
+    clientKey,
+    ...tenantAliasesFor(clientKey),
     clientOption?.name,
     clientOption?.shortName,
   );
@@ -109,6 +116,8 @@ function generateEventCode(clientKey: string, eventName: string): string {
     return name.replace(pattern, "");
   }, eventName.trim());
   const nameParts = eventNameWithoutClient
+    .replace(/\b(?:sourcing\s+)?event$/i, "")
+    .trim()
     .toUpperCase()
     .replace(/[^A-Z0-9 ]/g, "")
     .split(" ")
@@ -116,7 +125,15 @@ function generateEventCode(clientKey: string, eventName: string): string {
     .slice(0, 3);
   const nameSlug = nameParts.length > 0 ? nameParts.join("-") : "EVENT";
   const year = new Date().getFullYear();
-  return `${prefix}-${nameSlug}-${year}`;
+  return `${prefix}-${nameSlug}-${year}${normalizeEventCodeSuffix(creationRequestId)}`;
+}
+
+function normalizeEventCodeSuffix(value: string | undefined): string {
+  const suffix = value
+    ?.toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 8);
+  return suffix ? `-${suffix}` : "";
 }
 
 function buildClientEventNamePrefixes(
@@ -161,7 +178,11 @@ export async function createSourcingEvent(
   input: CreateSourcingEventInput,
 ): Promise<SourceEventRow> {
   const supabase = getAzureWriteFluentClient();
-  const eventCode = generateEventCode(input.clientKey, input.eventName);
+  const eventCode = generateEventCode(
+    input.clientKey,
+    input.eventName,
+    input.creationRequestId,
+  );
   const nowIso = new Date().toISOString();
 
   // Idempotent on (client_key, event_code): retries, double-submits, and

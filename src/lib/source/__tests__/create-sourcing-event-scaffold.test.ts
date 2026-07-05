@@ -201,6 +201,29 @@ describe("createSourcingEvent scaffolding", () => {
     expect(String(insertedRow.event_code)).not.toContain("MERIDIAN-MERIDIAN");
   });
 
+  it("can append a browser creation request id to create a fresh event instance without changing the event title", async () => {
+    const calls = setupMockSupabase({
+      id: "evt-new-6",
+      client_key: "lakeshore",
+      event_code: "LAKE-AMS-SOURCING-2026-ABC12345",
+    });
+
+    await createSourcingEvent({
+      clientKey: "lakeshore",
+      eventName: "Lakeshore AMS Sourcing Event",
+      eventType: "managed_service",
+      triggerDescription: "Recording proof requires a fresh sourcing event.",
+      creationRequestId: "abc12345-extra-suffix",
+    });
+
+    const eventInsert = calls.find((c) => c.table === "source_events")!;
+    const insertedRow = eventInsert.rows as Record<string, unknown>;
+    expect(insertedRow.event_name).toBe("Lakeshore AMS Sourcing Event");
+    expect(insertedRow.event_code).toBe(
+      `LAKE-AMS-${new Date().getFullYear()}-ABC12345`,
+    );
+  });
+
   it("does not abort event creation if scaffolding fails", async () => {
     const single = jest.fn().mockResolvedValue({
       data: {

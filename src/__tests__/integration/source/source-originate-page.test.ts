@@ -316,11 +316,14 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const request = fetchMock.mock.calls[0]?.[1] as { body?: string };
     const payload = JSON.parse(request.body ?? "{}") as {
+      eventName?: string;
       scopeDescription?: string;
       valueTargetDescription?: string;
       baselineOwnerDescription?: string;
+      creationRequestId?: string;
     };
 
+    expect(payload.eventName).toBe("Lakeshore AMS Sourcing Event");
     expect(payload.scopeDescription).toBe(
       "In: AMS, cloud operations, Epic integration support. Out: deskside and security operations.",
     );
@@ -332,6 +335,9 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(payload.baselineOwnerDescription).toBe(
       "Finance owns spend baseline; ServiceNow owner owns ticket-volume extract.",
     );
+    expect(payload.creationRequestId).toEqual(expect.any(String));
+    expect(payload.creationRequestId).not.toHaveLength(0);
+    expect(payload.eventName).not.toContain(payload.creationRequestId ?? "");
   });
 
   it("names integration-fabric events as a clean commercial-control event instead of echoing the scope clause", () => {
