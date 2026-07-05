@@ -50,7 +50,7 @@ export interface SourceApprovalWrite {
   readonly clientKey: string;
   readonly fromState: string;
   readonly toState: string;
-  readonly approvalAction: 'admin_review' | 'rejected';
+  readonly approvalAction: 'admin_review' | 'rejected' | 'sent_back';
   readonly approvedByUserId: string;
   readonly notes: string | null;
 }

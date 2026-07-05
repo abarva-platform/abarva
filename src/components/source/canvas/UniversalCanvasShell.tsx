@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
@@ -113,8 +113,6 @@ import { DocumentTab } from './workspace-tabs/DocumentTab';
 import { EvidenceTab } from './workspace-tabs/EvidenceTab';
 import { LogTab, type ActivityEntry } from './workspace-tabs/LogTab';
 import { threeChoicesForStage } from './canvas-three-choices';
-import { SourceAvaDecisionExperience } from '@/components/source/SourceAvaDecisionExperience';
-import type { DecisionPackageModel } from '@/lib/source/proposal-intelligence/decision-package';
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -133,7 +131,6 @@ interface UniversalCanvasShellProps {
   activityEntries: ActivityEntry[];
   tenantName: string;
   decisionThreadId?: string | null;
-  proposalDecisionPackage?: DecisionPackageModel | null;
 }
 
 /**
@@ -162,7 +159,6 @@ export function UniversalCanvasShell({
   activityEntries,
   tenantName,
   decisionThreadId = null,
-  proposalDecisionPackage = null,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -356,6 +352,29 @@ export function UniversalCanvasShell({
     }
   };
 
+  // Auto-draft the strategy-stage artifacts. The strategy memo, value target,
+  // and archetype record are produced at event creation, not via a manual
+  // "Draft with aVa" click — when the creator lands on the freshly-created
+  // event at the strategy stage and a generatable artifact's body is still
+  // empty, generation fires once per artifact. (Browser-initiated so it runs
+  // on the full request budget rather than being killed as a post-response
+  // background task.) Once a body exists it never re-fires.
+  const autoDraftFiredRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (viewStage !== 'strategy') return;
+    for (const artifact of liveArtifactStates) {
+      const code = artifact.artifactCode;
+      if (artifact.stage !== 'strategy') continue;
+      if (!generatableCodes.has(code)) continue;
+      if ((artifact.body ?? '').trim().length > 0) continue;
+      if (pendingGenerationByCode[code]) continue;
+      if (autoDraftFiredRef.current.has(code)) continue;
+      autoDraftFiredRef.current.add(code);
+      void handleArtifactGenerate(code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewStage, liveArtifactStates, generatableCodes, pendingGenerationByCode]);
+
   const handleArtifactBodySave = async (
     code: string,
     body: string,
@@ -518,7 +537,7 @@ export function UniversalCanvasShell({
     [viewStage],
   );
 
-  const initialTab: WorkspaceTabKey = proposalDecisionPackage ? 'decision' : 'document';
+  const initialTab: WorkspaceTabKey = 'document';
   const tabs = [
     {
       key: 'document' as WorkspaceTabKey,
@@ -563,21 +582,6 @@ export function UniversalCanvasShell({
         />
       ),
     },
-    ...(proposalDecisionPackage
-      ? [
-          {
-            key: 'decision' as WorkspaceTabKey,
-            label: 'aVa Decision',
-            badge: 'live',
-            content: (
-              <SourceAvaDecisionExperience
-                model={proposalDecisionPackage}
-                eventId={event.id}
-              />
-            ),
-          },
-        ]
-      : []),
     {
       key: 'evidence' as WorkspaceTabKey,
       label: 'Evidence',

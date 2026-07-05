@@ -82,6 +82,93 @@ Tone: tight. 600-1200 words total. No filler. Cite the trigger from the event in
     },
   },
 
+  d02_value_target: {
+    artifactCode: 'd02_value_target',
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: [],
+    upstreamOptional: [],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Value Target Brief (artifact d02_value_target) — the financial bracket this sourcing event is set up to deliver. Always a range with a confidence band, never a point estimate.
+
+Required structural sections:
+## §1 · Value range
+## §2 · Lever rationale
+## §3 · Confidence posture
+## §4 · What tightens the band
+
+Tone: tight, quantitative, 500-900 words. Model a low/high range around the intake's estimated value at stake (if given) over a 3-year horizon; if no estimate was provided, say so explicitly and frame the range qualitatively. Break value out by lever (labor arbitrage, automation, consolidation, license rationalization, avoidance) in a markdown table with low / high / confidence columns. State which downstream evidence (ticket history, pricing, BAFO concessions, scorecard) tightens which bracket. Do not fabricate benchmarks — where a number is modeled rather than evidenced, mark it as modeled.`,
+    buildUserMessage: (ctx) => {
+      return [
+        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Event: ${ctx.event.name}`,
+        `Code: ${ctx.event.code}`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Estimated value at stake (intake): $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : 'Estimated value at stake (intake): (not provided — frame the range qualitatively)',
+        '',
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? '(not provided in intake)'}`,
+        '',
+        `Scope description from intake:`,
+        ctx.event.scopeDescription || '(not provided)',
+        '',
+        `Draft the Value Target Brief per the system prompt requirements.`,
+      ]
+        .filter((line): line is string => line !== null)
+        .join('\n');
+    },
+  },
+
+  d03_archetype_decision: {
+    artifactCode: 'd03_archetype_decision',
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: [],
+    upstreamOptional: [],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Archetype Decision Record (artifact d03_archetype_decision) — which sourcing archetype this event maps to and why. This drives the artifact pack, agent line-up, and gate criteria.
+
+Required structural sections:
+## §1 · Selected archetype
+## §2 · Why this archetype
+## §3 · What the archetype unlocks
+## §4 · Variations from the canonical archetype
+
+Archetypes: Application Managed Services · Cloud & Infrastructure · Data & Analytics · Enterprise Software · Custom / Multi-tower.
+
+Tone: decisive, 400-800 words. Name the selected archetype — use the intake archetype if provided, otherwise infer the best fit from the trigger + scope and state plainly that it is inferred. Justify why it fits and why the adjacent archetypes do not. State what the archetype unlocks (the pre-shaped artifact pack, agent line-up, and gate criteria). Call out any variations that bend the canonical archetype (multi-tower scope, regulated tenant, prior failed sourcing, vendor-concentration constraint). Tie the rigor level to the archetype and the value at stake.`,
+    buildUserMessage: (ctx) => {
+      return [
+        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Event: ${ctx.event.name}`,
+        `Code: ${ctx.event.code}`,
+        ctx.event.archetype
+          ? `Archetype (intake): ${ctx.event.archetype}`
+          : 'Archetype (intake): (not provided — infer best fit and mark as inferred)',
+        ctx.event.rigor ? `Rigor (intake): ${ctx.event.rigor}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Estimated value at stake: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : null,
+        '',
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? '(not provided in intake)'}`,
+        '',
+        `Scope description from intake:`,
+        ctx.event.scopeDescription || '(not provided)',
+        '',
+        `Draft the Archetype Decision Record per the system prompt requirements.`,
+      ]
+        .filter((line): line is string => line !== null)
+        .join('\n');
+    },
+  },
+
   d05_scope_memo: {
     artifactCode: 'd05_scope_memo',
     version: 1,
