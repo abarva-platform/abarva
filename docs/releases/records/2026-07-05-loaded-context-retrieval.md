@@ -28,16 +28,20 @@ This change makes the loaded-context retriever run for any substantive question 
 
 ## Changes Included
 
-- `src/lib/knowledge/tenant-enterprise-context.ts`:
+- `src/lib/knowledge/tenant-enterprise-context.ts` (first cut, PR #4465 — merged):
   - `retrieveStructuredTenantSources`: the loaded-context keyword retriever now runs for any question with a usable keyword token, not only when an IT/CIO `wants*` gate matched. Domain-specific readers (profile/apps/vendors/initiatives/DORA) remain gated as before.
-  - `readKeywordContextChunkSource`: candidate SQL now orders by `classification_source = 'OPERATOR_CONFIRMED'` first, then `updated_at DESC`, then `chunk_id`, and raises the candidate `LIMIT` from 18 to 240; keyword token window widened 8 → 12. Final selection still done by in-memory relevance ranking (`rankChunks`), unchanged, taking the top 8.
+  - `readKeywordContextChunkSource`: raised the candidate `LIMIT` 18 → 240; keyword token window widened 8 → 12. Final selection still done by in-memory relevance ranking (`rankChunks`), unchanged, taking the top 8.
+- `src/lib/knowledge/tenant-enterprise-context.ts` (correction, follow-up PR — this record updated):
+  - **Outer gate fix**: `retrieveTenantEnterpriseSources` previously early-returned `[]` when `isTenantEnterpriseQuestion(query)` was false (an IT/enterprise-vocab classifier, `ENTERPRISE_QUERY_RE`). Legal/HR/finance-ops questions failed that classifier, so the query never reached the inner keyword retriever — the first cut's inner change had no effect for those domains. Now the domain-agnostic loaded-context keyword retriever (`retrieveStructuredTenantSources`) runs regardless; only the leadership/segment readers stay gated behind `isTenantEnterpriseQuestion`.
+  - **Ordering fix**: removed the `classification_source = 'OPERATOR_CONFIRMED'`-first ordering. The legacy corpus defaults `classification_source` to `OPERATOR_CONFIRMED`, while fresh Admin uploads are `NEEDS_CLASSIFICATION` until triaged — so confirmed-first ordering buried exactly the newly-loaded rows. Candidate pool now ordered purely by `updated_at DESC NULLS LAST, chunk_id ASC` so freshly-loaded chunks are always in the pool for relevance ranking.
 
 ## QA / Validation
 
 - Typecheck: `npx tsc --noEmit -p tsconfig.json` → **PASS** (0 errors; node_modules symlinked into worktree).
 - Schema precondition check: **PASS** — columns referenced (`classification_source`, `updated_at`) confirmed present on `public.enterprise_context_chunks` (migrations `20260616180000_context_classification_and_insights.sql`, `20260514100000_enterprise_context_layer.sql`).
 - Pre-change live evidence (app.abarva.ai, Lakeshore Holdings): **reproduced the defect** — uploaded legal-intake KPI baseline committed (20 records/chunks, diagnostics-confirmed) but four ask phrasings never surfaced the values; retriever either skipped (domain gate) or crowded out (LIMIT 18).
-- Post-deploy live signed-in ask proof: **NOT-RUN (blocked until ACA deploy)** — re-run the ask on `app.abarva.ai` after deploy and confirm the loaded KPI values (e.g. 31.6 avg request age, 663 avoidable inquiries) are cited.
+- Post-deploy live signed-in ask proof (first cut, PR #4465): **FAIL** — after deploy the loaded values still did not surface. Diagnosed two remaining causes (outer `isTenantEnterpriseQuestion` gate skipped legal-ops queries entirely; `OPERATOR_CONFIRMED`-first ordering buried fresh NEEDS_CLASSIFICATION uploads). Both corrected in the follow-up.
+- Post-deploy live signed-in ask proof (follow-up): **NOT-RUN (pending redeploy)** — re-run the Lakeshore ask after the follow-up deploys and confirm the loaded KPI values are cited.
 - Automated tests for this file: **NOT-RUN** (no unit test added; behavior is verified by live ask proof per the verify standard).
 
 ## Rollout Plan
