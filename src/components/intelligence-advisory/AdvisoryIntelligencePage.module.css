@@ -245,6 +245,58 @@
   padding: 16px;
 }
 
+.panelBadge {
+  display: inline-flex;
+  border: 1px solid #2f8d6b44;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: #2f8d6b11;
+  color: #2f8d6b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.panelSummary {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #4f4942;
+  margin: 0 0 12px;
+}
+
+.signalCards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.signalCard {
+  background: #f6f1e9;
+  border: 1px solid #ded6ca;
+  border-radius: 7px;
+  padding: 8px 9px;
+}
+
+.signalCardValue {
+  font-family: Newsreader, Georgia, serif;
+  font-size: 22px;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.signalCardLabel {
+  color: #746e66;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
 .panelTitle {
   margin: 4px 0 10px;
   font-size: 12px;

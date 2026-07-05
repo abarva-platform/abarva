@@ -86,6 +86,8 @@ export interface CioTowerAnswerResult {
   validationStatus: 'passed' | 'failed';
   validationErrors: string[];
   latencyMs: number;
+  metricCards: Array<{ label: string; value: string }>;
+  gaps: string[];
 }
 
 export interface CioTowerVisibleTable {
@@ -408,6 +410,33 @@ async function loadRelationships(tenantKey: string): Promise<CioTowerRelationshi
   );
 }
 
+function formatM(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `$${Math.round(value / 1_000)}K`;
+  return `$${Math.round(value)}`;
+}
+
+function deriveMetricCards(
+  contract: CioTowerContract,
+  measures: CioTowerMeasureResult[],
+): Array<{ label: string; value: string }> {
+  const budgetContracts = new Set(['tower_total_it_spend', 'tower_run_change_split', 'tower_trend_it_budget']);
+  if (!budgetContracts.has(contract.contract_key)) return [];
+  const byKey = new Map(measures.map((m) => [m.measure_key, m]));
+  const total = byKey.get('total_it_budget_fy26');
+  const run = byKey.get('run_budget_fy26');
+  const change = byKey.get('change_budget_fy26');
+  const ai = byKey.get('ai_innovation_budget_fy26');
+  const cards: Array<{ label: string; value: string }> = [];
+  if (total?.value_numeric) cards.push({ label: 'Total IT Budget', value: formatM(Number(total.value_numeric)) });
+  if (run?.value_numeric) cards.push({ label: 'Run Budget', value: formatM(Number(run.value_numeric)) });
+  if (change?.value_numeric) cards.push({ label: 'Change Budget', value: formatM(Number(change.value_numeric)) });
+  if (ai?.value_numeric) cards.push({ label: 'AI & Innovation', value: formatM(Number(ai.value_numeric)) });
+  return cards.slice(0, 4);
+}
+
 function deriveGaps(contract: CioTowerContract, measures: CioTowerMeasureResult[], facts: CioTowerFactRow[]): string[] {
   const gaps: string[] = [];
   const measureByKey = new Map(measures.map((measure) => [measure.measure_key, measure]));
@@ -611,5 +640,7 @@ export async function answerCioTowerQuestion(args: {
     validationStatus: validationErrors.length ? 'failed' : 'passed',
     validationErrors,
     latencyMs,
+    metricCards: deriveMetricCards(context.contract, context.measures),
+    gaps: context.gaps,
   };
 }

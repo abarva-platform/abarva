@@ -44,6 +44,8 @@ export async function POST(request: Request) {
       validationStatus: result.validationStatus,
       validationErrors: result.validationErrors,
       latencyMs: result.latencyMs,
+      metricCards: result.metricCards,
+      gaps: result.gaps,
       rendererPolicy: {
         purePlacementOnly: true,
         proseRewritten: false,

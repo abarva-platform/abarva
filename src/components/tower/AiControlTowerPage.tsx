@@ -40,6 +40,8 @@ interface AtlasAnswer {
   rows: string[][];
   modelTables?: VisibleTable[];
   modelTabs?: VisibleTab[];
+  metricCards?: Array<{ label: string; value: string }>;
+  gaps?: string[];
   choices: Array<{ label: string; tab: TowerTab }>;
   /** Engine-suggested follow-up questions (re-ask on click). */
   followUps?: Array<{ label: string; value: string }>;
@@ -69,6 +71,8 @@ interface CioTowerChatResponse {
     tabs?: VisibleTab[];
     followUpQuestion?: string | null;
   };
+  metricCards?: Array<{ label: string; value: string }>;
+  gaps?: string[];
   validationStatus?: 'passed' | 'failed';
   validationErrors?: string[];
 }
@@ -220,6 +224,8 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
         rows: [],
         modelTables: data.modelOutput.tables ?? [],
         modelTabs: data.modelOutput.tabs ?? [],
+        metricCards: data.metricCards ?? [],
+        gaps: data.gaps ?? [],
         choices: [],
         followUps: data.modelOutput.followUpQuestion
           ? [{ label: data.modelOutput.followUpQuestion, value: data.modelOutput.followUpQuestion }]
@@ -341,9 +347,20 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
               </p>
             ) : answer ? (
               <>
+                <span style={styles.statusBadge}>aVa · Tower</span>
                 {answer.headline ? <strong>{answer.headline}</strong> : null}
-                {answer.body ? <p style={{ whiteSpace: 'pre-wrap', margin: '0 0 8px' }}>{answer.body}</p> : null}
-                {answer.disclosure ? <p>{answer.disclosure}</p> : null}
+                {answer.body ? <p style={{ whiteSpace: 'pre-wrap', margin: '0 0 4px' }}>{answer.body}</p> : null}
+                {answer.disclosure ? <p style={{ color: COLORS.muted, fontSize: 11, margin: 0 }}>{answer.disclosure}</p> : null}
+                {answer.metricCards && answer.metricCards.length > 0 ? (
+                  <div style={styles.metricRow}>
+                    {answer.metricCards.map((card) => (
+                      <div key={card.label} style={styles.metricCard}>
+                        <div style={styles.metricValue}>{card.value}</div>
+                        <div style={styles.metricLabel}>{card.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 {answer.rows.length > 0 ? <MiniTable columns={answer.columns} rows={answer.rows} /> : null}
                 {answer.modelTables?.map((table) => (
                   <VisibleAnswerTable key={table.id} table={table} />
@@ -351,6 +368,14 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
                 {answer.modelTabs?.map((tab) => (
                   <VisibleAnswerTab key={tab.id} tab={tab} />
                 ))}
+                {answer.gaps && answer.gaps.length > 0 ? (
+                  <div style={styles.gapsBox}>
+                    <div style={styles.gapsLabel}>Data gaps</div>
+                    {answer.gaps.map((gap) => (
+                      <div key={gap} style={styles.gapRow}>· {gap}</div>
+                    ))}
+                  </div>
+                ) : null}
                 {answer.citations.length > 0 ? (
                   <div style={styles.citationRow}>
                     {answer.citations.slice(0, 4).map((citation) => <span key={citation}>{citation}</span>)}
@@ -1005,6 +1030,66 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 12,
     background: '#fbfaf7',
     fontSize: 13,
+    lineHeight: 1.35,
+  },
+  statusBadge: {
+    display: 'inline-flex',
+    alignSelf: 'start',
+    border: `1px solid ${COLORS.green}55`,
+    borderRadius: 999,
+    padding: '2px 8px',
+    background: `${COLORS.green}11`,
+    color: COLORS.green,
+    fontFamily: COLORS.mono,
+    fontSize: 9,
+    fontWeight: 900,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  metricRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 7,
+  },
+  metricCard: {
+    background: COLORS.bg,
+    border: `1px solid ${COLORS.line}`,
+    borderRadius: 7,
+    padding: '8px 9px',
+  },
+  metricValue: {
+    fontFamily: COLORS.serif,
+    fontSize: 19,
+    lineHeight: 1,
+    marginBottom: 3,
+  },
+  metricLabel: {
+    color: COLORS.muted,
+    fontFamily: COLORS.mono,
+    fontSize: 9,
+    fontWeight: 800,
+    letterSpacing: 1.0,
+    textTransform: 'uppercase',
+  },
+  gapsBox: {
+    border: `1px solid ${COLORS.amber}55`,
+    borderRadius: 7,
+    background: '#fff5df',
+    padding: '9px 11px',
+    display: 'grid',
+    gap: 5,
+  },
+  gapsLabel: {
+    color: '#6f4717',
+    fontFamily: COLORS.mono,
+    fontSize: 9,
+    fontWeight: 900,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  gapRow: {
+    color: '#6f4717',
+    fontSize: 12,
     lineHeight: 1.35,
   },
   suggested: {

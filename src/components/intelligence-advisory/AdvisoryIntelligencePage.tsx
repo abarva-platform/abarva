@@ -188,10 +188,24 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
         </section>
 
         <aside className={styles.panel}>
-          <div className={styles.panelTitle}>What this is using</div>
-          <p>{section.executiveSummary}</p>
+          <span className={styles.panelBadge}>Intelligence · aVa</span>
+          <p className={styles.panelSummary}>{section.executiveSummary}</p>
+          <div className={styles.signalCards}>
+            <div className={styles.signalCard}>
+              <div className={styles.signalCardValue}>{section.implications.length}</div>
+              <div className={styles.signalCardLabel}>Signals</div>
+            </div>
+            <div className={styles.signalCard}>
+              <div className={styles.signalCardValue}>{section.sources.length}</div>
+              <div className={styles.signalCardLabel}>Sources</div>
+            </div>
+            <div className={styles.signalCard}>
+              <div className={styles.signalCardValue}>{section.currentState.length}</div>
+              <div className={styles.signalCardLabel}>Context pts</div>
+            </div>
+          </div>
           <div className={styles.panelTitle}>Signals behind the advice</div>
-          {section.implications.slice(0, 4).map((item) => (
+          {section.implications.slice(0, 6).map((item) => (
             <div className={styles.signal} key={item.label}>
               <span>{item.label}</span>
               <b>{item.value}</b>
