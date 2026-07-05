@@ -140,9 +140,9 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
         })}[[/artifact]]\n`,
       );
 
-      // Navigate to the new event's detail page.
+      // Navigate to the new event's canvas (Strategy stage).
       ctx.writer?.write(
-        `\n[[artifact:navigate-to]]${JSON.stringify({ target: '/source', rationale: 'New event created — returning to Source portfolio' })}[[/artifact]]\n`,
+        `\n[[artifact:navigate-to]]${JSON.stringify({ target: `/source/events/${event.id}?stage=Strategy`, rationale: 'New event created — opening event canvas at Strategy stage' })}[[/artifact]]\n`,
       );
 
       return {
