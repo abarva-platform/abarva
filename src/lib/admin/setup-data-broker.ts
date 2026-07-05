@@ -287,6 +287,91 @@ export interface SegmentRecordPage {
 
 const SEGMENT_RECORD_LIMIT = 200;
 
+/** Inventory segments that hold the tenant's application/systems estate. */
+const APP_INVENTORY_SEGMENTS = ["it_landscape", "application_portfolio"] as const;
+
+/**
+ * One application/system row shaped for Source d04 pre-population. Unlike
+ * SegmentRecordSummary this preserves the structured payload fields
+ * (tier/owner/vendor/criticality) that the d04 table needs.
+ */
+export interface AppInventoryRecord {
+  recordId: string;
+  name: string;
+  recordKind: string;
+  tier: string | null;
+  owner: string | null;
+  vendor: string | null;
+  criticality: string | null;
+  notes: string | null;
+  sourceDoc: string | null;
+}
+
+/**
+ * List the tenant's application/systems inventory across the app-inventory
+ * segments, preserving the payload fields getSegmentRecordPage drops. This is
+ * the sanctioned broker seam: app-tier callers (e.g. Source generation) import
+ * this instead of touching data_inventory_records or the tenant-data adapter
+ * directly. Returns [] when nothing is loaded, so callers fall back to the
+ * blank d04 stub rather than erroring.
+ *
+ * `brokerTenantKey` must already be the substrate key (dashed form) — translate
+ * an app client key with clientKeyToInventorySubstrateKey before calling.
+ */
+export async function listAppInventoryRecords(
+  brokerTenantKey: string,
+): Promise<AppInventoryRecord[]> {
+  const results = await Promise.allSettled(
+    APP_INVENTORY_SEGMENTS.map((segmentId) =>
+      azureRead.select<RecordRow>({
+        table: "data_inventory_records",
+        columns: [
+          "record_id",
+          "title",
+          "record_kind",
+          "record_payload",
+          "source_doc",
+        ],
+        where: { tenant_key: brokerTenantKey, segment_id: segmentId },
+        orderBy: { column: "uploaded_at", direction: "desc" },
+        limit: SEGMENT_RECORD_LIMIT,
+      }),
+    ),
+  );
+
+  const out: AppInventoryRecord[] = [];
+  const seen = new Set<string>();
+  results.forEach((result, index) => {
+    if (result.status !== "fulfilled") return;
+    const segmentId = APP_INVENTORY_SEGMENTS[index];
+    for (const row of result.value) {
+      if (seen.has(row.record_id)) continue;
+      seen.add(row.record_id);
+      const payload = row.record_payload ?? null;
+      out.push({
+        recordId: row.record_id,
+        name: deriveRecordTitle(row, segmentId),
+        recordKind: row.record_kind,
+        tier:
+          stringField(payload, "tier") ??
+          stringField(payload, "app_tier") ??
+          stringField(payload, "criticality_tier"),
+        owner:
+          stringField(payload, "owner") ??
+          stringField(payload, "business_owner") ??
+          stringField(payload, "it_owner"),
+        vendor: stringField(payload, "vendor") ?? stringField(payload, "supplier"),
+        criticality:
+          stringField(payload, "criticality") ??
+          stringField(payload, "business_criticality"),
+        notes: stringField(payload, "notes") ?? stringField(payload, "description"),
+        sourceDoc: row.source_doc ?? null,
+      });
+    }
+  });
+  return out;
+}
+
 /**
  * Read the per-record list for a segment, plus the rollup row.
  * Returns null when both queries fail; returns an empty record

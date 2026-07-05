@@ -13,6 +13,7 @@ import type {
   SourceArtifactPromptTemplate,
   SourceGenerationContext,
 } from './types';
+import { buildAppInventoryPromptBlock } from './app-inventory';
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 // Practical ceiling — Sonnet at 4000 output tokens produces ~10–12 pages
@@ -163,6 +164,50 @@ Tone: decisive, 400-800 words. Name the selected archetype — use the intake ar
         ctx.event.scopeDescription || '(not provided)',
         '',
         `Draft the Archetype Decision Record per the system prompt requirements.`,
+      ]
+        .filter((line): line is string => line !== null)
+        .join('\n');
+    },
+  },
+
+  d04_app_inv: {
+    artifactCode: 'd04_app_inv',
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: [],
+    upstreamOptional: [],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Application Inventory & Tiering (artifact d04_app_inv). This is the factual base the scope memo and RFP price against — the in-scope applications/systems with their tier, owner, and criticality.
+
+Required structural sections:
+## §1 · Inventory source
+## §2 · Application list
+## §3 · Tiering rationale
+## §4 · Coverage + gaps
+## §5 · Inventory owner + sign-off
+
+Tone: factual, table-first. §2 MUST be a markdown table with columns: App ID | Name | Tier | Owner | Vendor | Criticality | Notes.
+
+When an enterprise application inventory is supplied in the user message, populate §2 directly from it — one row per system, verbatim IDs and names — and DO NOT invent applications beyond that list. In §1, state that the inventory derives from the tenant's loaded systems inventory and name the source. In §4, list every row with a missing Tier or Owner as a coverage gap to confirm, rather than guessing the value.
+
+When no inventory is supplied, produce the §2 table framework (headers + a placeholder row), and state plainly in §1 and §4 that the inventory is not yet ingested and must be authored or uploaded before scope can lock. Never fabricate applications.`,
+    buildUserMessage: (ctx) => {
+      return [
+        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Event: ${ctx.event.name}`,
+        `Code: ${ctx.event.code}`,
+        ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        '',
+        `Scope description from intake:`,
+        ctx.event.scopeDescription || '(not provided)',
+        '',
+        '— ENTERPRISE APPLICATION INVENTORY —',
+        '',
+        buildAppInventoryPromptBlock(ctx.enterpriseAppInventory),
+        '',
+        `Draft the Application Inventory & Tiering per the system prompt requirements.`,
       ]
         .filter((line): line is string => line !== null)
         .join('\n');
