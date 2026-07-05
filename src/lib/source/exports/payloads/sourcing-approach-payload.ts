@@ -11,6 +11,7 @@
 import 'server-only';
 
 import type { SourceGenerationContext } from '@/lib/source/agent-generation/types';
+import { sanitizeArtifactBodyForExport } from '@/lib/source/agent-generation/context-binder';
 import type { NarrativeDocxPayload } from '../renderers/narrative-docx';
 import {
   buildSourcingApproachBody,
@@ -31,7 +32,7 @@ export async function buildSourcingApproachPayloadFromContext(
       eventName: ctx.event.name,
       issuedBy: ctx.event.owner ?? undefined,
       generatedAt,
-      body: authored.body,
+      body: sanitizeArtifactBodyForExport(authored.body),
       bodyIsAuthored: true,
     };
   }

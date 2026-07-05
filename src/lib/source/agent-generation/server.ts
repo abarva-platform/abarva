@@ -11,6 +11,7 @@ import "server-only";
 export {
   buildSourceGenerationContext,
   collectUpstreamBodies,
+  sanitizeArtifactBodyForExport,
 } from "./context-binder";
 
 // Server callers usually want the registry too — re-export so they
