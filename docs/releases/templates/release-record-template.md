@@ -38,6 +38,8 @@ List validation performed and the result. Include commands, CI checks, smoke tes
 
 Describe how this becomes active: merge to main, Azure Container Apps image build/deploy, Azure control-lane deploy, migration apply, feature flag, manual runbook, or no runtime rollout.
 
+For `app.abarva.ai`, use the Azure Container Apps runbook and record the exact ACA revision/image when deployed. Do not cite Vercel deployment status as production evidence.
+
 ## Deployment Authority
 
 Required when the release can affect Azure Container Apps, deploy workflows, runtime images, feature flags, environment variables, worker jobs, traffic, DNS, or client/product environment promotion.

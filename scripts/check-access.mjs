@@ -95,6 +95,16 @@ function checkGithubLocal() {
 }
 
 function checkAzureLocal() {
+  const runbookPath = path.join(cwd, 'docs/runbooks/azure-container-apps-deploy.md');
+  addResult(
+    'Azure deploy runbook',
+    fs.existsSync(runbookPath),
+    fs.existsSync(runbookPath)
+      ? `Canonical ACA runbook found at ${runbookPath}`
+      : 'Missing docs/runbooks/azure-container-apps-deploy.md.',
+    'Restore the Azure Container Apps deploy runbook.',
+  );
+
   const result = spawnSync('az', ['account', 'show', '--query', 'name', '-o', 'tsv'], {
     cwd,
     encoding: 'utf8',
@@ -106,6 +116,39 @@ function checkAzureLocal() {
     result.status === 0,
     result.status === 0 ? `Authenticated to ${result.stdout.trim() || 'an Azure subscription'}.` : (result.stderr || result.stdout || 'az account show failed.').trim(),
     'Run `az login` or refresh the operator service-principal credentials.',
+  );
+}
+
+function checkAzureContainerAppLive() {
+  const result = spawnSync(
+    'az',
+    [
+      'containerapp',
+      'show',
+      '-g',
+      'rg-abarva-controlplane-lab-eastus',
+      '-n',
+      'ca-abarva-web-lab-eastus',
+      '--query',
+      '{latestRevisionName:properties.latestRevisionName,latestReadyRevisionName:properties.latestReadyRevisionName,image:properties.template.containers[0].image,traffic:properties.configuration.ingress.traffic}',
+      '-o',
+      'json',
+    ],
+    {
+      cwd,
+      encoding: 'utf8',
+      timeout: 10000,
+      env: process.env,
+    },
+  );
+
+  addResult(
+    'Azure Container App',
+    result.status === 0,
+    result.status === 0
+      ? (result.stdout || 'Read ca-abarva-web-lab-eastus.')
+      : (result.stderr || result.stdout || 'Could not read ca-abarva-web-lab-eastus.').trim(),
+    'Verify Azure subscription, resource group, and Container Apps permissions.',
   );
 }
 
@@ -141,6 +184,7 @@ function main() {
   checkAzureLocal();
 
   if (live) {
+    checkAzureContainerAppLive();
     checkProductionHttp();
   }
 
