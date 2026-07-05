@@ -7,6 +7,7 @@ import {
   formatValueAtStake,
   isArchived,
   moveValue,
+  moveLifecyclePct,
   relativeTime,
 } from "./move-list-format";
 import { conciseSponsorLabel } from "./sponsor-display";
@@ -148,7 +149,25 @@ export function MoveListTable({
                 className={`${styles.tblCol} ${styles.colPhase}`}
                 role="cell"
               >
-                {move.phaseLabel}
+                <span className={styles.phaseLabelText}>
+                  {move.phaseLabel}
+                </span>
+                {!archived && (
+                  <span
+                    className={styles.lifecycleMeter}
+                    title={`${moveLifecyclePct(move)}% through the lifecycle`}
+                  >
+                    <span className={styles.lifecycleTrack}>
+                      <span
+                        className={styles.lifecycleFill}
+                        style={{ width: `${moveLifecyclePct(move)}%` }}
+                      />
+                    </span>
+                    <span className={styles.lifecyclePct}>
+                      {moveLifecyclePct(move)}%
+                    </span>
+                  </span>
+                )}
               </span>
 
               <span

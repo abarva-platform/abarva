@@ -3,6 +3,7 @@ import {
   filterByChip,
   formatValueAtStake,
   isArchived,
+  moveLifecyclePct,
   relativeTime,
   searchMoves,
   summaryStats,
@@ -132,5 +133,15 @@ describe("move-list-format", () => {
     expect(relativeTime("2026-06-10T12:00:00.000Z", now)).toBe("Yesterday");
     expect(relativeTime("2026-06-08T12:00:00.000Z", now)).toBe("3 days ago");
     expect(relativeTime(null, now)).toBe("—");
+  });
+
+  it("moveLifecyclePct: 0/20/40/…/100 by current phase, clamped", () => {
+    expect(moveLifecyclePct(move({ id: "a", currentPhase: 0 }))).toBe(0);
+    expect(moveLifecyclePct(move({ id: "b", currentPhase: 1 }))).toBe(20);
+    expect(moveLifecyclePct(move({ id: "c", currentPhase: 2 }))).toBe(40);
+    expect(moveLifecyclePct(move({ id: "d", currentPhase: 5 }))).toBe(100);
+    // clamps out-of-range values
+    expect(moveLifecyclePct(move({ id: "e", currentPhase: 7 }))).toBe(100);
+    expect(moveLifecyclePct(move({ id: "f", currentPhase: -1 }))).toBe(0);
   });
 });
