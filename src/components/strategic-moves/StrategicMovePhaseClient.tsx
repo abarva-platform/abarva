@@ -1762,7 +1762,7 @@ export function StrategicMovePhaseClient({
     : hardGapCount > 0
       ? `Next: upload evidence — ${hardGapCount} hard gap${
           hardGapCount > 1 ? "s" : ""
-        } block${hardGapCount === 1 ? "s" : ""} the charter`
+        } block${hardGapCount === 1 ? "s" : ""} this phase's gate`
       : "Next: generate the phase deliverable, sign it off, then approve the gate";
 
   const [openPanels, setOpenPanels] = useState<
@@ -1812,16 +1812,6 @@ export function StrategicMovePhaseClient({
       PHASE_CANONICAL_KEYS[phaseNum],
     ),
   ).length;
-  const knownSoFarItems = [
-    `Use case: ${move.name}`,
-    `Sponsor: ${conciseSponsorLabel(move.sponsor)}`,
-    `Capture: ${filledCount} of ${canvasSections.length} inputs saved`,
-    `Artifacts: ${phaseArtifactCount} phase artifact${phaseArtifactCount === 1 ? "" : "s"} on file`,
-    gateItemsWithStatus.length > 0
-      ? `Gate: ${totalGateDone} of ${gateItemsWithStatus.length} criteria met`
-      : "Gate: no active outgoing gate on this viewed phase",
-  ];
-
   return (
     <div id={`ws-phase-p${phaseNum}-page`} className={styles.page}>
       {/* Phase context bar */}
@@ -2074,25 +2064,6 @@ export function StrategicMovePhaseClient({
                 </div>
               </div>
             )}
-
-            <section
-              id={`ws-canvas-p${phaseNum}-solution-context`}
-              className={styles.detailSection}
-            >
-              <div className={styles.detailSectionTitle}>
-                What we know so far
-              </div>
-              <div className={styles.captureChipRow}>
-                {knownSoFarItems.map((item) => (
-                  <span
-                    key={item}
-                    className={`${styles.captureChip} ${styles.captureChipFilled}`}
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </section>
 
             {/* Phase capture sections */}
             <CollapsePanel

@@ -35,8 +35,12 @@ This slice makes it one action, **"Build and approve"**: it **generates the boar
 ## Changes Included
 
 - `src/components/strategic-moves/StrategicMovePhaseClient.tsx`
-  - Merged the "Approve" + "Generate artifact" steps into one "Build and approve" step (`buildAndApprove`): generate → (on clean success) sign off. A `genSucceededRef` captures the run outcome so sign-off only fires when the run finished `succeeded`.
-  - Removed `canApprove`/`canGenerate` (→ `canBuildApprove`); sequence is now Save → Build-and-approve → Advance (Advance renumbered 4→3).
+  - **Build-and-approve:** merged the "Approve" + "Generate artifact" steps into one "Build and approve" step (`buildAndApprove`): generate → (on clean success) sign off. A `genSucceededRef` captures the run outcome so sign-off only fires when the run finished `succeeded`. `canApprove`/`canGenerate` → `canBuildApprove`; sequence is Save → Build-and-approve → Advance.
+  - **Action-first:** the workflow sequence now renders **first**, above the seven capture cards (was below them), so the action is visible without scrolling.
+  - **Declutter:** removed the "What we know so far" panel (its use-case/sponsor duplicate the header, its capture count duplicates the tracker + Capture details, its gate count duplicates the Gate readiness panel — and that "Gate 1 of 5" chip next to an enabled Approve read as a contradiction). Removed the now-unused `knownSoFarItems`.
+  - **Copy:** "…hard gaps block the charter" → "…block this phase's gate" (was hardcoded "charter" for every phase; wrong on P2–P5).
+- `src/components/strategic-moves/MoveListTable.tsx` — the Moves list Sponsor column uses `conciseSponsorLabel` (was the full governance run-on).
+- `src/components/strategic-moves/sponsor-display.ts` — `conciseSponsorLabel` (first clause of the sponsor name, capped), shared by the header and the list.
 - `src/lib/programs/mutations.ts` — `signOffDeliverable` accepts `draft` as well as `in_review` (`.in("status", ["draft", "in_review"])`), so sign-off can act on a freshly-generated deliverable without a separate publish hop.
 
 ## QA / Validation
