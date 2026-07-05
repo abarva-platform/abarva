@@ -1,4 +1,4 @@
-import { createDefaultSession, type SessionRunner } from "@/lib/data-plane/read-adapters/azureSession";
+import { createDefaultSession, type SessionRunner, type SqlRunner } from "@/lib/data-plane/read-adapters/azureSession";
 import { appClientKeyForTenant, tenantProfileForClientKey } from "@/lib/tenant/aliases";
 import type {
   HomeV6BrowserColumn,
@@ -163,29 +163,20 @@ export async function getHomeV7ContextBrowser(args: {
         )
       : [];
     // Evidence-gap posture is computed over the FULL dimension, not the capped
-    // preview window, so the "evidence gaps" count and the top-missing-field
-    // cards reflect the whole loaded dimension instead of the first 12 rows.
+    // preview window. It is also scoped to the fields that actually represent
+    // missing business evidence, so structural blanks (a top-level entity with
+    // no parent) and provenance/lineage columns (validated_by = "not client
+    // validated" on every synthetic row) do not inflate the count.
+    //
+    // Preference order, self-configured from the live schema:
+    //   1. Required-field contract — count gaps only on columns the
+    //      column_registry marks required_level ~ 'required*'. This is the
+    //      authored per-dimension "required" set.
+    //   2. Provenance denylist — when the contract column is absent or
+    //      unpopulated, count content-field gaps but exclude internal,
+    //      provenance/lineage, and relationship-reference columns.
     const gapRows = dimensionKeys.length
-      ? await run<{
-          dimension_key: string;
-          column_name: string;
-          gap_count: number;
-        }>(
-          `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
-           from intelligence_v7.business_records r
-           cross join lateral jsonb_each_text(r.values_json) kv
-           where r.tenant_key = $1
-             and r.contract_version = $2
-             and r.dimension_key = any($3::text[])
-             and (
-               kv.value is null
-               or btrim(kv.value) = ''
-               or kv.value ~* 'needs evidence|evidence_gap|not client validated'
-               or kv.value ~* '^data_thin:'
-             )
-           group by r.dimension_key, kv.key`,
-          [tenantKey, contractVersion, dimensionKeys],
-        )
+      ? await loadGapRows(run, { tenantKey, contractVersion, dimensionKeys })
       : [];
 
     const columnsByDimension = groupBy(allColumns, (column) => column.dimension_key);
@@ -329,6 +320,109 @@ function topKnownGaps(
         howItHelps: gapHowItHelps(label, meta?.module_use),
       };
     });
+}
+
+interface GapRow {
+  dimension_key: string;
+  column_name: string;
+  gap_count: number;
+}
+
+// The predicate for a cell that represents missing business evidence: empty, or
+// explicitly marked as needing evidence. Kept identical across both gap queries
+// and the row-level `collectKnownGapKeys` fallback so counts stay consistent.
+const GAP_VALUE_PREDICATE = `(
+  kv.value is null
+  or btrim(kv.value) = ''
+  or kv.value ~* 'needs evidence|evidence_gap|not client validated'
+  or kv.value ~* '^data_thin:'
+)`;
+
+// Internal, provenance/lineage, and blanket-caveat columns are not business
+// evidence gaps. validated_by / source_validation_status / known_gaps carry the
+// same synthetic caveat on every row; excluding them stops that caveat from
+// being counted 25x as if 25 business fields were missing.
+const NON_EVIDENCE_COLUMNS = [
+  "tenant_key",
+  "record_key",
+  "source_file_key",
+  "created_at",
+  "updated_at",
+  "data_provider_name",
+  "data_provider_role",
+  "source_artifact_type",
+  "source_artifact_name",
+  "capture_method",
+  "extraction_method",
+  "generated_by",
+  "validated_by",
+  "source_validation_status",
+  "source_as_of_date",
+  "known_gaps",
+  "kpi_source_ref",
+];
+
+// Load per-column gap counts over the full dimension. Prefers the authored
+// required-field contract; falls back to a provenance denylist; both are safe
+// under the autocommit session (a failed probe does not poison the connection).
+async function loadGapRows(
+  run: SqlRunner,
+  args: { tenantKey: string; contractVersion: string; dimensionKeys: string[] },
+): Promise<GapRow[]> {
+  const { tenantKey, contractVersion, dimensionKeys } = args;
+
+  let requiredContractPopulated = false;
+  try {
+    const probe = await run<{ n: number }>(
+      `select count(*)::int as n
+       from intelligence_v7.column_registry
+       where contract_version = $1
+         and required_level is not null
+         and required_level ~* '^required'`,
+      [contractVersion],
+    );
+    requiredContractPopulated = (probe[0]?.n ?? 0) > 0;
+  } catch {
+    // required_level column is absent in this deployment's schema — fall back.
+    requiredContractPopulated = false;
+  }
+
+  if (requiredContractPopulated) {
+    try {
+      return await run<GapRow>(
+        `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
+         from intelligence_v7.business_records r
+         cross join lateral jsonb_each_text(r.values_json) kv
+         join intelligence_v7.column_registry cr
+           on cr.contract_version = r.contract_version
+          and cr.dimension_key = r.dimension_key
+          and cr.column_name = kv.key
+         where r.tenant_key = $1
+           and r.contract_version = $2
+           and r.dimension_key = any($3::text[])
+           and cr.required_level ~* '^required'
+           and ${GAP_VALUE_PREDICATE}
+         group by r.dimension_key, kv.key`,
+        [tenantKey, contractVersion, dimensionKeys],
+      );
+    } catch {
+      // Fall through to the denylist query on any unexpected schema mismatch.
+    }
+  }
+
+  return run<GapRow>(
+    `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
+     from intelligence_v7.business_records r
+     cross join lateral jsonb_each_text(r.values_json) kv
+     where r.tenant_key = $1
+       and r.contract_version = $2
+       and r.dimension_key = any($3::text[])
+       and kv.key <> all($4::text[])
+       and kv.key !~* '(_ref|_refs)$'
+       and ${GAP_VALUE_PREDICATE}
+     group by r.dimension_key, kv.key`,
+    [tenantKey, contractVersion, dimensionKeys, NON_EVIDENCE_COLUMNS],
+  );
 }
 
 interface DimensionGapStats {
