@@ -176,6 +176,23 @@ function inferSourceEventTenantName(args: {
 }
 
 /**
+ * Strip lines that are internal operational metadata — not authored content
+ * meant for client-facing documents. These header lines appear in
+ * demo-seeded bodies (e.g. "**Evidence label:** synthetic_demo") and must
+ * never surface in downloads, exports, or upstream generation prompts.
+ */
+const INTERNAL_METADATA_LINE_RE =
+  /^\*\*(?:Evidence label|CXO review status|Data classification|Review stage|Seed source|Internal label):\*\*/i;
+
+export function sanitizeArtifactBodyForExport(body: string): string {
+  return body
+    .split('\n')
+    .filter((line) => !INTERNAL_METADATA_LINE_RE.test(line.trim()))
+    .join('\n')
+    .trimStart();
+}
+
+/**
  * Pluck approved-or-richer bodies from the substrate, keyed by code.
  * The prompt builder uses this to bind upstream artifacts into the
  * user message. Pre-approval-status bodies are still included if a
@@ -190,7 +207,7 @@ export function collectUpstreamBodies(
   for (const code of codes) {
     const row = ctx.artifactStates.find((a) => a.artifactCode === code);
     if (row?.body && row.body.trim().length > 0) {
-      out[code] = row.body;
+      out[code] = sanitizeArtifactBodyForExport(row.body);
     }
   }
   return out;

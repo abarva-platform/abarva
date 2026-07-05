@@ -154,6 +154,20 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Probe events are synthetic permission-check artifacts created by middleware
+// health checks (event_code contains "-PROBE-" or event_name starts with
+// "Permission Probe" / "Probe"). Exclude them from all client-facing views.
+function isProbeOrTestSourceEvent(event: SourceEventRow): boolean {
+  const code = event.event_code?.toUpperCase() ?? "";
+  const name = event.event_name?.toLowerCase() ?? "";
+  return (
+    code.includes("-PROBE-") ||
+    code.endsWith("-PROBE") ||
+    name.startsWith("permission probe") ||
+    name === "probe"
+  );
+}
+
 export async function getPendingSourceEvents(
   clientKey: string,
 ): Promise<SourceEventRow[]> {
@@ -169,9 +183,10 @@ export async function getPendingSourceEvents(
   const rows = (await selectSourceEventsReadAdapter().getPendingEventsForClient(
     clientKey,
   )) as SourceEventRow[];
-  return allowedIds === null
+  const clientRows = allowedIds === null
     ? rows
     : rows.filter((event) => allowedIds.includes(event.id));
+  return clientRows.filter((event) => !isProbeOrTestSourceEvent(event));
 }
 
 export async function createSourcingEvent(
@@ -350,10 +365,11 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
     (await selectSourceEventsReadAdapter().getActiveEventsForClient(
       activeClient.key,
     )) as SourceEventRow[];
-  const scopedPersistedRows =
+  const scopedPersistedRows = (
     allowedIds === null
       ? persistedRows
-      : persistedRows.filter((row) => allowedIds.includes(row.id));
+      : persistedRows.filter((row) => allowedIds.includes(row.id))
+  ).filter((row) => !isProbeOrTestSourceEvent(row));
   const persisted = scopedPersistedRows.map((row) =>
     sourceEventRowToSummary(row, activeClient.name),
   );

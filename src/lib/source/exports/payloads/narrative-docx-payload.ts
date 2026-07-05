@@ -8,6 +8,7 @@
 import 'server-only';
 
 import type { SourceGenerationContext } from '@/lib/source/agent-generation/types';
+import { sanitizeArtifactBodyForExport } from '@/lib/source/agent-generation/context-binder';
 import { loadArtifactTemplate } from '@/lib/source/canvas-substrate/templates';
 import type { NarrativeDocxPayload } from '../renderers/narrative-docx';
 import { buildDecisionBriefPayloadFromContext } from './decision-brief-payload';
@@ -22,7 +23,7 @@ export function buildNarrativeDocxPayloadFromContext(
   }
 
   const state = ctx.artifactStates.find((a) => a.artifactCode === artifactCode);
-  const authoredBody = state?.body ?? null;
+  const authoredBody = state?.body ? sanitizeArtifactBodyForExport(state.body) : null;
   assertNarrativeArtifactExportable(artifactCode, state);
   const fallbackBody = loadCanonicalScaffold(artifactCode);
 
