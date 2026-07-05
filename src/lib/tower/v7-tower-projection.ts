@@ -161,18 +161,10 @@ function normalizeDimensionKey(value: unknown): string {
 
 async function readV7TowerRecords(tenantKey: string): Promise<V7TowerRecordRow[]> {
   const rows = await azureRead.query<V7TowerRecordRow>(
-    `with latest_run as (
-       select contract_version
-       from intelligence_v7.tenant_pack_runs
-       where tenant_key = $1 and load_status in ('loaded', 'validated')
-       order by loaded_at desc
-       limit 1
-     )
-     select lower(r.dimension_key) as dimension_key, r.record_key, r.record_name, r.source_file,
-       r.source_row_number::int, r.as_of_date::text, r.period_end::text,
+    `select lower(r.dimension_key) as dimension_key, r.record_key, r.record_name, r.source_file,
+       r.source_row_number, r.as_of_date, r.period_end,
        r.source_artifact_name, r.source_validation_status, r.values_json
      from intelligence_v7.business_records r
-     join latest_run lr on lr.contract_version = r.contract_version
      where r.tenant_key = $1 and lower(r.dimension_key) = any($2::text[])
      order by r.dimension_key, r.source_row_number nulls last, r.record_key
      limit 1200`,
