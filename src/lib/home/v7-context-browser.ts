@@ -147,18 +147,27 @@ export async function getHomeV7ContextBrowser(args: {
       : [];
     const allRecords = dimensionKeys.length
       ? await run<V7RecordRow>(
+          // Preview rows are grouped by entity (the operating company/owner)
+          // so the table is scannable by who-owns-what rather than raw load
+          // order. Dimensions without an entity_name fall back to source order.
           `select dimension_key, record_key, record_name, source_file, source_row_number::int,
             source_artifact_name, source_validation_status, values_json
            from (
             select r.*,
-              row_number() over (partition by r.dimension_key order by r.source_row_number asc) as preview_rank
+              row_number() over (
+                partition by r.dimension_key
+                order by nullif(btrim(r.values_json->>'entity_name'), '') asc nulls last,
+                         r.source_row_number asc
+              ) as preview_rank
             from intelligence_v7.business_records r
             where r.tenant_key = $1
               and r.contract_version = $2
               and r.dimension_key = any($3::text[])
            ) ranked
            where preview_rank <= 12
-           order by dimension_key, source_row_number asc`,
+           order by dimension_key,
+                    nullif(btrim(values_json->>'entity_name'), '') asc nulls last,
+                    source_row_number asc`,
           [tenantKey, contractVersion, dimensionKeys],
         )
       : [];
