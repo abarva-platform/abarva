@@ -4,6 +4,7 @@ import path from 'node:path';
 import Papa from 'papaparse';
 
 import { azureRead } from '@/lib/data-plane/azureRead';
+import { appClientKeyForTenant } from '@/lib/tenant/aliases';
 import {
   getControlTowerLensProjection,
   type ControlTowerLensProjection,
@@ -17,6 +18,7 @@ type JsonRecord = Record<string, unknown>;
 
 export type AiControlTowerReadSource =
   | 'ai_control_data_plane'
+  | 'intelligence_v7'
   | 'context_projection'
   | 'first_capital_local_synthetic_fallback'
   | 'empty';
@@ -221,6 +223,19 @@ interface AiControlTowerReadRows {
   facts: JsonRecord[];
 }
 
+interface V7TowerRecordRow {
+  dimension_key: string;
+  record_key: string;
+  record_name: string | null;
+  source_file: string | null;
+  source_row_number: number | null;
+  as_of_date: string | null;
+  period_end: string | null;
+  source_artifact_name: string | null;
+  source_validation_status: string | null;
+  values_json: JsonRecord;
+}
+
 const EMPTY_ROWS: AiControlTowerReadRows = {
   refreshRun: null,
   sources: [],
@@ -319,6 +334,31 @@ function lowerIncludes(value: string, needle: string): boolean {
   return value.toLowerCase().includes(needle.toLowerCase());
 }
 
+function isPlaceholderValue(value: unknown): boolean {
+  const raw = text(value).toLowerCase();
+  return !raw || raw.startsWith('data_thin:') || raw === 'n/a' || raw === 'null';
+}
+
+function firstUsableValue(row: JsonRecord, keys: readonly string[]): unknown {
+  for (const key of keys) {
+    const value = row[key];
+    if (!isPlaceholderValue(value)) return value;
+  }
+  return null;
+}
+
+function firstUsableText(row: JsonRecord, keys: readonly string[], fallback = ''): string {
+  return text(firstUsableValue(row, keys), fallback);
+}
+
+function firstUsableNumber(row: JsonRecord, keys: readonly string[]): number {
+  return num(firstUsableValue(row, keys));
+}
+
+function v7Payload(row: V7TowerRecordRow): JsonRecord {
+  return row.values_json && typeof row.values_json === 'object' ? row.values_json : {};
+}
+
 async function safeSelect(table: string, refreshRunId: string): Promise<JsonRecord[]> {
   return azureRead.select<JsonRecord>({
     table,
@@ -392,6 +432,332 @@ async function readDataPlaneRows(args: {
     evidence,
     facts,
   };
+}
+
+const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
+  apexretail: 'apex-retail',
+  firstcapital: 'first-capital-financial',
+  lakeshore: 'lakeshore-industries',
+  meridian: 'meridian-health',
+  skyharbor: 'skyharbor-air',
+};
+
+const V7_TOWER_DIMENSIONS = [
+  'v7_07_vendors_contracts',
+  'v7_08_spend_value',
+  'v7_09_programs_initiatives_business_priorities',
+  'v7_10_ai_initiatives',
+  'v7_11_operations_risk_controls',
+] as const;
+
+function v7TenantKeyFor(args: {
+  clientKey?: string | null;
+  tenantName?: string | null;
+}): string | null {
+  const appClientKey = appClientKeyForTenant(args.clientKey) ?? appClientKeyForTenant(args.tenantName);
+  return appClientKey ? V7_TENANT_BY_APP_CLIENT[appClientKey] ?? null : null;
+}
+
+async function readV7TowerRecords(args: {
+  clientKey?: string | null;
+  tenantName?: string | null;
+}): Promise<V7TowerRecordRow[]> {
+  const tenantKey = v7TenantKeyFor(args);
+  if (!tenantKey) return [];
+  return azureRead.query<V7TowerRecordRow>(
+    `with latest_run as (
+       select contract_version
+       from intelligence_v7.tenant_pack_runs
+       where tenant_key = $1 and load_status in ('loaded', 'validated')
+       order by loaded_at desc
+       limit 1
+     )
+     select r.dimension_key, r.record_key, r.record_name, r.source_file,
+       r.source_row_number::int, r.as_of_date::text, r.period_end::text,
+       r.source_artifact_name, r.source_validation_status, r.values_json
+     from intelligence_v7.business_records r
+     join latest_run lr on lr.contract_version = r.contract_version
+     where r.tenant_key = $1 and r.dimension_key = any($2::text[])
+     order by r.dimension_key, r.source_row_number nulls last, r.record_key
+     limit 1000`,
+    [tenantKey, [...V7_TOWER_DIMENSIONS]],
+    { missingTable: 'empty' },
+  ).catch(() => []);
+}
+
+function v7EvidenceState(row: V7TowerRecordRow): string {
+  const status = text(row.source_validation_status).toLowerCase();
+  if (status.includes('review') || status.includes('low')) return 'review_required';
+  if (status.includes('missing') || status.includes('reject')) return 'missing';
+  return 'received';
+}
+
+function latestV7Date(records: V7TowerRecordRow[]): string | null {
+  return records
+    .flatMap((row) => [row.period_end, row.as_of_date])
+    .map((value) => dateText(value))
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1) ?? null;
+}
+
+function v7EvidenceLabel(row: V7TowerRecordRow): string {
+  const artifact = text(row.source_artifact_name, text(row.source_file, 'V7 business record'));
+  return row.source_row_number ? `${artifact} row ${row.source_row_number}` : artifact;
+}
+
+function addV7Evidence(
+  evidence: JsonRecord[],
+  row: V7TowerRecordRow,
+  recordType: string,
+  recordKey: string,
+): void {
+  evidence.push({
+    evidence_key: `v7-${row.dimension_key}-${row.record_key}`,
+    record_type: recordType,
+    record_key: recordKey,
+    evidence_type: 'v7_business_record',
+    citation_label: v7EvidenceLabel(row),
+    evidence_pointer: text(row.source_file, row.dimension_key),
+    evidence_state: v7EvidenceState(row),
+    confidence: 0.82,
+  });
+}
+
+function buildRowsFromV7Records(records: V7TowerRecordRow[]): AiControlTowerReadRows {
+  if (records.length === 0) return EMPTY_ROWS;
+  const initiatives: JsonRecord[] = [];
+  const usage: JsonRecord[] = [];
+  const benefits: JsonRecord[] = [];
+  const spend: JsonRecord[] = [];
+  const risks: JsonRecord[] = [];
+  const evidence: JsonRecord[] = [];
+  const facts: JsonRecord[] = [];
+
+  for (const row of records) {
+    const payload = v7Payload(row);
+    if (row.dimension_key === 'v7_09_programs_initiatives_business_priorities') {
+      const id = firstUsableText(payload, ['program_id', 'initiative_id', 'priority_id'], row.record_key);
+      const title = firstUsableText(payload, ['program_name', 'initiative_name', 'priority_name'], text(row.record_name, id));
+      const expectedValue = firstUsableNumber(payload, ['expected_value_usd', 'target_value_usd', 'committed_value_usd', 'business_case_value_usd']);
+      const realizedValue = firstUsableNumber(payload, ['realized_value_usd', 'measured_value_usd', 'finance_attested_value_usd']);
+      const budget = firstUsableNumber(payload, ['budget_usd', 'approved_budget_usd', 'committed_budget_usd']);
+      initiatives.push({
+        initiative_key: id,
+        initiative_name: title,
+        function_name: firstUsableText(payload, ['business_function', 'function_name', 'service_tower_or_function'], 'Portfolio'),
+        category: firstUsableText(payload, ['priority_type', 'category', 'program_type'], 'Program initiative'),
+        stage: firstUsableText(payload, ['phase', 'current_status', 'status', 'stage_gate'], 'portfolio'),
+        business_owner_role: firstUsableText(payload, ['business_owner', 'business_sponsor', 'sponsor'], 'Unassigned owner'),
+        executive_sponsor_role: firstUsableText(payload, ['executive_sponsor', 'business_sponsor', 'sponsor'], 'Unassigned sponsor'),
+        promised_benefit: firstUsableText(payload, ['target_outcome', 'value_basis', 'business_case_summary'], 'V7 value linkage'),
+        target_metric_key: 'value_realization_usd',
+        committed_usd: budget,
+        status_flag: firstUsableText(payload, ['decision_needed', 'status', 'current_status'], 'review'),
+        confidence: firstUsableText(payload, ['confidence'], 'medium'),
+        payload,
+      });
+      if (expectedValue > 0 || realizedValue > 0) {
+        benefits.push({
+          benefit_key: `${id}-v7-benefit`,
+          initiative_key: id,
+          benefit_name: firstUsableText(payload, ['value_basis', 'target_outcome'], 'V7 business-case value'),
+          metric_key: 'value_realization_usd',
+          promised_annual_value_usd: expectedValue,
+          realized_annual_value_usd: realizedValue,
+          confidence: firstUsableText(payload, ['confidence'], 'medium').toLowerCase(),
+          readiness_state: realizedValue > 0 ? 'measured' : 'committed_business_case',
+          evidence_state: v7EvidenceState(row),
+          payload,
+        });
+      }
+      if (budget > 0) {
+        spend.push({
+          spend_key: `${id}-v7-program-spend`,
+          initiative_key: id,
+          vendor: firstUsableText(payload, ['vendor_name', 'vendor'], 'Portfolio'),
+          product_or_service: title,
+          spend_type: 'committed_program_budget',
+          monthly_spend_usd: budget / 12,
+          annualized_spend_usd: budget,
+          renewal_date: firstUsableText(payload, ['renewal_or_gate_date', 'target_date']),
+          evidence_state: v7EvidenceState(row),
+          payload,
+        });
+      }
+      addV7Evidence(evidence, row, 'initiative', id);
+    }
+
+    if (row.dimension_key === 'v7_10_ai_initiatives') {
+      const id = firstUsableText(payload, ['ai_initiative_id', 'initiative_id', 'use_case_id'], row.record_key);
+      const title = firstUsableText(payload, ['ai_use_case', 'use_case', 'initiative_name'], text(row.record_name, id));
+      const promisedValue = firstUsableNumber(payload, ['value_hypothesis_usd', 'value_hypothesis', 'expected_value_usd']);
+      const measuredValue = firstUsableNumber(payload, ['measured_value_usd', 'realized_value_usd']);
+      initiatives.push({
+        initiative_key: id,
+        initiative_name: title,
+        function_name: normalizeFunctionName(firstUsableText(payload, ['business_function_ref', 'business_process', 'function_name', 'user_group'], 'AI portfolio')),
+        category: 'AI initiative',
+        stage: firstUsableText(payload, ['production_status', 'stage'], 'portfolio'),
+        business_owner_role: firstUsableText(payload, ['business_owner', 'user_group', 'sponsor'], 'Unassigned owner'),
+        executive_sponsor_role: firstUsableText(payload, ['executive_sponsor', 'business_owner', 'user_group'], 'Unassigned sponsor'),
+        vendor: firstUsableText(payload, ['vendor', 'tool_or_model'], 'AI portfolio'),
+        tool_or_system: firstUsableText(payload, ['tool_or_model', 'agent_or_copilot_name'], 'AI capability'),
+        promised_benefit: firstUsableText(payload, ['value_hypothesis', 'target_outcome'], 'AI value hypothesis'),
+        target_metric_key: 'measured_value_usd',
+        status_flag: firstUsableText(payload, ['scale_hold_stop_recommendation', 'scale_hold_stop', 'decision_needed'], 'review'),
+        confidence: firstUsableText(payload, ['confidence'], 'medium').toLowerCase(),
+        payload,
+      });
+      if (promisedValue > 0 || measuredValue > 0) {
+        benefits.push({
+          benefit_key: `${id}-v7-ai-benefit`,
+          initiative_key: id,
+          benefit_name: 'AI measured value',
+          metric_key: 'measured_value_usd',
+          promised_annual_value_usd: promisedValue,
+          realized_annual_value_usd: measuredValue,
+          confidence: firstUsableText(payload, ['confidence'], 'medium').toLowerCase(),
+          readiness_state: measuredValue > 0 ? 'measured' : 'hypothesis_loaded',
+          evidence_state: v7EvidenceState(row),
+          payload,
+        });
+      }
+      const seats = firstUsableNumber(payload, ['licensed_users', 'seats']);
+      const activeUsers = firstUsableNumber(payload, ['active_users']);
+      if (seats > 0 || activeUsers > 0) {
+        usage.push({
+          tool_key: `${id}-usage`,
+          tool_name: firstUsableText(payload, ['tool_or_model', 'agent_or_copilot_name'], title),
+          vendor: firstUsableText(payload, ['vendor', 'tool_or_model'], 'AI portfolio'),
+          user_group_or_team: firstUsableText(payload, ['user_group', 'business_function_ref', 'business_process'], 'AI portfolio'),
+          persona: firstUsableText(payload, ['user_group', 'business_process'], 'AI users'),
+          licensed_seats: seats,
+          active_users: activeUsers,
+          utilization_pct: firstUsableNumber(payload, ['adoption_pct', 'adoption_metric']),
+          monthly_spend_usd: firstUsableNumber(payload, ['monthly_spend_usd']),
+          evidence_state: v7EvidenceState(row),
+          payload,
+        });
+      }
+      const riskText = firstUsableText(payload, ['risk_status', 'model_risk_tier', 'data_readiness', 'decision_needed']);
+      if (riskText) {
+        risks.push({
+          risk_key: `${id}-v7-risk`,
+          initiative_key: id,
+          dimension: 'ai_readiness',
+          severity: /blocked|critical|high|gap|hold/i.test(riskText) ? 'high' : 'medium',
+          status: firstUsableText(payload, ['production_status', 'risk_status'], 'review'),
+          risk_description: riskText,
+          owner_role: firstUsableText(payload, ['business_owner', 'user_group'], 'AI governance owner'),
+          required_action: firstUsableText(payload, ['decision_needed', 'scale_hold_stop_recommendation', 'scale_hold_stop'], 'Review AI readiness before scale.'),
+          governance_gate: firstUsableText(payload, ['data_readiness', 'model_risk_tier'], 'partial'),
+          evidence_state: v7EvidenceState(row),
+          payload,
+        });
+      }
+      addV7Evidence(evidence, row, 'ai_initiative', id);
+    }
+
+    if (row.dimension_key === 'v7_08_spend_value') {
+      const amount = firstUsableNumber(payload, ['amount_usd']);
+      if (amount > 0) {
+        const id = firstUsableText(payload, ['spend_id'], row.record_key);
+        spend.push({
+          spend_key: id,
+          initiative_key: firstUsableText(payload, ['program_id', 'initiative_id']) || null,
+          vendor: firstUsableText(payload, ['vendor_name', 'vendor_id'], 'Portfolio'),
+          product_or_service: firstUsableText(payload, ['spend_category', 'service_tower_or_function', 'value_linkage'], text(row.record_name, 'Spend/value row')),
+          spend_type: firstUsableText(payload, ['amount_type'], 'spend'),
+          monthly_spend_usd: amount / 12,
+          annualized_spend_usd: amount,
+          renewal_date: firstUsableText(payload, ['renewal_or_gate_date']),
+          unit_economics_metric: firstUsableText(payload, ['unit_economics']),
+          evidence_state: v7EvidenceState(row),
+          payload,
+        });
+        addV7Evidence(evidence, row, 'spend_value', id);
+      }
+    }
+
+    if (row.dimension_key === 'v7_07_vendors_contracts') {
+      const annualCost = firstUsableNumber(payload, ['annual_cost_usd', 'annualized_spend_usd']);
+      const renewalDate = firstUsableText(payload, ['renewal_date', 'renewal_or_gate_date']);
+      if (annualCost > 0 || renewalDate) {
+        const id = firstUsableText(payload, ['contract_id', 'vendor_id'], row.record_key);
+        spend.push({
+          spend_key: `${id}-v7-contract`,
+          initiative_key: null,
+          vendor: firstUsableText(payload, ['vendor_name'], 'Vendor'),
+          product_or_service: firstUsableText(payload, ['contract_name', 'service', 'service_category', 'scope_summary'], text(row.record_name, 'Vendor contract')),
+          spend_type: 'vendor_contract',
+          monthly_spend_usd: annualCost / 12,
+          annualized_spend_usd: annualCost,
+          renewal_date: renewalDate,
+          unit_economics_metric: firstUsableText(payload, ['pricing_basis']),
+          evidence_state: v7EvidenceState(row),
+          payload,
+        });
+        addV7Evidence(evidence, row, 'vendor_contract', id);
+      }
+    }
+
+    if (row.dimension_key === 'v7_11_operations_risk_controls') {
+      const id = firstUsableText(payload, ['risk_id', 'control_id', 'process_control_id'], row.record_key);
+      risks.push({
+        risk_key: id,
+        initiative_key: firstUsableText(payload, ['initiative_id', 'program_id']),
+        dimension: firstUsableText(payload, ['risk_category', 'dimension'], 'operational_control'),
+        severity: firstUsableText(payload, ['severity'], 'medium').toLowerCase(),
+        status: firstUsableText(payload, ['status'], 'open'),
+        risk_description: firstUsableText(payload, ['risk_name', 'business_impact', 'process_control_name'], text(row.record_name, 'Operational risk/control')),
+        owner_role: firstUsableText(payload, ['control_owner', 'risk_owner', 'owner'], 'Control owner'),
+        required_action: firstUsableText(payload, ['required_action', 'remediation', 'decision_needed'], 'Review control evidence.'),
+        governance_gate: firstUsableText(payload, ['gate', 'control_status'], 'partial'),
+        evidence_state: v7EvidenceState(row),
+        payload,
+      });
+    }
+
+    facts.push({
+      id: `v7-fact-${row.record_key}`,
+      record_type: row.dimension_key,
+      record_key: row.record_key,
+      fact_key: 'v7_business_record',
+      fact_type: 'v7',
+      fact_text: [text(row.record_name), firstUsableText(payload, ['use_case', 'program_name', 'priority_name', 'vendor_name', 'value_linkage', 'risk_name'])].filter(Boolean).join(': '),
+      confidence: v7EvidenceState(row) === 'review_required' ? 0.68 : 0.82,
+      evidence_state: v7EvidenceState(row),
+      evidence_keys: [`v7-${row.dimension_key}-${row.record_key}`],
+    });
+  }
+
+  return {
+    refreshRun: {
+      id: 'intelligence-v7-latest',
+      refresh_run_key: 'intelligence-v7-derived-tower',
+      reporting_period_end: latestV7Date(records),
+    },
+    sources: [],
+    initiatives,
+    usage,
+    productivity: [],
+    dora: [],
+    agents: [],
+    benefits,
+    spend,
+    risks,
+    actions: [],
+    evidence,
+    facts,
+  };
+}
+
+async function readV7TowerRows(args: {
+  clientKey?: string | null;
+  tenantName?: string | null;
+}): Promise<AiControlTowerReadRows> {
+  return buildRowsFromV7Records(await readV7TowerRecords(args));
 }
 
 function fallbackAllowed(clientKey: string | null | undefined, tenantName: string | null | undefined): boolean {
@@ -1071,6 +1437,8 @@ function buildModel(args: {
   const sourceDisclosure =
     args.source === 'ai_control_data_plane'
       ? 'Read from committed AI Control Tower data-plane tables.'
+      : args.source === 'intelligence_v7'
+        ? 'Read from the validated V7 intelligence substrate and mapped into the Tower portfolio model.'
       : args.source === 'context_projection'
         ? 'Projected live from this tenant’s committed context layer (the durable AI Control Tower lens over enterprise_context_*), not the packaged synthetic demo.'
         : args.source === 'first_capital_local_synthetic_fallback'
@@ -1186,9 +1554,29 @@ export async function getAiControlTowerReadModel(args: {
     });
   }
 
-  // Durable Tower projection precedence: BEFORE the synthetic fallback, try the
-  // committed context-layer projection (`ai_control_tower_lens_mv`). Precedence
-  // order is `ai_control_data_plane` → `context_projection` →
+  const v7Rows = await readV7TowerRows({
+    clientKey: args.clientKey,
+    tenantName: args.tenantName,
+  });
+  const hasV7Rows =
+    v7Rows.initiatives.length > 0 ||
+    v7Rows.usage.length > 0 ||
+    v7Rows.benefits.length > 0 ||
+    v7Rows.spend.length > 0 ||
+    v7Rows.risks.length > 0;
+  if (hasV7Rows) {
+    return buildModel({
+      rows: v7Rows,
+      clientId: args.clientId ?? null,
+      clientKey: args.clientKey ?? null,
+      tenantName: args.tenantName ?? 'AbarVa Client',
+      source: 'intelligence_v7',
+    });
+  }
+
+  // Durable Tower projection precedence: after V7, before synthetic fallback,
+  // try the committed context-layer projection (`ai_control_tower_lens_mv`).
+  // Precedence order is `ai_control_data_plane` → `intelligence_v7` → `context_projection` →
   // `first_capital_local_synthetic_fallback` → `empty` (brief §4, line 306).
   //
   // Degrades gracefully: when the MV is absent/empty (it is not applied live yet,
