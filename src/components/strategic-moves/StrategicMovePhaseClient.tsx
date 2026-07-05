@@ -1542,6 +1542,19 @@ function CharterWorkflow({
       : "Building…"
     : "Build report";
   const reportCrit = items.find((c) => isReport(c.label));
+  // The critical thing left to enable "Build report", in plain English.
+  let buildReason: string | undefined;
+  if (!allSaved) {
+    buildReason = `Save all ${canvasSections.length} inputs first — ${filledNow}/${canvasSections.length} captured.`;
+  } else if (!deliverableId) {
+    buildReason = "Save the record to create the deliverable.";
+  } else if (approving) {
+    buildReason = "Signing off…";
+  }
+  // Unmet HARD gate criteria — these must all clear before the phase can advance.
+  const hardBlockers = items.filter(
+    (c) => !c.completed && c.severity === "hard",
+  );
   const steps = items.map((c) => {
     const base = {
       id: c.id,
@@ -1560,6 +1573,7 @@ function CharterWorkflow({
           },
           kind: "primary" as const,
           disabled: !canBuildApprove || genBusy,
+          reason: buildReason,
         },
       };
     }
@@ -1578,6 +1592,16 @@ function CharterWorkflow({
   steps.sort((a, b) => Number(b.done) - Number(a.done));
   const doneCount = items.filter((c) => c.completed).length;
   const nextPhase = phaseNum + 1;
+  // Advance is enabled ONLY when every hard gate criterion is met — the same
+  // rule the server enforces on the advance POST — so the button never looks
+  // ready before it is. (The prior `canAdvance` gated only on the deliverable
+  // being signed off, letting the button enable while hard evidence was still
+  // missing and relying on a server rejection.)
+  const wbCanAdvance =
+    phaseNum >= 2 &&
+    phaseNum <= 4 &&
+    hardBlockers.length === 0 &&
+    !advancing;
   const advance =
     phaseNum >= 2 && phaseNum <= 4
       ? {
@@ -1585,12 +1609,26 @@ function CharterWorkflow({
           onClick: () => {
             void advanceGate();
           },
-          disabled: !canAdvance,
-          note: canAdvance
-            ? "Ready to advance."
-            : "Unlocks when the gate criteria above are met.",
+          disabled: !wbCanAdvance,
+          note: wbCanAdvance
+            ? "All gate criteria met — ready to advance."
+            : `Complete first: ${hardBlockers.map((c) => c.label).join("; ")}`,
         }
       : null;
+
+  // Live % complete: gate = phase-completion signal; evidence = required needs.
+  const gatePct = items.length
+    ? Math.round((doneCount / items.length) * 100)
+    : 0;
+  const requiredPackets = wbPackets.filter((p) => p.priority === "required");
+  const requiredCovered = requiredPackets.filter(
+    (p) => p.status === "covered" || p.status === "waived",
+  ).length;
+  const evidencePct = requiredPackets.length
+    ? Math.round((requiredCovered / requiredPackets.length) * 100)
+    : wbPackets.length
+      ? Math.round((evReady / wbPackets.length) * 100)
+      : 100;
 
   return (
     <EvidenceWorkbench
@@ -1603,6 +1641,8 @@ function CharterWorkflow({
       statusColor={statusColor ?? move.statusColor}
       evidenceGroups={evidenceGroups}
       evidenceReadyLabel={`${evReady} of ${wbPackets.length} in`}
+      evidencePct={evidencePct}
+      gatePct={gatePct}
       selectedEvidenceId={selectedEvidenceId}
       onSelectEvidence={setSelectedEvidenceId}
       onAddEvidence={onAddEvidence ?? (() => {})}
