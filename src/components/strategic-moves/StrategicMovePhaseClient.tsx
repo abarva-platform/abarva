@@ -1773,6 +1773,11 @@ export function StrategicMovePhaseClient({
   const [openPanels, setOpenPanels] = useState<
     Partial<Record<PanelKey, boolean>>
   >(() => ({
+    // Action-forward: on the phase the Move is actually in, the capture +
+    // Save→Approve→Advance workflow is open by default (and rendered first,
+    // below) so the action is visible without scrolling past the readiness
+    // and context panels.
+    capture: isCurrentPhase,
     [autoOpenPanel]: true,
     needs: hasEvidenceNeedPackets,
   }));
@@ -2094,6 +2099,99 @@ export function StrategicMovePhaseClient({
               </div>
             </section>
 
+            {/* Phase capture sections */}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-capture-collapse`}
+              title="Capture details"
+              meta={
+                canvasSections.length > 0
+                  ? `— ${filledCount} of ${canvasSections.length} captured`
+                  : undefined
+              }
+              open={isPanelOpen("capture")}
+              onOpenChange={(open) => setPanelOpen("capture", open)}
+            >
+              {PHASE_WORKFLOW[phaseNum] && canvasSections.length > 0 ? (
+                <CharterWorkflow
+                  key={serverCapture ? "capture-loaded" : "capture-loading"}
+                  move={move}
+                  phaseNum={phaseNum}
+                  canvasSections={canvasSections}
+                  capturedSections={capturedSections}
+                  isCaptureCardOpen={isCaptureCardOpen}
+                  setOpenCaptureCards={setOpenCaptureCards}
+                />
+              ) : (
+                capturedSections.map(({ section, content }) => (
+                  <section
+                    key={section.id}
+                    id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+                    className={styles.detailSection}
+                  >
+                    <details
+                      open={isCaptureCardOpen(section.id)}
+                      onToggle={(e) => {
+                        const isOpen = (e.currentTarget as HTMLDetailsElement)
+                          .open;
+                        setOpenCaptureCards((prev) =>
+                          (prev[section.id] ?? true) === isOpen
+                            ? prev
+                            : { ...prev, [section.id]: isOpen },
+                        );
+                      }}
+                    >
+                      <summary className={styles.captureCardSummary}>
+                        <span
+                          className={styles.detailSectionTitle}
+                          style={{ marginBottom: 0 }}
+                        >
+                          {section.label}
+                        </span>
+                        <span
+                          className={
+                            content !== null
+                              ? styles.captureBadgeDone
+                              : styles.captureBadgePending
+                          }
+                        >
+                          {content !== null ? "✓ Captured" : "Not captured"}
+                        </span>
+                      </summary>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          color: "var(--abarva-slate)",
+                          fontStyle: "italic",
+                          lineHeight: 1.5,
+                          padding: "4px 0 2px",
+                        }}
+                      >
+                        {section.placeholder}
+                      </div>
+                      {content !== null ? (
+                        <div className={styles.captureContent}>{content}</div>
+                      ) : (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: "8px 10px",
+                            borderRadius: 6,
+                            background: "rgba(0,102,204,0.04)",
+                            border: "1px dashed rgba(0,102,204,0.18)",
+                            fontSize: 12,
+                            color: "var(--abarva-slate)",
+                          }}
+                        >
+                          Work with Ava in the chat pane to populate this
+                          section.
+                        </div>
+                      )}
+                    </details>
+                  </section>
+                ))
+              )}
+            </CollapsePanel>
+
             <UploadGuidanceCard phaseNum={phaseNum} />
 
             {/* Gate criteria panel */}
@@ -2270,98 +2368,6 @@ export function StrategicMovePhaseClient({
                 </CollapsePanel>
               )}
 
-            {/* Phase capture sections */}
-            <CollapsePanel
-              id={`ws-canvas-p${phaseNum}-capture-collapse`}
-              title="Capture details"
-              meta={
-                canvasSections.length > 0
-                  ? `— ${filledCount} of ${canvasSections.length} captured`
-                  : undefined
-              }
-              open={isPanelOpen("capture")}
-              onOpenChange={(open) => setPanelOpen("capture", open)}
-            >
-              {PHASE_WORKFLOW[phaseNum] && canvasSections.length > 0 ? (
-                <CharterWorkflow
-                  key={serverCapture ? "capture-loaded" : "capture-loading"}
-                  move={move}
-                  phaseNum={phaseNum}
-                  canvasSections={canvasSections}
-                  capturedSections={capturedSections}
-                  isCaptureCardOpen={isCaptureCardOpen}
-                  setOpenCaptureCards={setOpenCaptureCards}
-                />
-              ) : (
-                capturedSections.map(({ section, content }) => (
-                  <section
-                    key={section.id}
-                    id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
-                    className={styles.detailSection}
-                  >
-                    <details
-                      open={isCaptureCardOpen(section.id)}
-                      onToggle={(e) => {
-                        const isOpen = (e.currentTarget as HTMLDetailsElement)
-                          .open;
-                        setOpenCaptureCards((prev) =>
-                          (prev[section.id] ?? true) === isOpen
-                            ? prev
-                            : { ...prev, [section.id]: isOpen },
-                        );
-                      }}
-                    >
-                      <summary className={styles.captureCardSummary}>
-                        <span
-                          className={styles.detailSectionTitle}
-                          style={{ marginBottom: 0 }}
-                        >
-                          {section.label}
-                        </span>
-                        <span
-                          className={
-                            content !== null
-                              ? styles.captureBadgeDone
-                              : styles.captureBadgePending
-                          }
-                        >
-                          {content !== null ? "✓ Captured" : "Not captured"}
-                        </span>
-                      </summary>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          color: "var(--abarva-slate)",
-                          fontStyle: "italic",
-                          lineHeight: 1.5,
-                          padding: "4px 0 2px",
-                        }}
-                      >
-                        {section.placeholder}
-                      </div>
-                      {content !== null ? (
-                        <div className={styles.captureContent}>{content}</div>
-                      ) : (
-                        <div
-                          style={{
-                            marginTop: 8,
-                            padding: "8px 10px",
-                            borderRadius: 6,
-                            background: "rgba(0,102,204,0.04)",
-                            border: "1px dashed rgba(0,102,204,0.18)",
-                            fontSize: 12,
-                            color: "var(--abarva-slate)",
-                          }}
-                        >
-                          Work with Ava in the chat pane to populate this
-                          section.
-                        </div>
-                      )}
-                    </details>
-                  </section>
-                ))
-              )}
-            </CollapsePanel>
 
             {/* Generate & documents */}
             <CollapsePanel
