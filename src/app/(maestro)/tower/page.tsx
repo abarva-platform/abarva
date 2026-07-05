@@ -51,6 +51,13 @@ export default async function TowerPage({
     ? await Promise.all([
         buildAtlasTowerCurrentState({
           clientId: activeClient.id,
+          clientKey: activeClient.key,
+          clientName: activeClient.name,
+          tenantKeyCandidates: [
+            activeClient.key,
+            activeClient.name,
+            activeClient.id,
+          ],
           surfaceContext: { activeTowerLens: "value" },
         }).catch(() => null),
         loadCioTowerMetricPackets([

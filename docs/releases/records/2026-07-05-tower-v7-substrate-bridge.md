@@ -43,6 +43,9 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
 - `src/lib/atlas/tower-grounding.ts`
   - Uses the V7 Tower projection when the older materialized Tower page rows are empty or lack program/vendor value.
   - Runs supporting-row, band-metric, pressure, and 2x2 logic against the V7-backed visible Tower state.
+  - Accepts active-client tenant key/name candidates so the visible Tower state resolves the same V7 tenant alias set used by the KPI metric-packet path.
+- `src/app/(maestro)/tower/page.tsx`
+  - Passes active-client key, name, and id into the Tower state builder so tenant alias resolution is not limited to the internal client profile lookup.
 - `src/lib/cio-tower/metric-packet-store.ts`
   - Supplements missing CIO Tower metric packets from V7-derived runtime packets so the KPI strip does not show false value gaps.
 - `src/lib/ai-control-tower/__tests__/read-model.test.ts`
@@ -53,6 +56,8 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
   - Covers uppercase V7 dimension keys matching the Azure-loaded file naming style.
   - Covers V7 spend/value rows creating committed-value program rows and vendor exposure.
   - Guards against reintroducing the brittle `latest_run` join in the visible-page projection.
+- `src/lib/atlas/__tests__/tower-grounding-client-name.test.ts`
+  - Guards that the Tower state builder receives active-client tenant candidates before invoking the V7 projection.
 
 ## QA / Validation
 
@@ -62,6 +67,8 @@ Tower could show value and renewal "gap" states when its older AI Control Tower 
 - Pass: `npx jest src/lib/ai-control-tower/__tests__/read-model.test.ts --runInBand`
 - Pass: `npx eslint src/lib/tower/v7-tower-projection.ts src/lib/atlas/tower-grounding.ts src/lib/cio-tower/metric-packet-store.ts src/lib/tower/__tests__/v7-tower-projection.test.ts`
 - Pass: `npx jest src/lib/tower/__tests__/v7-tower-projection.test.ts --runInBand`
+- Pass: `npx eslint src/app/(maestro)/tower/page.tsx src/lib/atlas/tower-grounding.ts src/lib/atlas/__tests__/tower-grounding-client-name.test.ts`
+- Pass: `npx jest src/lib/atlas/__tests__/tower-grounding-client-name.test.ts --runInBand`
 - Pass: `npm run release:check`
 
 ## Rollout Plan
@@ -85,6 +92,7 @@ Revert this release commit to restore the previous Tower read-model order. No mi
 - Signed-in browser proof after the visible-page binding still showed false gaps because the Azure-loaded V7 dimension keys use `V7_...` casing while the runtime projection filtered only lowercase `v7_...` keys. This record now includes the case-insensitive dimension-key fix.
 - Signed-in browser proof after the case-insensitive deploy still showed false gaps because the visible Tower projection did not turn `V7_08_spend_value` into Tower initiative/program rows. This record now includes the spend/value-to-program projection.
 - The visible projection now reads directly from loaded V7 business records for the selected tenant/dimensions so read-model availability is tied to actual committed V7 records, not a secondary run-status filter.
+- Signed-in browser proof after the direct-read deploy still showed false gaps because the visible Tower state builder did not receive the same active-client tenant key/name candidates as the metric-packet path. It could read budget packets but still miss V7-backed initiatives/vendors. This record now includes the active-client candidate binding.
 - Post-deploy audit still required after the visible-page binding: active ACA revision/image digest plus signed-in browser proof that Lakeshore Tower no longer renders false `gap` states when V7 records exist.
 
 ## Context Ingestion Evidence
@@ -100,8 +108,8 @@ No new ingestion is performed by this release. It consumes existing V7 records a
 - Review/approval queue: Not applicable.
 - Client data-plane commit: Existing V7 load, not part of this release.
 - Embedding/search refresh: Not applicable.
-- Live signed-in retrieval or answer QA: First bridge deployment, first hotfix deployment, visible-page binding deployment, and case-insensitive dimension-key deployment failed signed-in Lakeshore Tower proof for the visible page; spend/value projection browser proof still required.
+- Live signed-in retrieval or answer QA: First bridge deployment, first hotfix deployment, visible-page binding deployment, case-insensitive dimension-key deployment, spend/value projection deployment, and direct-read deployment failed signed-in Lakeshore Tower proof for the visible page; active-client candidate binding browser proof still required.
 
 ## Known Gaps
 
-- V7 spend/value projection production/browser proof has not been run yet.
+- Active-client candidate binding production/browser proof has not been run yet.
