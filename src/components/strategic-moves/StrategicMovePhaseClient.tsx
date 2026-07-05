@@ -754,6 +754,10 @@ function CharterWorkflow({
       genMounted.current = false;
     };
   }, []);
+  // Whether the last generation produced a clean deliverable (run `succeeded`).
+  // A ref, not state, so the "Build and approve" flow can read the outcome
+  // immediately after awaiting generateArtifact without a stale-closure read.
+  const genSucceededRef = useRef(false);
 
   const filledNow = sectionIds.filter((id) => (values[id] ?? "").trim()).length;
 
@@ -854,6 +858,7 @@ function CharterWorkflow({
     // GET /api/v1/deliverables/runs/{id}), so the request returns immediately and the UI
     // tracks live progress to completion.
     setGen({ status: "generating", pct: 0, label: "Queued…" });
+    genSucceededRef.current = false;
     const gateKey = workflow?.deliverableTypeKey;
     try {
       const pollRun = async (runId: string): Promise<void> => {
@@ -892,6 +897,7 @@ function CharterWorkflow({
             continue;
           }
           if (poll.status === "succeeded") {
+            genSucceededRef.current = true;
             setGen({ status: "done", qualityScore: null, pass: true });
             return;
           }
@@ -1004,6 +1010,33 @@ function CharterWorkflow({
     workflow,
   ]);
 
+  // Build and approve — one action. Generate the board-grade deliverable, and
+  // ONLY if it cleanly succeeds, sign it off. This is the fix for the old
+  // Save → Approve → Generate ordering: Approve used to sign off the raw,
+  // never-generated capture record (so a Move could advance with an ungenerated
+  // charter), and generating afterward reset the deliverable to `draft` and
+  // un-signed it. Now generation runs first and sign-off acts on the generated
+  // draft (the sign-off route accepts `draft`), so a signed-off gate deliverable
+  // always implies a generated one.
+  const buildAndApprove = useCallback(async () => {
+    if (!deliverableId) {
+      setApproveError("Save the record first.");
+      return;
+    }
+    setApproveError(null);
+    // 1. Generate (sets gen state + polls to completion). genSucceededRef is
+    //    true only when the run finished `succeeded` (a clean deliverable).
+    await generateArtifact();
+    if (!genSucceededRef.current) {
+      // generateArtifact already surfaced the error/blocker in `gen`; don't
+      // sign off a deliverable that wasn't cleanly generated.
+      return;
+    }
+    // 2. Sign off the freshly-generated deliverable (sign-off route accepts
+    //    `draft`). Reuses approveRecord so the sign-off request stays in one place.
+    await approveRecord();
+  }, [deliverableId, generateArtifact, approveRecord]);
+
   // Advance gate: finalize capture (mark the phase modules completed) then
   // approve the gate and advance the Move. This is the P1–P5 equivalent of the
   // P0 "Approve brief" button — the phase workspace otherwise had no advance
@@ -1084,18 +1117,20 @@ function CharterWorkflow({
 
   // Derived enable/disable:
   //  • Save: enabled unless a save is in flight.
-  //  • Approve: enabled only when all sections are saved AND a deliverableId
-  //    exists, and not already approved / approving.
-  //  • Generate: enabled only after approval, and not already generating.
-  const canApprove = allSaved && Boolean(deliverableId) && !approved;
-  const canGenerate = approved && gen.status !== "generating";
+  //  • Build and approve: enabled when all sections are saved and a
+  //    deliverableId exists, not already approved, and no build in flight.
+  const canBuildApprove =
+    allSaved &&
+    Boolean(deliverableId) &&
+    !approved &&
+    gen.status !== "generating" &&
+    !approving;
 
-  const sequenceState = (n: 1 | 2 | 3): "done" | "active" | "" => {
+  const sequenceState = (n: 1 | 2): "done" | "active" | "" => {
     if (n === 1) return approved || allSaved ? "done" : "active";
-    if (n === 2) return approved ? "done" : allSaved ? "active" : "";
-    return gen.status === "done" ? "done" : approved ? "active" : "";
+    return approved ? "done" : allSaved ? "active" : "";
   };
-  const stepClass = (n: 1 | 2 | 3) => {
+  const stepClass = (n: 1 | 2) => {
     const s = sequenceState(n);
     return `${styles.charterStep} ${
       s === "done"
@@ -1219,92 +1254,53 @@ function CharterWorkflow({
             &rarr;
           </span>
 
-          {/* Step 2 — Approve */}
+          {/* Step 2 — Build and approve (generate the deliverable, then sign it off) */}
           <div
             className={stepClass(2)}
-            id={`ws-canvas-p${phaseNum}-step-approve`}
+            id={`ws-canvas-p${phaseNum}-step-build-approve`}
           >
-            <span className={styles.charterStepNum}>2 · Approve</span>
+            <span className={styles.charterStepNum}>2 · Build and approve</span>
             <button
               type="button"
               className={styles.charterPrimaryBtn}
-              onClick={() => void approveRecord()}
-              disabled={!canApprove || approving}
-            >
-              {approved
-                ? "Approved ✓"
-                : approving
-                  ? "Approving…"
-                  : "Approve record"}
-            </button>
-            {approveError && (
-              <span className={styles.charterStepError}>{approveError}</span>
-            )}
-            {!approved && !approveError && (
-              <span className={styles.charterStepHint}>
-                {allSaved
-                  ? deliverableId
-                    ? "Sign off the saved record."
-                    : "Save the record first."
-                  : "Save all inputs first."}
-              </span>
-            )}
-            {approved && !approveError && (
-              <span className={styles.charterStepOk}>Record signed off ✓</span>
-            )}
-          </div>
-
-          <span className={styles.charterStepArrow} aria-hidden>
-            &rarr;
-          </span>
-
-          {/* Step 3 — Generate artifact */}
-          <div
-            className={stepClass(3)}
-            id={`ws-canvas-p${phaseNum}-step-generate`}
-          >
-            <span className={styles.charterStepNum}>3 · Generate artifact</span>
-            <button
-              type="button"
-              className={styles.charterPrimaryBtn}
-              onClick={() => void generateArtifact()}
-              disabled={!canGenerate}
+              onClick={() => void buildAndApprove()}
+              disabled={!canBuildApprove}
             >
               {gen.status === "generating"
-                ? "Generating…"
-                : gen.status === "done"
-                  ? gen.pass
-                    ? "Regenerate artifact"
-                    : "Regenerate at board-grade"
-                  : "Generate artifact"}
+                ? "Building…"
+                : approving
+                  ? "Approving…"
+                  : approved
+                    ? "Approved ✓"
+                    : "Build and approve"}
             </button>
             {gen.status === "generating" && (
               <span className={styles.charterStepHint}>
                 {gen.label
                   ? `${gen.label}${gen.pct ? ` · ${gen.pct}%` : ""}`
-                  : "Drafting the board-grade charter — this runs in the background and can take a few minutes."}
+                  : "Generating the board-grade deliverable — runs in the background, a few minutes."}
               </span>
             )}
-            {gen.status === "done" && gen.pass && (
+            {approved && !approveError && (
               <span className={styles.charterStepOk}>
-                {gen.qualityScore != null
-                  ? `Quality ${gen.qualityScore} · `
-                  : ""}
-                Built ✓ ·{" "}
+                Built and signed off ✓ ·{" "}
                 <Link href={`/strategic-moves/${move.id}/evidence`}>
                   Open File Cabinet →
                 </Link>
               </span>
             )}
-            {gen.status === "done" && !gen.pass && (
+            {approveError && (
+              <span className={styles.charterStepError}>{approveError}</span>
+            )}
+            {gen.status === "done" && !gen.pass && !approved && (
               <div className={styles.gateDetail}>
                 <span className={styles.charterStepError}>
                   Held below the board-grade gate
                   {gen.blockers?.length
                     ? ` — ${gen.blockers.length} reason${
                         gen.blockers.length > 1 ? "s" : ""
-                      } to resolve before it can be approved:`
-                    : ". Re-run, or refine the inputs and context, then regenerate."}
+                      } to resolve, then build again:`
+                    : ". Refine the inputs and context, then build again."}
                 </span>
                 {gen.blockers?.length ? (
                   <div className={styles.charterAdvancedNote}>
@@ -1319,21 +1315,18 @@ function CharterWorkflow({
                     ))}
                   </div>
                 ) : null}
-                <span className={styles.charterStepHint}>
-                  Use “Regenerate at board-grade” above to run another pass —
-                  the gate stays enforced.{" "}
-                  <Link href={`/strategic-moves/${move.id}/evidence`}>
-                    Open File Cabinet →
-                  </Link>
-                </span>
               </div>
             )}
-            {gen.status === "error" && (
+            {gen.status === "error" && !approveError && (
               <span className={styles.charterStepError}>{gen.message}</span>
             )}
-            {gen.status === "idle" && !approved && (
+            {!approved && !approveError && gen.status === "idle" && (
               <span className={styles.charterStepHint}>
-                Approve the record first.
+                {allSaved
+                  ? deliverableId
+                    ? "Generates the board-grade deliverable and signs it off."
+                    : "Save the record first."
+                  : "Save all inputs first."}
               </span>
             )}
           </div>
@@ -1353,7 +1346,7 @@ function CharterWorkflow({
             className={`${styles.charterStep} ${approved ? styles.charterStepActive : ""}`}
             id={`ws-canvas-p${phaseNum}-step-advance`}
           >
-            <span className={styles.charterStepNum}>4 · Advance</span>
+            <span className={styles.charterStepNum}>3 · Advance</span>
             <button
               type="button"
               className={styles.charterPrimaryBtn}
