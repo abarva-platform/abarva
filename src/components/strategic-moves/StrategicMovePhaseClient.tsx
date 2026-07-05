@@ -1357,7 +1357,11 @@ function CharterWorkflow({
   const captureCards = (
     <>
       {/* Ordered Save → Build-and-approve sequence — rendered FIRST (above the
-          capture cards) so the action is visible without scrolling past inputs. */}
+          capture cards) so the action is visible without scrolling past inputs.
+          Hidden for P0: Originate capture is owned by the originate flow
+          (read-only cards here) and P0 has no phase deliverable to build, so the
+          Save/Build sequence does not apply — P0 promotes via approve-brief. */}
+      {phaseNum !== 0 && (
       <section
         id={`ws-canvas-p${phaseNum}-charter-sequence`}
         className={styles.detailSection}
@@ -1475,6 +1479,7 @@ function CharterWorkflow({
           </div>
         </div>
       </section>
+      )}
 
       {/* Editable capture cards */}
       {capturedSections.map(({ section, content }) => {
@@ -1857,10 +1862,19 @@ export function StrategicMovePhaseClient({
   const isCurrentPhase = move.currentPhase === phaseNum;
   const gateItemsWithStatus = isCurrentPhase ? move.gateCriteria : [];
 
-  // Evidence Workbench: P2–P5 of the CURRENT phase get the evidence-first
-  // surface (chat recedes to a collapsed dock). P0/P1 + non-current phases keep
-  // the existing chat-resident canvas.
-  const useWorkbench = isCurrentPhase && phaseNum >= 2 && phaseNum <= 5;
+  // Evidence Workbench: the CURRENT phase gets the evidence-first surface with
+  // the gate-clarity panel (criteria met/unmet, "N of M met", "To advance to
+  // Pn"). P0 is included so Originate shows the same "what completes this phase"
+  // clarity as P2–P5 instead of a bare capture canvas — its gate criteria
+  // (governance GATE_RULES 0→1: seed, hypothesis, sponsor, scope, evidence
+  // family) already exist on move.gateCriteria. P0 has no phase deliverable and
+  // promotes via approve-brief, so the in-workbench build/advance action stays
+  // gated to P2–P4 (advance === null for P0); P0 gains the criteria clarity
+  // without a build/advance flow it cannot satisfy. P1 keeps the chat-resident
+  // canvas (its advance lives in the captureCards sequence).
+  const useWorkbench =
+    isCurrentPhase &&
+    ((phaseNum >= 2 && phaseNum <= 5) || phaseNum === 0);
   const dockSurface = `/strategic-moves/${move.id}/phase/${phaseNum}`;
   const [dockRemount, setDockRemount] = useState(0);
   const openAva = useCallback(() => {
