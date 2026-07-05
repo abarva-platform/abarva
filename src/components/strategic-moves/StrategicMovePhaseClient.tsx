@@ -19,6 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   extractArtifacts,
   visibleArtifactPendingText,
@@ -1218,6 +1219,52 @@ function CharterWorkflow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workbench, evidenceNeedPackets]);
 
+  // Inline evidence upload — pick a file in the workbench, POST it to the Move
+  // evidence route (records program_evidence_items), then refresh so the
+  // explorer statuses + % update in place. No trip to the File Cabinet.
+  const wbRouter = useRouter();
+  const evFileRef = useRef<HTMLInputElement>(null);
+  const [evUpload, setEvUpload] = useState<{
+    status: "idle" | "uploading" | "done" | "error";
+    msg: string;
+  }>({ status: "idle", msg: "" });
+  const pickEvidence = useCallback(() => evFileRef.current?.click(), []);
+  const onEvidenceFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      setEvUpload({ status: "uploading", msg: `Uploading ${file.name}…` });
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("phase", String(phaseNum));
+        const sel = wbPackets.find((p) => p.familyId === selectedEvidenceId);
+        if (sel) fd.append("artifactType", sel.evidenceSlot);
+        const res = await fetch(
+          `/api/programs/workspace/${move.id}/upload`,
+          { method: "POST", credentials: "include", body: fd },
+        );
+        const j = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+          detail?: string;
+        };
+        if (!res.ok || j?.ok === false) {
+          throw new Error(j?.error || j?.detail || `Upload failed (HTTP ${res.status})`);
+        }
+        setEvUpload({ status: "done", msg: `Ingested ${file.name} — updating…` });
+        wbRouter.refresh();
+      } catch (err) {
+        setEvUpload({
+          status: "error",
+          msg: err instanceof Error ? err.message : "Upload failed",
+        });
+      }
+    },
+    [move.id, phaseNum, wbPackets, selectedEvidenceId, wbRouter],
+  );
+
   // The existing capture UI (Save → Build-and-approve → Advance + section
   // cards). In workbench mode it becomes the EvidenceWorkbench `captureSlot`;
   // otherwise it is returned as-is (P1 + non-current phases, unchanged).
@@ -1631,22 +1678,34 @@ function CharterWorkflow({
       : 100;
 
   return (
-    <EvidenceWorkbench
-      moveName={move.name}
-      displayCode={move.displayCode}
-      tenantName={move.tenant.name}
-      sponsorLine={sponsorLine ?? ""}
-      phaseNum={phaseNum}
-      phaseLabel=""
-      statusColor={statusColor ?? move.statusColor}
-      evidenceGroups={evidenceGroups}
-      evidenceReadyLabel={`${evReady} of ${wbPackets.length} in`}
-      evidencePct={evidencePct}
-      gatePct={gatePct}
-      selectedEvidenceId={selectedEvidenceId}
-      onSelectEvidence={setSelectedEvidenceId}
-      onAddEvidence={onAddEvidence ?? (() => {})}
-      gateHeading={
+    <>
+      <input
+        ref={evFileRef}
+        type="file"
+        accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.json"
+        style={{ display: "none" }}
+        onChange={(e) => void onEvidenceFile(e)}
+      />
+      <EvidenceWorkbench
+        moveName={move.name}
+        displayCode={move.displayCode}
+        tenantName={move.tenant.name}
+        sponsorLine={sponsorLine ?? ""}
+        phaseNum={phaseNum}
+        phaseLabel=""
+        statusColor={statusColor ?? move.statusColor}
+        evidenceGroups={evidenceGroups}
+        evidenceReadyLabel={`${evReady} of ${wbPackets.length} in`}
+        evidencePct={evidencePct}
+        gatePct={gatePct}
+        selectedEvidenceId={selectedEvidenceId}
+        onSelectEvidence={setSelectedEvidenceId}
+        onAddEvidence={pickEvidence}
+        evidenceUploadNote={
+          evUpload.status !== "idle" ? evUpload.msg : undefined
+        }
+        evidenceUploadState={evUpload.status}
+        gateHeading={
         phaseNum <= 4 ? `To advance to P${nextPhase}` : "To hand off to Tower"
       }
       gateSubhead={`${doneCount} of ${items.length} gate criteria met`}
@@ -1662,6 +1721,7 @@ function CharterWorkflow({
       onViewDossier={() => {}}
       captureSlot={captureCards}
     />
+    </>
   );
 }
 
