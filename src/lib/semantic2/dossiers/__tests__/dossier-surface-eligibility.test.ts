@@ -120,6 +120,11 @@ describe("semantic2 dossier tenant scope policy", () => {
       canonicalTenantKey: "apex-retail",
       surfaceEligible: true,
     });
+    expect(classifyTenantScope("morgan-street")).toMatchObject({
+      canonicalTenantKey: "lakeshore-holdings",
+      scopeType: "runtime_client",
+      surfaceEligible: true,
+    });
   });
 
   it("blocks global, unknown, archived, uuid, and lab-only tenant scopes", () => {
@@ -138,7 +143,7 @@ describe("semantic2 dossier tenant scope policy", () => {
     expect(
       classifyTenantScope("0834e0e7-5b56-46fe-9912-5aa9bc0d66c9"),
     ).toMatchObject({ scopeType: "system_bucket", surfaceEligible: false });
-    expect(classifyTenantScope("morgan-street")).toMatchObject({
+    expect(classifyTenantScope("roosevelt-holdings")).toMatchObject({
       scopeType: "lab_only",
       surfaceEligible: false,
     });
