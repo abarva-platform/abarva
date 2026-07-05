@@ -37,7 +37,7 @@ The Gate tab has been removed from `EventWorkspace` because gate criteria are no
 | Modified file | `src/components/source/canvas/UniversalCanvasShell.tsx` | Removes AgentDock 45/55 split-pane; wires three-column flex layout with CanvasGateSidebar + EventWorkspace + AvaBottomBar |
 | Modified (implicit) | `EventWorkspace` tab list | Gate tab removed; Document, Evidence, and Log tabs remain |
 
-PR link: TBD — will be added when PR is created.
+PR link: https://github.com/abarva-platform/abarva/pull/4452
 
 ## QA / Validation
 
@@ -77,8 +77,8 @@ The rollback window is the time between the new revision receiving traffic and d
 
 ## Audit Evidence
 
-- PR URL: TBD — will be added when PR is created.
-- CI run: TBD — linked from PR when available.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4452
+- CI run: linked from PR above.
 - ACA revision / image tag: TBD — recorded at deploy time.
 - Smoke verification: navigate to a Source event canvas as a signed-in user and confirm three-column layout, gate sidebar, and bottom bar.
 
