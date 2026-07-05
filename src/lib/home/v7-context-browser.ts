@@ -62,31 +62,37 @@ const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
   skyharbor: "skyharbor-air",
 };
 
+// Preview columns per dimension, using the ACTUAL column names in the loaded V7
+// data (verified against the v2 synthetic dataset + live column_registry). An
+// earlier version referenced an assumed schema, so ~13 dimensions had all
+// preferred columns missing and fell back to generic shared columns
+// (entity_scope, shared_service_flag, budget_ownership_model), making the Data
+// preview useless. Every column below is present and populated in the data.
 const PREVIEW_COLUMNS: Record<string, string[]> = {
-  v7_01_enterprise_profile: ["company_name", "industry", "revenue_usd", "employee_count", "total_direct_technology_budget_usd"],
-  v7_02_business_functions: ["entity_name", "function_name", "executive_owner", "business_capability", "critical_processes_structured"],
+  v7_01_enterprise_profile: ["company_name", "industry", "revenue_usd", "employee_count", "total_direct_technology_budget_usd", "strategic_priorities"],
+  v7_02_business_functions: ["entity_name", "function_name", "executive_owner", "business_capability", "function_criticality"],
   v7_03_org_ownership: ["entity_name", "org_unit", "leader_role", "reports_to_role", "decision_rights"],
-  v7_04_workforce_personas: ["entity_name", "persona_name", "business_area", "population_count", "ai_relevance"],
-  v7_05_applications_systems: ["entity_name", "system_name", "system_category", "system_owner", "criticality"],
+  v7_04_workforce_personas: ["entity_name", "persona_name", "role_family", "population_count", "change_readiness"],
+  v7_05_applications_systems: ["entity_name", "system_name", "system_category", "criticality", "business_owner"],
   v7_06_data_assets_integrations: ["entity_name", "data_asset_name", "system_of_record", "integration_type", "data_owner"],
-  v7_07_vendors_contracts: ["entity_name", "vendor_name", "service_category", "renewal_date", "contract_risk"],
-  v7_08_spend_value: ["entity_name", "amount_usd", "amount_type", "owner", "value_linkage"],
-  v7_09_programs_initiatives_business_priorities: ["entity_name", "program_name", "business_priority", "sponsor", "status"],
-  v7_10_ai_initiatives: ["entity_name", "use_case", "tool_or_model", "active_users", "data_readiness"],
-  v7_11_operations_risk_controls: ["entity_name", "process", "risk_name", "status", "control_owner"],
-  v7_12_relationships_graph_edges: ["from_object_ref", "relationship_type", "to_object_ref", "relationship_strength", "evidence_basis"],
-  v7_13_source_evidence_registry: ["evidence_title", "evidence_type", "source_location", "evidence_owner", "evidence_confidence"],
-  v7_14_metric_definitions: ["metric_name", "metric_definition", "metric_owner", "cadence", "source_basis"],
-  v7_15_industry_market_knowledge_patterns: ["pattern_name", "industry_segment", "recommended_actions", "source_basis", "recommended_use"],
-  v7_16_expert_lenses: ["lens_name", "expertise_area", "recommended_actions", "claim_boundary", "module_use"],
-  v7_17_client_rate_card_cost_basis: ["tower", "role", "location", "rate_basis", "blended_rate_usd"],
-  v7_18_function_system_data_vendor_bridge: ["entity_name", "business_function", "system_name", "data_asset_name", "vendor_name"],
-  v7_19_service_tower_managed_services_scope: ["tower_name", "scope_area", "delivery_model", "service_owner", "pricing_basis"],
-  v7_20_chunk_retrieval_registry: ["source_artifact_ref", "dimension", "semantic_tags", "retrieval_eligibility", "chunk_purpose"],
-  v7_21_graph_registry_relationship_dictionary: ["relationship_type", "from_type", "to_type", "client_friendly_definition", "module_use"],
-  v7_22_operational_evidence_process_intelligence: ["process_name", "event_source", "volume_metric", "bottleneck_signal", "process_owner"],
-  v7_23_external_benchmark_market_corpus: ["benchmark_name", "industry_segment", "source_basis", "recommended_use", "caveat"],
-  v7_24_infrastructure_cloud_estate: ["entity_name", "platform_name", "hosting_model", "provider", "volumetric_summary"],
+  v7_07_vendors_contracts: ["entity_name", "vendor_name", "vendor_category", "annual_cost_usd", "renewal_date", "contract_risk"],
+  v7_08_spend_value: ["entity_name", "amount_usd", "spend_category", "run_change", "spend_owner"],
+  v7_09_programs_initiatives_business_priorities: ["entity_name", "priority_name", "priority_type", "business_sponsor", "current_status"],
+  v7_10_ai_initiatives: ["entity_name", "ai_use_case", "tool_or_model", "active_users", "production_status"],
+  v7_11_operations_risk_controls: ["entity_name", "process_control_name", "risk_category", "severity", "status"],
+  v7_12_relationships_graph_edges: ["from_object_ref", "relationship_type", "to_object_ref", "relationship_strength"],
+  v7_13_source_evidence_registry: ["entity_name", "source_artifact_uri", "validation_status", "sensitivity"],
+  v7_14_metric_definitions: ["metric_name", "metric_definition", "metric_owner", "unit", "target_value"],
+  v7_15_industry_market_knowledge_patterns: ["pattern_name", "industry_domain", "recommended_actions"],
+  v7_16_expert_lenses: ["expert_lens_name", "lens_domain", "question_families", "decision_criteria"],
+  v7_17_client_rate_card_cost_basis: ["service_tower", "role_family", "seniority", "delivery_location", "rate_usd_per_hour"],
+  v7_18_function_system_data_vendor_bridge: ["function_ref", "dependency_type", "object_ref", "role_in_function", "criticality_to_function"],
+  v7_19_service_tower_managed_services_scope: ["service_tower", "scope_item", "included_services", "sla", "pricing_unit"],
+  v7_20_chunk_retrieval_registry: ["source_artifact_ref", "dimension", "semantic_tags", "retrieval_eligibility"],
+  v7_21_graph_registry_relationship_dictionary: ["edge_type", "allowed_from", "allowed_to", "inverse_label", "evidence_required"],
+  v7_22_operational_evidence_process_intelligence: ["process", "work_item_type", "volume", "cycle_time", "bottleneck"],
+  v7_23_external_benchmark_market_corpus: ["benchmark_name", "industry", "geography", "range_low", "range_high"],
+  v7_24_infrastructure_cloud_estate: ["estate_item_name", "infrastructure_category", "hosting_deployment_model", "criticality", "primary_location_region"],
 };
 
 const defaultSession = createDefaultSession("home-v7-context-browser");
@@ -270,16 +276,20 @@ function previewColumns(
 ): HomeV6BrowserColumn[] {
   const preferred = PREVIEW_COLUMNS[dimension.dimension_key] ?? [];
   const available = new Set(columns.map((column) => column.column_name));
-  const selected = [
-    ...preferred.filter(
-      (column) =>
-        available.has(column) ||
-        records.some((record) => record.values_json[column] !== undefined),
-    ),
-    ...columns
-      .map((column) => column.column_name)
-      .filter((column) => !preferred.includes(column)),
-  ]
+  const preferredSelected = preferred.filter(
+    (column) =>
+      available.has(column) ||
+      records.some((record) => record.values_json[column] !== undefined),
+  );
+  const preferredSet = new Set(preferredSelected);
+  // Fill any remaining slots with real business columns only — never generic
+  // structural (entity_scope, shared_service_flag…), provenance/lineage, or
+  // relationship-reference columns. Columns explicitly listed in PREVIEW_COLUMNS
+  // are always honored (e.g. *_ref columns for the relationships dimension).
+  const fallback = columns
+    .map((column) => column.column_name)
+    .filter((column) => !preferredSet.has(column) && !isNonPreviewColumn(column));
+  const selected = [...preferredSelected, ...fallback]
     .filter((column) => !isInternalOnlyColumn(column))
     .slice(0, 6);
   return selected.map((column) => ({
@@ -567,16 +577,34 @@ function display(value: unknown): string {
   return text.replace(/_/g, " ").replace(/\|/g, ", ").replace(/\s+/g, " ").trim();
 }
 
+// Common acronyms that title-casing would otherwise mangle ("Usd", "Ai", "Sla").
+const LABEL_ACRONYMS = /\b(usd|ai|kpi|sla|it|hr|erp|hcm|api|sso|rbac|rls|dr|roi|sql|etl|ui|ux)\b/gi;
+
 function humanize(value: string): string {
   return value
     .replace(/^v7_\d+_/, "")
     .replace(/\.csv$/i, "")
     .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (match) => match.toUpperCase());
+    .replace(/\b\w/g, (match) => match.toUpperCase())
+    .replace(LABEL_ACRONYMS, (match) => match.toUpperCase());
 }
 
 function isInternalOnlyColumn(column: string): boolean {
   return /^(tenant_key|record_key|source_file_key|created_at|updated_at)$/i.test(column);
+}
+
+// Columns that must never be auto-selected as preview fillers: internal keys,
+// generic structural fields shared by every dimension, provenance/lineage, and
+// relationship-reference pointers. Columns explicitly listed in PREVIEW_COLUMNS
+// bypass this (they are chosen before the fallback runs).
+function isNonPreviewColumn(column: string): boolean {
+  return (
+    isInternalOnlyColumn(column) ||
+    /_refs?$/i.test(column) ||
+    /^(entity_scope|parent_entity_name|used_by_entities|shared_service_flag|budget_ownership_model|known_gaps|data_provider_name|data_provider_role|source_artifact_type|source_artifact_name|capture_method|extraction_method|generated_by|validated_by|source_validation_status|source_as_of_date)$/i.test(
+      column,
+    )
+  );
 }
 
 function scoreFromCount(value: number): number {
