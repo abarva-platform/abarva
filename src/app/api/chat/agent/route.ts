@@ -72,6 +72,7 @@ import {
   supabaseViolationsBackend,
 } from "@/lib/intelligence/synthesis/violationsSupabaseBackend";
 import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
+import { VISIBLE_ANSWER_CONTRACT_PROMPT } from "@/lib/agent/visible-answer-contract";
 import {
   composeSentinelSystemPrompt,
   checkSentinelVoice,
@@ -1228,7 +1229,11 @@ export async function POST(request: Request) {
     "",
     artifactInstructions,
     "",
-    VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT,
+    // #4468 referenced VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT, which was never
+    // defined/imported and broke the production build. Wired to the existing
+    // visible-answer output contract (same intent: a self-scrub contract for
+    // the visible model output) to restore the build and preserve the intent.
+    VISIBLE_ANSWER_CONTRACT_PROMPT,
     "",
     // PR-R / CXO grounding · tenant current-state block for all
     // canonical agents on tenant-scoped surfaces.
