@@ -211,6 +211,13 @@ const CATEGORY_KEYWORDS: Readonly<Record<SourceCategoryId, readonly RegExp[]>> =
     /\bcx outsourc/,
     /back-?office outsourc/,
   ],
+  bpo_shared_services: [
+    /\bbpo\b/i,
+    /shared services/i,
+    /finance.{0,3}(and|&).{0,3}accounting|\bf&a\b/i,
+    /procure.to.pay|order.to.cash|record.to.report|\bp2p\b|\bo2c\b|\br2r\b/i,
+    /payroll|accounts payable|invoice processing/i,
+  ],
   cyber_grc: [
     /\bgrc\b/,
     /cyber(?:security)?/,
@@ -245,6 +252,7 @@ const CATEGORY_DEFAULT_MOTION: Readonly<Record<SourceCategoryId, BuyingMotion>> 
   saas_renewal: 'renewal_renegotiation',
   cloud_finops: 'framework_commitment',
   bpo_contact_centre: 'competitive_rfp',
+  bpo_shared_services: 'competitive_rfp',
   cyber_grc: 'competitive_rfp',
   staff_aug_vs_managed_service: 'demand_triage',
 };

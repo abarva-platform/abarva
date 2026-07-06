@@ -23,11 +23,16 @@ describe('event → archetype resolution (classifier category)', () => {
     expect(resolveArchetypeForEvent({ categoryId: 'saas_renewal' }).archetypeId).toBe('CONTRACT_RENEWAL');
   });
 
-  it('REFUSES (does not guess) for a category with no shipped archetype', () => {
-    const r = resolveArchetypeForEvent({ categoryId: 'cyber_grc' });
-    expect(r.resolved).toBe(false);
-    expect(r.archetype).toBeNull();
-    expect(r.reason).toMatch(/no shipped archetype/i);
+  it('resolves the newly-shipped archetype categories', () => {
+    expect(resolveArchetypeForEvent({ categoryId: 'cyber_grc' }).archetypeId).toBe('MSSP_CYBER');
+    expect(resolveArchetypeForEvent({ categoryId: 'staff_aug_vs_managed_service' }).archetypeId).toBe(
+      'STAFF_AUGMENTATION',
+    );
+    expect(resolveArchetypeForEvent({ categoryId: 'ai_engineering_partner' }).archetypeId).toBe(
+      'DIGITAL_PRODUCT_ENGINEERING',
+    );
+    expect(resolveArchetypeForEvent({ categoryId: 'bpo_contact_centre' }).archetypeId).toBe('CONTACT_CENTER_CX');
+    expect(resolveArchetypeForEvent({ categoryId: 'bpo_shared_services' }).archetypeId).toBe('BPO_SHARED_SERVICES');
   });
 });
 
@@ -66,6 +71,16 @@ describe('resolver integrity', () => {
   });
 
   it('reports exactly the categories that currently have a shipped archetype', () => {
-    expect(archetypeReadyCategories().sort()).toEqual(['ams', 'cloud_finops', 'data_ai_platform', 'saas_renewal']);
+    expect(archetypeReadyCategories().sort()).toEqual([
+      'ai_engineering_partner',
+      'ams',
+      'bpo_contact_centre',
+      'bpo_shared_services',
+      'cloud_finops',
+      'cyber_grc',
+      'data_ai_platform',
+      'saas_renewal',
+      'staff_aug_vs_managed_service',
+    ]);
   });
 });

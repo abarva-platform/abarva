@@ -25,7 +25,18 @@ const ALL = listSourceArchetypes();
 describe('Source Event Archetype Framework — registry integrity', () => {
   it('registers the shipped archetypes', () => {
     expect(ALL.map((a) => a.id).sort()).toEqual(
-      ['AI_DATA_PLATFORM', 'AMS_MANAGED_SERVICES', 'CLOUD_FINOPS', 'CONTRACT_RENEWAL', 'ERP_SI_IMPLEMENTATION'],
+      [
+        'AI_DATA_PLATFORM',
+        'AMS_MANAGED_SERVICES',
+        'BPO_SHARED_SERVICES',
+        'CLOUD_FINOPS',
+        'CONTACT_CENTER_CX',
+        'CONTRACT_RENEWAL',
+        'DIGITAL_PRODUCT_ENGINEERING',
+        'ERP_SI_IMPLEMENTATION',
+        'MSSP_CYBER',
+        'STAFF_AUGMENTATION',
+      ],
     );
   });
 

@@ -18,19 +18,20 @@ import type { SourceEventArchetype } from './types';
  * Explicit category → archetype map. `null` = no shipped archetype yet (the
  * runtime must refuse for that category, not substitute a different one).
  *
- * Live classifier categories (8): ams, data_ai_platform, ai_engineering_partner,
- * saas_renewal, cloud_finops, bpo_contact_centre, cyber_grc,
+ * Live classifier categories (9): ams, data_ai_platform, ai_engineering_partner,
+ * saas_renewal, cloud_finops, bpo_contact_centre, bpo_shared_services, cyber_grc,
  * staff_aug_vs_managed_service.
  */
 export const CATEGORY_TO_ARCHETYPE_ID: Record<SourceCategoryId, string | null> = {
   ams: 'AMS_MANAGED_SERVICES',
   data_ai_platform: 'AI_DATA_PLATFORM',
   saas_renewal: 'CONTRACT_RENEWAL',
-  ai_engineering_partner: null, // archetype not yet shipped
+  ai_engineering_partner: 'DIGITAL_PRODUCT_ENGINEERING',
   cloud_finops: 'CLOUD_FINOPS',
-  bpo_contact_centre: null, // archetype not yet shipped
-  cyber_grc: null, // archetype not yet shipped
-  staff_aug_vs_managed_service: null, // archetype not yet shipped
+  bpo_contact_centre: 'CONTACT_CENTER_CX',
+  bpo_shared_services: 'BPO_SHARED_SERVICES',
+  cyber_grc: 'MSSP_CYBER',
+  staff_aug_vs_managed_service: 'STAFF_AUGMENTATION',
 };
 
 /**
