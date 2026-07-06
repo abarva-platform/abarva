@@ -32,6 +32,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 
 - `scripts/v7/build-lakeshore-holdco-v7.mjs`
 - `scripts/v7/load-lakeshore-holdco-v7-azure.mjs`
+- `scripts/v7/readback-lakeshore-holdco-v7-azure.mjs`
 - `scripts/v7/sql/intelligence-v7-holdco-entity-spine.sql`
 - `datasets/lakeshore-industries-synthetic-v7-holdco/`
 - `src/lib/home/v7-context-browser.ts`
@@ -40,6 +41,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
   - `v7:lakeshore:holdco:build`
   - `v7:lakeshore:holdco:validate`
   - `v7:lakeshore:holdco:azure-load`
+  - `v7:lakeshore:holdco:azure-readback`
 
 ## QA / Validation
 
@@ -63,6 +65,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
   - Every portfolio company has at least 12 corporate-shared-system consumption bridge rows
 - `npx jest src/lib/home/__tests__/v7-context-browser.test.ts --runInBand` — Pass after linking existing local `node_modules` into the clean worktree.
 - `node --check scripts/v7/load-lakeshore-holdco-v7-azure.mjs` — Pass.
+- `node --check scripts/v7/readback-lakeshore-holdco-v7-azure.mjs` — Pass.
 - Client workbook formula-error scan — Pass, 0 formula errors.
 - Client workbook visual preview — Pass for entity registry and applications/systems sheets.
 

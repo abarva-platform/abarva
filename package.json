@@ -203,6 +203,7 @@
     "v7:lakeshore:holdco:build": "node scripts/v7/build-lakeshore-holdco-v7.mjs",
     "v7:lakeshore:holdco:validate": "node scripts/v7/build-lakeshore-holdco-v7.mjs",
     "v7:lakeshore:holdco:azure-load": "node scripts/v7/load-lakeshore-holdco-v7-azure.mjs",
+    "v7:lakeshore:holdco:azure-readback": "node scripts/v7/readback-lakeshore-holdco-v7-azure.mjs",
     "azure:security:audit": "node scripts/azure/audit-lab-security.mjs",
     "azure:observability:audit": "node scripts/azure/audit-observability.mjs",
     "azure:agent-quality:telemetry-smoke": "npx tsx src/scripts/agent-quality-telemetry-smoke.ts",
