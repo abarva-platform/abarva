@@ -1,4 +1,5 @@
 import { POST } from '../route';
+import { askIntelligence } from '@/lib/intelligence/ask';
 import { recordSynthesisEvent } from '@/lib/reasoning/synthesis-telemetry';
 
 jest.mock('@clerk/nextjs/server', () => ({
@@ -95,5 +96,33 @@ describe('POST /api/intelligence/ask telemetry', () => {
     );
     expect(text).toContain('"type":"done"');
     expect(text).toContain('"telemetryEventId":"tlm_sentinel_1"');
+  });
+
+  it('forwards trace-enabled requests into the Intelligence synthesis path', async () => {
+    const response = await POST(makeRequest({
+      q: 'Where should we fund AI first?',
+      client: 'apexretail',
+      traceEnabled: true,
+      surfaceContext: {
+        activeTab: 'intelligence',
+        clientKey: 'apexretail',
+        pageFacts: ['Apex Retail context lens: AI portfolio'],
+      },
+    }) as never);
+    await readResponseText(response);
+
+    expect(askIntelligence).toHaveBeenCalledWith(
+      'Where should we fund AI first?',
+      expect.objectContaining({
+        traceEnabled: true,
+        traceSession: expect.objectContaining({
+          question: 'Where should we fund AI first?',
+        }),
+        surfaceContext: expect.objectContaining({
+          activeTab: 'intelligence',
+          pageFacts: ['Apex Retail context lens: AI portfolio'],
+        }),
+      }),
+    );
   });
 });

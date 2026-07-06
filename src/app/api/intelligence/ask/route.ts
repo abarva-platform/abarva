@@ -32,6 +32,7 @@ interface AskPayload {
   requestedClient: string | null;
   surfaceContext: AskSurfaceContext | null;
   tabId: string | null;
+  traceEnabled: boolean;
 }
 
 async function handleAsk(payload: AskPayload) {
@@ -192,6 +193,20 @@ async function handleAsk(payload: AskPayload) {
           conversationContextBlock: memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
+          traceEnabled: payload.traceEnabled,
+          traceSession: payload.traceEnabled
+            ? {
+                tenant,
+                user: sessionUserId || userId
+                  ? {
+                      id: sessionUserId ?? userId ?? 'unknown-user',
+                      email: null,
+                      role: activePersonDisplayName ?? null,
+                    }
+                  : undefined,
+                question: query,
+              }
+            : undefined,
         })) {
           if (event.type === 'classified') classificationForMemory = event.classification ?? classificationForMemory;
           if (event.type === 'sources') {
@@ -273,6 +288,7 @@ async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
     requestedClient: url.searchParams.get('client'),
     surfaceContext: parseSurfaceContext(url.searchParams.get('surfaceContext')),
     tabId: url.searchParams.get('tabId') ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
+    traceEnabled: url.searchParams.get('trace') === '1' || url.searchParams.get('traceEnabled') === 'true',
   };
 }
 
@@ -290,6 +306,7 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
     requestedClient: readString(payload.client),
     surfaceContext: normalizeSurfaceContext(payload.surfaceContext),
     tabId: readString(payload.tabId) ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
+    traceEnabled: readBoolean(payload.traceEnabled) || readString(payload.trace) === '1',
   };
 }
 
@@ -326,6 +343,10 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
 
 function readString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function readBoolean(value: unknown): boolean {
+  return value === true || value === 'true' || value === '1';
 }
 
 function readStringArray(value: unknown): string[] | undefined {
