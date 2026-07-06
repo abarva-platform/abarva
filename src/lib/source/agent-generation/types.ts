@@ -113,6 +113,24 @@ export interface SourceGenerationContext {
   gateCriteria: SourceEventGateCriterion[];
   evidence: SourceEventEvidence[];
   uploadedEvidence?: SourceGenerationUploadedArtifact[];
+  /**
+   * The tenant's application/systems inventory, pulled through the sanctioned
+   * broker seam (setup-data-broker) and translated to a light per-app shape.
+   * Empty/absent when nothing is loaded — d04 falls back to a blank framework
+   * rather than inventing applications.
+   */
+  enterpriseAppInventory?: SourceAppInventoryEntry[];
+}
+
+/** One application/system, shaped for the d04 inventory table. */
+export interface SourceAppInventoryEntry {
+  appId: string;
+  name: string;
+  tier: string | null;
+  owner: string | null;
+  vendor: string | null;
+  criticality: string | null;
+  notes: string | null;
 }
 
 export interface SourceGenerationUploadedArtifact {

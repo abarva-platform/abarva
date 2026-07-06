@@ -21,6 +21,16 @@ jest.mock('@/lib/client-config', () => ({
   canonicalClientDisplayName: jest.fn(() => 'Apex Retail'),
 }));
 
+jest.mock('@/lib/admin/setup-data-broker', () => ({
+  __esModule: true,
+  listAppInventoryRecords: () => Promise.resolve([]),
+}));
+
+jest.mock('@/lib/agent/tools/intelligence/_shared', () => ({
+  __esModule: true,
+  clientKeyToInventorySubstrateKey: (key: string) => key,
+}));
+
 jest.mock('@/lib/data-plane/postgresCompat', () => ({
   getAzureReadFluentClient: jest.fn(),
 }));
