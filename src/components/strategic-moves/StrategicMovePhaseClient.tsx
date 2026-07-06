@@ -397,42 +397,9 @@ function contractCanvasSections(phase: number): CanvasSection[] {
 }
 
 const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
-  // P0 capture is owned by the originate flow (StrategicMoveOriginateClient);
-  // these cards are the phase-workspace read-only view and are not the Save path.
-  0: [
-    {
-      id: "seed",
-      label: "Move seed",
-      placeholder:
-        "Problem signal, named outcome, and AI/transformation hypothesis",
-    },
-    {
-      id: "sponsor-candidate",
-      label: "Sponsor candidate",
-      placeholder:
-        "Named executive with plausible decision rights and approval path",
-    },
-    {
-      id: "value-hypothesis",
-      label: "Value hypothesis",
-      placeholder:
-        "Unvalidated value range, mechanism, and assumptions to test in Discovery",
-    },
-    {
-      id: "scope-boundary",
-      label: "Scope boundary",
-      placeholder:
-        "First cohort, use case, or disruption slice; what is explicitly out of scope",
-    },
-    {
-      id: "evidence-family",
-      label: "Evidence family",
-      placeholder:
-        "Current-state documents, datasets, interviews, and baselines P1/P2 must collect",
-    },
-  ],
-  // P1–P5: canonical contract sections. Do NOT hand-author ids here — they must
+  // P0–P5: canonical contract sections. Do NOT hand-author ids here — they must
   // equal the contract keys or Save silently persists nothing.
+  0: contractCanvasSections(0),
   1: contractCanvasSections(1),
   2: contractCanvasSections(2),
   3: contractCanvasSections(3),
@@ -503,6 +470,63 @@ function generateTurnId(): string {
 
 const SECTION_CHARTER_KEYS: Record<string, string[]> = {
   // P0
+  business_trigger: [
+    "business_trigger",
+    "businessTrigger",
+    "trigger",
+    "problem_statement",
+    "problemStatement",
+    "problem",
+    "move_seed",
+  ],
+  problem_statement: [
+    "problem_statement",
+    "problemStatement",
+    "problem",
+    "move_seed",
+  ],
+  affected_function_process: [
+    "affected_function_process",
+    "affectedFunctionProcess",
+    "scope_boundary",
+    "scopeBoundary",
+    "initial_scope",
+    "function_process",
+  ],
+  initial_value_hypothesis: [
+    "initial_value_hypothesis",
+    "initialValueHypothesis",
+    "value_hypothesis",
+    "valueHypothesis",
+    "target_outcome",
+    "targetOutcome",
+  ],
+  stakeholder_owner_view: [
+    "stakeholder_owner_view",
+    "stakeholderOwnerView",
+    "sponsor_candidate",
+    "sponsorCandidate",
+    "sponsor",
+  ],
+  known_evidence: [
+    "known_evidence",
+    "knownEvidence",
+    "evidence_family",
+    "evidenceFamily",
+  ],
+  missing_evidence_open_questions: [
+    "missing_evidence_open_questions",
+    "missingEvidenceOpenQuestions",
+    "open_questions",
+    "openQuestions",
+  ],
+  recommendation_to_advance: [
+    "recommendation_to_advance",
+    "recommendationToAdvance",
+    "approval_rationale",
+    "approvalRationale",
+  ],
+  // Legacy P0 ids kept only for old persisted charters/tests.
   seed: ["problem_statement", "problemStatement", "problem", "move_seed"],
   "sponsor-candidate": ["sponsor_candidate", "sponsorCandidate", "sponsor"],
   "value-hypothesis": [
@@ -811,6 +835,7 @@ function CharterWorkflow({
   onAddEvidence?: () => void;
   onAskAva?: () => void;
 }) {
+  const wbRouter = useRouter();
   const workflow = PHASE_WORKFLOW[phaseNum];
   const sectionIds = useMemo(
     () => canvasSections.map((s) => s.id),
@@ -1201,6 +1226,71 @@ function CharterWorkflow({
   // + phase-gate-approval routes; the server still enforces the gate.
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState<string | null>(null);
+  const approveP0AndAdvance = useCallback(async () => {
+    setAdvancing(true);
+    setAdvanceError(null);
+    try {
+      const items: Record<string, string> = {};
+      for (const id of sectionIds) {
+        const v = (values[id] ?? "").trim();
+        if (v) items[sectionSaveKey(id)] = v;
+      }
+      const finalizeRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-capture`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phase: 0, items, complete: true }),
+        },
+      );
+      const finalize = (await finalizeRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        missing?: string[];
+        error?: string;
+        detail?: string;
+      };
+      if (!finalizeRes.ok || !finalize.ok) {
+        throw new Error(
+          finalize.missing?.length
+            ? `P0 capture incomplete — still missing: ${finalize.missing.join(", ")}`
+            : finalize.detail || finalize.error || `Finalize failed (HTTP ${finalizeRes.status})`,
+        );
+      }
+
+      const advanceRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-gate-approval`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: 0,
+            rationale:
+              "P0 origination capture complete; origination brief approved and ready to advance to P1 Charter.",
+          }),
+        },
+      );
+      const advance = (await advanceRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        newPhase?: number;
+        closeResult?: { blockedBy?: string[] };
+        detail?: string;
+        error?: string;
+      };
+      if (!advanceRes.ok || !advance.ok) {
+        const blockedBy = advance.closeResult?.blockedBy?.join("; ");
+        throw new Error(
+          blockedBy || advance.detail || advance.error || `Advance failed (HTTP ${advanceRes.status})`,
+        );
+      }
+      wbRouter.push(`/strategic-moves/${move.id}/phase/${advance.newPhase ?? 1}`);
+    } catch (err) {
+      setAdvanceError(err instanceof Error ? err.message : "Advance failed");
+      setAdvancing(false);
+    }
+  }, [move.id, sectionIds, values, wbRouter]);
+
   const advanceGate = useCallback(async () => {
     setAdvancing(true);
     setAdvanceError(null);
@@ -1260,12 +1350,12 @@ function CharterWorkflow({
       }
       const newPhase = advance.newPhase ?? phaseNum + 1;
       // Land the operator on the phase they just advanced into.
-      window.location.assign(`/strategic-moves/${move.id}/phase/${newPhase}`);
+      wbRouter.push(`/strategic-moves/${move.id}/phase/${newPhase}`);
     } catch (err) {
       setAdvanceError(err instanceof Error ? err.message : "Advance failed");
       setAdvancing(false);
     }
-  }, [move.id, phaseNum]);
+  }, [move.id, phaseNum, wbRouter]);
 
   // ── Collapsed one-action flow ────────────────────────────────────────────
   // "The user provides inputs + makes decisions, never clicks Build."
@@ -1329,12 +1419,15 @@ function CharterWorkflow({
   // Originate, where the job is to *select* the evidence family (a capture
   // item), not to cover evidence. Empty the rail so P0 focuses on its gate
   // criteria instead of showing misleading Discover-phase coverage.
-  const wbPackets =
-    phaseNum === 0
-      ? []
-      : (evidenceNeedPackets ?? []).filter(
-          (p) => p.status !== "not_applicable",
-        );
+  const wbPackets = useMemo(
+    () =>
+      phaseNum === 0
+        ? []
+        : (evidenceNeedPackets ?? []).filter(
+            (p) => p.status !== "not_applicable",
+          ),
+    [evidenceNeedPackets, phaseNum],
+  );
   const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(
     null,
   );
@@ -1351,7 +1444,6 @@ function CharterWorkflow({
   // Inline evidence upload — pick a file in the workbench, POST it to the Move
   // evidence route (records program_evidence_items), then refresh so the
   // explorer statuses + % update in place. No trip to the File Cabinet.
-  const wbRouter = useRouter();
   const evFileRef = useRef<HTMLInputElement>(null);
   const [evUpload, setEvUpload] = useState<{
     status: "idle" | "uploading" | "done" | "error";
@@ -1416,17 +1508,55 @@ function CharterWorkflow({
   // phases, no action).
   const captureCards = (
     <>
-      {/* Ordered Save → Build-and-approve sequence — rendered FIRST (above the
-          capture cards) so the action is visible without scrolling past inputs.
-          Hidden for P0: Originate capture is owned by the originate flow
-          (read-only cards here) and P0 has no phase deliverable to build, so the
-          Save/Build sequence does not apply — P0 promotes via approve-brief. */}
-      {/* Single "Approve & advance" action. The user provides inputs (the cards
-          below); saving the record, generating the board-grade deliverable,
+      {phaseNum === 0 && workbench && (
+        <section
+          id="ws-canvas-p0-approve-brief"
+          className={styles.detailSection}
+        >
+          <div className={styles.detailSectionTitle}>
+            Complete P0 &mdash; {filledNow} of {canvasSections.length}{" "}
+            inputs provided
+          </div>
+          <div className={styles.charterSequence}>
+            <div
+              className={`${styles.charterStep} ${styles.charterStepActive}`}
+              id="ws-canvas-p0-approve-brief-action"
+            >
+              <button
+                type="button"
+                className={styles.charterPrimaryBtn}
+                onClick={() => void approveP0AndAdvance()}
+                disabled={advancing || filledNow < canvasSections.length}
+              >
+                {advancing
+                  ? "Approving brief…"
+                  : "Approve brief & advance to P1"}
+              </button>
+              {filledNow < canvasSections.length && !advancing && (
+                <span className={styles.charterStepHint}>
+                  Provide all {canvasSections.length} P0 inputs to approve the
+                  origination brief.
+                </span>
+              )}
+              {filledNow >= canvasSections.length && !advancing && (
+                <span className={styles.charterStepHint}>
+                  One step: saves P0 capture, signs the origination brief, and
+                  advances this Move to P1 Charter through the governed gate.
+                </span>
+              )}
+              {advanceError && (
+                <span className={styles.charterStepError}>{advanceError}</span>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Single "Approve & advance" action for P1–P5. The user provides inputs
+          below; saving the record, generating the board-grade deliverable,
           signing it off, and advancing all run automatically as backend steps
-          on one click — no separate Save / Build clicks. Hidden for P0
-          (read-only originate capture, no deliverable; promotes via
-          approve-brief). */}
+          on one click — no separate Save / Build clicks. P0 has the specialized
+          origination-brief action above. */}
       {phaseNum !== 0 && workbench && (
       <section
         id={`ws-canvas-p${phaseNum}-complete`}
