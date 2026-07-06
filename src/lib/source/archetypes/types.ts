@@ -220,4 +220,55 @@ export interface SourceEventArchetype {
   agentGuidance: AgentGuidance;
   /** Per-stage requirements (evidence + methods + deliverables). */
   stageModel: StageRequirements[];
+  /**
+   * Structured value-lever rules — the qualitative→quantitative bridge. Each rule
+   * turns an archetype trap into a computable value row: what to watch, the
+   * evidence it needs, the trigger, the $ basis, the RFP clause it drives, its
+   * evaluation + BAFO impact, and the executive implication. One rule drives
+   * evidence request → RFP clause → response exhibit → scorecard hook → BAFO ask
+   * → decision-brief insight → value-lever row → aVa answer. Optional while the
+   * library is authored archetype-by-archetype.
+   */
+  valueLeverRules?: ValueLeverRule[];
+}
+
+/** The value-lever categories a rule contributes to (the savings basket). */
+export type ValueLeverCategory =
+  | 'pricing'
+  | 'scope_leakage'
+  | 'productivity'
+  | 'sla_economics'
+  | 'retained_cost'
+  | 'transition_risk'
+  | 'staffing'
+  | 'renewal_leverage';
+
+/**
+ * A single archetype value-lever rule. Deterministic advisor knowledge (code
+ * constant, versioned) — NOT free LLM prose. The trigger + valueBasis keep the
+ * generated number grounded and defensible.
+ */
+export interface ValueLeverRule {
+  /** Stable key, archetype-prefixed, e.g. 'AMS.ENHANCEMENT_LEAKAGE'. */
+  key: string;
+  name: string;
+  category: ValueLeverCategory;
+  /** The pattern the advisor watches for. */
+  whatToWatch: string;
+  /** Evidence family keys this rule needs before it can quantify. */
+  requiredEvidence: string[];
+  /** When the rule fires (the condition in the event's evidence). */
+  triggerLogic: string;
+  /** How the $ value is computed — the basis for the range (never a bare guess). */
+  valueBasis: string;
+  /** Default confidence when the trigger fires with adequate evidence. */
+  defaultConfidence: 'low' | 'med' | 'high';
+  /** The RFP clause this rule requires vendors to answer. */
+  rfpClause: string;
+  /** How it shifts evaluation (scoring hook / disqualifier). */
+  evaluationImpact: string;
+  /** The negotiation ask it becomes at BAFO. */
+  bafoAsk: string;
+  /** Why it matters to the executive decision. */
+  executiveImplication: string;
 }

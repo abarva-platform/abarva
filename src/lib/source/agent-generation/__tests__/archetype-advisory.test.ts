@@ -52,4 +52,21 @@ describe("buildArchetypeAdvisoryBlock", () => {
     };
     expect(buildArchetypeAdvisoryBlock(bare)).not.toContain("Pricing traps to surface");
   });
+
+  it("renders value-lever rules with their basis, BAFO ask, and confidence, and the range/caveat discipline", () => {
+    expect((AMS_MANAGED_SERVICES.valueLeverRules ?? []).length).toBeGreaterThan(0);
+    const block = buildArchetypeAdvisoryBlock(AMS_MANAGED_SERVICES);
+    expect(block).toContain("Value levers");
+    expect(block).toContain("range with a confidence band, never a bare guaranteed number");
+    const first = AMS_MANAGED_SERVICES.valueLeverRules![0];
+    expect(block).toContain(first.name);
+    expect(block).toContain(first.valueBasis);
+    expect(block).toContain(first.bafoAsk);
+    expect(block).toContain(`confidence ${first.defaultConfidence}`);
+  });
+
+  it("omits the value-levers section when an archetype has no rules yet", () => {
+    const noRules: SourceEventArchetype = { ...AMS_MANAGED_SERVICES, valueLeverRules: [] };
+    expect(buildArchetypeAdvisoryBlock(noRules)).not.toContain("Value levers");
+  });
 });

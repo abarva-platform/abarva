@@ -60,5 +60,18 @@ export function buildArchetypeAdvisoryBlock(
     lines.push("");
   }
 
+  const valueLevers = archetype.valueLeverRules ?? [];
+  if (valueLevers.length > 0) {
+    lines.push(
+      "Value levers (each is a quantifiable savings/protection opportunity — surface it, tie it to the evidence, and carry its BAFO ask and executive implication into the deliverable; state value as a range with a confidence band, never a bare guaranteed number):",
+    );
+    for (const r of valueLevers) {
+      lines.push(
+        `- ${r.name} [${r.category}, confidence ${r.defaultConfidence}]: watch — ${r.whatToWatch} Value basis — ${r.valueBasis} BAFO ask — ${r.bafoAsk} Executive implication — ${r.executiveImplication}`,
+      );
+    }
+    lines.push("");
+  }
+
   return lines.join("\n").trimEnd();
 }
