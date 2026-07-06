@@ -21,7 +21,10 @@ import {
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
+import { listAppInventoryRecords } from '@/lib/admin/setup-data-broker';
 import type {
+  SourceAppInventoryEntry,
   SourceGenerationContext,
   SourceGenerationUploadedArtifact,
 } from './types';
@@ -96,6 +99,29 @@ export async function buildSourceGenerationContext(
       listUploadedEvidenceForGeneration(substrateEventId),
     ]);
 
+  // Pull the company's application inventory through the sanctioned broker seam
+  // so d04 pre-populates from the real systems estate instead of a blank stub.
+  // The active client key (e.g. 'apexretail') must be translated to the substrate
+  // key (e.g. 'apex-retail') first, or the read returns zero rows. Degrades to an
+  // empty inventory when nothing is loaded — never fatal to generation.
+  const substrateKey = activeClient?.key
+    ? clientKeyToInventorySubstrateKey(activeClient.key)
+    : null;
+  const appInventoryRows = substrateKey
+    ? await listAppInventoryRecords(substrateKey).catch(() => [])
+    : [];
+  const enterpriseAppInventory: SourceAppInventoryEntry[] = appInventoryRows.map(
+    (row) => ({
+      appId: row.recordId,
+      name: row.name,
+      tier: row.tier,
+      owner: row.owner,
+      vendor: row.vendor,
+      criticality: row.criticality,
+      notes: row.notes,
+    }),
+  );
+
   return {
     tenantKey: activeClient?.key ?? 'unknown',
     tenantName,
@@ -119,6 +145,7 @@ export async function buildSourceGenerationContext(
     gateCriteria,
     evidence,
     uploadedEvidence,
+    enterpriseAppInventory,
   };
 }
 

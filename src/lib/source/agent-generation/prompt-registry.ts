@@ -14,6 +14,7 @@ import type {
   SourceGenerationContext,
 } from "./types";
 import { formatRequiredSectionsForPrompt } from "./section-conformance";
+import { buildAppInventoryPromptBlock } from "./app-inventory";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -750,6 +751,11 @@ Requirements:
         lines.push("");
       }
 
+      lines.push("— ENTERPRISE APPLICATION INVENTORY (company's loaded systems estate) —");
+      lines.push("");
+      lines.push(buildAppInventoryPromptBlock(ctx.enterpriseAppInventory));
+      lines.push("");
+
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
         lines.push(evidenceBlock);
@@ -757,7 +763,7 @@ Requirements:
       }
 
       lines.push(
-        "Draft the Application and System Inventory per the system prompt requirements. Every application row not directly supported by uploaded evidence must be marked [ASSUMED — client to validate]. Do not expose internal product terms.",
+        "Draft the Application and System Inventory per the system prompt requirements. Where the company's application inventory above is provided, build the in-scope application table directly from it (verbatim IDs and names). Any application row NOT supported by that inventory or by uploaded evidence must be marked [ASSUMED — client to validate]. Do not expose internal product terms.",
       );
       return lines.join("\n");
     },
