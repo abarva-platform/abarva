@@ -704,10 +704,12 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/business context|available context|loaded context/.test(q))
     return "loaded_context";
   // Identity / orientation questions ("who is <company>", "tell me about the
-  // business", "why is <X> a good demo problem") must resolve to the enterprise
-  // profile before the keyword ladder below — otherwise a program name that
-  // happens to contain "contract" (e.g. "Legal Contract Intake") is captured by
-  // the vendor/contract rule and the answer never describes the company.
+  // business") must resolve to the enterprise profile before the keyword ladder
+  // below — otherwise a program name that happens to contain "contract" (e.g.
+  // "Legal Contract Intake") is captured by the vendor/contract rule and the
+  // answer never describes the company. Home is the context browser: it orients
+  // on the loaded picture. Advisory judgment ("why is X a good problem", "what
+  // should we do") is Intelligence's job and is handed off below.
   if (
     /\bwho\s+(is|are)\b/.test(q) &&
     !/\b(cio|cto|ciso|cfo|cdo|cdao|caio|coo|ceo|gc|general counsel|owner|leader|head of|vp|director|sponsor|accountable|responsible|reports?\s+to)\b/.test(
@@ -721,11 +723,20 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
     )
   )
     return "loaded_context";
+  // Advisory / judgment phrasing ("why is X a good problem / candidate / demo",
+  // "what should we do", "recommend / prioritize / worth it") belongs on
+  // Intelligence, not Home. Route to the Intelligence handoff so Home answers
+  // with the "Open Intelligence" boundary instead of trying to give advice.
   if (
-    /\b(demo|use\s?case|example|candidate|pilot problem)\b/.test(q) &&
-    /\b(good|strong|compelling|ideal|great|right|why|best)\b/.test(q)
+    /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend)\b/.test(
+      q,
+    ) ||
+    (/\b(good|right|best|compelling|ideal|strong)\b/.test(q) &&
+      /\b(demo|use\s?case|example|candidate|problem|opportunity|bet|investment|first move)\b/.test(
+        q,
+      ))
   )
-    return "loaded_context";
+    return "handoff_intelligence";
   if (/business areas|business functions|available business/.test(q))
     return "business_areas";
   if (/technology leaders|named .*leaders|accountability/.test(q))
