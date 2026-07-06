@@ -714,6 +714,7 @@ async function writeToDb(payload) {
   await client.connect();
   try {
     await client.query('BEGIN');
+    await replaceTenantRows(client, Object.keys(payload.tenants));
     await upsertSources(client, payload.sources);
     await upsertEntities(client, [...payload.entities.values()]);
     await upsertFacts(client, payload.facts);
@@ -727,6 +728,16 @@ async function writeToDb(payload) {
     throw error;
   } finally {
     await client.end();
+  }
+}
+
+async function replaceTenantRows(client, tenantKeys) {
+  for (const tenantKey of tenantKeys) {
+    await client.query(`DELETE FROM cio_tower.measure_results WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.relationships WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.facts WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.entities WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.source_registry WHERE tenant_key = $1`, [tenantKey]);
   }
 }
 
