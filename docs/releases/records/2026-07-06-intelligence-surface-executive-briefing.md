@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed`
 
 ## Plain-English Summary
 
@@ -48,12 +48,14 @@ This candidate also corrects the Intelligence synthesis prompt so the live Claud
 - Pass: `npx eslint src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx src/app/api/intelligence/ask/route.ts src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/agent/display-text.ts src/lib/agent/visible-answer-contract.ts src/lib/agent/__tests__/display-text.test.ts`
 - Pass: `npx eslint src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`
 - Pass: `npm run release:check`
-- Not run yet: signed-in Azure browser proof. Required after ACA deployment.
-- Not run yet: live Claude/aVa response accuracy proof. Required after ACA deployment using signed-in tenant context.
+- Pass: ACR build `ca14c` from commit `a59ce421e`, image digest `sha256:38e4a622862096d9b7f405aca909bfb72514d36dacdd9013d563b4e99e1a4383`.
+- Pass: ACA revision `ca-abarva-web-lab-eastus--0000263` healthy/running with 100% traffic.
+- Partial: signed-in Chrome proof showed the Intelligence page shape and Lakeshore tenant context before the final prompt-corrected redeploy. Post-`0000263` screenshot capture returned a black frame, so final signed-in visual proof should be rerun from a clean Chrome window.
+- Partial: Claude/aVa prompt accuracy is proven by source prompt guardrail test and deployed SHA/digest. Live clicked Claude response capture was blocked by browser automation instability and should be rerun before claiming end-to-end model response proof complete.
 
 ## Rollout Plan
 
-Deploy through the approved Azure Container Apps lane for `app.abarva.ai`: build a digest-pinned image from the exact commit SHA, update `ca-abarva-web-lab-eastus`, wait for the new revision to become healthy, move 100% ingress traffic to that revision, and run signed-in browser/API proof.
+Deployed through the approved Azure Container Apps lane for `app.abarva.ai`: built a digest-pinned image from commit `a59ce421e`, updated `ca-abarva-web-lab-eastus`, waited for revision `ca-abarva-web-lab-eastus--0000263` to become healthy, and moved 100% ingress traffic to that revision.
 
 ## Rollback Plan
 
@@ -63,9 +65,13 @@ Move ACA traffic back to the previous healthy revision. No migration rollback is
 
 - Focused Jest and ESLint outputs in the operator log.
 - Release record: `docs/releases/records/2026-07-06-intelligence-surface-executive-briefing.md`
-- Post-deploy evidence to be added after Azure verification: ACA revision, image digest, signed-in screenshots, API trace snippets, Claude response/render comparison.
+- ACA revision: `ca-abarva-web-lab-eastus--0000263`
+- Image: `acrabarvalab001.azurecr.io/abarva/web:intelligence-surface-a59ce421e`
+- Digest: `sha256:38e4a622862096d9b7f405aca909bfb72514d36dacdd9013d563b4e99e1a4383`
+- Proof summary: `proof/intelligence-surface-20260706-aca0000262/proof-summary.md`
+- Signed-in screenshots captured before final prompt redeploy: `proof/intelligence-surface-20260706-aca0000262/01-intelligence-initial.png` through `05-intelligence-tab-selected.png`
 
 ## Known Gaps
 
 - The right briefing canvas is deterministic from the existing tenant briefing model. Deeper V7-derived Intelligence read-model binding remains a follow-on unless already supplied by the page view model.
-- Signed-in production proof and live Claude prompt/response accuracy proof remain pending until deployment completes.
+- Post-`0000263` signed-in visual screenshot and live clicked Claude response capture remain pending because Chrome screenshot/click automation became unreliable after tab/full-screen switching.
