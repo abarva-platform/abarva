@@ -1394,11 +1394,19 @@ function CharterWorkflow({
     [move.id, phaseNum, wbPackets, selectedEvidenceId, wbRouter],
   );
 
-  // Hard gate criteria not yet met — the single "Approve & advance" action is
-  // blocked until these clear (the same rule the server enforces on advance), so
-  // the user isn't sent into a multi-minute generation only to be rejected.
-  const hardGateUnmet = (gateItems ?? []).filter(
-    (c) => !c.completed && c.severity === "hard",
+  // Hard gate criteria the USER must provide before the single "Approve &
+  // advance" action can succeed — used only as an informational "still needed"
+  // hint, NOT to disable the button. We EXCLUDE the deliverable/report
+  // criterion: that artifact is produced BY this action (generate + sign-off),
+  // so pre-blocking on it would deadlock (you can't sign off the report without
+  // running the action). The remaining evidence criteria are validated by the
+  // server on advance; if any are unmet the advance surfaces a clear error and
+  // the user provides them, then re-clicks (which skips regeneration).
+  const hardGateStillNeeded = (gateItems ?? []).filter(
+    (c) =>
+      !c.completed &&
+      c.severity === "hard" &&
+      !/signed off|report|charter|deliverable/i.test(c.label),
   );
 
   // The capture UI. The user provides the section inputs; a single "Approve &
@@ -1443,8 +1451,7 @@ function CharterWorkflow({
                 advancing ||
                 approving ||
                 gen.status === "generating" ||
-                filledNow < canvasSections.length ||
-                (!approved && hardGateUnmet.length > 0)
+                filledNow < canvasSections.length
               }
             >
               {saving
@@ -1469,18 +1476,8 @@ function CharterWorkflow({
             )}
             {filledNow >= canvasSections.length &&
               !approved &&
-              hardGateUnmet.length > 0 &&
+              gen.status === "idle" &&
               !completing && (
-                <span className={styles.charterStepHint}>
-                  Complete first:{" "}
-                  {hardGateUnmet.map((c) => c.label).join("; ")}
-                </span>
-              )}
-            {filledNow >= canvasSections.length &&
-              hardGateUnmet.length === 0 &&
-              !completing &&
-              !approved &&
-              gen.status === "idle" && (
                 <span className={styles.charterStepHint}>
                   One step: saves your inputs, generates the board-grade
                   deliverable, signs it off, and{" "}
@@ -1488,6 +1485,13 @@ function CharterWorkflow({
                     ? `advances to P${phaseNum + 1}`
                     : "prepares the Tower handoff"}
                   . Runs in the background, a few minutes.
+                  {hardGateStillNeeded.length > 0 && (
+                    <>
+                      {" "}
+                      Still needed to clear the gate:{" "}
+                      {hardGateStillNeeded.map((c) => c.label).join("; ")}.
+                    </>
+                  )}
                 </span>
               )}
             {gen.status === "generating" && (
