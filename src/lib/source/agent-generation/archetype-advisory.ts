@@ -63,11 +63,17 @@ export function buildArchetypeAdvisoryBlock(
   const valueLevers = archetype.valueLeverRules ?? [];
   if (valueLevers.length > 0) {
     lines.push(
-      "Value levers (each is a quantifiable savings/protection opportunity — surface it, tie it to the evidence, and carry its BAFO ask and executive implication into the deliverable; state value as a range with a confidence band, never a bare guaranteed number):",
+      "Value levers — classify, do not chase a single savings %. The first vendor bid is the vendor's OPENING POSITION, not the baseline; a price drop is not automatically value we created. Classify every lever by its value TYPE (expected_concession = giveback already in the first bid; incremental_negotiated = value earned beyond it; solution_tightening = a better solution, not just a lower price; protected = post-award leakage avoided; risk_adjusted = value net of delivery/underpricing/solution risk).",
+    );
+    lines.push(
+      "Numbers are DETERMINISTIC and DEFENSIBLE: derive each figure only from the stated inputs using the stated formula — never invent or round a number the inputs do not support. If a required input is missing, state 'insufficient evidence' for that lever; do NOT guess. Always present a range with a confidence band and show the derivation (inputs → formula), never a bare guaranteed number. Do not sum protected/risk-adjusted value into a headline savings figure.",
     );
     for (const r of valueLevers) {
+      const inputList = r.computation.inputs
+        .map((i) => `${i.key} (${i.unit}, ${i.source}${i.citationRequired ? ", cited" : ""})`)
+        .join("; ");
       lines.push(
-        `- ${r.name} [${r.category}, confidence ${r.defaultConfidence}]: watch — ${r.whatToWatch} Value basis — ${r.valueBasis} BAFO ask — ${r.bafoAsk} Executive implication — ${r.executiveImplication}`,
+        `- ${r.name} [type ${r.valueType}, ${r.category}, confidence ${r.defaultConfidence}]: watch — ${r.whatToWatch} Value basis — ${r.valueBasis} Formula — ${r.computation.method}. Inputs — ${inputList}. Range — ${r.computation.rangeMethod} BAFO ask — ${r.bafoAsk} Executive implication — ${r.executiveImplication}${r.commercialRisk ? ` Commercial risk — ${r.commercialRisk}` : ""}`,
       );
     }
     lines.push("");
