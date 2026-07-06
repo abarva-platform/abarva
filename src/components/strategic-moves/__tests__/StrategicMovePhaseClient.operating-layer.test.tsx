@@ -3,10 +3,62 @@
  */
 
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { StrategicMovePhaseClient } from "../StrategicMovePhaseClient";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+
+const mockRouterPush = jest.fn();
+const mockRouterRefresh = jest.fn();
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockRouterPush,
+    refresh: mockRouterRefresh,
+  }),
+}));
+
+beforeEach(() => {
+  mockRouterPush.mockReset();
+  mockRouterRefresh.mockReset();
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: false,
+    json: async () => null,
+  }) as jest.Mock;
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+function makeCompleteP0Move(): StrategicMove {
+  return makeMove({
+    name: "Kyriba treasury rollout value realization",
+    currentPhase: 0,
+    phaseLabel: "P0 Originate",
+    charter: {
+      scaffold: {
+        business_trigger:
+          "Treasury leaders need the rollout framed before funding more automation.",
+        problem_statement:
+          "Kyriba go-live needs bank connectivity, SAP feeds, signer controls, and SOX evidence before it is value-ready.",
+        affected_function_process:
+          "Treasury, finance systems, bank connectivity, and payment controls.",
+        sponsor_candidate: "CFO and Treasurer accountable, CIO consulted",
+        value_hypothesis:
+          "Reduce manual cash positioning work and improve liquidity visibility.",
+        scope_boundary:
+          "In: Kyriba, bank connectivity, SAP/AP/AR/GL feeds, payment controls. Out: SAP replacement.",
+        evidence_family:
+          "Cash visibility baseline, bank account inventory, payment formats, signer matrix, SOX control evidence.",
+        missing_evidence_open_questions:
+          "Confirm signer matrix owner and current cash-positioning baseline before P1.",
+        recommendation_to_advance:
+          "Advance to P1 Charter to validate sponsor authority and evidence plan.",
+      },
+    },
+  });
+}
 
 function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
   return {
@@ -85,7 +137,7 @@ const needPacket: MoveEvidenceNeedPacket = {
 };
 
 describe("StrategicMovePhaseClient operating layer", () => {
-  it("renders What We Need Next and review feedback guidance in the phase workspace", () => {
+  it("renders evidence workbench upload guidance in the phase workspace", async () => {
     render(
       <StrategicMovePhaseClient
         move={makeMove()}
@@ -94,19 +146,17 @@ describe("StrategicMovePhaseClient operating layer", () => {
       />,
     );
 
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /\+ Add evidence/i }),
+      ).toBeInTheDocument(),
+    );
     expect(
-      screen.getByText("What We Need Before This Phase Is Final"),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText("What We Need Next").length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/AP invoice exception workflow notes/i).length,
+      screen.getAllByText(/Current-state process \/ operating documentation/i).length,
     ).toBeGreaterThan(0);
-    expect(
-      screen.getByTestId("moves-phase-review-feedback-loop"),
-    ).toHaveTextContent("Upload client comments or review notes");
   });
 
-  it("renders sponsor pending copy instead of raw unassigned language", () => {
+  it("renders sponsor pending copy instead of raw unassigned language", async () => {
     render(
       <StrategicMovePhaseClient
         move={makeMove()}
@@ -115,40 +165,89 @@ describe("StrategicMovePhaseClient operating layer", () => {
       />,
     );
 
-    expect(screen.getAllByText(/Sponsor: To be assigned/i).length).toBeGreaterThan(0);
+    await waitFor(() =>
+      expect(screen.getAllByText(/Sponsor: To be assigned/i).length).toBeGreaterThan(0),
+    );
     expect(screen.queryByText(/Sponsor: Unassigned/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/SPONSOR: UNASSIGNED/i)).not.toBeInTheDocument();
   });
 
-  it("renders P0 capture details from the nested origination charter scaffold", () => {
+  it("renders P0 capture details from the nested origination charter scaffold", async () => {
     render(
       <StrategicMovePhaseClient
         move={makeMove({
-          name: "Kyriba treasury rollout value realization",
-          currentPhase: 0,
-          phaseLabel: "P0 Originate",
-          charter: {
-            scaffold: {
-              problem_statement:
-                "Kyriba go-live needs bank connectivity, SAP feeds, signer controls, and SOX evidence before it is value-ready.",
-              sponsor_candidate: "CFO and Treasurer accountable, CIO consulted",
-              value_hypothesis:
-                "Reduce manual cash positioning work and improve liquidity visibility.",
-              scope_boundary:
-                "In: Kyriba, bank connectivity, SAP/AP/AR/GL feeds, payment controls. Out: SAP replacement.",
-              evidence_family:
-                "Cash visibility baseline, bank account inventory, payment formats, signer matrix, SOX control evidence.",
-            },
-          },
+          ...makeCompleteP0Move(),
         })}
         phaseNum={0}
       />,
     );
 
-    expect(screen.getAllByText(/5 of 5 captured/i).length).toBeGreaterThan(0);
+    await waitFor(() =>
+      expect(screen.getByText(/8 of 8 inputs provided/i)).toBeInTheDocument(),
+    );
     expect(screen.getByText(/bank connectivity, SAP feeds/i)).toBeInTheDocument();
     expect(screen.getByText(/CFO and Treasurer accountable/i)).toBeInTheDocument();
     expect(screen.getByText(/Cash visibility baseline/i)).toBeInTheDocument();
+    const advanceButton = screen.getByRole("button", {
+      name: /Approve brief & advance to P1/i,
+    });
+    expect(advanceButton).toBeInTheDocument();
+    expect(advanceButton).toBeEnabled();
     expect(screen.queryByText(/Work with Ava in the chat pane to populate this section/i)).not.toBeInTheDocument();
+  });
+
+  it("posts complete P0 capture and uses the governed gate approval route when advancing", async () => {
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock
+      .mockResolvedValueOnce({ ok: false, json: async () => null })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true, newPhase: 1 }),
+      });
+
+    render(
+      <StrategicMovePhaseClient move={makeCompleteP0Move()} phaseNum={0} />,
+    );
+
+    await screen.findByText(/8 of 8 inputs provided/i);
+    const advanceButton = screen.getByRole("button", {
+      name: /Approve brief & advance to P1/i,
+    });
+    expect(advanceButton).toBeEnabled();
+
+    fireEvent.click(advanceButton);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/v1/programs/49c77bca-471d-4398-8b13-fa8ed1487597/phase-capture",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"phase":0'),
+      }),
+    );
+    const captureBody = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(Object.keys(captureBody.items).sort()).toEqual([
+      "affected_function_process",
+      "business_trigger",
+      "initial_value_hypothesis",
+      "known_evidence",
+      "missing_evidence_open_questions",
+      "problem_statement",
+      "recommendation_to_advance",
+      "stakeholder_owner_view",
+    ]);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/api/v1/programs/49c77bca-471d-4398-8b13-fa8ed1487597/phase-gate-approval",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"phase":0'),
+      }),
+    );
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/strategic-moves/49c77bca-471d-4398-8b13-fa8ed1487597/phase/1",
+    );
   });
 });

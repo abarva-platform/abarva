@@ -18,7 +18,7 @@ import {
 // these tests lock the invariant so the drift cannot silently return.
 
 describe("phase-capture workspace ↔ contract key alignment", () => {
-  const WORKFLOW_PHASES = [1, 2, 3, 4, 5];
+  const WORKFLOW_PHASES = [0, 1, 2, 3, 4, 5];
 
   it.each(WORKFLOW_PHASES)(
     "phase %s exposes canonical capture keys that fully satisfy the route",
@@ -52,6 +52,21 @@ describe("phase-capture workspace ↔ contract key alignment", () => {
     // Every required P1 section is still missing under the drifted keys.
     expect(result.missing).toEqual(
       getPhaseCaptureSections(1).map((s) => s.label),
+    );
+  });
+
+  it("rejects the historical drifted P0 workspace ids", () => {
+    const driftedItems = {
+      seed: "Contract obligation leakage is slowing intake.",
+      sponsor_candidate: "VP Legal Ops and VP Vendor Management.",
+      value_hypothesis: "Reduce missed obligations and cycle time.",
+      scope_boundary: "Priority supplier and technology contracts.",
+      evidence_family: "Contract samples, intake logs, obligation registers.",
+    };
+    const result = evaluatePhaseCapture(0, driftedItems);
+    expect(result.complete).toBe(false);
+    expect(result.missing).toEqual(
+      getPhaseCaptureSections(0).map((s) => s.label),
     );
   });
 
