@@ -9,7 +9,7 @@ const outRoot = process.argv.includes('--out')
   ? path.resolve(process.argv[process.argv.indexOf('--out') + 1])
   : path.join(repoRoot, 'datasets/lakeshore-industries-synthetic-v7-holdco');
 
-const contractVersion = 'v7.1.0-holdco-entity-spine-20260706';
+const contractVersion = 'v7.1.1-holdco-depth-correction-20260706';
 const tenantKey = 'lakeshore-industries';
 const tenantName = 'Lakeshore Holdings';
 const asOf = '2026-07-06';
@@ -205,6 +205,249 @@ const corporateEntity = entities[0];
 const opcos = entities.filter((entity) => entity.entity_scope === 'portfolio_company');
 const allOpcoEntityIds = opcos.map((entity) => entity.entity_id).join('; ');
 const allOpcoEntityNames = opcos.map((entity) => entity.entity_name).join('; ');
+
+const opcoDepthProfiles = {
+  'LSH-OPCO-NLS': {
+    archetype: 'foodservice distribution and cold-chain logistics',
+    operatingSites: '22 distribution centers; 370 route and linehaul assets; 1,900 active customer ship-to locations',
+    processSignature: 'order capture, replenishment planning, warehouse waves, yard turns, route dispatch, proof-of-delivery, freight settlement',
+    localPainPoints: 'freight-rate variance, late inbound appointments, cold-chain excursions, manual detention claims, disconnected WMS/TMS exception queues',
+    functions: [
+      ['Network Planning and Replenishment', 'supply chain', 'VP Supply Chain', 'demand sensing; DC replenishment; inventory balancing; vendor fill-rate review', 'critical'],
+      ['Warehouse Operations', 'operations', 'COO', 'receiving; slotting; wave planning; pick/pack/ship; dock scheduling', 'critical'],
+      ['Transportation and Fleet Operations', 'operations', 'VP Fleet Operations', 'load planning; route optimization; driver dispatch; proof-of-delivery', 'critical'],
+      ['Customer Delivery Experience', 'customer', 'Chief Commercial Officer', 'delivery ETA; claims; substitutions; service recovery', 'high'],
+      ['Food Safety and Cold Chain', 'risk', 'VP Quality', 'temperature compliance; lot traceability; recall response', 'critical'],
+      ['Freight Audit and Carrier Management', 'finance', 'VP Finance', 'carrier invoice audit; accessorial dispute; rate-card maintenance', 'high'],
+    ],
+    systems: [
+      ['ERP and Order Management', 'ERP', 'Infor M3', 'order_to_cash_and_finance', 3800000, 'critical'],
+      ['Warehouse Management', 'WMS', 'Manhattan Active WM', 'warehouse_execution', 2900000, 'critical'],
+      ['Transportation Management', 'TMS', 'Blue Yonder TMS', 'transportation_planning', 2100000, 'critical'],
+      ['Yard Management', 'YMS', 'PINC Yard Management', 'yard_visibility', 760000, 'high'],
+      ['Fleet Telematics', 'Fleet', 'Samsara', 'driver_safety_and_vehicle_telemetry', 920000, 'high'],
+      ['Route Optimization', 'Routing', 'Descartes Route Planner', 'route_optimization', 880000, 'high'],
+      ['Carrier Visibility', 'Visibility', 'project44', 'shipment_visibility', 640000, 'high'],
+      ['Freight Audit and Pay', 'Freight Audit', 'Cass Information Systems', 'freight_settlement', 520000, 'medium'],
+      ['Cold Chain Monitoring', 'IoT', 'Sensitech', 'temperature_monitoring', 690000, 'critical'],
+      ['EDI Gateway', 'EDI', 'TrueCommerce', 'customer_supplier_edi', 580000, 'critical'],
+      ['Dock Appointment Scheduling', 'Scheduling', 'Opendock', 'appointment_scheduling', 280000, 'medium'],
+      ['Inventory Optimization', 'Planning', 'ToolsGroup SO99+', 'inventory_optimization', 840000, 'high'],
+      ['Labor Management', 'Labor', 'Blue Yonder Labor Management', 'warehouse_labor', 610000, 'high'],
+      ['Customer Delivery Portal', 'Portal', 'Salesforce Experience Cloud', 'customer_delivery', 740000, 'high'],
+      ['Quality and Recall Traceability', 'QMS', 'TraceGains', 'food_traceability', 540000, 'critical'],
+      ['Driver Mobile Proof of Delivery', 'Mobile', 'Zebra Reflexis', 'proof_of_delivery', 430000, 'high'],
+      ['Supply Chain Control Tower', 'Analytics', 'Power BI + Azure Data Explorer', 'operations_analytics', 710000, 'high'],
+      ['DC Automation Controls', 'OT', 'Honeywell Intelligrated', 'material_handling_controls', 960000, 'critical'],
+      ['Customer Claims and OS&D Tracker', 'Claims', 'Salesforce Service Cloud', 'delivery_claims', 320000, 'medium'],
+      ['Supplier Appointment and ASN Portal', 'Supplier Portal', 'Körber Dock Scheduling', 'supplier_asn_appointments', 360000, 'high'],
+    ],
+  },
+  'LSH-OPCO-BMS': {
+    archetype: 'marketing services, promotions, loyalty operations, and fulfillment',
+    operatingSites: '6 campaign operations centers; 14 fulfillment partners; 870 active client programs',
+    processSignature: 'brief intake, campaign build, creative approvals, promotion fulfillment, loyalty service, client billing',
+    localPainPoints: 'manual proofing cycles, campaign margin leakage, client-specific data silos, consent-policy variation, fulfillment exception rework',
+    functions: [
+      ['Campaign Operations', 'customer', 'VP Client Operations', 'brief intake; campaign setup; milestone tracking; margin review', 'critical'],
+      ['Creative and Digital Asset Operations', 'operations', 'VP Production', 'asset intake; versioning; rights review; proof approval', 'high'],
+      ['Promotion Fulfillment', 'operations', 'COO', 'offer setup; reward validation; fulfillment exception handling', 'critical'],
+      ['Loyalty Service Operations', 'customer', 'Chief Commercial Officer', 'member inquiry; loyalty issue triage; client SLA management', 'high'],
+      ['Privacy and Consent Operations', 'risk', 'General Counsel', 'consent capture; preference management; privacy evidence', 'critical'],
+      ['Client Billing and Revenue Assurance', 'finance', 'Controller', 'project billing; media pass-through; margin true-up', 'high'],
+    ],
+    systems: [
+      ['Client CRM and Pipeline', 'CRM', 'Salesforce Sales Cloud', 'client_pipeline', 840000, 'high'],
+      ['Campaign Management', 'Marketing Ops', 'Adobe Campaign', 'campaign_execution', 1450000, 'critical'],
+      ['Marketing Resource Management', 'MRM', 'Aprimo', 'marketing_resource_management', 970000, 'high'],
+      ['Digital Asset Management', 'DAM', 'Bynder', 'digital_asset_governance', 520000, 'medium'],
+      ['Loyalty Operations Platform', 'Loyalty', 'Kobie Alchemy', 'loyalty_operations', 1100000, 'critical'],
+      ['Promotion Fulfillment', 'Fulfillment', 'Epsilon PeopleCloud', 'promotion_fulfillment', 940000, 'critical'],
+      ['Consent and Preference Center', 'Privacy', 'OneTrust Consent', 'consent_management', 460000, 'critical'],
+      ['Client Project Accounting', 'Finance', 'NetSuite Projects', 'project_accounting', 680000, 'high'],
+      ['Creative Workflow Proofing', 'Workflow', 'Workfront', 'creative_workflow', 620000, 'high'],
+      ['Print Production Estimating', 'Production', 'EFI Pace', 'print_estimating', 390000, 'medium'],
+      ['Fulfillment Warehouse Lite', 'WMS', 'ShipBob WMS', 'fulfillment_inventory', 480000, 'medium'],
+      ['Marketing Analytics Workbench', 'Analytics', 'Tableau Cloud', 'marketing_analytics', 510000, 'high'],
+      ['Client Data Clean Room', 'Data Platform', 'Snowflake Clean Rooms', 'client_data_collaboration', 760000, 'high'],
+      ['Customer Support Desk', 'Service', 'Zendesk Suite', 'loyalty_service_cases', 430000, 'high'],
+      ['Billing Integration Hub', 'Integration', 'Boomi', 'billing_and_client_data_integration', 350000, 'critical'],
+      ['Rights and Claims Tracker', 'Legal Ops', 'Onit', 'content_rights_and_claims', 270000, 'medium'],
+      ['Client Profitability Ledger', 'Finance Analytics', 'Adaptive Insights', 'client_margin_profitability', 310000, 'high'],
+      ['Retail Offer QA Workspace', 'Quality Workflow', 'Airtable Enterprise', 'offer_quality_assurance', 190000, 'medium'],
+    ],
+  },
+  'LSH-OPCO-FFF': {
+    archetype: 'brand-led consumer products with DTC and retail channels',
+    operatingSites: '3 light manufacturing sites; 5 co-manufacturers; DTC storefront plus 42 strategic retail accounts',
+    processSignature: 'product lifecycle, demand planning, trade promotion, retail EDI, DTC order orchestration, quality/recall',
+    localPainPoints: 'deduction leakage, promo ROI opacity, co-manufacturer quality holds, retail chargebacks, slow product master updates',
+    functions: [
+      ['Product Lifecycle and Innovation', 'operations', 'VP Product Operations', 'concept; formulation; packaging; commercialization readiness', 'high'],
+      ['Demand Planning and S&OP', 'supply chain', 'VP Supply Chain', 'baseline forecast; promo uplift; constrained supply plan', 'critical'],
+      ['Retail and Trade Operations', 'customer', 'Chief Commercial Officer', 'trade calendar; deductions; retail compliance; EDI orders', 'critical'],
+      ['DTC Commerce Operations', 'customer', 'VP Digital Commerce', 'site operations; order orchestration; returns; subscription service', 'high'],
+      ['Co-Manufacturing Quality', 'risk', 'VP Quality', 'supplier quality; batch release; recall readiness', 'critical'],
+      ['Revenue Growth Management', 'finance', 'VP Finance', 'price-pack architecture; promo ROI; margin waterfall', 'high'],
+    ],
+    systems: [
+      ['ERP and Finance', 'ERP', 'Microsoft Dynamics 365 F&O', 'finance_supply_chain', 2700000, 'critical'],
+      ['Product Lifecycle Management', 'PLM', 'Salsify ProductXM', 'product_lifecycle', 680000, 'high'],
+      ['Demand Planning', 'Planning', 'o9 Solutions', 'demand_planning', 920000, 'critical'],
+      ['S&OP Scenario Planning', 'Planning', 'Anaplan', 'sales_and_operations_planning', 730000, 'high'],
+      ['Trade Promotion Management', 'TPM', 'UpClear BluePlanner', 'trade_promotion', 820000, 'critical'],
+      ['Retail Deduction Management', 'Finance', 'HighRadius Deductions', 'deduction_management', 460000, 'high'],
+      ['DTC Commerce', 'Commerce', 'Shopify Plus', 'direct_to_consumer_orders', 620000, 'high'],
+      ['Order Management', 'OMS', 'Fluent Commerce', 'order_orchestration', 510000, 'high'],
+      ['Retail EDI', 'EDI', 'SPS Commerce', 'retail_edi', 430000, 'critical'],
+      ['Quality and Recall Management', 'QMS', 'MasterControl', 'quality_recall', 540000, 'critical'],
+      ['Co-Man Supplier Portal', 'Supplier Portal', 'TraceGains', 'supplier_quality', 410000, 'high'],
+      ['Warehouse and 3PL Visibility', 'WMS', 'Extensiv 3PL Warehouse Manager', 'inventory_visibility', 390000, 'high'],
+      ['Customer Support', 'Service', 'Gorgias', 'dtc_customer_service', 220000, 'medium'],
+      ['PIM Syndication', 'PIM', 'Salsify', 'product_content_syndication', 360000, 'high'],
+      ['Margin Analytics', 'Analytics', 'Power BI + Databricks', 'margin_waterfall', 480000, 'high'],
+      ['Consumer Data Platform', 'CDP', 'Segment', 'consumer_identity', 440000, 'medium'],
+      ['Retail Category Management', 'Category Management', 'NielsenIQ Discover', 'category_performance', 390000, 'medium'],
+      ['Batch Genealogy and Traceability', 'Traceability', 'Aptean Food & Beverage ERP', 'batch_genealogy', 330000, 'critical'],
+    ],
+  },
+  'LSH-OPCO-GLP': {
+    archetype: 'workplace foodservice, vending, micro-market, and route replenishment',
+    operatingSites: '18 commissary/warehouse nodes; 4,200 vending and micro-market locations; 260 route drivers',
+    processSignature: 'menu planning, route replenishment, vending telemetry, cashless POS, food safety, service-call dispatch',
+    localPainPoints: 'stockout-driven revenue loss, machine telemetry gaps, manual route changes, spoilage claims, disconnected POS and ERP margins',
+    functions: [
+      ['Micro-Market Operations', 'operations', 'COO', 'assortment; POS settlement; replenishment; shrink review', 'critical'],
+      ['Route Replenishment', 'operations', 'VP Route Operations', 'route planning; load build; driver execution; exception recovery', 'critical'],
+      ['Commissary and Menu Operations', 'operations', 'VP Food Operations', 'menu planning; production batches; allergen controls', 'high'],
+      ['Machine Service and Repair', 'operations', 'VP Field Operations', 'service call intake; parts; technician dispatch', 'high'],
+      ['Food Safety Compliance', 'risk', 'VP Quality', 'HACCP checks; expiry controls; recall drill', 'critical'],
+      ['Client Account Service', 'customer', 'Chief Commercial Officer', 'client requests; service-level review; revenue leakage', 'high'],
+    ],
+    systems: [
+      ['Route Accounting ERP', 'ERP', 'Cantaloupe Seed', 'route_accounting', 1500000, 'critical'],
+      ['Micro-Market POS', 'POS', '365 Retail Markets', 'micro_market_pos', 980000, 'critical'],
+      ['Vending Telemetry', 'IoT', 'Cantaloupe Telemetry', 'vending_machine_telemetry', 760000, 'critical'],
+      ['Route Optimization', 'Routing', 'Omnitracs Roadnet', 'route_optimization', 640000, 'high'],
+      ['Driver Mobile App', 'Mobile', 'Cantaloupe Go', 'route_driver_mobile', 310000, 'high'],
+      ['Warehouse Replenishment', 'WMS', 'Aptean Food & Beverage WMS', 'warehouse_replenishment', 510000, 'high'],
+      ['Food Safety HACCP', 'QMS', 'SafetyCulture', 'food_safety_audits', 240000, 'critical'],
+      ['Commissary Production Planning', 'MES', 'JustFood ERP Production', 'commissary_production', 420000, 'high'],
+      ['Cashless Payment Gateway', 'Payments', 'Nayax', 'vending_payments', 390000, 'critical'],
+      ['Machine Service Dispatch', 'Field Service', 'ServiceTitan', 'machine_service_dispatch', 360000, 'high'],
+      ['Customer Account Portal', 'Portal', 'Salesforce Experience Cloud', 'client_service_portal', 330000, 'medium'],
+      ['Spoilage and Shrink Analytics', 'Analytics', 'Power BI', 'spoilage_shrink_reporting', 180000, 'medium'],
+      ['Allergen and Nutrition Database', 'Compliance', 'ESHA Genesis', 'nutrition_labeling', 160000, 'high'],
+      ['Procurement and Supplier Rebates', 'Procurement', 'Foodbuy Portal', 'supplier_rebates', 280000, 'medium'],
+      ['IoT Alert Hub', 'Integration', 'Azure IoT Hub', 'machine_event_ingestion', 350000, 'high'],
+      ['Client SLA Scorecard', 'Analytics', 'Tableau Cloud', 'client_sla_reporting', 190000, 'medium'],
+      ['Route Settlement and Cash Reconciliation', 'Finance', 'Cantaloupe Seed Cashless+', 'route_cash_settlement', 240000, 'high'],
+      ['Client Site Master and Equipment Registry', 'Asset Registry', 'ServiceNow CSM', 'client_site_equipment', 210000, 'medium'],
+    ],
+  },
+  'LSH-OPCO-HPG': {
+    archetype: 'industrial packaging, print, corrugate, and contract manufacturing',
+    operatingSites: '9 plants; 34 converting lines; 11 print/finishing lines; 2 regional distribution centers',
+    processSignature: 'quote-to-order, production scheduling, shop-floor execution, quality release, maintenance, shipment',
+    localPainPoints: 'schedule churn, scrap visibility, machine downtime, manual quality certificates, disconnected estimating-to-MES handoff',
+    functions: [
+      ['Quote and Estimating', 'customer', 'VP Commercial Operations', 'quote intake; cost estimate; margin approval; spec handoff', 'high'],
+      ['Production Planning and Scheduling', 'operations', 'COO', 'capacity plan; finite schedule; changeover optimization', 'critical'],
+      ['Shop Floor Execution', 'operations', 'VP Manufacturing', 'work order release; labor reporting; scrap capture; yield review', 'critical'],
+      ['Quality Release and Traceability', 'risk', 'VP Quality', 'inspection plan; certificate of analysis; nonconformance', 'critical'],
+      ['Maintenance Reliability', 'operations', 'VP Operations', 'PM plan; downtime event; spare parts; root-cause action', 'high'],
+      ['Customer Fulfillment', 'supply chain', 'VP Supply Chain', 'ATP check; shipment planning; OTIF review', 'high'],
+    ],
+    systems: [
+      ['Packaging ERP', 'ERP', 'Epicor Kinetic', 'quote_order_finance', 3100000, 'critical'],
+      ['Manufacturing Execution', 'MES', 'Plex Smart Manufacturing', 'shop_floor_execution', 1800000, 'critical'],
+      ['Advanced Planning and Scheduling', 'APS', 'PlanetTogether', 'finite_scheduling', 760000, 'critical'],
+      ['SCADA and Line Controls', 'OT', 'Rockwell FactoryTalk', 'line_controls', 920000, 'critical'],
+      ['Plant Historian', 'Operational Data', 'AVEVA PI', 'machine_telemetry', 670000, 'high'],
+      ['Quality Management', 'QMS', 'ETQ Reliance', 'quality_release', 590000, 'critical'],
+      ['CMMS Reliability', 'CMMS', 'IBM Maximo', 'maintenance_reliability', 720000, 'high'],
+      ['Print Workflow', 'Production', 'Esko Automation Engine', 'print_prepress', 430000, 'high'],
+      ['Color and Specification Management', 'Quality', 'X-Rite ColorCert', 'color_specification', 260000, 'medium'],
+      ['Warehouse Management', 'WMS', 'Korber WMS', 'warehouse_shipping', 610000, 'high'],
+      ['Transportation Tendering', 'TMS', 'MercuryGate TMS', 'carrier_tendering', 390000, 'medium'],
+      ['Customer Label/Artwork Portal', 'Portal', 'Loftware Spectrum', 'label_artwork', 310000, 'medium'],
+      ['Supplier Quality Portal', 'Supplier Quality', 'Intelex Supplier Quality', 'supplier_quality', 280000, 'medium'],
+      ['EHS Management', 'EHS', 'VelocityEHS', 'safety_environmental', 330000, 'high'],
+      ['Plant BI and OEE', 'Analytics', 'L2L Connected Workforce', 'oee_reporting', 520000, 'high'],
+      ['EDI Order Gateway', 'EDI', 'OpenText Trading Grid', 'customer_edi_orders', 370000, 'critical'],
+      ['Energy and Utilities Monitoring', 'Sustainability', 'Schneider EcoStruxure', 'plant_energy_monitoring', 290000, 'medium'],
+      ['Customer Specification Repository', 'Content', 'Veeva QualityDocs', 'customer_specs_certificates', 260000, 'high'],
+    ],
+  },
+  'LSH-OPCO-RCF': {
+    archetype: 'industrial components fabrication plus technical field services',
+    operatingSites: '5 fabrication shops; 34 service branches; 720 field technicians; 68,000 annual work orders',
+    processSignature: 'configure-price-quote, parts planning, fabrication, technician dispatch, field work order, billing',
+    localPainPoints: 'parts availability, technician utilization, quote margin leakage, field paperwork lag, warranty claims',
+    functions: [
+      ['Field Service Dispatch', 'operations', 'VP Field Operations', 'work intake; technician scheduling; parts reservation; SLA recovery', 'critical'],
+      ['Parts and Inventory Planning', 'supply chain', 'VP Supply Chain', 'min/max planning; branch replenishment; critical spare allocation', 'critical'],
+      ['Fabrication and Assembly', 'operations', 'COO', 'job traveler; work-cell schedule; labor capture; quality check', 'high'],
+      ['Quote and Contract Operations', 'customer', 'VP Commercial Operations', 'CPQ; contract entitlement; margin approval', 'high'],
+      ['Warranty and Claims', 'finance', 'Controller', 'claim intake; root cause; recovery; accrual review', 'medium'],
+      ['Technician Safety and Compliance', 'risk', 'VP Quality', 'certification; job safety analysis; incident reporting', 'critical'],
+    ],
+    systems: [
+      ['Service ERP', 'ERP', 'IFS Cloud', 'service_finance_parts', 3600000, 'critical'],
+      ['Field Service Management', 'FSM', 'ServiceMax', 'field_service_dispatch', 1700000, 'critical'],
+      ['Mobile Technician App', 'Mobile', 'ServiceMax Go', 'mobile_work_orders', 620000, 'critical'],
+      ['CPQ and Contract Entitlement', 'CPQ', 'Salesforce Revenue Cloud', 'quote_contract_entitlement', 860000, 'high'],
+      ['Parts Inventory Planning', 'Planning', 'Servigistics', 'service_parts_planning', 740000, 'critical'],
+      ['Branch WMS', 'WMS', 'Fishbowl Advanced', 'branch_inventory', 390000, 'medium'],
+      ['Fabrication MES', 'MES', 'JobBOSS²', 'fabrication_execution', 520000, 'high'],
+      ['CAD and Engineering Vault', 'PLM', 'Autodesk Vault', 'engineering_documents', 410000, 'medium'],
+      ['Warranty Claims System', 'Claims', 'Pega Warranty', 'warranty_claims', 330000, 'medium'],
+      ['Technician Scheduling Optimizer', 'Scheduling', 'Skedulo', 'technician_scheduling', 470000, 'high'],
+      ['Safety Certification LMS', 'LMS', 'Cornerstone OnDemand', 'technician_certification', 290000, 'high'],
+      ['Customer Service Portal', 'Portal', 'Salesforce Experience Cloud', 'customer_work_order_visibility', 390000, 'medium'],
+      ['IoT Equipment Monitoring', 'IoT', 'PTC ThingWorx', 'remote_equipment_monitoring', 680000, 'high'],
+      ['Service Margin Analytics', 'Analytics', 'Power BI + Snowflake', 'service_margin', 360000, 'high'],
+      ['Depot Repair Tracking', 'Repair', 'RepairQ', 'depot_repair', 210000, 'medium'],
+      ['Integration and Event Bus', 'Integration', 'MuleSoft', 'service_event_integration', 480000, 'critical'],
+      ['Installed Base Registry', 'Asset Registry', 'Salesforce Asset Cloud', 'customer_installed_base', 380000, 'high'],
+      ['Remote Assist Knowledge Base', 'Knowledge', 'Microsoft Dynamics Remote Assist', 'technician_remote_support', 240000, 'medium'],
+    ],
+  },
+  'LSH-OPCO-KIS': {
+    archetype: 'contracted industrial services, facilities support, and equipment lifecycle services',
+    operatingSites: '42 regional branches; 1,100 mobile workforce users; 520 active service contracts',
+    processSignature: 'contract mobilization, work order planning, safety compliance, asset service, time/material billing, SLA governance',
+    localPainPoints: 'contract leakage, disconnected time capture, safety paperwork, margin erosion from unbilled extras, branch-by-branch process variation',
+    functions: [
+      ['Contract Mobilization', 'customer', 'VP Commercial Operations', 'scope handoff; site onboarding; SLA setup; staffing plan', 'high'],
+      ['Branch Service Operations', 'operations', 'COO', 'work order intake; crew assignment; SLA tracking; escalation', 'critical'],
+      ['Asset Lifecycle Services', 'operations', 'VP Operations', 'inspection; preventive service; repair event; lifecycle recommendation', 'high'],
+      ['Safety and Compliance Operations', 'risk', 'VP Safety', 'permit to work; incident reporting; training evidence', 'critical'],
+      ['Time, Materials, and Billing', 'finance', 'Controller', 'time capture; material markup; invoice support; dispute resolution', 'critical'],
+      ['Workforce Scheduling', 'operations', 'VP Field Operations', 'crew availability; certification match; route plan', 'high'],
+    ],
+    systems: [
+      ['Industrial Services ERP', 'ERP', 'Deltek Costpoint', 'project_finance_contracts', 2900000, 'critical'],
+      ['Work Order Management', 'EAM', 'IBM Maximo Mobile', 'work_order_execution', 1400000, 'critical'],
+      ['Field Workforce Scheduling', 'Scheduling', 'UKG Dimensions', 'crew_scheduling', 810000, 'critical'],
+      ['Mobile Time and Materials', 'Mobile', 'ProntoForms', 'field_time_materials', 460000, 'high'],
+      ['Safety Management', 'EHS', 'Intelex EHSQ', 'safety_incidents_permits', 530000, 'critical'],
+      ['Contract Compliance Tracker', 'CLM', 'Icertis OpCo Workspace', 'contract_compliance', 420000, 'high'],
+      ['Customer SLA Portal', 'Portal', 'ServiceNow CSM', 'customer_sla_visibility', 620000, 'high'],
+      ['Asset Inspection Mobile', 'Mobile', 'Fulcrum', 'asset_inspections', 340000, 'high'],
+      ['Equipment Lifecycle Analytics', 'Analytics', 'Power BI + Azure Synapse', 'equipment_lifecycle', 410000, 'high'],
+      ['Branch Inventory', 'Inventory', 'NetSuite Inventory', 'branch_inventory', 390000, 'medium'],
+      ['Permit to Work', 'Compliance', 'VelocityEHS Permit to Work', 'permit_management', 280000, 'high'],
+      ['Training and Certification', 'LMS', 'Docebo', 'field_certifications', 260000, 'high'],
+      ['Dispatch Optimization', 'Routing', 'OptimoRoute', 'crew_routing', 290000, 'medium'],
+      ['Invoice Evidence Repository', 'Content', 'Box Enterprise', 'billing_evidence', 190000, 'medium'],
+      ['Vendor Subcontractor Portal', 'Supplier Portal', 'Coupa Supplier Portal', 'subcontractor_management', 260000, 'medium'],
+      ['Branch Integration Hub', 'Integration', 'Azure Logic Apps', 'branch_event_integration', 360000, 'critical'],
+      ['Contract Margin Forecasting', 'Finance Analytics', 'Vena Solutions', 'contract_margin_forecast', 310000, 'high'],
+      ['Subcontractor Safety Compliance', 'Compliance', 'Avetta', 'subcontractor_safety_compliance', 220000, 'high'],
+    ],
+  },
+};
 
 const sharedFunctions = [
   ['Corporate Treasury', 'finance', 'CFO', 'cash forecasting; liquidity planning; bank connectivity; payment controls', 'critical'],
@@ -450,29 +693,64 @@ function buildFunctions() {
     }));
   });
   for (const entity of opcos) {
-    opcoFunctionTemplates.forEach(([name, category, owner, processes, criticality], index) => {
+    const profile = opcoDepthProfiles[entity.entity_id];
+    const localTemplates = [...(profile?.functions ?? []), ...opcoFunctionTemplates.filter(([name]) => !String(name).match(/Manufacturing|Supply Chain|Field Service|Legal|Finance/)).slice(0, 6)];
+    localTemplates.forEach(([name, category, owner, processes, criticality], index) => {
       rows.push(withEntity(entity, {
         function_id: id('FUNC', entity, name, index),
         function_name: name,
         function_category: category,
         parent_function_name: entity.entity_name,
-        business_capability: `${name} planning; execution; controls; reporting`,
+        business_capability: functionCapability(name, entity),
         executive_owner: owner.replace('OpCo', entity.entity_short_name),
         operating_model: 'OpCo-led function with corporate policy, data, and platform guardrails',
         critical_processes_structured: processes,
-        primary_kpis_structured: 'cycle time; backlog; cost; service level; quality; first-pass yield',
+        primary_kpis_structured: functionKpis(name, category),
         kpi_source_ref: `${slug(entity.entity_short_name)}-function-scorecard.xlsx`,
         function_criticality: criticality,
         stakeholder_facing_type: category === 'customer' ? 'customer' : 'mixed',
         supporting_system_refs: `${entity.entity_short_name} ERP Core; ${entity.entity_short_name} Business Intelligence; ServiceNow ITSM`,
         supporting_data_asset_refs: `${entity.entity_short_name} operational KPI data product; ${entity.entity_short_name} finance data product`,
         supporting_vendor_refs: 'Microsoft; Local OpCo Systems Integrator',
-        known_business_pain_points: 'Manual handoffs, local system variation, reporting latency, incomplete workflow standardization',
-        ai_opportunity_areas: 'copilot assisted work; exception triage; operational forecasting; shared services workflow automation',
+        known_business_pain_points: profile?.localPainPoints ?? 'Manual handoffs, local system variation, reporting latency, incomplete workflow standardization',
+        ai_opportunity_areas: aiOpportunitiesForFunction(name, category, entity),
       }));
     });
   }
   return rows;
+}
+
+function functionCapability(name, entity) {
+  const profile = opcoDepthProfiles[entity.entity_id];
+  if (/Warehouse|Transportation|Fleet|Route|Replenishment|Supply Chain/i.test(name)) return `Controls the ${entity.entity_short_name} physical-flow engine: ${profile?.processSignature ?? 'planning, execution, and exception recovery'}.`;
+  if (/Quality|Safety|Compliance|Food|Cold Chain/i.test(name)) return `Maintains audit-ready safety, quality, traceability, and compliance evidence for ${entity.entity_short_name}.`;
+  if (/Finance|Billing|Revenue|Trade|Freight Audit/i.test(name)) return `Connects operational activity to margin, billing, controls, and value proof for ${entity.entity_short_name}.`;
+  if (/Field|Service|Dispatch|Maintenance|Asset/i.test(name)) return `Runs field/service work from intake through dispatch, completion, parts, and customer confirmation.`;
+  if (/Campaign|Loyalty|Customer|DTC|Retail|Commercial/i.test(name)) return `Runs customer-facing commercial operations with service, margin, and compliance accountability.`;
+  return `Owns ${name.toLowerCase()} execution, control evidence, and improvement backlog for ${entity.entity_short_name}.`;
+}
+
+function functionKpis(name, category) {
+  if (/Warehouse/i.test(name)) return 'dock-to-stock time; pick accuracy; order cycle time; labor cost per case; inventory accuracy';
+  if (/Transportation|Fleet|Route/i.test(name)) return 'on-time delivery; cost per mile; trailer dwell; route adherence; claims per shipment';
+  if (/Campaign|Loyalty/i.test(name)) return 'campaign launch cycle time; fulfillment accuracy; client SLA attainment; margin leakage; consent exceptions';
+  if (/Trade|Retail|Revenue/i.test(name)) return 'trade ROI; deduction aging; forecast accuracy; gross-to-net leakage; retail compliance chargebacks';
+  if (/Manufacturing|Production|Shop Floor/i.test(name)) return 'OEE; schedule adherence; scrap rate; first-pass yield; downtime minutes';
+  if (/Field|Service|Dispatch/i.test(name)) return 'technician utilization; first-time fix; SLA attainment; unbilled work; work-order aging';
+  if (/Finance|Billing|Controller/i.test(name) || category === 'finance') return 'close days; billing accuracy; write-off rate; control exceptions; forecast variance';
+  if (/Quality|Safety|Compliance/i.test(name) || category === 'risk') return 'audit findings; incident rate; corrective-action aging; recall drill time; compliance exceptions';
+  return 'cycle time; backlog; cost; service level; quality; first-pass yield';
+}
+
+function aiOpportunitiesForFunction(name, category, entity) {
+  if (/Warehouse|Transportation|Route|Fleet/i.test(name)) return 'exception triage for route/dock delays; load-risk prediction; natural-language operations cockpit';
+  if (/Campaign|Creative|Loyalty/i.test(name)) return 'campaign brief summarization; rights/consent checks; fulfillment exception copilot; client margin assistant';
+  if (/Trade|Demand|DTC|Retail/i.test(name)) return 'promo ROI explanation; deduction triage; demand-signal summarization; retail compliance assistant';
+  if (/Manufacturing|Production|Shop Floor|Maintenance/i.test(name)) return 'schedule-risk explanation; downtime root-cause assistant; quality nonconformance triage; maintenance prioritization';
+  if (/Field|Service|Dispatch|Asset/i.test(name)) return 'dispatch optimization advisor; technician knowledge assistant; warranty/parts triage; unbilled-work detector';
+  if (/Safety|Quality|Compliance|Food/i.test(name)) return 'audit evidence pack builder; policy-grounded corrective-action assistant; inspection finding summarization';
+  if (category === 'finance') return 'close exception copilot; margin leakage detector; invoice evidence matching; forecast narrative generator';
+  return `${entity.entity_short_name} role-grounded assistant for exception triage, workflow guidance, and value proof.`;
 }
 
 function buildOrgOwnership() {
@@ -506,6 +784,9 @@ function buildOrgOwnership() {
     budget_authority: budget,
     business_or_it_org: role.match(/CIO|Data|IT|Architect|CISO|Automation/) ? 'IT' : 'Business',
     escalation_path: `${role} -> ${reportsTo}`,
+    accountable_budget_usd: corporateRoleBudget(role),
+    team_size_fte: [28, 74, 18, 42, 16, 31, 26, 11, 54, 88, 22, 140, 12, 16, 9, 14, 8, 36][index] ?? 10,
+    key_initiatives_owned: corporateInitiativesForRole(role),
   }));
   for (const entity of opcos) {
     roleTemplates.forEach(([role, family, rights, authority], index) => {
@@ -519,10 +800,65 @@ function buildOrgOwnership() {
         budget_authority: authority === 'budget_authority' ? `${Math.round(entity.total_direct_technology_budget_usd / 1000000)}M technology and local transformation influence` : 'functional decision authority',
         business_or_it_org: family === 'technology' ? 'IT' : 'Business',
         escalation_path: `${role} -> ${entity.entity_short_name} President -> Lakeshore portfolio leadership`,
+        accountable_budget_usd: role.match(/Information|Technology|IT/) ? entity.total_direct_technology_budget_usd : role === 'President' ? entity.revenue_usd : role.match(/Finance|Controller/) ? Math.round(entity.revenue_usd * 0.015) : 0,
+        team_size_fte: roleTeamSize(role, entity),
+        key_initiatives_owned: roleInitiatives(role, entity),
       }));
     });
   }
   return rows;
+}
+
+function corporateInitiativesForRole(role) {
+  if (/CIO|Enterprise Applications/.test(role)) return 'entity-spine data foundation; ERP rationalization; shared-services platform standardization';
+  if (/CFO|Controller|Treasurer/.test(role)) return 'Kyriba control evidence; close automation; value-realization office';
+  if (/Innovation|Automation/.test(role)) return 'AI use-case intake; automation factory; 90-day value proof sprints';
+  if (/CHRO/.test(role)) return 'HR service delivery modernization; employee knowledge assistant';
+  if (/Legal|General Counsel/.test(role)) return 'contract AI intake; matter triage; outside-counsel spend governance';
+  if (/CISO|Security/.test(role)) return 'identity posture; privileged access; AI security controls';
+  if (/Data/.test(role)) return 'semantic layer certification; data product ownership; lineage and data quality observability';
+  if (/Procurement|Vendor/.test(role)) return 'supplier workflow modernization; renewal governance; vendor performance evidence';
+  if (/Shared Services/.test(role)) return 'service catalog; SLA design; chargeback model; employee experience measurement';
+  if (/Architect|Integration/.test(role)) return 'integration simplification; API standards; portfolio dependency map';
+  if (/Change/.test(role)) return 'adoption roadmap; stakeholder readiness; training and communications';
+  return 'shared-services operating model; service catalog; performance governance';
+}
+
+function corporateRoleBudget(role) {
+  if (role === 'Corporate CIO') return corporateEntity.total_direct_technology_budget_usd;
+  if (role === 'CFO') return corporateEntity.revenue_usd;
+  if (role === 'VP Innovation') return corporateEntity.ai_data_budget_usd;
+  if (/CISO/.test(role)) return 24778000;
+  if (/Data/.test(role)) return 26684000;
+  if (/Treasurer/.test(role)) return 22872000;
+  if (/Enterprise Applications/.test(role)) return 59086000;
+  if (/IT Operations/.test(role)) return 13342000;
+  if (/General Counsel/.test(role)) return 2100000;
+  if (/Procurement/.test(role)) return 7624000;
+  if (/Automation/.test(role)) return 20966000;
+  return 0;
+}
+
+function roleTeamSize(role, entity) {
+  const scale = Math.max(1, entity.employee_count / 1000);
+  if (role === 'President') return 6;
+  if (/Operating|Operations/.test(role)) return Math.round(18 * scale);
+  if (/Information|Technology|IT/.test(role)) return Math.round(9 * scale);
+  if (/Finance|Controller/.test(role)) return Math.round(7 * scale);
+  if (/Supply Chain/.test(role)) return Math.round(8 * scale);
+  if (/HR/.test(role)) return Math.round(5 * scale);
+  return Math.round(4 * scale);
+}
+
+function roleInitiatives(role, entity) {
+  const profile = opcoDepthProfiles[entity.entity_id];
+  if (/Information|Technology|IT/.test(role)) return `${entity.entity_short_name} application rationalization; data quality gates; corporate platform adoption`;
+  if (/Operating|Operations|Supply Chain/.test(role)) return `${profile?.archetype ?? entity.industry} execution cockpit; exception triage; process baseline`;
+  if (/Finance|Controller/.test(role)) return 'local P&L automation; billing/reconciliation evidence; margin leakage analysis';
+  if (/Commercial|Sales/.test(role)) return 'customer service automation; pricing/margin workflow; account SLA visibility';
+  if (/Legal/.test(role)) return 'contract obligation evidence; compliance intake; policy-grounded AI review';
+  if (/HR/.test(role)) return 'workforce service catalog; frontline knowledge assistant; skills/certification visibility';
+  return `${entity.entity_short_name} operating model modernization`;
 }
 
 function syntheticPerson(role, unit, index) {
@@ -534,6 +870,7 @@ function syntheticPerson(role, unit, index) {
 function buildPersonas() {
   const rows = [];
   for (const entity of [corporateEntity, ...opcos]) {
+    const profile = opcoDepthProfiles[entity.entity_id];
     const templates = entity.entity_scope === 'holdco'
       ? [
           ['Executive sponsor', 'executive', 14, 'Approves portfolio choices, cross-OpCo standards, and capital gates', 'medium'],
@@ -551,20 +888,61 @@ function buildPersonas() {
         ]
       : personaTemplates;
     templates.forEach(([name, family, population, tasks, readiness], index) => {
+      const localTasks = entity.entity_scope === 'portfolio_company' ? personaTasksForEntity(name, tasks, entity) : tasks;
       rows.push(withEntity(entity, {
         persona_id: id('PER', entity, name, index),
         persona_name: name,
         role_family: family,
         population_count: population,
-        primary_tasks: tasks,
-        systems_used: `${entity.entity_short_name} ERP Core; ServiceNow ITSM; Microsoft 365 Copilot; Power BI`,
-        pain_points: 'Manual lookup, fragmented data, exception rework, unclear ownership, duplicate entry',
+        population_basis: entity.entity_scope === 'holdco' ? 'shared-services and corporate users' : `estimated users across ${profile?.operatingSites ?? entity.entity_name}`,
+        primary_tasks: localTasks,
+        systems_used: systemsForPersona(name, entity),
+        pain_points: entity.entity_scope === 'holdco' ? 'Manual lookup, fragmented data, exception rework, unclear ownership, duplicate entry' : profile?.localPainPoints,
         change_readiness: readiness,
-        ai_enablement_need: 'Role-specific workflow assistant, policy grounding, data access guardrails, and adoption support',
+        ai_enablement_need: personaAiNeed(name, entity),
+        decisions_supported: personaDecisionSupport(name, entity),
       }));
     });
   }
   return rows;
+}
+
+function personaTasksForEntity(name, fallback, entity) {
+  const profile = opcoDepthProfiles[entity.entity_id];
+  if (/Plant|branch supervisor/i.test(name)) return `${profile?.processSignature}; daily labor, safety, backlog, and exception decisions`;
+  if (/Field service/i.test(name)) return 'crew dispatch, work-order updates, parts availability, safety checks, customer completion notes';
+  if (/Customer service/i.test(name)) return 'order status, service escalations, claims, delivery ETA, account-specific SLA answers';
+  if (/Finance/i.test(name)) return 'local close, billing exceptions, margin analysis, working-capital reviews, value proof';
+  if (/Procurement/i.test(name)) return 'supplier onboarding, PO exceptions, supplier quality, rebate/commercial compliance';
+  return fallback;
+}
+
+function systemsForPersona(name, entity) {
+  const p = opcoDepthProfiles[entity.entity_id];
+  if (entity.entity_scope === 'holdco') return 'ServiceNow ITSM; Workday HCM; Kyriba Treasury; OneStream; Microsoft 365 Copilot; Power BI';
+  const names = p?.systems?.map(([systemName]) => `${entity.entity_short_name} ${systemName}`) ?? [];
+  if (/Finance|FP&A|controller/i.test(name)) return names.filter((s) => /ERP|Billing|Finance|Analytics|Deduction|Freight Audit|Margin/i.test(s)).slice(0, 4).join('; ');
+  if (/Plant|branch|Field|service|supervisor/i.test(name)) return names.filter((s) => /MES|WMS|TMS|Field|Mobile|Work Order|Scheduling|Route|SCADA|CMMS|EAM/i.test(s)).slice(0, 5).join('; ');
+  if (/Customer/i.test(name)) return names.filter((s) => /CRM|Portal|Service|Commerce|Campaign|Loyalty|Order/i.test(s)).slice(0, 5).join('; ');
+  if (/IT/i.test(name)) return `${entity.entity_short_name} Integration and Event Bus; ServiceNow ITSM; Okta Workforce Identity; Power BI`;
+  return names.slice(0, 4).join('; ') || `${entity.entity_short_name} ERP; Power BI`;
+}
+
+function personaAiNeed(name, entity) {
+  if (/Executive/i.test(name)) return 'Decision brief that summarizes value, risk, owner, and missing proof across entity-level initiatives.';
+  if (/Finance|FP&A/i.test(name)) return 'Variance explanation, close exception summarization, billing evidence matching, and value-proof narrative.';
+  if (/Field|Plant|branch|supervisor/i.test(name)) return 'Operations copilot for backlog, schedule risk, work order evidence, safety, and next-best action.';
+  if (/Customer/i.test(name)) return 'Policy-grounded customer response, order/service context, SLA explanation, and escalation guidance.';
+  if (/IT/i.test(name)) return 'Incident/change summarization, dependency tracing, and system-owner lookup across local and corporate platforms.';
+  return `Role-specific assistant grounded in ${entity.entity_short_name} systems, policy, workflow, and evidence.`;
+}
+
+function personaDecisionSupport(name, entity) {
+  if (/Executive/i.test(name)) return 'fund / certify / hold decisions for portfolio and operating transformation';
+  if (/Finance|FP&A/i.test(name)) return 'budget variance, business-case confidence, and value realization decisions';
+  if (/Field|Plant|branch|supervisor/i.test(name)) return 'daily operating priorities, exception escalation, staffing, and quality response';
+  if (/Customer/i.test(name)) return 'service recovery, claims handling, and customer communication decisions';
+  return `${entity.entity_short_name} workflow and evidence decisions`;
 }
 
 function buildSystems() {
@@ -597,7 +975,8 @@ function buildSystems() {
     }));
   });
   for (const entity of opcos) {
-    systemTemplates.forEach(([suffix, category, vendor, domain, baseCost, criticality], index) => {
+    const localSystems = opcoDepthProfiles[entity.entity_id]?.systems ?? systemTemplates;
+    localSystems.forEach(([suffix, category, vendor, domain, baseCost, criticality], index) => {
       rows.push(withEntity(entity, {
       system_id: id('SYS', entity, suffix, index),
       system_name: `${entity.entity_short_name} ${suffix}`,
@@ -609,23 +988,54 @@ function buildSystems() {
       service_consumer_type: 'owning_portfolio_company',
       system_category: category,
       vendor_product: vendorForEntity(vendor, entity),
-        hosting_model: category.match(/ERP|MES|EAM/) ? 'hybrid' : 'SaaS / cloud',
+        hosting_model: hostingForSystem(category, vendor),
         business_function_refs: systemFunctionRefs(suffix),
         critical_process_refs: domain,
         business_owner_role: businessOwnerForSystem(suffix),
         technical_owner_role: `${entity.entity_short_name} IT Operations Manager`,
         criticality,
-        lifecycle_status: index % 7 === 0 ? 'modernization_candidate' : 'production',
-        modernization_disposition: index % 7 === 0 ? 'rationalize_or_modernize' : 'maintain_with_controls',
+        lifecycle_status: systemLifecycle(index, suffix),
+        modernization_disposition: modernizationForSystem(index, suffix, category),
         annual_run_cost_usd: fmtCurrency(Math.round(baseCost * (0.75 + entity.revenue_usd / 4500000000))),
         vendor_contract_refs: vendor,
         data_domains: domain,
         ai_data_readiness: index % 4 === 0 ? 'needs_data_quality_gate' : 'usable_with_owner_confirmation',
         decision_relevance: 'opco_process_transformation_and_shared_services_dependency',
+        system_business_context: systemBusinessContext(suffix, entity),
       }));
     });
   }
   return rows;
+}
+
+function hostingForSystem(category, vendor) {
+  if (/OT|SCADA|MES|CMMS|EAM|Controls|IoT/i.test(category) || /FactoryTalk|Honeywell|AVEVA|Rockwell/i.test(vendor)) return 'plant/branch edge + hybrid';
+  if (/ERP|PLM|WMS|TMS|APS/i.test(category)) return 'hybrid cloud / SaaS';
+  return 'SaaS / cloud';
+}
+
+function systemLifecycle(index, suffix) {
+  if (/ECC|legacy|Gateway|Controls|ERP/i.test(suffix) && index % 3 === 0) return 'modernization_candidate';
+  if (/Portal|Analytics|AI|IoT/i.test(suffix)) return 'scaling';
+  return index % 9 === 0 ? 'technical_debt_watch' : 'production';
+}
+
+function modernizationForSystem(index, suffix, category) {
+  if (/ERP|Gateway|Integration|EDI/i.test(suffix)) return 'standardize_integration_and_master_data';
+  if (/Analytics|Data|Control Tower|BI/i.test(suffix)) return 'certify_for_ai_and_executive_reporting';
+  if (/OT|MES|SCADA|CMMS|EAM/i.test(category)) return 'stabilize_edge_integration_and_lineage';
+  return index % 9 === 0 ? 'rationalize_or_modernize' : 'maintain_with_controls';
+}
+
+function systemBusinessContext(suffix, entity) {
+  const profile = opcoDepthProfiles[entity.entity_id];
+  if (/ERP/i.test(suffix)) return `Financial and order/process backbone for ${entity.entity_short_name}; must reconcile to corporate finance and entity-spine reporting.`;
+  if (/WMS|Warehouse/i.test(suffix)) return `Controls local inventory movement and fulfillment execution for ${profile?.archetype}.`;
+  if (/TMS|Route|Fleet|Dispatch|Field/i.test(suffix)) return `Coordinates mobile work, shipment, route, or technician execution; key to service-level and cost leakage analysis.`;
+  if (/MES|SCADA|Historian|Production|Plant/i.test(suffix)) return `Captures shop-floor execution and machine/process evidence; key to OEE, quality, and maintenance decisions.`;
+  if (/Quality|Safety|Compliance|Recall/i.test(suffix)) return `Holds audit, inspection, traceability, safety, and corrective-action evidence.`;
+  if (/Campaign|Loyalty|Commerce|CRM|Customer|Portal/i.test(suffix)) return `Supports customer-facing work and service evidence; key to revenue, SLA, and experience decisions.`;
+  return `Supports ${entity.entity_short_name} ${profile?.archetype ?? 'operations'} with local ownership and corporate reporting dependency.`;
 }
 
 function vendorForEntity(vendor, entity) {
@@ -689,19 +1099,8 @@ function businessOwnerForSystem(suffix) {
 
 function buildDataAssets(systems) {
   const rows = [];
-  const templates = [
-    ['finance close data product', 'financials', 'daily', 'CFO'],
-    ['order-to-cash data product', 'commercial', 'daily', 'Chief Commercial Officer'],
-    ['procure-to-pay data product', 'procurement', 'daily', 'VP Procurement'],
-    ['inventory and warehouse data product', 'supply_chain', 'hourly', 'VP Supply Chain'],
-    ['workforce and labor data product', 'workforce', 'daily', 'HR Director'],
-    ['quality and safety data product', 'quality', 'daily', 'VP Quality'],
-    ['service management data product', 'technology', 'real-time', 'OpCo CIO'],
-    ['operational KPI semantic model', 'operations', 'daily', 'COO'],
-    ['customer service interactions', 'customer', 'hourly', 'Chief Commercial Officer'],
-    ['automation opportunity ledger', 'innovation', 'weekly', 'VP Innovation'],
-  ];
   for (const entity of [corporateEntity, ...opcos]) {
+    const templates = entity.entity_scope === 'holdco' ? corporateDataProducts() : opcoDataProducts(entity);
     templates.forEach(([name, domain, frequency, owner], index) => {
       rows.push(withEntity(entity, {
         data_asset_id: id('DATA', entity, name, index),
@@ -714,10 +1113,56 @@ function buildDataAssets(systems) {
         data_quality_status: index % 3 === 0 ? 'needs_certification' : 'usable_with_monitoring',
         lineage_status: index % 4 === 0 ? 'partial_lineage' : 'documented',
         ai_consumption_readiness: index % 3 === 0 ? 'gate_required' : 'candidate',
+        business_question_supported: dataProductQuestion(name, entity),
+        minimum_validation_needed: 'named owner, source-system extract, reconciliation check, freshness SLA, and sample record review',
       }));
     });
   }
   return rows;
+}
+
+function corporateDataProducts() {
+  return [
+    ['holdco entity master and portfolio hierarchy', 'entity_master', 'daily', 'Corporate CIO'],
+    ['consolidated finance close data product', 'financials', 'daily', 'CFO'],
+    ['cash visibility and bank connectivity data product', 'treasury', 'hourly', 'Treasurer'],
+    ['workforce and HR service data product', 'workforce', 'daily', 'CHRO'],
+    ['legal matter and contract obligation data product', 'legal', 'daily', 'General Counsel'],
+    ['supplier and contract spend data product', 'procurement', 'daily', 'VP Procurement'],
+    ['IT service and asset data product', 'technology', 'real-time', 'VP IT Operations'],
+    ['identity and security risk data product', 'security', 'real-time', 'CISO'],
+    ['enterprise KPI semantic model', 'operations', 'daily', 'Chief Data Officer'],
+    ['automation opportunity and value ledger', 'innovation', 'weekly', 'VP Innovation'],
+    ['portfolio company budget and initiative ledger', 'technology_budget', 'weekly', 'Corporate CIO'],
+    ['shared-services SLA and chargeback ledger', 'shared_services', 'daily', 'Director Shared Services'],
+  ];
+}
+
+function opcoDataProducts(entity) {
+  const common = [
+    ['local finance close and margin data product', 'financials', 'daily', 'CFO'],
+    ['order-to-cash and customer service data product', 'commercial', 'hourly', 'Chief Commercial Officer'],
+    ['procure-to-pay and supplier quality data product', 'procurement', 'daily', 'VP Procurement'],
+    ['workforce, labor, and skills data product', 'workforce', 'daily', 'HR Director'],
+    ['IT service and application health data product', 'technology', 'real-time', 'OpCo CIO'],
+    ['local initiative budget and value proof ledger', 'technology_budget', 'weekly', entity.cxo_sponsor],
+  ];
+  if (entity.entity_id === 'LSH-OPCO-NLS') return [...common, ['shipment visibility and carrier performance data product', 'transportation', 'real-time', 'VP Fleet Operations'], ['warehouse inventory and slotting data product', 'warehouse_execution', 'hourly', 'COO'], ['cold-chain compliance data product', 'food_traceability', 'real-time', 'VP Quality'], ['freight audit variance data product', 'freight_settlement', 'daily', 'VP Finance']];
+  if (entity.entity_id === 'LSH-OPCO-BMS') return [...common, ['campaign profitability data product', 'campaign_execution', 'daily', 'VP Client Operations'], ['loyalty service and fulfillment data product', 'loyalty_operations', 'hourly', 'Chief Commercial Officer'], ['client consent and preference data product', 'consent_management', 'daily', 'General Counsel'], ['creative workflow and rights data product', 'digital_asset_governance', 'daily', 'VP Production']];
+  if (entity.entity_id === 'LSH-OPCO-FFF') return [...common, ['trade promotion ROI and deduction data product', 'trade_promotion', 'daily', 'VP Finance'], ['demand and S&OP forecast data product', 'demand_planning', 'daily', 'VP Supply Chain'], ['DTC order and return data product', 'direct_to_consumer_orders', 'hourly', 'VP Digital Commerce'], ['quality recall and supplier traceability data product', 'quality_recall', 'daily', 'VP Quality']];
+  if (entity.entity_id === 'LSH-OPCO-GLP') return [...common, ['vending telemetry and stockout data product', 'vending_machine_telemetry', 'real-time', 'VP Route Operations'], ['route replenishment and driver execution data product', 'route_optimization', 'hourly', 'VP Route Operations'], ['food safety and allergen data product', 'food_safety_audits', 'daily', 'VP Quality'], ['micro-market POS and shrink data product', 'micro_market_pos', 'hourly', 'Controller']];
+  if (entity.entity_id === 'LSH-OPCO-HPG') return [...common, ['shop-floor OEE and scrap data product', 'shop_floor_execution', 'real-time', 'VP Manufacturing'], ['finite schedule and capacity data product', 'finite_scheduling', 'hourly', 'COO'], ['quality release and nonconformance data product', 'quality_release', 'daily', 'VP Quality'], ['maintenance reliability data product', 'maintenance_reliability', 'daily', 'VP Operations']];
+  if (entity.entity_id === 'LSH-OPCO-RCF') return [...common, ['field work order and SLA data product', 'field_service_dispatch', 'real-time', 'VP Field Operations'], ['service parts availability data product', 'service_parts_planning', 'daily', 'VP Supply Chain'], ['warranty claims and recovery data product', 'warranty_claims', 'daily', 'Controller'], ['technician certification and safety data product', 'technician_certification', 'daily', 'VP Quality']];
+  return [...common, ['contract SLA and work-order data product', 'work_order_execution', 'real-time', 'COO'], ['time/material billing evidence data product', 'field_time_materials', 'daily', 'Controller'], ['safety permit and incident data product', 'safety_incidents_permits', 'daily', 'VP Safety'], ['equipment lifecycle data product', 'equipment_lifecycle', 'daily', 'VP Operations']];
+}
+
+function dataProductQuestion(name, entity) {
+  if (/budget|initiative|value proof/i.test(name)) return `Which ${entity.entity_short_name} projects are funded, value-backed, gated, or at risk?`;
+  if (/finance|margin|billing|deduction/i.test(name)) return `Where is margin, billing, close, or working-capital evidence strong enough for CFO decisions?`;
+  if (/workforce|labor|skills/i.test(name)) return `Which workforce process has enough evidence for AI assistance or operating redesign?`;
+  if (/shipment|route|field|work order|transport/i.test(name)) return `Which operational exceptions drive cost, SLA misses, or service recovery?`;
+  if (/quality|safety|compliance|recall/i.test(name)) return `What quality or compliance evidence is required before scaling automation?`;
+  return `What should ${entity.entity_short_name} trust, inspect, or certify before using this data in decisions?`;
 }
 
 function pickSystemForEntity(systems, entity, domain) {
@@ -750,42 +1195,63 @@ function buildSpendValue() {
   const rows = [];
   for (const entity of [corporateEntity, ...opcos]) {
     const budget = entity.total_direct_technology_budget_usd;
-    const categories = [
-      ['Run operations', 'run_cost', 0.42, 'committed'],
-      ['Application modernization', 'change', 0.16, 'discretionary'],
-      ['Data platform and analytics', 'data_ai', 0.11, 'mixed'],
-      ['Cybersecurity and identity', 'risk', 0.10, 'committed'],
-      ['Shared services automation', 'automation', 0.08, 'discretionary'],
-      ['Infrastructure and cloud', 'run_cost', 0.13, 'committed'],
-    ];
-    categories.forEach(([name, type, pct, model], index) => {
+    const categories = spendCategoriesForEntity(entity);
+    categories.forEach(([name, type, pct, model, initiative, owner], index) => {
       rows.push(withEntity(entity, {
         spend_id: id('SPEND', entity, name, index),
         amount_usd: Math.round(budget * pct),
         spend_category: name,
         spend_type: type,
         run_change: type === 'run_cost' ? 'run' : 'change',
-        spend_owner: entity.cxo_sponsor,
+        spend_owner: owner ?? entity.cxo_sponsor,
         committed_vs_discretionary: model,
         value_linkage: type === 'automation' || type === 'data_ai' ? 'linked_to_ai_and_shared_services_transformation' : 'operating_runway',
         unit_economics: `${Math.round((budget * pct) / Math.max(1, entity.employee_count))} USD per employee`,
+        mapped_initiative_ref: initiative,
+        funding_decision_status: model === 'discretionary' ? 'requires_business_case_or_gate' : 'funded_baseline',
+        value_evidence_status: type === 'run_cost' ? 'run_baseline_visible' : 'needs_value_proof_or_benefits_owner',
       }));
     });
   }
   return rows;
 }
 
+function spendCategoriesForEntity(entity) {
+  if (entity.entity_scope === 'holdco') return [
+    ['Corporate platforms run and licenses', 'run_cost', 0.31, 'committed', 'shared service platform operations', 'Corporate CIO'],
+    ['Cybersecurity and identity', 'risk', 0.13, 'committed', 'identity posture and privileged access', 'CISO'],
+    ['Data platform and semantic layer', 'data_ai', 0.14, 'mixed', 'entity-spine data foundation', 'Chief Data Officer'],
+    ['Shared services automation factory', 'automation', 0.11, 'discretionary', 'AI and automation value office', 'VP Innovation'],
+    ['Finance / treasury modernization', 'change', 0.12, 'discretionary', 'Kyriba treasury control evidence', 'CFO'],
+    ['Integration and API modernization', 'change', 0.08, 'mixed', 'corporate integration standardization', 'VP Enterprise Architecture'],
+    ['ITSM and employee service operations', 'run_cost', 0.07, 'committed', 'ServiceNow service catalog', 'VP IT Operations'],
+    ['Legal / procurement workflow modernization', 'automation', 0.04, 'discretionary', 'contract AI intake and supplier workflow', 'General Counsel'],
+  ];
+  const archetype = opcoDepthProfiles[entity.entity_id]?.archetype ?? 'local operations';
+  return [
+    ['Local application run and support', 'run_cost', 0.34, 'committed', `${entity.entity_short_name} application run baseline`, entity.cxo_sponsor],
+    ['Industry operations platform modernization', 'change', 0.18, 'discretionary', `${entity.entity_short_name} ${archetype} execution modernization`, entity.cxo_sponsor],
+    ['Data readiness and reporting', 'data_ai', 0.11, 'mixed', `${entity.entity_short_name} operational data certification`, 'Director Data and Analytics'],
+    ['Customer / service workflow automation', 'automation', 0.09, 'discretionary', `${entity.entity_short_name} service and exception copilot`, 'Chief Commercial Officer'],
+    ['Infrastructure, network, and branch/plant edge', 'run_cost', 0.12, 'committed', `${entity.entity_short_name} edge reliability`, `${entity.entity_short_name} IT Operations Manager`],
+    ['Security and compliance controls', 'risk', 0.08, 'committed', `${entity.entity_short_name} control evidence`, 'General Counsel / Legal Lead'],
+    ['Shared-service consumption and chargebacks', 'run_cost', 0.08, 'committed', `${entity.entity_short_name} corporate shared-service consumption`, 'CFO'],
+  ];
+}
+
 function buildPrograms() {
   const rows = [];
   const corporate = [
-    ['Shared services AI service desk', 'in_flight', 'VP Innovation', 'reduce Tier 1 HR/Finance/IT cases and improve employee experience'],
-    ['Kyriba treasury control evidence', 'in_flight', 'Treasurer', 'cash visibility, bank connectivity, payment controls'],
-    ['Finance close automation', 'planned', 'CFO', 'reduce close cycle and reconciliation rework'],
-    ['Legal contract AI intake', 'planned', 'General Counsel', 'contract triage, clause review, outside counsel spend controls'],
-    ['Entity spine and semantic data foundation', 'in_flight', 'Chief Data Officer', 'create governed entity/function/system/vendor spine'],
-    ['Workday employee service modernization', 'planned', 'CHRO', 'HR service catalog and knowledge automation'],
+    ['Shared services AI service desk', 'in_flight', 'VP Innovation', 'reduce Tier 1 HR/Finance/IT cases and improve employee experience', 6200000, 'ServiceNow ITSM; Workday HCM; Microsoft 365 Copilot'],
+    ['Kyriba treasury control evidence', 'in_flight', 'Treasurer', 'cash visibility, bank connectivity, payment controls', 3800000, 'Kyriba Treasury; ERP/AP/AR/GL feeds; bank connectivity'],
+    ['Finance close automation', 'planned', 'CFO', 'reduce close cycle and reconciliation rework', 4700000, 'OneStream Consolidation; Oracle EPM; BlackLine candidate'],
+    ['Legal contract AI intake', 'planned', 'General Counsel', 'contract triage, clause review, outside counsel spend controls', 2100000, 'Icertis Contract Intelligence; Legal Tracker; Microsoft 365 Copilot'],
+    ['Entity spine and semantic data foundation', 'in_flight', 'Chief Data Officer', 'create governed entity/function/system/vendor spine', 5400000, 'Snowflake Enterprise Lake; dbt Semantic Layer; Purview'],
+    ['Workday employee service modernization', 'planned', 'CHRO', 'HR service catalog and knowledge automation', 3200000, 'Workday HCM; ServiceNow HRSD candidate; Microsoft 365 Copilot'],
+    ['Corporate integration and API modernization', 'planned', 'VP Enterprise Architecture', 'reduce point-to-point integration fragility across OpCos', 2900000, 'Azure Integration Services; Enterprise API Gateway'],
+    ['Value office benefits tracking', 'candidate', 'CFO', 'connect technology spend to committed, forecast, and proven value', 1700000, 'Power BI Executive Reporting; portfolio budget ledger'],
   ];
-  corporate.forEach(([name, status, sponsor, purpose], index) => {
+  corporate.forEach(([name, status, sponsor, purpose, budgetUsd, systems], index) => {
     rows.push(withEntity(corporateEntity, {
       priority_id: id('PROG', corporateEntity, name, index),
       priority_name: name,
@@ -794,14 +1260,15 @@ function buildPrograms() {
       current_status: status,
       decision_required: 'Approve gate, owner, baseline, and 90-day value proof.',
       value_hypothesis: purpose,
+      budget_usd: budgetUsd,
+      funding_source: 'corporate technology and AI/data budget',
+      impacted_systems: systems,
+      impacted_org_roles: corporateInitiativesForRole(sponsor),
+      value_metric: programValueMetric(name),
     }));
   });
   for (const entity of opcos) {
-    [
-      [`${entity.entity_short_name} ERP/data readiness sprint`, 'planned', entity.cxo_sponsor, 'certify core ERP, finance, customer, inventory, and workforce data'],
-      [`${entity.entity_short_name} operations exception triage`, 'candidate', 'COO', 'AI-assisted backlog, quality, and operational exception prioritization'],
-      [`${entity.entity_short_name} customer service copilot`, 'candidate', 'Chief Commercial Officer', 'reduce case handle time and improve knowledge consistency'],
-    ].forEach(([name, status, sponsor, purpose], index) => rows.push(withEntity(entity, {
+    opcoProgramsForEntity(entity).forEach(([name, status, sponsor, purpose, budgetUsd, systems, metric], index) => rows.push(withEntity(entity, {
       priority_id: id('PROG', entity, name, index),
       priority_name: name,
       priority_type: 'opco_transformation',
@@ -809,9 +1276,40 @@ function buildPrograms() {
       current_status: status,
       decision_required: 'Confirm owner, baseline, data products, and adoption plan.',
       value_hypothesis: purpose,
+      budget_usd: budgetUsd,
+      funding_source: `${entity.entity_short_name} local technology budget plus selective corporate value-office funding`,
+      impacted_systems: systems,
+      impacted_org_roles: roleInitiatives(sponsor, entity),
+      value_metric: metric,
     })));
   }
   return rows;
+}
+
+function programValueMetric(name) {
+  if (/Kyriba|treasury/i.test(name)) return 'cash visibility coverage, bank feed certification, payment-control exceptions';
+  if (/close/i.test(name)) return 'close days, reconciliation aging, manual journal count, controller signoff';
+  if (/Legal|contract/i.test(name)) return 'contract cycle time, matter triage time, outside counsel spend avoided';
+  if (/service desk|employee/i.test(name)) return 'case deflection, first-contact resolution, employee CSAT, policy exception rate';
+  if (/data|semantic/i.test(name)) return 'certified data products, lineage coverage, semantic definition adoption';
+  return 'committed value, proven value, adoption, and control evidence';
+}
+
+function opcoProgramsForEntity(entity) {
+  const systems = (opcoDepthProfiles[entity.entity_id]?.systems ?? []).map(([name]) => `${entity.entity_short_name} ${name}`);
+  const budget = entity.total_direct_technology_budget_usd;
+  const common = [
+    [`${entity.entity_short_name} data readiness and budget-to-value spine`, 'in_flight', entity.cxo_sponsor, 'map local IT budget to systems, projects, owners, and proof of value', Math.round(budget * 0.06), systems.filter((s) => /ERP|Analytics|Data|Integration/i.test(s)).slice(0, 4).join('; '), 'budget mapped to initiative, owner, value hypothesis, and source evidence'],
+    [`${entity.entity_short_name} application rationalization and integration cleanup`, 'candidate', `${entity.entity_short_name} IT Operations Manager`, 'reduce duplicated local tools, fragile point-to-point integrations, and unsupported reporting extracts', Math.round(budget * 0.045), systems.filter((s) => /ERP|Integration|EDI|Gateway|Portal|Analytics/i.test(s)).slice(0, 5).join('; '), 'applications retired, interfaces simplified, run-cost avoided, incident reduction'],
+    [`${entity.entity_short_name} frontline AI adoption and control gate`, 'candidate', 'Business Process Owner', 'prepare role-specific copilots with approved knowledge, workflow boundaries, and adoption measures', Math.round(budget * 0.035), systems.filter((s) => /Mobile|Service|Portal|Workflow|Knowledge|Safety|Quality/i.test(s)).slice(0, 5).join('; '), 'active users, deflection, cycle time, human review exceptions, adoption'],
+  ];
+  if (entity.entity_id === 'LSH-OPCO-NLS') return [...common, ['Northline dock-to-delivery control tower', 'planned', 'VP Supply Chain', 'reduce detention, late loads, cold-chain exceptions, and route-cost leakage', Math.round(budget * 0.14), systems.filter((s) => /WMS|TMS|Yard|Fleet|Cold|Visibility/i.test(s)).join('; '), 'on-time delivery, dwell time, claims, cost per mile']];
+  if (entity.entity_id === 'LSH-OPCO-BMS') return [...common, ['Brightmark campaign margin and fulfillment cockpit', 'planned', 'VP Client Operations', 'connect campaign plan, creative proofing, fulfillment exceptions, consent, and margin evidence', Math.round(budget * 0.13), systems.filter((s) => /Campaign|Loyalty|Fulfillment|Consent|Analytics|Workflow/i.test(s)).join('; '), 'launch cycle time, margin leakage, SLA, consent exceptions']];
+  if (entity.entity_id === 'LSH-OPCO-FFF') return [...common, ['Forge & Field trade promotion and demand decision cockpit', 'planned', 'VP Finance', 'connect trade spend, forecast, deductions, DTC orders, and product quality evidence', Math.round(budget * 0.13), systems.filter((s) => /Trade|Demand|DTC|Order|Quality|Retail/i.test(s)).join('; '), 'promo ROI, deduction aging, forecast accuracy, gross-to-net leakage']];
+  if (entity.entity_id === 'LSH-OPCO-GLP') return [...common, ['Great Lakes Pantry route and machine telemetry optimization', 'planned', 'VP Route Operations', 'reduce stockouts, route rework, spoilage, machine downtime, and service calls', Math.round(budget * 0.12), systems.filter((s) => /Route|Vending|POS|Food|Telemetry|Machine/i.test(s)).join('; '), 'stockout rate, route adherence, spoilage, service-call aging']];
+  if (entity.entity_id === 'LSH-OPCO-HPG') return [...common, ['HarborPoint plant schedule, OEE, and quality evidence cockpit', 'planned', 'COO', 'connect schedule churn, downtime, scrap, quality release, and shipment evidence', Math.round(budget * 0.15), systems.filter((s) => /MES|SCADA|Quality|CMMS|Scheduling|OEE|ERP/i.test(s)).join('; '), 'OEE, schedule adherence, scrap, downtime, OTIF']];
+  if (entity.entity_id === 'LSH-OPCO-RCF') return [...common, ['Riverton field-service margin and SLA cockpit', 'planned', 'VP Field Operations', 'connect dispatch, parts, technician mobile work, warranty, billing, and service margin evidence', Math.round(budget * 0.14), systems.filter((s) => /Field|Mobile|Parts|Warranty|Scheduling|Service/i.test(s)).join('; '), 'SLA attainment, utilization, first-time fix, unbilled work']];
+  return [...common, ['Keystone contract mobilization and field execution cockpit', 'planned', 'VP Field Operations', 'connect contract scope, work orders, crew scheduling, safety permits, billing evidence, and SLA performance', Math.round(budget * 0.14), systems.filter((s) => /Contract|Work Order|Scheduling|Safety|Billing|SLA/i.test(s)).join('; '), 'contract margin, SLA, safety exceptions, billing evidence completeness']];
 }
 
 function buildAiInitiatives(programs) {
@@ -873,6 +1371,10 @@ function buildRelationships(functions, systems, vendors, dataAssets, programs) {
       graph_materialization_status: 'ready',
     }));
   }
+  for (const opco of opcos) {
+    add(corporateEntity, corporateEntity.entity_name, 'holding_company', 'owns', opco.entity_name, 'portfolio_company', 'strong');
+    add(opco, opco.entity_name, 'portfolio_company', 'reports_to', corporateEntity.entity_name, 'holding_company', 'strong');
+  }
   for (const entity of [corporateEntity, ...opcos]) {
     const ef = functions.filter((row) => row.entity_id === entity.entity_id);
     const es = systems.filter((row) => row.entity_id === entity.entity_id);
@@ -898,6 +1400,14 @@ function buildRelationships(functions, systems, vendors, dataAssets, programs) {
     for (const program of ep) {
       add(entity, program.priority_name, 'program_initiative', 'depends_on', ef[edge % ef.length]?.function_name ?? 'Digital and IT', 'business_function', 'strong');
       add(entity, program.priority_name, 'program_initiative', 'requires_data_from', ed[edge % ed.length]?.data_asset_name ?? 'data product', 'data_asset', 'medium');
+    }
+    if (entity.entity_scope === 'portfolio_company') {
+      const shared = sharedCorporateSystemsForFunction({ function_name: 'Finance and Controller', function_category: 'finance' }, systems)
+        .concat(sharedCorporateSystemsForFunction({ function_name: 'Digital and IT', function_category: 'technology' }, systems))
+        .slice(0, 6);
+      for (const system of shared) {
+        add(entity, system.system_name, 'corporate_shared_system', 'serves_portfolio_company', entity.entity_name, 'portfolio_company', 'strong');
+      }
     }
   }
   return rows;
@@ -1044,32 +1554,22 @@ function simpleDimension(entityRows, prefix, rowsPerEntity, fields) {
 
 function buildOtherDimensions(functions, systems, vendors, dataAssets, programs) {
   return {
-    'V7_15_industry_market_knowledge_patterns.csv': [
-      ['Back-office AI value office', 'industrial_shared_services', 'prioritize finance, HR, legal, procurement, and IT service workflows where volume, baseline, and owner exist'],
-      ['Finance close automation', 'finance_transformation', 'gate AI on reconciliation evidence, account ownership, and close-cycle baseline'],
-      ['Treasury cash forecasting', 'treasury', 'certify bank feeds, ERP/AP/AR/GL quality, and signer controls before scaling'],
-      ['Legal AI intake', 'legal_operations', 'start with matter triage and clause playbooks; keep attorney review controls'],
-      ['HR shared services assistant', 'hr_operations', 'ground policy answers in HR knowledge base and case taxonomy before broad rollout'],
-    ].map(([pattern_name, industry_domain, recommended_actions], index) => ({ pattern_id: `PAT-${String(index + 1).padStart(3, '0')}`, pattern_name, industry_domain, recommended_actions, pattern_confidence: 'high', ...commonEvidence })),
-    'V7_16_expert_lenses.csv': [
-      ['CIO', 'technology_portfolio', 'what should we scale, certify, hold, or stop', 'proof of ownership, integration depth, run cost, value baseline'],
-      ['CFO', 'value_and_controls', 'what value is committed vs proven', 'finance attestation, baseline, control evidence'],
-      ['VP Innovation', 'ai_and_automation', 'where should AI change how work is done', 'use-case owner, adoption path, data readiness, risk gate'],
-      ['CHRO', 'people_and_shared_services', 'where HR AI can improve service without policy risk', 'policy grounding, HRIS data, employee experience baseline'],
-      ['General Counsel', 'legal_ai_governance', 'where legal AI can safely assist', 'matter type, privilege, attorney review, retention policy'],
-    ].map(([expert_lens_name, lens_domain, question_families, decision_criteria], index) => ({ lens_id: `LENS-${String(index + 1).padStart(3, '0')}`, expert_lens_name, lens_domain, question_families, decision_criteria, ...commonEvidence })),
-    'V7_17_client_rate_card_cost_basis.csv': simpleDimension([corporateEntity], 'RATE', 18, (entity, index) => ({
+    'V7_15_industry_market_knowledge_patterns.csv': industryPatterns(),
+    'V7_16_expert_lenses.csv': expertLenses(),
+    'V7_17_client_rate_card_cost_basis.csv': simpleDimension([corporateEntity], 'RATE', 54, (entity, index) => ({
       rate_card_id: `RATE-${String(index + 1).padStart(3, '0')}`,
-      service_tower: ['Finance operations', 'HR operations', 'Legal operations', 'IT service desk', 'Data engineering', 'Automation delivery'][index % 6],
-      role_family: ['analyst', 'senior analyst', 'manager'][index % 3],
+      service_tower: ['Finance operations', 'HR operations', 'Legal operations', 'IT service desk', 'Data engineering', 'Automation delivery', 'Cyber operations', 'ERP/application support', 'Field-service process analytics'][index % 9],
+      role_family: ['analyst', 'senior analyst', 'manager', 'solution architect', 'process owner', 'data steward'][index % 6],
       seniority: ['junior', 'mid', 'senior'][index % 3],
       delivery_location: ['US', 'nearshore', 'offshore'][index % 3],
-      rate_usd_per_hour: [85, 115, 150, 55, 42, 75][index % 6],
+      rate_usd_per_hour: [85, 115, 150, 175, 130, 105, 95, 145, 165][index % 9],
+      applicability: ['run operations', 'transformation project', 'AI readiness sprint', 'managed service baseline'][index % 4],
+      assumptions: 'Synthetic planning rate; client must validate actual vendor/rate-card terms before sourcing or business-case use.',
     })),
-    'V7_19_service_tower_managed_services_scope.csv': simpleDimension([corporateEntity, ...opcos], 'TOWER', 6, (entity, index) => ({
+    'V7_19_service_tower_managed_services_scope.csv': simpleDimension([corporateEntity, ...opcos], 'TOWER', 8, (entity, index) => ({
       scope_id: id('TOWER', entity, `scope ${index}`, index),
-      service_tower: ['Finance operations', 'HR operations', 'Legal operations', 'IT operations', 'Data platform', 'Automation factory'][index % 6],
-      scope_item: `${entity.entity_short_name} ${['intake', 'fulfillment', 'quality review', 'reporting', 'controls', 'continuous improvement'][index % 6]}`,
+      service_tower: ['Finance operations', 'HR operations', 'Legal operations', 'IT operations', 'Data platform', 'Automation factory', 'Application support', 'Cyber / identity operations'][index % 8],
+      scope_item: `${entity.entity_short_name} ${['intake', 'fulfillment', 'quality review', 'reporting', 'controls', 'continuous improvement', 'knowledge management', 'exception triage'][index % 8]}`,
       included_services: 'intake, triage, execution, reporting, exception handling',
       sla: ['P1 4h', 'P2 1 business day', 'P3 3 business days'][index % 3],
       pricing_unit: ['per ticket', 'per FTE', 'per workflow', 'per application'][index % 4],
@@ -1096,30 +1596,137 @@ function buildOtherDimensions(functions, systems, vendors, dataAssets, programs)
       ['depends_on', 'program_initiative', 'business_function', 'required by'],
       ['requires_data_from', 'program_initiative', 'data_asset', 'required by'],
     ].map(([edge_type, allowed_from, allowed_to, inverse_label], index) => ({ relationship_dictionary_id: `REL-DICT-${index + 1}`, edge_type, allowed_from, allowed_to, inverse_label, evidence_required: 'source artifact, owner, and relationship strength', ...commonEvidence })),
-    'V7_22_operational_evidence_process_intelligence.csv': simpleDimension([corporateEntity, ...opcos], 'PROC', 10, (entity, index) => ({
+    'V7_22_operational_evidence_process_intelligence.csv': simpleDimension([corporateEntity, ...opcos], 'PROC', 14, (entity, index) => ({
       process_id: id('PROC', entity, `process ${index}`, index),
-      process: ['AP invoice exception', 'employee service request', 'contract review intake', 'IT access request', 'customer case escalation', 'production schedule exception', 'supplier onboarding', 'forecast variance review', 'quality hold resolution', 'work order dispatch'][index % 10],
+      process: ['AP invoice exception', 'employee service request', 'contract review intake', 'IT access request', 'customer case escalation', 'production schedule exception', 'supplier onboarding', 'forecast variance review', 'quality hold resolution', 'work order dispatch', 'trade deduction dispute', 'route/service exception', 'safety/compliance evidence', 'data-quality certification'][index % 14],
       work_item_type: ['ticket', 'case', 'approval', 'exception'][index % 4],
       volume: 400 + index * 125 + Math.round(entity.employee_count / 10),
       cycle_time: `${2 + (index % 7)} days`,
       bottleneck: ['manual approval', 'missing master data', 'unclear owner', 'duplicate entry', 'policy lookup'][index % 5],
     })),
-    'V7_23_external_benchmark_market_corpus.csv': [
-      ['Shared services automation rate', 'industrial', 'North America', 0.12, 0.35],
-      ['Finance close cycle days', 'industrial', 'North America', 4, 8],
-      ['HR case deflection with AI', 'industrial', 'North America', 0.15, 0.42],
-      ['Legal contract AI cycle-time reduction', 'industrial', 'North America', 0.10, 0.30],
-      ['IT ticket deflection with knowledge AI', 'industrial', 'North America', 0.18, 0.45],
-    ].map(([benchmark_name, industry, geography, range_low, range_high], index) => ({ benchmark_id: `BM-${String(index + 1).padStart(3, '0')}`, benchmark_name, industry, geography, range_low, range_high, benchmark_basis: 'synthetic planning benchmark; not tenant fact', ...commonEvidence })),
-    'V7_24_infrastructure_cloud_estate.csv': simpleDimension([corporateEntity, ...opcos], 'INFRA', 12, (entity, index) => ({
+    'V7_23_external_benchmark_market_corpus.csv': externalBenchmarks(),
+    'V7_24_infrastructure_cloud_estate.csv': simpleDimension([corporateEntity, ...opcos], 'INFRA', 16, (entity, index) => ({
       estate_item_id: id('INFRA', entity, `infra ${index}`, index),
-      estate_item_name: `${entity.entity_short_name} ${['Azure landing zone', 'AWS workload account', 'plant network segment', 'endpoint fleet', 'identity tenant', 'backup vault', 'data gateway', 'API gateway', 'VDI pool', 'warehouse Wi-Fi', 'OT firewall', 'monitoring workspace'][index % 12]}`,
+      estate_item_name: `${entity.entity_short_name} ${['Azure landing zone', 'AWS workload account', 'plant network segment', 'endpoint fleet', 'identity tenant', 'backup vault', 'data gateway', 'API gateway', 'VDI pool', 'warehouse Wi-Fi', 'OT firewall', 'monitoring workspace', 'branch SD-WAN', 'mobile device fleet', 'secrets vault', 'observability collector'][index % 16]}`,
       infrastructure_category: ['cloud', 'network', 'endpoint', 'identity', 'backup', 'integration', 'security', 'observability'][index % 8],
       hosting_deployment_model: ['Azure', 'AWS', 'hybrid', 'plant_edge'][index % 4],
       criticality: index % 5 === 0 ? 'critical' : 'high',
       primary_location_region: entity.headquarters,
     })),
   };
+}
+
+function industryPatterns() {
+  const rows = [
+    ['Back-office AI value office', 'industrial_shared_services', 'prioritize finance, HR, legal, procurement, and IT service workflows where volume, baseline, and owner exist', 'CIO; CFO; VP Innovation', 'applies to Lakeshore corporate shared services'],
+    ['Finance close automation', 'finance_transformation', 'gate AI on reconciliation evidence, account ownership, and close-cycle baseline', 'CFO; Controller', 'applies to corporate and all OpCos'],
+    ['Treasury cash forecasting', 'treasury', 'certify bank feeds, ERP/AP/AR/GL quality, and signer controls before scaling', 'Treasurer; CFO', 'applies to Kyriba readiness'],
+    ['Legal AI intake', 'legal_operations', 'start with matter triage and clause playbooks; keep attorney review controls', 'General Counsel', 'applies to Icertis and Legal Tracker'],
+    ['HR shared services assistant', 'hr_operations', 'ground policy answers in HR knowledge base and case taxonomy before broad rollout', 'CHRO', 'applies to Workday / employee service'],
+    ['Logistics control tower', 'distribution_logistics', 'connect WMS, TMS, YMS, telematics, carrier visibility, and freight audit before claiming route-cost savings', 'Northline VP Supply Chain', 'Northline Supply Chain'],
+    ['Cold-chain exception management', 'foodservice_distribution', 'treat temperature excursions, route delays, and recall evidence as one operating graph', 'Northline VP Quality', 'Northline Supply Chain'],
+    ['Campaign margin cockpit', 'marketing_services', 'link campaign brief, fulfillment cost, client billing, consent, and SLA evidence to find margin leakage', 'Brightmark VP Client Operations', 'Brightmark Marketing Services'],
+    ['Consent-safe loyalty AI', 'marketing_services', 'separate tenant facts, client data permissions, and consumer consent before service automation', 'Brightmark General Counsel', 'Brightmark Marketing Services'],
+    ['Trade promotion ROI control', 'consumer_products', 'connect TPM, deductions, demand, retail EDI, and product master before reallocating spend', 'Forge & Field VP Finance', 'Forge & Field Consumer Products'],
+    ['DTC and retail order orchestration', 'consumer_products', 'use OMS, DTC, retail EDI, WMS, and service cases to find customer-cost leakage', 'Forge & Field VP Digital Commerce', 'Forge & Field Consumer Products'],
+    ['Vending telemetry replenishment', 'foodservice', 'use machine telemetry, POS, route plans, and spoilage data to prioritize replenishment automation', 'Great Lakes Pantry VP Route Operations', 'Great Lakes Pantry Services'],
+    ['Food safety evidence pack', 'foodservice', 'HACCP, allergen, recall, and route/product evidence must be certified before AI-driven exception decisions', 'Great Lakes Pantry VP Quality', 'Great Lakes Pantry Services'],
+    ['Plant OEE and quality cockpit', 'packaging_manufacturing', 'connect MES, SCADA, historian, QMS, CMMS, and schedule data before claiming productivity value', 'HarborPoint COO', 'HarborPoint Packaging Group'],
+    ['Specification-to-quality traceability', 'packaging_manufacturing', 'customer specs, print workflow, quality release, and shipment evidence should share a single product/spec spine', 'HarborPoint VP Quality', 'HarborPoint Packaging Group'],
+    ['Field-service margin leakage', 'industrial_field_services', 'combine work order, technician mobile, parts, warranty, and billing evidence to find unbilled work', 'Riverton VP Field Operations', 'Riverton Components & Field Services'],
+    ['Installed-base service intelligence', 'industrial_field_services', 'link asset registry, remote monitoring, service history, and contract entitlement before predictive service claims', 'Riverton CIO', 'Riverton Components & Field Services'],
+    ['Contract mobilization controls', 'industrial_services', 'link contract scope, crew scheduling, permits, work orders, and billing evidence before scaling automation', 'Keystone VP Field Operations', 'Keystone Industrial Services'],
+    ['Safety-first industrial AI', 'industrial_services', 'permit-to-work, certification, incident, and subcontractor evidence should gate AI recommendations', 'Keystone VP Safety', 'Keystone Industrial Services'],
+    ['Holdco platform rationalization', 'portfolio_company_rollup', 'distinguish corporate-run platforms from OpCo-local systems; optimize standards without flattening operating differences', 'Corporate CIO', 'Lakeshore Holdings'],
+    ['Budget-to-value governance', 'portfolio_company_rollup', 'map each technology spend bucket to initiative, owner, impacted systems, value metric, and proof status', 'CFO; Corporate CIO', 'Lakeshore Holdings'],
+    ['Semantic entity spine', 'portfolio_company_rollup', 'a holdco needs stable entity, function, system, owner, vendor, and data-product IDs before cross-company AI answers', 'Chief Data Officer', 'Lakeshore Holdings'],
+    ['Shared-services chargeback design', 'shared_services', 'show which OpCos consume each corporate service and which data proves usage, SLA, and cost allocation', 'Director Shared Services', 'Lakeshore Holdings'],
+    ['Copilot adoption boundary', 'knowledge_work_ai', 'ground each assistant in approved policy, process, data product, and human-review control', 'VP Innovation', 'Lakeshore Holdings'],
+  ];
+  return rows.map(([pattern_name, industry_domain, recommended_actions, executive_audience, relevance], index) => ({
+    pattern_id: `PAT-${String(index + 1).padStart(3, '0')}`,
+    pattern_name,
+    industry_domain,
+    recommended_actions,
+    executive_audience,
+    relevance_to_lakeshore: relevance,
+    pattern_confidence: 'high',
+    grounding_boundary: 'industry/pattern context, not tenant fact unless tied to Lakeshore evidence',
+    ...commonEvidence,
+  }));
+}
+
+function expertLenses() {
+  const rows = [
+    ['Corporate CIO', 'technology_portfolio', 'what should we standardize, delegate, rationalize, or leave OpCo-local', 'ownership, integration depth, run cost, criticality, value baseline'],
+    ['CFO', 'value_and_controls', 'what value is committed vs proven and where spend lacks evidence', 'finance attestation, baseline, control evidence, budget owner'],
+    ['VP Innovation', 'ai_and_automation', 'where should AI change how work is done without creating unmanaged risk', 'use-case owner, adoption path, data readiness, risk gate'],
+    ['CHRO', 'people_and_shared_services', 'where HR AI can improve service without policy risk', 'policy grounding, HRIS data, employee experience baseline'],
+    ['General Counsel', 'legal_ai_governance', 'where legal AI can safely assist', 'matter type, privilege, attorney review, retention policy'],
+    ['CISO', 'security_and_identity', 'which AI or integration path changes identity, data, or cyber risk', 'access model, privileged access, data classification, audit evidence'],
+    ['Chief Data Officer', 'data_products', 'which facts are ready for executive decisions and which need certification', 'owner, source, lineage, quality, freshness SLA'],
+    ['Treasurer', 'treasury_controls', 'what must be true before Kyriba or cash forecasting is decision-grade', 'bank feed, ERP/AP/AR/GL quality, signer controls'],
+    ['VP Enterprise Applications', 'application_modernization', 'which systems are core, duplicated, fragile, or modernization candidates', 'criticality, lifecycle, interfaces, business process dependency'],
+    ['VP IT Operations', 'run_operations', 'where service quality, incidents, and asset data point to operating risk', 'ticket volume, SLA, CMDB, change failure, endpoint health'],
+    ['VP Procurement', 'vendor_commercials', 'where supplier renewals or contracts create leverage or risk', 'renewal, spend, concentration, service quality, exit risk'],
+    ['Director Shared Services', 'service_delivery', 'which shared services need SLA, chargeback, or intake redesign', 'volume, cost per transaction, service levels, OpCo consumption'],
+    ['OpCo President', 'portfolio_company_p_and_l', 'which technology or AI choices matter to local P&L execution', 'revenue, margin, service level, operating risk, local ownership'],
+    ['OpCo CIO', 'local_technology', 'which systems must stay local versus align to corporate standards', 'process specificity, integration, cost, risk, corporate dependency'],
+    ['COO', 'operations_transformation', 'which operating process has the clearest exception and value pattern', 'volume, cycle time, service level, safety, quality'],
+    ['VP Field Operations', 'field_service', 'where dispatch, workforce, parts, and billing evidence show leakage', 'utilization, SLA, work-order aging, first-time fix, unbilled work'],
+    ['VP Supply Chain', 'supply_chain', 'where planning, inventory, transportation, or supplier evidence should drive action', 'OTIF, inventory accuracy, forecast, freight cost, supplier performance'],
+    ['VP Quality', 'quality_and_compliance', 'what needs certification before AI can advise on quality or safety', 'inspection evidence, nonconformance, traceability, corrective action'],
+  ];
+  return rows.map(([expert_lens_name, lens_domain, question_families, decision_criteria], index) => ({
+    lens_id: `LENS-${String(index + 1).padStart(3, '0')}`,
+    expert_lens_name,
+    lens_domain,
+    question_families,
+    decision_criteria,
+    default_canvas: index % 3 === 0 ? 'proof boundary' : index % 3 === 1 ? 'value-readiness matrix' : 'gate-to-value roadmap',
+    ...commonEvidence,
+  }));
+}
+
+function externalBenchmarks() {
+  const rows = [
+    ['Shared services automation rate', 'industrial', 'North America', 0.12, 0.35, 'percentage of eligible transactional work automated'],
+    ['Finance close cycle days', 'industrial', 'North America', 4, 8, 'business days from period end to management close'],
+    ['HR case deflection with AI', 'industrial', 'North America', 0.15, 0.42, 'share of HR cases resolved through governed knowledge/self-service'],
+    ['Legal contract AI cycle-time reduction', 'industrial', 'North America', 0.10, 0.30, 'cycle-time improvement for low/medium-risk contract intake'],
+    ['IT ticket deflection with knowledge AI', 'industrial', 'North America', 0.18, 0.45, 'share of tickets resolved through knowledge or automated workflow'],
+    ['Warehouse pick accuracy', 'distribution', 'North America', 0.985, 0.998, 'order-line accuracy range for mature WMS environments'],
+    ['Transportation cost reduction from TMS optimization', 'logistics', 'North America', 0.03, 0.08, 'planning benchmark for routing/tendering optimization'],
+    ['Yard dwell time reduction', 'logistics', 'North America', 0.10, 0.25, 'reduction from appointment/YMS visibility improvement'],
+    ['Cold-chain exception reduction', 'food_distribution', 'North America', 0.08, 0.20, 'reduction in preventable temperature excursions'],
+    ['Trade promotion ROI improvement', 'consumer_products', 'North America', 0.05, 0.15, 'gross-to-net / trade effectiveness improvement range'],
+    ['Retail deduction aging reduction', 'consumer_products', 'North America', 0.15, 0.35, 'reduction in aged deductions through evidence matching'],
+    ['DTC customer case handle-time reduction', 'consumer_products', 'North America', 0.10, 0.28, 'service AI / order-context assistant benchmark'],
+    ['Manufacturing OEE improvement', 'packaging_manufacturing', 'North America', 0.03, 0.10, 'improvement from MES/CMMS/scheduling evidence cockpit'],
+    ['Scrap reduction from quality analytics', 'packaging_manufacturing', 'North America', 0.04, 0.12, 'scrap reduction from nonconformance and process visibility'],
+    ['Maintenance downtime reduction', 'manufacturing', 'North America', 0.05, 0.15, 'planned/unplanned downtime reduction benchmark'],
+    ['Field technician utilization improvement', 'field_services', 'North America', 0.05, 0.14, 'utilization uplift from scheduling, parts, and mobile workflow'],
+    ['First-time fix improvement', 'field_services', 'North America', 0.04, 0.12, 'first-time fix improvement from knowledge and parts visibility'],
+    ['Unbilled work recovery', 'industrial_services', 'North America', 0.01, 0.04, 'revenue leakage recoverable through time/material evidence'],
+    ['Safety incident reporting cycle-time reduction', 'industrial_services', 'North America', 0.15, 0.35, 'cycle-time improvement with mobile safety evidence'],
+    ['Application rationalization savings', 'portfolio_company_rollup', 'North America', 0.04, 0.12, 'addressable app run-cost reduction after dependency mapping'],
+    ['Integration incident reduction', 'portfolio_company_rollup', 'North America', 0.10, 0.30, 'reduction from API/EDI simplification and monitoring'],
+    ['Data quality incident reduction', 'data_platform', 'North America', 0.15, 0.40, 'reduction from ownership, lineage, and observability controls'],
+    ['Employee service satisfaction improvement', 'shared_services', 'North America', 0.05, 0.18, 'experience lift from service catalog and AI-assisted support'],
+    ['Supplier onboarding cycle-time reduction', 'procurement', 'North America', 0.15, 0.35, 'cycle-time improvement from workflow and evidence automation'],
+  ];
+  return rows.map(([benchmark_name, industry, geography, range_low, range_high, benchmark_definition], index) => ({
+    benchmark_id: `BM-${String(index + 1).padStart(3, '0')}`,
+    benchmark_name,
+    industry,
+    geography,
+    range_low,
+    range_high,
+    benchmark_definition,
+    benchmark_basis: 'synthetic planning benchmark; not tenant fact',
+    recommended_use: 'Use only for directional scenario framing until replaced by client data or licensed market evidence.',
+    ...commonEvidence,
+  }));
 }
 
 async function main() {
@@ -1405,6 +2012,7 @@ function validatePack(files) {
   }
 
   const thresholds = [
+    ['V7_00_portfolio_entity_registry.csv', 8],
     ['V7_01_enterprise_profile.csv', opcoRows.length + 1],
     ['V7_02_business_functions.csv', 90],
     ['V7_03_org_ownership.csv', 110],
@@ -1412,8 +2020,23 @@ function validatePack(files) {
     ['V7_05_applications_systems.csv', 140],
     ['V7_06_data_assets_integrations.csv', 80],
     ['V7_07_vendors_contracts.csv', 90],
+    ['V7_08_spend_value.csv', 55],
+    ['V7_09_programs_initiatives_business_priorities.csv', 35],
+    ['V7_10_ai_initiatives.csv', 35],
+    ['V7_11_operations_risk_controls.csv', 48],
     ['V7_12_relationships_graph_edges.csv', 450],
+    ['V7_13_source_evidence_registry.csv', 48],
+    ['V7_14_metric_definitions.csv', 350],
+    ['V7_15_industry_market_knowledge_patterns.csv', 20],
+    ['V7_16_expert_lenses.csv', 15],
+    ['V7_17_client_rate_card_cost_basis.csv', 45],
     ['V7_18_function_system_data_vendor_bridge.csv', 430],
+    ['V7_19_service_tower_managed_services_scope.csv', 60],
+    ['V7_20_chunk_retrieval_registry.csv', 350],
+    ['V7_21_graph_registry_relationship_dictionary.csv', 6],
+    ['V7_22_operational_evidence_process_intelligence.csv', 100],
+    ['V7_23_external_benchmark_market_corpus.csv', 20],
+    ['V7_24_infrastructure_cloud_estate.csv', 120],
   ];
   for (const [file, min] of thresholds) {
     const count = files[file]?.length ?? 0;
@@ -1468,6 +2091,7 @@ function validatePack(files) {
     systems: files['V7_05_applications_systems.csv'].length,
     relationships: files['V7_12_relationships_graph_edges.csv'].length,
     bridgeRows: files['V7_18_function_system_data_vendor_bridge.csv'].length,
+    allDimensionHealth: thresholds.map(([file, min]) => ({ file, rows: files[file]?.length ?? 0, min, pass: (files[file]?.length ?? 0) >= min })),
     errors: errors.length,
     warnings: warnings.length,
   };

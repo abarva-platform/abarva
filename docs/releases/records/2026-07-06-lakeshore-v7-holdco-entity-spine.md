@@ -14,9 +14,9 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 
 ## Layer Impact
 
-- `client-data-lane`: Adds a repo-owned Lakeshore V7.1 synthetic holdco pack under `datasets/lakeshore-industries-synthetic-v7-holdco/`.
+- `client-data-lane`: Adds a repo-owned Lakeshore V7.1.1 synthetic holdco pack under `datasets/lakeshore-industries-synthetic-v7-holdco/`.
 - `client-data-lane`: Adds the required entity-spine SQL extension for `intelligence_v7` so Azure Postgres can query `entity_id`, `parent_entity_id`, and entity coverage directly.
-- `client-data-lane`: Adds an ACA-job-safe V7.1 loader script that defaults to the baked Lakeshore payload and applies the entity-spine SQL extension after load.
+- `client-data-lane`: Adds an ACA-job-safe V7.1.1 loader script that defaults to the baked Lakeshore payload and applies the entity-spine SQL extension after load.
 - `global-control-lane`: Updates the Home V7 browser read-model labels so a loaded entity spine appears as `Portfolio Company Hierarchy`.
 - `global-control-lane`: Hardens Home V7 dimension selection to derive visible dimensions from actual tenant records, then use the registry for labels/metadata, so a newer Lakeshore contract does not hide older validated V7 records for other tenants.
 
@@ -48,21 +48,34 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 - `npm run v7:lakeshore:holdco:validate` — Pass.
 - Hygiene summary — Pass:
   - 25 files
-  - 2,974 rows
+  - 3,094 rows
   - 8 entity rows
   - 7 named portfolio companies
   - 96 business functions
   - 116 org ownership rows
   - 82 workforce personas
-  - 150 application/system rows
-  - 522 relationship edges
-  - 595 function/system/data/vendor bridge rows, including OpCo consumption of corporate shared systems
+  - 152 application/system rows
+  - 529 relationship edges
+  - 510 function/system/data/vendor bridge rows, including OpCo consumption of corporate shared systems
+  - All 25 V7 dimensions pass explicit row-count health gates
   - 0 hygiene errors
 - Corporate shared application coverage — Pass:
   - 24 holdco-owned shared-service systems
-  - 18 local systems per named portfolio company
+  - 16-20 local systems per named portfolio company, tailored by OpCo archetype
   - Every corporate shared-service system lists all 7 served portfolio companies
   - Every portfolio company has at least 12 corporate-shared-system consumption bridge rows
+- Budget / project / people depth — Pass:
+  - IT budget rows map to corporate vs OpCo spend categories, initiative refs, funding status, and value-evidence status
+  - Program rows include budget, sponsor, impacted systems, value metric, and decision required
+  - Org ownership rows include accountable budget, team size, escalation path, and key initiatives owned
+  - Workforce persona rows include population basis, systems used, pain points, AI need, and decisions supported
+- Small-dimension health — Pass:
+  - Industry/pattern corpus expanded to 24 patterns
+  - Expert lenses expanded to 18 lenses
+  - External benchmark corpus expanded to 24 benchmarks
+  - Rate card expanded to 54 rows
+  - Operational process evidence expanded to 112 rows
+  - Infrastructure/cloud estate expanded to 128 rows
 - `npx jest src/lib/home/__tests__/v7-context-browser.test.ts --runInBand` — Pass after linking existing local `node_modules` into the clean worktree.
 - `node --check scripts/v7/load-lakeshore-holdco-v7-azure.mjs` — Pass.
 - `node --check scripts/v7/readback-lakeshore-holdco-v7-azure.mjs` — Pass.
@@ -89,7 +102,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 
 ## Rollback Plan
 
-- Data rollback: Mark the V7.1 Lakeshore run as superseded and restore traffic/read-model use to the prior validated V7.0 contract.
+- Data rollback: Mark the V7.1.1 Lakeshore run as superseded and restore traffic/read-model use to the prior validated V7.0 or V7.1 contract.
 - Schema rollback: The SQL extension is additive. If needed, stop using the new views/columns; do not drop columns during active proof unless a DBA/operator approves.
 - App rollback: Revert the Home V7 browser display change or redeploy the prior ACA image.
 

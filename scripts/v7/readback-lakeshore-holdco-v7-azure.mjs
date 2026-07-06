@@ -4,7 +4,7 @@ import fs from 'node:fs';
 const requireFromApp = createRequire(fs.existsSync('/app/package.json') ? '/app/package.json' : new URL('../../package.json', import.meta.url));
 const { Client } = requireFromApp('pg');
 
-const contractVersion = process.env.V7_CONTRACT_VERSION || 'v7.1.0-holdco-entity-spine-20260706';
+const contractVersion = process.env.V7_CONTRACT_VERSION || 'v7.1.1-holdco-depth-correction-20260706';
 const tenantKey = process.env.V7_TENANT_KEY || 'lakeshore-industries';
 const connectionString = process.env.DATABASE_URL || process.env.ABARVA_AZURE_DATABASE_URL || process.env.AZURE_DATABASE_URL;
 
