@@ -127,7 +127,9 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
   - `total_it_budget_fy25_baseline`: `$179.2M` from 8 source facts
 - Signed-in deployed browser proof — Pass:
   - Proof folder: `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z`
+  - Restored-traffic proof folder after another revision briefly superseded traffic: `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-restored-20260706T202414Z`
   - Browser checks: 21/21 passed
+  - Restored smoke checks: 5/5 passed after returning traffic to `ca-abarva-web-lab-eastus--0000261`
   - Home shows 25 context areas, 3.09K/3,094 records, 25 source files, 916 gaps, and Portfolio Company Hierarchy
   - Portfolio Company Hierarchy shows 8 loaded records
   - Enterprise Profile shows 8 loaded records and money formatted in M/B terms
@@ -152,7 +154,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 - Repo-owned deploy workflow: Manual ACA release executed from exact git SHA under the approved Azure Container Apps lane.
 - Shared runtime mutators: Azure Postgres schema extension and V7 loader job.
 - Approved image digest: `sha256:22421165790264ed5622b4c1aa832930faf50ebf6dca39e4cdfdac1e7d3c42c0`.
-- ACA runtime invariant: `ca-abarva-web-lab-eastus--0000261` is latest-ready and receives 100% traffic.
+- ACA runtime invariant: `ca-abarva-web-lab-eastus--0000261` is healthy and receives 100% ingress traffic.
 - Worker image invariant: V7 and Tower reload/readback jobs ran through the ACA private operator lane with digest-pinned images.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Complete.
@@ -190,6 +192,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
   - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/01-home-overview.png`
   - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/05-home-enterprise-profile-data.png`
   - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/08-tower-overview.png`
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-restored-20260706T202414Z/restored-proof.json`
 
 ## Known Gaps
 
