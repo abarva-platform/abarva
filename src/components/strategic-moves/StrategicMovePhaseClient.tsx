@@ -1874,19 +1874,19 @@ export function StrategicMovePhaseClient({
   const isCurrentPhase = move.currentPhase === phaseNum;
   const gateItemsWithStatus = isCurrentPhase ? move.gateCriteria : [];
 
-  // Evidence Workbench: the CURRENT phase gets the evidence-first surface with
-  // the gate-clarity panel (criteria met/unmet, "N of M met", "To advance to
-  // Pn"). P0 is included so Originate shows the same "what completes this phase"
-  // clarity as P2–P5 instead of a bare capture canvas — its gate criteria
-  // (governance GATE_RULES 0→1: seed, hypothesis, sponsor, scope, evidence
-  // family) already exist on move.gateCriteria. P0 has no phase deliverable and
-  // promotes via approve-brief, so the in-workbench build/advance action stays
-  // gated to P2–P4 (advance === null for P0); P0 gains the criteria clarity
-  // without a build/advance flow it cannot satisfy. P1 keeps the chat-resident
-  // canvas (its advance lives in the captureCards sequence).
-  const useWorkbench =
-    isCurrentPhase &&
-    ((phaseNum >= 2 && phaseNum <= 5) || phaseNum === 0);
+  // Evidence Workbench: EVERY current phase (P0–P5) gets the evidence-first
+  // surface with the gate-clarity panel (criteria met/unmet, "N of M met",
+  // "To advance to Pn"), so "what completes this phase" reads the same across
+  // the whole lifecycle. Gate criteria come from move.gateCriteria
+  // (governance GATE_RULES per phase). Phase-specific nuance is handled inside:
+  //  • P0 has no phase deliverable and promotes via approve-brief — its
+  //    Save/Build sequence is hidden and the in-workbench advance stays gated
+  //    to P2–P4 (advance === null for P0); it gains criteria clarity only.
+  //  • P1 has a charter deliverable, so its capture → build → advance sequence
+  //    renders in the captureSlot as before; the workbench adds the gate-clarity
+  //    panel on top. The in-workbench advance stays gated to P2–P4, so P1's
+  //    advance remains the single captureSlot control (no double advance).
+  const useWorkbench = isCurrentPhase && phaseNum >= 0 && phaseNum <= 5;
   const dockSurface = `/strategic-moves/${move.id}/phase/${phaseNum}`;
   const [dockRemount, setDockRemount] = useState(0);
   const openAva = useCallback(() => {
