@@ -584,11 +584,14 @@ function loadRelationships(out, tenantKey, tenantDir) {
           tenant_key: tenantKey,
           from_entity_key: parentKey,
           to_entity_key: childKey,
-          relationship_type: row.entity_scope === 'portfolio_company' ? 'owns_portfolio_company' : 'parent_of',
+          relationship_type: 'owns',
           confidence: 'high',
           source_key: key(tenantKey, 'family-8-semantic-enrichment/F25_context-node-dictionary.csv'),
           source_row: row.source_row || null,
-          attributes: row,
+          attributes: {
+            ...row,
+            semantic_relationship_type: row.entity_scope === 'portfolio_company' ? 'owns_portfolio_company' : 'parent_of',
+          },
         });
       }
     }

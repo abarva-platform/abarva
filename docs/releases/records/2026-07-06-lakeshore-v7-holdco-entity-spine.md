@@ -88,6 +88,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
   - `node --check scripts/tower/load-cio-tower-standardized-v1.mjs` — Pass.
   - `TOWER_STANDARDIZED_TENANTS=lakeshore-industries npm run tower:cio:load-standardized -- --dry-run` — Pass; dry-run sees 49 source files, 306 entities, 140 facts, 126 relationships, 8 measure results.
   - Tower loader replacement check — Pass; loader now deletes only the target tenant rows from `measure_results`, `relationships`, `facts`, `entities`, and `source_registry` inside the reload transaction before inserting the refreshed package.
+  - Tower relationship schema compatibility — Pass; holdco-to-portfolio-company hierarchy writes through the existing allowed `owns` relationship type while retaining the precise `owns_portfolio_company` semantic label in relationship attributes.
   - `npm run tower:cio:quality` — Pass; 300/300 question checks and 1/1 integrity checks.
   - `npx jest src/lib/tower/__tests__/v7-tower-projection.test.ts --runInBand` — Pass. The duplicate Jest mock warnings are pre-existing repository warnings.
 - Small-dimension health — Pass:
