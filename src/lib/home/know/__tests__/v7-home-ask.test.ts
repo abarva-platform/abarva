@@ -59,6 +59,7 @@ function fakeSession(): SessionRunner {
             values_json: {
               system_name: 'SkyOps Recovery Platform',
               system_owner: 'Operations Technology',
+              technical_owner: 'Operations Technology',
               criticality: 'critical',
               lifecycle_status: 'modernize',
             },
@@ -72,6 +73,7 @@ function fakeSession(): SessionRunner {
             values_json: {
               system_name: 'Reservation Core',
               system_owner: 'Core Platforms',
+              technical_owner: 'Core Platforms',
               criticality: 'critical',
               lifecycle_status: 'stabilize and expose',
             },
@@ -105,6 +107,23 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.table?.headers).toEqual(['System', 'Owner', 'Criticality', 'Lifecycle']);
     expect(JSON.stringify(result)).not.toMatch(/record_key|chunk_key|values_json|source_row_number/i);
     expect('trace' in result ? result.trace?.modelCall.provider : null).toBe('none');
+  });
+
+  it('routes plain IT systems questions to the applications/systems V7 dimension', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'lakeshore',
+      tenantDisplayName: 'Lakeshore Holdings',
+      question: 'WHAT IS LOADED ABOUT it systems?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('apps_systems');
+    expect(result.answer.primaryDimension).toBe('v7_05_applications_systems');
+    expect(result.answer.directAnswer).toMatch(/SkyOps Recovery Platform/i);
+    expect(result.answer.directAnswer).not.toMatch(/enterprise profile shows/i);
+    expect(result.answer.table?.headers).toEqual(['System', 'Owner', 'Criticality', 'Lifecycle']);
   });
 
   it('routes company profile questions to Enterprise Profile with compact values', async () => {

@@ -337,7 +337,16 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(
       screen.getByText("Show the systems, data, vendors, and risks as tables."),
     ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "Data" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Gaps" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Context findings")).not.toBeInTheDocument();
     // V6-backed context findings replace the legacy Intelligence signal cards.
+    fireEvent.click(screen.getByRole("tab", { name: "Gaps" }));
     expect(screen.getByText("Context findings")).toBeInTheDocument();
     expect(screen.getByText("4 findings")).toBeInTheDocument();
     expect(
@@ -353,6 +362,7 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(
       screen.queryByText("SHOULD NOT RENDER LEGACY SIGNAL"),
     ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Summary" }));
     // rail lists the loaded context dimension; detail not shown yet
     expect(screen.getByText("2 context areas loaded")).toBeInTheDocument();
     expect(screen.queryByText("Business areas · 8")).not.toBeInTheDocument();
@@ -459,6 +469,7 @@ describe("HomeSurface — real React Context Explorer", () => {
       "aria-selected",
       "true",
     );
+    expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
       "aria-selected",
@@ -467,6 +478,32 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(
       screen.getByRole("tabpanel", { name: "Data" }),
     ).toBeInTheDocument();
+  });
+
+  it("resets the selected context view to Summary when the dropdown changes", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "Vendors & Contracts" },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+    expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "IT systems landscape" },
+    });
+    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
   it("formats raw numeric preview cells for CXO readability", () => {
@@ -578,7 +615,7 @@ describe("HomeSurface — real React Context Explorer", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("makes the Questions tab click-to-ask instead of dead duplicate text", () => {
+  it("does not render a Questions tab in the selected context views", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -589,11 +626,13 @@ describe("HomeSurface — real React Context Explorer", () => {
     fireEvent.change(screen.getByLabelText("Choose context dimension"), {
       target: { value: "Vendors & Contracts" },
     });
-    fireEvent.click(screen.getByRole("tab", { name: "Questions" }));
 
-    const askButton = screen.getByRole("button", {
-      name: "Which renewals or vendors need attention?",
-    });
-    expect(askButton).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "Data" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Gaps" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
   });
 });
