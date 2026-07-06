@@ -2,7 +2,13 @@ jest.mock('server-only', () => ({}));
 
 import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
-import { chunkAskText, chooseSynthesisTokenBudget, sanitizeAskSynthesis } from '../synthesizer';
+import {
+  CONCISE_SYSTEM_PROMPT,
+  SYSTEM_PROMPT,
+  chunkAskText,
+  chooseSynthesisTokenBudget,
+  sanitizeAskSynthesis,
+} from '../synthesizer';
 import { buildDeterministicConciseFollowups } from '../followups';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -36,6 +42,17 @@ describe('Ask Intelligence guardrails', () => {
     expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(160);
     expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(160);
     expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
+  });
+
+  it('uses aVa identity and current demo-industry coverage in Claude prompts', () => {
+    expect(SYSTEM_PROMPT).toContain("You are aVa, AbarVa's Intelligence advisor.");
+    expect(SYSTEM_PROMPT).toContain('industrial holding companies');
+    expect(SYSTEM_PROMPT).toContain('shared services');
+    expect(SYSTEM_PROMPT).toContain('airlines');
+    expect(CONCISE_SYSTEM_PROMPT).toContain('industrial/shared services');
+    expect(CONCISE_SYSTEM_PROMPT).toContain('airline operations');
+    expect(SYSTEM_PROMPT).not.toContain("You are Sentinel, AbarVa's Intelligence agent.");
+    expect(CONCISE_SYSTEM_PROMPT).not.toContain("You are Sentinel, AbarVa's Intelligence agent.");
   });
 
   it('uses deterministic followups only for explicit concise Ask requests', () => {

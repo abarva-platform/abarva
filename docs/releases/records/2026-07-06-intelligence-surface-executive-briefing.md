@@ -12,6 +12,8 @@
 
 This release upgrades the Intelligence page from a simple advisory-board layout into a two-zone executive briefing surface. The left side is the aVa analyst conversation, backed by the existing Intelligence ask route and Claude synthesis. The right side is a deterministic executive briefing canvas with tabs for Answer, Industry Signal, Trends, Plays, and Evidence. The right side uses the selected tenant briefing section as the source of visible data and as the surface context sent to the model.
 
+This candidate also corrects the Intelligence synthesis prompt so the live Claude call uses the user-visible aVa identity and explicitly covers the current demo industries: industrial holding companies, corporate shared services, and airlines, in addition to the older retail, healthcare, and financial-services examples.
+
 ## Layer Impact
 
 - `global-control-lane`: Changes shared Intelligence UI rendering and the Intelligence ask route trace plumbing for all authenticated clients.
@@ -34,13 +36,17 @@ This release upgrades the Intelligence page from a simple advisory-board layout 
 - Added UI regression coverage in `src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx`.
 - Extended ask route telemetry coverage in `src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts`.
 - Added direct-display surface coverage in `src/lib/agent/__tests__/display-text.test.ts`.
+- Corrected `src/lib/intelligence/ask/synthesizer.ts` so Claude is prompted as aVa, not legacy Sentinel, and has explicit Industrial/Morgan Street and SkyHarbor industry coverage.
+- Added prompt guardrail coverage in `src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`.
 
 ## QA / Validation
 
 - Pass: `npx jest src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx --runInBand`
 - Pass: `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts --runInBand`
 - Pass: `npx jest src/lib/agent/__tests__/display-text.test.ts --runInBand`
+- Pass: `npx jest src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts --runInBand`
 - Pass: `npx eslint src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx src/app/api/intelligence/ask/route.ts src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/agent/display-text.ts src/lib/agent/visible-answer-contract.ts src/lib/agent/__tests__/display-text.test.ts`
+- Pass: `npx eslint src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`
 - Pass: `npm run release:check`
 - Not run yet: signed-in Azure browser proof. Required after ACA deployment.
 - Not run yet: live Claude/aVa response accuracy proof. Required after ACA deployment using signed-in tenant context.
