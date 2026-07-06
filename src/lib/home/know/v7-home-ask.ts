@@ -288,12 +288,50 @@ function tenantDisplayNameFor(input: {
 
 function classifyQuestion(question: string): keyof typeof TOPICS {
   const q = question.toLowerCase();
+  // Identity / orientation ("who is <company>", "what do we know / what's
+  // loaded", "tell me about the business") must resolve to the enterprise
+  // profile BEFORE the keyword ladder. Home is the context browser: it orients
+  // on the loaded picture. Two collisions this guards against: a company name
+  // that contains a stray token (e.g. "Lakeshore" contains "lake", which the
+  // data-estate rule below matches) and a program name that contains "contract"
+  // (e.g. "Legal Contract Intake") — both otherwise hijack an orientation
+  // question into the wrong dimension.
+  if (
+    /\bwho\s+(is|are)\b/.test(q) &&
+    !/\b(cio|cto|ciso|cfo|cdo|cdao|caio|coo|ceo|gc|general counsel|owner|leader|head of|vp|director|sponsor|accountable|responsible|reports?\s+to)\b/.test(
+      q,
+    )
+  )
+    return 'loaded_context';
+  if (
+    /\b(what do we know|what.?s loaded|what context (is|do|are)|tell me about|introduce|overview of|describe the|profile of)\b/.test(
+      q,
+    ) &&
+    !/\b(system|app|vendor|contract|budget|spend|risk|control|metric|kpi|leader)\b/.test(
+      q,
+    )
+  )
+    return 'loaded_context';
+  // Advisory / judgment ("why is X a good problem", "what should we do",
+  // "recommend / prioritize / worth it") is Intelligence's job, not Home's.
+  if (
+    /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend)\b/.test(
+      q,
+    ) ||
+    (/\b(good|right|best|compelling|ideal|strong)\b/.test(q) &&
+      /\b(demo|use\s?case|example|candidate|problem|opportunity|bet|investment|first move)\b/.test(
+        q,
+      ))
+  )
+    return 'handoff_intelligence';
   if (/company profile|enterprise profile|revenue|employees?|portfolio compan|company size|business profile/.test(q)) return 'loaded_context';
   if (/business areas|business functions|available business|organization structure/.test(q)) return 'business_areas';
   if (/technology leaders|it organization|it org|structured today|roles|accountability/.test(q)) return 'it_org';
   if (/application|core systems|systems context|apps|erp|sap|mainframe/.test(q)) return 'apps_systems';
   if (/infrastructure|cloud|data center|network|hosting|aws|azure/.test(q)) return 'infrastructure';
-  if (/data|analytics|teradata|tableau|lake|databricks/.test(q) && !/data-thin|thin/.test(q)) return 'data_estate';
+  // Word-bounded tokens so a tenant/company name never collides with a
+  // dimension keyword (e.g. "Lakeshore" must not match a bare "lake").
+  if (/\b(data|analytics|teradata|tableau|databricks|lakehouse)\b/.test(q) && !/data-thin|thin/.test(q)) return 'data_estate';
   if (/relationship|graph|connect|dependency/.test(q)) return 'relationships';
   if (/vendor|contract/.test(q) && /source|sourcing/.test(q)) return 'handoff_source';
   if (/vendor|contract/.test(q)) return 'vendors_contracts';
@@ -394,7 +432,14 @@ function buildEnterpriseProfileParagraphs(args: {
 }): string[] {
   const company = display(args.row.company_name);
   const industry = display(args.row.industry);
-  const revenue = formatUsd(args.row.revenue_usd);
+  // A holding company can carry $0 direct revenue (revenue rolls up at the
+  // operating-company level); render revenue only when it is a positive figure
+  // so the profile never reads "$0 revenue".
+  const revenueNumber = parseNumber(args.row.revenue_usd);
+  const revenue =
+    revenueNumber !== null && revenueNumber > 0
+      ? formatUsd(revenueNumber)
+      : null;
   const employees = formatCount(args.row.employee_count);
   const budget = formatUsd(args.row.total_direct_technology_budget_usd);
   const scope = display(args.row.entity_scope);
