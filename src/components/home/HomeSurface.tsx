@@ -5,13 +5,8 @@
 // not classify intent, retrieve data, or render Intelligence experts locally.
 
 import { useCallback, useMemo, useState } from "react";
-import {
-  AvaChatShell,
-  type AvaCanvasTab,
-} from "@/components/ava-chat/AvaChatShell";
 import type {
   ChatMessage,
-  SuggestedAction,
 } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type {
@@ -28,10 +23,6 @@ import type {
   HomeV6BrowserPreview,
   HomeV6ContextBrowser,
 } from "@/lib/home/v6-context-browser";
-import {
-  buildHomeV6ContextFindings,
-  type HomeV6ContextFinding,
-} from "@/lib/home/v6/home-v6-context-findings";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -122,20 +113,102 @@ const CSS = `
 .homex .hx-gapCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7A5A1F;background:#FFF5DB;border:1px solid #E8D3A2;border-radius:999px;padding:4px 8px;white-space:nowrap}
 .homex .hx-gapCard p{font-size:13px;line-height:1.55;color:#3d3d36;margin:7px 0 0}
 .homex .hx-gapMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#66708a;margin-top:10px}
+.homex .hx2{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);background:#fbfaf7;color:#111827}
+.homex .hx2-enterprise{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:22px;align-items:center;border-bottom:1px solid #e7e3da;background:#fff;padding:18px 24px}
+.homex .hx2-kicker,.homex .hx2-cardKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#1f6b3a}
+.homex .hx2-enterprise h1{font-family:var(--font-fraunces),Georgia,serif;font-size:30px;line-height:1.05;margin:6px 0 4px;font-weight:600;color:#111827}
+.homex .hx2-enterprise p{margin:0;color:#536073;font-size:13px}
+.homex .hx2-stats{display:flex;gap:12px;align-items:stretch}
+.homex .hx2-stat{min-width:98px;border:1px solid #e7e3da;border-radius:8px;background:#fbfaf7;padding:9px 11px}
+.homex .hx2-stat span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7b7a72}
+.homex .hx2-stat strong{display:block;margin-top:3px;font-family:var(--font-fraunces),Georgia,serif;font-size:19px;color:#111827}
+.homex .hx2-score{display:grid;place-items:center;gap:4px;color:#536073;font-size:11px;text-align:center}
+.homex .hx2-shell{min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 330px;gap:0;overflow:hidden}
+.homex .hx2-explorer{min-height:0;overflow:auto;border-right:1px solid #e7e3da;background:#f6f3ed;padding:16px}
+.homex .hx2-explorerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.homex .hx2-explorerHead strong{font-family:var(--font-fraunces),Georgia,serif;font-size:18px;color:#111827}
+.homex .hx2-explorerHead span{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;color:#7b7a72;text-transform:uppercase;letter-spacing:.1em}
+.homex .hx2-search{position:relative;margin-bottom:10px}
+.homex .hx2-search input{width:100%;border:1px solid #ded8ca;border-radius:8px;background:#fff;padding:10px 11px 10px 32px;font:inherit;font-size:13px;color:#111827}
+.homex .hx2-search span{position:absolute;left:11px;top:9px;color:#7b7a72}
+.homex .hx2-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;color:#6b7280;font-size:11px}
+.homex .hx2-legend i,.homex .hx2-nodeDot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.homex .green{background:#1f9d6a}.homex .amber{background:#c47a22}.homex .blue{background:#2b8ee8}
+.homex .hx2-treeGroup{margin-top:12px}
+.homex .hx2-treeGroupTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7b7a72;margin:0 0 7px}
+.homex .hx2-treeBtn{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:start;width:100%;border:1px solid transparent;border-radius:8px;background:transparent;text-align:left;padding:9px;color:#111827;cursor:pointer}
+.homex .hx2-treeBtn:hover{background:#fff;border-color:#e7e3da}
+.homex .hx2-treeBtn[aria-pressed="true"]{background:#07162f;color:#fff;border-color:#07162f;box-shadow:0 12px 30px rgba(7,22,47,.12)}
+.homex .hx2-treeBtn small{display:block;color:inherit;opacity:.68;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.homex .hx2-treeBtn em{font-style:normal;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;opacity:.7;white-space:nowrap}
+.homex .hx2-detail{min-width:0;min-height:0;overflow:auto;padding:24px 26px 80px;background:#fbfaf7}
+.homex .hx2-detailHead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start;border-bottom:1px solid #e7e3da;padding-bottom:16px}
+.homex .hx2-crumb{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#1f6b3a}
+.homex .hx2-detail h1{font-family:var(--font-fraunces),Georgia,serif;font-size:32px;line-height:1.08;margin:7px 0 8px;color:#111827}
+.homex .hx2-detailHead p{max-width:76ch;color:#4b5563;line-height:1.55;margin:0}
+.homex .hx2-detailActions{display:flex;gap:8px}
+.homex .hx2-detailActions button,.homex .hx2-tab,.homex .hx2-suggestions button,.homex .hx2-ask button{border:1px solid #ded8ca;border-radius:8px;background:#fff;color:#13213b;font:inherit;font-weight:700;font-size:12px;padding:9px 11px;cursor:pointer}
+.homex .hx2-detailActions .primary,.homex .hx2-ask button{background:#07162f;color:#fff;border-color:#07162f}
+.homex .hx2-tabs{display:flex;gap:8px;align-items:end;border-bottom:1px solid #e7e3da;margin-top:18px}
+.homex .hx2-tab{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:#626a76;padding:12px 8px 10px}
+.homex .hx2-tab[aria-selected="true"]{color:#07162f;border-bottom-color:#22aeea}
+.homex .hx2-section{padding-top:18px}
+.homex .hx2-summaryGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.homex .hx2-summaryGrid article,.homex .hx2-gapCard,.homex .hx2-sourceList article,.homex .hx2-card{border:1px solid #e7e3da;border-radius:10px;background:#fff;padding:16px}
+.homex .hx2-summaryGrid span{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#1f6b3a}
+.homex .hx2-summaryGrid strong{display:block;font-family:var(--font-fraunces),Georgia,serif;font-size:22px;margin:8px 0;color:#111827}
+.homex .hx2-summaryGrid p,.homex .hx2-gapCard p,.homex .hx2-sourceList p{margin:0;color:#4b5563;font-size:13px;line-height:1.5}
+.homex .hx2-examples{margin-top:18px;border-top:1px solid #e7e3da;padding-top:16px}
+.homex .hx2-examples h2{font-family:var(--font-fraunces),Georgia,serif;font-size:20px;margin:0 0 10px}
+.homex .hx2-example{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid #eee9dd;padding:10px 0}
+.homex .hx2-example span,.homex .hx2-relRow .node{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#dff5ef;color:#126449;font-weight:800;font-size:12px}
+.homex .hx2-example p{margin:1px 0 0;color:#111827;line-height:1.45}
+.homex .hx2-tableMeta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.homex .hx2-tableMeta span{border:1px solid #e7e3da;border-radius:999px;background:#fff;padding:6px 10px;color:#536073;font-size:12px}
+.homex .hx2-tableWrap{overflow:auto;border:1px solid #e7e3da;border-radius:10px;background:#fff}
+.homex .hx2-tableWrap table{width:100%;border-collapse:collapse;min-width:720px;font-size:12.5px}
+.homex .hx2-tableWrap th{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;text-align:left;background:#f6f3ed;color:#667085;padding:11px;border-bottom:1px solid #e7e3da;white-space:nowrap}
+.homex .hx2-tableWrap td{padding:11px;border-bottom:1px solid #f0ece4;vertical-align:top;line-height:1.4;color:#111827}
+.homex .hx2-gapPill{display:inline-flex;border-radius:999px;background:#fff1d6;color:#875a11;font-size:11px;font-weight:800;padding:3px 8px}
+.homex .hx2-gapGrid,.homex .hx2-sourceList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.homex .hx2-gapCard strong,.homex .hx2-sourceList span{display:block;font-family:var(--font-fraunces),Georgia,serif;font-size:18px;color:#111827}
+.homex .hx2-gapCard span,.homex .hx2-sourceList strong{display:inline-flex;margin:8px 0;border-radius:999px;background:#fff1d6;color:#875a11;padding:4px 8px;font-size:11px}
+.homex .hx2-relMap{display:grid;gap:10px}
+.homex .hx2-relRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #e7e3da;border-radius:10px;background:#fff;padding:12px}
+.homex .hx2-relRow p{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111827}
+.homex .hx2-relRow .edge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;color:#667085;text-transform:uppercase;letter-spacing:.08em}
+.homex .hx2-relRow strong{font-size:12px;color:#1f6b3a;white-space:nowrap}
+.homex .hx2-empty{border:1px dashed #d8d1c2;border-radius:10px;background:#fff;padding:16px;color:#536073}
+.homex .hx2-rail{min-height:0;overflow:auto;border-left:1px solid #e7e3da;background:#fff;padding:16px;display:grid;align-content:start;gap:14px}
+.homex .hx2-visual{text-align:center}
+.homex .hx2-ring{--score:72%;width:116px;height:116px;border-radius:50%;margin:8px auto 12px;display:grid;place-items:center;background:conic-gradient(#22aeea var(--score),#e9e5dc 0)}
+.homex .hx2-ring span{display:grid;place-items:center;width:82px;height:82px;border-radius:50%;background:#fff;font-family:var(--font-fraunces),Georgia,serif;font-size:25px;font-weight:700;color:#07162f}
+.homex .hx2-cardTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:20px;line-height:1.1;margin:4px 0 6px;color:#111827}
+.homex .hx2-card p{margin:0;color:#536073;font-size:13px;line-height:1.5}
+.homex .hx2-miniBars{display:grid;gap:10px}
+.homex .hx2-barRow{display:grid;grid-template-columns:84px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:12px;color:#536073}
+.homex .hx2-barRow div{height:8px;border-radius:999px;background:#eee9dd;overflow:hidden}
+.homex .hx2-barRow i{display:block;height:100%;border-radius:999px;background:#1f9d6a}
+.homex .hx2-barRow strong{text-align:right;color:#111827}
+.homex .hx2-avaHead{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.homex .hx2-avaMark{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#07162f;color:#22aeea;font-family:var(--font-fraunces),Georgia,serif;font-weight:800}
+.homex .hx2-avaHead strong{display:block;color:#111827}
+.homex .hx2-avaHead span,.homex .hx2-scope{display:block;color:#667085;font-size:11.5px;line-height:1.35}
+.homex .hx2-scope{border-top:1px solid #e7e3da;border-bottom:1px solid #e7e3da;padding:10px 0;margin-bottom:10px}
+.homex .hx2-suggestions{display:grid;gap:7px}
+.homex .hx2-suggestions button{text-align:left;font-weight:600;line-height:1.35}
+.homex .hx2-thread{display:grid;gap:8px;margin-top:10px;max-height:160px;overflow:auto}
+.homex .hx2-turn{border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.4;background:#f6f3ed;color:#111827;white-space:pre-wrap}
+.homex .hx2-turn.user{background:#07162f;color:#fff}
+.homex .hx2-ask{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;margin-top:10px}
+.homex .hx2-ask input{min-width:0;border:1px solid #ded8ca;border-radius:8px;padding:10px;font:inherit;font-size:13px}
+@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:260px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{flex-wrap:wrap}}
+@media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}}
 `;
-
-const CONTEXT_BROWSER_QUESTIONS = [
-  "What context is loaded, and what can we trust?",
-  "Which areas are strongest, and which are thin?",
-  "Show the systems, data, vendors, and risks as tables.",
-  "What can aVa answer confidently from this context?",
-  "Where should I go next: Tower, Source, Intelligence, or Moves?",
-  "What evidence is missing before decisions?",
-];
 
 const EMPTY_DIMS: BindingDimension[] = [];
 
-type HomeCanvasTab = "summary" | "data" | "gaps";
+type ExplorerTab = "summary" | "data" | "gaps" | "sources" | "relationships";
 
 const TECHNICAL_STRING_FIELDS = new Set([
   "id",
@@ -177,36 +250,6 @@ function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
 
 function isSourceLineageString(value: string): boolean {
   return /\.(csv|json|jsonl|yaml|yml)(?::\d+)?$/i.test(value.trim());
-}
-
-function contextBrowserQuestions(dimensions: BindingDimension[]): string[] {
-  const labels = dimensions.map((dimension) =>
-    dimension.dimension.toLowerCase(),
-  );
-  const questions = [...CONTEXT_BROWSER_QUESTIONS];
-  if (
-    labels.some(
-      (label) => label.includes("data") || label.includes("analytics"),
-    )
-  ) {
-    questions.push(
-      "Show our data products in a table with domain and owning team.",
-    );
-  }
-  if (
-    labels.some(
-      (label) => label.includes("integration") || label.includes("interface"),
-    )
-  ) {
-    questions.push("Map relationships between systems and integrations.");
-  }
-  return questions.slice(0, 6);
-}
-
-function toneFor(trust: number): string {
-  if (trust >= 75) return "var(--hg)";
-  if (trust >= 50) return "var(--ham)";
-  return "var(--hr)";
 }
 
 function formatPreviewCell(
@@ -305,106 +348,6 @@ function trimCompactNumber(value: number): string {
   }).format(value);
 }
 
-function dimensionOptionLabel(
-  dimension: BindingDimension,
-  preview?: HomeV6BrowserPreview | null,
-): string {
-  if (!preview) return `${dimension.dimension} · ${dimension.trust}% answerability`;
-  const rowLabel = `${preview.rowCount.toLocaleString()} row${
-    preview.rowCount === 1 ? "" : "s"
-  }`;
-  const gapLabel =
-    preview.dataThinCells > 0
-      ? `${preview.dataThinCells.toLocaleString()} evidence gap${
-          preview.dataThinCells === 1 ? "" : "s"
-        }`
-      : "0 evidence gaps";
-  return `${dimension.dimension} · ${rowLabel} · ${gapLabel}`;
-}
-
-function FindingCard({ finding }: { finding: HomeV6ContextFinding }) {
-  return (
-    <div className="hx-card">
-      <div className="hx-cardTop">
-        <div className="hx-tags">
-          {finding.claimBasis.replace(/_/g, " ")}
-          {finding.patternContextUsed ? " · pattern context used" : ""}
-        </div>
-        <span className="hx-badge">{finding.confidence} confidence</span>
-      </div>
-      <h3>{finding.title}</h3>
-      <p>{finding.executiveFinding}</p>
-      <p style={{ marginTop: 8 }}>{finding.whyItMatters}</p>
-      <div className="hx-evi">
-        {finding.sourceRowCount.toLocaleString()} supporting rows ·{" "}
-        {finding.sourceFiles.length} source file
-        {finding.sourceFiles.length === 1 ? "" : "s"} · next:{" "}
-        {surfaceLabel(finding.recommendedSurface)}
-      </div>
-      <div className="hx-mini" aria-label="Supporting dimensions">
-        {finding.supportingDimensions.slice(0, 4).map((dimension) => (
-          <span className="hx-chip" key={dimension}>
-            {dimension}
-          </span>
-        ))}
-      </div>
-      {finding.evidenceGaps.length > 0 ? (
-        <div className="hx-mini" aria-label="Evidence gaps">
-          {finding.evidenceGaps.slice(0, 3).map((gap) => (
-            <span className="hx-chip hx-chipWarn" key={gap}>
-              Needs evidence: {gap}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      <details className="hx-detail">
-        <summary>Why this appears</summary>
-        <div className="hx-detailgrid">
-          <div className="hx-detailblock">
-            <strong>Supporting source files</strong>
-            {finding.sourceFiles.map(clientFacingFileName).join(", ")}
-          </div>
-          <div className="hx-detailblock">
-            <strong>Claim basis</strong>
-            {claimBasisLabel(finding.claimBasis)}
-            {finding.patternContextUsed
-              ? " Pattern context used — not tenant proof."
-              : ""}
-          </div>
-          <div className="hx-detailblock">
-            <strong>Recommended next step</strong>
-            {surfaceLabel(finding.recommendedSurface)}:{" "}
-            {finding.recommendedQuestion}
-          </div>
-          {finding.evidenceRefs.length > 0 ? (
-            <div className="hx-detailblock">
-              <strong>Representative source support</strong>
-              <ul className="hx-rowrefs">
-                {finding.evidenceRefs.slice(0, 3).map((ref, index) => (
-                  <li key={`${ref.v6File}-${ref.label}-${index}`}>
-                    {ref.label}
-                    <br />
-                    {ref.claimSupported}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-      </details>
-    </div>
-  );
-}
-
-function claimBasisLabel(basis: HomeV6ContextFinding["claimBasis"]): string {
-  if (basis === "tenant_fact") return "Tenant fact from source rows.";
-  if (basis === "calculated") return "Calculated from source rows.";
-  if (basis === "abarva_assessment")
-    return "AbarVa assessment from available facts and gaps.";
-  if (basis === "industry_pattern") return "Industry pattern context only.";
-  return "Tenant facts plus pattern context.";
-}
-
 function clientFacingFileName(value: string): string {
   return value
     // Strip the version prefix AND the file ordinal (e.g. "V7_04_") so the
@@ -420,913 +363,6 @@ function isLineageColumn(
   return (
     /^__/.test(column.key) ||
     /^(loaded record|source family|basis|source basis)$/i.test(column.label)
-  );
-}
-
-function surfaceLabel(
-  surface: HomeV6ContextFinding["recommendedSurface"],
-): string {
-  if (surface === "home") return "Home";
-  if (surface === "intelligence") return "Intelligence";
-  if (surface === "tower") return "Tower";
-  if (surface === "source") return "Source";
-  return "Moves";
-}
-
-type DimensionBrowserSpec = {
-  loaded: string[];
-  browse: string[];
-  ask: string[];
-};
-
-const DEFAULT_BROWSER_SPEC: DimensionBrowserSpec = {
-  loaded: [
-    "Summary records describing this part of the operating model.",
-    "Source-backed facts that aVa can use when answering context questions.",
-    "Coverage and confidence indicators showing whether this area is strong or thin.",
-  ],
-  browse: [
-    "What is known in this area",
-    "Which adjacent areas it connects to",
-    "What evidence gaps should be closed before decisions rely on it",
-  ],
-  ask: [
-    "What is loaded in this area?",
-    "What can we answer confidently here?",
-    "What information is missing or thin?",
-  ],
-};
-
-const DIMENSION_BROWSER_SPECS: Record<string, DimensionBrowserSpec> = {
-  "Enterprise Profile": {
-    loaded: [
-      "Company shape, industry context, scale indicators, operating priorities, and enterprise-level constraints.",
-      "The business backdrop aVa should use before answering module-specific questions.",
-      "Known boundaries for what this demo tenant represents.",
-    ],
-    browse: [
-      "Enterprise profile and operating context",
-      "Strategic priorities and constraints",
-      "Where tenant facts are strong versus assumed",
-    ],
-    ask: [
-      "Summarize this enterprise in one executive brief.",
-      "What makes this company complex from a technology perspective?",
-      "What context is missing before we brief a CIO?",
-    ],
-  },
-  "Business & Operating Model": {
-    loaded: [
-      "Business functions, operating ownership, value-chain shape, and where process complexity concentrates.",
-      "Function-level context that helps aVa avoid generic technology answers.",
-      "Connections into finance, operations, technology, risk, and data domains.",
-    ],
-    browse: [
-      "Business functions and ownership model",
-      "Operating complexity by area",
-      "Business-to-technology dependencies",
-    ],
-    ask: [
-      "Show the business functions loaded for this tenant.",
-      "Where does operating complexity concentrate?",
-      "Which business areas depend most on technology change?",
-    ],
-  },
-  "Workforce & Personas": {
-    loaded: [
-      "User groups, leader roles, frontline personas, adoption constraints, and where AI may change work.",
-      "Role-level evidence aVa can use when explaining adoption, training, or operating-model risk.",
-      "Where named-person coverage is available or still thin.",
-    ],
-    browse: [
-      "Leader roles and affected personas",
-      "Adoption risks and workflow impact",
-      "Missing named-owner or persona evidence",
-    ],
-    ask: [
-      "Which teams or roles are most affected?",
-      "Where do we have named ownership versus only role-level ownership?",
-      "What adoption risks should we plan for?",
-    ],
-  },
-  "Business Metrics": {
-    loaded: [
-      "Outcome metrics, demand indicators, performance indicators, and value measures that define success.",
-      "Metric context used to separate activity from provable value.",
-      "Known baseline or maturity gaps where a metric cannot yet be trusted.",
-    ],
-    browse: [
-      "Outcome metrics and baselines",
-      "Value measures tied to initiatives",
-      "Measurement gaps and proof limits",
-    ],
-    ask: [
-      "Which business metrics are loaded?",
-      "What value can we prove today?",
-      "Which metrics are too thin for executive reporting?",
-    ],
-  },
-  "Capabilities & Value Streams": {
-    loaded: [
-      "Business capabilities, value streams, process areas, and where technology should change how work runs.",
-      "Capability context that links AI or systems work to business outcomes.",
-      "Cross-functional areas where change should be sequenced rather than funded in isolation.",
-    ],
-    browse: [
-      "Loaded business capabilities",
-      "Value streams and operating outcomes",
-      "Change areas that span functions",
-    ],
-    ask: [
-      "Which capabilities are loaded?",
-      "What capabilities should AI or modernization improve?",
-      "Where does work need to be redesigned?",
-    ],
-  },
-  "Applications & Core Systems": {
-    loaded: [
-      "Application estate, systems of record, modernization pressure, ownership, and critical business dependencies.",
-      "System-level facts aVa can use for architecture, risk, and roadmap questions.",
-      "Where system owner, lifecycle, or dependency metadata is incomplete.",
-    ],
-    browse: [
-      "Systems of record and major platforms",
-      "Ownership and modernization pressure",
-      "Dependencies into data, integration, and business operations",
-    ],
-    ask: [
-      "Which systems of record are loaded?",
-      "What systems carry the most modernization risk?",
-      "Show systems by owner or business function.",
-    ],
-  },
-  "Infrastructure & Cloud": {
-    loaded: [
-      "Cloud, hosting, infrastructure, capacity, platform, and operational readiness facts.",
-      "Evidence for cloud posture, data-center constraints, run-cost exposure, and resilience.",
-      "Known gaps in usage, capacity, or environment-level detail.",
-    ],
-    browse: [
-      "Cloud and infrastructure footprint",
-      "Run and resilience constraints",
-      "Platform gaps affecting modernization",
-    ],
-    ask: [
-      "What cloud and infrastructure facts are loaded?",
-      "Where are the largest infrastructure risks?",
-      "What do we not know about cloud cost or capacity?",
-    ],
-  },
-  "Data & Analytics Estate": {
-    loaded: [
-      "Data platforms, data products, analytics tools, semantic ownership, and readiness caveats.",
-      "Facts used to judge whether AI, reporting, or automation can be trusted.",
-      "Quality, lineage, freshness, and ownership gaps where decisions need caution.",
-    ],
-    browse: [
-      "Data products and analytics platforms",
-      "Semantic ownership and quality constraints",
-      "Readiness gates for AI or executive reporting",
-    ],
-    ask: [
-      "What data platforms and products are loaded?",
-      "Where is data quality blocking AI value?",
-      "Which domains need certified data products?",
-    ],
-  },
-  "Integrations & Interfaces": {
-    loaded: [
-      "APIs, interfaces, EDI, batch flows, middleware, integration dependencies, and brittle handoffs.",
-      "Relationship facts that explain why one system or initiative depends on another.",
-      "Known missing interface metadata such as cadence, owner, or failure mode.",
-    ],
-    browse: [
-      "Loaded integrations and interfaces",
-      "System dependency graph clues",
-      "Integration gaps or fragility points",
-    ],
-    ask: [
-      "Show the integration and dependency graph.",
-      "Which systems depend on batch or EDI flows?",
-      "Where are integration details missing?",
-    ],
-  },
-  "Security & Compliance": {
-    loaded: [
-      "Control areas, compliance obligations, risk posture, evidence requirements, and gating constraints.",
-      "Facts used to determine where AI or technology change needs approval or stronger proof.",
-      "Missing control evidence that should block unsupported claims.",
-    ],
-    browse: [
-      "Control and compliance coverage",
-      "Risk areas tied to technology decisions",
-      "Evidence gaps before governance approval",
-    ],
-    ask: [
-      "What security and compliance evidence is loaded?",
-      "Which risks should block scaling?",
-      "What controls are missing or thin?",
-    ],
-  },
-  "Vendors & Contracts": {
-    loaded: [
-      "Vendor roster, contract and renewal evidence, commercial concentration, sourcing relevance, and missing contract fields.",
-      "Facts that support questions about who is under contract, what is renewing, what is commercially material, and what needs sourcing attention.",
-      "Coverage indicators for contract value, renewal date, owner, scope, risk, and evidence quality.",
-    ],
-    browse: [
-      "Loaded vendor and contract coverage",
-      "Renewal calendar and commercial exposure",
-      "Missing vendor, contract, or pricing evidence",
-    ],
-    ask: [
-      "Show vendor and contract coverage.",
-      "Which renewals or vendors need attention?",
-      "What contract fields are missing before Source can act?",
-    ],
-  },
-  "IT Budget & Financials": {
-    loaded: [
-      "Run, change, AI/data, labor, vendor, cloud, program, and portfolio spend records.",
-      "Finance facts used to answer spend, value, and budget allocation questions.",
-      "Where amounts, time periods, or cost categories are missing or not board-grade.",
-    ],
-    browse: [
-      "Budget and spend coverage",
-      "Run versus change and vendor/cloud/labor exposure",
-      "Finance gaps before Tower reporting",
-    ],
-    ask: [
-      "What budget and spend facts are loaded?",
-      "Show spend by category or business area.",
-      "Which spend numbers are not yet fully supported?",
-    ],
-  },
-  "AI & Automation Footprint": {
-    loaded: [
-      "AI initiatives, tools, model or agent usage, gates, adoption evidence, and operating controls.",
-      "Facts that help distinguish AI activity from real changes in work.",
-      "Missing adoption, usage, value, or governance evidence.",
-    ],
-    browse: [
-      "AI initiatives and automation footprint",
-      "Adoption and governance evidence",
-      "Value-proof gaps",
-    ],
-    ask: [
-      "Which AI initiatives are loaded?",
-      "Where is AI being used versus only piloted?",
-      "What evidence is missing before we scale AI?",
-    ],
-  },
-  "Initiatives & Roadmap": {
-    loaded: [
-      "Active initiatives, roadmap items, promised value, dependencies, milestones, owners, and risk posture.",
-      "Facts that support sequencing, prioritization, and change-package questions.",
-      "Missing milestone, owner, dependency, or value evidence.",
-    ],
-    browse: [
-      "Initiatives and roadmap coverage",
-      "Dependencies and sequencing pressure",
-      "Execution gaps before Moves or Tower action",
-    ],
-    ask: [
-      "Which initiatives are loaded?",
-      "What should move first, pause, or be sequenced?",
-      "Which initiatives lack owner or value proof?",
-    ],
-  },
-  "Benefits Realization": {
-    loaded: [
-      "Expected benefits, realized value, adoption proof, outcome evidence, and value-tracking gaps.",
-      "Facts that help aVa say whether value is proven, claimed, or still thin.",
-      "Where measurement design or finance validation is missing.",
-    ],
-    browse: [
-      "Benefit and value evidence",
-      "Adoption and outcome proof",
-      "Unvalidated value claims",
-    ],
-    ask: [
-      "What benefits are proven versus claimed?",
-      "Where do we need better value evidence?",
-      "Which initiatives should Tower track for benefits?",
-    ],
-  },
-  "Risk & RAID Log": {
-    loaded: [
-      "Open risks, assumptions, issues, dependencies, constraints, mitigation status, and escalation context.",
-      "Evidence aVa can use to explain blockers, caveats, and decision gates.",
-      "Missing severity, owner, mitigation, or due-date details.",
-    ],
-    browse: [
-      "Risks, assumptions, issues, and dependencies",
-      "Mitigation and escalation coverage",
-      "Risk fields that are missing or stale",
-    ],
-    ask: [
-      "What risks and dependencies are loaded?",
-      "Which blockers need executive attention?",
-      "What risk evidence is missing?",
-    ],
-  },
-  "Operations & Service": {
-    loaded: [
-      "Service-management evidence, operational health, incident/change/service patterns, and delivery constraints.",
-      "Facts that link technology operations to reliability, adoption, and execution risk.",
-      "Missing service metrics, owner, SLA, or operational evidence.",
-    ],
-    browse: [
-      "Operations and service coverage",
-      "Delivery and reliability patterns",
-      "Operational gaps affecting execution",
-    ],
-    ask: [
-      "What operations and service facts are loaded?",
-      "Where are service risks blocking change?",
-      "Which operational metrics are thin?",
-    ],
-  },
-  "AI Governance & Policy": {
-    loaded: [
-      "Responsible-AI policies, human-in-the-loop gates, monitoring rules, model controls, and usage constraints.",
-      "Evidence aVa uses to determine whether AI can scale safely.",
-      "Missing governance, policy, approval, or monitoring proof.",
-    ],
-    browse: [
-      "AI governance and policy coverage",
-      "Human review and monitoring gates",
-      "Governance gaps before scaling",
-    ],
-    ask: [
-      "What AI governance evidence is loaded?",
-      "Which AI uses need approval gates?",
-      "What policy evidence is missing?",
-    ],
-  },
-  "Industry Benchmarks": {
-    loaded: [
-      "Outside-in industry patterns, benchmark context, peer analogs, and pattern-fit guidance.",
-      "Industry context used as advisory pattern context, not tenant fact.",
-      "Where external patterns should not be treated as company-specific evidence.",
-    ],
-    browse: [
-      "Industry pattern context",
-      "Peer-style benchmarks and caveats",
-      "Pattern context versus tenant-specific proof",
-    ],
-    ask: [
-      "Which industry patterns apply here?",
-      "Where does this tenant look ahead or behind peers?",
-      "What is pattern context versus loaded tenant fact?",
-    ],
-  },
-};
-
-// Curated specs are keyed by the V6-era display labels. The live V7 pack uses
-// different `dimension_label` strings (e.g. "Business Functions",
-// "Applications & Systems"), so almost every dimension used to fall through to
-// the generic DEFAULT_BROWSER_SPEC and every Summary read identically. When
-// there is no curated match, derive the Summary from the actual loaded slice so
-// it is specific to this dimension.
-function browserSpecForDimension(
-  dimension: string,
-  preview?: HomeV6BrowserPreview | null,
-): DimensionBrowserSpec {
-  const curated = DIMENSION_BROWSER_SPECS[dimension];
-  if (curated) return curated;
-  if (preview) return generatedSpecFromPreview(dimension, preview);
-  return DEFAULT_BROWSER_SPEC;
-}
-
-function generatedSpecFromPreview(
-  dimension: string,
-  preview: HomeV6BrowserPreview,
-): DimensionBrowserSpec {
-  const area = dimension.toLowerCase();
-  const fields = preview.columns
-    .filter((column) => !isLineageColumn(column))
-    .map((column) => column.label);
-  // Build examples from the SAME preview columns/formatting shown in the Data
-  // tab (the first couple of non-blank cells per row), rather than a separate
-  // row-labeling heuristic. Dimensions with no natural "name" field (rate
-  // cards, registries) don't have a reliable single label, and guessing one
-  // from an arbitrary column can surface a source filename or a boilerplate
-  // caveat note instead of a real business example.
-  const examples = preview.rows
-    .map((row) =>
-      row
-        .map((cell, index) => ({ cell, column: preview.columns[index] }))
-        .filter(({ cell }) => cell && cell !== "Needs evidence")
-        .slice(0, 2)
-        .map(({ cell, column }) =>
-          column ? formatPreviewCell(cell, column) : cell,
-        )
-        .join(" — "),
-    )
-    .filter(Boolean)
-    .slice(0, 3);
-  const rowLabel = `${preview.rowCount.toLocaleString()} loaded record${
-    preview.rowCount === 1 ? "" : "s"
-  }`;
-  const sourceLabel = `${preview.sourceCount.toLocaleString()} source file${
-    preview.sourceCount === 1 ? "" : "s"
-  }`;
-  const gapLabels = preview.knownGaps.slice(0, 3).map((gap) => gap.label);
-  return {
-    loaded: [
-      `${rowLabel} across ${sourceLabel}.`,
-      fields.length
-        ? `Readable fields: ${fields.join(", ")}.`
-        : "Source-backed facts aVa can use when answering context questions.",
-      examples.length
-        ? `Examples in this tenant: ${examples.join("; ")}.`
-        : "Coverage and confidence indicators show whether this area is strong or thin.",
-    ],
-    browse:
-      fields.length > 0 ? fields.slice(0, 6) : DEFAULT_BROWSER_SPEC.browse,
-    ask: [
-      `What ${area} is loaded for this tenant?`,
-      gapLabels.length
-        ? `Which ${area} fields still need evidence (${gapLabels.join(", ")})?`
-        : `What can we answer confidently about ${area}?`,
-      `Show ${area} as a table.`,
-    ],
-  };
-}
-
-function DimensionView({
-  dim,
-  preview,
-  findings,
-}: {
-  dim: BindingDimension;
-  preview?: HomeV6BrowserPreview | null;
-  findings: HomeV6ContextFinding[];
-}) {
-  const [activeTab, setActiveTab] = useState<"summary" | "data" | "gaps">(
-    "summary",
-  );
-  const related = findings.filter((finding) =>
-    finding.supportingDimensions.includes(dim.dimension),
-  );
-  const spec = browserSpecForDimension(dim.dimension, preview);
-  const visiblePreviewColumns = preview
-    ? preview.columns
-        .map((column, index) => ({ column, index }))
-        .filter(({ column }) => !isLineageColumn(column))
-    : [];
-  const previewColumnsForTable =
-    visiblePreviewColumns.length > 0
-      ? visiblePreviewColumns
-      : (preview?.columns.map((column, index) => ({ column, index })) ?? []);
-  return (
-    <div className="hx-body">
-      <div className="hx-ey">Loaded context dimension</div>
-      <h2 className="hx-h2">{dim.dimension}</h2>
-      <p style={{ color: "var(--hm)", maxWidth: "64ch" }}>{dim.description}</p>
-      <div className="hx-stats">
-        <div className="hx-stat">
-          <div className="k">Status</div>
-          <div className="v" style={{ fontSize: 16 }}>
-            <span className="hx-badge">{dim.status}</span>
-          </div>
-        </div>
-        <div className="hx-stat">
-          <div className="k">Loaded records</div>
-          <div className="v">{dim.evidence.toLocaleString()}</div>
-        </div>
-        <div className="hx-stat">
-          <div className="k">Sources</div>
-          <div className="v">{dim.sources}</div>
-        </div>
-        <div className="hx-stat" style={{ minWidth: 140 }}>
-          {preview ? (
-            <>
-              <div className="k">Evidence gaps</div>
-              <div className="v">{preview.dataThinCells.toLocaleString()}</div>
-            </>
-          ) : (
-            <>
-              <div className="k">Answerability</div>
-              <div className="v">{dim.trust}%</div>
-              <div className="hx-meter">
-                <span
-                  style={{
-                    width: `${Math.max(0, Math.min(100, dim.trust))}%`,
-                    background: toneFor(dim.trust),
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="hx-tabs" role="tablist" aria-label="Dimension canvas tabs">
-        {[
-          ["summary", "Summary"],
-          ["data", "Data"],
-          ["gaps", "Gaps"],
-        ].map(([id, label]) => (
-          <button
-            aria-selected={activeTab === id}
-            aria-controls={`home-dimension-panel-${id}`}
-            className="hx-tab"
-            id={`home-dimension-tab-${id}`}
-            key={id}
-            onClick={() => setActiveTab(id as "summary" | "data" | "gaps")}
-            role="tab"
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div
-        className="hx-browser"
-        aria-labelledby="home-dimension-tab-summary"
-        hidden={activeTab !== "summary"}
-        id="home-dimension-panel-summary"
-        role="tabpanel"
-      >
-        <section className="hx-panel" aria-label="What is loaded">
-          <h3>What is loaded here</h3>
-          <ul className="hx-list">
-            {spec.loaded.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
-        <section className="hx-panel" aria-label="How to browse this context">
-          <h3>How to browse it</h3>
-          <ul className="hx-asklist">
-            {spec.ask.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
-      </div>
-      <div
-        className="hx-browser"
-        aria-labelledby="home-dimension-tab-summary"
-        hidden={activeTab !== "summary"}
-        style={{
-          marginTop: 16,
-        }}
-      >
-        <section className="hx-panel" aria-label="Available detail types">
-          <h3>Detail types available</h3>
-          <ul className="hx-list">
-            {spec.browse.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
-        <aside className="hx-explain" aria-label="What the numbers mean">
-          <strong>How to read the numbers:</strong> evidence points are loaded,
-          source-backed context items aVa can use in answers. Sources are the
-          distinct loaded files or source families behind this area. Evidence
-          gaps are fields explicitly marked as needing evidence before they
-          should support final decisions.
-        </aside>
-      </div>
-      {activeTab === "gaps" && dim.flag ? (
-        <p style={{ color: "var(--ham)", fontSize: 13, marginTop: 14 }}>
-          ⚑ {dim.flag}
-        </p>
-      ) : null}
-      {preview ? (
-        <div
-          className="hx-preview"
-          aria-labelledby="home-dimension-tab-data"
-          hidden={activeTab !== "data"}
-          id="home-dimension-panel-data"
-          role="tabpanel"
-          style={{
-            marginTop: 14,
-          }}
-        >
-          <div className="hx-previewIntro">
-            <div className="hx-previewTitle">
-              <div className="hx-ey">Loaded data preview</div>
-              <strong>{preview.title}</strong>
-              <span>
-                Actual loaded rows from the source file, shown with
-                client-friendly column names and readable values.
-              </span>
-            </div>
-            <div className="hx-previewMeta" aria-label="Loaded data coverage">
-              <span className="hx-chip">
-                <strong>{preview.rowCount.toLocaleString()}</strong> rows
-              </span>
-              <span className="hx-chip">
-                <strong>{preview.sourceCount}</strong> source file
-                {preview.sourceCount === 1 ? "" : "s"}
-              </span>
-              <span className="hx-chip">
-                <strong>{preview.dataThinCells.toLocaleString()}</strong>{" "}
-                evidence gaps
-              </span>
-            </div>
-          </div>
-          <p
-            style={{ color: "var(--hf)", fontSize: 12, margin: "0 2px 8px" }}
-          >
-            Showing the first {preview.rows.length.toLocaleString()} of{" "}
-            {preview.rowCount.toLocaleString()} loaded row
-            {preview.rowCount === 1 ? "" : "s"}, grouped by entity. Evidence-gap
-            counts are measured across the full dimension.
-          </p>
-          <div className="hx-tablewrap">
-            <table className="hx-table">
-              <thead>
-                <tr>
-                  {previewColumnsForTable.map(({ column }) => (
-                    <th key={column.key}>{column.label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {preview.rows.map((row, rowIndex) => (
-                  <tr key={`${preview.dimension}-${rowIndex}`}>
-                    {previewColumnsForTable.map(({ column, index }) => {
-                      const cell = row[index] ?? "";
-                      return (
-                        <td key={`${preview.dimension}-${rowIndex}-${column.key}`}>
-                        {cell === "Needs evidence" ? (
-                          <span className="hx-gapcell">{cell}</span>
-                        ) : (
-                          formatPreviewCell(
-                            cell,
-                            column,
-                          )
-                        )}
-                      </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="hx-mini" aria-label="Source files">
-            {preview.fileNames.slice(0, 2).map((fileName) => (
-              <span className="hx-chip" key={fileName}>
-                {clientFacingFileName(fileName)}
-              </span>
-            ))}
-          </div>
-          {preview.knownGaps.length > 0 ? (
-            <div className="hx-mini" aria-label="Top missing fields">
-              {preview.knownGaps.map((gap) => (
-                <span className="hx-chip" key={gap.label}>
-                  Missing {gap.label.toLowerCase()}:{" "}
-                  <strong>{gap.count}</strong>
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-      {activeTab === "gaps" && preview?.knownGaps.length ? (
-        <div
-          className="hx-gapCards"
-          aria-label="Top missing fields"
-          aria-labelledby="home-dimension-tab-gaps"
-          id="home-dimension-panel-gaps"
-          role="tabpanel"
-        >
-          {preview.knownGaps.map((gap) => (
-            <article className="hx-gapCard" key={gap.label}>
-              <div className="hx-gapCardTop">
-                <h3>{gap.label}</h3>
-                <span className="hx-gapCount">
-                  {gap.count.toLocaleString()} missing
-                </span>
-              </div>
-              <p>
-                <strong>What this means:</strong>{" "}
-                {gap.instruction
-                  ? gap.instruction
-                  : `${gap.label} was expected in the loaded source row but still needs evidence from the client source owner.`}
-              </p>
-              <p>
-                <strong>Why it matters:</strong>{" "}
-                {gap.whyItMatters ??
-                  `${gap.label} helps determine whether this context can support a decision-ready answer.`}
-              </p>
-              <p>
-                <strong>How it helps:</strong>{" "}
-                {gap.howItHelps ??
-                  `Once supplied, ${gap.label.toLowerCase()} lets aVa answer more precisely without guessing.`}
-              </p>
-              {gap.moduleUse ? (
-                <div className="hx-gapMeta">Used by: {gap.moduleUse}</div>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      ) : null}
-      {activeTab === "gaps" && !preview?.knownGaps.length ? (
-        <p
-          className="hx-hint"
-          aria-labelledby="home-dimension-tab-gaps"
-          id="home-dimension-panel-gaps"
-          role="tabpanel"
-        >
-          No repeated missing-field pattern appears in the preview rows.
-        </p>
-      ) : null}
-      {activeTab === "gaps" && related.length > 0 && (
-        <div className="hx-sec">
-          <div className="hx-sechead">
-            <span className="hx-ey">Context findings tied to this area</span>
-          </div>
-          <div className="hx-grid">
-            {related.map((finding) => (
-              <FindingCard finding={finding} key={finding.findingId} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Overview({
-  payload,
-  v6Browser,
-  findings,
-}: {
-  payload: IntelligenceBindingPayload | null;
-  v6Browser: HomeV6ContextBrowser | null | undefined;
-  findings: HomeV6ContextFinding[];
-}) {
-  const dimensions = Object.values(v6Browser?.dimensions ?? {});
-  const dimensionCount = dimensions.length || payload?.context.length || 0;
-  const v6Rows = dimensions.reduce(
-    (sum, dimension) => sum + dimension.rowCount,
-    0,
-  );
-  const v6Files = new Set(
-    dimensions.flatMap((dimension) => dimension.fileNames),
-  ).size;
-  const evidenceGaps = dimensions.reduce(
-    (sum, dimension) => sum + dimension.dataThinCells,
-    0,
-  );
-  const [activeTab, setActiveTab] = useState<HomeCanvasTab>("summary");
-  const overviewGaps = dimensions
-    .filter((dimension) => dimension.dataThinCells > 0)
-    .sort((a, b) => b.dataThinCells - a.dataThinCells)
-    .slice(0, 8);
-  return (
-    <div className="hx-body">
-      <div className="hx-ey">Current-state context</div>
-      <h2 className="hx-h2">What we know about your enterprise.</h2>
-
-      <div className="hx-tabs" role="tablist" aria-label="Overview canvas tabs">
-        {[
-          ["summary", "Summary"],
-          ["data", "Data"],
-          ["gaps", "Gaps"],
-        ].map(([id, label]) => (
-          <button
-            aria-selected={activeTab === id}
-            aria-controls={`home-overview-panel-${id}`}
-            className="hx-tab"
-            id={`home-overview-tab-${id}`}
-            key={id}
-            onClick={() => setActiveTab(id as HomeCanvasTab)}
-            role="tab"
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "summary" ? (
-        <div
-          aria-labelledby="home-overview-tab-summary"
-          id="home-overview-panel-summary"
-          role="tabpanel"
-        >
-          {dimensionCount > 0 ? (
-            <div className="hx-stats">
-              <div className="hx-stat">
-                <div className="k">Context areas</div>
-                <div className="v">{dimensionCount}</div>
-              </div>
-              <div className="hx-stat">
-                <div className="k">Loaded records</div>
-                <div className="v">{v6Rows.toLocaleString()}</div>
-              </div>
-              <div className="hx-stat">
-                <div className="k">Source files</div>
-                <div className="v">{v6Files}</div>
-              </div>
-              <div className="hx-stat">
-                <div className="k">Evidence gaps</div>
-                <div className="v">{evidenceGaps.toLocaleString()}</div>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="hx-hint">
-            <span className="hx-dot" style={{ background: "var(--hb)" }} />
-            Pick a context area from the dropdown, or ask in the aVa panel.
-          </div>
-        </div>
-      ) : null}
-
-      {activeTab === "data" ? (
-        <div
-          className="hx-preview"
-          aria-labelledby="home-overview-tab-data"
-          id="home-overview-panel-data"
-          role="tabpanel"
-          style={{ marginTop: 14 }}
-        >
-          <div className="hx-previewIntro">
-            <div className="hx-previewTitle">
-              <div className="hx-ey">Loaded context area coverage</div>
-              <strong>Context areas available in Home</strong>
-              <span>
-                Overview-level inventory of the context slices available for
-                browsing.
-              </span>
-            </div>
-          </div>
-          <div className="hx-tablewrap">
-            <table className="hx-table">
-              <thead>
-                <tr>
-                  <th>Context area</th>
-                  <th>Loaded records</th>
-                  <th>Source files</th>
-                  <th>Evidence gaps</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dimensions.map((dimension) => (
-                  <tr key={dimension.dimension}>
-                    <td>{dimension.dimension}</td>
-                    <td>{dimension.rowCount.toLocaleString()}</td>
-                    <td>{dimension.sourceCount.toLocaleString()}</td>
-                    <td>{dimension.dataThinCells.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : null}
-
-      {activeTab === "gaps" ? (
-        <div
-          aria-labelledby="home-overview-tab-gaps"
-          id="home-overview-panel-gaps"
-          role="tabpanel"
-        >
-          {overviewGaps.length > 0 ? (
-            <div className="hx-gapCards" aria-label="Overview evidence gaps">
-              {overviewGaps.map((dimension) => (
-                <article className="hx-gapCard" key={dimension.dimension}>
-                  <div className="hx-gapCardTop">
-                    <h3>{dimension.dimension}</h3>
-                    <span className="hx-gapCount">
-                      {dimension.dataThinCells.toLocaleString()} gaps
-                    </span>
-                  </div>
-                  <p>
-                    <strong>What this means:</strong> this context area has
-                    fields that still need source-backed evidence before Home
-                    should treat the slice as board-ready.
-                  </p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="hx-hint">No overview evidence gaps are loaded.</p>
-          )}
-
-          {findings.length > 0 && (
-            <div className="hx-sec">
-              <div className="hx-sechead">
-                <span className="hx-ey">Context findings</span>
-                <span className="hx-ey">{findings.length} findings</span>
-              </div>
-              <div className="hx-grid">
-                {findings.map((finding) => (
-                  <FindingCard finding={finding} key={finding.findingId} />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : null}
-    </div>
   );
 }
 
@@ -1511,6 +547,482 @@ function textFallback(response: HomeKnowResponse): string {
   return lines.join("\n\n") || "I do not see that in the loaded data.";
 }
 
+function completenessScore(args: {
+  rows: number;
+  gaps: number;
+  sources: number;
+}): number {
+  const { rows, gaps, sources } = args;
+  if (rows <= 0) return 0;
+  const density = Math.min(42, Math.round(Math.log10(rows + 1) * 18));
+  const sourceScore = Math.min(24, sources * 8);
+  const gapPenalty = Math.min(36, Math.round((gaps / Math.max(rows, 1)) * 18));
+  return Math.max(18, Math.min(96, 38 + density + sourceScore - gapPenalty));
+}
+
+function categoryForDimension(dimension: string): string {
+  const label = dimension.toLowerCase();
+  if (/enterprise|business|org|workforce/.test(label)) return "Enterprise";
+  if (/application|system|data|integration|infrastructure|cloud/.test(label))
+    return "Technology";
+  if (/vendor|spend|budget|benefit|rate|tower/.test(label)) return "Commercial";
+  if (/ai|automation|initiative|program|roadmap/.test(label)) return "Change";
+  if (/risk|control|security|compliance|evidence|source/.test(label))
+    return "Trust";
+  if (/industry|benchmark|expert|metric|graph|relationship/.test(label))
+    return "Knowledge";
+  return "Context";
+}
+
+function statusTone(gaps: number, rows: number): "green" | "amber" | "blue" {
+  if (rows <= 0) return "blue";
+  if (gaps > rows * 0.2) return "amber";
+  return "green";
+}
+
+function shortMetric(value: number): string {
+  if (value >= 1_000_000) return `${trimCompactNumber(value / 1_000_000)}M`;
+  if (value >= 1_000) return `${trimCompactNumber(value / 1_000)}K`;
+  return value.toLocaleString();
+}
+
+function previewForDimension(
+  browser: HomeV6ContextBrowser | null | undefined,
+  dimension: string | null,
+): HomeV6BrowserPreview | null {
+  if (!browser || !dimension) return null;
+  return browser.dimensions[dimension] ?? null;
+}
+
+function summarizeSelectedContext(args: {
+  dimension: BindingDimension | null;
+  preview: HomeV6BrowserPreview | null;
+  totalDimensions: number;
+  totalRows: number;
+  totalSources: number;
+  totalGaps: number;
+}): string {
+  const { dimension, preview, totalDimensions, totalRows, totalSources, totalGaps } =
+    args;
+  if (!dimension) {
+    return `${totalDimensions.toLocaleString()} context areas are loaded with ${totalRows.toLocaleString()} records across ${totalSources.toLocaleString()} source files. ${totalGaps.toLocaleString()} evidence gaps remain visible so Home stays a context browser, not an unsupported advisory engine.`;
+  }
+  if (!preview) return dimension.description;
+  const gapText =
+    preview.dataThinCells > 0
+      ? `${preview.dataThinCells.toLocaleString()} evidence gaps remain.`
+      : "No repeated evidence-gap pattern is visible in this area.";
+  return `${dimension.dimension} has ${preview.rowCount.toLocaleString()} loaded records from ${preview.sourceCount.toLocaleString()} source file${preview.sourceCount === 1 ? "" : "s"}. ${gapText}`;
+}
+
+function selectedExamples(preview: HomeV6BrowserPreview | null): string[] {
+  if (!preview) return [];
+  return preview.rows
+    .map((row) =>
+      row
+        .map((cell, index) => ({ cell, column: preview.columns[index] }))
+        .filter(({ cell, column }) => cell && cell !== "Needs evidence" && column)
+        .filter(({ column }) => column && !isLineageColumn(column))
+        .slice(0, 2)
+        .map(({ cell, column }) => (column ? formatPreviewCell(cell, column) : cell))
+        .join(" · "),
+    )
+    .filter(Boolean)
+    .slice(0, 4);
+}
+
+function relationshipItems(
+  preview: HomeV6BrowserPreview | null,
+): Array<{ from: string; relation: string; to: string; strength: string }> {
+  if (!preview) return [];
+  return preview.sourceRows.slice(0, 5).map((row, index) => {
+    const values = Object.entries(row.values)
+      .filter(([label, value]) => {
+        if (!value || value === "Needs evidence") return false;
+        if (/loaded record|source family|basis/i.test(label)) return false;
+        if (isSourceLineageString(value)) return false;
+        if (/synthetic demo/i.test(value)) return false;
+        return true;
+      })
+      .map(([, value]) => value);
+    return {
+      from: values[0] ?? row.label,
+      relation: values[1] ?? "relates to",
+      to: values[2] ?? values[0] ?? row.label,
+      strength: values[3] ?? `${Math.max(55, 92 - index * 8)}% mapped`,
+    };
+  });
+}
+
+function ExplorerDetail({
+  selected,
+  preview,
+  activeTab,
+  onTabChange,
+  overview,
+}: {
+  selected: BindingDimension | null;
+  preview: HomeV6BrowserPreview | null;
+  activeTab: ExplorerTab;
+  onTabChange: (tab: ExplorerTab) => void;
+  overview: {
+    dimensions: HomeV6BrowserPreview[];
+    totalRows: number;
+    totalSources: number;
+    totalGaps: number;
+  };
+}) {
+  const title = selected?.dimension ?? "Enterprise context overview";
+  const summary = summarizeSelectedContext({
+    dimension: selected,
+    preview,
+    totalDimensions: overview.dimensions.length,
+    totalRows: overview.totalRows,
+    totalSources: overview.totalSources,
+    totalGaps: overview.totalGaps,
+  });
+  const examples = selectedExamples(preview);
+  const tabs: Array<[ExplorerTab, string]> = [
+    ["summary", "Summary"],
+    ["data", "Data"],
+    ["gaps", "Gaps"],
+    ["sources", "Sources"],
+    ["relationships", "Relationships"],
+  ];
+  const visibleColumns =
+    preview?.columns
+      .map((column, index) => ({ column, index }))
+      .filter(({ column }) => !isLineageColumn(column)) ?? [];
+  const tableColumns =
+    visibleColumns.length > 0
+      ? visibleColumns
+      : (preview?.columns.map((column, index) => ({ column, index })) ?? []);
+  const gaps = preview?.knownGaps ?? [];
+  const relationships = relationshipItems(preview);
+
+  return (
+    <main className="hx2-detail" data-testid="home-context-detail">
+      <div className="hx2-detailHead">
+        <div>
+          <div className="hx2-crumb">Home / Context Browser</div>
+          <h1>{title}</h1>
+          <p>{summary}</p>
+        </div>
+        <div className="hx2-detailActions">
+          <button type="button">Explain context</button>
+          <button className="primary" type="button">
+            Send to Intelligence
+          </button>
+        </div>
+      </div>
+
+      <div className="hx2-tabs" role="tablist" aria-label="Selected context views">
+        {tabs.map(([id, label]) => (
+          <button
+            aria-selected={activeTab === id}
+            className="hx2-tab"
+            key={id}
+            onClick={() => onTabChange(id)}
+            role="tab"
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "summary" ? (
+        <section className="hx2-section" role="tabpanel">
+          <div className="hx2-summaryGrid">
+            <article>
+              <span>What is loaded</span>
+              <strong>
+                {preview
+                  ? `${preview.rowCount.toLocaleString()} records`
+                  : `${overview.dimensions.length.toLocaleString()} context areas`}
+              </strong>
+              <p>
+                {preview
+                  ? `${preview.title} with source-backed values and readable fields.`
+                  : "The tenant context pack is available for inspection by context area."}
+              </p>
+            </article>
+            <article>
+              <span>What can be trusted</span>
+              <strong>
+                {preview ? `${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}` : `${overview.totalSources} files`}
+              </strong>
+              <p>Home shows source-backed context and keeps missing evidence visible.</p>
+            </article>
+            <article>
+              <span>What needs work</span>
+              <strong>
+                {(preview?.dataThinCells ?? overview.totalGaps).toLocaleString()} gaps
+              </strong>
+              <p>Gaps are client-to-complete fields, not confidence theater.</p>
+            </article>
+          </div>
+          {examples.length > 0 ? (
+            <div className="hx2-examples">
+              <h2>Representative loaded rows</h2>
+              {examples.map((example, index) => (
+                <div className="hx2-example" key={`${example}-${index}`}>
+                  <span>{index + 1}</span>
+                  <p>{example}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {activeTab === "data" ? (
+        <section className="hx2-section" role="tabpanel">
+          {preview ? (
+            <>
+              <div className="hx2-tableMeta">
+                <span>{preview.rowCount.toLocaleString()} rows loaded</span>
+                <span>{preview.sourceCount.toLocaleString()} source file{preview.sourceCount === 1 ? "" : "s"}</span>
+                <span>{preview.dataThinCells.toLocaleString()} evidence gaps</span>
+              </div>
+              <div className="hx2-tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      {tableColumns.map(({ column }) => (
+                        <th key={column.key}>{column.label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preview.rows.map((row, rowIndex) => (
+                      <tr key={`${preview.dimension}-${rowIndex}`}>
+                        {tableColumns.map(({ column, index }) => {
+                          const cell = row[index] ?? "";
+                          return (
+                            <td key={`${preview.dimension}-${rowIndex}-${column.key}`}>
+                              {cell === "Needs evidence" ? (
+                                <span className="hx2-gapPill">{cell}</span>
+                              ) : (
+                                formatPreviewCell(cell, column)
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="hx2-tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Context area</th>
+                    <th>Loaded records</th>
+                    <th>Sources</th>
+                    <th>Gaps</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overview.dimensions.map((dimension) => (
+                    <tr key={dimension.dimension}>
+                      <td>{dimension.dimension}</td>
+                      <td>{dimension.rowCount.toLocaleString()}</td>
+                      <td>{dimension.sourceCount.toLocaleString()}</td>
+                      <td>{dimension.dataThinCells.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {activeTab === "gaps" ? (
+        <section className="hx2-section" role="tabpanel">
+          {gaps.length > 0 ? (
+            <div className="hx2-gapGrid">
+              {gaps.map((gap) => (
+                <article className="hx2-gapCard" key={gap.label}>
+                  <strong>{gap.label}</strong>
+                  <span>{gap.count.toLocaleString()} missing</span>
+                  <p>
+                    {gap.whyItMatters ??
+                      `${gap.label} needs client evidence before this area should support final decisions.`}
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="hx2-empty">No repeated missing-field pattern is visible for this selection.</p>
+          )}
+        </section>
+      ) : null}
+
+      {activeTab === "sources" ? (
+        <section className="hx2-section" role="tabpanel">
+          <div className="hx2-sourceList">
+            {(preview ? preview.fileNames : overview.dimensions.flatMap((d) => d.fileNames))
+              .slice(0, 12)
+              .map((fileName, index) => (
+                <article key={`${fileName}-${index}`}>
+                  <span>{clientFacingFileName(fileName)}</span>
+                  <strong>{preview ? preview.rowCount.toLocaleString() : "Loaded"} rows</strong>
+                  <p>Mapped into the context browser with source lineage preserved.</p>
+                </article>
+              ))}
+          </div>
+        </section>
+      ) : null}
+
+      {activeTab === "relationships" ? (
+        <section className="hx2-section" role="tabpanel">
+          {relationships.length > 0 ? (
+            <div className="hx2-relMap">
+              {relationships.map((item, index) => (
+                <div className="hx2-relRow" key={`${item.from}-${item.to}-${index}`}>
+                  <span className="node">{index + 1}</span>
+                  <p>{item.from}</p>
+                  <span className="edge">{item.relation}</span>
+                  <p>{item.to}</p>
+                  <strong>{item.strength}</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="hx2-empty">
+              Select a relationship-heavy context area, such as Applications, Data,
+              Vendors, or Relationships, to inspect mapped links.
+            </p>
+          )}
+        </section>
+      ) : null}
+    </main>
+  );
+}
+
+function ExplorerRail({
+  selected,
+  preview,
+  overview,
+  onAsk,
+  thread,
+  isBusy,
+}: {
+  selected: BindingDimension | null;
+  preview: HomeV6BrowserPreview | null;
+  overview: { totalRows: number; totalSources: number; totalGaps: number };
+  onAsk: (question: string) => void;
+  thread: ChatMessage[];
+  isBusy: boolean;
+}) {
+  const [draft, setDraft] = useState("");
+  const score = completenessScore({
+    rows: preview?.rowCount ?? overview.totalRows,
+    gaps: preview?.dataThinCells ?? overview.totalGaps,
+    sources: preview?.sourceCount ?? overview.totalSources,
+  });
+  const suggestions = selected
+    ? [
+        `Explain ${selected.dimension.toLowerCase()} in plain English.`,
+        `Show gaps in ${selected.dimension.toLowerCase()}.`,
+        `What can Home answer about ${selected.dimension.toLowerCase()}?`,
+      ]
+    : [
+        "What context is loaded, and what can we trust?",
+        "Which areas are strongest and thinnest?",
+        "What should I inspect next?",
+      ];
+  const submit = (question: string) => {
+    const text = question.trim();
+    if (!text) return;
+    onAsk(text);
+    setDraft("");
+  };
+  return (
+    <aside className="hx2-rail" data-testid="home-context-rail">
+      <div className="hx2-card hx2-visual">
+        <div className="hx2-cardKicker">Context quality</div>
+        <div className="hx2-ring" style={{ "--score": `${score}%` } as React.CSSProperties}>
+          <span>{score}%</span>
+        </div>
+        <div className="hx2-cardTitle">{selected?.dimension ?? "Enterprise context"}</div>
+        <p>
+          {preview
+            ? `${shortMetric(preview.rowCount)} records, ${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}, ${shortMetric(preview.dataThinCells)} gaps.`
+            : `${shortMetric(overview.totalRows)} records across ${overview.totalSources} source files.`}
+        </p>
+      </div>
+      <div className="hx2-card hx2-miniBars">
+        <div className="hx2-cardKicker">Data rendering</div>
+        {[
+          ["Loaded rows", preview?.rowCount ?? overview.totalRows],
+          ["Source files", preview?.sourceCount ?? overview.totalSources],
+          ["Evidence gaps", preview?.dataThinCells ?? overview.totalGaps],
+        ].map(([label, raw]) => {
+          const value = Number(raw);
+          const max = Math.max(1, preview?.rowCount ?? overview.totalRows);
+          return (
+            <div className="hx2-barRow" key={label}>
+              <span>{label}</span>
+              <div>
+                <i style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
+              </div>
+              <strong>{shortMetric(value)}</strong>
+            </div>
+          );
+        })}
+      </div>
+      <div className="hx2-card hx2-ava">
+        <div className="hx2-avaHead">
+          <div className="hx2-avaMark">a</div>
+          <div>
+            <strong>aVa</strong>
+            <span>Scoped to selected context</span>
+          </div>
+        </div>
+        <div className="hx2-scope">
+          Scope: <strong>{selected?.dimension ?? "Overview"}</strong>. Home answers from loaded context; advisory synthesis belongs in Intelligence.
+        </div>
+        <div className="hx2-suggestions">
+          {suggestions.map((question) => (
+            <button key={question} onClick={() => submit(question)} type="button">
+              {question}
+            </button>
+          ))}
+        </div>
+        <div className="hx2-thread">
+          {thread.slice(-2).map((turn) => (
+            <div className={`hx2-turn ${turn.role}`} key={turn.id}>
+              {turn.body || (isBusy && turn.role === "agent" ? "Reading loaded context..." : "")}
+            </div>
+          ))}
+        </div>
+        <form
+          className="hx2-ask"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit(draft);
+          }}
+        >
+          <input
+            onChange={(event) => setDraft(event.currentTarget.value)}
+            placeholder="Ask about this context..."
+            value={draft}
+          />
+          <button disabled={isBusy} type="submit">
+            ↑
+          </button>
+        </form>
+      </div>
+    </aside>
+  );
+}
+
 export function HomeSurface({
   payload,
   clientKey,
@@ -1526,22 +1038,67 @@ export function HomeSurface({
     [v6Browser],
   );
   const dims = safeV6Browser?.bindingContext ?? safePayload?.context ?? EMPTY_DIMS;
-  const sourceLabel = safeV6Browser?.contractLabel ?? "V6";
   const [dimKey, setDimKey] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<ExplorerTab>("summary");
+  const [search, setSearch] = useState("");
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
   const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
   const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
-  const findings = useMemo(
-    () =>
-      sourceLabel === "V6"
-        ? sanitizeVisibleStrings(buildHomeV6ContextFindings(safeV6Browser))
-        : [],
-    [safeV6Browser, sourceLabel],
-  );
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)
     : null;
+  const selectedPreview = previewForDimension(safeV6Browser, selected?.dimension ?? null);
+  const dimensions = Object.values(safeV6Browser?.dimensions ?? {});
+  const totalRows = dimensions.reduce((sum, dimension) => sum + dimension.rowCount, 0);
+  const totalSources = new Set(dimensions.flatMap((dimension) => dimension.fileNames)).size;
+  const totalGaps = dimensions.reduce(
+    (sum, dimension) => sum + dimension.dataThinCells,
+    0,
+  );
+  const totalScore = completenessScore({
+    rows: totalRows,
+    sources: totalSources,
+    gaps: totalGaps,
+  });
+  const explorerItems = dims
+    .map((dimension) => {
+      const preview = previewForDimension(safeV6Browser, dimension.dimension);
+      return {
+        dimension,
+        preview,
+        category: categoryForDimension(dimension.dimension),
+      };
+    })
+    .filter((item) => {
+      const needle = search.trim().toLowerCase();
+      if (!needle) return true;
+      return [
+        item.dimension.dimension,
+        item.dimension.description,
+        item.category,
+        ...(item.preview?.fileNames ?? []),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    });
+  const groupedItems = explorerItems.reduce(
+    (groups, item) => {
+      const entries = groups.get(item.category) ?? [];
+      entries.push(item);
+      groups.set(item.category, entries);
+      return groups;
+    },
+    new Map<
+      string,
+      Array<{
+        dimension: BindingDimension;
+        preview: HomeV6BrowserPreview | null;
+        category: string;
+      }>
+    >(),
+  );
 
   const askHomeKnow = useCallback(
     async (text: string) => {
@@ -1617,109 +1174,140 @@ export function HomeSurface({
     [clientKey, tenantKey],
   );
 
-  const suggestedActions = useMemo<SuggestedAction[]>(
-    () =>
-      contextBrowserQuestions(dims)
-        .slice(0, 3)
-        .map((question, index) => ({
-          id: `home-know-suggested-${index}`,
-          label: question,
-          body: question,
-          onClick: () => {
-            void askHomeKnow(question);
-          },
-        })),
-    [askHomeKnow, dims],
-  );
-
-  const tabs = useMemo<AvaCanvasTab[]>(
-    () => [
-      { id: "overview", label: "Overview" },
-      { id: "context", label: "Context", count: dims.length },
-      { id: "findings", label: "Context findings", count: findings.length },
-    ],
-    [dims.length, findings.length],
-  );
-
-  const canvas = (
+  return (
     <div className="homex">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div className="hx-shell">
-        <main className="hx-canvas">
-          <div className="hx-rail" aria-label="Context Explorer tabs">
-            <div className="hx-rail-h">Context Explorer</div>
-            <div className="hx-navWrap">
-              <div className="hx-railLabel">
-                <span className="hx-dot" style={{ background: "var(--hb)" }} />
-                <span>
-                  {dims.length
-                    ? `${dims.length} context areas loaded`
-                    : "Context areas"}
-                </span>
-              </div>
-              <select
-                aria-label="Choose context dimension"
-                className="hx-select"
-                onChange={(event) =>
-                  setDimKey(event.currentTarget.value || null)
-                }
-                value={dimKey ?? ""}
-              >
-                <option value="">Overview</option>
-                {dims.map((d) => (
-                  <option key={d.dimension} value={d.dimension}>
-                    {dimensionOptionLabel(
-                      d,
-                      safeV6Browser?.dimensions[d.dimension] ?? null,
-                    )}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {dims.length > 0 && (
-              <div className="hx-rail-g">Context areas · {dims.length}</div>
-            )}
+      <div className="hx2">
+        <header className="hx2-enterprise">
+          <div>
+            <div className="hx2-kicker">Home · Context Browser</div>
+            <h1>{safeV6Browser?.displayName ?? tenantDisplayName}</h1>
+            <p>
+              Browse loaded enterprise context, source-backed data, evidence gaps,
+              and relationships before sending work to Intelligence, Moves, Source,
+              or Tower.
+            </p>
           </div>
-          {selected ? (
-            <DimensionView
-              key={selected.dimension}
-              dim={selected}
-              preview={safeV6Browser?.dimensions[selected.dimension] ?? null}
-              findings={findings}
-            />
-          ) : (
-            <Overview
-              payload={safePayload}
-              v6Browser={safeV6Browser}
-              findings={findings}
-            />
-          )}
-        </main>
+          <div className="hx2-stats" aria-label="Home context totals">
+            <div className="hx2-stat">
+              <span>Context areas</span>
+              <strong>{dims.length.toLocaleString()}</strong>
+            </div>
+            <div className="hx2-stat">
+              <span>Records</span>
+              <strong>{shortMetric(totalRows)}</strong>
+            </div>
+            <div className="hx2-stat">
+              <span>Source files</span>
+              <strong>{totalSources.toLocaleString()}</strong>
+            </div>
+            <div className="hx2-stat">
+              <span>Gaps</span>
+              <strong>{shortMetric(totalGaps)}</strong>
+            </div>
+          </div>
+          <div className="hx2-score">
+            <div className="hx2-ring" style={{ "--score": `${totalScore}%` } as React.CSSProperties}>
+              <span>{totalScore}%</span>
+            </div>
+            <span>Context loaded and mapped</span>
+          </div>
+        </header>
+
+        <div className="hx2-shell">
+          <aside className="hx2-explorer" data-testid="home-context-explorer">
+            <div className="hx2-explorerHead">
+              <strong>Context Explorer</strong>
+              <span>{dims.length} areas</span>
+            </div>
+            <label className="hx2-search">
+              <span>⌕</span>
+              <input
+                aria-label="Search context areas"
+                onChange={(event) => setSearch(event.currentTarget.value)}
+                placeholder="Search systems, vendors, owners..."
+                value={search}
+              />
+            </label>
+            <div className="hx2-legend" aria-label="Context status legend">
+              <span><i className="green" />Loaded</span>
+              <span><i className="amber" />Gaps</span>
+              <span><i className="blue" />Needs validation</span>
+            </div>
+            <button
+              aria-pressed={!selected}
+              className="hx2-treeBtn"
+              onClick={() => {
+                setDimKey(null);
+                setActiveTab("summary");
+              }}
+              type="button"
+            >
+              <i className="hx2-nodeDot green" />
+              <span>
+                Enterprise overview
+                <small>{totalRows.toLocaleString()} records across all context areas</small>
+              </span>
+              <em>{shortMetric(totalGaps)} gaps</em>
+            </button>
+            {[...groupedItems.entries()].map(([category, items]) => (
+              <div className="hx2-treeGroup" key={category}>
+                <div className="hx2-treeGroupTitle">{category}</div>
+                {items.map(({ dimension, preview }) => {
+                  const gaps = preview?.dataThinCells ?? 0;
+                  const rows = preview?.rowCount ?? dimension.evidence;
+                  const tone = statusTone(gaps, rows);
+                  return (
+                    <button
+                      aria-pressed={selected?.dimension === dimension.dimension}
+                      className="hx2-treeBtn"
+                      key={dimension.dimension}
+                      onClick={() => {
+                        setDimKey(dimension.dimension);
+                        setActiveTab("summary");
+                      }}
+                      type="button"
+                    >
+                      <i className={`hx2-nodeDot ${tone}`} />
+                      <span>
+                        {dimension.dimension}
+                        <small>{dimension.description}</small>
+                      </span>
+                      <em>{shortMetric(rows)}</em>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </aside>
+
+          <ExplorerDetail
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            overview={{
+              dimensions,
+              totalRows,
+              totalSources,
+              totalGaps,
+            }}
+            preview={selectedPreview}
+            selected={selected}
+          />
+
+          <ExplorerRail
+            isBusy={isBusy}
+            onAsk={askHomeKnow}
+            overview={{
+              totalRows,
+              totalSources,
+              totalGaps,
+            }}
+            preview={selectedPreview}
+            selected={selected}
+            thread={thread}
+          />
+        </div>
       </div>
     </div>
-  );
-
-  return (
-    <AvaChatShell
-      agent={{
-        name: "aVa",
-        role: `${tenantDisplayName} Home KNOW advisor`,
-      }}
-      canvas={canvas}
-      defaultLeftPercent={34}
-      isBusy={isBusy}
-      minLeftPx={360}
-      onMessage={askHomeKnow}
-      placeholder="Ask about available context, systems, owners, vendors..."
-      suggestedActions={suggestedActions}
-      surface="home"
-      surfaceContext={{
-        clientKey,
-        tenantKey,
-        tabs,
-        selectedDimension: dimKey,
-      }}
-      thread={thread}
-    />
   );
 }

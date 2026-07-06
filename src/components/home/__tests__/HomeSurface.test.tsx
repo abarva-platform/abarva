@@ -301,8 +301,8 @@ const v6Browser = {
   },
 } satisfies HomeV6ContextBrowser;
 
-describe("HomeSurface — real React Context Explorer", () => {
-  it("renders the shared aVa dock + Context Explorer canvas", () => {
+describe("HomeSurface — Explorer context browser", () => {
+  it("renders Home as an Explorer-first context browser with scoped aVa", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -310,80 +310,27 @@ describe("HomeSurface — real React Context Explorer", () => {
         v6Browser={v6Browser}
       />,
     );
-    expect(screen.getByTestId("agent-dock-panel")).toBeInTheDocument();
-    expect(screen.getByTestId("agent-dock-input")).toBeInTheDocument();
-    expect(screen.getByLabelText("Ask aVa")).toBeInTheDocument();
-    expect(screen.getByLabelText("Dock mode")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Ask Home KNOW")).not.toBeInTheDocument();
-    expect(
-      screen.queryByLabelText("Ava Home KNOW chat"),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByLabelText("Choose context dimension"),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat to left")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat to right")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat to top")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat to bottom")).toBeInTheDocument();
-    expect(screen.getByLabelText("Expand to overlay")).toBeInTheDocument();
-    expect(screen.getByLabelText("Context Explorer tabs")).toBeInTheDocument();
-    expect(screen.getByLabelText("Suggested actions")).toBeInTheDocument();
-    expect(
-      screen.getByText("What context is loaded, and what can we trust?"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Which areas are strongest, and which are thin?"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Show the systems, data, vendors, and risks as tables."),
-    ).toBeInTheDocument();
+
+    expect(screen.getByTestId("home-context-explorer")).toBeInTheDocument();
+    expect(screen.getByTestId("home-context-detail")).toBeInTheDocument();
+    expect(screen.getByTestId("home-context-rail")).toBeInTheDocument();
+    expect(screen.queryByTestId("agent-dock-panel")).not.toBeInTheDocument();
+    expect(screen.getByText("Context Explorer")).toBeInTheDocument();
+    expect(screen.getByText("Enterprise overview")).toBeInTheDocument();
+    expect(screen.getByText("Context loaded and mapped")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
     expect(screen.getByRole("tab", { name: "Data" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Gaps" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Sources" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Relationships" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Context findings")).not.toBeInTheDocument();
-    // V6-backed context findings replace the legacy Intelligence signal cards.
-    fireEvent.click(screen.getByRole("tab", { name: "Gaps" }));
-    expect(screen.getByText("Context findings")).toBeInTheDocument();
-    expect(screen.getByText("4 findings")).toBeInTheDocument();
-    expect(
-      screen.getByText("System and data readiness are the main context gate."),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText("Why this appears")[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/supporting rows ·/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Needs evidence:/).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getAllByText("Why this appears")[0]);
-    expect(screen.getAllByText("Representative source support")[0]).toBeInTheDocument();
-    expect(screen.queryByText(/V6_05_applications_systems\.csv/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/APP-001/)).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("SHOULD NOT RENDER LEGACY SIGNAL"),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "Summary" }));
-    // rail lists the loaded context dimension; detail not shown yet
-    expect(screen.getByText("2 context areas loaded")).toBeInTheDocument();
-    expect(screen.queryByText("Business areas · 8")).not.toBeInTheDocument();
-    expect(screen.getByText("Context areas")).toBeInTheDocument();
-    expect(screen.getByText("Loaded records")).toBeInTheDocument();
-    expect(screen.getByText("Source files")).toBeInTheDocument();
-    expect(screen.queryByText("Evidence points")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Lens:/)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: /IT systems landscape/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("option", { name: /\d+ rows? · \d+ evidence gaps?/ })
-        .length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.queryByText("Applications, integrations, systems of record"),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Home answers from loaded context/)).toBeInTheDocument();
   });
 
-  it("opens a loaded dimension's detail from the rail", () => {
+  it("selects a context area from the Explorer tree and defaults the detail view to Summary", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -391,96 +338,21 @@ describe("HomeSurface — real React Context Explorer", () => {
         v6Browser={v6Browser}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "IT systems landscape" },
-    });
-    expect(
-      screen.getByText("Applications, integrations, systems of record"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Answerability")).toBeInTheDocument();
-  });
 
-  it("explains what vendor and contract context means in browse mode", () => {
-    render(
-      <HomeSurface
-        clientKey="apexretail"
-        payload={payload}
-        v6Browser={v6Browser}
-      />,
-    );
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "Vendors & Contracts" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
 
-    expect(screen.getByText("What is loaded here")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Vendor roster, contract and renewal evidence, commercial concentration, sourcing relevance, and missing contract fields.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText("How to browse it")).toBeInTheDocument();
-    expect(
-      screen.getByText("Which renewals or vendors need attention?"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Detail types available")).toBeInTheDocument();
-    expect(
-      screen.getByText("Loaded vendor and contract coverage"),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/evidence points are loaded/)).toBeInTheDocument();
-    expect(screen.getByText("Vendors and contracts")).toBeInTheDocument();
-    expect(screen.getByText("Loaded data preview")).toBeInTheDocument();
-    expect(screen.getByText("Evidence gaps")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Evidence gaps are fields explicitly marked/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Actual loaded rows from the source file, shown with client-friendly column names and readable values.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText("90")).toBeInTheDocument();
-    expect(screen.getByText("rows")).toBeInTheDocument();
-    expect(screen.getByText("Kyriba")).toBeInTheDocument();
-    expect(screen.getByText("Treasury")).toBeInTheDocument();
-    expect(screen.getByText("Needs evidence")).toBeInTheDocument();
-    // Source-file ordinal ("07") is stripped so it does not read as a count.
-    expect(screen.getByText("vendors contracts")).toBeInTheDocument();
-    expect(screen.queryByText("07 vendors contracts")).not.toBeInTheDocument();
-    expect(screen.queryByText("VND-001 - Kyriba")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("apex/vendors-contracts.csv"),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("synthetic demo")).not.toBeInTheDocument();
-  });
-
-  it("renders dimension canvas tabs as actual tab controls", () => {
-    render(
-      <HomeSurface
-        clientKey="apexretail"
-        payload={payload}
-        v6Browser={v6Browser}
-      />,
-    );
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "Vendors & Contracts" },
-    });
-
+    expect(screen.getByRole("heading", { name: "Vendors & Contracts", level: 1 })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
-    expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
-    expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    expect(
-      screen.getByRole("tabpanel", { name: "Data" }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("What is loaded")).toBeInTheDocument();
+    expect(screen.getByText("90 records")).toBeInTheDocument();
+    expect(screen.getByText("12 gaps")).toBeInTheDocument();
+    expect(screen.getByText(/Kyriba/)).toBeInTheDocument();
   });
 
-  it("resets the selected context view to Summary when the dropdown changes", () => {
+  it("renders loaded rows as clean CXO-readable data without lineage clutter", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -488,18 +360,37 @@ describe("HomeSurface — real React Context Explorer", () => {
         v6Browser={v6Browser}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "Vendors & Contracts" },
-    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+
+    expect(screen.getByText("90 rows loaded")).toBeInTheDocument();
+    expect(screen.getByText("Kyriba")).toBeInTheDocument();
+    expect(screen.getByText("Treasury")).toBeInTheDocument();
+    expect(screen.getByText("Needs evidence")).toBeInTheDocument();
+    expect(screen.queryByText("VND-001 - Kyriba")).not.toBeInTheDocument();
+    expect(screen.queryByText("apex/vendors-contracts.csv")).not.toBeInTheDocument();
+    expect(screen.queryByText("synthetic demo")).not.toBeInTheDocument();
+  });
+
+  it("resets to Summary when another Explorer node is selected", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
 
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "IT systems landscape" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: /IT systems landscape/i }));
+    expect(screen.getByRole("heading", { name: "IT systems landscape", level: 1 })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -529,93 +420,15 @@ describe("HomeSurface — real React Context Explorer", () => {
         v6Browser={v6Browser}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "Benefits Realization" },
-    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Benefits Realization/i }));
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
 
     expect(screen.getByText("$1M")).toBeInTheDocument();
     expect(screen.queryByText("1000000")).not.toBeInTheDocument();
   });
 
-  it("derives a dimension-specific summary for V7 labels with no curated spec", () => {
-    // "Business Functions" is a live V7 dimension_label that has no curated
-    // DIMENSION_BROWSER_SPECS entry (those use V6-era names). The Summary must
-    // be built from the loaded slice, not fall back to generic default copy.
-    const v7Browser = {
-      tenantKey: "lakeshore",
-      displayName: "Lakeshore Holdings",
-      datasetDir: "lakeshore",
-      generatedAt: "2026-07-03T00:00:00.000Z",
-      contractLabel: "V7",
-      bindingContext: [
-        {
-          dimension: "Business Functions",
-          status: "loaded",
-          description: "Business Functions records with client-friendly fields.",
-          evidence: 25,
-          sources: 1,
-          trust: 74,
-        },
-      ],
-      dimensions: {
-        "Business Functions": {
-          dimension: "Business Functions",
-          title: "Business Functions loaded records",
-          fileNames: ["V7_02_business_functions.csv"],
-          rowCount: 25,
-          dataThinCells: 14,
-          sourceCount: 1,
-          columns: [
-            { key: "function_name", label: "Function" },
-            { key: "executive_owner", label: "Executive owner" },
-          ],
-          rows: [["Finance Operations", "CFO"]],
-          sourceRows: [
-            {
-              v6File: "V7_02_business_functions.csv",
-              rowNumber: 2,
-              rowId: "Source row 2",
-              label: "Finance Operations",
-              values: { Function: "Finance Operations", "Executive owner": "CFO" },
-              knownGaps: [],
-            },
-          ],
-          knownGaps: [{ label: "Executive owner", count: 6 }],
-        },
-      },
-    } satisfies HomeV6ContextBrowser;
-
-    render(
-      <HomeSurface clientKey="lakeshore" payload={null} v6Browser={v7Browser} />,
-    );
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "Business Functions" },
-    });
-
-    // Data-derived, dimension-specific — NOT the generic default copy, and the
-    // source file's ordinal ("02") must not leak in as a count.
-    expect(
-      screen.getByText(/25 loaded records across 1 source file\./),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/02 business functions/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/Readable fields: Function, Executive owner\./),
-    ).toBeInTheDocument();
-    // Examples are built from the actual Data-tab row cells (Function,
-    // Executive owner), not a separate row-label heuristic that can surface a
-    // source filename or boilerplate note for dimensions with no natural name.
-    expect(
-      screen.getByText(/Examples in this tenant: Finance Operations — CFO\./),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        "Summary records describing this part of the operating model.",
-      ),
-    ).not.toBeInTheDocument();
-  });
-
-  it("does not render a Questions tab in the selected context views", () => {
+  it("renders Sources and Relationships as first-class selected-context views", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -623,16 +436,31 @@ describe("HomeSurface — real React Context Explorer", () => {
         v6Browser={v6Browser}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
-      target: { value: "Vendors & Contracts" },
+
+    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
+    fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
+    expect(screen.getByText("vendors contracts")).toBeInTheDocument();
+    expect(screen.queryByText("07 vendors contracts")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
+    expect(screen.getByText("Kyriba")).toBeInTheDocument();
+    expect(screen.getByText("Treasury")).toBeInTheDocument();
+  });
+
+  it("searches the Explorer tree", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Search context areas"), {
+      target: { value: "vendor" },
     });
 
-    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    expect(screen.getByRole("tab", { name: "Data" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Gaps" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Vendors & Contracts/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /IT systems landscape/i })).not.toBeInTheDocument();
   });
 });
