@@ -22,7 +22,7 @@ function fakeSession(): SessionRunner {
           },
         ] as R[];
       }
-      if (sql.includes("from intelligence_v7.dimension_registry")) {
+      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
         return [
           {
             dimension_key: "v7_05_applications_systems",
@@ -114,7 +114,7 @@ function routingSession(opts: {
           },
         ] as R[];
       }
-      if (sql.includes("from intelligence_v7.dimension_registry")) {
+      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
         return [
           {
             dimension_key: dim,
@@ -189,7 +189,7 @@ function chunkRegistrySession(): SessionRunner {
           },
         ] as R[];
       }
-      if (sql.includes("from intelligence_v7.dimension_registry")) {
+      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
         return [
           {
             dimension_key: dim,
@@ -270,6 +270,133 @@ describe("getHomeV7ContextBrowser — plain-English labels for CXO readability",
     const keys = preview!.columns.map((column) => column.key);
     expect(keys).not.toContain("chunk_id");
     expect(JSON.stringify(preview)).not.toContain("lakeshore-industries-v2-chunk-00003");
+  });
+});
+
+function holdcoHierarchySession(onRunParams?: (params: unknown[]) => void): SessionRunner {
+  const dim = "v7_00_portfolio_entity_registry";
+  return async (fn) =>
+    fn(async <R>(sql: string, params: unknown[]) => {
+      if (sql.includes("from intelligence_v7.tenant_pack_runs")) {
+        onRunParams?.(params);
+        return [
+          {
+            tenant_key: params[0],
+            tenant_name: "Lakeshore Holdings",
+            contract_version: "v7.1.0-holdco-entity-spine-20260706",
+            source_dataset: "lakeshore-holdco-v7",
+            load_status: "validated",
+            file_count: 25,
+            row_count: 2722,
+            field_count: 100000,
+            graph_node_count: 1000,
+            relationship_edge_count: 522,
+            chunk_count: 400,
+            loaded_at: "2026-07-06T00:00:00.000Z",
+          },
+        ] as R[];
+      }
+      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
+        return [
+          {
+            dimension_key: dim,
+            dimension_file: "V7_00_portfolio_entity_registry.csv",
+            dimension_label: "Portfolio Entity Registry",
+            column_count: 18,
+            record_count: 8,
+            source_files: 1,
+          },
+        ] as R[];
+      }
+      if (sql.includes("from intelligence_v7.column_registry")) {
+        return [
+          { dimension_key: dim, column_name: "entity_id", client_field: "Entity ID", client_instruction: "Stable ID", module_use: "Home" },
+          { dimension_key: dim, column_name: "entity_name", client_field: "Entity name", client_instruction: "Name", module_use: "Home" },
+          { dimension_key: dim, column_name: "entity_scope", client_field: "Entity scope", client_instruction: "Scope", module_use: "Home" },
+          { dimension_key: dim, column_name: "parent_entity_name", client_field: "Parent entity name", client_instruction: "Parent", module_use: "Home" },
+          { dimension_key: dim, column_name: "revenue_usd", client_field: "Revenue USD", client_instruction: "Revenue", module_use: "Home" },
+          { dimension_key: dim, column_name: "employee_count", client_field: "Employee count", client_instruction: "Employees", module_use: "Home" },
+          { dimension_key: dim, column_name: "total_direct_technology_budget_usd", client_field: "Technology budget USD", client_instruction: "Budget", module_use: "Home" },
+        ] as R[];
+      }
+      if (sql.includes("from intelligence_v7.business_records")) {
+        return [
+          {
+            dimension_key: dim,
+            record_key: "hidden-holdco",
+            record_name: "Lakeshore Holdings",
+            source_file: "V7_00_portfolio_entity_registry.csv",
+            source_row_number: 2,
+            source_artifact_name: "V7_00_portfolio_entity_registry.csv",
+            source_validation_status: "synthetic_demo",
+            values_json: {
+              entity_id: "LSH-HOLDCO",
+              entity_name: "Lakeshore Holdings",
+              entity_scope: "holdco",
+              parent_entity_name: "",
+              revenue_usd: "7120000000",
+              employee_count: "11800",
+              total_direct_technology_budget_usd: "190600000",
+            },
+          },
+          {
+            dimension_key: dim,
+            record_key: "hidden-opco",
+            record_name: "Northline Supply Chain",
+            source_file: "V7_00_portfolio_entity_registry.csv",
+            source_row_number: 3,
+            source_artifact_name: "V7_00_portfolio_entity_registry.csv",
+            source_validation_status: "synthetic_demo",
+            values_json: {
+              entity_id: "LSH-OPCO-NLS",
+              entity_name: "Northline Supply Chain",
+              entity_scope: "portfolio_company",
+              parent_entity_name: "Lakeshore Holdings",
+              revenue_usd: "1500000000",
+              employee_count: "3000",
+              total_direct_technology_budget_usd: "32500000",
+            },
+          },
+        ] as R[];
+      }
+      return [] as R[];
+    });
+}
+
+describe("getHomeV7ContextBrowser — holdco entity spine", () => {
+  it("uses the latest validated tenant contract when Home is not explicitly pinned", async () => {
+    let runParams: unknown[] | null = null;
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "lakeshore",
+      session: holdcoHierarchySession((params) => {
+        runParams = params;
+      }),
+    });
+
+    expect(runParams?.[1]).toBeNull();
+    expect(browser?.datasetDir).toBe("lakeshore-holdco-v7");
+    expect(browser?.dimensions["Portfolio Company Hierarchy"]?.rowCount).toBe(8);
+  });
+
+  it("surfaces portfolio company hierarchy as a first-class Home dimension", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "lakeshore",
+      session: holdcoHierarchySession(),
+      contractVersion: "v7.1.0-holdco-entity-spine-20260706",
+    });
+
+    expect(browser?.bindingContext?.[0]?.dimension).toBe("Portfolio Company Hierarchy");
+    const preview = browser?.dimensions["Portfolio Company Hierarchy"];
+    expect(preview?.columns.map((column) => column.label)).toEqual([
+      "Company / Unit",
+      "Company Scope",
+      "Parent Company",
+      "Revenue USD",
+      "Employee Count",
+      "Technology Budget USD",
+    ]);
+    expect(preview?.rows.flat()).toContain("Northline Supply Chain");
+    expect(preview?.rows.flat()).toContain("portfolio company");
   });
 });
 

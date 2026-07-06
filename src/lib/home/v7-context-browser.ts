@@ -51,8 +51,6 @@ interface V7RecordRow {
   values_json: JsonRecord;
 }
 
-const DEFAULT_CONTRACT_VERSION = "v7.0.0-synthetic-depth-v2-20260703";
-
 const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
   apexretail: "apex-retail",
   firstcapital: "first-capital-financial",
@@ -69,11 +67,12 @@ const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
 // (entity_scope, shared_service_flag, budget_ownership_model), making the Data
 // preview useless. Every column below is present and populated in the data.
 const PREVIEW_COLUMNS: Record<string, string[]> = {
-  v7_01_enterprise_profile: ["company_name", "industry", "revenue_usd", "employee_count", "total_direct_technology_budget_usd", "strategic_priorities"],
+  v7_00_portfolio_entity_registry: ["entity_name", "entity_scope", "parent_entity_name", "revenue_usd", "employee_count", "total_direct_technology_budget_usd"],
+  v7_01_enterprise_profile: ["entity_name", "entity_scope", "industry", "revenue_usd", "employee_count", "total_direct_technology_budget_usd"],
   v7_02_business_functions: ["entity_name", "function_name", "executive_owner", "business_capability", "function_criticality"],
   v7_03_org_ownership: ["entity_name", "org_unit", "leader_role", "reports_to_role", "decision_rights"],
   v7_04_workforce_personas: ["entity_name", "persona_name", "role_family", "population_count", "change_readiness"],
-  v7_05_applications_systems: ["entity_name", "system_name", "system_category", "criticality", "business_owner"],
+  v7_05_applications_systems: ["entity_name", "system_name", "system_scope", "served_entity_names", "system_category", "criticality"],
   v7_06_data_assets_integrations: ["entity_name", "data_asset_name", "system_of_record", "integration_type", "data_owner"],
   v7_07_vendors_contracts: ["entity_name", "vendor_name", "vendor_category", "annual_cost_usd", "renewal_date", "contract_risk"],
   v7_08_spend_value: ["entity_name", "amount_usd", "spend_category", "run_change", "spend_owner"],
@@ -107,7 +106,7 @@ export async function getHomeV7ContextBrowser(args: {
   const profile = tenantProfileForClientKey(appClientKey);
   const tenantKey = V7_TENANT_BY_APP_CLIENT[profile.appClientKey];
   if (!tenantKey) return null;
-  const contractVersion = args.contractVersion ?? DEFAULT_CONTRACT_VERSION;
+  const requestedContractVersion = args.contractVersion ?? null;
   const session = args.session ?? defaultSession;
 
   return session(async (run) => {
@@ -118,26 +117,38 @@ export async function getHomeV7ContextBrowser(args: {
         file_count::int, row_count::int, field_count::int, graph_node_count::int,
         relationship_edge_count::int, chunk_count::int, loaded_at::text
        from intelligence_v7.tenant_pack_runs
-       where tenant_key = $1 and contract_version = $2 and load_status in ('loaded', 'validated')
+       where tenant_key = $1
+         and ($2::text is null or contract_version = $2)
+         and load_status in ('loaded', 'validated')
        order by loaded_at desc
        limit 1`,
-      [tenantKey, contractVersion],
+      [tenantKey, requestedContractVersion],
     );
     const runRow = runs[0];
     if (!runRow) return null;
+    const contractVersion = runRow.contract_version;
 
     const dimensionRows = await run<V7DimensionRow>(
-      `select d.dimension_key, d.dimension_file, d.dimension_label, d.column_count::int,
-        count(r.record_key)::int as record_count,
-        count(distinct r.source_file_key)::int as source_files
-       from intelligence_v7.dimension_registry d
-       left join intelligence_v7.business_records r
-        on r.dimension_key = d.dimension_key
-       and r.contract_version = d.contract_version
-       and r.tenant_key = $1
-       where d.contract_version = $2
-       group by d.dimension_key, d.dimension_file, d.dimension_label, d.column_count
-       order by d.dimension_key`,
+      `with record_counts as (
+        select r.dimension_key,
+          min(r.source_file) as dimension_file,
+          count(r.record_key)::int as record_count,
+          count(distinct r.source_file_key)::int as source_files
+        from intelligence_v7.business_records r
+        where r.tenant_key = $1
+          and r.contract_version = $2
+        group by r.dimension_key
+       )
+       select rc.dimension_key,
+        coalesce(d.dimension_file, rc.dimension_file, rc.dimension_key || '.csv') as dimension_file,
+        coalesce(d.dimension_label, initcap(replace(regexp_replace(rc.dimension_key, '^v7_[0-9]+_', ''), '_', ' '))) as dimension_label,
+        coalesce(d.column_count, 0)::int as column_count,
+        rc.record_count,
+        rc.source_files
+       from record_counts rc
+       left join intelligence_v7.dimension_registry d
+        on d.dimension_key = rc.dimension_key
+       order by rc.dimension_key`,
       [tenantKey, contractVersion],
     );
 
@@ -583,6 +594,7 @@ function gapHowItHelps(label: string, moduleUse: string | null | undefined): str
 // the authored dimension_label; dimensions not listed here keep their
 // existing label (most V7 labels are already plain business language).
 const FRIENDLY_DIMENSION_LABELS: Record<string, string> = {
+  v7_00_portfolio_entity_registry: "Portfolio Company Hierarchy",
   v7_12_relationships_graph_edges: "System & Business Relationships",
   v7_13_source_evidence_registry: "Source Documents & Evidence",
   v7_15_industry_market_knowledge_patterns: "Industry & Market Patterns",
@@ -603,7 +615,10 @@ function friendlyDimensionLabel(dimensionKey: string, dimensionLabel: string): s
 // the raw column_name so the override applies everywhere that column appears,
 // across every dimension.
 const FRIENDLY_COLUMN_LABELS: Record<string, string> = {
+  entity_id: "Company ID",
   entity_name: "Company / Unit",
+  entity_scope: "Company Scope",
+  parent_entity_id: "Parent Company ID",
   parent_entity_name: "Parent Company",
   edge_type: "Relationship Type",
   allowed_from: "From",

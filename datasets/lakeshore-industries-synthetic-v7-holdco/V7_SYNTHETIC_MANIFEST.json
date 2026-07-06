@@ -1,0 +1,162 @@
+{
+  "generatedAt": "2026-07-06T17:48:51.114Z",
+  "contractVersion": "v7.1.0-holdco-entity-spine-20260706",
+  "tenantKey": "lakeshore-industries",
+  "tenantName": "Lakeshore Holdings",
+  "outputRoot": "/private/tmp/nexus-v7-holdco-spine/datasets/lakeshore-industries-synthetic-v7-holdco",
+  "totalRows": 2974,
+  "totalFiles": 25,
+  "source": "repo-owned deterministic Lakeshore holdco entity-spine generator",
+  "files": [
+    {
+      "file": "V7_00_portfolio_entity_registry.csv",
+      "rows": 8,
+      "columns": 36,
+      "checksum_sha256": "d1ad36e665f720172cc0ad9bdfc26aebec2b5cc606edbe3b4a90d12f1e0665a3"
+    },
+    {
+      "file": "V7_01_enterprise_profile.csv",
+      "rows": 8,
+      "columns": 42,
+      "checksum_sha256": "b8df80f48067cb65584ab0d59b223279c4eb0cd30ea8a2ce8de3651a31acc577"
+    },
+    {
+      "file": "V7_02_business_functions.csv",
+      "rows": 96,
+      "columns": 35,
+      "checksum_sha256": "d3cb3e39b7a5e12f32423335e53cdfe073d5bed933be2d1611c6ab69bd5ed15c"
+    },
+    {
+      "file": "V7_03_org_ownership.csv",
+      "rows": 116,
+      "columns": 27,
+      "checksum_sha256": "543f8f6713637e049a517a9414965e32713e00f469c11bd1c362397c6b12c9a4"
+    },
+    {
+      "file": "V7_04_workforce_personas.csv",
+      "rows": 82,
+      "columns": 27,
+      "checksum_sha256": "24a397e3e2caf2861c836393a7c885843fabf9bce25140e947e5ba89b3abc68f"
+    },
+    {
+      "file": "V7_05_applications_systems.csv",
+      "rows": 150,
+      "columns": 41,
+      "checksum_sha256": "ca35447afdebb16b8b2c0e706756d8a102110bc4016eee0f464eba3641bd9e82"
+    },
+    {
+      "file": "V7_06_data_assets_integrations.csv",
+      "rows": 80,
+      "columns": 28,
+      "checksum_sha256": "b61697726dc2d59ad3d0aa62cf7e6a11fdd997bdd1ed12ea4d515068f87a3eb8"
+    },
+    {
+      "file": "V7_07_vendors_contracts.csv",
+      "rows": 96,
+      "columns": 27,
+      "checksum_sha256": "29d19726a411f1d082a0557b012695194ac26784a3e74a42d13d034f6719b587"
+    },
+    {
+      "file": "V7_08_spend_value.csv",
+      "rows": 48,
+      "columns": 27,
+      "checksum_sha256": "bd580999c143ed5728937f20a3caf9d2ce1f63ceda03601faa854f0104f0125b"
+    },
+    {
+      "file": "V7_09_programs_initiatives_business_priorities.csv",
+      "rows": 27,
+      "columns": 25,
+      "checksum_sha256": "a4b33d2a563ee2118573aaa36bddd4d41493270e1566a1064086154496ef4769"
+    },
+    {
+      "file": "V7_10_ai_initiatives.csv",
+      "rows": 27,
+      "columns": 25,
+      "checksum_sha256": "dce0e73a3fc8ff97275841d6d8c3b270a4ef9ea34ad77d327c384cc056c2b688"
+    },
+    {
+      "file": "V7_11_operations_risk_controls.csv",
+      "rows": 48,
+      "columns": 25,
+      "checksum_sha256": "137a5070d61a3962a19914398f82030647e9024e1107290127777439788e3bf0"
+    },
+    {
+      "file": "V7_12_relationships_graph_edges.csv",
+      "rows": 522,
+      "columns": 29,
+      "checksum_sha256": "e85da4ff658daca22dce75bc0e6a794a7344649cceaf2a1103b123b1e96487e5"
+    },
+    {
+      "file": "V7_13_source_evidence_registry.csv",
+      "rows": 48,
+      "columns": 26,
+      "checksum_sha256": "b0e1a1eca3031ded1cf8eaf96d0e2c0d456eb5dd708c9e13c11de9840c7876bd"
+    },
+    {
+      "file": "V7_14_metric_definitions.csv",
+      "rows": 384,
+      "columns": 25,
+      "checksum_sha256": "57c037f06320311d69ba262c9f3d181bbef4fb89888b99d9e9acbd5928e5be21"
+    },
+    {
+      "file": "V7_18_function_system_data_vendor_bridge.csv",
+      "rows": 595,
+      "columns": 28,
+      "checksum_sha256": "e48f2345b34d749ccd027509ba9b4d9e2fe3d7acb98632df922a5cd0c1ca1770"
+    },
+    {
+      "file": "V7_15_industry_market_knowledge_patterns.csv",
+      "rows": 5,
+      "columns": 16,
+      "checksum_sha256": "0867fe4247747e926889c17d3a20db62e59e4f4c84bef18bd4a2a5bbc9f3cfe1"
+    },
+    {
+      "file": "V7_16_expert_lenses.csv",
+      "rows": 5,
+      "columns": 16,
+      "checksum_sha256": "5d635079c988c6bb7841ca2928f06a48baba1a8df963794701790b61b8faca84"
+    },
+    {
+      "file": "V7_17_client_rate_card_cost_basis.csv",
+      "rows": 18,
+      "columns": 24,
+      "checksum_sha256": "f713e899e285c64cb0a3bf614b9800cc508b54593a97acc864284e726a9325bb"
+    },
+    {
+      "file": "V7_19_service_tower_managed_services_scope.csv",
+      "rows": 48,
+      "columns": 24,
+      "checksum_sha256": "ae95414dc3c60f4184eee4a42d476603defed434fbdbc3c631e8c1577fdbd0c4"
+    },
+    {
+      "file": "V7_20_chunk_retrieval_registry.csv",
+      "rows": 376,
+      "columns": 30,
+      "checksum_sha256": "75a4fb10c1caac6364ecb59938723e2be775105e83e762410f4bdcf8a92725aa"
+    },
+    {
+      "file": "V7_21_graph_registry_relationship_dictionary.csv",
+      "rows": 6,
+      "columns": 17,
+      "checksum_sha256": "4ec1f67975c7216a5fe7baf6733dcf3a6b5973f76f9c25e108c1ae507e80eff9"
+    },
+    {
+      "file": "V7_22_operational_evidence_process_intelligence.csv",
+      "rows": 80,
+      "columns": 24,
+      "checksum_sha256": "44b3ffddbd7aa5fd7c7f03205b0e81f56a0b7f9e1a7b48a2a905a88977552e59"
+    },
+    {
+      "file": "V7_23_external_benchmark_market_corpus.csv",
+      "rows": 5,
+      "columns": 18,
+      "checksum_sha256": "323ed5c197abe5e02448bdbc6473739a5a3d2ab209565d8781f901ccfe25b9fb"
+    },
+    {
+      "file": "V7_24_infrastructure_cloud_estate.csv",
+      "rows": 96,
+      "columns": 24,
+      "checksum_sha256": "5e23914c4f20f6c680df4e3c8d02251e3b558068adcacf41bb2e8261ee037cc0"
+    }
+  ]
+}

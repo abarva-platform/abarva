@@ -1,0 +1,108 @@
+{
+  "pass": true,
+  "summary": {
+    "pass": true,
+    "files": 25,
+    "rows": 2974,
+    "entities": 8,
+    "opcos": 7,
+    "namedOpCos": [
+      "Northline Supply Chain",
+      "Brightmark Marketing Services",
+      "Forge & Field Consumer Products",
+      "Great Lakes Pantry Services",
+      "HarborPoint Packaging Group",
+      "Riverton Components & Field Services",
+      "Keystone Industrial Services"
+    ],
+    "businessFunctions": 96,
+    "orgRoles": 116,
+    "workforcePersonas": 82,
+    "systems": 150,
+    "relationships": 522,
+    "bridgeRows": 595,
+    "errors": 0,
+    "warnings": 0
+  },
+  "errors": [],
+  "warnings": [],
+  "entityCoverage": [
+    {
+      "entity_id": "LSH-OPCO-NLS",
+      "entity_name": "Northline Supply Chain",
+      "business_functions": 12,
+      "org_ownership": 14,
+      "workforce_personas": 10,
+      "applications_systems": 18,
+      "data_assets_integrations": 10,
+      "vendors_contracts": 12,
+      "relationships_graph_edges": 65
+    },
+    {
+      "entity_id": "LSH-OPCO-BMS",
+      "entity_name": "Brightmark Marketing Services",
+      "business_functions": 12,
+      "org_ownership": 14,
+      "workforce_personas": 10,
+      "applications_systems": 18,
+      "data_assets_integrations": 10,
+      "vendors_contracts": 12,
+      "relationships_graph_edges": 65
+    },
+    {
+      "entity_id": "LSH-OPCO-FFF",
+      "entity_name": "Forge & Field Consumer Products",
+      "business_functions": 12,
+      "org_ownership": 14,
+      "workforce_personas": 10,
+      "applications_systems": 18,
+      "data_assets_integrations": 10,
+      "vendors_contracts": 12,
+      "relationships_graph_edges": 65
+    },
+    {
+      "entity_id": "LSH-OPCO-GLP",
+      "entity_name": "Great Lakes Pantry Services",
+      "business_functions": 12,
+      "org_ownership": 14,
+      "workforce_personas": 10,
+      "applications_systems": 18,
+      "data_assets_integrations": 10,
+      "vendors_contracts": 12,
+      "relationships_graph_edges": 65
+    },
+    {
+      "entity_id": "LSH-OPCO-HPG",
+      "entity_name": "HarborPoint Packaging Group",
+      "business_functions": 12,
+      "org_ownership": 14,
+      "workforce_personas": 10,
+      "applications_systems": 18,
+      "data_assets_integrations": 10,
+      "vendors_contracts": 12,
+      "relationships_graph_edges": 65
+    },
+    {
+      "entity_id": "LSH-OPCO-RCF",
+      "entity_name": "Riverton Components & Field Services",
+      "business_functions": 12,
+      "org_ownership": 14,
+      "workforce_personas": 10,
+      "applications_systems": 18,
+      "data_assets_integrations": 10,
+      "vendors_contracts": 12,
+      "relationships_graph_edges": 65
+    },
+    {
+      "entity_id": "LSH-OPCO-KIS",
+      "entity_name": "Keystone Industrial Services",
+      "business_functions": 12,
+      "org_ownership": 14,
+      "workforce_personas": 10,
+      "applications_systems": 18,
+      "data_assets_integrations": 10,
+      "vendors_contracts": 12,
+      "relationships_graph_edges": 65
+    }
+  ]
+}
