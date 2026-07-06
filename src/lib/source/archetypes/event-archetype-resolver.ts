@@ -27,7 +27,7 @@ export const CATEGORY_TO_ARCHETYPE_ID: Record<SourceCategoryId, string | null> =
   data_ai_platform: 'AI_DATA_PLATFORM',
   saas_renewal: 'CONTRACT_RENEWAL',
   ai_engineering_partner: null, // archetype not yet shipped
-  cloud_finops: null, // archetype not yet shipped
+  cloud_finops: 'CLOUD_FINOPS',
   bpo_contact_centre: null, // archetype not yet shipped
   cyber_grc: null, // archetype not yet shipped
   staff_aug_vs_managed_service: null, // archetype not yet shipped
