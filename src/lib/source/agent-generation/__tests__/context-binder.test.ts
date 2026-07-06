@@ -31,6 +31,18 @@ jest.mock('@/lib/agent/tools/intelligence/_shared', () => ({
   clientKeyToInventorySubstrateKey: (key: string) => key,
 }));
 
+jest.mock('@/lib/source/archetypes/event-archetype-resolver', () => ({
+  __esModule: true,
+  resolveArchetypeForEvent: () => ({
+    resolved: false,
+    archetype: null,
+    archetypeId: null,
+    source: 'unresolved',
+    categoryId: null,
+    reason: 'test',
+  }),
+}));
+
 jest.mock('@/lib/data-plane/postgresCompat', () => ({
   getAzureReadFluentClient: jest.fn(),
 }));

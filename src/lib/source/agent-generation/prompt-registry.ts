@@ -292,6 +292,9 @@ This memo is your recommendation to the CIO on whether and how to take this to m
         "",
         formatDraftEvidenceContext(ctx),
         "",
+        ctx.archetypeAdvisory
+          ? `— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —\n\n${ctx.archetypeAdvisory}\n`
+          : null,
         `Draft the Sourcing Strategy Memo per the system prompt requirements.`,
       ]
         .filter((line): line is string => line !== null)
@@ -580,6 +583,15 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
         formatD09RfpEvidenceCoverage(ctx),
         "",
       );
+
+      if (ctx.archetypeAdvisory) {
+        lines.push(
+          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
+          "",
+          ctx.archetypeAdvisory,
+          "",
+        );
+      }
 
       lines.push(
         "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the client-to-complete register with accountable role/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; do not use bracketed client fill-in markers. If exact human names or calendar dates are missing, use accountable role names and gate-relative target triggers. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with accountable role, target date or trigger, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
