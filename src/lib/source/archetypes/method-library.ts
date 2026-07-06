@@ -96,6 +96,78 @@ export const SOURCING_METHODS: Record<string, SourcingMethodSpec> = {
     consumesFamilies: ['integration_landscape', 'data_migration_scope', 'customization_inventory'],
     producesArtifact: 'complexity_assessment',
   },
+  staffing_model: {
+    key: 'staffing_model',
+    label: 'Staffing / coverage model',
+    description:
+      'Sizes the agent/coverage staffing required to meet volume and service-level targets, exposing shift, occupancy, and shrinkage assumptions.',
+    consumesFamilies: ['staffing_coverage_model', 'contact_volume_baseline', 'sla_kpi_baseline'],
+    producesArtifact: 'staffing_model',
+  },
+  pod_sizing: {
+    key: 'pod_sizing',
+    label: 'Delivery-pod sizing',
+    description:
+      'Sizes cross-functional delivery pods against backlog and roadmap so the engagement is priced on outcome capacity, not raw headcount.',
+    consumesFamilies: ['product_backlog_roadmap', 'current_team_cost', 'velocity_baseline'],
+    producesArtifact: 'pod_sizing_model',
+  },
+  velocity_sla: {
+    key: 'velocity_sla',
+    label: 'Velocity / throughput SLA analysis',
+    description:
+      'Sets defensible velocity and throughput targets from the delivery baseline so an outcome-priced engagement is held to a real bar.',
+    consumesFamilies: ['velocity_baseline', 'product_backlog_roadmap'],
+    producesArtifact: 'velocity_sla_analysis',
+  },
+  quality_gap: {
+    key: 'quality_gap',
+    label: 'Quality / defect gap analysis',
+    description:
+      'Quantifies the defect, escape-rate, and rework gap against the quality baseline that the partner must close and own commercially.',
+    consumesFamilies: ['quality_baseline', 'quality_error_baseline'],
+    producesArtifact: 'quality_gap_analysis',
+  },
+  rate_normalization: {
+    key: 'rate_normalization',
+    label: 'Rate-card normalization',
+    description:
+      'Normalizes contractor rate cards to a common role/level/location basis and separates bill rate from pay rate to expose markup.',
+    consumesFamilies: ['rate_card', 'bill_pay_rate_split', 'contingent_spend_baseline'],
+    producesArtifact: 'rate_normalization_workbook',
+  },
+  role_normalization: {
+    key: 'role_normalization',
+    label: 'Role / level normalization',
+    description:
+      'Maps heterogeneous contractor titles to a normalized role taxonomy so rates and mix are comparable across suppliers.',
+    consumesFamilies: ['role_taxonomy', 'contractor_roster'],
+    producesArtifact: 'role_normalization_map',
+  },
+  tenure_analysis: {
+    key: 'tenure_analysis',
+    label: 'Tenure / co-employment analysis',
+    description:
+      'Analyzes contractor tenure to surface long-tenure co-employment exposure and conversion or re-competition opportunities.',
+    consumesFamilies: ['tenure_data', 'contractor_roster'],
+    producesArtifact: 'tenure_analysis',
+  },
+  location_mix_analysis: {
+    key: 'location_mix_analysis',
+    label: 'Location-mix analysis',
+    description:
+      'Analyzes onshore/nearshore/offshore location mix against rates to size the location-arbitrage and right-shoring opportunity.',
+    consumesFamilies: ['location_mix', 'contractor_roster', 'rate_card'],
+    producesArtifact: 'location_mix_analysis',
+  },
+  utilization_analysis: {
+    key: 'utilization_analysis',
+    label: 'Utilization / demand-alignment analysis',
+    description:
+      'Compares contractor utilization to demand to find idle or over-provisioned capacity the contract should flex down.',
+    consumesFamilies: ['utilization_alignment', 'contractor_roster'],
+    producesArtifact: 'utilization_analysis',
+  },
 };
 
 export function getSourcingMethod(key: string): SourcingMethodSpec | undefined {

@@ -28,7 +28,7 @@ function event(name: string, extra?: Partial<SourcingEventAttributes>): Sourcing
   return { name, ...extra };
 }
 
-describe('classifySourcingEvent — category coverage (all 8)', () => {
+describe('classifySourcingEvent — category coverage (all 9)', () => {
   const cases: Array<{ label: string; attrs: SourcingEventAttributes; expected: SourceCategoryId }> = [
     {
       label: 'AMS',
@@ -59,6 +59,13 @@ describe('classifySourcingEvent — category coverage (all 8)', () => {
       label: 'BPO / contact centre',
       attrs: event('Contact center outsourcing — BPO for tier-1 customer service'),
       expected: 'bpo_contact_centre',
+    },
+    {
+      label: 'BPO / shared services',
+      attrs: event(
+        'Finance & accounting shared services BPO — payroll and accounts payable, procure-to-pay (P2P) and record-to-report',
+      ),
+      expected: 'bpo_shared_services',
     },
     {
       label: 'cyber / GRC',
