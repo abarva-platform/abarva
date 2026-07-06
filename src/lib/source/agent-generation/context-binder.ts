@@ -23,6 +23,9 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { listAppInventoryRecords } from '@/lib/admin/setup-data-broker';
+import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
+import type { SourceCategoryId } from '@/lib/source/classifier/category-classifier';
+import { buildArchetypeAdvisoryBlock } from './archetype-advisory';
 import type {
   SourceAppInventoryEntry,
   SourceGenerationContext,
@@ -122,6 +125,19 @@ export async function buildSourceGenerationContext(
     }),
   );
 
+  // Revive the dormant archetype playbook: resolve the event's sourcing
+  // archetype from its live classifier category (event_type as fallback) and
+  // pre-format its commercial intelligence so deliverable prompts carry
+  // archetype-SPECIFIC traps/levers/challenges instead of generic advisor prose.
+  // Refuses to guess when the category isn't mapped — advisory stays empty.
+  const archetypeResolution = resolveArchetypeForEvent({
+    categoryId: (event.classifiedCategory ?? null) as SourceCategoryId | null,
+    eventType: event.archetype ?? null,
+  });
+  const archetypeAdvisory = buildArchetypeAdvisoryBlock(
+    archetypeResolution.archetype,
+  );
+
   return {
     tenantKey: activeClient?.key ?? 'unknown',
     tenantName,
@@ -146,6 +162,8 @@ export async function buildSourceGenerationContext(
     evidence,
     uploadedEvidence,
     enterpriseAppInventory,
+    archetypeId: archetypeResolution.archetypeId,
+    archetypeAdvisory,
   };
 }
 
