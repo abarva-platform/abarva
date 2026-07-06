@@ -23,6 +23,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 - `client-data-lane`: Regenerates the Lakeshore `tower-standardized-v1` package from the same V7.1.1 holdco spine so Tower receives portfolio-company-aware budget, initiative, vendor, system, relationship, and value-evidence rows instead of the older Lakeshore Industries package.
 - `global-control-lane`: Updates the Tower standardized loader so `entity_id`, `entity_scope`, `parent_entity_id`, and portfolio-company metadata are preserved in `cio_tower.entities`, `facts`, and `relationships`.
 - `global-control-lane`: Hardens the Tower standardized loader for tenant-scoped replacement so stale rows from the prior Lakeshore package do not collide with or pollute the refreshed V7.1.1 Tower substrate.
+- `global-control-lane`: Aligns the CIO Tower tenant alias map so Lakeshore app sessions resolve to the loaded `cio_tower` tenant key `lakeshore-industries` instead of missing the governed Tower metric packet and falling back to stale V7 projection totals.
 
 ## Client Applicability
 
@@ -89,6 +90,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
   - `TOWER_STANDARDIZED_TENANTS=lakeshore-industries npm run tower:cio:load-standardized -- --dry-run` — Pass; dry-run sees 49 source files, 306 entities, 140 facts, 126 relationships, 8 measure results.
   - Tower loader replacement check — Pass; loader now deletes only the target tenant rows from `measure_results`, `relationships`, `facts`, `entities`, and `source_registry` inside the reload transaction before inserting the refreshed package.
   - Tower relationship schema compatibility — Pass; holdco-to-portfolio-company hierarchy writes through the existing allowed `owns` relationship type while retaining the precise `owns_portfolio_company` semantic label in relationship attributes.
+  - Tower tenant alias compatibility — Pass; `lakeshore`, `lakeshore-holdings`, and `Lakeshore Holdings` now canonicalize to the loaded CIO Tower key `lakeshore-industries`.
   - `npm run tower:cio:quality` — Pass; 300/300 question checks and 1/1 integrity checks.
   - `npx jest src/lib/tower/__tests__/v7-tower-projection.test.ts --runInBand` — Pass. The duplicate Jest mock warnings are pre-existing repository warnings.
 - Small-dimension health — Pass:
