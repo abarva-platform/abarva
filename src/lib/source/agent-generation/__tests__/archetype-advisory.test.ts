@@ -57,12 +57,30 @@ describe("buildArchetypeAdvisoryBlock", () => {
     expect((AMS_MANAGED_SERVICES.valueLeverRules ?? []).length).toBeGreaterThan(0);
     const block = buildArchetypeAdvisoryBlock(AMS_MANAGED_SERVICES);
     expect(block).toContain("Value levers");
-    expect(block).toContain("range with a confidence band, never a bare guaranteed number");
+    expect(block).toContain("range with a confidence band");
+    expect(block).toContain("never a bare guaranteed number");
     const first = AMS_MANAGED_SERVICES.valueLeverRules![0];
     expect(block).toContain(first.name);
     expect(block).toContain(first.valueBasis);
     expect(block).toContain(first.bafoAsk);
     expect(block).toContain(`confidence ${first.defaultConfidence}`);
+  });
+
+  it("classifies each lever by value type and forbids chasing a single savings %", () => {
+    const block = buildArchetypeAdvisoryBlock(AMS_MANAGED_SERVICES);
+    expect(block).toContain("do not chase a single savings %");
+    expect(block).toContain("OPENING POSITION");
+    const first = AMS_MANAGED_SERVICES.valueLeverRules![0];
+    expect(block).toContain(`type ${first.valueType}`);
+  });
+
+  it("carries the deterministic derivation (formula + inputs) and the insufficient-evidence guard", () => {
+    const block = buildArchetypeAdvisoryBlock(AMS_MANAGED_SERVICES);
+    expect(block).toContain("DETERMINISTIC");
+    expect(block).toContain("insufficient evidence");
+    const first = AMS_MANAGED_SERVICES.valueLeverRules![0];
+    expect(block).toContain(first.computation.method);
+    expect(block).toContain(first.computation.inputs[0].key);
   });
 
   it("omits the value-levers section when an archetype has no rules yet", () => {

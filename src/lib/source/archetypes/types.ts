@@ -241,26 +241,112 @@ export type ValueLeverCategory =
   | 'retained_cost'
   | 'transition_risk'
   | 'staffing'
-  | 'renewal_leverage';
+  | 'renewal_leverage'
+  | 'commercial_posture'
+  | 'solution_quality'
+  | 'assumptions'
+  | 'claim_integrity';
+
+/**
+ * The five value TYPES — the classification spine. Source does not chase a single
+ * "savings %". The first vendor bid is the vendor's OPENING POSITION, not the
+ * baseline; a price reduction is not automatically Source-created value. Every
+ * movement is classified into one of these so the value story is honest:
+ *  - `expected_concession`   — giveback already latent in the first bid; the buyer
+ *                              would get it just by asking. NOT Source-created.
+ *  - `incremental_negotiated`— value beyond the expected concession, earned through
+ *                              competitive tension, normalization, and BAFO pressure.
+ *  - `solution_tightening`   — value from a better solution: staffing, SLA, transition,
+ *                              productivity, assumptions cleanup — not just a lower price.
+ *  - `protected`             — post-award leakage AVOIDED (scope, SLA, change-order),
+ *                              value that never shows up as a discount but is real.
+ *  - `risk_adjusted`         — value remaining after discounting delivery, underpricing,
+ *                              and solution-weakness risk (the defensible, not headline, figure).
+ */
+export type ValueType =
+  | 'expected_concession'
+  | 'incremental_negotiated'
+  | 'solution_tightening'
+  | 'protected'
+  | 'risk_adjusted';
+
+/** Where a computation input comes from — all structured/extracted, never model-invented. */
+export type ValueInputSource =
+  | 'extracted_vendor' // parsed from a vendor proposal/response (price line, SLA term, staffing, claim)
+  | 'extracted_contract' // parsed from the incumbent / current contract
+  | 'enterprise_inventory' // committed client inventory / run-cost / ticket volumes
+  | 'should_cost' // computed should-cost model output
+  | 'benchmark' // named market benchmark (source recorded)
+  | 'analyst_input'; // explicit human-entered assumption (logged, overridable)
+
+export type ValueUnit =
+  | 'usd'
+  | 'usd_per_year'
+  | 'pct'
+  | 'count'
+  | 'fte'
+  | 'months'
+  | 'ratio';
+
+/** A single typed input the deterministic math consumes. */
+export interface ValueComputationInput {
+  /** Stable fact key the evaluator reads, e.g. 'annual_change_order_spend'. */
+  key: string;
+  label: string;
+  unit: ValueUnit;
+  source: ValueInputSource;
+  /** If true, no value row is produced without a cited value for this input. */
+  citationRequired: boolean;
+}
+
+/**
+ * The deterministic, defensible computation contract for a value lever. The
+ * NUMBER is derived by code from the typed inputs — never authored by the model.
+ * `method` is what an auditor reads; `formulaId` is the pure evaluator that
+ * implements it (same inputs → same output). A range is mandatory — a point
+ * estimate is never presented as fact — and missing required inputs yield
+ * `insufficient_evidence`, not a guess. This is how we defend our math.
+ */
+export interface ValueComputation {
+  /** The ONLY things the value is derived from. */
+  inputs: ValueComputationInput[];
+  /** Human-readable formula, e.g. 'avoidable_pct × annual_change_order_spend × term_years'. */
+  method: string;
+  /** Machine id of the deterministic evaluator fn implementing `method`. */
+  formulaId: string;
+  /** How the low/high band is derived (mandatory range, never a bare point). */
+  rangeMethod: string;
+  /** When any citationRequired input is absent, the lever must not guess. */
+  onMissingEvidence: 'insufficient_evidence';
+}
 
 /**
  * A single archetype value-lever rule. Deterministic advisor knowledge (code
- * constant, versioned) — NOT free LLM prose. The trigger + valueBasis keep the
- * generated number grounded and defensible.
+ * constant, versioned) — NOT free LLM prose. The `computation` contract makes the
+ * generated number grounded, reproducible, and auditable.
  */
 export interface ValueLeverRule {
   /** Stable key, archetype-prefixed, e.g. 'AMS.ENHANCEMENT_LEAKAGE'. */
   key: string;
   name: string;
   category: ValueLeverCategory;
+  /**
+   * Which of the five value types this lever primarily produces. Forces every
+   * lever to declare whether it is expected concession, incremental negotiated
+   * value, solution tightening, protected value, or risk-adjusted value — so the
+   * value story classifies movement instead of claiming a single headline number.
+   */
+  valueType: ValueType;
   /** The pattern the advisor watches for. */
   whatToWatch: string;
   /** Evidence family keys this rule needs before it can quantify. */
   requiredEvidence: string[];
   /** When the rule fires (the condition in the event's evidence). */
   triggerLogic: string;
-  /** How the $ value is computed — the basis for the range (never a bare guess). */
+  /** Plain-English summary of the basis for the range (the human gloss on `computation.method`). */
   valueBasis: string;
+  /** The deterministic computation contract — how the number is derived and defended. */
+  computation: ValueComputation;
   /** Default confidence when the trigger fires with adequate evidence. */
   defaultConfidence: 'low' | 'med' | 'high';
   /** The RFP clause this rule requires vendors to answer. */
@@ -271,4 +357,15 @@ export interface ValueLeverRule {
   bafoAsk: string;
   /** Why it matters to the executive decision. */
   executiveImplication: string;
+  /**
+   * The commercial risk if this lever is mishandled or the value is claimed
+   * without evidence — keeps the advisory honest about downside, not just upside.
+   */
+  commercialRisk?: string;
+  /**
+   * The product capability / UI view that surfaces this lever (e.g.
+   * 'value_lever_map', 'vendor_commercial_posture', 'solution_quality'). Ties the
+   * rule to where the user sees and acts on it.
+   */
+  capabilityRef?: string;
 }
