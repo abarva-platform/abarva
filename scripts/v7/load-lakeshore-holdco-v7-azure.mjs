@@ -263,10 +263,10 @@ async function ensureSchema(client) {
       checked_at timestamptz not null default now()
     )`);
   await q(client, `create or replace view intelligence_v7.current_tenant_pack_runs as
-    select distinct on (tenant_key, contract_version) *
+    select distinct on (tenant_key) *
     from intelligence_v7.tenant_pack_runs
     where load_status in ('loaded','validated') and superseded_at is null
-    order by tenant_key, contract_version, loaded_at desc`);
+    order by tenant_key, loaded_at desc`);
   await q(client, `create or replace view intelligence_v7.current_business_records as
     select r.* from intelligence_v7.business_records r join intelligence_v7.current_tenant_pack_runs run on run.run_key = r.run_key`);
   await q(client, `create or replace view intelligence_v7.graph_edge_health as
@@ -340,7 +340,7 @@ try {
 
   for (const tenant of payload.tenantPacks) {
     const runKey = key('run', payload.contractVersion, tenant.tenantKey);
-    await q(client, `update intelligence_v7.tenant_pack_runs set superseded_at=now(), load_status='superseded' where tenant_key=$1 and contract_version=$2 and run_key<>$3 and superseded_at is null`, [tenant.tenantKey, payload.contractVersion, runKey]);
+    await q(client, `update intelligence_v7.tenant_pack_runs set superseded_at=now(), load_status='superseded' where tenant_key=$1 and run_key<>$2 and superseded_at is null`, [tenant.tenantKey, runKey]);
     await q(client, `delete from intelligence_v7.tenant_pack_runs where run_key=$1`, [runKey]);
     const expectedRows = tenant.files.reduce((sum, f) => sum + f.rows.length, 0);
     await q(client, `insert into intelligence_v7.tenant_pack_runs(run_key, tenant_key, tenant_name, contract_version, source_dataset, load_status, file_count, row_count, field_count)

@@ -17,6 +17,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 - `client-data-lane`: Adds a repo-owned Lakeshore V7.1.1 synthetic holdco pack under `datasets/lakeshore-industries-synthetic-v7-holdco/`.
 - `client-data-lane`: Adds the required entity-spine SQL extension for `intelligence_v7` so Azure Postgres can query `entity_id`, `parent_entity_id`, and entity coverage directly.
 - `client-data-lane`: Adds an ACA-job-safe V7.1.1 loader script that defaults to the baked Lakeshore payload and applies the entity-spine SQL extension after load.
+- `client-data-lane`: Hardens V7 current-run supersession so a refreshed tenant contract replaces prior active tenant runs in `current_*` read paths instead of double-counting old and new contracts.
 - `global-control-lane`: Updates the Home V7 browser read-model labels so a loaded entity spine appears as `Portfolio Company Hierarchy`.
 - `global-control-lane`: Hardens Home V7 dimension selection to derive visible dimensions from actual tenant records, then use the registry for labels/metadata, so a newer Lakeshore contract does not hide older validated V7 records for other tenants.
 - `client-data-lane`: Regenerates the Lakeshore `tower-standardized-v1` package from the same V7.1.1 holdco spine so Tower receives portfolio-company-aware budget, initiative, vendor, system, relationship, and value-evidence rows instead of the older Lakeshore Industries package.
@@ -97,6 +98,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 - `npx jest src/lib/home/__tests__/v7-context-browser.test.ts --runInBand` — Pass after linking existing local `node_modules` into the clean worktree.
 - `node --check scripts/v7/load-lakeshore-holdco-v7-azure.mjs` — Pass.
 - `node --check scripts/v7/readback-lakeshore-holdco-v7-azure.mjs` — Pass.
+- Azure V7 readback gate now asserts exactly one active current Lakeshore tenant run, contract `v7.1.1-holdco-depth-correction-20260706`, 3,094 rows, 8 entity rows, 24 corporate shared-service systems, 128 OpCo-local systems, and shared-system bridge rows for all 7 OpCos.
 - Client workbook formula-error scan — Pass, 0 formula errors.
 - Client workbook visual preview — Pass for entity registry and applications/systems sheets.
 
@@ -104,7 +106,7 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 
 1. Review and merge this candidate.
 2. Build a digest-pinned ACA image from the merged SHA.
-3. Run `npm run v7:lakeshore:holdco:azure-load` through the approved ACA Job/operator path so Azure Postgres is mutated only inside the private VNet.
+3. Run `npm run v7:lakeshore:holdco:azure-load` through the approved ACA Job/operator path so Azure Postgres is mutated only inside the private VNet. The loader supersedes any prior active Lakeshore run before inserting the refreshed tenant pack.
 4. Run Azure readback validation for `intelligence_v7.current_entity_registry`, `entity_dimension_coverage`, `business_records`, `relationship_edges`, and `chunk_registry`.
 5. Run `npm run tower:cio:load-standardized` for `lakeshore-industries` through the approved ACA Job/operator path so `cio_tower` receives the regenerated Tower standardized package.
 6. Run Tower readback/proof for the `cio_tower` entities, facts, relationships, measure results, and visible `/tower` budget cards.

@@ -38,24 +38,33 @@ try {
        limit 1`,
       [tenantKey, contractVersion],
     ),
+    activeRuns: await q(
+      `select run_key, contract_version, load_status, row_count, loaded_at::text
+       from intelligence_v7.tenant_pack_runs
+       where tenant_key = $1
+         and superseded_at is null
+         and load_status in ('loaded','validated')
+       order by loaded_at desc`,
+      [tenantKey],
+    ),
     entityRollup: await q(
       `select entity_scope, count(*)::int as count,
         sum(revenue_usd)::numeric as revenue_usd,
         sum(employee_count)::int as employees,
         sum(total_direct_technology_budget_usd)::numeric as tech_budget_usd
        from intelligence_v7.current_entity_registry
-       where tenant_key = $1
+       where tenant_key = $1 and contract_version = $2
        group by entity_scope
        order by entity_scope`,
-      [tenantKey],
+      [tenantKey, contractVersion],
     ),
     entityNames: await q(
       `select entity_name, entity_scope, parent_entity_name,
         revenue_usd, employee_count, total_direct_technology_budget_usd
        from intelligence_v7.current_entity_registry
-       where tenant_key = $1
+       where tenant_key = $1 and contract_version = $2
        order by entity_scope, entity_name`,
-      [tenantKey],
+      [tenantKey, contractVersion],
     ),
     dimensionCounts: await q(
       `select dimension_key, count(*)::int as records
@@ -97,13 +106,15 @@ try {
 
   const failures = [];
   if (report.run[0]?.load_status !== 'validated') failures.push('Latest run is not validated.');
-  if (Number(report.run[0]?.row_count ?? 0) !== 2974) failures.push(`Expected 2974 rows, got ${report.run[0]?.row_count}.`);
+  if (report.activeRuns.length !== 1) failures.push(`Expected 1 active current tenant run, got ${report.activeRuns.length}.`);
+  if (report.activeRuns[0]?.contract_version !== contractVersion) failures.push(`Expected active run contract ${contractVersion}, got ${report.activeRuns[0]?.contract_version}.`);
+  if (Number(report.run[0]?.row_count ?? 0) !== 3094) failures.push(`Expected 3094 rows, got ${report.run[0]?.row_count}.`);
   if ((report.entityNames ?? []).length !== 8) failures.push(`Expected 8 entity rows, got ${report.entityNames.length}.`);
   if (!report.systemScopes.some((row) => row.system_scope === 'corporate_shared_service' && row.systems === 24)) {
     failures.push('Expected 24 corporate_shared_service systems.');
   }
-  if (!report.systemScopes.some((row) => row.system_scope === 'opco_local_application' && row.systems === 126)) {
-    failures.push('Expected 126 opco_local_application systems.');
+  if (!report.systemScopes.some((row) => row.system_scope === 'opco_local_application' && row.systems === 128)) {
+    failures.push('Expected 128 opco_local_application systems.');
   }
   if ((report.sharedSystemBridgeByOpco ?? []).length !== 7) failures.push('Expected shared-system bridge rows for 7 OpCos.');
   for (const row of report.sharedSystemBridgeByOpco) {
