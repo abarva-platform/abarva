@@ -24,6 +24,7 @@ export type SourceCategoryId =
   | 'saas_renewal'
   | 'cloud_finops'
   | 'bpo_contact_centre'
+  | 'bpo_shared_services'
   | 'cyber_grc'
   | 'staff_aug_vs_managed_service';
 
@@ -35,6 +36,7 @@ export const SOURCE_CATEGORY_IDS = [
   'saas_renewal',
   'cloud_finops',
   'bpo_contact_centre',
+  'bpo_shared_services',
   'cyber_grc',
   'staff_aug_vs_managed_service',
 ] as const satisfies readonly SourceCategoryId[];
@@ -847,6 +849,111 @@ const STAFF_AUG_VS_MANAGED_SERVICE: SourceCategoryDefinition<'staff_aug_vs_manag
   ],
 };
 
+const BPO_SHARED_SERVICES: SourceCategoryDefinition<'bpo_shared_services'> = {
+  id: 'bpo_shared_services',
+  label: 'BPO / Shared Services (Transaction Processing)',
+  summary:
+    'Outsourcing of transaction-processing shared services across HR, Finance & Accounting (F&A), and Supply Chain (SCM) — priced on process volumes and held to error/rework and cycle-time SLAs.',
+  decisionQuestions: [
+    {
+      id: 'bss-q1',
+      stage: 0,
+      question:
+        'Is the win labour arbitrage, or automation and process redesign? Outsourcing a manual, error-prone process at a lower rate banks the dysfunction.',
+    },
+    {
+      id: 'bss-q2',
+      stage: 1,
+      question:
+        'Is pricing on true transaction volume bands, or per-FTE — and does it flex down as automation deflects work?',
+    },
+    {
+      id: 'bss-q3',
+      stage: 2,
+      question:
+        'Who owns the rework and error cost — payroll corrections, invoice-accuracy misses, PO/invoice mismatches — the provider commercially, or us?',
+    },
+    {
+      id: 'bss-q4',
+      stage: 5,
+      question:
+        'How do SOX controls, segregation-of-duties, and the retained approver/controller org survive the transition, and are they costed into TCO?',
+    },
+  ],
+  evidenceInputs: [
+    {
+      segment: 'operating_telemetry',
+      whatItProves:
+        'Transaction volume by process (payroll events, AP invoices, PO matches, HR cases), plus error/rework and cycle-time baselines.',
+      required: true,
+    },
+    {
+      segment: 'it_financials',
+      whatItProves: 'Current fully-loaded unit cost per process for should-cost and any savings claim.',
+      required: true,
+    },
+    {
+      segment: 'program_inventory',
+      whatItProves: 'Automation / RPA / self-service programs that will deflect volume mid-term.',
+      required: true,
+    },
+    {
+      segment: 'compliance',
+      whatItProves: 'SOX controls, segregation-of-duties, and data-privacy obligations that bound delivery model and geography.',
+      required: true,
+    },
+    {
+      segment: 'vendor_contracts',
+      whatItProves: 'Incumbent BPO / shared-services terms, volume commitments, and exit provisions.',
+      required: false,
+    },
+  ],
+  outputArtifacts: [
+    {
+      id: 'bss-a1',
+      name: 'Arbitrage vs automate vs redesign decision memo',
+      purpose: 'States whether volume-band BPO is the right motion, or automation/redesign should come first.',
+    },
+    {
+      id: 'bss-a2',
+      name: 'Volume-band pricing & deflection model',
+      purpose: 'Ties price to transaction volume bands and projects automation deflection across the term.',
+    },
+    {
+      id: 'bss-a3',
+      name: 'Error/rework economics & retained-cost model',
+      purpose: 'Quantifies rework cost the provider must own and the retained approver/controller effort in TCO.',
+    },
+    {
+      id: 'bss-a4',
+      name: 'Controls / SoD continuity matrix',
+      purpose: 'Maps SOX controls and segregation-of-duties through transition and steady-state.',
+    },
+  ],
+  antiPatterns: [
+    {
+      id: 'bss-x1',
+      trap: 'Outsourcing a manual, error-prone process for arbitrage instead of automating or redesigning it first.',
+      correction: 'Run Stage 0 triage; size the automation deflection pool before exporting the process.',
+    },
+    {
+      id: 'bss-x2',
+      trap: 'Signing per-FTE pricing while planning automation — paying for headcount you intend to remove.',
+      correction: 'Use volume-band pricing that flexes down as deflection removes transactions.',
+    },
+    {
+      id: 'bss-x3',
+      trap: 'Letting exceptions (off-cycle payroll, invoice disputes, master-data fixes) leak into uncapped T&M.',
+      correction: 'Price exception handling explicitly and cap non-standard-work leakage.',
+    },
+    {
+      id: 'bss-x4',
+      trap: 'Omitting the retained approver/controller org and SoD continuity, making the bidder look cheaper than the real total.',
+      correction: 'Load retained-org and client-SME effort into TCO and require a controls-continuity plan.',
+    },
+  ],
+};
+
 /**
  * The complete, exhaustive taxonomy keyed by category id. The Slice 1.1
  * classifier will read from this registry; it does not mutate it.
@@ -858,11 +965,12 @@ export const SOURCE_CATEGORY_TAXONOMY: Readonly<Record<SourceCategoryId, SourceC
   saas_renewal: SAAS_RENEWAL,
   cloud_finops: CLOUD_FINOPS,
   bpo_contact_centre: BPO_CONTACT_CENTRE,
+  bpo_shared_services: BPO_SHARED_SERVICES,
   cyber_grc: CYBER_GRC,
   staff_aug_vs_managed_service: STAFF_AUG_VS_MANAGED_SERVICE,
 };
 
-/** Flat list of all 8 categories, in canonical order. */
+/** Flat list of all 9 categories, in canonical order. */
 export const SOURCE_CATEGORIES: readonly SourceCategory[] =
   SOURCE_CATEGORY_IDS.map((id) => SOURCE_CATEGORY_TAXONOMY[id]);
 
