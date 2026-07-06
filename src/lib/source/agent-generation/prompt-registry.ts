@@ -706,6 +706,15 @@ Writing and format requirements:
         lines.push("");
       }
 
+      if (ctx.archetypeAdvisory) {
+        lines.push(
+          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
+          "",
+          ctx.archetypeAdvisory,
+          "",
+        );
+      }
+
       lines.push(
         "Draft the Vendor Response Control Pack per the system prompt. Bind it to this event and scope, include all eight required response-control components, include the response-compliance mandate, and make the future commercial leverage checks possible without claiming perfect downstream proposal parsing.",
       );
@@ -919,6 +928,15 @@ If the evaluation scorecard (d16) or pricing workbook (d19) has not been authore
       if (evidenceBlock) {
         lines.push(evidenceBlock);
         lines.push("");
+      }
+
+      if (ctx.archetypeAdvisory) {
+        lines.push(
+          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
+          "",
+          ctx.archetypeAdvisory,
+          "",
+        );
       }
 
       lines.push(
