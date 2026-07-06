@@ -389,7 +389,7 @@ function buildParagraphs(args: {
   if (args.topicKey === 'unsupported') {
     return [
       'Home is a context browser for the loaded enterprise record. It does not answer general knowledge, trivia, news, weather, or unrelated web questions.',
-      'Use Home to inspect the company profile, business functions, applications, data, vendors, budget, AI footprint, controls, evidence trail, and known gaps.',
+      'Use Home to inspect the company profile, business functions, applications, data, vendors, budget, AI footprint, controls, source trail, and known gaps.',
       'For recommendations, use-case judgment, investment choices, or outside-in synthesis, open Intelligence so aVa can use the advisory canvas instead of the Home context browser.',
     ];
   }
@@ -428,13 +428,13 @@ function buildParagraphs(args: {
     ? `${args.displayName}'s loaded ${dimensionLabel} context shows ${joinList(samples)}.`
     : `${args.displayName}'s loaded ${dimensionLabel} context is present, but the preview rows need stronger client-readable names.`;
   return [
-    `${sampleSentence} Home can use this as current-state evidence while keeping source confidence and validation boundaries visible.`,
-    'The supporting material is broad enough for orientation and current-state discovery, but Home still keeps validation gaps visible before board-grade use.',
+    `${sampleSentence} Home can use this as current-state context while keeping confidence and validation boundaries visible.`,
+    'The business context is broad enough for orientation and current-state discovery, but Home still keeps validation gaps visible before board-grade use.',
     args.config.handoffTarget
-      ? `${surfaceName(args.config.handoffTarget)} should take over when the user wants decisions, recommendations, or execution moves; Home should stay focused on loaded facts and evidence boundaries.`
+      ? `${surfaceName(args.config.handoffTarget)} should take over when the user wants decisions, recommendations, or execution moves; Home should stay focused on available facts and validation boundaries.`
       : args.gaps[0]
-        ? `Important evidence gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
-        : 'No explicit evidence gap appears in the selected fields, but client validation is still required before board-grade use.',
+        ? `Important source gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
+        : 'No explicit source gap appears in the selected fields, but client validation is still required before board-grade use.',
   ];
 }
 

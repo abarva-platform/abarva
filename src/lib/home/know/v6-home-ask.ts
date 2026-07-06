@@ -1217,7 +1217,7 @@ function answerParagraphsByTopic(args: {
   if (topicKey === "unsupported") {
     return [
       "Home is a context browser for the loaded enterprise record. It does not answer general knowledge, trivia, news, weather, or unrelated web questions.",
-      "Use Home to inspect the company profile, business functions, applications, data, vendors, budget, AI footprint, controls, evidence trail, and known gaps.",
+      "Use Home to inspect the company profile, business functions, applications, data, vendors, budget, AI footprint, controls, source trail, and known gaps.",
       "For recommendations, use-case judgment, investment choices, or outside-in synthesis, open Intelligence so aVa can use the advisory canvas instead of the Home context browser.",
     ];
   }

@@ -99,7 +99,8 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.proof.answerSource.claudeInvoked).toBe(false);
     expect(result.answer.primaryDimension).toBe('v7_05_applications_systems');
     expect(result.answer.directAnswer).toMatch(/SkyOps Recovery Platform/i);
-    expect(result.answer.directAnswer).toMatch(/supporting material is broad enough/i);
+    expect(result.answer.directAnswer).toMatch(/business context is broad enough/i);
+    expect(result.answer.directAnswer).not.toMatch(/\bevidence\b|supporting material/i);
     expect(result.answer.directAnswer).not.toMatch(/field facts|graph nodes|retrieval chunks/i);
     expect(result.answer.table?.headers).toEqual(['System', 'Owner', 'Criticality', 'Lifecycle']);
     expect(JSON.stringify(result)).not.toMatch(/record_key|chunk_key|values_json|source_row_number/i);
@@ -171,7 +172,7 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.proof.questionIntent).toBe('handoff_intelligence');
     expect(result.answer.answerBoundary.handoffTarget).toBe('intelligence');
     expect(result.answer.directAnswer).toContain('Intelligence should take over');
-    expect(result.answer.directAnswer).toContain('Home should stay focused on loaded facts');
+    expect(result.answer.directAnswer).toContain('Home should stay focused on available facts and validation boundaries');
   });
 
   it('keeps explicit Tower ownership routed to Tower', async () => {

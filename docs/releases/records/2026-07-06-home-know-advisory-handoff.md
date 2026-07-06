@@ -42,6 +42,8 @@ This follow-up also closes the V7-first path and general-knowledge gap: Home now
 - Follow-up hotfix:
   - Bounded V7 `ai` / `hold` classifier tokens so "available" no longer matches AI and "Holdings" no longer matches hold.
   - Added an explicit orientation rule for "what business context is available" questions.
+- Follow-up visible-language cleanup:
+  - Replaced visible Home boundary/handoff wording such as "evidence trail", "supporting material", and "evidence boundaries" with context-browser language: source trail, business context, available facts, and validation boundaries.
 
 ## QA / Validation
 
@@ -57,6 +59,7 @@ This follow-up also closes the V7-first path and general-knowledge gap: Home now
   - "Tell me about the company" → `loaded_context`; "Who is the CIO?" → not captured (leader-role exclusion); "What vendors do we have contracts with?" → `vendors_contracts` (unchanged).
 - "What is the capital of Uganda?" → `unsupported`, with Home context-browser boundary and no Kampala answer.
 - **Live proof follow-up — PASS after hotfix:** signed-in Chrome API proof initially caught `What business context is available for Lakeshore Holdings?` being routed to Tower because of unbounded classifier tokens. Added regression and bounded tokens before final deploy proof.
+- **Visible-language regression — PASS:** `npx jest src/lib/home/know/__tests__ --runInBand` (102/102) now asserts V7 Home visible prose does not contain plain "evidence" or "supporting material" in the deterministic application/system answer.
 - **Typecheck — PASS:** `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`.
 - **Release check — PASS:** `npm run release:check`.
 - **Live signed-in proof — NOT-RUN (pending deploy):** on `ca-abarva-web-lab-eastus`, confirm an advisory question on Home shows the Intelligence handoff, and an identity question shows the enterprise profile.
