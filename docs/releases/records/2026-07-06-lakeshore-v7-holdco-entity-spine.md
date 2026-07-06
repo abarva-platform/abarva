@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-lab`
 
 ## Plain-English Summary
 
@@ -104,6 +104,36 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 - `node --check scripts/v7/load-lakeshore-holdco-v7-azure.mjs` — Pass.
 - `node --check scripts/v7/readback-lakeshore-holdco-v7-azure.mjs` — Pass.
 - Azure V7 readback gate now asserts exactly one active current Lakeshore tenant run, contract `v7.1.1-holdco-depth-correction-20260706`, 3,094 rows, 8 entity rows, 24 corporate shared-service systems, 128 OpCo-local systems, and shared-system bridge rows for all 7 OpCos.
+- Azure V7 data load/readback — Pass:
+  - Load proof: `/Users/anand/Projects/nexus/proof/lakeshore-v7-holdco-load-20260706T192928Z`
+  - Readback proof: `/Users/anand/Projects/nexus/proof/lakeshore-v7-holdco-readback-20260706T193150Z`
+  - Final image readback proof: `/Users/anand/Projects/nexus/proof/lakeshore-v7-holdco-readback-final-20260706T194454Z`
+  - Active contract: `v7.1.1-holdco-depth-correction-20260706`
+  - Active current tenant run count: 1
+  - Business records: 3,094
+  - Field facts: 87,007
+  - Graph nodes: 912
+  - Relationship edges: 529
+  - Retrieval chunks: 376
+  - Source files: 25
+  - Entity registry: 1 holdco and 7 portfolio companies
+  - System scope split: 24 corporate shared-service systems and 128 OpCo-local systems
+  - Weak/unscored graph edges: 0
+- Azure Tower data load/readback — Pass:
+  - Load proof: `/Users/anand/Projects/nexus/proof/lakeshore-tower-standardized-load-final2-20260706T195758Z`
+  - Readback proof: `/Users/anand/Projects/nexus/proof/lakeshore-tower-standardized-proof-final-20260706T195935Z`
+  - Lakeshore `cio_tower` rows: 49 source rows, 306 entities, 140 facts, 126 relationships, 8 measure results
+  - `total_it_budget_fy26`: `$190.6M` from 8 source facts
+  - `total_it_budget_fy25_baseline`: `$179.2M` from 8 source facts
+- Signed-in deployed browser proof — Pass:
+  - Proof folder: `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z`
+  - Browser checks: 21/21 passed
+  - Home shows 25 context areas, 3.09K/3,094 records, 25 source files, 916 gaps, and Portfolio Company Hierarchy
+  - Portfolio Company Hierarchy shows 8 loaded records
+  - Enterprise Profile shows 8 loaded records and money formatted in M/B terms
+  - Business Functions shows 96 loaded records grouped by OpCos
+  - Applications Systems shows 152 loaded records with OpCo/local/corporate scope language
+  - Tower shows `$190.6M` FY26 technology budget and no longer shows stale `$983.6M`
 - Client workbook formula-error scan — Pass, 0 formula errors.
 - Client workbook visual preview — Pass for entity registry and applications/systems sheets.
 
@@ -119,13 +149,13 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: Not required for data-only reload; required only if the Home read-model change is deployed.
+- Repo-owned deploy workflow: Manual ACA release executed from exact git SHA under the approved Azure Container Apps lane.
 - Shared runtime mutators: Azure Postgres schema extension and V7 loader job.
-- Approved image digest: Not assigned yet.
-- ACA runtime invariant: Not applicable until app deploy.
-- Worker image invariant: V7 loader image must be pinned when reload is executed.
+- Approved image digest: `sha256:22421165790264ed5622b4c1aa832930faf50ebf6dca39e4cdfdac1e7d3c42c0`.
+- ACA runtime invariant: `ca-abarva-web-lab-eastus--0000261` is latest-ready and receives 100% traffic.
+- Worker image invariant: V7 and Tower reload/readback jobs ran through the ACA private operator lane with digest-pinned images.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, after Azure reload and app deploy.
+- Live signed-in proof required: Complete.
 
 ## Rollback Plan
 
@@ -148,11 +178,19 @@ This candidate corrects the Lakeshore V7 data model for a holding-company tenant
 - Workbook previews:
   - `/Users/anand/Downloads/lakeshore-v7-holdco-entity-spine-20260706/entity-registry-preview.png`
   - `/Users/anand/Downloads/lakeshore-v7-holdco-entity-spine-20260706/systems-preview.png`
+- Azure V7 load/readback proof:
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-holdco-load-20260706T192928Z`
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-holdco-readback-20260706T193150Z`
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-holdco-readback-final-20260706T194454Z`
+- Azure Tower load/readback proof:
+  - `/Users/anand/Projects/nexus/proof/lakeshore-tower-standardized-load-final2-20260706T195758Z`
+  - `/Users/anand/Projects/nexus/proof/lakeshore-tower-standardized-proof-final-20260706T195935Z`
+- Signed-in browser proof:
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/browser-proof.json`
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/01-home-overview.png`
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/05-home-enterprise-profile-data.png`
+  - `/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/08-tower-overview.png`
 
 ## Known Gaps
 
-- Azure reload has not been executed yet.
-- Tower `cio_tower` Azure reload has not been executed yet.
-- ACA production deployment has not been executed yet.
-- Signed-in browser proof has not been executed yet.
-- This release rebuilds Lakeshore first; the same entity-spine pattern should be generalized to other holdco/multi-division tenants after Lakeshore passes Azure readback.
+- This release rebuilds Lakeshore first; the same entity-spine pattern should be generalized to other holdco/multi-division tenants after Lakeshore remains stable in demo use.
