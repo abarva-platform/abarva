@@ -24,7 +24,7 @@ import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { listAppInventoryRecords } from '@/lib/admin/setup-data-broker';
 import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
-import type { SourceCategoryId } from '@/lib/source/classifier/category-classifier';
+import type { SourceCategoryId } from '@/lib/source/taxonomy/category-taxonomy';
 import { buildArchetypeAdvisoryBlock } from './archetype-advisory';
 import type {
   SourceAppInventoryEntry,
