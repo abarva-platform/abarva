@@ -43,6 +43,15 @@ const payload = {
   ],
   context: [
     {
+      dimension: "Enterprise Profile",
+      status: "LOADED",
+      description: "Holding-company profile and basic business metadata",
+      evidence: 1,
+      sources: 1,
+      trust: 82,
+      flag: null,
+    },
+    {
       dimension: "IT systems landscape",
       status: "LOADED",
       description: "Applications, integrations, systems of record",
@@ -96,6 +105,37 @@ const v6Browser = {
   datasetDir: "apex-retail-synthetic-v6",
   generatedAt: "2026-06-28T00:00:00.000Z",
   dimensions: {
+    "Enterprise Profile": {
+      dimension: "Enterprise Profile",
+      title: "Enterprise Profile",
+      fileNames: ["V7_01_enterprise_profile.csv"],
+      rowCount: 1,
+      dataThinCells: 1,
+      sourceCount: 1,
+      columns: [
+        { key: "client_display_name", label: "Enterprise" },
+        { key: "industry_model", label: "Industry/model" },
+        { key: "annual_revenue_usd", label: "Revenue" },
+        { key: "employee_count", label: "Employees" },
+      ],
+      rows: [["Lakeshore Holdings", "Industrial holdco", "7120000000", "11800"]],
+      sourceRows: [
+        sourceRow(
+          "V7_01_enterprise_profile.csv",
+          2,
+          "ENT-001",
+          "Lakeshore Holdings",
+          {
+            Enterprise: "Lakeshore Holdings",
+            "Industry/model": "Industrial holdco",
+            Revenue: "7120000000",
+            Employees: "11800",
+          },
+          ["Parent entity"],
+        ),
+      ],
+      knownGaps: [{ label: "Parent entity", count: 1 }],
+    },
     "Applications & Core Systems": {
       dimension: "Applications & Core Systems",
       title: "Application and system inventory",
@@ -348,7 +388,7 @@ describe("HomeSurface — Explorer context browser", () => {
     );
     expect(screen.getByText("What is loaded")).toBeInTheDocument();
     expect(screen.getByText("90 records")).toBeInTheDocument();
-    expect(screen.getByText("12 gaps")).toBeInTheDocument();
+    expect(screen.getAllByText("12 fields").length).toBeGreaterThan(0);
     expect(screen.getByText(/Kyriba/)).toBeInTheDocument();
   });
 
@@ -445,6 +485,40 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
     expect(screen.getByText("Kyriba")).toBeInTheDocument();
     expect(screen.getByText("Treasury")).toBeInTheDocument();
+  });
+
+  it("explains profile quality, gaps, and relationships in plain English", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Enterprise Profile/i }));
+
+    expect(screen.getByText("88%")).toBeInTheDocument();
+    expect(screen.getByText(/1 field to complete/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+    expect(screen.getByText(/this is the loaded business data for Enterprise Profile/i)).toBeInTheDocument();
+    expect(screen.getByText("$7.12B")).toBeInTheDocument();
+    expect(screen.getByText("11,800")).toBeInTheDocument();
+    expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Gaps" }));
+    expect(screen.getByText(/gaps are client-to-complete fields/i)).toBeInTheDocument();
+    expect(screen.getByText("1 field missing")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
+    expect(screen.getByText(/sources show where this context came from/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
+    expect(screen.getByText(/relationships are mapped links between business objects/i)).toBeInTheDocument();
+    expect(screen.getByText(/only a profile anchor/i)).toBeInTheDocument();
+    expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
+    expect(screen.queryByText("11800")).not.toBeInTheDocument();
   });
 
   it("searches the Explorer tree", () => {
