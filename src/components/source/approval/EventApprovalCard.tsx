@@ -68,13 +68,24 @@ export function EventApprovalCard({
   const router = useRouter();
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [strategyGate, setStrategyGate] = useState({
+    sponsor: false,
+    value: false,
+    archetype: false,
+  });
   const [busyAction, setBusyAction] = useState<ApprovalAction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const reasonReady = reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
+  // Strategy-at-P0 makes approval the strategy gate: the three GATE-STRATEGY
+  // criteria are confirmed here as explicit checkboxes. Other tenants keep the
+  // single accountable-decision confirm.
+  const gateReady = generateMemoOnApprove
+    ? strategyGate.sponsor && strategyGate.value && strategyGate.archetype
+    : confirmed;
   const actionReady =
-    currentUserCanApprove && reasonReady && confirmed && !busyAction;
+    currentUserCanApprove && reasonReady && gateReady && !busyAction;
   const isSelfApproval = Boolean(
     currentUserId && createdBy.userId && currentUserId === createdBy.userId,
   );
@@ -91,7 +102,10 @@ export function EventApprovalCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: action === "reject" ? "reject" : "approve",
-          notes: reason,
+          notes:
+            action !== "reject" && generateMemoOnApprove
+              ? `${reason}\n\nStrategy gate confirmed at approval — sponsor sign-off, value target set, archetype confirmed.`
+              : reason,
           confirmed: true,
         }),
       });
@@ -204,18 +218,60 @@ export function EventApprovalCard({
             </span>
           </label>
 
-          <label style={CHECKBOX_ROW_STYLE}>
-            <input
-              data-testid="source-approval-confirmation"
-              type="checkbox"
-              checked={confirmed}
-              disabled={!currentUserCanApprove || Boolean(busyAction)}
-              onChange={(event) => setConfirmed(event.target.checked)}
-            />
-            <span>
-              I confirm this is my accountable human approval decision.
-            </span>
-          </label>
+          {generateMemoOnApprove ? (
+            <div style={{ display: "grid", gap: 8, marginBottom: 4 }}>
+              <div style={EYEBROW_STYLE}>Confirm the strategy gate</div>
+              <label style={CHECKBOX_ROW_STYLE}>
+                <input
+                  data-testid="source-approval-gate-sponsor"
+                  type="checkbox"
+                  checked={strategyGate.sponsor}
+                  disabled={!currentUserCanApprove || Boolean(busyAction)}
+                  onChange={(event) =>
+                    setStrategyGate((g) => ({ ...g, sponsor: event.target.checked }))
+                  }
+                />
+                <span>Sponsor sign-off — the decision owners endorse this event.</span>
+              </label>
+              <label style={CHECKBOX_ROW_STYLE}>
+                <input
+                  data-testid="source-approval-gate-value"
+                  type="checkbox"
+                  checked={strategyGate.value}
+                  disabled={!currentUserCanApprove || Boolean(busyAction)}
+                  onChange={(event) =>
+                    setStrategyGate((g) => ({ ...g, value: event.target.checked }))
+                  }
+                />
+                <span>Value target set — the savings and outcome envelope is agreed.</span>
+              </label>
+              <label style={CHECKBOX_ROW_STYLE}>
+                <input
+                  data-testid="source-approval-gate-archetype"
+                  type="checkbox"
+                  checked={strategyGate.archetype}
+                  disabled={!currentUserCanApprove || Boolean(busyAction)}
+                  onChange={(event) =>
+                    setStrategyGate((g) => ({ ...g, archetype: event.target.checked }))
+                  }
+                />
+                <span>Archetype confirmed — the sourcing archetype fits the work.</span>
+              </label>
+            </div>
+          ) : (
+            <label style={CHECKBOX_ROW_STYLE}>
+              <input
+                data-testid="source-approval-confirmation"
+                type="checkbox"
+                checked={confirmed}
+                disabled={!currentUserCanApprove || Boolean(busyAction)}
+                onChange={(event) => setConfirmed(event.target.checked)}
+              />
+              <span>
+                I confirm this is my accountable human approval decision.
+              </span>
+            </label>
+          )}
 
           <div style={ACTION_ROW_STYLE}>
             <details style={MORE_STYLE}>
@@ -271,7 +327,11 @@ export function EventApprovalCard({
 
           <div style={NEXT_STYLE}>
             <strong>What happens next</strong>
-            <span>Approve: event unlocks at Stage 1 Strategy.</span>
+            <span>
+              {generateMemoOnApprove
+                ? "Approve: the strategy gate is cleared here — the event advances to Scope and the memo drafts."
+                : "Approve: event unlocks at Stage 1 Strategy."}
+            </span>
             <span>Co-approve: the event stays on this page until routed.</span>
             <span>
               Request changes: the intake reopens with the current facts.

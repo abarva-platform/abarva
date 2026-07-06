@@ -99,4 +99,33 @@ describe("EventApprovalCard", () => {
         .disabled,
     ).toBe(false);
   });
+
+  it("shows the three strategy-gate confirmations and gates Approve on all three when strategy-at-P0 is on", () => {
+    render(<EventApprovalCard {...baseProps} generateMemoOnApprove />);
+
+    // the single accountable-decision confirm is replaced by the 3-box gate
+    expect(screen.queryByTestId("source-approval-confirmation")).toBeNull();
+    expect(screen.getByTestId("source-approval-gate-sponsor")).not.toBeNull();
+    expect(screen.getByTestId("source-approval-gate-value")).not.toBeNull();
+    expect(screen.getByTestId("source-approval-gate-archetype")).not.toBeNull();
+
+    const approve = screen.getByTestId(
+      "source-approval-approve",
+    ) as HTMLButtonElement;
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: {
+        value:
+          "Reviewed the trigger, owner, scope, value basis, and baseline owner for this event.",
+      },
+    });
+
+    // rationale + only two of three boxes → still blocked
+    fireEvent.click(screen.getByTestId("source-approval-gate-sponsor"));
+    fireEvent.click(screen.getByTestId("source-approval-gate-value"));
+    expect(approve.disabled).toBe(true);
+
+    // all three confirmed → Approve enables
+    fireEvent.click(screen.getByTestId("source-approval-gate-archetype"));
+    expect(approve.disabled).toBe(false);
+  });
 });
