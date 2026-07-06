@@ -838,7 +838,6 @@ function CharterWorkflow({
   // which the Save route wrote) → Approve stays enabled after a refresh.
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [savedCount, setSavedCount] = useState<number | null>(null);
   const [allSaved, setAllSaved] = useState<boolean>(
     () =>
       capturedSections.length > 0 &&
@@ -904,7 +903,6 @@ function CharterWorkflow({
           data.detail || data.error || `Save failed (HTTP ${res.status})`,
         );
       }
-      setSavedCount(data.savedFields?.length ?? 0);
       setAllSaved(Boolean(data.allSaved));
       if (data.deliverableId) setDeliverableId(data.deliverableId);
       if (data.recordCreated === false && data.recordError) {
@@ -912,15 +910,24 @@ function CharterWorkflow({
           `Inputs saved, but record not created: ${data.recordError}`,
         );
       }
+      // Return the fresh id so the combined "Approve & advance" flow can chain
+      // straight into build+advance without waiting for the async deliverableId
+      // state to settle (which would race in the same call stack).
+      return {
+        deliverableId: data.deliverableId ?? null,
+        allSaved: Boolean(data.allSaved),
+      };
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Save failed");
+      return { deliverableId: null, allSaved: false };
     } finally {
       setSaving(false);
     }
   }, [move.id, phaseNum, sectionIds, values]);
 
-  const approveRecord = useCallback(async () => {
-    if (!deliverableId) {
+  const approveRecord = useCallback(async (deliverableIdArg?: string) => {
+    const targetDeliverableId = deliverableIdArg ?? deliverableId;
+    if (!targetDeliverableId) {
       setApproveError("Save the record first.");
       return;
     }
@@ -934,7 +941,7 @@ function CharterWorkflow({
         ? `Record reviewed and approved — ${leadVal.slice(0, 160)}`
         : "Phase record reviewed and approved.";
       const res = await fetch(
-        `/api/v1/programs/${move.id}/deliverables/${deliverableId}/sign-off`,
+        `/api/v1/programs/${move.id}/deliverables/${targetDeliverableId}/sign-off`,
         {
           method: "POST",
           credentials: "include",
@@ -1131,8 +1138,9 @@ function CharterWorkflow({
   // un-signed it. Now generation runs first and sign-off acts on the generated
   // draft (the sign-off route accepts `draft`), so a signed-off gate deliverable
   // always implies a generated one.
-  const buildAndApprove = useCallback(async () => {
-    if (!deliverableId) {
+  const buildAndApprove = useCallback(async (deliverableIdArg?: string) => {
+    const targetDeliverableId = deliverableIdArg ?? deliverableId;
+    if (!targetDeliverableId) {
       setApproveError("Save the record first.");
       return;
     }
@@ -1180,7 +1188,9 @@ function CharterWorkflow({
     }
     // 3. Sign off the freshly-generated deliverable (sign-off route accepts
     //    `draft`). Reuses approveRecord so the sign-off request stays in one place.
-    await approveRecord();
+    //    Thread the id so a just-saved (state not yet settled) deliverable signs
+    //    off correctly in the combined flow.
+    await approveRecord(targetDeliverableId);
   }, [deliverableId, move.id, phaseNum, generateArtifact, approveRecord]);
 
   // Advance gate: finalize capture (mark the phase modules completed) then
@@ -1257,20 +1267,45 @@ function CharterWorkflow({
     }
   }, [move.id, phaseNum]);
 
-  // Advance is available once the gate record is approved (signed off), for the
-  // advanceable phases P1–P4 (P5 hands off to Tower via a separate path).
-  const canAdvance = approved && phaseNum >= 1 && phaseNum <= 4 && !advancing;
-
-  // Derived enable/disable:
-  //  • Save: enabled unless a save is in flight.
-  //  • Build and approve: enabled when all sections are saved and a
-  //    deliverableId exists, not already approved, and no build in flight.
-  const canBuildApprove =
-    allSaved &&
-    Boolean(deliverableId) &&
-    !approved &&
-    gen.status !== "generating" &&
-    !approving;
+  // ── Collapsed one-action flow ────────────────────────────────────────────
+  // "The user provides inputs + makes decisions, never clicks Build."
+  // A single "Approve & advance" runs the backend steps automatically: save the
+  // record (creates the deliverable), generate + sign off the board-grade
+  // artifact, then approve the gate and advance. No separate Save / Build clicks.
+  // The deliverable id is threaded from saveRecord's return so the chain does not
+  // race the async deliverableId state. If already approved (e.g. a retried
+  // advance after a gate rejection), it skips straight to advancing.
+  const [completing, setCompleting] = useState(false);
+  const completeAndAdvance = useCallback(async () => {
+    setCompleting(true);
+    setApproveError(null);
+    setAdvanceError(null);
+    try {
+      if (!approved) {
+        const saved = await saveRecord();
+        const id = saved.deliverableId ?? deliverableId;
+        if (!id) return; // saveRecord surfaced saveError; nothing to build.
+        await buildAndApprove(id);
+        // Only advance if generation cleanly succeeded; buildAndApprove already
+        // surfaced any generation error in `gen`.
+        if (!genSucceededRef.current) return;
+      }
+      // P1–P4 advance to the next phase. P5 is terminal (hands off to Tower via
+      // a separate path), so it stops at build + sign-off — no advance.
+      if (phaseNum >= 1 && phaseNum <= 4) {
+        await advanceGate();
+      }
+    } finally {
+      setCompleting(false);
+    }
+  }, [
+    approved,
+    deliverableId,
+    phaseNum,
+    saveRecord,
+    buildAndApprove,
+    advanceGate,
+  ]);
 
   const sequenceState = (n: 1 | 2): "done" | "active" | "" => {
     if (n === 1) return approved || allSaved ? "done" : "active";
@@ -1359,9 +1394,18 @@ function CharterWorkflow({
     [move.id, phaseNum, wbPackets, selectedEvidenceId, wbRouter],
   );
 
-  // The existing capture UI (Save → Build-and-approve → Advance + section
-  // cards). In workbench mode it becomes the EvidenceWorkbench `captureSlot`;
-  // otherwise it is returned as-is (P1 + non-current phases, unchanged).
+  // Hard gate criteria not yet met — the single "Approve & advance" action is
+  // blocked until these clear (the same rule the server enforces on advance), so
+  // the user isn't sent into a multi-minute generation only to be rejected.
+  const hardGateUnmet = (gateItems ?? []).filter(
+    (c) => !c.completed && c.severity === "hard",
+  );
+
+  // The capture UI. The user provides the section inputs; a single "Approve &
+  // advance" action then saves, generates the board-grade deliverable, signs it
+  // off, and advances — all as backend steps. In workbench mode this is the
+  // EvidenceWorkbench `captureSlot`; otherwise returned as-is (non-current
+  // phases, no action).
   const captureCards = (
     <>
       {/* Ordered Save → Build-and-approve sequence — rendered FIRST (above the
@@ -1369,74 +1413,91 @@ function CharterWorkflow({
           Hidden for P0: Originate capture is owned by the originate flow
           (read-only cards here) and P0 has no phase deliverable to build, so the
           Save/Build sequence does not apply — P0 promotes via approve-brief. */}
-      {phaseNum !== 0 && (
+      {/* Single "Approve & advance" action. The user provides inputs (the cards
+          below); saving the record, generating the board-grade deliverable,
+          signing it off, and advancing all run automatically as backend steps
+          on one click — no separate Save / Build clicks. Hidden for P0
+          (read-only originate capture, no deliverable; promotes via
+          approve-brief). */}
+      {phaseNum !== 0 && workbench && (
       <section
-        id={`ws-canvas-p${phaseNum}-charter-sequence`}
+        id={`ws-canvas-p${phaseNum}-complete`}
         className={styles.detailSection}
       >
         <div className={styles.detailSectionTitle}>
-          Phase workflow &mdash; {filledNow} of {canvasSections.length} captured
+          Complete P{phaseNum} &mdash; {filledNow} of {canvasSections.length}{" "}
+          inputs provided
         </div>
         <div className={styles.charterSequence}>
-          {/* Step 1 — Save */}
-          <div className={stepClass(1)} id={`ws-canvas-p${phaseNum}-step-save`}>
-            <span className={styles.charterStepNum}>1 · Save record</span>
-            <button
-              type="button"
-              className={styles.charterPrimaryBtn}
-              onClick={() => void saveRecord()}
-              disabled={saving}
-            >
-              {saving ? "Saving…" : "Save record"}
-            </button>
-            {savedCount !== null && !saveError && (
-              <span className={styles.charterStepOk}>
-                Saved ✓ — {savedCount} of {canvasSections.length}
-                {allSaved ? " · all saved" : ""}
-              </span>
-            )}
-            {saveError && (
-              <span className={styles.charterStepError}>{saveError}</span>
-            )}
-            {savedCount === null && !saveError && (
-              <span className={styles.charterStepHint}>
-                Persists the {canvasSections.length} inputs to the backend.
-              </span>
-            )}
-          </div>
-
-          <span className={styles.charterStepArrow} aria-hidden>
-            &rarr;
-          </span>
-
-          {/* Step 2 — Build and approve (generate the deliverable, then sign it off) */}
           <div
             className={stepClass(2)}
-            id={`ws-canvas-p${phaseNum}-step-build-approve`}
+            id={`ws-canvas-p${phaseNum}-complete-action`}
           >
-            <span className={styles.charterStepNum}>2 · Build and approve</span>
             <button
               type="button"
               className={styles.charterPrimaryBtn}
-              onClick={() => void buildAndApprove()}
-              disabled={!canBuildApprove}
+              onClick={() => void completeAndAdvance()}
+              disabled={
+                completing ||
+                saving ||
+                advancing ||
+                approving ||
+                gen.status === "generating" ||
+                filledNow < canvasSections.length ||
+                (!approved && hardGateUnmet.length > 0)
+              }
             >
-              {gen.status === "generating"
-                ? "Building…"
-                : approving
-                  ? "Approving…"
-                  : approved
-                    ? "Approved ✓"
-                    : "Build and approve"}
+              {saving
+                ? "Saving inputs…"
+                : gen.status === "generating"
+                  ? gen.label
+                    ? `Generating… ${gen.pct ? `${gen.pct}%` : ""}`
+                    : "Generating…"
+                  : approving
+                    ? "Signing off…"
+                    : advancing
+                      ? "Advancing…"
+                      : phaseNum <= 4
+                        ? `Approve & advance to P${phaseNum + 1}`
+                        : "Approve & finalize Tower handoff"}
             </button>
+            {filledNow < canvasSections.length && !completing && (
+              <span className={styles.charterStepHint}>
+                Provide all {canvasSections.length} inputs to continue &mdash;{" "}
+                {filledNow} done.
+              </span>
+            )}
+            {filledNow >= canvasSections.length &&
+              !approved &&
+              hardGateUnmet.length > 0 &&
+              !completing && (
+                <span className={styles.charterStepHint}>
+                  Complete first:{" "}
+                  {hardGateUnmet.map((c) => c.label).join("; ")}
+                </span>
+              )}
+            {filledNow >= canvasSections.length &&
+              hardGateUnmet.length === 0 &&
+              !completing &&
+              !approved &&
+              gen.status === "idle" && (
+                <span className={styles.charterStepHint}>
+                  One step: saves your inputs, generates the board-grade
+                  deliverable, signs it off, and{" "}
+                  {phaseNum <= 4
+                    ? `advances to P${phaseNum + 1}`
+                    : "prepares the Tower handoff"}
+                  . Runs in the background, a few minutes.
+                </span>
+              )}
             {gen.status === "generating" && (
               <span className={styles.charterStepHint}>
                 {gen.label
                   ? `${gen.label}${gen.pct ? ` · ${gen.pct}%` : ""}`
-                  : "Generating the board-grade deliverable — runs in the background, a few minutes."}
+                  : "Generating the board-grade deliverable — a few minutes."}
               </span>
             )}
-            {approved && !approveError && (
+            {approved && !approveError && !advanceError && (
               <span className={styles.charterStepOk}>
                 Built and signed off ✓ ·{" "}
                 <Link href={`/strategic-moves/${move.id}/evidence`}>
@@ -1444,8 +1505,13 @@ function CharterWorkflow({
                 </Link>
               </span>
             )}
-            {approveError && (
-              <span className={styles.charterStepError}>{approveError}</span>
+            {saveError && (
+              <span className={styles.charterStepError}>{saveError}</span>
+            )}
+            {(approveError || advanceError) && (
+              <span className={styles.charterStepError}>
+                {approveError || advanceError}
+              </span>
             )}
             {gen.status === "done" && !gen.pass && !approved && (
               <div className={styles.gateDetail}>
@@ -1454,8 +1520,8 @@ function CharterWorkflow({
                   {gen.blockers?.length
                     ? ` — ${gen.blockers.length} reason${
                         gen.blockers.length > 1 ? "s" : ""
-                      } to resolve, then build again:`
-                    : ". Refine the inputs and context, then build again."}
+                      } to resolve, then approve again:`
+                    : ". Refine the inputs and context, then approve again."}
                 </span>
                 {gen.blockers?.length ? (
                   <div className={styles.charterAdvancedNote}>
@@ -1474,15 +1540,6 @@ function CharterWorkflow({
             )}
             {gen.status === "error" && !approveError && (
               <span className={styles.charterStepError}>{gen.message}</span>
-            )}
-            {!approved && !approveError && gen.status === "idle" && (
-              <span className={styles.charterStepHint}>
-                {allSaved
-                  ? deliverableId
-                    ? "Generates the board-grade deliverable and signs it off."
-                    : "Save the record first."
-                  : "Save all inputs first."}
-              </span>
             )}
           </div>
         </div>
@@ -1576,47 +1633,8 @@ function CharterWorkflow({
       })}
 
 
-      {/* Advance to the next phase — the P1–P4 equivalent of P0 "Approve brief". */}
-      {phaseNum >= 1 && phaseNum <= 4 && (
-        <section
-          id={`ws-canvas-p${phaseNum}-advance`}
-          className={styles.detailSection}
-        >
-          <div className={styles.detailSectionTitle}>
-            Advance gate &mdash; P{phaseNum} &rarr; P{phaseNum + 1}
-          </div>
-          <div
-            className={`${styles.charterStep} ${approved ? styles.charterStepActive : ""}`}
-            id={`ws-canvas-p${phaseNum}-step-advance`}
-          >
-            <span className={styles.charterStepNum}>3 · Advance</span>
-            <button
-              type="button"
-              className={styles.charterPrimaryBtn}
-              onClick={() => void advanceGate()}
-              disabled={!canAdvance}
-            >
-              {advancing
-                ? "Advancing…"
-                : `Approve gate & advance to P${phaseNum + 1}`}
-            </button>
-            {advanceError && (
-              <span className={styles.charterStepError}>{advanceError}</span>
-            )}
-            {!advanceError && !approved && (
-              <span className={styles.charterStepHint}>
-                Approve the record first.
-              </span>
-            )}
-            {!advanceError && approved && !advancing && (
-              <span className={styles.charterStepHint}>
-                Finalizes capture, approves the gate, and moves this Move to P
-                {phaseNum + 1}.
-              </span>
-            )}
-          </div>
-        </section>
-      )}
+      {/* The advance is now part of the single "Approve & advance" action above —
+          no separate advance step. */}
     </>
   );
 
@@ -1694,32 +1712,11 @@ function CharterWorkflow({
     : null;
 
   const items = gateItems ?? [];
-  const isReport = (label: string) =>
-    /signed off|report|charter|deliverable/i.test(label);
-  const genBusy = gen.status === "generating" || approving;
-  const buildLabel = genBusy
-    ? "label" in gen && gen.label
-      ? gen.label
-      : "Building…"
-    : "Build report";
-  // P0 has no phase deliverable to "build" (its brief is approved via
-  // approve-brief, not generated here), so no P0 criterion gets a "Build
-  // report" action — that button would be permanently disabled.
-  const reportCrit =
-    phaseNum === 0 ? undefined : items.find((c) => isReport(c.label));
-  // The critical thing left to enable "Build report", in plain English.
-  let buildReason: string | undefined;
-  if (!allSaved) {
-    buildReason = `Save all ${canvasSections.length} inputs first — ${filledNow}/${canvasSections.length} captured.`;
-  } else if (!deliverableId) {
-    buildReason = "Save the record to create the deliverable.";
-  } else if (approving) {
-    buildReason = "Signing off…";
-  }
   // Unmet HARD gate criteria — these must all clear before the phase can advance.
-  const hardBlockers = items.filter(
-    (c) => !c.completed && c.severity === "hard",
-  );
+  // The gate steps are now READ-ONLY status (met/unmet + "Add evidence" for hard
+  // criteria). There is no per-criterion "Build report" action: generating the
+  // board-grade deliverable is a backend step of the single "Approve & advance"
+  // action (captureSlot), not a button the user clicks.
   const steps = items.map((c) => {
     const base = {
       id: c.id,
@@ -1728,20 +1725,6 @@ function CharterWorkflow({
       hard: c.severity === "hard",
     };
     if (c.completed) return base;
-    if (reportCrit && c.id === reportCrit.id) {
-      return {
-        ...base,
-        action: {
-          label: buildLabel,
-          onClick: () => {
-            void buildAndApprove();
-          },
-          kind: "primary" as const,
-          disabled: !canBuildApprove || genBusy,
-          reason: buildReason,
-        },
-      };
-    }
     if (c.severity === "hard" && onAddEvidence) {
       return {
         ...base,
@@ -1757,29 +1740,11 @@ function CharterWorkflow({
   steps.sort((a, b) => Number(b.done) - Number(a.done));
   const doneCount = items.filter((c) => c.completed).length;
   const nextPhase = phaseNum + 1;
-  // Advance is enabled ONLY when every hard gate criterion is met — the same
-  // rule the server enforces on the advance POST — so the button never looks
-  // ready before it is. (The prior `canAdvance` gated only on the deliverable
-  // being signed off, letting the button enable while hard evidence was still
-  // missing and relying on a server rejection.)
-  const wbCanAdvance =
-    phaseNum >= 2 &&
-    phaseNum <= 4 &&
-    hardBlockers.length === 0 &&
-    !advancing;
-  const advance =
-    phaseNum >= 2 && phaseNum <= 4
-      ? {
-          label: `Advance to P${nextPhase}`,
-          onClick: () => {
-            void advanceGate();
-          },
-          disabled: !wbCanAdvance,
-          note: wbCanAdvance
-            ? "All gate criteria met — ready to advance."
-            : `Complete first: ${hardBlockers.map((c) => c.label).join("; ")}`,
-        }
-      : null;
+  // The gate panel carries no separate advance button: the single "Approve &
+  // advance" action (which saves, generates, signs off, and advances in one
+  // step) lives in the captureSlot next to the inputs the user provides. The
+  // panel stays read-only status — criteria met/unmet + "Add evidence".
+  const advance = null;
 
   // Live % complete: gate = phase-completion signal; evidence = required needs.
   const gatePct = items.length
