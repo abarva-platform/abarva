@@ -124,4 +124,51 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.directAnswer).toMatch(/\$190\.6M direct technology budget/i);
     expect(result.answer.directAnswer).not.toMatch(/data assets integrations|field facts|V7_/i);
   });
+
+  it('blocks general-knowledge trivia instead of answering or pretending it is tenant context', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'lakeshore',
+      tenantDisplayName: 'Lakeshore Holdings',
+      question: 'What is the capital of Uganda?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('unsupported');
+    expect(result.answer.primaryDimension).toBe('v7_01_enterprise_profile');
+    expect(result.answer.directAnswer).toContain('Home is a context browser');
+    expect(result.answer.directAnswer).toContain('does not answer general knowledge');
+    expect(result.answer.directAnswer).not.toMatch(/Kampala/i);
+  });
+
+  it('hands generic use-case and investment judgment to Intelligence', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'lakeshore',
+      tenantDisplayName: 'Lakeshore Holdings',
+      question: 'Which AI use cases should we fund and scale first?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('handoff_intelligence');
+    expect(result.answer.answerBoundary.handoffTarget).toBe('intelligence');
+    expect(result.answer.directAnswer).toContain('Intelligence should take over');
+    expect(result.answer.directAnswer).toContain('Home should stay focused on loaded facts');
+  });
+
+  it('keeps explicit Tower ownership routed to Tower', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'skyharbor',
+      tenantDisplayName: 'SkyHarbor Air',
+      question: 'Should Tower evaluate the spend and value proof for these AI initiatives?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('handoff_tower');
+    expect(result.answer.answerBoundary.handoffTarget).toBe('tower');
+  });
 });

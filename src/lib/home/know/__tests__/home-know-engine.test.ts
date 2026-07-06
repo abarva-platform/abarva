@@ -554,7 +554,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.answerStatus).toBe("partial");
     expect(response.tables[0]).toMatchObject({
       id: "home-it-org",
-      dimensionId: "it_org_ownership",
+      dimensionId: "IT Organization & Ownership",
     });
     expect(response.tables[0]?.rows[0]).toMatchObject({
       team_name: "Store Systems and POS",
@@ -565,7 +565,7 @@ describe("Home KNOW contract engine", () => {
       "F03_it-org-ownership.csv line 2",
     );
     expect(response.gaps[0]).toMatchObject({
-      expectedField: "executive_owner_person_name",
+      expectedField: "Executive Owner Person Name",
       displayLabel: "Named portfolio lead",
     });
     expect(response.safety).toMatchObject({
@@ -591,7 +591,10 @@ describe("Home KNOW contract engine", () => {
     });
 
     expect(response.dimensionsUsed).toEqual(
-      expect.arrayContaining(["business_org_functions", "it_org_ownership"]),
+      expect.arrayContaining([
+        "Business Functions",
+        "IT Organization & Ownership",
+      ]),
     );
     expect(response.tables.map((table) => table.id)).toEqual(
       expect.arrayContaining(["home-business-functions", "home-it-org"]),
@@ -662,7 +665,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.prose).not.toMatch(/Home context for .* includes .* row/i);
     expect(response.tables).toEqual([]);
     expect(response.gaps[0]).toMatchObject({
-      expectedField: "forecast_cloud_bill_2027_usd",
+      expectedField: "Forecast Cloud Bill 2027 Usd",
       displayLabel: "2027 cloud bill by account/provider",
     });
   });
@@ -679,7 +682,7 @@ describe("Home KNOW contract engine", () => {
       id: "home-budget-mix-chart",
       kind: "cost-stack",
       type: "cost_stack",
-      dimensionId: "it_budget_financials",
+      dimensionId: "IT Budget & Financials",
     });
     expect(response.charts[0]?.data).toEqual([
       { label: "Run", value: 130200000, color: expect.any(String) },
@@ -708,9 +711,9 @@ describe("Home KNOW contract engine", () => {
       ]),
     );
     expect(response.graphs[0]?.edges[0]).toMatchObject({
-      from: "APP-ORACLE-RETAIL",
-      to: "TEAM-STORE-SYSTEMS",
-      type: "supports",
+      from: "node-1",
+      to: "node-2",
+      type: "Supports",
     });
   });
 

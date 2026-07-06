@@ -77,6 +77,7 @@ const TOPICS: Record<string, V7TopicConfig> = {
   handoff_source: topic('handoff_source', 'v7_07_vendors_contracts', ['v7_13_source_evidence_registry'], ['Vendor/evidence', 'Renewal/type', 'Risk', 'Source basis'], ['vendor_name', 'renewal_date', 'contract_risk', 'source_basis'], 'source', 'Source owns sourcing events, vendor evidence, renewal decisions, and partner tradeoffs.'),
   handoff_moves: topic('handoff_moves', 'v7_09_programs_initiatives_business_priorities', ['v7_12_relationships_graph_edges'], ['Program', 'Status', 'Owner', 'Move relevance'], ['priority_name', 'current_status', 'technology_sponsor', 'stage_gate'], 'moves', 'Moves owns governed change framing, ownership, sequencing, and mobilization.'),
   handoff_tower: topic('handoff_tower', 'v7_10_ai_initiatives', ['v7_08_spend_value'], ['Use case', 'Readiness', 'Value', 'Decision'], ['ai_use_case', 'data_readiness', 'measured_value_usd', 'scale_hold_stop_recommendation'], 'tower', 'Tower owns portfolio execution, spend, adoption, readiness, and value tracking.'),
+  unsupported: topic('unsupported', 'v7_01_enterprise_profile', [], ['Boundary', 'What Home can do'], ['company_name', 'strategic_priorities']),
 };
 
 const defaultSession = createDefaultSession('home-v7-know-ask');
@@ -288,6 +289,7 @@ function tenantDisplayNameFor(input: {
 
 function classifyQuestion(question: string): keyof typeof TOPICS {
   const q = question.toLowerCase();
+  if (isGeneralKnowledgeOrUnsupportedQuestion(q)) return 'unsupported';
   // Identity / orientation ("who is <company>", "what do we know / what's
   // loaded", "tell me about the business") must resolve to the enterprise
   // profile BEFORE the keyword ladder. Home is the context browser: it orients
@@ -312,18 +314,11 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
     )
   )
     return 'loaded_context';
-  // Advisory / judgment ("why is X a good problem", "what should we do",
-  // "recommend / prioritize / worth it") is Intelligence's job, not Home's.
-  if (
-    /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend)\b/.test(
-      q,
-    ) ||
-    (/\b(good|right|best|compelling|ideal|strong)\b/.test(q) &&
-      /\b(demo|use\s?case|example|candidate|problem|opportunity|bet|investment|first move)\b/.test(
-        q,
-      ))
-  )
-    return 'handoff_intelligence';
+  if (/intelligence/.test(q) && /hand|instead|advis|take over|own|evaluate/.test(q)) return 'handoff_intelligence';
+  if (/source|sourcing event|rfp|bafo|vendor selection/.test(q) && /(create|draft|launch|run|recommend|compare|select|score)/.test(q)) return 'handoff_source';
+  if (/\b(move|moves|roadmap|mobilize|charter|execution plan)\b/.test(q) && /(create|draft|launch|run|build|shape|convert)/.test(q)) return 'handoff_moves';
+  if (/tower/.test(q) && /(hand|instead|hold|scale|evaluate|take over|own|readiness|value proof|portfolio)/.test(q)) return 'handoff_tower';
+  if (isAdvisoryOrUseCaseQuestion(q)) return 'handoff_intelligence';
   if (/company profile|enterprise profile|revenue|employees?|portfolio compan|company size|business profile/.test(q)) return 'loaded_context';
   if (/business areas|business functions|available business|organization structure/.test(q)) return 'business_areas';
   if (/technology leaders|it organization|it org|structured today|roles|accountability/.test(q)) return 'it_org';
@@ -343,8 +338,18 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/operations|service management|risk|control|reliability/.test(q)) return 'operations';
   if (/metric|kpi|outcome/.test(q)) return 'metrics';
   if (/source trail|citation|citation basis|evidence/.test(q)) return 'source_trail';
-  if (/intelligence/.test(q) && /hand|instead|advis/.test(q)) return 'handoff_intelligence';
   return 'loaded_context';
+}
+
+function isGeneralKnowledgeOrUnsupportedQuestion(q: string) {
+  return /\b(capital of|weather|stock price|latest news|who won|sports score|recipe|translate|distance from|population of)\b/.test(q) ||
+    /\bwhat\s+is\s+the\s+capital\b/.test(q);
+}
+
+function isAdvisoryOrUseCaseQuestion(q: string) {
+  return /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend|which .* should|where should .* fund|kill|scale|hold|stop)\b/.test(q) ||
+    (/\b(good|right|best|compelling|ideal|strong)\b/.test(q) &&
+      /\b(demo|use\s?case|example|candidate|problem|opportunity|bet|investment|first move)\b/.test(q));
 }
 
 function buildTable(rows: V7RecordRow[], config: V7TopicConfig) {
@@ -381,6 +386,14 @@ function buildParagraphs(args: {
   rows: V7RecordRow[];
   gaps: Array<{ label: string; impact: string }>;
 }) {
+  if (args.topicKey === 'unsupported') {
+    return [
+      'Home is a context browser for the loaded enterprise record. It does not answer general knowledge, trivia, news, weather, or unrelated web questions.',
+      'Use Home to inspect the company profile, business functions, applications, data, vendors, budget, AI footprint, controls, evidence trail, and known gaps.',
+      'For recommendations, use-case judgment, investment choices, or outside-in synthesis, open Intelligence so aVa can use the advisory canvas instead of the Home context browser.',
+    ];
+  }
+
   const preferredSampleColumns = [
     'estate_item_name',
     'system_name',

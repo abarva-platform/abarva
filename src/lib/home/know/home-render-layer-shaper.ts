@@ -102,14 +102,7 @@ export function shapeHomeKnowResponseForRender(
   response: HomeKnowResponse,
 ): HomeKnowResponse {
   if (response.safety.composerTrace?.composer === "home_v6_dataset_contract") {
-    const renderedText = JSON.stringify({
-      prose: response.prose,
-      tables: response.tables,
-      charts: response.charts,
-      graphs: response.graphs,
-      gaps: response.gaps,
-      citations: response.citations,
-    });
+    const renderedText = visibleHomeResponseText(response);
     const leaks = renderedLayerLeakIssues(renderedText);
     return {
       ...response,
@@ -165,14 +158,7 @@ export function shapeHomeKnowResponseForRender(
         }
       : response.handoff,
   };
-  const renderedText = JSON.stringify({
-    prose: shaped.prose,
-    tables: shaped.tables,
-    charts: shaped.charts,
-    graphs: shaped.graphs,
-    gaps: shaped.gaps,
-    citations: shaped.citations,
-  });
+  const renderedText = visibleHomeResponseText(shaped);
   const leaks = renderedLayerLeakIssues(renderedText);
   return {
     ...shaped,
@@ -198,4 +184,66 @@ function compactHomeCitations(citations: HomeKnowCitation[]): HomeKnowCitation[]
     if (compact.length >= 6) break;
   }
   return compact;
+}
+
+function visibleHomeResponseText(response: HomeKnowResponse): string {
+  return [
+    response.prose,
+    ...response.facts.flatMap((fact) => [
+      fact.dimensionId,
+      fact.label,
+      visibleValue(fact.value),
+    ]),
+    ...response.tables.flatMap((table) => [
+      table.title,
+      table.dimensionId,
+      table.note,
+      ...table.columns.map((column) => column.label),
+      ...table.rows.flatMap((row) =>
+        Object.values(row).map((value) => visibleValue(value)),
+      ),
+    ]),
+    ...response.charts.flatMap((chart) => [
+      chart.title,
+      chart.dimensionId,
+      ...chart.data.map((point) => point.label),
+      ...chart.caveats,
+    ]),
+    ...response.graphs.flatMap((graph) => [
+      graph.title,
+      graph.warning,
+      ...graph.nodeTypes,
+      ...graph.edgeTypes,
+      ...graph.nodes.flatMap((node) => [node.label, node.type]),
+      ...graph.edges.flatMap((edge) => [edge.label, edge.type]),
+      ...graph.gaps,
+    ]),
+    ...response.gaps.flatMap((gap) => [
+      gap.dimensionId,
+      gap.objectType,
+      gap.expectedField,
+      gap.displayLabel,
+      gap.message,
+    ]),
+    ...response.conflicts.flatMap((conflict) => [
+      conflict.dimensionId,
+      conflict.label,
+      conflict.description,
+    ]),
+    ...response.citations.flatMap((citation) => [
+      citation.label,
+      citation.excerpt,
+    ]),
+    response.handoff?.label,
+    response.handoff?.reason,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join("\n");
+}
+
+function visibleValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  return "";
 }
