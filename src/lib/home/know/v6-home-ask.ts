@@ -703,6 +703,29 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
     return "handoff_tower";
   if (/business context|available context|loaded context/.test(q))
     return "loaded_context";
+  // Identity / orientation questions ("who is <company>", "tell me about the
+  // business", "why is <X> a good demo problem") must resolve to the enterprise
+  // profile before the keyword ladder below — otherwise a program name that
+  // happens to contain "contract" (e.g. "Legal Contract Intake") is captured by
+  // the vendor/contract rule and the answer never describes the company.
+  if (
+    /\bwho\s+(is|are)\b/.test(q) &&
+    !/\b(cio|cto|ciso|cfo|cdo|cdao|caio|coo|ceo|gc|general counsel|owner|leader|head of|vp|director|sponsor|accountable|responsible|reports?\s+to)\b/.test(
+      q,
+    )
+  )
+    return "loaded_context";
+  if (
+    /\b(tell me about|introduce|overview of|profile of|describe the|what does .* do)\b.*\b(company|business|organi[sz]ation|enterprise|client|firm|holding|group|holdco)\b/.test(
+      q,
+    )
+  )
+    return "loaded_context";
+  if (
+    /\b(demo|use\s?case|example|candidate|pilot problem)\b/.test(q) &&
+    /\b(good|strong|compelling|ideal|great|right|why|best)\b/.test(q)
+  )
+    return "loaded_context";
   if (/business areas|business functions|available business/.test(q))
     return "business_areas";
   if (/technology leaders|named .*leaders|accountability/.test(q))
@@ -1282,9 +1305,61 @@ function answerParagraphsByTopic(args: {
     ];
   }
   if (topicKey === "loaded_context") {
+    const profile = firstRows(
+      dataset.files["V6_01_enterprise_profile.csv"] ?? [],
+      1,
+    )[0];
+    const company = clean(profile?.company_name) || displayName;
+    const industry = clean(profile?.industry);
+    const subIndustry = clean(profile?.sub_industry);
+    const model = clean(profile?.business_model);
+    const employees = clean(profile?.employee_count);
+    const employeeLine =
+      employees && /^\d+$/.test(employees)
+        ? `${Number(employees).toLocaleString()} employees`
+        : "";
+    // Drop directive / data-thin tokens ("do_not_add_...") and the employee
+    // count (already stated in the identity line) so only fresh facts show.
+    const rawPriorities = clean(profile?.strategic_priorities);
+    const priorities = rawPriorities
+      ? describeStrategicPriorities(
+          rawPriorities
+            .split("|")
+            .filter(
+              (part) => !/^\s*(do_not|data_thin|total_employees)/i.test(part),
+            )
+            .join("|"),
+        )
+      : "";
+    const descriptor = industry
+      ? subIndustry
+        ? `${industry} — ${subIndustry}`
+        : industry
+      : "";
+    const identitySentences: string[] = [];
+    identitySentences.push(
+      descriptor
+        ? `${company} is a ${descriptor}${employeeLine ? `, with ${employeeLine}` : ""}.`
+        : `${company} is the enterprise loaded in the V6 Home contract pack, spanning ${dataset.manifest.totals.files} governed evidence areas and ${dataset.manifest.totals.rows} business records.`,
+    );
+    if (model) identitySentences.push(`${model.trim().replace(/\.+$/, "")}.`);
+    const identity = identitySentences.join(" ");
+    const programs = (dataset.files["V6_09_programs_initiatives.csv"] ?? [])
+      .map((row) => {
+        const name = clean(row.record_name);
+        const phase = clean(row.phase);
+        return name ? (phase ? `${name} (${phase})` : name) : "";
+      })
+      .filter(Boolean)
+      .slice(0, 4);
     return [
-      `${displayName} is using the V6 Home contract pack, with ${dataset.manifest.totals.files} governed evidence areas and ${dataset.manifest.totals.rows} business records.`,
-      "Home can safely answer what is loaded, which facts are populated, which fields are data-thin, and which workspace should take over. It cannot borrow from retired legacy Home context layers.",
+      identity,
+      priorities
+        ? `Loaded profile context: ${priorities}. Home grounds only on these V6 facts and shows data-thin fields as gaps rather than borrowing from retired legacy context layers.`
+        : `${company}'s profile is loaded across ${dataset.manifest.totals.files} governed evidence areas and ${dataset.manifest.totals.rows} business records; Home answers only what those V6 facts support.`,
+      programs.length
+        ? `Loaded initiatives Home can orient a CXO on include ${joinList(programs)} — each carries owner, sponsor, phase, budget, value basis, and risk in the V6 evidence, which is what makes them credible demo problems rather than generic context categories.`
+        : "Home can safely answer what is loaded, which facts are populated, which are data-thin, and which workspace should take over the next decision.",
       gapSentence(gaps),
     ];
   }
