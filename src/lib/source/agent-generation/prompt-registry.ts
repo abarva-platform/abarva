@@ -824,6 +824,91 @@ Requirements:
       return lines.join("\n");
     },
   },
+
+  d24_decision_brief: {
+    artifactCode: "d24_decision_brief",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: [],
+    upstreamOptional: [
+      "d01_strategy_memo",
+      "d02_value_target",
+      "d05_scope_memo",
+      "d16_scorecard",
+      "d19_pricing_workbook",
+      "d22_bafo_question_pack",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Decision Brief (artifact d24_decision_brief) — the board-grade recommendation that closes the event. It is the single most consequential document in the sourcing lifecycle: it synthesizes the whole chain (strategy, scope, evaluation scores, pricing, BAFO) into one defensible call an executive can sign.
+
+Required structural sections:
+## §1 · Recommendation
+## §2 · Why this vendor
+## §3 · Tradeoff card
+## §4 · Finalist comparison
+## §5 · Counter-recommendation
+## §6 · Required sign-offs
+
+Ground every claim in the bound upstream artifacts and uploaded evidence, cited by code and source-file name:
+- §1 leads with the recommendation, stated conditionally (which vendor, conditional on what — e.g. security uplift, a priced assumption, a transition milestone).
+- §4 finalist comparison must draw normalized TCO from the pricing workbook (d19) and the capability / security / transition scores from the evaluation scorecard (d16), and present them as a comparison table. Do NOT invent vendor names, scores, or prices that are not present in the bound upstream — if a finalist's number is missing, show it as a gap to close, not a guess.
+- §3 tradeoff card frames value posture from the value target (d02), open risks with residual exposure, and the transition window; scope boundaries come from d05; the mandate from d01.
+- §5 states the runner-up's case honestly so the brief is a real decision, not a one-sided pitch.
+- §6 lists the sign-offs required to advance to Selection (sponsor commitment, Steward sign-off, Sentinel risk attestation).
+
+If the evaluation scorecard (d16) or pricing workbook (d19) has not been authored yet, do not fabricate a comparison. Say plainly that the finalist comparison cannot be completed until those exist, name exactly what is missing, and give a conditional recommendation only to the extent the available evidence supports it. 1200-2400 words.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Estimated value at stake: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : null,
+        "",
+        "— UPSTREAM EVENT CHAIN —",
+        "",
+      ].filter((line): line is string => line !== null);
+
+      const bind = (code: string, label: string, driverNote: string) => {
+        lines.push(`${label} (${code})${driverNote ? ` — ${driverNote}` : ""}:`);
+        lines.push(
+          upstream[code] ??
+            "(NOT YET AUTHORED — do not fabricate; surface as a gap to close)",
+        );
+        lines.push("");
+      };
+
+      bind("d01_strategy_memo", "Sourcing Strategy Memo", "the mandate for §2");
+      bind("d02_value_target", "Value Target Brief", "the value posture for §3");
+      bind("d05_scope_memo", "Scope Memo", "scope boundaries");
+      bind(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "capability / security / transition scores for §4",
+      );
+      bind("d19_pricing_workbook", "Pricing Workbook", "normalized TCO for §4");
+      bind(
+        "d22_bafo_question_pack",
+        "BAFO Question Pack",
+        "open concessions / clarifications",
+      );
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "Draft the Decision Brief per the system prompt requirements. Lead with the recommendation; build the finalist comparison only from the scorecard and pricing numbers above; keep the counter-recommendation honest.",
+      );
+      return lines.join("\n");
+    },
+  },
 };
 
 export function getPromptTemplate(

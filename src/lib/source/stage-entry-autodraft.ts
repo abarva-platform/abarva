@@ -66,6 +66,7 @@ const AUTO_DRAFT_PRIMARY_CODES_BY_STAGE: Partial<
   strategy: ["d01_strategy_memo"],
   scope: ["d05_scope_memo"],
   rfp: ["d09_rfp_pack"],
+  executive_decision: ["d24_decision_brief"],
 };
 
 export function autoDraftCodesForStage(stage: SourceStageKey): string[] {
