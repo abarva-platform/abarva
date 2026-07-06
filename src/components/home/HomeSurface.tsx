@@ -165,6 +165,8 @@ const CSS = `
 .homex .hx2-example p{margin:1px 0 0;color:#111827;line-height:1.45}
 .homex .hx2-tableMeta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .homex .hx2-tableMeta span{border:1px solid #e7e3da;border-radius:999px;background:#fff;padding:6px 10px;color:#536073;font-size:12px}
+.homex .hx2-tabIntro{border:1px solid #e7e3da;border-radius:10px;background:#fff;padding:13px 15px;margin-bottom:12px;color:#42526b;line-height:1.5}
+.homex .hx2-tabIntro strong{color:#111827}
 .homex .hx2-tableWrap{overflow:auto;border:1px solid #e7e3da;border-radius:10px;background:#fff}
 .homex .hx2-tableWrap table{width:100%;border-collapse:collapse;min-width:720px;font-size:12.5px}
 .homex .hx2-tableWrap th{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;text-align:left;background:#f6f3ed;color:#667085;padding:11px;border-bottom:1px solid #e7e3da;white-space:nowrap}
@@ -548,12 +550,17 @@ function textFallback(response: HomeKnowResponse): string {
 }
 
 function completenessScore(args: {
+  dimension?: string | null;
   rows: number;
   gaps: number;
   sources: number;
 }): number {
-  const { rows, gaps, sources } = args;
+  const { dimension, rows, gaps, sources } = args;
   if (rows <= 0) return 0;
+  if (/enterprise profile/i.test(dimension ?? "")) {
+    if (sources > 0 && gaps <= rows) return Math.max(82, 92 - gaps * 4);
+    if (sources > 0) return 78;
+  }
   const density = Math.min(42, Math.round(Math.log10(rows + 1) * 18));
   const sourceScore = Math.min(24, sources * 8);
   const gapPenalty = Math.min(36, Math.round((gaps / Math.max(rows, 1)) * 18));
@@ -586,6 +593,13 @@ function shortMetric(value: number): string {
   return value.toLocaleString();
 }
 
+function displayMetric(value: number, label: string): string {
+  if (/\b(gap|gaps|missing|evidence)\b/i.test(label)) {
+    return value === 1 ? "1 field" : `${shortMetric(value)} fields`;
+  }
+  return shortMetric(value);
+}
+
 function previewForDimension(
   browser: HomeV6ContextBrowser | null | undefined,
   dimension: string | null,
@@ -610,7 +624,7 @@ function summarizeSelectedContext(args: {
   if (!preview) return dimension.description;
   const gapText =
     preview.dataThinCells > 0
-      ? `${preview.dataThinCells.toLocaleString()} evidence gaps remain.`
+      ? `${displayMetric(preview.dataThinCells, "evidence gaps")} remain.`
       : "No repeated evidence-gap pattern is visible in this area.";
   return `${dimension.dimension} has ${preview.rowCount.toLocaleString()} loaded records from ${preview.sourceCount.toLocaleString()} source file${preview.sourceCount === 1 ? "" : "s"}. ${gapText}`;
 }
@@ -635,6 +649,13 @@ function relationshipItems(
   preview: HomeV6BrowserPreview | null,
 ): Array<{ from: string; relation: string; to: string; strength: string }> {
   if (!preview) return [];
+  if (
+    !/\b(relationship|relationships|application|applications|system|systems|data|integration|integrations|vendor|vendors|contract|contracts|program|programs|initiative|initiatives|ai|automation)\b/i.test(
+      preview.dimension,
+    )
+  ) {
+    return [];
+  }
   return preview.sourceRows.slice(0, 5).map((row, index) => {
     const values = Object.entries(row.values)
       .filter(([label, value]) => {
@@ -644,7 +665,10 @@ function relationshipItems(
         if (/synthetic demo/i.test(value)) return false;
         return true;
       })
-      .map(([, value]) => value);
+      .map(([label, value]) =>
+        formatPreviewCell(value, { key: label, label }),
+      )
+      .filter((value) => !/^\d+(?:\.\d+)?$/.test(value));
     return {
       from: values[0] ?? row.label,
       relation: values[1] ?? "relates to",
@@ -699,6 +723,7 @@ function ExplorerDetail({
       : (preview?.columns.map((column, index) => ({ column, index })) ?? []);
   const gaps = preview?.knownGaps ?? [];
   const relationships = relationshipItems(preview);
+  const selectedName = selected?.dimension ?? "enterprise context";
 
   return (
     <main className="hx2-detail" data-testid="home-context-detail">
@@ -757,7 +782,7 @@ function ExplorerDetail({
             <article>
               <span>What needs work</span>
               <strong>
-                {(preview?.dataThinCells ?? overview.totalGaps).toLocaleString()} gaps
+                {displayMetric(preview?.dataThinCells ?? overview.totalGaps, "evidence gaps")}
               </strong>
               <p>Gaps are client-to-complete fields, not confidence theater.</p>
             </article>
@@ -780,10 +805,15 @@ function ExplorerDetail({
         <section className="hx2-section" role="tabpanel">
           {preview ? (
             <>
+              <p className="hx2-tabIntro">
+                <strong>Plain English:</strong> this is the loaded business data for{" "}
+                {selectedName}. Values are formatted for reading; missing fields stay
+                visible as evidence gaps instead of being hidden.
+              </p>
               <div className="hx2-tableMeta">
                 <span>{preview.rowCount.toLocaleString()} rows loaded</span>
                 <span>{preview.sourceCount.toLocaleString()} source file{preview.sourceCount === 1 ? "" : "s"}</span>
-                <span>{preview.dataThinCells.toLocaleString()} evidence gaps</span>
+                <span>{displayMetric(preview.dataThinCells, "evidence gaps")} to complete</span>
               </div>
               <div className="hx2-tableWrap">
                 <table>
@@ -844,12 +874,18 @@ function ExplorerDetail({
 
       {activeTab === "gaps" ? (
         <section className="hx2-section" role="tabpanel">
+          <p className="hx2-tabIntro">
+            <strong>Plain English:</strong> gaps are client-to-complete fields in
+            the loaded context. They are not a confidence score by themselves; they
+            tell the team what should be validated before this area supports
+            board-grade or downstream advisory work.
+          </p>
           {gaps.length > 0 ? (
             <div className="hx2-gapGrid">
               {gaps.map((gap) => (
                 <article className="hx2-gapCard" key={gap.label}>
                   <strong>{gap.label}</strong>
-                  <span>{gap.count.toLocaleString()} missing</span>
+                  <span>{displayMetric(gap.count, `${gap.label} gap`)} missing</span>
                   <p>
                     {gap.whyItMatters ??
                       `${gap.label} needs client evidence before this area should support final decisions.`}
@@ -865,6 +901,11 @@ function ExplorerDetail({
 
       {activeTab === "sources" ? (
         <section className="hx2-section" role="tabpanel">
+          <p className="hx2-tabIntro">
+            <strong>Plain English:</strong> sources show where this context came
+            from. Home keeps the source trail available for audit, while the main
+            views keep file paths and internal row IDs out of the executive read.
+          </p>
           <div className="hx2-sourceList">
             {(preview ? preview.fileNames : overview.dimensions.flatMap((d) => d.fileNames))
               .slice(0, 12)
@@ -881,6 +922,13 @@ function ExplorerDetail({
 
       {activeTab === "relationships" ? (
         <section className="hx2-section" role="tabpanel">
+          <p className="hx2-tabIntro">
+            <strong>Plain English:</strong> relationships are mapped links between
+            business objects, such as systems to vendors, applications to data, or
+            initiatives to owners. If this selected area is only a profile anchor,
+            use relationship-heavy areas like Systems, Data, Vendors, or the
+            Relationships reference.
+          </p>
           {relationships.length > 0 ? (
             <div className="hx2-relMap">
               {relationships.map((item, index) => (
@@ -922,6 +970,7 @@ function ExplorerRail({
 }) {
   const [draft, setDraft] = useState("");
   const score = completenessScore({
+    dimension: selected?.dimension,
     rows: preview?.rowCount ?? overview.totalRows,
     gaps: preview?.dataThinCells ?? overview.totalGaps,
     sources: preview?.sourceCount ?? overview.totalSources,
@@ -953,7 +1002,7 @@ function ExplorerRail({
         <div className="hx2-cardTitle">{selected?.dimension ?? "Enterprise context"}</div>
         <p>
           {preview
-            ? `${shortMetric(preview.rowCount)} records, ${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}, ${shortMetric(preview.dataThinCells)} gaps.`
+            ? `${shortMetric(preview.rowCount)} records, ${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}, ${displayMetric(preview.dataThinCells, "evidence gaps")} to complete.`
             : `${shortMetric(overview.totalRows)} records across ${overview.totalSources} source files.`}
         </p>
       </div>
@@ -965,14 +1014,17 @@ function ExplorerRail({
           ["Evidence gaps", preview?.dataThinCells ?? overview.totalGaps],
         ].map(([label, raw]) => {
           const value = Number(raw);
-          const max = Math.max(1, preview?.rowCount ?? overview.totalRows);
+          const max =
+            label === "Evidence gaps"
+              ? Math.max(1, (preview?.rowCount ?? overview.totalRows) * 5)
+              : Math.max(1, preview?.rowCount ?? overview.totalRows);
           return (
             <div className="hx2-barRow" key={label}>
               <span>{label}</span>
               <div>
                 <i style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
               </div>
-              <strong>{shortMetric(value)}</strong>
+              <strong>{displayMetric(value, String(label))}</strong>
             </div>
           );
         })}
