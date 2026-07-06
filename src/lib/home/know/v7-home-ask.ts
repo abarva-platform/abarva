@@ -322,7 +322,7 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/company profile|enterprise profile|revenue|employees?|portfolio compan|company size|business profile/.test(q)) return 'loaded_context';
   if (/business areas|business functions|available business|organization structure/.test(q)) return 'business_areas';
   if (/technology leaders|it organization|it org|structured today|roles|accountability/.test(q)) return 'it_org';
-  if (/application|core systems|systems context|apps|erp|sap|mainframe/.test(q)) return 'apps_systems';
+  if (/\b(applications?|apps?|core systems?|it systems?|systems? of record|systems? landscape|systems? inventory|systems? context|erp|sap|mainframe)\b/.test(q)) return 'apps_systems';
   if (/infrastructure|cloud|data center|network|hosting|aws|azure/.test(q)) return 'infrastructure';
   // Word-bounded tokens so a tenant/company name never collides with a
   // dimension keyword (e.g. "Lakeshore" must not match a bare "lake").

@@ -135,6 +135,8 @@ const CONTEXT_BROWSER_QUESTIONS = [
 
 const EMPTY_DIMS: BindingDimension[] = [];
 
+type HomeCanvasTab = "summary" | "data" | "gaps";
+
 const TECHNICAL_STRING_FIELDS = new Set([
   "id",
   "key",
@@ -857,16 +859,14 @@ function DimensionView({
   dim,
   preview,
   findings,
-  onAsk,
 }: {
   dim: BindingDimension;
   preview?: HomeV6BrowserPreview | null;
   findings: HomeV6ContextFinding[];
-  onAsk?: (question: string) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<
-    "summary" | "data" | "gaps" | "questions"
-  >("summary");
+  const [activeTab, setActiveTab] = useState<"summary" | "data" | "gaps">(
+    "summary",
+  );
   const related = findings.filter((finding) =>
     finding.supportingDimensions.includes(dim.dimension),
   );
@@ -927,7 +927,6 @@ function DimensionView({
           ["summary", "Summary"],
           ["data", "Data"],
           ["gaps", "Gaps"],
-          ["questions", "Questions"],
         ].map(([id, label]) => (
           <button
             aria-selected={activeTab === id}
@@ -935,9 +934,7 @@ function DimensionView({
             className="hx-tab"
             id={`home-dimension-tab-${id}`}
             key={id}
-            onClick={() =>
-              setActiveTab(id as "summary" | "data" | "gaps" | "questions")
-            }
+            onClick={() => setActiveTab(id as "summary" | "data" | "gaps")}
             role="tab"
             type="button"
           >
@@ -1140,39 +1137,6 @@ function DimensionView({
           No repeated missing-field pattern appears in the preview rows.
         </p>
       ) : null}
-      {activeTab === "questions" ? (
-        <section
-          className="hx-panel"
-          style={{ marginTop: 14 }}
-          aria-label="Ask aVa about this area"
-          aria-labelledby="home-dimension-tab-questions"
-          id="home-dimension-panel-questions"
-          role="tabpanel"
-        >
-          <h3>Ask aVa about this area</h3>
-          <p style={{ color: "var(--hm)", fontSize: 12.5, margin: "0 0 12px" }}>
-            Questions are scoped to {dim.dimension}. Select one to run it against
-            the loaded context in the aVa panel.
-          </p>
-          <ul className="hx-asklist">
-            {spec.ask.map((item) => (
-              <li key={item} style={{ border: 0, padding: 0, background: "none" }}>
-                {onAsk ? (
-                  <button
-                    className="hx-askbtn"
-                    onClick={() => onAsk(item)}
-                    type="button"
-                  >
-                    {item}
-                  </button>
-                ) : (
-                  item
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
       {activeTab === "gaps" && related.length > 0 && (
         <div className="hx-sec">
           <div className="hx-sechead">
@@ -1211,49 +1175,157 @@ function Overview({
     (sum, dimension) => sum + dimension.dataThinCells,
     0,
   );
+  const [activeTab, setActiveTab] = useState<HomeCanvasTab>("summary");
+  const overviewGaps = dimensions
+    .filter((dimension) => dimension.dataThinCells > 0)
+    .sort((a, b) => b.dataThinCells - a.dataThinCells)
+    .slice(0, 8);
   return (
     <div className="hx-body">
       <div className="hx-ey">Current-state context</div>
       <h2 className="hx-h2">What we know about your enterprise.</h2>
-      {dimensionCount > 0 ? (
-        <div className="hx-stats">
-          <div className="hx-stat">
-            <div className="k">Context areas</div>
-            <div className="v">{dimensionCount}</div>
-          </div>
-          <div className="hx-stat">
-            <div className="k">Loaded records</div>
-            <div className="v">{v6Rows.toLocaleString()}</div>
-          </div>
-          <div className="hx-stat">
-            <div className="k">Source files</div>
-            <div className="v">{v6Files}</div>
-          </div>
-          <div className="hx-stat">
-            <div className="k">Evidence gaps</div>
-            <div className="v">{evidenceGaps.toLocaleString()}</div>
+
+      <div className="hx-tabs" role="tablist" aria-label="Overview canvas tabs">
+        {[
+          ["summary", "Summary"],
+          ["data", "Data"],
+          ["gaps", "Gaps"],
+        ].map(([id, label]) => (
+          <button
+            aria-selected={activeTab === id}
+            aria-controls={`home-overview-panel-${id}`}
+            className="hx-tab"
+            id={`home-overview-tab-${id}`}
+            key={id}
+            onClick={() => setActiveTab(id as HomeCanvasTab)}
+            role="tab"
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "summary" ? (
+        <div
+          aria-labelledby="home-overview-tab-summary"
+          id="home-overview-panel-summary"
+          role="tabpanel"
+        >
+          {dimensionCount > 0 ? (
+            <div className="hx-stats">
+              <div className="hx-stat">
+                <div className="k">Context areas</div>
+                <div className="v">{dimensionCount}</div>
+              </div>
+              <div className="hx-stat">
+                <div className="k">Loaded records</div>
+                <div className="v">{v6Rows.toLocaleString()}</div>
+              </div>
+              <div className="hx-stat">
+                <div className="k">Source files</div>
+                <div className="v">{v6Files}</div>
+              </div>
+              <div className="hx-stat">
+                <div className="k">Evidence gaps</div>
+                <div className="v">{evidenceGaps.toLocaleString()}</div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="hx-hint">
+            <span className="hx-dot" style={{ background: "var(--hb)" }} />
+            Pick a context area from the dropdown, or ask in the aVa panel.
           </div>
         </div>
       ) : null}
 
-      {findings.length > 0 && (
-        <div className="hx-sec">
-          <div className="hx-sechead">
-            <span className="hx-ey">Context findings</span>
-            <span className="hx-ey">{findings.length} findings</span>
+      {activeTab === "data" ? (
+        <div
+          className="hx-preview"
+          aria-labelledby="home-overview-tab-data"
+          id="home-overview-panel-data"
+          role="tabpanel"
+          style={{ marginTop: 14 }}
+        >
+          <div className="hx-previewIntro">
+            <div className="hx-previewTitle">
+              <div className="hx-ey">Loaded context area coverage</div>
+              <strong>Context areas available in Home</strong>
+              <span>
+                Overview-level inventory of the context slices available for
+                browsing.
+              </span>
+            </div>
           </div>
-          <div className="hx-grid">
-            {findings.map((finding) => (
-              <FindingCard finding={finding} key={finding.findingId} />
-            ))}
+          <div className="hx-tablewrap">
+            <table className="hx-table">
+              <thead>
+                <tr>
+                  <th>Context area</th>
+                  <th>Loaded records</th>
+                  <th>Source files</th>
+                  <th>Evidence gaps</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dimensions.map((dimension) => (
+                  <tr key={dimension.dimension}>
+                    <td>{dimension.dimension}</td>
+                    <td>{dimension.rowCount.toLocaleString()}</td>
+                    <td>{dimension.sourceCount.toLocaleString()}</td>
+                    <td>{dimension.dataThinCells.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="hx-hint">
-        <span className="hx-dot" style={{ background: "var(--hb)" }} />
-        Pick a context dot above, or ask in the aVa panel.
-      </div>
+      {activeTab === "gaps" ? (
+        <div
+          aria-labelledby="home-overview-tab-gaps"
+          id="home-overview-panel-gaps"
+          role="tabpanel"
+        >
+          {overviewGaps.length > 0 ? (
+            <div className="hx-gapCards" aria-label="Overview evidence gaps">
+              {overviewGaps.map((dimension) => (
+                <article className="hx-gapCard" key={dimension.dimension}>
+                  <div className="hx-gapCardTop">
+                    <h3>{dimension.dimension}</h3>
+                    <span className="hx-gapCount">
+                      {dimension.dataThinCells.toLocaleString()} gaps
+                    </span>
+                  </div>
+                  <p>
+                    <strong>What this means:</strong> this context area has
+                    fields that still need source-backed evidence before Home
+                    should treat the slice as board-ready.
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="hx-hint">No overview evidence gaps are loaded.</p>
+          )}
+
+          {findings.length > 0 && (
+            <div className="hx-sec">
+              <div className="hx-sechead">
+                <span className="hx-ey">Context findings</span>
+                <span className="hx-ey">{findings.length} findings</span>
+              </div>
+              <div className="hx-grid">
+                {findings.map((finding) => (
+                  <FindingCard finding={finding} key={finding.findingId} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1610,10 +1682,10 @@ export function HomeSurface({
           </div>
           {selected ? (
             <DimensionView
+              key={selected.dimension}
               dim={selected}
               preview={safeV6Browser?.dimensions[selected.dimension] ?? null}
               findings={findings}
-              onAsk={askHomeKnow}
             />
           ) : (
             <Overview
