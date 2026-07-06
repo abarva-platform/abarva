@@ -306,7 +306,7 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   )
     return 'loaded_context';
   if (
-    /\b(what do we know|what.?s loaded|what context (is|do|are)|tell me about|introduce|overview of|describe the|profile of)\b/.test(
+    /\b(what do we know|what.?s loaded|what context (is|do|are)|what business context is available|tell me about|introduce|overview of|describe the|profile of)\b/.test(
       q,
     ) &&
     !/\b(system|app|vendor|contract|budget|spend|risk|control|metric|kpi|leader)\b/.test(
@@ -333,8 +333,8 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/budget|spend|financial|cost/.test(q)) return 'budget_spend';
   if (/priority|program|initiative|project|transformation/.test(q) && /moves|move/.test(q)) return 'handoff_moves';
   if (/priority|program|initiative|project|transformation/.test(q)) return 'programs';
-  if (/ai|automation|agent|copilot/.test(q) && /tower|scale|hold|stop/.test(q)) return 'handoff_tower';
-  if (/ai|automation|agent|copilot/.test(q)) return 'ai_footprint';
+  if (/\b(ai|automation|agent|agentic|copilot)\b/.test(q) && /\b(tower|scale|hold|stop)\b/.test(q)) return 'handoff_tower';
+  if (/\b(ai|automation|agent|agentic|copilot)\b/.test(q)) return 'ai_footprint';
   if (/operations|service management|risk|control|reliability/.test(q)) return 'operations';
   if (/metric|kpi|outcome/.test(q)) return 'metrics';
   if (/source trail|citation|citation basis|evidence/.test(q)) return 'source_trail';

@@ -39,6 +39,9 @@ This follow-up also closes the V7-first path and general-knowledge gap: Home now
   - Scrubs plain "evidence" and "rows" wording out of visible Home prose.
 - `src/lib/home/know/home-render-layer-shaper.ts`:
   - Corrects the render-layer leak scanner so it checks user-visible values rather than JSON property names, avoiding false tripwire alarms on valid Home tables.
+- Follow-up hotfix:
+  - Bounded V7 `ai` / `hold` classifier tokens so "available" no longer matches AI and "Holdings" no longer matches hold.
+  - Added an explicit orientation rule for "what business context is available" questions.
 
 ## QA / Validation
 
@@ -53,6 +56,7 @@ This follow-up also closes the V7-first path and general-knowledge gap: Home now
   - "What context is loaded, and what can we trust?" / "Which areas are strongest…" → Home (unchanged).
   - "Tell me about the company" → `loaded_context`; "Who is the CIO?" → not captured (leader-role exclusion); "What vendors do we have contracts with?" → `vendors_contracts` (unchanged).
 - "What is the capital of Uganda?" → `unsupported`, with Home context-browser boundary and no Kampala answer.
+- **Live proof follow-up — PASS after hotfix:** signed-in Chrome API proof initially caught `What business context is available for Lakeshore Holdings?` being routed to Tower because of unbounded classifier tokens. Added regression and bounded tokens before final deploy proof.
 - **Typecheck — PASS:** `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`.
 - **Release check — PASS:** `npm run release:check`.
 - **Live signed-in proof — NOT-RUN (pending deploy):** on `ca-abarva-web-lab-eastus`, confirm an advisory question on Home shows the Intelligence handoff, and an identity question shows the enterprise profile.
