@@ -25,6 +25,7 @@ Tower should answer CIO/CFO questions from governed financial, vendor, program, 
 | Actual YTD | Actual spend by same grain as budget | ERP actuals, AP, procurement, cloud billing | Show committed budget only; burn-rate is partial |
 | Forecast EOY | Latest forecast by line | FP&A forecast/EPM | Do not claim overrun/underrun |
 | Portfolio company | Legal entity/company allocation | ERP company code, cost center hierarchy | No portfolio-company slice |
+| Holding-company hierarchy | Parent entity, operating companies, shared-service consumers, corporate vs OpCo ownership | Legal entity master, ERP company code hierarchy, FP&A planning hierarchy, HR org hierarchy | Tower cannot safely slice corporate shared services versus portfolio-company local spend |
 | Vendor exposure | Vendor, contract, renewal, ACV, supported system | CLM, procurement, SAM | Renewal and concentration views partial |
 | Initiative budget | Initiative id/name/owner/budget/stage | PPM, Jira Align, ServiceNow SPM | Cannot rank programs safely |
 | Measured value | Realized value, method, baseline, finance attestation | Benefits ledger, KPI systems | ROI is unproven |
@@ -48,6 +49,9 @@ Tower should answer CIO/CFO questions from governed financial, vendor, program, 
 For the next template version, add or require:
 
 - portfolio_company_id
+- parent_entity_id
+- entity_scope
+- shared_service_provider_entity_id when a corporate platform serves multiple operating companies
 - legal_entity_id
 - cost_center_id
 - budget_owner_role
