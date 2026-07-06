@@ -125,6 +125,22 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.directAnswer).not.toMatch(/data assets integrations|field facts|V7_/i);
   });
 
+  it('keeps business-context availability questions on Home even when tenant name contains routing substrings', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'lakeshore',
+      tenantDisplayName: 'Lakeshore Holdings',
+      question: 'What business context is available for Lakeshore Holdings?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('loaded_context');
+    expect(result.answer.primaryDimension).toBe('v7_01_enterprise_profile');
+    expect(result.answer.answerBoundary.handoffTarget).toBeNull();
+    expect(result.answer.directAnswer).toMatch(/Lakeshore Holdings/i);
+  });
+
   it('blocks general-knowledge trivia instead of answering or pretending it is tenant context', async () => {
     const result = await answerHomeKnowFromV7({
       tenantKey: 'lakeshore',
