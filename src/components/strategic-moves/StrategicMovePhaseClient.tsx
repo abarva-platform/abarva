@@ -1289,9 +1289,17 @@ function CharterWorkflow({
 
   // Workbench evidence selection (used only in workbench mode; hooks run
   // unconditionally so they stay above any early return).
-  const wbPackets = (evidenceNeedPackets ?? []).filter(
-    (p) => p.status !== "not_applicable",
-  );
+  // P0 carries no evidence-coverage rail: the evidence needs served here are
+  // Discover-phase (current-state, systems, KPI, cost) and are premature at
+  // Originate, where the job is to *select* the evidence family (a capture
+  // item), not to cover evidence. Empty the rail so P0 focuses on its gate
+  // criteria instead of showing misleading Discover-phase coverage.
+  const wbPackets =
+    phaseNum === 0
+      ? []
+      : (evidenceNeedPackets ?? []).filter(
+          (p) => p.status !== "not_applicable",
+        );
   const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(
     null,
   );
@@ -1694,7 +1702,11 @@ function CharterWorkflow({
       ? gen.label
       : "Building…"
     : "Build report";
-  const reportCrit = items.find((c) => isReport(c.label));
+  // P0 has no phase deliverable to "build" (its brief is approved via
+  // approve-brief, not generated here), so no P0 criterion gets a "Build
+  // report" action — that button would be permanently disabled.
+  const reportCrit =
+    phaseNum === 0 ? undefined : items.find((c) => isReport(c.label));
   // The critical thing left to enable "Build report", in plain English.
   let buildReason: string | undefined;
   if (!allSaved) {
