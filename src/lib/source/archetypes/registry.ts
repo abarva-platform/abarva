@@ -403,11 +403,111 @@ export const CONTRACT_RENEWAL: SourceEventArchetype = {
 };
 
 // ── registry ─────────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
+// 5 · CLOUD / INFRASTRUCTURE / FINOPS
+// ═════════════════════════════════════════════════════════════════════════════
+export const CLOUD_FINOPS: SourceEventArchetype = {
+  id: 'CLOUD_FINOPS',
+  name: 'Cloud / Infrastructure / FinOps',
+  description: 'Sourcing or optimizing cloud + infrastructure spend (commitments, utilization, managed cloud, FinOps governance).',
+  version: '1.0.0', status: 'validated', eventType: 'infrastructure',
+  applicableSpendCategories: ['cloud_infrastructure', 'infrastructure_operations', 'managed_services'],
+  requiredEvidenceFamilies: [
+    RUN_COST_BASELINE,
+    f({ key: 'cloud_billing', label: 'Cloud billing / cost-and-usage export', kind: 'financial', whyNeeded: 'The only true basis for utilization waste, commitment coverage, and pass-through markup.', sourceDocHint: 'CUR / billing export (CSV) by account/service', acceptedFormats: ['csv', 'xlsx'], feedsMethods: ['should_cost', 'tco_normalization'] }),
+    f({ key: 'utilization_telemetry', label: 'Utilization telemetry', kind: 'metric_baseline', whyNeeded: 'Sizes idle/oversized capacity — the largest FinOps lever.', sourceDocHint: 'Utilization/rightsizing report (CSV)', acceptedFormats: ['csv', 'xlsx'], feedsMethods: ['should_cost'] }),
+    f({ key: 'commitment_inventory', label: 'Commitment inventory (RI / Savings Plans / CUDs)', kind: 'inventory', whyNeeded: 'Coverage and expiry drive re-commitment leverage and stranded-commitment risk.', sourceDocHint: 'Reservation/commitment export (CSV)', acceptedFormats: ['csv', 'xlsx'] }),
+    f({ key: 'workload_inventory', label: 'Workload / environment inventory', kind: 'inventory', whyNeeded: 'Defines the in-scope estate for managed-cloud pricing and migration risk.', sourceDocHint: 'Account/subscription + workload inventory (CSV)', acceptedFormats: ['csv', 'xlsx'], feedsMethods: ['transition_risk_model'] }),
+    f({ key: 'infra_sla_incidents', label: 'Infra SLA + incident baseline', kind: 'metric_baseline', whyNeeded: 'Sets the availability/coverage bar a managed-cloud partner must beat.', sourceDocHint: 'Incident/availability export (CSV)', acceptedFormats: ['csv'], feedsMethods: ['sla_gap'] }),
+    CONTRACT_BASELINE,
+    f({ key: 'tooling_landscape', label: 'Cloud tooling landscape', kind: 'inventory', whyNeeded: 'Exposes duplicate observability/security/FinOps tooling for consolidation.', sourceDocHint: 'Tooling inventory (CSV)', acceptedFormats: ['csv'] }),
+  ],
+  optionalEvidenceFamilies: [
+    f({ key: 'private_pricing_agreements', label: 'Private pricing / EDP / MSA discounts', kind: 'commercial', whyNeeded: 'Establishes the true net rate for pass-through-markup detection.', sourceDocHint: 'EDP/PPA terms (PDF)', acceptedFormats: ['pdf', 'xlsx'] }),
+  ],
+  requiredStakeholders: ['CIO / VP Infrastructure', 'Cloud / Platform Engineering lead', 'FinOps / Cloud Financial Management', 'Procurement', 'Finance (infra cost owner)', 'Security / Compliance'],
+  sourcingStrategyQuestions: [
+    'Is this a managed-cloud sourcing, a hyperscaler commitment negotiation, or a FinOps optimization — and what is the value thesis for each?',
+    'What is our should-cost after rightsizing and commitment optimization, before any vendor discount?',
+    'What commitment coverage and flexibility do we require, and what is our stranded-commitment risk?',
+    'Where is a managed-cloud partner marking up pass-through hyperscaler cost, and is that transparent?',
+    'What duplicate tooling can we consolidate as part of this event?',
+  ],
+  vendorDiscussionGuide: {
+    topics: ['Managed-cloud pricing model', 'Pass-through vs marked-up hyperscaler cost', 'Commitment management + flexibility', 'Automation / optimization commitments', 'Availability SLA + credits', 'Tooling + observability'],
+    ask: ['Show hyperscaler cost as pass-through at net rate, separate from your management fee', 'What rightsizing / optimization savings will you commit to, with credits?', 'How do you manage commitments and who owns stranded-commitment risk?', 'What availability SLA and credits will you sign?'],
+    doNotRevealYet: ['Our post-rightsizing should-cost', 'Our current utilization-waste percentage', 'Our willingness to self-manage FinOps'],
+    likelyPushback: ['Bundling hyperscaler cost with management fee to hide markup', 'Optimization "advice" without committed savings/credits', 'Owning commitment purchases to capture the arbitrage'],
+    challengeAssumptions: ['Assumed steady growth justifying large upfront commitments', 'Assumed current utilization is efficient', 'Marked-up pass-through presented as a single blended rate'],
+  },
+  rfpDocumentStructure: [
+    { key: 'exec_overview', title: 'Executive overview', required: true, evidenceDependencies: [] },
+    { key: 'workload_scope', title: 'Workload / environment scope', required: true, evidenceDependencies: ['workload_inventory'] },
+    { key: 'current_state', title: 'Current-state cost, utilization & commitments', required: true, evidenceDependencies: ['cloud_billing', 'utilization_telemetry', 'commitment_inventory'] },
+    { key: 'pricing_model', title: 'Pricing model — pass-through + management fee', required: true, evidenceDependencies: ['cloud_billing'] },
+    { key: 'optimization', title: 'Optimization & automation commitments', required: true, evidenceDependencies: ['utilization_telemetry'] },
+    { key: 'commitment_mgmt', title: 'Commitment management & risk ownership', required: true, evidenceDependencies: ['commitment_inventory'] },
+    { key: 'sla_availability', title: 'Availability SLA + credits', required: true, evidenceDependencies: ['infra_sla_incidents'] },
+    { key: 'security', title: 'Security / compliance requirements', required: true, evidenceDependencies: [] },
+    { key: 'tooling', title: 'Tooling / observability + consolidation', required: false, evidenceDependencies: ['tooling_landscape'] },
+    { key: 'commercial_terms', title: 'Commercial terms appendix (rate transparency, audit, exit)', required: true, evidenceDependencies: ['contract_baseline'] },
+    { key: 'response_instructions', title: 'Response instructions & evaluation criteria', required: true, evidenceDependencies: [] },
+  ],
+  pricingModel: {
+    model: 'pass-through hyperscaler cost + transparent management fee + committed optimization',
+    costComponents: ['hyperscaler consumption (pass-through, net rate)', 'management fee', 'reserved/committed capacity', 'optimization/automation services', 'tooling/licensing', 'egress/support tiers'],
+    traps: ['Marked-up pass-through hidden in a blended rate', 'Reserved-capacity / utilization waste not repriced', 'Optimization "advice" without committed savings or credits', 'Vendor owning commitment purchases to capture the arbitrage', 'Duplicate tooling billed on top', 'Egress / support-tier surprises'],
+    shouldCost: true,
+  },
+  evaluationModel: {
+    criteria: [
+      { key: 'price_transparency', label: 'Price transparency & normalized should-cost gap', weight: 0.30 },
+      { key: 'optimization', label: 'Committed optimization / automation savings', weight: 0.25 },
+      { key: 'capability', label: 'Managed-cloud capability & SLA credibility', weight: 0.20 },
+      { key: 'commitment_risk', label: 'Commitment management & risk ownership', weight: 0.15 },
+      { key: 'security', label: 'Security & compliance', weight: 0.10 },
+    ],
+    disqualifiers: ['Cannot show hyperscaler cost as transparent pass-through', 'No committed optimization savings or credits', 'No availability SLA credits'],
+  },
+  riskModel: {
+    dimensions: ['pass-through markup opacity', 'stranded-commitment risk', 'utilization-waste persistence', 'lock-in / exit risk', 'security/compliance drift'],
+    contractProtections: ['pass-through rate transparency + audit rights', 'optimization glide-path with credits', 'commitment-risk ownership clause', 'egress/exit assistance', 'benchmarking clause'],
+  },
+  negotiationLevers: [
+    { key: 'passthrough_transparency', label: 'Pass-through rate transparency', rationale: 'Splitting hyperscaler cost from management fee exposes and removes hidden markup.', timing: 'rfp' },
+    { key: 'optimization_credits', label: 'Committed optimization savings with credits', rationale: 'Converts vendor "advice" into contractual savings the buyer keeps.', timing: 'bafo' },
+    { key: 'commitment_flexibility', label: 'Commitment flexibility / buyer-owned commitments', rationale: 'Keeps the commitment arbitrage with the buyer and caps stranded risk.', timing: 'rfp' },
+    { key: 'multicloud_tension', label: 'Multi-provider / self-manage tension', rationale: 'Credible self-manage or alternate-provider threat compresses the management fee.', timing: 'pre_rfp' },
+  ],
+  deliverablePack: [
+    { key: 'cloud_strategy_memo', label: 'Cloud / FinOps Sourcing Strategy Memo', stage: 'strategy', audience: 'CIO · VP Infra', sections: ['Objective', 'Managed vs self-manage decision', 'Should-cost after optimization', 'Commitment strategy', 'Consolidation targets'], qualityBar: { minSections: 5, requiresCitations: true, altitude: 'exec', rubric: ['Names this estate’s accounts/services (not generic)', 'Utilization waste cited from telemetry', 'Should-cost stated after rightsizing, before discount'] }, formats: ['html', 'docx'], gateArtifact: true },
+    { key: 'cloud_rfp', label: 'Cloud / Managed-Cloud RFP', stage: 'rfp', audience: 'Vendors', sections: ['Workload scope', 'Pricing (pass-through + fee)', 'Optimization commitments', 'Commitment management', 'Availability SLA', 'Commercial terms'], qualityBar: { minSections: 6, requiresCitations: true, altitude: 'full', rubric: ['Pass-through separated from management fee', 'Optimization stated as committed savings', 'Cost/utilization cited from billing evidence'] }, formats: ['docx', 'pdf', 'xlsx'], gateArtifact: true },
+    { key: 'cloud_negotiation_memo', label: 'Cloud Pricing & Negotiation Memo', stage: 'bafo', audience: 'CIO · Procurement', sections: ['Should-cost vs proposals', 'Markup exposure', 'Optimization asks by vendor', 'Walk-away'], qualityBar: { minSections: 4, requiresCitations: true, altitude: 'exec', rubric: ['Vendor-specific asks', 'Markup quantified', 'Walk-away stated'] }, formats: ['html', 'docx'] },
+  ],
+  gateCriteria: [
+    { key: 'cloud_baseline_evidenced', describe: 'Billing, utilization, and commitment inventory are usable evidence before RFP.', fromStage: 'scope', toStage: 'rfp', severity: 'hard' },
+    { key: 'cloud_pricing_normalized', describe: 'Proposals normalized to pass-through + fee and to should-cost before BAFO.', fromStage: 'pricing', toStage: 'bafo', severity: 'hard' },
+  ],
+  agentGuidance: {
+    systemFraming: 'This is a cloud / infrastructure / FinOps sourcing or optimization event. Reason over committed billing, utilization, commitment inventory, and contract evidence. Never assert a savings number without committed billing + utilization evidence; separate hyperscaler pass-through from vendor management fee; name missing evidence explicitly.',
+    keyQuestions: ['What is should-cost after rightsizing + commitment optimization?', 'Where is pass-through cost marked up?', 'What is the stranded-commitment risk?', 'What tooling can be consolidated?'],
+    requiresGroundedAnswer: true,
+  },
+  stageModel: [
+    { stage: 'strategy', requiredEvidence: [{ family: 'cloud_billing', severity: 'hard' }, { family: 'utilization_telemetry', severity: 'hard' }], analysisMethods: ['should_cost'], deliverables: ['cloud_strategy_memo'] },
+    { stage: 'scope', requiredEvidence: [{ family: 'workload_inventory', severity: 'hard' }, { family: 'commitment_inventory', severity: 'hard' }, { family: 'infra_sla_incidents', severity: 'soft' }], analysisMethods: ['sla_gap'], deliverables: [] },
+    { stage: 'rfp', requiredEvidence: [{ family: 'workload_inventory', severity: 'hard' }, { family: 'cloud_billing', severity: 'hard' }], analysisMethods: [], deliverables: ['cloud_rfp'] },
+    { stage: 'pricing', requiredEvidence: [{ family: 'cloud_billing', severity: 'hard' }, { family: 'contract_baseline', severity: 'soft' }], analysisMethods: ['tco_normalization', 'should_cost'], deliverables: [] },
+    { stage: 'bafo', requiredEvidence: [], analysisMethods: ['market_benchmark'], deliverables: ['cloud_negotiation_memo'] },
+  ],
+};
+
 export const SOURCE_ARCHETYPE_REGISTRY: Record<string, SourceEventArchetype> = {
   [AMS_MANAGED_SERVICES.id]: AMS_MANAGED_SERVICES,
   [ERP_SI_IMPLEMENTATION.id]: ERP_SI_IMPLEMENTATION,
   [AI_DATA_PLATFORM.id]: AI_DATA_PLATFORM,
   [CONTRACT_RENEWAL.id]: CONTRACT_RENEWAL,
+  [CLOUD_FINOPS.id]: CLOUD_FINOPS,
   // Add new archetypes here — no Source core code change required.
 };
 

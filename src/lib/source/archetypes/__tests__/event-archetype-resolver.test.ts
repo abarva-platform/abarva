@@ -66,6 +66,6 @@ describe('resolver integrity', () => {
   });
 
   it('reports exactly the categories that currently have a shipped archetype', () => {
-    expect(archetypeReadyCategories().sort()).toEqual(['ams', 'data_ai_platform', 'saas_renewal']);
+    expect(archetypeReadyCategories().sort()).toEqual(['ams', 'cloud_finops', 'data_ai_platform', 'saas_renewal']);
   });
 });

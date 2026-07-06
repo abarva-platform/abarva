@@ -23,9 +23,9 @@ import { SOURCING_METHODS } from '../method-library';
 const ALL = listSourceArchetypes();
 
 describe('Source Event Archetype Framework — registry integrity', () => {
-  it('registers the four seed archetypes', () => {
+  it('registers the shipped archetypes', () => {
     expect(ALL.map((a) => a.id).sort()).toEqual(
-      ['AI_DATA_PLATFORM', 'AMS_MANAGED_SERVICES', 'CONTRACT_RENEWAL', 'ERP_SI_IMPLEMENTATION'],
+      ['AI_DATA_PLATFORM', 'AMS_MANAGED_SERVICES', 'CLOUD_FINOPS', 'CONTRACT_RENEWAL', 'ERP_SI_IMPLEMENTATION'],
     );
   });
 
