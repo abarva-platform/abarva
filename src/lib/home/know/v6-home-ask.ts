@@ -484,6 +484,7 @@ const TOPICS: Record<string, TopicConfig> = {
     "moves",
     "Moves owns governed change framing, ownership, sequencing, and mobilization.",
   ),
+  unsupported: topic("unsupported", "unsupported", [], [], [], []),
 };
 
 export function answerHomeKnowFromV6(input: V6HomeAskInput): V6HomeAskResult {
@@ -689,6 +690,7 @@ function loadV6Dataset(tenantKey: string): V6Dataset {
 
 function classifyQuestion(question: string): keyof typeof TOPICS {
   const q = question.toLowerCase();
+  if (isGeneralKnowledgeOrUnsupportedQuestion(q)) return "unsupported";
   if (/relationship|connect/.test(q)) return "relationships";
   if (/board|executive summary|board-ready/.test(q)) return "board_summary";
   if (
@@ -766,6 +768,14 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/source trail|citation|citation basis/.test(q)) return "source_trail";
   if (/moves|strategic change|move/.test(q)) return "move_relevance";
   return "loaded_context";
+}
+
+function isGeneralKnowledgeOrUnsupportedQuestion(q: string) {
+  return (
+    /\b(capital of|weather|stock price|latest news|who won|sports score|recipe|translate|distance from|population of)\b/.test(
+      q,
+    ) || /\bwhat\s+is\s+the\s+capital\b/.test(q)
+  );
 }
 
 function selectRows(
@@ -1067,6 +1077,7 @@ function classifyAnswerability(args: {
   dataThinCount: number;
 }): V6HomeAnswerability {
   const { config, topicKey, rows, gaps, dataThinCount } = args;
+  if (topicKey === "unsupported") return "unsupported";
   if (!rows.length) return "data_thin";
   if (config.handoffTarget === "tower") return "requires_tower";
   if (config.handoffTarget === "intelligence") return "requires_intelligence";
@@ -1203,6 +1214,14 @@ function answerParagraphsByTopic(args: {
   gaps: V6HomeGap[];
 }): string[] {
   const { displayName, dataset, config, topicKey, rows, gaps } = args;
+  if (topicKey === "unsupported") {
+    return [
+      "Home is a context browser for the loaded enterprise record. It does not answer general knowledge, trivia, news, weather, or unrelated web questions.",
+      "Use Home to inspect the company profile, business functions, applications, data, vendors, budget, AI footprint, controls, evidence trail, and known gaps.",
+      "For recommendations, use-case judgment, investment choices, or outside-in synthesis, open Intelligence so aVa can use the advisory canvas instead of the Home context browser.",
+    ];
+  }
+
   const countLine = `${displayName} has ${rows.length} usable V6 ${humanize(config.primaryDimension).toLowerCase()} evidence item${rows.length === 1 ? "" : "s"} loaded across ${config.files.length} governed evidence area${config.files.length === 1 ? "" : "s"}.`;
   if (topicKey === "budget_spend") {
     const amounts = rows.map((row) => clean(row.amount_usd)).filter(Boolean);

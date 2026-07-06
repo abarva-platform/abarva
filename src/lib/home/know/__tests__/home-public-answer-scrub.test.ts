@@ -22,7 +22,7 @@ describe("home public answer scrub", () => {
       operationalEvidenceInsufficiencyLead(
         "What evidence supports finance close automation?",
       ),
-    ).toMatch(/does not yet have enough operational-process source support/i);
+    ).toMatch(/does not yet have enough operational-process material/i);
     expect(
       operationalEvidenceInsufficiencyLead(
         "Do we have enough evidence for Treasury/Kyriba automation?",

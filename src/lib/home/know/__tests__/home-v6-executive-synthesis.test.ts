@@ -114,7 +114,7 @@ describe("Home V6 executive synthesis", () => {
 
   it("marks raw Claude preserved even when trace exposure is disabled", async () => {
     mockClaudeText(
-      "For Retail Demo, the loaded business context is strong enough to describe ownership, readiness, and decision risk, but not enough to claim named-person accountability.\n\nThe next evidence to validate is source freshness and owner confirmation before this becomes decision-ready.",
+      "For Retail Demo, the loaded business context is strong enough to describe ownership, readiness, and decision risk, but not enough to claim named-person accountability.\n\nThe next validation point is source freshness and owner confirmation before this becomes decision-ready.",
     );
     const question = "What business context is available for this tenant?";
     const v6 = answerHomeKnowFromV6({
@@ -134,7 +134,7 @@ describe("Home V6 executive synthesis", () => {
 
     expect(result.trace.used).toBe(true);
     expect(result.response.prose).toBe(
-      "For Retail Demo, the loaded business context is strong enough to describe ownership, readiness, and decision risk, but not enough to claim named-person accountability.\n\nThe next evidence to validate is source freshness and owner confirmation before this becomes decision-ready.",
+      "For Retail Demo, the loaded business context is strong enough to describe ownership, readiness, and decision risk, but not enough to claim named-person accountability.\n\nThe next validation point is source freshness and owner confirmation before this becomes decision-ready.",
     );
     expect(result.response.safety.composerTrace?.reason).toContain(
       "answerSource=claude_text",
@@ -155,10 +155,10 @@ describe("Home V6 executive synthesis", () => {
       [
         "For Lakeshore Holdings:",
         "- **What this means:** finance modernization is the strongest current story, but the value claim still needs proof.",
-        "- **Why it matters:** SAP feeds, treasury controls, and payment evidence decide whether this is board-ready.",
+        "- **Why it matters:** SAP feeds, treasury controls, and payment context decide whether this is board-ready.",
         "- **Where to go next:** use Tower for spend and value, Source for renewals, and Moves for execution sequencing.",
         "",
-        "Caveat: named ownership and period-specific value evidence still need validation before leadership treats the case as proven.",
+        "Caveat: named ownership and period-specific value proof still need validation before leadership treats the case as proven.",
       ].join("\n"),
     );
     const question =
@@ -507,7 +507,7 @@ describe("Home V6 executive synthesis", () => {
 
     expect(result.trace.used).toBe(true);
     expect(result.response.prose).toContain("Lakeshore Holdings");
-    expect(result.response.prose).toContain("top-line enterprise line");
+    expect(result.response.prose).toContain("operating-company allocation bucket");
     expect(result.response.prose).not.toContain("enterprise row");
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
   });

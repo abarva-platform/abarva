@@ -64,7 +64,7 @@ describe("home demo-safe response sanitizer", () => {
         citations: safe.citations,
       }),
     ).not.toMatch(
-      /SkyHarbor Air Group|SkyHarbor Air|SkyHarbor Airlines|Lakeshore Holdings|Apex Retail Group/i,
+      /SkyHarbor Air Group|SkyHarbor Air|SkyHarbor Airlines|Apex Retail Group/i,
     );
     expect(safe.safety.composerTrace.promptSnapshot.full).toBe(
       "Airline Demo and Lakeshore Holdings appeared in the prompt.",

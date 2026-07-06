@@ -334,7 +334,7 @@ describe("home consultant text synthesis", () => {
       throw new Error("expected synthesis");
     const selected = applyHomeConsultantTextSynthesis(response, result);
     expect(selected.prose).toContain("domain-led view");
-    expect(selected.prose).toContain("supporting material");
+    expect(selected.prose).toContain("business context");
     expect(selected.prose).not.toMatch(/\bevidence\b/i);
     expect(selected.prose).not.toMatch(/semantic|loaded context|source context|rows/i);
     expect(selected.safety.composerTrace?.composer).toBe(
@@ -364,7 +364,7 @@ describe("home consultant text synthesis", () => {
     );
 
     expect(text).toBe(
-      "The loaded supporting material shows a strong current picture across 42 records, but needed material is missing for one leader.",
+      "The business context shows a strong current picture across 42 records, but needed material is missing for one leader.",
     );
     expect(text).not.toMatch(/\bread\b|\bevidence\b|\brows\b|source context|current-state context/i);
   });
@@ -399,7 +399,7 @@ describe("home consultant text synthesis", () => {
       },
     );
 
-    expect(selected.prose).toContain("loaded supporting material shows");
+    expect(selected.prose).toContain("business context shows");
     expect(selected.prose).toContain("42 records");
     expect(selected.prose).not.toMatch(/\bevidence\b|\brows\b|source context/i);
     expect(selected.safety.composerTrace?.fallbackUsed).toBe(true);

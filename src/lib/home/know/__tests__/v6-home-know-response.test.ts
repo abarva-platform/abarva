@@ -141,6 +141,39 @@ describe("Home V6 KNOW response contract", () => {
     expect(response.contextQuality?.recommendedHandoff?.target).toBe("source");
   });
 
+  it("blocks general-knowledge trivia instead of answering or using loaded context", () => {
+    const result = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question: "What is the capital of Uganda?",
+      includeTrace: true,
+    });
+    const response = toHomeKnowResponseFromV6(result, {
+      question: "What is the capital of Uganda?",
+    });
+
+    expect(result.proof.questionIntent).toBe("unsupported");
+    expect(result.answer.answerability).toBe("unsupported");
+    expect(response.prose).toContain("Home is a context browser");
+    expect(response.prose).toContain("does not answer general knowledge");
+    expect(response.prose).not.toMatch(/Kampala/i);
+  });
+
+  it("hands generic use-case investment judgment to Intelligence", () => {
+    const result = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question: "Which AI use cases should we fund and scale first?",
+      includeTrace: true,
+    });
+    const response = toHomeKnowResponseFromV6(result, {
+      question: "Which AI use cases should we fund and scale first?",
+    });
+
+    expect(result.proof.questionIntent).toBe("handoff_intelligence");
+    expect(response.answerability).toBe("requires_intelligence");
+    expect(response.handoff?.target).toBe("intelligence");
+    expect(response.prose).toContain("Intelligence owns");
+  });
+
   it("resolves Financial Services demo aliases to the canonical V6 dataset", () => {
     for (const tenantKey of ["arcturus", "firstcapital", "first-capital"]) {
       const result = answerHomeKnowFromV6({
@@ -237,7 +270,7 @@ describe("Home V6 KNOW response contract", () => {
         question:
           "What business context is available for Financial Services Demo?",
         expectedDimension: "enterprise_profile",
-        expectedText: "V6 Home contract pack",
+        expectedText: "Loaded profile context",
       },
     ];
 
