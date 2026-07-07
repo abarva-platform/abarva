@@ -448,7 +448,7 @@ function buildReloadCommandPlan(): SetupDataLoadCenterModel["reloadCommandPlan"]
 function buildExceptionIntake(): SetupDataLoadCenterModel["exceptionIntake"] {
   const metadata = new Set<string>();
   for (const template of NORTHSTAR_CONTEXT_TEMPLATES) {
-    for (const requirement of template.exceptionMetadataRequirements) {
+    for (const requirement of template.exceptionMetadataRequirements ?? []) {
       metadata.add(requirement.label);
     }
   }

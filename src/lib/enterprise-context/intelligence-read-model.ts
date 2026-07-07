@@ -264,6 +264,9 @@ export function summarizeEnterpriseContextRows(input: {
   const initiatives = recordsByType.get('initiative_portfolio') ?? [];
   const dataDomains = recordsByType.get('data_domains_stewardship') ?? [];
   const risks = recordsByType.get('risk_compliance_register') ?? [];
+  const orgRows = recordsByType.get('org_decision_rights') ?? [];
+  const businessUnitRows = recordsByType.get('facilities_business_units') ?? [];
+  const kpis = recordsByType.get('kpi_metric') ?? [];
   const slaBreaches = incidents.filter((row) => row.payload.breach_sla === 'true' || row.payload.breach_sla === true).length;
   const tierOneApps = applications.filter((row) => String(row.payload.criticality ?? '').toLowerCase().includes('tier 1')).length;
   const highRenewals = renewals.filter((row) => String(row.payload.renewal_risk ?? '').toLowerCase() === 'high').length;
@@ -733,8 +736,10 @@ export function summarizeEnterpriseContextChunks(input: {
       "embedding:failed": failed,
     },
     cards,
+    contextInsights: [],
     sentinelFacts,
     vendorSpendRows: [],
+    derivedEnterpriseRead: null,
   };
 }
 

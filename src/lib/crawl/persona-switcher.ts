@@ -70,6 +70,17 @@ export const PRIMARY_CRAWL_SURFACES: CrawlSurface[] = [
   { id: 'admin-releases', path: '/admin/releases' },
 ];
 
+// Surfaces only crawled when explicitly requested by id (not part of the
+// default PRIMARY set). The context-demo surface additionally requires a
+// vector-proof check.
+const EXPLICIT_CRAWL_SURFACES: CrawlSurface[] = [
+  {
+    id: 'context-demo',
+    path: '/intelligence/context-demo',
+    requiresContextDemoVectorProof: true,
+  },
+];
+
 export const POST_DEPLOY_HARD_QUESTIONS = [
   "What decision should I make next, and what evidence supports it?",
   "What are the top three reasons this recommendation could be wrong?",

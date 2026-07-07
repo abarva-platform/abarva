@@ -44,6 +44,16 @@ import { AvaWordmark } from '@/components/brand/AvaWordmark';
 import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
+import type { AgentResponsePart } from '@/lib/agent/response-parts';
+import { AIResponsibilityFooter } from '@/components/abarva/AIResponsibilityFooter';
+import { AgentActionApprovalNotice } from './AgentActionApprovalNotice';
+import { EvidenceBasis } from './EvidenceBasis';
+import type { AskSource } from '@/lib/intelligence/ask/types';
+import type { AvaAnswerPacket } from '@/lib/ava-answer/contract';
+import { AvaAskMark } from '@/components/agent-answer/AvaAskMark';
+import { AgentAnswerRenderer } from '@/components/agent-answer/AgentAnswerRenderer';
+import { hasVisibleAvaArtifacts } from '@/lib/ava-answer/renderable-artifacts';
+import { demoSafeClientText } from '@/lib/client-config';
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -585,6 +595,37 @@ export function AgentDock(props: AgentDockProps) {
     isAgentBusy: isAgentBusyOverride,
   } = props;
   const displayAgentName = 'aVa';
+
+  // Visible-text sanitization + Moves-chrome normalization for all
+  // caller-provided content. `preserveVisibleText` opts a surface out of the
+  // demo-safe scrub; Moves surfaces additionally normalize chrome copy.
+  const isMovesSurface = surface.startsWith("moves/");
+  const agent = preserveVisibleText ? rawAgent : sanitizeVisibleStrings(rawAgent);
+  const surfaceContext = preserveVisibleText
+    ? rawSurfaceContext
+    : sanitizeVisibleStrings(rawSurfaceContext);
+  const initialQuote = rawInitialQuote
+    ? preserveVisibleText
+      ? rawInitialQuote
+      : demoSafeClientText(rawInitialQuote)
+    : rawInitialQuote;
+  const safeSuggestedActions = preserveVisibleText
+    ? rawSuggestedActions
+    : sanitizeVisibleStrings(rawSuggestedActions);
+  const suggestedActions = isMovesSurface
+    ? normalizeMovesChromeText(safeSuggestedActions)
+    : safeSuggestedActions;
+  const placeholder = rawPlaceholder
+    ? preserveVisibleText
+      ? rawPlaceholder
+      : demoSafeClientText(rawPlaceholder)
+    : rawPlaceholder;
+  const safeThread = preserveVisibleText ? rawThread : sanitizeVisibleStrings(rawThread);
+  const thread = isMovesSurface
+    ? normalizeMovesChromeText(safeThread)
+    : safeThread;
+  const focused = variant === "focused";
+  const showReviewChrome = !focused && !quietReviewChrome;
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show

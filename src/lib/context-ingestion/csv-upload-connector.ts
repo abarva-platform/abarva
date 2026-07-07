@@ -206,7 +206,7 @@ const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
 export function segmentKeyForContextDimension(
   dimension: ContextDimension,
 ): SegmentKey {
-  return SEGMENT_BY_DIMENSION[dimension];
+  return (SEGMENT_BY_DIMENSION[dimension] ?? 'program_inventory') as SegmentKey;
 }
 
 function normalizeHeader(value: string): string {
@@ -265,6 +265,19 @@ function resolveTemplate(
   const classification = classifyUploadedFile({ fileName, text: '' });
   return getTemplateForDimension(classification.dimension, { tenantKey })
     ?? getTemplateById('application-portfolio', { tenantKey })!;
+}
+
+function assertRequiredFieldsMapped(
+  template: ContextTemplateDefinition,
+  mapping: CsvMappingSuggestion,
+): void {
+  const missingRequiredFields = template.requiredFields.filter(
+    (field) => !mapping.fieldMappings[field],
+  );
+  if (missingRequiredFields.length === 0) return;
+  throw new Error(
+    `csv_missing_required_fields:${missingRequiredFields.join(",")}`,
+  );
 }
 
 function parseJsonObject(raw: unknown): Record<string, string> | undefined {
@@ -561,6 +574,13 @@ export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUplo
     compactTimestamp(uploadedAt),
   ].join(':');
   const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension] ?? 'program_inventory';
+  const sourceBase = sourcePathBase(input);
+  const dataClassification =
+    input.mapping?.dataClassification ?? "confidential";
+  const sourceBasis = input.sourceBlob
+    ? "azure_blob_admin_upload"
+    : "direct_structured_upload";
+  const sourceSystem = `admin_csv_${safeSlug(template.id)}`;
 
   const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
     const rowNumber = index + 2;

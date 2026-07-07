@@ -30,7 +30,10 @@ function metadataAppliesToFormat(
   requirement: TemplateExceptionMetadataRequirement,
   format: UploadedFileFormat,
 ): boolean {
-  return format !== 'unknown' && requirement.requiredForFormats.includes(format);
+  // The metadata requirement model no longer scopes requirements to a specific
+  // set of formats; a `required` requirement applies whenever the upload needs
+  // exception handling (i.e. any non-unknown format).
+  return format !== 'unknown' && requirement.required;
 }
 
 function isStructured(format: UploadedFileFormat): boolean {
@@ -72,15 +75,15 @@ export function assessTemplateUploadAlignment(args: {
   }
 
   const canonicalFormat = template.acceptedFormats.includes(args.format);
-  const requiresExceptionApproval = !canonicalFormat || profile.requiresMetadataForException;
+  const requiresExceptionApproval = !canonicalFormat || profile.requiresConversion;
   const suppliedMetadata = new Set((args.suppliedMetadataKeys ?? []).map((key) => key.trim()).filter(Boolean));
-  const metadataRequirements = template.exceptionMetadataRequirements.filter((requirement) =>
+  const metadataRequirements = (template.exceptionMetadataRequirements ?? []).filter((requirement) =>
     metadataAppliesToFormat(requirement, args.format),
   );
   const missingMetadataKeys = requiresExceptionApproval
     ? metadataRequirements
-        .filter((requirement) => !suppliedMetadata.has(requirement.key))
-        .map((requirement) => requirement.key)
+        .filter((requirement) => !suppliedMetadata.has(requirement.field))
+        .map((requirement) => requirement.field)
     : [];
 
   const preflight = isStructured(args.format) && args.headers
@@ -96,12 +99,12 @@ export function assessTemplateUploadAlignment(args: {
   const clarificationRequests: SchemaClarificationRequest[] = [
     ...(preflight?.clarificationRequests ?? []),
     ...missingMetadataKeys.map((key) => {
-      const requirement = metadataRequirements.find((item) => item.key === key);
+      const requirement = metadataRequirements.find((item) => item.field === key);
       return {
         action: 'supply_missing_required_field' as const,
         field: key,
         message: requirement
-          ? `Provide ${requirement.label}: ${requirement.purpose}`
+          ? `Provide ${requirement.label}.`
           : `Provide metadata field ${key}.`,
       };
     }),
@@ -119,7 +122,9 @@ export function assessTemplateUploadAlignment(args: {
     format: args.format,
     canonicalFormat,
     requiresExceptionApproval,
-    parserLabel: profile.parserLabel,
+    parserLabel: profile.nativeSupport
+      ? `Native ${profile.format.toUpperCase()} parser`
+      : `${profile.format.toUpperCase()} — conversion required`,
     missingRequiredFields,
     unknownColumns,
     missingMetadataKeys,

@@ -43,8 +43,8 @@ export const LOADER_DIMENSION_TO_CONTEXT: Record<
   risks_controls: "regulatory_qms_risk",
   financial_baseline: "financial_kpis",
   processes_operating_model: "enterprise_profile",
-  infrastructure_estate: "infrastructure_estate",
-  business_capability: "business_capability",
+  infrastructure_estate: "infrastructure_cloud",
+  business_capability: "capabilities_value_streams",
 };
 
 const DEFAULT_DATA_CLASSIFICATION = "confidential";

@@ -1,10 +1,22 @@
 import path from 'node:path';
 
+export interface ParsedIngestionDocumentMetadata {
+  filename?: string;
+  mimeType?: string | null;
+  byteLength?: number;
+  cacheScope?: string | null;
+  pageCount?: number | null;
+  tableCount?: number | null;
+  slideCount?: number;
+  worksheetCount?: number;
+  [key: string]: unknown;
+}
+
 export interface ParsedIngestionDocument {
   text: string;
   parseMethod: string;
   warnings: string[];
-  metadata: Record<string, unknown>;
+  metadata: ParsedIngestionDocumentMetadata;
 }
 
 export interface IngestionDocumentInput {

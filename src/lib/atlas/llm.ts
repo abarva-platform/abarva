@@ -14,10 +14,28 @@ import {
 } from '@/lib/atlas/tool-belt';
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
-import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
+import {
+  formatTowerCurrentStateForPrompt,
+  type AtlasTowerCurrentState,
+} from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
+import {
+  loadCuratedSemanticDossier,
+  type CuratedDossierLoadResult,
+} from '@/lib/semantic-dossiers';
 import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
-import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
+import type {
+  AtlasDebugTrace,
+  AtlasExecutionMode,
+  AtlasSuggestion,
+  AtlasTenancyCtx,
+  AtlasToolResultMap,
+} from '@/lib/atlas/types';
+import { buildTowerFactualSpineAnswer } from '@/lib/atlas/tower-factual-spine';
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  sanitizeAutonomousDecisionLanguage,
+} from '@/lib/ai-liability/human-decision-controls';
 
 /**
  * Atlas live-prod composition wiring (ATLAS-RUNLLM-COMPOSITION 2026-05-31).
@@ -173,6 +191,26 @@ function stripInternalReferences(value: string): string {
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi,
       "the referenced item",
     );
+}
+
+// Deep-scrub every string value in a tool-result payload of raw program keys
+// and UUIDs before it is JSON-embedded into the tenant prompt. Structure and
+// non-string values are preserved.
+function sanitizeForTenantPrompt<T>(value: T): T {
+  if (typeof value === "string") {
+    return stripInternalReferences(value) as unknown as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeForTenantPrompt(entry)) as unknown as T;
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      out[key] = sanitizeForTenantPrompt(entry);
+    }
+    return out as unknown as T;
+  }
+  return value;
 }
 
 function formatCleanTowerContext(towerState: AtlasTowerCurrentState): string {
@@ -575,6 +613,7 @@ export async function runAtlasLlm(
   const towerContext = formatCleanTowerContext(towerState);
   const dossierContext = formatCleanDossierContext(dossierLoad.result);
   const valueGroundingContext = renderAtlasValueGrounding(valueGrounding);
+  const retrievedContext = formatRetrievedContext(retrievalContext);
   const enterpriseReadContext = derivedEnterpriseRead
     ? [
         'DERIVED ENTERPRISE READ',

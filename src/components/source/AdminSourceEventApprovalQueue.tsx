@@ -50,6 +50,9 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
   const [comments, setComments] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, ActionResult>>({});
+  // Per-event error map. The value is written on action failure/success but is
+  // not rendered directly (surfaced via `results`), so only the setter is kept.
+  const [, setErrors] = useState<Record<string, string>>({});
 
   if (events.length === 0) return null;
 

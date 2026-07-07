@@ -556,6 +556,13 @@ const FORMAT_SUPPORT_PROFILES: Record<
   zip: { format: "zip", nativeSupport: false, requiresConversion: true },
 };
 
+export function getFormatSupportProfile(
+  format: UploadedFileFormat,
+): TemplateFormatSupportProfile | null {
+  if (format === "unknown") return null;
+  return FORMAT_SUPPORT_PROFILES[format] ?? null;
+}
+
 function buildExceptionMetadataRequirements(
   acceptedFormats: UploadedFileFormat[],
 ): TemplateExceptionMetadataRequirement[] {

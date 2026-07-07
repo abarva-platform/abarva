@@ -242,15 +242,7 @@ export interface ContextEvidenceRow {
 // Classification types (added with migration 20260616180000)
 // ──────────────────────────────────────────────────────────────────────────────
 
-export type DomainSegment =
-  | "DATA_ANALYTICS"
-  | "ERP"
-  | "DIGITAL_CX"
-  | "OPERATIONS"
-  | "INFRASTRUCTURE"
-  | "SECURITY_IDENTITY"
-  | "HR_WORKFORCE"
-  | "COLLABORATION";
+// (DomainSegment is declared once above near the dimension families.)
 
 export type BusinessFunction =
   | "FINANCE"
