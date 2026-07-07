@@ -26,6 +26,18 @@ If the user explicitly asks for a table, chart, graph, matrix, scorecard, or vis
 
 Do not include Markdown tables unless the user asks for a visual/table-style output.`;
 
+// Table-first variant for explicit visual asks (rank, compare, show as table, etc.).
+// Skips the prose-opener rule entirely — table is line 1.
+export const CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE = `TABLE-FIRST OUTPUT CONTRACT
+
+The user has explicitly requested a table, ranking, or comparison. Output rules:
+1. The FIRST line of your response must be a GFM Markdown table header row starting with "| ".
+2. The SECOND line must be the separator row "|---|---|...".
+3. Each subsequent row is one data item. Use real data from the loaded evidence — never fabricate.
+4. After the table, write 1-3 analysis sentences in bold naming the key decision implication.
+5. Do NOT write any sentence, opener, or preamble before the table. No "Lakeshore Holdings..." opener. No "Here is the table". Start with "|".
+6. This surface renders full GitHub-Flavored Markdown. Pipes, headers, and bold all render correctly.`;
+
 // Rich-text variant used when answerOnlyStreaming=true (aVa dock inline rendering).
 // Removes the table prohibition and replaces it with a table requirement for structured data.
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH = `CONSULTANT ANSWER SHAPE

@@ -11,6 +11,7 @@ import {
   chunkAskText,
   CONSULTANT_ANSWER_SHAPE_CONTRACT,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH,
+  CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE,
   enforceDecisionGradeAnswer,
   sanitizeAskSynthesis,
 } from "./response-policy";
@@ -616,15 +617,36 @@ ACTIVE INTELLIGENCE CANVAS RULES
   const answerOnlyDirective = answerOnly
     ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. GFM tables, bold section headers, and bullet lists are REQUIRED for comparisons, ranked lists, and multi-attribute data — do not flatten these to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~120-180 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.`
     : "";
+  // For explicit visual asks, detect here so we can use the table-first contract
+  // (which drops the prose-opener rule that would otherwise conflict with table-first).
+  const isVisualTableAsk = answerOnly && isExplicitVisualAsk(args.query);
   const shapeContract = answerOnly
-    ? CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
+    ? isVisualTableAsk
+      ? CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE
+      : CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
     : CONSULTANT_ANSWER_SHAPE_CONTRACT;
   const rawSystem =
     contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = answerOnly
-    ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with a crisp executive answer. Use a GFM table for any comparison, vendor matrix, ranked list, or multi-attribute data (3+ items × 2+ attributes). Use a fenced \`\`\`chart JSON block for spend/trend/maturity data with ≥3 numeric rows. Bold the key finding. Do not emit right-canvas tab markers or a canvas payload.`
+    ? isVisualTableAsk
+      ? `MANDATORY OUTPUT FORMAT — FOLLOW EXACTLY:
+Your response must contain a GFM Markdown table. Write the table BEFORE any prose.
+Table format (use real pipe characters):
+| Column1 | Column2 | Column3 |
+|---------|---------|---------|
+| value   | value   | value   |
+
+After the table, write 1-2 bold sentences naming the key decision implication.
+Do NOT write any sentence or preamble before the table. Do NOT emit tab markers or canvas payloads.
+
+SOURCES PROVIDED:
+${formatSourcesBlock(args.sources)}
+
+USER QUESTION:
+${args.query}`
+      : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with a crisp executive answer. Open with a single **bold sentence** that states the key finding. Use a GFM table for comparisons, vendor matrices, ranked lists, or multi-attribute data (3+ items × 2+ attributes). Use a fenced \`\`\`chart JSON block for spend/trend/maturity data with ≥3 numeric rows. Do not emit right-canvas tab markers or a canvas payload.`
     : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
