@@ -318,8 +318,8 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/source|sourcing event|rfp|bafo|vendor selection/.test(q) && /(create|draft|launch|run|recommend|compare|select|score)/.test(q)) return 'handoff_source';
   if (/\b(move|moves|roadmap|mobilize|charter|execution plan)\b/.test(q) && /(create|draft|launch|run|build|shape|convert)/.test(q)) return 'handoff_moves';
   if (/tower/.test(q) && /(hand|instead|hold|scale|evaluate|take over|own|readiness|value proof|portfolio)/.test(q)) return 'handoff_tower';
-  if (isAdvisoryOrUseCaseQuestion(q)) return 'handoff_intelligence';
   if (/company profile|enterprise profile|revenue|employees?|portfolio compan|company size|business profile/.test(q)) return 'loaded_context';
+  if (isAdvisoryOrUseCaseQuestion(q)) return 'handoff_intelligence';
   if (/business areas|business functions|available business|organization structure/.test(q)) return 'business_areas';
   if (/technology leaders|it organization|it org|structured today|roles|accountability/.test(q)) return 'it_org';
   if (/\b(applications?|apps?|core systems?|it systems?|systems? of record|systems? landscape|systems? inventory|systems? context|erp|sap|mainframe)\b/.test(q)) return 'apps_systems';
@@ -347,7 +347,7 @@ function isGeneralKnowledgeOrUnsupportedQuestion(q: string) {
 }
 
 function isAdvisoryOrUseCaseQuestion(q: string) {
-  return /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend|which .* should|where should .* fund|kill|scale|hold|stop)\b/.test(q) ||
+  return /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend|which .* should|where should .* (fund|invest)|leadership invest|invest next quarter|kill|scale|hold|stop)\b/.test(q) ||
     (/\b(good|right|best|compelling|ideal|strong)\b/.test(q) &&
       /\b(demo|use\s?case|example|candidate|problem|opportunity|bet|investment|first move)\b/.test(q));
 }
