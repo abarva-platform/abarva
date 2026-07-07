@@ -171,7 +171,15 @@ async function main(): Promise<void> {
       "DELETE FROM source_event_facts WHERE source_event_id = $1 AND client_key = $2 AND source_citation->>'proof_tag' = $3",
       [eventId, CLIENT_KEY, PROOF_TAG],
     );
-    for (const f of PROOF_FACTS) {
+    // SOURCE_SEED_DROP=key1,key2 → skip those facts, so the levers that need them
+    // STRAND (their required evidence is "missing") — demonstrates the honest
+    // Scope "$Z stranded because <evidence> is missing" insight live.
+    const dropKeys = (process.env.SOURCE_SEED_DROP ?? '')
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
+    const seedFacts = PROOF_FACTS.filter((f) => !dropKeys.includes(f.fact_key));
+    for (const f of seedFacts) {
       const spec = factSpecByKey(f.fact_key);
       await client.query(
         `INSERT INTO source_event_facts
@@ -185,7 +193,10 @@ async function main(): Promise<void> {
         ],
       );
     }
-    console.log(`   ✓ inserted ${PROOF_FACTS.length} cited facts`);
+    console.log(
+      `   ✓ inserted ${seedFacts.length} cited facts` +
+        (dropKeys.length ? ` (dropped ${dropKeys.length} to strand levers)` : ''),
+    );
 
     // Read them BACK from the DB and rebuild the fact map — the value must be
     // computed from persisted rows, not the in-memory constants.
