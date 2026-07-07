@@ -684,6 +684,21 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               ),
             );
           }
+          // answerOnly (aVa dock inline streaming) — the delta accumulation in
+          // m.answer is the rendered source of truth. Skip companion-canvas tab
+          // injection and agent-answer so the dock falls back to body
+          // (m.answer.trim()) which has the full GFM table with all rows.
+          if (answerOnlyStreaming) {
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "done",
+                  telemetryEventId: event.id,
+                }) + "\n",
+              ),
+            );
+            return;
+          }
           const routing = routeQuestion({
             query,
             industry: expertIndustryForClientKey(tenantClientKey),
