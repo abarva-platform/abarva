@@ -37,13 +37,18 @@ Changes are UI-only (no schema, no data, no API route changes). The left-panel a
 - **TypeScript**: `npx tsc --noEmit` clean (0 errors) on feature branch
 - **Release check**: all gates passed
 
-## Rollout
+## Rollout Plan
 
-Single-deploy. The Intelligence surface is served from `ca-abarva-web-lab-eastus` on the shared ACA web runtime. No traffic shifting required — this PR updates the main branch and deploys via the aca-main-deploy workflow.
+Single-deploy via `aca-main-deploy.yml` on push to main. No traffic shifting required. No feature flag. All tenants receive the upgraded UI immediately on the next container revision.
 
-## Rollback
+## Rollback Plan
 
-Revert this PR. No data migrations were run; no schema changes to undo.
+Revert this PR. No data migrations were run; no schema changes to undo. The surface falls back to the previous tab rendering immediately on the next container revision.
+
+## Known Gaps
+
+- Dollar figures in Peer Benchmarks and Cost & Value Signals tabs are hardcoded industry-corpus estimates, not calculated from tenant financial data. They are now labeled "illustrative" but will be replaced with Tower-integrated actuals once the financial data lane is wired.
+- Starter prompts are tuned for two tenant archetypes (Lakeshore / SkyHarbor). Other tenants receive the non-airline default. Full per-tenant customization deferred.
 
 ## Deployment Authority
 
