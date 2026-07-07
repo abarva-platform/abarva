@@ -145,6 +145,24 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.directAnswer).not.toMatch(/data assets integrations|field facts|V7_/i);
   });
 
+  it('keeps CFO company-profile orientation in Enterprise Profile instead of advisory handoff', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'lakeshore',
+      tenantDisplayName: 'Lakeshore Holdings',
+      question: 'What should a CFO know about Lakeshore Holdings from the loaded company profile?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('loaded_context');
+    expect(result.answer.primaryDimension).toBe('v7_01_enterprise_profile');
+    expect(result.answer.answerBoundary.handoffTarget).toBeNull();
+    expect(result.answer.directAnswer).toMatch(/Lakeshore Holdings/i);
+    expect(result.answer.directAnswer).toMatch(/\$7\.12B revenue/i);
+    expect(result.answer.directAnswer).not.toMatch(/active AI initiatives/i);
+  });
+
   it('keeps business-context availability questions on Home even when tenant name contains routing substrings', async () => {
     const result = await answerHomeKnowFromV7({
       tenantKey: 'lakeshore',
@@ -192,6 +210,22 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.answerBoundary.handoffTarget).toBe('intelligence');
     expect(result.answer.directAnswer).toContain('Intelligence should take over');
     expect(result.answer.directAnswer).toContain('Home should stay focused on available facts and validation boundaries');
+  });
+
+  it('hands leadership investment sequencing questions to Intelligence', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'lakeshore',
+      tenantDisplayName: 'Lakeshore Holdings',
+      question: 'Where should leadership invest next quarter based on this context?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('handoff_intelligence');
+    expect(result.answer.answerBoundary.handoffTarget).toBe('intelligence');
+    expect(result.answer.directAnswer).toContain('Intelligence should take over');
+    expect(result.answer.directAnswer).not.toMatch(/next-quarter investment case points to three priorities/i);
   });
 
   it('keeps explicit Tower ownership routed to Tower', async () => {
