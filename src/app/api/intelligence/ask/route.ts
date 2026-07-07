@@ -74,10 +74,17 @@ interface AskPayload {
   tabId: string | null;
   traceEnabled: boolean;
   richText: boolean;
+  answerOnlyStreaming: boolean;
 }
 
 async function handleAsk(payload: AskPayload, req: NextRequest) {
-  const { query, requestedClient, surfaceContext, richText } = payload;
+  const {
+    query,
+    requestedClient,
+    surfaceContext,
+    richText,
+    answerOnlyStreaming,
+  } = payload;
   if (!query.trim()) {
     return new Response(JSON.stringify({ error: "q required" }), {
       status: 400,
@@ -546,6 +553,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           tenantClientKey,
           tenant,
           richText,
+          answerOnlyStreaming,
           userId,
           tenantInventoryKey,
           surfaceContext,
@@ -1392,6 +1400,7 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
     traceEnabled:
       readBoolean(payload.traceEnabled) || readString(payload.trace) === "1",
     richText: readBoolean(payload.richText),
+    answerOnlyStreaming: readBoolean(payload.answerOnlyStreaming),
   };
 }
 

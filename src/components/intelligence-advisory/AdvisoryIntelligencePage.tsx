@@ -119,6 +119,7 @@ export function AdvisoryIntelligencePage({
           client: viewModel.clientKey,
           format: "rich",
           richText: true,
+          answerOnlyStreaming: true,
           traceEnabled: true,
           surfaceContext: buildSurfaceContext(viewModel, sectionList),
         }),
