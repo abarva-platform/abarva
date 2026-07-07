@@ -97,13 +97,13 @@ export interface AskOptions {
   traceEnabled?: boolean;
   /** Caller surface renders the companion canvas — stream the main answer only, let the canvas fill in separately. Default false. */
   companionCanvasEnabled?: boolean;
+  /** Caller surface renders inline markdown (aVa dock) — stream plain answer only with no tab payload. Overrides companionCanvasEnabled for the answerOnly path. */
+  answerOnlyStreaming?: boolean;
   traceSession?: {
     user?: AnswerTraceEnvelope["session"]["user"];
     tenant?: unknown;
     question?: string | null;
   };
-  /** Companion canvas panel is visible — stream structured tab blocks alongside prose. Default false. */
-  companionCanvasEnabled?: boolean;
   /** Called with the raw system + user prompt just before the model is invoked. Used by QA probes to hash/log the model input. */
   onModelInput?: (parts: { system: string; user: string }) => void;
   /** Called with the raw model output text after streaming completes. Used by QA probes to capture full answer text. */
@@ -433,7 +433,7 @@ export async function* askIntelligence(
       richText: opts.richText,
       // Companion-canvas turns stream answer-only (true streaming); the
       // structured canvas is authored separately below. Flag off → unchanged.
-      answerOnlyStreaming: companionCanvasEnabled,
+      answerOnlyStreaming: opts.answerOnlyStreaming ?? companionCanvasEnabled,
       query: trimmed,
       sources,
       intent: classification.intent,
