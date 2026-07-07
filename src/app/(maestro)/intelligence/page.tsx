@@ -1,22 +1,18 @@
-// /intelligence · aVa Intelligence advisor inside the maestro app shell.
+// /intelligence · Advisory board surface.
 
-import { notFound } from "next/navigation";
-import { AppShell } from "@/components/shell/AppShell";
-import {
-  getActiveClientRow,
-  hasLockedTenantSession,
-} from "@/lib/active-client";
-import { canonicalClientDisplayName } from "@/lib/client-config";
-import { IntelligenceV2Surface } from "@/components/intelligence-v2/IntelligenceV2Surface";
-import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
+import { AppShell } from '@/components/shell/AppShell';
+import { AdvisoryIntelligencePage } from '@/components/intelligence-advisory/AdvisoryIntelligencePage';
+import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
+import { canonicalClientDisplayName } from '@/lib/client-config';
+import { getEnterpriseLandscapeViewModel } from '@/lib/home/enterprise-landscape-view-model';
 
 export const metadata = {
-  title: "Intelligence · Context & Corpus Explorer | AbarVa",
+  title: 'Intelligence · Advisory Board | AbarVa',
   description:
-    "Explore tenant context, live facts, coverage, trust posture, and derived insights from the enterprise context layer.",
+    'A virtual advisory board that turns enterprise context and corpus knowledge into guidance, risks, benchmarks, and next actions.',
 };
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface IntelligencePageProps {
@@ -28,36 +24,24 @@ function firstSearchValue(value: string | string[] | undefined): string | null {
   return value ?? null;
 }
 
-function enterpriseContextTenantKey(
-  value: string | null | undefined,
-): string | null {
+function enterpriseContextTenantKey(value: string | null | undefined): string | null {
   const key = value?.trim().toLowerCase();
   if (!key) return null;
-  if (key === "arcturus" || key === "firstcapital") return "first-capital";
-  if (key === "meridian") return "meridian-health";
-  if (key === "apexretail") return "apex-retail";
+  if (key === 'arcturus' || key === 'firstcapital') return 'first-capital';
+  if (key === 'meridian') return 'meridian-health';
+  if (key === 'apexretail') return 'apex-retail';
   return key;
 }
 
-export default async function IntelligencePage({
-  searchParams,
-}: IntelligencePageProps = {}) {
+export default async function IntelligencePage({ searchParams }: IntelligencePageProps = {}) {
   const rawRequestedClient = firstSearchValue((await searchParams)?.client);
-  const requestedClient = (await hasLockedTenantSession())
-    ? rawRequestedClient
-    : null;
+  const requestedClient = (await hasLockedTenantSession()) ? rawRequestedClient : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
-  const contextTenantKey = enterpriseContextTenantKey(
-    client?.key ?? requestedClient,
-  );
+  const contextTenantKey = enterpriseContextTenantKey(client?.key ?? requestedClient);
   const tenantName =
     canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
     client?.name ??
-    "AbarVa Client";
-  const binding = getIntelligenceBindingPayload(contextTenantKey);
-  if (!binding) {
-    notFound();
-  }
+    'AbarVa Client';
 
   return (
     <AppShell
@@ -65,11 +49,16 @@ export default async function IntelligencePage({
       topBarProps={{
         tenantName,
         showLocked: Boolean(client?.key),
-        context: "Intelligence",
+        context: 'Intelligence',
       }}
       hasTenantKey={Boolean(client?.key)}
     >
-      <IntelligenceV2Surface payload={binding} tenantName={tenantName} />
+      <AdvisoryIntelligencePage
+        viewModel={getEnterpriseLandscapeViewModel({
+          clientKey: contextTenantKey ?? client?.key ?? requestedClient,
+          tenantName,
+        })}
+      />
     </AppShell>
   );
 }
