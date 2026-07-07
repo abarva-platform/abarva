@@ -20,6 +20,10 @@ env:
   CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
   RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
   PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+  # Post-deploy revision hygiene: number of most-recent PRIOR revisions to keep active as a
+  # rollback window (in addition to the new 100%-traffic revision, which is always kept).
+  # Older active revisions are deactivated so stale builds can never serve traffic during churn.
+  REVISION_ROLLBACK_WINDOW: ${{ vars.ACA_REVISION_ROLLBACK_WINDOW || '3' }}
   AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
   AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
   AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
@@ -399,14 +403,25 @@ jobs:
         run: |
           set -euo pipefail
           revision="${{ steps.deploy_revision.outputs.revision_name }}"
-          for attempt in {1..60}; do
+          # Robust health-wait: the workflow must reliably confirm the new revision is
+          # Provisioned + Running + Healthy so it can pin traffic itself. Flaky/short
+          # waits historically pushed operators to run manual `az ... ingress traffic set`,
+          # and parallel manual traffic edits are themselves a churn source. We poll the
+          # revision's healthState directly with a generous timeout (120 attempts x 15s =
+          # up to 30 minutes) and tolerate transient "Failed" provisioning blips while ACA
+          # rolls the new replica, only giving up if the revision never converges.
+          max_attempts=120
+          sleep_seconds=15
+          healthy=false
+          consecutive_provisioning_failures=0
+          for attempt in $(seq 1 "$max_attempts"); do
             if ! az containerapp revision show \
               --name "$CONTAINER_APP_NAME" \
               --resource-group "$RESOURCE_GROUP" \
               --revision "$revision" \
-              --output json > audit-artifacts/aca-main-deploy/revision.json; then
-              echo "attempt=$attempt revision=$revision not queryable yet"
-              sleep 10
+              --output json > audit-artifacts/aca-main-deploy/revision.json 2>/dev/null; then
+              echo "attempt=$attempt/$max_attempts revision=$revision not queryable yet"
+              sleep "$sleep_seconds"
               continue
             fi
 
@@ -414,16 +429,34 @@ jobs:
             running_state="$(jq -r '.properties.runningState // ""' audit-artifacts/aca-main-deploy/revision.json)"
             health_state="$(jq -r '.properties.healthState // ""' audit-artifacts/aca-main-deploy/revision.json)"
 
-            echo "attempt=$attempt revision=$revision provisioning=$provisioning_state running=$running_state health=$health_state"
+            echo "attempt=$attempt/$max_attempts revision=$revision provisioning=$provisioning_state running=$running_state health=$health_state"
             if [[ "$provisioning_state" == "Provisioned" && "$running_state" == "Running" && "$health_state" == "Healthy" ]]; then
-              exit 0
+              healthy=true
+              break
             fi
-            sleep 10
+
+            # A terminal Failed provisioning state that persists means the revision will
+            # never converge; bail early rather than burning the full timeout.
+            if [[ "$provisioning_state" == "Failed" ]]; then
+              consecutive_provisioning_failures=$((consecutive_provisioning_failures + 1))
+              if (( consecutive_provisioning_failures >= 3 )); then
+                echo "Revision $revision reported provisioningState=Failed $consecutive_provisioning_failures times; aborting wait." >&2
+                cat audit-artifacts/aca-main-deploy/revision.json >&2
+                exit 1
+              fi
+            else
+              consecutive_provisioning_failures=0
+            fi
+
+            sleep "$sleep_seconds"
           done
 
-          echo "Revision $revision did not become Healthy/Running in time." >&2
-          cat audit-artifacts/aca-main-deploy/revision.json >&2
-          exit 1
+          if [[ "$healthy" != "true" ]]; then
+            echo "Revision $revision did not become Healthy/Running in time." >&2
+            cat audit-artifacts/aca-main-deploy/revision.json >&2
+            exit 1
+          fi
+          echo "Revision $revision is Provisioned + Running + Healthy; safe to pin traffic."
 
       - name: Shift traffic to new revision
         shell: bash
@@ -448,22 +481,44 @@ jobs:
             echo "expected_image=$EXPECTED_ACA_IMAGE" >&2
             exit 1
           fi
+          pinned=false
           for attempt in {1..12}; do
             if az containerapp ingress traffic set \
               --name "$CONTAINER_APP_NAME" \
               --resource-group "$RESOURCE_GROUP" \
               --revision-weight "${revision}=100"; then
-              break
+              # Verify the set actually took effect: the target revision must hold 100%
+              # and be the ONLY non-zero-weight revision. Confirming the pin here (rather
+              # than trusting the set command's exit code) means the workflow reliably
+              # owns the traffic invariant, so operators never need to hand-run traffic set.
+              az containerapp ingress traffic show \
+                --name "$CONTAINER_APP_NAME" \
+                --resource-group "$RESOURCE_GROUP" \
+                --output json > audit-artifacts/aca-main-deploy/traffic-after.json
+              full_weight_revision="$(jq -r '.[]? | select((.weight // 0) == 100) | .revisionName' \
+                audit-artifacts/aca-main-deploy/traffic-after.json | head -n 1)"
+              nonzero_count="$(jq -r '[.[]? | select((.weight // 0) > 0)] | length' \
+                audit-artifacts/aca-main-deploy/traffic-after.json)"
+              if [[ "$full_weight_revision" == "$revision" && "$nonzero_count" == "1" ]]; then
+                pinned=true
+                break
+              fi
+              echo "Traffic set returned but $revision does not yet hold sole 100% weight (holder=$full_weight_revision nonzero=$nonzero_count); retrying."
+            else
+              echo "Traffic shift attempt $attempt failed; waiting for any active ACA operation to settle."
             fi
 
             if [[ "$attempt" == "12" ]]; then
-              echo "Failed to shift traffic to $revision after retries." >&2
+              echo "Failed to pin 100% traffic to $revision after retries." >&2
               exit 1
             fi
-
-            echo "Traffic shift attempt $attempt failed; waiting for any active ACA operation to settle."
             sleep 20
           done
+
+          if [[ "$pinned" != "true" ]]; then
+            echo "Traffic was not positively pinned to $revision." >&2
+            exit 1
+          fi
 
           az containerapp ingress traffic show \
             --name "$CONTAINER_APP_NAME" \
@@ -479,6 +534,128 @@ jobs:
           node scripts/deploy/check-aca-runtime-invariant.mjs \
             --expected-image "$EXPECTED_ACA_IMAGE" \
             --out-dir audit-artifacts/aca-main-deploy/runtime-invariant
+
+      - name: Post-deploy revision hygiene (deactivate stale revisions)
+        shell: bash
+        env:
+          NEW_REVISION: ${{ steps.deploy_revision.outputs.revision_name }}
+        run: |
+          set -euo pipefail
+          # DURABLE CURE for ACA deploy churn: this Container App runs in multi-revision
+          # mode and accumulates active revisions over time. If old revisions stay active
+          # they can serve traffic during churn (a user once saw a stale create-event page
+          # because traffic landed on an old revision). This step deactivates every OTHER
+          # active revision except the new 100%-traffic revision and the N most-recent prior
+          # revisions (REVISION_ROLLBACK_WINDOW) kept as a rollback window. It is idempotent
+          # and safe to re-run.
+          #
+          # GUARDRAILS (a bad purge caused a 404 in the past):
+          #   1. Positively re-confirm the 100%-traffic revision (the runtime invariant)
+          #      before touching anything; if traffic is NOT on the new revision, FAIL.
+          #   2. Never deactivate the revision that currently holds traffic.
+          #   3. Only deactivate revisions with trafficWeight == 0.
+          #   4. If the traffic-holding revision cannot be positively identified, SKIP the
+          #      purge and warn rather than risk an outage.
+
+          window="${REVISION_ROLLBACK_WINDOW:-3}"
+          if ! [[ "$window" =~ ^[0-9]+$ ]]; then
+            echo "REVISION_ROLLBACK_WINDOW must be a non-negative integer; got '$window'. Skipping hygiene." >&2
+            exit 0
+          fi
+
+          # --- Guardrail 1 + 2: positively identify the 100%-traffic revision. ---
+          az containerapp ingress traffic show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/aca-main-deploy/hygiene-traffic.json
+
+          traffic_holder="$(jq -r '[.[]? | select((.weight // 0) == 100)] | if length == 1 then .[0].revisionName else "" end' \
+            audit-artifacts/aca-main-deploy/hygiene-traffic.json)"
+          nonzero_count="$(jq -r '[.[]? | select((.weight // 0) > 0)] | length' \
+            audit-artifacts/aca-main-deploy/hygiene-traffic.json)"
+
+          if [[ -z "$traffic_holder" || "$traffic_holder" == "null" || "$nonzero_count" != "1" ]]; then
+            echo "::warning::Could not positively identify a single 100%-traffic revision (holder='$traffic_holder' nonzero=$nonzero_count). SKIPPING revision hygiene to avoid outage risk." >&2
+            exit 0
+          fi
+
+          if [[ "$traffic_holder" != "$NEW_REVISION" ]]; then
+            echo "Runtime invariant violated: 100% traffic is on '$traffic_holder', not the new revision '$NEW_REVISION'. Refusing to deactivate any revision." >&2
+            exit 1
+          fi
+
+          # --- Build the keep-list: the 100%-traffic revision + N most-recent prior actives. ---
+          # List active revisions ordered by createdTime descending (newest first).
+          az containerapp revision list \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/aca-main-deploy/hygiene-revision-list.json
+
+          # Active revisions, newest-first, excluding the traffic holder (it is always kept).
+          mapfile -t prior_active < <(jq -r \
+            --arg holder "$traffic_holder" \
+            '[.[] | select(.properties.active == true)]
+              | sort_by(.properties.createdTime) | reverse
+              | .[] | .name
+              | select(. != $holder)' \
+            audit-artifacts/aca-main-deploy/hygiene-revision-list.json)
+
+          keep=("$traffic_holder")
+          for ((i = 0; i < ${#prior_active[@]} && i < window; i++)); do
+            keep+=("${prior_active[$i]}")
+          done
+
+          echo "Keeping revisions (traffic holder + ${window}-deep rollback window):"
+          printf '  KEEP  %s\n' "${keep[@]}"
+
+          in_keep_list() {
+            local candidate="$1"
+            local k
+            for k in "${keep[@]}"; do
+              [[ "$k" == "$candidate" ]] && return 0
+            done
+            return 1
+          }
+
+          deactivated=()
+          skipped_nonzero=()
+          for ((i = window; i < ${#prior_active[@]}; i++)); do
+            revision="${prior_active[$i]}"
+            # --- Guardrail 3: only deactivate revisions with trafficWeight == 0. ---
+            weight="$(jq -r --arg r "$revision" \
+              '[.[]? | select(.revisionName == $r) | (.weight // 0)] | (.[0] // 0)' \
+              audit-artifacts/aca-main-deploy/hygiene-traffic.json)"
+            if [[ "$weight" != "0" ]]; then
+              echo "::warning::Refusing to deactivate '$revision' — it carries trafficWeight=$weight (expected 0)." >&2
+              skipped_nonzero+=("$revision")
+              continue
+            fi
+            # Belt-and-suspenders: never touch a keep-listed or the traffic-holding revision.
+            if in_keep_list "$revision" || [[ "$revision" == "$traffic_holder" ]]; then
+              continue
+            fi
+            if az containerapp revision deactivate \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --revision "$revision"; then
+              echo "  DEACTIVATED  $revision"
+              deactivated+=("$revision")
+            else
+              echo "::warning::Failed to deactivate '$revision'; leaving it active. Will retry on next deploy." >&2
+            fi
+          done
+
+          {
+            echo "traffic_holder=$traffic_holder"
+            echo "new_revision=$NEW_REVISION"
+            echo "rollback_window=$window"
+            echo "kept=${keep[*]}"
+            echo "deactivated=${deactivated[*]:-<none>}"
+            echo "skipped_nonzero_weight=${skipped_nonzero[*]:-<none>}"
+            echo "utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee audit-artifacts/aca-main-deploy/revision-hygiene.txt
+
+          echo "Revision hygiene complete: kept ${#keep[@]}, deactivated ${#deactivated[@]}."
 
       - name: Verify production health endpoint
         shell: bash

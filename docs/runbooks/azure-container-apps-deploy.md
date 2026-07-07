@@ -18,6 +18,7 @@ Use this runbook whenever a user asks whether the app is deployed, asks to deplo
 - Resolves digest and deploys with `--image acrabarvalab001.azurecr.io/abarva/web:main-<sha>@sha256:<digest>`
 - Waits for new revision to become healthy before shifting traffic
 - Shifts 100% ingress traffic to the new revision via the workflow
+- **Auto-purges stale revisions after the deploy** (see "Post-deploy revision hygiene" below)
 
 <!-- deploy-authority-exception: prohibition statement below, not an executed command -->
 Agents must not run `az acr build`, local `docker push`, or branch workflows that write to `acrabarvalab001/abarva/web`.
@@ -65,6 +66,31 @@ az containerapp show \
 The invariant is satisfied when:
 - The template image, the 100%-traffic revision image, and all required worker job images match the approved `main-<sha>@sha256:<digest>` digest.
 - The `latestReadyRevisionName` carries 100% traffic weight.
+
+## Post-Deploy Revision Hygiene (Automatic)
+
+`ca-abarva-web-lab-eastus` runs in **multiple**-revision mode, so active revisions accumulate over
+time. If old revisions stay active they can serve traffic during churn — a user once saw a stale
+create-event page because ingress traffic had landed on an old revision. The deploy workflow now
+**auto-purges stale revisions** at the end of every run, so operators no longer hand-deactivate them.
+
+What the `Post-deploy revision hygiene (deactivate stale revisions)` step does, AFTER the new
+revision is healthy, traffic is pinned to it, and the runtime invariant is verified:
+
+1. Re-confirms the 100%-traffic revision (the runtime invariant) and that it is the newly deployed
+   revision. If traffic is not on the new revision, it FAILS without touching anything.
+2. Deactivates every OTHER active revision EXCEPT the 100%-traffic revision and the
+   `REVISION_ROLLBACK_WINDOW` most-recent prior revisions (default `3`, overridable via the
+   `ACA_REVISION_ROLLBACK_WINDOW` repo variable) kept as a rollback window.
+3. Guardrails: it never deactivates the traffic-holding revision; it only deactivates revisions with
+   `trafficWeight == 0`; and if it cannot positively identify a single 100%-traffic revision, it
+   SKIPS the purge and logs a warning rather than risk an outage. It is idempotent and safe to re-run.
+4. Logs the keep-list vs the deactivated list to `audit-artifacts/aca-main-deploy/revision-hygiene.txt`
+   (uploaded as deploy evidence) — no silent mass-deactivation.
+
+Operators should NOT hand-run `az containerapp revision deactivate` for routine cleanup; the workflow
+owns it. Deactivation is reversible — a deactivated revision can be re-activated with
+`az containerapp revision activate` if a rollback outside the retained window is ever required.
 
 ## Required Live QA
 
