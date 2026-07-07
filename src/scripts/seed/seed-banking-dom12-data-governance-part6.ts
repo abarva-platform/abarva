@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const BANKING_DOM12_DATA_GOVERNANCE_PART6_PATTERNS: any[] = [
 

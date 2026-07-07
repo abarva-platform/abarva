@@ -103,6 +103,16 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 
 Deployed to Azure Container Apps lab on revision `ca-abarva-web-lab-eastus--0000115` with 100% traffic. Signed-in Chrome crawl has verified `/home`, `/intelligence`, `/tower`, and `/admin` after cache-busted navigation.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-web-lab-eastus--m6ece1b74`, then revert the `/home`, `/intelligence`, nav, and proxy route changes. No schema or data rollback is required.

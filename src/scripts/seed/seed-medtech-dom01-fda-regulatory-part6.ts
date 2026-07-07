@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const MEDTECH_DOM01_FDA_REGULATORY_PART6_PATTERNS: any[] = [
 

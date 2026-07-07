@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Workforce & Labour Relations
 // Code range: A4200-A4499

@@ -1,8 +1,18 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
-import { isLaunchApprovedEmail } from '@/lib/auth/launch-access-server'
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
+import {
+  isExternalOnlyRole,
+  resolvePinnedSessionClientKey,
+  resolveSessionRole,
+  shouldDenySourceEventSlugForActiveClient,
+  shouldDenySourceEventSlugForPinnedClient,
+  shouldStripUnauthorizedClientParam,
+} from "@/lib/auth/access-routing";
+import {
+  loadSourceLifecycleRouteAction,
+  parseSourceEventRoute,
+} from "@/lib/source/lifecycle-routing-guard";
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 const ACTIVE_CLIENT_COOKIE = "abarva_active_client";
@@ -20,23 +30,26 @@ const PRODUCTION_READINESS_NO_STORE_HEADERS = {
 } as const;
 
 export const PUBLIC_ROUTE_PATTERNS = [
-  '/access(.*)',
-  '/sign-in(.*)',
-  '/signed-out(.*)',
-  '/access-denied',
-  '/forbidden',
-  '/invite(.*)',
-  '/auth-redirect(.*)',
-  '/',
-  '/demo(.*)',
-  '/investor(.*)',
-  // P13 demo assets live under How it works and must be reachable
-  // before auth so prospects can view the comparison/teaser pages.
-  '/how-it-works(.*)',
-  // Demo code sign-in starts unauthenticated from /access, so the ticket
+  "/sign-in(.*)",
+  "/signed-out(.*)",
+  "/invite(.*)",
+  "/auth-redirect(.*)",
+  "/",
+  // Public marketing video/demo page. This is not a product workspace; deeper
+  // /demo/* product/demo workspaces remain auth-gated below.
+  "/demo",
+  // Keep the signed-out surface intentionally lean. Product, architecture,
+  // training, model-card, contact, status, and other detail pages are private
+  // workspace material unless the user is signed in.
+  //
+  // These two Responsible AI checkpoints stay public at proxy level because
+  // signed-in users are redirected here before the app shell renders. The
+  // pages self-gate server-side and redirect anonymous visitors to sign-in.
+  "/responsible-ai/acknowledgment(.*)",
+  "/responsible-ai/training(.*)",
+  // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
-  '/api/auth/demo-code-sign-in(.*)',
-  '/api/auth/access-eligibility(.*)',
+  "/api/auth/demo-code-sign-in(.*)",
   // Health is intentionally public so platform probes can validate runtime
   // readiness before a browser session exists. The route masks raw backing
   // service errors when NODE_ENV=production.
@@ -66,13 +79,10 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // against RESEND_WEBHOOK_SECRET. Without the secret env var the
   // route returns 503 (misconfigured) rather than accepting unsigned
   // payloads.
-  '/api/webhooks/resend(.*)',
+  "/api/webhooks/resend(.*)",
   // Private-preview lead capture from the public marketing landing page.
-  // POST /api/request-access must be reachable without a Clerk session —
-  // it is the signed-out "Request access" form. The route validates a work
-  // email, stores the lead via the service-role write client, and notifies
-  // admin@abarva.ai via Resend. No tenant data is read or written.
-  '/api/request-access(.*)',
+  // POST /api/request-access must be reachable without a Clerk session.
+  "/api/request-access(.*)",
   // SEC-P1-11 (audit 2026-05-13): `/api/debug/tower-substrate` previously
   // lived here as "count-only diagnostic" — but it returned per-tenant
   // initiative counts publicly to anyone who knew the URL. The route is
@@ -178,29 +188,15 @@ function shouldBypassClerkForAxe(request: NextRequest) {
   );
 }
 
-function resolveSessionEmail(sessionClaims: unknown): string | null {
-  const claims = sessionClaims as
-    | {
-        emailAddress?: string | null
-        emailAddresses?: Array<{ emailAddress?: string | null }>
-        email_addresses?: Array<{ emailAddress?: string | null }>
-      }
-    | null
-    | undefined
-
-  return (
-    claims?.emailAddress ??
-    claims?.emailAddresses?.[0]?.emailAddress ??
-    claims?.email_addresses?.[0]?.emailAddress ??
-    null
-  )
-}
-
 function createSignInRedirect(request: NextRequest) {
-  const url = new URL('/access', request.url)
-  const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`
-  if (requestedPath && requestedPath !== '/' && !request.nextUrl.pathname.startsWith('/access')) {
-    url.searchParams.set('redirect', requestedPath)
+  const url = new URL("/sign-in", request.url);
+  const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  if (
+    requestedPath &&
+    requestedPath !== "/" &&
+    !request.nextUrl.pathname.startsWith("/sign-in")
+  ) {
+    url.searchParams.set("redirect", requestedPath);
   }
   return withProductionReadinessNoStoreHeaders(
     request,
@@ -217,33 +213,27 @@ function sourceEventSlugFromPath(pathname: string): string | null {
   return match?.[1] ?? null;
 }
 
-export default clerkMiddleware(async (auth, request: NextRequest) => {
-  const { userId, sessionClaims } = await auth()
-  const metadata = (sessionClaims?.publicMetadata as { role?: string; clientId?: string; defaultClientId?: string } | undefined) ?? {}
-  const metadataRole = metadata.role ?? null
-  const email = resolveSessionEmail(sessionClaims)
-  const role = resolveSessionRole(metadataRole, email)
-  const requestedClientId = request.nextUrl.searchParams.get('client')
-  const isLaunchApprovedSession = !userId || isLaunchApprovedEmail(email)
+function createGenericNotFoundResponse(): NextResponse {
+  return new NextResponse("Not Found", {
+    status: 404,
+    headers: {
+      "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
+}
 
-  // Wave 1 PR-1 (2026-05-30) · Setup/Admin Trust Plane consolidation.
-  // /admin/* is the single canonical route tree for the Setup/Admin
-  // surface. /home is now the client-facing Enterprise Landscape.
-  // Legacy /home panel pages that still re-export /admin counterparts
-  // redirect below, but bare /home must never redirect to /admin.
-  //
-  // /home, /home/queue, /home/learn, /home/ai-initiatives*,
-  // /home/configuration, /home/training stay as real /home pages and
-  // are NOT remapped here.
-  //
-  // Wave 1 PR-3 (2026-05-30) · `/home/tenant-profile` now lands on the
-  // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
-  // was demoted to a tab inside /admin Overview — see AdminTenantTab).
-  const homeToAdminMap: Record<string, string> = {
-    '/home/data-trust': '/admin/data-trust',
-    '/home/agent-readiness': '/admin/agent-readiness',
-    '/home/connectors': '/admin/connectors',
-    '/home/tenant-profile': '/admin?tab=tenant',
+function withProductionReadinessNoStoreHeaders<T extends NextResponse>(
+  request: NextRequest,
+  response: T,
+): T {
+  if (!isProductionReadinessNoStoreRequest(request)) return response;
+
+  for (const [key, value] of Object.entries(
+    PRODUCTION_READINESS_NO_STORE_HEADERS,
+  )) {
+    response.headers.set(key, value);
   }
   return response;
 }
@@ -408,19 +398,174 @@ const clerkProtectedProxy = clerkMiddleware(
       );
     }
 
-  if (request.nextUrl.pathname === '/signed-out') {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url), 307))
-  }
+    const requiresAuth =
+      authRequiredRoutes(request) && !isTokenGuardedPublicOpsRoute(request);
 
-  if (request.nextUrl.pathname === '/forbidden') {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/access-denied', request.url), 307))
-  }
+    if (
+      requiresAuth &&
+      shouldStripUnauthorizedClientParam(
+        role,
+        {
+          clientId: metadata.clientId,
+          defaultClientId: metadata.defaultClientId,
+          email,
+        },
+        requestedClientId,
+      )
+    ) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.searchParams.delete("client");
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(redirectUrl),
+      );
+    }
 
-  if (
-    requiresAuth
-    && shouldStripUnauthorizedClientParam(
-      role,
-      {
+    // SHIP-NOW #3 (2026-06-02) · Strip foreign ?client= injection on /tower,
+    // /home, and /admin route trees. The admin tenant-switch path remains
+    // legitimate — `resolvePostSignInPath()` mints `/home?client=<resolved>`
+    // / `/tower?client=<resolved>` for admins, and admin users are allowed
+    // to retain the param so the tenant-switcher continues to work.
+    //
+    // For every non-admin role on these route trees, an inbound ?client=
+    // param is treated as injection (the canonical tenant binding lives in
+    // Clerk metadata + the ACTIVE_CLIENT_COOKIE, not the query string).
+    // Include /source as defense-in-depth. The access-routing predicate should
+    // already catch unauthorized Source client params, but route-tree stripping
+    // keeps browser history, referrers, and logs free of foreign tenant hints.
+    if (requestedClientId && role !== "admin") {
+      const pathname = request.nextUrl.pathname;
+      const isProtectedTree =
+        pathname === "/source" ||
+        pathname.startsWith("/source/") ||
+        pathname === "/tower" ||
+        pathname.startsWith("/tower/") ||
+        pathname === "/home" ||
+        pathname.startsWith("/home/") ||
+        pathname === "/admin" ||
+        pathname.startsWith("/admin/");
+      if (isProtectedTree) {
+        console.warn(
+          `[proxy] stripping foreign ?client= injection on ${pathname} (role=${role ?? "anon"}, requested=${requestedClientId})`,
+        );
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.searchParams.delete("client");
+        return withProductionReadinessNoStoreHeaders(
+          request,
+          NextResponse.redirect(redirectUrl, 302),
+        );
+      }
+    }
+
+    if (
+      userId &&
+      (request.nextUrl.pathname === "/" ||
+        request.nextUrl.pathname.startsWith("/sign-in"))
+    ) {
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(new URL("/auth-redirect", request.url)),
+      );
+    }
+
+    // Maestro routes — require authenticated Maestro/Admin/Investor
+    if (maestroRoutes(request)) {
+      if (!userId) {
+        return createSignInRedirect(request);
+      }
+      if (role === "client") {
+        return withProductionReadinessNoStoreHeaders(
+          request,
+          NextResponse.redirect(new URL("/home", request.url)),
+        );
+      }
+    }
+
+    // Auth-required routes (any role)
+    if (requiresAuth && !userId) {
+      return createSignInRedirect(request);
+    }
+
+    if (requiresAuth && isExternalOnlyRole(role)) {
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(new URL("/", request.url)),
+      );
+    }
+
+    const sourceEventSlug = sourceEventSlugFromPath(request.nextUrl.pathname);
+    if (
+      requiresAuth &&
+      sourceEventSlug &&
+      (shouldDenySourceEventSlugForActiveClient(
+        activeClientId,
+        sourceEventSlug,
+      ) ||
+        shouldDenySourceEventSlugForPinnedClient(
+          role,
+          {
+            clientId: metadata.clientId,
+            defaultClientId: metadata.defaultClientId,
+            email,
+          },
+          sourceEventSlug,
+        ))
+    ) {
+      return createGenericNotFoundResponse();
+    }
+
+    const sourceLifecycleRoute = parseSourceEventRoute(
+      request.nextUrl.pathname,
+    );
+    if (requiresAuth && userId && sourceLifecycleRoute) {
+      const lifecycleClientKey =
+        activeClientId ??
+        resolvePinnedSessionClientKey({
+          clientId: metadata.clientId,
+          defaultClientId: metadata.defaultClientId,
+          email,
+        }) ??
+        (role === "admin" ? requestedClientId : null);
+      const routeAction = await loadSourceLifecycleRouteAction({
+        eventId: sourceLifecycleRoute.eventId,
+        clientKey: lifecycleClientKey,
+        pathname: request.nextUrl.pathname,
+        search: request.nextUrl.search,
+      });
+      if (routeAction.type === "redirect") {
+        return withProductionReadinessNoStoreHeaders(
+          request,
+          NextResponse.redirect(
+            new URL(routeAction.destination, request.url),
+            routeAction.status ?? 302,
+          ),
+        );
+      }
+    }
+
+    if (!isPublicRoute(request)) {
+      await auth.protect();
+    }
+
+    let response: NextResponse | null = null;
+    function getResponse() {
+      if (!response) response = NextResponse.next();
+      return response;
+    }
+
+    if (isPublicRoute(request) && !userId) {
+      getResponse().cookies.delete(ACTIVE_CLIENT_COOKIE);
+    }
+
+    if (isPublicRoute(request) && userId && !isExternalOnlyRole(role)) {
+      // B-01 fix: only write the cookie when the client key is EXPLICITLY
+      // pinned via Clerk metadata or email inference. Using resolveSessionClientKey
+      // here was wrong — it returns DEFAULT_CLIENT_KEY='meridian' when no explicit
+      // pin is found, which overwrote any valid cookie the client had already set
+      // (e.g. via the UI tenant-switcher). Admin/investor users and demo accounts
+      // without Clerk clientId metadata would get their cookie silently reset to
+      // 'meridian' on every public-route visit, causing the tenant binding leak.
+      const explicitlyPinnedClient = resolvePinnedSessionClientKey({
         clientId: metadata.clientId,
         defaultClientId: metadata.defaultClientId,
         email,
@@ -466,85 +611,8 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
     return response;
   }
 
-  if (userId && !isLaunchApprovedSession && !request.nextUrl.pathname.startsWith('/access-denied')) {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/access-denied', request.url)))
-  }
-
-  if (!userId && request.nextUrl.pathname.startsWith('/sign-in')) {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url)))
-  }
-
-  if (userId && (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/sign-in') || request.nextUrl.pathname.startsWith('/access'))) {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/auth-redirect', request.url)))
-  }
-
-  // Maestro routes — require authenticated Maestro/Admin/Investor
-  if (maestroRoutes(request)) {
-    if (!userId) {
-      return createSignInRedirect(request)
-    }
-    if (role === 'client') {
-      return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/home', request.url)))
-    }
-  }
-
-  // Auth-required routes (any role)
-  if (requiresAuth && !userId) {
-    return createSignInRedirect(request)
-  }
-
-  if (requiresAuth && isExternalOnlyRole(role)) {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url)))
-  }
-
-  if (!isPublicRoute(request)) {
-    await auth.protect()
-  }
-
-  let response: NextResponse | null = null
-  function getResponse() {
-    if (!response) response = NextResponse.next()
-    return response
-  }
-
-  if (isPublicRoute(request) && !userId) {
-    getResponse().cookies.delete(ACTIVE_CLIENT_COOKIE)
-  }
-
-  if (isPublicRoute(request) && userId && !isExternalOnlyRole(role)) {
-    // B-01 fix: only write the cookie when the client key is EXPLICITLY
-    // pinned via Clerk metadata or email inference. Using resolveSessionClientKey
-    // here was wrong — it returns DEFAULT_CLIENT_KEY='meridian' when no explicit
-    // pin is found, which overwrote any valid cookie the client had already set
-    // (e.g. via the UI tenant-switcher). Admin/investor users and demo accounts
-    // without Clerk clientId metadata would get their cookie silently reset to
-    // 'meridian' on every public-route visit, causing the tenant binding leak.
-    const explicitlyPinnedClient = resolvePinnedSessionClientKey({
-      clientId: metadata.clientId,
-      defaultClientId: metadata.defaultClientId,
-      email,
-    })
-    if (explicitlyPinnedClient) {
-      getResponse().cookies.set(ACTIVE_CLIENT_COOKIE, explicitlyPinnedClient, {
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365,
-        sameSite: 'lax',
-      })
-    }
-  }
-
-  // Tag mobile UA requests — consumed by server components via x-is-mobile header
-  const ua = request.headers.get('user-agent') ?? ''
-  if (MOBILE_UA.test(ua)) {
-    getResponse().headers.set('x-is-mobile', '1')
-  }
-
-  if (isProductionReadinessNoStoreRequest(request)) {
-    withProductionReadinessNoStoreHeaders(request, getResponse())
-  }
-
-  if (response) return response
-})
+  return clerkProtectedProxy(request, event);
+}
 
 export const config = {
   matcher: [

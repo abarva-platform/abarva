@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare genome patterns — Patient Financial Experience & Price Transparency
 // Domain 30: Patient Finance — GFE, Cost Estimation, Financial Counseling, Payment Plans, POS Collections

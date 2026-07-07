@@ -44,6 +44,16 @@ All clients are affected operationally because every client-facing surface on `a
 
 Merge this guardrail change through the normal release process. From this point forward, build and deploy `app.abarva.ai` only with the Azure Container Apps runbook: `az acr build`, `az containerapp update`, traffic assignment, and live QA against `https://app.abarva.ai`.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert this release commit if the team intentionally restores Vercel as an approved deployment target. Do not roll back just to satisfy old Vercel checks; update or disable those checks instead.

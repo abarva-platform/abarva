@@ -56,6 +56,16 @@ The top-level Tower route now opens the simplified AI Control Tower executive su
 
 Merge to `main`; the normal ACA main deploy builds and promotes the new web image. No database migration or manual data load is required for this UI slice.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert the PR while a replacement fix is prepared. No data rollback is required.

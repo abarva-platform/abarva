@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - NDC, Offer/Order Management & Modern Retailing
 // Code range: A1800-A2099

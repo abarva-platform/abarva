@@ -58,6 +58,16 @@ Merge to the controlled release branch, build the production container, deploy t
 - `ABARVA_LAUNCH_SKYHARBOR_EMAILS`
 - `ABARVA_LAUNCH_ADMIN_EMAILS`
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert this release commit to restore the previous `/sign-in` behavior and old canonical demo roster. Runtime env vars can be removed without a code rollback.

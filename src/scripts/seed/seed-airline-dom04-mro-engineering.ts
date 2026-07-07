@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — MRO Engineering, Airworthiness & Technical Operations
 // Domain: MRO Engineering, Airworthiness Management & Technical Operations

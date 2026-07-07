@@ -53,6 +53,16 @@ This release itself has no runtime rollout — it is dataset generation + planni
 3. **Phase 2 (First Capital ACA load)**: `scripts/jobs/load-first-capital-v2.ts` → ACA job → Log Analytics confirmation → golden questions smoke test
 4. **Phase 3 (Explorer visibility)**: Admin UI dimension family grouping + blob URL links → merge + deploy
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Dataset files are in `datasets/` — git revert removes them. No DB changes yet; schema migration rollback in Phase 0 is: `ALTER TABLE enterprise_context_records DROP COLUMN dimension_family, DROP COLUMN domain_segment, DROP COLUMN business_function, DROP COLUMN load_order;` and `DROP VIEW ai_control_graph_view;`. Data load rollback is: `DELETE FROM enterprise_context_* WHERE tenant_key = 'first-capital'` (safe, additive only, no data existed before).

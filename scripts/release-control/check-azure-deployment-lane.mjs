@@ -21,6 +21,7 @@ const requirements = [
       'app.abarva.ai',
       'deployed through Azure Container Apps',
       'not Vercel',
+      // deploy-authority-exception: required-marker strings, not executed commands
       'az acr build',
       'az containerapp update',
       'https://app.abarva.ai',
@@ -32,6 +33,7 @@ const requirements = [
       'Azure Container Apps Deploy Runbook',
       'ca-abarva-web-lab-eastus',
       'acrabarvalab001',
+      // deploy-authority-exception: required-marker strings, not executed commands
       'az acr build',
       'az containerapp ingress traffic set',
       'Do not use these as production deploy evidence',
@@ -49,6 +51,7 @@ const requirements = [
     file: 'scripts/vercel-disabled.sh',
     markers: [
       'Vercel deployment is disabled for app.abarva.ai',
+      // deploy-authority-exception: required-marker string, not an executed command
       'az containerapp update',
       'exit 78',
     ],

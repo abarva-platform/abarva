@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const HEALTHCARE_DOM01_RCM_CODING_PART4_PATTERNS: any[] = [
 

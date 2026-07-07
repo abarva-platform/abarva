@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const BANKING_DOM11_TPRM_PART6_PATTERNS: any[] = [
 

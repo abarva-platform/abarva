@@ -58,6 +58,16 @@ Intelligence and AI Control Tower now have a shared way to read the new derived 
 
 Merge after code review and include in the next controlled app deployment. The UI/runtime change becomes active when the deployed image includes both the rewired code and the v4 derived enterprise-read artifacts. The actual client data-plane truncate/load remains a separate governed loader run.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert this release candidate commit or remove derived enterprise-read injection from the read models and agent context packs. Because this release does not include a database migration, rollback does not require schema rollback.

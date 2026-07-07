@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const MEDTECH_DOM12_FIELD_SERVICE_PART3_PATTERNS: any[] = [
 

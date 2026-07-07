@@ -54,6 +54,16 @@ The purpose is durability and traceability: the Azure DB already had a V4 load r
 
 No runtime rollout is performed by this source-preservation commit. The next runtime step is to bind Home, Intelligence, Tower, Sentinel, and Atlas to the committed V4 source/read models and validate through signed-in browser QA.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert this commit to remove the source-preserved V4 files and receipts from git. No Azure DB rollback is required because this commit does not mutate Azure data.

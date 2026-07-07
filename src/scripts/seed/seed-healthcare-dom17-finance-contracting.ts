@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare Provider patterns — Finance, Managed Care Contracting & Physician Enterprise
 // AbarVa corpus — Domain 17: Healthcare Finance, Managed Care Contracting & Physician Enterprise Management

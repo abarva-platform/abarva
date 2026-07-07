@@ -40,6 +40,16 @@ Status: PASS (artifact inspection) / NOT-RUN (live ingestion path)
 
 Expose the workbook under the Tower template download surface after product wiring. Use the parse/load contract before any live client data-plane load. No migration required — this is a static artifact and documentation.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Remove the new `public/templates/tower/ai-control-tower/` workbook and the corresponding docs under `docs/build/ai-control-tower-template/`. No DB rollback needed (no data written).

@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 interface PatternSeed {
   code: string;
   name: string;

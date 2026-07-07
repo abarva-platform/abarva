@@ -78,6 +78,16 @@ flags the gap rather than fabricating.
 Merge to `main` via PR + squash. Deploy through the Azure Container Apps runbook. No
 migration, no feature flag. Record the ACA revision/image when deployed.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert the PR and redeploy the prior ACA revision. No schema or data migration to

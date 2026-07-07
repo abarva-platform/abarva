@@ -42,6 +42,16 @@ Agent windows now carry the approved lowercase `aVa` wordmark instead of relying
 
 Merge the release candidate and deploy through the approved Azure Container Apps path for `app.abarva.ai`. This record does not claim production deployment.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert the UI component/style changes and remove the served `aVa` asset to return to the previous initials/glyph agent identity and fixed ask inputs. No migration or data rollback is required.

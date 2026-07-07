@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Digital Transformation & AI/ML Governance
 // Code range: A5100-A5399

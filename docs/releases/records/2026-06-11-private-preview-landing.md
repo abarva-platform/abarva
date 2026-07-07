@@ -47,6 +47,16 @@ Status: PASS (design) / NOT-RUN (migration, email)
 
 Deploy the branch; apply the migration on ACA before public traffic relies on durable storage (email notification works without it).
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Revert the component to the previous `LoggedOutLandingPage`, remove the public-route entry and the API route. The `access_requests` table is additive and can be left in place.

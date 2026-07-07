@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — PSS Architecture, Booking Engine & Reservations Core
 // Code range: A600–A899 (300 patterns)

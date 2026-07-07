@@ -1,3 +1,4 @@
+// pilot-data-loader-exception: global-static-corpus
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — Crew Management: Planning, Rostering & Day-of-Operations
 // Domain 03 · Code range: A900–A1199 (300 patterns)

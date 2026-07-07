@@ -6,6 +6,7 @@ cat >&2 <<'MSG'
 
 Canonical deploy path:
   az acr build
+  # deploy-authority-exception: informational canonical path labels, not executed commands
   az containerapp update
   az containerapp ingress traffic set
   live QA against https://app.abarva.ai

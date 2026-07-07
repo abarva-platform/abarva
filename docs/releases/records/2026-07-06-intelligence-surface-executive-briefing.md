@@ -57,6 +57,16 @@ This candidate also corrects the Intelligence synthesis prompt so the live Claud
 
 Deployed through the approved Azure Container Apps lane for `app.abarva.ai`: built a digest-pinned image from commit `a59ce421e`, updated `ca-abarva-web-lab-eastus`, waited for revision `ca-abarva-web-lab-eastus--0000263` to become healthy, and moved 100% ingress traffic to that revision.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Move ACA traffic back to the previous healthy revision. No migration rollback is required because this release does not change database schema or loaded tenant data.
