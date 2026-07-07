@@ -276,6 +276,8 @@ export interface ValueWaterfallView {
 /** The insight kinds. Build the first three; the model is declared for all steps. */
 export type StepInsightKind =
   | 'value_pool' // P0 Strategy — value pool decomposed by lever
+  | 'scope_coverage' // Scope — $ reachable vs stranded under current scope/evidence
+  | 'rfp_clause_coverage' // RFP — $ protected by a clause vs still exposed
   | 'value_bridge' // Pricing — the value-type waterfall (≥20% proof)
   | 'should_cost_normalization' // Evaluation — normalized TCO flips the winner
   | 'evidence_gap_priced' // Scope — unprotectable $ until evidence lands (future)
@@ -283,6 +285,42 @@ export type StepInsightKind =
   | 'vendor_dodge_map' // Responses — vendor tells (future)
   | 'captured_vs_target' // BAFO — captured vs target by lever (future)
   | 'committed_vs_realized'; // Value — committed vs realized over time (future)
+
+// ── The advisor layer — what makes an insight advisor-grade, not just a chart ──
+//
+// An insight is NOT a chart. It is advisor GUIDANCE. Every step insight may carry
+// this advisor layer alongside its chart data, and the InsightShell renders it as
+// labeled lines beneath the chart so EVERY insight — not just Scope/RFP — can show
+// best-practice, benchmark, and the downstream cost of getting the step wrong.
+//
+// Honesty:
+//   • `bestPractice` lines are advisor knowledge pulled VERBATIM (where sensible)
+//     from the archetype's value-lever playbook fields (whatToWatch, rfpClause,
+//     bafoAsk, executiveImplication, …). They are real advisor knowledge, not
+//     invented prose.
+//   • `benchmark` is a market/peer comparison. Unless it is sourced to the tenant
+//     it is a LABELED market range ("comparable AMS events …"), never presented as
+//     the client's own number.
+//   • `downstreamImpact` states how THIS step's decision determines what is still
+//     capturable later — the cost of getting it wrong.
+export interface AdvisorLayer {
+  /**
+   * Best-practice guidance for this step — what a great sourcing advisor for THIS
+   * archetype knows. Sourced from the value-lever playbook fields, not invented.
+   */
+  bestPractice?: readonly string[];
+  /**
+   * A peer/industry benchmark line. Real if sourced; otherwise a clearly-LABELED
+   * market range (the renderer prefixes it so it never reads as a tenant number).
+   */
+  benchmark?: string;
+  /**
+   * How this step's decision determines what is still capturable downstream — the
+   * cost of getting this step wrong (scope sets the ceiling; the RFP is the last
+   * lock point; …).
+   */
+  downstreamImpact?: string;
+}
 
 /** One horizontal bar in the value-pool insight — a lever's low–high $ range. */
 export interface ValuePoolBarView {
@@ -301,7 +339,7 @@ export interface ValuePoolBarView {
 }
 
 /** Strategy — VALUE POOL decomposed by lever. "Is the prize worth the event?" */
-export interface ValuePoolInsightView {
+export interface ValuePoolInsightView extends AdvisorLayer {
   kind: 'value_pool';
   provenance: IntelProvenance;
   /** The "so what" — e.g. "$X–Y at stake across N levers; biggest is <lever> ($Z)". */
@@ -314,8 +352,116 @@ export interface ValuePoolInsightView {
   note?: string;
 }
 
+// ── Scope · SCOPE-TO-VALUE COVERAGE (reachable vs stranded) ───────────────────
+
+/**
+ * One value lever, judged for whether the current scope + landed evidence make it
+ * REACHABLE. A lever is reachable when every fact its computation requires is
+ * present; it is STRANDED when required evidence is missing / out of scope — its $
+ * at stake cannot be captured downstream because the event never scoped for it.
+ */
+export interface ScopeCoverageRowView {
+  /** The lever key (stable id). */
+  leverKey: string;
+  /** Human lever name, e.g. 'Change-order leakage'. */
+  label: string;
+  /** The value type — drives the bar accent. */
+  valueType: ValueType;
+  /** Low end of the $ at stake for this lever (USD over term). */
+  low: number;
+  /** High end of the $ at stake for this lever (USD over term). */
+  high: number;
+  /** Reachable (all required evidence present) vs stranded (missing). */
+  reachable: boolean;
+  /**
+   * The human-readable evidence families this lever needs (from the rule's
+   * `requiredEvidence`) — shown so a stranded lever says WHY it is stranded.
+   */
+  requiredEvidence: readonly string[];
+  /**
+   * When stranded, the specific required-evidence family names still missing.
+   * Empty when reachable.
+   */
+  missingEvidence: readonly string[];
+}
+
+/**
+ * Scope — SCOPE-TO-VALUE COVERAGE. "Scope sets your ceiling." Each lever is
+ * reachable or stranded under the current scope/evidence; the headline sizes the
+ * reachable-vs-stranded split. Live from real facts where present; a clearly
+ * badged MODEL (from the archetype) when the event has no facts yet — showing what
+ * a complete scope unlocks. Carries the advisor layer (best-practice / benchmark /
+ * downstream) so the CXO sees the cost of scoping this wrong.
+ */
+export interface ScopeCoverageInsightView extends AdvisorLayer {
+  kind: 'scope_coverage';
+  provenance: IntelProvenance;
+  /**
+   * The "so what" — e.g. "$X of $Y reachable under current scope; $Z stranded
+   * because <missing evidence>."
+   */
+  headline: string;
+  /** One row per lever, reachable-first then stranded, biggest-$ within each. */
+  rows: readonly ScopeCoverageRowView[];
+  /** Whether the reachable/stranded split is a MODEL (no client scope facts yet). */
+  isModel: boolean;
+  /** Sample/model honesty note when provenance is 'sample'. */
+  note?: string;
+}
+
+// ── RFP · LEVER-TO-CLAUSE COVERAGE (protected vs exposed) ─────────────────────
+
+/**
+ * One value lever, judged for whether the RFP PROTECTS it with a required clause.
+ * There is no structured RFP-draft in the fact model yet, so by default the
+ * archetype's recommended clause set is treated as "to require" (a MODEL) — every
+ * lever is EXPOSED until its clause is confirmed required. When a real RFP-draft
+ * signal exists, that determines protected vs exposed instead.
+ */
+export interface RfpClauseRowView {
+  /** The lever key (stable id). */
+  leverKey: string;
+  /** Human lever name. */
+  label: string;
+  /** The value type — drives the bar accent. */
+  valueType: ValueType;
+  /** Low end of the $ at stake this clause protects (USD over term). */
+  low: number;
+  /** High end of the $ at stake this clause protects (USD over term). */
+  high: number;
+  /** Protected (the RFP requires the clause) vs exposed (it does not / not yet). */
+  protected: boolean;
+  /** The exact RFP clause text to require for this lever (from the playbook). */
+  rfpClause: string;
+  /** The BAFO ask this lever becomes if not locked in the RFP (from the playbook). */
+  bafoAsk: string;
+}
+
+/**
+ * RFP — LEVER-TO-CLAUSE COVERAGE. "The RFP is the last point to lock a lever into
+ * a requirement." Each lever is protected by a clause or exposed; the headline
+ * sizes the exposed pool. Defaults to a MODEL (all "to require") until an RFP-draft
+ * signal exists. Carries the advisor layer + a clause library (the exact clauses
+ * to drop into the RFP).
+ */
+export interface RfpClauseInsightView extends AdvisorLayer {
+  kind: 'rfp_clause_coverage';
+  provenance: IntelProvenance;
+  /**
+   * The "so what" — e.g. "your $X pool depends on N levers; best-in-class AMS RFPs
+   * protect each with a clause; M exposed ($Z)."
+   */
+  headline: string;
+  /** One row per lever, exposed-first then protected, biggest-$ within each. */
+  rows: readonly RfpClauseRowView[];
+  /** Whether protected/exposed is a MODEL (no RFP-draft signal yet). */
+  isModel: boolean;
+  /** Sample/model honesty note when provenance is 'sample'. */
+  note?: string;
+}
+
 /** Pricing — the VALUE BRIDGE (the value-type waterfall wrapped as an insight). */
-export interface ValueBridgeInsightView {
+export interface ValueBridgeInsightView extends AdvisorLayer {
   kind: 'value_bridge';
   provenance: IntelProvenance;
   /** The "so what" — the ≥20% classified-value framing. */
@@ -348,7 +494,7 @@ export interface ShouldCostVendorView {
  * a MODEL (illustrative vendors) because vendor-bid facts are not in the fact
  * model yet — `provenance` is always 'sample' here and the note says so.
  */
-export interface ShouldCostInsightView {
+export interface ShouldCostInsightView extends AdvisorLayer {
   kind: 'should_cost_normalization';
   provenance: IntelProvenance;
   /** The "so what" — the trap ("Vendor B is cheapest on paper; normalized, A wins by $X"). */
@@ -371,6 +517,8 @@ export interface ShouldCostInsightView {
  */
 export type StepInsightView =
   | ValuePoolInsightView
+  | ScopeCoverageInsightView
+  | RfpClauseInsightView
   | ValueBridgeInsightView
   | ShouldCostInsightView;
 

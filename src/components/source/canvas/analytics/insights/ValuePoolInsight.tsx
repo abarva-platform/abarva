@@ -50,6 +50,11 @@ export function ValuePoolInsight({ insight }: ValuePoolInsightProps) {
         headline={insight.headline}
         provenance={insight.provenance}
         note={insight.note}
+        advisor={{
+          bestPractice: insight.bestPractice,
+          benchmark: insight.benchmark,
+          downstreamImpact: insight.downstreamImpact,
+        }}
       >
         <div
           data-testid="value-pool-empty"
@@ -93,6 +98,11 @@ export function ValuePoolInsight({ insight }: ValuePoolInsightProps) {
       headline={insight.headline}
       provenance={insight.provenance}
       note={insight.note}
+      advisor={{
+        bestPractice: insight.bestPractice,
+        benchmark: insight.benchmark,
+        downstreamImpact: insight.downstreamImpact,
+      }}
     >
       <div style={{ margin: '0 0 12px' }}>
         <ValueTypeLegend />

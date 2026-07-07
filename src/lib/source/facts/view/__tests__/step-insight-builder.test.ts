@@ -6,6 +6,8 @@
 import {
   buildStepInsight,
   buildValuePoolInsight,
+  buildScopeCoverageInsight,
+  buildRfpClauseInsight,
   buildShouldCostModelInsight,
   stepInsightKindForStage,
 } from '../step-insight-builder';
@@ -21,8 +23,10 @@ const FACTS_ONE_LEVER: EventFactMap = {
 };
 
 describe('stepInsightKindForStage', () => {
-  it('maps the three shipped steps to their kinds', () => {
+  it('maps the shipped steps to their kinds', () => {
     expect(stepInsightKindForStage('strategy')).toBe('value_pool');
+    expect(stepInsightKindForStage('scope')).toBe('scope_coverage');
+    expect(stepInsightKindForStage('rfp')).toBe('rfp_clause_coverage');
     expect(stepInsightKindForStage('pricing')).toBe('value_bridge');
     expect(stepInsightKindForStage('evaluation')).toBe(
       'should_cost_normalization',
@@ -32,11 +36,115 @@ describe('stepInsightKindForStage', () => {
   it('normalizes case / separators', () => {
     expect(stepInsightKindForStage('Strategy')).toBe('value_pool');
     expect(stepInsightKindForStage('  pricing  ')).toBe('value_bridge');
+    expect(stepInsightKindForStage('RFP')).toBe('rfp_clause_coverage');
   });
 
   it('returns null for steps not yet wired (falls back to the read)', () => {
-    expect(stepInsightKindForStage('scope')).toBeNull();
     expect(stepInsightKindForStage('transition')).toBeNull();
+    expect(stepInsightKindForStage('selection')).toBeNull();
+  });
+});
+
+describe('buildScopeCoverageInsight — Scope', () => {
+  it('marks a lever REACHABLE when its required evidence is present, others STRANDED', () => {
+    const insight = buildScopeCoverageInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+    );
+    expect(insight.kind).toBe('scope_coverage');
+    // With real facts (not empty) this is LIVE, not a model.
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    // The change-order leakage lever is reachable (its citationRequired inputs
+    // annual_change_order_spend + recurring_avoidable_pct are present).
+    const leakage = insight.rows.find(
+      (r) => r.leverKey === 'AMS.ENHANCEMENT_LEAKAGE',
+    );
+    expect(leakage?.reachable).toBe(true);
+    // At least one other lever is stranded, and its missing evidence is NAMED.
+    const stranded = insight.rows.filter((r) => !r.reachable);
+    expect(stranded.length).toBeGreaterThan(0);
+    expect(stranded[0].missingEvidence.length).toBeGreaterThan(0);
+    // Stranded $ is counted in the honest headline (reachable vs stranded).
+    expect(insight.headline).toMatch(/reachable/i);
+    expect(insight.headline).toMatch(/stranded/i);
+    // Reachable-first ordering.
+    const firstStrandedIdx = insight.rows.findIndex((r) => !r.reachable);
+    const lastReachableIdx = insight.rows.reduce(
+      (acc, r, i) => (r.reachable ? i : acc),
+      -1,
+    );
+    if (firstStrandedIdx >= 0) {
+      expect(lastReachableIdx).toBeLessThan(firstStrandedIdx);
+    }
+    // Advisor layer renders best-practice / benchmark / downstream.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+    expect(insight.benchmark).toMatch(/market range/i);
+    expect(insight.downstreamImpact).toMatch(/ceiling/i);
+  });
+
+  it('all-evidence → all reachable, nothing stranded', () => {
+    // Provide every citationRequired input across all AMS levers.
+    const ALL_EVIDENCE: EventFactMap = {
+      annual_change_order_spend: 4_000_000,
+      recurring_avoidable_pct: 0.35,
+      annual_run_cost: 12_000_000,
+      projected_volume_decline_pct: 0.2,
+      variable_cost_share_pct: 0.6,
+      automatable_effort_pool: 3_000_000,
+      committed_credit_pct: 0.1,
+      retained_fte_delta: 4,
+      loaded_fte_cost: 195_000,
+      at_risk_fee_pool: 5_000_000,
+      credit_cap_pct: 0.1,
+      chronic_miss_rate: 0.05,
+      transition_fee: 2_000_000,
+      overrun_probability: 0.3,
+      term_years: 3,
+    };
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, ALL_EVIDENCE);
+    expect(insight.provenance).toBe('live');
+    expect(insight.rows.every((r) => r.reachable)).toBe(true);
+    expect(insight.rows.every((r) => r.missingEvidence.length === 0)).toBe(true);
+    expect(insight.headline).toMatch(/nothing stranded/i);
+  });
+
+  it('no facts → honest MODEL badge, no fabricated tenant numbers', () => {
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, {});
+    expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
+    expect(insight.note).toMatch(/model/i);
+    // A model shows what a complete scope unlocks — ranges only, never a point.
+    for (const r of insight.rows) {
+      expect(r.high).toBeGreaterThan(r.low);
+    }
+    expect(insight.headline).toMatch(/complete scope/i);
+  });
+});
+
+describe('buildRfpClauseInsight — RFP', () => {
+  it('lists exposed levers with their real rfpClause + bafoAsk text (MODEL)', () => {
+    const insight = buildRfpClauseInsight(AMS_MANAGED_SERVICES, FACTS_ONE_LEVER);
+    expect(insight.kind).toBe('rfp_clause_coverage');
+    // No RFP-draft signal in the fact model yet → always a model, all exposed.
+    expect(insight.isModel).toBe(true);
+    expect(insight.provenance).toBe('sample');
+    expect(insight.rows.every((r) => !r.protected)).toBe(true);
+    // Each row carries the EXACT clause text from the archetype playbook.
+    const leakage = insight.rows.find(
+      (r) => r.leverKey === 'AMS.ENHANCEMENT_LEAKAGE',
+    );
+    expect(leakage?.rfpClause).toMatch(/classify recurring support/i);
+    expect(leakage?.bafoAsk).toMatch(/fixed service catalog/i);
+    // Headline sizes the pool + the exposed count.
+    expect(insight.headline).toMatch(/pool depends on/i);
+    expect(insight.headline).toMatch(/exposed/i);
+    // Advisor layer.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+    expect(insight.benchmark).toMatch(/market range/i);
+    expect(insight.downstreamImpact).toMatch(/last point to lock/i);
+    // Honesty note explains what makes it fully live.
+    expect(insight.note).toMatch(/RFP-draft signal/i);
   });
 });
 
@@ -106,9 +214,26 @@ describe('buildStepInsight — dispatch', () => {
     }
   });
 
+  it('returns scope coverage for scope, rfp clause coverage for rfp', () => {
+    const scope = buildStepInsight({
+      stageKey: 'scope',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(scope?.kind).toBe('scope_coverage');
+    const rfp = buildStepInsight({
+      stageKey: 'rfp',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(rfp?.kind).toBe('rfp_clause_coverage');
+  });
+
   it('returns null for a step with no insight in this slice', () => {
     const insight = buildStepInsight({
-      stageKey: 'scope',
+      stageKey: 'transition',
       inputs: FACTS_ONE_LEVER,
       citations: {},
       archetypeId: 'AMS_MANAGED_SERVICES',
