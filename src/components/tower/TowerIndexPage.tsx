@@ -8,9 +8,11 @@ import { AppShell } from "@/components/shell/AppShell";
 import { MetricProvenance } from "@/components/tower/MetricProvenance";
 import { ExecutiveActionQueuePanel } from "@/components/tower/ExecutiveActionQueuePanel";
 import {
+  ValueBridgeChart,
   ValueProvenBarChart,
   BudgetRunChangeChart,
-  BenchmarkComparisonChart,
+  BenchmarkTenantCards,
+  BenchmarkRadarChart,
 } from "@/components/tower/charts/TowerCxoCharts";
 import {
   AtlasChatPanel,
@@ -2850,6 +2852,12 @@ function CxoGovernedCommandCenter({
 }) {
   const [activeSection, setActiveSection] =
     useState<CxoCommandSection>("value");
+  const flagshipProgram = model.portfolioValueRows
+    .filter((row) => (row.promisedValueNumeric ?? 0) > 0)
+    .slice()
+    .sort(
+      (a, b) => (b.promisedValueNumeric ?? 0) - (a.promisedValueNumeric ?? 0),
+    )[0];
   const commandCards = [
     "total_it_budget_fy26",
     "total_it_budget_fy25_baseline",
@@ -2954,30 +2962,41 @@ function CxoGovernedCommandCenter({
       </section>
 
       {activeSection === "value" ? (
-        <section style={{ marginBottom: 20 }}>
-          <div
-            style={{
-              fontFamily: T.MONO,
-              fontSize: 9.5,
-              letterSpacing: "1.5px",
-              textTransform: "uppercase",
-              color: T.GOLD,
-              fontWeight: 900,
-              marginBottom: 9,
-            }}
-          >
-            Value Command Center
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gap: 12,
-            }}
-          >
-            {commandCards.map((card) => (
-              <CxoGovernedMeasureCard key={card.measureKey} card={card} />
-            ))}
+        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+          {flagshipProgram ? (
+            <CioPanel
+              eyebrow="Flagship Program"
+              title="The single largest value promise in the portfolio."
+            >
+              <ValueBridgeChart program={flagshipProgram} />
+            </CioPanel>
+          ) : null}
+
+          <div>
+            <div
+              style={{
+                fontFamily: T.MONO,
+                fontSize: 9.5,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                color: T.GOLD,
+                fontWeight: 900,
+                marginBottom: 9,
+              }}
+            >
+              Value Command Center
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: 12,
+              }}
+            >
+              {commandCards.map((card) => (
+                <CxoGovernedMeasureCard key={card.measureKey} card={card} />
+              ))}
+            </div>
           </div>
         </section>
       ) : null}
@@ -3029,12 +3048,24 @@ function CxoGovernedCommandCenter({
       {activeSection === "benchmark" ? (
         <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
           {model.benchmarkRows.length > 0 ? (
-            <CioPanel
-              eyebrow="Peer Comparison"
-              title="Against real governed tenants — not a synthetic corpus."
-            >
-              <BenchmarkComparisonChart rows={model.benchmarkRows} />
-            </CioPanel>
+            <>
+              <CioPanel
+                eyebrow="Peer Comparison"
+                title="Against real governed tenants — not a synthetic corpus."
+              >
+                <BenchmarkTenantCards
+                  rows={model.benchmarkRows}
+                  currentTenantName={model.tenantName}
+                />
+              </CioPanel>
+
+              <CioPanel
+                eyebrow="Shape Comparison"
+                title="Every measure, one shape."
+              >
+                <BenchmarkRadarChart rows={model.benchmarkRows} />
+              </CioPanel>
+            </>
           ) : null}
 
           <CioPanel
