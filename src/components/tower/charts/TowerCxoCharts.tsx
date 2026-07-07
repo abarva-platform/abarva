@@ -170,9 +170,24 @@ export function ValueBridgeChart({
   if (promised <= 0) return null;
 
   const data = [
-    { label: "Committed", committed, promised: 0, measured: 0, toProve: 0 },
-    { label: "Promised", committed: 0, promised, measured: 0, toProve: 0 },
-    { label: "Measured", committed: 0, promised: 0, measured, toProve },
+    {
+      label: "Committed",
+      value: committed,
+      toProve: 0,
+      fill: CT.INK_2,
+    },
+    {
+      label: "Promised",
+      value: promised,
+      toProve: 0,
+      fill: CT.GREEN_DEEP,
+    },
+    {
+      label: "Measured",
+      value: measured,
+      toProve,
+      fill: CT.GREEN,
+    },
   ];
 
   const sourceLine = [program.owner, program.source]
@@ -233,7 +248,7 @@ export function ValueBridgeChart({
         ) : null}
       </div>
 
-      <div style={{ height: 300, maxWidth: 600 }}>
+      <div style={{ height: 300, maxWidth: 594 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
@@ -254,48 +269,8 @@ export function ValueBridgeChart({
             />
             <YAxis hide domain={[0, Math.max(promised, committed) * 1.14]} />
             <Bar
-              dataKey="committed"
-              fill={CT.INK}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={104}
-              isAnimationActive={false}
-            >
-              <LabelList
-                dataKey="committed"
-                position="top"
-                content={<BridgeValueLabel />}
-              />
-            </Bar>
-            <Bar
-              dataKey="promised"
-              fill={CT.GREEN_DEEP}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={104}
-              isAnimationActive={false}
-            >
-              <LabelList
-                dataKey="promised"
-                position="top"
-                content={<BridgeValueLabel />}
-              />
-            </Bar>
-            <Bar
-              dataKey="measured"
-              stackId="measured"
-              fill={CT.GREEN}
-              radius={[0, 0, 0, 0]}
-              maxBarSize={104}
-              isAnimationActive={false}
-            >
-              <LabelList
-                dataKey="measured"
-                position="top"
-                content={<BridgeValueLabel />}
-              />
-            </Bar>
-            <Bar
               dataKey="toProve"
-              stackId="measured"
+              stackId="value"
               fill="rgba(29,158,117,0.08)"
               stroke={CT.GREEN_DEEP}
               strokeDasharray="4 3"
@@ -308,6 +283,22 @@ export function ValueBridgeChart({
                 dataKey="toProve"
                 position="center"
                 content={<BridgeToProveLabel />}
+              />
+            </Bar>
+            <Bar
+              dataKey="value"
+              stackId="value"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={104}
+              isAnimationActive={false}
+            >
+              {data.map((entry) => (
+                <Cell key={entry.label} fill={entry.fill} />
+              ))}
+              <LabelList
+                dataKey="value"
+                position="top"
+                content={<BridgeValueLabel />}
               />
             </Bar>
           </BarChart>
@@ -341,9 +332,10 @@ export function ValueBridgeChart({
         <div
           style={{
             fontFamily: CT.SANS,
-            fontSize: 13.5,
+            fontSize: 14,
             color: CT.INK_2,
-            marginTop: 4,
+            marginTop: 9,
+            lineHeight: 1.5,
           }}
         >
           {formatMoneyShort(measured)} measured of {formatMoneyShort(promised)}{" "}
@@ -1094,6 +1086,205 @@ export function BenchmarkRadarChart({
       >
         Peers are other governed tenants loaded in AbarVa, anonymized. Coverage
         is whoever is loaded — not a full market panel.
+      </div>
+    </div>
+  );
+}
+
+export function BenchmarkPeer2x2Chart({
+  rows,
+  currentTenantName,
+}: {
+  rows: ReadonlyArray<CioTowerCxoBenchmarkRow>;
+  currentTenantName: string;
+}) {
+  const cards = benchmarkRows(rows);
+  if (cards.length === 0) return null;
+
+  const maxBudget = Math.max(...cards.map((card) => card.totalBudget), 1);
+  const plotted = cards.map((card) => ({
+    ...card,
+    left: Math.max(8, Math.min(92, card.changePct)),
+    top: Math.max(8, Math.min(92, 100 - card.valueProvenPct)),
+    size: Math.max(30, Math.min(54, 28 + (card.totalBudget / maxBudget) * 26)),
+  }));
+
+  return (
+    <div>
+      <ChartEyebrow>Peer benchmark · value proof versus change spend</ChartEyebrow>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 250px",
+          gap: 28,
+          alignItems: "start",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: CT.SERIF,
+              fontSize: 24,
+              color: CT.INK,
+              marginBottom: 8,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Is the portfolio funding change that proves value?
+          </div>
+          <div
+            style={{
+              fontFamily: CT.SANS,
+              fontSize: 13.5,
+              color: CT.INK_2,
+              marginBottom: 18,
+              lineHeight: 1.45,
+              maxWidth: 620,
+            }}
+          >
+            Each governed tenant is plotted by change-spend share and value
+            proven. Larger marks carry larger FY26 budget envelopes.
+          </div>
+          <div
+            style={{
+              position: "relative",
+              height: 380,
+              borderLeft: `1px solid ${CT.RULE}`,
+              borderBottom: `1px solid ${CT.RULE}`,
+              background:
+                "linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(10,10,11,0.16) calc(50% - 0.5px), rgba(10,10,11,0.16) calc(50% + 0.5px), transparent calc(50% + 0.5px)), linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(10,10,11,0.16) calc(50% - 0.5px), rgba(10,10,11,0.16) calc(50% + 0.5px), transparent calc(50% + 0.5px))",
+            }}
+          >
+            {[
+              ["Value proof high · change low", 14, 10],
+              ["Value proof high · change high", 58, 10],
+              ["Value proof low · change low", 14, 82],
+              ["Value proof low · change high", 58, 82],
+            ].map(([label, left, top]) => (
+              <div
+                key={label}
+                style={{
+                  position: "absolute",
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  transform: "translate(-50%, -50%)",
+                  fontFamily: CT.MONO,
+                  fontSize: 9,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: CT.GRAY_DK,
+                  fontWeight: 650,
+                  pointerEvents: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label}
+              </div>
+            ))}
+            {plotted.map((card) => {
+              const label = card.isCurrent ? currentTenantName : card.label;
+              return (
+                <div
+                  key={card.label}
+                  title={`${label}: ${card.changePct}% change spend, ${card.valueProvenPct}% value proven, ${formatMoneyShort(card.totalBudget)} budget`}
+                  style={{
+                    position: "absolute",
+                    left: `${card.left}%`,
+                    top: `${card.top}%`,
+                    width: card.size,
+                    height: card.size,
+                    transform: "translate(-50%, -50%)",
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    background: card.isCurrent ? CT.GREEN : "#fff",
+                    border: `2px solid ${card.isCurrent ? CT.GREEN_DEEP : CT.RULE}`,
+                    color: card.isCurrent ? "#fff" : CT.INK,
+                    fontFamily: CT.MONO,
+                    fontSize: 10,
+                    fontWeight: 900,
+                    boxShadow: card.isCurrent
+                      ? "0 12px 24px rgba(15, 118, 110, 0.22)"
+                      : "0 8px 18px rgba(15, 23, 42, 0.10)",
+                  }}
+                >
+                  {card.isCurrent
+                    ? "YOU"
+                    : card.label.replace(/^Peer\s+/i, "P")}
+                </div>
+              );
+            })}
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                bottom: -34,
+                transform: "translateX(-50%)",
+                fontFamily: CT.MONO,
+                fontSize: 10,
+                letterSpacing: "0.12em",
+                color: CT.GRAY_DK,
+                textTransform: "uppercase",
+                fontWeight: 700,
+              }}
+            >
+              Change spend share →
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                left: -44,
+                top: "50%",
+                transform: "translateY(-50%) rotate(-90deg)",
+                transformOrigin: "center",
+                fontFamily: CT.MONO,
+                fontSize: 10,
+                letterSpacing: "0.12em",
+                color: CT.GRAY_DK,
+                textTransform: "uppercase",
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Value proven →
+            </div>
+          </div>
+        </div>
+        <div
+          style={{
+            borderLeft: `1px solid ${CT.RULE}`,
+            paddingLeft: 22,
+            display: "grid",
+            gap: 14,
+          }}
+        >
+          {plotted.map((card) => (
+            <div key={card.label}>
+              <div
+                style={{
+                  fontFamily: CT.SERIF,
+                  fontSize: 16,
+                  color: CT.INK,
+                  fontWeight: 500,
+                }}
+              >
+                {card.isCurrent ? currentTenantName : card.label}
+              </div>
+              <div
+                style={{
+                  fontFamily: CT.SANS,
+                  fontSize: 12.5,
+                  color: CT.INK_2,
+                  marginTop: 3,
+                  lineHeight: 1.4,
+                }}
+              >
+                {formatMoneyShort(card.totalBudget)} budget · {card.changePct}%
+                change · {card.valueProvenPct}% value proven
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
