@@ -5,6 +5,7 @@ import {
   DIMENSION_FAMILY_MAP,
   type ContextDimension,
   type ContextDimensionFamily,
+  type ContextDimensionUniversal,
 } from "./types";
 
 export interface YamlLoadResult {
@@ -51,7 +52,7 @@ export async function loadYamlToContext(input: {
   ) as ContextDimension;
   const dimensionFamily =
     (parsed.dimension_family as ContextDimensionFamily | undefined) ??
-    DIMENSION_FAMILY_MAP[dimension];
+    DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal];
   const canonicalRecordId = `${input.tenantKey}_enterprise_profile`;
   const title =
     stringValue(parsed.company_name).trim() ||

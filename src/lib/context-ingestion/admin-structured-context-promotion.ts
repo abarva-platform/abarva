@@ -11,7 +11,11 @@ import type {
   RowClassificationResult,
 } from "./csv-upload-connector";
 import { DIMENSION_FAMILY_MAP } from "./types";
-import type { ContextDimension, ContextDimensionFamily } from "./types";
+import type {
+  ContextDimension,
+  ContextDimensionFamily,
+  ContextDimensionUniversal,
+} from "./types";
 
 type CsvRow = Record<string, string>;
 
@@ -432,7 +436,8 @@ export function buildAdminStructuredContextPromotionPlan(
       rows: input.rows.length,
     });
   const dimension = trueDimension(input.template, input.fileName);
-  const dimensionFamily = DIMENSION_FAMILY_MAP[dimension];
+  const dimensionFamily =
+    DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal];
   const sourceId = stableUuid([
     "enterprise_context_sources",
     input.tenantKey,

@@ -14,6 +14,7 @@ import {
   DIMENSION_FAMILY_MAP,
   type ContextDimension,
   type ContextDimensionFamily,
+  type ContextDimensionUniversal,
 } from "@/lib/context-ingestion/types";
 import { loadYamlToContext } from "@/lib/context-ingestion/yaml-loader";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -135,8 +136,14 @@ function asObject(value: unknown): Record<string, unknown> {
 }
 
 function cleanDatasetPath(value: string): string {
-  const root = path.resolve(/* turbopackIgnore: true */ process.cwd(), "datasets");
-  const resolved = path.resolve(/* turbopackIgnore: true */ process.cwd(), value);
+  const root = path.resolve(
+    /* turbopackIgnore: true */ process.cwd(),
+    "datasets",
+  );
+  const resolved = path.resolve(
+    /* turbopackIgnore: true */ process.cwd(),
+    value,
+  );
   if (!resolved.startsWith(`${root}${path.sep}`) && resolved !== root) {
     throw new Error("manifest_load_dataset_path_outside_datasets");
   }
@@ -257,14 +264,17 @@ export async function POST(request: NextRequest) {
     const phases: LoadPhaseResult[] = [];
 
     for (const entry of manifest.entries) {
-      const filePath = path.join(/* turbopackIgnore: true */ datasetRoot, cleanManifestFile(entry.file));
+      const filePath = path.join(
+        /* turbopackIgnore: true */ datasetRoot,
+        cleanManifestFile(entry.file),
+      );
       const bytes = await fs.readFile(filePath);
       const fileText = bytes.toString("utf8");
       const type = entryType(entry.file);
       const dimension = entry.dimension as ContextDimension | undefined;
       const dimensionFamily = (entry.family ??
         (dimension
-          ? DIMENSION_FAMILY_MAP[dimension]
+          ? DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal]
           : null)) as ContextDimensionFamily | null;
 
       if (type === "jsonl" || entry.type === "relationship_graph") {

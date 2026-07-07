@@ -12,6 +12,7 @@ import {
   DIMENSION_FAMILY_MAP,
   type ContextDimension,
   type ContextDimensionFamily,
+  type ContextDimensionUniversal,
   type ContextEvidenceRow,
   type ExtractedContextFact,
 } from "./types";
@@ -174,7 +175,8 @@ export async function commitContextBatch(
 ): Promise<ContextCommitReceipt> {
   const committedAt = input.uploadedAt ?? new Date().toISOString();
   const dimensionFamily =
-    input.dimensionFamily ?? DIMENSION_FAMILY_MAP[input.dimension];
+    input.dimensionFamily ??
+    DIMENSION_FAMILY_MAP[input.dimension as ContextDimensionUniversal];
   const sourceFileId = `manifest-load:${safeSlug(input.tenantKey)}:${safeSlug(
     input.fileName,
   )}`;
