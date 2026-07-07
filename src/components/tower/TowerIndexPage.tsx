@@ -1967,6 +1967,12 @@ function CioPanel({
         background: "#fff",
         padding: 18,
         boxShadow: "0 12px 26px rgba(15, 23, 42, 0.04)",
+        // CSS grid items default to min-width:auto, so a Recharts
+        // ResponsiveContainer's intrinsic sizing can grow this panel past
+        // its grid track (invisibly clipped by an ancestor's overflow, not
+        // reflected in document.body.scrollWidth). Force it to respect the
+        // track instead.
+        minWidth: 0,
       }}
     >
       {eyebrow ? (
