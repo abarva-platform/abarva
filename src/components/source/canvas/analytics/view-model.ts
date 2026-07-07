@@ -164,6 +164,34 @@ export interface GateDeliverableView {
   isReadinessPack?: boolean;
 }
 
+/**
+ * When present, the gate's Approve button is LIVE: clicking it POSTs to the
+ * existing Source approval backend (the same route the standalone
+ * `/source/events/[eventId]/approval` page calls) so approving in-canvas
+ * persists and advances the event identically. This is how the P0 approval is
+ * FOLDED into the Strategy gate — the canvas reuses the real persistence, it
+ * does not fork it. When absent, the Approve button is a presentational
+ * end-state (the current Scope-exemplar behavior).
+ */
+export interface StageGateActionView {
+  /** The event id to approve. */
+  eventId: string;
+  /**
+   * The rationale recorded on the append-only approval record. The route
+   * requires a human-readable note; the canvas sends this verbatim.
+   */
+  rationale: string;
+  /**
+   * The confirmation keys the approve route requires (all sent `true` once the
+   * user has ticked the three gate boxes). Mirrors
+   * `SourceApprovalConfirmations` so the canvas gate attests exactly what the
+   * standalone approval page attests.
+   */
+  confirmationKeys: readonly string[];
+  /** Where to land after a successful approve (defaults to the next stage). */
+  redirectStageKey?: string | null;
+}
+
 /** Beat 3 — the 3-box sponsor confirm + what generates after approval. */
 export interface StageGateView {
   /** Who confirms the gate, e.g. 'K. Oshima, CIO'. */
@@ -174,6 +202,12 @@ export interface StageGateView {
   generates: readonly GateDeliverableView[];
   /** The next stage name, or null if this closes the event. */
   nextStageName: string | null;
+  /**
+   * Optional live-approve wiring. Present only when this gate IS the P0 approval
+   * (Strategy stage, `source_analytics` on); absent renders the presentational
+   * end-state.
+   */
+  action?: StageGateActionView;
 }
 
 // ── Value-type waterfall (analytical stages / value proof) ────────────────────

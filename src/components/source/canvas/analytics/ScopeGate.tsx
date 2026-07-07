@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
 import { ANALYTICS } from './analytics-tokens';
 import type { StageGateView } from './view-model';
 
@@ -17,9 +18,61 @@ interface ScopeGateProps {
  * deliverables + the NEXT phase's readiness pack auto-generate — no build step.
  */
 export function ScopeGate({ gate, stageName }: ScopeGateProps) {
+  const router = useRouter();
   const [confirmed, setConfirmed] = useState<ReadonlySet<number>>(new Set());
+  const [approving, setApproving] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
   const allConfirmed = confirmed.size === gate.confirms.length;
   const last = gate.nextStageName === null;
+  // The gate is LIVE (folds the P0 approval) only when the view attaches an
+  // `action`. Otherwise the Approve button is a presentational end-state, exactly
+  // as the Scope exemplar has always rendered.
+  const action = gate.action ?? null;
+
+  async function submitApprove() {
+    if (!action || !allConfirmed || approving) return;
+    setApproving(true);
+    setApproveError(null);
+    try {
+      const confirmations = Object.fromEntries(
+        action.confirmationKeys.map((key) => [key, true]),
+      );
+      const response = await fetch(
+        `/api/v1/source/events/${action.eventId}/approve`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'approve',
+            notes: action.rationale,
+            confirmations,
+          }),
+        },
+      );
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        detail?: string;
+        stageAdvancedTo?: string | null;
+      };
+      if (!response.ok || payload.error) {
+        setApproveError(
+          payload.detail ?? payload.error ?? 'Approval failed. Try again.',
+        );
+        return;
+      }
+      const target =
+        payload.stageAdvancedTo ?? action.redirectStageKey ?? gate.nextStageName;
+      const stageQuery = target
+        ? `?stage=${encodeURIComponent(String(target).toLowerCase())}`
+        : '';
+      router.push(`/source/events/${action.eventId}${stageQuery}`);
+      router.refresh();
+    } catch {
+      setApproveError('Approval failed. Try again.');
+    } finally {
+      setApproving(false);
+    }
+  }
 
   const cardStyle: CSSProperties = {
     border: `1px solid ${ANALYTICS.LINE}`,
@@ -224,7 +277,8 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
       <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
           type="button"
-          disabled={!allConfirmed}
+          disabled={!allConfirmed || approving}
+          onClick={action ? () => void submitApprove() : undefined}
           style={{
             border: 'none',
             borderRadius: ANALYTICS.RADIUS_SM,
@@ -234,12 +288,14 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
             fontSize: 13.5,
             fontWeight: 600,
             padding: '11px 18px',
-            cursor: allConfirmed ? 'pointer' : 'not-allowed',
+            cursor: allConfirmed && !approving ? 'pointer' : 'not-allowed',
           }}
         >
-          {last
-            ? 'Approve & close event'
-            : `Approve & advance to ${gate.nextStageName} →`}
+          {approving
+            ? 'Approving…'
+            : last
+              ? 'Approve & close event'
+              : `Approve & advance to ${gate.nextStageName} →`}
         </button>
         {!allConfirmed ? (
           <span style={{ fontSize: 11.5, color: ANALYTICS.FAINT }}>
@@ -247,6 +303,22 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
           </span>
         ) : null}
       </div>
+
+      {approveError ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: '10px 12px',
+            borderRadius: ANALYTICS.RADIUS_SM,
+            background: ANALYTICS.RUST_TINT,
+            color: ANALYTICS.RUST,
+            fontSize: 12.5,
+            lineHeight: 1.5,
+          }}
+        >
+          {approveError}
+        </div>
+      ) : null}
     </section>
   );
 }
