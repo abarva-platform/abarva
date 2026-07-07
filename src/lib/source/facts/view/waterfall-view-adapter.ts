@@ -43,23 +43,13 @@ function toFactConfidence(c: EvaluatorConfidence): FactConfidence {
 }
 
 /**
- * Pick the unit for a lever's band from its canonical FactSpec. We use the FIRST
- * of the lever's computation inputs that carries a usd / usd_per_year unit (the
- * value-bearing fact); the band amount is a USD total over the term, so the
- * displayed unit is 'usd'. Falls back to 'usd' when no spec resolves.
+ * The unit a lever's band renders in. Every evaluator sums its inputs to a USD
+ * total over the term, so the band is always 'usd' — regardless of the per-input
+ * unit (pct / fte / count feed the math but are not the band's unit). Kept as a
+ * function so a future non-USD lever family can override here in one place.
  */
-function unitForLever(leverKey: string, archetypeId: string): ValueUnit {
-  const archetype = getSourceArchetype(archetypeId);
-  const rule = archetype?.valueLeverRules?.find((r) => r.key === leverKey);
-  if (!rule) return 'usd';
-  // The evaluator sums to a USD total over the term regardless of the per-input
-  // unit, so the band renders in 'usd'. We still consult the spec to fail loud if
-  // a lever's inputs ever stop resolving.
-  const valueInput = rule.computation.inputs.find((i) => {
-    const spec = factSpecByKey(i.key);
-    return spec?.unit === 'usd' || spec?.unit === 'usd_per_year';
-  });
-  return valueInput ? 'usd' : 'usd';
+function unitForLever(): ValueUnit {
+  return 'usd';
 }
 
 /**
@@ -113,7 +103,7 @@ export function leverResultToBandView(
     id: `wf.${lever.key}`,
     valueType: lever.valueType,
     label: lever.name,
-    unit: unitForLever(lever.key, archetypeId),
+    unit: unitForLever(),
     confidence: toFactConfidence(lever.confidence),
   };
 
