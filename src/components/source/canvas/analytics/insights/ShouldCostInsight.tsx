@@ -100,17 +100,21 @@ export function ShouldCostInsight({ insight }: ShouldCostInsightProps) {
           />
           <Tooltip
             cursor={{ fill: 'rgba(10,10,11,0.03)' }}
-            formatter={(value: number, name: string) => [
-              fmtUsd(value),
-              name === 'headline' ? 'Headline price' : 'Normalization (retained + risk)',
-            ]}
-            labelFormatter={(_label: string, payload) => {
+            formatter={(value, name) => {
+              const amount = typeof value === 'number' ? value : Number(value) || 0;
+              const label =
+                name === 'headline'
+                  ? 'Headline price'
+                  : 'Normalization (retained + risk)';
+              return [fmtUsd(amount), label];
+            }}
+            labelFormatter={(label, payload) => {
               const row = payload?.[0]?.payload as
                 | { label?: string; normalizedTco?: number }
                 | undefined;
               return row?.label
                 ? `${row.label} — normalized TCO ${fmtUsd(row.normalizedTco ?? 0)}`
-                : _label;
+                : label;
             }}
             contentStyle={{
               fontFamily: ANALYTICS.SANS,
@@ -120,7 +124,7 @@ export function ShouldCostInsight({ insight }: ShouldCostInsightProps) {
             }}
           />
           <Legend
-            formatter={(value: string) =>
+            formatter={(value) =>
               value === 'headline' ? 'Headline price' : 'Normalization added'
             }
             wrapperStyle={{ fontFamily: ANALYTICS.SANS, fontSize: 11 }}

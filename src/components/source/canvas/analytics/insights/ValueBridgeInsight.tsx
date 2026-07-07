@@ -91,16 +91,16 @@ export function ValueBridgeInsight({ insight }: ValueBridgeInsightProps) {
             />
             <Tooltip
               cursor={{ fill: 'rgba(10,10,11,0.03)' }}
-              formatter={(_value: number, _name: string, entry) => {
-                const row = entry?.payload as
+              formatter={(_value, _name, entry) => {
+                const row = (entry?.payload ?? undefined) as
                   | { low: number; high: number }
                   | undefined;
-                if (!row) return ['', ''];
-                return [fmtWaterfallUsdRange(row.low, row.high), 'Classified value'];
+                if (!row) return '';
+                return fmtWaterfallUsdRange(row.low, row.high);
               }}
-              labelFormatter={(_label: string, payload) =>
-                (payload?.[0]?.payload as { fullLabel?: string })?.fullLabel ??
-                _label
+              labelFormatter={(label, payload) =>
+                (payload?.[0]?.payload as { fullLabel?: string } | undefined)
+                  ?.fullLabel ?? label
               }
               contentStyle={{
                 fontFamily: ANALYTICS.SANS,
