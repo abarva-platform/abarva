@@ -8,3 +8,4 @@
 export * from './fact-catalog';
 export * from './fact-types';
 export * from './template-fact-map';
+export * from './evaluators';
