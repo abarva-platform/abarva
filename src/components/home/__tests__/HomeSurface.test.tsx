@@ -343,7 +343,7 @@ const v6Browser = {
 
 describe("HomeSurface — Explorer context browser", () => {
   it("renders Home as an Explorer-first context browser with scoped aVa", () => {
-    render(
+    const { container } = render(
       <HomeSurface
         clientKey="apexretail"
         payload={payload}
@@ -357,7 +357,8 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.queryByTestId("agent-dock-panel")).not.toBeInTheDocument();
     expect(screen.getByText("Context Explorer")).toBeInTheDocument();
     expect(screen.getByText("Enterprise overview")).toBeInTheDocument();
-    expect(screen.getByText("Context loaded and mapped")).toBeInTheDocument();
+    expect(screen.queryByText("Context loaded and mapped")).not.toBeInTheDocument();
+    expect(container.querySelectorAll(".hx2-ring")).toHaveLength(1);
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
       "aria-selected",
       "true",

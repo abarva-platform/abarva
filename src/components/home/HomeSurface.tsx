@@ -114,7 +114,7 @@ const CSS = `
 .homex .hx-gapCard p{font-size:13px;line-height:1.55;color:#3d3d36;margin:7px 0 0}
 .homex .hx-gapMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#66708a;margin-top:10px}
 .homex .hx2{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);background:#fbfaf7;color:#111827}
-.homex .hx2-enterprise{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:22px;align-items:center;border-bottom:1px solid #e7e3da;background:#fff;padding:18px 24px}
+.homex .hx2-enterprise{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:22px;align-items:center;border-bottom:1px solid #e7e3da;background:#fff;padding:18px 24px}
 .homex .hx2-kicker,.homex .hx2-cardKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#1f6b3a}
 .homex .hx2-enterprise h1{font-family:var(--font-fraunces),Georgia,serif;font-size:30px;line-height:1.05;margin:6px 0 4px;font-weight:600;color:#111827}
 .homex .hx2-enterprise p{margin:0;color:#536073;font-size:13px}
@@ -122,7 +122,6 @@ const CSS = `
 .homex .hx2-stat{min-width:98px;border:1px solid #e7e3da;border-radius:8px;background:#fbfaf7;padding:9px 11px}
 .homex .hx2-stat span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7b7a72}
 .homex .hx2-stat strong{display:block;margin-top:3px;font-family:var(--font-fraunces),Georgia,serif;font-size:19px;color:#111827}
-.homex .hx2-score{display:grid;place-items:center;gap:4px;color:#536073;font-size:11px;text-align:center}
 .homex .hx2-shell{min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 330px;gap:0;overflow:hidden}
 .homex .hx2-explorer{min-height:0;overflow:auto;border-right:1px solid #e7e3da;background:#f6f3ed;padding:16px}
 .homex .hx2-explorerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
@@ -1108,11 +1107,6 @@ export function HomeSurface({
     (sum, dimension) => sum + dimension.dataThinCells,
     0,
   );
-  const totalScore = completenessScore({
-    rows: totalRows,
-    sources: totalSources,
-    gaps: totalGaps,
-  });
   const explorerItems = dims
     .map((dimension) => {
       const preview = previewForDimension(safeV6Browser, dimension.dimension);
@@ -1257,12 +1251,6 @@ export function HomeSurface({
               <span>Gaps</span>
               <strong>{shortMetric(totalGaps)}</strong>
             </div>
-          </div>
-          <div className="hx2-score">
-            <div className="hx2-ring" style={{ "--score": `${totalScore}%` } as React.CSSProperties}>
-              <span>{totalScore}%</span>
-            </div>
-            <span>Context loaded and mapped</span>
           </div>
         </header>
 
