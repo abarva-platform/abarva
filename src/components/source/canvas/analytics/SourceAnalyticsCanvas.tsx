@@ -8,20 +8,40 @@ import { AnalyticsStageRail } from './AnalyticsStageRail';
 import { ScopeAnalyticsStage } from './ScopeAnalyticsStage';
 import { AvaLauncher } from './AvaLauncher';
 import { SAMPLE_SCOPE_AVA, SAMPLE_SCOPE_STAGE } from './sample-view-model';
+import {
+  SAMPLE_STRATEGY_AVA,
+  SAMPLE_STRATEGY_STAGE,
+} from './strategy-sample-view-model';
 import type { AvaLauncherView, StageAnalyticsView } from './view-model';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
+
+/**
+ * The honest SAMPLE stage view for a given viewing stage. Strategy is the
+ * mandate/intake exemplar; every other stage shares the Scope exemplar until its
+ * own live view wires in. This is what makes clicking Strategy render the
+ * Strategy stage (not the Scope placeholder) when no live view is supplied.
+ */
+function sampleStageViewFor(stageKey: SourceStageKey): StageAnalyticsView {
+  return stageKey === 'strategy' ? SAMPLE_STRATEGY_STAGE : SAMPLE_SCOPE_STAGE;
+}
+
+/** The matching aVa launcher scope for a viewing stage. */
+function sampleAvaFor(stageKey: SourceStageKey): AvaLauncherView {
+  return stageKey === 'strategy' ? SAMPLE_STRATEGY_AVA : SAMPLE_SCOPE_AVA;
+}
 
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
   viewStage: SourceStageKey;
   tenantName: string;
   /**
-   * The stage view to render. Defaults to the sample Scope exemplar while the
-   * value-analytics evaluator slice is being wired — at integration, the route
-   * passes the live `StageAnalyticsView` and the sample falls away.
+   * The stage view to render. When omitted, the canvas renders the honest SAMPLE
+   * view for `viewStage` (Strategy → the mandate exemplar; every other stage →
+   * the Scope exemplar). At integration the route passes the live
+   * `StageAnalyticsView` and the sample falls away.
    */
   stageView?: StageAnalyticsView;
-  /** aVa's launcher scope. Defaults to the sample Scope scope. */
+  /** aVa's launcher scope. Defaults to the sample scope for `viewStage`. */
   avaLauncher?: AvaLauncherView;
 }
 
@@ -55,10 +75,15 @@ export function SourceAnalyticsCanvas({
   event,
   viewStage,
   tenantName,
-  stageView = SAMPLE_SCOPE_STAGE,
-  avaLauncher = SAMPLE_SCOPE_AVA,
+  stageView,
+  avaLauncher,
 }: SourceAnalyticsCanvasProps) {
   const eventMeta = [event.accountName, event.archetype].filter(Boolean).join(' · ');
+  // Select the stage view: the live view when the route supplied one, else the
+  // honest SAMPLE view for the stage on screen. This is the fix for the rail —
+  // clicking Strategy renders the Strategy stage, not the Scope placeholder.
+  const resolvedStageView = stageView ?? sampleStageViewFor(viewStage);
+  const resolvedAva = avaLauncher ?? sampleAvaFor(viewStage);
 
   return (
     <AppShell
@@ -86,9 +111,9 @@ export function SourceAnalyticsCanvas({
             viewStage={viewStage}
             currentStage={event.currentStageKey}
           />
-          <ScopeAnalyticsStage view={stageView} />
+          <ScopeAnalyticsStage view={resolvedStageView} />
         </div>
-        <AvaLauncher launcher={avaLauncher} />
+        <AvaLauncher launcher={resolvedAva} />
       </main>
     </AppShell>
   );

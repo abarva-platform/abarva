@@ -17,6 +17,10 @@ export {
   SAMPLE_SCOPE_STAGE,
   SAMPLE_SCOPE_AVA,
 } from './sample-view-model';
+export {
+  SAMPLE_STRATEGY_STAGE,
+  SAMPLE_STRATEGY_AVA,
+} from './strategy-sample-view-model';
 export type {
   AvaLauncherView,
   FactConfidence,
@@ -28,6 +32,7 @@ export type {
   IntelProvenance,
   SourceIntelViewModel,
   StageAnalyticsView,
+  StageGateActionView,
   StageGateView,
   StageTaskView,
   TaskFileView,

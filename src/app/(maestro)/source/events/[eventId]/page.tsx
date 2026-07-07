@@ -36,6 +36,15 @@ import {
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { readEventFacts } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
+import {
+  buildStrategyStageView,
+  deriveStrategyIntakeFacts,
+} from "@/lib/source/facts/view/strategy-stage-builder";
+import { requireTenancy } from "@/lib/auth/tenancy";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import type { SourceEventRow } from "@/lib/source/queries";
+import type { StageAnalyticsView } from "@/components/source/canvas/analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -90,12 +99,21 @@ export default async function SourceEventDetailPage({
         name: activeClient?.name,
       }) ?? event.accountName;
 
-    // Build a LIVE StageAnalyticsView from the event's committed facts. When the
-    // facts are too thin to compute a single lever (or the read fails), pass
-    // nothing so the canvas renders the honestly-marked SAMPLE view. Never break
+    // Build the stage view. The STRATEGY (P0) stage is the mandate-confirmation
+    // stage and its gate IS the P0 approval — build it from the event's captured
+    // intake and, when the event is genuinely awaiting approval in the strategy
+    // stage and the user can approve, fold the live approve action into its gate.
+    // Every OTHER stage uses the value-waterfall builder as before. Never break
     // the flag-off path — this whole branch is gated by source_analytics.
-    let liveStageView = undefined;
-    if (activeClient?.key) {
+    let liveStageView: StageAnalyticsView | undefined = undefined;
+
+    if (viewStage === "strategy" && activeClient?.key) {
+      liveStageView = await buildStrategyStageForRoute(
+        event.id,
+        activeClient.key,
+        event.currentStageKey,
+      );
+    } else if (activeClient?.key) {
       try {
         const { inputs, citations } = await readEventFacts({
           eventId: event.id,
@@ -271,4 +289,74 @@ export default async function SourceEventDetailPage({
       simpleFrontEnabled={simpleFrontEnabled}
     />
   );
+}
+
+// Lifecycle states where the P0 approval is still pending — the same set the
+// standalone /approval page treats as approvable.
+const STRATEGY_APPROVAL_STATES = new Set([
+  "waiting_on_client",
+  "waiting_on_co_approver",
+  "draft_revision",
+]);
+
+/**
+ * Build the fact-driven STRATEGY (P0) stage view for the analytics canvas.
+ *
+ * Reads the persisted event row (the SAME intake fields the standalone approval
+ * page reads) to fill the Sponsor / Mandate / Value-thesis confirm table, and —
+ * when the event is genuinely awaiting the P0 approval in the strategy stage and
+ * the current user can approve — folds the LIVE approve action into the gate so
+ * approving in-canvas reuses the existing approve backend. When the row can't be
+ * read, returns undefined so the canvas shows the honestly-marked sample view.
+ */
+async function buildStrategyStageForRoute(
+  eventId: string,
+  clientKey: string,
+  currentStageKey: string,
+): Promise<StageAnalyticsView | undefined> {
+  try {
+    const { data } = await getAzureReadFluentClient()
+      .from("source_events")
+      .select(
+        "id, client_key, event_code, event_name, event_type, current_stage_key, lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, scope_description, decision_owner, created_by_user_id, created_at, updated_at",
+      )
+      .eq("id", eventId)
+      .eq("client_key", clientKey)
+      .single();
+    if (!data) return undefined;
+
+    const row = data as SourceEventRow;
+    const facts = deriveStrategyIntakeFacts(row);
+
+    // Only offer the live approve action when the event is genuinely awaiting the
+    // P0 approval in the strategy stage AND the user can approve. The approve
+    // route re-checks access + confirmations server-side regardless; this just
+    // avoids arming a gate that would be rejected.
+    let canApprove = false;
+    const awaitingApproval =
+      currentStageKey === "strategy" &&
+      STRATEGY_APPROVAL_STATES.has(row.lifecycle_state);
+    if (awaitingApproval) {
+      const tenancy = await requireTenancy().catch(() => null);
+      if (tenancy) {
+        const policy = await loadUserSourceAccessPolicy(tenancy, {
+          activeClientKey: clientKey,
+          sourceEventId: eventId,
+        }).catch(() => null);
+        canApprove = policy?.canApproveSourceStages === true;
+      }
+    }
+
+    return buildStrategyStageView({
+      facts,
+      provenance: "live",
+      approve: canApprove ? { eventId, redirectStageKey: "scope" } : null,
+    });
+  } catch (error) {
+    console.error(
+      "[SourceEventDetailPage] strategy stage build failed; falling back to sample",
+      error instanceof Error ? error.message : String(error),
+    );
+    return undefined;
+  }
 }
