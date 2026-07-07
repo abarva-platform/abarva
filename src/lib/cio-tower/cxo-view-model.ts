@@ -272,6 +272,24 @@ function groupKeyForPortfolioValue(row: FactEvidenceRow): string {
     ?? row.fact_key;
 }
 
+// The Lakeshore V7 projection (project-lakeshore-v7-to-tower-standardized.mjs) builds
+// source_label by suffixing the real program/entity name with a fixed set of fact-type
+// descriptors (e.g. "<name> directional promised value"). Facts carry no separate
+// record_name/initiative_name, so source_label is the only place the real name lives;
+// strip the known suffixes (iteratively, since FY2025 trend rows double-suffix) rather
+// than discarding the field, or every program label falls through to a bare fallback.
+const SOURCE_LABEL_SUFFIX_PATTERN = /\s+(FY26 committed budget|directional promised value|directional measured value|local IT FY26 budget|FY26 run budget component|FY26 change budget component|FY2025 trend baseline)$/i;
+
+function cleanedSourceLabel(row: FactEvidenceRow): string | null {
+  const raw = attributeText(row, 'source_label');
+  if (!raw) return null;
+  let cleaned = raw;
+  while (SOURCE_LABEL_SUFFIX_PATTERN.test(cleaned)) {
+    cleaned = cleaned.replace(SOURCE_LABEL_SUFFIX_PATTERN, '').trim();
+  }
+  return cleaned.length > 0 ? cleaned : null;
+}
+
 function programLabel(row: FactEvidenceRow, fallback: string): string {
   return attributeText(row, 'record_name')
     ?? attributeText(row, 'initiative_name')
@@ -280,7 +298,7 @@ function programLabel(row: FactEvidenceRow, fallback: string): string {
     ?? attributeText(row, 'title')
     ?? attributeText(row, 'business_name')
     ?? attributeText(row, 'business_label')
-    ?? attributeText(row, 'source_label')
+    ?? cleanedSourceLabel(row)
     ?? attributeText(row, 'label')
     ?? attributeText(row, 'name')
     ?? row.entity_display_name

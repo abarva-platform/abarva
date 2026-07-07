@@ -314,7 +314,7 @@ try {
   for (const dim of payload.dimensions) {
     await q(client, `insert into intelligence_v7.dimension_registry(dimension_key, contract_version, dimension_file, dimension_label, column_count, metadata, updated_at)
       values($1,$2,$3,$4,$5,$6::jsonb,now())
-      on conflict(dimension_key) do update set dimension_label=excluded.dimension_label, column_count=excluded.column_count, metadata=excluded.metadata, updated_at=now()`,
+      on conflict(dimension_key) do update set contract_version=excluded.contract_version, dimension_file=excluded.dimension_file, dimension_label=excluded.dimension_label, column_count=excluded.column_count, metadata=excluded.metadata, updated_at=now()`,
       [dim.dimensionKey, payload.contractVersion, dim.file, dim.label, dim.columns.length, JSON.stringify(dim.metadata)]);
     const columnRows = dim.columns.map((col, idx) => {
       const meta = dim.metadata.find((m) => m['Internal Field'] === col || m['Client Field'] === col) || {};
