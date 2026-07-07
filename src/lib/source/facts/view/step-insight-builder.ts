@@ -1117,7 +1117,10 @@ export function buildExecDecisionInsight(
   const protectedBand = bandFor(['protected']);
   const riskBand = bandFor(['risk_adjusted']);
 
-  const slices: ExecDecisionSliceView[] = [
+  // Annotate the literal on its own binding so the contextual `ExecDecisionSliceView[]`
+  // type narrows each `valueTypes` to `ValueType[]` (chaining `.filter` directly on the
+  // literal would strip that context and infer `string[]`).
+  const allSlices: ExecDecisionSliceView[] = [
     {
       bucket: 'negotiable',
       label: 'Net negotiable value',
@@ -1139,7 +1142,8 @@ export function buildExecDecisionInsight(
       high: riskBand.high,
       valueTypes: ['risk_adjusted'],
     },
-  ].filter((s) => s.high > 0);
+  ];
+  const slices = allSlices.filter((s) => s.high > 0);
 
   const residualRiskLevers = results
     .filter((r) => r.insufficientEvidence)
@@ -1183,11 +1187,12 @@ export function buildExecDecisionInsight(
   const sNeg = sampleBucket(['incremental_negotiated', 'solution_tightening']);
   const sProt = sampleBucket(['protected']);
   const sRisk = sampleBucket(['risk_adjusted']);
-  const sampleSlices: ExecDecisionSliceView[] = [
+  const allSampleSlices: ExecDecisionSliceView[] = [
     { bucket: 'negotiable', label: 'Net negotiable value', low: sNeg.low, high: sNeg.high, valueTypes: ['incremental_negotiated', 'solution_tightening'] },
     { bucket: 'protected', label: 'Protected value (risk hedge)', low: sProt.low, high: sProt.high, valueTypes: ['protected'] },
     { bucket: 'risk_adjusted', label: 'Risk-adjusted (TCO normalization)', low: sRisk.low, high: sRisk.high, valueTypes: ['risk_adjusted'] },
-  ].filter((s) => s.high > 0);
+  ];
+  const sampleSlices = allSampleSlices.filter((s) => s.high > 0);
   return {
     kind: 'exec_decision',
     provenance: 'sample',
