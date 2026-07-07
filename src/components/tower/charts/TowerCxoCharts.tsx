@@ -34,6 +34,8 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  type LabelProps,
+  type YAxisTickContentProps,
 } from "recharts";
 import type {
   CioTowerCxoBenchmarkRow,
@@ -184,7 +186,9 @@ export function ValueBridgeChart({
             <LabelList
               dataKey="committed"
               position="top"
-              formatter={(v: number) => (v > 0 ? formatMoneyShort(v) : "")}
+              formatter={(v) =>
+                Number(v) > 0 ? formatMoneyShort(Number(v)) : ""
+              }
               style={{
                 fontFamily: CT.SERIF,
                 fontSize: 20,
@@ -202,7 +206,9 @@ export function ValueBridgeChart({
             <LabelList
               dataKey="promised"
               position="top"
-              formatter={(v: number) => (v > 0 ? formatMoneyShort(v) : "")}
+              formatter={(v) =>
+                Number(v) > 0 ? formatMoneyShort(Number(v)) : ""
+              }
               style={{
                 fontFamily: CT.SERIF,
                 fontSize: 20,
@@ -221,7 +227,9 @@ export function ValueBridgeChart({
             <LabelList
               dataKey="measured"
               position="center"
-              formatter={(v: number) => (v > 0 ? formatMoneyShort(v) : "")}
+              formatter={(v) =>
+                Number(v) > 0 ? formatMoneyShort(Number(v)) : ""
+              }
               style={{
                 fontFamily: CT.SANS,
                 fontSize: 13,
@@ -240,8 +248,8 @@ export function ValueBridgeChart({
             <LabelList
               dataKey="toProve"
               position="center"
-              formatter={(v: number) =>
-                v > 0 ? `${formatMoneyShort(v)} to prove` : ""
+              formatter={(v) =>
+                Number(v) > 0 ? `${formatMoneyShort(Number(v))} to prove` : ""
               }
               style={{ fontFamily: CT.SANS, fontSize: 11, fill: CT.INK_2 }}
             />
@@ -297,16 +305,15 @@ interface ValueProvenChartRow {
   labelText: string;
 }
 
-function ValueProvenEndLabel(props: {
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  index?: number;
-  rows: ValueProvenChartRow[];
-}) {
-  const { x = 0, y = 0, width = 0, height = 0, index = 0, rows } = props;
-  const row = rows[index];
+function ValueProvenEndLabel(
+  props: LabelProps & { rows: ValueProvenChartRow[] },
+) {
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const width = Number(props.width ?? 0);
+  const height = Number(props.height ?? 0);
+  const index = Number(props.index ?? 0);
+  const row = props.rows[index];
   if (!row) return null;
   return (
     <text
@@ -389,14 +396,15 @@ export function ValueProvenBarChart({
             tickLine={false}
           />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              formatMoneyShort(value),
+            formatter={(value, name) => [
+              formatMoneyShort(Number(value)),
               name === "measured"
                 ? "Measured"
                 : "Unproven (promised − measured)",
             ]}
-            labelFormatter={(_label: string, payload) =>
-              payload?.[0]?.payload?.fullProgram ?? _label
+            labelFormatter={(label, payload) =>
+              (payload?.[0]?.payload as { fullProgram?: string } | undefined)
+                ?.fullProgram ?? label
             }
             contentStyle={{
               fontFamily: CT.SANS,
@@ -450,14 +458,17 @@ interface BudgetChartRow {
   mostlyRun: boolean;
 }
 
-function BudgetYAxisTick(props: {
-  x?: number;
-  y?: number;
-  payload?: { value: string };
-  rowsByEntity: Map<string, BudgetChartRow>;
-}) {
-  const { x = 0, y = 0, payload, rowsByEntity } = props;
-  const row = payload ? rowsByEntity.get(payload.value) : undefined;
+function BudgetYAxisTick(
+  props: Partial<YAxisTickContentProps> & {
+    rowsByEntity: Map<string, BudgetChartRow>;
+  },
+) {
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const payload = props.payload;
+  const row = payload
+    ? props.rowsByEntity.get(String(payload.value))
+    : undefined;
   return (
     <g transform={`translate(${x},${y})`}>
       <text
@@ -488,14 +499,12 @@ function BudgetYAxisTick(props: {
   );
 }
 
-function BudgetSegmentLabel(props: {
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  value?: number;
-}) {
-  const { x = 0, y = 0, width = 0, height = 0, value = 0 } = props;
+function BudgetSegmentLabel(props: LabelProps) {
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const width = Number(props.width ?? 0);
+  const height = Number(props.height ?? 0);
+  const value = Number(props.value ?? 0);
   if (!value || width < 34) return null;
   return (
     <text
@@ -515,16 +524,13 @@ function BudgetSegmentLabel(props: {
   );
 }
 
-function BudgetTotalLabel(props: {
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  index?: number;
-  rows: BudgetChartRow[];
-}) {
-  const { x = 0, y = 0, width = 0, height = 0, index = 0, rows } = props;
-  const row = rows[index];
+function BudgetTotalLabel(props: LabelProps & { rows: BudgetChartRow[] }) {
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const width = Number(props.width ?? 0);
+  const height = Number(props.height ?? 0);
+  const index = Number(props.index ?? 0);
+  const row = props.rows[index];
   if (!row) return null;
   return (
     <text
@@ -663,12 +669,13 @@ export function BudgetRunChangeChart({
             tickLine={false}
           />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              formatMoneyShort(value),
+            formatter={(value, name) => [
+              formatMoneyShort(Number(value)),
               name === "run" ? "Run" : "Change",
             ]}
-            labelFormatter={(_label: string, payload) =>
-              payload?.[0]?.payload?.fullEntity ?? _label
+            labelFormatter={(label, payload) =>
+              (payload?.[0]?.payload as { fullEntity?: string } | undefined)
+                ?.fullEntity ?? label
             }
             contentStyle={{
               fontFamily: CT.SANS,
