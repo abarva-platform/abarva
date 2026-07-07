@@ -2,7 +2,7 @@ import { demoSafeClientText } from "@/lib/client-config";
 
 export interface HomeKnowVisibleSanitizerAudit {
   sanitizerApplied: boolean;
-  sanitizerReason: "none" | "duplicate_tenant_opening";
+  sanitizerReason: "none" | "duplicate_tenant_opening" | "markdown_markup";
   semanticLoss: false;
   changedFields: string[];
   beforePrefix?: string;
@@ -53,8 +53,9 @@ function sanitizeValue<T>(
     if (key && TECHNICAL_ID_KEYS.has(key)) {
       return value;
     }
+    const demoSafeValue = demoSafeClientText(value);
     return collapseRepeatedTenantOpening(
-      demoSafeClientText(value),
+      stripVisibleMarkdownMarkup(demoSafeValue, audit, path),
       audit,
       path,
     ) as T;
@@ -82,6 +83,20 @@ function sanitizeValue<T>(
   return value;
 }
 
+function stripVisibleMarkdownMarkup(
+  value: string,
+  audit: HomeKnowVisibleSanitizerAudit,
+  path: string,
+): string {
+  const normalized = value
+    .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+    .replace(/__([^_\n]+)__/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "");
+  if (normalized === value) return value;
+  recordSanitizerChange(audit, "markdown_markup", path, value, normalized);
+  return normalized;
+}
+
 function collapseRepeatedTenantOpening(
   value: string,
   audit: HomeKnowVisibleSanitizerAudit,
@@ -91,18 +106,34 @@ function collapseRepeatedTenantOpening(
     /\bFor\s+([^,\n]+),\s+For\s+\1,\s*/gi,
     (match, repeatedName: string) => {
       const replacement = `For ${repeatedName.trim()}, `;
-      if (!audit.sanitizerApplied) {
-        audit.sanitizerApplied = true;
-        audit.sanitizerReason = "duplicate_tenant_opening";
-        audit.beforePrefix = prefixForAudit(value);
-        audit.afterPrefix = prefixForAudit(value.replace(match, replacement));
-      }
-      if (!audit.changedFields.includes(path)) {
-        audit.changedFields.push(path);
-      }
+      recordSanitizerChange(
+        audit,
+        "duplicate_tenant_opening",
+        path,
+        value,
+        value.replace(match, replacement),
+      );
       return replacement;
     },
   );
+}
+
+function recordSanitizerChange(
+  audit: HomeKnowVisibleSanitizerAudit,
+  reason: Exclude<HomeKnowVisibleSanitizerAudit["sanitizerReason"], "none">,
+  path: string,
+  before: string,
+  after: string,
+): void {
+  if (!audit.sanitizerApplied) {
+    audit.sanitizerApplied = true;
+    audit.sanitizerReason = reason;
+    audit.beforePrefix = prefixForAudit(before);
+    audit.afterPrefix = prefixForAudit(after);
+  }
+  if (!audit.changedFields.includes(path)) {
+    audit.changedFields.push(path);
+  }
 }
 
 function prefixForAudit(value: string): string {
