@@ -77,7 +77,35 @@ const nextConfig: NextConfig = {
       // /intelligence the canonical surface — Sentinel chat dominant
       // with the reactive knowledge pane. The old /preview/intelligence
       // redirects are retired; /intelligence resolves to
-      // src/app/intelligence/page.tsx directly.
+      // src/app/(maestro)/intelligence/page.tsx (advisory board) directly.
+      //
+      // The "sunset legacy surfaces" change deleted the entire legacy
+      // src/app/intelligence/* leaf-route tree (quality, patterns,
+      // signals, solutions, map, topics, brief, author, synthesize,
+      // context-demo, failure-modes) but added NO redirects — so those
+      // bookmarked paths 404. The knowledge Quality lens in particular
+      // was still reachable in stale deployments and rendered a blank
+      // main-content zone. Land all of these on the canonical advisory
+      // surface. NOTE: `/intelligence/ask` is intentionally NOT redirected
+      // here — it is owned by a parallel Intelligence workstream and may
+      // resolve to its own route; a catch-all would shadow it, so each
+      // dead leaf is enumerated explicitly instead.
+      { source: '/intelligence/quality', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/quality/:path*', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/patterns', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/patterns/:path*', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/signals', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/signals/:path*', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/solutions', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/solutions/:path*', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/map', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/topics', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/topics/:path*', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/brief', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/author', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/synthesize', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/context-demo', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/failure-modes/:path*', destination: '/intelligence', permanent: false },
       // Legacy sponsor URLs now land on the person profile route instead of
       // dumping users into the programs preview shell.
       { source: '/sponsor/:path*', destination: '/persons/:path*', permanent: false },
