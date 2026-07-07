@@ -42,8 +42,11 @@ interface ActionResult {
   redirectTo?: string;
   eventId?: string;
   newLifecycleState?: string;
-  /** Stage the event advanced to on approval (Strategy-at-P0 → "scope"). */
+  /** Stage the event advanced to on approval (Strategy-at-P0 → "scope"). The
+   *  approve route returns `stageAdvancedTo`; `advancedToStage` kept as a
+   *  backward-compatible fallback. */
   advancedToStage?: string;
+  stageAdvancedTo?: string;
   detail?: string;
   error?: string;
 }
@@ -106,7 +109,23 @@ export function EventApprovalCard({
             action !== "reject" && generateMemoOnApprove
               ? `${reason}\n\nStrategy gate confirmed at approval — sponsor sign-off, value target set, archetype confirmed.`
               : reason,
+          // The approve route validates `confirmations` (all three required keys)
+          // via evaluateSourceApprovalDecision — sending a bare `confirmed` flag
+          // 422s for gate tenants. Map the gate checkboxes (or the single confirm
+          // for non-gate tenants) onto the canonical confirmation keys. The
+          // in-canvas Strategy gate sends the same shape.
           confirmed: true,
+          confirmations: {
+            strategyMemoReviewed: generateMemoOnApprove
+              ? strategyGate.sponsor
+              : confirmed,
+            valueTargetConfirmed: generateMemoOnApprove
+              ? strategyGate.value
+              : confirmed,
+            archetypeRigorConfirmed: generateMemoOnApprove
+              ? strategyGate.archetype
+              : confirmed,
+          },
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as ActionResult;
@@ -144,8 +163,9 @@ export function EventApprovalCard({
         // the approve route advances to Scope and returns `advancedToStage`;
         // `currentStageHref` was built from the pre-approve stage, so using it
         // would drop the user back on the now-completed Strategy view.
-        const target = payload.advancedToStage
-          ? `/source/events/${eventId}?stage=${payload.advancedToStage}`
+        const advancedTo = payload.stageAdvancedTo ?? payload.advancedToStage;
+        const target = advancedTo
+          ? `/source/events/${eventId}?stage=${advancedTo}`
           : currentStageHref;
         router.push(target);
         router.refresh();
