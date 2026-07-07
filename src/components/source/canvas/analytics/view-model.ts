@@ -255,6 +255,125 @@ export interface ValueWaterfallView {
   bands: readonly ValueWaterfallBandView[];
 }
 
+// ── Per-step killer insight (the "✦ Intelligence" tab's value-proving chart) ──
+//
+// Each Source workflow step's Intelligence tab delivers ITS killer, value-proving
+// insight: a plain-English "so what" headline + a Recharts chart, grounded in the
+// fact/lever engine. A step insight is a DISCRIMINATED UNION by `kind`; each kind
+// carries exactly the chart-shaped data its component needs, plus the honesty
+// metadata every AbarVa number carries (provenance + an optional note). This is
+// the substrate the parallel evaluator slice already produces (levers, waterfall);
+// the insight layer reshapes it into the per-step "what does this tell the buyer
+// they couldn't see without AbarVa?" moment.
+//
+// Honesty invariants (mirroring the value-waterfall doctrine):
+//   • `provenance: 'sample'` (or a MODEL kind whose data is illustrative) MUST
+//     carry a note; it is never dressed as live.
+//   • A kind with no evidence renders an honest empty state ("provide evidence to
+//     size this"), never a fabricated number.
+//   • Ranges, never bare point estimates, on every $ figure.
+
+/** The insight kinds. Build the first three; the model is declared for all steps. */
+export type StepInsightKind =
+  | 'value_pool' // P0 Strategy — value pool decomposed by lever
+  | 'value_bridge' // Pricing — the value-type waterfall (≥20% proof)
+  | 'should_cost_normalization' // Evaluation — normalized TCO flips the winner
+  | 'evidence_gap_priced' // Scope — unprotectable $ until evidence lands (future)
+  | 'value_protected_exposed' // RFP — $ locked by clauses vs still exposed (future)
+  | 'vendor_dodge_map' // Responses — vendor tells (future)
+  | 'captured_vs_target' // BAFO — captured vs target by lever (future)
+  | 'committed_vs_realized'; // Value — committed vs realized over time (future)
+
+/** One horizontal bar in the value-pool insight — a lever's low–high $ range. */
+export interface ValuePoolBarView {
+  /** Stable id (the lever key) for chart keys + sort stability. */
+  leverKey: string;
+  /** Human lever name, e.g. 'Change-order leakage'. */
+  label: string;
+  /** The value type — drives the bar color. */
+  valueType: ValueType;
+  /** Low end of the at-stake range (USD over term). */
+  low: number;
+  /** High end of the at-stake range (USD over term). */
+  high: number;
+  /** Confidence in the range. */
+  confidence: FactConfidence;
+}
+
+/** Strategy — VALUE POOL decomposed by lever. "Is the prize worth the event?" */
+export interface ValuePoolInsightView {
+  kind: 'value_pool';
+  provenance: IntelProvenance;
+  /** The "so what" — e.g. "$X–Y at stake across N levers; biggest is <lever> ($Z)". */
+  headline: string;
+  /** One bar per QUANTIFIED lever, biggest-first. Empty → honest empty state. */
+  bars: readonly ValuePoolBarView[];
+  /** Levers that could not be sized yet (named, not fabricated). */
+  needsEvidenceLevers: readonly string[];
+  /** Sample/model honesty note when provenance is 'sample'. */
+  note?: string;
+}
+
+/** Pricing — the VALUE BRIDGE (the value-type waterfall wrapped as an insight). */
+export interface ValueBridgeInsightView {
+  kind: 'value_bridge';
+  provenance: IntelProvenance;
+  /** The "so what" — the ≥20% classified-value framing. */
+  headline: string;
+  /** The full waterfall (all its honesty rules preserved by the renderer). */
+  waterfall: ValueWaterfallView;
+  note?: string;
+}
+
+/** One vendor's headline vs normalized cost, decomposed for the grouped bars. */
+export interface ShouldCostVendorView {
+  /** Vendor id (cover name for the model). */
+  vendorKey: string;
+  /** Display name, e.g. 'Vendor A'. */
+  label: string;
+  /** The headline / list price the vendor bid (USD over term). */
+  headlinePrice: number;
+  /**
+   * The normalizing adjustments added on top of headline to reach true TCO —
+   * e.g. retained FTE cost, weak-SLA risk. Each is a debit that makes bids
+   * comparable. Rendered stacked above headline in the normalized bar.
+   */
+  adjustments: readonly { label: string; amount: number }[];
+  /** headlinePrice + Σ adjustments — the normalized TCO. */
+  normalizedTco: number;
+}
+
+/**
+ * Evaluation — SHOULD-COST NORMALIZATION. "The cheapest bid is a trap." Ships as
+ * a MODEL (illustrative vendors) because vendor-bid facts are not in the fact
+ * model yet — `provenance` is always 'sample' here and the note says so.
+ */
+export interface ShouldCostInsightView {
+  kind: 'should_cost_normalization';
+  provenance: IntelProvenance;
+  /** The "so what" — the trap ("Vendor B is cheapest on paper; normalized, A wins by $X"). */
+  headline: string;
+  /** The vendors compared (headline vs normalized). */
+  vendors: readonly ShouldCostVendorView[];
+  /** The vendor key that wins on HEADLINE price (the paper-cheapest). */
+  headlineWinnerKey: string;
+  /** The vendor key that wins on NORMALIZED TCO (the real winner). */
+  normalizedWinnerKey: string;
+  /** Always present for the model — states it goes live when responses ingest. */
+  note?: string;
+}
+
+/**
+ * The per-step insight the "✦ Intelligence" tab foregrounds. A discriminated
+ * union — the renderer switches on `kind`. Absent → the tab falls back to the
+ * existing IntelPanel read (+ optional waterfall). This is additive; the intake
+ * beats and the value-waterfall beat are untouched.
+ */
+export type StepInsightView =
+  | ValuePoolInsightView
+  | ValueBridgeInsightView
+  | ShouldCostInsightView;
+
 // ── The stage-level composite the canvas renders ─────────────────────────────
 
 /**
@@ -279,6 +398,13 @@ export interface StageAnalyticsView {
    * value proof is available. Absent on pure-intake stages.
    */
   waterfall?: ValueWaterfallView;
+  /**
+   * Optional per-step KILLER INSIGHT — the value-proving chart the "✦
+   * Intelligence" tab foregrounds for THIS step (value pool at Strategy, value
+   * bridge at Pricing, should-cost at Evaluation, …). Additive: when present the
+   * tab leads with it; when absent it falls back to the IntelPanel read.
+   */
+  stepInsight?: StepInsightView;
 }
 
 /**

@@ -6,6 +6,7 @@ import { IntelPanel } from './IntelPanel';
 import { TaskChecklist } from './TaskChecklist';
 import { ScopeGate } from './ScopeGate';
 import { ValueWaterfall } from './ValueWaterfall';
+import { StepInsightPanel } from './insights';
 import type { StageAnalyticsView } from './view-model';
 
 interface ScopeAnalyticsStageProps {
@@ -185,13 +186,23 @@ export function ScopeAnalyticsStage({
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Per-step KILLER INSIGHT leads the tab when this step carries one:
+              Strategy → value pool, Pricing → value bridge, Evaluation →
+              should-cost. Each foregrounds its "so what" headline above the
+              chart. Absent → the IntelPanel read carries the tab. */}
+          {view.stepInsight ? (
+            <StepInsightPanel insight={view.stepInsight} />
+          ) : null}
           {/* Beat 1 — "What Source brings to <stage>" lives INSIDE the
               Intelligence tab (per design), not above the tabs. */}
           <IntelPanel intel={view.intel} stageName={view.stageName} />
           {/* The value-type waterfall renders ONLY when the stage genuinely
-              carries one (value/analytical stages). Intake stages do not —
-              there is no value pool to show, and none is fabricated. */}
-          {view.waterfall ? <ValueWaterfall waterfall={view.waterfall} /> : null}
+              carries one (value/analytical stages) AND the step insight is not
+              already the value bridge (which renders its own waterfall — no
+              double render). Intake stages fabricate nothing. */}
+          {view.waterfall && view.stepInsight?.kind !== 'value_bridge' ? (
+            <ValueWaterfall waterfall={view.waterfall} />
+          ) : null}
         </div>
       )}
     </div>

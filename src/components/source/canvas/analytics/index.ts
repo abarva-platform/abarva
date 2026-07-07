@@ -14,6 +14,12 @@ export { ValueWaterfall } from './ValueWaterfall';
 export { AvaLauncher } from './AvaLauncher';
 export { AnalyticsStageRail } from './AnalyticsStageRail';
 export {
+  StepInsightPanel,
+  ValuePoolInsight,
+  ValueBridgeInsight,
+  ShouldCostInsight,
+} from './insights';
+export {
   SAMPLE_SCOPE_STAGE,
   SAMPLE_SCOPE_AVA,
 } from './sample-view-model';
@@ -30,11 +36,18 @@ export type {
   IntelPointTone,
   IntelPointView,
   IntelProvenance,
+  ShouldCostInsightView,
+  ShouldCostVendorView,
   SourceIntelViewModel,
   StageAnalyticsView,
   StageGateActionView,
   StageGateView,
   StageTaskView,
+  StepInsightKind,
+  StepInsightView,
+  ValueBridgeInsightView,
+  ValuePoolBarView,
+  ValuePoolInsightView,
   TaskFileView,
   TaskProvenanceView,
   TaskReviewRowView,

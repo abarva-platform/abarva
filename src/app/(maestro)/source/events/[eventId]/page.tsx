@@ -36,6 +36,7 @@ import {
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { readEventFacts } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
+import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
 import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
@@ -44,7 +45,10 @@ import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { SourceEventRow } from "@/lib/source/queries";
-import type { StageAnalyticsView } from "@/components/source/canvas/analytics";
+import type {
+  StageAnalyticsView,
+  StepInsightView,
+} from "@/components/source/canvas/analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -106,33 +110,54 @@ export default async function SourceEventDetailPage({
     // Every OTHER stage uses the value-waterfall builder as before. Never break
     // the flag-off path — this whole branch is gated by source_analytics.
     let liveStageView: StageAnalyticsView | undefined = undefined;
+    // The per-step killer insight (value pool / value bridge / should-cost) for
+    // the viewing stage. Built from the same facts the stage view reads, so it
+    // rides live when facts exist and a clearly-marked sample/model otherwise.
+    let stepInsight: StepInsightView | undefined = undefined;
 
-    if (viewStage === "strategy" && activeClient?.key) {
-      liveStageView = await buildStrategyStageForRoute(
-        event.id,
-        activeClient.key,
-        event.currentStageKey,
-      );
-    } else if (activeClient?.key) {
+    if (activeClient?.key) {
       try {
         const { inputs, citations } = await readEventFacts({
           eventId: event.id,
           clientKey: activeClient.key,
         });
-        liveStageView =
-          buildLiveStageView({
+        // eventType is not on the summary; leave it unset so the builder
+        // resolves the value archetype the same way buildLiveStageView does
+        // (the first archetype carrying value-lever rules — today AMS).
+        stepInsight =
+          buildStepInsight({
+            stageKey: viewStage,
             inputs,
             citations,
             baselineLabel: "Value at stake (event estimate)",
             baselineAmount: event.valueAtStakeUsd ?? 0,
-            stageKey: viewStage,
           }) ?? undefined;
+
+        if (viewStage !== "strategy") {
+          liveStageView =
+            buildLiveStageView({
+              inputs,
+              citations,
+              baselineLabel: "Value at stake (event estimate)",
+              baselineAmount: event.valueAtStakeUsd ?? 0,
+              stageKey: viewStage,
+            }) ?? undefined;
+        }
       } catch (error) {
         console.error(
           "[SourceEventDetailPage] live analytics build failed; falling back to sample",
           error instanceof Error ? error.message : String(error),
         );
         liveStageView = undefined;
+        stepInsight = undefined;
+      }
+
+      if (viewStage === "strategy") {
+        liveStageView = await buildStrategyStageForRoute(
+          event.id,
+          activeClient.key,
+          event.currentStageKey,
+        );
       }
     }
 
@@ -142,6 +167,7 @@ export default async function SourceEventDetailPage({
         viewStage={viewStage}
         tenantName={analyticsTenantName}
         stageView={liveStageView}
+        stepInsight={stepInsight}
       />
     );
   }
