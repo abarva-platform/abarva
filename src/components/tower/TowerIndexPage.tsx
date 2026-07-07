@@ -11,8 +11,7 @@ import {
   ValueBridgeChart,
   ValueProvenBarChart,
   BudgetRunChangeChart,
-  BenchmarkTenantCards,
-  BenchmarkRadarChart,
+  BenchmarkPeer2x2Chart,
 } from "@/components/tower/charts/TowerCxoCharts";
 import {
   AtlasChatPanel,
@@ -2881,33 +2880,18 @@ function CxoGovernedCommandCenter({
   return (
     <div
       style={{
-        padding: "32px 40px 90px",
-        maxWidth: 1160,
+        padding: "0 40px 90px",
+        maxWidth: 1080,
         margin: "0 auto",
       }}
     >
-      <div
-        style={{
-          fontFamily: T.SERIF,
-          fontSize: 26,
-          fontWeight: 500,
-          letterSpacing: "-0.02em",
-          lineHeight: 1.22,
-          maxWidth: "38ch",
-          marginBottom: 32,
-          color: T.INK,
-        }}
-      >
-        {model.headline}
-      </div>
-
       <section
         aria-label="Tower command center sections"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
-          marginBottom: 32,
+          marginBottom: 30,
           borderBottom: `1px solid ${T.RULE}`,
         }}
       >
@@ -2963,13 +2947,9 @@ function CxoGovernedCommandCenter({
           }}
         >
           {flagshipProgram ? (
-            <CioPanel
-              eyebrow="Flagship Program"
-              title="The single largest value promise in the portfolio."
-              plain
-            >
+            <section style={{ minWidth: 0 }}>
               <ValueBridgeChart program={flagshipProgram} />
-            </CioPanel>
+            </section>
           ) : null}
 
           <div>
@@ -3069,24 +3049,12 @@ function CxoGovernedCommandCenter({
           }}
         >
           {model.benchmarkRows.length > 0 ? (
-            <>
-              <CioPanel
-                eyebrow="Peer Comparison"
-                title="Against real governed tenants — not a synthetic corpus."
-              >
-                <BenchmarkTenantCards
-                  rows={model.benchmarkRows}
-                  currentTenantName={model.tenantName}
-                />
-              </CioPanel>
-
-              <CioPanel
-                eyebrow="Shape Comparison"
-                title="Every measure, one shape."
-              >
-                <BenchmarkRadarChart rows={model.benchmarkRows} />
-              </CioPanel>
-            </>
+            <section style={{ minWidth: 0 }}>
+              <BenchmarkPeer2x2Chart
+                rows={model.benchmarkRows}
+                currentTenantName={model.tenantName}
+              />
+            </section>
           ) : null}
 
           <CioPanel
@@ -6453,8 +6421,8 @@ export function TowerIndexPage({
         {/* Masthead */}
         <div
           style={{
-            padding: "28px 40px 0",
-            maxWidth: 1160,
+            padding: "28px 40px 24px",
+            maxWidth: 1080,
             margin: "0 auto",
           }}
         >
@@ -6478,12 +6446,12 @@ export function TowerIndexPage({
                   marginBottom: 11,
                 }}
               >
-                Portfolio
+                Tower
               </div>
               <h1
                 style={{
                   fontFamily: T.SERIF,
-                  fontSize: 38,
+                  fontSize: 40,
                   fontWeight: 500,
                   letterSpacing: "-0.025em",
                   lineHeight: 1.03,
@@ -6492,37 +6460,66 @@ export function TowerIndexPage({
                   whiteSpace: "nowrap",
                 }}
               >
-                {towerMastheadName}
+                CXO Executive Dashboard
               </h1>
-              <div
-                style={{
-                  marginTop: 9,
-                  color: T.INK_2,
-                  fontSize: 16,
-                  fontWeight: 400,
-                  lineHeight: 1.5,
-                }}
-              >
-                <em>Every number citable.</em>
-              </div>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 11,
-                  marginTop: 13,
+                  marginTop: 10,
                   flexWrap: "wrap",
-                  fontSize: 12.5,
                   color: T.INK_2,
+                  fontSize: 14,
+                  fontWeight: 400,
+                  lineHeight: 1.35,
                 }}
               >
-                <span>{towerEntityCount} entities</span>
-                {towerBudgetEnvelope ? (
+                <span style={{ fontFamily: T.SERIF, fontWeight: 500 }}>
+                  {towerMastheadName}
+                </span>
+                <span style={{ color: T.GRAY }}>·</span>
+                <em>Every number citable.</em>
+                {towerEntityCount > 0 ? (
                   <>
-                    <span aria-hidden="true">·</span>
-                    <span>{towerBudgetEnvelope.displayValue} FY26 in view</span>
+                    <span style={{ color: T.GRAY }}>·</span>
+                    <span>
+                      {towerEntityCount} entit
+                      {towerEntityCount === 1 ? "y" : "ies"}
+                    </span>
                   </>
                 ) : null}
+                {towerBudgetEnvelope ? (
+                  <>
+                    <span style={{ color: T.GRAY }}>·</span>
+                    <span>
+                      <b
+                        style={{
+                          color: T.INK,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {towerBudgetEnvelope.displayValue}
+                      </b>{" "}
+                      FY26 in view
+                    </span>
+                  </>
+                ) : null}
+              </div>
+              <div
+                style={{
+                  marginTop: 12,
+                  color: T.INK_2,
+                  fontSize: 13,
+                  fontWeight: 520,
+                  lineHeight: 1.35,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                Budget, top programs, value proof, vendor exposure, and risks
+                the CIO should inspect this week.
               </div>
             </div>
             {reportDownloadSlot ? (
