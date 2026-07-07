@@ -12,17 +12,22 @@
  * a CLI, and a target table.
  */
 
-import { aiControlTowerSource } from './ai-control-tower';
-import { azureCostSource } from './azure-cost';
-import { claudeCodeSource } from './claude-code';
-import { copilotSource } from './copilot';
-import { cursorSource } from './cursor';
-import { jiraSource } from './jira';
-import { servicenowCmdbSource } from './servicenow-cmdb';
-import { githubDoraSource } from './github-dora';
-import { servicenowItsmSource } from './servicenow-itsm';
+import { azureCostSource } from "./azure-cost";
+import { claudeCodeSource } from "./claude-code";
+import { copilotSource } from "./copilot";
+import { cursorSource } from "./cursor";
+import { jiraSource } from "./jira";
+import { servicenowCmdbSource } from "./servicenow-cmdb";
+import { githubDoraSource } from "./github-dora";
+import { servicenowItsmSource } from "./servicenow-itsm";
 
-export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
+export type TowerIngestKind =
+  | "cost"
+  | "inventory"
+  | "productivity"
+  | "risk"
+  | "usage"
+  | "value";
 
 export interface TowerIngestSource {
   /** Stable key used as the source identifier on disk and in registries. */
@@ -54,7 +59,6 @@ export interface TowerIngestSource {
 }
 
 export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
-  aiControlTowerSource,
   azureCostSource,
   claudeCodeSource,
   copilotSource,
@@ -66,7 +70,9 @@ export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
   // Sibling slices append here, alphabetical by `key`.
 ];
 
-export function findTowerIngestSource(key: string): TowerIngestSource | undefined {
+export function findTowerIngestSource(
+  key: string,
+): TowerIngestSource | undefined {
   return TOWER_INGEST_SOURCES.find((s) => s.key === key);
 }
 

@@ -8,6 +8,11 @@ import { AppShell } from "@/components/shell/AppShell";
 import { MetricProvenance } from "@/components/tower/MetricProvenance";
 import { ExecutiveActionQueuePanel } from "@/components/tower/ExecutiveActionQueuePanel";
 import {
+  ValueProvenBarChart,
+  BudgetRunChangeChart,
+  BenchmarkComparisonChart,
+} from "@/components/tower/charts/TowerCxoCharts";
+import {
   AtlasChatPanel,
   type AtlasMessage,
 } from "@/components/atlas/AtlasChatPanel";
@@ -421,7 +426,12 @@ function CanvasViewTabs({
 }
 
 type CioDashboardView =
-  "overview" | "visuals" | "portfolio" | "budget" | "vendors" | "ai_roi";
+  | "overview"
+  | "visuals"
+  | "portfolio"
+  | "budget"
+  | "vendors"
+  | "ai_roi";
 
 const CIO_DASHBOARD_VIEWS: Array<{
   key: CioDashboardView;
@@ -732,7 +742,10 @@ function buildCioDashboardModel(
   );
   const measuredTotal =
     cioTowerMetricNumber(metricPackets, "measured_value_ytd") ??
-    initiatives.reduce((sum, initiative) => sum + initiativeValue(initiative), 0);
+    initiatives.reduce(
+      (sum, initiative) => sum + initiativeValue(initiative),
+      0,
+    );
   const initiativeEvidenceCount =
     cioTowerMetricRowCount(initiativeBudgetPacket) ??
     cioTowerMetricRowCount(promisedValuePacket) ??
@@ -2225,7 +2238,9 @@ function CxoGovernedMeasureCard({ card }: { card: CioTowerCxoMeasureCard }) {
       >
         {card.displayValue}
       </div>
-      <div style={{ marginTop: 6, color: T.INK_2, fontSize: 12, lineHeight: 1.35 }}>
+      <div
+        style={{ marginTop: 6, color: T.INK_2, fontSize: 12, lineHeight: 1.35 }}
+      >
         {footer}
       </div>
     </article>
@@ -2239,20 +2254,29 @@ function findCxoCard(
   return cards.find((card) => card.measureKey === measureKey) ?? null;
 }
 
-function safeRatio(numerator: number | null | undefined, denominator: number | null | undefined): number | null {
-  if (!Number.isFinite(Number(numerator)) || !Number.isFinite(Number(denominator))) return null;
+function safeRatio(
+  numerator: number | null | undefined,
+  denominator: number | null | undefined,
+): number | null {
+  if (
+    !Number.isFinite(Number(numerator)) ||
+    !Number.isFinite(Number(denominator))
+  )
+    return null;
   const den = Number(denominator);
   if (den <= 0) return null;
   return Number(numerator) / den;
 }
 
 function formatPlainPercent(ratio: number | null | undefined): string {
-  if (ratio === null || ratio === undefined || !Number.isFinite(ratio)) return "gap";
+  if (ratio === null || ratio === undefined || !Number.isFinite(ratio))
+    return "gap";
   return `${(ratio * 100).toFixed(1)}%`;
 }
 
 function formatMoneyGap(value: number | null | undefined): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return "gap";
+  if (value === null || value === undefined || !Number.isFinite(value))
+    return "gap";
   return formatMoney(value);
 }
 
@@ -2302,7 +2326,9 @@ function DerivedCxoMetricCard({
       >
         {value}
       </div>
-      <div style={{ marginTop: 6, color: T.INK_2, fontSize: 12, lineHeight: 1.35 }}>
+      <div
+        style={{ marginTop: 6, color: T.INK_2, fontSize: 12, lineHeight: 1.35 }}
+      >
         {detail}
       </div>
     </article>
@@ -2329,40 +2355,54 @@ function CxoGovernedTable({
   }
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
         <thead>
           <tr>
-            {["Item", "Metric", "Value", "Timing", "Where it comes from"].map((head) => (
-              <th
-                key={head}
-                style={{
-                  textAlign: head === "Value" ? "right" : "left",
-                  padding: "0 10px 10px",
-                  fontFamily: T.MONO,
-                  fontSize: 9,
-                  letterSpacing: "1.2px",
-                  color: T.GRAY_DK,
-                  textTransform: "uppercase",
-                }}
-              >
-                {head}
-              </th>
-            ))}
+            {["Item", "Metric", "Value", "Timing", "Where it comes from"].map(
+              (head) => (
+                <th
+                  key={head}
+                  style={{
+                    textAlign: head === "Value" ? "right" : "left",
+                    padding: "0 10px 10px",
+                    fontFamily: T.MONO,
+                    fontSize: 9,
+                    letterSpacing: "1.2px",
+                    color: T.GRAY_DK,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {head}
+                </th>
+              ),
+            )}
           </tr>
         </thead>
         <tbody>
           {rows.slice(0, 8).map((row, index) => (
-            <tr key={`${row.label}-${row.measure}-${index}`} style={{ borderTop: `1px solid ${T.RULE}` }}>
+            <tr
+              key={`${row.label}-${row.measure}-${index}`}
+              style={{ borderTop: `1px solid ${T.RULE}` }}
+            >
               <td style={{ padding: "12px 10px", minWidth: 220 }}>
                 <strong>{row.label}</strong>
                 <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
-                  {row.type ? labelize(row.type) : "type not loaded"} · {row.confidence}
+                  {row.type ? labelize(row.type) : "type not loaded"} ·{" "}
+                  {row.confidence}
                 </div>
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
                 {labelizeCioMeasureKey(row.measure)}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {row.value}
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
@@ -2418,7 +2458,17 @@ function CxoPortfolioValuePackTable({
               <th
                 key={head}
                 style={{
-                  textAlign: ["Budget", "Actual YTD", "Promised value", "Measured value", "Gap", "Realization", "Value / $"].includes(head) ? "right" : "left",
+                  textAlign: [
+                    "Budget",
+                    "Actual YTD",
+                    "Promised value",
+                    "Measured value",
+                    "Gap",
+                    "Realization",
+                    "Value / $",
+                  ].includes(head)
+                    ? "right"
+                    : "left",
                   padding: "0 10px 10px",
                   fontFamily: T.MONO,
                   fontSize: 9,
@@ -2452,43 +2502,94 @@ function CxoPortfolioValuePackTable({
                   {row.confidence} confidence
                 </div>
               </td>
-              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 150 }}>
+              <td
+                style={{ padding: "12px 10px", color: T.INK_2, minWidth: 150 }}
+              >
                 {row.owner}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {row.budget}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {row.actualSpend}
                 <div style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 3 }}>
                   {row.spendBurnRate} burn
                 </div>
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {row.promisedValue}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {row.measuredValue}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850, color: row.valueGap === "gap" ? T.AMBER : T.INK }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                  color: row.valueGap === "gap" ? T.AMBER : T.INK,
+                }}
+              >
                 {row.valueGap}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {row.valueRealizationRate}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {row.measuredValuePerDollarSpent}
               </td>
-              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 150 }}>
+              <td
+                style={{ padding: "12px 10px", color: T.INK_2, minWidth: 150 }}
+              >
                 {row.evidenceStatus}
               </td>
-              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 220 }}>
+              <td
+                style={{ padding: "12px 10px", color: T.INK_2, minWidth: 220 }}
+              >
                 <strong style={{ color: T.INK }}>{row.inspectionReason}</strong>
                 <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
                   {row.blocker}
                 </div>
               </td>
-              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 190 }}>
+              <td
+                style={{ padding: "12px 10px", color: T.INK_2, minWidth: 190 }}
+              >
                 {row.source}
               </td>
             </tr>
@@ -2504,17 +2605,42 @@ function CxoBudgetMix({
 }: {
   cards: ReadonlyArray<CioTowerCxoMeasureCard>;
 }) {
-  const total = findCxoCard(cards, "total_it_budget_fy26")?.valueNumeric ?? null;
+  const total =
+    findCxoCard(cards, "total_it_budget_fy26")?.valueNumeric ?? null;
   const run = findCxoCard(cards, "run_budget_fy26")?.valueNumeric ?? null;
   const change = findCxoCard(cards, "change_budget_fy26")?.valueNumeric ?? null;
-  const initiative = findCxoCard(cards, "initiative_budget_fy26")?.valueNumeric ?? null;
-  const actualSpend = findCxoCard(cards, "actual_spend_ytd")?.valueNumeric ?? null;
+  const initiative =
+    findCxoCard(cards, "initiative_budget_fy26")?.valueNumeric ?? null;
+  const actualSpend =
+    findCxoCard(cards, "actual_spend_ytd")?.valueNumeric ?? null;
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
-      <DerivedCxoMetricCard label="Run ratio" value={formatPlainPercent(safeRatio(run, total))} detail={`${formatMoneyGap(run)} run / ${formatMoneyGap(total)} total`} />
-      <DerivedCxoMetricCard label="Change ratio" value={formatPlainPercent(safeRatio(change, total))} detail={`${formatMoneyGap(change)} change / ${formatMoneyGap(total)} total`} />
-      <DerivedCxoMetricCard label="Initiative intensity" value={formatPlainPercent(safeRatio(initiative, total))} detail={`${formatMoneyGap(initiative)} funded work / ${formatMoneyGap(total)} total`} />
-      <DerivedCxoMetricCard label="Spend burn rate" value={formatPlainPercent(safeRatio(actualSpend, initiative))} detail={`${formatMoneyGap(actualSpend)} YTD spend / ${formatMoneyGap(initiative)} initiative budget`} />
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gap: 12,
+      }}
+    >
+      <DerivedCxoMetricCard
+        label="Run ratio"
+        value={formatPlainPercent(safeRatio(run, total))}
+        detail={`${formatMoneyGap(run)} run / ${formatMoneyGap(total)} total`}
+      />
+      <DerivedCxoMetricCard
+        label="Change ratio"
+        value={formatPlainPercent(safeRatio(change, total))}
+        detail={`${formatMoneyGap(change)} change / ${formatMoneyGap(total)} total`}
+      />
+      <DerivedCxoMetricCard
+        label="Initiative intensity"
+        value={formatPlainPercent(safeRatio(initiative, total))}
+        detail={`${formatMoneyGap(initiative)} funded work / ${formatMoneyGap(total)} total`}
+      />
+      <DerivedCxoMetricCard
+        label="Spend burn rate"
+        value={formatPlainPercent(safeRatio(actualSpend, initiative))}
+        detail={`${formatMoneyGap(actualSpend)} YTD spend / ${formatMoneyGap(initiative)} initiative budget`}
+      />
     </div>
   );
 }
@@ -2524,30 +2650,71 @@ function CxoValueRealization({
 }: {
   cards: ReadonlyArray<CioTowerCxoMeasureCard>;
 }) {
-  const promised = findCxoCard(cards, "promised_value_fy26")?.valueNumeric ?? null;
-  const measured = findCxoCard(cards, "measured_value_ytd")?.valueNumeric ?? null;
-  const actualSpend = findCxoCard(cards, "actual_spend_ytd")?.valueNumeric ?? null;
-  const initiative = findCxoCard(cards, "initiative_budget_fy26")?.valueNumeric ?? null;
-  const gap = promised !== null && measured !== null ? Math.max(promised - measured, 0) : null;
+  const promised =
+    findCxoCard(cards, "promised_value_fy26")?.valueNumeric ?? null;
+  const measured =
+    findCxoCard(cards, "measured_value_ytd")?.valueNumeric ?? null;
+  const actualSpend =
+    findCxoCard(cards, "actual_spend_ytd")?.valueNumeric ?? null;
+  const initiative =
+    findCxoCard(cards, "initiative_budget_fy26")?.valueNumeric ?? null;
+  const gap =
+    promised !== null && measured !== null
+      ? Math.max(promised - measured, 0)
+      : null;
   const measuredPerSpent = safeRatio(measured, actualSpend);
   const promisedPerInitiative = safeRatio(promised, initiative);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
-      <DerivedCxoMetricCard label="Promised value" value={formatMoneyGap(promised)} detail="FY26 forecast value from governed initiative records" />
-      <DerivedCxoMetricCard label="Measured value" value={formatMoneyGap(measured)} detail="YTD measured value only where loaded" tone={measured ? "good" : "warn"} />
-      <DerivedCxoMetricCard label="Value gap" value={formatMoneyGap(gap)} detail="Promised value not yet measured YTD" tone={gap && gap > 0 ? "warn" : "good"} />
-      <DerivedCxoMetricCard label="Value per dollar spent" value={measuredPerSpent === null ? "gap" : `${measuredPerSpent.toFixed(2)}x`} detail={`${formatMoneyGap(measured)} measured / ${formatMoneyGap(actualSpend)} spent YTD`} />
-      <DerivedCxoMetricCard label="Promised value per initiative $" value={promisedPerInitiative === null ? "gap" : `${promisedPerInitiative.toFixed(2)}x`} detail={`${formatMoneyGap(promised)} promised / ${formatMoneyGap(initiative)} initiative budget`} />
-      <DerivedCxoMetricCard label="Measured realization rate" value={formatPlainPercent(safeRatio(measured, promised))} detail={`${formatMoneyGap(measured)} measured / ${formatMoneyGap(promised)} promised`} />
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gap: 12,
+      }}
+    >
+      <DerivedCxoMetricCard
+        label="Promised value"
+        value={formatMoneyGap(promised)}
+        detail="FY26 forecast value from governed initiative records"
+      />
+      <DerivedCxoMetricCard
+        label="Measured value"
+        value={formatMoneyGap(measured)}
+        detail="YTD measured value only where loaded"
+        tone={measured ? "good" : "warn"}
+      />
+      <DerivedCxoMetricCard
+        label="Value gap"
+        value={formatMoneyGap(gap)}
+        detail="Promised value not yet measured YTD"
+        tone={gap && gap > 0 ? "warn" : "good"}
+      />
+      <DerivedCxoMetricCard
+        label="Value per dollar spent"
+        value={
+          measuredPerSpent === null ? "gap" : `${measuredPerSpent.toFixed(2)}x`
+        }
+        detail={`${formatMoneyGap(measured)} measured / ${formatMoneyGap(actualSpend)} spent YTD`}
+      />
+      <DerivedCxoMetricCard
+        label="Promised value per initiative $"
+        value={
+          promisedPerInitiative === null
+            ? "gap"
+            : `${promisedPerInitiative.toFixed(2)}x`
+        }
+        detail={`${formatMoneyGap(promised)} promised / ${formatMoneyGap(initiative)} initiative budget`}
+      />
+      <DerivedCxoMetricCard
+        label="Measured realization rate"
+        value={formatPlainPercent(safeRatio(measured, promised))}
+        detail={`${formatMoneyGap(measured)} measured / ${formatMoneyGap(promised)} promised`}
+      />
     </div>
   );
 }
 
-function CxoTenantBenchmark({
-  model,
-}: {
-  model: CioTowerCxoViewModel;
-}) {
+function CxoTenantBenchmark({ model }: { model: CioTowerCxoViewModel }) {
   if (model.benchmarkRows.length === 0) {
     return (
       <TowerEmptyState
@@ -2559,10 +2726,19 @@ function CxoTenantBenchmark({
   }
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
         <thead>
           <tr>
-            {["Peer", "FY26 IT budget", "Run mix", "Change mix", "Initiative intensity", "Value realization"].map((head) => (
+            {[
+              "Peer",
+              "FY26 IT budget",
+              "Run mix",
+              "Change mix",
+              "Initiative intensity",
+              "Value realization",
+            ].map((head) => (
               <th
                 key={head}
                 style={{
@@ -2592,20 +2768,32 @@ function CxoTenantBenchmark({
               <td style={{ padding: "12px 10px", fontWeight: 900 }}>
                 {row.isCurrent ? model.tenantName : row.label}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {formatMoneyGap(row.totalBudget)}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right" }}>
                 {formatPlainPercent(safeRatio(row.runBudget, row.totalBudget))}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                {formatPlainPercent(safeRatio(row.changeBudget, row.totalBudget))}
+                {formatPlainPercent(
+                  safeRatio(row.changeBudget, row.totalBudget),
+                )}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                {formatPlainPercent(safeRatio(row.initiativeBudget, row.totalBudget))}
+                {formatPlainPercent(
+                  safeRatio(row.initiativeBudget, row.totalBudget),
+                )}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                {formatPlainPercent(safeRatio(row.measuredValue, row.promisedValue))}
+                {formatPlainPercent(
+                  safeRatio(row.measuredValue, row.promisedValue),
+                )}
               </td>
             </tr>
           ))}
@@ -2655,8 +2843,10 @@ const CXO_COMMAND_SECTIONS: Array<{
 
 function CxoGovernedCommandCenter({
   model,
+  budgetRollups = [],
 }: {
   model: CioTowerCxoViewModel;
+  budgetRollups?: ReadonlyArray<TowerBudgetRollup>;
 }) {
   const [activeSection, setActiveSection] =
     useState<CxoCommandSection>("value");
@@ -2672,7 +2862,9 @@ function CxoGovernedCommandCenter({
   ]
     .map((measureKey) => findCxoCard(model.cards, measureKey))
     .filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
-  const parityCard = model.cards.find((card) => card.measureKey === model.parityMeasureKey);
+  const parityCard = model.cards.find(
+    (card) => card.measureKey === model.parityMeasureKey,
+  );
 
   return (
     <div style={{ padding: "18px 32px 34px" }}>
@@ -2724,7 +2916,14 @@ function CxoGovernedCommandCenter({
           paddingBottom: 12,
         }}
       >
-        <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 7,
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
           {CXO_COMMAND_SECTIONS.map((section) => {
             const selected = section.key === activeSection;
             return (
@@ -2755,84 +2954,168 @@ function CxoGovernedCommandCenter({
       </section>
 
       {activeSection === "value" ? (
-      <section style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: T.MONO, fontSize: 9.5, letterSpacing: "1.5px", textTransform: "uppercase", color: T.GOLD, fontWeight: 900, marginBottom: 9 }}>
-          Value Command Center
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
-          {commandCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
-        </div>
-      </section>
+        <section style={{ marginBottom: 20 }}>
+          <div
+            style={{
+              fontFamily: T.MONO,
+              fontSize: 9.5,
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              color: T.GOLD,
+              fontWeight: 900,
+              marginBottom: 9,
+            }}
+          >
+            Value Command Center
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 12,
+            }}
+          >
+            {commandCards.map((card) => (
+              <CxoGovernedMeasureCard key={card.measureKey} card={card} />
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {activeSection === "budget" ? (
-      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
-        <CioPanel eyebrow="Budget Mix" title="Where the money is committed.">
-          <CxoBudgetMix cards={model.cards} />
-        </CioPanel>
+        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+          {budgetRollups.length > 0 ? (
+            <CioPanel
+              eyebrow="Budget by Entity"
+              title="Holdco and operating companies, run vs. change."
+            >
+              <BudgetRunChangeChart rows={budgetRollups} />
+            </CioPanel>
+          ) : null}
 
-        <CioPanel eyebrow="Value Realization" title="Whether the portfolio is paying back.">
-          <CxoValueRealization cards={model.cards} />
-        </CioPanel>
-      </section>
+          <CioPanel eyebrow="Budget Mix" title="Where the money is committed.">
+            <CxoBudgetMix cards={model.cards} />
+          </CioPanel>
+
+          <CioPanel
+            eyebrow="Value Realization"
+            title="Whether the portfolio is paying back."
+          >
+            <CxoValueRealization cards={model.cards} />
+          </CioPanel>
+        </section>
       ) : null}
 
       {activeSection === "portfolio" ? (
-      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
-        <CioPanel eyebrow="Portfolio Value Pack" title="Which funded programs have value proof, owners, blockers, and gaps.">
-          <CxoPortfolioValuePackTable rows={model.portfolioValueRows} />
-        </CioPanel>
-      </section>
+        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+          {model.portfolioValueRows.length > 0 ? (
+            <CioPanel
+              eyebrow="Value Proven"
+              title="How much of the promise is proven, by program."
+            >
+              <ValueProvenBarChart rows={model.portfolioValueRows} />
+            </CioPanel>
+          ) : null}
+
+          <CioPanel
+            eyebrow="Portfolio Value Pack"
+            title="Which funded programs have value proof, owners, blockers, and gaps."
+          >
+            <CxoPortfolioValuePackTable rows={model.portfolioValueRows} />
+          </CioPanel>
+        </section>
       ) : null}
 
       {activeSection === "benchmark" ? (
-      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
-        <CioPanel eyebrow="Tenant Benchmark" title="How this portfolio compares with peers.">
-          <CxoTenantBenchmark model={model} />
-        </CioPanel>
-      </section>
+        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+          {model.benchmarkRows.length > 0 ? (
+            <CioPanel
+              eyebrow="Peer Comparison"
+              title="Against real governed tenants — not a synthetic corpus."
+            >
+              <BenchmarkComparisonChart rows={model.benchmarkRows} />
+            </CioPanel>
+          ) : null}
+
+          <CioPanel
+            eyebrow="Tenant Benchmark"
+            title="How this portfolio compares with peers."
+          >
+            <CxoTenantBenchmark model={model} />
+          </CioPanel>
+        </section>
       ) : null}
 
       {activeSection === "evidence" ? (
-      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
-        <CioPanel eyebrow="Evidence and Trust" title="Where leadership can inspect the numbers.">
-          <CxoGovernedTable
-            rows={model.trustRows}
-            emptyTitle="Source detail is not ready yet."
-            emptyBody="Tower needs source references before it can show the inspection path."
-          />
-        </CioPanel>
-      </section>
+        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+          <CioPanel
+            eyebrow="Evidence and Trust"
+            title="Where leadership can inspect the numbers."
+          >
+            <CxoGovernedTable
+              rows={model.trustRows}
+              emptyTitle="Source detail is not ready yet."
+              emptyBody="Tower needs source references before it can show the inspection path."
+            />
+          </CioPanel>
+        </section>
       ) : null}
 
       {activeSection === "ask" ? (
-      <section
-        data-cio-tower-parity-measure-key={model.parityMeasureKey}
-        data-cio-tower-parity-dashboard-value={parityCard?.displayValue ?? "gap"}
-        style={{
-          border: `1px solid ${T.PURPLE}`,
-          borderRadius: 14,
-          background: T.PURPLE_BG,
-          padding: "16px 20px",
-        }}
-      >
-        <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: T.PURPLE, fontWeight: 900 }}>
-          Ask aVa
-        </div>
-        <h3 style={{ margin: "7px 0 0", fontFamily: T.SERIF, fontSize: 21, lineHeight: 1.12 }}>
-          Ask “what is my IT spend?” and aVa should explain the same board number in plain language.
-        </h3>
-        <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13.5 }}>
-          Tower is anchored on <strong>{parityCard?.displayValue ?? "gap"}</strong> for the executive
-          budget envelope. Use aVa to explain what the number means, where value is lagging,
-          and what to inspect next.
-        </p>
-        {model.gaps.length > 0 ? (
-          <div style={{ marginTop: 12, color: T.AMBER, fontSize: 13.5, fontWeight: 750 }}>
-            Business gaps: {model.gaps.join(" ")}
+        <section
+          data-cio-tower-parity-measure-key={model.parityMeasureKey}
+          data-cio-tower-parity-dashboard-value={
+            parityCard?.displayValue ?? "gap"
+          }
+          style={{
+            border: `1px solid ${T.PURPLE}`,
+            borderRadius: 14,
+            background: T.PURPLE_BG,
+            padding: "16px 20px",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: T.MONO,
+              fontSize: 10,
+              letterSpacing: "1.8px",
+              textTransform: "uppercase",
+              color: T.PURPLE,
+              fontWeight: 900,
+            }}
+          >
+            Ask aVa
           </div>
-        ) : null}
-      </section>
+          <h3
+            style={{
+              margin: "7px 0 0",
+              fontFamily: T.SERIF,
+              fontSize: 21,
+              lineHeight: 1.12,
+            }}
+          >
+            Ask “what is my IT spend?” and aVa should explain the same board
+            number in plain language.
+          </h3>
+          <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13.5 }}>
+            Tower is anchored on{" "}
+            <strong>{parityCard?.displayValue ?? "gap"}</strong> for the
+            executive budget envelope. Use aVa to explain what the number means,
+            where value is lagging, and what to inspect next.
+          </p>
+          {model.gaps.length > 0 ? (
+            <div
+              style={{
+                marginTop: 12,
+                color: T.AMBER,
+                fontSize: 13.5,
+                fontWeight: 750,
+              }}
+            >
+              Business gaps: {model.gaps.join(" ")}
+            </div>
+          ) : null}
+        </section>
       ) : null}
     </div>
   );
@@ -2925,14 +3208,20 @@ function CioDashboardPanel({
             <CioPanel title="Vendor exposure.">
               <CioBarList
                 rows={model.spendByVendor.slice(0, 6)}
-                total={model.spendByVendor.reduce((sum, row) => sum + row.amount, 0)}
+                total={model.spendByVendor.reduce(
+                  (sum, row) => sum + row.amount,
+                  0,
+                )}
                 empty="No vendor contract values are loaded."
               />
             </CioPanel>
             <CioPanel title="AI investment families.">
               <CioBarList
                 rows={model.aiSpendRows.slice(0, 6)}
-                total={model.aiSpendRows.reduce((sum, row) => sum + row.amount, 0)}
+                total={model.aiSpendRows.reduce(
+                  (sum, row) => sum + row.amount,
+                  0,
+                )}
                 empty="No AI-tagged spend rows are loaded."
               />
             </CioPanel>
@@ -3225,7 +3514,11 @@ function SubstratePressure({
 // ─── Pressure card ────────────────────────────────────────────────────────────
 type PressureType = "cost" | "dupl" | "vend" | "adopt" | "value";
 type PortfolioCanvasView =
-  "pressures" | "alignment" | "contract" | "adoption" | "evidence";
+  | "pressures"
+  | "alignment"
+  | "contract"
+  | "adoption"
+  | "evidence";
 
 interface PressureProps {
   type: PressureType;
@@ -5946,10 +6239,9 @@ export function TowerIndexPage({
   const initialOpener: AtlasMessage = {
     id: "atlas-opener",
     role: "atlas",
-    content:
-      cxoView
-        ? cxoView.headline
-        : hasTowerEvidenceForAva
+    content: cxoView
+      ? cxoView.headline
+      : hasTowerEvidenceForAva
         ? cioDashboardModel.executiveNarrative
         : (atlasObservationsView?.headline ??
           "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions."),
@@ -5959,18 +6251,17 @@ export function TowerIndexPage({
   ]);
   const [atlasPending, setAtlasPending] = useState(false);
   const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
-  const initialPrompts: string[] =
-    hasTowerEvidenceForAva
-      ? [
-          ...cioDashboardModel.scenarioQuestions,
-          ...cioDashboardModel.decisionActions.map((action) => action.ask),
-        ].slice(0, 7)
-      : (atlasObservationsView?.suggestedPrompts.slice() ?? [
-          "What Tower evidence is loaded for this tenant?",
-          "Which Tower metrics are missing source evidence?",
-          "Which portfolio or vendor facts should be loaded next?",
-          "What can Tower answer today without assumptions?",
-        ]);
+  const initialPrompts: string[] = hasTowerEvidenceForAva
+    ? [
+        ...cioDashboardModel.scenarioQuestions,
+        ...cioDashboardModel.decisionActions.map((action) => action.ask),
+      ].slice(0, 7)
+    : (atlasObservationsView?.suggestedPrompts.slice() ?? [
+        "What Tower evidence is loaded for this tenant?",
+        "Which Tower metrics are missing source evidence?",
+        "Which portfolio or vendor facts should be loaded next?",
+        "What can Tower answer today without assumptions?",
+      ]);
   const [atlasSuggestions, setAtlasSuggestions] = useState<AtlasSuggestion[]>(
     initialPrompts.map((label) => ({
       label,
@@ -5980,10 +6271,7 @@ export function TowerIndexPage({
   );
 
   const sendToAtlas = useCallback(
-    async (
-      text: string,
-      attachments: AttachmentRef[],
-    ) => {
+    async (text: string, attachments: AttachmentRef[]) => {
       const trimmed = text.trim();
       if (!trimmed && attachments.length === 0) return;
       // Without a tenant binding we can't authenticate the chat call. Keep
@@ -6074,10 +6362,7 @@ export function TowerIndexPage({
         setAtlasPending(false);
       }
     },
-    [
-      clientId,
-      atlasThreadId,
-    ],
+    [clientId, atlasThreadId],
   );
 
   const handleMetricAsk = useCallback<MetricAskHandler>(
@@ -6207,8 +6492,8 @@ export function TowerIndexPage({
                   lineHeight: 1.3,
                 }}
               >
-                Budget, top programs, value proof, vendor exposure, and risks the CIO
-                should inspect this week.
+                Budget, top programs, value proof, vendor exposure, and risks
+                the CIO should inspect this week.
               </div>
             </div>
             {reportDownloadSlot ? (
@@ -6230,7 +6515,10 @@ export function TowerIndexPage({
                 closeHref={closeDetailHref}
               />
             ) : cxoView ? (
-              <CxoGovernedCommandCenter model={cxoView} />
+              <CxoGovernedCommandCenter
+                model={cxoView}
+                budgetRollups={budgetRollups}
+              />
             ) : (
               <>
                 <CioDashboardTabs
@@ -6279,7 +6567,12 @@ export function TowerIndexPage({
   return (
     <AppShell
       surface="tower"
-      topBarProps={{ tenantName, preserveTenantName: true, showLocked: true, context }}
+      topBarProps={{
+        tenantName,
+        preserveTenantName: true,
+        showLocked: true,
+        context,
+      }}
       middleStrip={towerSubmenuSlot}
     >
       <AtlasChatPanel
