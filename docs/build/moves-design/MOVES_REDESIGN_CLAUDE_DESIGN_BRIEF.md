@@ -38,13 +38,15 @@ Use Recharts (or, in the standalone mockup, faithful SVG that matches Recharts o
 - **Cost-scenario grouped bars** — Big 4 (1.8–2.8M) vs boutique-hybrid (0.95–1.45M) vs offshore-heavy (0.62–0.98M).
 - **Sensitivity tornado**; first-year value range.
 
-### 4. Archetype-benchmarked, not generic — and the archetype is a *classified shape*, not a use-case label
-Do **not** invent a use-case archetype (like "AI-assisted intake/triage"). Use cases are unbounded; the archetype is the bounded **solution *shape*** a move is *classified into* — one of 8 governed shapes that already exist in code (`automation`, `assistant`, `retrieval_copilot`, `human_in_loop_agent`, `full_agentic_workflow`, `data_remediation`, `vendor_led_implementation`, `process_redesign`). The design should show, per phase:
-- **The resolved shape** (e.g., "Classified as: Human-in-the-Loop Agent") — output of the existing classifier, not a hand-picked label.
-- **Readiness on 3 dimensions** (data / control / eval) with a small "ambition vs readiness" indicator — the governing rule is *ambition must not exceed readiness*; surface the gaps to close.
-- **Composed benchmarks** next to this move's actuals — the typical value lever / baseline / classic trap for `(shape × industry × function)`, tagged by source (taxonomy trap · industry baseline · or **"empirical — N comparable moves"** once the case corpus has data).
+### 4. Solution building blocks — a *bundle*, not a single archetype label
+**Canonical model: `MOVES_SOLUTION_BUILDING_BLOCKS.md` (read it).** A Move is **not** one archetype — it is a **composed bundle of 3–6 reusable building blocks** drawn from a governed set of **10**: process redesign · data readiness/remediation · knowledge/retrieval copilot · AI-assisted decision support · workflow automation · human-in-the-loop agent · analytics/intelligence layer · system/platform implementation · controls/governance/risk · value-tracking/operating-cadence. Do **not** invent use-case labels; do **not** reduce it to a single shape.
 
-For the mockup, the benchmark panel reads as *"for this shape, in this industry, similar moves see X; you're at Y"* — composed and learned, never a static per-use-case card. (See `MOVES_ANALYTICS_LAYER_SPEC.md` §5.)
+The design must show, per phase:
+- **A simple "Recommended solution building blocks" card** — the bundle for this Move (e.g., *"Redesign the intake process · Clean up contract metadata · Add AI-assisted triage · Configure workflow inside CLM · Keep attorney approval controls · Track value in Tower"*), plus a **"Not recommended yet"** line with a reason (e.g., *"Fully autonomous contract review — legal/control readiness not high enough"*). That "not yet" line is the `ambition ≤ readiness` guardrail made visible.
+- **Blocks drive the phase content** (this is the point, not the label): in **P2** the selected blocks dictate *what evidence to ask for*; in **P4** they become *workstreams*; each finding/chart on the page hangs under the block it belongs to (process · data-quality · AI-adoption · control · value metric groups).
+- **Benchmarks are composed** for `(block × industry × function)`, tagged by source (block-playbook trap · industry baseline · or *"empirical — N comparable moves"*). Never a static per-use-case card.
+
+For the mockup, the insight/benchmark panel reads as *"for this block, in this industry, similar moves see X; you're at Y."* (See `MOVES_SOLUTION_BUILDING_BLOCKS.md` and `MOVES_ANALYTICS_LAYER_SPEC.md` §5.)
 
 ## Codebase map (so the mockup maps to real wiring)
 
