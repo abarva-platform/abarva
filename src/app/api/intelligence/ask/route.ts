@@ -603,7 +603,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           if (event.type === "delta" && event.text) {
             assistantText += event.text;
             const displayText = displaySafeIntelligenceDelta(event.text);
-            if (!displayText.trim()) continue;
+            if (!displayText.trim() && !answerOnlyStreaming) continue;
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({ ...event, text: displayText }) + "\n",
