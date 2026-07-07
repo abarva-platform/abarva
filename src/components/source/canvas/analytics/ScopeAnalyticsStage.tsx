@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ANALYTICS } from './analytics-tokens';
 import { IntelPanel } from './IntelPanel';
 import { TaskChecklist } from './TaskChecklist';
@@ -15,20 +15,39 @@ interface ScopeAnalyticsStageProps {
 type StageTab = 'inputs' | 'intel';
 
 /**
- * The redesigned Source stage page — the three-beat pattern rendered on the
- * canvas:
+ * The redesigned Source stage page — aligned to the standalone design:
  *
- *   [ Intel we bring ]  +  [ Your inputs & feedback ]  →  [ Deliverable ]
+ *   [ H1 + purpose ]
+ *   [ progress bar · N of M complete · Continue to gate → ]
+ *   [ tabs: Inputs to gate | ✦ Intelligence ]     ← directly under the header
  *
- * Beat 1 (intel) is always present. The "Inputs to gate" tab carries beats 2
- * (task checklist) and 3 (the gate); the "Intelligence" tab foregrounds the
- * engine's read + the value-type waterfall. This is the Scope stage as the
- * intake exemplar — every intake stage renders from the same `StageAnalyticsView`.
+ * The "Inputs to gate" tab carries the task checklist (beat 2) and the gate
+ * (beat 3). The "Intelligence" tab foregrounds the engine's read for THIS stage
+ * ("What Source brings to <stage>") — and the value-type waterfall ONLY when the
+ * stage actually has one. Intake stages (Scope) have no waterfall: the value
+ * pool is a downstream artifact, not something to fabricate at Scope.
  */
 export function ScopeAnalyticsStage({ view }: ScopeAnalyticsStageProps) {
   const [tab, setTab] = useState<StageTab>('inputs');
+  const gateRef = useRef<HTMLDivElement>(null);
 
-  const headStyle: CSSProperties = { marginBottom: 20 };
+  const { done, total } = useMemo(() => {
+    const t = view.tasks.length;
+    const d = view.tasks.filter((task) => task.state === 'done').length;
+    return { done: d, total: t };
+  }, [view.tasks]);
+  const allComplete = total > 0 && done === total;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  const goToGate = () => {
+    setTab('inputs');
+    // Let the tab switch commit, then reveal the gate.
+    requestAnimationFrame(() =>
+      gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    );
+  };
+
+  const headStyle: CSSProperties = { marginBottom: 18 };
 
   return (
     <div data-testid="scope-analytics-stage">
@@ -59,10 +78,67 @@ export function ScopeAnalyticsStage({ view }: ScopeAnalyticsStageProps) {
         </p>
       </div>
 
-      {/* Beat 1 — always on the page, above the fold. */}
-      <IntelPanel intel={view.intel} />
+      {/* Progress bar + Continue to gate — the design's top control. */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 18,
+          margin: '0 0 18px',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              height: 6,
+              borderRadius: 999,
+              background: ANALYTICS.SOFT,
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${pct}%`,
+                height: '100%',
+                borderRadius: 999,
+                background: ANALYTICS.GREEN,
+                transition: 'width 240ms ease',
+              }}
+            />
+          </div>
+        </div>
+        <div
+          style={{
+            fontSize: 13,
+            color: ANALYTICS.MUTED,
+            whiteSpace: 'nowrap',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          <b style={{ color: ANALYTICS.INK }}>{done}</b> of {total} complete
+        </div>
+        <button
+          type="button"
+          onClick={goToGate}
+          disabled={!allComplete}
+          style={{
+            border: `1px solid ${allComplete ? ANALYTICS.INK : ANALYTICS.LINE}`,
+            background: allComplete ? ANALYTICS.INK : 'transparent',
+            color: allComplete ? '#fff' : ANALYTICS.FAINT,
+            padding: '8px 16px',
+            borderRadius: ANALYTICS.RADIUS_SM,
+            fontSize: 13.5,
+            fontWeight: 600,
+            fontFamily: ANALYTICS.SANS,
+            cursor: allComplete ? 'pointer' : 'not-allowed',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Continue to gate →
+        </button>
+      </div>
 
-      {/* Tabs: Inputs to gate (beats 2 → 3) · Intelligence (the read + waterfall) */}
+      {/* Tabs — directly under the header/progress bar (per design). */}
       <div
         style={{
           display: 'inline-flex',
@@ -71,7 +147,7 @@ export function ScopeAnalyticsStage({ view }: ScopeAnalyticsStageProps) {
           borderRadius: 11,
           padding: 3,
           gap: 2,
-          margin: '22px 0 20px',
+          margin: '0 0 20px',
         }}
       >
         <TabButton active={tab === 'inputs'} onClick={() => setTab('inputs')}>
@@ -88,17 +164,19 @@ export function ScopeAnalyticsStage({ view }: ScopeAnalyticsStageProps) {
           {/* Beat 2 — the task checklist. */}
           <TaskChecklist tasks={view.tasks} />
           {/* Beat 3 — the gate. */}
-          <ScopeGate gate={view.gate} stageName={view.stageName} />
+          <div ref={gateRef}>
+            <ScopeGate gate={view.gate} stageName={view.stageName} />
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {view.waterfall ? (
-            <ValueWaterfall waterfall={view.waterfall} />
-          ) : (
-            <p style={{ fontSize: 13.5, color: ANALYTICS.MUTED }}>
-              No value-type analysis on this stage yet.
-            </p>
-          )}
+          {/* Beat 1 — "What Source brings to <stage>" lives INSIDE the
+              Intelligence tab (per design), not above the tabs. */}
+          <IntelPanel intel={view.intel} stageName={view.stageName} />
+          {/* The value-type waterfall renders ONLY when the stage genuinely
+              carries one (value/analytical stages). Intake stages do not —
+              there is no value pool to show, and none is fabricated. */}
+          {view.waterfall ? <ValueWaterfall waterfall={view.waterfall} /> : null}
         </div>
       )}
     </div>
