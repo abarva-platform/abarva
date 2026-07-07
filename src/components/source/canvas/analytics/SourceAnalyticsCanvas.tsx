@@ -12,7 +12,11 @@ import {
   SAMPLE_STRATEGY_AVA,
   SAMPLE_STRATEGY_STAGE,
 } from './strategy-sample-view-model';
-import type { AvaLauncherView, StageAnalyticsView } from './view-model';
+import type {
+  AvaLauncherView,
+  StageAnalyticsView,
+  StepInsightView,
+} from './view-model';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 
 /**
@@ -41,6 +45,13 @@ interface SourceAnalyticsCanvasProps {
    * `StageAnalyticsView` and the sample falls away.
    */
   stageView?: StageAnalyticsView;
+  /**
+   * The per-step killer insight for `viewStage` (value pool / value bridge /
+   * should-cost). Attached onto whichever stage view renders (live or sample),
+   * so the "✦ Intelligence" tab leads with it. Absent → the tab shows the
+   * IntelPanel read only.
+   */
+  stepInsight?: StepInsightView;
   /** aVa's launcher scope. Defaults to the sample scope for `viewStage`. */
   avaLauncher?: AvaLauncherView;
 }
@@ -76,13 +87,19 @@ export function SourceAnalyticsCanvas({
   viewStage,
   tenantName,
   stageView,
+  stepInsight,
   avaLauncher,
 }: SourceAnalyticsCanvasProps) {
   const eventMeta = [event.accountName, event.archetype].filter(Boolean).join(' · ');
   // Select the stage view: the live view when the route supplied one, else the
   // honest SAMPLE view for the stage on screen. This is the fix for the rail —
   // clicking Strategy renders the Strategy stage, not the Scope placeholder.
-  const resolvedStageView = stageView ?? sampleStageViewFor(viewStage);
+  const baseStageView = stageView ?? sampleStageViewFor(viewStage);
+  // Attach the per-step insight onto whichever view resolved. The insight rides
+  // its own provenance (live/sample/model), independent of the stage view's.
+  const resolvedStageView: StageAnalyticsView = stepInsight
+    ? { ...baseStageView, stepInsight }
+    : baseStageView;
   const resolvedAva = avaLauncher ?? sampleAvaFor(viewStage);
 
   return (
