@@ -10,6 +10,12 @@ import { ScopeCoverageInsight } from './ScopeCoverageInsight';
 import { RfpClauseInsight } from './RfpClauseInsight';
 import { ValueBridgeInsight } from './ValueBridgeInsight';
 import { ShouldCostInsight } from './ShouldCostInsight';
+import { TransitionRiskInsight } from './TransitionRiskInsight';
+import { ExecDecisionInsight } from './ExecDecisionInsight';
+import { ValueRealizationInsight } from './ValueRealizationInsight';
+import { ResponseCoverageInsight } from './ResponseCoverageInsight';
+import { BafoProgressInsight } from './BafoProgressInsight';
+import { CommittedValueInsight } from './CommittedValueInsight';
 import type { StepInsightView } from '../view-model';
 
 interface StepInsightPanelProps {
@@ -28,6 +34,18 @@ export function StepInsightPanel({ insight }: StepInsightPanelProps) {
       return <ValueBridgeInsight insight={insight} />;
     case 'should_cost_normalization':
       return <ShouldCostInsight insight={insight} />;
+    case 'transition_risk':
+      return <TransitionRiskInsight insight={insight} />;
+    case 'exec_decision':
+      return <ExecDecisionInsight insight={insight} />;
+    case 'value_realization':
+      return <ValueRealizationInsight insight={insight} />;
+    case 'response_coverage':
+      return <ResponseCoverageInsight insight={insight} />;
+    case 'bafo_progress':
+      return <BafoProgressInsight insight={insight} />;
+    case 'committed_value':
+      return <CommittedValueInsight insight={insight} />;
     default:
       return null;
   }

@@ -9,6 +9,12 @@ import {
   buildScopeCoverageInsight,
   buildRfpClauseInsight,
   buildShouldCostModelInsight,
+  buildTransitionRiskInsight,
+  buildExecDecisionInsight,
+  buildValueRealizationInsight,
+  buildResponseCoverageInsight,
+  buildBafoProgressInsight,
+  buildCommittedValueInsight,
   stepInsightKindForStage,
 } from '../step-insight-builder';
 import { AMS_MANAGED_SERVICES } from '@/lib/source/archetypes/registry';
@@ -20,6 +26,15 @@ const FACTS_ONE_LEVER: EventFactMap = {
   annual_change_order_spend: 4_000_000,
   recurring_avoidable_pct: 0.35,
   term_years: 3,
+};
+
+// The seeded transition facts (the values the Lakeshore seed persists). The
+// AMS.TRANSITION_RISK lever computes transition_fee × overrun_cost_multiple ×
+// (overrun_probability / 100).
+const FACTS_TRANSITION: EventFactMap = {
+  transition_fee: 3_100_000,
+  overrun_probability: 30,
+  overrun_cost_multiple: 1.6,
 };
 
 describe('stepInsightKindForStage', () => {
@@ -39,9 +54,19 @@ describe('stepInsightKindForStage', () => {
     expect(stepInsightKindForStage('RFP')).toBe('rfp_clause_coverage');
   });
 
-  it('returns null for steps not yet wired (falls back to the read)', () => {
-    expect(stepInsightKindForStage('transition')).toBeNull();
-    expect(stepInsightKindForStage('selection')).toBeNull();
+  it('maps the remaining steps to their kinds', () => {
+    expect(stepInsightKindForStage('transition')).toBe('transition_risk');
+    expect(stepInsightKindForStage('exec_decision')).toBe('exec_decision');
+    expect(stepInsightKindForStage('executive_decision')).toBe('exec_decision');
+    expect(stepInsightKindForStage('value')).toBe('value_realization');
+    expect(stepInsightKindForStage('responses')).toBe('response_coverage');
+    expect(stepInsightKindForStage('bafo')).toBe('bafo_progress');
+    expect(stepInsightKindForStage('selection')).toBe('committed_value');
+  });
+
+  it('returns null for a step with no insight in this slice', () => {
+    expect(stepInsightKindForStage('closeout')).toBeNull();
+    expect(stepInsightKindForStage('unknown-stage')).toBeNull();
   });
 });
 
@@ -231,14 +256,228 @@ describe('buildStepInsight — dispatch', () => {
     expect(rfp?.kind).toBe('rfp_clause_coverage');
   });
 
-  it('returns null for a step with no insight in this slice', () => {
+  it('returns a LIVE transition-risk insight for transition from seeded facts', () => {
     const insight = buildStepInsight({
       stageKey: 'transition',
+      inputs: FACTS_TRANSITION,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(insight?.kind).toBe('transition_risk');
+    expect(insight?.provenance).toBe('live');
+  });
+
+  it('returns a LIVE exec-decision insight for the decision step when facts quantify', () => {
+    const insight = buildStepInsight({
+      stageKey: 'exec_decision',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(insight?.kind).toBe('exec_decision');
+    expect(insight?.provenance).toBe('live');
+  });
+
+  it('returns MODEL insights for value / responses / bafo / selection', () => {
+    const value = buildStepInsight({
+      stageKey: 'value',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(value?.kind).toBe('value_realization');
+    expect(value?.provenance).toBe('sample');
+
+    const responses = buildStepInsight({
+      stageKey: 'responses',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(responses?.kind).toBe('response_coverage');
+    expect(responses?.provenance).toBe('sample');
+
+    const bafo = buildStepInsight({
+      stageKey: 'bafo',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(bafo?.kind).toBe('bafo_progress');
+    expect(bafo?.provenance).toBe('sample');
+
+    const selection = buildStepInsight({
+      stageKey: 'selection',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(selection?.kind).toBe('committed_value');
+    expect(selection?.provenance).toBe('sample');
+  });
+
+  it('returns null for a step with no insight in this slice', () => {
+    const insight = buildStepInsight({
+      stageKey: 'closeout',
       inputs: FACTS_ONE_LEVER,
       citations: {},
       archetypeId: 'AMS_MANAGED_SERVICES',
     });
     expect(insight).toBeNull();
+  });
+});
+
+describe('buildTransitionRiskInsight — Transition (LIVE)', () => {
+  it('computes the exposure band + fee-at-risk from the seeded transition facts', () => {
+    const insight = buildTransitionRiskInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_TRANSITION,
+    );
+    expect(insight.kind).toBe('transition_risk');
+    expect(insight.provenance).toBe('live');
+    expect(insight.quantified).toBe(true);
+    // The fee-at-risk cap is the real transition fee.
+    expect(insight.transitionFee).toBe(3_100_000);
+    // Exposure = fee × multiple × (prob/100) = 3.1M × 1.6 × 0.3 = 1.488M (expected),
+    // with a conservative haircut low end. Real $, a range (low < high), never $0.
+    expect(insight.exposureHigh).toBeCloseTo(3_100_000 * 1.6 * 0.3, 0);
+    expect(insight.exposureLow).toBeGreaterThan(0);
+    expect(insight.exposureHigh).toBeGreaterThan(insight.exposureLow);
+    expect(insight.overrunProbabilityPct).toBe(30);
+    expect(insight.overrunCostMultiple).toBe(1.6);
+    // Headline states the at-risk $ and the milestone cap.
+    expect(insight.headline).toMatch(/at risk/i);
+    expect(insight.headline).toMatch(/milestone/i);
+    // Advisor layer surfaces the playbook clause + downstream.
+    expect(insight.bestPractice?.some((l) => /milestone/i.test(l))).toBe(true);
+    expect(insight.downstreamImpact).toMatch(/retained-cost|delayed value/i);
+  });
+
+  it('renders an honest empty (never $0) when the transition facts are absent', () => {
+    const insight = buildTransitionRiskInsight(AMS_MANAGED_SERVICES, {});
+    expect(insight.provenance).toBe('sample');
+    expect(insight.quantified).toBe(false);
+    expect(insight.exposureLow).toBe(0);
+    expect(insight.exposureHigh).toBe(0);
+    expect(insight.note).toMatch(/needs evidence/i);
+    // Still no fabricated tenant number in the headline.
+    expect(insight.headline).toMatch(/provide the transition fee/i);
+  });
+});
+
+describe('buildExecDecisionInsight — Executive Decision (LIVE)', () => {
+  it('classifies computed value into negotiable / protected / risk, stated apart', () => {
+    // Facts that quantify multiple value types: change-order (protected),
+    // volume-band (incremental), transition (risk_adjusted).
+    const FACTS_MULTI: EventFactMap = {
+      annual_change_order_spend: 4_000_000,
+      recurring_avoidable_pct: 0.35,
+      annual_run_cost: 12_000_000,
+      projected_volume_decline_pct: 0.2,
+      variable_cost_share_pct: 0.6,
+      transition_fee: 3_100_000,
+      overrun_probability: 30,
+      overrun_cost_multiple: 1.6,
+      term_years: 3,
+    };
+    const insight = buildExecDecisionInsight(AMS_MANAGED_SERVICES, {
+      stageKey: 'exec_decision',
+      inputs: FACTS_MULTI,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(insight.kind).toBe('exec_decision');
+    expect(insight.provenance).toBe('live');
+    expect(insight.computedLeverCount).toBeGreaterThanOrEqual(1);
+    // Slices are stated apart (each bucket present appears once, with a real range).
+    const buckets = insight.slices.map((s) => s.bucket);
+    expect(new Set(buckets).size).toBe(buckets.length); // no bucket duplicated
+    for (const s of insight.slices) {
+      expect(s.high).toBeGreaterThanOrEqual(s.low);
+    }
+    // Headline never folds protected/risk into the negotiable number.
+    expect(insight.headline).toMatch(/negotiable/i);
+    expect(insight.headline).toMatch(/stated apart|apart|confidence/i);
+  });
+
+  it('falls back to a clearly-marked SAMPLE when no lever computes', () => {
+    const insight = buildExecDecisionInsight(AMS_MANAGED_SERVICES, {
+      stageKey: 'exec_decision',
+      inputs: {},
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+    });
+    expect(insight.provenance).toBe('sample');
+    expect(insight.computedLeverCount).toBe(0);
+    expect(insight.note).toBeTruthy();
+    // Residual-risk names the unsized levers, never a fabricated $.
+    expect(insight.residualRiskLeverCount).toBeGreaterThan(0);
+    expect(insight.residualRiskLevers.length).toBe(insight.residualRiskLeverCount);
+  });
+});
+
+describe('MODEL step insights — value / responses / bafo / selection', () => {
+  it('value_realization: committed track + null realized, names the flip fact', () => {
+    const insight = buildValueRealizationInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+    );
+    expect(insight.kind).toBe('value_realization');
+    expect(insight.provenance).toBe('sample');
+    // Committed is a positive track; realized is null (never a fabricated number).
+    expect(insight.points.length).toBeGreaterThan(0);
+    expect(insight.points.every((p) => p.committed >= 0)).toBe(true);
+    expect(insight.points.every((p) => p.realized === null)).toBe(true);
+    expect(insight.flipFact).toMatch(/realized-value actuals/i);
+    expect(insight.note).toMatch(/model/i);
+    // Advisor layer present.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('response_coverage: every dimension dodged (MODEL), carries evaluationImpact', () => {
+    const insight = buildResponseCoverageInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+    );
+    expect(insight.kind).toBe('response_coverage');
+    expect(insight.provenance).toBe('sample');
+    expect(insight.rows.length).toBeGreaterThan(0);
+    expect(insight.rows.every((r) => r.status === 'dodged')).toBe(true);
+    expect(insight.rows.every((r) => r.evaluationImpact.length > 0)).toBe(true);
+    expect(insight.flipFact).toMatch(/vendor responses ingested/i);
+  });
+
+  it('bafo_progress: captured 0 vs target, carries the bafoAsk, names the flip', () => {
+    const insight = buildBafoProgressInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+    );
+    expect(insight.kind).toBe('bafo_progress');
+    expect(insight.provenance).toBe('sample');
+    expect(insight.rows.length).toBeGreaterThan(0);
+    // Captured is 0 (never fabricated); target is a real range.
+    expect(insight.rows.every((r) => r.captured === 0)).toBe(true);
+    expect(insight.rows.every((r) => r.targetHigh >= r.targetLow)).toBe(true);
+    expect(insight.rows.every((r) => r.bafoAsk.length > 0)).toBe(true);
+    // Biggest-target first.
+    for (let i = 1; i < insight.rows.length; i += 1) {
+      expect(insight.rows[i - 1].targetHigh).toBeGreaterThanOrEqual(
+        insight.rows[i].targetHigh,
+      );
+    }
+    expect(insight.flipFact).toMatch(/BAFO concession actuals/i);
+  });
+
+  it('committed_value: compact bars by lever, names the award flip fact', () => {
+    const insight = buildCommittedValueInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+    );
+    expect(insight.kind).toBe('committed_value');
+    expect(insight.provenance).toBe('sample');
+    expect(insight.bars.length).toBeGreaterThan(0);
+    expect(insight.bars.every((b) => b.high >= b.low)).toBe(true);
+    expect(insight.flipFact).toMatch(/award facts/i);
   });
 });
 

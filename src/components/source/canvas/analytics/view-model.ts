@@ -273,18 +273,29 @@ export interface ValueWaterfallView {
 //     size this"), never a fabricated number.
 //   • Ranges, never bare point estimates, on every $ figure.
 
-/** The insight kinds. Build the first three; the model is declared for all steps. */
+/**
+ * The insight kinds. Every Source workflow step foregrounds its killer insight:
+ *   • value_pool (Strategy) · scope_coverage (Scope) · rfp_clause_coverage (RFP) ·
+ *     value_bridge (Pricing) · should_cost_normalization (Evaluation) — LIVE/MODEL
+ *     as their facts allow (shipped in #4537 / #4539).
+ *   • transition_risk (Transition) — LIVE from the seeded transition facts.
+ *   • exec_decision (Executive Decision) — LIVE from the value bridge + risk read.
+ *   • value_realization (Value) · response_coverage (Responses) ·
+ *     bafo_progress (BAFO) · committed_value (Selection) — MODEL until their fact
+ *     lands (each names the fact that flips it live).
+ */
 export type StepInsightKind =
-  | 'value_pool' // P0 Strategy — value pool decomposed by lever
+  | 'value_pool' // Strategy — value pool decomposed by lever (LIVE/SAMPLE)
   | 'scope_coverage' // Scope — $ reachable vs stranded under current scope/evidence
   | 'rfp_clause_coverage' // RFP — $ protected by a clause vs still exposed
   | 'value_bridge' // Pricing — the value-type waterfall (≥20% proof)
   | 'should_cost_normalization' // Evaluation — normalized TCO flips the winner
-  | 'evidence_gap_priced' // Scope — unprotectable $ until evidence lands (future)
-  | 'value_protected_exposed' // RFP — $ locked by clauses vs still exposed (future)
-  | 'vendor_dodge_map' // Responses — vendor tells (future)
-  | 'captured_vs_target' // BAFO — captured vs target by lever (future)
-  | 'committed_vs_realized'; // Value — committed vs realized over time (future)
+  | 'transition_risk' // Transition — $ exposed on overrun vs fee-at-risk (LIVE)
+  | 'exec_decision' // Executive Decision — negotiable/protected/risk value + risk (LIVE)
+  | 'value_realization' // Value — committed vs realized over the term (MODEL)
+  | 'response_coverage' // Responses — vendor answered vs dodged per dimension (MODEL)
+  | 'bafo_progress' // BAFO — value captured vs target by lever (MODEL)
+  | 'committed_value'; // Selection — value locked by the awarded contract (MODEL)
 
 // ── The advisor layer — what makes an insight advisor-grade, not just a chart ──
 //
@@ -509,6 +520,232 @@ export interface ShouldCostInsightView extends AdvisorLayer {
   note?: string;
 }
 
+// ── Transition · TRANSITION-RISK EXPOSURE (LIVE) ─────────────────────────────
+
+/**
+ * Transition — TRANSITION-RISK EXPOSURE. LIVE from the seeded transition facts:
+ * the AMS.TRANSITION_RISK lever computes `transition_fee × overrun_cost_multiple ×
+ * overrun_probability` — the probability-weighted $ at risk if the transition
+ * overruns. The chart bands the exposure (conservative→expected) against the
+ * fee-at-risk the milestone plan can cap it with. Renders insufficient-evidence
+ * honestly (never $0) when the fee/probability facts are absent.
+ */
+export interface TransitionRiskInsightView extends AdvisorLayer {
+  kind: 'transition_risk';
+  provenance: IntelProvenance;
+  /** The "so what" — "$X at risk if transition overruns; milestone fees cap it at $Y." */
+  headline: string;
+  /**
+   * True when the lever computed from real facts (LIVE); false when the fact is
+   * absent and the exposure could not be sized (honest empty — never a guess).
+   */
+  quantified: boolean;
+  /** The quoted transition fee (the fee-at-risk a milestone plan can cap). */
+  transitionFee: number;
+  /** The probability-weighted exposure band, conservative→expected (USD). */
+  exposureLow: number;
+  exposureHigh: number;
+  /** The overrun probability used (pct, 0–100) — surfaced for the read-out. */
+  overrunProbabilityPct: number;
+  /** The overrun cost multiple used (ratio) — surfaced for the read-out. */
+  overrunCostMultiple: number;
+  /** Confidence in the exposure band. */
+  confidence: FactConfidence;
+  /** Sample/model honesty note (present only when not quantified). */
+  note?: string;
+}
+
+// ── Executive Decision · VALUE + RISK, BOARD-READY (LIVE) ────────────────────
+
+/**
+ * One classified slice of the executive decision read — a value-type total the
+ * board sees stated in its own right (negotiable earned value; protected and
+ * risk-adjusted stated SEPARATELY, never folded into a savings headline).
+ */
+export interface ExecDecisionSliceView {
+  /** 'negotiable' (earned: incremental + solution) · 'protected' · 'risk_adjusted'. */
+  bucket: 'negotiable' | 'protected' | 'risk_adjusted';
+  /** Display label, e.g. 'Net negotiable value'. */
+  label: string;
+  low: number;
+  high: number;
+  /** The value types folded into this bucket (audit trail). */
+  valueTypes: readonly ValueType[];
+}
+
+/**
+ * Executive Decision — VALUE + RISK, BOARD-READY. LIVE from the value bridge
+ * (`buildValueWaterfall`): the classified value split into what is NEGOTIABLE
+ * (incremental + solution — the earned ask), what is PROTECTED (a risk hedge), and
+ * what is RISK-ADJUSTED (a normalization) — each stated apart with a confidence
+ * band, plus a residual-risk read (the levers still needing evidence). Never a
+ * single savings number; protected/risk are never summed into the negotiable ask.
+ */
+export interface ExecDecisionInsightView extends AdvisorLayer {
+  kind: 'exec_decision';
+  provenance: IntelProvenance;
+  /** The "so what" — "net negotiable value $X–Y; protected $P, risk-adjusted $R stated apart — confidence <band>." */
+  headline: string;
+  /** The classified slices (negotiable / protected / risk-adjusted), each apart. */
+  slices: readonly ExecDecisionSliceView[];
+  /** The rolled-up confidence across the negotiable slice (weakest link). */
+  confidence: FactConfidence;
+  /** Count of levers computed from facts (the value the board can bank). */
+  computedLeverCount: number;
+  /** Count of levers still needing evidence (the residual-risk read). */
+  residualRiskLeverCount: number;
+  /** Names of the levers still needing evidence (named, never guessed). */
+  residualRiskLevers: readonly string[];
+  /** Sample/model honesty note when provenance is 'sample'. */
+  note?: string;
+}
+
+// ── Value · COMMITTED vs REALIZED over time (MODEL) ──────────────────────────
+
+/** One period point on the committed-vs-realized track. */
+export interface ValueRealizationPointView {
+  /** Period label, e.g. 'Y1', 'Y2'. */
+  period: string;
+  /** Cumulative committed value at this period (USD, from the awarded levers). */
+  committed: number;
+  /**
+   * Cumulative realized value at this period (USD). 0 / null until periodic
+   * realized-value actuals are ingested — the chart shows the gap honestly.
+   */
+  realized: number | null;
+}
+
+/**
+ * Value — COMMITTED vs REALIZED over the term. MODEL: realized-value actuals are
+ * not in the fact model yet, so the realized track is a placeholder (0) against the
+ * committed track (from the awarded levers). Goes live when periodic realized-value
+ * actuals per lever are ingested. Never fabricates a realization number.
+ */
+export interface ValueRealizationInsightView extends AdvisorLayer {
+  kind: 'value_realization';
+  provenance: IntelProvenance;
+  /** The "so what" — "committed $X; realization tracked here once actuals land." */
+  headline: string;
+  /** The committed vs realized track over the term. */
+  points: readonly ValueRealizationPointView[];
+  /** The fact that flips this MODEL → LIVE, named for the operator. */
+  flipFact: string;
+  /** Always present — states this is a model and what makes it live. */
+  note?: string;
+}
+
+// ── Responses · VENDOR DODGE-MAP (MODEL) ─────────────────────────────────────
+
+/** One value dimension × whether vendors answered or dodged (illustrative). */
+export interface ResponseCoverageRowView {
+  /** The lever key (stable id). */
+  leverKey: string;
+  /** The value dimension, e.g. 'Volume-band price flex-down'. */
+  label: string;
+  /** The value type — drives the accent. */
+  valueType: ValueType;
+  /** Low end of the $ at stake this dimension carries (USD over term). */
+  low: number;
+  high: number;
+  /** 'answered' (vendor committed) vs 'dodged' (illustrative until responses ingest). */
+  status: 'answered' | 'dodged';
+  /** The evaluation impact this dimension carries (from the playbook). */
+  evaluationImpact: string;
+}
+
+/**
+ * Responses — VENDOR DODGE-MAP. MODEL: vendor-response facts are not in the fact
+ * model yet, so every dimension is shown as "dodged" (the exposure) until proven
+ * answered. Goes live when vendor responses are ingested per lever/clause. The $
+ * at stake is real where the lever computes, else the illustrative scale.
+ */
+export interface ResponseCoverageInsightView extends AdvisorLayer {
+  kind: 'response_coverage';
+  provenance: IntelProvenance;
+  /** The "so what" — the dodged-vs-answered pool. */
+  headline: string;
+  /** One row per value dimension (dodged-first, biggest-$ within). */
+  rows: readonly ResponseCoverageRowView[];
+  /** The fact that flips this MODEL → LIVE, named for the operator. */
+  flipFact: string;
+  /** Always present — states this is a model and what makes it live. */
+  note?: string;
+}
+
+// ── BAFO · CAPTURED vs TARGET (MODEL) ────────────────────────────────────────
+
+/** One lever's captured-vs-target progress + its remaining BAFO ask. */
+export interface BafoProgressRowView {
+  /** The lever key (stable id). */
+  leverKey: string;
+  /** Human lever name. */
+  label: string;
+  /** The value type — drives the accent. */
+  valueType: ValueType;
+  /** The target value to capture on this lever (USD over term). */
+  targetLow: number;
+  targetHigh: number;
+  /** Value captured so far (USD). 0 until BAFO concession actuals ingest. */
+  captured: number;
+  /** The BAFO ask (the lever left to pull) — from the playbook. */
+  bafoAsk: string;
+}
+
+/**
+ * BAFO — VALUE CAPTURED vs TARGET. MODEL: negotiation / concession actuals are not
+ * in the fact model yet, so captured is a placeholder (0) against the target (from
+ * the awarded levers). Each row carries its remaining BAFO ask (the lever left to
+ * pull). Goes live when BAFO concession actuals per lever are ingested.
+ */
+export interface BafoProgressInsightView extends AdvisorLayer {
+  kind: 'bafo_progress';
+  provenance: IntelProvenance;
+  /** The "so what" — target pool + levers still to pull. */
+  headline: string;
+  /** One row per lever (biggest-target first) with its remaining BAFO ask. */
+  rows: readonly BafoProgressRowView[];
+  /** The fact that flips this MODEL → LIVE, named for the operator. */
+  flipFact: string;
+  /** Always present — states this is a model and what makes it live. */
+  note?: string;
+}
+
+// ── Selection · COMMITTED VALUE by lever (MODEL, compact) ─────────────────────
+
+/** One committed-value bar — the value locked by the awarded contract. */
+export interface CommittedValueBarView {
+  /** The lever key (stable id). */
+  leverKey: string;
+  /** Human lever name. */
+  label: string;
+  /** The value type — drives the bar color. */
+  valueType: ValueType;
+  /** Low–high $ locked (USD over term). */
+  low: number;
+  high: number;
+  /** Confidence in the range. */
+  confidence: FactConfidence;
+}
+
+/**
+ * Selection — COMMITTED VALUE by lever. A compact committed-value summary: the value
+ * locked by the awarded contract, by lever. MODEL until award facts land (the award
+ * confirms which levers the winning vendor committed). Low-signal by design — a
+ * compact bar set, not an over-built surface.
+ */
+export interface CommittedValueInsightView extends AdvisorLayer {
+  kind: 'committed_value';
+  provenance: IntelProvenance;
+  /** The "so what" — the total value the award locks. */
+  headline: string;
+  /** One bar per lever, biggest-first. */
+  bars: readonly CommittedValueBarView[];
+  /** The fact that flips this MODEL → LIVE, named for the operator. */
+  flipFact: string;
+  /** Always present — states this is a model and what makes it live. */
+  note?: string;
+}
+
 /**
  * The per-step insight the "✦ Intelligence" tab foregrounds. A discriminated
  * union — the renderer switches on `kind`. Absent → the tab falls back to the
@@ -520,7 +757,13 @@ export type StepInsightView =
   | ScopeCoverageInsightView
   | RfpClauseInsightView
   | ValueBridgeInsightView
-  | ShouldCostInsightView;
+  | ShouldCostInsightView
+  | TransitionRiskInsightView
+  | ExecDecisionInsightView
+  | ValueRealizationInsightView
+  | ResponseCoverageInsightView
+  | BafoProgressInsightView
+  | CommittedValueInsightView;
 
 // ── The stage-level composite the canvas renders ─────────────────────────────
 
