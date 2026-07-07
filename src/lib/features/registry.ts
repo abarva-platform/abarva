@@ -169,9 +169,9 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "source_analytics",
     summary:
-      "Master switch for the Source value-analytics layer — the deterministic fact model (source_event_facts) → value-lever evaluators → value-type waterfall, and the intelligence surfaced on the stage canvas. Ships dark: every analytics slice (extraction, evaluators, redesigned UI, Door-1 diagnose→recover) gates behind this flag so nothing changes for users until it is flipped per tenant, live-proven. Default off for all.",
+      "Master switch for the Source value-analytics layer — the deterministic fact model (source_event_facts) → value-lever evaluators → value-type waterfall, and the intelligence surfaced on the stage canvas. Ships dark: every analytics slice (extraction, evaluators, redesigned UI, Door-1 diagnose→recover) gates behind this flag so nothing changes for users until it is flipped per tenant, live-proven. Lakeshore is the first enrolled tenant (the value-analytics pilot); the migrations (source_event_facts, source_value_levers) are applied and the redesigned canvas falls back to honestly-marked sample intelligence until real facts are ingested. Env allowlist: ABARVA_FEATURE_SOURCE_ANALYTICS_TENANTS.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["lakeshore"],
   },
   {
     key: "moves_orchestrated_deliverables",
