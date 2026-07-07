@@ -45,8 +45,11 @@ import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import type { AgentResponsePart } from '@/lib/agent/response-parts';
+import { AILabel } from '@/components/abarva/AILabel';
 import { AIResponsibilityFooter } from '@/components/abarva/AIResponsibilityFooter';
+import { shouldShowPlainTextCitationGap } from '@/lib/agent/citation-gap';
 import { AgentActionApprovalNotice } from './AgentActionApprovalNotice';
+import { CitationGapNotice } from './CitationGapNotice';
 import { EvidenceBasis } from './EvidenceBasis';
 import type { AskSource } from '@/lib/intelligence/ask/types';
 import type { AvaAnswerPacket } from '@/lib/ava-answer/contract';
@@ -982,7 +985,10 @@ export function AgentDock(props: AgentDockProps) {
                 }
               >
                 {turn.role === 'agent' ? (
-                  <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
+                  <div style={AGENT_BYLINE_STYLE}>
+                    {displayAgentName}
+                    <AILabel status="draft" detail="Review before acting" compact />
+                  </div>
                 ) : null}
                 <div style={BUBBLE_STYLE}>
                   {turn.role === 'agent' ? (
@@ -991,6 +997,10 @@ export function AgentDock(props: AgentDockProps) {
                     turn.body
                   )}
                 </div>
+                {turn.role === "agent" &&
+                shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
+                  <CitationGapNotice compact />
+                ) : null}
                 {showReviewChrome &&
                 turn.role === "agent" &&
                 surface !== "intelligence" &&

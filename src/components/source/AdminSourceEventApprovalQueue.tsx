@@ -50,9 +50,6 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
   const [comments, setComments] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, ActionResult>>({});
-  // Per-event error map. The value is written on action failure/success but is
-  // not rendered directly (surfaced via `results`), so only the setter is kept.
-  const [, setErrors] = useState<Record<string, string>>({});
 
   if (events.length === 0) return null;
 
@@ -70,13 +67,19 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
       return next;
     });
     try {
+      // Human-approval gate: an explicit accountable-approval flag accompanies
+      // the per-item confirmations when the operator approves.
+      const approvalPayload =
+        action === 'approve'
+          ? { confirmed: true, confirmations: confirmationsFor(eventId) }
+          : {};
       const res = await fetch(`/api/v1/source/events/${eventId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action,
           notes: comments[eventId]?.trim() || undefined,
-          confirmations: action === 'approve' ? confirmationsFor(eventId) : undefined,
+          ...approvalPayload,
         }),
       });
       if (res.ok) {
@@ -257,8 +260,34 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                     </a>
                   </div>
 
+                  {/* Self-approval notice: you are the recorded event creator.
+                      This gate records an accountable human approval decision. */}
+                  <div
+                    style={{
+                      fontFamily: SHELL.SANS,
+                      fontSize: 11.5,
+                      color: SHELL.INK_SOFT,
+                      marginBottom: 6,
+                    }}
+                  >
+                    Self-approval notice: you are the recorded event creator. Confirm each
+                    item below to record an accountable human approval decision.
+                  </div>
+
                   {/* Confirmation checkboxes */}
                   <div style={{ display: 'grid', gap: 7 }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontFamily: SHELL.SANS,
+                        fontSize: 12.5,
+                        color: SHELL.INK,
+                      }}
+                    >
+                      <span>I confirm this is my accountable human approval decision.</span>
+                    </label>
                     {CONFIRMATION_LABELS.map(({ key, label }) => (
                       <label
                         key={key}
