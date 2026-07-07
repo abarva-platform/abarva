@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The production build (`npm run build`, Next.js 16 + Turbopack) was broken on `origin/main`, which blocked every Azure Container Apps deploy. The break came from an earlier "canvas three-column" merge (`6ebe6d4a9`) that landed half-applied: it deleted function/const/type definitions, dropped import statements, renamed context dimensions, changed a couple of shared type shapes, and left duplicate declarations and duplicate object keys behind — while leaving all the callers that still referenced the deleted/old symbols. Turbopack compiled cleanly, but Next.js then failed the build during its TypeScript pass. This change restores the deleted symbols from git history (they previously worked), re-adds the dropped imports, de-duplicates the duplicated declarations/keys, updates renamed dimension literals, and repairs two type shapes so `npm run build` completes with 0 errors. No feature behavior is intended to change; this is a build-restoration fix.
+The production build (`npm run build`, Next.js 16 + Turbopack) was broken by an earlier "canvas three-column" merge (`6ebe6d4a9`) that landed half-applied: it deleted function/const/type definitions, dropped import statements, renamed context dimensions, changed a couple of shared type shapes, left duplicate declarations and duplicate object keys behind, and stripped required AI-surface governance tokens — while leaving all the callers/tests that still referenced the deleted/old symbols. A parallel effort already landed a build fix on `main` (including a `next.config` `typescript.ignoreBuildErrors: true` safety net plus repairs to the files it touched). This change is rebased on that `main` and layers the additional files `main` did NOT touch — genuinely runtime-broken code (`ignoreBuildErrors` masks type errors but does not fix missing symbols, duplicate object keys, or undefined variables): it restores deleted symbols from git history, re-adds dropped imports, de-duplicates the duplicated declarations/keys, updates renamed dimension literals, repairs two type shapes, and restores the AI-surface control governance rendering (AILabel, citation-gap notice, human-approval-gate tokens). `npm run build` completes with 0 errors and `scripts/audit/ai-surface-control-catalog.mjs` passes. No feature behavior is intended to change; this is a build/governance restoration fix.
 
 ## Layer Impact
 
@@ -43,11 +43,12 @@ Representative repairs:
 
 ## QA / Validation
 
-- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` — completes with exit code 0: "✓ Compiled successfully", TypeScript pass clean, "✓ Generating static pages (290/290)", page optimization finalized.
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` — completes with exit code 0: "✓ Compiled successfully", "✓ Generating static pages (290/290)", page optimization finalized.
+- `node scripts/audit/ai-surface-control-catalog.mjs` — passes (22 surfaces) after restoring the AgentDock + approval-queue governance tokens (was red on `main` HEAD, stripped by `6ebe6d4a9`).
 - `npx eslint` on touched files — 0 errors (only pre-existing unused-variable warnings).
-- `node scripts/release-check.mjs --base origin/main --head HEAD` — expected to pass with this record present.
+- `node scripts/release-check.mjs --base origin/main --head HEAD` — passed.
 
-Note: the repo's `next build` runs a blocking TypeScript pass (no `typescript.ignoreBuildErrors`). Bare `tsc -p tsconfig.json` did not reproduce these errors (stale/cache-tolerant); `next build` was the only authoritative check, so fixes were verified by iterating the real build to green.
+Note: `main` runs `next build` with `typescript.ignoreBuildErrors: true` (added by the parallel effort), so the type-check stage is non-blocking there. This PR does not remove that flag; instead it fixes the genuinely-broken runtime code (missing symbols, duplicate object keys, undefined vars, stripped governance tokens) that the flag would otherwise mask.
 
 ## Rollout Plan
 
@@ -77,4 +78,5 @@ Revert the squash-merge commit on `main` and redeploy the prior image. This rest
 
 - `template-alignment.ts` is consumed only by a test; it was adapted to the new metadata/profile shapes rather than restoring the old shapes, so its associated test may need follow-up if it asserts the old fields.
 - `sanitizeForTenantPrompt` (atlas/llm) was newly defined to satisfy a refactor call site that never created it; it deep-applies the existing `stripInternalReferences` scrubber. Behavior is best-effort scrubbing, not a formal tenant-isolation guarantee.
+- The `Behavior coverage floor` CI check fails on `main` HEAD (independently of this PR) because `tenant-onboarding.test.ts` still asserts old client demo emails (`cio@apex-retail.example.com`, etc.) that the launch-roster rewrite of `canonical-auth-roster.ts` deliberately removed. This PR leaves `canonical-auth-roster.ts` identical to `main`, so it neither causes nor fixes that failure; it is tracked as a separate reconciliation task.
 - This record does not itself deploy; the ACA image build/deploy is a separate, standard step.
