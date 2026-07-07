@@ -78,6 +78,8 @@ export interface AskOptions {
     tenant?: unknown;
     question?: string | null;
   };
+  /** Called with the raw system + user prompt just before the model is invoked. Used by QA probes to hash/log the model input. */
+  onModelInput?: (parts: { system: string; user: string }) => void;
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {

@@ -14,6 +14,7 @@ import type {
   SourceGenerationContext,
 } from './types';
 import { buildAppInventoryPromptBlock } from './app-inventory';
+import { formatRequiredSectionsForPrompt } from './section-conformance';
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -53,6 +54,10 @@ Client-facing language:
 Format:
 - Markdown only. ATX headings (#, ##, ###). Numbered §-prefixed sections (## §1 · …) match the AbarVa house style — but let the argument lead; headings serve the narrative, not the reverse.
 - Tables when comparing. Bullet lists when enumerating. Add a compact "so what" line after dense tables.`;
+
+// Alias used by later artifact templates (d02, d24, etc.) that were written
+// before the voice constant was renamed. Both names resolve to the same voice.
+const SENTINEL_VOICE = AVA_SOURCE_ADVISOR_VOICE;
 
 export const SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE = `Vendor responses must be submitted using the provided response templates and pricing workbook. Narrative responses may supplement, but may not replace, the required structured response tables.
 

@@ -22,7 +22,11 @@ import { canonicalClientDisplayName } from '@/lib/client-config';
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { listAppInventoryRecords } from '@/lib/admin/setup-data-broker';
-import type { SourceAppInventoryEntry, SourceGenerationContext } from './types';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
+import { buildArchetypeAdvisoryBlock } from './archetype-advisory';
+import type { SourceCategoryId } from '@/lib/source/taxonomy/category-taxonomy';
+import type { SourceAppInventoryEntry, SourceGenerationContext, SourceGenerationUploadedArtifact } from './types';
 
 /**
  * Build the read-only context snapshot for a generation call.
@@ -130,29 +134,6 @@ export async function buildSourceGenerationContext(
     archetypeResolution.archetype,
   );
 
-  // Pull the tenant's application inventory through the sanctioned broker seam
-  // so d04 pre-populates from real systems instead of a blank stub. The active
-  // client key (e.g. 'apexretail') must be translated to the substrate key
-  // (e.g. 'apex-retail') first, or the read returns zero rows. Degrades to an
-  // empty inventory when nothing is loaded — never fatal to generation.
-  const substrateKey = activeClient?.key
-    ? clientKeyToInventorySubstrateKey(activeClient.key)
-    : null;
-  const appInventoryRows = substrateKey
-    ? await listAppInventoryRecords(substrateKey).catch(() => [])
-    : [];
-  const enterpriseAppInventory: SourceAppInventoryEntry[] = appInventoryRows.map(
-    (row) => ({
-      appId: row.recordId,
-      name: row.name,
-      tier: row.tier,
-      owner: row.owner,
-      vendor: row.vendor,
-      criticality: row.criticality,
-      notes: row.notes,
-    }),
-  );
-
   return {
     tenantKey: activeClient?.key ?? 'unknown',
     tenantName,
@@ -175,6 +156,8 @@ export async function buildSourceGenerationContext(
     artifactStates,
     gateCriteria,
     evidence,
+    uploadedEvidence,
+    archetypeAdvisory,
     enterpriseAppInventory,
   };
 }
