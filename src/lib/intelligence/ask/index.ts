@@ -33,6 +33,20 @@ import {
   buildSkyHarborCtoReadinessPromptAddendum,
   buildSkyHarborCtoReadinessSource,
 } from "./skyharbor-cto-readiness-source";
+import {
+  createIntelligenceLatencyTrace,
+  type IntelligenceLatencyTiming,
+} from "@/lib/intelligence/latency-trace";
+import type { IntelligenceDossier } from "@/lib/intelligence/dossiers/types";
+import type { AdvisoryPacket } from "@/lib/intelligence/advisory-packet/types";
+import type { CompanionCanvasPayload } from "@/lib/intelligence/ask/companion-canvas";
+import {
+  assembleAdvisoryPacket,
+  advisoryPacketForClientEvent,
+} from "@/lib/intelligence/advisory-packet/assemble-advisory-packet";
+import { buildIntelligenceDossier } from "@/lib/intelligence/dossiers";
+import { buildCompanionCanvasPayload } from "@/lib/intelligence/ask/companion-canvas-engine";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
 export type {
   AskIntent,
@@ -49,7 +63,10 @@ export interface AskEvent {
     | "delta"
     | "followups"
     | "done"
-    | "error";
+    | "error"
+    | "intelligence-dossier"
+    | "advisory-packet"
+    | "canvas";
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
@@ -87,6 +104,16 @@ export interface AskOptions {
   companionCanvasEnabled?: boolean;
   /** Called with the raw system + user prompt just before the model is invoked. Used by QA probes to hash/log the model input. */
   onModelInput?: (parts: { system: string; user: string }) => void;
+  /** Called with the raw model output text after streaming completes. Used by QA probes to capture full answer text. */
+  onModelOutput?: (text: string) => void;
+  /** Latency trace request ID to resume an existing trace (passed from the route layer). */
+  latencyTraceId?: string | null;
+  /** Timestamp (ms) when the latency trace started at the route layer. */
+  latencyStartedAt?: number;
+  /** Called for each latency timing mark emitted during the ask pipeline. */
+  onTiming?: (timing: IntelligenceLatencyTiming) => void;
+  /** Include the advisory-packet audit block in the synthesizer prompt. Default false. */
+  includeAdvisoryPacketAudit?: boolean;
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
