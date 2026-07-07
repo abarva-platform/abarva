@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AreaChart,
@@ -75,6 +75,10 @@ export function AdvisoryIntelligencePage({
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const briefing = useMemo(
     () => buildCorpusBriefing(viewModel, sectionList),
@@ -315,21 +319,26 @@ export function AdvisoryIntelligencePage({
         </nav>
         <div className={styles.panel}>
           {activeTab === "outlook" ? (
-            <OutlookPanel briefing={briefing} />
+            <OutlookPanel briefing={briefing} mounted={mounted} />
           ) : null}
-          {activeTab === "peer" ? <PeerPanel briefing={briefing} /> : null}
+          {activeTab === "peer" ? (
+            <PeerPanel briefing={briefing} mounted={mounted} />
+          ) : null}
           {activeTab === "adoption" ? (
             <AdoptionPanel briefing={briefing} />
           ) : null}
           {activeTab === "trends" ? <TrendsPanel briefing={briefing} /> : null}
-          {activeTab === "value" ? <ValuePanel briefing={briefing} /> : null}
+          {activeTab === "value" ? (
+            <ValuePanel briefing={briefing} mounted={mounted} />
+          ) : null}
           {activeTab === "risk" ? (
             <RiskPanel briefing={briefing} sectionList={sectionList} />
           ) : null}
         </div>
       </section>
     ),
-    [activeTab, briefing, sectionList],
+
+    [activeTab, briefing, sectionList, mounted],
   );
 
   return (
@@ -359,7 +368,13 @@ const AI_INVESTMENT_DATA = [
   { year: "2026", median: 130, top: 260 },
 ];
 
-function OutlookPanel({ briefing }: { briefing: CorpusBriefing }) {
+function OutlookPanel({
+  briefing,
+  mounted,
+}: {
+  briefing: CorpusBriefing;
+  mounted: boolean;
+}) {
   return (
     <>
       <MetricCards
@@ -379,72 +394,74 @@ function OutlookPanel({ briefing }: { briefing: CorpusBriefing }) {
           </div>
           <span className={styles.blockTag}>V6 corpus</span>
         </div>
-        <div style={{ height: 220, marginTop: 8 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={AI_INVESTMENT_DATA}
-              margin={{ top: 10, right: 16, bottom: 0, left: 0 }}
-            >
-              <defs>
-                <linearGradient id="gradTop" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#E07A34" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#E07A34" stopOpacity={0.03} />
-                </linearGradient>
-                <linearGradient id="gradMed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#11613A" stopOpacity={0.22} />
-                  <stop offset="95%" stopColor="#11613A" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#EBEBEA"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="year"
-                tick={{ fontSize: 11, fill: "#8A8A85" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: "#8A8A85" }}
-                axisLine={false}
-                tickLine={false}
-                width={36}
-              />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 12,
-                  border: "1px solid #E5E5E2",
-                  borderRadius: 6,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                }}
-                formatter={(v: number, name: string) => [
-                  v,
-                  name === "top" ? "Top quartile" : "Sector median",
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="top"
-                stroke="#E07A34"
-                strokeWidth={2}
-                strokeDasharray="6 3"
-                fill="url(#gradTop)"
-                dot={false}
-                name="Top quartile"
-              />
-              <Area
-                type="monotone"
-                dataKey="median"
-                stroke="#11613A"
-                strokeWidth={2}
-                fill="url(#gradMed)"
-                dot={false}
-                name="Sector median"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div style={{ height: mounted ? 220 : 0, marginTop: 8 }}>
+          {mounted && (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={AI_INVESTMENT_DATA}
+                margin={{ top: 10, right: 16, bottom: 0, left: 0 }}
+              >
+                <defs>
+                  <linearGradient id="gradTop" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#E07A34" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#E07A34" stopOpacity={0.03} />
+                  </linearGradient>
+                  <linearGradient id="gradMed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#11613A" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#11613A" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#EBEBEA"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="year"
+                  tick={{ fontSize: 11, fill: "#8A8A85" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "#8A8A85" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={36}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    border: "1px solid #E5E5E2",
+                    borderRadius: 6,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  }}
+                  formatter={(v: number, name: string) => [
+                    v,
+                    name === "top" ? "Top quartile" : "Sector median",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="top"
+                  stroke="#E07A34"
+                  strokeWidth={2}
+                  strokeDasharray="6 3"
+                  fill="url(#gradTop)"
+                  dot={false}
+                  name="Top quartile"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="median"
+                  stroke="#11613A"
+                  strokeWidth={2}
+                  fill="url(#gradMed)"
+                  dot={false}
+                  name="Sector median"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
         <div className={styles.chartLegend}>
           <span
@@ -501,7 +518,13 @@ function OutlookPanel({ briefing }: { briefing: CorpusBriefing }) {
 }
 
 /* ── Right Panel: Peer Benchmarks ── */
-function PeerPanel({ briefing }: { briefing: CorpusBriefing }) {
+function PeerPanel({
+  briefing,
+  mounted,
+}: {
+  briefing: CorpusBriefing;
+  mounted: boolean;
+}) {
   const chartData = briefing.benchmarkRows.map((row) => ({
     label: row.label
       .replace(" (%)", "")
@@ -534,78 +557,80 @@ function PeerPanel({ briefing }: { briefing: CorpusBriefing }) {
           </div>
           <span className={styles.blockTag}>n={briefing.peerCount} peers</span>
         </div>
-        <div style={{ height: 260, marginTop: 12 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              layout="vertical"
-              margin={{ top: 0, right: 60, bottom: 0, left: 8 }}
-              barSize={18}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#EBEBEA"
-                horizontal={false}
-              />
-              <XAxis
-                type="number"
-                tick={{ fontSize: 10, fill: "#8A8A85" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                type="category"
-                dataKey="label"
-                tick={{ fontSize: 11, fill: "#404040", fontWeight: 500 }}
-                width={148}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 12,
-                  border: "1px solid #E5E5E2",
-                  borderRadius: 6,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                }}
-                formatter={(
-                  v: number,
-                  _n: string,
-                  props: { payload?: { youFmt?: string; peerFmt?: string } },
-                ) => [
-                  `You ${props?.payload?.youFmt ?? v} · Peer ${props?.payload?.peerFmt ?? "—"}`,
-                  "",
-                ]}
-              />
-              <Bar
-                dataKey="you"
-                radius={[0, 3, 3, 0]}
-                label={{
-                  position: "right",
-                  fontSize: 11,
-                  fill: "#404040",
-                  formatter: (
-                    _: number,
-                    entry: { payload?: { youFmt?: string } },
-                  ) => entry?.payload?.youFmt ?? "",
-                }}
+        <div style={{ height: mounted ? 260 : 0, marginTop: 12 }}>
+          {mounted && (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 0, right: 60, bottom: 0, left: 8 }}
+                barSize={18}
               >
-                {chartData.map((row, i) => (
-                  <Cell key={i} fill={row.worse ? "#C84A1E" : "#11613A"} />
-                ))}
-              </Bar>
-              {chartData.map((row, i) => (
-                <ReferenceLine
-                  key={i}
-                  x={row.peer}
-                  stroke="#1A1A1A"
-                  strokeWidth={1.5}
-                  strokeDasharray="3 2"
-                  ifOverflow="visible"
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#EBEBEA"
+                  horizontal={false}
                 />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 10, fill: "#8A8A85" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "#404040", fontWeight: 500 }}
+                  width={148}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    border: "1px solid #E5E5E2",
+                    borderRadius: 6,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  }}
+                  formatter={(
+                    v: number,
+                    _n: string,
+                    props: { payload?: { youFmt?: string; peerFmt?: string } },
+                  ) => [
+                    `You ${props?.payload?.youFmt ?? v} · Peer ${props?.payload?.peerFmt ?? "—"}`,
+                    "",
+                  ]}
+                />
+                <Bar
+                  dataKey="you"
+                  radius={[0, 3, 3, 0]}
+                  label={{
+                    position: "right",
+                    fontSize: 11,
+                    fill: "#404040",
+                    formatter: (
+                      _: number,
+                      entry: { payload?: { youFmt?: string } },
+                    ) => entry?.payload?.youFmt ?? "",
+                  }}
+                >
+                  {chartData.map((row, i) => (
+                    <Cell key={i} fill={row.worse ? "#C84A1E" : "#11613A"} />
+                  ))}
+                </Bar>
+                {chartData.map((row, i) => (
+                  <ReferenceLine
+                    key={i}
+                    x={row.peer}
+                    stroke="#1A1A1A"
+                    strokeWidth={1.5}
+                    strokeDasharray="3 2"
+                    ifOverflow="visible"
+                  />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
         <div className={styles.chartLegend}>
           <span
@@ -883,7 +908,13 @@ function TrendsPanel({ briefing }: { briefing: CorpusBriefing }) {
 }
 
 /* ── Right Panel: Cost & Value Signals ── */
-function ValuePanel({ briefing }: { briefing: CorpusBriefing }) {
+function ValuePanel({
+  briefing,
+  mounted,
+}: {
+  briefing: CorpusBriefing;
+  mounted: boolean;
+}) {
   const valueChartData = briefing.valueBars.map((row) => ({
     label: row.label
       .replace(" automation potential", "")
@@ -912,58 +943,60 @@ function ValuePanel({ briefing }: { briefing: CorpusBriefing }) {
             </div>
           </div>
         </div>
-        <div style={{ height: 260, marginTop: 12 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={valueChartData}
-              layout="vertical"
-              margin={{ top: 0, right: 64, bottom: 0, left: 8 }}
-              barSize={22}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#EBEBEA"
-                horizontal={false}
-              />
-              <XAxis type="number" hide />
-              <YAxis
-                type="category"
-                dataKey="label"
-                tick={{ fontSize: 11, fill: "#404040", fontWeight: 500 }}
-                width={148}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 12,
-                  border: "1px solid #E5E5E2",
-                  borderRadius: 6,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                }}
-                formatter={(
-                  _: number,
-                  __: string,
-                  props: { payload?: { display?: string } },
-                ) => [props?.payload?.display ?? "", "Est. value / yr"]}
-              />
-              <Bar
-                dataKey="value"
-                fill="#11613A"
-                radius={[0, 4, 4, 0]}
-                label={{
-                  position: "right",
-                  fontSize: 12,
-                  fill: "#11613A",
-                  fontWeight: 700,
-                  formatter: (
+        <div style={{ height: mounted ? 260 : 0, marginTop: 12 }}>
+          {mounted && (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={valueChartData}
+                layout="vertical"
+                margin={{ top: 0, right: 64, bottom: 0, left: 8 }}
+                barSize={22}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#EBEBEA"
+                  horizontal={false}
+                />
+                <XAxis type="number" hide />
+                <YAxis
+                  type="category"
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "#404040", fontWeight: 500 }}
+                  width={148}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    border: "1px solid #E5E5E2",
+                    borderRadius: 6,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  }}
+                  formatter={(
                     _: number,
-                    entry: { payload?: { display?: string } },
-                  ) => entry?.payload?.display ?? "",
-                }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+                    __: string,
+                    props: { payload?: { display?: string } },
+                  ) => [props?.payload?.display ?? "", "Est. value / yr"]}
+                />
+                <Bar
+                  dataKey="value"
+                  fill="#11613A"
+                  radius={[0, 4, 4, 0]}
+                  label={{
+                    position: "right",
+                    fontSize: 12,
+                    fill: "#11613A",
+                    fontWeight: 700,
+                    formatter: (
+                      _: number,
+                      entry: { payload?: { display?: string } },
+                    ) => entry?.payload?.display ?? "",
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
         <div className={styles.chartLegend}>
           <span className={styles.legendSrc}>
