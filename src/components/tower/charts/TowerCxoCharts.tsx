@@ -178,6 +178,7 @@ export function ValueBridgeChart({
           />
           <YAxis hide domain={[0, Math.max(promised, committed) * 1.15]} />
           <Bar
+            isAnimationActive={false}
             dataKey="committed"
             fill={CT.INK}
             radius={[4, 4, 0, 0]}
@@ -198,6 +199,7 @@ export function ValueBridgeChart({
             />
           </Bar>
           <Bar
+            isAnimationActive={false}
             dataKey="promised"
             fill={CT.GREEN_DEEP}
             radius={[4, 4, 0, 0]}
@@ -218,6 +220,7 @@ export function ValueBridgeChart({
             />
           </Bar>
           <Bar
+            isAnimationActive={false}
             dataKey="measured"
             stackId="measured"
             fill={CT.GREEN}
@@ -239,6 +242,7 @@ export function ValueBridgeChart({
             />
           </Bar>
           <Bar
+            isAnimationActive={false}
             dataKey="toProve"
             stackId="measured"
             fill={CT.GREEN_SOFT}
@@ -414,12 +418,14 @@ export function ValueProvenBarChart({
             }}
           />
           <Bar
+            isAnimationActive={false}
             dataKey="measured"
             stackId="value"
             fill={CT.GREEN}
             radius={[4, 0, 0, 4]}
           />
           <Bar
+            isAnimationActive={false}
             dataKey="unproven"
             stackId="value"
             fill={CT.GREEN_SOFT}
@@ -695,6 +701,7 @@ export function BudgetRunChangeChart({
             }}
           />
           <Bar
+            isAnimationActive={false}
             dataKey="run"
             stackId="budget"
             fill={CT.INK}
@@ -707,6 +714,7 @@ export function BudgetRunChangeChart({
             />
           </Bar>
           <Bar
+            isAnimationActive={false}
             dataKey="change"
             stackId="budget"
             fill={CT.GREEN}
@@ -985,6 +993,7 @@ export function BenchmarkRadarChart({
           {cards.map((card) => (
             <Radar
               key={card.label}
+              isAnimationActive={false}
               name={card.isCurrent ? "This tenant" : card.label}
               dataKey={card.label}
               stroke={card.isCurrent ? CT.GREEN_DEEP : CT.GRAY}
@@ -1091,17 +1100,32 @@ export function BenchmarkComparisonChart({
               color: CT.INK_2,
             }}
           />
-          <Bar dataKey="runPct" fill={CT.INK} radius={[3, 3, 0, 0]}>
+          <Bar
+            isAnimationActive={false}
+            dataKey="runPct"
+            fill={CT.INK}
+            radius={[3, 3, 0, 0]}
+          >
             {chartRows.map((row) => (
               <Cell key={row.label} fillOpacity={row.isCurrent ? 1 : 0.55} />
             ))}
           </Bar>
-          <Bar dataKey="changePct" fill={CT.GREEN} radius={[3, 3, 0, 0]}>
+          <Bar
+            isAnimationActive={false}
+            dataKey="changePct"
+            fill={CT.GREEN}
+            radius={[3, 3, 0, 0]}
+          >
             {chartRows.map((row) => (
               <Cell key={row.label} fillOpacity={row.isCurrent ? 1 : 0.55} />
             ))}
           </Bar>
-          <Bar dataKey="valueProvenPct" fill={CT.AMBER} radius={[3, 3, 0, 0]}>
+          <Bar
+            isAnimationActive={false}
+            dataKey="valueProvenPct"
+            fill={CT.AMBER}
+            radius={[3, 3, 0, 0]}
+          >
             {chartRows.map((row) => (
               <Cell key={row.label} fillOpacity={row.isCurrent ? 1 : 0.55} />
             ))}
