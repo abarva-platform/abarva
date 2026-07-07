@@ -1,6 +1,7 @@
 export interface VisibleAnswerContractResult {
   passed: boolean;
   text: string;
+  version?: string;
   violations?: string[];
 }
 
