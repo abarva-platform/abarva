@@ -142,6 +142,13 @@ export interface StageTaskView {
   provenance?: TaskProvenanceView;
   /** The complete-this-task button label, e.g. 'Confirm volumetrics'. */
   cta: string;
+  /**
+   * When set, a file uploaded to this task's dropzone is ALSO parsed into typed
+   * `source_event_facts` via `/facts/ingest-file` using this template code (e.g.
+   * 'VOLUMETRICS_V1', 'APP_INVENTORY_V1'). The upload still stores as an artifact;
+   * this additionally flips the step insight LIVE. Absent → registry-only upload.
+   */
+  factTemplateCode?: string;
 }
 
 // ── Beat 3 · the gate ────────────────────────────────────────────────────────

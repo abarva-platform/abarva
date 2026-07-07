@@ -153,3 +153,80 @@ export async function uploadSourceCanvasArtifact(
     parseStatus: artifact.parseStatus ?? null,
   };
 }
+
+/** The honest result of parsing an uploaded file into typed facts. */
+export interface IngestFactsResult {
+  /** How many typed `source_event_facts` rows were written. */
+  factsWritten: number;
+  /** Upload columns the template did not bind to a fact (surfaced, not dropped). */
+  unmappedColumns: string[];
+  /** Count of cells that were bound but could not become a fact. */
+  rejectedRowCount: number;
+}
+
+export interface IngestFactsArgs {
+  eventId: string;
+  file: File;
+  /** The template fact map this upload is parsed against, e.g. 'VOLUMETRICS_V1'. */
+  templateCode: string;
+}
+
+/**
+ * POST an uploaded CSV/XLSX to the deterministic fact-ingest-file route. On
+ * success the file's rows are parsed (no LLM) and persisted as typed
+ * `source_event_facts`, which flips the stage's ✦ Intelligence insight LIVE.
+ * Resolves with the honest counts (written / unmapped / rejected); throws with a
+ * human-readable message on failure so the caller shows an error, never a fake
+ * "N facts written". This is ADDITIVE to the artifact upload — the file still
+ * stores as an artifact via `uploadSourceCanvasArtifact`.
+ */
+export async function ingestSourceCanvasFacts(
+  args: IngestFactsArgs,
+): Promise<IngestFactsResult> {
+  const formData = new FormData();
+  formData.append('file', args.file, args.file.name);
+  formData.append('templateCode', args.templateCode);
+
+  const href = `/api/v1/source/${encodeURIComponent(
+    args.eventId,
+  )}/facts/ingest-file`;
+
+  let response: Response;
+  try {
+    response = await fetch(href, { method: 'POST', body: formData });
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `Fact ingest request failed: ${error.message}`
+        : 'Fact ingest request failed before reaching the server.',
+    );
+  }
+
+  const payload = (await response.json().catch(() => null)) as {
+    ok?: boolean;
+    detail?: string;
+    error?: string;
+    factsWritten?: number;
+    unmappedColumns?: string[];
+    rejectedRows?: unknown[];
+  } | null;
+
+  if (!response.ok || !payload?.ok) {
+    throw new Error(
+      payload?.detail ??
+        payload?.error ??
+        `Fact ingest failed with HTTP ${response.status}.`,
+    );
+  }
+
+  return {
+    factsWritten:
+      typeof payload.factsWritten === 'number' ? payload.factsWritten : 0,
+    unmappedColumns: Array.isArray(payload.unmappedColumns)
+      ? payload.unmappedColumns
+      : [],
+    rejectedRowCount: Array.isArray(payload.rejectedRows)
+      ? payload.rejectedRows.length
+      : 0,
+  };
+}

@@ -1,12 +1,15 @@
 'use client';
 
 import { useRef, useState, type CSSProperties, type DragEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { ANALYTICS, taskVerb } from './analytics-tokens';
 import {
   CANVAS_UPLOAD_ACCEPT,
   formatUploadSize,
+  ingestSourceCanvasFacts,
   isAcceptedCanvasUpload,
   uploadSourceCanvasArtifact,
+  type IngestFactsResult,
   type UploadedArtifactResult,
 } from './upload-artifact';
 import type {
@@ -207,6 +210,7 @@ function TaskRow({
               signed={/letter|commit/i.test(task.title)}
               eventId={eventId}
               stageKey={stageKey}
+              factTemplateCode={task.factTemplateCode}
               onUploaded={onComplete}
             />
           ) : null}
@@ -480,16 +484,81 @@ function TemplateChip({ template }: { template: TaskTemplateView }) {
   );
 }
 
+/**
+ * The honest fact-ingest receipt shown under the uploaded-file card: how many
+ * typed facts were written, plus any unmapped columns / rejected rows. Zero
+ * facts written is stated plainly (amber), never dressed as success. This is what
+ * tells the user the ✦ Intelligence insight just flipped LIVE.
+ */
+function FactResultChip({ ingest }: { ingest: IngestFactsResult }) {
+  const wrote = ingest.factsWritten > 0;
+  const parts: string[] = [];
+  if (ingest.unmappedColumns.length > 0) {
+    parts.push(
+      `${ingest.unmappedColumns.length} column${
+        ingest.unmappedColumns.length === 1 ? '' : 's'
+      } unmapped`,
+    );
+  }
+  if (ingest.rejectedRowCount > 0) {
+    parts.push(
+      `${ingest.rejectedRowCount} cell${
+        ingest.rejectedRowCount === 1 ? '' : 's'
+      } rejected`,
+    );
+  }
+  return (
+    <div
+      role="status"
+      data-testid="fact-ingest-result"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
+        marginTop: 8,
+        padding: '9px 12px',
+        borderRadius: ANALYTICS.RADIUS_SM,
+        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        background: wrote ? 'rgba(20,140,90,0.06)' : 'rgba(180,120,10,0.06)',
+        fontSize: 12.5,
+        fontFamily: ANALYTICS.SANS,
+      }}
+    >
+      <span style={{ color: wrote ? ANALYTICS.GREEN : ANALYTICS.AMBER_TEXT }}>
+        {wrote ? '✦' : '△'}
+      </span>
+      <span style={{ color: ANALYTICS.INK_2 }}>
+        <b style={{ color: ANALYTICS.INK }}>
+          {ingest.factsWritten} fact{ingest.factsWritten === 1 ? '' : 's'} written
+        </b>
+        {wrote ? ' — Intelligence updated from your file' : ' — nothing mapped'}
+        {parts.length > 0 ? ` (${parts.join(' · ')})` : ''}
+      </span>
+    </div>
+  );
+}
+
 type DropZoneStatus =
   | { phase: 'idle' }
   | { phase: 'uploading'; name: string }
-  | { phase: 'uploaded'; result: UploadedArtifactResult }
+  | {
+      phase: 'uploaded';
+      result: UploadedArtifactResult;
+      /** Present when the file was also parsed into typed facts. */
+      ingest?: IngestFactsResult;
+    }
   | { phase: 'error'; message: string };
 
 interface DropZoneProps {
   signed: boolean;
   eventId?: string;
   stageKey?: string;
+  /**
+   * When set, an uploaded CSV/XLSX is ALSO parsed into typed facts via
+   * `/facts/ingest-file` using this template code, flipping the step insight
+   * LIVE. Absent → registry-only upload (the current behavior).
+   */
+  factTemplateCode?: string;
   onUploaded?: () => void;
 }
 
@@ -502,7 +571,14 @@ interface DropZoneProps {
  *
  * Without `eventId` the zone stays presentational (sample/preview mode).
  */
-function DropZone({ signed, eventId, stageKey, onUploaded }: DropZoneProps) {
+function DropZone({
+  signed,
+  eventId,
+  stageKey,
+  factTemplateCode,
+  onUploaded,
+}: DropZoneProps) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<DropZoneStatus>({ phase: 'idle' });
   const [dragActive, setDragActive] = useState(false);
@@ -518,11 +594,41 @@ function DropZone({ signed, eventId, stageKey, onUploaded }: DropZoneProps) {
     }
     setStatus({ phase: 'uploading', name: file.name });
     try {
+      // 1) Store the file as an artifact (unchanged behavior — always happens).
       const result = await uploadSourceCanvasArtifact({
         eventId,
         stageKey,
         file,
       });
+
+      // 2) When this task binds a template, ALSO parse the file into typed facts.
+      //    On success the step insight flips LIVE — refresh the page so the
+      //    server re-reads facts and rebuilds it. A fact-ingest failure surfaces
+      //    as an error (never a fake "done"): the artifact is already stored.
+      if (factTemplateCode) {
+        let ingest: IngestFactsResult;
+        try {
+          ingest = await ingestSourceCanvasFacts({
+            eventId,
+            file,
+            templateCode: factTemplateCode,
+          });
+        } catch (ingestError) {
+          setStatus({
+            phase: 'error',
+            message:
+              ingestError instanceof Error
+                ? `File stored, but fact parse failed: ${ingestError.message}`
+                : 'File stored, but fact parse failed.',
+          });
+          return;
+        }
+        setStatus({ phase: 'uploaded', result, ingest });
+        onUploaded?.();
+        if (ingest.factsWritten > 0) router.refresh();
+        return;
+      }
+
       setStatus({ phase: 'uploaded', result });
       onUploaded?.();
     } catch (error) {
@@ -553,14 +659,17 @@ function DropZone({ signed, eventId, stageKey, onUploaded }: DropZoneProps) {
   // uploader (out of scope: this wires the volumetrics-style CSV/XLSX dropzone).
   if (status.phase === 'uploaded') {
     return (
-      <FileChip
-        file={{
-          format: status.result.format,
-          name: status.result.originalName,
-          meta: `${formatUploadSize(status.result.sizeBytes)} · uploaded`,
-        }}
-        onRemove={() => setStatus({ phase: 'idle' })}
-      />
+      <div>
+        <FileChip
+          file={{
+            format: status.result.format,
+            name: status.result.originalName,
+            meta: `${formatUploadSize(status.result.sizeBytes)} · uploaded`,
+          }}
+          onRemove={() => setStatus({ phase: 'idle' })}
+        />
+        {status.ingest ? <FactResultChip ingest={status.ingest} /> : null}
+      </div>
     );
   }
 

@@ -24,15 +24,14 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { inferClientKeyFromEmail, isClientKey } from "@/lib/client-config";
-import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { resolveSourceEventUuidForClient } from "@/lib/source/queries";
-import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
-import {
-  mapTemplateUploadToFacts,
-  type ParsedTemplateRow,
-  type ParsedTemplateUpload,
+import type {
+  ParsedTemplateRow,
+  ParsedTemplateUpload,
 } from "@/lib/source/facts/extraction/structured-map";
-import { selectSourceFactWriteAdapter } from "@/lib/data-plane/write-adapters/sourceFactWriteAdapter";
+import {
+  ingestTemplateUpload,
+  ingestFailureStatus,
+} from "@/lib/source/facts/ingest/ingest-template-upload";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -129,69 +128,27 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    const template = templateFactMapByCode(parsed.templateCode);
-    if (!template) {
-      return Response.json(
-        {
-          error: "unknown_template",
-          detail: `No template fact map for code '${parsed.templateCode}'`,
-        },
-        { status: 400 },
-      );
-    }
-
-    // Resolve + tenant-fence the event.
-    const supabase = getAzureReadFluentClient();
-    const resolvedEventId = await resolveSourceEventUuidForClient(
-      eventId,
-      effectiveClientKey,
-    ).catch(() => null);
-    const lookupId = resolvedEventId ?? eventId;
-    const { data: persistedEvent, error: fetchError } = await supabase
-      .from("source_events")
-      .select("id, client_key")
-      .eq("id", lookupId)
-      .maybeSingle();
-
-    if (fetchError) {
-      return Response.json(
-        { error: "lookup_failed", detail: fetchError.message },
-        { status: 500 },
-      );
-    }
-    if (!persistedEvent || persistedEvent.client_key !== effectiveClientKey) {
-      return Response.json(
-        { error: "not_found", detail: `No source event with id ${eventId}` },
-        { status: 404 },
-      );
-    }
-
-    // Deterministic map → typed facts.
-    const mapped = mapTemplateUploadToFacts(template, parsed.upload, {
-      sourceEventId: persistedEvent.id,
-      clientKey: effectiveClientKey,
+    // Deterministic map + tenant-fence + write — the SHARED ingest tail that the
+    // /facts/ingest-file (multipart) route also calls, so behavior is identical.
+    const result = await ingestTemplateUpload({
+      templateCode: parsed.templateCode,
+      upload: parsed.upload,
+      scope: { eventId, clientKey: effectiveClientKey },
     });
-
-    // Persist through the data-plane write seam (RLS-scoped by client_key).
-    const writeAdapter = selectSourceFactWriteAdapter(
-      undefined,
-      effectiveClientKey,
-    );
-    const write = await writeAdapter.insertFacts(mapped.facts);
-    if (!write.ok) {
+    if (!result.ok) {
       return Response.json(
-        { error: "write_failed", detail: write.error },
-        { status: 500 },
+        { error: result.code, detail: result.detail },
+        { status: ingestFailureStatus(result.code) },
       );
     }
 
     return Response.json({
       ok: true,
-      eventId: persistedEvent.id,
-      templateCode: template.templateCode,
-      factsWritten: write.data?.inserted ?? 0,
-      unmappedColumns: mapped.unmappedColumns,
-      rejectedRows: mapped.rejectedRows,
+      eventId: result.eventId,
+      templateCode: result.templateCode,
+      factsWritten: result.factsWritten,
+      unmappedColumns: result.unmappedColumns,
+      rejectedRows: result.rejectedRows,
     });
   } catch (err) {
     console.error("[POST /api/v1/source/:eventId/facts/ingest]", err);

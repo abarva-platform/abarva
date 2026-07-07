@@ -13,6 +13,14 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
+// The dropzone calls next/navigation's useRouter (to refresh the page after a
+// fact ingest flips the step insight live). Stub it so the component renders
+// under jsdom without an App Router.
+const routerRefresh = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), refresh: routerRefresh }),
+}));
+
 import { TaskChecklist } from '../TaskChecklist';
 import type { StageTaskView } from '../view-model';
 
@@ -123,5 +131,59 @@ describe('TaskChecklist provide-task upload', () => {
     render(<TaskChecklist tasks={[PROVIDE_TASK]} />);
     expect(screen.getByTestId('task-dropzone')).toBeInTheDocument();
     expect(screen.queryByTestId('task-file-input')).not.toBeInTheDocument();
+  });
+
+  it('also ingests facts and refreshes when the task binds a template', async () => {
+    // Two POSTs: 1) artifact upload, 2) fact ingest-file. Both return ok.
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          artifact: {
+            id: 'artifact-1',
+            originalName: 'volumetrics.csv',
+            sourceFormat: 'csv',
+            sizeBytes: 4096,
+            parseStatus: 'parsed',
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          eventId: 'evt-1',
+          templateCode: 'VOLUMETRICS_V1',
+          factsWritten: 5,
+          unmappedColumns: ['Notes'],
+          rejectedRows: [],
+        }),
+      });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const boundTask: StageTaskView = {
+      ...PROVIDE_TASK,
+      factTemplateCode: 'VOLUMETRICS_V1',
+    };
+    render(
+      <TaskChecklist tasks={[boundTask]} eventId="evt-1" stageKey="scope" />,
+    );
+
+    selectFile(
+      new File([new Uint8Array(16)], 'volumetrics.csv', { type: 'text/csv' }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    // The second call is the deterministic fact ingest-file route.
+    const secondUrl = String(fetchMock.mock.calls[1][0]);
+    expect(secondUrl).toContain('/api/v1/source/evt-1/facts/ingest-file');
+
+    // The honest result chip renders the real written count.
+    const chip = await screen.findByTestId('fact-ingest-result');
+    expect(chip).toHaveTextContent(/5 facts written/i);
+    // And the page is refreshed so the step insight re-reads the new facts.
+    await waitFor(() => expect(routerRefresh).toHaveBeenCalled());
   });
 });
