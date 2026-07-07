@@ -7,6 +7,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { getTenantSourceFiles } from "@/lib/context-ingestion/tenant-context-read-model";
 import { buildLoadStudioView } from "@/lib/admin/setup-load-studio-view";
 import { getClientOption, isClientKey } from "@/lib/client-config";
+import { composeOverviewBlocks } from "@/lib/admin/overview-composer";
 
 export const metadata = { title: "Setup · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -65,17 +66,17 @@ export default async function AdminSetupPage() {
     name: activeClientDisplayName,
     slug: tenant.tenantSlug,
     industry: clientOption.vertical,
-    region: activeClient?.industry_code ?? 'Tenant configured',
-    tier: 'Enterprise',
-    status: 'locked',
-    contractStart: 'Tenant record',
-    contractEnd: 'Tenant record',
-    renewalOwner: 'Tenant success',
+    region: activeClient?.industry_code ?? "Tenant configured",
+    tier: "Enterprise",
+    status: "locked",
+    contractStart: "Tenant record",
+    contractEnd: "Tenant record",
+    renewalOwner: "Tenant success",
     programCount: programsCount,
     activePrograms: programsCount,
-    dataResidency: 'Tenant configured',
-    ssoProvider: 'Tenant configured',
-    createdDate: 'Tenant record',
+    dataResidency: "Tenant configured",
+    ssoProvider: "Tenant configured",
+    createdDate: "Tenant record",
   };
   return (
     <AppShell
