@@ -3,6 +3,10 @@ import type { CSSProperties } from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
+import { SourceSetupConfigPage } from "@/components/source/setup/SourceSetupConfigPage";
+import { getActiveClientRow } from "@/lib/active-client";
+import { canonicalClientDisplayName } from "@/lib/client-config";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import {
   SOURCE_STAGE_ORDER,
@@ -203,7 +207,12 @@ function tdStyle(extra?: CSSProperties): CSSProperties {
   };
 }
 
-export default function SourceSetupPage() {
+/**
+ * The flag-off Source Setup: the artifact-operations contract table. Untouched
+ * by the `source_analytics` realign — this is the current surface every tenant
+ * without the flag continues to see.
+ */
+function SourceSetupArtifactOperationsPage() {
   const operations = listSourceArtifactOperations();
   const summary = summarizeSourceArtifactOperations(operations);
   const operationsByStage = SOURCE_STAGE_ORDER.map((stage) => ({
@@ -566,4 +575,37 @@ export default function SourceSetupPage() {
       </main>
     </AppShell>
   );
+}
+
+/**
+ * Source Setup route. Behind the `source_analytics` master flag (Lakeshore is
+ * the first enrolled tenant): flag ON → the redesigned three-card "Source
+ * configuration" surface; flag OFF → the untouched artifact-operations page.
+ *
+ * The three config cards render honest placeholder state ("not configured") —
+ * this repo has no tenant-wide connected-evidence-source registry or default-
+ * archetype config store to source real values from, and we never fabricate a
+ * connection count.
+ */
+export default async function SourceSetupPage() {
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const sourceAnalyticsEnabled = isFeatureEnabled(
+    {
+      clientKey: activeClient?.key ?? null,
+      clientId: activeClient?.id ?? null,
+    },
+    "source_analytics",
+  );
+
+  if (!sourceAnalyticsEnabled) {
+    return <SourceSetupArtifactOperationsPage />;
+  }
+
+  const tenantName =
+    canonicalClientDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ?? "your tenant";
+
+  return <SourceSetupConfigPage tenantName={tenantName} />;
 }
