@@ -11,6 +11,11 @@
 
 export * from './types';
 export { evaluateLeverRule } from './evaluate';
+export {
+  adaptEvaluatorResult,
+  type CitationLookup,
+  type FactCitation,
+} from './evaluators-adapter';
 export { diagnoseLeakage, isLeakageLever, leakageLeversFor } from './diagnose';
 export { buildValueBridge } from './bridge';
 export { recommendPlay } from './play';
