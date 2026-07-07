@@ -93,9 +93,9 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "intelligence_quality_charts",
     summary:
-      "First Recharts data-visualizations on the Intelligence Knowledge Quality lens (/intelligence/quality): a domain-coverage bar chart (pattern count per domain, colored by coverage strength) and a contradiction-status donut. Charts ONLY the deterministic view fields with honest empty states (no domains → empty state; zero contradictions → 'No contradictions logged yet', never a zero donut). Default OFF; flag-off the Quality lens is byte-identical (the charts component is never mounted). Tenant opt-in via includeTenants or ABARVA_FEATURE_INTELLIGENCE_QUALITY_CHARTS_TENANTS.",
+      "First Recharts data-visualizations on the Intelligence Knowledge Quality lens (/intelligence/quality): a domain-coverage bar chart (pattern count per domain, colored by coverage strength) and a contradiction-status donut. Charts ONLY the deterministic view fields with honest empty states (no domains → empty state; zero contradictions → 'No contradictions logged yet', never a zero donut). Default OFF; flag-off the Quality lens is byte-identical (the charts component is never mounted). Tenant opt-in via includeTenants or ABARVA_FEATURE_INTELLIGENCE_QUALITY_CHARTS_TENANTS. Lakeshore enrolled first to prove the Recharts look-and-feel live before wider rollout.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["lakeshore"],
   },
   {
     key: "intelligence_companion_canvas",
