@@ -1,0 +1,43 @@
+// Source analytics canvas — public surface (the redesigned three-beat page).
+//
+// Ships dark behind the `source_analytics` flag: the route renders
+// `SourceAnalyticsCanvas` when the flag is on for the tenant, and the current
+// `UniversalCanvasShell` (untouched) when off.
+
+export { SourceAnalyticsCanvas } from './SourceAnalyticsCanvas';
+export { ScopeAnalyticsStage } from './ScopeAnalyticsStage';
+export { IntelPanel } from './IntelPanel';
+export { TaskChecklist } from './TaskChecklist';
+export { ScopeGate } from './ScopeGate';
+export { ValueTypeChip, ValueTypeLegend } from './ValueTypeChip';
+export { ValueWaterfall } from './ValueWaterfall';
+export { AvaLauncher } from './AvaLauncher';
+export { AnalyticsStageRail } from './AnalyticsStageRail';
+export {
+  SAMPLE_SCOPE_STAGE,
+  SAMPLE_SCOPE_AVA,
+} from './sample-view-model';
+export type {
+  AvaLauncherView,
+  FactConfidence,
+  FactSourceCitation,
+  GateConfirmView,
+  GateDeliverableView,
+  IntelPointTone,
+  IntelPointView,
+  IntelProvenance,
+  SourceIntelViewModel,
+  StageAnalyticsView,
+  StageGateView,
+  StageTaskView,
+  TaskFileView,
+  TaskProvenanceView,
+  TaskReviewRowView,
+  TaskState,
+  TaskTemplateView,
+  TaskType,
+  ValueType,
+  ValueUnit,
+  ValueWaterfallBandView,
+  ValueWaterfallView,
+} from './view-model';

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { UniversalCanvasShell } from "@/components/source/canvas/UniversalCanvasShell";
+import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
 import { getSourcingEvent } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
@@ -67,6 +68,33 @@ export default async function SourceEventDetailPage({
     (SOURCE_STAGE_ORDER.includes(event.currentStageKey)
       ? event.currentStageKey
       : "strategy");
+
+  // ── source_analytics · the redesigned three-beat stage canvas ──────────────
+  // Ships DARK behind the master flag. When ON for the tenant, render the new
+  // analytics canvas; when OFF, fall through to the untouched UniversalCanvasShell
+  // below. Resolved early so the heavy substrate/vendor reads the current shell
+  // needs are skipped on the analytics path.
+  const sourceAnalyticsEnabled = isFeatureEnabled(
+    {
+      clientKey: activeClient?.key ?? null,
+      clientId: activeClient?.id ?? null,
+    },
+    "source_analytics",
+  );
+  if (sourceAnalyticsEnabled) {
+    const analyticsTenantName =
+      canonicalClientDisplayName({
+        key: activeClient?.key,
+        name: activeClient?.name,
+      }) ?? event.accountName;
+    return (
+      <SourceAnalyticsCanvas
+        event={event}
+        viewStage={viewStage}
+        tenantName={analyticsTenantName}
+      />
+    );
+  }
 
   // Read canvas substrate (RLS-scoped server-side). Use the resolved
   // event.id (UUID) — when the slug is an event_code (B7), passing the
