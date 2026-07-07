@@ -139,7 +139,7 @@ export default async function ContextTemplatesPage() {
                   <td
                     style={{ borderBottom: "1px solid #eee7d8", padding: 10 }}
                   >
-                    {formatList(template.exceptionFormats)}
+                    {formatList(template.exceptionFormats ?? [])}
                   </td>
                   <td
                     style={{ borderBottom: "1px solid #eee7d8", padding: 10 }}
@@ -149,11 +149,11 @@ export default async function ContextTemplatesPage() {
                   <td
                     style={{ borderBottom: "1px solid #eee7d8", padding: 10 }}
                   >
-                    {template.exceptionMetadataRequirements
+                    {(template.exceptionMetadataRequirements ?? [])
                       .slice(0, 5)
                       .map((requirement) => requirement.label)
                       .join(", ")}
-                    {template.exceptionMetadataRequirements.length > 5
+                    {(template.exceptionMetadataRequirements ?? []).length > 5
                       ? " + more"
                       : ""}
                   </td>
