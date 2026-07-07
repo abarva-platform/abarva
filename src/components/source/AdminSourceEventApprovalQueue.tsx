@@ -50,6 +50,8 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
   const [comments, setComments] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, ActionResult>>({});
+  // Per-event error map. Written on action failure/success; surfaced via results.
+  const [, setErrors] = useState<Record<string, string>>({});
 
   if (events.length === 0) return null;
 
