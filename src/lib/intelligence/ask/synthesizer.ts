@@ -555,15 +555,15 @@ export async function* synthesizeStream(args: {
   // light formatting. Placed AFTER the role prompt so it overrides the earlier
   // "plain text only" convention. Empty for every plain-text caller.
   const richTextAddendum = lightMarkdown
-    ? `\n\nRICH-TEXT SURFACE OVERRIDE: This answer is rendered as Markdown with full GitHub-Flavored Markdown support including tables and charts.
+    ? `\n\nRICH-TEXT SURFACE OVERRIDE — SUPERSEDES ALL PRIOR FORMATTING INSTRUCTIONS: This answer is rendered as Markdown with full GitHub-Flavored Markdown support. The earlier instruction "Do not include Markdown tables unless the user asks" is CANCELLED for this surface. The earlier instruction "Do not print visible section labels" is CANCELLED for this surface.
 
-FORMATTING RULES (mandatory):
-1. Open with a single **bold sentence** — the key finding, not a preamble.
-2. Use **bold section headers** (e.g. **Cost Exposure**, **Key Risks**) on their own line when the answer covers 3 or more distinct topics.
-3. Use "- " bullet lists where items benefit from visual separation. Never write more than 4 sentences in a single paragraph.
-4. Use a GFM table for ANY naturally tabular data (comparisons, ranked lists, vendor/initiative/risk matrices, spend breakdowns, timelines, benchmarks). Table rules: header row + separator row + every data row on separate lines; 3–5 columns; 2–8 rows; only cited or clearly labeled planning values.
-5. **Bold** the single most decision-critical number or phrase per section. Do not bold decoratively.
-6. Keep answers tight — depth over length. No hollow openers ("Great question", "Based on the context").
+MANDATORY FORMATTING RULES — follow every one of these exactly:
+1. Open with a single **bold sentence** that states the key finding directly. No prose preamble before it.
+2. When the answer covers 3 or more distinct topics, use **Bold Section Headers** on their own line (e.g. **Demand Sensing**, **Supplier Intelligence**, **What to Do**).
+3. Use "- " bullet lists wherever items benefit from scanning rather than reading.
+4. ALWAYS use a GFM Markdown table for ANY comparison, ranked list, vendor matrix, spend breakdown, timeline, or multi-row data. GFM table format: header row | col1 | col2, then separator row |---|---|, then one data row per line. 3–5 columns, 2–8 rows. Never describe tabular data in prose if a table would be clearer.
+5. **Bold** the single most decision-critical number or phrase per section.
+6. Never write more than 4 sentences in a single paragraph. Depth over length. No hollow openers.
 
 CHART CONTRACT: The renderer supports inline charts rendered from fenced code blocks with language identifier \`chart\`. When you have data that would be clearer as a visual (spend trends, maturity comparisons, top-N ranked items, allocation breakdowns), emit a chart block INSTEAD of or ALONGSIDE the table. Chart block format:
 
@@ -1354,17 +1354,12 @@ ACTIVE INTELLIGENCE CANVAS RULES
 
     // Sanitize cap with headroom over the prompt's named target.
     //
-    // The OUTPUT CONVENTIONS footer tells the model "never over 200" as a
-    // target. If the cap and the target are the same number, a model that
-    // overshoots by 5-10% (typical) gets hard-truncated and then back-tracked
-    // to the last sentence end — sometimes losing 10-30 words. Setting the
-    // cap to 240 gives the model headroom to land at 195-220 without clipping
-    // and still fences off true runaway responses. The prompt remains the
-    // primary length lever; this is a safety net.
-    const sanitized = sanitizeAskSynthesis(
-      text,
-      chooseAdvisorWordCap(args.query, 240),
-    );
+    // Rich-text surfaces render Markdown — skip stripMarkdownControl so bold,
+    // tables, and headers survive. Word-cap still applies as a safety net.
+    // Plain-text callers go through the full sanitize (strips markdown artifacts).
+    const sanitized = args.richText
+      ? text
+      : sanitizeAskSynthesis(text, chooseAdvisorWordCap(args.query, 240));
     const evidenceDisciplined = applyPartialEvidencePolicy(
       sanitized,
       args.sources,
