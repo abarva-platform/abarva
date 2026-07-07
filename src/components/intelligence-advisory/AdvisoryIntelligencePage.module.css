@@ -569,6 +569,39 @@
   text-transform: uppercase;
 }
 
+/* ── Chart legend row ── */
+.chartLegend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.legendDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-size: 11px;
+  color: var(--ink-2);
+  font-family: var(--sans);
+}
+
+.legendSrc {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  letter-spacing: 0;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
 /* ══ Block container ══ */
 .block {
   padding: 17px 18px;
