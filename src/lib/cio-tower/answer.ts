@@ -7,6 +7,7 @@ import {
   assertVisibleAnswerContract,
   type VisibleAnswerContractResult,
 } from "@/lib/agent/visible-answer-contract";
+import { isExplicitVisualAsk } from "@/lib/intelligence/ask/synthesizer";
 
 const MODEL_NAME = "claude-sonnet-4-6";
 const PROMPT_VERSION = "cio_tower_advisor_prompt_v1";
@@ -353,6 +354,15 @@ export function buildCioTowerClaudePrompt(
     "- If a table helps, include tables[]. The renderer will display your title, column labels, and cell text exactly.",
     "- If multiple panes help, include tabs[]. The renderer will place your tab labels and prose exactly.",
     "- If no table is needed, return tables as an empty array.",
+    ...(isExplicitVisualAsk(context.question)
+      ? [
+          "",
+          "TABLE INSTRUCTION (this question asks for a comparison, ranking, or visual):",
+          "- You MUST include at least one table in tables[].",
+          "- Also embed the same table as a GFM markdown table directly in the answer field so the inline renderer can display it.",
+          "- In the answer field: table header row first (| Col | Col | ...), then separator (|---|---|...), then data rows. Follow with 1-2 bold analysis sentences.",
+        ]
+      : []),
     "",
     "Required JSON shape:",
     "{",
@@ -390,6 +400,17 @@ export function buildCioTowerClaudePrompt(
     "",
     "Answer now. Return the JSON object only.",
   ].join("\n");
+}
+
+function cioTowerTablesToGfm(tables: CioTowerVisibleTable[]): string {
+  return tables
+    .map((t) => {
+      const header = `| ${t.columns.join(" | ")} |`;
+      const sep = `| ${t.columns.map(() => "---").join(" | ")} |`;
+      const rows = t.rows.map((row) => `| ${row.join(" | ")} |`).join("\n");
+      return `**${t.title}**\n\n${header}\n${sep}\n${rows}`;
+    })
+    .join("\n\n");
 }
 
 async function loadContract(question: string): Promise<CioTowerContract> {
@@ -755,8 +776,20 @@ export async function answerCioTowerQuestion(args: {
     throw error;
   }
 
+  const gfmTables =
+    parsedOutput.tables && parsedOutput.tables.length > 0
+      ? cioTowerTablesToGfm(parsedOutput.tables)
+      : "";
+  // Append serialized tables to prose only when the answer doesn't already
+  // contain a GFM table (visual-ask path asks Claude to embed it directly).
+  const hasInlineTable = /^\|.+\|/m.test(parsedOutput.answer);
+  const responseText =
+    gfmTables && !hasInlineTable
+      ? `${parsedOutput.answer}\n\n${gfmTables}`
+      : parsedOutput.answer;
+
   return {
-    response: parsedOutput.answer,
+    response: responseText,
     modelOutputRaw: rawResponse,
     modelOutput: parsedOutput,
     promptPackageKey,

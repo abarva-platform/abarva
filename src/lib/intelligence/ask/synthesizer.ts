@@ -323,7 +323,7 @@ export function chooseSynthesisTokenBudget(query: string): number {
   return Math.max(chooseAdvisorTokenBudget(query, defaultBudget), 3000);
 }
 
-function isExplicitVisualAsk(query: string): boolean {
+export function isExplicitVisualAsk(query: string): boolean {
   return /\b(table|tables|chart|charts|graph|graphs|visual|visuals|visually|visuali[sz]e|plot|comparison grid|matrix|ranking|ranked|breakdown|show me)\b/i.test(
     query,
   );
