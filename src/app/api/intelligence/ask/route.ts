@@ -73,6 +73,7 @@ interface AskPayload {
   surfaceContext: AskSurfaceContext | null;
   tabId: string | null;
   traceEnabled: boolean;
+  richText?: boolean;
 }
 
 async function handleAsk(payload: AskPayload, req: NextRequest) {
@@ -200,9 +201,13 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
     },
   }).catch((err) => console.warn("[ask.session-memory.user-turn]", err));
   capturePreStreamTiming(
-    routeTrace.finish("route.session_memory.user_turn.done", userTurnStartedAt, {
-      hasSession: Boolean(memory?.sessionId),
-    }),
+    routeTrace.finish(
+      "route.session_memory.user_turn.done",
+      userTurnStartedAt,
+      {
+        hasSession: Boolean(memory?.sessionId),
+      },
+    ),
   );
   const includeLatencyTrace = shouldIncludeIntelligenceLatencyTrace(
     req,
@@ -552,13 +557,14 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           traceSession: payload.traceEnabled
             ? {
                 tenant,
-                user: sessionUserId || userId
-                  ? {
-                      id: sessionUserId ?? userId ?? 'unknown-user',
-                      email: null,
-                      role: activePersonDisplayName ?? null,
-                    }
-                  : undefined,
+                user:
+                  sessionUserId || userId
+                    ? {
+                        id: sessionUserId ?? userId ?? "unknown-user",
+                        email: null,
+                        role: activePersonDisplayName ?? null,
+                      }
+                    : undefined,
                 question: query,
               }
             : undefined,
@@ -810,12 +816,16 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             sources: advisorSources,
           });
           enqueueTiming(
-            routeTrace.finish("route.structured_exhibits.done", exhibitsStartedAt, {
-              tableCount: exhibits.tables.length,
-              chartCount: exhibits.charts.length,
-              graphCount: exhibits.graphs.length,
-              citationCount: exhibits.citations.length,
-            }),
+            routeTrace.finish(
+              "route.structured_exhibits.done",
+              exhibitsStartedAt,
+              {
+                tableCount: exhibits.tables.length,
+                chartCount: exhibits.charts.length,
+                graphCount: exhibits.graphs.length,
+                citationCount: exhibits.citations.length,
+              },
+            ),
           );
           if (
             hasRenderableStructuredExhibits(exhibits) ||
@@ -1345,11 +1355,16 @@ function buildHomeKnowRouteFallbackResponse(input: {
 async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
   const url = new URL(req.url);
   return {
-    query: url.searchParams.get('q') ?? '',
-    requestedClient: url.searchParams.get('client'),
-    surfaceContext: parseSurfaceContext(url.searchParams.get('surfaceContext')),
-    tabId: url.searchParams.get('tabId') ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
-    traceEnabled: url.searchParams.get('trace') === '1' || url.searchParams.get('traceEnabled') === 'true',
+    query: url.searchParams.get("q") ?? "",
+    requestedClient: url.searchParams.get("client"),
+    surfaceContext: parseSurfaceContext(url.searchParams.get("surfaceContext")),
+    tabId:
+      url.searchParams.get("tabId") ??
+      req.cookies.get("ai-ask-tab-id")?.value ??
+      null,
+    traceEnabled:
+      url.searchParams.get("trace") === "1" ||
+      url.searchParams.get("traceEnabled") === "true",
   };
 }
 
@@ -1367,8 +1382,12 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
     query: readString(payload.q) ?? readString(payload.query) ?? "",
     requestedClient: readString(payload.client),
     surfaceContext: normalizeSurfaceContext(payload.surfaceContext),
-    tabId: readString(payload.tabId) ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
-    traceEnabled: readBoolean(payload.traceEnabled) || readString(payload.trace) === '1',
+    tabId:
+      readString(payload.tabId) ??
+      req.cookies.get("ai-ask-tab-id")?.value ??
+      null,
+    traceEnabled:
+      readBoolean(payload.traceEnabled) || readString(payload.trace) === "1",
   };
 }
 
@@ -1410,7 +1429,7 @@ function readString(value: unknown): string | null {
 }
 
 function readBoolean(value: unknown): boolean {
-  return value === true || value === 'true' || value === '1';
+  return value === true || value === "true" || value === "1";
 }
 
 function readStringArray(value: unknown): string[] | undefined {
@@ -1467,7 +1486,10 @@ function ensureRouteMandatoryCanvasTabs(
 
 function cleanRouteCanvasMainAnswer(text: string): string {
   const withoutCanvas = text
-    .replace(/```(?:abarva-canvas|json\s+abarva-canvas)\s*[\s\S]*?(?:```|$)/gi, "")
+    .replace(
+      /```(?:abarva-canvas|json\s+abarva-canvas)\s*[\s\S]*?(?:```|$)/gi,
+      "",
+    )
     .replace(/\n\s*Table\s*[·:-][\s\S]*$/i, "")
     .replace(/\n\s*\|[^|\n]+\|[\s\S]*$/i, "")
     .replace(/\n{3,}/g, "\n\n")
@@ -1490,8 +1512,10 @@ function buildRouteFallbackCanvasTab(
 ): string {
   if (label === "Decision") {
     const firstSentence =
-      args.mainAnswer.split(/(?<=[.!?])\s+/).find(Boolean)?.trim() ??
-      "Sequence the decision by value, readiness, and proof.";
+      args.mainAnswer
+        .split(/(?<=[.!?])\s+/)
+        .find(Boolean)
+        ?.trim() ?? "Sequence the decision by value, readiness, and proof.";
     return [
       "<<<TAB: Decision | grounding: tenant-evidence>>>",
       `Executive choice: ${firstSentence}`,
@@ -1515,8 +1539,9 @@ function buildRouteFallbackCanvasTab(
         nativeCanvas,
       ].join("\n");
     }
-    const tenantCount = args.sources.filter((source) => source.type === "TENANT")
-      .length;
+    const tenantCount = args.sources.filter(
+      (source) => source.type === "TENANT",
+    ).length;
     const contextCount = Math.max(args.sources.length - tenantCount, 0);
     return [
       "<<<TAB: Chart | grounding: mixed>>>",
@@ -1545,18 +1570,22 @@ function buildRouteFallbackCanvasTab(
 
   return [
     "<<<TAB: Evidence | grounding: tenant-evidence>>>",
-    `Tenant facts used: ${args.sources
-      .filter((source) => source.type === "TENANT")
-      .slice(0, 3)
-      .map((source) => source.name || source.id)
-      .filter(Boolean)
-      .join("; ") || "tenant evidence packet"}.`,
-    `Industry or pattern context used: ${args.sources
-      .filter((source) => source.type !== "TENANT")
-      .slice(0, 3)
-      .map((source) => source.name || source.id)
-      .filter(Boolean)
-      .join("; ") || "none used"}.`,
+    `Tenant facts used: ${
+      args.sources
+        .filter((source) => source.type === "TENANT")
+        .slice(0, 3)
+        .map((source) => source.name || source.id)
+        .filter(Boolean)
+        .join("; ") || "tenant evidence packet"
+    }.`,
+    `Industry or pattern context used: ${
+      args.sources
+        .filter((source) => source.type !== "TENANT")
+        .slice(0, 3)
+        .map((source) => source.name || source.id)
+        .filter(Boolean)
+        .join("; ") || "none used"
+    }.`,
     "Validation point: confirm the accountable owner, baseline metric, and proof gate before using the answer as board-grade guidance.",
   ].join("\n");
 }
