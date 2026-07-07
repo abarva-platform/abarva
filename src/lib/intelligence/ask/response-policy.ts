@@ -55,7 +55,7 @@ export function stripMarkdownControl(text: string): string {
     .replace(/[ \t]+\n/g, "\n");
 }
 
-export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
+export function sanitizeAskSynthesis(text: string, maxWords = 400): string {
   const withoutOpener = stripMarkdownControl(
     stripInternalRecordIds(text).replace(HOLLOW_OPENER_RE, "").trim(),
   );

@@ -44,7 +44,7 @@ const HONESTY_RULES = [
   "HONESTY RULES (binding):",
   "- Never fabricate a tenant number, date, dollar figure, vendor name, or metric. If a value is not present in the supplied EVIDENCE, omit it.",
   '- If a metric governs the decision but is NOT instrumented in the evidence, mark it state "expected_uncaptured" (or "benchmark" if an industry range stands in), give a one-line whyItMatters, and a loadHint naming what to ingest to light it up.',
-  "- Industry / peer values are RANGES (for example \"8-15%\", \"$8-25M\"), never fake single decimals.",
+  '- Industry / peer values are RANGES (for example "8-15%", "$8-25M"), never fake single decimals.',
   "- Be ADJACENT to the provided answer — add signals, framing, exhibit, field context, and next moves. Do NOT restate the answer's prose.",
   "- Stay strictly inside the active tenant. Never import another organization's facts.",
   "- Provenance is one of: enterprise-evidence (a tenant fact), industry-context (a peer/benchmark range), inference (your reasoning). Label honestly.",
@@ -237,7 +237,9 @@ async function generateDecisionLens(
     'If correct, output ```json {"ok": true}```. Otherwise output ```json {"ok": false, "decision": CompanionDecisionView}```. No prose.',
   ].join("\n");
 
-  const verify = parseJsonBlock(await callLens(ctx, verifyPrompt, "decision-verify"));
+  const verify = parseJsonBlock(
+    await callLens(ctx, verifyPrompt, "decision-verify"),
+  );
   if (verify && verify.ok === false && verify.decision) {
     decision = normalizeDecision(verify.decision);
   }
@@ -283,7 +285,9 @@ async function generateVisualLens(
     'If correct, output ```json {"ok": true}```. Otherwise output ```json {"ok": false, "visual": CompanionExhibit | null}```. No prose.',
   ].join("\n");
 
-  const verify = parseJsonBlock(await callLens(ctx, verifyPrompt, "visual-verify"));
+  const verify = parseJsonBlock(
+    await callLens(ctx, verifyPrompt, "visual-verify"),
+  );
   if (verify && verify.ok === false && "visual" in verify) {
     visual = normalizeVisual(verify.visual);
   }
@@ -326,7 +330,9 @@ async function generateIndustryLens(
     'If correct, output ```json {"ok": true}```. Otherwise output ```json {"ok": false, "industryContext": CompanionIndustryContext}```. No prose.',
   ].join("\n");
 
-  const verify = parseJsonBlock(await callLens(ctx, verifyPrompt, "industry-verify"));
+  const verify = parseJsonBlock(
+    await callLens(ctx, verifyPrompt, "industry-verify"),
+  );
   if (verify && verify.ok === false && verify.industryContext) {
     industry = normalizeIndustry(verify.industryContext);
   }
@@ -370,7 +376,9 @@ async function generateNextMovesLens(
     'If correct, output ```json {"ok": true}```. Otherwise output ```json {"ok": false, "nextMoves": CompanionNextMove[]}```. No prose.',
   ].join("\n");
 
-  const verify = parseJsonBlock(await callLens(ctx, verifyPrompt, "next-moves-verify"));
+  const verify = parseJsonBlock(
+    await callLens(ctx, verifyPrompt, "next-moves-verify"),
+  );
   if (verify && verify.ok === false && Array.isArray(verify.nextMoves)) {
     moves = normalizeNextMoves(verify.nextMoves);
   }
@@ -407,7 +415,7 @@ async function callLens(
 
   const response = await client.messages.create({
     model: COMPANION_MODEL,
-    max_tokens: 1400,
+    max_tokens: 3000,
     system,
     messages: [{ role: "user", content: userPrompt }],
   });
@@ -520,7 +528,8 @@ function normalizeTiles(value: unknown): SignalTile[] {
     const whyItMatters = asString(record.whyItMatters);
     if (!label || !whyItMatters) continue;
     const state =
-      typeof record.state === "string" && SIGNAL_STATES.has(record.state as SignalState)
+      typeof record.state === "string" &&
+      SIGNAL_STATES.has(record.state as SignalState)
         ? (record.state as SignalState)
         : "none";
     const provenance = asProvenance(record.provenance);
@@ -822,10 +831,10 @@ export function scrubCrossTenantAssertions(
   const check = (text: string | undefined): boolean =>
     Boolean(
       text &&
-        detectCrossTenantIdentityLeak({
-          clientKey: tenantClientKey,
-          response: text,
-        }).leaked,
+      detectCrossTenantIdentityLeak({
+        clientKey: tenantClientKey,
+        response: text,
+      }).leaked,
     );
   const decisionLeak =
     check(payload.tabs.decision.judgment) ||
@@ -839,7 +848,8 @@ export function scrubCrossTenantAssertions(
     payload.tabs.industryContext = defaultIndustryContext();
   }
   payload.tabs.evidence = payload.tabs.evidence.filter(
-    (tile) => !check(tile.label) && !check(tile.whyItMatters) && !check(tile.context),
+    (tile) =>
+      !check(tile.label) && !check(tile.whyItMatters) && !check(tile.context),
   );
   return payload;
 }

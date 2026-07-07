@@ -263,7 +263,7 @@ OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.
 
   The chat surface renders plain text only. Do NOT use Markdown headings, **bold** markers, or formal bullet lists in the response body. Inline em-dashes, "(1) … (2) …" markers, and brief lead-line lists like the EXAMPLE 1 / EXAMPLE 4 shape above are fine.
 
-  Length: single-issue answers 100–120 words; multi-item answers up to ~180 words; never over 200.
+  Length: single-issue answers 100–150 words; multi-item answers up to ~400 words when the question requires it (vendor comparisons, ranked lists, portfolio reviews). Never pad — depth over length, but never truncate a required analytical point to hit a word target.
 
   Do not output source citations inline as bracketed IDs — the UI renders sources separately. Cite evidence in prose ("three peer specialty retailers in the corpus") not as "[PAT-XXX-001]".
 
@@ -318,8 +318,8 @@ function chooseModel(intent: AskIntent, query: string): string {
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  const defaultBudget = isExplicitConciseAsk(query) ? 160 : 600;
-  return Math.max(chooseAdvisorTokenBudget(query, defaultBudget), 1300);
+  const defaultBudget = isExplicitConciseAsk(query) ? 400 : 3000;
+  return Math.max(chooseAdvisorTokenBudget(query, defaultBudget), 3000);
 }
 
 function isExplicitVisualAsk(query: string): boolean {
@@ -1079,7 +1079,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
           );
           const missingOnlyRepair = await client.messages.create({
             model,
-            max_tokens: 900,
+            max_tokens: 2000,
             system: systemWithContinuity,
             messages: [{ role: "user", content: missingOnlyPrompt }],
           });

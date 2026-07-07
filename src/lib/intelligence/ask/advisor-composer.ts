@@ -111,8 +111,7 @@ const ENTERPRISE_FUNCTION_ROUTES: EnterpriseFunctionRoute[] = [
     key: "integrations",
     label: "integration topology and dependency graph",
     requiredArtifact: "graph",
-    columns:
-      "From | Relationship | To | Evidence | Confidence",
+    columns: "From | Relationship | To | Evidence | Confidence",
     supportSource: {
       type: "PATTERN",
       id: "enterprise-integration-topology-pattern",
@@ -156,8 +155,7 @@ const ENTERPRISE_FUNCTION_ROUTES: EnterpriseFunctionRoute[] = [
     key: "risk_controls",
     label: "risk, governance, and controls",
     requiredArtifact: "table",
-    columns:
-      "Risk | Control / mitigation | Owner | Severity | Evidence / gap",
+    columns: "Risk | Control / mitigation | Owner | Severity | Evidence / gap",
     supportSource: {
       type: "PATTERN",
       id: "enterprise-ai-risk-control-pattern",
@@ -271,28 +269,54 @@ function enterpriseFunctionRouteForQuery(
     ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === key) ?? null;
   const has = (pattern: RegExp) => pattern.test(normalized);
 
-  if (has(/\b(customer|front.?office|contact.?center|journey|loyalty|service recovery|agent assist)\b/)) {
+  if (
+    has(
+      /\b(customer|front.?office|contact.?center|journey|loyalty|service recovery|agent assist)\b/,
+    )
+  ) {
     return routeByKey("customer");
   }
-  if (has(/\b(initiative|initiatives|roadmap|scale|hold|stop|invest|investment|investments|where should|prioriti[sz]e|top bets?)\b/)) {
+  if (
+    has(
+      /\b(initiative|initiatives|roadmap|scale|hold|stop|invest|investment|investments|where should|prioriti[sz]e|top bets?)\b/,
+    )
+  ) {
     return routeByKey("initiatives");
   }
-  if (has(/\b(architecture|mainframe|platform|identity|api|apis|constraint|constraints|legacy|resilien(?:ce|cy))\b/)) {
+  if (
+    has(
+      /\b(architecture|mainframe|platform|identity|api|apis|constraint|constraints|legacy|resilien(?:ce|cy))\b/,
+    )
+  ) {
     return routeByKey("architecture");
   }
   if (
-    has(/\b(application|applications|app portfolio|core systems?|systems of record|modernization|lifecycle)\b/) &&
+    has(
+      /\b(application|applications|app portfolio|core systems?|systems of record|modernization|lifecycle)\b/,
+    ) &&
     !has(/\b(vendor|supplier|contract|concentration|renewal)\b/)
   ) {
     return routeByKey("applications");
   }
-  if (has(/\b(data product|data products|analytics|maturity|ai readiness|lineage|registry)\b/)) {
+  if (
+    has(
+      /\b(data product|data products|analytics|maturity|ai readiness|lineage|registry)\b/,
+    )
+  ) {
     return routeByKey("data_products");
   }
-  if (has(/\b(integration|dependency|dependencies|topolog|graph|edge|edges|relationship|relationships|feeds?|upstream|downstream)\b/)) {
+  if (
+    has(
+      /\b(integration|dependency|dependencies|topolog|graph|edge|edges|relationship|relationships|feeds?|upstream|downstream)\b/,
+    )
+  ) {
     return routeByKey("integrations");
   }
-  if (has(/\b(budget|run.?cost|finance|spend|cost|portfolio or category|capex|opex)\b/)) {
+  if (
+    has(
+      /\b(budget|run.?cost|finance|spend|cost|portfolio or category|capex|opex)\b/,
+    )
+  ) {
     return routeByKey("finance");
   }
   if (has(/\b(vendor|contract|supplier|concentration|renewal)\b/)) {
@@ -306,16 +330,32 @@ function enterpriseFunctionRouteForQuery(
   ) {
     return routeByKey("benefits");
   }
-  if (has(/\b(workforce|persona|people|fte|labor|productivity|function|employee|shared services?)\b/)) {
+  if (
+    has(
+      /\b(workforce|persona|people|fte|labor|productivity|function|employee|shared services?)\b/,
+    )
+  ) {
     return routeByKey("workforce");
   }
-  if (has(/\b(risk|risks|control|controls|governance|severity|compliance|audit)\b/)) {
+  if (
+    has(
+      /\b(risk|risks|control|controls|governance|severity|compliance|audit)\b/,
+    )
+  ) {
     return routeByKey("risk_controls");
   }
-  if (has(/\b(benefit|benefits|realization|realized|value lever|leakage|at-risk|impact|roi)\b/)) {
+  if (
+    has(
+      /\b(benefit|benefits|realization|realized|value lever|leakage|at-risk|impact|roi)\b/,
+    )
+  ) {
     return routeByKey("benefits");
   }
-  if (has(/\b(operations|operational|process|bottleneck|root cause|itsm|incident|problem|change|cmdb|back office|back-office|bpr|reengineering)\b/)) {
+  if (
+    has(
+      /\b(operations|operational|process|bottleneck|root cause|itsm|incident|problem|change|cmdb|back office|back-office|bpr|reengineering)\b/,
+    )
+  ) {
     return routeByKey("operations");
   }
   return null;
@@ -433,7 +473,10 @@ export function expertRefsForAdvisorRoute(query: string): ExpertRef[] {
   return [];
 }
 
-export function chooseAdvisorTokenBudget(query: string, fallback: number): number {
+export function chooseAdvisorTokenBudget(
+  query: string,
+  fallback: number,
+): number {
   const route = routeIntelligenceAdvisorQuestion(query);
   if (route === "airline_irops_ai_roi") return 1800;
   if (route === "enterprise_function_artifact") return Math.max(fallback, 1300);
@@ -444,7 +487,7 @@ export function chooseAdvisorWordCap(query: string, fallback: number): number {
   const route = routeIntelligenceAdvisorQuestion(query);
   if (route === "airline_irops_ai_roi") return 950;
   if (route === "enterprise_function_artifact") return Math.max(fallback, 620);
-  return fallback;
+  return Math.max(fallback, 600);
 }
 
 function buildEnterpriseFunctionComposerBlock(
@@ -503,13 +546,19 @@ function buildEnterpriseFunctionComposerBlock(
   };
 }
 
-function summarizeSources(sources: AskSource[]): AdvisorComposerResult["selectedSourceSummary"] {
+function summarizeSources(
+  sources: AskSource[],
+): AdvisorComposerResult["selectedSourceSummary"] {
   return sources.reduce(
     (summary, source) => {
       if (source.type === "TENANT" || source.type === "SURFACE") {
         summary.tenantEvidenceCount += 1;
       }
-      if (source.type === "PATTERN" || source.type === "WORLDVIEW" || source.type === "TOPIC") {
+      if (
+        source.type === "PATTERN" ||
+        source.type === "WORLDVIEW" ||
+        source.type === "TOPIC"
+      ) {
         summary.corpusEvidenceCount += 1;
       }
       if (
