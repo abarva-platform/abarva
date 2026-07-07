@@ -76,6 +76,9 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
         "The one thing we can't pre-fill. Upload your ticket history so we can size the support tier from real volumes.",
       provenance: { owner: 'Ravi Menon, IT-Ops', source: 'ServiceNow export' },
       cta: 'Confirm volumetrics',
+      // A CSV/XLSX dropped here is parsed into typed volumetrics facts, flipping
+      // the ✦ Intelligence step insight from MODEL to LIVE.
+      factTemplateCode: 'VOLUMETRICS_V1',
     },
     {
       id: 'scope.exclusions',
