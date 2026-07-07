@@ -19,6 +19,7 @@ Adds the canonical "solution building blocks" model for Moves and aligns the red
 - `docs/build/moves-design/MOVES_SOLUTION_BUILDING_BLOCKS.md` (new — canonical model).
 - `docs/build/moves-design/MOVES_BUILDING_BLOCK_SPINE.md` (new — phase-flow build spec: blocks as lanes P2→P3→P4→P5→Tower + the 5 product features).
 - `docs/build/moves-design/MOVES_PORTFOLIO_HEALTHCARE_PLAYBOOK.md` (new — portfolio model: foundation vs outcome Moves, shared-foundation dependencies, wave sequencing, portfolio view; healthcare worked example).
+- `docs/build/moves-design/MOVES_DYNAMIC_PATTERN_ASSEMBLY.md` (new — the AbarVa⇄Claude contract: AbarVa builds a Pattern Assembly Packet + validates; Claude assembles the pattern; not "archetype").
 - `docs/build/moves-design/MOVES_REDESIGN_CLAUDE_DESIGN_BRIEF.md` (§4 → building-blocks bundle + card).
 - `docs/build/moves-design/MOVES_ANALYTICS_LAYER_SPEC.md` (§5 → bundle recommender; types).
 

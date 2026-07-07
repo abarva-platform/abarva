@@ -2,6 +2,8 @@
 
 Companion to `MOVES_REDESIGN_CLAUDE_DESIGN_BRIEF.md`. The brief is the *look*; this is the *substance*. The redesigned phase page renders live, evidence-cited, archetype-benchmarked intelligence — that requires a typed analytics layer Moves does not have yet. Build it as a direct mirror of Source's `src/lib/source/analytics/*` + `src/lib/source/archetypes/*`.
 
+> **Where Claude fits (see `MOVES_DYNAMIC_PATTERN_ASSEMBLY.md`):** this layer does the two *governed* halves — it **builds the Pattern Assembly Packet** (context, evidence, blocks, readiness, constraints, benchmarks, required outputs) that Claude synthesizes against, and it **runs the post-response validator** (evidence-backed / assumption / needs-confirmation / not-allowed / draft / promote). Deterministic **facts** (`MoveFinding` baselines/metrics) come from this layer; the **solution pattern** (options, architecture, roadmap narrative) is assembled by Claude *between* those two governed steps and then labeled. Claude assembles; AbarVa governs and validates.
+
 ## 1. Goal & the "un-trap" principle
 
 Today Moves generates findings straight into HTML/Word (`src/lib/programs/board-artifacts/*`, `deliverables/board-deliverable.ts`, `deliverable-narrative.ts`). The root cause, the value bridge, the baselines — all trapped in prose. This layer makes each finding a **first-class typed object** that:
