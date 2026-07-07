@@ -1,9 +1,11 @@
 import { SourcePortfolioPage } from '@/components/source/SourcePortfolioPage';
+import { SourcePortfolioBookPage } from '@/components/source/SourcePortfolioBookPage';
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { listSourcingEvents } from '@/lib/source/queries';
 import { canonicalClientDisplayName } from '@/lib/client-config';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 
 export const metadata = { title: 'Source Portfolio · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -32,12 +34,31 @@ export default async function SourcePortfolioRoute({
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
     'AbarVa Client';
 
+  // source_analytics · the redesigned "Your sourcing book" home. Ships DARK
+  // behind the master flag (OFF for all). When ON for the tenant, render the
+  // realigned book; when OFF, the current portfolio table below is untouched.
+  const sourceAnalyticsEnabled = isFeatureEnabled(
+    { clientKey: activeClient?.key ?? null, clientId: activeClient?.id ?? null },
+    'source_analytics',
+  );
+  const canViewFinancialValues = sourceAccessPolicy?.canViewFinancialData === true;
+
+  if (sourceAnalyticsEnabled) {
+    return (
+      <SourcePortfolioBookPage
+        events={events}
+        tenantName={activeClientDisplayName}
+        canViewFinancialValues={canViewFinancialValues}
+      />
+    );
+  }
+
   return (
     <SourcePortfolioPage
       events={events}
       searchParams={params}
       tenantName={activeClientDisplayName}
-      canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
+      canViewFinancialValues={canViewFinancialValues}
     />
   );
 }

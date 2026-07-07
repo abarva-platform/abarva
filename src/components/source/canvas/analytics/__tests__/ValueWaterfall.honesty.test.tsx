@@ -80,6 +80,13 @@ describe("ValueWaterfall — honesty invariants", () => {
   it("ships the sample exemplar marked as sample intelligence (not live)", () => {
     // Guards the default the canvas renders before the live engine wires in.
     expect(SAMPLE_SCOPE_STAGE.intel.provenance).toBe("sample");
-    expect(SAMPLE_SCOPE_STAGE.waterfall?.provenance).toBe("sample");
+  });
+
+  it("does NOT put a value-type waterfall on the Scope (intake) stage", () => {
+    // The classified value pool is a downstream artifact (Pricing/Evaluation/
+    // Value), computed from real facts — never fabricated at an intake stage.
+    // Showing a $-waterfall at Scope for a data-less event is the defect this
+    // guards against.
+    expect(SAMPLE_SCOPE_STAGE.waterfall).toBeUndefined();
   });
 });

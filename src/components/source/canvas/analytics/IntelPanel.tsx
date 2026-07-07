@@ -6,14 +6,16 @@ import type { SourceIntelViewModel } from './view-model';
 
 interface IntelPanelProps {
   intel: SourceIntelViewModel;
+  /** The stage this read is for, e.g. 'Scope' → "What Source brings to Scope". */
+  stageName?: string;
 }
 
 /**
- * Beat 1 — "Intel we bring." The engine's read for this stage, rendered ON the
- * page (never buried only in the download): what it found, benchmarks, archetype
- * knowledge, and what a cold start would miss. Tagged, plain-English findings.
+ * Beat 1 — "Intel we bring." The engine's read for this stage, rendered inside
+ * the Intelligence tab: what it found, benchmarks, archetype knowledge, and what
+ * a cold start would miss. Tagged, plain-English findings.
  */
-export function IntelPanel({ intel }: IntelPanelProps) {
+export function IntelPanel({ intel, stageName }: IntelPanelProps) {
   const isSample = intel.provenance === 'sample';
   const panelStyle: CSSProperties = {
     border: `1px solid ${ANALYTICS.LINE}`,
@@ -53,7 +55,7 @@ export function IntelPanel({ intel }: IntelPanelProps) {
             color: ANALYTICS.INK,
           }}
         >
-          What Source brings
+          What Source brings{stageName ? ` to ${stageName}` : ''}
         </span>
         <span
           style={{
@@ -68,7 +70,7 @@ export function IntelPanel({ intel }: IntelPanelProps) {
             color: isSample ? ANALYTICS.MUTED : ANALYTICS.GREEN_TEXT,
           }}
         >
-          {isSample ? 'Sample' : 'Live'}
+          {isSample ? 'Sample' : 'Live intelligence'}
         </span>
       </div>
 

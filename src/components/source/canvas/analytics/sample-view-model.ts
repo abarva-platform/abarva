@@ -16,7 +16,6 @@
 import type {
   AvaLauncherView,
   StageAnalyticsView,
-  ValueWaterfallView,
 } from './view-model';
 
 /** The Scope stage, rendered as the intake exemplar of the three-beat pattern. */
@@ -157,9 +156,9 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
     ],
     nextStageName: 'RFP',
   },
-  // The value-type waterfall is present on Scope as the value-thesis preview:
-  // the classified pool the event is chasing, so the ≥20% is legible early.
-  waterfall: sampleScopeWaterfall(),
+  // No value-type waterfall on Scope: the classified value pool is a downstream
+  // artifact (Pricing/Evaluation/Value), computed from real facts — never
+  // fabricated at an intake stage. The Intelligence tab here is the read only.
 };
 
 /** aVa's docked-launcher scope for the Scope stage. */
@@ -174,86 +173,3 @@ export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
   ],
 };
 
-/**
- * The sample value-type waterfall — the classified value pool for the Apex AMS
- * event, one band per value type. Ranged, confidence-banded, and cited to the
- * fact/model source. One band is `insufficient_evidence` on purpose, to show the
- * honest "needs evidence" state rather than a fabricated number.
- */
-function sampleScopeWaterfall(): ValueWaterfallView {
-  return {
-    provenance: 'sample',
-    baselineLabel: 'Incumbent AMS run-rate (3-yr)',
-    baselineAmount: 14_200_000,
-    unit: 'usd',
-    bands: [
-      {
-        id: 'wf.concession',
-        valueType: 'expected_concession',
-        label: 'Giveback latent in the first competitive bid',
-        amountLow: 1_100_000,
-        amountHigh: 1_600_000,
-        unit: 'usd',
-        confidence: 'high',
-        state: 'quantified',
-        citation: {
-          doc: 'Comparable AMS bid spreads (benchmark)',
-          locator: 'first-bid concession band, AMS 2024–26 set',
-        },
-      },
-      {
-        id: 'wf.incremental',
-        valueType: 'incremental_negotiated',
-        label: 'Won through competitive tension + BAFO pressure',
-        amountLow: 900_000,
-        amountHigh: 1_400_000,
-        unit: 'usd',
-        confidence: 'med',
-        state: 'quantified',
-        citation: {
-          doc: 'Value-lever map (should-cost normalization)',
-          locator: 'incremental band, post-normalization',
-        },
-      },
-      {
-        id: 'wf.solution',
-        valueType: 'solution_tightening',
-        label: 'Automation commitment + milestone transition (fee-at-risk)',
-        amountLow: 600_000,
-        amountHigh: 1_050_000,
-        unit: 'usd',
-        confidence: 'med',
-        state: 'quantified',
-        citation: {
-          doc: 'AMS archetype value levers',
-          locator: 'AMS.PRODUCTIVITY_CREDITS + AMS.TRANSITION_RISK',
-        },
-      },
-      {
-        id: 'wf.protected',
-        valueType: 'protected',
-        label: 'Change-order leakage folded to base + SLA credit floor',
-        amountLow: 700_000,
-        amountHigh: 1_300_000,
-        unit: 'usd',
-        confidence: 'med',
-        state: 'quantified',
-        citation: {
-          doc: 'AMS archetype value levers',
-          locator: 'AMS.ENHANCEMENT_LEAKAGE + AMS.SLA_ECONOMICS',
-        },
-      },
-      {
-        id: 'wf.risk',
-        valueType: 'risk_adjusted',
-        label: 'Vendor-B automation floor — unpriced, pending the BAFO ask',
-        amountLow: 0,
-        amountHigh: 0,
-        unit: 'usd',
-        confidence: 'low',
-        state: 'insufficient_evidence',
-        citation: null,
-      },
-    ],
-  };
-}
