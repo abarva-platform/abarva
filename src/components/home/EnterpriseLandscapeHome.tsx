@@ -17,6 +17,7 @@ export function EnterpriseLandscapeHome({
   const [selectedId, setSelectedId] = useState(viewModel.defaultSectionId);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [askValue, setAskValue] = useState('');
+  const [askNotice, setAskNotice] = useState<string | null>(null);
   const section = viewModel.sections[selectedId] ?? viewModel.sections[viewModel.defaultSectionId];
 
   const sourceCount = section.sources.length;
@@ -24,25 +25,45 @@ export function EnterpriseLandscapeHome({
 
   function runAsk() {
     const normalized = question.toLowerCase();
+    if (!normalized) {
+      setAskNotice(null);
+      return;
+    }
+
+    if (isOutOfScopeHomeAsk(normalized)) {
+      setAskNotice(
+        'Home is a context browser. Use Intelligence for recommendations, use cases, and outside-in questions.',
+      );
+      return;
+    }
+
     const match =
       Object.values(viewModel.sections).find((candidate) =>
-        normalized.includes(candidate.id) ||
+        hasPhrase(normalized, candidate.id) ||
         normalized.includes(candidate.title.toLowerCase().slice(0, 24)) ||
         normalized.includes(candidate.subtitle.toLowerCase().slice(0, 24)),
       ) ??
       Object.values(viewModel.sections).find((candidate) =>
-        normalized.includes(candidate.id.replace('-', ' ')),
-      );
-    if (match) setSelectedId(match.id);
+        hasPhrase(normalized, candidate.id.replace('-', ' ')),
+    );
+    if (match) {
+      setSelectedId(match.id);
+      setAskNotice(null);
+      return;
+    }
+
+    setAskNotice(
+      'I can jump to loaded context sections here. Try business model, applications, data, vendors, budget, AI footprint, risk, or benchmarks.',
+    );
   }
 
   return (
     <div className={styles.surface}>
       <div className={styles.askbar}>
         <div className={styles.ask}>
-          <span className={styles.agent}><span className={styles.liveDot} />Sentinel</span>
+          <span className={styles.agent}><span className={styles.liveDot} />aVa</span>
           <input
-            aria-label="Ask Sentinel"
+            aria-label="Ask aVa"
             value={askValue}
             onChange={(event) => setAskValue(event.target.value)}
             onKeyDown={(event) => {
@@ -52,6 +73,7 @@ export function EnterpriseLandscapeHome({
           />
           <button type="button" onClick={runAsk}>Ask</button>
         </div>
+        {askNotice ? <div className={styles.askNotice}>{askNotice}</div> : null}
       </div>
 
       <div className={styles.workspace}>
@@ -199,6 +221,24 @@ export function EnterpriseLandscapeHome({
       </aside>
     </div>
   );
+}
+
+function hasPhrase(input: string, phrase: string) {
+  const escaped = phrase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!escaped) return false;
+  return new RegExp(`(^|\\W)${escaped}(\\W|$)`, 'i').test(input);
+}
+
+function isOutOfScopeHomeAsk(normalized: string) {
+  if (/\bcapital\s+of\b|\bweather\b|\bnews\b|\bstock price\b|\bwho\s+is\b|\bwhat\s+is\s+the\s+capital\b/.test(normalized)) {
+    return true;
+  }
+
+  if (/\b(move|moves|source|sourcing event|rfp|vendor selection|bafo)\b/.test(normalized)) {
+    return true;
+  }
+
+  return /\b(should we|which .* should|recommend|prioriti[sz]e|fund|kill|scale|hold|stop|use cases?|roadmap|business case|strategy)\b/.test(normalized);
 }
 
 function ReportBlock({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {

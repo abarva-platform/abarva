@@ -8,6 +8,9 @@
 .askbar {
   min-height: 72px;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
   align-items: center;
   padding: 14px 28px;
   background: #f4f0e8;
@@ -68,6 +71,14 @@
   color: #fff;
   font-weight: 800;
   cursor: pointer;
+}
+
+.askNotice {
+  align-self: stretch;
+  color: #67625b;
+  font-size: 12px;
+  line-height: 1.35;
+  padding-left: 158px;
 }
 
 .workspace {
@@ -749,4 +760,3 @@
     grid-template-columns: 1fr;
   }
 }
-
