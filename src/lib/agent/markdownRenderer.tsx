@@ -19,19 +19,358 @@
 // and passes it through. This component substitutes those placeholders
 // inline before any other tokenization runs.
 
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import type { ComponentPropsWithoutRef, ReactNode } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
-import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
+import { useMemo, useState, useEffect } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { BrandColors, BrandTypography } from "@/lib/shell/brand-tokens";
 import {
   GENERAL_PRACTICE_PREFACE,
   normalizeAbarvaAgentMarkup,
   tokenizeChildren,
-} from './markdownTokens';
+} from "./markdownTokens";
+
+// ── Inline chart renderer ─────────────────────────────────────────────────────
+
+interface ChartHint {
+  type: "bar" | "horizontal-bar" | "line" | "area" | "pie";
+  title?: string;
+  subtitle?: string;
+  data: Array<Record<string, string | number>>;
+  xKey: string;
+  yKey: string;
+  yKey2?: string;
+  color?: string;
+  color2?: string;
+  unit?: string;
+  note?: string;
+}
+
+function renderChartBody(
+  hint: ChartHint,
+  fmtVal: (v: unknown) => string,
+): ReactNode {
+  const { type, data, xKey, yKey, yKey2 } = hint;
+  const color = hint.color ?? "#218553";
+  const color2 = hint.color2 ?? "#E07A34";
+  const tStyle = { fontSize: 11, borderRadius: 6, border: "1px solid #E5E5E2" };
+  const tickSm = { fontSize: 10, fill: "#6d675f" };
+
+  if (type === "horizontal-bar") {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 0, right: 44, bottom: 0, left: 4 }}
+          barSize={18}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#EBEBEA"
+            horizontal={false}
+          />
+          <XAxis
+            type="number"
+            tick={tickSm}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => fmtVal(v)}
+          />
+          <YAxis
+            type="category"
+            dataKey={xKey}
+            tick={{ fontSize: 10, fill: "#404040", fontWeight: 500 }}
+            width={106}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            formatter={(v: unknown) => [fmtVal(v), ""]}
+            contentStyle={tStyle}
+          />
+          <Bar
+            dataKey={yKey}
+            fill={color}
+            radius={[0, 3, 3, 0]}
+            label={{
+              position: "right" as const,
+              fontSize: 10,
+              fill: "#404040",
+              fontWeight: 600,
+              formatter: (v: unknown) => fmtVal(v),
+            }}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }
+  if (type === "bar") {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#EBEBEA"
+            vertical={false}
+          />
+          <XAxis
+            dataKey={xKey}
+            tick={tickSm}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={tickSm}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => fmtVal(v)}
+            width={36}
+          />
+          <Tooltip
+            formatter={(v: unknown) => [fmtVal(v), ""]}
+            contentStyle={tStyle}
+          />
+          <Bar dataKey={yKey} fill={color} radius={[3, 3, 0, 0]} />
+          {yKey2 && <Bar dataKey={yKey2} fill={color2} radius={[3, 3, 0, 0]} />}
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }
+  if (type === "line") {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={data}
+          margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#EBEBEA"
+            vertical={false}
+          />
+          <XAxis
+            dataKey={xKey}
+            tick={tickSm}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={tickSm}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => fmtVal(v)}
+            width={36}
+          />
+          <Tooltip
+            formatter={(v: unknown) => [fmtVal(v), ""]}
+            contentStyle={tStyle}
+          />
+          <Line
+            type="monotone"
+            dataKey={yKey}
+            stroke={color}
+            strokeWidth={2}
+            dot={false}
+          />
+          {yKey2 && (
+            <Line
+              type="monotone"
+              dataKey={yKey2}
+              stroke={color2}
+              strokeWidth={2}
+              strokeDasharray="5 3"
+              dot={false}
+            />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  }
+  if (type === "area") {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
+        >
+          <defs>
+            <linearGradient id="icg1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.2} />
+              <stop offset="95%" stopColor={color} stopOpacity={0.02} />
+            </linearGradient>
+            {yKey2 && (
+              <linearGradient id="icg2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={color2} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={color2} stopOpacity={0.02} />
+              </linearGradient>
+            )}
+          </defs>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#EBEBEA"
+            vertical={false}
+          />
+          <XAxis
+            dataKey={xKey}
+            tick={tickSm}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={tickSm}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => fmtVal(v)}
+            width={36}
+          />
+          <Tooltip
+            formatter={(v: unknown) => [fmtVal(v), ""]}
+            contentStyle={tStyle}
+          />
+          <Area
+            type="monotone"
+            dataKey={yKey}
+            stroke={color}
+            strokeWidth={2}
+            fill="url(#icg1)"
+            dot={false}
+          />
+          {yKey2 && (
+            <Area
+              type="monotone"
+              dataKey={yKey2}
+              stroke={color2}
+              strokeWidth={2}
+              strokeDasharray="5 3"
+              fill="url(#icg2)"
+              dot={false}
+            />
+          )}
+        </AreaChart>
+      </ResponsiveContainer>
+    );
+  }
+  if (type === "pie") {
+    const PIE_COLORS = [
+      color,
+      color2,
+      "#1A6B8A",
+      "#7B4F9E",
+      "#C84A1E",
+      "#857B6F",
+    ];
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey={yKey}
+            nameKey={xKey}
+            cx="50%"
+            cy="50%"
+            outerRadius={72}
+            innerRadius={34}
+            paddingAngle={2}
+          >
+            {data.map((_, i) => (
+              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            formatter={(v: unknown) => [fmtVal(v), ""]}
+            contentStyle={tStyle}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  }
+  return null;
+}
+
+function InlineChart({ raw }: { raw: string }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  let hint: ChartHint;
+  try {
+    hint = JSON.parse(raw) as ChartHint;
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(hint.data) || hint.data.length === 0) return null;
+
+  const { title, subtitle, unit = "", note } = hint;
+  const fmtVal = (v: unknown) => (unit ? `${unit}${String(v)}` : String(v));
+  const chartH =
+    hint.type === "horizontal-bar"
+      ? Math.max(140, hint.data.length * 32)
+      : hint.type === "pie"
+        ? 180
+        : 190;
+
+  return (
+    <div
+      style={{
+        margin: "10px 0",
+        background: "rgba(12,26,58,0.02)",
+        border: "1px solid rgba(12,26,58,0.1)",
+        borderRadius: 8,
+        padding: "12px 12px 8px",
+        overflow: "hidden",
+      }}
+    >
+      {title && (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#161411",
+            marginBottom: subtitle ? 2 : 8,
+            lineHeight: 1.3,
+          }}
+        >
+          {title}
+        </div>
+      )}
+      {subtitle && (
+        <div style={{ fontSize: 10, color: "#6d675f", marginBottom: 8 }}>
+          {subtitle}
+        </div>
+      )}
+      <div style={{ height: mounted ? chartH : 0 }}>
+        {mounted && renderChartBody(hint, fmtVal)}
+      </div>
+      {note && (
+        <div style={{ fontSize: 10, color: "#8d8680", marginTop: 6 }}>
+          {note}
+        </div>
+      )}
+    </div>
+  );
+}
+InlineChart.displayName = "InlineChart";
 
 // ── Component overrides ───────────────────────────────────────────────────────
 //
@@ -41,7 +380,9 @@ import {
 // through React context (which would force hooks inside lowercase-named
 // callbacks and trip rules-of-hooks lint).
 
-type MdComponents = NonNullable<ComponentPropsWithoutRef<typeof ReactMarkdown>['components']>;
+type MdComponents = NonNullable<
+  ComponentPropsWithoutRef<typeof ReactMarkdown>["components"]
+>;
 
 function buildComponents(
   inlineNodes: ReadonlyMap<string, ReactNode> | undefined,
@@ -49,13 +390,16 @@ function buildComponents(
   return {
     p: ({ children }) => {
       // Layer-3 fallback preface: italicize the literal preface phrase
-      if (typeof children === 'string' && children.trim().startsWith(GENERAL_PRACTICE_PREFACE)) {
+      if (
+        typeof children === "string" &&
+        children.trim().startsWith(GENERAL_PRACTICE_PREFACE)
+      ) {
         const rest = children.trim().slice(GENERAL_PRACTICE_PREFACE.length);
         return (
           <p
             style={{
-              margin: '0.6em 0',
-              fontStyle: 'italic',
+              margin: "0.6em 0",
+              fontStyle: "italic",
               color: BrandColors.slate,
               borderLeft: `2px solid ${BrandColors.stone}`,
               paddingLeft: 10,
@@ -66,81 +410,93 @@ function buildComponents(
           </p>
         );
       }
-      return <p style={{ margin: '0.6em 0' }}>{tokenizeChildren(children, 'p', inlineNodes)}</p>;
+      return (
+        <p style={{ margin: "0.6em 0" }}>
+          {tokenizeChildren(children, "p", inlineNodes)}
+        </p>
+      );
     },
 
     li: ({ children }) => (
-      <li style={{ margin: '0.2em 0' }}>{tokenizeChildren(children, 'li', inlineNodes)}</li>
+      <li style={{ margin: "0.2em 0" }}>
+        {tokenizeChildren(children, "li", inlineNodes)}
+      </li>
     ),
 
     h1: ({ children }) => (
       <h1
         style={{
           fontFamily: BrandTypography.serif,
-          fontSize: '1.4em',
+          fontSize: "1.4em",
           fontWeight: 400,
-          margin: '0.8em 0 0.4em',
+          margin: "0.8em 0 0.4em",
           color: BrandColors.inkBlack,
         }}
       >
-        {tokenizeChildren(children, 'h1', inlineNodes)}
+        {tokenizeChildren(children, "h1", inlineNodes)}
       </h1>
     ),
     h2: ({ children }) => (
       <h2
         style={{
           fontFamily: BrandTypography.serif,
-          fontSize: '1.2em',
+          fontSize: "1.2em",
           fontWeight: 400,
-          margin: '0.7em 0 0.35em',
+          margin: "0.7em 0 0.35em",
           color: BrandColors.inkBlack,
         }}
       >
-        {tokenizeChildren(children, 'h2', inlineNodes)}
+        {tokenizeChildren(children, "h2", inlineNodes)}
       </h2>
     ),
     h3: ({ children }) => (
       <h3
         style={{
-          fontSize: '1.05em',
+          fontSize: "1.05em",
           fontWeight: 600,
-          margin: '0.6em 0 0.3em',
+          margin: "0.6em 0 0.3em",
           color: BrandColors.inkBlack,
         }}
       >
-        {tokenizeChildren(children, 'h3', inlineNodes)}
+        {tokenizeChildren(children, "h3", inlineNodes)}
       </h3>
     ),
     h4: ({ children }) => (
       <h4
         style={{
-          fontSize: '0.95em',
+          fontSize: "0.95em",
           fontWeight: 600,
-          margin: '0.5em 0 0.25em',
+          margin: "0.5em 0 0.25em",
           color: BrandColors.inkBlack,
         }}
       >
-        {tokenizeChildren(children, 'h4', inlineNodes)}
+        {tokenizeChildren(children, "h4", inlineNodes)}
       </h4>
     ),
 
     strong: ({ children }) => (
-      <strong style={{ fontWeight: 600 }}>{tokenizeChildren(children, 'strong', inlineNodes)}</strong>
+      <strong style={{ fontWeight: 600 }}>
+        {tokenizeChildren(children, "strong", inlineNodes)}
+      </strong>
     ),
     em: ({ children }) => (
-      <em>{tokenizeChildren(children, 'em', inlineNodes)}</em>
+      <em>{tokenizeChildren(children, "em", inlineNodes)}</em>
     ),
 
     code: ({ children, className }) => {
+      if (className === "language-chart") {
+        return <InlineChart raw={String(children ?? "").trim()} />;
+      }
       // Block code (fenced) gets a className like `language-…`; inline code does not.
-      const isBlock = typeof className === 'string' && className.startsWith('language-');
+      const isBlock =
+        typeof className === "string" && className.startsWith("language-");
       if (isBlock) {
         return (
           <code
             className={className}
             style={{
               fontFamily: BrandTypography.mono,
-              fontSize: '0.88em',
+              fontSize: "0.88em",
             }}
           >
             {children}
@@ -151,9 +507,9 @@ function buildComponents(
         <code
           style={{
             fontFamily: BrandTypography.mono,
-            fontSize: '0.88em',
-            background: 'rgba(12,26,58,0.06)',
-            padding: '1px 5px',
+            fontSize: "0.88em",
+            background: "rgba(12,26,58,0.06)",
+            padding: "1px 5px",
             borderRadius: 3,
           }}
         >
@@ -161,49 +517,67 @@ function buildComponents(
         </code>
       );
     },
-    pre: ({ children }) => (
-      <pre
-        style={{
-          background: 'rgba(12,26,58,0.04)',
-          border: `1px solid rgba(12,26,58,0.12)`,
-          borderRadius: 6,
-          padding: '10px 12px',
-          margin: '0.7em 0',
-          overflowX: 'auto',
-          fontFamily: BrandTypography.mono,
-          fontSize: '0.85em',
-          lineHeight: 1.55,
-          color: BrandColors.inkBlack,
-        }}
-      >
-        {children}
-      </pre>
-    ),
+    pre: ({ node, children }) => {
+      const first = (
+        node as {
+          children?: Array<{
+            tagName?: string;
+            properties?: { className?: unknown };
+          }>;
+        }
+      )?.children?.[0];
+      const cls = Array.isArray(first?.properties?.className)
+        ? (first.properties.className as string[])
+        : [];
+      if (cls.includes("language-chart")) return <>{children}</>;
+      return (
+        <pre
+          style={{
+            background: "rgba(12,26,58,0.04)",
+            border: `1px solid rgba(12,26,58,0.12)`,
+            borderRadius: 6,
+            padding: "10px 12px",
+            margin: "0.7em 0",
+            overflowX: "auto",
+            fontFamily: BrandTypography.mono,
+            fontSize: "0.85em",
+            lineHeight: 1.55,
+            color: BrandColors.inkBlack,
+          }}
+        >
+          {children}
+        </pre>
+      );
+    },
 
     a: ({ children, href }) => (
       <a
         href={href}
-        style={{ color: BrandColors.signalBlue, textDecoration: 'underline', textUnderlineOffset: 2 }}
+        style={{
+          color: BrandColors.signalBlue,
+          textDecoration: "underline",
+          textUnderlineOffset: 2,
+        }}
       >
         {children}
       </a>
     ),
 
     ul: ({ children }) => (
-      <ul style={{ margin: '0.4em 0', paddingLeft: '1.4em' }}>{children}</ul>
+      <ul style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ul>
     ),
     ol: ({ children }) => (
-      <ol style={{ margin: '0.4em 0', paddingLeft: '1.4em' }}>{children}</ol>
+      <ol style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ol>
     ),
 
     blockquote: ({ children }) => (
       <blockquote
         style={{
-          margin: '0.6em 0',
-          padding: '4px 12px',
+          margin: "0.6em 0",
+          padding: "4px 12px",
           borderLeft: `3px solid ${BrandColors.stone}`,
           color: BrandColors.slate,
-          fontStyle: 'italic',
+          fontStyle: "italic",
         }}
       >
         {children}
@@ -215,20 +589,20 @@ function buildComponents(
         style={{
           border: 0,
           borderTop: `1px solid rgba(12,26,58,0.12)`,
-          margin: '1em 0',
+          margin: "1em 0",
         }}
       />
     ),
 
     table: ({ children }) => (
-      <div style={{ overflowX: 'auto', margin: '0.8em 0' }}>
+      <div style={{ overflowX: "auto", margin: "0.8em 0" }}>
         <table
           style={{
-            borderCollapse: 'collapse',
+            borderCollapse: "collapse",
             background: BrandColors.paper,
             border: `1px solid rgba(12,26,58,0.18)`,
-            fontSize: '0.92em',
-            width: '100%',
+            fontSize: "0.92em",
+            width: "100%",
           }}
         >
           {children}
@@ -236,32 +610,32 @@ function buildComponents(
       </div>
     ),
     thead: ({ children }) => (
-      <thead style={{ background: 'rgba(12,26,58,0.04)' }}>{children}</thead>
+      <thead style={{ background: "rgba(12,26,58,0.04)" }}>{children}</thead>
     ),
     th: ({ children }) => (
       <th
         style={{
-          textAlign: 'left',
-          padding: '6px 10px',
+          textAlign: "left",
+          padding: "6px 10px",
           borderBottom: `1px solid rgba(12,26,58,0.18)`,
           fontWeight: 600,
           color: BrandColors.inkBlack,
-          fontSize: '0.86em',
-          letterSpacing: '0.02em',
+          fontSize: "0.86em",
+          letterSpacing: "0.02em",
         }}
       >
-        {tokenizeChildren(children, 'th', inlineNodes)}
+        {tokenizeChildren(children, "th", inlineNodes)}
       </th>
     ),
     td: ({ children }) => (
       <td
         style={{
-          padding: '6px 10px',
+          padding: "6px 10px",
           borderBottom: `1px solid rgba(12,26,58,0.08)`,
-          verticalAlign: 'top',
+          verticalAlign: "top",
         }}
       >
-        {tokenizeChildren(children, 'td', inlineNodes)}
+        {tokenizeChildren(children, "td", inlineNodes)}
       </td>
     ),
   };
@@ -290,7 +664,10 @@ export interface AgentMarkdownProps {
  */
 export function AgentMarkdown({ text, inlineNodes }: AgentMarkdownProps) {
   const components = useMemo(() => buildComponents(inlineNodes), [inlineNodes]);
-  const normalizedText = useMemo(() => normalizeAbarvaAgentMarkup(text), [text]);
+  const normalizedText = useMemo(
+    () => normalizeAbarvaAgentMarkup(text),
+    [text],
+  );
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}

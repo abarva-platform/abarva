@@ -1320,6 +1320,33 @@ function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
       data-testid="agent-dock-mode-picker"
       style={MODE_PICKER_STYLE}
     >
+      {/* Pin-right (side-rail-right) */}
+      <ModeButton
+        mode="side-rail-right"
+        active={mode === "side-rail-right"}
+        onClick={() =>
+          onChange(mode === "side-rail-right" ? "side-rail" : "side-rail-right")
+        }
+        aria-label="Pin right"
+        title="Pin right"
+        dockId={dockId}
+      >
+        <SideRailRightIcon />
+      </ModeButton>
+      {/* Pin-bottom */}
+      <ModeButton
+        mode="pin-bottom"
+        active={mode === "pin-bottom"}
+        onClick={() =>
+          onChange(mode === "pin-bottom" ? "side-rail" : "pin-bottom")
+        }
+        aria-label="Pin bottom"
+        title="Pin bottom"
+        dockId={dockId}
+      >
+        <PinBottomIcon />
+      </ModeButton>
+      {/* Expand / restore */}
       {mode === "expand" ? (
         <ModeButton
           mode="side-rail"
@@ -1560,6 +1587,43 @@ function SideRailIcon() {
     >
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <line x1="9" y1="3" x2="9" y2="21" />
+    </svg>
+  );
+}
+function SideRailRightIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="15" y1="3" x2="15" y2="21" />
+    </svg>
+  );
+}
+function PinBottomIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="14" width="18" height="7" rx="2" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <line x1="12" y1="3" x2="12" y2="10" />
     </svg>
   );
 }

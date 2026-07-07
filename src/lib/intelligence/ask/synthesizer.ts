@@ -420,7 +420,10 @@ export function reconcileStreamRemainder(
     return { remainder: finalText, diverged: false };
   }
   if (finalText.startsWith(liveStreamedText)) {
-    return { remainder: finalText.slice(liveStreamedText.length), diverged: false };
+    return {
+      remainder: finalText.slice(liveStreamedText.length),
+      diverged: false,
+    };
   }
   // Diverged: emit from the longest common prefix so no final content is lost.
   let common = 0;
@@ -494,7 +497,7 @@ export async function* synthesizeStream(args: {
   latencyStartedAt?: number;
 }): AsyncGenerator<string> {
   if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
-    yield 'aVa synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.';
+    yield "aVa synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.";
     return;
   }
 
@@ -552,12 +555,40 @@ export async function* synthesizeStream(args: {
   // light formatting. Placed AFTER the role prompt so it overrides the earlier
   // "plain text only" convention. Empty for every plain-text caller.
   const richTextAddendum = lightMarkdown
-    ? `\n\nRICH-TEXT SURFACE OVERRIDE: This answer is rendered as Markdown — this overrides the "plain text only" convention above. You MAY use: a blank line between paragraphs; **bold** on the single most decision-relevant figure or verb in a paragraph (sparingly — not every line); a compact GitHub-flavored Markdown table when the user asks for a table, chart, visual, comparison, ranked list, spend/cost/budget breakdown, owner/risk/next-move matrix, or three or more comparable rows; and short "- " bullet lists where they genuinely aid scanning. Do NOT use Markdown headings (#). If you emit a table, it MUST be a valid GitHub-flavored Markdown table with the header row, separator row, and every data row on separate lines. Never emit inline pipe-table fragments inside a paragraph. Keep the table to roughly 3-5 columns and 2-6 rows, and include only cited tenant/corpus values or clearly labeled planning ranges.
+    ? `\n\nRICH-TEXT SURFACE OVERRIDE: This answer is rendered as Markdown with full GitHub-Flavored Markdown support including tables and charts.
 
-VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually, plot, trend, dependency map, relationship map, upstream/downstream map, or network, emit a compact GitHub-flavored Markdown data table when the retrieved evidence supports at least two comparable rows or two connected nodes. For charts, include one text label column and one exact numeric value column (for example "Initiative | Value"). For relationship graphs, include explicit edge rows with "From | Relationship | To | Evidence" or "Source | Relationship | Target | Evidence". Do not describe a visual only in prose when the data exists. If the data is not connected enough for a real chart or graph, say the specific missing evidence in one short caveat and do not fabricate a visual. Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
+FORMATTING RULES (mandatory):
+1. Open with a single **bold sentence** — the key finding, not a preamble.
+2. Use **bold section headers** (e.g. **Cost Exposure**, **Key Risks**) on their own line when the answer covers 3 or more distinct topics.
+3. Use "- " bullet lists where items benefit from visual separation. Never write more than 4 sentences in a single paragraph.
+4. Use a GFM table for ANY naturally tabular data (comparisons, ranked lists, vendor/initiative/risk matrices, spend breakdowns, timelines, benchmarks). Table rules: header row + separator row + every data row on separate lines; 3–5 columns; 2–8 rows; only cited or clearly labeled planning values.
+5. **Bold** the single most decision-critical number or phrase per section. Do not bold decoratively.
+6. Keep answers tight — depth over length. No hollow openers ("Great question", "Based on the context").
+
+CHART CONTRACT: The renderer supports inline charts rendered from fenced code blocks with language identifier \`chart\`. When you have data that would be clearer as a visual (spend trends, maturity comparisons, top-N ranked items, allocation breakdowns), emit a chart block INSTEAD of or ALONGSIDE the table. Chart block format:
+
+\`\`\`chart
+{
+  "type": "bar",
+  "title": "AI Initiative Spend by Domain",
+  "subtitle": "FY2026 · $ millions",
+  "data": [
+    { "domain": "Ops AI", "spend": 12.4 },
+    { "domain": "Supply Chain", "spend": 8.1 },
+    { "domain": "Customer", "spend": 6.7 }
+  ],
+  "xKey": "domain",
+  "yKey": "spend",
+  "unit": "$",
+  "note": "Source: V6 corpus spend signals"
+}
+\`\`\`
+
+Supported types: "bar" (vertical bars), "horizontal-bar" (best for ranked lists ≥4 items), "line" (trends over time), "area" (cumulative trends), "pie" (share/allocation, ≤6 slices). Use "horizontal-bar" for any ranked list ≥4 items. Use "line" or "area" for time-series. Use "pie" only for part-of-whole where ≤6 slices make the point. For dual-series, add "yKey2" and "color2". Only emit a chart if you have ≥3 real data rows with numeric y-values — never fabricate data to fill a chart.`
     : "";
-  const decisionCanvasAddendum = args.richText && !answerOnly
-    ? `\n\n${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}
+  const decisionCanvasAddendum =
+    args.richText && !answerOnly
+      ? `\n\n${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}
 
 ACTIVE INTELLIGENCE CANVAS RULES
 - Every rich-text Intelligence answer must use the tab markers above and populate all five right-canvas tabs: Decision, Industry Insights, Chart, Table, and Evidence.
@@ -570,16 +601,17 @@ ACTIVE INTELLIGENCE CANVAS RULES
 - Table is mandatory. It may be directly tied to the answer or adjacent to the function/category/pattern that helps the executive reason about the answer. Use a compact Markdown table.
 - Use business names and executive labels. Do not expose data-product IDs, application IDs, row labels, raw field names, file names, debug labels, or implementation terms.
 - Avoid product-mechanics phrases in visible prose such as "loaded sources", "loaded tenant sources", "loaded enterprise context", "retrieved context", or "corpus was retrieved." Say "company evidence", "the enterprise record", "SkyHarbor evidence", "industry context", or "planning assumption" instead.`
-    : "";
+      : "";
   const advisorComposer = buildIntelligenceAdvisorComposerBlock({
     query: args.query,
     tenantClientKey: args.tenantClientKey,
     sources: args.sources,
     richText: args.richText,
   });
-  const advisorComposerAddendum = advisorComposer && !answerOnly
-    ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
-    : "";
+  const advisorComposerAddendum =
+    advisorComposer && !answerOnly
+      ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
+      : "";
   const answerOnlyDirective = answerOnly
     ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a single, crisp executive answer in light Markdown prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — a separate decision companion handles the structured signals, decision frame, exhibit, industry context, and next moves. Keep to the length discipline above (single-issue ~100-120 words, multi-item up to ~180). Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.`
     : "";
@@ -607,8 +639,8 @@ ACTIVE INTELLIGENCE CANVAS RULES
   emitTiming(
     latencyTrace.mark("prompt.constructed", {
       systemChars: systemWithContinuity.length,
-      systemApproxTokens: summarizeTextPayload(systemWithContinuity)
-        .approxTokens,
+      systemApproxTokens:
+        summarizeTextPayload(systemWithContinuity).approxTokens,
       userChars: prompt.length,
       userApproxTokens: summarizeTextPayload(prompt).approxTokens,
       sourceCount: args.sources.length,
@@ -792,9 +824,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
         if (!sawFirstToken) {
           sawFirstToken = true;
           emitTiming(
-            latencyTrace.finish("claude.primary.first_token", primaryStartedAt, {
-              model,
-            }),
+            latencyTrace.finish(
+              "claude.primary.first_token",
+              primaryStartedAt,
+              {
+                model,
+              },
+            ),
           );
         }
         text += event.delta.text;
@@ -1048,10 +1084,14 @@ ACTIVE INTELLIGENCE CANVAS RULES
           });
           const missingOnlyText = extractMessageText(missingOnlyRepair);
           emitTiming(
-            latencyTrace.finish("repair.missing_tabs.done", missingOnlyStartedAt, {
-              model,
-              repairedChars: missingOnlyText.length,
-            }),
+            latencyTrace.finish(
+              "repair.missing_tabs.done",
+              missingOnlyStartedAt,
+              {
+                model,
+                repairedChars: missingOnlyText.length,
+              },
+            ),
           );
           const combinedText = [bestDraft.trim(), missingOnlyText.trim()]
             .filter(Boolean)
@@ -1103,11 +1143,15 @@ ACTIVE INTELLIGENCE CANVAS RULES
       });
       const repairedText = extractMessageText(nativeCanvasRepair).trim();
       emitTiming(
-        latencyTrace.finish("repair.native_canvas.done", nativeCanvasStartedAt, {
-          model,
-          repairedChars: repairedText.length,
-          accepted: hasExecutiveCanvasPayload(repairedText),
-        }),
+        latencyTrace.finish(
+          "repair.native_canvas.done",
+          nativeCanvasStartedAt,
+          {
+            model,
+            repairedChars: repairedText.length,
+            accepted: hasExecutiveCanvasPayload(repairedText),
+          },
+        ),
       );
       if (repairedText && hasExecutiveCanvasPayload(repairedText)) {
         text = repairedText;
