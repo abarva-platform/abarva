@@ -111,7 +111,11 @@ export function SourceAnalyticsCanvas({
             viewStage={viewStage}
             currentStage={event.currentStageKey}
           />
-          <ScopeAnalyticsStage view={resolvedStageView} />
+          <ScopeAnalyticsStage
+            view={resolvedStageView}
+            eventId={event.id}
+            stageKey={viewStage}
+          />
         </div>
         <AvaLauncher launcher={resolvedAva} />
       </main>

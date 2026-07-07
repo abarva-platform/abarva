@@ -1,0 +1,127 @@
+/**
+ * @jest-environment jsdom
+ */
+
+// The redesigned canvas dropzone must be a REAL uploader, not a presentational
+// placeholder. These tests assert the honesty contract for the `provide` task:
+//   1. Selecting a file POSTs it to the governed artifacts upload endpoint.
+//   2. On success it renders the uploaded-file card with the returned metadata
+//      (name · "{size} · uploaded") — a real persisted file, not a fake state.
+//   3. On failure it renders an error, never a fake "uploaded" success.
+//   4. Without an eventId (sample/preview mode) the dropzone does NOT upload.
+
+import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+
+import { TaskChecklist } from '../TaskChecklist';
+import type { StageTaskView } from '../view-model';
+
+const PROVIDE_TASK: StageTaskView = {
+  id: 'provide-volumetrics',
+  title: 'Provide the volumetrics',
+  subtitle: '147 apps · pre-filled',
+  type: 'provide',
+  state: 'todo',
+  guide: 'Attach the 18-month service baseline as a CSV or XLSX.',
+  cta: 'Confirm volumetrics',
+};
+
+const originalFetch = global.fetch;
+
+afterEach(() => {
+  global.fetch = originalFetch;
+  jest.clearAllMocks();
+});
+
+function selectFile(file: File) {
+  const input = screen.getByTestId('task-file-input') as HTMLInputElement;
+  fireEvent.change(input, { target: { files: [file] } });
+}
+
+describe('TaskChecklist provide-task upload', () => {
+  it('POSTs the file and renders the uploaded-file card on success', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        artifact: {
+          id: 'artifact-1',
+          originalName: 'apex-svc-baseline-18mo.xlsx',
+          sourceFormat: 'spreadsheet',
+          sizeBytes: 2_200_000,
+          parseStatus: 'pending',
+        },
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <TaskChecklist tasks={[PROVIDE_TASK]} eventId="evt-1" stageKey="scope" />,
+    );
+
+    selectFile(
+      new File([new Uint8Array(16)], 'apex-svc-baseline-18mo.xlsx', {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain('/api/v1/source/evt-1/artifacts/upload');
+    expect((init as RequestInit).method).toBe('POST');
+    expect((init as RequestInit).body).toBeInstanceOf(FormData);
+
+    // The uploaded-file card reflects the REAL persisted file.
+    await screen.findByText('apex-svc-baseline-18mo.xlsx');
+    expect(screen.getByText(/uploaded/)).toBeInTheDocument();
+    // A remove affordance is present.
+    expect(
+      screen.getByLabelText(/Remove apex-svc-baseline-18mo\.xlsx/),
+    ).toBeInTheDocument();
+  });
+
+  it('renders an error (not a fake success) when the upload fails', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ ok: false, error: 'storage_upload_failed' }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<TaskChecklist tasks={[PROVIDE_TASK]} eventId="evt-1" />);
+
+    selectFile(
+      new File([new Uint8Array(16)], 'baseline.csv', { type: 'text/csv' }),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('storage_upload_failed');
+    // No fake uploaded card.
+    expect(screen.queryByText(/· uploaded/)).not.toBeInTheDocument();
+  });
+
+  it('rejects a wrong-type file before any network call', async () => {
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<TaskChecklist tasks={[PROVIDE_TASK]} eventId="evt-1" />);
+
+    selectFile(
+      new File([new Uint8Array(16)], 'evil.exe', {
+        type: 'application/x-msdownload',
+      }),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/CSV or XLSX/i);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not render a file input in sample/preview mode (no eventId)', () => {
+    render(<TaskChecklist tasks={[PROVIDE_TASK]} />);
+    expect(screen.getByTestId('task-dropzone')).toBeInTheDocument();
+    expect(screen.queryByTestId('task-file-input')).not.toBeInTheDocument();
+  });
+});

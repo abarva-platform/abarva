@@ -10,6 +10,13 @@ import type { StageAnalyticsView } from './view-model';
 
 interface ScopeAnalyticsStageProps {
   view: StageAnalyticsView;
+  /**
+   * The Source event id + stage key. When present, `provide` dropzones become
+   * real uploaders (persist to Azure Blob + the artifact registry). Absent →
+   * the dropzones stay presentational (sample/preview mode).
+   */
+  eventId?: string;
+  stageKey?: string;
 }
 
 type StageTab = 'inputs' | 'intel';
@@ -27,7 +34,11 @@ type StageTab = 'inputs' | 'intel';
  * stage actually has one. Intake stages (Scope) have no waterfall: the value
  * pool is a downstream artifact, not something to fabricate at Scope.
  */
-export function ScopeAnalyticsStage({ view }: ScopeAnalyticsStageProps) {
+export function ScopeAnalyticsStage({
+  view,
+  eventId,
+  stageKey,
+}: ScopeAnalyticsStageProps) {
   const [tab, setTab] = useState<StageTab>('inputs');
   const gateRef = useRef<HTMLDivElement>(null);
 
@@ -162,7 +173,11 @@ export function ScopeAnalyticsStage({ view }: ScopeAnalyticsStageProps) {
       {tab === 'inputs' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Beat 2 — the task checklist. */}
-          <TaskChecklist tasks={view.tasks} />
+          <TaskChecklist
+            tasks={view.tasks}
+            eventId={eventId}
+            stageKey={stageKey}
+          />
           {/* Beat 3 — the gate. */}
           <div ref={gateRef}>
             <ScopeGate gate={view.gate} stageName={view.stageName} />
