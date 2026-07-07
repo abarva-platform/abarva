@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Airport Operations & Ground Handling
 // Code range: A2100-A2399
 // Run: npx tsx src/scripts/seed/seed-airline-dom07-airport-ops.ts

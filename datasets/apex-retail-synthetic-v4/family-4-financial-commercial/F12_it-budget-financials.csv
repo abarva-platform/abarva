@@ -1,11 +1,11 @@
-budget_line_id,function_or_platform,run_budget_usd,change_budget_usd,ai_budget_usd,owner_role,notes,capex_pct,opex_pct
-APX-BUD-001,Store Systems and POS,130200000,71400000,650000,VP Store Technology,AI value proof required for FY27 funding,25,75
-APX-BUD-002,Digital Commerce Engineering,161200000,88400000,1070000,SVP Digital Engineering,Baseline portfolio funding,25,75
-APX-BUD-003,Merchandising and Planning Systems,85560000,46920000,1490000,VP Merch Tech,Baseline portfolio funding,25,75
-APX-BUD-004,Supply Chain Platforms,106640000,58480000,1910000,VP Supply Chain Tech,AI value proof required for FY27 funding,25,75
-APX-BUD-005,Customer Data and Loyalty Platforms,76880000,42160000,2330000,VP Customer Platforms,Baseline portfolio funding,25,75
-APX-BUD-006,ERP and Corporate Systems,71920000,39440000,2750000,VP ERP,Baseline portfolio funding,25,75
-APX-BUD-007,"Data, Analytics and AI",114080000,62560000,3170000,Chief Data Officer,AI value proof required for FY27 funding,25,75
-APX-BUD-008,Cloud Platform and SRE,102920000,56440000,3590000,VP Cloud Platform,Baseline portfolio funding,25,75
-APX-BUD-009,Cybersecurity,69440000,38080000,4010000,CISO,Baseline portfolio funding,25,75
-APX-BUD-010,Service Management and End User Tech,60760000,33320000,4430000,VP IT Operations,AI value proof required for FY27 funding,25,75
+budget_line_id,function_or_platform,run_budget_usd,change_budget_usd,ai_budget_usd,owner_role,notes
+APX-BUD-001,Store Systems and POS,130200000,71400000,650000,VP Store Technology,AI value proof required for FY27 funding
+APX-BUD-002,Digital Commerce Engineering,161200000,88400000,1070000,SVP Digital Engineering,Baseline portfolio funding
+APX-BUD-003,Merchandising and Planning Systems,85560000,46920000,1490000,VP Merch Tech,Baseline portfolio funding
+APX-BUD-004,Supply Chain Platforms,106640000,58480000,1910000,VP Supply Chain Tech,AI value proof required for FY27 funding
+APX-BUD-005,Customer Data and Loyalty Platforms,76880000,42160000,2330000,VP Customer Platforms,Baseline portfolio funding
+APX-BUD-006,ERP and Corporate Systems,71920000,39440000,2750000,VP ERP,Baseline portfolio funding
+APX-BUD-007,"Data, Analytics and AI",114080000,62560000,3170000,Chief Data Officer,AI value proof required for FY27 funding
+APX-BUD-008,Cloud Platform and SRE,102920000,56440000,3590000,VP Cloud Platform,Baseline portfolio funding
+APX-BUD-009,Cybersecurity,69440000,38080000,4010000,CISO,Baseline portfolio funding
+APX-BUD-010,Service Management and End User Tech,60760000,33320000,4430000,VP IT Operations,AI value proof required for FY27 funding

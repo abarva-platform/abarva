@@ -17,19 +17,14 @@ type RequestAccessBody = {
   initiative?: string;
 };
 
-// Inbound private-preview lead notifications go to the shared AbarVa intake.
-const LEAD_INBOXES = ['admin@abarva.ai'] as const;
-const DEFAULT_FROM_EMAIL = 'AbarVa Preview <support@send.abarva.ai>';
-
-function resolveLeadFromEmail(): string {
-  return process.env.RESEND_FROM_EMAIL?.trim() || DEFAULT_FROM_EMAIL;
-}
+// Inbound private-preview lead notifications go here.
+const LEAD_INBOX = 'admin@abarva.ai';
 
 /**
  * Public, unauthenticated lead capture for the signed-out marketing landing page.
- * Stores the request in `access_requests` (durable) and emails the private-preview
- * intake recipients via Resend (notification). Both paths are best-effort; we only
- * fail the request if neither durable path succeeds in production.
+ * Stores the request in `access_requests` (durable) and emails admin@abarva.ai
+ * via Resend (notification). Both paths are best-effort; we only fail the request
+ * if neither durable path succeeds in production.
  */
 export async function POST(req: NextRequest) {
   let body: RequestAccessBody;
@@ -80,13 +75,13 @@ export async function POST(req: NextRequest) {
     console.error('[request-access] store failed:', err);
   }
 
-  // 2) Notify the private-preview intake recipients.
+  // 2) Notify admin@abarva.ai.
   if (process.env.RESEND_API_KEY) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: resolveLeadFromEmail(),
-        to: [...LEAD_INBOXES],
+        from: 'AbarVa Preview <noreply@abarva.ai>',
+        to: LEAD_INBOX,
         replyTo: email,
         subject: `Preview request — ${name} · ${company}`,
         text: [

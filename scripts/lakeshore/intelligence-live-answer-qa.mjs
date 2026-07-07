@@ -41,7 +41,7 @@ const questions = [
   {
     id: 'LIVE-ASK-005',
     label: 'Federated tenant posture',
-    query: 'What should Lakeshore L0 see that Lakeshore Holdings L1 should not automatically see at transaction grain?',
+    query: 'What should Lakeshore L0 see that Morgan Street L1 should not automatically see at transaction grain?',
     required: ['Lakeshore', 'L0', 'L1'],
   },
   {

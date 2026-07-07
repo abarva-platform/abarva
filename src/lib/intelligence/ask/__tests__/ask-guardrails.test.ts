@@ -1,15 +1,17 @@
 jest.mock("server-only", () => ({}));
 
-import { atlasStakeholderConflictHandoff } from "../index";
-import { retrieveSurfaceContextSources } from "../retrievers/surface-context";
+import { atlasStakeholderConflictHandoff } from '../index';
+import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
 import {
+  CONCISE_SYSTEM_PROMPT,
+  SYSTEM_PROMPT,
   chunkAskText,
   chooseSynthesisTokenBudget,
   sanitizeAskSynthesis,
-} from "../synthesizer";
-import { buildDeterministicConciseFollowups } from "../followups";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+} from '../synthesizer';
+import { buildDeterministicConciseFollowups } from '../followups';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 describe("Ask Intelligence guardrails", () => {
   it("routes advice requests about executive contradictions to the decision workspace", () => {
@@ -66,40 +68,25 @@ describe("Ask Intelligence guardrails", () => {
     ).toBe(1300);
   });
 
-  it("makes the Intelligence companion canvas mandatory for all rich-text answers", () => {
-    const synthesizerCode = readFileSync(
-      join(__dirname, "..", "synthesizer.ts"),
-      "utf8",
-    );
-    const tabContract = readFileSync(
-      join(__dirname, "..", "..", "tabbed-response.ts"),
-      "utf8",
-    );
-
-    expect(tabContract).toContain(
-      "Always provide all five companion cards for Intelligence answers",
-    );
-    expect(synthesizerCode).toContain(
-      "Every rich-text Intelligence answer must use the tab markers above and populate all five right-canvas tabs",
-    );
-    expect(synthesizerCode).toContain(
-      'return ["Decision", "Industry Insights", "Chart", "Table", "Evidence"];',
-    );
-    expect(synthesizerCode).not.toContain("if (parsed.tabs.length === 0) return []");
-    expect(synthesizerCode).not.toContain("If the user explicitly asks for evidence");
+  it('uses aVa identity and current demo-industry coverage in Claude prompts', () => {
+    expect(SYSTEM_PROMPT).toContain("You are aVa, AbarVa's Intelligence advisor.");
+    expect(SYSTEM_PROMPT).toContain('industrial holding companies');
+    expect(SYSTEM_PROMPT).toContain('shared services');
+    expect(SYSTEM_PROMPT).toContain('airlines');
+    expect(CONCISE_SYSTEM_PROMPT).toContain('industrial/shared services');
+    expect(CONCISE_SYSTEM_PROMPT).toContain('airline operations');
+    expect(SYSTEM_PROMPT).not.toContain("You are Sentinel, AbarVa's Intelligence agent.");
+    expect(CONCISE_SYSTEM_PROMPT).not.toContain("You are Sentinel, AbarVa's Intelligence agent.");
   });
 
-  it("uses deterministic followups only for explicit concise Ask requests", () => {
-    expect(
-      buildDeterministicConciseFollowups({
-        query:
-          "Name one modernization risk SkyHarbor should watch. Keep it concise.",
-        entities: ["IBM dependency"],
-      }),
-    ).toEqual([
-      "Show the evidence behind IBM dependency",
-      "What would change this recommendation?",
-      "What should we do next?",
+  it('uses deterministic followups only for explicit concise Ask requests', () => {
+    expect(buildDeterministicConciseFollowups({
+      query: 'Name one modernization risk SkyHarbor should watch. Keep it concise.',
+      entities: ['IBM dependency'],
+    })).toEqual([
+      'Show the evidence behind IBM dependency',
+      'What would change this recommendation?',
+      'What should we do next?',
     ]);
 
     expect(

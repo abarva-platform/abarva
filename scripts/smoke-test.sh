@@ -5,7 +5,7 @@
 # Usage:
 #   ./scripts/smoke-test.sh [BASE_URL]
 #
-# BASE_URL defaults to https://app.abarva.ai (Azure Container Apps production)
+# BASE_URL defaults to https://app.abarva.ai
 # Set SMOKE_BASE_URL environment variable to override.
 #
 # Exit code:

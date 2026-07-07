@@ -1,0 +1,27 @@
+# SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=strategy_initiatives | owner=Marcus Reilly | system=Corporate Strategy | as_of=2026-06-06 | sensitivity=Internal
+from_init,to_init,relationship
+INIT-001,INIT-009,shares-resource
+INIT-002,INIT-009,enables
+INIT-002,INIT-009,shares-resource
+INIT-002,INIT-007,enables
+INIT-003,INIT-009,blocks
+INIT-004,INIT-004,shares-resource
+INIT-004,INIT-010,enables
+INIT-005,INIT-003,enables
+INIT-005,INIT-004,blocks
+INIT-005,INIT-004,enables
+INIT-006,INIT-007,blocks
+INIT-006,INIT-012,blocks
+INIT-007,INIT-009,blocks
+INIT-007,INIT-005,blocks
+INIT-007,INIT-001,enables
+INIT-008,INIT-008,enables
+INIT-008,INIT-006,blocks
+INIT-008,INIT-009,enables
+INIT-009,INIT-009,enables
+INIT-009,INIT-008,shares-resource
+INIT-009,INIT-002,enables
+INIT-010,INIT-007,shares-resource
+INIT-010,INIT-007,enables
+INIT-011,INIT-004,enables
+INIT-012,INIT-003,shares-resource

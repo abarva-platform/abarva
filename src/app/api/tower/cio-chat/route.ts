@@ -1,7 +1,6 @@
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { answerCioTowerQuestion, canonicalCioTowerTenantKey } from '@/lib/cio-tower/answer';
-import { canonicalCioTowerTenantDisplayName } from '@/lib/cio-tower/metric-packet';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,10 +23,7 @@ export async function POST(request: Request) {
 
   const activeClient = await getActiveClientRow().catch(() => null);
   const tenantKey = canonicalCioTowerTenantKey(tenancy.clientKey ?? activeClient?.key ?? tenancy.clientId);
-  const tenantName =
-    canonicalCioTowerTenantDisplayName({ key: tenantKey, name: activeClient?.name }) ??
-    activeClient?.name ??
-    tenantKey;
+  const tenantName = activeClient?.name ?? tenantKey;
 
   try {
     const result = await answerCioTowerQuestion({
@@ -48,7 +44,8 @@ export async function POST(request: Request) {
       validationStatus: result.validationStatus,
       validationErrors: result.validationErrors,
       latencyMs: result.latencyMs,
-      v6VisibleOutputAudit: result.v6VisibleOutputAudit,
+      metricCards: result.metricCards,
+      gaps: result.gaps,
       rendererPolicy: {
         purePlacementOnly: true,
         proseRewritten: false,

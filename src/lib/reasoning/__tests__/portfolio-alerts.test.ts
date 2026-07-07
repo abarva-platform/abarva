@@ -284,11 +284,11 @@ describe("PortfolioAlert id + link wiring", () => {
     expect(ca?.link).toBe("/source/events/INST-1");
   });
 
-  it("routes program instances to the Tower query surface and source events to /source/events/{id}", () => {
+  it('routes program instances to the consolidated /tower surface and source events to /source/events/{id}', () => {
     const alerts = buildPortfolioAlerts();
     for (const a of alerts) {
-      if (a.link.startsWith("/tower?program=")) {
-        expect(a.link).toBe(a.link.toLowerCase());
+      if (a.link === '/tower') {
+        expect(a.link).toBe('/tower');
       } else {
         expect(a.link.startsWith("/source/events/")).toBe(true);
       }

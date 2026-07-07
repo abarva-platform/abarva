@@ -1,0 +1,58 @@
+{
+  "id": "INT-SKY-009",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "Which data products matter most for IROPS AI readiness?",
+  "expectedTerms": [
+    "data",
+    "IROPS"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:10:03.065Z",
+  "completedAt": "2026-07-06T23:10:29.959Z",
+  "latencyMs": 26894,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-009-prompt-reconstruction.txt",
+  "promptReconstructionHash": "1cb321221573d2f86ff56a53b1777ae58cecf2135bb2d1a5a3f9eea6bcb14407",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-009.ndjson",
+  "claudeResponse": "Airline Demo — the data products that matter most for IROPS AI readiness are the ones that feed the recovery decision loop: crew legality, flight status, PNR/reservation events, the operational event store, and aircraft tail assignment. Everything else (turn events, baggage, maintenance, weather) is supporting context.\nFund certification of these five before you scale any autonomous recovery agent. The reason is mechanical. Every IROPS AI initiative in your loaded stack — IROPS Decision Assistant, Crew Recovery Copilot, Passenger Reaccommodation Agent — makes decisions that are only as good as the freshness and lineage of these feeds.\nA crew recovery recommendation built on stale legality data is a DOT exposure event, not a productivity win. A reaccommodation agent working from lagging PNR state rebooks passengers onto flights that no longer exist.\nPriority ranking of the data products, tied to the AI initiatives they unlock: | Data product | Priority | Feeds which AI initiatives | Readiness gate | Owner to confirm |\n|---|---|---|---|---|\n| Crew Legality Feed | 1 — critical | Crew Recovery Copilot; IROPS Decision Assistant | Certified freshness SLA + lineage; regulatory audit trail | VP Crew Operations |\n| Flight Status Feed | 1 — critical | All 8 IROPS AI initiatives | Sub-minute freshness; source-of-truth reconciliation vs OCC | EVP Operations |\n| Operational Event Store | 1 — critical | IROPS Decision Assistant; Delay Root-Cause Assistant | Event schema stability; replay capability; retention policy | VP Data Platforms |\n| PNR / Reservation Event | 2 — high | Passenger Reaccommodation Agent; Disruption Comms Agent | PSS/mainframe gateway latency; event completeness | VP Digital Products |\n| Aircraft Tail Assignment | 2 — high | IROPS Decision Assistant; Turn Risk Predictor | Reconciliation with maintenance constraints | EVP Operations |\n| Airport Gate Turn Event | 3 — supporting | Turn Risk Predictor | Cross-airport signal quality varies | VP Airport Ops |\n| Maintenance Delay Feed | 3 — supporting | Maintenance Delay Prediction; Root-Cause Assistant | Integration with tail assignment | VP Maintenance Engineering |\n| Baggage Scan Event | 3 — supporting | Baggage Recovery Prediction | Scan coverage gaps at outstations | VP Airport Ops |\n| Weather Event Feed | 3 — supporting | Delay Root-Cause; Turn Risk Predictor | External vendor SLA; already commoditized | VP Data Platforms | The three tier-1 products (crew legality, flight status, operational event store) are the gate.\nUntil each has an owner-signed freshness SLA, documented lineage, and certified reconciliation against the OCC's source of truth, autonomous scale is a model-risk conversation you will lose. What's missing to make this board-grade: current measured freshness for each feed vs.\ntarget SLA, and owner signoff from VP Data Platforms on the operational event store's schema stability. Those two artifacts convert this from AbarVa assessment to certified readiness. Want me to sequence the certification work against your IROPS Data Foundation and Operational Event Streaming programs, or pull the model-risk tier implications for the tier-1 feeds first?",
+  "renderedText": "Airline Demo — the data products that matter most for IROPS AI readiness are the ones that feed the recovery decision loop: crew legality, flight status, PNR/reservation events, the operational event store, and aircraft tail assignment. Everything else (turn events, baggage, maintenance, weather) is supporting context.\nFund certification of these five before you scale any autonomous recovery agent. The reason is mechanical. Every IROPS AI initiative in your loaded stack — IROPS Decision Assistant, Crew Recovery Copilot, Passenger Reaccommodation Agent — makes decisions that are only as good as the freshness and lineage of these feeds.\nA crew recovery recommendation built on stale legality data is a DOT exposure event, not a productivity win. A reaccommodation agent working from lagging PNR state rebooks passengers onto flights that no longer exist.\nPriority ranking of the data products, tied to the AI initiatives they unlock: | Data product | Priority | Feeds which AI initiatives | Readiness gate | Owner to confirm |\n|---|---|---|---|---|\n| Crew Legality Feed | 1 — critical | Crew Recovery Copilot; IROPS Decision Assistant | Certified freshness SLA + lineage; regulatory audit trail | VP Crew Operations |\n| Flight Status Feed | 1 — critical | All 8 IROPS AI initiatives | Sub-minute freshness; source-of-truth reconciliation vs OCC | EVP Operations |\n| Operational Event Store | 1 — critical | IROPS Decision Assistant; Delay Root-Cause Assistant | Event schema stability; replay capability; retention policy | VP Data Platforms |\n| PNR / Reservation Event | 2 — high | Passenger Reaccommodation Agent; Disruption Comms Agent | PSS/mainframe gateway latency; event completeness | VP Digital Products |\n| Aircraft Tail Assignment | 2 — high | IROPS Decision Assistant; Turn Risk Predictor | Reconciliation with maintenance constraints | EVP Operations |\n| Airport Gate Turn Event | 3 — supporting | Turn Risk Predictor | Cross-airport signal quality varies | VP Airport Ops |\n| Maintenance Delay Feed | 3 — supporting | Maintenance Delay Prediction; Root-Cause Assistant | Integration with tail assignment | VP Maintenance Engineering |\n| Baggage Scan Event | 3 — supporting | Baggage Recovery Prediction | Scan coverage gaps at outstations | VP Airport Ops |\n| Weather Event Feed | 3 — supporting | Delay Root-Cause; Turn Risk Predictor | External vendor SLA; already commoditized | VP Data Platforms | The three tier-1 products (crew legality, flight status, operational event store) are the gate.\nUntil each has an owner-signed freshness SLA, documented lineage, and certified reconciliation against the OCC's source of truth, autonomous scale is a model-risk conversation you will lose. What's missing to make this board-grade: current measured freshness for each feed vs.\ntarget SLA, and owner signoff from VP Data Platforms on the operational event store's schema stability. Those two artifacts convert this from AbarVa assessment to certified readiness. Want me to sequence the certification work against your IROPS Data Foundation and Operational Event Streaming programs, or pull the model-risk tier implications for the tier-1 feeds first?",
+  "sourcesCount": 9,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "IT landscape (skyharbor-air)",
+    "Enterprise data-product AI-readiness pattern"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": null,
+  "score": {
+    "verdict": "watch",
+    "score": 4.5,
+    "flags": [
+      "answer_too_long"
+    ]
+  }
+}

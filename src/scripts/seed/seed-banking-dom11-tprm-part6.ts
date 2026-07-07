@@ -1,18 +1,6 @@
-interface PatternSeed {
-  code: string;
-  name: string;
-  description: string;
-  vertical: string;
-  office_category: string;
-  keywords: string[];
-  failure_rate_pct: number;
-  is_active: boolean;
-  demoRelevant: boolean;
-  subTopic: string;
-  data: Record<string, string | number | boolean>;
-}
-
-export const BANKING_DOM11_TPRM_PART6_PATTERNS: PatternSeed[] = [
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const BANKING_DOM11_TPRM_PART6_PATTERNS: any[] = [
 
   // ── Fourth-Party Risk (B3400–B3411) ──────────────────────────────────────
 

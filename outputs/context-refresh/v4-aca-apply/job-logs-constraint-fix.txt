@@ -1,0 +1,12 @@
+{"TimeStamp":"2026-06-18T22:15:05.07553","Log":"Connecting to the container 'job-phs-meridian-load2-0606'..."}
+{"TimeStamp":"2026-06-18T22:15:05.17548","Log":"Successfully Connected to container: 'job-phs-meridian-load2-0606' [Execution: 'job-phs-meridian-load2-0606-yd63ymp', Replica: 'job-phs-meridian-load2-0606-yd63ymp-9tnj5']"}
+{"TimeStamp":"2026-06-18T22:14:02.6473671+00:00","Log":"F (node:1) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'."}
+{"TimeStamp":"2026-06-18T22:14:02.6474105+00:00","Log":"F In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees."}
+{"TimeStamp":"2026-06-18T22:14:02.6474425+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T22:14:02.6474462+00:00","Log":"F To prepare for this change:"}
+{"TimeStamp":"2026-06-18T22:14:02.6474482+00:00","Log":"F - If you want the current behavior, explicitly use 'sslmode=verify-full'"}
+{"TimeStamp":"2026-06-18T22:14:02.6474503+00:00","Log":"F - If you want libpq compatibility now, use 'uselibpqcompat=true\u0026sslmode=require'"}
+{"TimeStamp":"2026-06-18T22:14:02.6474524+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T22:14:02.6474553+00:00","Log":"F See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions."}
+{"TimeStamp":"2026-06-18T22:14:02.6474571+00:00","Log":"F (Use \u0060node --trace-warnings ...\u0060 to show where the warning was created)"}
+{"TimeStamp":"2026-06-18T22:14:05.2357021+00:00","Log":"F RESULT_JSON {"ok":false,"run_id":"v4-aca-all-20260618-constraint-fix","error":"invalid input syntax for type json"}"}

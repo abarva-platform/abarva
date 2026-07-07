@@ -1,0 +1,96 @@
+{
+  "baseUrl": "https://app.abarva.ai",
+  "email": "cio@apex-retail.example.com",
+  "capturedAt": "2026-06-02T00:38:06.471Z",
+  "demoSeries": "moves",
+  "primerFiles": {
+    "intro": "/Users/anand/Downloads/abarva-primer-pack/index.html",
+    "corpus": "/Users/anand/Downloads/abarva-primer-pack/abarva-industry-patterns-db-primer.html",
+    "apex": "/Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html"
+  },
+  "readOnlyNote": "The capture may create clearly labeled Apex demo Move and Source records when recording live flows; clean them up after review.",
+  "scenes": [
+    {
+      "id": "move-definition",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#moves",
+      "intendedSeconds": 46,
+      "actualSeconds": 46.6
+    },
+    {
+      "id": "nexus-journey",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/abarva-industry-patterns-db-primer.html#module-journeys",
+      "intendedSeconds": 58,
+      "actualSeconds": 58.6
+    },
+    {
+      "id": "live-move-create",
+      "url": "https://app.abarva.ai/strategic-moves/24138102-35a3-4b1d-addb-df1e9025ac28",
+      "intendedSeconds": 120,
+      "actualSeconds": 225.6
+    },
+    {
+      "id": "moves-failure-checks",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#fail",
+      "intendedSeconds": 54,
+      "actualSeconds": 54.6
+    },
+    {
+      "id": "patternops-close",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#patternops",
+      "intendedSeconds": 42,
+      "actualSeconds": 42
+    }
+  ],
+  "videoWebm": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/working-tour-raw/page@fa41d64fc262acf5b533dbecf6d59fbb.webm",
+  "outputs": {
+    "talkTrack": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-moves-demo-talk-track.txt",
+    "narrationAudio": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-moves-demo-narration.wav",
+    "audioMode": "gpt-4o-mini-tts-marin-speed-0.88-scene-locked-max-pad-3s",
+    "sceneAudioSegments": [
+      {
+        "id": "move-definition",
+        "rawSeconds": 46.6,
+        "audioSeconds": 63.792,
+        "sourceSpeechSeconds": 63.792,
+        "pauseSeconds": 0
+      },
+      {
+        "id": "nexus-journey",
+        "rawSeconds": 58.6,
+        "audioSeconds": 59.76,
+        "sourceSpeechSeconds": 59.76,
+        "pauseSeconds": 0
+      },
+      {
+        "id": "live-move-create",
+        "rawSeconds": 225.6,
+        "audioSeconds": 103.848,
+        "sourceSpeechSeconds": 100.848,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "moves-failure-checks",
+        "rawSeconds": 54.6,
+        "audioSeconds": 60.504,
+        "sourceSpeechSeconds": 60.504,
+        "pauseSeconds": 0
+      },
+      {
+        "id": "patternops-close",
+        "rawSeconds": 42,
+        "audioSeconds": 70.776,
+        "sourceSpeechSeconds": 70.776,
+        "pauseSeconds": 0
+      }
+    ],
+    "motion": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-moves-demo.mp4",
+    "copied": [
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-moves-demo.mp4",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-moves-demo-talk-track.txt",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-moves-demo-live-motion.mp4"
+    ],
+    "webmDurationSeconds": 428.32,
+    "audioDurationSeconds": 358.68,
+    "motionDurationSeconds": 358.516009
+  }
+}

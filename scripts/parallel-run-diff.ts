@@ -2,7 +2,7 @@
 //
 // Parallel-run diff harness (Lane D — cutover decision tool).
 //
-// Compares the CURRENT production path (left) against the AZURE LAB path
+// Compares the canonical app domain (left) against a candidate ACA path
 // (right) and produces a founder-readable pass / warn / fail / preflight-
 // blocked report so a non-engineer can answer one question:
 //

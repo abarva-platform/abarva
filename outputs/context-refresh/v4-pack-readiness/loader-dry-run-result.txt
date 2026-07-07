@@ -1,0 +1,157 @@
+RESULT_JSON {
+  "ok": true,
+  "run_id": "v4-dry-run-20260618",
+  "mode": "dry_run",
+  "clients": [
+    {
+      "client": "meridian-health",
+      "mode": "dry_run",
+      "context": {
+        "sources": 1,
+        "source_files": 30,
+        "records": 1538,
+        "facts": 16728,
+        "chunks": 1538,
+        "relationships": 1000
+      },
+      "private_patterns": 6,
+      "tower": {
+        "ai_control_refresh_runs": 1,
+        "ai_control_sources": 14,
+        "ai_control_initiatives": 14,
+        "ai_control_tool_usage_monthly": 40,
+        "ai_control_persona_productivity": 14,
+        "ai_control_dora_metrics": 12,
+        "ai_control_agent_outcomes": 14,
+        "ai_control_benefit_realization": 14,
+        "ai_control_spend_contracts": 14,
+        "ai_control_risk_governance": 14,
+        "ai_control_actions": 10,
+        "ai_control_evidence_items": 14,
+        "ai_control_context_facts": 692,
+        "ai_control_context_relationships": 0,
+        "ai_control_atlas_context_packs": 1
+      }
+    },
+    {
+      "client": "lakeshore",
+      "mode": "dry_run",
+      "context": {
+        "sources": 1,
+        "source_files": 30,
+        "records": 1348,
+        "facts": 14619,
+        "chunks": 1348,
+        "relationships": 850
+      },
+      "private_patterns": 5,
+      "tower": {
+        "ai_control_refresh_runs": 1,
+        "ai_control_sources": 14,
+        "ai_control_initiatives": 10,
+        "ai_control_tool_usage_monthly": 40,
+        "ai_control_persona_productivity": 10,
+        "ai_control_dora_metrics": 10,
+        "ai_control_agent_outcomes": 10,
+        "ai_control_benefit_realization": 10,
+        "ai_control_spend_contracts": 10,
+        "ai_control_risk_governance": 10,
+        "ai_control_actions": 10,
+        "ai_control_evidence_items": 10,
+        "ai_control_context_facts": 496,
+        "ai_control_context_relationships": 0,
+        "ai_control_atlas_context_packs": 1
+      }
+    },
+    {
+      "client": "first-capital",
+      "mode": "dry_run",
+      "context": {
+        "sources": 1,
+        "source_files": 31,
+        "records": 2227,
+        "facts": 24474,
+        "chunks": 2227,
+        "relationships": 1800
+      },
+      "private_patterns": 6,
+      "tower": {
+        "ai_control_refresh_runs": 1,
+        "ai_control_sources": 14,
+        "ai_control_initiatives": 42,
+        "ai_control_tool_usage_monthly": 35,
+        "ai_control_persona_productivity": 16,
+        "ai_control_dora_metrics": 12,
+        "ai_control_agent_outcomes": 42,
+        "ai_control_benefit_realization": 126,
+        "ai_control_spend_contracts": 42,
+        "ai_control_risk_governance": 42,
+        "ai_control_actions": 24,
+        "ai_control_evidence_items": 42,
+        "ai_control_context_facts": 1806,
+        "ai_control_context_relationships": 0,
+        "ai_control_atlas_context_packs": 1
+      }
+    },
+    {
+      "client": "skyharbor-air",
+      "mode": "dry_run",
+      "context": {
+        "sources": 1,
+        "source_files": 35,
+        "records": 6094,
+        "facts": 55956,
+        "chunks": 6094,
+        "relationships": 5200
+      },
+      "private_patterns": 9,
+      "tower": {
+        "ai_control_refresh_runs": 1,
+        "ai_control_sources": 14,
+        "ai_control_initiatives": 30,
+        "ai_control_tool_usage_monthly": 144,
+        "ai_control_persona_productivity": 18,
+        "ai_control_dora_metrics": 54,
+        "ai_control_agent_outcomes": 12,
+        "ai_control_benefit_realization": 30,
+        "ai_control_spend_contracts": 120,
+        "ai_control_risk_governance": 150,
+        "ai_control_actions": 5,
+        "ai_control_evidence_items": 80,
+        "ai_control_context_facts": 2426,
+        "ai_control_context_relationships": 0,
+        "ai_control_atlas_context_packs": 1
+      }
+    },
+    {
+      "client": "apex-retail",
+      "mode": "dry_run",
+      "context": {
+        "sources": 1,
+        "source_files": 31,
+        "records": 1656,
+        "facts": 17548,
+        "chunks": 1656,
+        "relationships": 1000
+      },
+      "private_patterns": 6,
+      "tower": {
+        "ai_control_refresh_runs": 1,
+        "ai_control_sources": 14,
+        "ai_control_initiatives": 14,
+        "ai_control_tool_usage_monthly": 44,
+        "ai_control_persona_productivity": 12,
+        "ai_control_dora_metrics": 12,
+        "ai_control_agent_outcomes": 14,
+        "ai_control_benefit_realization": 14,
+        "ai_control_spend_contracts": 14,
+        "ai_control_risk_governance": 14,
+        "ai_control_actions": 10,
+        "ai_control_evidence_items": 14,
+        "ai_control_context_facts": 692,
+        "ai_control_context_relationships": 0,
+        "ai_control_atlas_context_packs": 1
+      }
+    }
+  ]
+}

@@ -1,6 +1,5 @@
 export const AI_CONTROL_TOWER_LENSES = [
   'value_adoption',
-  'initiatives',
   'productivity',
   'agents',
   'spend',

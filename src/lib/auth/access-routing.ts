@@ -1,10 +1,5 @@
-import {
-  DEFAULT_CLIENT_KEY,
-  inferClientKeyFromEmail,
-  isClientKey,
-  isKnownAgentClientLoginEmail,
-  type ClientKey,
-} from "@/lib/client-config";
+import { DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
+import { getStaticLaunchAccessProfile } from '@/lib/auth/launch-access';
 
 export type AppSessionRole =
   | "admin"
@@ -36,14 +31,23 @@ function normalizeEmail(email: string | null | undefined): string {
   return email?.trim().toLowerCase() ?? "";
 }
 
-function isAnandOperatorAlias(normalizedEmail: string): boolean {
+export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return false;
+  const launchProfile = getStaticLaunchAccessProfile(normalized);
+  if (launchProfile?.clientKey) return true;
   return (
-    normalizedEmail === "anand.sundaram+apex@thesundaram.com" ||
-    normalizedEmail === "anand.sundaram+meridian@thesundaram.com" ||
-    normalizedEmail === "anand.sundaram+skyharbor@thesundaram.com" ||
-    normalizedEmail === "anand.sundaram+lakeshore@thesundaram.com" ||
-    normalizedEmail === "anand.sundaram+firstcapital@thesundaram.com" ||
-    normalizedEmail === "anand.sundaram+northstar@thesundaram.com"
+    normalized.endsWith('@meridian-health.example.com') ||
+    normalized.endsWith('@apex-retail.example.com') ||
+    normalized.endsWith('@firstcapital.example.com') ||
+    normalized.endsWith('@northstar-clinical.example.com') ||
+    normalized.endsWith('@skyharbor-air.example.com') ||
+    normalized.endsWith('@lakeshore-industries.example.com') ||
+    normalized.includes('+apex@abarva.com') ||
+    normalized.includes('+meridian@abarva.com') ||
+    normalized.includes('+firstcapital@abarva.com') ||
+    normalized.includes('+northstar@abarva.com') ||
+    normalized.includes('+skyharbor@abarva.com')
   );
 }
 
@@ -101,23 +105,21 @@ export function inferSessionRoleFromEmail(
 ): AppSessionRole {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
+  const launchProfile = getStaticLaunchAccessProfile(normalized);
+  if (launchProfile) return launchProfile.role;
 
   if (
-    normalized.endsWith("@meridian-health.example.com") ||
-    normalized.endsWith("@apex-retail.example.com") ||
-    normalized.endsWith("@firstcapital.example.com") ||
-    normalized.endsWith("@northstar-clinical.example.com") ||
-    normalized.endsWith("@skyharbor-air.example.com") ||
-    normalized.endsWith("@lakeshore-holdings.example.com") ||
-    normalized.includes("+apex@abarva.com") ||
-    normalized.includes("+meridian@abarva.com") ||
-    normalized.includes("+firstcapital@abarva.com") ||
-    normalized.includes("+northstar@abarva.com") ||
-    normalized.includes("+skyharbor@abarva.com") ||
-    normalized.includes("+lakeshore@abarva.com") ||
-    isKnownAgentClientLoginEmail(normalized) ||
-    isAnandOperatorAlias(normalized) ||
-    isPilotAccessEmail(normalized)
+    normalized.endsWith('@meridian-health.example.com') ||
+    normalized.endsWith('@apex-retail.example.com') ||
+    normalized.endsWith('@firstcapital.example.com') ||
+    normalized.endsWith('@northstar-clinical.example.com') ||
+    normalized.endsWith('@skyharbor-air.example.com') ||
+    normalized.endsWith('@lakeshore-industries.example.com') ||
+    normalized.includes('+apex@abarva.com') ||
+    normalized.includes('+meridian@abarva.com') ||
+    normalized.includes('+firstcapital@abarva.com') ||
+    normalized.includes('+northstar@abarva.com') ||
+    normalized.includes('+skyharbor@abarva.com')
   ) {
     return "client";
   }
@@ -231,7 +233,7 @@ export function resolvePostSignInPath(
   const resolvedClientId = resolveSessionClientKey(input);
 
   if (isNewClientSetupEmail(input.email)) {
-    return "/tower";
+    return '/tower';
   }
 
   if (isExternalOnlyRole(resolvedRole)) {

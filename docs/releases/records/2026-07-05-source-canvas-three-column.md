@@ -67,6 +67,16 @@ No database migration, no seed script, no feature flag toggle required.
 
 Reference runbook: `docs/runbooks/azure-container-apps-deploy.md`.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 1. Identify the prior healthy ACA revision (visible in `az containerapp revision list`).
@@ -75,13 +85,9 @@ Reference runbook: `docs/runbooks/azure-container-apps-deploy.md`.
 
 The rollback window is the time between the new revision receiving traffic and discovery of a regression; because only UI files changed, a traffic shift is sufficient and instant.
 
-## Deployment Authority
-
-`global-control-lane` — standard ACA container deploy. No database migration, no feature flag, no seed script required. Authorized under the Code-lane pre-approval documented in project memory (`feedback_auto_merge_authority.md`). ACA deploy follows `docs/runbooks/azure-container-apps-deploy.md`.
-
 ## Audit Evidence
 
-- PR URL: https://github.com/abarva-platform/abarva/pull/4462
+- PR URL: https://github.com/abarva-platform/abarva/pull/4452
 - CI run: linked from PR above.
 - ACA revision / image tag: TBD — recorded at deploy time.
 - Smoke verification: navigate to a Source event canvas as a signed-in user and confirm three-column layout, gate sidebar, and bottom bar.

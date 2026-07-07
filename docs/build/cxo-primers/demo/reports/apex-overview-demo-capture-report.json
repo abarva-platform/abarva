@@ -1,0 +1,148 @@
+{
+  "baseUrl": "https://app.abarva.ai",
+  "email": "cio@apex-retail.example.com",
+  "capturedAt": "2026-06-01T22:51:35.611Z",
+  "demoSeries": "overview",
+  "primerFiles": {
+    "intro": "/Users/anand/Downloads/abarva-primer-pack/index.html",
+    "corpus": "/Users/anand/Downloads/abarva-primer-pack/abarva-industry-patterns-db-primer.html",
+    "apex": "/Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html"
+  },
+  "readOnlyNote": "The capture may create clearly labeled Apex demo Move and Source records when recording live flows; clean them up after review.",
+  "scenes": [
+    {
+      "id": "platform-hero",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/index.html#hero",
+      "intendedSeconds": 32,
+      "actualSeconds": 32.6
+    },
+    {
+      "id": "failure-frame",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/index.html#problem",
+      "intendedSeconds": 30,
+      "actualSeconds": 30
+    },
+    {
+      "id": "operating-loop",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/index.html#loop",
+      "intendedSeconds": 32,
+      "actualSeconds": 32
+    },
+    {
+      "id": "decision-engine",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/abarva-industry-patterns-db-primer.html#visuals",
+      "intendedSeconds": 36,
+      "actualSeconds": 36.6
+    },
+    {
+      "id": "apex-orientation",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#orient",
+      "intendedSeconds": 36,
+      "actualSeconds": 36.6
+    },
+    {
+      "id": "apex-context-loaded",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#you",
+      "intendedSeconds": 36,
+      "actualSeconds": 36
+    },
+    {
+      "id": "apex-industry-corpus",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#industry",
+      "intendedSeconds": 28,
+      "actualSeconds": 28
+    },
+    {
+      "id": "live-setup",
+      "url": "https://app.abarva.ai/admin",
+      "intendedSeconds": 32,
+      "actualSeconds": 33.3
+    },
+    {
+      "id": "live-intelligence",
+      "url": "https://app.abarva.ai/intelligence/ask",
+      "intendedSeconds": 72,
+      "actualSeconds": 101.7
+    }
+  ],
+  "videoWebm": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/working-tour-raw/page@86d3916d91d9d4f678312dbd49a8ee42.webm",
+  "outputs": {
+    "talkTrack": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-overview-demo-talk-track.txt",
+    "narrationAudio": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-overview-demo-narration.wav",
+    "audioMode": "gpt-4o-mini-tts-marin-speed-0.88-scene-locked-max-pad-3s",
+    "sceneAudioSegments": [
+      {
+        "id": "platform-hero",
+        "rawSeconds": 32.6,
+        "audioSeconds": 32.832,
+        "sourceSpeechSeconds": 32.832,
+        "pauseSeconds": 0
+      },
+      {
+        "id": "failure-frame",
+        "rawSeconds": 30,
+        "audioSeconds": 23.568,
+        "sourceSpeechSeconds": 20.568,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "operating-loop",
+        "rawSeconds": 32,
+        "audioSeconds": 29.976,
+        "sourceSpeechSeconds": 26.976,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "decision-engine",
+        "rawSeconds": 36.6,
+        "audioSeconds": 26.52,
+        "sourceSpeechSeconds": 23.52,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "apex-orientation",
+        "rawSeconds": 36.6,
+        "audioSeconds": 32.64,
+        "sourceSpeechSeconds": 29.64,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "apex-context-loaded",
+        "rawSeconds": 36,
+        "audioSeconds": 34.752,
+        "sourceSpeechSeconds": 31.752,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "apex-industry-corpus",
+        "rawSeconds": 28,
+        "audioSeconds": 26.064,
+        "sourceSpeechSeconds": 23.064,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "live-setup",
+        "rawSeconds": 33.3,
+        "audioSeconds": 21.576,
+        "sourceSpeechSeconds": 18.576,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "live-intelligence",
+        "rawSeconds": 101.7,
+        "audioSeconds": 44.808,
+        "sourceSpeechSeconds": 41.808,
+        "pauseSeconds": 3
+      }
+    ],
+    "motion": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-overview-demo.mp4",
+    "copied": [
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-overview-demo.mp4",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-overview-demo-talk-track.txt",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-overview-demo-live-motion.mp4"
+    ],
+    "webmDurationSeconds": 366.76,
+    "audioDurationSeconds": 272.736009,
+    "motionDurationSeconds": 272.9
+  }
+}

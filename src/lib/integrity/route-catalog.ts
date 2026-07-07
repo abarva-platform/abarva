@@ -88,7 +88,11 @@ export interface RouteLinkRecord {
 }
 
 const SPEC_PHASES = [1, 2, 3, 4, 5] as SpecPhaseNumber[];
-const GLOBAL_TOWER_SURFACES = ["/tower"];
+const GLOBAL_TOWER_SURFACES = [
+  '/tower',
+  // AI Control Tower consolidation retires the old portfolio/onboard
+  // subroutes; all Tower executive analysis enters through /tower.
+];
 
 export function isTowerSubsurfaceSlug(
   value: string,

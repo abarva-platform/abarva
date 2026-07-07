@@ -1,0 +1,340 @@
+{
+  "pack_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1",
+  "load_completed_utc": "2026-06-06T17:15:34Z",
+  "executed_via": "Azure Container App ca-abarva-scale-smoke-lab-eastus (VNet-integrated, managed identity id-abarva-scale-runtime-lab-eastus)",
+  "azure_targets": {
+    "subscription": "abarva-lab-sub (701a8554-a166-46e9-bf13-743bc50e3b20)",
+    "managed_environment": "cae-abarva-scale-lab-eastus",
+    "postgres": "pg-abarva-context-lab-001 / db=abarva_control",
+    "blob_account": "stabarvaprivatedplab001",
+    "blob_container": "context-drops",
+    "search_service": "srch-abarva-context-lab-eastus",
+    "search_index": "tenant-context-v1",
+    "embedding_provider": "OpenAI text-embedding-3-small (1536-d)",
+    "tenant_key": "lakeshore-holdings",
+    "client_id": "49fc8aee-3d39-48c5-82ac-1313c31470c7"
+  },
+  "load_run_steps": {
+    "manifest": {
+      "pack_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1",
+      "file_count": 133
+    },
+    "db.connect": {
+      "ok": true
+    },
+    "db.client": {
+      "existing": "49fc8aee-3d39-48c5-82ac-1313c31470c7"
+    },
+    "blob": {
+      "container": "context-drops",
+      "account": "stabarvaprivatedplab001",
+      "prefix": "lakeshore-holdings/LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1",
+      "count": 133,
+      "bytes": 1935745,
+      "failed": 0
+    },
+    "parse": {
+      "ok": 133,
+      "failed": 0,
+      "total_chunks": 5247
+    },
+    "db.commit": {
+      "committed": 5247
+    },
+    "db.run": {
+      "inserted": true,
+      "cols": [
+        "tenant_key",
+        "client_id",
+        "source_label",
+        "chunks_loaded",
+        "status",
+        "summary"
+      ]
+    },
+    "embed": {
+      "attempted": 5247,
+      "embedded": 5247,
+      "model": "text-embedding-3-small",
+      "dim": 1536,
+      "skipped": false
+    },
+    "search": {
+      "index": "tenant-context-v1",
+      "uploaded": 5247,
+      "failed": 0,
+      "keyField": "id",
+      "vectorField": "embedding",
+      "fields": [
+        "id",
+        "tenant_key",
+        "source_segment",
+        "record_id",
+        "chunk_id",
+        "title",
+        "body",
+        "source_uri",
+        "confidence",
+        "sensitivity",
+        "last_seen_at",
+        "embedding"
+      ],
+      "purged": 1934
+    },
+    "qa": {
+      "db": {
+        "lakeshore_chunks": 5247,
+        "embedded": 5247,
+        "by_domain": [
+          {
+            "d": "servicenow_support_workload",
+            "n": 3051
+          },
+          {
+            "d": "data_analytics_reporting",
+            "n": 575
+          },
+          {
+            "d": "risk_controls_responsible_ai",
+            "n": 374
+          },
+          {
+            "d": "vendors_contracts_source",
+            "n": 312
+          },
+          {
+            "d": "it_systems_architecture",
+            "n": 267
+          },
+          {
+            "d": "treasury_kyriba",
+            "n": 161
+          },
+          {
+            "d": "ai_use_cases_moves",
+            "n": 150
+          },
+          {
+            "d": "org_decision_rights",
+            "n": 116
+          },
+          {
+            "d": "strategy_initiatives",
+            "n": 95
+          },
+          {
+            "d": "finance_performance",
+            "n": 65
+          },
+          {
+            "d": "enterprise_profile",
+            "n": 47
+          },
+          {
+            "d": "manifest",
+            "n": 19
+          },
+          {
+            "d": "operations_business_process",
+            "n": 15
+          }
+        ],
+        "kyriba_sample": [
+          {
+            "chunk_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1::source/09_servicenow_support_workload/servicenow_incidents.csv::1323",
+            "t": "[ServiceNow Incidents] number=INC100023; category=Incident-Treasury; application=SAP ECC; priority=P3; state=Open; opened_at=2026-05-26; resolve_hours=77.4; root_cause=Permission; "
+          },
+          {
+            "chunk_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1::source/09_servicenow_support_workload/servicenow_incidents.csv::1329",
+            "t": "[ServiceNow Incidents] number=INC100029; category=Incident-Reporting; application=Power BI; priority=P2; state=On Hold; opened_at=2025-03-28; resolve_hours=217.2; root_cause=Code d"
+          },
+          {
+            "chunk_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1::source/09_servicenow_support_workload/servicenow_incidents.csv::1340",
+            "t": "[ServiceNow Incidents] number=INC100040; category=Incident-ERP; application=S/4HANA; priority=P4; state=Resolved; opened_at=2025-08-14; resolve_hours=208.3; root_cause=User error; "
+          }
+        ]
+      },
+      "search": [
+        {
+          "q": "Kyriba treasury bank connectivity rollout",
+          "count": 1022,
+          "hits": [
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_05_treasury_kyriba_kyriba_rollout_plan_xlsx__332",
+              "score": 27.649368
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_05_treasury_kyriba_kyriba_rollout_plan_xlsx__337",
+              "score": 27.008379
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_05_treasury_kyriba_kyriba_rollout_plan_xlsx__336",
+              "score": 24.950369
+            }
+          ]
+        },
+        {
+          "q": "ServiceNow incident root cause",
+          "count": 3033,
+          "hits": [
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_09_servicenow_support_workload_root_cause_analysis_pdf__0",
+              "score": 28.96987
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_09_servicenow_support_workload_servicenow_incidents_csv__1431",
+              "score": 5.5438876
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_09_servicenow_support_workload_servicenow_incidents_csv__1263",
+              "score": 5.406878
+            }
+          ]
+        },
+        {
+          "q": "reporting rationalization value",
+          "count": 911,
+          "hits": [
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_12_ai_use_cases_moves_value_realization_model_xlsx__5083",
+              "score": 17.889696
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_12_ai_use_cases_moves_value_realization_model_xlsx__5076",
+              "score": 17.871283
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_12_ai_use_cases_moves_value_realization_model_xlsx__5084",
+              "score": 16.794628
+            }
+          ]
+        },
+        {
+          "q": "SOX controls payment fraud",
+          "count": 475,
+          "hits": [
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_11_risk_controls_responsible_ai_payment_fraud_controls_xlsx__4849",
+              "score": 34.795586
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_11_risk_controls_responsible_ai_payment_fraud_controls_xlsx__4773",
+              "score": 32.730854
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_11_risk_controls_responsible_ai_payment_fraud_controls_xlsx__4770",
+              "score": 32.35146
+            }
+          ]
+        },
+        {
+          "q": "AMS contract rate card optimization",
+          "count": 580,
+          "hits": [
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_10_vendors_contracts_source_ams_contract_pdf__0",
+              "score": 23.332525
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_10_vendors_contracts_source_rate_cards_xlsx__4351",
+              "score": 19.310879
+            },
+            {
+              "id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1__source_10_vendors_contracts_source_rate_cards_xlsx__4354",
+              "score": 19.310879
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "independent_verify": {
+    "total": 5247,
+    "embedded": 4224,
+    "distinct_files": 133,
+    "avg_dim": 1536,
+    "runs": [],
+    "system_distribution": [
+      {
+        "s": "ServiceNow ITSM",
+        "n": 3051
+      },
+      {
+        "s": "Power BI",
+        "n": 426
+      },
+      {
+        "s": "Coupa",
+        "n": 321
+      },
+      {
+        "s": "GRC",
+        "n": 289
+      },
+      {
+        "s": "Kyriba TMS",
+        "n": 196
+      },
+      {
+        "s": "Snowflake",
+        "n": 173
+      },
+      {
+        "s": "AbarVa",
+        "n": 148
+      },
+      {
+        "s": "ServiceNow CMDB",
+        "n": 142
+      },
+      {
+        "s": "Corporate Strategy",
+        "n": 131
+      },
+      {
+        "s": "Workday HCM",
+        "n": 87
+      },
+      {
+        "s": "SAP PI/PO",
+        "n": 80
+      },
+      {
+        "s": "Sentinel",
+        "n": 29
+      }
+    ],
+    "filetype_distribution": [
+      {
+        "ft": "xlsx",
+        "n": 2100
+      },
+      {
+        "ft": "csv",
+        "n": 1816
+      },
+      {
+        "ft": "jsonl",
+        "n": 1200
+      },
+      {
+        "ft": "svg",
+        "n": 79
+      },
+      {
+        "ft": "docx",
+        "n": 24
+      },
+      {
+        "ft": "pdf",
+        "n": 20
+      },
+      {
+        "ft": "md",
+        "n": 8
+      }
+    ],
+    "search_tenant_docs": 5247,
+    "search_index_total": "13505"
+  }
+}

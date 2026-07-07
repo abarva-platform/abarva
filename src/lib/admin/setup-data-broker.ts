@@ -293,7 +293,7 @@ const APP_INVENTORY_SEGMENTS = ["it_landscape", "application_portfolio"] as cons
 /**
  * One application/system row shaped for Source d04 pre-population. Unlike
  * SegmentRecordSummary this preserves the structured payload fields
- * (tier/owner/vendor/criticality) the d04 table needs.
+ * (tier/owner/vendor/criticality) that the d04 table needs.
  */
 export interface AppInventoryRecord {
   recordId: string;
@@ -309,10 +309,11 @@ export interface AppInventoryRecord {
 
 /**
  * List the tenant's application/systems inventory across the app-inventory
- * segments, preserving the payload fields getSegmentRecordPage drops. Sanctioned
- * broker seam: app-tier callers (e.g. Source generation) import this instead of
- * touching data_inventory_records directly. Returns [] when nothing is loaded so
- * callers fall back to a blank framework rather than erroring.
+ * segments, preserving the payload fields getSegmentRecordPage drops. This is
+ * the sanctioned broker seam: app-tier callers (e.g. Source generation) import
+ * this instead of touching data_inventory_records or the tenant-data adapter
+ * directly. Returns [] when nothing is loaded, so callers fall back to the
+ * blank d04 stub rather than erroring.
  *
  * `brokerTenantKey` must already be the substrate key (dashed form) — translate
  * an app client key with clientKeyToInventorySubstrateKey before calling.
@@ -359,13 +360,11 @@ export async function listAppInventoryRecords(
           stringField(payload, "owner") ??
           stringField(payload, "business_owner") ??
           stringField(payload, "it_owner"),
-        vendor:
-          stringField(payload, "vendor") ?? stringField(payload, "supplier"),
+        vendor: stringField(payload, "vendor") ?? stringField(payload, "supplier"),
         criticality:
           stringField(payload, "criticality") ??
           stringField(payload, "business_criticality"),
-        notes:
-          stringField(payload, "notes") ?? stringField(payload, "description"),
+        notes: stringField(payload, "notes") ?? stringField(payload, "description"),
         sourceDoc: row.source_doc ?? null,
       });
     }

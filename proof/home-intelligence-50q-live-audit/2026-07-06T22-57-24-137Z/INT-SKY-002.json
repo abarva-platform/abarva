@@ -1,0 +1,55 @@
+{
+  "id": "INT-SKY-002",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "Should IROPS AI scale now or wait for operational data certification?",
+  "expectedTerms": [
+    "IROPS",
+    "data"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:06:03.568Z",
+  "completedAt": "2026-07-06T23:06:40.528Z",
+  "latencyMs": 36960,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-002-prompt-reconstruction.txt",
+  "promptReconstructionHash": "512c9d08883f94f6679cb9d60bfa489c2381e5dcf73e9e7d0a0ac4581dee3c28",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-002.ndjson",
+  "claudeResponse": "Airline Demo's IROPS AI should not scale autonomously right now — the data certification work is a prerequisite, not a parallel track. The loaded readiness context is clear: crew legality feeds, PNR/reservation events, flight status, and the operational event store all carry open freshness and lineage questions. No owner has signed off on those.\nScaling autonomous recovery decisions on uncertified data is how you get a model that generates legally invalid crew pairings or misroutes passengers — both of which carry DOT exposure and operational cost that exceeds the disruption savings you're chasing.\nThe eight active AI initiatives — IROPS Decision Assistant, Crew Recovery Copilot, Passenger Reaccommodation Agent, and the rest — are at pilot-approved status in the governance footprint. That's the right gate to be at.\nIt means the architecture is real and the pilots are live, but model-risk tiering, human-in-loop override logging, and control-owner sign-off are still open. You can't board-grade the value story without those.\nWhat you can do now: accelerate the IROPS Data Foundation and Operational Event Streaming programs, get VP Data Platforms to sign freshness SLAs on the five critical feeds, and run the IROPS Decision Assistant in assisted mode — recommendations to controllers, not autonomous actions — while you accumulate override rate and decision-latency evidence.\nThat evidence is what converts the pilot into a scalable, auditable program.",
+  "renderedText": "Airline Demo's IROPS AI should not scale autonomously right now — the data certification work is a prerequisite, not a parallel track. The loaded readiness context is clear: crew legality feeds, PNR/reservation events, flight status, and the operational event store all carry open freshness and lineage questions. No owner has signed off on those.\nScaling autonomous recovery decisions on uncertified data is how you get a model that generates legally invalid crew pairings or misroutes passengers — both of which carry DOT exposure and operational cost that exceeds the disruption savings you're chasing.\nThe eight active AI initiatives — IROPS Decision Assistant, Crew Recovery Copilot, Passenger Reaccommodation Agent, and the rest — are at pilot-approved status in the governance footprint. That's the right gate to be at.\nIt means the architecture is real and the pilots are live, but model-risk tiering, human-in-loop override logging, and control-owner sign-off are still open. You can't board-grade the value story without those.\nWhat you can do now: accelerate the IROPS Data Foundation and Operational Event Streaming programs, get VP Data Platforms to sign freshness SLAs on the five critical feeds, and run the IROPS Decision Assistant in assisted mode — recommendations to controllers, not autonomous actions — while you accumulate override rate and decision-latency evidence.\nThat evidence is what converts the pilot into a scalable, auditable program.",
+  "sourcesCount": 8,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "IT landscape (skyharbor-air)"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/screenshots/INT-SKY-002-api-proof.png",
+  "score": {
+    "verdict": "pass",
+    "score": 5,
+    "flags": []
+  }
+}

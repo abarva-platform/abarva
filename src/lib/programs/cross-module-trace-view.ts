@@ -299,7 +299,7 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
       title: ledger.subjectLabel || "Outcome ledger entry",
       detail: `Value rung: ${ledger.valueRung.replace(/_/g, " ")} · governance: ${ledger.governanceReviewStatus.replace(/_/g, " ")}.`,
       joinId: ledger.id,
-      href: "/tower",
+      href: '/tower',
       gapRef: null,
       regulatoryDeliverable: null,
     };

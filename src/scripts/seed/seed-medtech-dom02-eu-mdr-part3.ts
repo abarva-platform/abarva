@@ -1,18 +1,6 @@
-interface PatternSeed {
-  code: string;
-  name: string;
-  description: string;
-  vertical: string;
-  office_category: string;
-  keywords: string[];
-  failure_rate_pct: number;
-  is_active: boolean;
-  demoRelevant: boolean;
-  subTopic: string;
-  data: Record<string, string | number | boolean>;
-}
-
-export const MEDTECH_DOM02_EU_MDR_PART3_PATTERNS: PatternSeed[] = [
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const MEDTECH_DOM02_EU_MDR_PART3_PATTERNS: any[] = [
 
   // ── Clinical Evaluation Report (M350–M361) ────────────────────────────────
 

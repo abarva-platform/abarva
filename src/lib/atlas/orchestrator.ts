@@ -124,12 +124,34 @@ function confidenceFloorFromTowerState(
   return "high";
 }
 
-function traceConfidenceFloor(
-  value: "high" | "med" | "low" | "none",
-): "HIGH" | "MED" | "LOW" {
-  if (value === "high") return "HIGH";
-  if (value === "med") return "MED";
-  return "LOW";
+function shouldLeadAtlasWithEnterpriseRead(message: string, intent: AtlasChatResponse['intent']): boolean {
+  if (intent === 'morning_summary' || intent === 'portfolio_status') return true;
+  return /\b(context|current state|what.*telling|landscape|overall|summary|where are we|what should i know)\b/i.test(message);
+}
+
+function enrichWithEnterpriseRead(input: {
+  message: string;
+  response: AtlasChatResponse;
+  toolResults: AtlasToolResultMap;
+}): AtlasChatResponse {
+  const read = input.toolResults.derivedEnterpriseRead;
+  if (!read || !shouldLeadAtlasWithEnterpriseRead(input.message, input.response.intent)) return input.response;
+  if (input.response.response.includes(read.headline)) return input.response;
+  const move = read.recommendedMoves[0];
+  return {
+    ...input.response,
+    response: [
+      `Enterprise read: ${read.headline}`,
+      move ? `First move: ${move.title} — ${move.decision}` : null,
+      input.response.response,
+    ].filter(Boolean).join('\n\n'),
+  };
+}
+
+function traceConfidenceFloor(value: 'high' | 'med' | 'low' | 'none'): 'HIGH' | 'MED' | 'LOW' {
+  if (value === 'high') return 'HIGH';
+  if (value === 'med') return 'MED';
+  return 'LOW';
 }
 
 function readMetricExplanationRequest(
@@ -604,6 +626,11 @@ export async function runAtlasTurnDetailed(input: {
       groundingDisclosure,
     };
   }
+  response = enrichWithEnterpriseRead({
+    message: input.message,
+    response,
+    toolResults,
+  });
   response = {
     ...response,
     debugTrace: response.debugTrace

@@ -9,10 +9,7 @@ const ROOT = process.cwd();
 const PACKAGE_ROOT = path.join(ROOT, 'tower-standardized-v1');
 const DRY_RUN = process.argv.includes('--dry-run') || !process.env.DATABASE_URL;
 const TENANT_ARG = process.argv.find((arg) => arg.startsWith('--tenant='));
-const TENANT_FILTER_SOURCE = TENANT_ARG?.replace('--tenant=', '') || process.env.TOWER_STANDARDIZED_TENANTS || '';
-const TENANT_FILTER = TENANT_FILTER_SOURCE
-  ? new Set(TENANT_FILTER_SOURCE.split(',').map((s) => s.trim()).filter(Boolean))
-  : null;
+const TENANT_FILTER = TENANT_ARG ? new Set(TENANT_ARG.replace('--tenant=', '').split(',').map((s) => s.trim()).filter(Boolean)) : null;
 
 const measureDefinitions = [
   {
@@ -108,50 +105,6 @@ const questionContracts = [
     required_fields: ['initiative_name', 'budget_fy26_usd', 'owner_role'],
     artifact_type: 'table',
     examples: ['give me the list of top 10 IT programs', 'what are the largest IT initiatives by budget?'],
-  },
-  {
-    contract_key: 'tower_portfolio_value_gap',
-    intent: 'table',
-    question_family: 'portfolio_value_gap',
-    measure_key: 'promised_value_fy26',
-    default_scope: 'initiative',
-    dimensions: ['initiative', 'promised_value', 'measured_value', 'value_gap', 'owner', 'evidence'],
-    required_fields: ['initiative_name', 'promised_value_fy26_usd', 'measured_value_ytd_usd'],
-    artifact_type: 'table',
-    examples: ['which initiatives have the largest value gap?', 'show the biggest gap between promised and measured value'],
-  },
-  {
-    contract_key: 'tower_weak_value_evidence',
-    intent: 'table',
-    question_family: 'weak_value_evidence',
-    measure_key: 'measured_value_ytd',
-    default_scope: 'initiative',
-    dimensions: ['initiative', 'evidence_status', 'measured_value', 'owner'],
-    required_fields: ['initiative_name', 'evidence_status', 'measured_value_ytd_usd'],
-    artifact_type: 'table',
-    examples: ['which programs have weak value evidence?', 'show initiatives with missing value proof'],
-  },
-  {
-    contract_key: 'tower_inspect_this_week',
-    intent: 'table',
-    question_family: 'inspect_this_week',
-    measure_key: 'initiative_budget_fy26',
-    default_scope: 'initiative',
-    dimensions: ['initiative', 'budget', 'actual_spend', 'promised_value', 'measured_value', 'evidence_status'],
-    required_fields: ['initiative_name', 'budget_fy26_usd', 'actual_spend_ytd_usd', 'evidence_status'],
-    artifact_type: 'table',
-    examples: ['what should I inspect this week?', 'where should I focus before the next funding gate?'],
-  },
-  {
-    contract_key: 'tower_advisor_morning_brief',
-    intent: 'diagnose',
-    question_family: 'advisor_morning_brief',
-    measure_key: 'initiative_budget_fy26',
-    default_scope: 'initiative',
-    dimensions: ['initiative', 'budget', 'actual_spend', 'promised_value', 'measured_value', 'evidence_status', 'owner'],
-    required_fields: ['initiative_name', 'budget_fy26_usd', 'actual_spend_ytd_usd', 'promised_value_fy26_usd', 'measured_value_ytd_usd', 'evidence_status'],
-    artifact_type: 'table',
-    examples: ['which investment posture should the CIO take?', 'give me the CIO morning brief', 'what should the CIO know this morning?'],
   },
   {
     contract_key: 'tower_total_it_spend',
@@ -282,14 +235,6 @@ function entityTypeFromNodeType(nodeType) {
   return 'system';
 }
 
-function parentKeyForDictionaryRow(tenantKey, row) {
-  if (!row.node_id) return null;
-  if (row.node_id === row.entity_id) {
-    return row.parent_entity_id ? key(tenantKey, row.parent_entity_id) : null;
-  }
-  return row.entity_id ? key(tenantKey, row.entity_id) : null;
-}
-
 function collectPackage() {
   const tenants = fs.readdirSync(PACKAGE_ROOT, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -363,7 +308,6 @@ function addEntity(out, entity) {
       ...existing,
       source_key: existing.source_key || entity.source_key || null,
       source_row: existing.source_row || entity.source_row || null,
-      parent_entity_key: existing.parent_entity_key || entity.parent_entity_key || null,
       attributes: {
         ...(existing.attributes ?? {}),
         aliases: [...new Set([...(existing.attributes?.aliases ?? []), entity.entity_key])],
@@ -385,42 +329,6 @@ function addEntity(out, entity) {
 function resolveEntityKey(out, entityKey) {
   if (!entityKey) return null;
   return out.entityAliases.get(entityKey) ?? entityKey;
-}
-
-function normalizedReference(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return null;
-  return raw
-    .replace(/-FY2025-.+$/, '')
-    .replace(/\s+FY2025 trend baseline$/i, '');
-}
-
-function referenceVariants(value) {
-  const normalized = normalizedReference(value);
-  if (!normalized) return [];
-
-  const variants = [normalized];
-  const initiativeMatch = normalized.match(/^(.+-INIT-\d{3})(?:-\d+)?$/);
-  if (initiativeMatch) variants.push(initiativeMatch[1]);
-  return Array.from(new Set(variants));
-}
-
-function factEntityReferences(row) {
-  const refs = [];
-  if (row.view === 'initiative_budget') {
-    refs.push(row.source_label, row.reconciles_to_record_id, row.is_rollup_of, row.source_record_id);
-  } else {
-    refs.push(row.source_record_id, row.reconciles_to_record_id, row.is_rollup_of, row.source_label);
-  }
-  return refs.flatMap(referenceVariants).filter(Boolean);
-}
-
-function resolveFactEntityKey(out, tenantKey, row) {
-  for (const ref of factEntityReferences(row)) {
-    const candidate = resolveEntityKey(out, key(tenantKey, ref));
-    if (out.entities.has(candidate)) return candidate;
-  }
-  return null;
 }
 
 function addRelationship(out, relationship) {
@@ -461,16 +369,9 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: entityTypeFromNodeType(row.node_type),
         display_name: row.business_label || row.node_id,
-        parent_entity_key: parentKeyForDictionaryRow(tenantKey, row),
         source_key: key(tenantKey, row.source_file || 'family-8-semantic-enrichment/F25_context-node-dictionary.csv'),
         source_row: row.source_row || null,
-        attributes: {
-          ...row,
-          node_id: row.node_id,
-          node_type: row.node_type,
-          confidence: row.confidence,
-          caveat: row.caveat,
-        },
+        attributes: { node_id: row.node_id, node_type: row.node_type, confidence: row.confidence, caveat: row.caveat },
       });
     }
   }
@@ -483,7 +384,6 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: 'initiative',
         display_name: row.initiative_name || row.initiative_id,
-        parent_entity_key: row.entity_id ? key(tenantKey, row.entity_id) : null,
         source_key: key(tenantKey, 'ai-control-tower/T01_initiative-registry.csv'),
         source_row: row.source_row || null,
         attributes: row,
@@ -499,7 +399,6 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: 'org_unit',
         display_name: row.budget_area || row.function_or_platform || row.line_id,
-        parent_entity_key: row.entity_id ? key(tenantKey, row.entity_id) : null,
         source_key: key(tenantKey, 'family-4-financial-commercial/F12_it-budget-financials.csv'),
         source_row: row.source_row || null,
         attributes: row,
@@ -516,10 +415,9 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: 'vendor',
         display_name: row.vendor_or_tool,
-        parent_entity_key: row.entity_id ? key(tenantKey, row.entity_id) : null,
         source_key: key(tenantKey, 'ai-control-tower/T08_spend-contracts.csv'),
         source_row: row.source_row || null,
-        attributes: { ...row, vendor_or_tool: row.vendor_or_tool },
+        attributes: { vendor_or_tool: row.vendor_or_tool },
       });
     }
   }
@@ -532,7 +430,8 @@ function loadFacts(out, tenantKey, tenantDir) {
     for (const row of readCsv(filePath)) {
       const value = numberOrNull(row.amount_usd);
       if (value === null) continue;
-      const entityKey = resolveFactEntityKey(out, tenantKey, row);
+      const rawEntityKey = row.source_record_id ? key(tenantKey, String(row.source_record_id).replace(/-FY2025-.+$/, '')) : null;
+      const entityKey = resolveEntityKey(out, rawEntityKey);
       out.facts.push({
         fact_key: key(tenantKey, rel, row.source_record_id, row.view, row.amount_type, row.basis, row.period, row.source_row),
         tenant_key: tenantKey,
@@ -571,32 +470,6 @@ function scopeForView(view) {
 }
 
 function loadRelationships(out, tenantKey, tenantDir) {
-  const dictionary = path.join(tenantDir, 'family-8-semantic-enrichment', 'F25_context-node-dictionary.csv');
-  if (fs.existsSync(dictionary)) {
-    for (const row of readCsv(dictionary)) {
-      if (!row.parent_entity_id || !row.node_id) continue;
-      if (row.node_id !== row.entity_id) continue;
-      const parentKey = resolveEntityKey(out, key(tenantKey, row.parent_entity_id));
-      const childKey = resolveEntityKey(out, key(tenantKey, row.node_id));
-      if (out.entities.has(parentKey) && out.entities.has(childKey)) {
-        addRelationship(out, {
-          relationship_key: key(tenantKey, row.parent_entity_id, row.node_id, 'owns'),
-          tenant_key: tenantKey,
-          from_entity_key: parentKey,
-          to_entity_key: childKey,
-          relationship_type: 'owns',
-          confidence: 'high',
-          source_key: key(tenantKey, 'family-8-semantic-enrichment/F25_context-node-dictionary.csv'),
-          source_row: row.source_row || null,
-          attributes: {
-            ...row,
-            semantic_relationship_type: row.entity_scope === 'portfolio_company' ? 'owns_portfolio_company' : 'parent_of',
-          },
-        });
-      }
-    }
-  }
-
   const spend = path.join(tenantDir, 'ai-control-tower', 'T08_spend-contracts.csv');
   if (fs.existsSync(spend)) {
     for (const row of readCsv(spend)) {
@@ -717,7 +590,6 @@ async function writeToDb(payload) {
   await client.connect();
   try {
     await client.query('BEGIN');
-    await replaceTenantRows(client, Object.keys(payload.tenants));
     await upsertSources(client, payload.sources);
     await upsertEntities(client, [...payload.entities.values()]);
     await upsertFacts(client, payload.facts);
@@ -731,16 +603,6 @@ async function writeToDb(payload) {
     throw error;
   } finally {
     await client.end();
-  }
-}
-
-async function replaceTenantRows(client, tenantKeys) {
-  for (const tenantKey of tenantKeys) {
-    await client.query(`DELETE FROM cio_tower.measure_results WHERE tenant_key = $1`, [tenantKey]);
-    await client.query(`DELETE FROM cio_tower.relationships WHERE tenant_key = $1`, [tenantKey]);
-    await client.query(`DELETE FROM cio_tower.facts WHERE tenant_key = $1`, [tenantKey]);
-    await client.query(`DELETE FROM cio_tower.entities WHERE tenant_key = $1`, [tenantKey]);
-    await client.query(`DELETE FROM cio_tower.source_registry WHERE tenant_key = $1`, [tenantKey]);
   }
 }
 
@@ -771,29 +633,7 @@ async function upsertFacts(client, rows) {
     await client.query(
       `INSERT INTO cio_tower.facts (fact_key, tenant_key, entity_key, entity_type, measure, scope, view, amount_type, basis, period, value_numeric, value_text, value_date, value_bool, unit, value_source, confidence, source_key, source_row, formula_key, formula_version, is_rollup_of, component_of, attributes)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
-       ON CONFLICT (fact_key) DO UPDATE SET
-         entity_key=EXCLUDED.entity_key,
-         entity_type=EXCLUDED.entity_type,
-         measure=EXCLUDED.measure,
-         scope=EXCLUDED.scope,
-         view=EXCLUDED.view,
-         amount_type=EXCLUDED.amount_type,
-         basis=EXCLUDED.basis,
-         period=EXCLUDED.period,
-         value_numeric=EXCLUDED.value_numeric,
-         value_text=EXCLUDED.value_text,
-         value_date=EXCLUDED.value_date,
-         value_bool=EXCLUDED.value_bool,
-         unit=EXCLUDED.unit,
-         value_source=EXCLUDED.value_source,
-         confidence=EXCLUDED.confidence,
-         source_key=EXCLUDED.source_key,
-         source_row=EXCLUDED.source_row,
-         formula_key=EXCLUDED.formula_key,
-         formula_version=EXCLUDED.formula_version,
-         is_rollup_of=EXCLUDED.is_rollup_of,
-         component_of=EXCLUDED.component_of,
-         attributes=EXCLUDED.attributes`,
+       ON CONFLICT (fact_key) DO UPDATE SET value_numeric=EXCLUDED.value_numeric, attributes=EXCLUDED.attributes`,
       [
         row.fact_key, row.tenant_key, row.entity_key, row.entity_type, row.measure, row.scope, row.view, row.amount_type, row.basis, row.period,
         row.value_numeric, row.value_text, row.value_date, row.value_bool, row.unit, row.value_source, row.confidence, row.source_key, row.source_row,

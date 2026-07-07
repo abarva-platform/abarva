@@ -1,0 +1,1456 @@
+{
+  "summary": {
+    "pack_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1",
+    "parsed_at": "2026-06-06T16:44:26.827Z",
+    "parser": "src/lib/ingestion/document-upload-parser.ts::parseIngestionDocument (+csv/jsonl/text chunkers)",
+    "files_total": 133,
+    "files_parsed_ok": 133,
+    "files_failed": 0,
+    "total_extracted_chars": 711705,
+    "estimated_total_chunks": 3456,
+    "by_type": {
+      "md": {
+        "files": 5,
+        "ok": 5,
+        "chars": 6616,
+        "chunks": 10
+      },
+      "csv": {
+        "files": 8,
+        "ok": 8,
+        "chars": 205257,
+        "chunks": 1816
+      },
+      "pdf": {
+        "files": 17,
+        "ok": 17,
+        "chars": 14203,
+        "chunks": 24
+      },
+      "xlsx": {
+        "files": 71,
+        "ok": 71,
+        "chars": 183308,
+        "chunks": 261
+      },
+      "docx": {
+        "files": 24,
+        "ok": 24,
+        "chars": 12567,
+        "chunks": 28
+      },
+      "jsonl": {
+        "files": 1,
+        "ok": 1,
+        "chars": 199163,
+        "chunks": 1200
+      },
+      "svg": {
+        "files": 7,
+        "ok": 7,
+        "chars": 90591,
+        "chunks": 117
+      }
+    },
+    "by_domain": {
+      "manifest": {
+        "files": 4,
+        "ok": 4,
+        "chunks": 20
+      },
+      "enterprise_profile": {
+        "files": 9,
+        "ok": 9,
+        "chunks": 23
+      },
+      "org_decision_rights": {
+        "files": 8,
+        "ok": 8,
+        "chunks": 21
+      },
+      "strategy_initiatives": {
+        "files": 9,
+        "ok": 9,
+        "chunks": 48
+      },
+      "finance_performance": {
+        "files": 11,
+        "ok": 11,
+        "chunks": 28
+      },
+      "treasury_kyriba": {
+        "files": 14,
+        "ok": 14,
+        "chunks": 99
+      },
+      "it_systems_architecture": {
+        "files": 14,
+        "ok": 14,
+        "chunks": 89
+      },
+      "data_analytics_reporting": {
+        "files": 11,
+        "ok": 11,
+        "chunks": 136
+      },
+      "operations_business_process": {
+        "files": 9,
+        "ok": 9,
+        "chunks": 10
+      },
+      "servicenow_support_workload": {
+        "files": 10,
+        "ok": 10,
+        "chunks": 2825
+      },
+      "vendors_contracts_source": {
+        "files": 11,
+        "ok": 11,
+        "chunks": 30
+      },
+      "risk_controls_responsible_ai": {
+        "files": 12,
+        "ok": 12,
+        "chunks": 87
+      },
+      "ai_use_cases_moves": {
+        "files": 11,
+        "ok": 11,
+        "chunks": 40
+      }
+    },
+    "failures": []
+  },
+  "rows": [
+    {
+      "path": "source/00_manifest/pack_overview.md",
+      "type": "md",
+      "domain": "manifest",
+      "ok": true,
+      "method": "markdown-text",
+      "chars": 2044,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/00_manifest/load_control_plan.md",
+      "type": "md",
+      "domain": "manifest",
+      "ok": true,
+      "method": "markdown-text",
+      "chars": 1475,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/00_manifest/glossary_and_taxonomy.md",
+      "type": "md",
+      "domain": "manifest",
+      "ok": true,
+      "method": "markdown-text",
+      "chars": 1580,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/00_manifest/context_domain_index.csv",
+      "type": "csv",
+      "domain": "manifest",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 1288,
+      "chunks": 13,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/corporate_overview.pdf",
+      "type": "pdf",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 2028,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/business_units.xlsx",
+      "type": "xlsx",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1544,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/geographic_footprint.xlsx",
+      "type": "xlsx",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1795,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/revenue_cost_baseline.xlsx",
+      "type": "xlsx",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1230,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/leadership_priorities.pdf",
+      "type": "pdf",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 761,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/operating_model.docx",
+      "type": "docx",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 608,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/transformation_themes.md",
+      "type": "md",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "markdown-text",
+      "chars": 687,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/enterprise_fact_sheet.csv",
+      "type": "csv",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 359,
+      "chunks": 8,
+      "warnings": []
+    },
+    {
+      "path": "source/01_enterprise_profile/segment_pnl_summary.xlsx",
+      "type": "xlsx",
+      "domain": "enterprise_profile",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1091,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/executive_org_chart.xlsx",
+      "type": "xlsx",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1862,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/finance_org.xlsx",
+      "type": "xlsx",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2256,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/it_org.xlsx",
+      "type": "xlsx",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2352,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/procurement_vendor_mgmt_org.xlsx",
+      "type": "xlsx",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2115,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/shared_services_org.xlsx",
+      "type": "xlsx",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2373,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/steering_committees.pdf",
+      "type": "pdf",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 830,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/raci_decision_rights.xlsx",
+      "type": "xlsx",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1922,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/02_org_decision_rights/org_design_narrative.docx",
+      "type": "docx",
+      "domain": "org_decision_rights",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 502,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/corporate_strategy_2026_2027.pdf",
+      "type": "pdf",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 758,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/board_priorities.pdf",
+      "type": "pdf",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 475,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/transformation_portfolio.xlsx",
+      "type": "xlsx",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2399,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/initiative_inventory.xlsx",
+      "type": "xlsx",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1863,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/budget_assumptions.xlsx",
+      "type": "xlsx",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 626,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/dependency_map.csv",
+      "type": "csv",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 936,
+      "chunks": 25,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/raid_log.xlsx",
+      "type": "xlsx",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 3085,
+      "chunks": 4,
+      "warnings": []
+    },
+    {
+      "path": "source/03_strategy_initiatives/strategy_narrative.docx",
+      "type": "docx",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 374,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/pnl_baseline.xlsx",
+      "type": "xlsx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 3162,
+      "chunks": 4,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/cash_working_capital.xlsx",
+      "type": "xlsx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1137,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/fpa_process.docx",
+      "type": "docx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 427,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/forecasting_process.docx",
+      "type": "docx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 441,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/close_process.docx",
+      "type": "docx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 449,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/management_reporting.pdf",
+      "type": "pdf",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 575,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/kpi_catalog.xlsx",
+      "type": "xlsx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1674,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/value_pools.xlsx",
+      "type": "xlsx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1157,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/monthly_management_pack.pdf",
+      "type": "pdf",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 495,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/finance_calendar.csv",
+      "type": "csv",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 519,
+      "chunks": 10,
+      "warnings": []
+    },
+    {
+      "path": "source/04_finance_performance/working_capital_drivers.xlsx",
+      "type": "xlsx",
+      "domain": "finance_performance",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 889,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/kyriba_rollout_plan.xlsx",
+      "type": "xlsx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1345,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/bank_connectivity_inventory.xlsx",
+      "type": "xlsx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1483,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/payment_process.docx",
+      "type": "docx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 1187,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/kyriba_integration_design.docx",
+      "type": "docx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 1038,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/treasury_policy.docx",
+      "type": "docx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 517,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/cash_positioning.xlsx",
+      "type": "xlsx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 984,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/liquidity_forecasting.xlsx",
+      "type": "xlsx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 991,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/debt_fx_exposure.xlsx",
+      "type": "xlsx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 795,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/bank_fee_baseline.xlsx",
+      "type": "xlsx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 935,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/treasury_controls.pdf",
+      "type": "pdf",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 552,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/treasury_target_operating_model.pdf",
+      "type": "pdf",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 465,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/kyriba_rollout_risks_defects.xlsx",
+      "type": "xlsx",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2070,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/05_treasury_kyriba/kyriba_test_defects.csv",
+      "type": "csv",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 3737,
+      "chunks": 60,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/application_inventory.xlsx",
+      "type": "xlsx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 11794,
+      "chunks": 15,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/erp_landscape.pdf",
+      "type": "pdf",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 1868,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/hris_workday.docx",
+      "type": "docx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 315,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/procurement_systems.docx",
+      "type": "docx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 319,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/identity_sso.docx",
+      "type": "docx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 326,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/data_platforms.docx",
+      "type": "docx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 934,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/finance_systems.xlsx",
+      "type": "xlsx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 911,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/reporting_tools.xlsx",
+      "type": "xlsx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 798,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/security_tools.xlsx",
+      "type": "xlsx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 672,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/legacy_applications.xlsx",
+      "type": "xlsx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1765,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/integration_architecture.pdf",
+      "type": "pdf",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 1830,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/interface_inventory.xlsx",
+      "type": "xlsx",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 7355,
+      "chunks": 10,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/report_inventory.xlsx",
+      "type": "xlsx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 29473,
+      "chunks": 37,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/dashboard_inventory.xlsx",
+      "type": "xlsx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 4783,
+      "chunks": 6,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/kpi_definitions.xlsx",
+      "type": "xlsx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1662,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/data_ownership.xlsx",
+      "type": "xlsx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 987,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/data_quality_issues.xlsx",
+      "type": "xlsx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2824,
+      "chunks": 4,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/lineage_map.csv",
+      "type": "csv",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 2605,
+      "chunks": 60,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/semantic_layer_assumptions.docx",
+      "type": "docx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 1126,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/data_products.xlsx",
+      "type": "xlsx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 964,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/analytics_backlog.xlsx",
+      "type": "xlsx",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1984,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/07_data_analytics_reporting/reporting_rationalization_brief.pdf",
+      "type": "pdf",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 630,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/order_to_cash.docx",
+      "type": "docx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 410,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/procure_to_pay.docx",
+      "type": "docx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 407,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/record_to_report.docx",
+      "type": "docx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 417,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/treasury_operations.docx",
+      "type": "docx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 422,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/vendor_onboarding.docx",
+      "type": "docx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 413,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/planning_cycle.docx",
+      "type": "docx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 411,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/management_reporting_process.docx",
+      "type": "docx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 438,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/month_end_close.pdf",
+      "type": "pdf",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 508,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/08_operations_business_process/process_kpi_baseline.xlsx",
+      "type": "xlsx",
+      "domain": "operations_business_process",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 887,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/servicenow_incidents.csv",
+      "type": "csv",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 194194,
+      "chunks": 1600,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/servicenow_events.jsonl",
+      "type": "jsonl",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "jsonl-record-chunker",
+      "chars": 199163,
+      "chunks": 1200,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/enhancement_backlog.xlsx",
+      "type": "xlsx",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 7804,
+      "chunks": 10,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/defects.xlsx",
+      "type": "xlsx",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 4968,
+      "chunks": 7,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/sla_model.xlsx",
+      "type": "xlsx",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 721,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/ticket_categories.xlsx",
+      "type": "xlsx",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 798,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/ticket_aging.xlsx",
+      "type": "xlsx",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 400,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/root_cause_analysis.pdf",
+      "type": "pdf",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 532,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/support_team_structure.xlsx",
+      "type": "xlsx",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 876,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/09_servicenow_support_workload/automation_opportunities.xlsx",
+      "type": "xlsx",
+      "domain": "servicenow_support_workload",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1048,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/si_contracts.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2423,
+      "chunks": 4,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/software_contracts.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2603,
+      "chunks": 4,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/bank_partner_contracts.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1312,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/rate_cards.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 5680,
+      "chunks": 8,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/vendor_scorecards.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1035,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/sourcing_pipeline.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1201,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/bafo_model.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 772,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/contract_risks.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1360,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/renewal_calendar.xlsx",
+      "type": "xlsx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2035,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/rfp_requirements.docx",
+      "type": "docx",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 359,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/10_vendors_contracts_source/ams_contract.pdf",
+      "type": "pdf",
+      "domain": "vendors_contracts_source",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 647,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/risk_control_register.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 10927,
+      "chunks": 14,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/sox_controls.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 3176,
+      "chunks": 4,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/payment_fraud_controls.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 761,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/segregation_of_duties.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1922,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/audit_findings.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 2920,
+      "chunks": 4,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/cyber_risks.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1371,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/operational_risks.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1033,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/responsible_ai_controls.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1190,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/model_use_case_review_checklist.xlsx",
+      "type": "xlsx",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 638,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/evidence_gap_register.csv",
+      "type": "csv",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "csv-row-chunker",
+      "chars": 1619,
+      "chunks": 40,
+      "warnings": []
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/ai_governance.pdf",
+      "type": "pdf",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 662,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/ai_opportunity_portfolio.xlsx",
+      "type": "xlsx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 6531,
+      "chunks": 9,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/finance_ai_use_cases.xlsx",
+      "type": "xlsx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1520,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/it_modernization_use_cases.xlsx",
+      "type": "xlsx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1569,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/procurement_vendor_optimization_use_cases.xlsx",
+      "type": "xlsx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1643,
+      "chunks": 3,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/cost_optimization_use_case.xlsx",
+      "type": "xlsx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1557,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/value_realization_model.xlsx",
+      "type": "xlsx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "exceljs-xlsx",
+      "chars": 1520,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/treasury_kyriba_success_use_case.pdf",
+      "type": "pdf",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "pdf-parse",
+      "chars": 587,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/reporting_rationalization_use_case.docx",
+      "type": "docx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 342,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/human_agent_operating_model.docx",
+      "type": "docx",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "docx-mammoth",
+      "chars": 385,
+      "chunks": 1,
+      "warnings": []
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/ai_moves_portfolio_summary.md",
+      "type": "md",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "markdown-text",
+      "chars": 830,
+      "chunks": 2,
+      "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/current_state_architecture.svg",
+      "type": "svg",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 20816,
+      "chunks": 27,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/06_it_systems_architecture/integration_architecture_diagram.svg",
+      "type": "svg",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 15004,
+      "chunks": 19,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/05_treasury_kyriba/kyriba_connectivity_architecture.svg",
+      "type": "svg",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 14107,
+      "chunks": 18,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/07_data_analytics_reporting/data_platform_architecture.svg",
+      "type": "svg",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 12392,
+      "chunks": 16,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/security_zero_trust_architecture.svg",
+      "type": "svg",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 9891,
+      "chunks": 13,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/ai_agent_reference_architecture.svg",
+      "type": "svg",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 11839,
+      "chunks": 15,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/03_strategy_initiatives/roadmap_2026_2027.svg",
+      "type": "svg",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 6542,
+      "chunks": 9,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    }
+  ]
+}

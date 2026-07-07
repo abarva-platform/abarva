@@ -8,7 +8,7 @@ import type {
 import { CANVAS } from "./canvas-tokens";
 import { StageNextMoveCard } from "./StageNextMoveCard";
 
-export type WorkspaceTabKey = "document" | "gate" | "evidence" | "log";
+export type WorkspaceTabKey = 'document' | 'decision' | 'gate' | 'evidence' | 'log';
 
 interface WorkspaceTab {
   key: WorkspaceTabKey;

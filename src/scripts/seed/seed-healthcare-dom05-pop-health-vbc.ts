@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare Provider patterns — Population Health Management, ACO & Value-Based Care
 // Domain: Population Health Management, ACO Operations & Value-Based Care Contracting
 // Code range: H1500–H1799 (300 patterns)

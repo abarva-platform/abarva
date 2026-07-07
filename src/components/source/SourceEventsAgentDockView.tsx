@@ -41,7 +41,7 @@ interface Props {
   filterStatus?: string | null;
 }
 
-const AVA_AGENT = {
+const SOURCE_AGENT = {
   initials: 'aVa',
   name: 'aVa',
   role: 'Source portfolio advisor',
@@ -61,12 +61,10 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
 
-  // Translate AgentDock onMessage into a streamed Source runtime call,
-  // accumulating the response locally so we can commit a single agent
-  // turn when streaming finishes. We use the same /api/chat/agent
-  // endpoint every other Source agent surface uses; surfaceContext
-  // (filterStage, filterStatus) is forwarded so the prompt is grounded
-  // in the portfolio posture the user is currently looking at.
+  // Translate AgentDock onMessage into a streamed Source advisor runtime call,
+  // accumulating the response locally so we can commit a single agent turn when
+  // streaming finishes. surfaceContext is forwarded so the prompt is grounded in
+  // the portfolio posture the user is currently looking at.
   const onMessage = useCallback(
     async (text: string, attachments: AttachmentRef[]) => {
       if (!text && attachments.length === 0) return;
@@ -79,10 +77,8 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         { id: `u-${Date.now()}`, role: 'user', body: userBody },
       ]);
 
-      // Inline the extracted attachment text so aVa has the file
-      // contents as context even before a long-form retrieval pipeline
-      // is wired up. The dock route already trims preview to ~4000
-      // chars per attachment which is safe to stitch into the prompt.
+      // Inline the extracted attachment text so aVa has file context even before
+      // a long-form retrieval pipeline is wired up.
       const attachmentContext = attachments
         .filter((a) => a.extracted_text_preview && a.extracted_text_preview.trim().length > 0)
         .map(
@@ -99,7 +95,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         filterSummary.length > 0
           ? ` Portfolio filters: ${filterSummary.join(', ')}.`
           : ' Portfolio filters: none.';
-      const context = `Surface: source/events. Agent: ${AVA_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
+      const context = `Surface: source/events. Agent: ${SOURCE_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
 
       let acc = '';
       try {
@@ -180,7 +176,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
 
   return (
     <AgentDock
-      agent={AVA_AGENT}
+      agent={SOURCE_AGENT}
       surface="source/events"
       defaultMode="side-rail"
       defaultLeftPercent={30}

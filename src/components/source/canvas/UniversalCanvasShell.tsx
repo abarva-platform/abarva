@@ -1,36 +1,12 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { AppShell } from "@/components/shell/AppShell";
-import { SourceSubNav } from "@/components/source/SourceSubNav";
-import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
-import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
-import {
-  criterionById as specCriterionById,
-  specByCode,
-} from "@/lib/source/canonical-specs";
-import {
-  resolveStageNextMove,
-  type StageNextMoveActionTarget,
-} from "@/lib/source/stage-next-move";
-import { resolveSimpleStageScreen } from "@/lib/source/simple-front";
-import { nextStepNeeds } from "@/lib/source/next-step-needs";
-import {
-  assessStageGate,
-  buildStageRecommendation,
-  isAssessmentMet,
-} from "@/lib/source/gate-auto-assessment";
-import { approvalViewForCriterion } from "@/lib/source/approval-routing";
-import type { AgentResponsePart } from "@/lib/agent/response-parts";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
+import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
+import { listSupportedGenerationCodes } from '@/lib/source/agent-generation';
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -124,58 +100,22 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
-} from "@/lib/source/canvas-substrate";
-import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
-import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
-import {
-  SOURCE_STAGE_LABELS,
-  SOURCE_STAGE_ORDER,
-} from "@/lib/source/constants";
-import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
-import {
-  type AttachmentRef,
-  type ChatMessage,
-  type SuggestedAction,
-} from "@/components/agent/AgentDock";
-import { SentinelChatProportional } from "./SentinelChatProportional";
-import { CanvasGateSidebar } from "./CanvasGateSidebar";
-import { AvaBottomBar } from "./AvaBottomBar";
-import { EventIdStrip } from "./EventIdStrip";
-import { EventStepRail } from "./EventStepRail";
-import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
-import { StageNextMoveCard } from "./StageNextMoveCard";
-import { SimpleStageFront } from "./SimpleStageFront";
-import { CANVAS } from "./canvas-tokens";
-import { DocumentTab } from "./workspace-tabs/DocumentTab";
-import { GateTab } from "./workspace-tabs/GateTab";
-import { EvidenceTab } from "./workspace-tabs/EvidenceTab";
-import { LogTab, type ActivityEntry } from "./workspace-tabs/LogTab";
-import { StageDecisionLensPanel } from "./workspace-tabs/StageDecisionLensPanel";
-import { CommunicationDraftsPanel } from "./workspace-tabs/CommunicationDraftsPanel";
-import { threeChoicesForStage } from "./canvas-three-choices";
-import { StrategyStageView } from "./strategy/StrategyStageView";
-import { ScopeStageView } from "./scope/ScopeStageView";
-import { RfpStageView } from "./rfp/RfpStageView";
-import { ResponsesStageView } from "./responses/ResponsesStageView";
-import { VendorBafoInstructionPackPanel } from "./responses/VendorBafoInstructionPackPanel";
-import { VendorChallengeLeveragePanel } from "./responses/VendorChallengeLeveragePanel";
-import { VendorEvaluationScorecardPanel } from "./responses/VendorEvaluationScorecardPanel";
-import { VendorResponseProfilesPanel } from "./responses/VendorResponseProfilesPanel";
-import { ContractOptimizationProfilePanel } from "./contract-optimization/ContractOptimizationProfilePanel";
-import { EvaluationStageView } from "./evaluation/EvaluationStageView";
-import { PricingStageView } from "./pricing/PricingStageView";
-import { BafoStageView } from "./bafo/BafoStageView";
-import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisionStageView";
-import { TransitionStageView } from "./transition/TransitionStageView";
-import { SimpleFrontErrorBoundary } from "./SimpleFrontErrorBoundary";
-import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
-import type {
-  VendorBafoInstructionPack,
-  VendorChallengeIntelligence,
-  VendorEvaluationDecisionView,
-  VendorResponseProfileSet,
-} from "@/lib/source/proposal-intelligence";
-import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
+} from '@/lib/source/canvas-substrate';
+import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registry/types';
+import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
+import { canvasDockAgentForStage } from '@/lib/source/portfolio-derivations';
+import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
+import type { AttachmentRef, ChatMessage, SuggestedAction } from '@/components/agent/AgentDock';
+import { EventIdStrip } from './EventIdStrip';
+import { EventStepRail } from './EventStepRail';
+import { EventWorkspace, type WorkspaceTabKey } from './EventWorkspace';
+import { CANVAS } from './canvas-tokens';
+import { CanvasGateSidebar } from './CanvasGateSidebar';
+import { AvaBottomBar } from './AvaBottomBar';
+import { DocumentTab } from './workspace-tabs/DocumentTab';
+import { EvidenceTab } from './workspace-tabs/EvidenceTab';
+import { LogTab, type ActivityEntry } from './workspace-tabs/LogTab';
+import { threeChoicesForStage } from './canvas-three-choices';
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -348,22 +288,19 @@ function renderStageDocumentContent({
 }
 
 /**
- * Top-level universal sourcing canvas. Renders the id strip, step rail, and
- * the shared `<AgentDock>` (chat lane on the left, workspace on the right
- * by default — five toggleable dock modes per surface).
+ * Top-level universal sourcing canvas. Three-column layout:
+ *   Left  (276px)  — CanvasGateSidebar: always-visible gate criteria checklist
+ *   Center (flex)  — EventWorkspace: Document / Evidence / Log tabs
+ *   Bottom         — AvaBottomBar: aVa composer + expandable thread panel
  *
  * Reads real data from the canvas substrate — pre-filtered to the stage being
- * viewed. Chat goes through the existing source Sentinel/Atlas runtime at
- * `/api/v1/source/[eventId]/nexus/ask`; AgentDock paperclip uploads carry
- * the event id so the route can stamp `agent_attachment.linked_event_id`
- * before invoking the deterministic stub. The runtime itself is unchanged.
+ * viewed. Chat goes through the source Sentinel/Atlas runtime at
+ * `/api/v1/source/[eventId]/nexus/ask`. The runtime itself is unchanged.
  *
- * Stage→agent mapping is binary at the dock surface:
- *   stages 1–9 (Strategy → Selection)  → Sentinel
+ * Stage→agent mapping is binary internally:
+ *   stages 1–9 (Strategy → Selection)  → Sentinel, presented as aVa Source
  *   stages 10–11 (Transition, Value)   → Atlas
- * (`canvasDockAgentForStage`). Specialist agents (Nexus, Steward) still
- * lead their respective workflows via tool calls invoked by the front
- * agent — they don't host the chat surface here.
+ * (`canvasDockAgentForStage`).
  */
 export function UniversalCanvasShell({
   event,
@@ -796,90 +733,28 @@ export function UniversalCanvasShell({
     }
   };
 
-    // "Draft with Ava" — run the SAME governed generation as the Workspace
-  // (persists the artifact + runs the quality gate), but IN PLACE and narrated
-  // in the left dock, so the one Sentinel the user already sees does the work.
-  // No navigation. When it lands, the gate criterion linked to the artifact
-  // clears. Gaps are flagged, never invented.
-  const handleDraftWithSentinel = async (code: string): Promise<void> => {
-    if (pendingGenerationByCode[code]) return; // guard against double-fire
-    const name = specByCode(code)?.name ?? code;
-    const t0 = Date.now();
-    setThread((t) => [
-      ...t,
-      { id: `u-${t0}`, role: "user", body: `Draft the ${name} from the event facts.` },
-      {
-        id: `a-${t0 + 1}`,
-        role: "agent",
-        body: `Drafting the ${name} from the event facts — governed and persisted to the Workspace, with gap flags wherever the evidence is thin. One moment…`,
-      },
-    ]);
-    const result = await handleArtifactGenerate(code);
-    const t1 = Date.now();
-    setThread((t) => [
-      ...t,
-      result.ok
-        ? {
-            id: `a-${t1}`,
-            role: "agent",
-            body: `Drafted and persisted the ${name} to the Workspace. Open it there to review, then clear the gate. Anything I couldn't evidence is flagged as a gap — not invented.`,
-          }
-        : {
-            id: `a-${t1}`,
-            role: "agent",
-            body: `I couldn't complete the ${name}: ${result.detail}${
-              result.missingUpstream?.length
-                ? ` (missing upstream: ${result.missingUpstream.join(", ")})`
-                : ""
-            }`,
-          },
-    ]);
-  };
-
-  // Auto-draft the strategy memo on entry (flag: source_strategy_auto_draft).
-  // When you land on Strategy with no memo yet, run the governed Draft-with-
-  // Sentinel ONCE — so the memo appears from the validated P0 facts without a
-  // manual click. `nextMove.draftArtifactCode` is set only while the draft is
-  // still needed, so this self-disables the moment the memo exists; the ref
-  // guards a double-fire; an existing authored body is never overwritten.
-  const autoDraftFiredRef = useRef(false);
+  // Auto-draft the strategy-stage artifacts. The strategy memo, value target,
+  // and archetype record are produced at event creation, not via a manual
+  // "Draft with aVa" click — when the creator lands on the freshly-created
+  // event at the strategy stage and a generatable artifact's body is still
+  // empty, generation fires once per artifact. (Browser-initiated so it runs
+  // on the full request budget rather than being killed as a post-response
+  // background task.) Once a body exists it never re-fires.
+  const autoDraftFiredRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (!strategyAutoDraftEnabled || !workspaceExplorerEnabled) return;
-    if (viewStage !== "strategy") return;
-    if (autoDraftFiredRef.current) return;
-    const code = nextMove.draftArtifactCode;
-    if (!code) return;
-    if (pendingGenerationByCode[code]) return;
-    if (artifactStateMap[code]?.body) return;
-    autoDraftFiredRef.current = true;
-    void handleDraftWithSentinel(code);
-    // handleDraftWithSentinel is recreated each render; the ref guard makes this
-    // fire exactly once, so it is intentionally omitted from the deps.
+    if (viewStage !== 'strategy') return;
+    for (const artifact of liveArtifactStates) {
+      const code = artifact.artifactCode;
+      if (artifact.stage !== 'strategy') continue;
+      if (!generatableCodes.has(code)) continue;
+      if ((artifact.body ?? '').trim().length > 0) continue;
+      if (pendingGenerationByCode[code]) continue;
+      if (autoDraftFiredRef.current.has(code)) continue;
+      autoDraftFiredRef.current.add(code);
+      void handleArtifactGenerate(code);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    strategyAutoDraftEnabled,
-    workspaceExplorerEnabled,
-    viewStage,
-    nextMove,
-    pendingGenerationByCode,
-    artifactStateMap,
-  ]);
-
-  // Stage orientation: when the user first opens a fresh event (empty chat
-  // thread, no session history), aVa greets with a plain-language explanation
-  // of what to do at this stage and why. Fires once per event per browser
-  // session (the ref + sessionStorage guard it).
-  const orientationFiredRef = useRef(false);
-  useEffect(() => {
-    if (orientationFiredRef.current) return;
-    if (thread.length > 0) return; // session history already loaded
-    const orientation = nextMove.stageOrientation;
-    if (!orientation) return;
-    orientationFiredRef.current = true;
-    setThread([{ id: "orientation-0", role: "agent", body: orientation }]);
-  // nextMove changes on every render; the ref guard makes this fire once.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nextMove.stageOrientation, thread.length]);
+  }, [viewStage, liveArtifactStates, generatableCodes, pendingGenerationByCode]);
 
   const handleArtifactBodySave = async (
     code: string,
@@ -1045,7 +920,7 @@ export function UniversalCanvasShell({
     }
   };
 
-  // Three-choice catalog mapped to AgentDock SuggestedActions. Click pre-fills
+  // Three-choice catalog mapped to AvaBottomBar chips. Click pre-fills
   // the composer rather than auto-submitting so the user can edit first
   // (B4 semantics preserved from the prior chat lane).
   const suggestedActions: SuggestedAction[] = useMemo(
@@ -1129,26 +1004,8 @@ export function UniversalCanvasShell({
       }),
     },
     {
-      key: "gate" as WorkspaceTabKey,
-      label: "Gate",
-      badge: `${contextBundle.metCriteria}/${contextBundle.totalCriteria}`,
-      content: (
-        <GateTab
-          fromStage={viewStage}
-          states={stageCriteria}
-          assessment={stageGateAssessment}
-          recommendation={stageRecommendation}
-          approvalViewByCriterionId={approvalViewByCriterionId}
-          onChangeCriterionState={handleCriterionStateChange}
-          pendingByCriterionId={pendingCriterionByCriterionId}
-          onPromoteStage={handlePromoteStage}
-          promotePending={promotePending}
-        />
-      ),
-    },
-    {
-      key: "evidence" as WorkspaceTabKey,
-      label: "Evidence",
+      key: 'evidence' as WorkspaceTabKey,
+      label: 'Evidence',
       badge: contextBundle.readiness,
       content: (
         <EvidenceTab
@@ -1395,50 +1252,17 @@ export function UniversalCanvasShell({
             fromStage={viewStage}
             states={stageCriteria}
             allCriteria={liveGateCriterionStates}
-            onChangeCriterionState={(cid, next) => handleCriterionStateChange(cid, next, '')}
+            onChangeCriterionState={handleCriterionStateChange}
             pendingByCriterionId={pendingCriterionByCriterionId}
-            onPromoteStage={(stage) => handlePromoteStage(stage, `Advanced from gate sidebar to ${stage}`)}
+            onPromoteStage={handlePromoteStage}
             promotePending={promotePending}
           />
           <div style={WORKSPACE_COLUMN_STYLE}>
-            <div
-              data-testid="source-canvas-context-strip"
-              style={WORKSPACE_WRAPPER_STYLE}
-            >
-              <div style={WORKSPACE_INNER_STYLE}>
-                {isLakeshoreDemoCaseStudy ? (
-                  <CaseStudyCoherenceBanner
-                    currentStage={event.currentStageKey}
-                    viewStage={viewStage}
-                  />
-                ) : null}
-                {viewStage !== event.currentStageKey ? (
-                  <div
-                    data-testid="source-canvas-preview-banner"
-                    style={{
-                      marginBottom: 14,
-                      padding: "10px 14px",
-                      background: "#FFF8F0",
-                      border: "1px solid #F5C98A",
-                      borderRadius: 8,
-                      fontFamily: "var(--font-sans, system-ui)",
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      color: "#7A4A00",
-                    }}
-                  >
-                    <strong>Previewing{" "}
-                    {SOURCE_STAGE_LABELS[viewStage] ?? viewStage}.</strong>{" "}
-                    You are in the{" "}
-                    {SOURCE_STAGE_LABELS[event.currentStageKey] ?? event.currentStageKey}{" "}
-                    stage. Clear all gate criteria there before working this stage.
-                  </div>
-                ) : null}
-                {simpleFrontWorkspace ?? advancedWorkspace}
-              </div>
-            </div>
+            <CanvasContextStrip stageKey={viewStage} contextBundle={contextBundle}>
+              <EventWorkspace tabs={tabs} defaultTab={initialTab} />
+            </CanvasContextStrip>
             <AvaBottomBar
-              agentName={displayAgentName(dockAgent)}
+              agentName={displayAgentName()}
               thread={thread}
               onMessage={(text) => handleAgentMessage(text, [])}
               suggestedActions={suggestedActions}
@@ -1451,30 +1275,8 @@ export function UniversalCanvasShell({
   );
 }
 
-const LAKESHORE_CASE_STUDY_CHOICES = [
-  "What is this Lakeshore shared-services AMS event about?",
-  "Which RFP version is final?",
-  "Which vendor should advance and why?",
-  "What should go into BAFO?",
-  "What should the CIO and CFO worry about?",
-  "Show artifact lineage.",
-];
-
-function isLakeshoreSharedServicesDemoEvent(
-  event: Pick<SourcingEventSummary, "code" | "name" | "accountName">,
-): boolean {
-  return /^LAKE-SHARED-SERVICES-AMS-2026$/i.test(event.code.trim());
-}
-
-function isArtifactDraftVisible(
-  artifact: SourceEventArtifactState | undefined,
-): boolean {
-  return Boolean(
-    artifact?.body?.trim() ||
-      artifact?.linkedArtifactId ||
-      artifact?.status === "approved" ||
-      artifact?.status === "locked",
-  );
+function displayAgentName(): string {
+  return 'aVa';
 }
 
 function isStageAtOrAfter(current: SourceStageKey, target: SourceStageKey) {
@@ -1483,15 +1285,9 @@ function isStageAtOrAfter(current: SourceStageKey, target: SourceStageKey) {
   return currentIndex >= 0 && targetIndex >= 0 && currentIndex >= targetIndex;
 }
 
-function CaseStudyCoherenceBanner({
-  currentStage,
-  viewStage,
-}: {
-  currentStage: SourceStageKey;
-  viewStage: SourceStageKey;
-}) {
-  const currentLabel = SOURCE_STAGE_LABELS[currentStage] ?? currentStage;
-  const viewLabel = SOURCE_STAGE_LABELS[viewStage] ?? viewStage;
+// Stage label + readiness/artifact counts shown above the EventWorkspace tabs.
+function CanvasContextStrip({ stageKey, contextBundle, children }: CanvasContextStripProps) {
+  const stageLabel = SOURCE_STAGE_LABELS[stageKey];
   return (
     <section
       data-testid="source-lakeshore-case-study-banner"
@@ -1868,7 +1664,27 @@ const CONTAINER_STYLE: CSSProperties = {
   flexShrink: 0,
 };
 
-const SPLITTER_WRAPPER_STYLE: CSSProperties = {
+const DOSSIER_LINK_WRAP_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  paddingTop: 10,
+};
+
+const DOSSIER_LINK_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 6,
+  background: '#fff',
+  color: CANVAS.INK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: '0.08em',
+  padding: '7px 10px',
+  textDecoration: 'none',
+  textTransform: 'uppercase',
+};
+
+const CANVAS_BODY_STYLE: CSSProperties = {
   flex: 1,
   display: "flex",
   minHeight: 0,
@@ -1889,6 +1705,14 @@ const WORKSPACE_COLUMN_STYLE: CSSProperties = {
   flexDirection: "column",
   minHeight: 0,
   overflow: "hidden",
+};
+
+const WORKSPACE_COLUMN_STYLE: CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+  overflow: 'hidden',
 };
 
 const WORKSPACE_WRAPPER_STYLE: CSSProperties = {

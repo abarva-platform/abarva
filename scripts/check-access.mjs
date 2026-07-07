@@ -79,8 +79,61 @@ function checkLegacyEnvAbsence() {
   );
 }
 
-function checkGithubLocal() {
-  const result = spawnSync('gh', ['auth', 'status'], {
+async function checkPineconeLive() {
+  if (!envHas('PINECONE_API_KEY') || !envHas('PINECONE_INDEX')) {
+    addResult(
+      'Pinecone live',
+      false,
+      'Skipped because local Pinecone env is incomplete.',
+      'Set PINECONE_API_KEY and PINECONE_INDEX first.',
+    );
+    return;
+  }
+
+  try {
+    const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+    const stats = await pc.index(process.env.PINECONE_INDEX).describeIndexStats();
+    addResult(
+      'Pinecone live',
+      true,
+      `Connected to index ${process.env.PINECONE_INDEX} with ${stats.totalRecordCount ?? 0} total records.`,
+      '',
+    );
+  } catch (error) {
+    addResult(
+      'Pinecone live',
+      false,
+      `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
+      'Check network access, API key permissions, and index name.',
+    );
+  }
+}
+
+function checkAzureLocal() {
+  const azureEnvPath = path.join(cwd, '.env.azure.local');
+  const runbookPath = path.join(cwd, 'docs/runbooks/azure-container-apps-deploy.md');
+
+  addResult(
+    'Azure deploy runbook',
+    fs.existsSync(runbookPath),
+    fs.existsSync(runbookPath)
+      ? `Canonical ACA runbook found at ${runbookPath}`
+      : 'Missing docs/runbooks/azure-container-apps-deploy.md.',
+    'Restore the Azure Container Apps deploy runbook.',
+  );
+
+  addResult(
+    'Azure env snapshot',
+    fs.existsSync(azureEnvPath),
+    fs.existsSync(azureEnvPath)
+      ? `Readable at ${azureEnvPath}`
+      : 'No .env.azure.local file found. This is acceptable if Azure auth is provided by az login.',
+    'Use az login / az account set for live Azure operations.',
+  );
+}
+
+function checkAzureLive() {
+  const account = spawnSync('az', ['account', 'show', '--query', '{name:name,id:id}', '-o', 'json'], {
     cwd,
     encoding: 'utf8',
     timeout: 6000,
@@ -94,32 +147,67 @@ function checkGithubLocal() {
   );
 }
 
-function checkAzureLocal() {
-  const result = spawnSync('az', ['account', 'show', '--query', 'name', '-o', 'tsv'], {
-    cwd,
-    encoding: 'utf8',
-    timeout: 6000,
-    env: process.env,
-  });
-  addResult(
-    'Azure CLI',
-    result.status === 0,
-    result.status === 0 ? `Authenticated to ${result.stdout.trim() || 'an Azure subscription'}.` : (result.stderr || result.stdout || 'az account show failed.').trim(),
-    'Run `az login` or refresh the operator service-principal credentials.',
-  );
-}
+  if (account.error) {
+    addResult(
+      'Azure account',
+      false,
+      `CLI failed: ${account.error.message}`,
+      'Install Azure CLI or run this check in an environment with az available.',
+    );
+    return;
+  }
 
-function checkProductionHttp() {
-  const result = spawnSync(
-    'curl',
-    ['-fsS', '--max-time', '15', 'https://app.abarva.ai/api/health'],
-    { cwd, encoding: 'utf8', timeout: 20000, env: process.env },
+  if (account.signal === 'SIGTERM') {
+    addResult(
+      'Azure account',
+      false,
+      'Azure CLI timed out.',
+      'Run `az login` and retry with network access.',
+    );
+    return;
+  }
+
+  if (account.status !== 0) {
+    addResult(
+      'Azure account',
+      false,
+      (account.stderr || account.stdout || 'Unknown Azure CLI error').trim(),
+      'Run `az login` and `az account set --subscription abarva-lab-sub`.',
+    );
+    return;
+  }
+
+  addResult('Azure account', true, (account.stdout || 'Authenticated with Azure CLI.').trim(), '');
+
+  const app = spawnSync(
+    'az',
+    [
+      'containerapp',
+      'show',
+      '-g',
+      'rg-abarva-controlplane-lab-eastus',
+      '-n',
+      'ca-abarva-web-lab-eastus',
+      '--query',
+      '{latestRevisionName:properties.latestRevisionName,latestReadyRevisionName:properties.latestReadyRevisionName,image:properties.template.containers[0].image,traffic:properties.configuration.ingress.traffic}',
+      '-o',
+      'json',
+    ],
+    {
+      cwd,
+      encoding: 'utf8',
+      timeout: 10000,
+      env: process.env,
+    },
   );
+
   addResult(
-    'Azure production health',
-    result.status === 0,
-    result.status === 0 ? 'https://app.abarva.ai/api/health returned success.' : (result.stderr || result.stdout || 'curl failed.').trim(),
-    'Check Azure Container Apps ingress, custom-domain binding, and app health logs.',
+    'Azure Container App',
+    app.status === 0,
+    app.status === 0
+      ? (app.stdout || 'Read ca-abarva-web-lab-eastus.')
+      : (app.stderr || app.stdout || 'Could not read ca-abarva-web-lab-eastus.').trim(),
+    'Verify Azure subscription, resource group, and Container Apps permissions.',
   );
 }
 
@@ -135,13 +223,14 @@ function printResults() {
 
 function main() {
   checkEnvFile();
-  checkRuntimeEnv();
-  checkLegacyEnvAbsence();
-  checkGithubLocal();
+  checkSupabaseLocal();
+  checkPineconeLocal();
   checkAzureLocal();
 
   if (live) {
-    checkProductionHttp();
+    await checkSupabaseLive();
+    await checkPineconeLive();
+    checkAzureLive();
   }
 
   printResults();

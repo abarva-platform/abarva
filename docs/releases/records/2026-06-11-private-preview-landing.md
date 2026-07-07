@@ -10,7 +10,7 @@
 `candidate`
 
 ## Plain-English Summary
-Replaces the signed-out marketing landing page (`LoggedOutLandingPage`) with the new founder-led private-preview design: a product-led hero (dark gradient, a no-PII Strategic Moves screenshot, and a connected "three dimensions of value" — Decide / Source / Prove), a graphical "Picture this" three-moment section, the five surfaces, and a "Request access" call to action. No AI-generated human imagery is used; visuals are the product screenshot and abstract brand graphics. The hero copy now addresses the accountable CXO directly instead of using generic AI-ambition framing.
+Replaces the signed-out marketing landing page (`LoggedOutLandingPage`) with the new founder-led private-preview design: a product-led hero (dark gradient, the real Strategic Moves screenshot, and a connected "three dimensions of value" — Decide / Source / Prove), a graphical "Picture this" three-moment section, the five surfaces, and a "Request access" call to action. No AI-generated human imagery is used; visuals are the real product screenshot and abstract brand graphics.
 
 Adds a real backend for the "Request access" form: a public, unauthenticated `POST /api/request-access` that validates a work email, stores the lead in a new `access_requests` table (durable), and notifies `admin@abarva.ai` via Resend. Both the store and the email are best-effort; in production the request only fails if the lead was captured nowhere.
 
@@ -27,37 +27,45 @@ Adds a real backend for the "Request access" form: a public, unauthenticated `PO
 - Feature flag: none
 
 ## Changes Included
-- `src/components/marketing/LoggedOutLandingPage.tsx` — rewritten to the new private-preview design (styled-jsx, no Tailwind), Request-access modal form (client state → `POST /api/request-access`), Option-2 logo from `/brand/`, and CXO-accountable opening copy.
-- `src/app/api/request-access/route.ts` — new public POST: validate (work email), store in `access_requests`, email `admin@abarva.ai` via Resend (`replyTo` the requester). Default sender is the verified `support@send.abarva.ai` subdomain, with `RESEND_FROM_EMAIL` available as an Azure env override. Best-effort; 500 only if nothing captured in prod.
+- `src/components/marketing/LoggedOutLandingPage.tsx` — rewritten to the new private-preview design (styled-jsx, no Tailwind), Request-access modal form (client state → `POST /api/request-access`), Option-2 logo from `/brand/`.
+- `src/app/api/request-access/route.ts` — new public POST: validate (work email), store in `access_requests`, email `admin@abarva.ai` via Resend (`replyTo` the requester). Best-effort; 500 only if nothing captured in prod.
 - `src/proxy.ts` — `'/api/request-access(.*)'` added to `PUBLIC_ROUTE_PATTERNS`.
 - `supabase/migrations/20260611193000_access_requests.sql` — new `access_requests` table + indexes + RLS (service-role only).
-- `public/marketing/*` — no-PII product screenshot (`moves-real.png`) and abstract brand graphics (`accent.png`, `surf-*.png`). No AI-human imagery.
+- `public/marketing/*` — real product screenshot (`moves-real.png`) and abstract brand graphics (`accent.png`, `surf-*.png`). No AI-human imagery.
 
 ## QA / Validation
-- PASS — form fields cover name, work email, company, role, company size, industry, org type (enterprise vs SI/advisory), optional initiative.
-- PASS — `npx jest src/app/api/request-access/__tests__/route.test.ts --runInBand`; verifies the verified `send.abarva.ai` default sender and `RESEND_FROM_EMAIL` override.
-- PASS — `npx eslint src/app/api/request-access/route.ts src/app/api/request-access/__tests__/route.test.ts`.
-- PASS — static design validated in the browser during implementation (hero, three-dimension stack, graphical Picture-this section, modal form, footer logo).
-- PASS — `moves-real.png` was replaced with the no-PII clean screenshot asset (`~/Downloads/_moves-clean.png`), showing only "Sample Enterprise · CXO" and no personal name, avatar, or sign-out control.
-- PASS — live Azure migration applied and verified against `abarva_control`; `access_requests` exists.
-- PASS — live Azure revision served `/`, `/signed-out`, and `/api/health` with 200 responses and Azure/Postgres health.
-- PASS — live `POST /api/request-access` rejected a free-email test with 422 and accepted a timestamped work-email test with 200 `{ ok: true }`.
-- PASS — fresh revision logs showed no request-access store/email failures and no Vercel or Supabase host strings.
+
+Status: PASS (design) / NOT-RUN (migration, email)
+
+- PASS: Form fields validated in browser — name, work email, company, role, company size, industry, org type (enterprise vs SI/advisory), optional initiative.
+- PASS: Static design validated in the browser (hero, three-dimension stack, graphical Picture-this section, modal form, footer logo).
+- NOT-RUN: `npx tsc --noEmit` for the rewritten component + new route — to run before merge.
+- NOT-RUN: Migration `20260611193000_access_requests.sql` — apply via `npm run db:migrate` on ACA (localhost cannot reach the private VNet DB). The API route fails soft if the table is not yet present (logged, falls back to email).
+- NOT-RUN: Email path — requires `RESEND_API_KEY`; without it, leads are still stored and (dev) logged.
 
 ## Rollout Plan
-1. Apply `supabase/migrations/20260611193000_access_requests.sql` to the Azure/Postgres control plane through the private ACA/VNet migration job.
-2. Set `RESEND_API_KEY` as an Azure Container Apps secret and bind `RESEND_API_KEY=secretref:resend-api-key`.
-3. Set `RESEND_FROM_EMAIL` to `AbarVa Preview <support@send.abarva.ai>` unless the root `abarva.ai` domain is separately verified in Resend.
-4. Deploy the branch image to Azure Container Apps and route traffic through the normal active revision process.
-5. Browser-test `/`, `/signed-out`, valid request-access submit, invalid/free-email submit, durable `access_requests` row creation, and real Resend notification delivery.
 
-Rollout through PR #3412 completed on 2026-06-12. This follow-up polish updates the CXO opening copy and no-PII product screenshot only.
+Deploy the branch; apply the migration on ACA before public traffic relies on durable storage (email notification works without it).
+
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
 
 ## Rollback Plan
-Revert the component to the previous `LoggedOutLandingPage`, remove the public-route entry and the API route, then redeploy the prior image. The `access_requests` table is additive and can be left in place; if legal/ops requires removal, export any captured leads first and then drop the table in a separate controlled data-plane rollback.
 
-## Known Gaps
-- The route is public by design; abuse protection beyond work-email validation/rate limiting is not part of this slice.
+Revert the component to the previous `LoggedOutLandingPage`, remove the public-route entry and the API route. The `access_requests` table is additive and can be left in place.
 
 ## Audit Evidence
 - New table is append-only lead capture; `user_agent` and `created_at` recorded. No PII beyond what the requester submits; no tenant data involved.
+
+## Known Gaps
+
+- `npx tsc --noEmit` not yet run on the new component and route
+- Migration not applied to ACA private DB yet
+- Email notification path not tested end-to-end (Resend key required)

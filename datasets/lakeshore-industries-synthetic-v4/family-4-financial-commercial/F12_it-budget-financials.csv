@@ -1,11 +1,14 @@
-budget_id,budget_area,owner_role,run_budget_usd,change_budget_usd,ai_or_data_budget_usd,labor_pct,vendor_pct,cloud_or_infra_pct,budget_pressure,capex_pct,opex_pct
-LAK-BUD-001,Office of CIO,CIO,19840000,8990000,2170000,30,42,18,legacy run cost crowding out automation,25,75
-LAK-BUD-002,SAP and ERP Platforms,VP ERP,99840000,45240000,16380000,33,46,21,within plan,25,75
-LAK-BUD-003,Treasury and Finance Systems,VP Finance Technology,39680000,17980000,8680000,36,50,24,Kyriba rollout requires evidence-based scope control,25,75
-LAK-BUD-004,Integration and Middleware,VP Integration,30720000,13920000,8400000,39,54,27,within plan,25,75
-LAK-BUD-005,Data Platform and BI,Chief Data Officer,62720000,28420000,6860000,42,42,18,legacy run cost crowding out automation,25,75
-LAK-BUD-006,Manufacturing and OT Systems,VP Manufacturing Tech,111360000,50460000,18270000,30,46,21,within plan,25,75
-LAK-BUD-007,Cloud and Infrastructure,VP Infrastructure,120320000,54520000,26320000,33,50,24,within plan,38,62
-LAK-BUD-008,ServiceNow and IT Operations,VP IT Operations,27520000,12470000,7525000,36,54,27,within plan,25,75
-LAK-BUD-009,Cybersecurity and Identity,CISO,74240000,33640000,8120000,39,42,18,legacy run cost crowding out automation,25,75
-LAK-BUD-010,AI Automation Office,Chief Data Officer,17920000,8120000,2940000,42,46,21,within plan,25,75
+budget_id,budget_area,owner_role,run_budget_usd,change_budget_usd,ai_or_data_budget_usd,labor_pct,vendor_pct,cloud_or_infra_pct,budget_pressure
+LAK-PC-001,Northline Industries – IT,Northline CIO,22400000,10100000,2680000,52,32,16,OpCo-controlled; $1.5B industrial manufacturing; ERP and OT run-heavy
+LAK-PC-002,Brightmark Capital – IT,Brightmark CTO,10800000,4800000,1290000,48,38,14,OpCo-controlled; $720M PE portfolio company; lean run; vendor-intensive
+LAK-PC-003,Forge and Field – IT,Forge and Field VP Technology,11900000,5400000,1480000,53,31,16,OpCo-controlled; $800M specialty manufacturing and distribution
+LAK-PC-004,Great Lakes Pantry – IT,GLP VP Technology,8100000,3600000,970000,55,30,15,OpCo-controlled; $540M food distribution and retail; high vendor dependency
+LAK-PC-005,Additional Portfolio Companies – IT,OpCo IT Leads (aggregate),53200000,23800000,6380000,53,32,15,OpCo-controlled aggregate; $3.56B portfolio revenue base; mix of industries
+LAK-CS-001,Corporate · CIO Office and Governance,Group CIO,3800000,1700000,380000,70,18,12,holdco IT leadership; portfolio oversight and enterprise vendor governance
+LAK-CS-002,Corporate · Cloud and Infrastructure,VP Infrastructure,3100000,1400000,310000,32,42,26,holdco network backbone; shared cloud hub; cross-OpCo connectivity
+LAK-CS-003,Corporate · Cybersecurity and Identity,CISO,2800000,1200000,280000,38,45,17,holdco SOC; group identity platform; OpCo security policy authority
+LAK-CS-004,Corporate · Data Platform and Analytics,Chief Data Officer,2600000,1100000,260000,40,40,20,holdco portfolio analytics; consolidated management reporting
+LAK-CS-005,Corporate · Enterprise Applications,VP ERP,1900000,900000,190000,30,55,15,shared SAP consolidation layer; OpCo ERP instances are OpCo-funded
+LAK-CS-006,Corporate · Integration and Middleware,VP Integration,1400000,600000,140000,40,45,15,holdco data bus; cross-OpCo reporting and Kyriba integrations
+LAK-CS-007,Corporate · ServiceNow and IT Operations,VP IT Operations,1500000,700000,150000,36,52,12,holdco ITSM; shared service desk coordination across OpCos
+LAK-CS-008,Corporate · AI and Innovation Office,Chief Data Officer,8100000,3700000,7520000,40,42,18,primary AI investment vehicle; portfolio-wide AI programs and agents

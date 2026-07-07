@@ -41,9 +41,9 @@
   }
   .layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 288px 1fr;
     min-height: 100vh;
-    max-width: 1480px;
+    max-width: 1760px;
     margin: 0 auto;
   }
 
@@ -130,8 +130,15 @@
 
   /* Main */
   main {
-    padding: 56px 64px 96px;
-    max-width: 920px;
+    padding: 64px 88px 120px;
+    max-width: 1120px;
+  }
+  /* Full-canvas break-out: lets a block use the whole main column width,
+     escaping the 1120px reading measure for maps, rails, and wide exhibits. */
+  main .fullcanvas {
+    max-width: none;
+    margin-left: calc(-1 * clamp(24px, 4vw, 88px));
+    margin-right: calc(-1 * clamp(24px, 4vw, 88px));
   }
 
   /* Cover */
@@ -635,9 +642,120 @@
     .layout { grid-template-columns: 1fr; }
     .sidebar { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
     main { padding: 32px 28px 64px; }
+    main .fullcanvas { margin-left: -28px; margin-right: -28px; }
     .cover h1 { font-size: 40px; }
     .step-grid { grid-template-columns: 1fr; }
+    .jmap-scroll { padding-left: 28px; padding-right: 28px; }
   }
+
+  /* ───── Brand lockup — AbarVa mark + wordmark, as in the app nav ───── */
+  .sidebar .brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    margin-bottom: 7px;
+  }
+  .sidebar .brand-lockup .mark { flex: none; display: block; }
+  .sidebar .brand-lockup .wordmark {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .sidebar .brand-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  /* ───── Journey map — 10 value steps aligned to outcome · levers · value ───── */
+  .journey-map { margin: 8px 0 44px; }
+  .jmap-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 4px;
+    padding: 0 clamp(24px, 4vw, 88px);
+  }
+  .jmap-head h3 {
+    font-family: 'Fraunces', serif; font-size: 21px; font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+  .jmap-head .jmap-sub {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--gray); font-weight: 600;
+  }
+  .jmap-scroll {
+    overflow-x: auto; padding: 20px clamp(24px, 4vw, 88px) 8px;
+    scrollbar-width: thin;
+  }
+  .jmap-grid {
+    display: grid;
+    grid-template-columns: 96px repeat(11, minmax(158px, 1fr));
+    align-items: stretch;
+    min-width: 1180px;
+    row-gap: 0;
+  }
+  /* Rail row — connecting line + numbered nodes */
+  .jmap-rail { display: contents; }
+  .jmap-lane-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--gray); font-weight: 700;
+    display: flex; align-items: center; padding: 10px 12px 10px 0;
+    border-top: 1px solid var(--border);
+  }
+  .jmap-node {
+    position: relative; padding: 4px 10px 16px; text-align: center;
+  }
+  .jmap-node::before {
+    content: ''; position: absolute; top: 17px; left: 0; right: 0;
+    height: 2px; background: var(--border-strong);
+  }
+  .jmap-node.first::before { left: 50%; }
+  .jmap-node.last::before { right: 50%; }
+  .jmap-dot {
+    position: relative; z-index: 1; width: 34px; height: 34px; margin: 0 auto 9px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--ink); color: var(--cream-2);
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px;
+    box-shadow: 0 0 0 4px var(--page-bg);
+  }
+  .jmap-node.gate .jmap-dot {
+    background: var(--cream-2); color: var(--gold);
+    border: 2px dashed var(--gold); box-shadow: 0 0 0 4px var(--page-bg);
+  }
+  .jmap-node .jmap-title {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px;
+    line-height: 1.25; color: var(--ink);
+  }
+  .jmap-node .jmap-agent {
+    font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--gray); margin-top: 3px;
+  }
+  /* Lane cells — outcome / levers / value */
+  .jmap-cell {
+    padding: 10px 10px; border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    font-size: 11.5px; line-height: 1.4; color: var(--ink-2);
+  }
+  .jmap-cell.gate { background: rgba(156,123,63,0.05); }
+  .jmap-cell:last-child { border-right: 1px solid var(--border); }
+  .jmap-lane-label.value, .jmap-cell.value {
+    background: var(--green-bg);
+  }
+  .jmap-cell.value { color: #14503b; font-weight: 500; border-top-color: rgba(29,158,117,0.28); }
+  .jmap-lane-label.value { color: var(--green); border-top-color: rgba(29,158,117,0.28); }
+  .jmap-legend {
+    padding: 12px clamp(24px, 4vw, 88px) 0; display: flex; gap: 20px; flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--gray);
+  }
+  .jmap-legend b { color: var(--ink-2); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -646,7 +764,16 @@
 
   <!-- ───── Sidebar ───── -->
   <aside class="sidebar">
-    <div class="brand">AbarVa · Operating Guide v2</div>
+    <a class="brand-lockup" href="#top" aria-label="AbarVa">
+      <svg class="mark" viewBox="0 0 128 100" width="31" height="24" aria-hidden="true">
+        <path d="M18 80 L50 20 L82 80" fill="none" stroke="#050505" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter"/>
+        <path d="M62 55 L82 80 L110 20" fill="none" stroke="#22AEEA" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter"/>
+        <path d="M48 52 L74 52 L83 61 L57 61 Z" fill="#22AEEA" opacity="0.58"/>
+        <path d="M62 55 L74 52 L83 61 L70 65 Z" fill="#0A76D8" opacity="0.38"/>
+      </svg>
+      <span class="wordmark">AbarVa</span>
+    </a>
+    <div class="brand-tag">Operating Guide · v2</div>
     <h1>The AbarVa Operating Guide</h1>
     <div class="subtitle">Vision, agents, knowledge layer, industry depth, and the sourcing operating journey — for technology leaders running AI-driven enterprise transformation.</div>
 
@@ -1235,6 +1362,84 @@
       <div class="section-num">Section 08</div>
       <h2>The 11-step operating journey</h2>
       <p class="lede">A canonical sourcing event passes through eleven steps. Each step has a primary question, a lead agent, gating evidence, and a savings impact. Skip a step and you usually pay for it later.</p>
+
+      <!-- ───── Journey map: Strategy gate → 10 value steps ───── -->
+      <div class="journey-map fullcanvas">
+        <div class="jmap-head">
+          <h3>The value journey at a glance</h3>
+          <span class="jmap-sub">Strategy is the gate · 10 steps carry the value</span>
+        </div>
+        <div class="jmap-scroll">
+          <div class="jmap-grid">
+
+            <!-- Rail row: gate + 10 numbered nodes -->
+            <div class="jmap-lane-label" style="border-top:none;align-items:flex-end;padding-bottom:14px">Journey</div>
+            <div class="jmap-node gate first">
+              <div class="jmap-dot">◆</div>
+              <div class="jmap-title">Strategy</div>
+              <div class="jmap-agent">Gate · Nexus</div>
+            </div>
+            <div class="jmap-node"><div class="jmap-dot">1</div><div class="jmap-title">Scope</div><div class="jmap-agent">Nexus</div></div>
+            <div class="jmap-node"><div class="jmap-dot">2</div><div class="jmap-title">RFP / RFI Readiness</div><div class="jmap-agent">Nexus</div></div>
+            <div class="jmap-node"><div class="jmap-dot">3</div><div class="jmap-title">Vendor Responses</div><div class="jmap-agent">Nexus · Sentinel</div></div>
+            <div class="jmap-node"><div class="jmap-dot">4</div><div class="jmap-title">Evaluation</div><div class="jmap-agent">Steward</div></div>
+            <div class="jmap-node"><div class="jmap-dot">5</div><div class="jmap-title">Pricing Normalization</div><div class="jmap-agent">Nexus · Sentinel</div></div>
+            <div class="jmap-node"><div class="jmap-dot">6</div><div class="jmap-title">BAFO / Negotiation</div><div class="jmap-agent">Nexus</div></div>
+            <div class="jmap-node"><div class="jmap-dot">7</div><div class="jmap-title">Executive Decision</div><div class="jmap-agent">Atlas</div></div>
+            <div class="jmap-node"><div class="jmap-dot">8</div><div class="jmap-title">Selection Readiness</div><div class="jmap-agent">Steward</div></div>
+            <div class="jmap-node"><div class="jmap-dot">9</div><div class="jmap-title">Transition Readiness</div><div class="jmap-agent">Steward</div></div>
+            <div class="jmap-node last"><div class="jmap-dot">10</div><div class="jmap-title">Value Realization</div><div class="jmap-agent">Atlas</div></div>
+
+            <!-- Outcome lane -->
+            <div class="jmap-lane-label">Outcome</div>
+            <div class="jmap-cell gate">Why we're sourcing, named on the record — objective, vendor posture, decision owner, value hypothesis.</div>
+            <div class="jmap-cell">Boundary, target tier, and exclusions fixed with auditable evidence.</div>
+            <div class="jmap-cell">A defensible RFP/RFI package cleared to release.</div>
+            <div class="jmap-cell">Vendor responses complete enough to compare.</div>
+            <div class="jmap-cell">A governed, defensible recommendation.</div>
+            <div class="jmap-cell">Apples-to-apples TCO across every vendor.</div>
+            <div class="jmap-cell">Trapped assumptions closed; best final offer secured.</div>
+            <div class="jmap-cell">A decision executives can stand behind.</div>
+            <div class="jmap-cell">Confirm the deal should proceed — or stop it.</div>
+            <div class="jmap-cell">Transition planned to protect the savings case.</div>
+            <div class="jmap-cell">Projected savings actually measured and realized.</div>
+
+            <!-- Levers lane -->
+            <div class="jmap-lane-label">Levers</div>
+            <div class="jmap-cell gate">Strategy Memo auto-scaffolded; Nexus drafts the value hypothesis; Sentinel checks historic spend.</div>
+            <div class="jmap-cell">Scope canvas surfaces required artifacts + readiness; outline vs. full-tier made explicit.</div>
+            <div class="jmap-cell">Readiness panel flags every prerequisite; pricing template + scorecard weights locked with audit trail.</div>
+            <div class="jmap-cell">Sentinel completeness checklist; per-vendor score with cited gaps; gate blocks incomplete.</div>
+            <div class="jmap-cell">Steward enforces two-rater minimum, evidence citation, weight-set lock; sensitivity report.</div>
+            <div class="jmap-cell">Nexus + Sentinel normalize assumptions, units, and ramp to one baseline.</div>
+            <div class="jmap-cell">Nexus runs BAFO against the normalized baseline.</div>
+            <div class="jmap-cell">Atlas frames the executive decision brief with evidence and audit trail.</div>
+            <div class="jmap-cell">Steward runs the selection-readiness gate before signature.</div>
+            <div class="jmap-cell">Steward governs transition readiness and cutover evidence.</div>
+            <div class="jmap-cell">Atlas tracks realized value vs. projection with named owners.</div>
+
+            <!-- Value lane -->
+            <div class="jmap-lane-label value">Value</div>
+            <div class="jmap-cell gate value">Frames all downstream capture — skipping costs 5–10% of the deal.</div>
+            <div class="jmap-cell value">8–15% of TCO at stake; mis-tiered support eats 12–18% of an AMS deal.</div>
+            <div class="jmap-cell value">Comparable from arrival — saves 3–4 weeks of clarification.</div>
+            <div class="jmap-cell value">Prevents a 6–10% TCO error from selection-by-aesthetics.</div>
+            <div class="jmap-cell value">Blocks weight-gaming that flips the ranking.</div>
+            <div class="jmap-cell value">Reranks TCO on 1 in 3 deals; normalized winner often $1–3M cheaper.</div>
+            <div class="jmap-cell value">Recovers 4–9% of TCO — ~$1.2M–$2.7M on a $30M deal.</div>
+            <div class="jmap-cell value">Prevents re-litigation — 3–6 months and 15–25% of negotiated value.</div>
+            <div class="jmap-cell value">Catches the 1-in-20 deal that shouldn't sign: $0 vs. 15–30% of TCO.</div>
+            <div class="jmap-cell value">Bad transitions burn 6–14 months; done right protects 100% of the projection.</div>
+            <div class="jmap-cell value">Disciplined tracking realizes 70–85% vs. 30–55% without.</div>
+
+          </div>
+        </div>
+        <div class="jmap-legend">
+          <span>◆&nbsp;&nbsp;<b>Strategy gate</b> — approval opens the journey</span>
+          <span><b>1–10</b> — value-carrying steps</span>
+          <span><b>Read down</b> each step: outcome → levers → value</span>
+        </div>
+      </div>
 
       <!-- Step 01 -->
       <div class="step-card" id="step-01">

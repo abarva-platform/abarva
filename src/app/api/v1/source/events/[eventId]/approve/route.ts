@@ -1,27 +1,49 @@
 // POST /api/v1/source/events/[eventId]/approve
 //
-// Client-scoped Source approval endpoint: review and approve (or reject)
-// a sourcing event created via the commit_source_event tool. On approval
-// the event's lifecycle_state advances to 'active'; on rejection it moves
-// to 'archived'. An approval record is written to source_event_approvals.
+// Client-scoped Source approval endpoint. The event-creation approval IS the
+// strategy gate: approving attests that the reviewer read the auto-generated
+// strategy memo, the value target, and the archetype + rigor call. There is
+// no separate "Strategy" canvas stage — an approve advances the event
+// straight to Scope (the first stage with real client work).
+//
+// Actions:
+//   approve   → lifecycle_state 'active' (requires all three confirmations);
+//               advances current_stage_key 'strategy' → 'scope'.
+//   send_back → stays 'waiting_on_client'; the reviewer's comment is recorded
+//               so the creator can revise.
+//   reject    → lifecycle_state 'archived'.
+// An approval record is written to source_event_approvals in every case.
 
-import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
-import { getActiveClientRow } from "@/lib/active-client";
-import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
-import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
-import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import { getActiveClientRow } from '@/lib/active-client';
+import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import {
-  firstGovernanceBlocker,
-  normalizeApprovalReason,
-  validateApprovalReason,
-} from "@/lib/source/source-governance-enforcement";
-import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
+  evaluateSourceApprovalDecision,
+  type SourceApprovalConfirmations,
+} from '@/lib/source/approval-decision';
 
 interface ApproveBody {
-  action: "approve" | "reject";
+  action: 'approve' | 'reject' | 'send_back';
   notes?: string;
-  confirmed?: boolean;
+  confirmations?: SourceApprovalConfirmations;
+}
+
+/**
+ * Fold the reviewer's free-text comment and the attested confirmations into a
+ * single human-readable notes string for the append-only approval record.
+ */
+function composeApprovalNotes(
+  comment: string | undefined,
+  action: ApproveBody['action'],
+): string | null {
+  const trimmed = comment?.trim();
+  if (action === 'approve') {
+    const attest = 'Confirmed review of strategy memo, value target, and archetype + rigor.';
+    return trimmed ? `${attest}\n${trimmed}` : attest;
+  }
+  return trimmed ? trimmed : null;
 }
 
 export async function POST(
@@ -68,80 +90,54 @@ export async function POST(
     return Response.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  if (body.action !== "approve" && body.action !== "reject") {
-    return Response.json(
-      {
-        error: "invalid_action",
-        detail: 'action must be "approve" or "reject"',
-      },
-      { status: 400 },
-    );
-  }
-  if (body.confirmed !== true) {
-    return Response.json(
-      {
-        error: "confirmation_required",
-        detail:
-          "A confirmation step is required before approving or rejecting a Source event.",
-      },
-      { status: 409 },
-    );
-  }
-  const reason = normalizeApprovalReason(body.notes);
-  const reasonVerdict = validateApprovalReason(reason);
-  if (!reasonVerdict.ok) {
-    const blocker = firstGovernanceBlocker(reasonVerdict);
-    return Response.json(
-      {
-        error: blocker.code,
-        detail: blocker.detail,
-        blockers: reasonVerdict.blockers,
-      },
-      { status: 409 },
-    );
-  }
-
   const supabase = getAzureReadFluentClient();
 
-  // Fetch the event to check it exists and get current state
+  // Fetch the event to check it exists and get current state + stage.
   const { data: event, error: fetchError } = await supabase
-    .from("source_events")
-    .select(
-      "id, lifecycle_state, event_name, event_code, client_key, created_by_user_id",
-    )
-    .eq("id", eventId)
-    .eq("client_key", activeClient.key)
+    .from('source_events')
+    .select('id, lifecycle_state, current_stage_key, event_name, event_code, client_key')
+    .eq('id', eventId)
+    .eq('client_key', activeClient.key)
     .single();
 
   if (fetchError || !event) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }
 
+  // Resolve the decision (validates action + confirmations, decides the
+  // lifecycle transition and whether to advance the stage).
+  const decision = evaluateSourceApprovalDecision(body.action, body.confirmations, {
+    currentStageKey: event.current_stage_key as string | null,
+  });
+  if (!decision.ok) {
+    const status = decision.error === 'confirmations_required' ? 422 : 400;
+    return Response.json(
+      {
+        error: decision.error,
+        detail: decision.detail,
+        ...(decision.missingConfirmations ? { missingConfirmations: decision.missingConfirmations } : {}),
+      },
+      { status },
+    );
+  }
+
   const fromState = event.lifecycle_state as string;
-  const toState = body.action === "approve" ? "active" : "closed_rejected";
-  const isSelfApproval = event.created_by_user_id === tenancy.userId;
-  const approvalNotes = [
-    reason,
-    isSelfApproval
-      ? "Self-approval notice: approver is also the recorded event creator."
-      : null,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const toState = decision.toState!;
 
   // DB write routed through the data-plane write seam (Slice 3b): the
   // lifecycle update + the append-only approval record. On Azure the two
   // run in one transaction; on Supabase they apply individually as before.
-  // A failed approval insert stays non-fatal (logged inside the adapter).
-  const sourceWrite = selectSourceWriteAdapter(undefined, activeClient.key);
-  const approvalWrite = await sourceWrite.applyApproval({
+  const approvalWrite = await selectSourceWriteAdapter(
+    undefined,
+    activeClient.key,
+  ).applyApproval({
     eventId,
     clientKey: activeClient.key,
     fromState,
     toState,
-    approvalAction: body.action === "approve" ? "admin_review" : "rejected",
+    approvalAction: decision.approvalAction,
     approvedByUserId: tenancy.userId,
-    notes: approvalNotes,
+    notes: composeApprovalNotes(body.notes, body.action),
   });
 
   if (!approvalWrite.ok) {
@@ -151,113 +147,29 @@ export async function POST(
     );
   }
 
-  await sourceWrite.insertActivityLog({
-    eventId,
-    clientKey: activeClient.key,
-    actorUserId: tenancy.userId,
-    actorDisplayName: tenancy.email ?? tenancy.userId,
-    actorRole: tenancy.role ?? accessPolicy.accessLevel ?? "Source approver",
-    actionType:
-      body.action === "approve"
-        ? "source_event_approved"
-        : "source_event_rejected",
-    actionLabel:
-      body.action === "approve"
-        ? "Source event approved"
-        : "Source event rejected",
-    reason,
-    metadata: {
-      fromState,
-      toState,
-      selfApproval: isSelfApproval,
-    },
-    occurredAtIso: new Date().toISOString(),
-  });
-
-  // Strategy-at-P0 (flag: source_strategy_at_p0): fold Strategy into the
-  // origination gate. On approval the event advances straight to Scope and the
-  // three GATE-STRATEGY criteria are waived with an audit reason — the strategy
-  // is set and endorsed at this approval (which the sponsor co-signs), so there
-  // is no separate Strategy to-do page; the rail shows Strategy done. Best-
-  // effort: a failure here leaves the standard Strategy stage intact (a safe
-  // fallback) and never fails the approval itself.
-  let advancedToStage: string | null = null;
-  if (
-    body.action === "approve" &&
-    isFeatureEnabled(
-      { clientKey: activeClient.key, clientId: activeClient.id ?? null },
-      "source_strategy_at_p0",
-    )
-  ) {
-    const nowIso = new Date().toISOString();
-    try {
-      const stageWrite = await sourceWrite.updateStage({
+  // Advance the stage past the (unworked) strategy stage on approval. The
+  // strategy memo remains viewable in the rail; Scope is the first stage the
+  // client actually works. Non-fatal: a stage-advance miss leaves the event
+  // active at strategy rather than blocking the approval.
+  let stageAdvancedTo: string | null = null;
+  if (decision.advanceStageTo) {
+    const stageWrite = await selectSourceWriteAdapter(
+      undefined,
+      activeClient.key,
+    ).updateStage({
+      eventId,
+      clientKey: activeClient.key,
+      stageKey: decision.advanceStageTo,
+      lifecycleState: toState,
+      updatedAtIso: new Date().toISOString(),
+    });
+    if (!stageWrite.ok) {
+      console.error('[POST /api/v1/source/events/:eventId/approve] stage_advance_failed', {
         eventId,
-        clientKey: activeClient.key,
-        stageKey: "scope",
-        lifecycleState: toState,
-        updatedAtIso: nowIso,
+        message: stageWrite.error,
       });
-      if (stageWrite.ok) advancedToStage = "scope";
-
-      const { data: strategyRows } = await supabase
-        .from("source_event_gate_criterion_states")
-        .select("id, criterion_id")
-        .eq("source_event_id", eventId)
-        .in("criterion_id", [
-          "GATE-STRATEGY-01",
-          "GATE-STRATEGY-02",
-          "GATE-STRATEGY-03",
-        ]);
-
-      for (const row of strategyRows ?? []) {
-        await sourceWrite.updateGateCriterion({
-          criterionRowId: String((row as { id: string }).id),
-          state: "waived",
-          reviewerUserId: tenancy.userId,
-          reviewedAtIso: nowIso,
-          notes:
-            "Strategy set and endorsed at P0 origination (intake approval, sponsor co-signed); folded into the approval gate — no separate Strategy stage.",
-          updatedAtIso: nowIso,
-        });
-      }
-    } catch (err) {
-      console.error(
-        "[POST /api/v1/source/:eventId/approve] strategy_at_p0_failed",
-        {
-          eventId,
-          message: err instanceof Error ? err.message : String(err),
-        },
-      );
-    }
-
-    if (advancedToStage === "scope") {
-      void (async () => {
-        await autoDraftOnStageEntry(
-          {
-            eventId,
-            clientKey: activeClient.key,
-            enteredStage: "strategy",
-          },
-          { request },
-        );
-        await autoDraftOnStageEntry(
-          {
-            eventId,
-            clientKey: activeClient.key,
-            enteredStage: "scope",
-          },
-          { request },
-        );
-      })().catch((error) => {
-        console.error(
-          "[POST /api/v1/source/:eventId/approve] strategy_at_p0_autodraft_failed",
-          {
-            eventId,
-            message: error instanceof Error ? error.message : String(error),
-          },
-        );
-      });
+    } else {
+      stageAdvancedTo = decision.advanceStageTo;
     }
   }
 
@@ -266,7 +178,6 @@ export async function POST(
     eventId,
     action: body.action,
     newLifecycleState: toState,
-    selfApproval: isSelfApproval,
-    advancedToStage,
+    stageAdvancedTo,
   });
 }

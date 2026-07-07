@@ -1,0 +1,106 @@
+{
+  "baseUrl": "https://app.abarva.ai",
+  "email": "cio@apex-retail.example.com",
+  "capturedAt": "2026-06-01T12:45:48.322Z",
+  "readOnlyNote": "The capture typed into new Move and Source intake screens but did not submit or promote production records.",
+  "frames": [
+    {
+      "order": 1,
+      "slug": "trust-plane",
+      "label": "Trust Plane / setup status",
+      "url": "https://app.abarva.ai/admin",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-01-trust-plane.png"
+    },
+    {
+      "order": 2,
+      "slug": "data-trust",
+      "label": "Context data trust and segment coverage",
+      "url": "https://app.abarva.ai/admin/data-trust",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-02-data-trust.png"
+    },
+    {
+      "order": 3,
+      "slug": "intelligence-question",
+      "label": "Intelligence question typed",
+      "url": "https://app.abarva.ai/intelligence",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-03-intelligence-question.png"
+    },
+    {
+      "order": 4,
+      "slug": "pattern-map",
+      "label": "Pattern map",
+      "url": "https://app.abarva.ai/intelligence#map",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-04-pattern-map.png"
+    },
+    {
+      "order": 5,
+      "slug": "moves-portfolio",
+      "label": "Moves portfolio",
+      "url": "https://app.abarva.ai/strategic-moves",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-05-moves-portfolio.png"
+    },
+    {
+      "order": 6,
+      "slug": "create-move",
+      "label": "Create a Move workspace entry point",
+      "url": "https://app.abarva.ai/strategic-moves/new",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-06-create-move.png"
+    },
+    {
+      "order": 7,
+      "slug": "source-portfolio",
+      "label": "Source portfolio and vendor leverage",
+      "url": "https://app.abarva.ai/source/queue",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-07-source-portfolio.png"
+    },
+    {
+      "order": 8,
+      "slug": "create-source-event",
+      "label": "Create a Source event entry point",
+      "url": "https://app.abarva.ai/source/new",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-08-create-source-event.png"
+    },
+    {
+      "order": 9,
+      "slug": "tower-control",
+      "label": "Tower portfolio value control",
+      "url": "https://app.abarva.ai/tower",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-09-tower-control.png"
+    },
+    {
+      "order": 10,
+      "slug": "connectors",
+      "label": "Connector health",
+      "url": "https://app.abarva.ai/admin/connectors",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-10-connectors.png"
+    },
+    {
+      "order": 11,
+      "slug": "governance-rbac",
+      "label": "Governance and RBAC",
+      "url": "https://app.abarva.ai/admin/users-access",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-11-governance-rbac.png"
+    },
+    {
+      "order": 12,
+      "slug": "executive-close",
+      "label": "Executive close on Tower",
+      "url": "https://app.abarva.ai/tower",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-frames/apex-dynamic-12-executive-close.png"
+    }
+  ],
+  "videoWebm": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/dynamic-raw/page@40c8dfaf068ff6b95b60f8a408169dc0.webm",
+  "outputs": {
+    "narrationText": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-live-dynamic-narration.txt",
+    "narrationAudio": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-live-dynamic-narration.mp3",
+    "slideshow": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-live-demo.mp4",
+    "motion": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-live-motion.mp4",
+    "copied": [
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-live-demo.mp4",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-live-motion.mp4"
+    ],
+    "motionDurationSeconds": 232.2,
+    "slideshowDurationSeconds": 251.61102
+  },
+  "summary": "12 dynamic Apex surfaces captured with visible navigation, scrolling, typed Move intake, typed Source intake, and no production submit."
+}

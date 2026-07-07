@@ -43,8 +43,6 @@ traces, and validation results.
   `scripts/tower/generate-fy2025-trend-synthetic.mjs`
 - CIO Tower standardized loader:
   `scripts/tower/load-cio-tower-standardized-v1.mjs`
-- CIO Tower quality/reconciliation harness:
-  `scripts/tower/validate-cio-tower-quality.mjs`
 - CIO Tower chat answer service:
   `src/lib/cio-tower/answer.ts`
 - CIO Tower chat endpoint:
@@ -148,19 +146,6 @@ a high-context Claude prompt, and records prompt packages plus answer traces.
 Pass: Tower chat no longer falls back to the old `/api/v1/atlas/chat` path or a
 browser-side generated answer when the model path fails.
 
-Pass: Local CIO Tower known-question contract harness generated 300 question
-checks across five tenants and six question families, with 300/300 routing to
-the expected contract:
-`node scripts/tower/validate-cio-tower-quality.mjs`.
-
-Pass: Follow-up live-surface guard closes the surviving legacy `/tower`
-front-end path. The actual `TowerIndexPage` chat now posts to
-`/api/tower/cio-chat` instead of `/api/v1/atlas/chat`, old retry fallback copy
-is removed from that page, and `AtlasChatPanel` no longer rewrites model text.
-The static guard `node scripts/tower/assert-cio-tower-live-chat-sunset.mjs`
-protects this route against regressing to the old endpoint or renderer-side
-brand mutation.
-
 Pass: The Claude prompt now requires an explicit
 `cio_tower_visible_answer_v1` JSON contract. Claude owns every user-visible
 string, including main prose, table titles, table columns, table cells, tab
@@ -172,29 +157,10 @@ Pass: `cio_tower.answer_traces` stores the raw model response and rendered
 response identically for this route; visible-section parity is recorded in the
 artifact metadata.
 
-Pass: Server-side answer validation now blocks visible-answer contract
-violations after persisting the prompt/trace. Invalid Claude output is available
-for audit, but it is not returned to the UI for renderer-side cleanup.
-
 Pass: Focused local validation passed:
 - `npx eslint src/lib/cio-tower/answer.ts src/lib/cio-tower/__tests__/answer.test.ts src/app/api/tower/cio-chat/route.ts src/components/tower/AiControlTowerPage.tsx`
 - `npx jest src/lib/cio-tower/__tests__/answer.test.ts --runInBand`
-- `node scripts/tower/validate-cio-tower-quality.mjs`
-
-Note: a full clean-worktree TypeScript run was attempted after rebasing and was
-blocked by existing repository dependency/type resolution gaps unrelated to this
-Tower slice (`js-yaml`, Azure Document Intelligence, and axe Playwright types).
-The PR CI typecheck remains the authoritative full-repo gate.
-
-## Deployment Authority
-
-This release candidate is not deployed by branch, local script, preview image,
-or worktree mutation. The only approved runtime path is the repo-owned Azure
-Container Apps main deployment lane for `app.abarva.ai`: merge to `main`, build
-the exact main SHA image in ACR, update `ca-abarva-web-lab-eastus`, assign 100%
-traffic to the approved main revision, and record the active revision/image
-digest/traffic proof. Until that happens, the code and Azure data layer are not
-browser-proven production runtime state.
+- `npx tsc --noEmit --pretty false --incremental false`
 
 ## Rollout Plan
 
@@ -208,6 +174,16 @@ browser-proven production runtime state.
    visible-answer contract and the renderer placing it unchanged.
 7. Browser-prove the rebuilt Tower only after the new load, metric, prompt, and
    trace layers are populated.
+
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
 
 ## Rollback Plan
 

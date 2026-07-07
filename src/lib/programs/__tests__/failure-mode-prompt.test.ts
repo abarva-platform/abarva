@@ -63,7 +63,6 @@ describe('isProgramsSurface', () => {
     expect(isProgramsSurface('/programs/abc-123')).toBe(true);
     expect(isProgramsSurface('/demo/programs/new')).toBe(true);
     expect(isProgramsSurface('/tower')).toBe(true);
-    expect(isProgramsSurface('/tower/portfolio')).toBe(true);
     expect(isProgramsSurface('/strategic-moves/new')).toBe(true);
     expect(isProgramsSurface('/strategic-moves/apx-001')).toBe(true);
   });

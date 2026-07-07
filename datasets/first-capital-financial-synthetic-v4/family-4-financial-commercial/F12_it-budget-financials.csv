@@ -1,14 +1,14 @@
-budget_id,budget_area,owner_role,run_budget_usd,change_budget_usd,ai_or_data_budget_usd,labor_pct,vendor_pct,cloud_or_infra_pct,budget_pressure,capex_pct,opex_pct
-FC-BUD-001,Office of the CIO,Chief Information Officer,39680000,24320000,5120000,35,35,23,run cost crowding out change,25,75
-FC-BUD-002,Core Banking Platforms,VP Core Banking,193440000,118560000,24960000,36,42,19,within plan,25,75
-FC-BUD-003,Cards & Payments Technology,VP Cards & Payments Tech,166160000,101840000,21440000,33,35,16,run cost crowding out change,25,75
-FC-BUD-004,Channels & Digital Engineering,VP Digital,121520000,74480000,15680000,39,36,25,run cost crowding out change,25,75
-FC-BUD-005,Data Platform & AI Engineering,Chief Data & Analytics Officer,116560000,71440000,63920000,42,48,17,cloud cost growth,25,75
-FC-BUD-006,Integration & API Platform,VP Integration,59520000,36480000,32640000,44,43,22,within plan,25,75
-FC-BUD-007,"Risk, Treasury & Finance Systems",VP Risk & Finance Tech,110360000,67640000,14240000,39,38,14,run cost crowding out change,25,75
-FC-BUD-008,Financial Crimes Technology,VP Financial Crimes Tech,88040000,53960000,11360000,31,44,26,within plan,25,75
-FC-BUD-009,"Cyber, Privacy & Resilience",Chief Information Security Officer,152520000,93480000,19680000,44,35,17,run cost crowding out change,25,75
-FC-BUD-010,Cloud & Infrastructure,VP Infrastructure,157480000,96520000,86360000,38,38,22,cloud cost growth,38,62
-FC-BUD-011,ServiceNow & IT Operations,VP IT Operations,48360000,29640000,6240000,31,41,15,within plan,25,75
-FC-BUD-012,AI Governance & Model Risk Tech,Chief Data & Analytics Officer,32240000,19760000,17680000,38,39,20,cloud cost growth,25,75
-FC-BUD-013,Developer Experience & DevSecOps,VP Engineering,35960000,22040000,4640000,36,37,24,within plan,25,75
+budget_id,budget_area,owner_role,run_budget_usd,change_budget_usd,ai_or_data_budget_usd,labor_pct,vendor_pct,cloud_or_infra_pct,budget_pressure
+FC-BUD-001,Office of the CIO,Chief Information Officer,39680000,24320000,5120000,35,35,23,run cost crowding out change
+FC-BUD-002,Core Banking Platforms,VP Core Banking,193440000,118560000,24960000,36,42,19,within plan
+FC-BUD-003,Cards & Payments Technology,VP Cards & Payments Tech,166160000,101840000,21440000,33,35,16,run cost crowding out change
+FC-BUD-004,Channels & Digital Engineering,VP Digital,121520000,74480000,15680000,39,36,25,run cost crowding out change
+FC-BUD-005,Data Platform & AI Engineering,Chief Data & Analytics Officer,116560000,71440000,63920000,42,48,17,cloud cost growth
+FC-BUD-006,Integration & API Platform,VP Integration,59520000,36480000,32640000,44,43,22,within plan
+FC-BUD-007,"Risk, Treasury & Finance Systems",VP Risk & Finance Tech,110360000,67640000,14240000,39,38,14,run cost crowding out change
+FC-BUD-008,Financial Crimes Technology,VP Financial Crimes Tech,88040000,53960000,11360000,31,44,26,within plan
+FC-BUD-009,"Cyber, Privacy & Resilience",Chief Information Security Officer,152520000,93480000,19680000,44,35,17,run cost crowding out change
+FC-BUD-010,Cloud & Infrastructure,VP Infrastructure,157480000,96520000,86360000,38,38,22,cloud cost growth
+FC-BUD-011,ServiceNow & IT Operations,VP IT Operations,48360000,29640000,6240000,31,41,15,within plan
+FC-BUD-012,AI Governance & Model Risk Tech,Chief Data & Analytics Officer,32240000,19760000,17680000,38,39,20,cloud cost growth
+FC-BUD-013,Developer Experience & DevSecOps,VP Engineering,35960000,22040000,4640000,36,37,24,within plan

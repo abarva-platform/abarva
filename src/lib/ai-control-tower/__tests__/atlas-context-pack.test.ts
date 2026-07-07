@@ -44,6 +44,19 @@ const FACTS: AiControlTowerContextFact[] = [
     evidenceStatus: 'committed',
     evidenceIds: ['EV-MER-001'],
   },
+  {
+    factId: 'fc-derived-read-1',
+    clientId: 'first-capital-client-id',
+    refreshRunId: 'run-2026-05',
+    recordType: 'derived_enterprise_read',
+    recordKey: 'enterprise-read-first-capital',
+    factKey: 'enterprise_context_read',
+    factType: 'derived_read',
+    factText: 'First Capital enterprise read says AI value is gated by core modernization and model risk evidence.',
+    confidence: 0.9,
+    evidenceStatus: 'committed',
+    evidenceIds: ['datasets/first-capital-financial-synthetic-v4/derived-intelligence/enterprise-reads.json'],
+  },
 ];
 
 describe('AI Control Tower Atlas context pack', () => {
@@ -57,8 +70,26 @@ describe('AI Control Tower Atlas context pack', () => {
 
     expect(pack.activeLens).toBe('agents');
     expect(pack.intent).toBe('agent_outcome');
-    expect(pack.facts.map((fact) => fact.factId)).toEqual(['fc-fact-1']);
+    expect(pack.facts.map((fact) => fact.factId)).toEqual(['fc-fact-1', 'fc-derived-read-1']);
     expect(pack.facts.some((fact) => fact.clientId === 'meridian-client-id')).toBe(false);
+  });
+
+  it('keeps derived enterprise read facts available for Atlas even when they are not metric dictionary facts', () => {
+    const pack = buildAiControlTowerContextPack({
+      clientId: 'first-capital-client-id',
+      question: 'What is the enterprise context telling me about AI value?',
+      refreshRunId: 'run-2026-05',
+      facts: FACTS,
+    });
+
+    expect(pack.facts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          factId: 'fc-derived-read-1',
+          factKey: 'enterprise_context_read',
+        }),
+      ]),
+    );
   });
 
   it('keeps evidence guardrails when realized value is review-required', () => {

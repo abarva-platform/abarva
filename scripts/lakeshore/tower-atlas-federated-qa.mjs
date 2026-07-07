@@ -93,7 +93,7 @@ const atlasQuestions = [
   },
   {
     id: 'atlas-federated-l0-l1-boundary',
-    message: 'As the Lakeshore L0 sponsor, what can I see across Lakeshore Holdings and sibling HoldCos in Tower, and what can I not see without an explicit grant?',
+    message: 'As the Lakeshore L0 sponsor, what can I see across Morgan Street and sibling HoldCos in Tower, and what can I not see without an explicit grant?',
     requiredAny: [
       ['My read', 'Why', 'What I would do next'],
       ['consolidated'],

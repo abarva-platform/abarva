@@ -16,8 +16,8 @@ export type AbarVaLogoVariant = 'wordmark' | 'lockup'
 export type AbarVaLogoSize = 'sm' | 'md' | 'lg'
 
 interface AbarVaLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  /** Visual variant: compact Option 2 symbol + wordmark by default,
-   * or the slightly wider standard Option 2 lockup. */
+  /** Visual variant — 'wordmark' (default, canonical /brand/abarva-logo.svg)
+   *  or 'lockup' (standard Option 2 symbol + wordmark asset) */
   variant?: AbarVaLogoVariant
   /** Optional semantic size */
   size?: AbarVaLogoSize
@@ -46,8 +46,8 @@ const LOCKUP_SIZE_TO_HEIGHT: Record<AbarVaLogoSize, number> = {
 const WORDMARK_ASSET = '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg'
 const LOCKUP_ASSET = '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg'
 
-const COMPACT_ASSET_ASPECT_RATIO = 142.198 / 32
-const STANDARD_ASSET_ASPECT_RATIO = 153.277 / 32
+const WORDMARK_ASPECT_RATIO = 142.198 / 32
+const LOCKUP_ASPECT_RATIO = 153.277 / 32
 
 export function AbarVaLogo({
   variant = 'wordmark',
@@ -60,7 +60,7 @@ export function AbarVaLogo({
 }: AbarVaLogoProps) {
   const heightTable = variant === 'lockup' ? LOCKUP_SIZE_TO_HEIGHT : SIZE_TO_HEIGHT
   const computedHeight = height ?? heightTable[size]
-  const aspectRatio = variant === 'lockup' ? STANDARD_ASSET_ASPECT_RATIO : COMPACT_ASSET_ASPECT_RATIO
+  const aspectRatio = variant === 'lockup' ? LOCKUP_ASPECT_RATIO : WORDMARK_ASPECT_RATIO
   const computedWidth =
     width ?? `calc(${typeof computedHeight === 'number' ? `${computedHeight}px` : computedHeight} * ${aspectRatio})`
 

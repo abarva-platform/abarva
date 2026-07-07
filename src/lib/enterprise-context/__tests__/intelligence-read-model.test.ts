@@ -390,18 +390,19 @@ describe("enterprise context Intelligence read model", () => {
     expect(overview?.counts.records).toBe(1);
     expect(maxActiveQueries).toBe(1);
     expect(queryOrder).toEqual([
-      "enterprise_context_sources:count",
-      "enterprise_context_records:count",
-      "enterprise_context_facts:count",
-      "enterprise_context_relationships:count",
-      "enterprise_context_evidence:count",
-      "enterprise_context_quality_issues:count",
-      "enterprise_context_stewardship_tasks:count",
-      "enterprise_context_chunk_queue:count",
-      "enterprise_context_records:rows",
-      "enterprise_context_sources:rows",
-      "enterprise_context_quality_issues:rows",
-      "enterprise_context_evidence:rows",
+      'enterprise_context_sources:count',
+      'enterprise_context_records:count',
+      'enterprise_context_facts:count',
+      'enterprise_context_relationships:count',
+      'enterprise_context_evidence:count',
+      'enterprise_context_quality_issues:count',
+      'enterprise_context_stewardship_tasks:count',
+      'enterprise_context_chunk_queue:count',
+      'enterprise_context_records:rows',
+      'enterprise_context_sources:rows',
+      'enterprise_context_quality_issues:rows',
+      'enterprise_context_evidence:rows',
+      'context_insights:rows',
     ]);
 
     async function runQuery(

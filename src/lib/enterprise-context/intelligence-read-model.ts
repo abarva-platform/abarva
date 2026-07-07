@@ -1,5 +1,10 @@
-import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { canonicalTenantKey } from "@/lib/tenant/aliases";
+
+
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import {
+  getDerivedEnterpriseReadForTenant,
+  type DerivedEnterpriseReadSummary,
+} from '@/lib/enterprise-context/derived-enterprise-read';
 export interface EnterpriseContextRecordRow {
   record_type: string;
   title: string;
@@ -51,12 +56,26 @@ export interface EnterpriseContextOverviewCard {
   actions: string[];
 }
 
-export type EnterpriseContextVendorCategory =
-  | "hardware-cloud"
-  | "software-saas"
-  | "services-si";
-export type EnterpriseContextVendorHealth = "healthy" | "watch" | "risk";
-export type EnterpriseContextVendorTier = "incumbent" | "challenger" | "emerging";
+export interface EnterpriseContextInsightRow {
+  id: string;
+  headline: string;
+  so_what: string;
+  domain: string;
+  materiality: 'high' | 'medium' | 'low' | string;
+  rule_id: string;
+  evidence: string | null;
+  confidence: 'high' | 'medium' | 'low' | 'none' | string;
+  freshness_status: 'fresh' | 'attention' | 'stale' | 'review' | 'unknown' | string;
+  lifecycle_state: 'active' | 'review_required' | 'blocked_by_gap' | 'superseded' | string;
+  action: string | null;
+  entity_name: string | null;
+  entity_type: string | null;
+  derived_from_fact_ids?: string[] | null;
+}
+
+export type EnterpriseContextVendorCategory = 'hardware-cloud' | 'software-saas' | 'services-si';
+export type EnterpriseContextVendorHealth = 'healthy' | 'watch' | 'risk';
+export type EnterpriseContextVendorTier = 'incumbent' | 'challenger' | 'emerging';
 
 export interface EnterpriseContextVendorSpendRow {
   vendor: string;
@@ -90,8 +109,10 @@ export interface EnterpriseContextOverview {
   confidenceAverage: number;
   qualitySummary: Record<string, number>;
   cards: EnterpriseContextOverviewCard[];
+  contextInsights: EnterpriseContextInsightRow[];
   sentinelFacts: string[];
   vendorSpendRows: EnterpriseContextVendorSpendRow[];
+  derivedEnterpriseRead?: DerivedEnterpriseReadSummary | null;
 }
 
 const TABLES = {
@@ -111,6 +132,7 @@ export async function getEnterpriseContextOverviewForTenant(
 ): Promise<EnterpriseContextOverview | null> {
   const normalizedTenantKey = canonicalTenantKey(tenantKey?.trim());
   if (!normalizedTenantKey) return null;
+  const derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(normalizedTenantKey);
 
   try {
     const counts = await countEnterpriseContextRows(normalizedTenantKey);
@@ -144,6 +166,26 @@ export async function getEnterpriseContextOverviewForTenant(
       normalizedTenantKey,
       "evidence_usable",
     );
+    const insightRows = await fetchTenantRows<EnterpriseContextInsightRow>(
+      'context_insights',
+      normalizedTenantKey,
+      'id,headline,so_what,domain,materiality,rule_id,evidence,confidence,freshness_status,lifecycle_state,action,entity_name,entity_type,derived_from_fact_ids',
+    ).catch(() => []);
+
+    if (counts.records === 0 && !derivedEnterpriseRead) return null;
+    if (counts.records === 0 && derivedEnterpriseRead) {
+      return summarizeEnterpriseContextRows({
+        tenantKey: normalizedTenantKey,
+        tenantName: tenantName ?? normalizedTenantKey,
+        counts,
+        records: [],
+        sources: [],
+        qualityRows: [],
+        evidenceRows: [],
+        insightRows: [],
+        derivedEnterpriseRead,
+      });
+    }
 
     return summarizeEnterpriseContextRows({
       tenantKey: normalizedTenantKey,
@@ -153,9 +195,24 @@ export async function getEnterpriseContextOverviewForTenant(
       sources,
       qualityRows,
       evidenceRows,
+      insightRows,
+      derivedEnterpriseRead,
     });
   } catch (error) {
-    console.warn("[enterprise-context.overview]", error);
+    console.warn('[enterprise-context.overview]', error);
+    if (derivedEnterpriseRead) {
+      return summarizeEnterpriseContextRows({
+        tenantKey: normalizedTenantKey,
+        tenantName: tenantName ?? normalizedTenantKey,
+        counts: emptyEnterpriseContextCounts(),
+        records: [],
+        sources: [],
+        qualityRows: [],
+        evidenceRows: [],
+        insightRows: [],
+        derivedEnterpriseRead,
+      });
+    }
     return null;
   }
 }
@@ -168,6 +225,8 @@ export function summarizeEnterpriseContextRows(input: {
   sources: EnterpriseContextSourceRow[];
   qualityRows: EnterpriseContextQualityRow[];
   evidenceRows: Array<{ evidence_usable: boolean }>;
+  insightRows?: EnterpriseContextInsightRow[];
+  derivedEnterpriseRead?: DerivedEnterpriseReadSummary | null;
 }): EnterpriseContextOverview {
   const recordTypeCounts = countBy(input.records, (row) => row.record_type);
   const freshnessCounts = countBy(input.records, (row) => row.freshness_status);
@@ -194,56 +253,43 @@ export function summarizeEnterpriseContextRows(input: {
     recordsByType.set(row.record_type, bucket);
   }
 
-  const rowsOf = (...recordTypes: string[]) =>
-    recordTypes.flatMap((recordType) => recordsByType.get(recordType) ?? []);
-
-  const orgRows = rowsOf("org_decision_rights", "org_role");
-  const businessUnitRows = rowsOf(
-    "facilities_business_units",
-    "business_unit",
-    "facility",
-  );
-  const applications = rowsOf(
-    "cmdb_applications_services",
-    "cmdb_application",
-    "configuration_item",
-  );
-  const incidents = recordsByType.get("incidents") ?? [];
-  const problems = recordsByType.get("problems") ?? [];
-  const changes = recordsByType.get("changes") ?? [];
-  const renewals = recordsByType.get("renewal_calendar") ?? [];
-  const contracts = rowsOf("vendors_contract_inventory", "contract");
-  const spendRows = recordsByType.get("spend_baseline") ?? [];
-  const policies = recordsByType.get("policies_procedures") ?? [];
-  const initiatives = rowsOf("initiative_portfolio", "initiative");
-  const dataDomains = rowsOf(
-    "data_domains_stewardship",
-    "data_asset",
-    "business_capability",
-  );
-  const risks = rowsOf("risk_compliance_register", "risk");
-  const kpis = recordsByType.get("kpi_metric") ?? [];
-  const slaBreaches = incidents.filter(
-    (row) =>
-      row.payload.breach_sla === "true" || row.payload.breach_sla === true,
-  ).length;
-  const tierOneApps = applications.filter((row) =>
-    String(row.payload.criticality ?? "")
-      .toLowerCase()
-      .includes("tier 1"),
-  ).length;
-  const highRenewals = renewals.filter(
-    (row) => String(row.payload.renewal_risk ?? "").toLowerCase() === "high",
-  ).length;
-  const annualSpend = spendRows.reduce(
-    (sum, row) => sum + numeric(row.payload.run_rate_usd),
-    0,
-  );
-  const renewalExposure = renewals.reduce(
-    (sum, row) => sum + numeric(row.payload.estimated_value_usd),
-    0,
-  );
+  const applications = recordsByType.get('cmdb_applications_services') ?? [];
+  const incidents = recordsByType.get('incidents') ?? [];
+  const problems = recordsByType.get('problems') ?? [];
+  const changes = recordsByType.get('changes') ?? [];
+  const renewals = recordsByType.get('renewal_calendar') ?? [];
+  const contracts = recordsByType.get('vendors_contract_inventory') ?? [];
+  const spendRows = recordsByType.get('spend_baseline') ?? [];
+  const policies = recordsByType.get('policies_procedures') ?? [];
+  const initiatives = recordsByType.get('initiative_portfolio') ?? [];
+  const dataDomains = recordsByType.get('data_domains_stewardship') ?? [];
+  const risks = recordsByType.get('risk_compliance_register') ?? [];
+  const slaBreaches = incidents.filter((row) => row.payload.breach_sla === 'true' || row.payload.breach_sla === true).length;
+  const tierOneApps = applications.filter((row) => String(row.payload.criticality ?? '').toLowerCase().includes('tier 1')).length;
+  const highRenewals = renewals.filter((row) => String(row.payload.renewal_risk ?? '').toLowerCase() === 'high').length;
+  const annualSpend = spendRows.reduce((sum, row) => sum + numeric(row.payload.run_rate_usd), 0);
+  const renewalExposure = renewals.reduce((sum, row) => sum + numeric(row.payload.estimated_value_usd), 0);
   const vendorSpendRows = buildVendorSpendRows({ contracts, renewals, spendRows });
+  const derivedContextInsights: EnterpriseContextInsightRow[] = (input.derivedEnterpriseRead?.insights ?? []).map((insight, index) => ({
+    id: insight.id,
+    headline: insight.headline,
+    so_what: insight.soWhat,
+    domain: insight.domain || input.derivedEnterpriseRead?.industry || 'Enterprise context',
+    materiality: insight.severity,
+    rule_id: `derived-enterprise-read:${input.derivedEnterpriseRead?.readId ?? 'unknown'}:${index + 1}`,
+    evidence: insight.evidence.join('; ') || input.derivedEnterpriseRead?.source.path || null,
+    confidence: insight.severity === 'high' ? 'high' : 'medium',
+    freshness_status: 'fresh',
+    lifecycle_state: 'active',
+    action: input.derivedEnterpriseRead?.recommendedMoves[index]?.decision ?? 'Review evidence and decide next move',
+    entity_name: input.derivedEnterpriseRead?.tenantName ?? input.tenantName,
+    entity_type: 'derived_enterprise_read',
+    derived_from_fact_ids: insight.evidence,
+  }));
+  const contextInsights = [...derivedContextInsights, ...(input.insightRows ?? [])].sort((a, b) => {
+    const materialityOrder = (value: string) => value === 'high' ? 0 : value === 'medium' ? 1 : 2;
+    return materialityOrder(a.materiality) - materialityOrder(b.materiality);
+  });
 
   const cards: EnterpriseContextOverviewCard[] = [
     {
@@ -360,11 +406,24 @@ export function summarizeEnterpriseContextRows(input: {
   ];
 
   const sentinelFacts = [
+    ...(input.derivedEnterpriseRead ? [
+      `${input.tenantName} Derived Enterprise Read: ${input.derivedEnterpriseRead.headline}`,
+      `${input.tenantName} executive summary: ${input.derivedEnterpriseRead.executiveSummary}`,
+      `${input.tenantName} architecture pattern: ${input.derivedEnterpriseRead.architecturePattern}`,
+      `${input.tenantName} benchmark/north-star read: ${input.derivedEnterpriseRead.northStar} ${input.derivedEnterpriseRead.peerImplication}`,
+      ...input.derivedEnterpriseRead.recommendedMoves.slice(0, 3).map((move) =>
+        `Recommended move: ${move.title}. Owner: ${move.owner}. Decision: ${move.decision}. Expected impact: ${move.expectedImpact}.`,
+      ),
+      `Sentinel rule: lead with the Derived Enterprise Read before internal substrate counts; use raw context counts only as supporting proof.`,
+    ] : []),
     `${input.tenantName} Enterprise Context: ${input.counts.records} records, ${input.counts.facts} facts, ${input.counts.relationships} CI relationships, and ${input.counts.evidence} evidence rows are loaded from internal context sources.`,
     `Enterprise Context domains include org and decision rights (${orgRows.length}), facilities/business units (${businessUnitRows.length}), systems/services (${applications.length}), vendors/contracts (${contracts.length}), renewals (${renewals.length}), spend baseline (${spendRows.length}), KPIs/metrics (${kpis.length}), incidents (${incidents.length}), problems (${problems.length}), changes (${changes.length}), policies/procedures (${policies.length}), initiatives (${initiatives.length}), data domains/capabilities (${dataDomains.length}), and risks/compliance (${risks.length}).`,
     `Evidence posture: ${evidenceUsableCount}/${input.counts.evidence} evidence rows are currently usable; ${input.counts.qualityIssues} quality issues and ${input.counts.stewardshipTasks} stewardship tasks remain open.`,
     `Operational posture: ${incidents.length} incidents, ${problems.length} problems, ${changes.length} changes, and ${slaBreaches} SLA-breaching incidents are available for current-state guidance.`,
     `Commercial posture: ${contracts.length} contracts, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
+    ...contextInsights.slice(0, 8).map((insight) =>
+      `CIO insight ${insight.domain}: ${insight.headline}. So what: ${insight.so_what} Action: ${insight.action ?? 'review evidence'}. Evidence: ${insight.evidence ?? 'context insights'}.`,
+    ),
     `Sentinel rule: answer ${input.tenantName} current-state questions from Enterprise Context first, cite internal source systems and freshness/confidence, and mark external or industry guidance as outside this internal-context layer.`,
   ];
 
@@ -379,215 +438,23 @@ export function summarizeEnterpriseContextRows(input: {
     confidenceAverage,
     qualitySummary,
     cards,
+    contextInsights,
     sentinelFacts,
     vendorSpendRows,
+    derivedEnterpriseRead: input.derivedEnterpriseRead ?? null,
   };
 }
 
-async function getChunkBackedEnterpriseContextOverview(input: {
-  tenantKey: string;
-  tenantName: string;
-}): Promise<EnterpriseContextOverview | null> {
-  const chunks = await fetchTenantRows<EnterpriseContextChunkRow>(
-    "enterprise_context_chunks",
-    input.tenantKey,
-    "source_doc,source_record_id,chunk_id,chunk_text,embedding_status,embedding_model,embedded_at,provenance,chunk_metadata",
-  );
-
-  if (chunks.length === 0) return null;
-  return summarizeEnterpriseContextChunks({ ...input, chunks });
-}
-
-export function summarizeEnterpriseContextChunks(input: {
-  tenantKey: string;
-  tenantName: string;
-  chunks: EnterpriseContextChunkRow[];
-}): EnterpriseContextOverview {
-  const recordTypeCounts = countBy(input.chunks, (row) =>
-    recordTypeFromSourceDoc(row.source_doc),
-  );
-  const statusCounts = countBy(
-    input.chunks,
-    (row) => row.embedding_status ?? "pending",
-  );
-  const embedded = statusCounts.embedded ?? 0;
-  const pending = statusCounts.pending ?? 0;
-  const failed = statusCounts.failed ?? 0;
-  const sourceSystems = [
-    ...new Set(input.chunks.map((row) => sourceDocLabel(row.source_doc))),
-  ].sort();
-  const sourceDocPreview = sourceSystems.slice(0, 6).join(", ");
-
-  const counts: EnterpriseContextOverview["counts"] = {
-    sources: sourceSystems.length,
+function emptyEnterpriseContextCounts(): EnterpriseContextOverview['counts'] {
+  return {
+    sources: 0,
     records: 0,
     facts: 0,
-    relationships: recordTypeCounts.ci_relationships_dependencies ?? 0,
-    evidence: input.chunks.length,
-    qualityIssues: failed,
-    stewardshipTasks: pending,
-    chunkQueue: pending + failed,
-  };
-
-  const freshnessCounts = {
-    fresh: embedded,
-    attention: pending,
-    stale: failed,
-  };
-  const confidenceAverage =
-    input.chunks.length > 0 ? embedded / input.chunks.length : 0;
-
-  const chunkCountFor = (...types: string[]) =>
-    types.reduce((sum, type) => sum + (recordTypeCounts[type] ?? 0), 0);
-  const orgChunks = chunkCountFor(
-    "org_decision_rights",
-    "facilities_business_units",
-  );
-  const systemChunks = chunkCountFor(
-    "cmdb_applications_services",
-    "ci_relationships_dependencies",
-  );
-  const serviceChunks = chunkCountFor(
-    "incidents",
-    "problems",
-    "changes",
-    "slas",
-  );
-  const commercialChunks = chunkCountFor(
-    "vendors_contract_inventory",
-    "renewal_calendar",
-    "spend_baseline",
-  );
-  const governanceChunks = chunkCountFor(
-    "policies_procedures",
-    "risk_compliance_register",
-  );
-  const portfolioChunks = chunkCountFor(
-    "initiative_portfolio",
-    "data_domains_stewardship",
-  );
-
-  const cards: EnterpriseContextOverviewCard[] = [
-    {
-      key: "chunk-backed-loader-coverage",
-      title: "Loaded context files",
-      whatWeKnow: `${sourceSystems.length} Admin-loaded source files are available as ${input.chunks.length} chunk-backed evidence rows.`,
-      whyItMatters:
-        "This proves the tenant has retrievable setup evidence even while normalized Enterprise Context tables are still catching up.",
-      owner: "Context Stewardship",
-      freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(confidenceAverage),
-      evidenceCount: input.chunks.length,
-      sourceSystems: sourceSystems.slice(0, 4),
-      actions: [
-        "Ask Sentinel",
-        "Open evidence map",
-        "Review loader files",
-        "Add to Tower watchlist",
-      ],
-    },
-    {
-      key: "chunk-backed-embedding-coverage",
-      title: "Embedded evidence coverage",
-      whatWeKnow: `${embedded}/${input.chunks.length} context chunks are embedded for retrieval; ${pending} are pending and ${failed} failed.`,
-      whyItMatters:
-        "Sentinel and Nexus can only ground answers on context that has been committed and embedded.",
-      owner: "AI Platform Operations",
-      freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(confidenceAverage),
-      evidenceCount: embedded,
-      sourceSystems: sourceSystems.slice(0, 4),
-      actions: ["Ask Sentinel", "Review pending chunks", "Run embedding proof"],
-    },
-    {
-      key: "chunk-backed-org-systems",
-      title: "Organization and systems context",
-      whatWeKnow: `${orgChunks} org/facility chunks and ${systemChunks} system/dependency chunks are loaded from the setup templates.`,
-      whyItMatters:
-        "AI strategy, modernization, and sourcing decisions need named owners, decision rights, facilities, applications, and dependencies.",
-      owner: "Enterprise Architecture",
-      freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(confidenceAverage),
-      evidenceCount: orgChunks + systemChunks,
-      sourceSystems: sourceSystems
-        .filter((doc) => /org|facilities|cmdb|relationships/i.test(doc))
-        .slice(0, 4),
-      actions: ["Ask Sentinel", "Link to Move", "Open dependency brief"],
-    },
-    {
-      key: "chunk-backed-service-pressure",
-      title: "Service and operations context",
-      whatWeKnow: `${serviceChunks} incident, problem, change, and SLA chunks are loaded for operational pressure analysis.`,
-      whyItMatters:
-        "This lets current-state recommendations reflect actual service pain instead of generic transformation language.",
-      owner: "IT Service Management",
-      freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(confidenceAverage),
-      evidenceCount: serviceChunks,
-      sourceSystems: sourceSystems
-        .filter((doc) => /incident|problem|change|sla/i.test(doc))
-        .slice(0, 4),
-      actions: ["Ask Sentinel", "Open blocker brief", "Add to Tower watchlist"],
-    },
-    {
-      key: "chunk-backed-commercial-context",
-      title: "Vendor, renewal, and spend context",
-      whatWeKnow: `${commercialChunks} vendor, renewal, and spend chunks are loaded for financial and sourcing context.`,
-      whyItMatters:
-        "Commercial evidence gives CXOs a defensible starting point for prioritizing spend, renewal, and partner decisions.",
-      owner: "Finance and Sourcing",
-      freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(confidenceAverage),
-      evidenceCount: commercialChunks,
-      sourceSystems: sourceSystems
-        .filter((doc) => /vendor|renewal|spend/i.test(doc))
-        .slice(0, 4),
-      actions: ["Ask Sentinel", "Create Source event", "Generate brief"],
-    },
-    {
-      key: "chunk-backed-governance-portfolio",
-      title: "Governance and portfolio context",
-      whatWeKnow: `${governanceChunks} policy/risk chunks and ${portfolioChunks} initiative/data-domain chunks are loaded.`,
-      whyItMatters:
-        "Moves can now tie recommendations to governance constraints, active initiatives, and data-domain ownership.",
-      owner: "Enterprise PMO",
-      freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(confidenceAverage),
-      evidenceCount: governanceChunks + portfolioChunks,
-      sourceSystems: sourceSystems
-        .filter((doc) =>
-          /polic|risk|initiative|data-domain|data_domains/i.test(doc),
-        )
-        .slice(0, 4),
-      actions: ["Ask Sentinel", "Link to Move", "Review governance evidence"],
-    },
-  ];
-
-  const sentinelFacts = [
-    `${input.tenantName} Enterprise Context: ${embedded} embedded context chunks across ${sourceSystems.length} Admin-loaded source files are available from the chunk-backed context layer.`,
-    `Embedded posture: ${embedded}/${input.chunks.length} chunks embedded, ${pending} pending, and ${failed} failed.`,
-    `Loaded source documents include ${sourceDocPreview}${sourceSystems.length > 6 ? ", and more" : ""}.`,
-    `Context domains include org/decision rights (${recordTypeCounts.org_decision_rights ?? 0}), facilities/business units (${recordTypeCounts.facilities_business_units ?? 0}), systems/services (${recordTypeCounts.cmdb_applications_services ?? 0}), dependencies (${recordTypeCounts.ci_relationships_dependencies ?? 0}), vendors/contracts (${recordTypeCounts.vendors_contract_inventory ?? 0}), renewals (${recordTypeCounts.renewal_calendar ?? 0}), spend baseline (${recordTypeCounts.spend_baseline ?? 0}), incidents (${recordTypeCounts.incidents ?? 0}), problems (${recordTypeCounts.problems ?? 0}), changes (${recordTypeCounts.changes ?? 0}), SLAs (${recordTypeCounts.slas ?? 0}), policies/procedures (${recordTypeCounts.policies_procedures ?? 0}), initiatives (${recordTypeCounts.initiative_portfolio ?? 0}), data domains (${recordTypeCounts.data_domains_stewardship ?? 0}), and risk/compliance (${recordTypeCounts.risk_compliance_register ?? 0}).`,
-    `Sentinel rule: answer current-state questions from Admin-loaded context chunks when normalized Enterprise Context records are not yet populated, label the basis as chunk-backed loader evidence, and do not describe chunks as structured records or facts.`,
-  ];
-
-  return {
-    tenantKey: input.tenantKey,
-    tenantName: input.tenantName,
-    counts,
-    recordTypeCounts,
-    freshnessCounts,
-    sourceSystems,
-    evidenceUsableCount: embedded,
-    confidenceAverage,
-    qualitySummary: {
-      "embedding:embedded": embedded,
-      "embedding:pending": pending,
-      "embedding:failed": failed,
-    },
-    cards,
-    sentinelFacts,
-    vendorSpendRows: [],
+    relationships: 0,
+    evidence: 0,
+    qualityIssues: 0,
+    stewardshipTasks: 0,
+    chunkQueue: 0,
   };
 }
 
@@ -600,6 +467,74 @@ function buildVendorSpendRows(input: {
   for (const renewal of input.renewals) {
     const key = normalizeVendorKey(vendorNameFor(renewal));
     if (key && !renewalByVendor.has(key)) renewalByVendor.set(key, renewal);
+  }
+
+  const rows = input.contracts
+    .map((contract, index): EnterpriseContextVendorSpendRow | null => {
+      const vendor = vendorNameFor(contract);
+      if (!vendor) return null;
+      const renewal = renewalByVendor.get(normalizeVendorKey(vendor) ?? '');
+      const spend = firstNumeric(
+        contract.payload.annual_spend_usd,
+        contract.payload.annualized_spend_usd,
+        contract.payload.ttm_spend_usd,
+        contract.payload.run_rate_usd,
+        contract.payload.contract_value_usd,
+        contract.payload.estimated_annual_value_usd,
+        contract.payload.estimated_value_usd,
+        renewal?.payload.estimated_value_usd,
+        renewal?.payload.contract_value_usd,
+      );
+      const health = healthFor(contract, renewal);
+      return {
+        vendor,
+        category: categoryFor(contract),
+        subcategory: subcategoryFor(contract),
+        spendUsdM: spend / 1_000_000,
+        spendLabel: spend > 0 ? formatUsd(spend) : 'Not sized',
+        tier: tierFor(contract, index),
+        health,
+        renewsInMonths: renewalMonthsFor(contract, renewal),
+        takeaway: takeawayFor(contract, renewal, health),
+      };
+    })
+    .filter((row): row is EnterpriseContextVendorSpendRow => Boolean(row));
+
+  if (rows.length > 0) {
+    return rows.sort((a, b) => b.spendUsdM - a.spendUsdM).slice(0, 25);
+  }
+
+  return input.spendRows
+    .map((row, index): EnterpriseContextVendorSpendRow | null => {
+      const vendor = stringValue(row.payload.vendor_name, row.payload.vendor, row.payload.supplier_name, row.title);
+      if (!vendor) return null;
+      const spend = firstNumeric(
+        row.payload.run_rate_usd,
+        row.payload.annual_spend_usd,
+        row.payload.annualized_spend_usd,
+        row.payload.ttm_spend_usd,
+      );
+      return {
+        vendor,
+        category: categoryFor(row),
+        subcategory: subcategoryFor(row),
+        spendUsdM: spend / 1_000_000,
+        spendLabel: spend > 0 ? formatUsd(spend) : 'Not sized',
+        tier: index === 0 ? 'incumbent' : 'challenger',
+        health: 'watch',
+        renewsInMonths: null,
+        takeaway: `Spend baseline loaded from ${row.source_system}; confirm contract and renewal detail before acting.`,
+      };
+    })
+    .filter((row): row is EnterpriseContextVendorSpendRow => Boolean(row))
+    .sort((a, b) => b.spendUsdM - a.spendUsdM)
+    .slice(0, 25);
+}
+
+async function countEnterpriseContextRows(tenantKey: string): Promise<EnterpriseContextOverview['counts']> {
+  const counts: Partial<EnterpriseContextOverview['counts']> = {};
+  for (const [key, table] of Object.entries(TABLES)) {
+    counts[key as keyof EnterpriseContextOverview['counts']] = await countRows(table, tenantKey);
   }
 
   const rows = input.contracts
@@ -758,10 +693,10 @@ function firstNumeric(...values: unknown[]): number {
 
 function stringValue(...values: unknown[]): string {
   for (const value of values) {
-    if (typeof value === "string" && value.trim()) return value.trim();
-    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   }
-  return "";
+  return '';
 }
 
 function vendorNameFor(row: EnterpriseContextRecordRow): string {
@@ -777,7 +712,7 @@ function vendorNameFor(row: EnterpriseContextRecordRow): string {
 }
 
 function normalizeVendorKey(value: string): string | null {
-  const key = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const key = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   return key || null;
 }
 
@@ -792,42 +727,36 @@ function categoryFor(row: EnterpriseContextRecordRow): EnterpriseContextVendorCa
     row.payload.platform,
     row.payload.description,
   ]
-    .map((value) => String(value ?? "").toLowerCase())
-    .join(" ");
+    .map((value) => String(value ?? '').toLowerCase())
+    .join(' ');
 
   if (/\b(si|systems integrator|implementation|consulting|advisory|managed service|staff aug|outsourc|professional service)\b/.test(text)) {
-    return "services-si";
+    return 'services-si';
   }
   if (/\b(cloud|aws|azure|gcp|google cloud|vmware|dell|emc|cisco|network|storage|compute|data center|datacenter|hyperconverged|hci|hardware|infrastructure)\b/.test(text)) {
-    return "hardware-cloud";
+    return 'hardware-cloud';
   }
-  return "software-saas";
+  return 'software-saas';
 }
 
 function subcategoryFor(row: EnterpriseContextRecordRow): string {
-  return (
-    stringValue(
-      row.payload.subcategory,
-      row.payload.spend_subcategory,
-      row.payload.contract_type,
-      row.payload.platform,
-      row.payload.application_category,
-      row.payload.category,
-      row.record_type,
-    ) || "Enterprise vendor"
-  );
+  return stringValue(
+    row.payload.subcategory,
+    row.payload.spend_subcategory,
+    row.payload.contract_type,
+    row.payload.platform,
+    row.payload.application_category,
+    row.payload.category,
+    row.record_type,
+  ) || 'Enterprise vendor';
 }
 
 function tierFor(row: EnterpriseContextRecordRow, index: number): EnterpriseContextVendorTier {
-  const text = stringValue(
-    row.payload.tier,
-    row.payload.vendor_tier,
-    row.payload.relationship_type,
-  ).toLowerCase();
-  if (text.includes("emerging")) return "emerging";
-  if (text.includes("challenger")) return "challenger";
-  if (text.includes("incumbent") || text.includes("strategic")) return "incumbent";
-  return index < 8 ? "incumbent" : "challenger";
+  const text = stringValue(row.payload.tier, row.payload.vendor_tier, row.payload.relationship_type).toLowerCase();
+  if (text.includes('emerging')) return 'emerging';
+  if (text.includes('challenger')) return 'challenger';
+  if (text.includes('incumbent') || text.includes('strategic')) return 'incumbent';
+  return index < 8 ? 'incumbent' : 'challenger';
 }
 
 function healthFor(
@@ -843,12 +772,12 @@ function healthFor(
     renewal?.payload.renewal_risk,
     renewal?.payload.risk_level,
   ]
-    .map((value) => String(value ?? "").toLowerCase())
-    .join(" ");
+    .map((value) => String(value ?? '').toLowerCase())
+    .join(' ');
 
-  if (/\b(high|critical|red|at risk|risk)\b/.test(text)) return "risk";
-  if (/\b(medium|watch|amber|yellow|attention)\b/.test(text)) return "watch";
-  return "healthy";
+  if (/\b(high|critical|red|at risk|risk)\b/.test(text)) return 'risk';
+  if (/\b(medium|watch|amber|yellow|attention)\b/.test(text)) return 'watch';
+  return 'healthy';
 }
 
 function renewalMonthsFor(
@@ -882,12 +811,8 @@ function takeawayFor(
     renewal?.payload.notes,
   );
   if (note) return note;
-  if (health === "risk") {
-    return `Risk signal loaded from ${contract.source_system}; review renewal and dependency evidence before action.`;
-  }
-  if (health === "watch") {
-    return `Watch item loaded from ${contract.source_system}; confirm owner, renewal timing, and linked initiatives.`;
-  }
+  if (health === 'risk') return `Risk signal loaded from ${contract.source_system}; review renewal and dependency evidence before action.`;
+  if (health === 'watch') return `Watch item loaded from ${contract.source_system}; confirm owner, renewal timing, and linked initiatives.`;
   return `Loaded from ${contract.source_system}; validate spend, renewal, and dependency evidence before acting.`;
 }
 

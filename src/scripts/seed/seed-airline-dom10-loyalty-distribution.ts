@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — Loyalty Programme, FFP & GDS Distribution
 // Domain: Frequent Flyer Programme (FFP), Loyalty Partnerships & GDS Distribution
 // Code range: A3000–A3299 (300 patterns)

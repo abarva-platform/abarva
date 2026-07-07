@@ -511,7 +511,7 @@ export async function generateDraft(
   const { client } = await getAuditedAnthropicClient({
     tenantId: aiContext.tenantId,
     workflow: aiContext.workflow,
-    model: "claude-opus-4-8",
+    model: 'claude-opus-4-8',
     prompt,
     dataClass: "confidential",
     artifactId: aiContext.artifactId,
@@ -519,7 +519,7 @@ export async function generateDraft(
     metadata: aiContext.metadata,
   });
   const resp = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: 'claude-opus-4-8',
     max_tokens: 32_000,
     temperature: 0.3,
     messages: [{ role: "user", content: prompt }],
@@ -568,15 +568,15 @@ Return JSON only with schema:
     const { client } = await getAuditedAnthropicClient({
       tenantId: args.aiContext.tenantId,
       workflow: `${args.aiContext.workflow}:rubric-review`,
-      model: "claude-opus-4-8",
-      prompt: [RUBRIC_REVIEW_SYSTEM, prompt].join("\n\n"),
-      dataClass: "confidential",
+      model: 'claude-opus-4-8',
+      prompt: [RUBRIC_REVIEW_SYSTEM, prompt].join('\n\n'),
+      dataClass: 'confidential',
       artifactId: args.aiContext.artifactId,
       artifactType: args.aiContext.artifactType,
       metadata: args.aiContext.metadata,
     });
     const resp = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: 'claude-opus-4-8',
       max_tokens: 4_000,
       system: RUBRIC_REVIEW_SYSTEM,
       messages: [{ role: "user", content: prompt }],
@@ -661,14 +661,14 @@ ${renderRubricCriteria(args.spec.quality_rubric)}`;
   const { client } = await getAuditedAnthropicClient({
     tenantId: args.aiContext.tenantId,
     workflow: `${args.aiContext.workflow}:revision`,
-    model: "claude-opus-4-8",
+    model: 'claude-opus-4-8',
     prompt,
     dataClass: "confidential",
     artifactType: args.aiContext.artifactType,
     metadata: args.aiContext.metadata,
   });
   const resp = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: 'claude-opus-4-8',
     max_tokens: 32_000,
     temperature: 0.3,
     messages: [{ role: "user", content: prompt }],

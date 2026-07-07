@@ -161,6 +161,13 @@ export const ALL_CLIENTS: ClientOption[] = [
     color: "#2563EB",
     vertical: "Diversified Holdco",
   },
+  {
+    id: 'lakeshore',
+    name: 'Lakeshore Industries',
+    shortName: 'Lakeshore',
+    color: '#2563EB',
+    vertical: 'Industrial Manufacturing',
+  },
 ] as const;
 
 export type ClientKey = (typeof ALL_CLIENTS)[number]["id"];
@@ -171,52 +178,22 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   // 'Heliara Health' / 'Heliara Health Alliance' are legacy demo names for
   // Meridian — they should never surface to a logged-in user but are kept
   // as recognized aliases so the DB-lookup fallback in active-client.ts
-  // and canonicalClientDisplayName below resolve them to the full system name.
-  meridian: [
-    DEMO_SAFE_CLIENT_NAMES.meridian,
-    "Meridian Health",
-    "Meridian Health System",
-    "Heliara Health",
-    "Heliara Health Alliance",
-    "Heliara",
-  ],
-  arcturus: [
-    DEMO_SAFE_CLIENT_NAMES.arcturus,
-    "Arcturus Financial",
-    "Arcturus Financial Group",
-    "First Capital Financial",
-    "First Capital",
-  ],
-  apexretail: [
-    DEMO_SAFE_CLIENT_NAMES.apexretail,
-    "Apex Retail",
-    "Apex Retail Group",
-  ],
-  northstar: [
-    DEMO_SAFE_CLIENT_NAMES.northstar,
-    "Northstar Clinical Technologies",
-    "Northstar",
-  ],
-  skyharbor: [
-    DEMO_SAFE_CLIENT_NAMES.skyharbor,
-    "SkyHarbor Air",
-    "SkyHarbor Airlines",
-    "SkyHarbor",
-  ],
-  lakeshore: [
-    DEMO_SAFE_CLIENT_NAMES.lakeshore,
-    "Lakeshore Holdings",
-    "Lakeshore",
-  ],
+  // and canonicalClientDisplayName below resolve them to 'Meridian Health'.
+  meridian: ['Meridian Health', 'Meridian Health System', 'Heliara Health', 'Heliara Health Alliance', 'Heliara'],
+  arcturus: ['Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
+  apexretail: ['Apex Retail', 'Apex Retail Group'],
+  northstar: ['Northstar Clinical Technologies', 'Northstar'],
+  skyharbor: ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
+  lakeshore: ['Lakeshore Industries', 'Lakeshore Holdings', 'Lakeshore'],
 };
 
 export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
-  meridian: "HEALTHCARE_IDN",
-  arcturus: "FINSERV",
-  apexretail: "RETAIL",
-  northstar: "MEDTECH",
-  skyharbor: "AIRLINE",
-  lakeshore: "DIVERSIFIED",
+  meridian: 'HEALTHCARE_IDN',
+  arcturus: 'FINSERV',
+  apexretail: 'RETAIL',
+  northstar: 'MEDTECH',
+  skyharbor: 'AIRLINE',
+  lakeshore: 'INDUSTRIAL',
 };
 
 export function industryCodeForClientName(
@@ -312,26 +289,17 @@ export function canonicalClientDisplayName(args: {
   }
 
   if (
-    key === "skyharbor" ||
-    key === "skyharbor-air" ||
-    normalizedName === "skyharbor air" ||
-    normalizedName === "skyharbor airlines" ||
-    normalizedName === "skyharbor" ||
-    normalizedName === "airline demo"
+    key === 'lakeshore' ||
+    key === 'lakeshore-industries' ||
+    key === 'lakeshore-holdings' ||
+    normalizedName === 'lakeshore industries' ||
+    normalizedName === 'lakeshore holdings' ||
+    normalizedName === 'lakeshore'
   ) {
-    return DEMO_SAFE_CLIENT_NAMES.skyharbor;
+    return 'Lakeshore Industries';
   }
 
-  if (
-    key === "lakeshore" ||
-    key === "lakeshore-holdings" ||
-    normalizedName === "lakeshore holdings" ||
-    normalizedName === "lakeshore"
-  ) {
-    return DEMO_SAFE_CLIENT_NAMES.lakeshore;
-  }
-
-  if (name) return demoSafeClientText(name);
+  if (name) return name;
   const option = getClientOption(args.key);
   return option?.name ?? null;
 }
@@ -348,16 +316,25 @@ export function canonicalClientDisplayName(args: {
  * been removed; if a real customer email needs routing, do it through
  * Clerk metadata, not substring inference.
  */
-const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> =
-  [
-    // Canonical demo accounts (role-based emails, founder direction 2026-05-08)
-    ["apex-retail.example.com", "apexretail"],
-    ["meridian-health.example.com", "meridian"],
-    ["firstcapital.example.com", "arcturus"],
-    ["northstar-clinical.example.com", "northstar"],
-    ["skyharbor-air.example.com", "skyharbor"],
-    ["lakeshore-holdings.example.com", "lakeshore"],
-  ];
+const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
+  // Canonical demo accounts (role-based emails, founder direction 2026-05-08)
+  ['apex-retail.example.com', 'apexretail'],
+  ['meridian-health.example.com', 'meridian'],
+  ['firstcapital.example.com', 'arcturus'],
+  ['northstar-clinical.example.com', 'northstar'],
+  ['skyharbor-air.example.com', 'skyharbor'],
+  ['lakeshore-industries.example.com', 'lakeshore'],
+];
+
+const EXACT_EMAIL_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
+  ['anand.sundaram+apex@thesundaram.com', 'apexretail'],
+  ['anand.sundaram+firstcapital@thesundaram.com', 'arcturus'],
+  ['anand.sundaram+meridian@thesundaram.com', 'meridian'],
+  ['anand.sundaram+skyharbor@thesundaram.com', 'skyharbor'],
+  ['anand.sundaram+lakeshore@thesundaram.com', 'lakeshore'],
+  ['anand.sundaram@thesundaram.com', 'meridian'],
+  ['anandshp@gmail.com', 'lakeshore'],
+];
 
 /**
  * Legacy `<prefix>+<role>@abarva.com` local-part-suffix routes. These
@@ -450,6 +427,10 @@ export function inferClientKeyFromEmail(
 
   const [localPart, domain] = normalized.split("@", 2);
   if (!localPart || !domain) return null;
+
+  for (const [candidate, key] of EXACT_EMAIL_TO_CLIENT_KEY) {
+    if (normalized === candidate) return key;
+  }
 
   for (const [suffix, key] of EMAIL_DOMAIN_TO_CLIENT_KEY) {
     if (domain === suffix || domain.endsWith(`.${suffix}`)) return key;

@@ -49,6 +49,7 @@ export function buildAiControlTowerContextPack(
   const facts = (input.facts ?? []).filter((fact) => {
     if (fact.clientId !== input.clientId) return false;
     if (input.refreshRunId && fact.refreshRunId !== input.refreshRunId) return false;
+    if (fact.recordType === 'derived_enterprise_read' || fact.recordType === 'derived_enterprise_insight') return true;
     if (selectedMetricIds.has(fact.factKey) || intentMetricIds.has(fact.factKey)) return true;
     return metricDictionary.some((metric) => metric.metricId === fact.factKey);
   });

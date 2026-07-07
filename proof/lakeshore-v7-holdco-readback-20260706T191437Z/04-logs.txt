@@ -1,0 +1,302 @@
+2026-07-06T19:16:05.56803  Connecting to the container 'db-migrate'...
+2026-07-06T19:16:05.76127  Successfully Connected to container: 'db-migrate' [Execution: 'job-abarva-private-operator-eus-d9a822r', Replica: 'job-abarva-private-operator-eus-d9a822r-g7r5j']
+2026-07-06T19:15:38.2086601Z stdout F         "employees": 23600,
+2026-07-06T19:15:38.2086613Z stdout F         "tech_budget_usd": "381200000"
+2026-07-06T19:15:38.2086625Z stdout F       },
+2026-07-06T19:15:38.2086637Z stdout F       {
+2026-07-06T19:15:38.2086649Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2087016Z stdout F         "count": 14,
+2026-07-06T19:15:38.2087053Z stdout F         "revenue_usd": "14240000000",
+2026-07-06T19:15:38.2087070Z stdout F         "employees": 23600,
+2026-07-06T19:15:38.2087083Z stdout F         "tech_budget_usd": "308200000"
+2026-07-06T19:15:38.2087095Z stdout F       }
+2026-07-06T19:15:38.2087116Z stdout F     ],
+2026-07-06T19:15:38.2087129Z stdout F     "entityNames": [
+2026-07-06T19:15:38.2087142Z stdout F       {
+2026-07-06T19:15:38.2087154Z stdout F         "entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2087166Z stdout F         "entity_scope": "holdco",
+2026-07-06T19:15:38.2087496Z stdout F         "parent_entity_name": null,
+2026-07-06T19:15:38.2087514Z stdout F         "revenue_usd": "7120000000",
+2026-07-06T19:15:38.2087526Z stdout F         "employee_count": 11800,
+2026-07-06T19:15:38.2087538Z stdout F         "total_direct_technology_budget_usd": "190600000"
+2026-07-06T19:15:38.2087551Z stdout F       },
+2026-07-06T19:15:38.2087563Z stdout F       {
+2026-07-06T19:15:38.2087575Z stdout F         "entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2087587Z stdout F         "entity_scope": "holdco",
+2026-07-06T19:15:38.2087599Z stdout F         "parent_entity_name": null,
+2026-07-06T19:15:38.2087611Z stdout F         "revenue_usd": "7120000000",
+2026-07-06T19:15:38.2087641Z stdout F         "employee_count": 11800,
+2026-07-06T19:15:38.2087653Z stdout F         "total_direct_technology_budget_usd": "190600000"
+2026-07-06T19:15:38.2087665Z stdout F       },
+2026-07-06T19:15:38.2087677Z stdout F       {
+2026-07-06T19:15:38.2087688Z stdout F         "entity_name": "Brightmark Marketing Services",
+2026-07-06T19:15:38.2087700Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2087713Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2087725Z stdout F         "revenue_usd": "720000000",
+2026-07-06T19:15:38.2087737Z stdout F         "employee_count": 1300,
+2026-07-06T19:15:38.2087749Z stdout F         "total_direct_technology_budget_usd": "15600000"
+2026-07-06T19:15:38.2087761Z stdout F       },
+2026-07-06T19:15:38.2087772Z stdout F       {
+2026-07-06T19:15:38.2087784Z stdout F         "entity_name": "Brightmark Marketing Services",
+2026-07-06T19:15:38.2087870Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2087889Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2087905Z stdout F         "revenue_usd": "720000000",
+2026-07-06T19:15:38.2087917Z stdout F         "employee_count": 1300,
+2026-07-06T19:15:38.2087929Z stdout F         "total_direct_technology_budget_usd": "15600000"
+2026-07-06T19:15:38.2087941Z stdout F       },
+2026-07-06T19:15:38.2087953Z stdout F       {
+2026-07-06T19:15:38.2087965Z stdout F         "entity_name": "Forge & Field Consumer Products",
+2026-07-06T19:15:38.2087977Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2087989Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2088001Z stdout F         "revenue_usd": "800000000",
+2026-07-06T19:15:38.2088013Z stdout F         "employee_count": 1200,
+2026-07-06T19:15:38.2088025Z stdout F         "total_direct_technology_budget_usd": "17300000"
+2026-07-06T19:15:38.2088050Z stdout F       },
+2026-07-06T19:15:38.2088062Z stdout F       {
+2026-07-06T19:15:38.2088074Z stdout F         "entity_name": "Forge & Field Consumer Products",
+2026-07-06T19:15:38.2088086Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2088098Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2088110Z stdout F         "revenue_usd": "800000000",
+2026-07-06T19:15:38.2088123Z stdout F         "employee_count": 1200,
+2026-07-06T19:15:38.2088135Z stdout F         "total_direct_technology_budget_usd": "17300000"
+2026-07-06T19:15:38.2088147Z stdout F       },
+2026-07-06T19:15:38.2088159Z stdout F       {
+2026-07-06T19:15:38.2088171Z stdout F         "entity_name": "Great Lakes Pantry Services",
+2026-07-06T19:15:38.2088183Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2088195Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2088207Z stdout F         "revenue_usd": "540000000",
+2026-07-06T19:15:38.2088283Z stdout F         "employee_count": 900,
+2026-07-06T19:15:38.2088300Z stdout F         "total_direct_technology_budget_usd": "11700000"
+2026-07-06T19:15:38.2088315Z stdout F       },
+2026-07-06T19:15:38.2088328Z stdout F       {
+2026-07-06T19:15:38.2088339Z stdout F         "entity_name": "Great Lakes Pantry Services",
+2026-07-06T19:15:38.2088352Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2088450Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2088466Z stdout F         "revenue_usd": "540000000",
+2026-07-06T19:15:38.2088479Z stdout F         "employee_count": 900,
+2026-07-06T19:15:38.2088491Z stdout F         "total_direct_technology_budget_usd": "11700000"
+2026-07-06T19:15:38.2088503Z stdout F       },
+2026-07-06T19:15:38.2088514Z stdout F       {
+2026-07-06T19:15:38.2088526Z stdout F         "entity_name": "HarborPoint Packaging Group",
+2026-07-06T19:15:38.2088547Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2088559Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2088571Z stdout F         "revenue_usd": "1050000000",
+2026-07-06T19:15:38.2088583Z stdout F         "employee_count": 1800,
+2026-07-06T19:15:38.2088595Z stdout F         "total_direct_technology_budget_usd": "25100000"
+2026-07-06T19:15:38.2088607Z stdout F       },
+2026-07-06T19:15:38.2088619Z stdout F       {
+2026-07-06T19:15:38.2088631Z stdout F         "entity_name": "HarborPoint Packaging Group",
+2026-07-06T19:15:38.2088643Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2089622Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2089639Z stdout F         "revenue_usd": "1050000000",
+2026-07-06T19:15:38.2089650Z stdout F         "employee_count": 1800,
+2026-07-06T19:15:38.2089662Z stdout F         "total_direct_technology_budget_usd": "25100000"
+2026-07-06T19:15:38.2089687Z stdout F       },
+2026-07-06T19:15:38.2089699Z stdout F       {
+2026-07-06T19:15:38.2089825Z stdout F         "entity_name": "Keystone Industrial Services",
+2026-07-06T19:15:38.2089848Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2089865Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2089877Z stdout F         "revenue_usd": "1330000000",
+2026-07-06T19:15:38.2089889Z stdout F         "employee_count": 1600,
+2026-07-06T19:15:38.2089901Z stdout F         "total_direct_technology_budget_usd": "23400000"
+2026-07-06T19:15:38.2089913Z stdout F       },
+2026-07-06T19:15:38.2089924Z stdout F       {
+2026-07-06T19:15:38.2089936Z stdout F         "entity_name": "Keystone Industrial Services",
+2026-07-06T19:15:38.2089949Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2089960Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2089981Z stdout F         "revenue_usd": "1330000000",
+2026-07-06T19:15:38.2089994Z stdout F         "employee_count": 1600,
+2026-07-06T19:15:38.2090006Z stdout F         "total_direct_technology_budget_usd": "23400000"
+2026-07-06T19:15:38.2090018Z stdout F       },
+2026-07-06T19:15:38.2090031Z stdout F       {
+2026-07-06T19:15:38.2090043Z stdout F         "entity_name": "Northline Supply Chain",
+2026-07-06T19:15:38.2090055Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2090067Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2090079Z stdout F         "revenue_usd": "1500000000",
+2026-07-06T19:15:38.2090091Z stdout F         "employee_count": 3000,
+2026-07-06T19:15:38.2090102Z stdout F         "total_direct_technology_budget_usd": "32500000"
+2026-07-06T19:15:38.2090114Z stdout F       },
+2026-07-06T19:15:38.2090126Z stdout F       {
+2026-07-06T19:15:38.2090137Z stdout F         "entity_name": "Northline Supply Chain",
+2026-07-06T19:15:38.2090162Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2090175Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2090187Z stdout F         "revenue_usd": "1500000000",
+2026-07-06T19:15:38.2090268Z stdout F         "employee_count": 3000,
+2026-07-06T19:15:38.2090285Z stdout F         "total_direct_technology_budget_usd": "32500000"
+2026-07-06T19:15:38.2090300Z stdout F       },
+2026-07-06T19:15:38.2090312Z stdout F       {
+2026-07-06T19:15:38.2090435Z stdout F         "entity_name": "Riverton Components & Field Services",
+2026-07-06T19:15:38.2090450Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2090463Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2090475Z stdout F         "revenue_usd": "1180000000",
+2026-07-06T19:15:38.2090486Z stdout F         "employee_count": 2000,
+2026-07-06T19:15:38.2090499Z stdout F         "total_direct_technology_budget_usd": "28500000"
+2026-07-06T19:15:38.2090521Z stdout F       },
+2026-07-06T19:15:38.2090533Z stdout F       {
+2026-07-06T19:15:38.2090545Z stdout F         "entity_name": "Riverton Components & Field Services",
+2026-07-06T19:15:38.2090557Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:15:38.2090568Z stdout F         "parent_entity_name": "Lakeshore Holdings",
+2026-07-06T19:15:38.2090580Z stdout F         "revenue_usd": "1180000000",
+2026-07-06T19:15:38.2090592Z stdout F         "employee_count": 2000,
+2026-07-06T19:15:38.2090604Z stdout F         "total_direct_technology_budget_usd": "28500000"
+2026-07-06T19:15:38.2090616Z stdout F       }
+2026-07-06T19:15:38.2090628Z stdout F     ],
+2026-07-06T19:15:38.2090641Z stdout F     "dimensionCounts": [
+2026-07-06T19:15:38.2090653Z stdout F       {
+2026-07-06T19:15:38.2090665Z stdout F         "dimension_key": "v7_00_portfolio_entity_registry",
+2026-07-06T19:15:38.2090677Z stdout F         "records": 8
+2026-07-06T19:15:38.2090696Z stdout F       },
+2026-07-06T19:15:38.2090709Z stdout F       {
+2026-07-06T19:15:38.2090721Z stdout F         "dimension_key": "v7_01_enterprise_profile",
+2026-07-06T19:15:38.2090734Z stdout F         "records": 8
+2026-07-06T19:15:38.2090746Z stdout F       },
+2026-07-06T19:15:38.2090758Z stdout F       {
+2026-07-06T19:15:38.2090769Z stdout F         "dimension_key": "v7_02_business_functions",
+2026-07-06T19:15:38.2090781Z stdout F         "records": 96
+2026-07-06T19:15:38.2090794Z stdout F       },
+2026-07-06T19:15:38.2090806Z stdout F       {
+2026-07-06T19:15:38.2090865Z stdout F         "dimension_key": "v7_03_org_ownership",
+2026-07-06T19:15:38.2090882Z stdout F         "records": 116
+2026-07-06T19:15:38.2090898Z stdout F       },
+2026-07-06T19:15:38.2090910Z stdout F       {
+2026-07-06T19:15:38.2090922Z stdout F         "dimension_key": "v7_04_workforce_personas",
+2026-07-06T19:15:38.2090942Z stdout F         "records": 82
+2026-07-06T19:15:38.2090954Z stdout F       },
+2026-07-06T19:15:38.2090965Z stdout F       {
+2026-07-06T19:15:38.2090977Z stdout F         "dimension_key": "v7_05_applications_systems",
+2026-07-06T19:15:38.2090988Z stdout F         "records": 152
+2026-07-06T19:15:38.2091000Z stdout F       },
+2026-07-06T19:15:38.2091012Z stdout F       {
+2026-07-06T19:15:38.2091024Z stdout F         "dimension_key": "v7_06_data_assets_integrations",
+2026-07-06T19:15:38.2091035Z stdout F         "records": 82
+2026-07-06T19:15:38.2091047Z stdout F       },
+2026-07-06T19:15:38.2091059Z stdout F       {
+2026-07-06T19:15:38.2091070Z stdout F         "dimension_key": "v7_07_vendors_contracts",
+2026-07-06T19:15:38.2091082Z stdout F         "records": 96
+2026-07-06T19:15:38.2091094Z stdout F       },
+2026-07-06T19:15:38.2091105Z stdout F       {
+2026-07-06T19:15:38.2091127Z stdout F         "dimension_key": "v7_08_spend_value",
+2026-07-06T19:15:38.2091140Z stdout F         "records": 57
+2026-07-06T19:15:38.2091152Z stdout F       },
+2026-07-06T19:15:38.2091164Z stdout F       {
+2026-07-06T19:15:38.2091176Z stdout F         "dimension_key": "v7_09_programs_initiatives_business_priorities",
+2026-07-06T19:15:38.2091188Z stdout F         "records": 36
+2026-07-06T19:15:38.2091200Z stdout F       },
+2026-07-06T19:15:38.2091211Z stdout F       {
+2026-07-06T19:15:38.2091223Z stdout F         "dimension_key": "v7_10_ai_initiatives",
+2026-07-06T19:15:38.2091235Z stdout F         "records": 36
+2026-07-06T19:15:38.2091246Z stdout F       },
+2026-07-06T19:15:38.2091258Z stdout F       {
+2026-07-06T19:15:38.2091269Z stdout F         "dimension_key": "v7_11_operations_risk_controls",
+2026-07-06T19:15:38.2091281Z stdout F         "records": 48
+2026-07-06T19:15:38.2091342Z stdout F       },
+2026-07-06T19:15:38.2091357Z stdout F       {
+2026-07-06T19:15:38.2091380Z stdout F         "dimension_key": "v7_12_relationships_graph_edges",
+2026-07-06T19:15:38.2091393Z stdout F         "records": 529
+2026-07-06T19:15:38.2091405Z stdout F       },
+2026-07-06T19:15:38.2091417Z stdout F       {
+2026-07-06T19:15:38.2091429Z stdout F         "dimension_key": "v7_13_source_evidence_registry",
+2026-07-06T19:15:38.2091509Z stdout F         "records": 48
+2026-07-06T19:15:38.2091526Z stdout F       },
+2026-07-06T19:15:38.2091541Z stdout F       {
+2026-07-06T19:15:38.2091553Z stdout F         "dimension_key": "v7_14_metric_definitions",
+2026-07-06T19:15:38.2091566Z stdout F         "records": 384
+2026-07-06T19:15:38.2091578Z stdout F       },
+2026-07-06T19:15:38.2091589Z stdout F       {
+2026-07-06T19:15:38.2091601Z stdout F         "dimension_key": "v7_15_industry_market_knowledge_patterns",
+2026-07-06T19:15:38.2091614Z stdout F         "records": 24
+2026-07-06T19:15:38.2091637Z stdout F       },
+2026-07-06T19:15:38.2091649Z stdout F       {
+2026-07-06T19:15:38.2091661Z stdout F         "dimension_key": "v7_16_expert_lenses",
+2026-07-06T19:15:38.2091673Z stdout F         "records": 18
+2026-07-06T19:15:38.2091685Z stdout F       },
+2026-07-06T19:15:38.2091697Z stdout F       {
+2026-07-06T19:15:38.2091709Z stdout F         "dimension_key": "v7_17_client_rate_card_cost_basis",
+2026-07-06T19:15:38.2091721Z stdout F         "records": 54
+2026-07-06T19:15:38.2091733Z stdout F       },
+2026-07-06T19:15:38.2091745Z stdout F       {
+2026-07-06T19:15:38.2091757Z stdout F         "dimension_key": "v7_18_function_system_data_vendor_bridge",
+2026-07-06T19:15:38.2091769Z stdout F         "records": 510
+2026-07-06T19:15:38.2091781Z stdout F       },
+2026-07-06T19:15:38.2091793Z stdout F       {
+2026-07-06T19:15:38.2091805Z stdout F         "dimension_key": "v7_19_service_tower_managed_services_scope",
+2026-07-06T19:15:38.2091825Z stdout F         "records": 64
+2026-07-06T19:15:38.2091837Z stdout F       },
+2026-07-06T19:15:38.2091849Z stdout F       {
+2026-07-06T19:15:38.2091860Z stdout F         "dimension_key": "v7_20_chunk_retrieval_registry",
+2026-07-06T19:15:38.2091872Z stdout F         "records": 376
+2026-07-06T19:15:38.2091884Z stdout F       },
+2026-07-06T19:15:38.2091896Z stdout F       {
+2026-07-06T19:15:38.2091907Z stdout F         "dimension_key": "v7_21_graph_registry_relationship_dictionary",
+2026-07-06T19:15:38.2091919Z stdout F         "records": 6
+2026-07-06T19:15:38.2091931Z stdout F       },
+2026-07-06T19:15:38.2091943Z stdout F       {
+2026-07-06T19:15:38.2091954Z stdout F         "dimension_key": "v7_22_operational_evidence_process_intelligence",
+2026-07-06T19:15:38.2091967Z stdout F         "records": 112
+2026-07-06T19:15:38.2091978Z stdout F       },
+2026-07-06T19:15:38.2091990Z stdout F       {
+2026-07-06T19:15:38.2092010Z stdout F         "dimension_key": "v7_23_external_benchmark_market_corpus",
+2026-07-06T19:15:38.2092073Z stdout F         "records": 24
+2026-07-06T19:15:38.2092088Z stdout F       },
+2026-07-06T19:15:38.2092104Z stdout F       {
+2026-07-06T19:15:38.2092116Z stdout F         "dimension_key": "v7_24_infrastructure_cloud_estate",
+2026-07-06T19:15:38.2092128Z stdout F         "records": 128
+2026-07-06T19:15:38.2092140Z stdout F       }
+2026-07-06T19:15:38.2092152Z stdout F     ],
+2026-07-06T19:15:38.2092164Z stdout F     "systemScopes": [
+2026-07-06T19:15:38.2092176Z stdout F       {
+2026-07-06T19:15:38.2092188Z stdout F         "system_scope": "corporate_shared_service",
+2026-07-06T19:15:38.2092200Z stdout F         "systems": 24
+2026-07-06T19:15:38.2092213Z stdout F       },
+2026-07-06T19:15:38.2092225Z stdout F       {
+2026-07-06T19:15:38.2092236Z stdout F         "system_scope": "opco_local_application",
+2026-07-06T19:15:38.2092262Z stdout F         "systems": 128
+2026-07-06T19:15:38.2092274Z stdout F       }
+2026-07-06T19:15:38.2092286Z stdout F     ],
+2026-07-06T19:15:38.2092348Z stdout F     "sharedSystemBridgeByOpco": [
+2026-07-06T19:15:38.2092363Z stdout F       {
+2026-07-06T19:15:38.2092375Z stdout F         "entity_name": "Brightmark Marketing Services",
+2026-07-06T19:15:38.2092388Z stdout F         "shared_system_bridge_rows": 36
+2026-07-06T19:15:38.2092400Z stdout F       },
+2026-07-06T19:15:38.2092412Z stdout F       {
+2026-07-06T19:15:38.2092424Z stdout F         "entity_name": "Forge & Field Consumer Products",
+2026-07-06T19:15:38.2092437Z stdout F         "shared_system_bridge_rows": 36
+2026-07-06T19:15:38.2092449Z stdout F       },
+2026-07-06T19:15:38.2092461Z stdout F       {
+2026-07-06T19:15:38.2092473Z stdout F         "entity_name": "Great Lakes Pantry Services",
+2026-07-06T19:15:38.2092485Z stdout F         "shared_system_bridge_rows": 36
+2026-07-06T19:15:38.2092506Z stdout F       },
+2026-07-06T19:15:38.2092519Z stdout F       {
+2026-07-06T19:15:38.2092531Z stdout F         "entity_name": "HarborPoint Packaging Group",
+2026-07-06T19:15:38.2092543Z stdout F         "shared_system_bridge_rows": 36
+2026-07-06T19:15:38.2092556Z stdout F       },
+2026-07-06T19:15:38.2092568Z stdout F       {
+2026-07-06T19:15:38.2092580Z stdout F         "entity_name": "Keystone Industrial Services",
+2026-07-06T19:15:38.2092592Z stdout F         "shared_system_bridge_rows": 36
+2026-07-06T19:15:38.2092604Z stdout F       },
+2026-07-06T19:15:38.2092616Z stdout F       {
+2026-07-06T19:15:38.2092628Z stdout F         "entity_name": "Northline Supply Chain",
+2026-07-06T19:15:38.2092692Z stdout F         "shared_system_bridge_rows": 36
+2026-07-06T19:15:38.2092708Z stdout F       },
+2026-07-06T19:15:38.2092723Z stdout F       {
+2026-07-06T19:15:38.2092747Z stdout F         "entity_name": "Riverton Components & Field Services",
+2026-07-06T19:15:38.2092759Z stdout F         "shared_system_bridge_rows": 36
+2026-07-06T19:15:38.2092771Z stdout F       }
+2026-07-06T19:15:38.2092783Z stdout F     ],
+2026-07-06T19:15:38.2092795Z stdout F     "graphHealth": [
+2026-07-06T19:15:38.2092807Z stdout F       {
+2026-07-06T19:15:38.2092819Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:15:38.2092832Z stdout F         "contract_version": "v7.1.1-holdco-depth-correction-20260706",
+2026-07-06T19:15:38.2092844Z stdout F         "edge_count": "529",
+2026-07-06T19:15:38.2092856Z stdout F         "from_node_count": "228",
+2026-07-06T19:15:38.2092869Z stdout F         "to_node_count": "202",
+2026-07-06T19:15:38.2092881Z stdout F         "weak_or_unscored_edges": "0"
+2026-07-06T19:15:38.2092893Z stdout F       }
+2026-07-06T19:15:38.2092905Z stdout F     ]
+2026-07-06T19:15:38.2092917Z stdout F   }
+2026-07-06T19:15:38.2092936Z stdout F }
+2026-07-06T19:15:38.2241224Z stderr F npm notice
+2026-07-06T19:15:38.2241640Z stderr F npm notice New minor version of npm available! 11.13.0 -> 11.18.0
+2026-07-06T19:15:38.2241808Z stderr F npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.18.0
+2026-07-06T19:15:38.2241828Z stderr F npm notice To update run: npm install -g npm@11.18.0
+2026-07-06T19:15:38.2241842Z stderr F npm notice

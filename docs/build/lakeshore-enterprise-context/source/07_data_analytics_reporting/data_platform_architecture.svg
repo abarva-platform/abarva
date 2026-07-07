@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="820" viewBox="0 0 1300 820" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker>
+<marker id="arwR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#b91c1c"/></marker>
+<marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3"><circle cx="3" cy="3" r="2.4" fill="#39507e"/></marker>
+</defs>
+<rect width="1300" height="820" fill="#f5f1eb"/>
+<text x="36" y="34" font-size="12" fill="#6b7280" font-family="monospace">SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI</text>
+<text x="36" y="64" font-size="23" font-weight="700" fill="#0c1a3a" font-family="Georgia, serif">Data &amp; Analytics Platform Architecture</text>
+<text x="36" y="86" font-size="12.5" fill="#6b7280">Sources → Snowflake medallion + semantic layer + governance → consumption</text>
+<text x="650.0" y="410.0" font-size="150" fill="#0c1a3a" opacity="0.045" text-anchor="middle" transform="rotate(-22 650.0 410.0)" font-weight="700">SYNTHETIC</text>
+<rect x="36" y="110" width="1228" height="110" rx="12" fill="#eef7f1" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="105" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">SOURCES</text>
+<rect x="52" y="132" width="186" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="132" width="5" height="72" rx="2" fill="#0f766e"/>
+<text x="66" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">SAP</text>
+<text x="66" y="172" font-size="10.5" fill="#6b7280">IDoc/CDC</text>
+<rect x="254" y="132" width="186" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="254" y="132" width="5" height="72" rx="2" fill="#0f766e"/>
+<text x="268" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Workday</text>
+<text x="268" y="172" font-size="10.5" fill="#6b7280">EIB</text>
+<rect x="456" y="132" width="186" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="456" y="132" width="5" height="72" rx="2" fill="#0f766e"/>
+<text x="470" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Coupa</text>
+<text x="470" y="172" font-size="10.5" fill="#6b7280">cXML</text>
+<rect x="658" y="132" width="186" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="658" y="132" width="5" height="72" rx="2" fill="#0f766e"/>
+<text x="672" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Kyriba</text>
+<text x="672" y="172" font-size="10.5" fill="#6b7280">API</text>
+<rect x="860" y="132" width="186" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="860" y="132" width="5" height="72" rx="2" fill="#0f766e"/>
+<text x="874" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">ServiceNow</text>
+<text x="874" y="172" font-size="10.5" fill="#6b7280">REST</text>
+<rect x="1062" y="132" width="186" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="1062" y="132" width="5" height="72" rx="2" fill="#0f766e"/>
+<text x="1076" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Salesforce</text>
+<text x="1076" y="172" font-size="10.5" fill="#6b7280">Bulk</text>
+<rect x="36" y="244" width="1228" height="250" rx="12" fill="#eef4fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="239" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">SNOWFLAKE MEDALLION + GOVERNANCE</text>
+<rect x="60" y="270" width="360" height="96" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="60" y="270" width="5" height="96" rx="2" fill="#6d28d9"/>
+<text x="74" y="291" font-size="12.5" font-weight="600" fill="#0c1a3a">BRONZE / RAW (ADLS gen2 + ext stages)</text>
+<text x="410" y="288" font-size="8.5" fill="#6d28d9" text-anchor="end" font-family="monospace" font-weight="700">BRONZE</text>
+<text x="74" y="310" font-size="10.5" fill="#6b7280">Snowpipe auto-ingest, Parquet</text>
+<text x="74" y="325" font-size="10.5" fill="#6b7280">immutable landing, schema-on-read</text>
+<text x="74" y="340" font-size="10.5" fill="#6b7280">PII tagging at ingest</text>
+<rect x="60" y="376" width="360" height="96" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="60" y="376" width="5" height="96" rx="2" fill="#0066CC"/>
+<text x="74" y="397" font-size="12.5" font-weight="600" fill="#0c1a3a">SILVER / CURATED (dbt models)</text>
+<text x="410" y="394" font-size="8.5" fill="#0066CC" text-anchor="end" font-family="monospace" font-weight="700">SILVER</text>
+<text x="74" y="416" font-size="10.5" fill="#6b7280">conformed dims, SCD2 history</text>
+<text x="74" y="431" font-size="10.5" fill="#6b7280">data quality tests (dbt/Great Exp.)</text>
+<text x="74" y="446" font-size="10.5" fill="#6b7280">deduped, standardized</text>
+<rect x="440" y="270" width="360" height="96" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="440" y="270" width="5" height="96" rx="2" fill="#15803d"/>
+<text x="454" y="291" font-size="12.5" font-weight="600" fill="#0c1a3a">GOLD / PRESENT (marts)</text>
+<text x="790" y="288" font-size="8.5" fill="#15803d" text-anchor="end" font-family="monospace" font-weight="700">GOLD</text>
+<text x="454" y="310" font-size="10.5" fill="#6b7280">finance, treasury, vendor, ITSM</text>
+<text x="454" y="325" font-size="10.5" fill="#6b7280">aggregates + exposures</text>
+<text x="454" y="340" font-size="10.5" fill="#6b7280">row access policies</text>
+<rect x="440" y="376" width="360" height="96" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="440" y="376" width="5" height="96" rx="2" fill="#0f766e"/>
+<text x="454" y="397" font-size="12.5" font-weight="600" fill="#0c1a3a">SEMANTIC LAYER (dbt metrics)</text>
+<text x="790" y="394" font-size="8.5" fill="#0f766e" text-anchor="end" font-family="monospace" font-weight="700">SEMANTIC</text>
+<text x="454" y="416" font-size="10.5" fill="#6b7280">certified KPI definitions</text>
+<text x="454" y="431" font-size="10.5" fill="#6b7280">single source for BI + AI</text>
+<text x="454" y="446" font-size="10.5" fill="#6b7280">lineage + ownership</text>
+<rect x="820" y="270" width="420" height="96" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="820" y="270" width="5" height="96" rx="2" fill="#b45309"/>
+<text x="834" y="291" font-size="12.5" font-weight="600" fill="#0c1a3a">GOVERNANCE</text>
+<text x="1230" y="288" font-size="8.5" fill="#b45309" text-anchor="end" font-family="monospace" font-weight="700">GOV</text>
+<text x="834" y="310" font-size="10.5" fill="#6b7280">RBAC + dynamic data masking</text>
+<text x="834" y="325" font-size="10.5" fill="#6b7280">object tagging, access history</text>
+<text x="834" y="340" font-size="10.5" fill="#6b7280">data contracts, SLAs</text>
+<rect x="820" y="376" width="420" height="96" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="820" y="376" width="5" height="96" rx="2" fill="#b91c1c"/>
+<text x="834" y="397" font-size="12.5" font-weight="600" fill="#0c1a3a">DATA QUALITY &amp; OBSERVABILITY</text>
+<text x="1230" y="394" font-size="8.5" fill="#b91c1c" text-anchor="end" font-family="monospace" font-weight="700">DQ</text>
+<text x="834" y="416" font-size="10.5" fill="#6b7280">freshness/volume/anomaly monitors</text>
+<text x="834" y="431" font-size="10.5" fill="#6b7280">incident → ServiceNow</text>
+<text x="834" y="446" font-size="10.5" fill="#6b7280">DQ scorecards</text>
+<rect x="36" y="516" width="1228" height="110" rx="12" fill="#eef2fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="511" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">CONSUMPTION</text>
+<rect x="52" y="540" width="288" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="540" width="5" height="72" rx="2" fill="#15803d"/>
+<text x="66" y="561" font-size="12.5" font-weight="600" fill="#0c1a3a">Power BI (certified)</text>
+<text x="66" y="580" font-size="10.5" fill="#6b7280">governed datasets</text>
+<rect x="358" y="540" width="288" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="358" y="540" width="5" height="72" rx="2" fill="#0066CC"/>
+<text x="372" y="561" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure AI Search</text>
+<text x="372" y="580" font-size="10.5" fill="#6b7280">tenant-context-v1 (vector+BM25)</text>
+<rect x="664" y="540" width="288" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="664" y="540" width="5" height="72" rx="2" fill="#6d28d9"/>
+<text x="678" y="561" font-size="12.5" font-weight="600" fill="#0c1a3a">Context Layer (Postgres)</text>
+<text x="678" y="580" font-size="10.5" fill="#6b7280">enterprise_context_chunks</text>
+<rect x="970" y="540" width="288" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="970" y="540" width="5" height="72" rx="2" fill="#b45309"/>
+<text x="984" y="561" font-size="12.5" font-weight="600" fill="#0c1a3a">Reverse ETL</text>
+<text x="984" y="580" font-size="10.5" fill="#6b7280">ops activation</text>
+<path d="M145,204 L240,270" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M347,204 L240,270" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M549,204 L240,270" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M751,204 L240,270" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M953,204 L240,270" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M1155,204 L240,270" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M240,366 L240,376" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<path d="M420,424 L440,424" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="411.5" y="415.0" width="37.0" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="430.0" y="426.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">test→</text>
+<path d="M620,472 C410.0,502 410.0,510 200,540" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="383.4" y="497.0" width="53.2" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="410.0" y="508.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">datasets</text>
+<path d="M620,472 C560.0,492 560.0,520 500,540" fill="none" stroke="#0066CC" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="525.3" y="497.0" width="69.4" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="560.0" y="508.0" font-size="9" fill="#0066CC" text-anchor="middle" font-family="monospace">embed→index</text>
+<path d="M620,472 C710.0,492 710.0,520 800,540" fill="none" stroke="#6d28d9" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="688.8" y="497.0" width="42.400000000000006" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="710.0" y="508.0" font-size="9" fill="#6d28d9" text-anchor="middle" font-family="monospace">chunks</text>
+<rect x="1010" y="632" width="250" height="66" rx="8" fill="#ffffff" stroke="#26324f" stroke-opacity="0.3"/>
+<text x="1022" y="648" font-size="10" font-weight="700" font-family="monospace" fill="#1F2A44">LEGEND</text>
+<rect x="1022" y="654" width="14" height="9" rx="2" fill="#6d28d9"/><text x="1042" y="662" font-size="9.5" fill="#6b7280">raw/landing</text>
+<rect x="1022" y="670" width="14" height="9" rx="2" fill="#0066CC"/><text x="1042" y="678" font-size="9.5" fill="#6b7280">curated/vector</text>
+<rect x="1022" y="686" width="14" height="9" rx="2" fill="#15803d"/><text x="1042" y="694" font-size="9.5" fill="#6b7280">gold/BI</text>
+<text x="36" y="806" font-size="10.5" fill="#6b7280" font-family="monospace">LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1 · data_analytics_reporting · owner=Aisha Bello · system=Snowflake · 2026-06-06 · SYNTHETIC / LAKESHORE PILOT / NOT REAL DATA</text>
+</svg>

@@ -1,0 +1,194 @@
+2026-07-06T19:31:08.98458  Connecting to the container 'db-migrate'...
+2026-07-06T19:31:09.15695  Successfully Connected to container: 'db-migrate' [Execution: 'job-abarva-private-operator-eus-dzydoog', Replica: 'job-abarva-private-operator-eus-dzydoog-hx469']
+2026-07-06T19:30:18.8180675Z stdout F 
+2026-07-06T19:30:18.8181040Z stdout F > abarva@0.1.0 v7:lakeshore:holdco:azure-load
+2026-07-06T19:30:18.8181240Z stdout F > node scripts/v7/load-lakeshore-holdco-v7-azure.mjs
+2026-07-06T19:30:18.8181259Z stdout F 
+2026-07-06T19:30:18.9147377Z stderr F (node:18) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+2026-07-06T19:30:18.9147851Z stderr F In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+2026-07-06T19:30:18.9148031Z stderr F 
+2026-07-06T19:30:18.9148066Z stderr F To prepare for this change:
+2026-07-06T19:30:18.9148095Z stderr F - If you want the current behavior, explicitly use 'sslmode=verify-full'
+2026-07-06T19:30:18.9148119Z stderr F - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+2026-07-06T19:30:18.9148141Z stderr F 
+2026-07-06T19:30:18.9148163Z stderr F See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+2026-07-06T19:30:18.9148186Z stderr F (Use `node --trace-warnings ...` to show where the warning was created)
+2026-07-06T19:30:49.4951652Z stdout F {
+2026-07-06T19:30:49.4952075Z stdout F   "ok": true,
+2026-07-06T19:30:49.4952300Z stdout F   "summary": {
+2026-07-06T19:30:49.4952321Z stdout F     "generatedAt": "2026-07-06T19:30:19.001Z",
+2026-07-06T19:30:49.4952337Z stdout F     "contractVersion": "v7.1.1-holdco-depth-correction-20260706",
+2026-07-06T19:30:49.4952350Z stdout F     "tenants": [
+2026-07-06T19:30:49.4952363Z stdout F       {
+2026-07-06T19:30:49.4952375Z stdout F         "tenantKey": "lakeshore-industries",
+2026-07-06T19:30:49.4952387Z stdout F         "files": 25,
+2026-07-06T19:30:49.4952399Z stdout F         "rows": 3094,
+2026-07-06T19:30:49.4952413Z stdout F         "fields": 87007,
+2026-07-06T19:30:49.4952424Z stdout F         "graphNodes": 912,
+2026-07-06T19:30:49.4952436Z stdout F         "relationshipEdges": 529,
+2026-07-06T19:30:49.4952447Z stdout F         "chunks": 376
+2026-07-06T19:30:49.4952458Z stdout F       }
+2026-07-06T19:30:49.4952470Z stdout F     ],
+2026-07-06T19:30:49.4952497Z stdout F     "totals": {
+2026-07-06T19:30:49.4952509Z stdout F       "business_records": 3094,
+2026-07-06T19:30:49.4952520Z stdout F       "record_fields": 87007,
+2026-07-06T19:30:49.4952532Z stdout F       "relationship_edges": 529,
+2026-07-06T19:30:49.4952543Z stdout F       "graph_nodes": 912,
+2026-07-06T19:30:49.4952554Z stdout F       "chunk_registry": 376,
+2026-07-06T19:30:49.4952565Z stdout F       "source_files": 25
+2026-07-06T19:30:49.4952576Z stdout F     },
+2026-07-06T19:30:49.4952587Z stdout F     "graphHealth": [
+2026-07-06T19:30:49.4952598Z stdout F       {
+2026-07-06T19:30:49.4952609Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4952621Z stdout F         "contract_version": "v7.1.1-holdco-depth-correction-20260706",
+2026-07-06T19:30:49.4952633Z stdout F         "edge_count": "529",
+2026-07-06T19:30:49.4952644Z stdout F         "from_node_count": "228",
+2026-07-06T19:30:49.4952655Z stdout F         "to_node_count": "202",
+2026-07-06T19:30:49.4952770Z stdout F         "weak_or_unscored_edges": "0"
+2026-07-06T19:30:49.4952784Z stdout F       }
+2026-07-06T19:30:49.4952795Z stdout F     ],
+2026-07-06T19:30:49.4952807Z stdout F     "dimensionCounts": [
+2026-07-06T19:30:49.4952818Z stdout F       {
+2026-07-06T19:30:49.4952829Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4952841Z stdout F         "dimension_key": "v7_00_portfolio_entity_registry",
+2026-07-06T19:30:49.4953511Z stdout F         "actual_records": 8
+2026-07-06T19:30:49.4953556Z stdout F       },
+2026-07-06T19:30:49.4953574Z stdout F       {
+2026-07-06T19:30:49.4953587Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4953599Z stdout F         "dimension_key": "v7_01_enterprise_profile",
+2026-07-06T19:30:49.4953612Z stdout F         "actual_records": 8
+2026-07-06T19:30:49.4953634Z stdout F       },
+2026-07-06T19:30:49.4953646Z stdout F       {
+2026-07-06T19:30:49.4953657Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4953668Z stdout F         "dimension_key": "v7_02_business_functions",
+2026-07-06T19:30:49.4953680Z stdout F         "actual_records": 96
+2026-07-06T19:30:49.4953692Z stdout F       },
+2026-07-06T19:30:49.4953704Z stdout F       {
+2026-07-06T19:30:49.4953716Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4953729Z stdout F         "dimension_key": "v7_03_org_ownership",
+2026-07-06T19:30:49.4953744Z stdout F         "actual_records": 116
+2026-07-06T19:30:49.4953756Z stdout F       },
+2026-07-06T19:30:49.4953769Z stdout F       {
+2026-07-06T19:30:49.4953780Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4953792Z stdout F         "dimension_key": "v7_04_workforce_personas",
+2026-07-06T19:30:49.4953803Z stdout F         "actual_records": 82
+2026-07-06T19:30:49.4953827Z stdout F       },
+2026-07-06T19:30:49.4953839Z stdout F       {
+2026-07-06T19:30:49.4953850Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4953862Z stdout F         "dimension_key": "v7_05_applications_systems",
+2026-07-06T19:30:49.4953873Z stdout F         "actual_records": 152
+2026-07-06T19:30:49.4955009Z stdout F       },
+2026-07-06T19:30:49.4955240Z stdout F       {
+2026-07-06T19:30:49.4955273Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4955299Z stdout F         "dimension_key": "v7_06_data_assets_integrations",
+2026-07-06T19:30:49.4955322Z stdout F         "actual_records": 82
+2026-07-06T19:30:49.4955344Z stdout F       },
+2026-07-06T19:30:49.4955364Z stdout F       {
+2026-07-06T19:30:49.4955385Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4955407Z stdout F         "dimension_key": "v7_07_vendors_contracts",
+2026-07-06T19:30:49.4956101Z stdout F         "actual_records": 96
+2026-07-06T19:30:49.4956207Z stdout F       },
+2026-07-06T19:30:49.4956261Z stdout F       {
+2026-07-06T19:30:49.4956286Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4956307Z stdout F         "dimension_key": "v7_08_spend_value",
+2026-07-06T19:30:49.4956325Z stdout F         "actual_records": 57
+2026-07-06T19:30:49.4956344Z stdout F       },
+2026-07-06T19:30:49.4956385Z stdout F       {
+2026-07-06T19:30:49.4956404Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4956422Z stdout F         "dimension_key": "v7_09_programs_initiatives_business_priorities",
+2026-07-06T19:30:49.4956445Z stdout F         "actual_records": 36
+2026-07-06T19:30:49.4956465Z stdout F       },
+2026-07-06T19:30:49.4956484Z stdout F       {
+2026-07-06T19:30:49.4956505Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4956525Z stdout F         "dimension_key": "v7_10_ai_initiatives",
+2026-07-06T19:30:49.4956710Z stdout F         "actual_records": 36
+2026-07-06T19:30:49.4956733Z stdout F       },
+2026-07-06T19:30:49.4956753Z stdout F       {
+2026-07-06T19:30:49.4956771Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4956790Z stdout F         "dimension_key": "v7_11_operations_risk_controls",
+2026-07-06T19:30:49.4956808Z stdout F         "actual_records": 48
+2026-07-06T19:30:49.4956827Z stdout F       },
+2026-07-06T19:30:49.4956860Z stdout F       {
+2026-07-06T19:30:49.4956880Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4956898Z stdout F         "dimension_key": "v7_12_relationships_graph_edges",
+2026-07-06T19:30:49.4956916Z stdout F         "actual_records": 529
+2026-07-06T19:30:49.4956936Z stdout F       },
+2026-07-06T19:30:49.4956954Z stdout F       {
+2026-07-06T19:30:49.4956972Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4956991Z stdout F         "dimension_key": "v7_13_source_evidence_registry",
+2026-07-06T19:30:49.4957013Z stdout F         "actual_records": 48
+2026-07-06T19:30:49.4957031Z stdout F       },
+2026-07-06T19:30:49.4957049Z stdout F       {
+2026-07-06T19:30:49.4957189Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4957601Z stdout F         "dimension_key": "v7_14_metric_definitions",
+2026-07-06T19:30:49.4957659Z stdout F         "actual_records": 384
+2026-07-06T19:30:49.4957690Z stdout F       },
+2026-07-06T19:30:49.4957712Z stdout F       {
+2026-07-06T19:30:49.4957734Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4957755Z stdout F         "dimension_key": "v7_15_industry_market_knowledge_patterns",
+2026-07-06T19:30:49.4957777Z stdout F         "actual_records": 24
+2026-07-06T19:30:49.4957798Z stdout F       },
+2026-07-06T19:30:49.4957819Z stdout F       {
+2026-07-06T19:30:49.4957840Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4957862Z stdout F         "dimension_key": "v7_16_expert_lenses",
+2026-07-06T19:30:49.4957883Z stdout F         "actual_records": 18
+2026-07-06T19:30:49.4957903Z stdout F       },
+2026-07-06T19:30:49.4957924Z stdout F       {
+2026-07-06T19:30:49.4957944Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4957965Z stdout F         "dimension_key": "v7_17_client_rate_card_cost_basis",
+2026-07-06T19:30:49.4958001Z stdout F         "actual_records": 54
+2026-07-06T19:30:49.4958437Z stdout F       },
+2026-07-06T19:30:49.4958552Z stdout F       {
+2026-07-06T19:30:49.4958580Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4958642Z stdout F         "dimension_key": "v7_18_function_system_data_vendor_bridge",
+2026-07-06T19:30:49.4958663Z stdout F         "actual_records": 510
+2026-07-06T19:30:49.4958683Z stdout F       },
+2026-07-06T19:30:49.4958705Z stdout F       {
+2026-07-06T19:30:49.4958725Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4958746Z stdout F         "dimension_key": "v7_19_service_tower_managed_services_scope",
+2026-07-06T19:30:49.4958767Z stdout F         "actual_records": 64
+2026-07-06T19:30:49.4958789Z stdout F       },
+2026-07-06T19:30:49.4958809Z stdout F       {
+2026-07-06T19:30:49.4958830Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4958852Z stdout F         "dimension_key": "v7_20_chunk_retrieval_registry",
+2026-07-06T19:30:49.4958874Z stdout F         "actual_records": 376
+2026-07-06T19:30:49.4958895Z stdout F       },
+2026-07-06T19:30:49.4958915Z stdout F       {
+2026-07-06T19:30:49.4959621Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4959709Z stdout F         "dimension_key": "v7_21_graph_registry_relationship_dictionary",
+2026-07-06T19:30:49.4959757Z stdout F         "actual_records": 6
+2026-07-06T19:30:49.4959782Z stdout F       },
+2026-07-06T19:30:49.4959803Z stdout F       {
+2026-07-06T19:30:49.4959823Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4959842Z stdout F         "dimension_key": "v7_22_operational_evidence_process_intelligence",
+2026-07-06T19:30:49.4959863Z stdout F         "actual_records": 112
+2026-07-06T19:30:49.4959883Z stdout F       },
+2026-07-06T19:30:49.4959902Z stdout F       {
+2026-07-06T19:30:49.4959922Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4960025Z stdout F         "dimension_key": "v7_23_external_benchmark_market_corpus",
+2026-07-06T19:30:49.4960056Z stdout F         "actual_records": 24
+2026-07-06T19:30:49.4960084Z stdout F       },
+2026-07-06T19:30:49.4960096Z stdout F       {
+2026-07-06T19:30:49.4960108Z stdout F         "tenant_key": "lakeshore-industries",
+2026-07-06T19:30:49.4960119Z stdout F         "dimension_key": "v7_24_infrastructure_cloud_estate",
+2026-07-06T19:30:49.4960131Z stdout F         "actual_records": 128
+2026-07-06T19:30:49.4960143Z stdout F       }
+2026-07-06T19:30:49.4960155Z stdout F     ],
+2026-07-06T19:30:49.4960166Z stdout F     "entityRegistry": [
+2026-07-06T19:30:49.4960178Z stdout F       {
+2026-07-06T19:30:49.4960190Z stdout F         "entity_scope": "holdco",
+2026-07-06T19:30:49.4960202Z stdout F         "count": 1
+2026-07-06T19:30:49.4960215Z stdout F       },
+2026-07-06T19:30:49.4960229Z stdout F       {
+2026-07-06T19:30:49.4960241Z stdout F         "entity_scope": "portfolio_company",
+2026-07-06T19:30:49.4960253Z stdout F         "count": 7
+2026-07-06T19:30:49.4960264Z stdout F       }
+2026-07-06T19:30:49.4960291Z stdout F     ],
+2026-07-06T19:30:49.4960303Z stdout F     "entityCoverageRows": 161
+2026-07-06T19:30:49.4960315Z stdout F   }
+2026-07-06T19:30:49.4960327Z stdout F }
+2026-07-06T19:30:49.5216472Z stderr F npm notice
+2026-07-06T19:30:49.5216894Z stderr F npm notice New minor version of npm available! 11.13.0 -> 11.18.0
+2026-07-06T19:30:49.5217031Z stderr F npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.18.0
+2026-07-06T19:30:49.5217050Z stderr F npm notice To update run: npm install -g npm@11.18.0
+2026-07-06T19:30:49.5217064Z stderr F npm notice

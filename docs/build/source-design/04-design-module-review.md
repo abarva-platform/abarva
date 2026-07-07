@@ -4,7 +4,7 @@
 **Date:** 2026-06-04
 **Reviewing:** `docs/build/source-design/03-build-specs.html` (19 specs, draft v1)
 **Against:** The bar (Part 2) · the locked tokens (Part 3) · and the **northstar agreed 2026-06-04 — Apple-grade ease and elegance, with the Moves module as the quality reference.**
-**Companion artifact:** `preview/15-source-strategy-redesign.html` (corrected Strategy stage — proof-of-bar for Wave 2)
+**Companion artifact:** `06-strategy-screen.html` (corrected Strategy stage — proof-of-bar for Wave 2)
 
 ---
 
@@ -14,12 +14,12 @@ The Moves module set the bar. Four properties, non-negotiable, applied to every 
 
 1. **One obvious next action per screen.** If a user has to hunt for what to do, the screen has failed.
 2. **The answer leads; the machinery hides.** Page 1 states the decision or the next move. Reasoning, evidence, and history live below the fold or behind a click.
-3. **Quiet hierarchy.** Serif headline carries the page. Mono eyebrows are used _once_ per region, never stacked three deep. Status color is semantic, never decorative.
+3. **Quiet hierarchy.** Serif headline carries the page. Mono eyebrows are used *once* per region, never stacked three deep. Status color is semantic, never decorative.
 4. **Subtract before adding.** Every visible element must change what the user does next. The Strategy screenshot (five export buttons on a not-started memo) is the anti-pattern to design against.
 
 The squint test (blur 50%, primary action still obvious) is the acceptance gate for every visual spec.
 
-> **One caveat on tokens.** Moves uses Fraunces / `#0066CC`. Source keeps its **own locked tokens** (Georgia, accent `#1d4ed8`, paper `#F8F7F4`, per 2026-04-16). We match the _discipline and experience_ of Moves, not its palette. Do not propose font/color changes — locked.
+> **One caveat on tokens.** Moves uses Fraunces / `#0066CC`. Source keeps its **own locked tokens** (Georgia, accent `#1d4ed8`, paper `#F8F7F4`, per 2026-04-16). We match the *discipline and experience* of Moves, not its palette. Do not propose font/color changes — locked.
 
 ---
 
@@ -28,36 +28,28 @@ The squint test (blur 50%, primary action still obvious) is the acceptance gate 
 These eight gate every downstream decision. Resolved with a bias toward the northstar.
 
 ### Q1 · Voice and tone → **Second-person directive. Hold it everywhere.**
-
-"Draft your Strategy Memo" beats "Strategy memo awaiting draft." The directive voice _is_ the next-action discipline — it names what the user does. Passive/system-narrator voice re-introduces the "where do I go?" problem we're closing. Reserve passive voice for _status_ lines only ("Waiting on client"), never for _actions_.
+"Draft your Strategy Memo" beats "Strategy memo awaiting draft." The directive voice *is* the next-action discipline — it names what the user does. Passive/system-narrator voice re-introduces the "where do I go?" problem we're closing. Reserve passive voice for *status* lines only ("Waiting on client"), never for *actions*.
 
 ### Q2 · Density philosophy → **Vary density by mental task. Do not lift uniformly.**
-
-Bar principle #3 already says this. Portfolio/queue = high-density scan surfaces (executive triage). Canvas/intake = low-density focus surfaces (one task at a time). The Strategy redesign proves it: the empty drafting stage should be _calm_, leading with one Next Move card — not packed. Density is a tool, not a default.
+Bar principle #3 already says this. Portfolio/queue = high-density scan surfaces (executive triage). Canvas/intake = low-density focus surfaces (one task at a time). The Strategy redesign proves it: the empty drafting stage should be *calm*, leading with one Next Move card — not packed. Density is a tool, not a default.
 
 ### Q3 · Sentinel chat positioning → **Proportional (Spec 6 axis is right). Not modal.**
-
-A persistent modal overlay competes with the document for the same screen and the same job. Proportional-collapse keeps Sentinel _present but subordinate_ on decision stages. One refinement: on stages where the Next Move _is_ "draft with Sentinel," the chat and the primary CTA must not duplicate the offer — the CTA owns it, the rail offers _variations_ (levers, rigor). See Spec 6 revision.
+A persistent modal overlay competes with the document for the same screen and the same job. Proportional-collapse keeps Sentinel *present but subordinate* on decision stages. One refinement: on stages where the Next Move *is* "draft with Sentinel," the chat and the primary CTA must not duplicate the offer — the CTA owns it, the rail offers *variations* (levers, rigor). See Spec 6 revision.
 
 ### Q4 · Approval routing UX → **Collapse to one primary + a "More" menu. Four equal buttons is too much choice.**
-
 Four equal-weight buttons (Approve / Co-approve / Request changes / Reject) violates "one obvious action." Recommended: **Approve** as the single primary; **Send to co-approver** as secondary; **Request changes** and **Reject** behind a quiet "Other decisions ▾" menu. Reject especially should never be a one-click primary on a high-stakes page (misclick risk). See Spec 3 revision.
 
 ### Q5 · "Gate" vs "Required to advance" → **Keep "Gate" in author/ops vocabulary; show "Required to advance" in production.**
-
 "Gate" is real sourcing signal internally and in the audit log — keep it in the data model and author mode. But it leaks as jargon in production (the screenshot's red `GATE` badge). Production users see "Required to advance" or a simple unmet-state dot. This is consistent with bar principle #4 (taxonomy never leaks). Both can be true.
 
-### Q6 · Dark header on Executive Decision → **Yes, but make it the _only_ dark moment in the lifecycle.**
-
-A single charcoal `#1f2937` header on the one make-or-break decision page is a _deliberate_ signal — "this is the moment." It earns the contrast precisely because nothing else in the flow is dark. The risk is not that it's jarring; the risk is that it gets _copied_ to other surfaces and becomes noise. Rule: **dark header appears on Executive Decision and nowhere else.** Use accent blue, not charcoal, anywhere a lesser surface wants emphasis. (Note: this is the inverse of the Moves decision — there we pulled dark _out_. Here one dark moment is load-bearing. The difference is intentional and defensible: Moves is a browsing home; Exec Decision is a singular verdict.)
+### Q6 · Dark header on Executive Decision → **Yes, but make it the *only* dark moment in the lifecycle.**
+A single charcoal `#1f2937` header on the one make-or-break decision page is a *deliberate* signal — "this is the moment." It earns the contrast precisely because nothing else in the flow is dark. The risk is not that it's jarring; the risk is that it gets *copied* to other surfaces and becomes noise. Rule: **dark header appears on Executive Decision and nowhere else.** Use accent blue, not charcoal, anywhere a lesser surface wants emphasis. (Note: this is the inverse of the Moves decision — there we pulled dark *out*. Here one dark moment is load-bearing. The difference is intentional and defensible: Moves is a browsing home; Exec Decision is a singular verdict.)
 
 ### Q7 · Mobile → **Wave 5, separate exercise. Do not retrofit into every spec now.**
-
-CXOs review on phones, but the lifecycle _work_ (drafting, scoring, pricing) is desktop. Building responsive into all 19 specs now triples the surface area and slows Wave 1's load-bearing fixes. Better: ship desktop to the bar, then a focused Wave 5 that makes the _read_ surfaces (Exec Decision page-1, CXO Report, Value board pack, Decision Queue) phone-excellent. Author/drafting stays desktop.
+CXOs review on phones, but the lifecycle *work* (drafting, scoring, pricing) is desktop. Building responsive into all 19 specs now triples the surface area and slows Wave 1's load-bearing fixes. Better: ship desktop to the bar, then a focused Wave 5 that makes the *read* surfaces (Exec Decision page-1, CXO Report, Value board pack, Decision Queue) phone-excellent. Author/drafting stays desktop.
 
 ### Q8 · Empty states → **Author them now, for every surface. This is the redesign's biggest quick win.**
-
-The screenshot proves empty states are where the product feels most broken ("No DB-backed documents yet"). They're not an afterthought — they're the _first_ thing a new user sees on every stage. Every spec that renders a list or shelf must spec its empty state to the bar: lead with the Next Move, never apologize for an empty database. Add "empty state authored" to the acceptance checklist of Specs 1, 5, 7, 8, 9, 10, 11, 13, 16, 18.
+The screenshot proves empty states are where the product feels most broken ("No DB-backed documents yet"). They're not an afterthought — they're the *first* thing a new user sees on every stage. Every spec that renders a list or shelf must spec its empty state to the bar: lead with the Next Move, never apologize for an empty database. Add "empty state authored" to the acceptance checklist of Specs 1, 5, 7, 8, 9, 10, 11, 13, 16, 18.
 
 ---
 
@@ -68,7 +60,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ---
 
 ### Spec 1 · Decision queue · triage bands — ✏️ Approved with revisions
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -82,7 +73,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 2 · Intake completion footer — ✅ Approved with one note
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
@@ -94,7 +84,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 3 · Approval page (NEW) — ✏️ Approved with revisions · LOAD-BEARING
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -108,7 +97,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 4 · Lifecycle routing guard — ✅ Approved
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
@@ -120,7 +108,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 5 · Stage Next-Move pattern — ✅ Approved · this is the spine
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
@@ -129,12 +116,11 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 //   - Tone: keep directive ("Draft your Strategy Memo"). Not passive, not task-list checkboxes. (Resolves spec's open Q + cross-spec Q1.)
 //   - Multi-task stages (Evaluation): ONE Next Move at a time, resolved by the most-blocking sub-task. A list of 3 re-creates the "which do I pick" problem. Sequence them.
 //   - NO universal "Skip / I'll do it manually" secondary. Offer manual authoring only where it's real (drafting stages). On scoring/pricing stages there's nothing to "skip" — the secondary would be noise.
-//   - See preview/15-source-strategy-redesign.html for the built reference. Codex builds to that, not just to prose.
+//   - See 06-strategy-screen.html for the built reference. Codex builds to that, not just to prose.
 // Open with Codex before ship: yes  (the built mock is the contract — walk it together)
 ```
 
 ### Spec 6 · Sentinel chat sizing — ✏️ Approved with revisions
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -147,7 +133,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 7 · Artifact tile humanization — ✏️ Approved · WIDEN SCOPE
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -161,12 +146,11 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 8 · Strategy refit — ✅ Approved · reference built
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
 // Revisions:
-//   - Built reference: preview/15-source-strategy-redesign.html. This IS the target. Codex matches it.
+//   - Built reference: 06-strategy-screen.html. This IS the target. Codex matches it.
 //   - Gate names: paraphrase for the CIO ("Sponsor sign-off", "Value target set", "Archetype confirmed") in production; keep full names in author mode + audit log. (Resolves spec's open Q.)
 //   - Add to acceptance: "Export actions hidden until memo has a body" (the gating finding).
 //   - Add to acceptance: "Empty stage leads with one Next Move card; Sentinel rail ≤30%; no internal taxonomy visible." (Locks the bar into the DoD.)
@@ -174,7 +158,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 9 · Scope + RFP — ✏️ Approved with revisions
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -186,7 +169,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 10 · Responses + Evaluation — ✅ Approved
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
@@ -198,7 +180,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 11 · Pricing + BAFO — ✏️ Approved with revisions · LOAD-BEARING
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -211,7 +192,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 12 · Executive Decision page-1 summary — ✏️ Approved with revisions · LOAD-BEARING
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -225,7 +205,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 13 · Stage 10 Transition (NEW) — ✏️ Approved with revisions
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -237,7 +216,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 14 · Stage 11 Value extension — ✏️ Approved with revisions
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -249,7 +227,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 15 · Exports rewrites — ✅ Approved
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
@@ -262,7 +239,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 16 · Evidence drawer (NEW) — ✅ Approved
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
@@ -274,7 +250,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 17 · Audit log extension — ✅ Approved
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y
@@ -286,7 +261,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 18 · Cross-event attention surface (NEW) — ✏️ Approved with revisions
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: N
@@ -299,7 +273,6 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 ```
 
 ### Spec 19 · Renewal auto-event — ✅ Approved (design) · ⚠️ ops-sensitive
-
 ```
 // DESIGN MODULE REVIEW
 // Approved as-is: Y  (from a design standpoint)
@@ -315,25 +288,24 @@ Legend: **✅ Approved as-is** · **✏️ Approved with revisions** · **⛔ Ne
 
 ## Summary
 
-| Verdict                    | Specs                                                               |
-| -------------------------- | ------------------------------------------------------------------- |
-| ✅ Approved as-is          | 2, 4, 5, 8, 10, 15, 16, 17, 19 (design)                             |
-| ✏️ Approved with revisions | 1, 3, 6, 7, 9, 11, 12, 13, 14, 18                                   |
-| ⛔ Needs rework            | none — all are buildable; revisions are refinements, not rejections |
+| Verdict | Specs |
+|---|---|
+| ✅ Approved as-is | 2, 4, 5, 8, 10, 15, 16, 17, 19 (design) |
+| ✏️ Approved with revisions | 1, 3, 6, 7, 9, 11, 12, 13, 14, 18 |
+| ⛔ Needs rework | none — all are buildable; revisions are refinements, not rejections |
 
 **Open-with-Codex-before-ship (8):** Specs 3, 5, 7, 8, 11, 12, 18, 19. These have either an action-hierarchy change, a load-bearing viz decision, a scope expansion, or an autonomy/approval interaction that benefits from a build-time conversation.
 
 **Highest-leverage revisions:**
-
 1. **Spec 7 scope expansion** — the humanization sweep misses the exact strings the screenshot exposes. Widen it or the most-visible jargon survives.
 2. **Spec 3 + Q4 action hierarchy** — four equal decision buttons is the clearest "one obvious action" violation in the package.
 3. **Spec 12 + Q6 dark-header rule** — keep the dark Exec Decision header, but document "only dark moment in the lifecycle" or it metastasizes.
 4. **The export-gating finding** (folded into Specs 7 & 8 & 15) — "no export of nothing" is a one-line rule that kills a whole class of the screenshot's anti-patterns.
 
-**Wave 1 is cleared to start.** Specs 4, 3, 2, 7 are all approved (3 and 7 with the revisions above). The Strategy redesign (`preview/15-source-strategy-redesign.html`) is the built proof-of-bar for the Wave 2 canvas work.
+**Wave 1 is cleared to start.** Specs 4, 3, 2, 7 are all approved (3 and 7 with the revisions above). The Strategy redesign (`06-strategy-screen.html`) is the built proof-of-bar for the Wave 2 canvas work.
 
 **Next from the design module:** mock the remaining load-bearing screens — **Executive Decision page-1** (Spec 12), the **Approval page** (Spec 3), and **Pricing/BAFO** (Spec 11) — so each high-risk spec has a target to build against, not just prose.
 
 ---
 
-_Design module review · 2026-06-04 · Reviewed against the bar, the locked tokens, and the Moves-module northstar._
+*Design module review · 2026-06-04 · Reviewed against the bar, the locked tokens, and the Moves-module northstar.*

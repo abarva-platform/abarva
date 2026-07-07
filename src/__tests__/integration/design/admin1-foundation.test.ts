@@ -67,16 +67,16 @@ describe('ADMIN1 — Foundation: Logo + Tokens', () => {
       expect(existsSync(path)).toBe(true);
     });
 
-    it('Option 2 SVG contains the intersecting A plus V mark and embedded wordmark', () => {
-      const path = resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg');
+    it('lockup-v2 SVG contains the selected Option 2 brand identity', () => {
+      const path = resolve(process.cwd(), 'public/brand/abarva-logo-lockup-v2.svg');
       const content = readFileSync(path, 'utf8');
-      expect(content).toContain('M18 80 L50 20 L82 80');
-      expect(content).toContain('M62 55 L82 80 L110 20');
-      expect(content).toContain('<image href="data:image/png;base64,');
+      expect(content).toContain('AbarVa logo, pronounced Abar-va');
+      expect(content).toContain('#22AEEA');
+      expect(content).toContain('data:image/png;base64');
     });
 
-    it('Option 2 SVG uses canonical black and signal blue hexes', () => {
-      const path = resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg');
+    it('lockup-v2 SVG uses the Option 2 black and blue palette', () => {
+      const path = resolve(process.cwd(), 'public/brand/abarva-logo-lockup-v2.svg');
       const content = readFileSync(path, 'utf8');
       expect(content.toLowerCase()).toContain('#050505');
       expect(content.toLowerCase()).toContain('#22aeea');

@@ -1,0 +1,60 @@
+{
+  "id": "INT-SKY-001",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "For SkyHarbor, where should we fund AI next across IROPS, predictive maintenance, crew recovery, loyalty, and customer disruption recovery?",
+  "expectedTerms": [
+    "SkyHarbor",
+    "AI"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:05:29.472Z",
+  "completedAt": "2026-07-06T23:06:03.567Z",
+  "latencyMs": 34095,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-001-prompt-reconstruction.txt",
+  "promptReconstructionHash": "ea110c57315875a7a5a39bdcf31079fb1cbbb3d253c5b272389336c296037ca0",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-001.ndjson",
+  "claudeResponse": "Airline Demo has a clear AI investment priority stack, and the sequencing logic is driven by capability maturity, data readiness, and recovery-time value — not equal funding across all five domains. My\nfund IROPS and crew recovery first, predictive maintenance second, customer disruption recovery third, and hold loyalty as a scale bet until the operational foundation is proven. Here is why that order holds. IROPS is your highest-leverage domain. The loaded capability evidence shows IROPS recovery decisioning at early-stage AI maturity with critical business classification.\n7 hours through crew-ops AI, predictive maintenance, and network optimization in combination. That is the value pool — faster recovery compresses irregular operations (IROPS) cost across aircraft, crew, and passenger reaccommodation simultaneously.\nThe eight AI initiatives already named (IROPS Decision Assistant, Passenger Reaccommodation Agent, Airport Turn Risk Predictor) are the right bets, but they gate on the IROPS Data Foundation and Operational Event Streaming modernization programs being funded first. Crew recovery is tightly coupled to IROPS and should be co-funded, not sequenced behind it.\nThe Crew-Lufthansa Systems Engine is a critical-classified platform, and the Crew Recovery Copilot initiative depends on crew legality feed certification and human-in-loop workflow approval before any autonomous action. VP Crew Operations needs to own the data freshness sign-off here — that is the gate, not the model. Predictive maintenance is early-stage maturity and critical-classified.\n7 hours of maintenance delay reduction with predictive maintenance as a core enabler. Fund the Maintenance Delay Prediction initiative, but treat it as a parallel track to IROPS rather than the lead bet — the MRO data substrate needs owner-validated freshness before the model can do real work.\nCustomer disruption recovery is the third funding tier. The contact center workforce shows 6,200 agents handling refunds, vouchers, disruption recovery, and loyalty exceptions — a large cost-to-serve target.\nThe Customer Disruption Communication Agent and Passenger Reaccommodation Platform are the right insertion points, but both depend on PNR/reservation event certification and PSS/Mainframe Integration Modernization being far enough along to provide real-time passenger itinerary data. Loyalty I would hold as a scale bet.\nThere is no loaded evidence of loyalty AI readiness at Airline Demo today, and funding loyalty AI before the operational recovery stack is proven typically means you are automating apology vouchers for disruptions you have not yet reduced. Fix the disruption first; loyalty personalization compounds on top of a stable operational foundation.\nOne cross-cutting risk to name explicitly: there are open RAID items showing a critical-likelihood budget overrun risk (, escalated to Delivery Lead, rebaseline required) and a high-likelihood third-party SLA risk (, open, owned by Architecture). Any new AI funding envelope needs to be stress-tested against these before the investment case goes to the CFO.\nThe remaining field to confirm before this becomes board-grade: Finance-approved disruption cost baseline by event category, and model-risk tier approval for the IROPS and crew recovery AI initiatives. Without those two, the value claims stay directional.",
+  "renderedText": "Airline Demo has a clear AI investment priority stack, and the sequencing logic is driven by capability maturity, data readiness, and recovery-time value — not equal funding across all five domains. My\nfund IROPS and crew recovery first, predictive maintenance second, customer disruption recovery third, and hold loyalty as a scale bet until the operational foundation is proven. Here is why that order holds. IROPS is your highest-leverage domain. The loaded capability evidence shows IROPS recovery decisioning at early-stage AI maturity with critical business classification.\n7 hours through crew-ops AI, predictive maintenance, and network optimization in combination. That is the value pool — faster recovery compresses irregular operations (IROPS) cost across aircraft, crew, and passenger reaccommodation simultaneously.\nThe eight AI initiatives already named (IROPS Decision Assistant, Passenger Reaccommodation Agent, Airport Turn Risk Predictor) are the right bets, but they gate on the IROPS Data Foundation and Operational Event Streaming modernization programs being funded first. Crew recovery is tightly coupled to IROPS and should be co-funded, not sequenced behind it.\nThe Crew-Lufthansa Systems Engine is a critical-classified platform, and the Crew Recovery Copilot initiative depends on crew legality feed certification and human-in-loop workflow approval before any autonomous action. VP Crew Operations needs to own the data freshness sign-off here — that is the gate, not the model. Predictive maintenance is early-stage maturity and critical-classified.\n7 hours of maintenance delay reduction with predictive maintenance as a core enabler. Fund the Maintenance Delay Prediction initiative, but treat it as a parallel track to IROPS rather than the lead bet — the MRO data substrate needs owner-validated freshness before the model can do real work.\nCustomer disruption recovery is the third funding tier. The contact center workforce shows 6,200 agents handling refunds, vouchers, disruption recovery, and loyalty exceptions — a large cost-to-serve target.\nThe Customer Disruption Communication Agent and Passenger Reaccommodation Platform are the right insertion points, but both depend on PNR/reservation event certification and PSS/Mainframe Integration Modernization being far enough along to provide real-time passenger itinerary data. Loyalty I would hold as a scale bet.\nThere is no loaded evidence of loyalty AI readiness at Airline Demo today, and funding loyalty AI before the operational recovery stack is proven typically means you are automating apology vouchers for disruptions you have not yet reduced. Fix the disruption first; loyalty personalization compounds on top of a stable operational foundation.\nOne cross-cutting risk to name explicitly: there are open RAID items showing a critical-likelihood budget overrun risk (, escalated to Delivery Lead, rebaseline required) and a high-likelihood third-party SLA risk (, open, owned by Architecture). Any new AI funding envelope needs to be stress-tested against these before the investment case goes to the CFO.\nThe remaining field to confirm before this becomes board-grade: Finance-approved disruption cost baseline by event category, and model-risk tier approval for the IROPS and crew recovery AI initiatives. Without those two, the value claims stay directional.",
+  "sourcesCount": 11,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "Enterprise profile (skyharbor-air)",
+    "IT landscape (skyharbor-air)",
+    "Program inventory (skyharbor-air)"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/screenshots/INT-SKY-001-api-proof.png",
+  "score": {
+    "verdict": "watch",
+    "score": 4,
+    "flags": [
+      "answer_too_long",
+      "missing_expected:SkyHarbor"
+    ]
+  }
+}

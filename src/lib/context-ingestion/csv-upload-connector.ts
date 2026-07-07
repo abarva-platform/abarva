@@ -161,78 +161,46 @@ export interface CsvUploadLoadResult extends Omit<
 const MAX_ROWS = 50_000;
 const MAX_TEXT_COLUMNS = 12;
 
-const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
-  enterprise_profile: "enterprise_profile",
-  financial_kpis: "it_financials",
-  annual_quarterly_reports: "enterprise_profile",
-  market_competitor_intel: "program_inventory",
-  c_suite_strategy: "enterprise_profile",
-  business_units_segment_pnl: "it_financials",
-  product_portfolio: "program_inventory",
-  manufacturing_sites: "it_landscape",
-  erp_landscape: "it_landscape",
-  application_portfolio: "it_landscape",
-  ehr_platform: "it_landscape",
-  integration_topology: "it_landscape",
-  interoperability_topology: "it_landscape",
-  prior_authorization: "program_inventory",
-  revenue_cycle_denials: "it_financials",
-  ambient_clinical_documentation: "program_inventory",
-  clinical_ai_model_inventory: "it_landscape",
-  hipaa_ai_controls: "it_landscape",
-  vendor_baa_contracts: "it_financials",
-  service_line_pnl: "it_financials",
-  workforce_scheduling: "org_structure",
-  patient_access: "program_inventory",
-  imaging_ai_triage: "program_inventory",
-  cms_interoperability: "program_inventory",
-  vendor_contracts: "it_financials",
-  transformation_initiatives: "program_inventory",
-  org_roles_teams: "org_structure",
-  delivery_dora_devex: "program_inventory",
-  regulatory_qms_risk: "program_inventory",
-  value_based_care: "program_inventory",
-  population_health: "program_inventory",
-  data_platform_lineage: "data_estate",
-  digital_front_door: "it_landscape",
-  supply_chain_pharmacy: "it_financials",
-  ai_governance_decisions: "program_inventory",
-  clinical_downtime_cyber: "it_landscape",
-  nursing_workload_acuity: "org_structure",
-  ai_tooling_model_inventory: "it_landscape",
-  incidents_ops_telemetry: "it_landscape",
-  infrastructure_estate: "infrastructure",
-  business_capability: "enterprise_profile",
-  service_levels: "it_landscape",
-  it_landscape: "it_landscape",
-  infrastructure_dc: "infrastructure",
-  business_org_functions: "org_structure",
-  it_org_ownership: "org_structure",
-  personas_workforce: "org_structure",
-  capabilities_value_streams: "enterprise_profile",
-  applications_systems: "it_landscape",
-  system_function_mapping: "it_landscape",
-  infrastructure_cloud: "infrastructure",
-  platform_volumetrics: "infrastructure",
-  data_analytics_estate: "data_estate",
-  integrations_interfaces: "it_landscape",
-  vendors_contracts_licenses: "it_financials",
-  it_budget_financials: "it_financials",
-  initiatives_portfolio: "program_inventory",
-  operations_service_management: "it_landscape",
-  kpis_outcome_evidence: "program_inventory",
-  security_risk_compliance: "program_inventory",
-  ai_automation_footprint: "it_landscape",
-  initiative_milestones: "program_inventory",
-  benefit_realization: "program_inventory",
-  copilot_adoption_by_function: "org_structure",
-  erp_platform_agents: "it_landscape",
-  servicenow_automation_metrics: "it_landscape",
-  function_ai_productivity_scorecard: "org_structure",
-  model_risk_inventory: "program_inventory",
-  ai_spend_by_initiative: "it_financials",
-  ai_risk_register: "program_inventory",
-  gate_approval_history: "program_inventory",
+const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
+  enterprise_profile: 'enterprise_profile',
+  financial_kpis: 'it_financials',
+  annual_quarterly_reports: 'enterprise_profile',
+  market_competitor_intel: 'program_inventory',
+  c_suite_strategy: 'enterprise_profile',
+  business_units_segment_pnl: 'it_financials',
+  product_portfolio: 'program_inventory',
+  manufacturing_sites: 'it_landscape',
+  erp_landscape: 'it_landscape',
+  application_portfolio: 'it_landscape',
+  ehr_platform: 'it_landscape',
+  integration_topology: 'it_landscape',
+  interoperability_topology: 'it_landscape',
+  prior_authorization: 'program_inventory',
+  revenue_cycle_denials: 'it_financials',
+  ambient_clinical_documentation: 'program_inventory',
+  clinical_ai_model_inventory: 'it_landscape',
+  hipaa_ai_controls: 'it_landscape',
+  vendor_baa_contracts: 'it_financials',
+  service_line_pnl: 'it_financials',
+  workforce_scheduling: 'org_structure',
+  patient_access: 'program_inventory',
+  imaging_ai_triage: 'program_inventory',
+  cms_interoperability: 'program_inventory',
+  vendor_contracts: 'it_financials',
+  transformation_initiatives: 'program_inventory',
+  org_roles_teams: 'org_structure',
+  delivery_dora_devex: 'program_inventory',
+  regulatory_qms_risk: 'program_inventory',
+  value_based_care: 'program_inventory',
+  population_health: 'program_inventory',
+  data_platform_lineage: 'it_landscape',
+  digital_front_door: 'it_landscape',
+  supply_chain_pharmacy: 'it_financials',
+  ai_governance_decisions: 'program_inventory',
+  clinical_downtime_cyber: 'it_landscape',
+  nursing_workload_acuity: 'org_structure',
+  ai_tooling_model_inventory: 'it_landscape',
+  incidents_ops_telemetry: 'it_landscape',
 };
 
 export function segmentKeyForContextDimension(
@@ -292,28 +260,11 @@ function resolveTemplate(
   templateId?: string | null,
   tenantKey?: string | null,
 ): ContextTemplateDefinition {
-  const explicit = templateId
-    ? getTemplateById(templateId, { tenantKey })
-    : null;
+  const explicit = templateId ? getTemplateById(templateId, { tenantKey }) : null;
   if (explicit) return explicit;
-  const classification = classifyUploadedFile({ fileName, text: "" });
-  return (
-    getTemplateForDimension(classification.dimension, { tenantKey }) ??
-    getTemplateById("application-portfolio", { tenantKey })!
-  );
-}
-
-function assertRequiredFieldsMapped(
-  template: ContextTemplateDefinition,
-  mapping: CsvMappingSuggestion,
-): void {
-  const missingRequiredFields = template.requiredFields.filter(
-    (field) => !mapping.fieldMappings[field],
-  );
-  if (missingRequiredFields.length === 0) return;
-  throw new Error(
-    `csv_missing_required_fields:${missingRequiredFields.join(",")}`,
-  );
+  const classification = classifyUploadedFile({ fileName, text: '' });
+  return getTemplateForDimension(classification.dimension, { tenantKey })
+    ?? getTemplateById('application-portfolio', { tenantKey })!;
 }
 
 function parseJsonObject(raw: unknown): Record<string, string> | undefined {
@@ -488,11 +439,7 @@ export function inferCsvSchemaMapping(args: {
   tenantKey?: string | null;
   mapping?: CsvSchemaMapping;
 }): CsvMappingSuggestion {
-  const template = resolveTemplate(
-    args.fileName,
-    args.templateId ?? args.mapping?.templateId,
-    args.tenantKey,
-  );
+  const template = resolveTemplate(args.fileName, args.templateId ?? args.mapping?.templateId, args.tenantKey);
   const fieldMappings: Record<string, string> = {};
   const providedFieldMappings = args.mapping?.fieldMappings ?? {};
   const proposed = proposeCsvColumnMapping({ headers: args.headers, template });
@@ -590,15 +537,9 @@ function buildChunkText(args: {
   return lines.join("\n");
 }
 
-export function prepareCsvUploadForTenantContext(
-  input: CsvUploadInput,
-): CsvUploadPreparedBatch {
-  const parsed = parseStructuredUpload(input.csvText, input.fileName);
-  const template = resolveTemplate(
-    input.fileName,
-    input.mapping?.templateId,
-    input.tenantKey,
-  );
+export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUploadPreparedBatch {
+  const parsed = parseCsvUpload(input.csvText);
+  const template = resolveTemplate(input.fileName, input.mapping?.templateId, input.tenantKey);
   const mapping = inferCsvSchemaMapping({
     headers: parsed.headers,
     fileName: input.fileName,
@@ -618,15 +559,8 @@ export function prepareCsvUploadForTenantContext(
     safeSlug(input.fileName),
     fileHash.slice(0, 12),
     compactTimestamp(uploadedAt),
-  ].join(":");
-  const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension];
-  const sourceBase = sourcePathBase(input);
-  const dataClassification =
-    input.mapping?.dataClassification ?? "confidential";
-  const sourceBasis = input.sourceBlob
-    ? "azure_blob_admin_upload"
-    : "direct_structured_upload";
-  const sourceSystem = `admin_csv_${safeSlug(template.id)}`;
+  ].join(':');
+  const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension] ?? 'program_inventory';
 
   const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
     const rowNumber = index + 2;

@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
-import { headers } from "next/headers";
-import { SignInShell } from "@/components/auth/SignInShell";
+import { redirect } from 'next/navigation'
+import { currentUser } from '@clerk/nextjs/server'
 
 export const dynamic = "force-dynamic";
 
@@ -26,19 +24,5 @@ export default async function SignInPage({
     redirect(params.redirect || "/auth-redirect");
   }
 
-  const signInMode = (await shouldUseAccessibilitySignInFallback())
-    ? "accessibility"
-    : params.mode === "demo-code" &&
-        process.env.ENABLE_DEMO_CODE_SIGN_IN === "1"
-      ? "demo-code"
-      : params.mode === "clerk"
-        ? "clerk"
-        : "email-code";
-
-  return (
-    <SignInShell
-      redirectUrl={params.redirect || "/auth-redirect"}
-      signInMode={signInMode}
-    />
-  );
+  redirect('/')
 }

@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — Cybersecurity, ACARS/Avionics Security & IT Governance
 // Domain 16: Airline Cybersecurity — ACARS/Avionics Security & IT Security Governance
 // Code range: A4800–A5099 (300 patterns)

@@ -5,64 +5,21 @@ import { useRouter } from "next/navigation";
 import { SHELL } from "@/lib/shell/shell-tokens";
 
 const ROUTES = [
-  { label: "Home", path: "/home", surface: "Home", key: "hom" },
-  {
-    label: "Programs · Portfolio",
-    path: "/programs",
-    surface: "Programs",
-    key: "prg",
-  },
-  {
-    label: "APX-CDP-2026 · Apex Retail CDP",
-    path: "/programs/apx-cdp-2026",
-    surface: "Programs",
-    key: "prg",
-  },
-  {
-    label: "New Program",
-    path: "/programs/new",
-    surface: "Programs",
-    key: "prg",
-  },
-  { label: "Source · Events", path: "/source", surface: "Source", key: "src" },
-  {
-    label: "Intelligence · Library",
-    path: "/intelligence",
-    surface: "Intelligence",
-    key: "int",
-  },
-  {
-    label: "Intelligence · Solutions",
-    path: "/intelligence/solutions",
-    surface: "Intelligence",
-    key: "int",
-  },
-  { label: "AI Control Tower", path: "/tower", surface: "Tower", key: "twr" },
-  { label: "Admin · Overview", path: "/admin", surface: "Admin", key: "adm" },
-  {
-    label: "Admin · Connectors",
-    path: "/admin/connectors",
-    surface: "Admin",
-    key: "adm",
-  },
-  {
-    label: "Admin · Users & Access",
-    path: "/admin/users-access",
-    surface: "Admin",
-    key: "adm",
-  },
-  {
-    label: "Admin · Policies",
-    path: "/admin/policies",
-    surface: "Admin",
-    key: "adm",
-  },
-  {
-    label: "Admin · Tenant profile",
-    path: "/admin?tab=tenant",
-    surface: "Admin",
-    key: "adm",
-  },
+  { label: 'Home', path: '/home', surface: 'Home', key: 'hom' },
+  { label: 'Programs · Portfolio', path: '/programs', surface: 'Programs', key: 'prg' },
+  { label: 'APX-CDP-2026 · Apex Retail CDP', path: '/programs/apx-cdp-2026', surface: 'Programs', key: 'prg' },
+  { label: 'New Program', path: '/programs/new', surface: 'Programs', key: 'prg' },
+  { label: 'Source · Events', path: '/source', surface: 'Source', key: 'src' },
+  { label: 'Intelligence · Library', path: '/intelligence', surface: 'Intelligence', key: 'int' },
+  { label: 'Intelligence · Solutions', path: '/intelligence/solutions', surface: 'Intelligence', key: 'int' },
+  { label: 'Control Tower', path: '/tower', surface: 'Tower', key: 'twr' },
+  { label: 'AI Control Tower · Value', path: '/tower', surface: 'Tower', key: 'twr' },
+  { label: 'AI Control Tower · Spend', path: '/tower', surface: 'Tower', key: 'twr' },
+  { label: 'AI Control Tower · Actions', path: '/tower', surface: 'Tower', key: 'twr' },
+  { label: 'Setup · Connectors', path: '/admin', surface: 'Setup', key: 'set' },
+  { label: 'Setup · Users', path: '/admin/users', surface: 'Setup', key: 'set' },
+  { label: 'Setup · Policies', path: '/admin/policies', surface: 'Setup', key: 'set' },
+  { label: 'Setup · Tenant', path: '/admin?tab=tenant', surface: 'Setup', key: 'set' },
 ] as const;
 
 type Route = (typeof ROUTES)[number];

@@ -1,27 +1,25 @@
 /**
- * Home/Admin separation · Top-nav "Home" must point at Home.
+ * Home and Admin route separation.
  *
- * Home is the role-neutral workspace landing. Setup, users,
- * connectors, templates, policies, and other operator controls live
- * under /admin.
- *
- * If a future PR points "Home" back at /admin, this test fails so the
- * reviewer has to reconsider the separation.
+ * Home is the client-facing Enterprise Landscape. /admin remains the
+ * setup/admin control plane. Do not collapse these routes again.
  */
 
 import { NAV_ITEMS } from '@/components/shell/topbar-nav-items';
 import { TOP_NAV_ITEMS } from '@/lib/home/top-nav-items';
 
-describe('Top-nav · Home → /home', () => {
+describe('Top-nav · Home and Admin remain separate', () => {
   it('topbar-nav-items NAV_ITEMS "home" entry points at /home', () => {
     const home = NAV_ITEMS.find((item) => item.key === 'home');
     expect(home).toBeDefined();
     expect(home?.href).toBe('/home');
   });
 
-  it('topbar-nav-items "home" match treats Home as active and Admin as separate', () => {
+  it('topbar-nav-items "home" match treats /home as home-active but not /admin', () => {
     const home = NAV_ITEMS.find((item) => item.key === 'home');
     expect(home).toBeDefined();
+    expect(home?.match('/admin')).toBe(false);
+    expect(home?.match('/admin/data-trust')).toBe(false);
     expect(home?.match('/home')).toBe(true);
     expect(home?.match('/home/queue')).toBe(true);
     expect(home?.match('/admin')).toBe(false);

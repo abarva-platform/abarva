@@ -16,14 +16,9 @@ export type CockpitNavItem = {
 
 export const NAV_ITEMS: CockpitNavItem[] = [
   {
-    // Home is the role-neutral workspace landing. Setup, users,
-    // connectors, templates, policies, and other operator controls live
-    // under /admin and must not make the Home nav item active.
     key: "home",
     label: "Home",
     href: "/home",
-    // The Learn rail link lives at /home/learn but is its own nav item; Home
-    // must not also light up on Learn pages, so the Learn subtree is excluded.
     match: (pathname) =>
       pathname === "/" ||
       pathname === "/home" ||

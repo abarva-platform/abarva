@@ -11,29 +11,13 @@ import {
   query_signals,
   query_tower_current_state,
   query_use_cases,
-} from "@/lib/atlas/tool-belt";
-import { assembleRetrievalContext } from "@/lib/agent/retrieval";
-import type { AtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
-import {
-  buildAtlasValueGrounding,
-  renderAtlasValueGrounding,
-} from "@/lib/atlas/value-grounding";
-import {
-  loadCuratedSemanticDossier,
-  type CuratedDossierLoadResult,
-} from "@/lib/semantic-dossiers";
-import type {
-  AtlasDebugTrace,
-  AtlasExecutionMode,
-  AtlasSuggestion,
-  AtlasTenancyCtx,
-  AtlasToolResultMap,
-} from "@/lib/atlas/types";
-import { buildTowerFactualSpineAnswer } from "@/lib/atlas/tower-factual-spine";
-import {
-  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
-  sanitizeAutonomousDecisionLanguage,
-} from "@/lib/ai-liability/human-decision-controls";
+} from '@/lib/atlas/tool-belt';
+import { assembleRetrievalContext } from '@/lib/agent/retrieval';
+import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
+import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
+import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
+import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
+import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
 
 /**
  * Atlas live-prod composition wiring (ATLAS-RUNLLM-COMPOSITION 2026-05-31).
@@ -75,6 +59,7 @@ export const ATLAS_TEMPERATURE = 0;
 
 function buildFallback(toolResults: AtlasToolResultMap): string {
   const tower = toolResults.towerState;
+  const enterpriseRead = toolResults.derivedEnterpriseRead;
   const portfolio = toolResults.portfolio;
   const topSignal = toolResults.signalDetail ?? toolResults.signals?.[0];
   const programCount = toolResults.programs?.length ?? 0;
@@ -92,6 +77,10 @@ function buildFallback(toolResults: AtlasToolResultMap): string {
         ? "I also pulled corpus or industry context for this turn."
         : "No corpus or industry chunks were retrieved for this turn, so I will keep external comparisons qualified.";
     return [
+      enterpriseRead ? `${enterpriseRead.tenantName} Enterprise Read: ${enterpriseRead.headline}` : null,
+      enterpriseRead?.recommendedMoves[0]
+        ? `The first context-aware move is ${enterpriseRead.recommendedMoves[0].title}: ${enterpriseRead.recommendedMoves[0].decision}`
+        : null,
       `${tower.client.clientName} Tower is grounded on ${tower.substrateCounts.initiatives} initiatives, ${tower.substrateCounts.vendors} vendors, ${tower.substrateCounts.kpiSnapshots} KPI snapshots, ${tower.substrateCounts.decisions} decisions, and ${tower.substrateCounts.scenarios} scenarios.`,
       hero
         ? `The lead displayed metric is ${hero.label}: ${hero.value} (${hero.confidence}).`
@@ -388,23 +377,23 @@ export async function runAtlasLlm(
   debugTrace?: AtlasDebugTrace;
 }> {
   const towerState = await query_tower_current_state(ctx, surfaceContext);
-  const [portfolio, signals, programs, useCases, benchmark, retrievalContext] =
-    await Promise.all([
-      query_portfolio_aggregates(ctx),
-      query_signals(ctx, { limit: 4 }),
-      query_programs(ctx),
-      query_use_cases(ctx),
-      query_cohort_benchmarks(ctx, "adoption_penetration_pct_avg"),
-      assembleRetrievalContext({
-        clientId: ctx.clientId,
-        industry: towerState.client.industryCode,
-        userQuery: message,
-        topKClient: 3,
-        topKIndustry: 4,
-        topKTopic: 3,
-        atlasTenancy: ctx,
-      }),
-    ]);
+  const [portfolio, signals, programs, useCases, benchmark, retrievalContext, derivedEnterpriseRead] = await Promise.all([
+    query_portfolio_aggregates(ctx),
+    query_signals(ctx, { limit: 4 }),
+    query_programs(ctx),
+    query_use_cases(ctx),
+    query_cohort_benchmarks(ctx, 'adoption_penetration_pct_avg'),
+    assembleRetrievalContext({
+      clientId: ctx.clientId,
+      industry: towerState.client.industryCode,
+      userQuery: message,
+      topKClient: 3,
+      topKIndustry: 4,
+      topKTopic: 3,
+      atlasTenancy: ctx,
+    }),
+    getDerivedEnterpriseReadForTenant(towerState.client.tenantKey ?? towerState.client.clientName),
+  ]);
 
   const toolResults: AtlasToolResultMap = {
     towerState,
@@ -414,6 +403,7 @@ export async function runAtlasLlm(
     programs,
     useCases,
     benchmark,
+    derivedEnterpriseRead,
   };
   const valueGrounding = await buildAtlasValueGrounding({
     ctx,
@@ -585,6 +575,22 @@ export async function runAtlasLlm(
   const towerContext = formatCleanTowerContext(towerState);
   const dossierContext = formatCleanDossierContext(dossierLoad.result);
   const valueGroundingContext = renderAtlasValueGrounding(valueGrounding);
+  const enterpriseReadContext = derivedEnterpriseRead
+    ? [
+        'DERIVED ENTERPRISE READ',
+        `Headline: ${derivedEnterpriseRead.headline}`,
+        `Executive summary: ${derivedEnterpriseRead.executiveSummary}`,
+        `Architecture pattern: ${derivedEnterpriseRead.architecturePattern}`,
+        `Maturity read: ${derivedEnterpriseRead.maturityRead}`,
+        `North star: ${derivedEnterpriseRead.northStar}`,
+        `Peer implication: ${derivedEnterpriseRead.peerImplication}`,
+        'Derived insights:',
+        ...derivedEnterpriseRead.insights.slice(0, 5).map((insight) => `- ${insight.headline}: ${insight.soWhat}`),
+        'Recommended moves:',
+        ...derivedEnterpriseRead.recommendedMoves.slice(0, 3).map((move) => `- ${move.title}: ${move.decision} (${move.expectedImpact})`),
+      ].join('\n')
+    : 'DERIVED ENTERPRISE READ\nNo derived enterprise read artifact is available for this tenant.';
+  const payload = JSON.stringify(sanitizeForTenantPrompt(toolResults), null, 2);
   const userText = [
     `User question: ${message}`,
     "",
@@ -595,9 +601,18 @@ export async function runAtlasLlm(
     dossierContext,
     "",
     towerContext,
-    "",
-    `VALUE GROUNDING SUMMARY\n${valueGroundingContext}`,
-  ].join("\n");
+    '',
+    enterpriseReadContext,
+    '',
+    `ATLAS VALUE GROUNDING\n${valueGroundingContext}`,
+    '',
+    retrievedContext || 'RETRIEVED CONTEXT\nNo corpus, industry, or client vector chunks were retrieved for this turn.',
+    '',
+    CITATION_INSTRUCTION,
+    '',
+    'Raw tool context follows for exact IDs and auditability. Do not surface raw JSON unless asked.',
+    payload,
+  ].join('\n');
   const { client } = await getAuditedAnthropicClient({
     tenantId: ctx.clientId,
     userId: ctx.userId ?? undefined,

@@ -1,0 +1,15 @@
+# SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=manifest | owner=AbarVa Delivery | system=AbarVa Generator | as_of=2026-06-06 | sensitivity=Internal
+idx,domain_folder,context_domain,path
+0,00_manifest,manifest,source/00_manifest/
+1,01_enterprise_profile,enterprise_profile,source/01_enterprise_profile/
+2,02_org_decision_rights,org_decision_rights,source/02_org_decision_rights/
+3,03_strategy_initiatives,strategy_initiatives,source/03_strategy_initiatives/
+4,04_finance_performance,finance_performance,source/04_finance_performance/
+5,05_treasury_kyriba,treasury_kyriba,source/05_treasury_kyriba/
+6,06_it_systems_architecture,it_systems_architecture,source/06_it_systems_architecture/
+7,07_data_analytics_reporting,data_analytics_reporting,source/07_data_analytics_reporting/
+8,08_operations_business_process,operations_business_process,source/08_operations_business_process/
+9,09_servicenow_support_workload,servicenow_support_workload,source/09_servicenow_support_workload/
+10,10_vendors_contracts_source,vendors_contracts_source,source/10_vendors_contracts_source/
+11,11_risk_controls_responsible_ai,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/
+12,12_ai_use_cases_moves,ai_use_cases_moves,source/12_ai_use_cases_moves/

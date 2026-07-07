@@ -1,0 +1,48 @@
+{
+  "out": "/Users/anand/Projects/nexus/proof/lakeshore-v7-home-tower-browser-current-20260706T202240Z",
+  "checks": [
+    {
+      "name": "home 3.09K",
+      "ok": false
+    },
+    {
+      "name": "home 25 files",
+      "ok": false
+    },
+    {
+      "name": "portfolio hierarchy 8 visible",
+      "ok": false
+    },
+    {
+      "name": "tower 190.6M",
+      "ok": false
+    },
+    {
+      "name": "tower no 983.6M",
+      "ok": false
+    }
+  ],
+  "failed": [
+    {
+      "name": "home 3.09K",
+      "ok": false
+    },
+    {
+      "name": "home 25 files",
+      "ok": false
+    },
+    {
+      "name": "portfolio hierarchy 8 visible",
+      "ok": false
+    },
+    {
+      "name": "tower 190.6M",
+      "ok": false
+    },
+    {
+      "name": "tower no 983.6M",
+      "ok": false
+    }
+  ],
+  "timestamp": "2026-07-06T20:22:46.163Z"
+}

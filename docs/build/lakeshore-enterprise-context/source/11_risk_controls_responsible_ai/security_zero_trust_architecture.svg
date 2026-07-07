@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="800" viewBox="0 0 1300 800" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker>
+<marker id="arwR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#b91c1c"/></marker>
+<marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3"><circle cx="3" cy="3" r="2.4" fill="#39507e"/></marker>
+</defs>
+<rect width="1300" height="800" fill="#f5f1eb"/>
+<text x="36" y="34" font-size="12" fill="#6b7280" font-family="monospace">SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI</text>
+<text x="36" y="64" font-size="23" font-weight="700" fill="#0c1a3a" font-family="Georgia, serif">Security &amp; Zero-Trust Reference Architecture</text>
+<text x="36" y="86" font-size="12.5" fill="#6b7280">Identity perimeter → private data plane → detect/respond → controls mapping</text>
+<text x="650.0" y="400.0" font-size="150" fill="#0c1a3a" opacity="0.045" text-anchor="middle" transform="rotate(-22 650.0 400.0)" font-weight="700">SYNTHETIC</text>
+<rect x="36" y="110" width="1228" height="110" rx="12" fill="#fdeef0" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="105" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">IDENTITY-FIRST PERIMETER (Zero Trust)</text>
+<rect x="52" y="134" width="226" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="134" width="5" height="72" rx="2" fill="#b91c1c"/>
+<text x="66" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Entra ID</text>
+<text x="66" y="174" font-size="10.5" fill="#6b7280">SAML/OIDC, MFA, CA policies</text>
+<rect x="298" y="134" width="226" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="298" y="134" width="5" height="72" rx="2" fill="#b91c1c"/>
+<text x="312" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Zscaler SSE/ZTNA</text>
+<text x="312" y="174" font-size="10.5" fill="#6b7280">no implicit trust</text>
+<rect x="544" y="134" width="226" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="544" y="134" width="5" height="72" rx="2" fill="#b45309"/>
+<text x="558" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Front Door + WAF</text>
+<text x="558" y="174" font-size="10.5" fill="#6b7280">OWASP, DDoS</text>
+<rect x="790" y="134" width="226" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="790" y="134" width="5" height="72" rx="2" fill="#0066CC"/>
+<text x="804" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">API Mgmt</text>
+<text x="804" y="174" font-size="10.5" fill="#6b7280">OAuth2, mTLS</text>
+<rect x="1036" y="134" width="226" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="1036" y="134" width="5" height="72" rx="2" fill="#6d28d9"/>
+<text x="1050" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">CyberArk PAM</text>
+<text x="1050" y="174" font-size="10.5" fill="#6b7280">JIT, vaulting</text>
+<rect x="36" y="244" width="1228" height="150" rx="12" fill="#eef4fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="239" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">PRIVATE DATA PLANE (VNet-isolated, private endpoints)</text>
+<rect x="52" y="268" width="288" height="100" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="268" width="5" height="100" rx="2" fill="#0066CC"/>
+<text x="66" y="289" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure Postgres</text>
+<text x="66" y="308" font-size="10.5" fill="#6b7280">private endpoint, AAD auth, TLS</text>
+<text x="66" y="323" font-size="10.5" fill="#6b7280">managed identity access</text>
+<text x="66" y="338" font-size="10.5" fill="#6b7280">diagnostic logs → Sentinel</text>
+<rect x="358" y="268" width="288" height="100" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="358" y="268" width="5" height="100" rx="2" fill="#6d28d9"/>
+<text x="372" y="289" font-size="12.5" font-weight="600" fill="#0c1a3a">Blob Storage</text>
+<text x="372" y="308" font-size="10.5" fill="#6b7280">deny-public, firewall+PE, CMK</text>
+<text x="372" y="323" font-size="10.5" fill="#6b7280">managed identity access</text>
+<text x="372" y="338" font-size="10.5" fill="#6b7280">diagnostic logs → Sentinel</text>
+<rect x="664" y="268" width="288" height="100" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="664" y="268" width="5" height="100" rx="2" fill="#15803d"/>
+<text x="678" y="289" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure AI Search</text>
+<text x="678" y="308" font-size="10.5" fill="#6b7280">RBAC data-plane, PE</text>
+<text x="678" y="323" font-size="10.5" fill="#6b7280">managed identity access</text>
+<text x="678" y="338" font-size="10.5" fill="#6b7280">diagnostic logs → Sentinel</text>
+<rect x="970" y="268" width="288" height="100" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="970" y="268" width="5" height="100" rx="2" fill="#b45309"/>
+<text x="984" y="289" font-size="12.5" font-weight="600" fill="#0c1a3a">Key Vault</text>
+<text x="984" y="308" font-size="10.5" fill="#6b7280">secrets, RBAC, soft-delete/purge</text>
+<text x="984" y="323" font-size="10.5" fill="#6b7280">managed identity access</text>
+<text x="984" y="338" font-size="10.5" fill="#6b7280">diagnostic logs → Sentinel</text>
+<rect x="36" y="416" width="1228" height="130" rx="12" fill="#eefbf7" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="411" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">DETECT &amp; RESPOND</text>
+<rect x="52" y="440" width="288" height="86" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="440" width="5" height="86" rx="2" fill="#b91c1c"/>
+<text x="66" y="461" font-size="12.5" font-weight="600" fill="#0c1a3a">Microsoft Sentinel (SIEM)</text>
+<text x="66" y="480" font-size="10.5" fill="#6b7280">analytics rules, UEBA</text>
+<text x="66" y="495" font-size="10.5" fill="#6b7280">evidence → audit ledger</text>
+<rect x="358" y="440" width="288" height="86" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="358" y="440" width="5" height="86" rx="2" fill="#b45309"/>
+<text x="372" y="461" font-size="12.5" font-weight="600" fill="#0c1a3a">Defender for Cloud</text>
+<text x="372" y="480" font-size="10.5" fill="#6b7280">CSPM/CWPP, malware scan</text>
+<text x="372" y="495" font-size="10.5" fill="#6b7280">evidence → audit ledger</text>
+<rect x="664" y="440" width="288" height="86" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="664" y="440" width="5" height="86" rx="2" fill="#0066CC"/>
+<text x="678" y="461" font-size="12.5" font-weight="600" fill="#0c1a3a">Purview</text>
+<text x="678" y="480" font-size="10.5" fill="#6b7280">data classification, DLP</text>
+<text x="678" y="495" font-size="10.5" fill="#6b7280">evidence → audit ledger</text>
+<rect x="970" y="440" width="288" height="86" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="970" y="440" width="5" height="86" rx="2" fill="#15803d"/>
+<text x="984" y="461" font-size="12.5" font-weight="600" fill="#0c1a3a">SOAR / Playbooks</text>
+<text x="984" y="480" font-size="10.5" fill="#6b7280">auto-containment</text>
+<text x="984" y="495" font-size="10.5" fill="#6b7280">evidence → audit ledger</text>
+<rect x="36" y="568" width="1228" height="150" rx="12" fill="#eef7f1" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="563" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">GOVERNANCE &amp; CONTROLS MAPPING</text>
+<text x="60" y="600" font-size="11" font-weight="600" fill="#0c1a3a">SOX ITGC</text><text x="240" y="600" font-size="11" fill="#6b7280">access review, change mgmt, SoD</text><text x="760" y="600" font-size="11" fill="#1F2A44" font-family="monospace">quarterly attestation</text><text x="60" y="626" font-size="11" font-weight="600" fill="#0c1a3a">Payment fraud</text><text x="240" y="626" font-size="11" fill="#6b7280">dual auth, sanctions, anomaly</text><text x="760" y="626" font-size="11" fill="#1F2A44" font-family="monospace">Kyriba + Sentinel</text><text x="60" y="652" font-size="11" font-weight="600" fill="#0c1a3a">Data privacy</text><text x="240" y="652" font-size="11" fill="#6b7280">masking, DLP, residency</text><text x="760" y="652" font-size="11" fill="#1F2A44" font-family="monospace">Purview</text><text x="60" y="678" font-size="11" font-weight="600" fill="#0c1a3a">Responsible AI</text><text x="240" y="678" font-size="11" fill="#6b7280">use-case intake, human-in-loop</text><text x="760" y="678" font-size="11" fill="#1F2A44" font-family="monospace">AI Governance Board</text><path d="M165,206 L200,268" fill="none" stroke="#b91c1c" stroke-width="1.6" marker-end="url(#arwR)"/>
+<rect x="172.1" y="228.0" width="20.8" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="182.5" y="239.0" font-size="9" fill="#b91c1c" text-anchor="middle" font-family="monospace">MI</text>
+<path d="M200,368 L200,440" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<rect x="184.2" y="395.0" width="31.6" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="200.0" y="406.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">logs</text>
+<text x="36" y="786" font-size="10.5" fill="#6b7280" font-family="monospace">LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1 · risk_controls_responsible_ai · owner=David Chen · system=Microsoft Sentinel · 2026-06-06 · SYNTHETIC / LAKESHORE PILOT / NOT REAL DATA</text>
+</svg>

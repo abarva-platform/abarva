@@ -90,10 +90,10 @@ const CXO_QUESTIONS = [
   ['LSH-CXO-044', 'moves_program_success', 'Audit Committee', 'How should model-driven treasury anomaly detection be governed after Kyriba goes live?'],
   ['LSH-CXO-045', 'moves_program_success', 'CIO', 'How should the Shared Data Platform Move support the Kyriba value story without claiming more than it has?'],
 
-  ['LSH-CXO-046', 'federated_holdco', 'L0 Sponsor', 'What does Lakeshore L0 see that Lakeshore Holdings L1 should not automatically see at transaction grain?'],
+  ['LSH-CXO-046', 'federated_holdco', 'L0 Sponsor', 'What does Lakeshore L0 see that Morgan Street L1 should not automatically see at transaction grain?'],
   ['LSH-CXO-047', 'federated_holdco', 'CFO', 'How does the holding_group_id shortcut help the demo, and what hierarchy work remains post-demo?'],
   ['LSH-CXO-048', 'federated_holdco', 'L0 CIO', 'How should cross-HoldCo vendor overlap detection work without violating tenant isolation?'],
-  ['LSH-CXO-049', 'federated_holdco', 'L1 CFO', 'What should a Lakeshore Holdings CFO be able to see versus a sibling HoldCo CFO?'],
+  ['LSH-CXO-049', 'federated_holdco', 'L1 CFO', 'What should a Morgan Street CFO be able to see versus a sibling HoldCo CFO?'],
   ['LSH-CXO-050', 'federated_holdco', 'L0 Sponsor', 'How should federated Tower show aggregate savings while preserving contract confidentiality?'],
   ['LSH-CXO-051', 'federated_holdco', 'CFO', 'How should AbarVa explain parent aggregate reads to a skeptical GC?'],
   ['LSH-CXO-052', 'federated_holdco', 'CIO', 'What is the right sequence for L0/L1/L2 tenancy hardening after the demo shortcut?'],

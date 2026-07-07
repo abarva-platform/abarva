@@ -67,13 +67,12 @@ export const HOME_VIEW = {
 
   // Top pressure
   topPressure: {
-    title: "AI Cloud Spend",
-    severity: "high" as const,
-    heroStat: "Restricted",
-    heroLabel: "over budget · exact values hidden",
-    atlasSentence:
-      "LLM inference is the top driver — a negotiated rate card would recover material run-rate value.",
-    href: "/tower",
+    title: 'AI Cloud Spend',
+    severity: 'high' as const,
+    heroStat: 'Restricted',
+    heroLabel: 'over budget · exact values hidden',
+    atlasSentence: 'LLM inference is the top driver — a negotiated rate card would recover material run-rate value.',
+    href: '/tower',
   },
 
   // Source highlight

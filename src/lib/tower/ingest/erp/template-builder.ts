@@ -236,66 +236,37 @@ function writeDataSheet(
 function writeHowToFillSheet(wb: ExcelJS.Workbook) {
   const ws = wb.addWorksheet("How to fill");
   ws.getColumn(1).width = 110;
-  const lines: Array<{
-    text: string;
-    bold?: boolean;
-    size?: number;
-    color?: string;
-  }> = [
-    {
-      text: "AbarVa Control Tower · ERP financial-data template",
-      bold: true,
-      size: 16,
-    },
-    { text: `Template v${ERP_TEMPLATE_VERSION}`, color: "FF706D66", size: 11 },
-    { text: "" },
-    { text: "Sheets to fill", bold: true, size: 13 },
-    { text: "· Program Financials — one row per (program, fiscal period)." },
-    { text: "· Vendor Spend — one row per vendor your ERP knows about." },
-    { text: "" },
-    { text: "Order of operations", bold: true, size: 13 },
-    {
-      text: "1. Fill Vendor Spend first. Make sure every vendor_id you intend to reference exists here.",
-    },
-    {
-      text: "2. Fill Program Financials. vendor_id (if used) must match a row from sheet 1.",
-    },
-    {
-      text: "3. Save the file. Upload through the AI Control Tower setup flow or run the CLI: npm run tower:ingest-erp -- --file <path>.",
-    },
-    { text: "" },
-    {
-      text: "Required columns (teal headers) must be present and populated.",
-      bold: true,
-      size: 12,
-    },
-    {
-      text: "Optional columns can be blank. Numeric columns must be non-negative.",
-    },
-    { text: "" },
-    { text: "Validation enforced at ingest", bold: true, size: 13 },
-    { text: "· period_end ≥ period_start" },
-    { text: "· capex_usd + opex_usd ≤ actual_usd (within $1 rounding)" },
-    { text: "· vendor_id in Program Financials must FK to Vendor Spend" },
-    {
-      text: "· (program_id, period_start) is unique within Program Financials",
-    },
-    { text: "· (vendor_id) is unique within Vendor Spend" },
-    { text: "" },
-    { text: "Where this came from", bold: true, size: 13 },
-    {
-      text: "Two source-system paths supported. See README.md alongside this workbook for the",
-    },
-    { text: "step-by-step Oracle GL/AP and SAP CO-PA extract procedures." },
-    { text: "" },
-    { text: "Data classification", bold: true, size: 13 },
-    {
-      text: "Treat this file as CONFIDENTIAL. Program budgets and vendor spend are",
-    },
-    {
-      text: "gated by redaction Layer 2 in Tower roll-ups — exact figures appear only",
-    },
-    { text: "for users with the financial-data role." },
+  const lines: Array<{ text: string; bold?: boolean; size?: number; color?: string }> = [
+    { text: 'AbarVa Control Tower · ERP financial-data template', bold: true, size: 16 },
+    { text: `Template v${ERP_TEMPLATE_VERSION}`, color: 'FF706D66', size: 11 },
+    { text: '' },
+    { text: 'Sheets to fill', bold: true, size: 13 },
+    { text: '· Program Financials — one row per (program, fiscal period).' },
+    { text: '· Vendor Spend — one row per vendor your ERP knows about.' },
+    { text: '' },
+    { text: 'Order of operations', bold: true, size: 13 },
+    { text: '1. Fill Vendor Spend first. Make sure every vendor_id you intend to reference exists here.' },
+    { text: '2. Fill Program Financials. vendor_id (if used) must match a row from sheet 1.' },
+    { text: '3. Save the file. Upload through Admin templates or run the CLI: npm run tower:ingest-erp -- --file <path>.' },
+    { text: '' },
+    { text: 'Required columns (teal headers) must be present and populated.', bold: true, size: 12 },
+    { text: 'Optional columns can be blank. Numeric columns must be non-negative.' },
+    { text: '' },
+    { text: 'Validation enforced at ingest', bold: true, size: 13 },
+    { text: '· period_end ≥ period_start' },
+    { text: '· capex_usd + opex_usd ≤ actual_usd (within $1 rounding)' },
+    { text: '· vendor_id in Program Financials must FK to Vendor Spend' },
+    { text: '· (program_id, period_start) is unique within Program Financials' },
+    { text: '· (vendor_id) is unique within Vendor Spend' },
+    { text: '' },
+    { text: 'Where this came from', bold: true, size: 13 },
+    { text: 'Two source-system paths supported. See README.md alongside this workbook for the' },
+    { text: 'step-by-step Oracle GL/AP and SAP CO-PA extract procedures.' },
+    { text: '' },
+    { text: 'Data classification', bold: true, size: 13 },
+    { text: 'Treat this file as CONFIDENTIAL. Program budgets and vendor spend are' },
+    { text: 'gated by redaction Layer 2 in Tower roll-ups — exact figures appear only' },
+    { text: 'for users with the financial-data role.' },
   ];
   lines.forEach((line, idx) => {
     const cell = ws.getRow(idx + 2).getCell(2);

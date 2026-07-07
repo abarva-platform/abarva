@@ -1,0 +1,237 @@
+{
+  "baseUrl": "https://app.abarva.ai",
+  "email": "cio@apex-retail.example.com",
+  "capturedAt": "2026-06-01T15:18:26.928Z",
+  "primerPath": "/Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html",
+  "readOnlyNote": "The capture typed into new Move and Source intake screens but did not submit, promote, or open a production event.",
+  "scenes": [
+    {
+      "id": "opening",
+      "url": "https://app.abarva.ai/product",
+      "intendedSeconds": 36,
+      "actualSeconds": 36.2
+    },
+    {
+      "id": "vision",
+      "url": "https://app.abarva.ai/product",
+      "intendedSeconds": 34,
+      "actualSeconds": 34.1
+    },
+    {
+      "id": "apex-context",
+      "url": "file:///Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html#you",
+      "intendedSeconds": 44,
+      "actualSeconds": 44.6
+    },
+    {
+      "id": "industry-corpus",
+      "url": "file:///Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html#industry",
+      "intendedSeconds": 44,
+      "actualSeconds": 44
+    },
+    {
+      "id": "architecture",
+      "url": "file:///Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html#arch",
+      "intendedSeconds": 42,
+      "actualSeconds": 42.1
+    },
+    {
+      "id": "setup-live",
+      "url": "https://app.abarva.ai/admin",
+      "intendedSeconds": 48,
+      "actualSeconds": 49
+    },
+    {
+      "id": "intelligence-live",
+      "url": "https://app.abarva.ai/intelligence",
+      "intendedSeconds": 58,
+      "actualSeconds": 52.5
+    },
+    {
+      "id": "moves-primer",
+      "url": "file:///Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html#moves",
+      "intendedSeconds": 42,
+      "actualSeconds": 42.6
+    },
+    {
+      "id": "moves-live",
+      "url": "https://app.abarva.ai/strategic-moves/new",
+      "intendedSeconds": 86,
+      "actualSeconds": 80.6
+    },
+    {
+      "id": "source-primer",
+      "url": "file:///Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html#source",
+      "intendedSeconds": 42,
+      "actualSeconds": 42.6
+    },
+    {
+      "id": "source-live",
+      "url": "https://app.abarva.ai/source/new",
+      "intendedSeconds": 90,
+      "actualSeconds": 93.9
+    },
+    {
+      "id": "tower-live",
+      "url": "https://app.abarva.ai/tower",
+      "intendedSeconds": 58,
+      "actualSeconds": 59.3
+    },
+    {
+      "id": "compound-close",
+      "url": "file:///Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html#compound",
+      "intendedSeconds": 42,
+      "actualSeconds": 42.6
+    },
+    {
+      "id": "close",
+      "url": "file:///Users/anand/Downloads/abarva-cxo-demos/apex-cxo-primer.html#plan",
+      "intendedSeconds": 36,
+      "actualSeconds": 36
+    }
+  ],
+  "videoWebm": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/working-tour-raw/page@ab80e892709f8968ca772729bd9e57b1.webm",
+  "outputs": {
+    "talkTrack": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-working-tour-talk-track.txt",
+    "narrationAudio": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-working-tour-narration.wav",
+    "audioMode": "gpt-4o-mini-tts-marin-speed-0.88-product-opening-scene-mux",
+    "motion": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-working-tour.mp4",
+    "copied": [
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-working-tour.mp4",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-working-tour-talk-track.txt",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-live-motion.mp4"
+    ],
+    "webmDurationSeconds": 699.8,
+    "audioDurationSeconds": 574.375964,
+    "motionDurationSeconds": 516.701701,
+    "syncMode": "product page for product thesis; Apex primer starts only at Apex context; scene-by-scene mux; primer lead-in cuts prevent cross-section drift",
+    "syncManifest": [
+      {
+        "index": 1,
+        "id": "opening",
+        "sourceStart": 0.0,
+        "sourceCutSeconds": 16.0,
+        "sceneSeconds": 36.2,
+        "audioSeconds": 27.264,
+        "finalSeconds": 30.764
+      },
+      {
+        "index": 2,
+        "id": "vision",
+        "sourceStart": 36.2,
+        "sourceCutSeconds": 16.0,
+        "sceneSeconds": 34.1,
+        "audioSeconds": 23.688,
+        "finalSeconds": 27.188
+      },
+      {
+        "index": 3,
+        "id": "apex-context",
+        "sourceStart": 70.3,
+        "sourceCutSeconds": 10.5,
+        "sceneSeconds": 44.6,
+        "audioSeconds": 29.712,
+        "finalSeconds": 33.212
+      },
+      {
+        "index": 4,
+        "id": "industry-corpus",
+        "sourceStart": 114.9,
+        "sourceCutSeconds": 10.5,
+        "sceneSeconds": 44.0,
+        "audioSeconds": 31.008,
+        "finalSeconds": 34.508
+      },
+      {
+        "index": 5,
+        "id": "architecture",
+        "sourceStart": 158.9,
+        "sourceCutSeconds": 10.5,
+        "sceneSeconds": 42.1,
+        "audioSeconds": 30.12,
+        "finalSeconds": 33.62
+      },
+      {
+        "index": 6,
+        "id": "setup-live",
+        "sourceStart": 201.0,
+        "sourceCutSeconds": 49.0,
+        "sceneSeconds": 49.0,
+        "audioSeconds": 27.144,
+        "finalSeconds": 30.644
+      },
+      {
+        "index": 7,
+        "id": "intelligence-live",
+        "sourceStart": 250.0,
+        "sourceCutSeconds": 52.5,
+        "sceneSeconds": 52.5,
+        "audioSeconds": 39.48,
+        "finalSeconds": 44.48
+      },
+      {
+        "index": 8,
+        "id": "moves-primer",
+        "sourceStart": 302.5,
+        "sourceCutSeconds": 12.0,
+        "sceneSeconds": 42.6,
+        "audioSeconds": 28.584,
+        "finalSeconds": 32.084
+      },
+      {
+        "index": 9,
+        "id": "moves-live",
+        "sourceStart": 345.1,
+        "sourceCutSeconds": 80.6,
+        "sceneSeconds": 80.6,
+        "audioSeconds": 51.984,
+        "finalSeconds": 56.984
+      },
+      {
+        "index": 10,
+        "id": "source-primer",
+        "sourceStart": 425.7,
+        "sourceCutSeconds": 10.0,
+        "sceneSeconds": 42.6,
+        "audioSeconds": 27.504,
+        "finalSeconds": 31.004
+      },
+      {
+        "index": 11,
+        "id": "source-live",
+        "sourceStart": 468.3,
+        "sourceCutSeconds": 93.9,
+        "sceneSeconds": 93.9,
+        "audioSeconds": 62.16,
+        "finalSeconds": 67.16
+      },
+      {
+        "index": 12,
+        "id": "tower-live",
+        "sourceStart": 562.2,
+        "sourceCutSeconds": 59.3,
+        "sceneSeconds": 59.3,
+        "audioSeconds": 25.92,
+        "finalSeconds": 29.42
+      },
+      {
+        "index": 13,
+        "id": "compound-close",
+        "sourceStart": 621.5,
+        "sourceCutSeconds": 12.0,
+        "sceneSeconds": 42.6,
+        "audioSeconds": 29.808,
+        "finalSeconds": 33.308
+      },
+      {
+        "index": 14,
+        "id": "close",
+        "sourceStart": 664.1,
+        "sourceCutSeconds": 12.0,
+        "sceneSeconds": 36.0,
+        "audioSeconds": 28.968,
+        "finalSeconds": 32.468
+      }
+    ]
+  }
+}

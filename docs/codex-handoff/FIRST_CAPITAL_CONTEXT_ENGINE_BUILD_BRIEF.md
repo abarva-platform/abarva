@@ -8,24 +8,24 @@
 
 ## What exists today (read before writing any code)
 
-| Asset                                   | Location                                                                          | State                                           |
-| --------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Universal 19-dim types                  | `src/lib/context-ingestion/types.ts`                                              | ✓ Done                                          |
-| Universal template registry             | `src/lib/context-ingestion/template-registry.ts`                                  | ✓ Done                                          |
-| CSV upload connector                    | `src/lib/context-ingestion/csv-upload-connector.ts`                               | Partial — writes chunks only, not records/facts |
-| context-commit.ts                       | `src/lib/context-ingestion/context-commit.ts`                                     | Stub — no DB writes                             |
-| Admin CSV upload route                  | `src/app/api/admin/context-layer/csv-upload/route.ts`                             | Partial — CSV only, chunks only                 |
-| Azure Blob client                       | `src/lib/workshops/blob.ts`                                                       | ✓ Exists — reuse pattern                        |
-| Azure connectivity config               | `src/lib/azure-connectivity/config.ts`                                            | ✓ Exists                                        |
-| First Capital V2 dataset (19 dims)      | `datasets/first-capital-financial-synthetic-v2/`                                  | ✓ 33 files ready                                |
-| Tower supplement (10 Tower files)       | `datasets/first-capital-financial-synthetic-v2/ai-control-tower/`                 | ✓ 10 files ready                                |
-| Context relationship graph              | `datasets/first-capital-financial-synthetic-v2/graph/context-relationships.jsonl` | ✓ 151 edges ready                               |
-| Manifest                                | `datasets/first-capital-financial-synthetic-v2/manifest.yaml`                     | ✓ Done                                          |
-| DB migration (dimension_family columns) | Does NOT exist yet                                                                | ⚠ Must create                                   |
-| YAML/JSONL loader                       | Does NOT exist yet                                                                | ⚠ Must create                                   |
-| Batch/manifest-driven loader            | Does NOT exist yet                                                                | ⚠ Must create                                   |
-| Record+fact commit path                 | Does NOT exist yet                                                                | ⚠ Must create                                   |
-| Insight rules engine                    | Does NOT exist yet                                                                | Phase 2                                         |
+| Asset | Location | State |
+|---|---|---|
+| Universal 19-dim types | `src/lib/context-ingestion/types.ts` | ✓ Done |
+| Universal template registry | `src/lib/context-ingestion/template-registry.ts` | ✓ Done |
+| CSV upload connector | `src/lib/context-ingestion/csv-upload-connector.ts` | Partial — writes chunks only, not records/facts |
+| context-commit.ts | `src/lib/context-ingestion/context-commit.ts` | Stub — no DB writes |
+| Admin CSV upload route | `src/app/api/admin/context-layer/csv-upload/route.ts` | Partial — CSV only, chunks only |
+| Azure Blob client | `src/lib/workshops/blob.ts` | ✓ Exists — reuse pattern |
+| Azure connectivity config | `src/lib/azure-connectivity/config.ts` | ✓ Exists |
+| First Capital V2 dataset (19 dims) | `datasets/first-capital-financial-synthetic-v2/` | ✓ 33 files ready |
+| Tower supplement (10 Tower files) | `datasets/first-capital-financial-synthetic-v2/ai-control-tower/` | ✓ 10 files ready |
+| Context relationship graph | `datasets/first-capital-financial-synthetic-v2/graph/context-relationships.jsonl` | ✓ 151 edges ready |
+| Manifest | `datasets/first-capital-financial-synthetic-v2/manifest.yaml` | ✓ Done |
+| DB migration (dimension_family columns) | Does NOT exist yet | ⚠ Must create |
+| YAML/JSONL loader | Does NOT exist yet | ⚠ Must create |
+| Batch/manifest-driven loader | Does NOT exist yet | ⚠ Must create |
+| Record+fact commit path | Does NOT exist yet | ⚠ Must create |
+| Insight rules engine | Does NOT exist yet | Phase 2 |
 
 ---
 
@@ -132,7 +132,7 @@ az containerapp job start \
 ```typescript
 // Key contract: commitContextBatch() must:
 // 1. Upsert enterprise_context_records (with dimension_family, domain_segment, business_function)
-// 2. Upsert enterprise_context_facts (per field, with provenance)
+// 2. Upsert enterprise_context_facts (per field, with provenance)  
 // 3. Upsert enterprise_context_chunks (for full-text retrieval)
 // 4. Write enterprise_context_source_files row with blob_url
 // 5. Write data_ingestion_runs audit row
@@ -153,7 +153,7 @@ export interface ContextCommitReceipt {
 export async function commitContextBatch(
   input: ContextCommitBatchInput,
   db: PostgresCompatClient,
-): Promise<ContextCommitReceipt>;
+): Promise<ContextCommitReceipt>
 ```
 
 - Use `getAzureWriteFluentClient()` from `@/lib/data-plane/postgresCompat`
@@ -173,12 +173,9 @@ export interface YamlLoadResult {
   facts: ParsedContextFact[];
 }
 
-export async function loadYamlToContext(input: {
-  yamlText: string;
-  tenantKey: string;
-  fileName: string;
-  templateId: string;
-}): Promise<YamlLoadResult>;
+export async function loadYamlToContext(
+  input: { yamlText: string; tenantKey: string; fileName: string; templateId: string }
+): Promise<YamlLoadResult>
 ```
 
 - Use `js-yaml` (already in package.json — check first; if not, add it)
@@ -197,11 +194,13 @@ export interface GraphLoadResult {
   fkResolutionErrors: number; // from_record_key not found in records table
 }
 
-export async function loadJsonlGraphEdges(input: {
-  jsonlText: string;
-  tenantKey: string;
-  db: PostgresCompatClient;
-}): Promise<GraphLoadResult>;
+export async function loadJsonlGraphEdges(
+  input: {
+    jsonlText: string;
+    tenantKey: string;
+    db: PostgresCompatClient;
+  }
+): Promise<GraphLoadResult>
 ```
 
 - Parse each JSON line into an edge
@@ -226,7 +225,7 @@ export async function stageFileToBlob(input: {
   fileName: string;
   fileBytes: Buffer;
   mimeType: string;
-}): Promise<{ blobUrl: string | null; staged: boolean }>;
+}): Promise<{ blobUrl: string | null; staged: boolean }>
 ```
 
 - Reuse the `BlobServiceClient` pattern from `src/lib/workshops/blob.ts`
@@ -242,12 +241,12 @@ Batch manifest-driven loader — reads manifest.yaml, processes all files in loa
 ```typescript
 // POST /api/admin/context-layer/manifest-load
 // Body: { tenantKey: string; datasetPath: string; dryRun?: boolean }
-// Returns: { phases: LoadPhaseResult[]; totalRecords: number; totalFacts: number;
+// Returns: { phases: LoadPhaseResult[]; totalRecords: number; totalFacts: number; 
 //            totalEdges: number; blobUrls: Record<string, string> }
 
 // Load order from manifest:
 // 1. YAML → yaml-loader → commitContextBatch
-// 2. CSV (dimensions) → csv-upload-connector → commitContextBatch
+// 2. CSV (dimensions) → csv-upload-connector → commitContextBatch  
 // 3. JSONL (graph) → jsonl-graph-loader (after all entity dims committed)
 ```
 
@@ -260,7 +259,6 @@ Batch manifest-driven loader — reads manifest.yaml, processes all files in loa
 ### 1f. Extend existing CSV upload route
 
 `src/app/api/admin/context-layer/csv-upload/route.ts`:
-
 - Remove 2,000 row hard cap (or raise to 50,000)
 - After chunk staging, also call `commitContextBatch()` to write records + facts
 - Write blob URL to `enterprise_context_source_files.file_url` column (add column if missing)
@@ -287,7 +285,7 @@ Create `scripts/jobs/load-first-capital-v2.ts`:
 /**
  * ACA seed job for First Capital Financial V2 context load.
  * Run inside VNet via: az containerapp job start
- *
+ * 
  * Steps:
  * 1. Read manifest from DATASET_PATH env var
  * 2. TRUNCATE first-capital context rows (records, facts, chunks, relationships)
@@ -297,10 +295,9 @@ Create `scripts/jobs/load-first-capital-v2.ts`:
  * 6. Output JSON receipt to stdout (captured in Log Analytics)
  */
 
-const TENANT_KEY = "first-capital";
-const CLIENT_ID = "a75687bf-71b9-4524-ab4e-68ae3f28d200";
-const DATASET_PATH =
-  process.env.DATASET_PATH ?? "datasets/first-capital-financial-synthetic-v2";
+const TENANT_KEY = 'first-capital';
+const CLIENT_ID = 'a75687bf-71b9-4524-ab4e-68ae3f28d200';
+const DATASET_PATH = process.env.DATASET_PATH ?? 'datasets/first-capital-financial-synthetic-v2';
 ```
 
 **Truncate order** (respect FK constraints):
@@ -320,40 +317,39 @@ DELETE FROM data_ingestion_runs WHERE tenant_key = 'first-capital';
 
 **Load sequence** (from manifest.yaml):
 
-| Step | File                                       | Type  | Loader               |
-| ---- | ------------------------------------------ | ----- | -------------------- |
-| 1    | F01_enterprise-profile.yaml                | YAML  | yaml-loader          |
-| 2    | F02_business-org-functions.csv             | CSV   | csv-upload-connector |
-| 2    | F03_it-org-ownership.csv                   | CSV   | csv-upload-connector |
-| 2    | D19_personas-workforce.csv                 | CSV   | csv-upload-connector |
-| 3    | F04_capabilities-value-streams.csv         | CSV   | csv-upload-connector |
-| 4    | F05_applications-systems.csv               | CSV   | csv-upload-connector |
-| 4    | F06_system-function-mapping.csv            | CSV   | csv-upload-connector |
-| 4    | F07_infrastructure-cloud.csv               | CSV   | csv-upload-connector |
-| 4    | F08_platform-volumetrics.csv               | CSV   | csv-upload-connector |
-| 5    | F09_data-analytics-estate.csv              | CSV   | csv-upload-connector |
-| 5    | F10_integrations-interfaces.csv            | CSV   | csv-upload-connector |
-| 6    | F11_vendors-contracts-licenses.csv         | CSV   | csv-upload-connector |
-| 6    | F12_it-budget-financials.csv               | CSV   | csv-upload-connector |
-| 7    | F13_initiatives-portfolio.csv              | CSV   | csv-upload-connector |
-| 7    | T01_initiative-milestones.csv              | CSV   | csv-upload-connector |
-| 7    | T02_benefit-realization.csv                | CSV   | csv-upload-connector |
-| 7    | T08_ai-spend-by-initiative.csv             | CSV   | csv-upload-connector |
-| 7    | T10_gate-approval-history.csv              | CSV   | csv-upload-connector |
-| 8    | F14_operations-service-management.csv      | CSV   | csv-upload-connector |
-| 8    | T05_servicenow-automation-metrics.csv      | CSV   | csv-upload-connector |
-| 8    | F15_kpis-outcome-evidence.csv              | CSV   | csv-upload-connector |
-| 9    | F16_security-risk-compliance.csv           | CSV   | csv-upload-connector |
-| 9    | F17_ai-automation-footprint.csv            | CSV   | csv-upload-connector |
-| 9    | T03_copilot-adoption-by-function.csv       | CSV   | csv-upload-connector |
-| 9    | T04_erp-platform-agents.csv                | CSV   | csv-upload-connector |
-| 9    | T06_function-ai-productivity-scorecard.csv | CSV   | csv-upload-connector |
-| 9    | T07_model-risk-inventory.csv               | CSV   | csv-upload-connector |
-| 9    | T09_ai-risk-register.csv                   | CSV   | csv-upload-connector |
-| 10   | context-relationships.jsonl                | JSONL | jsonl-graph-loader   |
+| Step | File | Type | Loader |
+|---|---|---|---|
+| 1 | F01_enterprise-profile.yaml | YAML | yaml-loader |
+| 2 | F02_business-org-functions.csv | CSV | csv-upload-connector |
+| 2 | F03_it-org-ownership.csv | CSV | csv-upload-connector |
+| 2 | D19_personas-workforce.csv | CSV | csv-upload-connector |
+| 3 | F04_capabilities-value-streams.csv | CSV | csv-upload-connector |
+| 4 | F05_applications-systems.csv | CSV | csv-upload-connector |
+| 4 | F06_system-function-mapping.csv | CSV | csv-upload-connector |
+| 4 | F07_infrastructure-cloud.csv | CSV | csv-upload-connector |
+| 4 | F08_platform-volumetrics.csv | CSV | csv-upload-connector |
+| 5 | F09_data-analytics-estate.csv | CSV | csv-upload-connector |
+| 5 | F10_integrations-interfaces.csv | CSV | csv-upload-connector |
+| 6 | F11_vendors-contracts-licenses.csv | CSV | csv-upload-connector |
+| 6 | F12_it-budget-financials.csv | CSV | csv-upload-connector |
+| 7 | F13_initiatives-portfolio.csv | CSV | csv-upload-connector |
+| 7 | T01_initiative-milestones.csv | CSV | csv-upload-connector |
+| 7 | T02_benefit-realization.csv | CSV | csv-upload-connector |
+| 7 | T08_ai-spend-by-initiative.csv | CSV | csv-upload-connector |
+| 7 | T10_gate-approval-history.csv | CSV | csv-upload-connector |
+| 8 | F14_operations-service-management.csv | CSV | csv-upload-connector |
+| 8 | T05_servicenow-automation-metrics.csv | CSV | csv-upload-connector |
+| 8 | F15_kpis-outcome-evidence.csv | CSV | csv-upload-connector |
+| 9 | F16_security-risk-compliance.csv | CSV | csv-upload-connector |
+| 9 | F17_ai-automation-footprint.csv | CSV | csv-upload-connector |
+| 9 | T03_copilot-adoption-by-function.csv | CSV | csv-upload-connector |
+| 9 | T04_erp-platform-agents.csv | CSV | csv-upload-connector |
+| 9 | T06_function-ai-productivity-scorecard.csv | CSV | csv-upload-connector |
+| 9 | T07_model-risk-inventory.csv | CSV | csv-upload-connector |
+| 9 | T09_ai-risk-register.csv | CSV | csv-upload-connector |
+| 10 | context-relationships.jsonl | JSONL | jsonl-graph-loader |
 
 **Expected output counts** (from `99-verification/expected-row-counts.json` + tower supplement):
-
 - Records: ~350–400 (one per entity row across all dimensions)
 - Facts: ~4,000–6,000 (one per field per row)
 - Chunks: ~350–400 (one per record for full-text retrieval)
@@ -394,7 +390,6 @@ az monitor log-analytics query \
 Find the existing context layer admin page (search for `enterprise_context_source_files` or `/setup/context` or `/admin/context-layer`). Add or extend to show:
 
 **Per-tenant context summary panel:**
-
 ```
 First Capital Financial — Context Layer
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -414,7 +409,6 @@ Total                                     32 files           556 records
 ```
 
 **Per-file row** (expandable):
-
 - Filename → Blob URL link (opens in new tab)
 - Record count · Fact count · Load status
 - `loaded_at` timestamp
@@ -424,9 +418,8 @@ Total                                     32 files           556 records
 Returns: `{ families: FamilySummary[]; totalRecords: number; totalFacts: number; totalEdges: number; lastLoadedAt: string }`
 
 Query:
-
 ```sql
-SELECT
+SELECT 
   dimension_family,
   COUNT(DISTINCT id) as record_count,
   MAX(created_at) as last_loaded_at
@@ -451,38 +444,36 @@ After load completes, the ACA job MUST run all 7 golden questions from `99-verif
 // Assert: answer does not say "insufficient evidence" for questions with evidence_quality='high'
 
 const results = await runGoldenQuestions(TENANT_KEY, goldenQuestions);
-const failures = results.filter((r) => !r.citedCorrectly);
+const failures = results.filter(r => !r.citedCorrectly);
 if (failures.length > 0) {
-  console.error("GOLDEN QUESTION FAILURES:", failures);
+  console.error('GOLDEN QUESTION FAILURES:', failures);
   process.exit(1);
 }
 ```
 
 **The 7 questions and required citations:**
 
-| #      | Question                                                                    | Must cite                                |
-| ------ | --------------------------------------------------------------------------- | ---------------------------------------- |
-| GQ-001 | Which AI initiatives should we kill, and why?                               | FCF-INIT-007, FCF-INIT-008, FCF-INIT-009 |
-| GQ-002 | What evidence backs the Fraud Graph v2 value case?                          | FCF-INIT-004, FCF-KPI-001                |
-| GQ-003 | What blocks scaling AML triage automation?                                  | FCF-INIT-002, FCF-CTRL-003, FCF-AI-005   |
-| GQ-004 | Show AI tools serving the AML analyst persona and governance status.        | FCF-PERS-003, FCF-AI-005, FCF-CTRL-003   |
-| GQ-005 | Which vendor contracts renew within 90 days with no peer benchmark?         | FCF-VEND-002, FCF-VEND-009               |
-| GQ-006 | Which systems support Risk & Compliance and what's their governance status? | FCF-APP-NICE-ACTIMIZE, FCF-CTRL-003      |
-| GQ-007 | What is the productivity impact of AI on software engineers?                | FCF-PERS-007, FCF-AI-002, FCF-KPI-006    |
+| # | Question | Must cite |
+|---|---|---|
+| GQ-001 | Which AI initiatives should we kill, and why? | FCF-INIT-007, FCF-INIT-008, FCF-INIT-009 |
+| GQ-002 | What evidence backs the Fraud Graph v2 value case? | FCF-INIT-004, FCF-KPI-001 |
+| GQ-003 | What blocks scaling AML triage automation? | FCF-INIT-002, FCF-CTRL-003, FCF-AI-005 |
+| GQ-004 | Show AI tools serving the AML analyst persona and governance status. | FCF-PERS-003, FCF-AI-005, FCF-CTRL-003 |
+| GQ-005 | Which vendor contracts renew within 90 days with no peer benchmark? | FCF-VEND-002, FCF-VEND-009 |
+| GQ-006 | Which systems support Risk & Compliance and what's their governance status? | FCF-APP-NICE-ACTIMIZE, FCF-CTRL-003 |
+| GQ-007 | What is the productivity impact of AI on software engineers? | FCF-PERS-007, FCF-AI-002, FCF-KPI-006 |
 
 ---
 
 ## Phase 5 — QA Checklist + Merge + Deploy
 
 ### Before each PR merge:
-
 - [ ] `npx tsc --noEmit` — zero errors
 - [ ] `node scripts/release-check.mjs --base origin/main --head HEAD` — passes
 - [ ] Integration tests: `npm run test:integration` — no regressions
 - [ ] Release record added to `docs/releases/records/` for each PR
 
 ### After Phase 2 ACA job completes:
-
 - [ ] Log Analytics shows "Load complete" with correct row counts
 - [ ] Admin explorer shows 32 files, correct family grouping, blob URLs populated
 - [ ] All 7 golden questions return cited answers (no "insufficient evidence")
@@ -490,7 +481,6 @@ if (failures.length > 0) {
 - [ ] Tower surface (`/tower`) loads with initiative data populated
 
 ### Deploy to ACA after final merge:
-
 ```bash
 # Tag and deploy
 git tag context-engine-first-capital-v1.0
@@ -505,7 +495,6 @@ az containerapp update \
 ## File Reference Summary
 
 ### Dataset files (do not modify — generators are source of truth)
-
 ```
 datasets/first-capital-financial-synthetic-v2/
   manifest.yaml                              ← load order definition
@@ -522,14 +511,12 @@ datasets/first-capital-financial-synthetic-v2/
 ```
 
 ### Generator scripts (to re-run if data changes needed)
-
 ```
 scripts/seed/generate-first-capital-v2.mjs              ← 19-dimension base dataset
 scripts/seed/generate-first-capital-tower-supplement.mjs ← AI Control Tower supplement (T01–T10)
 ```
 
 ### Source files to create or modify
-
 ```
 supabase/migrations/20260618000000_dimension_family_columns.sql   [CREATE — Phase 0]
 src/lib/context-ingestion/context-commit.ts                        [REWRITE — Phase 1a]
@@ -558,14 +545,14 @@ scripts/jobs/load-first-capital-v2.ts                              [CREATE — P
 
 ## Tower data coverage (what T01–T10 enables)
 
-| Tower Lens           | Data files    | Key questions answerable                                          |
-| -------------------- | ------------- | ----------------------------------------------------------------- |
+| Tower Lens | Data files | Key questions answerable |
+|---|---|---|
 | Initiative Portfolio | F13, T01, T10 | What stage is each initiative? What gate is next? What's blocked? |
-| Benefit Realization  | T02, F15      | Committed vs realized $ per initiative; which are on track?       |
-| AI Spend             | T08, F12      | YTD spend vs budget per initiative; where is money being wasted?  |
-| Productivity         | D19, T03, T06 | AI adoption by function; Copilot productivity by function         |
-| ERP & Ambient AI     | T04, T05      | Workday AI, SAP Joule, ServiceNow agents — ungoverned AI surfaced |
-| Model Risk           | T07           | 47 models; 12 SR 11-7 at-risk; which initiatives are blocked      |
-| AI Risk              | T09           | 8 AI-specific risks; severity; regulatory implication; owner      |
-| Governance           | F16, T09      | OCC MRA + AI risk linkage; SR 11-7 coverage                       |
-| Vendor AI Clauses    | F11           | Which contracts have AI use restrictions; renewal dates           |
+| Benefit Realization | T02, F15 | Committed vs realized $ per initiative; which are on track? |
+| AI Spend | T08, F12 | YTD spend vs budget per initiative; where is money being wasted? |
+| Productivity | D19, T03, T06 | AI adoption by function; Copilot productivity by function |
+| ERP & Ambient AI | T04, T05 | Workday AI, SAP Joule, ServiceNow agents — ungoverned AI surfaced |
+| Model Risk | T07 | 47 models; 12 SR 11-7 at-risk; which initiatives are blocked |
+| AI Risk | T09 | 8 AI-specific risks; severity; regulatory implication; owner |
+| Governance | F16, T09 | OCC MRA + AI risk linkage; SR 11-7 coverage |
+| Vendor AI Clauses | F11 | Which contracts have AI use restrictions; renewal dates |

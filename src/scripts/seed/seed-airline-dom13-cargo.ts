@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Cargo & Charter Operations
 // Code range: A3900-A4199
 // Run: npx tsx src/scripts/seed/seed-airline-dom13-cargo.ts

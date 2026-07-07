@@ -55,12 +55,14 @@ export function pickTopMission(
 
 /**
  * Derive the appropriate detail-page href for a resolved instance kind.
- * Source events live under `/source/events/{id}`. Programs now land on
- * the single AI Control Tower surface.
+ * Source events live under `/source/events/{id}`. Program Tower drilldowns
+ * were retired with the AI Control Tower consolidation; program summaries
+ * now return to the single `/tower` executive surface.
  */
-function detailHrefFor(kind: "source" | "program", id: string): string {
-  if (kind === "source") return `/source/events/${id}`;
-  return `/tower?program=${encodeURIComponent(id)}`;
+function detailHrefFor(kind: 'source' | 'program', id: string): string {
+  if (kind === 'source') return `/source/events/${id}`;
+  void id;
+  return '/tower';
 }
 
 type StageStatus = "ready" | "in-progress" | "blocked";

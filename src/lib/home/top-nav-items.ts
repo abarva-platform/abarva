@@ -23,8 +23,6 @@ export interface TopNavItem {
 
 export const TOP_NAV_ITEMS: ReadonlyArray<TopNavItem> = [
   {
-    // Home is the role-neutral workspace landing; Setup/Admin
-    // operations stay under /admin.
     id: 'home',
     label: 'Home',
     href: '/home',

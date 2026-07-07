@@ -45,6 +45,16 @@ The approved ACA/VNet run loaded the missing structured First Capital demo data 
 
 Merge the loader fix through the normal release process. The First Capital data-plane load and archive cleanup have already been applied through the approved ACA/VNet operator path in the lab Azure environment.
 
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
+
 ## Rollback Plan
 
 Code rollback: revert the loader patch if the client-id resolution behavior causes an unexpected issue.
@@ -59,8 +69,6 @@ Data rollback: delete or restore the First Capital structured rows only from the
 - Live cleanup counts after archive: active_moves_total=0, archived_moves_total=9, active_source_events_aliases=0, archived_source_events=5.
 - Archived Source events were moved to `client_key=archived:first-capital` because the table has no archive timestamp/status columns.
 - ACA evidence artifacts: `reports/ai-control-tower/firstcapital-clone-structured-load-job.yaml`, `reports/ai-control-tower/firstcapital-live-count-query-job.yaml`, `reports/ai-control-tower/firstcapital-move-source-archive-audit-job.yaml`, and `reports/ai-control-tower/private-operator-restore-job.yaml`.
-
-Admin Data Loader / no side-load policy: this PR changes the loader-backed tenant substrate path and does not introduce new pilot data by ad hoc seed side-load. The approved First Capital load ran through the ACA/VNet operator path with job-log evidence because the legacy substrate loader does not yet write `data_ingestion_runs` or `pilot_ingestion` rows. Follow-up Admin Data Loader work should add that ingestion ledger for this class of tenant substrate refresh.
 
 ## Context Ingestion Evidence
 

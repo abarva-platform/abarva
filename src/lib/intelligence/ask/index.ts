@@ -28,37 +28,13 @@ import {
 } from "@/lib/knowledge/coverage";
 import { formatCoverageReportForPrompt } from "@/lib/knowledge/coverageReport";
 import {
-  buildCurrentStateAdvisory,
-  chunkAskText,
   isBroadCurrentStateQuestion,
-  sanitizeAskSynthesis,
-} from "./response-policy";
-import {
-  buildIntelligenceDossier,
-  type IntelligenceDossier,
-} from "@/lib/intelligence/dossiers";
-import {
-  advisoryPacketForClientEvent,
-  assembleAdvisoryPacket,
-  type AdvisoryPacket,
-} from "@/lib/intelligence/advisory-packet";
-import { synthesizeIntelligenceConsultantText } from "@/lib/intelligence/intelligence-consultant-text-synthesis";
+} from './response-policy';
+import type { AnswerTraceEnvelope } from '@/lib/debug/answer-trace';
 import {
   buildSkyHarborCtoReadinessPromptAddendum,
   buildSkyHarborCtoReadinessSource,
-} from "./skyharbor-cto-readiness-source";
-import {
-  buildIndustrialCioBackofficePromptAddendum,
-  buildIndustrialCioBackofficeSource,
-} from "./industrial-cio-backoffice-source";
-import { canonicalClientDisplayName } from "@/lib/client-config";
-import {
-  createIntelligenceLatencyTrace,
-  type IntelligenceLatencyTiming,
-} from "@/lib/intelligence/latency-trace";
-import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
-import { buildCompanionCanvasPayload } from "./companion-canvas-engine";
-import type { CompanionCanvasPayload } from "./companion-canvas";
+} from './skyharbor-cto-readiness-source';
 
 export type {
   AskIntent,
@@ -68,19 +44,11 @@ export type {
 } from "./types";
 
 export interface AskEvent {
-  type:
-    | "classified"
-    | "sources"
-    | "delta"
-    | "followups"
-    | "done"
-    | "error"
-    | "intelligence-dossier"
-    | "advisory-packet"
-    | "canvas";
+  type: 'classified' | 'sources' | 'trace' | 'delta' | 'followups' | 'done' | 'error';
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
+  trace?: AnswerTraceEnvelope;
   text?: string;
   followups?: string[];
   error?: string;
@@ -104,34 +72,12 @@ export interface AskOptions {
   surfaceContext?: AskSurfaceContext | null;
   activePersonGraphNodeId?: string | null;
   activePersonDisplayName?: string | null;
-  /**
-   * Observability hook forwarded to the synthesizer · invoked with the exact
-   * system + user content sent to the model. Used by the agent-trace spine.
-   */
-  onModelInput?: (parts: { system: string; user: string }) => void;
-  /** Operator-only trace hook for the exact raw model output. */
-  onModelOutput?: (parts: {
-    rawText: string;
-    text: string;
-    model?: string;
-    auditId?: string;
-    route: string;
-  }) => void;
-  /** Operator proof mode may stream full AdvisoryPacket audit lineage. Default streams only safe labels. */
-  includeAdvisoryPacketAudit?: boolean;
-  /** Operator-only latency hook. Emits timings, never user-visible content. */
-  onTiming?: (timing: IntelligenceLatencyTiming) => void;
-  latencyTraceId?: string | null;
-  latencyStartedAt?: number;
-  /**
-   * Companion-canvas feature. The ROUTE computes
-   * `isFeatureEnabled({ clientKey, clientId }, 'intelligence_companion_canvas')`
-   * and passes the result here — do NOT compute Clerk/tenant flags in this
-   * generator. When true, the answer streams answer-only (true streaming) and
-   * a structured `canvas` event is emitted after the answer completes. When
-   * falsy, the path is unchanged.
-   */
-  companionCanvasEnabled?: boolean;
+  traceEnabled?: boolean;
+  traceSession?: {
+    user?: AnswerTraceEnvelope['session']['user'];
+    tenant?: unknown;
+    question?: string | null;
+  };
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
@@ -318,18 +264,7 @@ export async function* askIntelligence(
       tenantId: opts.tenantId,
       tenantInventoryKey: opts.tenantInventoryKey,
     });
-    emitTiming(
-      trace.finish("retrieval.fact_fingerprint.done", fingerprintStartedAt, {
-        availableFamilyCount: factFingerprint?.namedEntityClasses.length ?? 0,
-      }),
-    );
-    const factAvailabilityBlock =
-      formatTenantFactAvailabilityBlock(factFingerprint);
-
-    // Persona expert packs are intentionally not summoned here. Intelligence
-    // grounding comes from tenant substrate, structured context, corpus
-    // patterns, and benchmarks; lightweight routing/lens decisions stay hidden.
-    const groundedFactBlock = factAvailabilityBlock;
+    const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
     const skyHarborCtoSource = buildSkyHarborCtoReadinessSource(trimmed, [
       opts.tenantClientKey,
       opts.tenantInventoryKey,
@@ -339,19 +274,7 @@ export async function* askIntelligence(
       opts.surfaceContext?.clientKey,
       opts.surfaceContext?.activeClient,
     ]);
-    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(
-      trimmed,
-      [
-        opts.tenantClientKey,
-        opts.tenantInventoryKey,
-        opts.tenant?.appClientKey,
-        opts.tenant?.canonicalKey,
-        opts.tenant?.displayName,
-        opts.surfaceContext?.clientKey,
-        opts.surfaceContext?.activeClient,
-      ],
-    );
-    const industrialCioSource = buildIndustrialCioBackofficeSource(trimmed, [
+    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(trimmed, [
       opts.tenantClientKey,
       opts.tenantInventoryKey,
       opts.tenant?.appClientKey,
@@ -360,21 +283,9 @@ export async function* askIntelligence(
       opts.surfaceContext?.clientKey,
       opts.surfaceContext?.activeClient,
     ]);
-    const industrialCioPromptAddendum =
-      buildIndustrialCioBackofficePromptAddendum(trimmed, [
-        opts.tenantClientKey,
-        opts.tenantInventoryKey,
-        opts.tenant?.appClientKey,
-        opts.tenant?.canonicalKey,
-        opts.tenant?.displayName,
-        opts.surfaceContext?.clientKey,
-        opts.surfaceContext?.activeClient,
-      ]);
-
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
     const rawSources: AskSource[] = [
-      ...(industrialCioSource ? [industrialCioSource] : []),
       ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
       ...v7Dossier.sources,
@@ -447,85 +358,14 @@ export async function* askIntelligence(
     };
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
-    if (handoff) {
-      for (const chunk of chunkAskText(sanitizeAskSynthesis(handoff, 140))) {
-        yield { type: "delta", text: chunk.trimEnd() };
-      }
-      yield {
-        type: "followups",
-        followups: [
-          "Map the contradiction in Intelligence",
-          "Show the evidence behind this tension",
-        ],
-      };
-      yield { type: "done" };
-      return;
-    }
-
-    if (isBlockingIntelligenceRepairEnabled()) {
-      const consultantText = await synthesizeIntelligenceConsultantText({
-        dossier: intelligenceDossier,
-        advisoryPacket,
-        tenantId:
-          opts.tenantId ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
-        userId: opts.userId,
-        onModelInput: opts.onModelInput,
-        onModelOutput: opts.onModelOutput,
-        onTiming: emitTiming,
-        latencyTraceId: trace.requestId,
-        latencyStartedAt: trace.startedAt,
-      });
-      if (consultantText && consultantText.used) {
-        let answer = "";
-        for (const chunk of chunkAskText(consultantText.text)) {
-          answer += chunk;
-          yield { type: "delta", text: chunk };
-        }
-        const followups = await generateFollowups({
-          query: trimmed,
-          answer,
-          entities: classification.entities,
-          tenantId: opts.tenantId,
-          userId: opts.userId,
-        });
-        yield { type: "followups", followups };
-        yield { type: "done" };
-        return;
-      }
-    } else {
-      emitTiming(
-        trace.mark("consultant.synthesis.skipped", {
-          reason: "live_no_repair_mode",
-        }),
-      );
-    }
-
-    if (isBroadCurrentStateQuestion(trimmed)) {
-      const advisory = buildCurrentStateAdvisory(sources);
-      if (advisory) {
-        for (const chunk of chunkAskText(sanitizeAskSynthesis(advisory, 170))) {
-          yield { type: "delta", text: chunk };
-        }
-        yield {
-          type: "followups",
-          followups: [
-            "Give me the CFO value lens",
-            "Give me the CIO delivery lens",
-            "Pressure-test the CMO growth lens",
-          ],
-        };
-        yield { type: "done" };
-        return;
-      }
-    }
+    const currentStateAsk = isBroadCurrentStateQuestion(trimmed);
 
     // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace bug fix.
     //
-    // The synthesizer already runs sanitizeAskSynthesis on the full text,
-    // then chunks it via chunkAskText into ~80-char pieces that each end
-    // with the trailing whitespace from `/.{1,80}(?:\s|$)/g`. We used to
-    // call sanitizeAskSynthesis(delta, 500) again here per chunk; that
-    // call's `.trim()` stripped the trailing whitespace from every chunk,
+    // The synthesizer owns final answer text and chunks it into ~80-char
+    // pieces that each end with the trailing whitespace from
+    // `/.{1,80}(?:\s|$)/g`. We used to call sanitizeAskSynthesis(delta, 500)
+    // again here per chunk; that call's `.trim()` stripped the trailing whitespace from every chunk,
     // which the SentinelChat client then concatenated together producing
     // the "ApexRetail" / "demandsensing" / "upstreamconditions" word-fusion
     // Carlos saw on every test in the 2026-05-10 re-test. The double-
@@ -547,17 +387,18 @@ export async function* askIntelligence(
       tenantClientKey: opts.tenantClientKey,
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
-      conversationContextBlock:
-        [
-          industrialCioPromptAddendum,
-          skyHarborCtoPromptAddendum,
-          opts.conversationContextBlock,
-        ]
-          .filter(Boolean)
-          .join("\n\n") || undefined,
-      factAvailabilityBlock: groundedFactBlock,
-      coverageReportBlock,
-      intelligenceDossier,
+      factAvailabilityBlock,
+      coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
+      conversationContextBlock: [
+        skyHarborCtoPromptAddendum,
+        opts.conversationContextBlock,
+        handoff
+          ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
+          : '',
+        currentStateAsk
+          ? 'CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose.'
+          : '',
+      ].filter(Boolean).join('\n\n') || undefined,
       averageConfidence,
       onModelInput: opts.onModelInput,
       onModelOutput: opts.onModelOutput,
@@ -602,6 +443,53 @@ export async function* askIntelligence(
           }),
         );
       }
+    }
+    if (opts.traceEnabled) {
+      yield {
+        type: 'trace',
+        trace: {
+          traceVersion: 'answer-quality-v1',
+          route: '/api/intelligence/ask',
+          surface: 'intelligence',
+          timestamp: new Date().toISOString(),
+          session: opts.traceSession ?? {
+            tenant: opts.tenant ?? opts.tenantClientKey ?? opts.tenantInventoryKey ?? null,
+            question: trimmed,
+          },
+          router: {
+            selectedEndpoint: '/api/intelligence/ask',
+            surface: 'intelligence',
+            intent: classification.intent,
+            primaryDimension: questionCategory,
+            secondaryDimensions: classification.entities ?? [],
+            answerMode: 'advisory_decision',
+            fallbackEligibility: true,
+          },
+          evidenceSelection: {
+            selectedDossierIds: sources.filter((source) => source.type === 'TENANT' || source.type === 'GRAPH').map((source) => source.id),
+            dossierEligibilityState: { coverageReport },
+            selectedReadModels: sources.map((source) => `${source.type}:${source.name}`),
+            selectedMetricSnapshots: sources
+              .filter((source) => /\$|\d+%|\b\d+(?:\.\d+)?\b/.test(source.detail))
+              .slice(0, 12)
+              .map((source) => ({ id: source.id, name: source.name, detail: source.detail.slice(0, 500) })),
+            selectedGaps: coverageReport.missingSegments,
+            selectedCitations: sources.map((source) => ({ id: source.id, name: source.name, type: source.type, confidence: source.confidence })),
+            artifactPlan: /\b(table|rank|compare|scorecard|chart)\b/i.test(trimmed) ? ['table'] : ['prose'],
+          },
+          modelCall: {
+            fallbackUsed: true,
+            fallbackReason: 'synthesis_trace_missing',
+          },
+          apiPayload: {
+            answer,
+            followupsPending: true,
+          },
+          validation: {
+            coverageReport,
+          },
+        },
+      };
     }
 
     const followups = await generateFollowups({

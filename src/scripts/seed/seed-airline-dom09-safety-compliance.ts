@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Safety Management System & Regulatory Compliance
 // Code range: A2700-A2999
 // Run: npx tsx src/scripts/seed/seed-airline-dom09-safety-compliance.ts

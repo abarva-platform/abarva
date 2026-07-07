@@ -1,0 +1,109 @@
+{
+  "baseUrl": "https://app.abarva.ai",
+  "email": "cio@apex-retail.example.com",
+  "capturedAt": "2026-06-02T00:48:53.781Z",
+  "demoSeries": "source",
+  "primerFiles": {
+    "intro": "/Users/anand/Downloads/abarva-primer-pack/index.html",
+    "corpus": "/Users/anand/Downloads/abarva-primer-pack/abarva-industry-patterns-db-primer.html",
+    "apex": "/Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html"
+  },
+  "readOnlyNote": "The capture may create clearly labeled Apex demo Move and Source records when recording live flows; clean them up after review.",
+  "scenes": [
+    {
+      "id": "source-definition",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#source",
+      "intendedSeconds": 44,
+      "actualSeconds": 44.6
+    },
+    {
+      "id": "source-journey",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/abarva-industry-patterns-db-primer.html#module-journeys",
+      "intendedSeconds": 58,
+      "actualSeconds": 58.6
+    },
+    {
+      "id": "live-source-create",
+      "url": "https://app.abarva.ai/source/events/522eedf2-ff6b-4307-b312-3e0903c6fd42?stage=Strategy",
+      "intendedSeconds": 130,
+      "actualSeconds": 150.1
+    },
+    {
+      "id": "tower-live",
+      "url": "https://app.abarva.ai/tower",
+      "intendedSeconds": 74,
+      "actualSeconds": 76.5
+    },
+    {
+      "id": "tower-primer",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#tower",
+      "intendedSeconds": 42,
+      "actualSeconds": 42.6
+    },
+    {
+      "id": "close",
+      "url": "file:///Users/anand/Downloads/abarva-primer-pack/apex-cxo-primer.html#compound",
+      "intendedSeconds": 42,
+      "actualSeconds": 42
+    }
+  ],
+  "videoWebm": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/working-tour-raw/page@7f39fee95577a53fe39752ef476184f6.webm",
+  "outputs": {
+    "talkTrack": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-source-demo-talk-track.txt",
+    "narrationAudio": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-source-demo-narration.wav",
+    "audioMode": "gpt-4o-mini-tts-marin-speed-0.88-scene-locked-max-pad-3s",
+    "sceneAudioSegments": [
+      {
+        "id": "source-definition",
+        "rawSeconds": 44.6,
+        "audioSeconds": 51.168,
+        "sourceSpeechSeconds": 51.168,
+        "pauseSeconds": 0
+      },
+      {
+        "id": "source-journey",
+        "rawSeconds": 58.6,
+        "audioSeconds": 54.648,
+        "sourceSpeechSeconds": 51.648,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "live-source-create",
+        "rawSeconds": 150.1,
+        "audioSeconds": 36.408,
+        "sourceSpeechSeconds": 33.408,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "tower-live",
+        "rawSeconds": 76.5,
+        "audioSeconds": 64.752,
+        "sourceSpeechSeconds": 61.752,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "tower-primer",
+        "rawSeconds": 42.6,
+        "audioSeconds": 23.736,
+        "sourceSpeechSeconds": 20.736,
+        "pauseSeconds": 3
+      },
+      {
+        "id": "close",
+        "rawSeconds": 42,
+        "audioSeconds": 24.432,
+        "sourceSpeechSeconds": 21.432,
+        "pauseSeconds": 3
+      }
+    ],
+    "motion": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-source-demo.mp4",
+    "copied": [
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-source-demo.mp4",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-source-demo-talk-track.txt",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-source-demo-live-motion.mp4"
+    ],
+    "webmDurationSeconds": 415.32,
+    "audioDurationSeconds": 255.144014,
+    "motionDurationSeconds": 255.299349
+  }
+}

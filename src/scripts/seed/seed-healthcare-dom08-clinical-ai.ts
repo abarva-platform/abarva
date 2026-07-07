@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare Provider patterns — AI/ML Clinical Decision Support & FDA SaMD Governance
 // AbarVa Healthcare Provider corpus — Domain 08
 // Code range: H2400–H2699 (300 patterns)

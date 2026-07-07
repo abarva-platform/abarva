@@ -57,17 +57,19 @@ Optional (features degrade gracefully): `STRIPE_SECRET_KEY`, `RESEND_API_KEY`, a
 
 The Dockerfile uses `node:24-bookworm-slim`. Use Node.js 24.x for consistency.
 
-## Architecture and provider enforcement
+## Production deployment lane
 
-These rules are executable policy, not guidance. Every agent and PR must preserve them:
+`app.abarva.ai` is deployed through Azure Container Apps, not Vercel. Do not use Vercel deploys, Vercel production aliases, Vercel rollback commands, or `*.vercel.app` URLs as evidence that the live product is current.
 
-- Azure/Postgres via `DATABASE_URL` is the runtime data plane. Do not point runtime code, CI checks, or operator jobs at Supabase.
-- Do not add Supabase runtime imports, Supabase env requirements, Supabase host literals, or `ALLOW_LEGACY_SUPABASE_CORPUS` fallbacks.
-- Do not add Pinecone or Neo4j runtime dependencies. Retrieval and graph/data-plane work must use Azure/Postgres/Azure Search unless Anand explicitly opens a migration lane.
-- Production answer generation for Sentinel, Nexus, Source chat, Tower synthesis, CXO answers, and agent reasoning must use Anthropic/Claude through the audited egress path. Do not require `OPENAI_API_KEY` for production answer synthesis.
-- OpenAI may appear only in explicitly scoped non-reasoning utilities (for example embeddings or demo audio) and must not be imported or required by production answer-generation paths.
-- Do not reintroduce Vercel as the production runtime or deployment path. `app.abarva.ai` is Azure Container Apps; Vercel references belong only in deprecation docs or explicit shutdown/runbook work. Tool/plugin availability in a local agent environment does **not** authorize Vercel deploys, Vercel env changes, or Vercel production assumptions.
-- Run `npm run audit:architecture-rules` before opening or updating PRs that touch runtime, provider, data-plane, CI, or config files. The GitHub `Architecture Rules` workflow enforces this on PRs.
+Canonical production/lab release path:
+
+1. Build an image from the exact git SHA with `az acr build`.
+2. Deploy that image to `ca-abarva-web-lab-eastus` with `az containerapp update`.
+3. Wait for the new revision to become healthy.
+4. Assign 100% ingress traffic to the new ACA revision.
+5. Verify `https://app.abarva.ai` with live route/browser checks.
+
+Use [docs/runbooks/azure-container-apps-deploy.md](/Users/anand/Projects/nexus/docs/runbooks/azure-container-apps-deploy.md) as the operator runbook. Vercel files in this repository are legacy sentinels or historical records only; they are not an approved deployment path for `app.abarva.ai`.
 
 ## Release control discipline
 

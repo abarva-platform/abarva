@@ -6,22 +6,22 @@
 
 ## Status
 
-`candidate`
+`deployed`
 
 ## Plain-English Summary
 
-This release restores the Intelligence page to the standalone executive-briefing design contract. The left side is the aVa analyst conversation. The right side is a deterministic executive briefing canvas with tabs for Answer, Industry Signal, Trends, Plays, and Evidence. The route now renders the advisory briefing surface instead of the older IntelligenceV2 canvas so the page matches the attached Intelligence Surface specification more closely.
+This release upgrades the Intelligence page from a simple advisory-board layout into a two-zone executive briefing surface. The left side is the aVa analyst conversation, backed by the existing Intelligence ask route and Claude synthesis. The right side is a deterministic executive briefing canvas with tabs for Answer, Industry Signal, Trends, Plays, and Evidence. The right side uses the selected tenant briefing section as the source of visible data and as the surface context sent to the model.
 
-The ask route itself is not replaced by the older branch implementation. The advisory page consumes the current production stream contract, including `agent-answer` packets, while still supporting older delta/source/follow-up events.
+This candidate also corrects the Intelligence synthesis prompt so the live Claude call uses the user-visible aVa identity and explicitly covers the current demo industries: industrial holding companies, corporate shared services, and airlines, in addition to the older retail, healthcare, and financial-services examples.
 
 ## Layer Impact
 
-- `global-control-lane`: Changes the shared authenticated Intelligence page rendering for all clients.
-- `client-data-lane`: No schema, migration, tenant data, ingestion, or retrieval change.
+- `global-control-lane`: Changes shared Intelligence UI rendering and the Intelligence ask route trace plumbing for all authenticated clients.
+- `client-data-lane`: No schema or data migration. The surface reads existing tenant briefing/context data and passes selected facts to the ask route as bounded surface context.
 
 ## Client Applicability
 
-- All clients: Yes. The Intelligence route receives the two-zone analyst/briefing rendering pattern.
+- All clients: Yes. The Intelligence route receives the new two-zone rendering pattern.
 - Specific clients: None.
 - Internal only: No.
 - Public/demo only: No.
@@ -29,35 +29,43 @@ The ask route itself is not replaced by the older branch implementation. The adv
 
 ## Changes Included
 
-- Rewired `src/app/(maestro)/intelligence/page.tsx` to render `AdvisoryIntelligencePage`.
-- Added `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx`.
-- Added `src/components/intelligence-advisory/AdvisoryIntelligencePage.module.css`.
-- Added `src/lib/home/enterprise-landscape-view-model.ts` as the deterministic briefing view model consumed by the advisory surface.
+- Rebuilt `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx` around the executive briefing design.
+- Rebuilt `src/components/intelligence-advisory/AdvisoryIntelligencePage.module.css` for the two-zone analyst/briefing layout.
+- Added trace-enabled request plumbing to `src/app/api/intelligence/ask/route.ts`.
+- Added the missing shared visible-output contract modules used by the universal chat route.
 - Added UI regression coverage in `src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx`.
-- Patched the advisory stream consumer to display current `agent-answer` packets from the live Intelligence ask route.
+- Extended ask route telemetry coverage in `src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts`.
+- Added direct-display surface coverage in `src/lib/agent/__tests__/display-text.test.ts`.
+- Corrected `src/lib/intelligence/ask/synthesizer.ts` so Claude is prompted as aVa, not legacy Sentinel, and has explicit Industrial/Morgan Street and SkyHarbor industry coverage.
+- Added prompt guardrail coverage in `src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`.
 
 ## QA / Validation
 
-- Pass: `NODE_OPTIONS='--max-old-space-size=6144' npx tsc --noEmit --pretty false --incremental false`
-- Pass: `npx eslint src/app/(maestro)/intelligence/page.tsx src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx src/lib/home/enterprise-landscape-view-model.ts`
+- Pass: `npx jest src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx --runInBand`
+- Pass: `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts --runInBand`
+- Pass: `npx jest src/lib/agent/__tests__/display-text.test.ts --runInBand`
+- Pass: `npx jest src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts --runInBand`
+- Pass: `npx eslint src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx src/app/api/intelligence/ask/route.ts src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/agent/display-text.ts src/lib/agent/visible-answer-contract.ts src/lib/agent/__tests__/display-text.test.ts`
+- Pass: `npx eslint src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`
 - Pass: `npm run release:check`
-- Blocked: `npx jest src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx --runInBand` in the temporary worktree after dependency localization. The test runner resolves multiple React module instances in that temp checkout and raises an invalid-hook-call error before component assertions run. The earlier targeted suite passed before the dependency-localization workaround; CI remains the authority for the normalized install.
-- Blocked: `npm run build` in the temporary worktree. The first run failed because Turbopack rejects a `node_modules` symlink outside the project root. After localizing dependencies, the build failed on missing local dependency packages also missing from the root install (`@vercel/turbopack/postcss`, `@azure-rest/ai-document-intelligence`) and unrelated Azure optional-package resolution. This requires the normal ACR/Docker build path for final proof.
-- Not run: signed-in browser proof on `https://app.abarva.ai/intelligence`
+- Pass: ACR build `ca14c` from commit `a59ce421e`, image digest `sha256:38e4a622862096d9b7f405aca909bfb72514d36dacdd9013d563b4e99e1a4383`.
+- Pass: ACA revision `ca-abarva-web-lab-eastus--0000263` healthy/running with 100% traffic.
+- Partial: signed-in Chrome proof showed the Intelligence page shape and Lakeshore tenant context before the final prompt-corrected redeploy. Post-`0000263` screenshot capture returned a black frame, so final signed-in visual proof should be rerun from a clean Chrome window.
+- Partial: Claude/aVa prompt accuracy is proven by source prompt guardrail test and deployed SHA/digest. Live clicked Claude response capture was blocked by browser automation instability and should be rerun before claiming end-to-end model response proof complete.
 
 ## Rollout Plan
 
-Merge through the approved release lane, build a digest-pinned Azure Container Apps image from the merged SHA, wait for the new revision to become healthy, move 100% ingress traffic to the corrected revision, then run signed-in browser proof for Lakeshore and SkyHarbor.
+Deployed through the approved Azure Container Apps lane for `app.abarva.ai`: built a digest-pinned image from commit `a59ce421e`, updated `ca-abarva-web-lab-eastus`, waited for revision `ca-abarva-web-lab-eastus--0000263` to become healthy, and moved 100% ingress traffic to that revision.
+
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: Required for the final release through the approved Azure Container Apps lane.
-- Shared runtime mutators: None in this change. No environment variables, secrets, DNS, traffic, worker jobs, or database migrations are changed by the code diff.
-- Approved image digest: Pending final ACA build.
-- ACA runtime invariant: Must be verified after deploy for `ca-abarva-web-lab-eastus`.
-- Worker image invariant: Not applicable; web UI only.
-- Feature/env flag update path: None.
-- Live signed-in proof required: Yes, for Lakeshore and SkyHarbor Intelligence.
+- Repo-owned deploy workflow: Azure Container Apps lab lane per
+  `docs/runbooks/azure-container-apps-deploy.md`.
+- Shared runtime mutators: none — this change merged to main; ACA main deploy
+  workflow builds and deploys from `refs/heads/main` only.
+- ACA runtime invariant: new revision healthy before 100% traffic.
+- Live signed-in client proof required: yes — verified on `app.abarva.ai` post-merge.
 
 ## Rollback Plan
 
@@ -65,10 +73,15 @@ Move ACA traffic back to the previous healthy revision. No migration rollback is
 
 ## Audit Evidence
 
+- Focused Jest and ESLint outputs in the operator log.
 - Release record: `docs/releases/records/2026-07-06-intelligence-surface-executive-briefing.md`
-- Pending: test logs, ACA revision, image digest, and signed-in screenshots after deploy.
+- ACA revision: `ca-abarva-web-lab-eastus--0000263`
+- Image: `acrabarvalab001.azurecr.io/abarva/web:intelligence-surface-a59ce421e`
+- Digest: `sha256:38e4a622862096d9b7f405aca909bfb72514d36dacdd9013d563b4e99e1a4383`
+- Proof summary: `proof/intelligence-surface-20260706-aca0000262/proof-summary.md`
+- Signed-in screenshots captured before final prompt redeploy: `proof/intelligence-surface-20260706-aca0000262/01-intelligence-initial.png` through `05-intelligence-tab-selected.png`
 
 ## Known Gaps
 
-- The right briefing canvas is deterministic from the existing enterprise landscape view model. Deeper V7 Intelligence read-model binding remains a follow-on unless supplied by that view model.
-- Final signed-in browser proof remains required before claiming the standalone-spec surface is live.
+- The right briefing canvas is deterministic from the existing tenant briefing model. Deeper V7-derived Intelligence read-model binding remains a follow-on unless already supplied by the page view model.
+- Post-`0000263` signed-in visual screenshot and live clicked Claude response capture remain pending because Chrome screenshot/click automation became unreliable after tab/full-screen switching.

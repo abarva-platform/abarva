@@ -1,0 +1,15 @@
+{
+  "pack_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1",
+  "file_count": 133,
+  "zip_bytes": 1441558,
+  "type_counts": {
+    "md": 5,
+    "csv": 8,
+    "pdf": 17,
+    "xlsx": 71,
+    "docx": 24,
+    "jsonl": 1,
+    "svg": 7
+  },
+  "total_source_bytes": 1935533
+}

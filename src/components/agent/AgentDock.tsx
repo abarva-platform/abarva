@@ -2,13 +2,9 @@
 
 // AgentDock · shared chat-dock foundation for every agent surface.
 //
-// Six toggleable modes per surface, persisted in localStorage:
-//   side-rail   — resizable left column (default)
-//   side-rail-right — resizable right column
-//   pin-bottom  — full-width strip at viewport bottom (~120 → 480px)
-//   pin-top     — mirror of pin-bottom anchored below the AppTopBar
-//   expand      — modal overlay 80% viewport, workspace dimmed behind
-//   collapsed   — floating 56×56 chip bottom-right with agent initials
+// Five toggleable modes per surface, persisted in localStorage. The full
+// mode model stays in the component, but the visible chrome is intentionally
+// sparse: end users get expand and close, not a row of layout-debug controls.
 //
 // Composer behavior is identical across modes: auto-grow textarea up to
 // ~6 rows / 160px, Enter submits, Shift+Enter inserts newline, paperclip
@@ -40,26 +36,14 @@ import {
   type KeyboardEvent,
   type ReactNode,
   type RefObject,
-} from "react";
-import { CANVAS } from "@/components/source/canvas/canvas-tokens";
-import { ResizableSplitter } from "@/components/source/canvas/ResizableSplitter";
-import { SynthesisFeedbackWidget } from "@/components/reasoning/SynthesisFeedbackWidget";
-import type { AgentResponsePart } from "@/lib/agent/response-parts";
-import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
-import { AILabel } from "@/components/abarva/AILabel";
-import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
-import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
-import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
-import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
-import { AgentResponseParts } from "./AgentResponseParts";
-import { CitationGapNotice } from "./CitationGapNotice";
-import { EvidenceBasis } from "./EvidenceBasis";
-import type { AskSource } from "@/lib/intelligence/ask/types";
-import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
-import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
-import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
-import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
-import { demoSafeClientText } from "@/lib/client-config";
+} from 'react';
+import { CANVAS } from '@/components/source/canvas/canvas-tokens';
+import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
+import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
+import { AvaWordmark } from '@/components/brand/AvaWordmark';
+import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
+import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -600,33 +584,7 @@ export function AgentDock(props: AgentDockProps) {
     collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
   } = props;
-  const isMovesSurface = surface.startsWith("moves/");
-  const agent = preserveVisibleText ? rawAgent : sanitizeVisibleStrings(rawAgent);
-  const surfaceContext = preserveVisibleText
-    ? rawSurfaceContext
-    : sanitizeVisibleStrings(rawSurfaceContext);
-  const initialQuote = rawInitialQuote
-    ? preserveVisibleText
-      ? rawInitialQuote
-      : demoSafeClientText(rawInitialQuote)
-    : rawInitialQuote;
-  const safeSuggestedActions = preserveVisibleText
-    ? rawSuggestedActions
-    : sanitizeVisibleStrings(rawSuggestedActions);
-  const suggestedActions = isMovesSurface
-    ? normalizeMovesChromeText(safeSuggestedActions)
-    : safeSuggestedActions;
-  const placeholder = rawPlaceholder
-    ? preserveVisibleText
-      ? rawPlaceholder
-      : demoSafeClientText(rawPlaceholder)
-    : rawPlaceholder;
-  const safeThread = preserveVisibleText ? rawThread : sanitizeVisibleStrings(rawThread);
-  const thread = isMovesSurface
-    ? normalizeMovesChromeText(safeThread)
-    : safeThread;
-  const focused = variant === "focused";
-  const showReviewChrome = !focused && !quietReviewChrome;
+  const displayAgentName = 'aVa';
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show
@@ -940,13 +898,8 @@ export function AgentDock(props: AgentDockProps) {
         {/* Header */}
         <div style={HEADER_STYLE}>
           <div style={AGENT_ROW_STYLE}>
-            {agent.mark === "ava" ? (
-              <AvaAskMark variant="avatar-dark" style={AVATAR_AVA_MARK_STYLE} />
-            ) : (
-              <span style={AVATAR_STYLE}>{agent.initials}</span>
-            )}
-            <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
-              <span style={AGENT_NAME_STYLE}>{agent.name}</span>
+            <AvaWordmark tone="light" style={AGENT_WORDMARK_STYLE} />
+            <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
               <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
             </div>
           </div>
@@ -969,8 +922,10 @@ export function AgentDock(props: AgentDockProps) {
         >
           {thread.length === 0 ? (
             <div style={EMPTY_STATE_STYLE}>
-              <p style={EMPTY_TITLE_STYLE}>Ask {agent.name} anything.</p>
-              <p style={EMPTY_SUBTITLE_STYLE}>{agent.role}</p>
+              <p style={EMPTY_TITLE_STYLE}>Ask {displayAgentName} anything.</p>
+              <p style={EMPTY_SUBTITLE_STYLE}>
+                {agent.role}
+              </p>
             </div>
           ) : (
             thread.map((turn) => (
@@ -985,56 +940,15 @@ export function AgentDock(props: AgentDockProps) {
                     : AGENT_TURN_STYLE
                 }
               >
-                {turn.role === "agent" ? (
-                  <div style={AGENT_BYLINE_STYLE}>
-                    <span>{agent.name}</span>
-                    {showReviewChrome ? (
-                      <AILabel
-                        status="draft"
-                        detail="Review before acting"
-                        compact
-                      />
-                    ) : null}
-                  </div>
+                {turn.role === 'agent' ? (
+                  <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
                 ) : null}
-                <div
-                  style={
-                    focused
-                      ? turn.role === "user"
-                        ? FOCUSED_USER_BUBBLE_STYLE
-                        : FOCUSED_AGENT_BUBBLE_STYLE
-                      : BUBBLE_STYLE
-                  }
-                >
-                  {turn.role === "agent" && turn.parts?.length ? (
-                    <AgentResponseParts parts={turn.parts} />
-                  ) : turn.role === "agent" &&
-                    focused &&
-                    shouldRenderAvaArtifactsInDock(
-                      surface,
-                      turn.agentAnswer,
-                    ) ? (
-                    <AgentAnswerRenderer answer={turn.agentAnswer} />
-                  ) : turn.role === "agent" ? (
-                    <div style={MARKDOWN_BUBBLE_STYLE}>
-                      <AgentMarkdown
-                        text={visibleAgentDockBody(
-                          surface,
-                          turn.body,
-                          turn.agentAnswer,
-                          preserveVisibleText,
-                        )}
-                      />
-                    </div>
+                <div style={BUBBLE_STYLE}>
+                  {turn.role === 'agent' ? (
+                    <AgentMarkdown text={turn.body} />
                   ) : (
                     turn.body
                   )}
-                  {showReviewChrome &&
-                  turn.role === "agent" &&
-                  (!turn.citations || turn.citations.length === 0) &&
-                  shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
-                    <CitationGapNotice compact />
-                  ) : null}
                 </div>
                 {showReviewChrome &&
                 turn.role === "agent" &&
@@ -1077,15 +991,8 @@ export function AgentDock(props: AgentDockProps) {
               aria-live="polite"
               style={AGENT_TURN_STYLE}
             >
-              <div style={AGENT_BYLINE_STYLE}>{agent.name}</div>
-              <div
-                style={{
-                  ...BUBBLE_STYLE,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
+              <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
+              <div style={{ ...BUBBLE_STYLE, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <AgentBusyThrobber />
                 <span style={{ fontStyle: "italic", opacity: 0.75 }}>
                   Working — retrieving tenant context and forming a view…
@@ -1141,7 +1048,7 @@ export function AgentDock(props: AgentDockProps) {
         <form
           onSubmit={submit}
           style={INPUT_FORM_STYLE}
-          aria-label={`Ask ${agent.name}`}
+          aria-label={`Ask ${displayAgentName}`}
           data-testid="agent-dock-form"
         >
           <button
@@ -1174,7 +1081,7 @@ export function AgentDock(props: AgentDockProps) {
             value={draft}
             onChange={(e) => onChangeDraft(e.target.value)}
             onKeyDown={onComposerKeyDown}
-            placeholder={placeholder ?? `Ask ${agent.name}…`}
+            placeholder={`Ask ${displayAgentName}…`}
             rows={1}
             spellCheck
             disabled={submitting}
@@ -1247,7 +1154,7 @@ export function AgentDock(props: AgentDockProps) {
         {workspace}
         <button
           type="button"
-          aria-label={`Restore ${agent.name} chat`}
+          aria-label={`Restore ${displayAgentName} chat`}
           data-testid="agent-dock-collapsed-chip"
           onClick={() =>
             setMode(lastRichMode === "collapsed" ? "side-rail" : lastRichMode)
@@ -1257,23 +1164,8 @@ export function AgentDock(props: AgentDockProps) {
           }
           style={COLLAPSED_CHIP_STYLE}
         >
-          {agent.mark === "ava" ? (
-            <AvaAskMark
-              variant="avatar-dark"
-              style={COLLAPSED_CHIP_AVA_MARK_STYLE}
-            />
-          ) : (
-            <span style={COLLAPSED_CHIP_INITIALS_STYLE}>{agent.initials}</span>
-          )}
-          <span style={COLLAPSED_CHIP_TEXT_STYLE}>
-            <span style={COLLAPSED_CHIP_LABEL_STYLE}>
-              {collapsedSummaryLabel ?? `Ask ${agent.name}`}
-            </span>
-            {collapsedSummaryDetail ? (
-              <span style={COLLAPSED_CHIP_DETAIL_STYLE}>
-                {collapsedSummaryDetail}
-              </span>
-            ) : null}
+          <span style={COLLAPSED_CHIP_INITIALS_STYLE}>
+            <AvaWordmark tone="light" style={{ width: 42 }} />
           </span>
         </button>
       </>
@@ -1357,7 +1249,7 @@ export function AgentDock(props: AgentDockProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`${agent.name} expanded chat`}
+        aria-label={`${displayAgentName} expanded chat`}
         data-testid="agent-dock-expand-overlay"
         style={EXPAND_OVERLAY_STYLE}
       >
@@ -1378,67 +1270,39 @@ interface ModePickerProps {
 function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
   return (
     <div
-      role="radiogroup"
-      aria-label="Dock mode"
+      aria-label="Chat window actions"
       data-testid="agent-dock-mode-picker"
       style={MODE_PICKER_STYLE}
     >
-      <ModeButton
-        mode="side-rail"
-        active={mode === "side-rail"}
-        onClick={() => onChange("side-rail")}
-        aria-label="Lock chat to left"
-        title="Lock left"
-        dockId={dockId}
-      >
-        <SideRailIcon />
-      </ModeButton>
-      <ModeButton
-        mode="side-rail-right"
-        active={mode === "side-rail-right"}
-        onClick={() => onChange("side-rail-right")}
-        aria-label="Lock chat to right"
-        title="Lock right"
-        dockId={dockId}
-      >
-        <SideRailRightIcon />
-      </ModeButton>
-      <ModeButton
-        mode="pin-bottom"
-        active={mode === "pin-bottom"}
-        onClick={() => onChange("pin-bottom")}
-        aria-label="Lock chat to bottom"
-        title="Lock bottom"
-        dockId={dockId}
-      >
-        <ArrowDownIcon />
-      </ModeButton>
-      <ModeButton
-        mode="pin-top"
-        active={mode === "pin-top"}
-        onClick={() => onChange("pin-top")}
-        aria-label="Lock chat to top"
-        title="Lock top"
-        dockId={dockId}
-      >
-        <ArrowUpIcon />
-      </ModeButton>
-      <ModeButton
-        mode="expand"
-        active={mode === "expand"}
-        onClick={() => onChange("expand")}
-        aria-label="Expand to overlay"
-        title="Expand"
-        dockId={dockId}
-      >
-        <MaximizeIcon />
-      </ModeButton>
+      {mode === 'expand' ? (
+        <ModeButton
+          mode="side-rail"
+          active={false}
+          onClick={() => onChange('side-rail')}
+          aria-label="Return to page"
+          title="Return to page"
+          dockId={dockId}
+        >
+          <SideRailIcon />
+        </ModeButton>
+      ) : (
+        <ModeButton
+          mode="expand"
+          active={false}
+          onClick={() => onChange('expand')}
+          aria-label="Expand chat"
+          title="Expand chat"
+          dockId={dockId}
+        >
+          <MaximizeIcon />
+        </ModeButton>
+      )}
       <ModeButton
         mode="collapsed"
-        active={mode === "collapsed"}
-        onClick={() => onChange("collapsed")}
-        aria-label="Hide chat to chip"
-        title="Hide"
+        active={false}
+        onClick={() => onChange('collapsed')}
+        aria-label="Close chat"
+        title="Close chat"
         dockId={dockId}
       >
         <CloseIcon />
@@ -1469,8 +1333,6 @@ function ModeButton({
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={active}
       aria-label={ariaLabel}
       title={title}
       onClick={onClick}
@@ -1655,60 +1517,6 @@ function SideRailIcon() {
     </svg>
   );
 }
-function SideRailRightIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-      <line x1="15" y1="3" x2="15" y2="21" />
-    </svg>
-  );
-}
-function ArrowDownIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <polyline points="19 12 12 19 5 12" />
-    </svg>
-  );
-}
-function ArrowUpIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="19" x2="12" y2="5" />
-      <polyline points="5 12 12 5 19 12" />
-    </svg>
-  );
-}
 function MaximizeIcon() {
   return (
     <svg
@@ -1817,44 +1625,21 @@ const HEADER_STYLE: CSSProperties = {
 };
 
 const AGENT_ROW_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 10,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 12,
   minWidth: 0,
 };
 
-const AVATAR_STYLE: CSSProperties = {
-  width: 28,
-  height: 28,
-  borderRadius: 999,
-  background: CANVAS.INK,
-  color: "#fff",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontFamily: CANVAS.SERIF,
-  fontSize: 14,
-  fontWeight: 500,
+const AGENT_WORDMARK_STYLE: CSSProperties = {
+  width: 62,
+  height: 'auto',
   flexShrink: 0,
-};
-
-const AVATAR_AVA_MARK_STYLE: CSSProperties = {
-  minWidth: 47,
-  width: 47,
-  fontSize: 24,
-  alignSelf: "center",
-};
-
-const AGENT_NAME_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 14,
-  fontWeight: 600,
-  color: CANVAS.INK,
 };
 
 const AGENT_ROLE_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
-  fontSize: 11,
+  fontSize: 12,
   color: CANVAS.INK_SOFT,
   lineHeight: 1.3,
 };
@@ -1982,29 +1767,8 @@ const BUBBLE_STYLE: CSSProperties = {
   fontSize: 14,
   lineHeight: 1.6,
   color: CANVAS.INK,
-  whiteSpace: "pre-wrap",
-  wordBreak: "break-word",
-  maxWidth: "100%",
-};
-
-const MARKDOWN_BUBBLE_STYLE: CSSProperties = {
-  whiteSpace: "normal",
-};
-
-const FOCUSED_AGENT_BUBBLE_STYLE: CSSProperties = {
-  ...BUBBLE_STYLE,
-  maxWidth: "92%",
-  padding: "10px 0",
-  color: CANVAS.INK,
-};
-
-const FOCUSED_USER_BUBBLE_STYLE: CSSProperties = {
-  ...BUBBLE_STYLE,
-  maxWidth: "88%",
-  padding: "10px 12px",
-  borderRadius: 14,
-  background: "#F4F7F4",
-  border: `1px solid ${CANVAS.HAIRLINE}`,
+  wordBreak: 'break-word',
+  maxWidth: '100%',
 };
 
 const FEEDBACK_ROW_STYLE: CSSProperties = {
@@ -2245,7 +2009,8 @@ const INPUT_STYLE: CSSProperties = {
   resize: "none",
   minHeight: 40,
   maxHeight: 160,
-  outline: "none",
+  overflowY: 'hidden',
+  outline: 'none',
 };
 
 const SUBMIT_BUTTON_STYLE: CSSProperties = {
@@ -2351,6 +2116,9 @@ const COLLAPSED_CHIP_STYLE: CSSProperties = {
 };
 
 const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   fontFamily: CANVAS.SERIF,
   fontSize: 18,
   fontWeight: 500,

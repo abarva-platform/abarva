@@ -1,10 +1,10 @@
 'use client'
 
 /**
- * MarketingNav — Option A public-site navigation.
+ * MarketingNav — public-site navigation.
  *
- * Lean public navigation plus Sign in + Request access CTA.
- * IP-heavy learning, architecture, corpus, and client materials stay behind auth.
+ * Launch default is intentionally narrow: one Request access CTA.
+ * Grouped menus can be opted in later when Product/About/Contact are ready.
  *
  * Used by both the shared `MarketingHeader` (site.tsx) and the
  * `LoggedOutLandingPage` so the public nav is consistent everywhere.
@@ -235,13 +235,13 @@ export type MarketingNavProps = {
   /** Optional override for the CTA target. */
   ctaHref?: string
   ctaLabel?: string
-  signInHref?: string
+  showMenuItems?: boolean
 }
 
 export function MarketingNav({
-  ctaHref = '/sign-in',
+  ctaHref = '/',
   ctaLabel = 'Request access',
-  signInHref = '/sign-in',
+  showMenuItems = false,
 }: MarketingNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const mobileId = useId()
@@ -260,25 +260,14 @@ export function MarketingNav({
     <div className="mkt-nav">
       <MarketingNavStyles />
       <nav className="mkt-nav__bar" aria-label="Primary">
-        <div className="mkt-nav__groups">
-          {MARKETING_NAV_GROUPS.map((group) => {
-            const onlyLink = group.links.length === 1 ? group.links[0] : null
-            if (onlyLink) {
-              return (
-                <NavLinkItem
-                  key={group.label}
-                  link={onlyLink}
-                  className="mkt-nav__top-link"
-                />
-              )
-            }
-            return <Dropdown key={group.label} group={group} />
-          })}
-        </div>
+        {showMenuItems && (
+          <div className="mkt-nav__groups">
+            {MARKETING_NAV_GROUPS.map((group) => (
+              <Dropdown key={group.label} group={group} />
+            ))}
+          </div>
+        )}
         <div className="mkt-nav__actions">
-          <Link href={signInHref} className="mkt-nav__signin">
-            Sign in
-          </Link>
           {isMailto(ctaHref) ? (
             <a href={ctaHref} className="mkt-nav__cta">
               {ctaLabel}
@@ -289,53 +278,46 @@ export function MarketingNav({
             </Link>
           )}
         </div>
-        <button
-          type="button"
-          className="mkt-nav__hamburger"
-          aria-expanded={mobileOpen}
-          aria-controls={mobileId}
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileOpen((value) => !value)}
-        >
-          <span className="mkt-nav__hamburger-bar" aria-hidden="true" />
-          <span className="mkt-nav__hamburger-bar" aria-hidden="true" />
-          <span className="mkt-nav__hamburger-bar" aria-hidden="true" />
-        </button>
-      </nav>
-      <div
-        id={mobileId}
-        className={`mkt-nav__mobile${mobileOpen ? ' mkt-nav__mobile--open' : ''}`}
-      >
-        {MARKETING_NAV_GROUPS.map((group) => {
-          const onlyLink = group.links.length === 1 ? group.links[0] : null
-          if (onlyLink) {
-            return <NavLinkItem key={group.label} link={onlyLink} className="mkt-nav__m-link" />
-          }
-          return <MobileSection key={group.label} group={group} />
-        })}
-        <div className="mkt-nav__m-actions">
-          <Link
-            href={signInHref}
-            className="mkt-nav__m-signin"
-            onClick={() => setMobileOpen(false)}
+        {showMenuItems && (
+          <button
+            type="button"
+            className="mkt-nav__hamburger"
+            aria-expanded={mobileOpen}
+            aria-controls={mobileId}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileOpen((value) => !value)}
           >
-            Sign in
-          </Link>
-          {isMailto(ctaHref) ? (
-            <a href={ctaHref} className="mkt-nav__m-cta">
-              {ctaLabel}
-            </a>
-          ) : (
-            <Link
-              href={ctaHref}
-              className="mkt-nav__m-cta"
-              onClick={() => setMobileOpen(false)}
-            >
-              {ctaLabel}
-            </Link>
-          )}
+            <span className="mkt-nav__hamburger-bar" aria-hidden="true" />
+            <span className="mkt-nav__hamburger-bar" aria-hidden="true" />
+            <span className="mkt-nav__hamburger-bar" aria-hidden="true" />
+          </button>
+        )}
+      </nav>
+      {showMenuItems && (
+        <div
+          id={mobileId}
+          className={`mkt-nav__mobile${mobileOpen ? ' mkt-nav__mobile--open' : ''}`}
+        >
+          {MARKETING_NAV_GROUPS.map((group) => (
+            <MobileSection key={group.label} group={group} />
+          ))}
+          <div className="mkt-nav__m-actions">
+            {isMailto(ctaHref) ? (
+              <a href={ctaHref} className="mkt-nav__m-cta">
+                {ctaLabel}
+              </a>
+            ) : (
+              <Link
+                href={ctaHref}
+                className="mkt-nav__m-cta"
+                onClick={() => setMobileOpen(false)}
+              >
+                {ctaLabel}
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

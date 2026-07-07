@@ -1,0 +1,89 @@
+{
+  "total": 5247,
+  "embedded": 4224,
+  "distinct_files": 133,
+  "avg_dim": 1536,
+  "runs": [],
+  "system_distribution": [
+    {
+      "s": "ServiceNow ITSM",
+      "n": 3051
+    },
+    {
+      "s": "Power BI",
+      "n": 426
+    },
+    {
+      "s": "Coupa",
+      "n": 321
+    },
+    {
+      "s": "GRC",
+      "n": 289
+    },
+    {
+      "s": "Kyriba TMS",
+      "n": 196
+    },
+    {
+      "s": "Snowflake",
+      "n": 173
+    },
+    {
+      "s": "AbarVa",
+      "n": 148
+    },
+    {
+      "s": "ServiceNow CMDB",
+      "n": 142
+    },
+    {
+      "s": "Corporate Strategy",
+      "n": 131
+    },
+    {
+      "s": "Workday HCM",
+      "n": 87
+    },
+    {
+      "s": "SAP PI/PO",
+      "n": 80
+    },
+    {
+      "s": "Sentinel",
+      "n": 29
+    }
+  ],
+  "filetype_distribution": [
+    {
+      "ft": "xlsx",
+      "n": 2100
+    },
+    {
+      "ft": "csv",
+      "n": 1816
+    },
+    {
+      "ft": "jsonl",
+      "n": 1200
+    },
+    {
+      "ft": "svg",
+      "n": 79
+    },
+    {
+      "ft": "docx",
+      "n": 24
+    },
+    {
+      "ft": "pdf",
+      "n": 20
+    },
+    {
+      "ft": "md",
+      "n": 8
+    }
+  ],
+  "search_tenant_docs": 5247,
+  "search_index_total": "13505"
+}

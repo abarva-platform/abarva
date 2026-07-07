@@ -2,25 +2,40 @@
   {
     "id": "FCF-GQ-001",
     "question": "Which AI initiatives should we kill, and why?",
-    "must_cite": ["FCF-INIT-007", "FCF-INIT-008", "FCF-INIT-009"],
+    "must_cite": [
+      "FCF-INIT-007",
+      "FCF-INIT-008",
+      "FCF-INIT-009"
+    ],
     "must_answer": "Branch Vision AI, Contact Center Sentiment AI, and Wealth Advisor Copilot — all three have no verified value and unresolved governance gaps."
   },
   {
     "id": "FCF-GQ-002",
     "question": "What evidence backs the Fraud Graph v2 value case?",
-    "must_cite": ["FCF-INIT-004", "FCF-KPI-001"],
+    "must_cite": [
+      "FCF-INIT-004",
+      "FCF-KPI-001"
+    ],
     "must_answer": "$28.6M fraud loss avoidance verified; engaged sponsor; high spend justified by evidence."
   },
   {
     "id": "FCF-GQ-003",
     "question": "What blocks scaling AML triage automation?",
-    "must_cite": ["FCF-INIT-002", "FCF-CTRL-003", "FCF-AI-005"],
+    "must_cite": [
+      "FCF-INIT-002",
+      "FCF-CTRL-003",
+      "FCF-AI-005"
+    ],
     "must_answer": "SR 11-7 model validation evidence incomplete; 12 production AI models lack refreshed validation."
   },
   {
     "id": "FCF-GQ-004",
     "question": "Show me all AI tools that serve the AML analyst persona and their governance status.",
-    "must_cite": ["FCF-PERS-003", "FCF-AI-005", "FCF-CTRL-003"],
+    "must_cite": [
+      "FCF-PERS-003",
+      "FCF-AI-005",
+      "FCF-CTRL-003"
+    ],
     "must_answer": "NICE X-Sight AI serves AML analysts; conditional approval; SR 11-7 validation pending."
   },
   {
@@ -48,7 +63,11 @@
   {
     "id": "FCF-GQ-007",
     "question": "What is the productivity impact of AI on software engineers at First Capital?",
-    "must_cite": ["FCF-PERS-007", "FCF-AI-002", "FCF-KPI-006"],
+    "must_cite": [
+      "FCF-PERS-007",
+      "FCF-AI-002",
+      "FCF-KPI-006"
+    ],
     "must_answer": "28% code-completion velocity improvement; GitHub Copilot on 980 engineer seats; index 100 → 128 vs 160 target."
   }
 ]

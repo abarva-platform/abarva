@@ -36,10 +36,9 @@ describe("Delta demo P0 graceful degradation", () => {
     jest.clearAllMocks();
   });
 
-  it("retires the legacy Tower portfolio route file", () => {
-    expect(existsSync("src/app/(maestro)/tower/portfolio/page.tsx")).toBe(
-      false,
-    );
+  it('retires the old Tower portfolio route in favor of the AI Control Tower entry point', () => {
+    expect(() => require.resolve('@/app/(maestro)/tower/portfolio/page')).toThrow();
+    expect(() => require.resolve('@/app/(maestro)/tower/page')).not.toThrow();
   });
 
   it("renders Source value as a degraded empty ledger when ledger data cannot load", async () => {

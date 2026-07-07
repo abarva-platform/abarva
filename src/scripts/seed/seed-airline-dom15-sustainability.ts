@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — Sustainability, SAF Compliance & CORSIA/EU ETS
 // Code range: A4500–A4799
 // Run: npx tsx src/scripts/seed/seed-airline-dom15-sustainability.ts

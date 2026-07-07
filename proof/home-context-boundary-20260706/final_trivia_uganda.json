@@ -1,0 +1,148 @@
+{
+  "mode": "KNOW",
+  "tenantKey": "lakeshore-holdings",
+  "question": "What is the capital of Uganda?",
+  "intent": "table",
+  "answerStatus": "answered",
+  "artifactStatus": "rendered",
+  "prose": "Home is a context browser for the loaded enterprise record. It does not answer general knowledge, trivia, news, weather, or unrelated web questions.\n\nUse Home to inspect the company profile, business functions, applications, data, vendors, budget, AI footprint, controls, source trail, and known gaps.\n\nFor recommendations, use-case judgment, investment choices, or outside-in synthesis, open Intelligence so aVa can use the advisory canvas instead of the Home context browser.",
+  "dimensionsUsed": [
+    "enterprise-profile"
+  ],
+  "facts": [
+    {
+      "id": "home-v7-fact-1-1",
+      "dimensionId": "enterprise-profile",
+      "label": "Boundary",
+      "value": "Lakeshore Holdings",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-1-2",
+      "dimensionId": "enterprise-profile",
+      "label": "What Home can do",
+      "value": "modernize critical Industrial holdco platforms; improve data readiness; rationalize run cost; govern AI scale; protect tenant-specific evidence boundaries",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "id": "home-v7-v7-01-enterprise-profile-table",
+      "title": "Enterprise Profile loaded facts",
+      "dimensionId": "enterprise-profile",
+      "columns": [
+        {
+          "key": "c0",
+          "label": "Boundary",
+          "align": "left",
+          "format": "text"
+        },
+        {
+          "key": "c1",
+          "label": "What Home can do",
+          "align": "left",
+          "format": "text"
+        }
+      ],
+      "rows": [
+        {
+          "c0": "Lakeshore Holdings",
+          "c1": "modernize critical Industrial holdco platforms; improve data readiness; rationalize run cost; govern AI scale; protect tenant-specific evidence boundaries"
+        }
+      ],
+      "citationIds": [
+        "home-v7-source-1"
+      ],
+      "note": "Current governed source evidence. Evidence gaps stay visible instead of becoming confidence scores."
+    }
+  ],
+  "charts": [],
+  "graphs": [],
+  "gaps": [],
+  "conflicts": [],
+  "citations": [
+    {
+      "id": "home-v7-source-1",
+      "label": "Enterprise Profile source file",
+      "sourceClass": "tenant-source-file",
+      "sourceFile": "V7_01_enterprise_profile.csv",
+      "sourceRowNumber": null,
+      "recordId": null,
+      "excerpt": "1 source evidence item selected from enterprise profile source file.",
+      "confidence": "high"
+    }
+  ],
+  "handoff": null,
+  "answerability": "answerable_from_loaded_context",
+  "safety": {
+    "serverValidated": true,
+    "blockedExperts": true,
+    "blockedDecisionFrames": true,
+    "blockedInternalCodes": true,
+    "unsupportedClaimsRemoved": 0,
+    "frontendTripwireShouldFire": false,
+    "usableEvidence": true,
+    "evidenceStatus": "usable_dossier",
+    "evidenceReason": "V7 Azure schema /Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703; old semantic layers bypassed.",
+    "evidenceChannels": {
+      "facts": 2,
+      "tables": 1,
+      "charts": 0,
+      "graphs": 0,
+      "citations": 1,
+      "sourceCoverage": 1,
+      "sections": 0,
+      "rollups": 0,
+      "relationshipPaths": 0,
+      "metrics": 0,
+      "gaps": 0
+    },
+    "composerTrace": {
+      "route": "/api/home/know/ask",
+      "composer": "home_v7_dataset_contract",
+      "goldenComposerAttempted": false,
+      "goldenComposerUsed": false,
+      "fallbackUsed": false,
+      "dimensionsUsed": [
+        "enterprise-profile"
+      ],
+      "factsBound": 2,
+      "tablesBound": 1,
+      "chartsBound": 0,
+      "graphsBound": 0,
+      "citationsBound": 1,
+      "sourceCoverageBound": 1,
+      "sectionsBound": 0,
+      "rollupsBound": 0,
+      "relationshipPathsBound": 0,
+      "metricsBound": 0,
+      "gapsBound": 0,
+      "usableEvidence": true,
+      "evidenceChannels": {
+        "facts": 2,
+        "tables": 1,
+        "charts": 0,
+        "graphs": 0,
+        "citations": 1,
+        "sourceCoverage": 1,
+        "sections": 0,
+        "rollups": 0,
+        "relationshipPaths": 0,
+        "metrics": 0,
+        "gaps": 0
+      },
+      "answerStatus": "answered",
+      "reason": "answerSource=v7_dataset_contract; source=v7_azure_schema; datasetDir=/Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703; selectedRows=1; selectedFacts=34; qualityGate=passed"
+    },
+    "visibleSanitizer": {
+      "sanitizerApplied": false,
+      "sanitizerReason": "none",
+      "semanticLoss": false,
+      "changedFields": []
+    }
+  }
+}

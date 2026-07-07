@@ -1,0 +1,159 @@
+{
+  "baseUrl": "https://app.abarva.ai",
+  "email": "cio@apex-retail.example.com",
+  "capturedAt": "2026-06-01T11:53:50.466Z",
+  "readOnlyNote": "Only the sign-in form was submitted; create/edit forms were opened only as screenshots and not submitted.",
+  "signIn": {
+    "alreadySignedIn": false
+  },
+  "tenant": {
+    "ok": true,
+    "switched": false
+  },
+  "routeResults": [
+    {
+      "order": 1,
+      "route": "/admin",
+      "slug": "trust-plane",
+      "label": "Trust Plane / setup status",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/admin",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-01-trust-plane.png",
+      "error": null,
+      "textPreview": "Apex Retail Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out SETUP · ADMIN Steward Control plane · tenant setup & readiness Overview Setup status and next actions Data Trust Loaded evidence and gaps Connectors Sy"
+    },
+    {
+      "order": 2,
+      "route": "/admin/data-trust",
+      "slug": "data-trust",
+      "label": "Context data trust and segment coverage",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/admin/data-trust",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-02-data-trust.png",
+      "error": null,
+      "textPreview": "Apex Retail Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out SETUP · ADMIN Steward Control plane · tenant setup & readiness Overview Setup status and next actions Data Trust Loaded evidence and gaps Connectors Sy"
+    },
+    {
+      "order": 3,
+      "route": "/intelligence",
+      "slug": "intelligence-brief",
+      "label": "Intelligence brief and AI bet selection",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/intelligence",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-03-intelligence-brief.png",
+      "error": null,
+      "textPreview": "Apex Retail Group Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out The Brief The Map Art of Possible Enterprise Context Vendors Which bet first → EXPORT BRIEF DOCX PDF APEX INTELLIGENCE Live RETAIL PATTERNS 40 SO"
+    },
+    {
+      "order": 4,
+      "route": "/intelligence/map",
+      "slug": "pattern-map",
+      "label": "Pattern map",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/intelligence#map",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-04-pattern-map.png",
+      "error": null,
+      "textPreview": "Apex Retail Group Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out The Brief The Map Art of Possible Enterprise Context Vendors Which bet first → EXPORT BRIEF DOCX PDF APEX INTELLIGENCE Live RETAIL PATTERNS 40 SO"
+    },
+    {
+      "order": 5,
+      "route": "/moves",
+      "slug": "moves-portfolio",
+      "label": "Moves portfolio",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/strategic-moves",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-05-moves-portfolio.png",
+      "error": null,
+      "textPreview": "Apex Retail Group Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out Strategic Moves + New Move 8 MOVES 5 NEED ATTENTION 1 ON TRACK $141M AT STAKE LIVE └─ RETAIL-COMMERCE-2026 · P0 Originate · sponsor/founder decis"
+    },
+    {
+      "order": 6,
+      "route": "/moves/new",
+      "slug": "create-move",
+      "label": "Create a Move workspace entry point",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/strategic-moves/new",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-06-create-move.png",
+      "error": null,
+      "textPreview": "Apex Retail Group Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out ↳ ORIGINATING NEW MOVE UNTITLED· DRAFT ✕ Cancel ✦ Nexus NEW MOVE · P0 ORIGINATE To start a new Strategic Move, I need four things from you: the o"
+    },
+    {
+      "order": 7,
+      "route": "/source",
+      "slug": "source-portfolio",
+      "label": "Source portfolio and vendor leverage",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/source/queue",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-07-source-portfolio.png",
+      "error": null,
+      "textPreview": "Apex Retail Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out SOURCE Queue Events Portfolio SOURCE · DECISION QUEUE 23 decisions need your attention What the sourcing function should decide today — one card per co"
+    },
+    {
+      "order": 8,
+      "route": "/source/new",
+      "slug": "create-source-event",
+      "label": "Create a Source event entry point",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/source/new",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-08-create-source-event.png",
+      "error": null,
+      "textPreview": "Apex Retail Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out SOURCE Queue Events Portfolio SS Sentinel Source Source Orchestrator IN REPLY TO Ready to stand up a new IT sourcing event for Apex Retail. Tell me the"
+    },
+    {
+      "order": 9,
+      "route": "/tower",
+      "slug": "tower-control",
+      "label": "Tower portfolio value control",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/tower",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-09-tower-control.png",
+      "error": null,
+      "textPreview": "Apex Retail Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out TOWER Portfolio Scorecards Gates Dependencies Executive brief A Atlas Tower Conductor — observes portfolio pressure, drift, and signals. ATLAS Atlas re"
+    },
+    {
+      "order": 10,
+      "route": "/admin/connectors",
+      "slug": "connectors",
+      "label": "Connector health",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/admin/connectors",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-10-connectors.png",
+      "error": null,
+      "textPreview": "Apex Retail Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out SETUP · ADMIN Steward Control plane · tenant setup & readiness Overview Setup status and next actions Data Trust Loaded evidence and gaps Connectors Sy"
+    },
+    {
+      "order": 11,
+      "route": "/admin/users-access",
+      "slug": "governance-rbac",
+      "label": "Governance and RBAC",
+      "ok": true,
+      "empty": false,
+      "finalUrl": "https://app.abarva.ai/admin/users-access",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-frames/apex-11-governance-rbac.png",
+      "error": null,
+      "textPreview": "Apex Retail Home Intelligence Moves Source Tower Learn Product CR Carlos Rivera Sign out SETUP · ADMIN Steward Control plane · tenant setup & readiness Overview Setup status and next actions Data Trust Loaded evidence and gaps Connectors Sy"
+    }
+  ],
+  "videoWebm": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/live-raw/page@2843a6b22761b590a9540e42cf2c69b7.webm",
+  "outputs": {
+    "narrationSource": "/Users/anand/Downloads/abarva-cxo-demos/apex-demo.mp4",
+    "narrationAudio": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-full.mp3",
+    "slideshow": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-live-demo.mp4",
+    "motion": "/Users/anand/Projects/nexus/docs/build/cxo-primers/demo/out/apex-live-motion.mp4",
+    "copied": [
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-live-demo.mp4",
+      "/Users/anand/Downloads/abarva-cxo-demos/apex-live-motion.mp4"
+    ]
+  },
+  "summary": "11 live Apex surfaces captured; 0 skipped/empty/gated; slideshow and motion videos copied to Downloads."
+}

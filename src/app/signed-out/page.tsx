@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { LoggedOutLandingPage } from '@/components/marketing/LoggedOutLandingPage'
+import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Signed out · AbarVa',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function SignedOutPage() {
-  return <LoggedOutLandingPage signedOut />
+  redirect('/')
 }

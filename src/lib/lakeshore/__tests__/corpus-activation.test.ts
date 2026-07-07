@@ -2,7 +2,12 @@ import {
   assertLakeshoreCorpusSourcesExist,
   buildLakeshoreCorpusActivationPlan,
 } from '../corpus-activation';
-import { CXO_PERSONAS } from '@/lib/auth/cxo-personas';
+import { CXO_PERSONAS, type CxoPersona } from '@/lib/auth/cxo-personas';
+
+type ExtendedCxoPersona = Omit<CxoPersona, 'clientKey' | 'tenantKey'> & {
+  clientKey: string;
+  tenantKey: string;
+};
 
 describe('Lakeshore corpus activation plan', () => {
   it('declares exactly the two requested Lakeshore CXO logins', () => {
@@ -18,7 +23,8 @@ describe('Lakeshore corpus activation plan', () => {
   });
 
   it('has matching canonical CXO persona records for Clerk provisioning', () => {
-    const lakeshore = CXO_PERSONAS.filter((persona) => persona.clientKey === 'lakeshore');
+    const personas = CXO_PERSONAS as ReadonlyArray<ExtendedCxoPersona>;
+    const lakeshore = personas.filter((persona) => persona.clientKey === 'lakeshore');
 
     expect(lakeshore).toHaveLength(2);
     expect(lakeshore.map((persona) => persona.slug).sort()).toEqual([

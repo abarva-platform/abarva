@@ -176,7 +176,8 @@ function cascadeAlert(
 // ─── Link helpers ─────────────────────────────────────────────────────────────
 
 function programLink(instanceId: string): string {
-  return `/tower?program=${encodeURIComponent(instanceId.toLowerCase())}`;
+  void instanceId;
+  return '/tower';
 }
 
 function sourceLink(instanceId: string): string {

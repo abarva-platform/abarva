@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Codeshare, Alliance & Interlining
 // Code range: A5400-A5459
 // Run: npx tsx src/scripts/seed/seed-airline-dom18-codeshare-part1.ts

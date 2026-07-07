@@ -72,8 +72,7 @@ interface AskPayload {
   requestedClient: string | null;
   surfaceContext: AskSurfaceContext | null;
   tabId: string | null;
-  /** Caller surface renders Markdown — allow light formatting (tables/bold). Default false. */
-  richText: boolean;
+  traceEnabled: boolean;
 }
 
 async function handleAsk(payload: AskPayload, req: NextRequest) {
@@ -549,42 +548,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           conversationContextBlock: memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
-          onModelInput: (parts) => {
-            traceModelInputHash = hashModelInput(parts);
-            if (includeTrace) {
-              controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({
-                    type: "trace-model-input",
-                    finalPrompt: {
-                      system: parts.system,
-                      user: parts.user,
-                      full: [parts.system, parts.user].join("\n\n"),
-                    },
-                  }) + "\n",
-                ),
-              );
-            }
-          },
-          onModelOutput: (parts) => {
-            if (!includeTrace) return;
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: "trace-model-output",
-                  route: parts.route,
-                  model: parts.model ?? null,
-                  auditId: parts.auditId ?? null,
-                  rawText: parts.rawText,
-                  text: parts.text,
-                }) + "\n",
-              ),
-            );
-          },
-          includeAdvisoryPacketAudit: includeTrace,
-          onTiming: enqueueTiming,
-          latencyTraceId: routeTrace.requestId,
-          latencyStartedAt: routeTrace.startedAt,
+          traceEnabled: payload.traceEnabled,
+          traceSession: payload.traceEnabled
+            ? {
+                tenant,
+                user: sessionUserId || userId
+                  ? {
+                      id: sessionUserId ?? userId ?? 'unknown-user',
+                      email: null,
+                      role: activePersonDisplayName ?? null,
+                    }
+                  : undefined,
+                question: query,
+              }
+            : undefined,
         })) {
           if (event.type === "classified")
             classificationForMemory =
@@ -1368,14 +1345,11 @@ function buildHomeKnowRouteFallbackResponse(input: {
 async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
   const url = new URL(req.url);
   return {
-    query: url.searchParams.get("q") ?? "",
-    requestedClient: url.searchParams.get("client"),
-    surfaceContext: parseSurfaceContext(url.searchParams.get("surfaceContext")),
-    tabId:
-      url.searchParams.get("tabId") ??
-      req.cookies.get("ai-ask-tab-id")?.value ??
-      null,
-    richText: url.searchParams.get("format") === "rich",
+    query: url.searchParams.get('q') ?? '',
+    requestedClient: url.searchParams.get('client'),
+    surfaceContext: parseSurfaceContext(url.searchParams.get('surfaceContext')),
+    tabId: url.searchParams.get('tabId') ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
+    traceEnabled: url.searchParams.get('trace') === '1' || url.searchParams.get('traceEnabled') === 'true',
   };
 }
 
@@ -1393,12 +1367,8 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
     query: readString(payload.q) ?? readString(payload.query) ?? "",
     requestedClient: readString(payload.client),
     surfaceContext: normalizeSurfaceContext(payload.surfaceContext),
-    tabId:
-      readString(payload.tabId) ??
-      req.cookies.get("ai-ask-tab-id")?.value ??
-      null,
-    richText:
-      readString(payload.format) === "rich" || payload.richText === true,
+    tabId: readString(payload.tabId) ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
+    traceEnabled: readBoolean(payload.traceEnabled) || readString(payload.trace) === '1',
   };
 }
 
@@ -1437,6 +1407,10 @@ function readString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : null;
+}
+
+function readBoolean(value: unknown): boolean {
+  return value === true || value === 'true' || value === '1';
 }
 
 function readStringArray(value: unknown): string[] | undefined {

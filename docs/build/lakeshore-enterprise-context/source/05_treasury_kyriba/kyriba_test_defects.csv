@@ -1,0 +1,62 @@
+# SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=treasury_kyriba | owner=Elena Vasquez | system=Kyriba TMS | as_of=2026-06-06 | sensitivity=Internal
+defect_id,priority,summary,status,bank,raised_date
+DEF-0001,P2,Reconciliation gap,Retest,Deutsche Bank,2025-09-11
+DEF-0002,P4,Statement import fails,Retest,Santander,2025-11-19
+DEF-0003,P4,Reconciliation gap,Open,Deutsche Bank,2026-02-22
+DEF-0004,P4,Payment file rejected,Open,Citi,2025-12-28
+DEF-0005,P2,Reconciliation gap,Open,DBS,2025-11-12
+DEF-0006,P2,Statement import fails,Retest,Santander,2026-04-01
+DEF-0007,P4,Payment file rejected,Open,DBS,2025-09-13
+DEF-0008,P3,Reconciliation gap,Open,Deutsche Bank,2025-11-28
+DEF-0009,P4,FX rate mismatch,Closed,Bank of America,2026-02-17
+DEF-0010,P3,Statement import fails,Closed,JPMorgan,2026-01-23
+DEF-0011,P1,Payment file rejected,Fixed,Bank of America,2026-04-14
+DEF-0012,P4,Statement import fails,Fixed,BNP Paribas,2026-04-14
+DEF-0013,P4,Payment file rejected,Open,Santander,2025-10-26
+DEF-0014,P1,Statement import fails,Open,Standard Chartered,2026-03-19
+DEF-0015,P4,Timeout,Fixed,Citi,2026-05-02
+DEF-0016,P1,FX rate mismatch,Open,Deutsche Bank,2026-02-02
+DEF-0017,P1,FX rate mismatch,Retest,DBS,2026-01-27
+DEF-0018,P1,Statement import fails,Closed,HSBC,2026-04-06
+DEF-0019,P1,FX rate mismatch,Closed,Standard Chartered,2025-11-11
+DEF-0020,P1,Statement import fails,Retest,Standard Chartered,2026-05-29
+DEF-0021,P2,Timeout,Closed,DBS,2025-11-19
+DEF-0022,P3,Reconciliation gap,Retest,HSBC,2025-11-12
+DEF-0023,P1,Statement import fails,Closed,Santander,2025-10-08
+DEF-0024,P2,Reconciliation gap,Retest,Bank of America,2026-02-26
+DEF-0025,P1,FX rate mismatch,Closed,HSBC,2026-05-17
+DEF-0026,P2,Timeout,Retest,Santander,2026-01-23
+DEF-0027,P3,Payment file rejected,Fixed,Wells Fargo,2026-03-09
+DEF-0028,P1,Statement import fails,Retest,Bank of America,2025-09-11
+DEF-0029,P1,Statement import fails,Fixed,JPMorgan,2025-12-31
+DEF-0030,P1,Payment file rejected,Open,JPMorgan,2026-05-17
+DEF-0031,P3,Reconciliation gap,Open,HSBC,2025-12-20
+DEF-0032,P1,Payment file rejected,Retest,JPMorgan,2026-04-25
+DEF-0033,P1,FX rate mismatch,Retest,Deutsche Bank,2025-09-20
+DEF-0034,P4,Timeout,Closed,Citi,2025-10-02
+DEF-0035,P2,Payment file rejected,Retest,Citi,2025-09-17
+DEF-0036,P4,Reconciliation gap,Fixed,Santander,2026-02-15
+DEF-0037,P2,Timeout,Closed,HSBC,2025-09-28
+DEF-0038,P2,Reconciliation gap,Retest,Citi,2026-04-24
+DEF-0039,P3,Reconciliation gap,Closed,Bank of America,2026-01-06
+DEF-0040,P2,FX rate mismatch,Closed,Bank of America,2025-10-21
+DEF-0041,P4,Statement import fails,Closed,Bank of America,2026-01-11
+DEF-0042,P3,Timeout,Closed,Bank of America,2025-10-19
+DEF-0043,P4,FX rate mismatch,Retest,Santander,2026-05-18
+DEF-0044,P3,Timeout,Retest,Standard Chartered,2025-11-24
+DEF-0045,P2,Timeout,Retest,JPMorgan,2026-04-07
+DEF-0046,P1,Statement import fails,Fixed,JPMorgan,2025-12-23
+DEF-0047,P4,Payment file rejected,Retest,JPMorgan,2025-09-03
+DEF-0048,P2,Reconciliation gap,Closed,Citi,2025-12-04
+DEF-0049,P4,Reconciliation gap,Fixed,Citi,2025-11-06
+DEF-0050,P2,Payment file rejected,Open,DBS,2025-11-16
+DEF-0051,P4,Statement import fails,Closed,Wells Fargo,2025-09-03
+DEF-0052,P2,Reconciliation gap,Retest,JPMorgan,2026-05-16
+DEF-0053,P2,Timeout,Open,Santander,2026-01-23
+DEF-0054,P3,Statement import fails,Closed,HSBC,2026-04-10
+DEF-0055,P3,FX rate mismatch,Open,HSBC,2025-12-20
+DEF-0056,P1,FX rate mismatch,Fixed,Bank of America,2026-02-19
+DEF-0057,P2,Timeout,Retest,DBS,2025-12-25
+DEF-0058,P1,Payment file rejected,Fixed,Citi,2025-09-26
+DEF-0059,P2,Reconciliation gap,Closed,Citi,2025-12-11
+DEF-0060,P2,FX rate mismatch,Open,JPMorgan,2025-12-25

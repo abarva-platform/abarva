@@ -14,8 +14,8 @@ destinations: 356
 countries: 63
 fleet_mainline_and_regional: 1420
 loyalty_members: 132000000
-annual_technology_budget_usd: 2800000000
-annual_ai_budget_usd: 84000000
+annual_technology_budget_usd: 2280000000
+annual_ai_budget_usd: 248000000
 cdp_status: none_enterprise_cdp
 primary_cloud: AWS
 mainframe_platform: IBM Z

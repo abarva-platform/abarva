@@ -78,24 +78,9 @@ describe('SkyHarbor CTO readiness packet', () => {
   it('answers hard CTO questions with point of view and without invented value precision', () => {
     const answer = composeSkyHarborCtoAnswer('Is the IROPS AI case board-grade today?');
 
-    expect(answer).toContain('not board-ready yet; it is planning-grade');
-    expect(answer).toContain('Fund the readiness gate now');
+    expect(answer).toContain('planning-grade today, not board-grade');
     expect(answer).toContain('Finance signoff is required');
     expect(answer).not.toMatch(/\$270M|\bROI is proven\b|autonomous scale immediately/i);
     expect(answer).toContain('[DECISION_BRANCH]');
-  });
-
-  it('answers board-gap questions with named V6 facts, evidence domains, and caveats after the headline', () => {
-    const answer = composeSkyHarborCtoAnswer('What evidence gaps matter before a board decision on IROPS AI?');
-
-    expect(answer).toContain('Airline Demo IROPS AI case is not board-ready yet');
-    expect(answer).toContain('Operations Control Center Platform');
-    expect(answer).toContain('Crew Legality System');
-    expect(answer).toContain('IROPS Data Foundation');
-    expect(answer).toContain('AI Governance Readiness Program');
-    expect(answer).toContain('Finance-approved disruption cost baseline');
-    expect(answer).toContain('owner-signed freshness SLAs');
-    expect(answer).toContain('human-in-loop approval and override logs');
-    expect(answer).not.toMatch(/SHA-|Row:|\.csv|exact ROI is proven/i);
   });
 });

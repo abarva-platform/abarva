@@ -1,0 +1,62 @@
+# SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=data_analytics_reporting | owner=Aisha Bello | system=Snowflake | as_of=2026-06-06 | sensitivity=Internal
+source,transform_layer,consumer,flow_id
+Kyriba,Snowflake RAW,Power BI,flow_0
+Workday,Snowflake CURATED,Tableau,flow_1
+Kyriba,Snowflake RAW,Tableau,flow_2
+Coupa,Snowflake RAW,Tableau,flow_3
+SAP,Snowflake RAW,Power BI,flow_4
+Kyriba,Snowflake CURATED,Tableau,flow_5
+Workday,Snowflake CURATED,Tableau,flow_6
+Workday,Snowflake RAW,Power BI,flow_7
+SAP,Snowflake CURATED,Power BI,flow_8
+Kyriba,Snowflake RAW,Tableau,flow_9
+SAP,Snowflake CURATED,Tableau,flow_10
+Kyriba,Snowflake CURATED,Tableau,flow_11
+SAP,Snowflake RAW,Tableau,flow_12
+Workday,Snowflake RAW,Tableau,flow_13
+Kyriba,Snowflake CURATED,Tableau,flow_14
+SAP,Snowflake RAW,Power BI,flow_15
+SAP,Snowflake CURATED,Power BI,flow_16
+Workday,Snowflake RAW,Tableau,flow_17
+Coupa,Snowflake CURATED,Power BI,flow_18
+Workday,Snowflake CURATED,Power BI,flow_19
+Kyriba,Snowflake RAW,Tableau,flow_20
+Workday,Snowflake CURATED,Power BI,flow_21
+Workday,Snowflake CURATED,Power BI,flow_22
+Coupa,Snowflake RAW,Power BI,flow_23
+Coupa,Snowflake RAW,Tableau,flow_24
+Workday,Snowflake RAW,Tableau,flow_25
+Coupa,Snowflake CURATED,Tableau,flow_26
+Coupa,Snowflake CURATED,Power BI,flow_27
+SAP,Snowflake CURATED,Power BI,flow_28
+Coupa,Snowflake CURATED,Tableau,flow_29
+Coupa,Snowflake CURATED,Tableau,flow_30
+SAP,Snowflake RAW,Tableau,flow_31
+Coupa,Snowflake CURATED,Power BI,flow_32
+Workday,Snowflake RAW,Power BI,flow_33
+Workday,Snowflake RAW,Power BI,flow_34
+Workday,Snowflake RAW,Tableau,flow_35
+Kyriba,Snowflake CURATED,Tableau,flow_36
+Coupa,Snowflake CURATED,Tableau,flow_37
+Workday,Snowflake RAW,Tableau,flow_38
+SAP,Snowflake CURATED,Tableau,flow_39
+SAP,Snowflake CURATED,Tableau,flow_40
+SAP,Snowflake RAW,Tableau,flow_41
+SAP,Snowflake CURATED,Tableau,flow_42
+Kyriba,Snowflake CURATED,Power BI,flow_43
+Coupa,Snowflake CURATED,Power BI,flow_44
+Workday,Snowflake RAW,Power BI,flow_45
+Coupa,Snowflake CURATED,Tableau,flow_46
+Kyriba,Snowflake CURATED,Power BI,flow_47
+SAP,Snowflake RAW,Tableau,flow_48
+Coupa,Snowflake CURATED,Power BI,flow_49
+Kyriba,Snowflake CURATED,Power BI,flow_50
+SAP,Snowflake RAW,Tableau,flow_51
+Workday,Snowflake RAW,Tableau,flow_52
+Kyriba,Snowflake RAW,Power BI,flow_53
+Coupa,Snowflake RAW,Tableau,flow_54
+SAP,Snowflake RAW,Tableau,flow_55
+Workday,Snowflake CURATED,Power BI,flow_56
+Workday,Snowflake CURATED,Power BI,flow_57
+SAP,Snowflake CURATED,Power BI,flow_58
+Kyriba,Snowflake CURATED,Tableau,flow_59

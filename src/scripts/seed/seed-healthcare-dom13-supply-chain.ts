@@ -1,3 +1,5 @@
+// pilot-data-loader-exception: global-static-corpus
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare Provider patterns — Supply Chain, Purchased Services & Clinical Procurement
 // AbarVa corpus — Domain 13
 // Code range: H3900–H4199 (300 patterns)

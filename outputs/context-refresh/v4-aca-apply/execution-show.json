@@ -1,0 +1,31 @@
+{
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/jobs/job-phs-meridian-load2-0606/executions/job-phs-meridian-load2-0606-4c3xwkm",
+  "name": "job-phs-meridian-load2-0606-4c3xwkm",
+  "properties": {
+    "startTime": "2026-06-18T22:06:47+00:00",
+    "status": "Failed",
+    "template": {
+      "containers": [
+        {
+          "env": [
+            {
+              "name": "DATABASE_URL",
+              "secretRef": "cappjob-job-phs-meridian-load2-0606"
+            }
+          ],
+          "image": "acrabarvalab001.azurecr.io/abarva/context-load:v4-all-202606181705",
+          "imageType": "ContainerImage",
+          "name": "job-phs-meridian-load2-0606",
+          "resources": {
+            "cpu": 0.5,
+            "ephemeralStorage": "",
+            "memory": "1Gi"
+          }
+        }
+      ],
+      "initContainers": []
+    }
+  },
+  "resourceGroup": "rg-abarva-controlplane-lab-eastus",
+  "type": "Microsoft.App/jobs/executions"
+}

@@ -112,24 +112,11 @@ export interface SourceGenerationContext {
   artifactStates: SourceEventArtifactState[];
   gateCriteria: SourceEventGateCriterion[];
   evidence: SourceEventEvidence[];
-  uploadedEvidence?: SourceGenerationUploadedArtifact[];
-  /**
-   * Resolved sourcing-archetype id (e.g. AMS_MANAGED_SERVICES), or null when the
-   * event's category doesn't map to a shipped archetype.
-   */
-  archetypeId?: string | null;
-  /**
-   * Pre-formatted archetype advisory block (pricing traps, negotiation levers,
-   * vendor-challenge assumptions, evaluation disqualifiers) injected into
-   * deliverable prompts so insights are archetype-specific, not generic. Empty
-   * string when no archetype resolved.
-   */
-  archetypeAdvisory?: string;
   /**
    * The tenant's application/systems inventory, pulled through the sanctioned
    * broker seam (setup-data-broker) and translated to a light per-app shape.
-   * Empty/absent when nothing is loaded — d04 falls back to a blank framework
-   * rather than inventing applications.
+   * Empty (or absent) when the tenant has no inventory loaded — d04 generation
+   * falls back to a blank framework rather than inventing applications.
    */
   enterpriseAppInventory?: SourceAppInventoryEntry[];
 }
@@ -143,18 +130,6 @@ export interface SourceAppInventoryEntry {
   vendor: string | null;
   criticality: string | null;
   notes: string | null;
-}
-
-export interface SourceGenerationUploadedArtifact {
-  id: string;
-  originalName: string;
-  artifactFamily: string;
-  sourceFormat: string;
-  parseStatus: string;
-  evidenceState: string;
-  stageKey: SourceStageKey;
-  chunkExcerpts: string[];
-  factSummaries: string[];
 }
 
 /**

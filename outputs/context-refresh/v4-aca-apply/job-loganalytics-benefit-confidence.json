@@ -1,0 +1,74 @@
+[
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "(Use `node --trace-warnings ...` to show where the warning was created)",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "- If you want the current behavior, explicitly use 'sslmode=verify-full'",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "To prepare for this change:",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "(node:1) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-h0zbkib-vdlrw",
+    "Log_s": "- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:37:15.9544403Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-acuc5wp-hkcbx",
+    "Log_s": "RESULT_JSON {\"ok\":false,\"run_id\":\"v4-aca-all-20260618-tower-variants\",\"error\":\"upsert_failed:ai_control_benefit_realization:offset=0:columns=client_id|refresh_run_id|source_id|payload|benefit_key|initiative_key|benefit_name|metric_key|promised_annual_value_usd|realized_annual_value_usd|confidence|readiness_state|evidence_state:sample={\\\"client_id\\\":\\\"6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301\\\",\\\"refresh_run_id\\\":\\\"f5b3de9b-a0bb-471f-94d0-916959e43fbc\\\",\\\"source_id\\\":\\\"ca3abd73-36d4-488b-b337-743ee33af59c\\\",\\\"payload\\\":{\\\"initiative_id\\\":\\\"SHA-INIT-001\\\",\\\"value_basis\\\":\\\"avoidable disruption cost\\\",\\\"committed_value_usd\\\":\\\"270000000\\\",\\\"realized_value_ytd_usd\\\":\\\"91800000\\\",\\\"confidence\\\":\\\"high\\\",\\\"measurement_method\\\":\\\"control group\\\",\\\"finance_attested\\\":\\\"true\\\",\\\"evidence_id\\\":\\\"EVID-SHA-0001\\\"},\\\"benefit_key\\\":\\\"SHA-INIT-001:avoidable disruption cost\\\",\\\"initiative_key\\\":\\\"SHA-INIT-001\\\",\\\"benefit_name\\\":\\\"avoidable disruption cost\\\",\\\"metric_key\\\":\\\"avoidable disruption cost\\\",\\\"promised_annual_value_usd\\\":270000000,\\\"realized_annual_value_usd\\\":91800000}:error=new row for relation \\\"ai_control_benefit_realization\\\" violates check constraint \\\"ai_control_benefit_realization_confidence_check\\\"\"}",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:33:59.471013Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-k2kjoxi-jx9mt",
+    "Log_s": "RESULT_JSON {\"ok\":false,\"run_id\":\"v4-aca-all-20260618-dora-fix\",\"error\":\"upsert_failed:ai_control_benefit_realization:offset=0:columns=client_id|refresh_run_id|source_id|payload|benefit_key|initiative_key|benefit_name|metric_key|promised_annual_value_usd|realized_annual_value_usd|confidence|readiness_state|evidence_state:sample={\\\"client_id\\\":\\\"6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301\\\",\\\"refresh_run_id\\\":\\\"872df67c-e85e-4e79-b026-f707fd26b58b\\\",\\\"source_id\\\":\\\"d446f400-e17a-4576-940f-12c4e4f310dc\\\",\\\"payload\\\":{\\\"initiative_id\\\":\\\"SHA-INIT-001\\\",\\\"value_basis\\\":\\\"avoidable disruption cost\\\",\\\"committed_value_usd\\\":\\\"270000000\\\",\\\"realized_value_ytd_usd\\\":\\\"91800000\\\",\\\"confidence\\\":\\\"high\\\",\\\"measurement_method\\\":\\\"control group\\\",\\\"finance_attested\\\":\\\"true\\\",\\\"evidence_id\\\":\\\"EVID-SHA-0001\\\"},\\\"benefit_key\\\":\\\"SHA-INIT-001:undefined\\\",\\\"initiative_key\\\":\\\"SHA-INIT-001\\\",\\\"promised_annual_value_usd\\\":null,\\\"realized_annual_value_usd\\\":null}:error=null value in column \\\"benefit_name\\\" of relation \\\"ai_control_benefit_realization\\\" violates not-null constraint\"}",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:29:09.7778833Z"
+  },
+  {
+    "ContainerGroupName_s": "job-phs-meridian-load2-0606-hgwj1qr-m7t58",
+    "Log_s": "RESULT_JSON {\"ok\":false,\"run_id\":\"v4-aca-all-20260618-dedupe\",\"error\":\"upsert_failed:ai_control_dora_metrics:offset=0:columns=client_id|refresh_run_id|source_id|payload|team|repo|period_start|period_end|lead_time_hours_before|lead_time_hours_after|change_failure_rate_pct_before|change_failure_rate_pct_after|mttr_hours_before|mttr_hours_after|evidence_state:sample={\\\"client_id\\\":\\\"6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301\\\",\\\"refresh_run_id\\\":\\\"f560a88d-af98-4fb1-9f05-e8e661f410c5\\\",\\\"source_id\\\":\\\"e5e1b92b-2499-42b9-828d-c0d06e252a16\\\",\\\"payload\\\":{\\\"team_id\\\":\\\"SHA-IT-018\\\",\\\"team_name\\\":\\\"Architecture and Technology Strategy\\\",\\\"period\\\":\\\"2026-05\\\",\\\"deployment_frequency\\\":\\\"9\\\",\\\"lead_time_days\\\":\\\"16.7\\\",\\\"change_failure_rate_pct\\\":\\\"9\\\",\\\"mttr_hours\\\":\\\"5.8\\\",\\\"ai_tooling_used\\\":\\\"AWS Bedrock; Salesforce Einstein\\\",\\\"notes\\\":\\\"DORA/Productivity feed for Tower\\\"},\\\"repo\\\":\\\"item\\\",\\\"period_start\\\":\\\"2026-04-01\\\",\\\"period_end\\\":\\\"2026-06-30\\\",\\\"lead_time_hours_before\\\":null,\\\"lead_time_hours_after\\\":null}:error=null value in column \\\"team\\\" of relation \\\"ai_control_dora_metrics\\\" violates not-null constraint\"}",
+    "TableName": "PrimaryResult",
+    "TimeGenerated": "2026-06-18T22:24:30.0625114Z"
+  }
+]

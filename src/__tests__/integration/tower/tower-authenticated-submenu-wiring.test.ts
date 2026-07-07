@@ -1,37 +1,60 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from 'node:fs';
 
-describe("Tower authenticated route wiring", () => {
-  const pageSource = readFileSync("src/app/(maestro)/tower/page.tsx", "utf8");
-  const towerIndexSource = readFileSync("src/components/tower/TowerIndexPage.tsx", "utf8");
+describe('AI Control Tower route wiring', () => {
+  const pageSource = readFileSync('src/app/(maestro)/tower/page.tsx', 'utf8');
+  const aiTowerSource = readFileSync('src/components/tower/AiControlTowerPage.tsx', 'utf8');
 
-  it("resolves the authenticated tenant once and passes that tenant into Tower state", () => {
-    expect(pageSource).toContain("getActiveClientRow()");
-    expect(pageSource).toContain("canonicalClientDisplayName");
-    expect(pageSource).toContain("buildAtlasTowerCurrentState");
-    expect(pageSource).toContain("clientId: activeClient.id");
-    expect(pageSource).toContain("clientId={activeClient?.id}");
+  it('renders the redesigned AI Control Tower inside the standard AppShell navigation', () => {
+    expect(pageSource).toContain('AppShell');
+    expect(pageSource).toContain('surface="tower"');
+    expect(pageSource).toContain('AI Control Tower ·');
+    expect(pageSource).toContain('<AiControlTowerPage');
   });
 
-  it("preserves Tower tabs through the React page instead of iframe query wiring", () => {
-    expect(pageSource).toContain("searchParams");
-    expect(pageSource).toContain("resolveTowerTab(tab)");
-    expect(pageSource).toContain("activeTab={activeTab}");
-    expect(pageSource).not.toContain("frameSrc");
-    expect(pageSource).not.toContain("requestedClient");
+  it('loads Tower substrate from the active client row', () => {
+    expect(pageSource).toContain('resolveTowerClient(resolvedSearchParams.client)');
+    expect(pageSource).toContain('TOWER_PILOT_CLIENT_KEYS');
+    expect(pageSource).toContain('clientHasTowerSubstrate(candidate.id)');
+    expect(pageSource).toContain('buildTowerInitiatives(activeClientId)');
+    expect(pageSource).toContain('buildTowerVendors(activeClientId)');
+    expect(pageSource).toContain('buildTowerSetupInitiativesFeed(activeClient)');
   });
 
-  it("mounts the shared aVa dock around the Tower workspace", () => {
-    expect(towerIndexSource).toContain("<AtlasChatPanel");
-    expect(towerIndexSource).toContain("workspace={towerWorkspace}");
-    expect(towerIndexSource).toContain("surface=\"tower\"");
-    expect(towerIndexSource).toContain('variant="focused"');
-    expect(towerIndexSource).toContain("onSubmit={sendToAtlas}");
+  it('keeps the seven AI Control Tower lenses in one canvas', () => {
+    for (const label of [
+      'Value and adoption',
+      'Productivity',
+      'Agents',
+      'Spend',
+      'Risk',
+      'Evidence',
+      'Actions',
+    ]) {
+      expect(aiTowerSource).toContain(label);
+    }
+    expect(aiTowerSource).toContain('messages={atlasMessages}');
+    expect(aiTowerSource).toContain('atlasReplyForLens');
   });
 
-  it("keeps retired static Tower endpoints and assets out of the runtime tree", () => {
-    expect(existsSync("src/app/api/tower/v2-frame/route.ts")).toBe(false);
-    expect(existsSync("src/app/api/tower/v2-data/route.ts")).toBe(false);
-    expect(existsSync("public/tower-v2/index.html")).toBe(false);
-    expect(existsSync("src/lib/tower-v2/v4-data.ts")).toBe(false);
+  it('removes legacy Tower subroutes so the old portfolio board cannot reappear by URL', () => {
+    const removedRoutes = [
+      'src/app/(maestro)/tower/activity/page.tsx',
+      'src/app/(maestro)/tower/lens/page.tsx',
+      'src/app/(maestro)/tower/onboard/page.tsx',
+      'src/app/(maestro)/tower/outcomes/page.tsx',
+      'src/app/(maestro)/tower/portfolio/page.tsx',
+      'src/app/(maestro)/tower/portfolio-dag/page.tsx',
+      'src/app/(maestro)/tower/pressures/page.tsx',
+      'src/app/(maestro)/tower/preview/page.tsx',
+      'src/app/(maestro)/tower/programs/page.tsx',
+      'src/app/(maestro)/tower/projects/page.tsx',
+      'src/app/(maestro)/tower/source-portfolio-value/page.tsx',
+      'src/app/(maestro)/tower/staff-aug/page.tsx',
+      'src/app/(maestro)/tower/tech-stack/page.tsx',
+      'src/app/(maestro)/tower/volumetrics/page.tsx',
+    ];
+    for (const route of removedRoutes) {
+      expect(existsSync(route)).toBe(false);
+    }
   });
 });

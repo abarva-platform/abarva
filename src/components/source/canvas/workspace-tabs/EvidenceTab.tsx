@@ -58,17 +58,13 @@ export function EvidenceTab({
       <div style={LEGEND_STYLE} aria-label="Seven-state ramp legend">
         {(
           [
-            [
-              "Usable Evidence",
-              CANVAS.ACTIVE,
-              "Validated, citable in artifacts and gates",
-            ],
-            ["Available", CANVAS.ACTIVE, "Parsed and sample-checked"],
-            ["Parsed", CANVAS.WAITING, "Fields extracted, not yet validated"],
-            ["Loaded", CANVAS.WAITING, "File ingested, not yet parsed"],
-            ["Not Requested", CANVAS.GRAY, "Known source, not yet pulled"],
-            ["Stale", CANVAS.BLOCKED, "Older than freshness window"],
-            ["Low Confidence", CANVAS.BLOCKED, "Flagged for review"],
+            ['Usable Evidence', CANVAS.ACTIVE, 'Validated, citable in artifacts and gates'],
+            ['Available', CANVAS.ACTIVE, 'Parsed and sample-checked'],
+            ['Parsed', CANVAS.WAITING, 'Fields extracted, not yet validated'],
+            ['Loaded', CANVAS.WAITING, 'File ingested, not yet parsed'],
+            ['Not Requested', CANVAS.GRAY, 'Known source, not yet pulled'],
+            ['Stale', CANVAS.BLOCKED, 'Older than freshness window'],
+            ['Low Confidence', CANVAS.BLOCKED, 'Flagged for review'],
           ] as const
         ).map(([label, color, desc]) => (
           <div key={label} style={LEGEND_ITEM_STYLE}>

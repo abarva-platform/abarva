@@ -71,11 +71,11 @@ export function AppRail() {
         flexShrink: 0,
       }}
     >
-      {/* Brand mark — AbarVa "A" icon */}
+      {/* Brand mark — canonical AbarVa Option 2 symbol */}
       <Link href="/home" style={{ textDecoration: 'none', flexShrink: 0, marginBottom: 18 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/logo-mark.svg"
+          src="/brand/abarva-option2-hq/abarva-option2-hq-symbol-light.svg"
           alt="AbarVa"
           style={{ width: 36, height: 33, display: 'block' }}
         />

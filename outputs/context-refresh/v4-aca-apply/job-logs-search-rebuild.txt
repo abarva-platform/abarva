@@ -1,0 +1,52 @@
+{"TimeStamp":"2026-06-18T23:11:25.13178","Log":"Connecting to the container 'context-ingestion-worker'..."}
+{"TimeStamp":"2026-06-18T23:11:25.22739","Log":"Successfully Connected to container: 'context-ingestion-worker' [Execution: 'job-a24-search-rebuild-eus-ffu43l1', Replica: 'job-a24-search-rebuild-eus-ffu43l1-btktd']"}
+{"TimeStamp":"2026-06-18T23:10:40.9549222+00:00","Log":"F {"event":"azure_search_index_deleted","index":"tenant-context-v1","status":204}"}
+{"TimeStamp":"2026-06-18T23:10:43.9193975+00:00","Log":"F {"event":"azure_search_index_applied","index":"tenant-context-v1"}"}
+{"TimeStamp":"2026-06-18T23:10:44.0167387+00:00","Log":"F {"event":"azure_search_index_applied","index":"evidence-ledger-v1"}"}
+{"TimeStamp":"2026-06-18T23:10:44.0945572+00:00","Log":"F {"event":"azure_search_index_applied","index":"source-vendor-v1"}"}
+{"TimeStamp":"2026-06-18T23:10:44.1556217+00:00","Log":"F {"event":"azure_search_index_applied","index":"industry-corpus-v1"}"}
+{"TimeStamp":"2026-06-18T23:10:44.2158706+00:00","Log":"F {"event":"azure_search_index_applied","index":"signals-v1"}"}
+{"TimeStamp":"2026-06-18T23:10:44.4011805+00:00","Log":"F {"event":"azure_search_indexes_verified","indexes":["tenant-context-v1","evidence-ledger-v1","source-vendor-v1","industry-corpus-v1","signals-v1"]}"}
+{"TimeStamp":"2026-06-18T23:10:44.4169969+00:00","Log":"F npm notice"}
+{"TimeStamp":"2026-06-18T23:10:44.4170333+00:00","Log":"F npm notice New minor version of npm available! 11.13.0 -\u003E 11.17.0"}
+{"TimeStamp":"2026-06-18T23:10:44.4170467+00:00","Log":"F npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.17.0"}
+{"TimeStamp":"2026-06-18T23:10:44.4170487+00:00","Log":"F npm notice To update run: npm install -g npm@11.17.0"}
+{"TimeStamp":"2026-06-18T23:10:44.41705+00:00","Log":"F npm notice"}
+{"TimeStamp":"2026-06-18T23:10:45.182179+00:00","Log":"F (node:89) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'."}
+{"TimeStamp":"2026-06-18T23:10:45.1822181+00:00","Log":"F In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees."}
+{"TimeStamp":"2026-06-18T23:10:45.1822329+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T23:10:45.1822388+00:00","Log":"F To prepare for this change:"}
+{"TimeStamp":"2026-06-18T23:10:45.1822402+00:00","Log":"F - If you want the current behavior, explicitly use 'sslmode=verify-full'"}
+{"TimeStamp":"2026-06-18T23:10:45.1822415+00:00","Log":"F - If you want libpq compatibility now, use 'uselibpqcompat=true\u0026sslmode=require'"}
+{"TimeStamp":"2026-06-18T23:10:45.1822428+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T23:10:45.182244+00:00","Log":"F See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions."}
+{"TimeStamp":"2026-06-18T23:10:45.1822453+00:00","Log":"F (Use \u0060node --trace-warnings ...\u0060 to show where the warning was created)"}
+{"TimeStamp":"2026-06-18T23:10:45.7530775+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":500}"}
+{"TimeStamp":"2026-06-18T23:10:46.0231981+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":1000}"}
+{"TimeStamp":"2026-06-18T23:10:46.3143451+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":1500}"}
+{"TimeStamp":"2026-06-18T23:10:46.6249986+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":2000}"}
+{"TimeStamp":"2026-06-18T23:10:46.8740768+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":2500}"}
+{"TimeStamp":"2026-06-18T23:10:47.1343454+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":3000}"}
+{"TimeStamp":"2026-06-18T23:10:47.4651794+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":3500}"}
+{"TimeStamp":"2026-06-18T23:10:47.9345849+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":4000}"}
+{"TimeStamp":"2026-06-18T23:10:48.3466687+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":4500}"}
+{"TimeStamp":"2026-06-18T23:10:48.8760205+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":5000}"}
+{"TimeStamp":"2026-06-18T23:10:49.4467964+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":5500}"}
+{"TimeStamp":"2026-06-18T23:10:49.6888171+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":6000}"}
+{"TimeStamp":"2026-06-18T23:10:49.9354907+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":6500}"}
+{"TimeStamp":"2026-06-18T23:10:50.2632397+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":7000}"}
+{"TimeStamp":"2026-06-18T23:10:50.5286269+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":7500}"}
+{"TimeStamp":"2026-06-18T23:10:50.7701638+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":8000}"}
+{"TimeStamp":"2026-06-18T23:10:51.0913887+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":8500}"}
+{"TimeStamp":"2026-06-18T23:10:51.4546593+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":9000}"}
+{"TimeStamp":"2026-06-18T23:10:51.757019+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":9500}"}
+{"TimeStamp":"2026-06-18T23:10:52.0035119+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":10000}"}
+{"TimeStamp":"2026-06-18T23:10:52.3147264+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":10500}"}
+{"TimeStamp":"2026-06-18T23:10:52.564335+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":11000}"}
+{"TimeStamp":"2026-06-18T23:10:52.9774961+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":11500}"}
+{"TimeStamp":"2026-06-18T23:10:53.680728+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":12000}"}
+{"TimeStamp":"2026-06-18T23:10:53.9571094+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":12500}"}
+{"TimeStamp":"2026-06-18T23:10:54.4525002+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":13000}"}
+{"TimeStamp":"2026-06-18T23:10:54.995175+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":13500}"}
+{"TimeStamp":"2026-06-18T23:10:55.479365+00:00","Log":"F {"event":"azure_search_backfill_batch_uploaded","uploaded":13741}"}
+{"TimeStamp":"2026-06-18T23:11:01.064627+00:00","Log":"F {"event":"azure_search_backfill_verified","observed":{"apex-retail":1656,"first-capital":2227,"lakeshore-holdings":1348,"meridian-health":1538,"northstar-clinical":878,"skyharbor-air":6094}}"}

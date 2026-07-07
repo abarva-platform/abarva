@@ -11,6 +11,17 @@ describe('proxy public route patterns', () => {
     expect(isPublicRoute(request)).toBe(true);
   });
 
+  it('treats the hidden approved-access page and eligibility check as public pre-auth routes', () => {
+    expect(isPublicRoute(new NextRequest('https://app.abarva.ai/access'))).toBe(true);
+    expect(isPublicRoute(new NextRequest('https://app.abarva.ai/api/auth/access-eligibility'))).toBe(true);
+  });
+
+  it('treats the launch access-denied page as public so denied sessions do not loop through Clerk', () => {
+    const request = new NextRequest('https://app.abarva.ai/access-denied');
+    expect(isPublicRoute(request)).toBe(true);
+    expect(isAuthRequiredRoute(request)).toBe(false);
+  });
+
   it('treats the health endpoint as a public platform probe', () => {
     const request = new NextRequest('https://app.abarva.ai/api/health');
     expect(isPublicRoute(request)).toBe(true);
