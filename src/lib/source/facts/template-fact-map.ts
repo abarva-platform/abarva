@@ -1,0 +1,150 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Template → fact mapping contract — the deterministic structured-map intake.
+//
+// When a client supplies a structured intake template (an app-inventory export, a
+// volumetrics workbook), each column maps to a canonical fact key. This contract
+// declares that mapping so intake is DETERMINISTIC — a CSV/XLSX column becomes a
+// `source_event_facts` row with `source_method = 'structured_map'` and NO LLM in
+// the loop. The header→factKey binding, the fact's entity, and the unit are all
+// stated here; an ingestion routine walks the rows and writes one fact per mapped
+// cell, citing the template code + column as provenance.
+//
+// This is the contract/structure only (the keystone). The row-walking ingestion
+// routine is a downstream slice that consumes this map. Every `factKey` here MUST
+// resolve to a catalog entry and its `entityKind`/`unit` MUST match the catalog —
+// tests assert this so a template can never bind a column to a non-fact or drift
+// from the canonical unit.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import type { ValueUnit } from '../archetypes/types';
+import type { FactEntityKind } from './fact-catalog';
+
+/** One template column bound to a canonical fact. */
+export interface TemplateColumnMapping {
+  /** The column header as it appears in the client's template. */
+  header: string;
+  /** The canonical fact key this column populates (must be in the catalog). */
+  factKey: string;
+  /** The entity a row of this template represents (must match the catalog spec). */
+  entityKind: FactEntityKind;
+  /** The unit of the column's values (must match the catalog spec). */
+  unit: ValueUnit;
+  /** Optional intake note (e.g. expected format, derivation hint). */
+  note?: string;
+}
+
+/** A structured intake template and its column→fact bindings. */
+export interface TemplateFactMap {
+  /** Stable template code, e.g. 'APP_INVENTORY_V1'. */
+  templateCode: string;
+  /** Human label for the template. */
+  label: string;
+  /** What one row of the template represents (the entity_ref carrier). */
+  rowEntity: FactEntityKind;
+  /**
+   * The column that identifies the row's entity (its entity_ref), e.g. the tower
+   * name or app id. Not itself a fact — it becomes `entity_ref` on each fact row.
+   */
+  entityRefColumn: string;
+  /** The fact-bearing column bindings. */
+  columns: TemplateColumnMapping[];
+}
+
+// ── App / system inventory template ──────────────────────────────────────────
+// One row per application. Feeds the run-cost / retained-cost economics per app,
+// rolled up to the tower level by the value engine.
+const APP_INVENTORY_TEMPLATE: TemplateFactMap = {
+  templateCode: 'APP_INVENTORY_V1',
+  label: 'Application & system inventory',
+  rowEntity: 'app',
+  entityRefColumn: 'Application ID',
+  columns: [
+    {
+      header: 'Annual Run Cost (USD)',
+      factKey: 'annual_run_cost',
+      entityKind: 'tower',
+      unit: 'usd_per_year',
+      note: 'Per-app annual run cost; rolled up per service tower by the value engine.',
+    },
+    {
+      header: 'Loaded FTE Cost (USD)',
+      factKey: 'loaded_fte_cost',
+      entityKind: 'event',
+      unit: 'usd_per_year',
+      note: 'Loaded annual cost of a retained FTE supporting this app.',
+    },
+    {
+      header: 'Variable Cost Share (%)',
+      factKey: 'variable_cost_share_pct',
+      entityKind: 'tower',
+      unit: 'pct',
+      note: 'Share of the app run cost that flexes with volume.',
+    },
+  ],
+};
+
+// ── Volumetrics template ─────────────────────────────────────────────────────
+// One row per service tower. Feeds volume-band pricing, scope-leakage, and
+// productivity-credit economics.
+const VOLUMETRICS_TEMPLATE: TemplateFactMap = {
+  templateCode: 'VOLUMETRICS_V1',
+  label: 'Ticket volumes & volumetrics',
+  rowEntity: 'tower',
+  entityRefColumn: 'Service Tower',
+  columns: [
+    {
+      header: 'Annual Change-Order Spend (USD)',
+      factKey: 'annual_change_order_spend',
+      entityKind: 'event',
+      unit: 'usd_per_year',
+      note: 'Change-order / enhancement spend attributable to the tower.',
+    },
+    {
+      header: 'Recurring/Avoidable Share (%)',
+      factKey: 'recurring_avoidable_pct',
+      entityKind: 'event',
+      unit: 'pct',
+      note: 'Share of change-order spend that recurs and is foldable into base scope.',
+    },
+    {
+      header: 'Projected Volume Decline (%)',
+      factKey: 'projected_volume_decline_pct',
+      entityKind: 'tower',
+      unit: 'pct',
+      note: 'Expected ticket-volume decline over the contract term.',
+    },
+    {
+      header: 'Automatable Effort Pool (USD)',
+      factKey: 'automatable_effort_pool',
+      entityKind: 'event',
+      unit: 'usd_per_year',
+      note: 'Annual effort addressable by automation for this tower.',
+    },
+    {
+      header: 'Chronic SLA Miss Rate (%)',
+      factKey: 'chronic_miss_rate',
+      entityKind: 'event',
+      unit: 'pct',
+      note: 'Historical chronic-miss rate for the tower SLAs.',
+    },
+  ],
+};
+
+/** All shipped structured intake templates, keyed by templateCode. */
+export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
+  [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
+  [VOLUMETRICS_TEMPLATE.templateCode]: VOLUMETRICS_TEMPLATE,
+  // Add new intake templates here — no engine change required.
+};
+
+/** Lookup a template fact map by code. */
+export function templateFactMapByCode(
+  templateCode: string,
+): TemplateFactMap | undefined {
+  return TEMPLATE_FACT_MAPS[templateCode];
+}
+
+/** All shipped template maps. */
+export function listTemplateFactMaps(): TemplateFactMap[] {
+  return Object.values(TEMPLATE_FACT_MAPS);
+}

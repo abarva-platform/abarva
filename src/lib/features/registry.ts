@@ -79,6 +79,7 @@ export type FeatureFlagKey =
   | "source_simple_front"
   | "source_strategy_auto_draft"
   | "source_strategy_at_p0"
+  | "source_analytics"
   | "context_corpus_explorer_enabled"
   | "source_reasoning_spine"
   | "home_know_llm_synthesis"
@@ -164,6 +165,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "Folds Strategy into P0 origination: on intake approval the event advances straight to Scope and the three GATE-STRATEGY criteria are waived with an audit reason (the strategy is set and endorsed at the P0 approval, which the sponsor co-signs). The Strategy stage is shown done on the rail rather than presented as a separate to-do page. Tenant opt-in; default off so the standard Strategy stage remains the norm until proven per tenant. Lakeshore enrolled 2026-07-06 for live proof of the strategy-stage kill.",
     policy: "tenant",
     includeTenants: ["lakeshore"],
+  },
+  {
+    key: "source_analytics",
+    summary:
+      "Master switch for the Source value-analytics layer — the deterministic fact model (source_event_facts) → value-lever evaluators → value-type waterfall, and the intelligence surfaced on the stage canvas. Ships dark: every analytics slice (extraction, evaluators, redesigned UI, Door-1 diagnose→recover) gates behind this flag so nothing changes for users until it is flipped per tenant, live-proven. Default off for all.",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "moves_orchestrated_deliverables",
