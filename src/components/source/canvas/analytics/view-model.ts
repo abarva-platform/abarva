@@ -394,6 +394,16 @@ export interface ScopeCoverageRowView {
    * Empty when reachable.
    */
   missingEvidence: readonly string[];
+  /**
+   * True when this (stranded) row's low/high is a benchmark-based POTENTIAL AT RISK
+   * — the lever's own formula run over the event's REAL value pool with the missing
+   * citationRequired drivers filled from illustrative AMS market bands (low→high),
+   * rather than the flat illustrative scale. It is a benchmark-scaled
+   * potential-if-unblocked, NOT a computed tenant number and NOT a savings claim; the
+   * UI badges it so a reader never mistakes it for a cited figure. Reachable rows and
+   * flat-scale stranded rows leave this false/undefined.
+   */
+  potentialAtRisk?: boolean;
 }
 
 /**

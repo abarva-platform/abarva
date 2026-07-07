@@ -207,8 +207,38 @@ export function ScopeCoverageInsight({ insight }: ScopeCoverageInsightProps) {
                   background: ANALYTICS.SOFT,
                 }}
               >
-                <span style={{ fontSize: 12.5, color: ANALYTICS.INK }}>
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    color: ANALYTICS.INK,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   {r.label}
+                  {/* Benchmark-based POTENTIAL AT RISK badge — honest wording so this
+                      reads as an "if unblocked", benchmark-scaled potential, never a
+                      computed tenant number or a savings claim. */}
+                  {r.potentialAtRisk ? (
+                    <span
+                      data-testid="scope-coverage-potential-badge"
+                      title="Benchmark-based potential at risk — this lever's own formula run over your real value pool, with the missing drivers filled from illustrative AMS market bands. Not a computed tenant number, not a savings claim."
+                      style={{
+                        fontSize: 10.5,
+                        fontFamily: ANALYTICS.SANS,
+                        color: ANALYTICS.AMBER_TEXT,
+                        background: ANALYTICS.AMBER_TINT,
+                        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+                        borderRadius: 999,
+                        padding: '1px 8px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {fmtUsd(r.low)}–{fmtUsd(r.high)} benchmark-based potential at risk
+                    </span>
+                  ) : null}
                 </span>
                 <span
                   style={{
@@ -218,7 +248,7 @@ export function ScopeCoverageInsight({ insight }: ScopeCoverageInsightProps) {
                     textAlign: 'right',
                   }}
                 >
-                  stranded — needs{' '}
+                  {r.potentialAtRisk ? 'if unblocked — needs' : 'stranded — needs'}{' '}
                   <b>
                     {(r.missingEvidence.length > 0
                       ? r.missingEvidence

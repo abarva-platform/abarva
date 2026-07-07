@@ -502,3 +502,93 @@ describe('buildShouldCostModelInsight — Evaluation (MODEL)', () => {
     expect(insight.headline).toMatch(/cheapest on paper/i);
   });
 });
+
+describe('buildScopeCoverageInsight — stranded POTENTIAL AT RISK (benchmark-scaled)', () => {
+  // Only the Volume-band lever's REAL value pool is present (annual_run_cost). Its
+  // citationRequired drivers (variable_cost_share_pct, projected_volume_decline_pct)
+  // are MISSING, so the lever is stranded — but because the pool is present we can
+  // size its benchmark-based "potential at risk" from its own formula.
+  const POOL_ONLY: EventFactMap = {
+    annual_run_cost: 46_000_000,
+    term_years: 3,
+  };
+
+  it('sizes a stranded lever to its REAL pool — far above the flat scale', () => {
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, POOL_ONLY);
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+
+    const volume = insight.rows.find(
+      (r) => r.leverKey === 'AMS.VOLUME_BAND_PRICING',
+    );
+    expect(volume).toBeDefined();
+    // It is stranded (its drivers are unscoped) but carries the potential-at-risk flag.
+    expect(volume?.reachable).toBe(false);
+    expect(volume?.potentialAtRisk).toBe(true);
+
+    // The flat illustrative scale for incremental_negotiated tops out at $1.9M. The
+    // potential-at-risk band, scaled to the $46M pool over a 3-yr term, is MUCH
+    // larger — proving it is pool-scaled, not the flat undersell.
+    const FLAT_HIGH = 1_900_000;
+    expect(volume!.high).toBeGreaterThan(FLAT_HIGH * 4);
+    // And scaled to the pool: low is a meaningful fraction of $46M × term, not ~$1M.
+    expect(volume!.high).toBeGreaterThan(10_000_000);
+  });
+
+  it('is a RANGE, never a point (low < high)', () => {
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, POOL_ONLY);
+    const volume = insight.rows.find(
+      (r) => r.leverKey === 'AMS.VOLUME_BAND_PRICING',
+    );
+    expect(volume!.high).toBeGreaterThan(volume!.low);
+    expect(volume!.low).toBeGreaterThan(0);
+  });
+
+  it('is deterministic — same facts produce the same band', () => {
+    const a = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, POOL_ONLY);
+    const b = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, POOL_ONLY);
+    const va = a.rows.find((r) => r.leverKey === 'AMS.VOLUME_BAND_PRICING');
+    const vb = b.rows.find((r) => r.leverKey === 'AMS.VOLUME_BAND_PRICING');
+    expect(va!.low).toBe(vb!.low);
+    expect(va!.high).toBe(vb!.high);
+  });
+
+  it('the headline is honestly framed as benchmark-scaled potential at risk', () => {
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, POOL_ONLY);
+    expect(insight.headline).toMatch(/at risk/i);
+    expect(insight.headline).toMatch(/benchmark-scaled/i);
+    expect(insight.headline).toMatch(/if unblocked/i);
+    // The note badges it benchmark-based potential, not a tenant/savings claim.
+    expect(insight.note).toMatch(/potential at risk/i);
+    expect(insight.note).toMatch(/not a computed tenant number/i);
+    expect(insight.note).toMatch(/not a savings claim/i);
+  });
+
+  it('falls back to the flat ILLUSTRATIVE_SCALE when the lever has no benchmarkable pool', () => {
+    // Present ONLY a fact that quantifies the change-order lever so the insight is
+    // LIVE — but for the SLA lever the required $ POOL (at_risk_fee_pool) is absent
+    // AND there is no benchmark for a $ pool, so it must fall back to the flat scale.
+    const SLA_FLAT_SCALE = { low: 1_800_000, high: 2_600_000 }; // protected scale
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, FACTS_ONE_LEVER);
+    expect(insight.provenance).toBe('live');
+    const sla = insight.rows.find((r) => r.leverKey === 'AMS.SLA_ECONOMICS');
+    expect(sla).toBeDefined();
+    expect(sla?.reachable).toBe(false);
+    // No pool present → not a potential-at-risk row; it sits on the flat scale.
+    expect(sla?.potentialAtRisk).toBeFalsy();
+    expect(sla!.low).toBe(SLA_FLAT_SCALE.low);
+    expect(sla!.high).toBe(SLA_FLAT_SCALE.high);
+  });
+
+  it('reachable levers are UNCHANGED — real computed band, no potential flag', () => {
+    // FACTS_ONE_LEVER makes the change-order lever reachable; it must still report a
+    // real computed band and must NOT carry the potentialAtRisk flag.
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, FACTS_ONE_LEVER);
+    const leakage = insight.rows.find(
+      (r) => r.leverKey === 'AMS.ENHANCEMENT_LEAKAGE',
+    );
+    expect(leakage?.reachable).toBe(true);
+    expect(leakage?.potentialAtRisk).toBeFalsy();
+    expect(leakage!.high).toBeGreaterThanOrEqual(leakage!.low);
+  });
+});

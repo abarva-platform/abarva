@@ -25,6 +25,8 @@ import {
   type EventFactMap,
 } from '@/lib/source/facts/evaluators/orchestrator';
 import { buildValueWaterfall } from '@/lib/source/facts/evaluators/waterfall';
+import { runFormula } from '@/lib/source/facts/evaluators/formulas';
+import { isInsufficient } from '@/lib/source/facts/evaluators/types';
 import type {
   SourceEventArchetype,
   ValueLeverRule,
@@ -396,6 +398,139 @@ function leverBand(
   return ILLUSTRATIVE_SCALE[rule.valueType];
 }
 
+// ── STRANDED-LEVER "POTENTIAL AT RISK" (benchmark-filled, not a tenant number) ─
+//
+// A stranded lever cannot COMPUTE (its citationRequired facts are missing), so the
+// flat ILLUSTRATIVE_SCALE undersells it: a run-cost / volume-band lever operating on
+// the event's REAL ~$46M run-cost pool is worth ~$16–23M over the term, but the flat
+// scale shows ~$1–2M. To make the "this blocked lever is worth $X if you unblock it"
+// moment land HONESTLY, we run the lever's OWN deterministic formula, filling ONLY
+// the missing citationRequired inputs from a NAMED benchmark band and using the REAL
+// facts that ARE present for the rest. Low uses the low end of every benchmark input,
+// high the high end. It is ALWAYS a range, ALWAYS badged benchmark-based potential —
+// never a computed tenant number, never a savings claim.
+//
+// Honesty rule: we NEVER invent a magnitude. Every filled input comes from
+// `AMS_DRIVER_BENCHMARKS` below (a code constant with sourcing). We only benchmark
+// the driver ratios/rates/small counts — the large $ POOLS (annual_run_cost,
+// annual_change_order_spend, at_risk_fee_pool, automatable_effort_pool,
+// transition_fee) are NEVER benchmark-filled; if the pool fact is absent the lever
+// stays on the flat ILLUSTRATIVE_SCALE (we don't fabricate the magnitude).
+
+/**
+ * Illustrative AMS market bands for the DRIVER inputs a stranded lever is missing —
+ * whole-number percents (18 = 18%), ratios, and small counts, NOT $ pools. These are
+ * plausible AMS-market magnitudes used only to size the "if unblocked" potential of a
+ * stranded lever whose real value pool IS present; they are never a tenant number.
+ * Deterministic: same present facts → same {low, high} potential band.
+ *
+ * Sourcing: representative ranges seen across mid-to-large AMS deals (L2/L3 managed
+ * services). Volume decline and variable-cost share track the shape of run-cost that
+ * flexes as tickets fall; credit / miss / overrun rates track typical vendor and SLA
+ * postures. Illustrative advisory bands, not audited tenant data.
+ */
+const AMS_DRIVER_BENCHMARKS: Record<string, { low: number; high: number }> = {
+  // Share of annual run cost that flexes with ticket volume (whole-number pct).
+  variable_cost_share_pct: { low: 50, high: 60 },
+  // Projected ticket-volume decline over the term (whole-number pct).
+  projected_volume_decline_pct: { low: 12, high: 20 },
+  // Share of change-order / enhancement spend that is recurring/avoidable (pct).
+  recurring_avoidable_pct: { low: 25, high: 40 },
+  // Committed year-over-year productivity/automation credit (whole-number pct).
+  committed_credit_pct: { low: 6, high: 12 },
+  // Retained client / SME FTE the buyer keeps under a typical model (count).
+  retained_fte_delta: { low: 3, high: 6 },
+  // Loaded annual cost per retained FTE (USD/yr) — a rate, not a value pool.
+  loaded_fte_cost: { low: 165_000, high: 210_000 },
+  // SLA credit cap as a share of the at-risk fee pool (whole-number pct).
+  credit_cap_pct: { low: 8, high: 15 },
+  // Historical chronic-miss rate on critical towers (whole-number pct).
+  chronic_miss_rate: { low: 4, high: 8 },
+  // Probability of a transition overrun (whole-number pct).
+  overrun_probability: { low: 20, high: 35 },
+};
+
+/**
+ * The large $ POOL inputs that anchor a lever's magnitude. These are NEVER
+ * benchmark-filled: if the pool fact is absent we cannot honestly size the lever, so
+ * the caller falls back to the flat ILLUSTRATIVE_SCALE rather than inventing a pool.
+ * Only the driver ratios/rates above may be benchmark-filled.
+ */
+const POOL_INPUT_KEYS = new Set<string>([
+  'annual_run_cost',
+  'annual_change_order_spend',
+  'at_risk_fee_pool',
+  'automatable_effort_pool',
+  'transition_fee',
+]);
+
+/**
+ * Compute a stranded lever's "potential at risk" band by running its OWN formula on
+ * the REAL present facts + benchmark-filled MISSING citationRequired inputs. Low fills
+ * every benchmarked input at its low end, high at its high end, so the result is a
+ * genuine range scaled to the event's real pool. Returns null when the lever still
+ * cannot be sized — because a required $ POOL fact is absent, or a missing driver has
+ * no benchmark, or the evaluator still can't produce a band — so the caller keeps the
+ * flat ILLUSTRATIVE_SCALE instead of fabricating a magnitude.
+ */
+function strandedPotentialBand(
+  rule: ValueLeverRule,
+  facts: EventFactMap,
+): { low: number; high: number } | null {
+  // The inputs the evaluator scopes over (real, present, finite ones).
+  const present: EvaluatorInputs = {};
+  for (const input of rule.computation.inputs) {
+    const v = facts[input.key];
+    if (typeof v === 'number' && Number.isFinite(v)) present[input.key] = v;
+  }
+
+  // Which citationRequired inputs are missing — these are what we must benchmark-fill.
+  const required = rule.computation.inputs.filter((i) => i.citationRequired);
+  const missing = required.filter((i) => !(i.key in present));
+
+  // If any missing input is a $ POOL, we cannot honestly size it — bail to the flat
+  // illustrative scale (never benchmark-fill a magnitude out of thin air).
+  if (missing.some((i) => POOL_INPUT_KEYS.has(i.key))) return null;
+  // Every missing driver must have a NAMED benchmark, else we cannot fill it honestly.
+  if (missing.some((i) => !(i.key in AMS_DRIVER_BENCHMARKS))) return null;
+  // Nothing to fill (all citationRequired present) means the lever is reachable and
+  // should not be on this path at all; treat as no-potential.
+  if (missing.length === 0) return null;
+  // The lever's MAGNITUDE must be anchored on a REAL tenant fact — a present $ pool,
+  // or a present required input that is not benchmark-fillable (a real anchor, not a
+  // driver ratio we would have invented). `term_years` alone is not an anchor: it only
+  // multiplies. Without a real anchor the whole magnitude would be benchmark-invented,
+  // so we bail to the flat illustrative scale. (This is why RETAINED_COST — whose only
+  // required inputs are both benchmarked drivers — never becomes a potential-at-risk
+  // row off `term_years` alone.)
+  const hasRealAnchor = Object.keys(present).some(
+    (k) =>
+      k !== 'term_years' &&
+      (POOL_INPUT_KEYS.has(k) || !(k in AMS_DRIVER_BENCHMARKS)),
+  );
+  if (!hasRealAnchor) return null;
+
+  const lowInputs: EvaluatorInputs = { ...present };
+  const highInputs: EvaluatorInputs = { ...present };
+  for (const i of missing) {
+    const b = AMS_DRIVER_BENCHMARKS[i.key];
+    lowInputs[i.key] = b.low;
+    highInputs[i.key] = b.high;
+  }
+
+  const lowResult = runFormula(rule.computation.formulaId, lowInputs);
+  const highResult = runFormula(rule.computation.formulaId, highInputs);
+  if (isInsufficient(lowResult) || isInsufficient(highResult)) return null;
+
+  // The evaluator itself returns a defensibility band per input set; take the low
+  // bound of the low-filled run and the high bound of the high-filled run so the
+  // potential band spans benchmark-low → benchmark-high end to end. Order defensively.
+  const low = Math.min(lowResult.low, highResult.low);
+  const high = Math.max(lowResult.high, highResult.high);
+  if (!(Number.isFinite(low) && Number.isFinite(high)) || high <= 0) return null;
+  return { low: Math.min(low, high), high: Math.max(low, high) };
+}
+
 // ── Scope · SCOPE-TO-VALUE COVERAGE (reachable vs stranded) ───────────────────
 
 /**
@@ -431,11 +566,36 @@ export function buildScopeCoverageInsight(
   );
 
   const rows: ScopeCoverageRowView[] = rules.map((rule) => {
-    const band = leverBand(rule, results);
     const { reachable } = leverReachability(rule, facts);
+    // In MODEL mode (no facts) we show every lever as reachable — "what a complete
+    // scope unlocks" — and badge the whole thing MODEL. With real facts the
+    // reachability is genuine.
+    const rowReachable = hasAnyFacts ? reachable : true;
+
+    // $ band: reachable → the real computed band (leverBand). Stranded (with real
+    // facts) → PREFER a benchmark-based "potential at risk" computed from the lever's
+    // OWN formula, filling only the missing citationRequired drivers from a named
+    // benchmark and using the REAL present pool facts for the rest. This makes the
+    // "$X if unblocked" moment land at event scale instead of the flat scale that
+    // undersells a $46M-run-cost lever as ~$1–2M. Falls back to the flat
+    // ILLUSTRATIVE_SCALE when the lever can't be honestly benchmark-sized.
+    let band: { low: number; high: number };
+    let potentialAtRisk = false;
+    if (rowReachable) {
+      band = leverBand(rule, results);
+    } else {
+      const potential = strandedPotentialBand(rule, facts);
+      if (potential) {
+        band = potential;
+        potentialAtRisk = true;
+      } else {
+        band = ILLUSTRATIVE_SCALE[rule.valueType];
+      }
+    }
+
     // Map the still-missing computation inputs back to the human evidence families
     // this lever declares — that's the plain-English "what to scope for".
-    const missingEvidence = reachable
+    const missingEvidence = rowReachable
       ? []
       : rule.requiredEvidence.map(evidenceFamilyLabel);
     return {
@@ -444,12 +604,10 @@ export function buildScopeCoverageInsight(
       valueType: rule.valueType,
       low: band.low,
       high: band.high,
-      // In MODEL mode (no facts) we show every lever as reachable — "what a
-      // complete scope unlocks" — and badge the whole thing MODEL. With real
-      // facts the reachability is genuine.
-      reachable: hasAnyFacts ? reachable : true,
+      reachable: rowReachable,
       requiredEvidence: rule.requiredEvidence.map(evidenceFamilyLabel),
       missingEvidence: hasAnyFacts ? missingEvidence : [],
+      potentialAtRisk,
     };
   });
 
@@ -460,6 +618,7 @@ export function buildScopeCoverageInsight(
   });
 
   const isModel = !hasAnyFacts;
+  const anyPotential = ordered.some((r) => !r.reachable && r.potentialAtRisk);
   return {
     kind: 'scope_coverage',
     provenance: isModel ? 'sample' : 'live',
@@ -468,7 +627,9 @@ export function buildScopeCoverageInsight(
     isModel,
     note: isModel
       ? 'Model — with no scope evidence landed, every lever is shown as what a complete scope would unlock. It resolves reachable-vs-stranded for real once your ticket, run-cost, SLA, and contract evidence lands. Not a tenant savings claim.'
-      : undefined,
+      : anyPotential
+        ? 'Reachable levers compute from your cited facts. A stranded lever whose value pool IS present but whose drivers are unscoped shows a benchmark-based POTENTIAL AT RISK — its own formula run over the real pool with the missing drivers filled from illustrative AMS market bands, low-to-high. It is a benchmark-scaled potential-if-unblocked, not a computed tenant number and not a savings claim; it resolves to a cited number once the missing evidence lands.'
+        : undefined,
     ...advisor,
   };
 }
@@ -499,9 +660,16 @@ function scopeCoverageHeadline(
   const worst = [...stranded].sort((a, b) => b.high - a.high)[0];
   const why =
     worst.missingEvidence.length > 0 ? worst.missingEvidence[0] : 'missing evidence';
+  // When at least one stranded lever's $ is a benchmark-scaled "potential at risk"
+  // (its real pool is present but its drivers are unscoped), say so honestly: the
+  // stranded number is a benchmark-scaled potential-if-unblocked, not a tenant claim.
+  const anyPotential = stranded.some((r) => r.potentialAtRisk);
+  const strandedFrag = anyPotential
+    ? `${fmtUsdRange(strandedLow, strandedHigh)} at risk, benchmark-scaled, if unblocked`
+    : `${fmtUsdRange(strandedLow, strandedHigh)} stranded`;
   return (
     `${fmtUsdRange(reachableLow, reachableHigh)} of ${fmtUsdRange(totalLow, totalHigh)} reachable under current scope; ` +
-    `${fmtUsdRange(strandedLow, strandedHigh)} stranded — biggest is ${worst.label}, blocked on ${why}.`
+    `${strandedFrag} — biggest is ${worst.label}, blocked on ${why}.`
   );
 }
 
