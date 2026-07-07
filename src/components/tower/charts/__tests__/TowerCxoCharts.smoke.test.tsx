@@ -5,9 +5,12 @@
 import "@testing-library/jest-dom";
 import { render } from "@testing-library/react";
 import {
+  ValueBridgeChart,
   ValueProvenBarChart,
   BudgetRunChangeChart,
   BenchmarkComparisonChart,
+  BenchmarkTenantCards,
+  BenchmarkRadarChart,
 } from "../TowerCxoCharts";
 import type {
   CioTowerPortfolioValueRow,
@@ -70,6 +73,12 @@ const benchmarkRow: CioTowerCxoBenchmarkRow = {
 };
 
 describe("TowerCxoCharts smoke", () => {
+  it("renders ValueBridgeChart without crashing", () => {
+    const { container } = render(<ValueBridgeChart program={portfolioRow} />);
+    expect(container.textContent).toContain("proven");
+    expect(container.textContent).toContain("OneData Platform");
+  });
+
   it("renders ValueProvenBarChart without crashing", () => {
     const { container } = render(<ValueProvenBarChart rows={[portfolioRow]} />);
     expect(container.textContent).toContain("Value proven vs. promised");
@@ -89,12 +98,33 @@ describe("TowerCxoCharts smoke", () => {
     expect(container.textContent).toContain("Every measure, one shape");
   });
 
+  it("renders BenchmarkTenantCards without crashing", () => {
+    const { container } = render(
+      <BenchmarkTenantCards
+        rows={[benchmarkRow]}
+        currentTenantName="Lakeshore Industries"
+      />,
+    );
+    expect(container.textContent).toContain("Lakeshore Industries");
+  });
+
+  it("renders BenchmarkRadarChart without crashing", () => {
+    const { container } = render(<BenchmarkRadarChart rows={[benchmarkRow]} />);
+    expect(container.textContent).toContain("Every measure, one shape");
+  });
+
   it("returns null for empty rows instead of an empty chart shell", () => {
     const { container: c1 } = render(<ValueProvenBarChart rows={[]} />);
     const { container: c2 } = render(<BudgetRunChangeChart rows={[]} />);
     const { container: c3 } = render(<BenchmarkComparisonChart rows={[]} />);
+    const { container: c4 } = render(
+      <BenchmarkTenantCards rows={[]} currentTenantName="Lakeshore" />,
+    );
+    const { container: c5 } = render(<BenchmarkRadarChart rows={[]} />);
     expect(c1.firstChild).toBeNull();
     expect(c2.firstChild).toBeNull();
     expect(c3.firstChild).toBeNull();
+    expect(c4.firstChild).toBeNull();
+    expect(c5.firstChild).toBeNull();
   });
 });
