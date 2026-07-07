@@ -1,0 +1,45 @@
+tc_id,preflight_result,your_result,severity_if_fail,note
+TC-01,,,,
+TC-02,,,,
+TC-03,,,,
+TC-04,,,,
+TC-05,PASS,,,Approvals inbox renders live; intake items listed with one action each
+TC-06,PASS-after-fix,,,"Upload via UI handler -> 200 -> persisted. FOUND P1: shelf frozen until reload (fixed #3402, re-verify post-deploy)"
+TC-07,PASS,,,Evidence chip Incumbent contract = Parsed (verified live earlier on this event)
+TC-08,,,,
+TC-09,PASS,,,Paperclip = chat attachment only; documented; Upload-document button is the registry path (added #3400)
+TC-10,PASS,,,Header honestly stays 'at usable' count; Parsed < Available by design
+TC-11,PASS,,,"Gate panel renders 3-level model, plain-English guidance, risk-if-missing per item"
+TC-12,PASS,,,Approve-with-gaps refused without rationale (422 contract; also disabled in canvas GateTab)
+TC-13,FAIL->FIXED,,P0,Record decision returned HTTP 500: playbook stage keys violated registry stage_key CHECK. Fixed #3402; re-verify post-deploy
+TC-14,,,,
+TC-15,,,,
+TC-16,,,,
+TC-17,,,,
+TC-18,,,,
+TC-19,,,,
+TC-20,,,,
+TC-21,,,,
+TC-22,,,,
+TC-23,,,,
+TC-24,,,,
+TC-25,,,,
+TC-26,,,,
+TC-27,,,,
+TC-28,,,,
+TC-29,,,,
+TC-30,,,,
+TC-31,,,,
+TC-32,,,,
+TC-33,,,,
+TC-34,,,,
+TC-35,,,,
+TC-36,PASS,,,No Sign-in flash while authenticated
+TC-37,,,,
+TC-38,,,,
+TC-39,,,,
+TC-40,,,,
+TC-41,,,,
+TC-42,,,,
+TC-43,,,,
+TC-44,,,,

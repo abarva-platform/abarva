@@ -4,20 +4,20 @@ import { PORTFOLIO } from './portfolio-tokens';
 
 const PREVIEW_EVENTS = [
   {
-    code: 'SRC-APX-101',
-    name: 'POS Systems Modernization',
+    code: 'SRC-DEMO-101',
+    name: 'Core platform renewal',
     stage: '03 RFP/RFI Readiness',
     status: 'Active',
   },
   {
-    code: 'SRC-APX-088',
-    name: 'AMS Outsourcing Renewal 2026',
+    code: 'SRC-DEMO-088',
+    name: 'Managed services retender',
     stage: '08 Executive Decision',
     status: 'Waiting',
   },
   {
-    code: 'SRC-MER-046',
-    name: 'Innovaccer Renewal',
+    code: 'SRC-DEMO-046',
+    name: 'Data platform value review',
     stage: '11 Value Realization',
     status: 'Completed',
   },
@@ -33,7 +33,7 @@ export function PortfolioEmptyState() {
         </h2>
         <p style={LEAD_PARAGRAPH_STYLE}>
           Source is the operating room for IT sourcing — strategy, scope, RFP, evaluation,
-          BAFO, decision, transition, and value realization, with Sentinel running the thread.
+          BAFO, decision, transition, and value realization, with Ava running the thread.
           Originate your first event and the portfolio populates from there.
         </p>
         <Link
@@ -57,7 +57,7 @@ export function PortfolioEmptyState() {
       </div>
 
       <aside style={PREVIEW_CARD_STYLE} aria-label="Preview of a populated portfolio">
-        <div style={PREVIEW_LABEL_STYLE}>Preview · once populated</div>
+        <div style={PREVIEW_LABEL_STYLE}>Generic sample · once populated</div>
         <table style={PREVIEW_TABLE_STYLE}>
           <thead>
             <tr>

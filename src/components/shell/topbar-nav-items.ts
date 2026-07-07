@@ -1,9 +1,7 @@
-// Shared nav-item registry for the AppTopBar and its variants
-// (AppTopBarBlack / AppTopBarEditorial / AppTopBarTwoBar).
+// Shared nav-item registry for the canonical AppTopBar.
 //
 // Single source of truth for the canonical 5-item nav: Home,
-// Intelligence, Moves, Source, Tower. Each variant pulls items from
-// here and just changes presentation.
+// Intelligence, Moves, Source, Tower.
 
 import type { useUser } from "@clerk/nextjs";
 import { resolveModuleAccess, type ProductModule } from "@/lib/auth/module-access";
@@ -24,7 +22,9 @@ export const NAV_ITEMS: CockpitNavItem[] = [
     match: (pathname) =>
       pathname === "/" ||
       pathname === "/home" ||
-      pathname.startsWith("/home/") ||
+      (pathname.startsWith("/home/") &&
+        pathname !== "/home/learn" &&
+        !pathname.startsWith("/home/learn/")) ||
       pathname === "/dashboard" ||
       pathname.startsWith("/dashboard/"),
   },

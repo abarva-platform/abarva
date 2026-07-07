@@ -1,11 +1,32 @@
-# Mobile banking NPS and crash analytics 37
+# Mobile banking NPS and crash analytics
 
-Synthetic tenant evidence for First Capital Financial. This source file is part of the banking context layer and should ground Sentinel, Source and Tower answers in First Capital-specific facts.
+Document type: Model risk committee note
+Prepared for: EVP Technology Operations
+Evidence date: 2026-02-16
+Primary system: FCF-APP-COMMERCIAL-LENDING-112 - First Capital Commercial Lending Service 112
+Owning team: TEAM-FCF-COMMLEND
+Related dependency: FCF-APP-FIS-HORIZON
+Vendor exposure: Kyndryl / $4,823,000 annual run-rate
+Classification: confidential
 
-- Referenced application: FCF-APP-COMMERCIAL-LENDING-112 (First Capital Commercial Lending Service 112)
-- Referenced initiative: FCF-INIT-026 (Client complaint root-cause analytics)
-- Referenced vendor: Kyndryl, annual exposure $4823000
-- Regulatory lens: OCC, FFIEC, GLBA, BSA/AML, SR 11-7 model-risk management and operational resilience.
-- Evidence note: Client complaint root-cause analytics is tied to Core Banking Platforms with healthy posture and board/CXO evidence requirements.
+## Situation
 
-Use this source to explain the decision thread, cite the exact ID, and avoid importing retail, healthcare or medtech facts into First Capital.
+First Capital Commercial Lending Service 112 is carried as a medium commercial lending platform with $2,894,000 in FY25 run cost and a restructure modernization posture. The application is not a stand-alone decision: it sits in a dependency chain that includes FCF-APP-FIS-HORIZON, Kyndryl, and the Cybersecurity and IAM control owner group.
+
+## Evidence Observed
+
+- Current architecture: saas deployment with 36 cataloged upstream/downstream relationships.
+- Program tie: FCF-INIT-026 - Client complaint root-cause analytics; committed funding $1,638,000, projected value $29,320,000, Sentinel posture Healthy.
+- Vendor condition: standard annual renewal notice; AI/data-use clause: standard data-processing and confidentiality restrictions.
+- Risk lens: OCC/FFIEC operational resilience, GLBA safeguarding, BSA/AML evidence where customer or transaction data is in scope, and SR 11-7 model-risk expectations for AI-assisted decisions.
+
+## Decision Implication
+
+The program is eligible to continue only while value measurement remains tied to the named control and operating metrics. Any recommendation must cite the application id, initiative id, vendor exposure, and the dependency above. If any of those facts are unavailable in the live context layer, Sentinel should answer that it cannot complete the recommendation yet.
+
+## Open Evidence Requests
+
+- Confirm whether FCF-APP-FIS-HORIZON has a tested rollback or parallel-run pattern.
+- Reconcile FCF-APP-COMMERCIAL-LENDING-112 run cost to the latest finance allocation workbook.
+- Attach latest ServiceNow change/problem records for the last two high-risk release windows.
+- Confirm whether second-line risk has accepted the evidence basis for FCF-INIT-026.

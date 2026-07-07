@@ -368,7 +368,7 @@ function buildSliceDetail(
 ): BuildSliceDetail {
   const isMerged = row.status === 'merged' || row.status === 'code_complete';
   const prHref = isMerged
-    ? `https://github.com/anthropic/nexus/pull/${deterministicPrNumber(row.id)}`
+    ? `https://github.com/abarva-platform/abarva/pull/${deterministicPrNumber(row.id)}`
     : null;
   return {
     id: row.id,
@@ -481,7 +481,7 @@ export async function buildBuildProgressPageView(): Promise<BuildProgressPageVie
       'Waves shipped, slices completed, blockers active. Deterministic snapshot — not a live deploy monitor.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: 'Build manifest',
       liveStatus: 'Deferred',

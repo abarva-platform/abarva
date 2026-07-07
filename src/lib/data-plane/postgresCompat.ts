@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { PoolConfig } from 'pg';
+import { resolveDatabaseUrlCandidatesForScope } from './tenantConnectionResolver';
+
 type JsonRecord = Record<string, unknown>;
 type FilterOp = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'is' | 'in' | 'like' | 'ilike' | 'contains' | 'overlaps' | 'text_search';
 
@@ -27,11 +30,7 @@ let activeConnectionString: string | null = null;
 let client: PostgresCompatClient | null = null;
 
 export function resolveDatabaseUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
-  const candidates = [
-    env.ABARVA_AZURE_DATABASE_URL?.trim(),
-    env.DATABASE_URL?.trim(),
-  ].filter((value): value is string => Boolean(value));
-  return [...new Set(candidates)];
+  return resolveDatabaseUrlCandidatesForScope(env);
 }
 
 function resolveDatabaseUrls(): string[] {
@@ -60,6 +59,21 @@ function disableSsl(connectionString: string): boolean {
   }
 }
 
+export function runtimePostgresPoolConfig(
+  connectionString: string,
+  applicationName: string,
+): PoolConfig {
+  return {
+    connectionString,
+    application_name: applicationName,
+    max: resolvePostgresPoolMax(),
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 5_000,
+    allowExitOnIdle: true,
+    ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
+  };
+}
+
 async function loadPg(): Promise<typeof import('pg')> {
   const loadPg = new Function('specifier', 'return import(specifier)') as (
     specifier: string,
@@ -67,27 +81,27 @@ async function loadPg(): Promise<typeof import('pg')> {
   return loadPg('pg');
 }
 
+/**
+ * Resolve the per-instance Postgres pool size for the write/compat pool.
+ *
+ * Default: 1. Cap: 20 (raised from 5 on 2026-05-30 in sync with the
+ * azure read-adapter session pool — see
+ * `src/lib/data-plane/read-adapters/azureSession.ts`'s
+ * `resolveAzurePoolMax` for the rationale).
+ */
 export function resolvePostgresPoolMax(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.ABARVA_PG_POOL_MAX?.trim() || env.PGPOOL_MAX?.trim();
   if (!raw) return 1;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return 1;
-  return Math.min(parsed, 5);
+  return Math.min(parsed, 20);
 }
 
 async function getPool(connectionString: string): Promise<import('pg').Pool> {
   const existing = pools.get(connectionString);
   if (existing) return existing;
   const { Pool } = await loadPg();
-  const pool = new Pool({
-    connectionString,
-    application_name: 'abarva-postgres-compat',
-    max: resolvePostgresPoolMax(),
-    idleTimeoutMillis: 5_000,
-    connectionTimeoutMillis: 5_000,
-    allowExitOnIdle: true,
-    ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
-  });
+  const pool = new Pool(runtimePostgresPoolConfig(connectionString, 'abarva-postgres-compat'));
   pools.set(connectionString, pool);
   return pool;
 }

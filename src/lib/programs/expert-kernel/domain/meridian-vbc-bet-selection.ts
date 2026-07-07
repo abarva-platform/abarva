@@ -633,7 +633,7 @@ export function buildVbcBetSelection(
         read === 'hold_for_evidence'
           ? 'Review the seed gap that gates this bet'
           : 'Open the costed case for this bet',
-      gestureHref: read === 'hold_for_evidence' ? '/home/data-trust' : '/moves',
+      gestureHref: read === 'hold_for_evidence' ? '/admin/data-trust' : '/moves',
     };
   });
 

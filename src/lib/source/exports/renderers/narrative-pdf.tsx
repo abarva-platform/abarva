@@ -19,24 +19,33 @@
 // Returns a React element that the route serializes via @react-pdf's
 // pdf().toBuffer(). Pure: payload + config → ReactElement.
 
-import 'server-only';
+import "server-only";
 
-import { Document, Page, Text, View, type DocumentProps } from '@react-pdf/renderer';
-import type { ReactElement } from 'react';
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  type DocumentProps,
+} from "@react-pdf/renderer";
+import type { ReactElement } from "react";
 
 import {
   DECISION_BRIEF_DOCX_CONFIG,
   DEMAND_CHALLENGE_DOCX_CONFIG,
+  PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG,
   RFP_PACK_DOCX_CONFIG,
   SCOPE_MEMO_DOCX_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG,
   SOURCING_APPROACH_DOCX_CONFIG,
+  STRATEGY_MEMO_DOCX_CONFIG,
+  VENDOR_RESPONSE_PACK_DOCX_CONFIG,
   VENDOR_RISK_PACK_DOCX_CONFIG,
   type NarrativeDocxConfig,
   type NarrativeDocxPayload,
-} from './narrative-docx';
-import { markdownToPdfNodes } from '@/lib/exports-shared/markdown-to-pdf';
-import { PDF_COLORS, PDF_STYLES } from '@/lib/exports-shared/pdf-base';
+} from "./narrative-docx";
+import { markdownToPdfNodes } from "@/lib/exports-shared/markdown-to-pdf";
+import { PDF_COLORS, PDF_STYLES } from "@/lib/exports-shared/pdf-base";
 
 export type NarrativePdfConfig = NarrativeDocxConfig;
 export type NarrativePdfPayload = NarrativeDocxPayload;
@@ -44,10 +53,13 @@ export type NarrativePdfPayload = NarrativeDocxPayload;
 export {
   DECISION_BRIEF_DOCX_CONFIG as DECISION_BRIEF_PDF_CONFIG,
   DEMAND_CHALLENGE_DOCX_CONFIG as DEMAND_CHALLENGE_PDF_CONFIG,
+  PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG as PRICING_WORKBOOK_SUMMARY_PDF_CONFIG,
   RFP_PACK_DOCX_CONFIG as RFP_PACK_PDF_CONFIG,
   SCOPE_MEMO_DOCX_CONFIG as SCOPE_MEMO_PDF_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG as SELECTION_MEMO_PDF_CONFIG,
   SOURCING_APPROACH_DOCX_CONFIG as SOURCING_APPROACH_PDF_CONFIG,
+  STRATEGY_MEMO_DOCX_CONFIG as STRATEGY_MEMO_PDF_CONFIG,
+  VENDOR_RESPONSE_PACK_DOCX_CONFIG as VENDOR_RESPONSE_PACK_PDF_CONFIG,
   VENDOR_RISK_PACK_DOCX_CONFIG as VENDOR_RISK_PACK_PDF_CONFIG,
 };
 
@@ -66,15 +78,15 @@ export function buildNarrativePdf(
   options: { degraded?: boolean } = {},
 ): ReactElement<DocumentProps> {
   const degraded = options.degraded ?? false;
-  const bodyNodes = degraded ? [] : markdownToPdfNodes(payload.body || '');
+  const bodyNodes = degraded ? [] : markdownToPdfNodes(payload.body || "");
   const headerLine = `${payload.tenantName}   ·   ${payload.eventCode}   ·   ${config.headerLabel}`;
   return (
     <Document
       title={`${config.documentTitle} · ${payload.eventCode}`}
-      author="AbarVa · Sentinel"
+      author="AbarVa Source"
       subject={`${config.headerLabel} for sourcing event ${payload.eventCode}.`}
-      creator="AbarVa · Sentinel"
-      producer="AbarVa · Sentinel"
+      creator="AbarVa Source"
+      producer="AbarVa Source"
     >
       {/* Cover page — kept simple. Earlier slices used `fixed`
           headers + footers with a `render` page-counter, but that
@@ -85,7 +97,7 @@ export function buildNarrativePdf(
           {config.eyebrowFor(payload.tenantName)}
         </Text>
         <Text style={PDF_STYLES.title}>{payload.eventName}</Text>
-        <Text style={PDF_STYLES.meta}>Tenant: {payload.tenantName}</Text>
+        <Text style={PDF_STYLES.meta}>Company: {payload.tenantName}</Text>
         <Text style={PDF_STYLES.meta}>Event code: {payload.eventCode}</Text>
         {payload.issuedBy ? (
           <Text style={PDF_STYLES.meta}>Issued by: {payload.issuedBy}</Text>
@@ -95,8 +107,8 @@ export function buildNarrativePdf(
           <View style={PDF_STYLES.scaffoldWarning}>
             <Text>
               Template scaffold — body has not been authored yet. The content
-              below is the canonical {config.headerLabel} scaffold; replace
-              with the actual authored content before circulating.
+              below is the canonical {config.headerLabel} scaffold; replace with
+              the actual authored content before circulating.
             </Text>
           </View>
         ) : null}
@@ -105,7 +117,7 @@ export function buildNarrativePdf(
           style={{
             fontSize: 9,
             color: PDF_COLORS.MUTED,
-            fontStyle: 'italic',
+            fontStyle: "italic",
             marginTop: 8,
           }}
         >
@@ -124,16 +136,15 @@ export function buildNarrativePdf(
         <Page size="LETTER" style={PDF_STYLES.page}>
           <Text style={PDF_STYLES.eyebrow}>Body content notice</Text>
           <Text style={PDF_STYLES.body}>
-            The full {config.headerLabel} body could not be rendered in
-            PDF format. This is a known limitation when the body is
-            structurally complex (deeply nested lists, many tables, or
-            cross-referenced sections).
+            The full {config.headerLabel} body could not be rendered in PDF
+            format. This is a known limitation when the body is structurally
+            complex (deeply nested lists, many tables, or cross-referenced
+            sections).
           </Text>
           <Text style={PDF_STYLES.body}>
-            For the complete content, please use the docx or HTML
-            export — both render the full body faithfully. The HTML
-            version is also print-friendly via your browser&apos;s
-            Print → Save as PDF.
+            For the complete content, please use the docx or HTML export — both
+            render the full body faithfully. The HTML version is also
+            print-friendly via your browser&apos;s Print → Save as PDF.
           </Text>
         </Page>
       ) : (

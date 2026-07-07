@@ -60,6 +60,8 @@ describe('Source scorecard governance shell', () => {
     );
 
     expect(routeSource).toContain('AppShell');
+    expect(routeSource).toContain('source-scorecard-layout');
+    expect(routeSource).toContain('SCORECARD_LAYOUT_STYLE');
     expect(componentSource).toContain('Custom follow-up is deferred');
 
     for (const source of [routeSource, componentSource]) {

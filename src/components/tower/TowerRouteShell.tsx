@@ -37,10 +37,10 @@ export function TowerRouteShell({
           borderRadius: '3px',
           fontSize: '10px',
         }}>
-          ATLAS
+          AVA
         </span>
         <span style={{ fontWeight: 600, color: '#1B2B5C', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
-          CONTROL TOWER · SIGNAL INTELLIGENCE · ATLAS
+          CONTROL TOWER · SIGNAL INTELLIGENCE · AVA
         </span>
         <span>·</span>
         <span style={{ color: '#0A0C12', fontWeight: 500 }}>{tenantName}</span>

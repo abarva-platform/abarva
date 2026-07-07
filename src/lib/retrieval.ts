@@ -1,3 +1,9 @@
+/*
+ * AbarVa Confidential — Trade Secret (TS-05)
+ * Protected under the AbarVa Trade Secret Policy (docs/ip/trade-secret-policy.md) and
+ * Trade Secret Register (docs/ip/trade-secret-register.md). Do not distribute externally
+ * or expose outside the tenant boundary. Access requires NDA + IP assignment (T075).
+ */
 import { azureRead } from '@/lib/data-plane/azureRead';
 import { searchCorpus } from '@/lib/corpus/retrieval';
 
@@ -69,6 +75,7 @@ export async function retrieveContext(
   query: string,
   vertical: Vertical,
   topK = 4,
+  tenantKey?: string,
 ): Promise<string> {
   const searchQuery = websearchQuery(query);
   const limit = Math.min(Math.max(topK, 1), 10);
@@ -92,7 +99,8 @@ export async function retrieveContext(
             websearch_to_tsquery('english', $1)
           ) AS score
         FROM enterprise_context_chunks
-        WHERE source_segment_id IN ('industry_context', 'cross_program_signals', 'compliance')
+        WHERE ($3::text IS NULL OR tenant_key = $3)
+          AND coalesce(chunk_metadata->>'lifecycle_state', 'active') = 'active'
           AND (
             to_tsvector('english', coalesce(chunk_text, '')) @@ websearch_to_tsquery('english', $1)
             OR chunk_text ILIKE '%' || $1 || '%'
@@ -101,7 +109,7 @@ export async function retrieveContext(
         ORDER BY score DESC, source ASC
         LIMIT $2
       `,
-      [searchQuery, limit],
+      [searchQuery, limit, tenantKey ?? null],
       { missingTable: 'empty' },
     );
 

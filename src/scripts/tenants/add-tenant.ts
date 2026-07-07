@@ -8,7 +8,7 @@
  *   1. src/lib/client-config.ts             (ALL_CLIENTS, CLIENT_KEY_TO_DB_NAME,
  *                                            CLIENT_KEY_TO_INDUSTRY_CODE,
  *                                            EMAIL_DOMAIN_TO_CLIENT_KEY)
- *   2. src/lib/active-client.ts             (CLIENT_KEY_TO_DB_SLUGS)
+ *   2. src/lib/tenant/aliases.ts            (TENANT_ALIAS_PROFILES)
  *   3. src/lib/tenants/demo-tenant-data-tiers.ts  (DEMO_TENANT_DATA_TIERS — shell_only default)
  *   4. src/lib/auth/canonical-auth-roster.ts (CANONICAL_AUTH_EMAILS, CANONICAL_CLIENT_ADMIN_EMAILS)
  *
@@ -27,7 +27,7 @@
  * Flags:
  *   --key           canonical client key (lowercase, no dash). Required.
  *   --name          display name (e.g. "Northwind Retail"). Required.
- *   --industry      one of RETAIL | HEALTHCARE_IDN | FINSERV. Required.
+ *   --industry      one of RETAIL | HEALTHCARE_IDN | FINSERV | DIVERSIFIED. Required.
  *   --admin-email   admin email or local part (e.g. cdo@northwind-retail OR
  *                   cdo@northwind-retail.example.com). Required.
  *   --short-name    optional short display name. Defaults to --name.
@@ -48,23 +48,29 @@
  *     The new tenant starts as `shell_only` until you seed it.
  */
 
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import * as path from 'path';
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import * as path from "path";
 
 // ---------------------------------------------------------------------------
 // Types + constants
 // ---------------------------------------------------------------------------
 
-export const VALID_INDUSTRIES = ['RETAIL', 'HEALTHCARE_IDN', 'FINSERV'] as const;
+export const VALID_INDUSTRIES = [
+  "RETAIL",
+  "HEALTHCARE_IDN",
+  "FINSERV",
+  "DIVERSIFIED",
+] as const;
 export type IndustryCode = (typeof VALID_INDUSTRIES)[number];
 
 const INDUSTRY_VERTICAL: Record<IndustryCode, string> = {
-  RETAIL: 'Retail',
-  HEALTHCARE_IDN: 'Healthcare',
-  FINSERV: 'Financial Services',
+  RETAIL: "Retail",
+  HEALTHCARE_IDN: "Healthcare",
+  FINSERV: "Financial Services",
+  DIVERSIFIED: "Diversified Holdco",
 };
 
-const DEFAULT_NEW_TENANT_COLOR = '#94A3B8'; // slate-400 — neutral until brand color picked.
+const DEFAULT_NEW_TENANT_COLOR = "#94A3B8"; // slate-400 — neutral until brand color picked.
 
 export interface AddTenantInput {
   key: string;
@@ -98,12 +104,12 @@ export interface AddTenantResult {
 const KEY_PATTERN = /^[a-z][a-z0-9]*$/;
 
 export function validateInput(raw: Partial<AddTenantInput>): AddTenantInput {
-  const key = (raw.key ?? '').trim();
-  const name = (raw.name ?? '').trim();
-  const industry = (raw.industry ?? '') as IndustryCode;
-  const adminEmail = (raw.adminEmail ?? '').trim();
+  const key = (raw.key ?? "").trim();
+  const name = (raw.name ?? "").trim();
+  const industry = (raw.industry ?? "") as IndustryCode;
+  const adminEmail = (raw.adminEmail ?? "").trim();
 
-  if (!key) throw new Error('--key is required');
+  if (!key) throw new Error("--key is required");
   if (!KEY_PATTERN.test(key)) {
     throw new Error(
       `--key must be lowercase letters/digits, starting with a letter, no dashes (got "${key}"). ` +
@@ -112,26 +118,30 @@ export function validateInput(raw: Partial<AddTenantInput>): AddTenantInput {
   }
 
   // Reserve existing canonical keys to avoid collision.
-  const RESERVED: ReadonlyArray<string> = ['apexretail', 'meridian', 'arcturus'];
+  const RESERVED: ReadonlyArray<string> = [
+    "apexretail",
+    "meridian",
+    "arcturus",
+  ];
   if (RESERVED.includes(key)) {
     throw new Error(
       `--key "${key}" is already a reserved canonical key. Use a fresh key for the new tenant.`,
     );
   }
 
-  if (!name) throw new Error('--name is required');
-  if (!industry) throw new Error('--industry is required');
+  if (!name) throw new Error("--name is required");
+  if (!industry) throw new Error("--industry is required");
   if (!VALID_INDUSTRIES.includes(industry)) {
     throw new Error(
-      `--industry must be one of ${VALID_INDUSTRIES.join(' | ')} (got "${industry}")`,
+      `--industry must be one of ${VALID_INDUSTRIES.join(" | ")} (got "${industry}")`,
     );
   }
 
-  if (!adminEmail) throw new Error('--admin-email is required');
+  if (!adminEmail) throw new Error("--admin-email is required");
   // Accept either a full email (cdo@northwind-retail.example.com) or a short
   // local@domain form (cdo@northwind-retail). The latter is auto-completed
   // with `.example.com` to match the canonical demo-account pattern.
-  if (!adminEmail.includes('@')) {
+  if (!adminEmail.includes("@")) {
     throw new Error(`--admin-email must contain '@' (got "${adminEmail}")`);
   }
 
@@ -150,13 +160,15 @@ export function normalizeAdminEmail(adminEmail: string): {
   domain: string;
 } {
   const trimmed = adminEmail.trim().toLowerCase();
-  const [localPart, rawDomain] = trimmed.split('@', 2);
+  const [localPart, rawDomain] = trimmed.split("@", 2);
   if (!localPart || !rawDomain) {
     throw new Error(`Invalid admin email: "${adminEmail}"`);
   }
   // Demo-account convention: `*.example.com` domain. Auto-complete if the
   // caller passed only the short form (e.g. `cdo@northwind-retail`).
-  const domain = rawDomain.includes('.') ? rawDomain : `${rawDomain}.example.com`;
+  const domain = rawDomain.includes(".")
+    ? rawDomain
+    : `${rawDomain}.example.com`;
   return { email: `${localPart}@${domain}`, domain };
 }
 
@@ -173,10 +185,16 @@ interface RegistryPaths {
 
 export function resolveRegistryPaths(repoRoot: string): RegistryPaths {
   const paths: RegistryPaths = {
-    clientConfig: path.join(repoRoot, 'src/lib/client-config.ts'),
-    activeClient: path.join(repoRoot, 'src/lib/active-client.ts'),
-    demoTenantDataTiers: path.join(repoRoot, 'src/lib/tenants/demo-tenant-data-tiers.ts'),
-    canonicalAuthRoster: path.join(repoRoot, 'src/lib/auth/canonical-auth-roster.ts'),
+    clientConfig: path.join(repoRoot, "src/lib/client-config.ts"),
+    activeClient: path.join(repoRoot, "src/lib/tenant/aliases.ts"),
+    demoTenantDataTiers: path.join(
+      repoRoot,
+      "src/lib/tenants/demo-tenant-data-tiers.ts",
+    ),
+    canonicalAuthRoster: path.join(
+      repoRoot,
+      "src/lib/auth/canonical-auth-roster.ts",
+    ),
   };
   for (const [name, p] of Object.entries(paths)) {
     if (!existsSync(p)) {
@@ -189,25 +207,6 @@ export function resolveRegistryPaths(repoRoot: string): RegistryPaths {
 // ---------------------------------------------------------------------------
 // Patch helpers — pure string functions for testability
 // ---------------------------------------------------------------------------
-
-/** Insert a block before the first occurrence of `marker`, only if `idempotencyToken`
- *  is not already present in the file. */
-function insertBeforeMarker(
-  source: string,
-  marker: string,
-  idempotencyToken: string,
-  block: string,
-): { content: string; changed: boolean } {
-  if (source.includes(idempotencyToken)) {
-    return { content: source, changed: false };
-  }
-  const idx = source.indexOf(marker);
-  if (idx === -1) {
-    throw new Error(`Marker not found while patching: ${marker}`);
-  }
-  const content = source.slice(0, idx) + block + source.slice(idx);
-  return { content, changed: true };
-}
 
 // ---------- 1. client-config.ts ----------
 
@@ -235,26 +234,35 @@ export function patchClientConfig(
       `    color: '${input.color ?? DEFAULT_NEW_TENANT_COLOR}',\n` +
       `    vertical: '${INDUSTRY_VERTICAL[input.industry]}',\n` +
       `  },\n`;
-    const ALL_CLIENTS_CLOSE = '] as const;';
-    const ALL_CLIENTS_START = 'export const ALL_CLIENTS:';
+    const ALL_CLIENTS_CLOSE = "] as const;";
+    const ALL_CLIENTS_START = "export const ALL_CLIENTS:";
     const startIdx = source.indexOf(ALL_CLIENTS_START);
-    if (startIdx === -1) throw new Error('ALL_CLIENTS array not found in client-config.ts');
+    if (startIdx === -1)
+      throw new Error("ALL_CLIENTS array not found in client-config.ts");
     const closeIdx = source.indexOf(ALL_CLIENTS_CLOSE, startIdx);
-    if (closeIdx === -1) throw new Error('ALL_CLIENTS close marker not found');
+    if (closeIdx === -1) throw new Error("ALL_CLIENTS close marker not found");
     content = content.slice(0, closeIdx) + block + content.slice(closeIdx);
     anyChange = true;
-    reasons.push('added ClientOption to ALL_CLIENTS');
+    reasons.push("added ClientOption to ALL_CLIENTS");
   }
 
   // CLIENT_KEY_TO_DB_NAME entry.
   const dbNameToken = `\n  ${input.key}:`;
-  if (!content.includes(dbNameToken) || !insertedInBlock(content, 'CLIENT_KEY_TO_DB_NAME', dbNameToken)) {
+  if (
+    !content.includes(dbNameToken) ||
+    !insertedInBlock(content, "CLIENT_KEY_TO_DB_NAME", dbNameToken)
+  ) {
     const dbNamesBlock = `  ${input.key}: ['${escapeSingleQuote(input.name)}'],\n`;
-    const r = insertAtEndOfRecord(content, 'CLIENT_KEY_TO_DB_NAME', input.key, dbNamesBlock);
+    const r = insertAtEndOfRecord(
+      content,
+      "CLIENT_KEY_TO_DB_NAME",
+      input.key,
+      dbNamesBlock,
+    );
     content = r.content;
     if (r.changed) {
       anyChange = true;
-      reasons.push('added CLIENT_KEY_TO_DB_NAME entry');
+      reasons.push("added CLIENT_KEY_TO_DB_NAME entry");
     }
   }
 
@@ -263,14 +271,14 @@ export function patchClientConfig(
     const industryBlock = `  ${input.key}: '${input.industry}',\n`;
     const r = insertAtEndOfRecord(
       content,
-      'CLIENT_KEY_TO_INDUSTRY_CODE',
+      "CLIENT_KEY_TO_INDUSTRY_CODE",
       input.key,
       industryBlock,
     );
     content = r.content;
     if (r.changed) {
       anyChange = true;
-      reasons.push('added CLIENT_KEY_TO_INDUSTRY_CODE entry');
+      reasons.push("added CLIENT_KEY_TO_INDUSTRY_CODE entry");
     }
   }
 
@@ -280,7 +288,7 @@ export function patchClientConfig(
     const domainEntry = `  ['${domain}', '${input.key}'],\n`;
     const r = insertAtEndOfTupleArray(
       content,
-      'EMAIL_DOMAIN_TO_CLIENT_KEY',
+      "EMAIL_DOMAIN_TO_CLIENT_KEY",
       domain,
       domainEntry,
     );
@@ -294,14 +302,18 @@ export function patchClientConfig(
   return {
     content,
     changed: anyChange,
-    reason: anyChange ? reasons.join(', ') : 'already registered',
+    reason: anyChange ? reasons.join(", ") : "already registered",
   };
 }
 
-function insertedInBlock(source: string, blockName: string, token: string): boolean {
+function insertedInBlock(
+  source: string,
+  blockName: string,
+  token: string,
+): boolean {
   const startIdx = source.indexOf(blockName);
   if (startIdx === -1) return false;
-  const closeIdx = source.indexOf('};', startIdx);
+  const closeIdx = source.indexOf("};", startIdx);
   if (closeIdx === -1) return false;
   return source.slice(startIdx, closeIdx).includes(token);
 }
@@ -314,8 +326,9 @@ function insertAtEndOfRecord(
 ): { content: string; changed: boolean } {
   const startIdx = source.indexOf(recordName);
   if (startIdx === -1) throw new Error(`Record ${recordName} not found`);
-  const closeIdx = source.indexOf('};', startIdx);
-  if (closeIdx === -1) throw new Error(`Record ${recordName} close marker not found`);
+  const closeIdx = source.indexOf("};", startIdx);
+  if (closeIdx === -1)
+    throw new Error(`Record ${recordName} close marker not found`);
   const section = source.slice(startIdx, closeIdx);
   // Idempotency: a line beginning with `<key>:` already present.
   const keyPattern = new RegExp(`\\n\\s*${escapeRegex(key)}\\s*:`);
@@ -335,10 +348,12 @@ function insertAtEndOfTupleArray(
   const startIdx = source.indexOf(arrayName);
   if (startIdx === -1) throw new Error(`Array ${arrayName} not found`);
   // Tuple arrays in this codebase close with `];` after a leading `[`.
-  const openIdx = source.indexOf('[', startIdx);
-  if (openIdx === -1) throw new Error(`Array ${arrayName} open marker not found`);
-  const closeIdx = source.indexOf('];', openIdx);
-  if (closeIdx === -1) throw new Error(`Array ${arrayName} close marker not found`);
+  const openIdx = source.indexOf("[", startIdx);
+  if (openIdx === -1)
+    throw new Error(`Array ${arrayName} open marker not found`);
+  const closeIdx = source.indexOf("];", openIdx);
+  if (closeIdx === -1)
+    throw new Error(`Array ${arrayName} close marker not found`);
   const section = source.slice(openIdx, closeIdx);
   if (section.includes(`'${uniqueToken}'`)) {
     return { content: source, changed: false };
@@ -348,11 +363,11 @@ function insertAtEndOfTupleArray(
 }
 
 function escapeSingleQuote(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  return s.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // ---------- 2. active-client.ts ----------
@@ -361,18 +376,34 @@ export function patchActiveClient(
   source: string,
   input: AddTenantInput,
 ): { content: string; changed: boolean; reason: string } {
-  // CLIENT_KEY_TO_DB_SLUGS is `Record<ClientKey, string[]>`. Each entry maps a
-  // canonical key to the list of slugs that may appear in the clients table.
-  // Convention: include the canonical key itself plus a dashed-name variant.
-  const slugCanonical = input.key;
-  const slugDashed = slugifyFromName(input.name);
-  const slugs = Array.from(new Set([slugCanonical, slugDashed]));
-  const block = `  ${input.key}: [${slugs.map((s) => `'${s}'`).join(', ')}],\n`;
-  const r = insertAtEndOfRecord(source, 'CLIENT_KEY_TO_DB_SLUGS', input.key, block);
+  // Tenant alias profiles replaced the old active-client db-slug record.
+  // New tenants need the canonical app key plus dashed and natural aliases so
+  // URL/query/session/database forms resolve through one tenant boundary.
+  const dashed = slugifyFromName(input.name);
+  const natural = input.name.toLowerCase().trim().replace(/\s+/g, " ");
+  const aliases = Array.from(new Set([input.key, dashed, natural]));
+  if (source.includes(`appClientKey: '${input.key}'`)) {
+    return { content: source, changed: false, reason: "already registered" };
+  }
+  const arrayName = "TENANT_ALIAS_PROFILES";
+  const startIdx = source.indexOf(arrayName);
+  if (startIdx === -1) throw new Error(`${arrayName} not found`);
+  const closeIdx = source.indexOf("] as const;", startIdx);
+  if (closeIdx === -1) throw new Error(`${arrayName} close marker not found`);
+  const block =
+    `  {\n` +
+    `    appClientKey: '${input.key}',\n` +
+    `    canonicalKey: '${dashed}',\n` +
+    `    brokerKey: '${dashed}',\n` +
+    `    displayName: '${escapeSingleQuote(input.name)}',\n` +
+    `    industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.${input.key},\n` +
+    `    aliases: [${aliases.map((s) => `'${escapeSingleQuote(s)}'`).join(", ")}],\n` +
+    `  },\n`;
+  const content = source.slice(0, closeIdx) + block + source.slice(closeIdx);
   return {
-    content: r.content,
-    changed: r.changed,
-    reason: r.changed ? `added CLIENT_KEY_TO_DB_SLUGS entry (slugs: ${slugs.join(', ')})` : 'already registered',
+    content,
+    changed: true,
+    reason: `added TENANT_ALIAS_PROFILES entry (aliases: ${aliases.join(", ")})`,
   };
 }
 
@@ -380,8 +411,8 @@ function slugifyFromName(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 // ---------- 3. demo-tenant-data-tiers.ts ----------
@@ -392,7 +423,7 @@ export function patchDemoTenantDataTiers(
 ): { content: string; changed: boolean; reason: string } {
   const idempotencyToken = `tenantSlug: '${input.key}'`;
   if (source.includes(idempotencyToken)) {
-    return { content: source, changed: false, reason: 'already registered' };
+    return { content: source, changed: false, reason: "already registered" };
   }
 
   // New tenants begin life as `shell_only` — no Programs / Source / Intelligence
@@ -440,13 +471,18 @@ export function patchDemoTenantDataTiers(
     `  },\n`;
 
   // Insert before the closing `];` of DEMO_TENANT_DATA_TIERS.
-  const arrayName = 'DEMO_TENANT_DATA_TIERS';
+  const arrayName = "DEMO_TENANT_DATA_TIERS";
   const startIdx = source.indexOf(arrayName);
-  if (startIdx === -1) throw new Error('DEMO_TENANT_DATA_TIERS not found');
-  const closeIdx = source.indexOf('];', startIdx);
-  if (closeIdx === -1) throw new Error('DEMO_TENANT_DATA_TIERS close marker not found');
+  if (startIdx === -1) throw new Error("DEMO_TENANT_DATA_TIERS not found");
+  const closeIdx = source.indexOf("];", startIdx);
+  if (closeIdx === -1)
+    throw new Error("DEMO_TENANT_DATA_TIERS close marker not found");
   const content = source.slice(0, closeIdx) + block + source.slice(closeIdx);
-  return { content, changed: true, reason: 'added DEMO_TENANT_DATA_TIERS entry (shell_only)' };
+  return {
+    content,
+    changed: true,
+    reason: "added DEMO_TENANT_DATA_TIERS entry (shell_only)",
+  };
 }
 
 // ---------- 4. canonical-auth-roster.ts ----------
@@ -458,7 +494,7 @@ export function patchCanonicalAuthRoster(
   const { email } = normalizeAdminEmail(input.adminEmail);
   const idempotencyToken = `'${email}'`;
   if (source.includes(idempotencyToken)) {
-    return { content: source, changed: false, reason: 'already registered' };
+    return { content: source, changed: false, reason: "already registered" };
   }
 
   let content = source;
@@ -468,30 +504,30 @@ export function patchCanonicalAuthRoster(
   {
     const r = insertAtEndOfTupleConstArray(
       content,
-      'CANONICAL_AUTH_EMAILS',
+      "CANONICAL_AUTH_EMAILS",
       email,
       `  '${email}', // admin · ${escapeSingleQuote(input.name)}\n`,
     );
     content = r.content;
-    if (r.changed) reasons.push('added CANONICAL_AUTH_EMAILS entry');
+    if (r.changed) reasons.push("added CANONICAL_AUTH_EMAILS entry");
   }
 
   // CANONICAL_CLIENT_ADMIN_EMAILS — same shape.
   {
     const r = insertAtEndOfTupleConstArray(
       content,
-      'CANONICAL_CLIENT_ADMIN_EMAILS',
+      "CANONICAL_CLIENT_ADMIN_EMAILS",
       email,
       `  '${email}',\n`,
     );
     content = r.content;
-    if (r.changed) reasons.push('added CANONICAL_CLIENT_ADMIN_EMAILS entry');
+    if (r.changed) reasons.push("added CANONICAL_CLIENT_ADMIN_EMAILS entry");
   }
 
   return {
     content,
     changed: reasons.length > 0,
-    reason: reasons.length > 0 ? reasons.join(', ') : 'already registered',
+    reason: reasons.length > 0 ? reasons.join(", ") : "already registered",
   };
 }
 
@@ -503,8 +539,9 @@ function insertAtEndOfTupleConstArray(
 ): { content: string; changed: boolean } {
   const startIdx = source.indexOf(arrayName);
   if (startIdx === -1) throw new Error(`Array ${arrayName} not found`);
-  const closeIdx = source.indexOf('] as const;', startIdx);
-  if (closeIdx === -1) throw new Error(`Array ${arrayName} close marker not found`);
+  const closeIdx = source.indexOf("] as const;", startIdx);
+  if (closeIdx === -1)
+    throw new Error(`Array ${arrayName} close marker not found`);
   const section = source.slice(startIdx, closeIdx);
   if (section.includes(`'${uniqueToken}'`)) {
     return { content: source, changed: false };
@@ -531,13 +568,13 @@ export function executeAddTenant(
 
   // 1 — client-config
   {
-    const original = readFileSync(paths.clientConfig, 'utf8');
+    const original = readFileSync(paths.clientConfig, "utf8");
     const result = patchClientConfig(original, input);
     if (result.changed && !opts.dryRun) {
-      writeFileSync(paths.clientConfig, result.content, 'utf8');
+      writeFileSync(paths.clientConfig, result.content, "utf8");
     }
     patches.push({
-      registry: 'client-config',
+      registry: "client-config",
       filePath: paths.clientConfig,
       changed: result.changed,
       reason: result.reason,
@@ -546,13 +583,13 @@ export function executeAddTenant(
 
   // 2 — active-client
   {
-    const original = readFileSync(paths.activeClient, 'utf8');
+    const original = readFileSync(paths.activeClient, "utf8");
     const result = patchActiveClient(original, input);
     if (result.changed && !opts.dryRun) {
-      writeFileSync(paths.activeClient, result.content, 'utf8');
+      writeFileSync(paths.activeClient, result.content, "utf8");
     }
     patches.push({
-      registry: 'active-client',
+      registry: "active-client",
       filePath: paths.activeClient,
       changed: result.changed,
       reason: result.reason,
@@ -561,13 +598,13 @@ export function executeAddTenant(
 
   // 3 — demo-tenant-data-tiers
   {
-    const original = readFileSync(paths.demoTenantDataTiers, 'utf8');
+    const original = readFileSync(paths.demoTenantDataTiers, "utf8");
     const result = patchDemoTenantDataTiers(original, input);
     if (result.changed && !opts.dryRun) {
-      writeFileSync(paths.demoTenantDataTiers, result.content, 'utf8');
+      writeFileSync(paths.demoTenantDataTiers, result.content, "utf8");
     }
     patches.push({
-      registry: 'demo-tenant-data-tiers',
+      registry: "demo-tenant-data-tiers",
       filePath: paths.demoTenantDataTiers,
       changed: result.changed,
       reason: result.reason,
@@ -576,13 +613,13 @@ export function executeAddTenant(
 
   // 4 — canonical-auth-roster
   {
-    const original = readFileSync(paths.canonicalAuthRoster, 'utf8');
+    const original = readFileSync(paths.canonicalAuthRoster, "utf8");
     const result = patchCanonicalAuthRoster(original, input);
     if (result.changed && !opts.dryRun) {
-      writeFileSync(paths.canonicalAuthRoster, result.content, 'utf8');
+      writeFileSync(paths.canonicalAuthRoster, result.content, "utf8");
     }
     patches.push({
-      registry: 'canonical-auth-roster',
+      registry: "canonical-auth-roster",
       filePath: paths.canonicalAuthRoster,
       changed: result.changed,
       reason: result.reason,
@@ -611,18 +648,20 @@ export function executeAddTenant(
 // CLI
 // ---------------------------------------------------------------------------
 
-export function parseArgv(argv: string[]): Partial<AddTenantInput> & { dryRun?: boolean } {
+export function parseArgv(
+  argv: string[],
+): Partial<AddTenantInput> & { dryRun?: boolean } {
   const out: Record<string, string | boolean> = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--dry-run') {
+    if (a === "--dry-run") {
       out.dryRun = true;
       continue;
     }
-    if (a?.startsWith('--')) {
+    if (a?.startsWith("--")) {
       const key = a.slice(2);
       const next = argv[i + 1];
-      if (next && !next.startsWith('--')) {
+      if (next && !next.startsWith("--")) {
         out[camelCase(key)] = next;
         i++;
       } else {
@@ -639,27 +678,27 @@ function camelCase(s: string): string {
 
 function renderSummary(result: AddTenantResult): string {
   const lines: string[] = [];
-  lines.push('');
-  lines.push('═════════════════════════════════════════════════════════════');
+  lines.push("");
+  lines.push("═════════════════════════════════════════════════════════════");
   lines.push(`Tenant onboarding summary · key="${result.key}"`);
-  lines.push('═════════════════════════════════════════════════════════════');
-  lines.push('');
-  lines.push('Registries:');
+  lines.push("═════════════════════════════════════════════════════════════");
+  lines.push("");
+  lines.push("Registries:");
   for (const p of result.patches) {
-    const status = p.changed ? '  + WROTE' : '  · skipped';
+    const status = p.changed ? "  + WROTE" : "  · skipped";
     lines.push(`${status}  ${p.registry}  (${p.reason})`);
     lines.push(`            ${p.filePath}`);
   }
-  lines.push('');
-  lines.push('Identity:');
+  lines.push("");
+  lines.push("Identity:");
   lines.push(`  industry      ${result.industry}`);
   lines.push(`  admin email   ${result.adminEmail}`);
   lines.push(`  email domain  ${result.emailDomain}`);
-  lines.push('');
-  lines.push('Next manual steps:');
+  lines.push("");
+  lines.push("Next manual steps:");
   result.nextSteps.forEach((s, i) => lines.push(`  ${i + 1}. ${s}`));
-  lines.push('');
-  return lines.join('\n');
+  lines.push("");
+  return lines.join("\n");
 }
 
 // Entry-point guard — only run when invoked as a script (not when imported
@@ -676,14 +715,14 @@ async function main(): Promise<void> {
   const result = executeAddTenant(input, { repoRoot, dryRun });
   process.stdout.write(renderSummary(result));
   if (dryRun) {
-    process.stdout.write('\n(--dry-run: no files written)\n');
+    process.stdout.write("\n(--dry-run: no files written)\n");
   }
 }
 
 function resolveRepoRoot(startDir: string): string {
   let dir = startDir;
   for (let i = 0; i < 8; i++) {
-    if (existsSync(path.join(dir, 'package.json'))) return dir;
+    if (existsSync(path.join(dir, "package.json"))) return dir;
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -694,7 +733,9 @@ function resolveRepoRoot(startDir: string): string {
 // Only run main() when this file is the entry script.
 if (require.main === module) {
   main().catch((err) => {
-    process.stderr.write(`add-tenant: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.stderr.write(
+      `add-tenant: ${err instanceof Error ? err.message : String(err)}\n`,
+    );
     process.exit(1);
   });
 }

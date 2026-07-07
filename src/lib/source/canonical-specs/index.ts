@@ -39,3 +39,10 @@ export {
   type SourceEvidenceRequirement,
   type EvidenceMinimumState,
 } from './evidence-requirements';
+
+export {
+  evidenceRequirementsForCriterion,
+  mappedEvidenceCriterionIds,
+  validateEvidenceGateMap,
+  type EvidenceGateEntry,
+} from './evidence-gate-map';

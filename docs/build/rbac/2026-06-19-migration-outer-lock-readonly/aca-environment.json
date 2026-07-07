@@ -1,0 +1,90 @@
+{
+  "extendedLocation": null,
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/managedEnvironments/cae-abarva-scale-lab-eastus",
+  "identity": null,
+  "kind": null,
+  "location": "East US",
+  "managedBy": null,
+  "name": "cae-abarva-scale-lab-eastus",
+  "plan": null,
+  "properties": {
+    "appInsightsConfiguration": null,
+    "appLogsConfiguration": {
+      "destination": "log-analytics",
+      "logAnalyticsConfiguration": {
+        "customerId": "03910a48-cca5-483b-a4b6-c576a2ecfaa9",
+        "sharedKey": null
+      }
+    },
+    "customDomainConfiguration": {
+      "certificateKeyVaultProperties": null,
+      "certificatePassword": null,
+      "certificateValue": null,
+      "customDomainVerificationId": "A8078EFAA2EC5EE0EBD7683E57858C95FFD118925265A1C3059FDB9865982C7A",
+      "dnsSuffix": null,
+      "expirationDate": null,
+      "subjectName": null,
+      "thumbprint": null
+    },
+    "daprAIConnectionString": null,
+    "daprAIInstrumentationKey": null,
+    "daprConfiguration": {
+      "version": "1.16.4-msft.7"
+    },
+    "defaultDomain": "agreeableocean-2c1472e6.eastus.azurecontainerapps.io",
+    "eventStreamEndpoint": "https://eastus.azurecontainerapps.dev/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/managedEnvironments/cae-abarva-scale-lab-eastus/eventstream",
+    "infrastructureResourceGroup": "ME_cae-abarva-scale-lab-eastus_rg-abarva-controlplane-lab-eastus_eastus",
+    "ingressConfiguration": null,
+    "kedaConfiguration": {
+      "version": "2.18.1"
+    },
+    "openTelemetryConfiguration": null,
+    "peerAuthentication": {
+      "mtls": {
+        "enabled": false
+      }
+    },
+    "peerTrafficConfiguration": {
+      "encryption": {
+        "enabled": false
+      }
+    },
+    "provisioningState": "Succeeded",
+    "publicNetworkAccess": "Enabled",
+    "staticIp": "4.255.59.220",
+    "vnetConfiguration": {
+      "dockerBridgeCidr": null,
+      "infrastructureSubnetId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-private-dataplane-lab-eastus/providers/Microsoft.Network/virtualNetworks/vnet-abarva-private-dataplane-lab-eastus/subnets/snet-app",
+      "internal": false,
+      "platformReservedCidr": null,
+      "platformReservedDnsIP": null
+    },
+    "workloadProfiles": [
+      {
+        "enableFips": false,
+        "name": "Consumption",
+        "workloadProfileType": "Consumption"
+      }
+    ],
+    "zoneRedundant": false
+  },
+  "resourceGroup": "rg-abarva-controlplane-lab-eastus",
+  "sku": null,
+  "systemData": {
+    "createdAt": "2026-05-14T20:08:06.9035543",
+    "createdBy": "8c84cffd-b638-48d7-9e9d-bb3e7530fb3e",
+    "createdByType": "Application",
+    "lastModifiedAt": "2026-05-15T03:29:10.6035402",
+    "lastModifiedBy": "8c84cffd-b638-48d7-9e9d-bb3e7530fb3e",
+    "lastModifiedByType": "Application"
+  },
+  "tags": {
+    "app": "AbarVa",
+    "costControl": "founder-review",
+    "dataClassification": "no-client-data",
+    "environment": "lab",
+    "owner": "Anand",
+    "purpose": "enterprise-saas-scale-test"
+  },
+  "type": "Microsoft.App/managedEnvironments"
+}

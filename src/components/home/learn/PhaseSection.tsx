@@ -22,9 +22,9 @@ const PHASES: Record<string, PhaseDef> = {
     name: 'Originate',
     gate: 'Promotion to P1',
     eyebrow: 'Strategic Moves · P0',
-    intro: 'Where a Move is born. You describe the initiative in natural language chat with Nexus. It extracts seven structured fields into a scaffold panel on the right. Once four required fields are filled, you name and promote the Move to P1.',
-    goal: 'Describe the initiative conversationally — Nexus extracts the seven scaffold fields from your chat. Once the four required fields are filled and you name the Move, you can promote to P1.',
-    chatExample: '"We have a 240bps private label GM gap vs our peer benchmark. The CFO wants to understand why the Morrison brand specifically is underperforming — markdown timing looks off." → Nexus: "I can see the Morrison pressure card in your substrate — 34.2% current vs 36.0% target. Filling your bet as: \'Recover Morrison private label GM from 34.2% to 36.0% across 14 underperforming segments.\' Archetype: Revenue Growth. CFO as sponsor — is that Lisa Park? And what\'s in scope — Morrison only, or all private label?" → Three fields filled in 90 seconds.',
+    intro: 'Where a Move is born. You describe the initiative in natural language chat with Ava. She extracts seven structured fields into a scaffold panel on the right. Once four required fields are filled, you name and promote the Move to P1.',
+    goal: 'Describe the initiative conversationally — Ava extracts the seven scaffold fields from your chat. Once the four required fields are filled and you name the Move, you can promote to P1.',
+    chatExample: '"We have a 240bps private label GM gap vs our peer benchmark. The CFO wants to understand why the Morrison brand specifically is underperforming — markdown timing looks off." → Ava: "I can see the Morrison pressure card in your substrate — 34.2% current vs 36.0% target. Filling your bet as: \'Recover Morrison private label GM from 34.2% to 36.0% across 14 underperforming segments.\' Archetype: Revenue Growth. CFO as sponsor — is that Lisa Park? And what\'s in scope — Morrison only, or all private label?" → Three fields filled in 90 seconds.',
     deliverables: [
       { label: '📋 Origination Scaffold', isGate: true },
       { label: '🎯 Move Record' },
@@ -40,13 +40,13 @@ const PHASES: Record<string, PhaseDef> = {
     callout: {
       kind: 'info',
       icon: '💡',
-      label: 'APX-01: Nexus pre-filled 5 of 7 fields',
-      body: 'When David Kim\'s team clicked "→ Originate a Move" on the Morrison pressure card, Nexus already had the substrate evidence. It pre-filled: bet/outcome, archetype, scope boundary, value hypothesis, and foundation readiness. They confirmed the sponsor (Lisa Park, CFO) and the initiative name. Total origination time: 20 minutes. That\'s what a substrate-backed origination looks like vs. starting from a blank form.',
+      label: 'APX-01: Ava pre-filled 5 of 7 fields',
+      body: 'When David Kim\'s team clicked "→ Originate a Move" on the Morrison pressure card, Ava already had the substrate evidence. She pre-filled: bet/outcome, archetype, scope boundary, value hypothesis, and foundation readiness. They confirmed the sponsor (Lisa Park, CFO) and the initiative name. Total origination time: 20 minutes. That\'s what a substrate-backed origination looks like vs. starting from a blank form.',
     },
     terms: [
-      { name: 'Scaffold', def: 'The seven-field structure Nexus fills during P0. It seeds all downstream documents and gate criteria. A well-filled scaffold = much better phase documents.' },
+      { name: 'Scaffold', def: 'The seven-field structure Ava fills during P0. It seeds all downstream documents and gate criteria. A well-filled scaffold = much better phase documents.' },
       { name: 'Bet / outcome', def: 'Field 1: the result you\'re targeting — one sentence, outcome-level, with direction and magnitude. Not a project name. "Recover Morrison private label GM from 34.2% to 36.0%" not "Morrison Pricing Project."' },
-      { name: 'Archetype', def: 'Field 2: Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. Nexus suggests based on your description — confirm or correct.' },
+      { name: 'Archetype', def: 'Field 2: Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. Ava suggests based on your description — confirm or correct.' },
       { name: 'Foundation readiness', def: 'Field 7: honest assessment of current-state data/infra. For APX-01: "Oracle POS + Workday connected. Pricing override data available. No in-house ML — substrate-native modeling only." Used in P3 Build vs Buy decision.' },
     ],
   },
@@ -57,7 +57,7 @@ const PHASES: Record<string, PhaseDef> = {
     eyebrow: 'Strategic Moves · P1',
     intro: 'Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline.',
     goal: 'Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline. The Charter Gate requires a named sponsor, a defined scope, and a signed-off charter document before you can advance to discovery.',
-    chatExample: '"Nexus, Lisa Park is the executive sponsor, Rachel Torres from Owned Brands is program lead. Marcus Chen COO needs to be consulted on the pricing changes — he controls the markdown calendar." → Nexus: "Got it. I\'m adding Marcus Chen as Consulted with a note: \'Markdown calendar changes require COO sign-off before implementation.\' That\'s a decision-rights gap — any pricing change Rachel\'s team designs in P3 will need Marcus\'s approval before it goes live. I\'m flagging it as a charter risk so it doesn\'t block the P3 gate later. Should I add a named review checkpoint in the baseline timeline?"',
+    chatExample: '"Ava, Lisa Park is the executive sponsor, Rachel Torres from Owned Brands is program lead. Marcus Chen COO needs to be consulted on the pricing changes — he controls the markdown calendar." → Ava: "Got it. I\'m adding Marcus Chen as Consulted with a note: \'Markdown calendar changes require COO sign-off before implementation.\' That\'s a decision-rights gap — any pricing change Rachel\'s team designs in P3 will need Marcus\'s approval before it goes live. I\'m flagging it as a charter risk so it doesn\'t block the P3 gate later. Should I add a named review checkpoint in the baseline timeline?"',
     deliverables: [
       { label: '📄 Program Charter', isGate: true },
       { label: '👥 Stakeholder Map' },
@@ -73,12 +73,12 @@ const PHASES: Record<string, PhaseDef> = {
     callout: {
       kind: 'info',
       icon: '💡',
-      label: 'The decision-rights gap Nexus caught in APX-01',
-      body: 'Marcus Chen (COO) owned the markdown calendar — but he wasn\'t in the APX-01 P0 scaffold. When Rachel Torres mentioned him in the P1 stakeholder chat, Nexus immediately flagged the decision-rights gap: any pricing guardrail Rachel\'s team designed in P3 required Marcus\'s sign-off or it would be blocked at implementation. Making that explicit in the P1 charter meant P3 design was never blocked. This is exactly what the Charter phase is for.',
+      label: 'The decision-rights gap Ava caught in APX-01',
+      body: 'Marcus Chen (COO) owned the markdown calendar — but he wasn\'t in the APX-01 P0 scaffold. When Rachel Torres mentioned him in the P1 stakeholder chat, Ava immediately flagged the decision-rights gap: any pricing guardrail Rachel\'s team designed in P3 required Marcus\'s sign-off or it would be blocked at implementation. Making that explicit in the P1 charter meant P3 design was never blocked. This is exactly what the Charter phase is for.',
     },
     terms: [
-      { name: 'Program Charter', def: 'The gate artifact for P1. Locks scope, sponsor, and decision rights. Generated by Nexus from your P0 scaffold + P1 chat inputs.' },
-      { name: 'RACI Matrix', def: 'Responsible / Accountable / Consulted / Informed for each workstream. Nexus generates a draft from your stakeholder list — edit before sign-off.' },
+      { name: 'Program Charter', def: 'The gate artifact for P1. Locks scope, sponsor, and decision rights. Generated by Ava from your P0 scaffold + P1 chat inputs.' },
+      { name: 'RACI Matrix', def: 'Responsible / Accountable / Consulted / Informed for each workstream. Ava generates a draft from your stakeholder list — edit before sign-off.' },
       { name: 'Scope boundary', def: 'The explicit in-scope and out-of-scope for the Move. Written during P0 but formalized in the P1 Charter. APX-01 scope: Morrison private label only, 14 flagged segments. All-private-label expansion explicitly out-of-scope.' },
     ],
   },
@@ -89,7 +89,7 @@ const PHASES: Record<string, PhaseDef> = {
     eyebrow: 'Strategic Moves · P2',
     intro: 'Map the current state, identify root causes, and build a structured problem statement.',
     goal: 'Map the current state, identify root causes, and build a structured problem statement. This phase includes a critical Continue / Discontinue decision — if diagnosis reveals a fundamental blocker (wrong scope, wrong sponsor, non-viable economics), you record it here and can formally discontinue the Move rather than letting it stall.',
-    chatExample: '"Nexus, I\'m uploading the Morrison pricing override log. 47% of AI-suggested prices were overridden by GMs last quarter." → Nexus: "That\'s the highest override rate in the substrate — third quartile for this peer cohort. I see three clusters: GMs overriding seasonal SKUs even when the model predicted correctly (trust failure), no reason codes so we can\'t distinguish good overrides from noise (transparency failure), and the Home category GM had a 71% override rate — structurally different from other GMs (behavior outlier). The root cause isn\'t model accuracy — it\'s trust and transparency. Building that into the design recommendation."',
+    chatExample: '"Ava, I\'m uploading the Morrison pricing override log. 47% of AI-suggested prices were overridden by GMs last quarter." → Ava: "That\'s the highest override rate in the substrate — third quartile for this peer cohort. I see three clusters: GMs overriding seasonal SKUs even when the model predicted correctly (trust failure), no reason codes so we can\'t distinguish good overrides from noise (transparency failure), and the Home category GM had a 71% override rate — structurally different from other GMs (behavior outlier). The root cause isn\'t model accuracy — it\'s trust and transparency. Building that into the design recommendation."',
     deliverables: [
       { label: '📊 Current State Assessment', isGate: true },
       { label: '🔍 Root Cause Analysis' },
@@ -110,7 +110,7 @@ const PHASES: Record<string, PhaseDef> = {
     },
     terms: [
       { name: 'Current State Assessment', def: 'The P2 gate artifact. Documents the as-is process with data evidence. Must be signed off before advancing.' },
-      { name: 'Root cause', def: 'The underlying driver of a problem — not the symptom. "47% override rate" is a symptom. "No reason codes, so planners can\'t distinguish good overrides from noise" is a root cause. Nexus will push back if you only document symptoms.' },
+      { name: 'Root cause', def: 'The underlying driver of a problem — not the symptom. "47% override rate" is a symptom. "No reason codes, so planners can\'t distinguish good overrides from noise" is a root cause. Ava will push back if you only document symptoms.' },
       { name: 'Continue / Discontinue', def: 'The formal binary decision at P2. Continue = commit to P3. Discontinue = formally close the Move with documented rationale. Discontinue is not failure — it\'s discipline.' },
     ],
   },
@@ -121,7 +121,7 @@ const PHASES: Record<string, PhaseDef> = {
     eyebrow: 'Strategic Moves · P3',
     intro: 'Define the target state architecture and operating model. Address each root cause from P2 with a specific design decision.',
     goal: 'Define the target state architecture and operating model. Address each root cause from P2 with a specific design decision. Define the sourcing strategy — build, buy, or partner — and complete solution design for all in-scope components. Every design decision should trace back to a P2 root cause.',
-    chatExample: '"The solution needs guardrail logic so the model can only suggest within an approved price range, mandatory reason codes so GMs must explain overrides, and a weekly model retrain from actual sell-through. Nexus, add the retrain cadence to the architecture." → Nexus: "Added. On sourcing: your substrate already has the Oracle POS + Workday data pipeline. This is Build not Buy — your data science team can implement with the existing connector outputs. Estimated build effort: 6–8 weeks. Want me to add that to the Sourcing Strategy with the Foundation Readiness note from origination — the \'no in-house ML\' flag in P0 no longer applies given the substrate pipeline?"',
+    chatExample: '"The solution needs guardrail logic so the model can only suggest within an approved price range, mandatory reason codes so GMs must explain overrides, and a weekly model retrain from actual sell-through. Ava, add the retrain cadence to the architecture." → Ava: "Added. On sourcing: your substrate already has the Oracle POS + Workday data pipeline. This is Build not Buy — your data science team can implement with the existing connector outputs. Estimated build effort: 6–8 weeks. Want me to add that to the Sourcing Strategy with the Foundation Readiness note from origination — the \'no in-house ML\' flag in P0 no longer applies given the substrate pipeline?"',
     deliverables: [
       { label: '🏗️ Target State Architecture', isGate: true },
       { label: '🎨 Solution Design' },
@@ -153,7 +153,7 @@ const PHASES: Record<string, PhaseDef> = {
     eyebrow: 'Strategic Moves · P4',
     intro: 'Translate the P3 design into an execution roadmap and build the business case economics.',
     goal: 'Translate the P3 design into an execution roadmap and build the business case economics. The P4 gate is the investment approval gate — the highest-stakes gate. It requires a sponsor-signed business case, a milestoned roadmap with named owners, and a financial model before any implementation begins.',
-    chatExample: '"Nexus, update the financial model — the reason code UX design adds $120K to the estimate. Lisa Park needs the business case by Thursday." → Nexus: "Updated. New investment total: $1.8M ($120K over original estimate). Annual value: $8.1M — unchanged. Payback: 2.7 months (was 2.4). IRR: 312%. The $120K doesn\'t change the investment decision materially — payback is still under a quarter. I\'m adding an executive summary note explaining the revision. The board presentation uses the new number. Want me to flag the change in Lisa\'s sponsor briefing so she\'s not surprised?"',
+    chatExample: '"Ava, update the financial model — the reason code UX design adds $120K to the estimate. Lisa Park needs the business case by Thursday." → Ava: "Updated. New investment total: $1.8M ($120K over original estimate). Annual value: $8.1M — unchanged. Payback: 2.7 months (was 2.4). IRR: 312%. The $120K doesn\'t change the investment decision materially — payback is still under a quarter. I\'m adding an executive summary note explaining the revision. The board presentation uses the new number. Want me to flag the change in Lisa\'s sponsor briefing so she\'s not surprised?"',
     deliverables: [
       { label: '🗺️ Execution Roadmap', isGate: true },
       { label: '💼 Business Case', isGate: true },
@@ -174,8 +174,8 @@ const PHASES: Record<string, PhaseDef> = {
     },
     terms: [
       { name: 'Business Case', def: 'The P4 gate artifact. Summarizes investment rationale, expected returns, risks, and the Financial Model. Must be signed off by the executive sponsor.' },
-      { name: 'Financial Model', def: 'A 5-sheet Excel workbook: Assumptions / 3-year P&L / NPV+IRR / Sensitivity / Payback. Generated by Nexus from your P0 value hypothesis and P3 sourcing costs — updated with actuals before gating out.' },
-      { name: 'Tower Metrics Plan', def: 'The KPIs and measurement approach Atlas will track after P5 handoff. For APX-01: Morrison GM rate, pricing override rate, and SKU count. Defined in P4 so Tower is ready from day one.' },
+      { name: 'Financial Model', def: 'A 5-sheet Excel workbook: Assumptions / 3-year P&L / NPV+IRR / Sensitivity / Payback. Generated by Ava from your P0 value hypothesis and P3 sourcing costs — updated with actuals before gating out.' },
+      { name: 'Tower Metrics Plan', def: 'The KPIs and measurement approach Ava will track in Control Tower after P5 handoff, drawing on her portfolio-monitoring expertise. For APX-01: Morrison GM rate, pricing override rate, and SKU count. Defined in P4 so Tower is ready from day one.' },
     ],
   },
   p5: {
@@ -184,8 +184,8 @@ const PHASES: Record<string, PhaseDef> = {
     gate: 'Tower Acceptance',
     eyebrow: 'Strategic Moves · P5',
     intro: 'Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance.',
-    goal: 'Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance. Gating out of P5 closes the Move and transitions it to Control Tower — where Atlas tracks execution progress, KPIs, and ongoing signal health.',
-    chatExample: '"Nexus, generate the handoff package. Karina Shah is PM, Dev Patel is tech lead. Include the charter, roadmap, business case, and the risk register from P2." → Nexus: "Package assembled. Two items need owner assignment before Tower acceptance: Risk 1 — Legacy Oracle POS integration complexity (flagged in P2, still open). Risk 2 — GM change management for reason code adoption (new risk, higher than original estimate). I\'d recommend Dev Patel owns Risk 1, Karina Shah owns Risk 2. Should I pre-fill the risk owners and generate the updated risk register for the handoff?"',
+    goal: 'Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance. Gating out of P5 closes the Move and transitions it to Control Tower — where Ava keeps watching, drawing on her portfolio-monitoring expertise to track execution progress, KPIs, and ongoing signal health.',
+    chatExample: '"Ava, generate the handoff package. Karina Shah is PM, Dev Patel is tech lead. Include the charter, roadmap, business case, and the risk register from P2." → Ava: "Package assembled. Two items need owner assignment before Tower acceptance: Risk 1 — Legacy Oracle POS integration complexity (flagged in P2, still open). Risk 2 — GM change management for reason code adoption (new risk, higher than original estimate). I\'d recommend Dev Patel owns Risk 1, Karina Shah owns Risk 2. Should I pre-fill the risk owners and generate the updated risk register for the handoff?"',
     deliverables: [
       { label: '🚀 Handoff Package', isGate: true },
       { label: '✅ Readiness Assessment' },
@@ -199,13 +199,13 @@ const PHASES: Record<string, PhaseDef> = {
     callout: {
       kind: 'success',
       icon: '→',
-      label: 'After P5: Atlas picks up APX-01',
-      body: 'The Move transitioned to Tower end of week 14. Atlas began tracking: Morrison GM rate (target 36.0%, current 34.2%), override rate (target <25%, current 47%), and SKU count rationalization. The first Tower pressure card appeared 3 weeks after P5 close: Home category override rate still 71% — Karina Shah\'s change management risk was materializing. Atlas surfaced it. The program team acted before the board asked.',
+      label: 'After P5: Ava keeps watching APX-01 in Tower',
+      body: 'The Move transitioned to Tower end of week 14. Ava — drawing on her portfolio-monitoring expertise — began tracking: Morrison GM rate (target 36.0%, current 34.2%), override rate (target <25%, current 47%), and SKU count rationalization. The first Tower pressure card appeared 3 weeks after P5 close: Home category override rate still 71% — Karina Shah\'s change management risk was materializing. Ava surfaced it. The program team acted before the board asked.',
     },
     terms: [
-      { name: 'Handoff Package', def: 'The P5 gate artifact. A compiled bundle of all key deliverables from P1–P4 plus the delivery team RACI, risk register, and readiness assessment. Atlas uses this as the Tower intake record.' },
-      { name: 'Readiness Assessment', def: 'A pre-launch checklist: team assembled, risks owned, metrics defined, exec briefed. Generated by Nexus — review and sign off before submitting for Tower acceptance.' },
-      { name: 'Tower acceptance', def: 'The confirmation from the Control Tower view that Atlas has received the handoff and the Move is ready to transition. A hard gate criterion — the program can\'t close without it.' },
+      { name: 'Handoff Package', def: 'The P5 gate artifact. A compiled bundle of all key deliverables from P1–P4 plus the delivery team RACI, risk register, and readiness assessment. Ava uses this as the Tower intake record.' },
+      { name: 'Readiness Assessment', def: 'A pre-launch checklist: team assembled, risks owned, metrics defined, exec briefed. Generated by Ava — review and sign off before submitting for Tower acceptance.' },
+      { name: 'Tower acceptance', def: 'The confirmation from the Control Tower view that the handoff is received and the Move is ready to transition into monitoring. A hard gate criterion — the program can\'t close without it.' },
     ],
     color: 'teal' as const,
   },

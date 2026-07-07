@@ -6,10 +6,17 @@
 
 import { redirect } from 'next/navigation';
 import { IntelligencePatternDetailPage } from '@/components/intelligence/IntelligencePatternDetailPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligencePatternDetailView,
   getKnownPatternIds,
 } from '@/lib/intelligence/intelligence-pattern-detail-view';
+
+// IntelligencePatternDetailPage uses useSearchParams() without a Suspense boundary.
+// Force dynamic to prevent next build from attempting static prerender of these
+// dead J0 routes (they are not linked from the product navigation).
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export function generateStaticParams() {
   return getKnownPatternIds().map((patternId) => ({ patternId }));
@@ -39,5 +46,11 @@ export default async function PatternDetailRoute({
     redirect('/intelligence');
   }
 
-  return <IntelligencePatternDetailPage view={view} />;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  return (
+    <IntelligencePatternDetailPage
+      view={view}
+      tenantName={activeClient?.name ?? 'Client workspace'}
+    />
+  );
 }

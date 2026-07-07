@@ -1,16 +1,18 @@
-export * from './agent-validation';
-export * from './agent-validation-fixtures';
-export * from './agent-validation-report';
-export * from './rfp-readiness';
-export * from './rfp-readiness-types';
-export * from './pricing-normalization';
-export * from './pricing-normalization-types';
-export * from './admin-setup-readiness-contract';
-export * from './agent-validation-runner';
-export * from './agent-mission-report';
-export * from './agent-mission-types';
-export * from './agent-missions';
-export * from './attachments';
+export * from "./agent-validation";
+export * from "./agent-validation-fixtures";
+export * from "./agent-validation-report";
+export * from "./rfp-readiness";
+export * from "./rfp-readiness-types";
+export * from "./pricing-normalization";
+export * from "./pricing-normalization-types";
+export * from "./admin-setup-readiness-contract";
+export * from "./agent-validation-runner";
+export * from "./agent-mission-report";
+export * from "./agent-mission-types";
+export * from "./agent-missions";
+export * from "./attachments";
+export * from "./artifact-operations";
+export * from "./artifact-binding-matrix";
 export type {
   SourceArtifactApprovalState,
   SourceArtifactEvidenceState,
@@ -24,75 +26,76 @@ export type {
   SourceEmbeddingStatus,
   SourceGraphStatus,
   SourceParseStatus,
-} from './artifact-registry/types';
-export { toSourceArtifactRegistryChipRef } from './artifact-registry/types';
+} from "./artifact-registry/types";
+export { toSourceArtifactRegistryChipRef } from "./artifact-registry/types";
 export {
   isAllowedSourceArtifactMimeType,
   isWithinSourceArtifactSizeLimit,
   MAX_SOURCE_ARTIFACT_SIZE_BYTES,
   SOURCE_ARTIFACT_MIME_ALLOWLIST,
-} from './artifact-registry/mime';
-export * from './chat-types';
-export * from './constants';
-export * from './disclosure-flag';
-export * from './mrm-screen';
-export * from './context-builder';
-export * from './context-quality';
-export * from './lifecycle';
-export * from './mock-seed';
-export * from './multi-agent-briefing';
-export * from './multi-agent-types';
-export * from './nexus-api';
-export * from './queries';
-export * from './scorecard';
-export * from './types';
-export * from './value-ledger';
-export * from './workflow-validation';
-export * from './workflow-validation-fixtures';
-export * from './workflow-validation-report';
-export * from './workflow-validation-runner';
-export * from './vendor-response-completeness';
-export * from './bafo-negotiation';
-export * from './executive-decision-types';
-export * from './executive-decision-summary';
-export * from './bafo-negotiation-model';
-export * from './pricing-normalization-model';
-export * from './commercial-risk-detection';
-export * from './control-tower-signals';
-export * from './intelligence-patterns';
-export * from './commercial-mission-queue';
-export * from './commercial-signal-types';
-export * from './commercial-signals';
-export * from './commercial-mission-adapter-types';
-export * from './commercial-mission-adapter';
-export * from './source-commercial-summary';
-export * from './source-answer-engine';
-export * from './expert-judgment/source-hard-question-answer';
-export * from './expert-judgment/source-judgment-kernel';
-export * from './expert-judgment/source-judgment-rules';
-export * from './expert-judgment/source-judgment-types';
-export * from './expert-judgment/source-robustness-lab';
-export * from './source-pricing-comparison-view';
-export * from './source-bafo-negotiation-view';
-export * from './source-commercial-risk-view';
-export * from './source-commercial-readiness';
-export * from './source-commercial-missions-view';
-export * from './source-commercial-signals-preview';
-export * from './source-commercial-hub-view';
-export * from './source-commercial-demo-scenario';
-export * from './vendor-selection-readiness';
-export * from './vendor-selection-readiness-types';
-export * from './source-commercial-executive-brief';
-export * from './source-commercial-action-queue';
-export * from './source-program-link';
-export * from './source-program-handoff';
-export * from './linked-program-badge-view';
-export * from './source-stage-gates';
-export * from './source-stage-gate-types';
-export * from './stage-packs';
-export * from './source-event-instance';
-export * from './source-event-instances';
-export * from './sourcing-tools';
+} from "./artifact-registry/mime";
+export * from "./chat-types";
+export * from "./constants";
+export * from "./disclosure-flag";
+export * from "./mrm-screen";
+export * from "./context-builder";
+export * from "./context-quality";
+export * from "./lifecycle";
+export * from "./mock-seed";
+export * from "./multi-agent-briefing";
+export * from "./multi-agent-types";
+export * from "./nexus-api";
+export * from "./queries";
+export * from "./scorecard";
+export * from "./types";
+export * from "./value-ledger";
+export * from "./workflow-validation";
+export * from "./workflow-validation-fixtures";
+export * from "./workflow-validation-report";
+export * from "./workflow-validation-runner";
+export * from "./vendor-response-completeness";
+export * from "./bafo-negotiation";
+export * from "./executive-decision-types";
+export * from "./executive-decision-summary";
+export * from "./bafo-negotiation-model";
+export * from "./pricing-normalization-model";
+export * from "./commercial-risk-detection";
+export * from "./control-tower-signals";
+export * from "./intelligence-patterns";
+export * from "./commercial-mission-queue";
+export * from "./commercial-signal-types";
+export * from "./commercial-signals";
+export * from "./commercial-mission-adapter-types";
+export * from "./commercial-mission-adapter";
+export * from "./source-commercial-summary";
+export * from "./source-answer-engine";
+export * from "./source-corpus-uplift";
+export * from "./expert-judgment/source-hard-question-answer";
+export * from "./expert-judgment/source-judgment-kernel";
+export * from "./expert-judgment/source-judgment-rules";
+export * from "./expert-judgment/source-judgment-types";
+export * from "./expert-judgment/source-robustness-lab";
+export * from "./source-pricing-comparison-view";
+export * from "./source-bafo-negotiation-view";
+export * from "./source-commercial-risk-view";
+export * from "./source-commercial-readiness";
+export * from "./source-commercial-missions-view";
+export * from "./source-commercial-signals-preview";
+export * from "./source-commercial-hub-view";
+export * from "./source-commercial-demo-scenario";
+export * from "./vendor-selection-readiness";
+export * from "./vendor-selection-readiness-types";
+export * from "./source-commercial-executive-brief";
+export * from "./source-commercial-action-queue";
+export * from "./source-program-link";
+export * from "./source-program-handoff";
+export * from "./linked-program-badge-view";
+export * from "./source-stage-gates";
+export * from "./source-stage-gate-types";
+export * from "./stage-packs";
+export * from "./source-event-instance";
+export * from "./source-event-instances";
+export * from "./sourcing-tools";
 
 export type {
   SourceAgentContextBundle,
@@ -125,4 +128,4 @@ export type {
   SourceUserRole,
   SourceValueLedgerLineSnapshot,
   SourceWaitState,
-} from './agent-context';
+} from "./agent-context";

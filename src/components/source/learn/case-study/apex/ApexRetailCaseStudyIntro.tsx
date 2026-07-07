@@ -10,7 +10,7 @@ const CHAPTERS = [
   { slug: 'apex-strategy',   num: '01', label: 'Strategy',          status: 'complete', summary: 'CIO office sponsors AMS consolidation. Three-incumbent problem named.' },
   { slug: 'apex-scope',      num: '02', label: 'Scope',             status: 'complete', summary: '40+ application estate scoped across infrastructure, applications, and data platform.' },
   { slug: 'apex-rfp',        num: '03', label: 'RFP',               status: 'complete', summary: 'Full RFP issued to 4 vendors with pricing template and SLA framework.' },
-  { slug: 'apex-responses',  num: '04', label: 'Vendor Responses',  status: 'complete', summary: 'All 4 responses received. Pricing normalized. Sentinel pattern signals detected.' },
+  { slug: 'apex-responses',  num: '04', label: 'Vendor Responses',  status: 'complete', summary: 'All 4 responses received. Pricing normalized. Ava pattern signals detected.' },
   { slug: 'apex-evaluation', num: '05', label: 'Evaluation',        status: 'complete', summary: 'Northstar and ArcVault advanced to BAFO. BlueMaster and DataPeak excluded.' },
   { slug: 'apex-pricing',    num: '06', label: 'Pricing',           status: 'complete', summary: '3-year TCO normalized. $11.2M gap between highest and lowest bidder uncovered.' },
   { slug: 'apex-bafo',       num: '07', label: 'BAFO',              status: 'active',   summary: 'BAFO responses due May 15. Two vendors invited. Decision window: May 30.' },
@@ -42,7 +42,7 @@ export function ApexRetailCaseStudyIntro() {
             'Archetype: Managed Services / Outsourcing',
             'Value: $35M projected · 3-year',
             'Rigor: Strategic',
-            'Tenant: Apex Retail (live demo)',
+            'Company: Apex Retail (live demo)',
             'Time: ~45 min · 8 chapters',
           ].map((tag) => (
             <span key={tag} style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 4, background: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)' }}>
@@ -67,7 +67,7 @@ export function ApexRetailCaseStudyIntro() {
           This case study tracks how a $35M AMS consolidation sourcing event gets run
           end-to-end: how the scope is drawn, how four vendors are evaluated against a
           locked scorecard, how pricing is normalised to a 3-year TCO that exposes an
-          $11.2M gap between the highest and lowest bidder, and how Sentinel flags two
+          $11.2M gap between the highest and lowest bidder, and how Ava flags two
           P0 contract risks in the BAFO round that the shortlisted vendors&rsquo; original
           proposals quietly buried.
         </BodyP>
@@ -75,7 +75,7 @@ export function ApexRetailCaseStudyIntro() {
           This case study is grounded in SRC-004, the <strong>AMS Outsourcing 2026</strong> event
           that is active in the Apex Retail tenant right now. The people, vendors, and
           numbers are the demo storyline — but the artifact structure, gate criteria,
-          and Sentinel signals are the same ones you would see in a real event.
+          and Ava signals are the same ones you would see in a real event.
           When you read &ldquo;Northstar Managed Services,&rdquo; you are reading the
           same vendor record that appears in the Source canvas.
         </Callout>
@@ -152,9 +152,9 @@ export function ApexRetailCaseStudyIntro() {
         </div>
         <Callout kind="warn" icon="📊" label="Label: projected">
           The $35M figure is projected — it is grounded in the contracted run-rate
-          baseline of the three incumbents plus Sentinel-flagged avoidance opportunities.
+          baseline of the three incumbents plus Ava-flagged avoidance opportunities.
           It becomes &ldquo;realized&rdquo; only after 12 months of the consolidated
-          AMS contract are invoiced and measured against the baseline. Atlas will not
+          AMS contract are invoiced and measured against the baseline. Ava will not
           label it realized until that evidence exists.
         </Callout>
       </Section>

@@ -1,0 +1,39 @@
+name: Coverage Threshold
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  behavior-coverage:
+    name: Behavior coverage floor
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run behavior coverage gate
+        run: npm run coverage:behavior-gate
+
+      - name: Upload coverage summary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: behavior-coverage-summary
+          path: coverage/behavior-gate/coverage-summary.json
+          retention-days: 14
+          if-no-files-found: warn

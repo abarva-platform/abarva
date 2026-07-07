@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbarVa Meridian / PHS CDAO Demo Training Manual</title>
+  <style>
+    :root {
+      --nav: #07111f;
+      --ink: #172033;
+      --muted: #607083;
+      --line: #dce5ee;
+      --soft: #f6f8fb;
+      --blue: #1f68d5;
+      --teal: #0f8a8a;
+      --amber: #a85d00;
+      --red: #a43434;
+      --green: #16794a;
+      --white: #ffffff;
+      --shadow: 0 14px 32px rgba(20, 34, 52, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--soft);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    .topbar {
+      height: 60px;
+      padding: 12px 24px;
+      background: var(--nav);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand img {
+      height: 28px;
+      width: auto;
+      display: block;
+    }
+
+    .brand span {
+      border-left: 1px solid rgba(255,255,255,0.22);
+      padding-left: 14px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.72);
+      white-space: nowrap;
+    }
+
+    .top-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.78);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 264px minmax(0, 1fr);
+      gap: 0;
+      max-width: 1500px;
+      margin: 0 auto;
+      min-height: calc(100vh - 60px);
+    }
+
+    aside {
+      position: sticky;
+      top: 60px;
+      align-self: start;
+      height: calc(100vh - 60px);
+      overflow: auto;
+      padding: 24px 18px;
+      background: #ffffff;
+      border-right: 1px solid var(--line);
+    }
+
+    .side-title {
+      font-size: 12px;
+      font-weight: 780;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    nav a {
+      display: block;
+      color: #344257;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      margin: 2px 0;
+    }
+
+    nav a:hover {
+      background: #eef4ff;
+      color: #123f86;
+    }
+
+    main {
+      padding: 30px 34px 70px;
+      background: #ffffff;
+    }
+
+    section {
+      max-width: 1120px;
+      padding: 30px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    section:first-child { padding-top: 0; }
+
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 780;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 940px;
+      font-size: 34px;
+      line-height: 1.08;
+      font-weight: 780;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 23px;
+      line-height: 1.18;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+
+    .lead {
+      max-width: 880px;
+      font-size: 17px;
+      margin-top: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #ffffff;
+    }
+
+    .card.soft { background: var(--soft); }
+
+    .status {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .status .card {
+      min-height: 118px;
+    }
+
+    .score {
+      display: block;
+      font-size: 24px;
+      line-height: 1.1;
+      margin-bottom: 6px;
+      color: var(--ink);
+      font-weight: 760;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
+      gap: 22px;
+      align-items: start;
+      margin-top: 18px;
+    }
+
+    .shot {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      background: #eef2f7;
+    }
+
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .route {
+      display: grid;
+      grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
+      gap: 18px;
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .route:first-of-type { border-top: 0; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eef4ff;
+      border: 1px solid #cadcf8;
+      color: #184c98;
+      font-size: 12px;
+      font-weight: 720;
+      margin-bottom: 9px;
+    }
+
+    .tag.green { color: #14623f; background: #effaf5; border-color: #c7e7d6; }
+    .tag.amber { color: #754000; background: #fff7e8; border-color: #ecd19f; }
+    .tag.red { color: #8a2c2c; background: #fff0f0; border-color: #e5bcbc; }
+
+    pre {
+      margin: 12px 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #0b1524;
+      color: #dbeafe;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    li { margin: 6px 0; }
+
+    .quote {
+      border-left: 4px solid var(--blue);
+      padding: 12px 14px;
+      background: #f5f8ff;
+      border-radius: 0 8px 8px 0;
+      color: #26364d;
+      margin: 14px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      color: #314158;
+      background: var(--soft);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .footer-note {
+      margin-top: 28px;
+      padding: 18px;
+      border-radius: 10px;
+      background: var(--nav);
+      color: #ffffff;
+    }
+
+    .footer-note p { color: rgba(255,255,255,0.78); }
+
+    @media (max-width: 1050px) {
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        position: relative;
+        top: auto;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2px 10px;
+      }
+      .status, .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .two, .route { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 650px) {
+      .topbar {
+        height: auto;
+        position: relative;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .brand span { display: none; }
+      main { padding: 24px 16px 50px; }
+      aside { padding: 18px 16px; }
+      nav { grid-template-columns: 1fr; }
+      .status, .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+      h2 { font-size: 21px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" />
+      <span>CDAO training manual</span>
+    </div>
+    <div class="top-meta">
+      <span class="pill">Meridian / PHS-inspired</span>
+      <span class="pill">Public + synthetic boundary</span>
+      <span class="pill">Human approval required</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="side-title">Manual Menu</div>
+      <nav aria-label="Manual sections">
+        <a href="#overview">Overview</a>
+        <a href="#positioning">Positioning</a>
+        <a href="#flow">Demo Flow</a>
+        <a href="#prompts">Prompt Blocks</a>
+        <a href="#context">Context Layer</a>
+        <a href="#controls">Human Controls</a>
+        <a href="#evidence">Evidence Needed</a>
+        <a href="#services">Services Attach</a>
+        <a href="#readiness">Readiness</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section id="overview">
+        <div class="eyebrow">Training source converted to visual manual</div>
+        <h1>How to run the Meridian / PHS CDAO proof conversation.</h1>
+        <p class="lead">This manual explains how to use the current screenshots, prompts, and talk track to show why AbarVa helps leaders move from AI ambition to governed execution: strategy, context layer, architecture, business case, sourcing, mobilization, and value control.</p>
+        <div class="status">
+          <div class="card soft"><span class="score">90%</span><h3>Visual proof</h3><p>HTML proof page exists and visual QA passed.</p></div>
+          <div class="card soft"><span class="score">85%</span><h3>CDAO talk track</h3><p>Manual now defines route flow, prompt blocks, and boundaries.</p></div>
+          <div class="card soft"><span class="score">65%</span><h3>Evidence rigor</h3><p>Public/synthetic boundary is clear; citation/context gaps remain visible.</p></div>
+          <div class="card soft"><span class="score">35%</span><h3>Private data plane</h3><p>Current evidence is production UI proof, not a true private-subscription dry run.</p></div>
+          <div class="card soft"><span class="score">70%</span><h3>Training depth</h3><p>This is usable as a presenter guide; richer final docs can follow.</p></div>
+        </div>
+      </section>
+
+      <section id="positioning">
+        <h2>Open with the operating problem</h2>
+        <div class="quote">The real issue is not whether AI can write a strategy memo. The issue is whether leadership can pick the right AI bets, prove the evidence, choose the right architecture, mobilize the right humans and agents, avoid implementation failure, control SI spend, and keep value visible. AbarVa is built for that operating problem.</div>
+        <div class="grid">
+          <div class="card"><h3>Say</h3><p>This is a Meridian demo inspired by public PHS context and synthetic internal evidence.</p></div>
+          <div class="card"><h3>Say</h3><p>AbarVa accelerates decisions, but named humans approve material action.</p></div>
+          <div class="card"><h3>Avoid</h3><p>Do not claim confidential PHS data, realized savings, or autonomous approval.</p></div>
+        </div>
+      </section>
+
+      <section id="flow">
+        <h2>Route-by-route demo flow</h2>
+        <div class="route">
+          <div>
+            <span class="tag green">Step 1 · Executive posture</span>
+            <h3>Home</h3>
+            <p>Show that AbarVa starts with portfolio posture, not a blank chat prompt.</p>
+            <ul><li>Value at stake</li><li>Decisions</li><li>Initiatives at risk</li></ul>
+          </div>
+          <div><div class="shot"><img src="assets/01-home-meridian-cdao.png" alt="Meridian CDAO home screenshot" /></div><p class="caption">Use as the opening screen. Do not claim demo values are realized PHS outcomes.</p></div>
+        </div>
+
+        <div class="route">
+          <div>
+            <span class="tag green">Step 2 · Context layer</span>
+            <h3>Admin / Setup</h3>
+            <p>Explain that the context layer is the moat: evidence, systems, data, vendors, rate cards, patterns, approvals, and gaps.</p>
+          </div>
+          <div><div class="shot"><img src="assets/02-admin-context-layer-overview.png" alt="Context layer overview screenshot" /></div><p class="caption">This screen anchors the setup/admin value story.</p></div>
+        </div>
+
+        <div class="route">
+          <div>
+            <span class="tag amber">Step 3 · Approval queue</span>
+            <h3>Evidence gates</h3>
+            <p>Show that evidence is not blindly trusted. It must be classified, parsed, mapped, embedded, and approved.</p>
+          </div>
+          <div><div class="shot"><img src="assets/05-admin-approval-queue.png" alt="Approval queue screenshot" /></div><p class="caption">Pending items are readiness signals, not something to hide.</p></div>
+        </div>
+
+        <div class="route">
+          <div>
+            <span class="tag amber">Step 4 · Sentinel</span>
+            <h3>Intelligence brief</h3>
+            <p>Show AI draft, citation-gap, and human-review notices. This proves AbarVa keeps decision accountability visible.</p>
+          </div>
+          <div><div class="shot"><img src="assets/06-intelligence-brief.png" alt="Intelligence brief screenshot" /></div><p class="caption">Acknowledge citation gaps explicitly before relying on final buyer answers.</p></div>
+        </div>
+
+        <div class="route">
+          <div>
+            <span class="tag green">Step 5 · Use-case map</span>
+            <h3>Which bets first?</h3>
+            <p>The map converts many use cases into dependency, risk, owner, and sequencing logic.</p>
+          </div>
+          <div><div class="shot"><img src="assets/07-intelligence-map.png" alt="Intelligence map screenshot" /></div><p class="caption">The CDAO story: pick bets based on value, feasibility, readiness, and sponsorship.</p></div>
+        </div>
+
+        <div class="route">
+          <div>
+            <span class="tag red">Step 6 · Truth boundary</span>
+            <h3>Enterprise context gap</h3>
+            <p>Use this to show that the product does not pretend private context exists before it is loaded.</p>
+          </div>
+          <div><div class="shot"><img src="assets/09-intelligence-enterprise-context.png" alt="Enterprise context gap screenshot" /></div><p class="caption">This is the argument for setup, corpus, and private data-plane work.</p></div>
+        </div>
+
+        <div class="route">
+          <div>
+            <span class="tag green">Step 7 · Maestro</span>
+            <h3>Strategic Moves</h3>
+            <p>Strategy becomes architecture, business case, mobilization, gates, and artifacts.</p>
+          </div>
+          <div><div class="shot"><img src="assets/10-moves-portfolio.png" alt="Strategic Moves screenshot" /></div><p class="caption">Keep the story at capability level if visible move names are demo-generated.</p></div>
+        </div>
+
+        <div class="route">
+          <div>
+            <span class="tag green">Step 8 · Tower</span>
+            <h3>Control value</h3>
+            <p>Executives track pressure, value, dependencies, status, and next action.</p>
+          </div>
+          <div><div class="shot"><img src="assets/12-tower-portfolio.png" alt="Tower screenshot" /></div><p class="caption">Use baseline and forecast only until realized-value evidence exists.</p></div>
+        </div>
+      </section>
+
+      <section id="prompts">
+        <h2>Prompt blocks and expected answer shapes</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>CDAO strategy</h3>
+            <pre>Which AI bets should Meridian move first, and what evidence would change the ranking?</pre>
+            <p>Expected shape: recommendation, value, feasibility, risk, readiness, sponsor, evidence gaps, named approval.</p>
+          </div>
+          <div class="card">
+            <h3>Azure / Databricks</h3>
+            <pre>Shape the target Azure / Databricks architecture for the first population-health AI move.</pre>
+            <p>Expected shape: lakehouse zones, data products, governance, model monitoring, lineage, human gates.</p>
+          </div>
+          <div class="card">
+            <h3>Failure avoidance</h3>
+            <pre>What are the top reasons this AI initiative could fail, and what gates should Meridian put in place?</pre>
+            <p>Expected shape: data, adoption, governance, SI scope, value, and owner gates.</p>
+          </div>
+          <div class="card">
+            <h3>SI optimization</h3>
+            <pre>If Meridian needs a Databricks implementation partner, how should it scope and sequence the sourcing event?</pre>
+            <p>Expected shape: scope after architecture, rate cards, effort model, build/managed services options.</p>
+          </div>
+          <div class="card">
+            <h3>Value case</h3>
+            <pre>Build a low/base/high value case. Separate savings, avoided cost, productivity, quality, and confidence.</pre>
+            <p>Expected shape: ranges, assumptions, human/agent/SI cost, no false precision, CFO approval.</p>
+          </div>
+          <div class="card">
+            <h3>Talk track</h3>
+            <p>A raw model can answer. AbarVa turns the answer into evidence, sequencing, owner, gates, and approval.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="context">
+        <h2>How to explain the context layer and corpus</h2>
+        <div class="quote">The context layer is not just uploaded files. It is a governed memory of how the enterprise works: systems, data domains, KPIs, vendors, initiatives, risks, patterns, artifacts, approvals, and outcomes. Every new use case adds to the corpus.</div>
+        <table>
+          <thead><tr><th>Dimension</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr><td>Application / workload inventory</td><td>Grounds modernization and Databricks decisions.</td></tr>
+            <tr><td>Data domains and quality baselines</td><td>Prevents AI strategy from floating above bad data.</td></tr>
+            <tr><td>Vendor contracts and sourcing history</td><td>Supports SI and managed-services cost optimization.</td></tr>
+            <tr><td>Rate cards and effort assumptions</td><td>Lets AbarVa estimate human, agent, and partner economics.</td></tr>
+            <tr><td>Industry and architecture patterns</td><td>Makes recommendations repeatable instead of improvised.</td></tr>
+            <tr><td>Approvals and evidence gaps</td><td>Keeps humans in command and makes missing proof visible.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="controls">
+        <h2>Human command and control</h2>
+        <div class="two">
+          <div>
+            <p>AbarVa is intentionally not autonomous for material decisions. Sentinel and Maestro can recommend, draft, summarize, rank, estimate, and flag gaps. Named humans approve, promote stages, send external communications, fund work, select vendors, and accept risk.</p>
+            <ul>
+              <li>AI draft labels</li>
+              <li>Review-before-acting notices</li>
+              <li>Citation-gap warnings</li>
+              <li>Approval queue and named approvers</li>
+              <li>Stage gates and readiness controls</li>
+            </ul>
+          </div>
+          <div class="card soft">
+            <h3>Use this sentence</h3>
+            <p>AbarVa makes AI useful without making governance invisible. The agent proposes; the human approves.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="evidence">
+        <h2>What must be loaded before a final buyer demo</h2>
+        <table>
+          <thead><tr><th>Object</th><th>Why it matters</th><th>Current posture</th></tr></thead>
+          <tbody>
+            <tr><td>Approved public evidence register</td><td>Prevents uncited claims.</td><td>Needed for final reliance.</td></tr>
+            <tr><td>Synthetic workshop notes</td><td>Makes prioritization specific.</td><td>Needed.</td></tr>
+            <tr><td>Workload inventory</td><td>Grounds architecture and migration path.</td><td>Needed.</td></tr>
+            <tr><td>Data quality baseline</td><td>Prevents unsupported AI recommendations.</td><td>Needed.</td></tr>
+            <tr><td>Rate card and effort model</td><td>Supports cost optimization.</td><td>Needed.</td></tr>
+            <tr><td>Approval personas</td><td>Keeps named human command visible.</td><td>Needed.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="services">
+        <h2>Services attach without overpricing entry</h2>
+        <p>The subscription lands the platform and context layer. The expansion opportunity is the work it reveals: custom product development, architecture support, data-plane managed services, AI use-case execution, SI selection support, and ongoing value realization.</p>
+        <div class="grid">
+          <div class="card"><h3>Initial motion</h3><p>Core platform, CDAO strategy, context layer, use-case shaping, roadmap, value model.</p></div>
+          <div class="card"><h3>Day-2 expansion</h3><p>Source for CPO/CIO when Databricks SI, managed services, or product-development partners are needed.</p></div>
+          <div class="card"><h3>Attach thesis</h3><p>Use AbarVa to discover the work, then attach custom development and services execution.</p></div>
+        </div>
+      </section>
+
+      <section id="readiness">
+        <h2>Readiness and next step</h2>
+        <table>
+          <thead><tr><th>Area</th><th>Score</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>Visual buyer proof</td><td>90%</td><td>Proof page exists and visual QA passed.</td></tr>
+            <tr><td>CDAO talk track</td><td>90%</td><td>This HTML manual now packages the flow and prompts.</td></tr>
+            <tr><td>Evidence rigor</td><td>65%</td><td>Boundaries are clear; citation/context gaps remain visible.</td></tr>
+            <tr><td>Live private data-plane proof</td><td>35%</td><td>Needs true private subscription dry run.</td></tr>
+            <tr><td>Final training depth</td><td>82%</td><td>Strong enough for internal rehearsal; can mature into Word/deck/video.</td></tr>
+          </tbody>
+        </table>
+        <div class="footer-note">
+          <h3>Boundary</h3>
+          <p>This manual uses live AbarVa screenshots and a synthetic Meridian demo inspired by public PHS context. It does not claim confidential PHS data, realized savings, or production private-data-plane completeness.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

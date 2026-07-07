@@ -1,0 +1,121 @@
+[
+  {
+    "type": "dependency",
+    "from": "src/app/(maestro)/engagements/[engagementId]/page.tsx",
+    "to": "src/lib/knowledge/graph-access.ts",
+    "unresolvedTo": "@/lib/knowledge/graph-access",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "app-tier-must-use-agent-context-broker"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/app/api/engage/[engagementId]/turn/route.ts",
+    "to": "src/lib/graph/cross-client.ts",
+    "unresolvedTo": "@/lib/graph/cross-client",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "app-tier-must-use-agent-context-broker"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/app/api/engage/[engagementId]/turn/route.ts",
+    "to": "src/lib/graph/retrieval.ts",
+    "unresolvedTo": "@/lib/graph/retrieval",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "app-tier-must-use-agent-context-broker"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/app/api/engagements/create/turn/route.ts",
+    "to": "src/lib/graph/engagement-sync.ts",
+    "unresolvedTo": "@/lib/graph/engagement-sync",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "app-tier-must-use-agent-context-broker"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/app/api/engagements/create/turn/route.ts",
+    "to": "src/lib/graph/mutations.ts",
+    "unresolvedTo": "@/lib/graph/mutations",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "app-tier-must-use-agent-context-broker"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/app/api/identity/turn/route.ts",
+    "to": "src/lib/graph/mutations.ts",
+    "unresolvedTo": "@/lib/graph/mutations",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "app-tier-must-use-agent-context-broker"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/app/api/intelligence/pattern/[code]/route.ts",
+    "to": "src/lib/knowledge/graph-access.ts",
+    "unresolvedTo": "@/lib/knowledge/graph-access",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "app-tier-must-use-agent-context-broker"
+    }
+  }
+]

@@ -1,0 +1,103 @@
+{
+  "version": "2026-06",
+  "environmentKey": "product-preview",
+  "purpose": "Non-mutating release-candidate gate packet for AbarVa Product Preview.",
+  "status": "scaffold_ready_before_runtime",
+  "dependsOn": [
+    "docs/azure/PRODUCT_PREVIEW_PROVISIONING_PACKET_2026-06.json",
+    "docs/azure/PRODUCT_DEV_CICD_PACKET_2026-06.json",
+    "docs/azure/PRODUCT_DEV_SYNTHETIC_DATA_BASELINE_2026-06.json",
+    "docs/azure/ENVIRONMENT_EXECUTION_LEDGER_TEMPLATE_2026-06.json"
+  ],
+  "releaseCandidateIdentity": {
+    "required": [
+      "pr_number",
+      "merge_commit_sha",
+      "release_record_path",
+      "image_tag",
+      "image_digest",
+      "source_branch",
+      "target_environment",
+      "feature_flags",
+      "migration_set",
+      "rollback_target"
+    ],
+    "promotionUnit": "pinned_image_digest",
+    "runtime": "Azure Container Apps",
+    "registry": "Azure Container Registry",
+    "vercelProductionRuntimeAllowed": false,
+    "supabaseRuntimeAllowed": false
+  },
+  "requiredCiGates": [
+    "release_check",
+    "typecheck",
+    "eslint",
+    "gitleaks",
+    "fresh_postgres_migration_replay",
+    "production_readiness_gate",
+    "context_corpus_governance_gate",
+    "canonical_tenant_allowlist",
+    "runtime_supabase_import_guard",
+    "vercel_production_runtime_guard",
+    "control_plane_purity",
+    "browser_matrix_smoke",
+    "public_axe_accessibility",
+    "lighthouse_budget",
+    "next_bundle_budget"
+  ],
+  "requiredPreviewEvidence": [
+    "azure_build_log",
+    "image_digest",
+    "aca_revision_export",
+    "traffic_state_before",
+    "traffic_state_after",
+    "curl_root_headers",
+    "curl_health_json",
+    "no_vercel_headers",
+    "azure_postgres_health",
+    "direct_postgres_true",
+    "signed_in_browser_qa_report",
+    "accessibility_smoke_report",
+    "context_healthcheck_report",
+    "retrieval_citation_proof",
+    "artifact_download_proof",
+    "rollback_command"
+  ],
+  "dataReadinessGates": {
+    "allowedData": ["synthetic", "pilot-reference", "client-approved-redacted"],
+    "disallowedData": [
+      "client-confidential-unapproved",
+      "phi",
+      "pii",
+      "raw-client-private-documents"
+    ],
+    "requiresIngestionReceipt": true,
+    "requiresBlobProof": true,
+    "requiresFactBackedRecords": true,
+    "requiresSearchIndexProof": true,
+    "requiresTenantScopedRetrieval": true,
+    "requiresCitationMetadata": true,
+    "requiresContextBundleTrace": true,
+    "autoPromoteAgentReady": false,
+    "forbiddenReadyClaims": ["chunks_only", "facts_only", "indexed_only"]
+  },
+  "promotionDecisionGates": [
+    "all_ci_gates_green",
+    "all_preview_evidence_present",
+    "context_healthcheck_passed_or_gaps_accepted",
+    "signed_in_browser_qa_passed",
+    "rollback_path_verified",
+    "release_operator_approval_recorded",
+    "product_owner_approval_recorded"
+  ],
+  "approvalGates": [
+    "deploy_release_candidate_to_product_preview",
+    "run_database_migration_against_product_preview",
+    "shift_product_preview_traffic",
+    "load_preview_data",
+    "accept_context_healthcheck_gaps",
+    "promote_release_candidate_to_product_prod"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true
+}

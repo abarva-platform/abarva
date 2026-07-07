@@ -61,7 +61,7 @@ export function NexusWorkshopCanvas({ programLabel }: NexusWorkshopCanvasProps) 
   return (
     <section
       data-nexus-workshop-canvas="prog12"
-      aria-label="Nexus workshop canvas"
+      aria-label="Ava workshop canvas"
       style={{
         background: COLORS.surface,
         border: `1px solid ${COLORS.border}`,
@@ -158,7 +158,7 @@ function CanvasHeader({ view }: { view: NexusWorkshopCanvasViewModel }) {
               marginTop: 2,
             }}
           >
-            Anchor: Nexus · {view.programLabel}
+            Anchor: Ava · {view.programLabel}
           </span>
         </div>
         <ReadinessChip state={view.readinessState} />

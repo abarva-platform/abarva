@@ -1,0 +1,17 @@
+{
+  "dataset_id": "skyharbor-air-synthetic-v2",
+  "title": "SkyHarbor Air — Comprehensive Synthetic Substrate v2 (all modules)",
+  "client_key": "skyharbor-air",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "abarva-platform",
+  "source_basis": "synthetic_comparable",
+  "ingestion_method": "admin_bulk_loader",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 2839,
+  "approved_by": "anand",
+  "approved_at": "2026-06-10",
+  "notes": "Template-aligned, loader-ready CSVs (datasets/skyharbor-air-synthetic-v2/) for an ~$80B airline with a ~$2.0B IT budget, spanning all modules: Source (application-portfolio/CMDB 600, infrastructure-estate 698 incl. IBM Z mainframe + legacy Teradata/Netezza + AWS/Azure/GCP, vendor-contracts 120 ≈ $1.91B incl. IBM AMS $280M & AWS $180M, sla-register 72, integration-topology 500, it-financials 168 lines = $2.0B FY26, org-roles 272 incl. CEO/7 C-Level/9 SVP/37 VP/119 Director), Moves (initiatives 60), Tower (dora-baseline 40, incidents 400, erp-landscape 60), Intelligence (ai-tooling 40, business-capabilities 80). 100% synthetic cover-name data (no real carrier identity/executive); deterministic generator scripts/skyharbor/generate-skyharbor-v2.mjs. Each CSV's columns match its NORTHSTAR template requiredFields so the governed bulk loader (stage_and_process) commits STRUCTURED FACTS (enterprise_context_records/facts), not just chunks. Adds the sla-register template + service_levels dimension. Load via ACA VNet job; verify facts count-by-count; indexing + agent_ready promotion follow as a separate gated step."
+}

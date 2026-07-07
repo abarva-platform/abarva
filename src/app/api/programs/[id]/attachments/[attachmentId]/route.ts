@@ -1,14 +1,14 @@
 // GET /api/programs/[id]/attachments/[attachmentId] · OV2-4b
 //
-// Issues a short-lived signed URL for an attachment and 302-redirects
-// the user agent to it. Authenticated tenants only; we verify both
-// the program tenancy AND that the attachment row belongs to the
-// program, before brokering the signed URL.
+// Streams attachment bytes through the authenticated app route. The
+// route verifies both the program tenancy AND that the attachment row
+// belongs to the program before reading object storage.
 //
-// Why a redirect (not a JSON {url} response): a redirect is one round
-// trip from the user's perspective and works with raw <a href>, which
-// is the simplest in-conversation chip we can render. JSON would force
-// the chat-message renderer to do its own fetch + redirect dance.
+// We intentionally proxy the file instead of redirecting to a signed
+// Azure Blob URL. The recording proof found browser downloads could
+// receive a 302 and then fail at Blob with AuthorizationFailure. Keeping
+// the download server-mediated makes the tenant/auth gate and storage
+// credential path deterministic for product demos and client use.
 
 import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import { getProgramById } from '@/lib/programs/queries';
@@ -21,10 +21,17 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const STORAGE_BUCKET = 'program-attachments';
-const SIGNED_URL_TTL_SECONDS = 60;
 
 function jsonError(status: number, code: string, detail?: string): Response {
   return Response.json({ error: code, ...(detail ? { detail } : {}) }, { status });
+}
+
+function contentDisposition(filename: string): string {
+  const safe = filename
+    .replace(/[\r\n"]/g, '_')
+    .replace(/[\\/]/g, '_')
+    .trim() || 'download';
+  return `attachment; filename="${safe}"`;
 }
 
 export async function GET(
@@ -74,27 +81,32 @@ export async function GET(
     return jsonError(403, 'forbidden');
   }
 
-  let signedUrl: string;
+  let bytes: Buffer;
   try {
-    signedUrl = await getObjectStorageAdapter().createSignedUrl(
+    bytes = await getObjectStorageAdapter().download(
       STORAGE_BUCKET,
       attachment.storagePath,
-      SIGNED_URL_TTL_SECONDS,
-      {
-      download: attachment.originalName,
-      },
     );
   } catch (error) {
-    console.error('[GET /api/programs/:id/attachments/:attachmentId] signed_url_failed', {
+    console.error('[GET /api/programs/:id/attachments/:attachmentId] download_failed', {
       storagePath: attachment.storagePath,
       message: error instanceof Error ? error.message : String(error),
     });
     return jsonError(
       500,
-      'signed_url_failed',
-      error instanceof Error ? error.message : 'object storage signed URL failed',
+      'download_failed',
+      error instanceof Error ? error.message : 'object storage download failed',
     );
   }
 
-  return Response.redirect(signedUrl, 302);
+  return new Response(new Uint8Array(bytes), {
+    status: 200,
+    headers: {
+      'content-type': attachment.mimeType || 'application/octet-stream',
+      'content-disposition': contentDisposition(attachment.originalName),
+      'content-length': String(bytes.length),
+      'cache-control': 'private, no-store',
+      'x-abarva-download-proxy': 'object-storage',
+    },
+  });
 }

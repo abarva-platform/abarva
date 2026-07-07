@@ -1,0 +1,130 @@
+{
+  "generatedAt": "2026-06-05T22:04:59.776Z",
+  "html": "/Users/anand/Projects/nexus/docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_DEMO_TRAINING_MANUAL_2026-06-05.html",
+  "results": [
+    {
+      "viewport": "training-desktop",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/meridian-phs-proof/qa/meridian-phs-training-desktop.png",
+      "consoleErrors": [],
+      "imageStatus": [
+        {
+          "src": "assets/abarva-nav-dark-compact-28px-2x.png",
+          "complete": true,
+          "naturalWidth": 248,
+          "naturalHeight": 56
+        },
+        {
+          "src": "assets/01-home-meridian-cdao.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 992
+        },
+        {
+          "src": "assets/02-admin-context-layer-overview.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 3100
+        },
+        {
+          "src": "assets/05-admin-approval-queue.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 11531
+        },
+        {
+          "src": "assets/06-intelligence-brief.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1008
+        },
+        {
+          "src": "assets/07-intelligence-map.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1008
+        },
+        {
+          "src": "assets/09-intelligence-enterprise-context.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1008
+        },
+        {
+          "src": "assets/10-moves-portfolio.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1301
+        },
+        {
+          "src": "assets/12-tower-portfolio.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 950
+        }
+      ],
+      "overflow": []
+    },
+    {
+      "viewport": "training-mobile",
+      "screenshot": "/Users/anand/Projects/nexus/docs/build/meridian-phs-proof/qa/meridian-phs-training-mobile.png",
+      "consoleErrors": [],
+      "imageStatus": [
+        {
+          "src": "assets/abarva-nav-dark-compact-28px-2x.png",
+          "complete": true,
+          "naturalWidth": 248,
+          "naturalHeight": 56
+        },
+        {
+          "src": "assets/01-home-meridian-cdao.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 992
+        },
+        {
+          "src": "assets/02-admin-context-layer-overview.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 3100
+        },
+        {
+          "src": "assets/05-admin-approval-queue.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 11531
+        },
+        {
+          "src": "assets/06-intelligence-brief.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1008
+        },
+        {
+          "src": "assets/07-intelligence-map.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1008
+        },
+        {
+          "src": "assets/09-intelligence-enterprise-context.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1008
+        },
+        {
+          "src": "assets/10-moves-portfolio.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 1301
+        },
+        {
+          "src": "assets/12-tower-portfolio.png",
+          "complete": true,
+          "naturalWidth": 1440,
+          "naturalHeight": 950
+        }
+      ],
+      "overflow": []
+    }
+  ]
+}

@@ -382,6 +382,52 @@ export function buildMeridianEnterpriseContextIngestionPlan(
   };
 }
 
+export function retargetEnterpriseContextIngestionPlan(
+  plan: EnterpriseContextIngestionPlan,
+  targetTenantKey: string,
+): EnterpriseContextIngestionPlan {
+  const tenantKey = targetTenantKey.trim();
+  if (!tenantKey) throw new Error('target_tenant_key_required');
+  if (tenantKey === plan.tenantKey) return plan;
+  const replaceTenantPrefix = (value: string) =>
+    value.startsWith(`${plan.tenantKey}:`) ? `${tenantKey}:${value.slice(plan.tenantKey.length + 1)}` : value;
+
+  return {
+    ...plan,
+    tenantKey,
+    sourceFiles: plan.sourceFiles.map((sourceFile) => ({
+      ...sourceFile,
+      sourceFileId: replaceTenantPrefix(sourceFile.sourceFileId),
+    })),
+    records: plan.records.map((record) => ({
+      ...record,
+      tenantKey,
+      canonicalRecordId: replaceTenantPrefix(record.canonicalRecordId),
+    })),
+    facts: plan.facts.map((fact) => ({
+      ...fact,
+      tenantKey,
+      canonicalRecordId: replaceTenantPrefix(fact.canonicalRecordId),
+      factKey: replaceTenantPrefix(fact.factKey),
+    })),
+    relationships: plan.relationships.map((relationship) => ({
+      ...relationship,
+      tenantKey,
+    })),
+    evidence: plan.evidence.map((evidence) => ({
+      ...evidence,
+      tenantKey,
+      evidenceKey: replaceTenantPrefix(evidence.evidenceKey),
+      canonicalRecordId: replaceTenantPrefix(evidence.canonicalRecordId),
+    })),
+    chunkQueue: plan.chunkQueue.map((queued) => ({
+      ...queued,
+      queueKey: replaceTenantPrefix(queued.queueKey),
+      canonicalRecordId: replaceTenantPrefix(queued.canonicalRecordId),
+    })),
+  };
+}
+
 function qualityIssuesForRow(
   row: EnterpriseContextCsvRow,
   sourceFile: string,

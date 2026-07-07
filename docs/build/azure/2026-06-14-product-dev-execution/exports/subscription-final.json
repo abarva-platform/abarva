@@ -1,0 +1,12 @@
+{
+  "authorizationSource": "RoleBased",
+  "displayName": "sub-abarva-product-dev-eus-001",
+  "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401",
+  "state": "Enabled",
+  "subscriptionId": "58eef48c-3ed6-48e6-9af4-de1848ad3401",
+  "subscriptionPolicies": {
+    "locationPlacementId": "Public_2014-09-01",
+    "quotaId": "PayAsYouGo_2014-09-01",
+    "spendingLimit": "Off"
+  }
+}

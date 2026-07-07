@@ -1,0 +1,98 @@
+[
+  {
+    "principalName": "admin_abarva.ai#EXT#@anandsundaramthesundaram.onmicrosoft.com",
+    "principalType": "User",
+    "roleDefinitionName": "Contributor",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20",
+    "principalId": "d770b649-9304-4783-a0b8-ad3e2822930d",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+  },
+  {
+    "principalName": "d86b8ae9-889c-43e7-9841-ecc98138acfb",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "Managed Identity Federated Identity Credential Contributor",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20",
+    "principalId": "e80e2bad-639e-4be5-a63b-ccbec31de2dd",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/7e559ce2-48d7-4b27-9128-fa1b247f1308"
+  },
+  {
+    "principalName": "8c84cffd-b638-48d7-9e9d-bb3e7530fb3e",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "Owner",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20",
+    "principalId": "f311efce-bf6b-43fd-8f4d-a4b8c5adba74",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+  },
+  {
+    "principalName": "anand.sundaram_thesundaram.com#EXT#@anandsundaramthesundaram.onmicrosoft.com",
+    "principalType": "User",
+    "roleDefinitionName": "Owner",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20",
+    "principalId": "dafa217b-8d21-4e15-9efb-40b9517bd959",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+  },
+  {
+    "principalName": "419ec65c-a393-4b33-a66e-51a1c49ea9d5",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "Container Apps Contributor",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus",
+    "principalId": "6928d484-5a06-4a7e-8a20-e49fff66d59f",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/358470bc-b998-42bd-ab17-a7e34c199c0f"
+  },
+  {
+    "principalName": "419ec65c-a393-4b33-a66e-51a1c49ea9d5",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "Contributor",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus",
+    "principalId": "6928d484-5a06-4a7e-8a20-e49fff66d59f",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+  },
+  {
+    "principalName": "52599ed7-f063-4972-a6a3-e27bc4ce0ba9",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "Contributor",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus",
+    "principalId": "a8a514d5-4349-463f-aa8a-0d5aa0317a5a",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+  },
+  {
+    "principalName": "8c84cffd-b638-48d7-9e9d-bb3e7530fb3e",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "Contributor",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus",
+    "principalId": "f311efce-bf6b-43fd-8f4d-a4b8c5adba74",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+  },
+  {
+    "principalName": "419ec65c-a393-4b33-a66e-51a1c49ea9d5",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "AcrPush",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
+    "principalId": "6928d484-5a06-4a7e-8a20-e49fff66d59f",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec"
+  },
+  {
+    "principalName": "419ec65c-a393-4b33-a66e-51a1c49ea9d5",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "Contributor",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
+    "principalId": "6928d484-5a06-4a7e-8a20-e49fff66d59f",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+  },
+  {
+    "principalName": "3b6e0c9d-2265-499f-af46-965e0ad78b95",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "AcrPull",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourcegroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
+    "principalId": "42f131d5-a0da-4d66-83f9-fe3769acc017",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d"
+  },
+  {
+    "principalName": "8c84cffd-b638-48d7-9e9d-bb3e7530fb3e",
+    "principalType": "ServicePrincipal",
+    "roleDefinitionName": "AcrPush",
+    "scope": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourcegroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
+    "principalId": "f311efce-bf6b-43fd-8f4d-a4b8c5adba74",
+    "roleDefinitionId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec"
+  }
+]

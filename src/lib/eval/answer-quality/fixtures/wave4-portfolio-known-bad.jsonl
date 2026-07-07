@@ -1,0 +1,3 @@
+{"id":"wave4-bad-signal","tenantKey":"apexretail","surface":"tower","answer":"The blocker is signal:39901c16-2e8b-4c8c-80aa-8a0182f26754 and the user should consider reviewing it later."}
+{"id":"wave4-bad-raw-program","tenantKey":"skyharbor","surface":"sentinel","answer":"Run SKY-CREW-RECOVERY after SKY-MAINFRAME-EXTRACT; keep an eye on tenant_id and update if needed."}
+{"id":"wave4-bad-vague","tenantKey":"meridian","surface":"sentinel","answer":"There are some issues in the portfolio. Consider exploring the sequence and circle back."}

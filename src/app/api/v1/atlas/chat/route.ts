@@ -1,9 +1,13 @@
-import { NextRequest } from 'next/server';
-import { requireAtlasTenancy, tenancyErrorResponse } from '@/app/api/v1/atlas/_auth';
-import { runAtlasTurn } from '@/lib/atlas/orchestrator';
+import { NextRequest } from "next/server";
+import {
+  requireAtlasTenancy,
+  tenancyErrorResponse,
+} from "@/app/api/v1/atlas/_auth";
+import { runAtlasTurn } from "@/lib/atlas/orchestrator";
+import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +22,10 @@ export async function POST(req: NextRequest) {
     const ctx = await requireAtlasTenancy(body.clientId);
     const message = body.message?.trim();
     if (!message) {
-      return Response.json({ error: 'bad_request', detail: 'message required' }, { status: 400 });
+      return Response.json(
+        { error: "bad_request", detail: "message required" },
+        { status: 400 },
+      );
     }
 
     const result = await runAtlasTurn({
@@ -29,16 +36,33 @@ export async function POST(req: NextRequest) {
       surfaceContext: body.surfaceContext,
     });
 
+    const visibleContract = assertVisibleAnswerContract(result.response);
+    if (!visibleContract.passed) {
+      return Response.json(
+        {
+          error: "visible_answer_contract_failed",
+          detail:
+            "aVa blocked this answer before display because it exposed non-user-facing answer language.",
+          version: visibleContract.version,
+          violations: visibleContract.violations,
+        },
+        { status: 422 },
+      );
+    }
+
     return Response.json(result, {
       headers: {
-        'x-atlas-mode': result.atlasMode,
+        "x-atlas-mode": result.atlasMode,
       },
     });
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
     } catch {
-      return Response.json({ error: 'internal_error', message: (err as Error).message }, { status: 500 });
+      return Response.json(
+        { error: "internal_error", message: (err as Error).message },
+        { status: 500 },
+      );
     }
   }
 }

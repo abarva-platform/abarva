@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moves Board-Grade Deliverable Standard — Implementation Report</title>
+    <style>
+      :root { --bg:#f8f7f4; --ink:#1a1a18; --muted:#5a6472; --line:#e3e6eb; --navy:#1b2b5c; --green:#1e7e34; --amber:#b26a00; --red:#b71c1c; }
+      * { box-sizing: border-box; }
+      body { background: var(--bg); color: var(--ink); font-family: "DM Sans", -apple-system, system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 56px 28px 96px; line-height: 1.55; }
+      h1, h2, h3 { font-family: Georgia, serif; font-weight: 400; }
+      h1 { font-size: 32px; margin: 0 0 6px; }
+      h2 { font-size: 21px; margin: 40px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+      h3 { font-size: 16px; margin: 24px 0 6px; }
+      .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+      code { font-family: Menlo, monospace; font-size: 12.5px; background: #eef0f3; padding: 1px 5px; border-radius: 3px; }
+      table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+      td, th { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+      th { background: #f1f2f4; font-weight: 600; }
+      ul { margin: 8px 0; padding-left: 22px; } li { margin: 4px 0; }
+      .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+      .ok { background: #e6f4ea; color: var(--green); }
+      .warn { background: #fff4e5; color: var(--amber); }
+      .flow { background: #eef0f3; border-radius: 8px; padding: 14px 18px; font-family: Menlo, monospace; font-size: 12.5px; line-height: 1.9; color: var(--navy); }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <h1>Moves Board-Grade Deliverable Standard</h1>
+    <div class="sub">
+      How AbarVa turns a language model into a deliverable factory — multi-pass
+      generation, governed evidence, a quality gate, and a board-grade render.
+    </div>
+
+    <h2>1. The shift</h2>
+    <p>
+      A language model can write well, but prose is not a deliverable. A
+      board-grade artifact is <em>controlled</em>: every client fact is sourced,
+      no internal plumbing leaks into client-facing text, the structure is
+      complete, claims without evidence are flagged rather than fabricated, and
+      the document is rendered to a real Office file with a title page, revision
+      history, table of contents, and source register. AbarVa wraps the model in
+      that control.
+    </p>
+
+    <h2>2. The pipeline</h2>
+    <div class="flow">
+      governed evidence bundle (committed facts, tenant-scoped)<br />
+      &nbsp;&nbsp;&darr; source-label mapping &mdash; [n] citations + Source Register<br />
+      Orchestrator &mdash; multi-pass<br />
+      &nbsp;&nbsp;&nbsp;&nbsp;1. architect &mdash; section plan + expected exhibits<br />
+      &nbsp;&nbsp;&nbsp;&nbsp;2. draft &mdash; expert latitude, grounded in evidence<br />
+      &nbsp;&nbsp;&nbsp;&nbsp;3. red-team &mdash; critique + rewrite<br />
+      &nbsp;&nbsp;&darr;<br />
+      Quality Gate &mdash; hard-blocks tag leakage / missing register /<br />
+      &nbsp;&nbsp;&nbsp;&nbsp;unsupported claims / missing sections + tables<br />
+      &nbsp;&nbsp;&darr; pass<br />
+      Render &mdash; DOCX (title page, revision history, TOC, headers, tables) + HTML<br />
+      &nbsp;&nbsp;&darr;<br />
+      Artifact Vault &mdash; Azure Blob + move_artifacts (versioned)
+    </div>
+
+    <h2>3. Governed evidence, never invented facts</h2>
+    <p>
+      Client facts come only from the committed, tenant-scoped evidence bundle.
+      Each is rendered as a numbered citation <code>[n]</code> resolved in a
+      <strong>Source Register</strong> at the foot of the document. Where a needed
+      input is absent, the generator writes <code>[MISSING EVIDENCE]</code> or a
+      <code>client-to-complete</code> placeholder — it does not manufacture a
+      number to fill the gap. Attested intake (Diagnose / Design questions the
+      client answered) enters the same governed path as cited claims.
+    </p>
+
+    <h2>4. The quality gate (hard blocks)</h2>
+    <table>
+      <tr><th>Check</th><th>Why it blocks</th></tr>
+      <tr><td>Internal-tag leakage</td><td>No <code>document_extract:*</code>, <code>tower_*</code>, <code>enterprise_context_*</code>, <code>chunk_id</code>, <code>fact_key</code>, raw table names, or retrieval labels may appear in client text.</td></tr>
+      <tr><td>Missing Source Register</td><td>Every cited claim must resolve to a register entry.</td></tr>
+      <tr><td>Unsupported claims</td><td>Quantified or material claims without a citation are flagged and counted; a clean board-grade pass drives this toward zero.</td></tr>
+      <tr><td>Missing sections / tables</td><td>The section contract for the deliverable type must be satisfied (exhibits present).</td></tr>
+      <tr><td>Title / client-to-complete hygiene</td><td>Proper title page; placeholders are explicit, never silent.</td></tr>
+    </table>
+    <p class="muted">
+      A deliverable that fails the gate is stored as <code>preliminary</code> (not
+      <code>board_ready</code>) — the system never presents unfinished output as
+      complete.
+    </p>
+
+    <h2>5. The ROI rule — Business Case derives, never authors</h2>
+    <p>
+      The Business Case does not invent ROI. It is the terminal node of the
+      consulting story-arc — Discovery → Solution Approach → Roadmap → Estimates →
+      Value Model → Business Case — and its numbers derive from the
+      <strong>approved</strong> upstream estimates and value model. Absent those,
+      the Business Case is <code>preliminary</code> / <code>blocked</code>, not
+      board-ready. No fabricated ROI ever reaches a board packet.
+    </p>
+
+    <h2>6. Render standard</h2>
+    <ul>
+      <li><strong>DOCX</strong>: title page, revision history, table of contents, running headers/footers, page numbers, formatted tables, 11pt body.</li>
+      <li><strong>HTML</strong>: faithful preview for in-app review.</li>
+      <li><strong>XLSX</strong>: estimate / value worksheets where the deliverable is a model.</li>
+      <li>Format follows intent; the same governed object renders to multiple formats.</li>
+    </ul>
+
+    <h2>7. Hard rules honored</h2>
+    <ul>
+      <li>No internal tags in client-facing documents. <span class="pill ok">gate-enforced</span></li>
+      <li>No unsupported claims. <span class="pill ok">gate-enforced</span></li>
+      <li>Do not fabricate ROI. <span class="pill ok">enforced</span></li>
+      <li>No board-ready Business Case without approved estimates/value. <span class="pill ok">enforced</span></li>
+      <li>No raw Claude prompt without a governed context bundle. <span class="pill ok">enforced</span></li>
+      <li>Do not over-constrain the model into mediocrity — expert latitude inside the contract. <span class="pill ok">by design</span></li>
+    </ul>
+  </body>
+</html>

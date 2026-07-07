@@ -101,19 +101,19 @@ function read(file: string): string {
 }
 
 // ---------------------------------------------------------------------
-// 1. Canonical brand component exists and is wordmark-only
+// 1. Canonical brand component exists and uses the Option 2 asset
 // ---------------------------------------------------------------------
 
-describe('NAV1F · canonical AbarVaLogo wordmark-only', () => {
+describe('NAV1F · canonical AbarVaLogo Option 2', () => {
   it('AbarVaLogo component exists at the canonical path', () => {
     expect(existsSync(r('src/components/brand/AbarVaLogo.tsx'))).toBe(true);
   });
 
   it('AbarVaLogo file points at the canonical SVG asset', () => {
-    expect(read('src/components/brand/AbarVaLogo.tsx')).toContain('/brand/abarva-logo.svg');
+    expect(read('src/components/brand/AbarVaLogo.tsx')).toContain('/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg');
   });
 
-  it('AbarVaLogo file does not inline an SVG path / symbol', () => {
+  it('AbarVaLogo file does not inline SVG markup', () => {
     const src = read('src/components/brand/AbarVaLogo.tsx');
     expect(src).not.toMatch(/<svg/i);
     expect(src).not.toMatch(/<symbol/i);
@@ -126,7 +126,7 @@ describe('NAV1F · canonical AbarVaLogo wordmark-only', () => {
   });
 
   it('canonical SVG asset exists', () => {
-    expect(existsSync(r('public/brand/abarva-logo.svg'))).toBe(true);
+    expect(existsSync(r('public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg'))).toBe(true);
   });
 });
 

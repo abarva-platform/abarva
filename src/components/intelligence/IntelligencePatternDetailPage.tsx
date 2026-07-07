@@ -535,7 +535,7 @@ function ActionCanvasSection({
         data-testid="intelligence-action-canvas-disclaimer"
         data-honest-disclaimer="intelligence-action-canvas"
       >
-        Deterministic seed · Action canvas reflects fixture context for the Apex Retail engagement.
+        Deterministic seed · Action canvas reflects fixture context for the active engagement.
         Live action tracking and deadline management are deferred to the programme action management module.
       </div>
     </div>
@@ -546,10 +546,12 @@ function ActionCanvasSection({
 
 interface IntelligencePatternDetailPageProps {
   view: IntelligencePatternDetailView;
+  tenantName: string;
 }
 
 export function IntelligencePatternDetailPage({
   view,
+  tenantName,
 }: IntelligencePatternDetailPageProps) {
   const tierMeta = TIER_MAP[view.tier];
   const statusMeta = STATUS_MAP[view.status];
@@ -558,7 +560,7 @@ export function IntelligencePatternDetailPage({
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: `Intelligence · ${view.patternKey} · ${view.patternName}`,
       }}

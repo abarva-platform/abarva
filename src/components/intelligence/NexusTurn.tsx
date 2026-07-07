@@ -1,39 +1,43 @@
-'use client';
+"use client";
 
-import type { NexusTurnData } from '@/lib/intelligence/types';
-import { PersonaLensChip } from './PersonaLensChip';
-import { CohortCard } from './CohortCard';
-import { SourcePill } from './SourcePill';
-import { OneSentence } from './formats/OneSentence';
-import { Matrix } from './formats/Matrix';
-import { Crux } from './formats/Crux';
-import { RankedList } from './formats/RankedList';
-import { Artifact } from './formats/Artifact';
-import { Clarification } from './formats/Clarification';
-import { CounterPair } from './formats/CounterPair';
-import { IDontKnow } from './formats/IDontKnow';
+import type { NexusTurnData } from "@/lib/intelligence/types";
+import { PersonaLensChip } from "./PersonaLensChip";
+import { CohortCard } from "./CohortCard";
+import { SourcePill } from "./SourcePill";
+import { OneSentence } from "./formats/OneSentence";
+import { Matrix } from "./formats/Matrix";
+import { Crux } from "./formats/Crux";
+import { RankedList } from "./formats/RankedList";
+import { Artifact } from "./formats/Artifact";
+import { Clarification } from "./formats/Clarification";
+import { CounterPair } from "./formats/CounterPair";
+import { IDontKnow } from "./formats/IDontKnow";
 
 function renderFormat(
   turn: NexusTurnData,
   onPersonaApply?: (personaKey: string) => void,
-  onArtifactAction?: (action: 'download_pdf' | 'download_html' | 'copy' | 'promote') => void,
+  onArtifactAction?: (
+    action: "download_pdf" | "download_html" | "copy" | "promote",
+  ) => void,
 ) {
   switch (turn.format) {
-    case 'matrix':
+    case "matrix":
       return <Matrix payload={turn.payload} />;
-    case 'crux':
+    case "crux":
       return <Crux payload={turn.payload} />;
-    case 'ranked_list':
+    case "ranked_list":
       return <RankedList payload={turn.payload} />;
-    case 'artifact':
+    case "artifact":
       return <Artifact payload={turn.payload} onAction={onArtifactAction} />;
-    case 'clarification':
-      return <Clarification payload={turn.payload} onOptionTap={onPersonaApply} />;
-    case 'counter_pair':
+    case "clarification":
+      return (
+        <Clarification payload={turn.payload} onOptionTap={onPersonaApply} />
+      );
+    case "counter_pair":
       return <CounterPair payload={turn.payload} />;
-    case 'idk':
+    case "idk":
       return <IDontKnow payload={turn.payload} />;
-    case 'one_sentence':
+    case "one_sentence":
     default:
       return <OneSentence payload={turn.payload} />;
   }
@@ -48,38 +52,64 @@ export function NexusTurn({
   turn: NexusTurnData;
   onPersonaApply?: (personaKey: string) => void;
   onCounterRequest?: () => void;
-  onArtifactAction?: (action: 'download_pdf' | 'download_html' | 'copy' | 'promote') => void;
+  onArtifactAction?: (
+    action: "download_pdf" | "download_html" | "copy" | "promote",
+  ) => void;
 }) {
-  const personaOptions = ['CFO', 'CIO', 'CMIO', 'Sponsor'];
+  const personaOptions = ["CFO", "CIO", "CMIO", "Sponsor"];
 
-  if (turn.role === 'user') {
+  if (turn.role === "user") {
     return (
       <article className="intel-turn user" role="article">
         <div className="intel-turn-header">
           <div className="intel-chip mono">you</div>
           <div className="intel-subtle" style={{ fontSize: 12 }}>
-            {new Date(turn.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+            {new Date(turn.createdAt).toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            })}
           </div>
         </div>
         <div style={{ marginTop: 12, fontSize: 16, lineHeight: 1.65 }}>
-          {turn.payload.answer ?? turn.payload.hero ?? ''}
+          {turn.payload.answer ?? turn.payload.hero ?? ""}
         </div>
       </article>
     );
   }
 
   return (
-    <article className="intel-turn nexus" role="article" aria-label={`Nexus ${turn.mode ?? 'answer'} ${turn.format ?? 'format'}`}>
+    <article
+      className="intel-turn nexus"
+      role="article"
+      aria-label={`Ava ${turn.mode ?? "answer"} ${turn.format ?? "format"}`}
+    >
       <div className="intel-turn-header">
         <div className="intel-inline-list">
-          <span className="intel-chip mono teal">Nexus</span>
-          {turn.mode ? <span className={`intel-chip mono ${turn.mode === 'grounded' ? 'green' : turn.mode === 'pivot' ? 'amber' : 'teal'}`}>{turn.mode}</span> : null}
-          {turn.format ? <span className="intel-chip mono">{turn.format.replace('_', ' ')}</span> : null}
-          {turn.confidence ? <span className="intel-chip mono">{turn.confidence}</span> : null}
-          {turn.personaKey ? <span className="intel-chip mono blue">{turn.personaKey}</span> : null}
+          <span className="intel-chip mono teal">Ava</span>
+          {turn.mode ? (
+            <span
+              className={`intel-chip mono ${turn.mode === "grounded" ? "green" : turn.mode === "pivot" ? "amber" : "teal"}`}
+            >
+              {turn.mode}
+            </span>
+          ) : null}
+          {turn.format ? (
+            <span className="intel-chip mono">
+              {turn.format.replace("_", " ")}
+            </span>
+          ) : null}
+          {turn.confidence ? (
+            <span className="intel-chip mono">{turn.confidence}</span>
+          ) : null}
+          {turn.personaKey ? (
+            <span className="intel-chip mono blue">{turn.personaKey}</span>
+          ) : null}
         </div>
         <div className="intel-subtle" style={{ fontSize: 12 }}>
-          {new Date(turn.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+          {new Date(turn.createdAt).toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          })}
         </div>
       </div>
 
@@ -98,7 +128,9 @@ export function NexusTurn({
 
       {turn.personaKey ? (
         <div className="intel-pushback" style={{ marginTop: 12 }}>
-          <div className="intel-chip mono blue">same sources, re-weighted only</div>
+          <div className="intel-chip mono blue">
+            same sources, re-weighted only
+          </div>
         </div>
       ) : null}
 
@@ -113,16 +145,34 @@ export function NexusTurn({
             ))}
           </div>
         </div>
+      ) : turn.format !== "clarification" && turn.format !== "idk" ? (
+        <div className="intel-pushback" style={{ marginTop: 14 }} role="note">
+          <div className="intel-chip mono amber">citation gap</div>
+          <div className="intel-subtle" style={{ marginTop: 8, fontSize: 13 }}>
+            This answer is not grounded in retrieved sources. Treat it as
+            reasoning, not evidence — ask for the underlying data to ground it.
+          </div>
+        </div>
       ) : null}
 
       <div className="intel-turn-footer" style={{ marginTop: 14 }}>
         <div className="intel-inline-list">
           {personaOptions.map((persona) => (
-            <PersonaLensChip key={persona} persona={persona} active={turn.personaKey === persona} onClick={() => onPersonaApply?.(persona)} />
+            <PersonaLensChip
+              key={persona}
+              persona={persona}
+              active={turn.personaKey === persona}
+              onClick={() => onPersonaApply?.(persona)}
+            />
           ))}
         </div>
         <div className="intel-inline-list">
-          <button type="button" className="intel-button-outline" onClick={onCounterRequest} disabled={!onCounterRequest}>
+          <button
+            type="button"
+            className="intel-button-outline"
+            onClick={onCounterRequest}
+            disabled={!onCounterRequest}
+          >
             Counter
           </button>
         </div>

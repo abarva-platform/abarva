@@ -283,26 +283,95 @@ function renderTargetArchitecture(arch: MoveSolutionArchitecture): string {
     )
     .join('');
 
+  const foundationClause =
+    s.foundation.length > 0
+      ? ` It rests on an adopted platform foundation of ${s.foundation.length} ` +
+        `components — landing zone, ingestion, medallion data products, ` +
+        `governed serving and the governance spine — shown below as adopted, ` +
+        `never ranked or rejected.`
+      : '';
+
   const hero =
     lede(
       `The target-state architecture is built from ${s.patterns.length} ` +
-        `curated reference solution patterns. Every pattern names its ` +
+        `curated reference solution options. Every option names its ` +
         `boundary — what it owns and what it explicitly does not — and a ` +
-        `named human accountability point.`,
+        `named human accountability point.` +
+        foundationClause,
     ) +
     heroExhibitHtml(
-      'Exhibit 3 — The curated reference solution patterns',
+      'Exhibit 3 — The curated reference solution options',
       `<div class="pattern-cards">${cards}</div>`,
     ) +
     detail(
-      'Reference-pattern table — pattern, control posture, accountability',
+      'Reference-option table — option, control posture, accountability',
       `<table class="data-table">` +
-        `<thead><tr><th>Reference pattern</th><th>Control posture</th>` +
+        `<thead><tr><th>Reference option</th><th>Control posture</th>` +
         `<th>Human accountability point</th></tr></thead>` +
         `<tbody>${rows}</tbody>` +
         `</table>`,
-    );
+    ) +
+    renderFoundationExhibit(s.foundation);
   return slide(s.anatomy, arch.moveLabel, 4, hero);
+}
+
+/**
+ * The "Adopted platform foundation" exhibit — the foundation-tagged patterns
+ * (landing zone, ingestion, medallion, governed serving, governance spine)
+ * rendered as ADOPTED components. They are visually distinct from the option
+ * scorecard (a blue "Adopted" treatment, never the red "rejected" treatment)
+ * and carry no selected/rejected disposition. Renders nothing when the pack
+ * carries no foundation patterns (fully back-compatible).
+ */
+function renderFoundationExhibit(
+  foundation: MoveSolutionArchitecture['sections']['targetArchitecture']['foundation'],
+): string {
+  if (foundation.length === 0) return '';
+
+  const cards = foundation
+    .map(
+      (f) =>
+        `<div class="pattern-card pattern-foundation">` +
+        `<div class="pattern-name">${esc(f.name)} ` +
+        `<span class="chip-found">Adopted foundation</span>` +
+        `<span class="chip chip-warn">${esc(
+          postureLabel(f.controlPosture),
+        )}</span>` +
+        `</div>` +
+        `<div class="pattern-detail"><strong>Boundary —</strong> ${esc(
+          f.boundary,
+        )}</div>` +
+        `<div class="pattern-detail"><strong>Human accountability —</strong> ${esc(
+          f.humanAccountabilityPoint,
+        )}</div>` +
+        `</div>`,
+    )
+    .join('');
+
+  return (
+    heroExhibitHtml(
+      'Exhibit 3b — Adopted platform foundation (cross-cutting, not an option)',
+      `<div class="pattern-cards">${cards}</div>`,
+    ) +
+    detail(
+      'Adopted-foundation table — component, control posture, accountability',
+      `<table class="data-table">` +
+        `<thead><tr><th>Foundation component</th><th>Control posture</th>` +
+        `<th>Human accountability point</th></tr></thead>` +
+        `<tbody>${foundation
+          .map(
+            (f) =>
+              `<tr>` +
+              `<td><strong>${esc(f.name)}</strong> ` +
+              `<span class="chip-found">Adopted</span></td>` +
+              `<td>${esc(postureLabel(f.controlPosture))}</td>` +
+              `<td>${esc(f.humanAccountabilityPoint)}</td>` +
+              `</tr>`,
+          )
+          .join('')}</tbody>` +
+        `</table>`,
+    )
+  );
 }
 
 // ===========================================================================
@@ -600,6 +669,13 @@ function archStyles(): string {
 }
 .pattern-rejected { border-left: 3px solid #8B1F0F; background: #fdf6e8; }
 .pattern-selected { border-left: 3px solid #2f6b3f; background: #f3f7f1; }
+.pattern-foundation { border-left: 3px solid #2c4a6e; background: #f1f4f8; }
+.chip-found {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px;
+  border-radius: 999px; border: 1px solid #2c4a6e; background: #e3eaf3;
+  color: #2c4a6e;
+}
 .pattern-name {
   font-size: 12.5px; font-weight: 800; color: #1c1a17; line-height: 1.35;
   display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap;

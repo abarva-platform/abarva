@@ -251,6 +251,8 @@ export interface SourcingEventSummary {
   currentStageLabel: string;
   openAlerts: number;
   owner: string;
+  decisionOwner?: string | null;
+  createdByUserId?: string | null;
   agingDays: number;
   blocker: string | null;
   nextAction: string;
@@ -259,6 +261,8 @@ export interface SourcingEventSummary {
   projectedValueUsd: number;
   realizedValueUsd: number;
   nextDecision: string;
+  /** Deterministic categoryId from classifySourcingEvent stored at intake (Slice 1.1). Null for events pre-dating this slice. */
+  classifiedCategory?: string | null;
 }
 
 export interface SourcingEventDetail extends SourcingEventSummary {

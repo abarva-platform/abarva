@@ -16,35 +16,37 @@
 // the API layer can return a 400 rather than handing the user the
 // wrong format.
 
-import type { DeliverableFormat, SourceDeliverableKind } from './types';
+import type { DeliverableFormat, SourceDeliverableKind } from "./types";
 
 /** Default format per Source deliverable kind, matches what we ship today. */
 const DEFAULT_FORMAT: Record<SourceDeliverableKind, DeliverableFormat> = {
   // Narrative artifacts default to docx (offline-edit + share).
-  'scope-memo': 'docx',
-  'rfp-package': 'docx',
-  'decision-brief': 'docx',
-  'selection-memo': 'docx',
+  "strategy-memo": "docx",
+  "scope-memo": "docx",
+  "rfp-package": "docx",
+  "vendor-response-pack": "docx",
+  "decision-brief": "docx",
+  "selection-memo": "docx",
   // Structured-data artifacts default to xlsx (the in-place editing
   // surface buyers actually use).
-  'app-inventory': 'xlsx',
-  'response-checklist': 'xlsx',
-  'scorecard': 'xlsx',
-  'pricing-template': 'xlsx',
-  'pricing-comparison': 'xlsx',
-  'trap-log': 'xlsx',
-  'bafo-question-pack': 'xlsx',
+  "app-inventory": "xlsx",
+  "response-checklist": "xlsx",
+  scorecard: "xlsx",
+  "pricing-template": "xlsx",
+  "pricing-comparison": "xlsx",
+  "trap-log": "xlsx",
+  "bafo-question-pack": "xlsx",
   // Lifecycle-coverage wave. Narrative kinds default to docx; the
   // structured ones (market-scan, TCO iceberg, ai-clause-gap, renewal-
   // decision) default to xlsx because their canonical working surface
   // is a workbook.
-  'demand-challenge': 'docx',
-  'sourcing-approach': 'docx',
-  'market-scan': 'xlsx',
-  'tco-iceberg': 'xlsx',
-  'ai-clause-gap': 'xlsx',
-  'vendor-risk-pack': 'docx',
-  'renewal-decision': 'xlsx',
+  "demand-challenge": "docx",
+  "sourcing-approach": "docx",
+  "market-scan": "xlsx",
+  "tco-iceberg": "xlsx",
+  "ai-clause-gap": "xlsx",
+  "vendor-risk-pack": "docx",
+  "renewal-decision": "xlsx",
 };
 
 /**
@@ -64,17 +66,19 @@ const ALLOWED_FORMATS: Record<
   SourceDeliverableKind,
   ReadonlyArray<DeliverableFormat>
 > = {
-  'scope-memo': ['docx', 'html', 'pdf'],
-  'rfp-package': ['docx', 'html', 'pdf'],
-  'decision-brief': ['docx', 'html', 'pdf'],
-  'selection-memo': ['docx', 'html', 'pdf'],
-  'app-inventory': ['xlsx', 'docx', 'pdf'],
-  'response-checklist': ['xlsx', 'docx', 'pdf'],
-  'scorecard': ['xlsx', 'docx', 'pdf'],
-  'pricing-template': ['xlsx', 'docx', 'pdf'],
-  'pricing-comparison': ['xlsx', 'docx', 'pdf'],
-  'trap-log': ['xlsx', 'docx', 'pdf'],
-  'bafo-question-pack': ['xlsx', 'docx', 'pdf'],
+  "strategy-memo": ["docx", "html", "pdf"],
+  "scope-memo": ["docx", "html", "pdf"],
+  "rfp-package": ["docx", "html", "pdf"],
+  "vendor-response-pack": ["docx", "html", "pdf"],
+  "decision-brief": ["docx", "html", "pdf"],
+  "selection-memo": ["docx", "html", "pdf"],
+  "app-inventory": ["xlsx", "docx", "pdf"],
+  "response-checklist": ["xlsx", "docx", "pdf"],
+  scorecard: ["xlsx", "docx", "pdf"],
+  "pricing-template": ["xlsx", "docx", "pdf", "html"],
+  "pricing-comparison": ["xlsx", "docx", "pdf"],
+  "trap-log": ["xlsx", "docx", "pdf"],
+  "bafo-question-pack": ["xlsx", "docx", "pdf"],
   // Lifecycle-coverage wave. Matches the per-stage content:
   // Demand Challenge, Sourcing Approach, Vendor Risk Pack = narrative
   //   (docx + pdf — no xlsx working grid)
@@ -82,13 +86,13 @@ const ALLOWED_FORMATS: Record<
   //   structured (xlsx canonical) + docx + pdf
   // The AI Clause Gap also has html because it ships as a sharable
   // checklist link the panel can review without a download.
-  'demand-challenge': ['docx', 'pdf'],
-  'sourcing-approach': ['docx', 'pdf'],
-  'market-scan': ['xlsx', 'docx', 'pdf'],
-  'tco-iceberg': ['xlsx', 'docx', 'pdf'],
-  'ai-clause-gap': ['xlsx', 'docx', 'pdf', 'html'],
-  'vendor-risk-pack': ['docx', 'pdf'],
-  'renewal-decision': ['xlsx', 'docx', 'pdf'],
+  "demand-challenge": ["docx", "pdf"],
+  "sourcing-approach": ["docx", "pdf"],
+  "market-scan": ["xlsx", "docx", "pdf"],
+  "tco-iceberg": ["xlsx", "docx", "pdf"],
+  "ai-clause-gap": ["xlsx", "docx", "pdf", "html"],
+  "vendor-risk-pack": ["docx", "pdf"],
+  "renewal-decision": ["xlsx", "docx", "pdf"],
 };
 
 /**
@@ -112,14 +116,16 @@ export function routeFormat(
   if (!allowed.includes(requestedFormat)) {
     throw new Error(
       `Format "${requestedFormat}" is not allowed for kind "${kind}". ` +
-        `Allowed formats: ${allowed.join(', ')}.`,
+        `Allowed formats: ${allowed.join(", ")}.`,
     );
   }
   return requestedFormat;
 }
 
 /** Read-only accessor — used by docs / tests / coverage reports. */
-export function getDefaultFormat(kind: SourceDeliverableKind): DeliverableFormat {
+export function getDefaultFormat(
+  kind: SourceDeliverableKind,
+): DeliverableFormat {
   return DEFAULT_FORMAT[kind];
 }
 

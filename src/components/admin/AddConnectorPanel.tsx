@@ -719,8 +719,8 @@ export function AddConnectorPanel({
                       border: '1px solid rgba(122,79,1,0.25)',
                     }}
                   >
-                    Would test connection · placeholder until the
-                    connector-health RPC lands (Wave 2 PR-1).
+                    Connection test is queued until the live connector health
+                    service is enabled.
                   </div>
                 )}
 

@@ -7,6 +7,7 @@ import {
   scopeAiEgressRowsToClient,
   summarizeAiEgressRows,
   summarizeUsageFromAiEgressRows,
+  summarizeWeeklyUsageReportFromAiEgressRows,
   type AiEgressAuditRow,
 } from '../customer-admin-read-model';
 
@@ -25,6 +26,17 @@ const rows: AiEgressAuditRow[] = [
       inputTokens: 1200,
       outputTokens: 300,
       costUsd: 0.0081,
+      usageCap: {
+        usage_cap_decision: 'alert',
+        usage_cap_reason: 'token_alert_threshold_reached',
+        usage_cap_period: 'monthly',
+        usage_cap_token_cap: 2000,
+        usage_cap_tokens_after: 1500,
+        usage_cap_token_percent_after: 75,
+        usage_cap_alert_at_percent: 70,
+        usage_cap_block_at_percent: 100,
+        usage_cap_blocks_model_call: false,
+      },
     },
     error_message: null,
     created_at: '2026-05-30T12:00:00.000Z',
@@ -131,5 +143,34 @@ describe('C4 customer-admin read model', () => {
       estimatedCostUsd: null,
       costBasis: 'not_metered',
     });
+  });
+
+  it('builds a tenant-scoped weekly usage report with cap alert posture', () => {
+    const report = summarizeWeeklyUsageReportFromAiEgressRows(rows, 'client-apex');
+
+    expect(report.calls).toBe(2);
+    expect(report.totalTokens).toBe(2300);
+    expect(report.estimatedCostUsd).toBe(0.0083);
+    expect(report.tokenCap).toBe(2000);
+    expect(report.tokenPercentOfCap).toBe(75);
+    expect(report.capDecision).toBe('alert');
+    expect(report.status).toBe('cap_alert');
+    expect(report.reportReady).toBe(true);
+    expect(report.includedMonthlyTokenAllowance).toBe(50_000_000);
+    expect(report.overageRateUsdPerMillionTokens).toBe(18);
+    expect(report.evidenceBasis).toBe('usage_cap_audit_metadata');
+  });
+
+  it('does not make a client report ready without usage-cap evidence', () => {
+    const report = summarizeWeeklyUsageReportFromAiEgressRows(
+      rows.map((row) => ({ ...row, request_metadata: { inputTokens: 100, outputTokens: 50, costUsd: 0.01 } })),
+      'client-apex',
+    );
+
+    expect(report.totalTokens).toBe(300);
+    expect(report.status).toBe('needs_cap_configuration');
+    expect(report.reportReady).toBe(false);
+    expect(report.customerNotice).toContain('no tenant usage-cap audit metadata');
+    expect(report.evidenceBasis).toBe('provider_metadata_only');
   });
 });

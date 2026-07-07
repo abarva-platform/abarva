@@ -40,7 +40,10 @@ function milestoneBatchKey(milestone: CreateMilestoneInput): string {
 export const createMilestonesTool: AgentTool<CreateMilestonesInput> = {
   name: 'create_milestones',
   description:
-    'Create structured program milestone rows for an existing program. Use this after drafting a P4 execution roadmap when the roadmap names critical milestones, owners, dependencies, decision points, and evidence sources. Do not use this for vague narrative bullets; each milestone needs a concrete name and description.',
+    'Create structured program milestone rows for an existing program. Use this only after the user explicitly ' +
+    'asks to save the roadmap milestones or confirms the milestone set should be persisted. The P4 execution ' +
+    'roadmap must name critical milestones, owners, dependencies, decision points, and evidence sources. Do not ' +
+    'use this for vague narrative bullets; each milestone needs a concrete name and description.',
   surfaces: ['/programs/:id'],
   input_schema: {
     type: 'object',

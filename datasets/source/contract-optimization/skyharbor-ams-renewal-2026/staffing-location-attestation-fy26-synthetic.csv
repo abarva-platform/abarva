@@ -1,0 +1,4 @@
+source_type,label,tenant_key,tower,committed_fte,observed_fte,location_mix,coverage,evidence_reference
+synthetic_demo,Synthetic demo evidence,skyharbor-air,Airline operations apps,54,48,"US 38%; India 52%; nearshore 10%",partial weekend gap,Staffing exhibit FY26 months 1-12
+synthetic_demo,Synthetic demo evidence,skyharbor-air,Corporate shared services,38,36,"US 28%; India 62%; nearshore 10%",verified weekday coverage,Staffing exhibit FY26 months 1-12
+synthetic_demo,Synthetic demo evidence,skyharbor-air,Data and integration support,22,18,"US 32%; India 68%",unverified overnight escalation,Staffing exhibit FY26 months 1-12

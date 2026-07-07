@@ -208,7 +208,7 @@ export function SourceValueLedger({
       <section style={SOURCE_CARD} aria-label="Atlas value ledger shell">
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ ...PERSPECTIVE_LABEL, color: '#1D4F8C', marginBottom: 6 }}>Atlas value ledger lead</div>
+            <div style={{ ...PERSPECTIVE_LABEL, color: '#1D4F8C', marginBottom: 6 }}>Ava value ledger lead</div>
             <h2 style={{ fontFamily: SHELL.SERIF, color: SHELL.INK, fontSize: 30, margin: 0 }}>
               Source value ledger
             </h2>
@@ -371,7 +371,7 @@ export function SourceValueLedger({
                     id="value-custom-input"
                     type="text"
                     readOnly
-                    placeholder="Ask Atlas about this value ledger, gate, event, or evidence..."
+                    placeholder="Ask aVa about this value ledger, gate, event, or evidence..."
                     style={{
                       fontFamily: SHELL.SANS,
                       fontSize: 14,

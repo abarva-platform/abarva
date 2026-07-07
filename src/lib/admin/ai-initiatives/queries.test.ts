@@ -144,7 +144,7 @@ describe('AI initiatives admin queries', () => {
           initiative_id: 'INIT-1',
           vendor_name: 'Wipro',
           contract_value_usd: '32000000',
-          renewal_date: '2026-11-30',
+          renewal_date: new Date('2026-11-30T00:00:00.000Z'),
           financial_health: 'watch',
         },
       ]);

@@ -20,12 +20,12 @@ script is idempotent — safe to re-run.
 
 The script edits these four files (and only these four):
 
-| Registry | File | What gets added |
-| -------- | ---- | --------------- |
-| 1 · `client-config` | `src/lib/client-config.ts` | `ClientOption` in `ALL_CLIENTS` + entries in `CLIENT_KEY_TO_DB_NAME`, `CLIENT_KEY_TO_INDUSTRY_CODE`, `EMAIL_DOMAIN_TO_CLIENT_KEY` |
-| 2 · `active-client` | `src/lib/active-client.ts` | Entry in `CLIENT_KEY_TO_DB_SLUGS` (canonical + dashed forms) |
-| 3 · `demo-tenant-data-tiers` | `src/lib/tenants/demo-tenant-data-tiers.ts` | Shell-only `DemoTenantDataTier` (all surfaces `unavailable`, `routeHint: null`) |
-| 4 · `canonical-auth-roster` | `src/lib/auth/canonical-auth-roster.ts` | Admin email in `CANONICAL_AUTH_EMAILS` and `CANONICAL_CLIENT_ADMIN_EMAILS` |
+| Registry                     | File                                        | What gets added                                                                                                                   |
+| ---------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1 · `client-config`          | `src/lib/client-config.ts`                  | `ClientOption` in `ALL_CLIENTS` + entries in `CLIENT_KEY_TO_DB_NAME`, `CLIENT_KEY_TO_INDUSTRY_CODE`, `EMAIL_DOMAIN_TO_CLIENT_KEY` |
+| 2 · `active-client`          | `src/lib/active-client.ts`                  | Entry in `CLIENT_KEY_TO_DB_SLUGS` (canonical + dashed forms)                                                                      |
+| 3 · `demo-tenant-data-tiers` | `src/lib/tenants/demo-tenant-data-tiers.ts` | Shell-only `DemoTenantDataTier` (all surfaces `unavailable`, `routeHint: null`)                                                   |
+| 4 · `canonical-auth-roster`  | `src/lib/auth/canonical-auth-roster.ts`     | Admin email in `CANONICAL_AUTH_EMAILS` and `CANONICAL_CLIENT_ADMIN_EMAILS`                                                        |
 
 After the script runs, the new tenant exists as a recognised key with
 honest empty states everywhere. No data leakage into another tenant's
@@ -34,15 +34,15 @@ unseeded surface.
 
 ## Flags
 
-| Flag | Required | Example | Notes |
-| ---- | -------- | ------- | ----- |
-| `--key` | yes | `northwind` | Canonical lowercase key. No dashes, no uppercase. Must not collide with `apexretail`, `meridian`, `arcturus`. |
-| `--name` | yes | `"Northwind Retail"` | Display name. |
-| `--industry` | yes | `RETAIL` | One of `RETAIL`, `HEALTHCARE_IDN`, `FINSERV`. |
-| `--admin-email` | yes | `cdo@northwind-retail` | Either full email or short form. Short form auto-completes to `*.example.com`. |
-| `--short-name` | no | `"Northwind"` | Defaults to `--name`. |
-| `--color` | no | `"#94A3B8"` | Hex color for nav chrome. Defaults to neutral slate. |
-| `--dry-run` | no | — | Print summary without writing. |
+| Flag            | Required | Example                | Notes                                                                                                         |
+| --------------- | -------- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `--key`         | yes      | `northwind`            | Canonical lowercase key. No dashes, no uppercase. Must not collide with `apexretail`, `meridian`, `arcturus`. |
+| `--name`        | yes      | `"Northwind Retail"`   | Display name.                                                                                                 |
+| `--industry`    | yes      | `RETAIL`               | One of `RETAIL`, `HEALTHCARE_IDN`, `FINSERV`, `DIVERSIFIED`.                                                  |
+| `--admin-email` | yes      | `cdo@northwind-retail` | Either full email or short form. Short form auto-completes to `*.example.com`.                                |
+| `--short-name`  | no       | `"Northwind"`          | Defaults to `--name`.                                                                                         |
+| `--color`       | no       | `"#94A3B8"`            | Hex color for nav chrome. Defaults to neutral slate.                                                          |
+| `--dry-run`     | no       | —                      | Print summary without writing.                                                                                |
 
 ## Manual steps (still required)
 

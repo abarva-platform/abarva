@@ -8,6 +8,7 @@ import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { createSourcingEvent } from '@/lib/source/queries';
+import { buildSourceScopeDescription } from '@/lib/source/intake-summary';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 
 interface CreateSourceEventBody {
@@ -16,6 +17,10 @@ interface CreateSourceEventBody {
   triggerDescription?: string;
   decisionOwner?: string;
   scopeDescription?: string;
+  valueTargetDescription?: string;
+  baselineOwnerDescription?: string;
+  categoryLabel?: string;
+  creationRequestId?: string;
   linkedProgramId?: string;
   estimatedValueUsd?: number;
 }
@@ -88,16 +93,35 @@ export async function POST(request: Request) {
   }
 
   try {
+    const rawScopeDescription = parseOptionalString(body.scopeDescription);
+    const valueTargetDescription = parseOptionalString(
+      body.valueTargetDescription,
+    );
+    const baselineOwnerDescription = parseOptionalString(
+      body.baselineOwnerDescription,
+    );
+    const categoryLabel = parseOptionalString(body.categoryLabel);
+    const scopeDescription =
+      valueTargetDescription || baselineOwnerDescription || categoryLabel
+        ? buildSourceScopeDescription({
+            scopeBoundary: rawScopeDescription,
+            valueTarget: valueTargetDescription,
+            baselineOwner: baselineOwnerDescription,
+            category: categoryLabel,
+          })
+        : rawScopeDescription;
+
     const event = await createSourcingEvent({
       clientKey: activeClient.key,
       eventName,
       eventType: parseEventType(body.eventType),
       triggerDescription,
       decisionOwner: parseOptionalString(body.decisionOwner),
-      scopeDescription: parseOptionalString(body.scopeDescription),
+      scopeDescription,
       linkedProgramId: parseOptionalString(body.linkedProgramId),
       estimatedValueUsd: parseOptionalNumber(body.estimatedValueUsd),
       createdByUserId: tenancy.userId,
+      creationRequestId: parseOptionalString(body.creationRequestId),
     });
 
     if (tenancy.userId) {

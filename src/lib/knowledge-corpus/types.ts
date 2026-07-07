@@ -9,7 +9,7 @@
 
 // ── Shared primitives ──────────────────────────────────────────
 
-export type Industry = 'retail' | 'healthcare' | 'finserv';
+export type Industry = 'retail' | 'healthcare' | 'finserv' | 'airline';
 export type Office = 'front' | 'middle' | 'back';
 export type LifecycleStage = 'emerging' | 'scaling' | 'mature' | 'declining';
 export type ShareTrajectory = 'gaining' | 'holding' | 'losing' | 'retreating';

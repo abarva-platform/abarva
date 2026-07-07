@@ -15,6 +15,7 @@ import { runValue } from './specialists/value';
 import { runDecision } from './specialists/decision';
 import { assemble, type CompositionBundle } from './assembler';
 import { compose } from './composer';
+import { hashModelInput } from '@/lib/agent-trace';
 import { loadSessionContext, renderSessionContextBlock, type SessionContext } from './sessionContext';
 import { adaptToContextBundle } from './context-adapter';
 import type {
@@ -87,6 +88,11 @@ export interface OrchestratorOutput {
   clarifying?: ReturnType<typeof shouldClarify>;
   session?: SessionContext;
   gateSignals: GateSignal[];
+
+  // Observability · sha256 of the exact model input sent to Claude in Phase 5.
+  // Absent on early-exit paths (clarifying / latency-budget) that never call
+  // the model. Consumed by the agent-trace spine.
+  modelInputHash?: string;
 
   // S4 · Context Bundle adapter metadata. Optional and additive: these
   // fields surface the platform Context Bundle / scoring / response gate
@@ -304,6 +310,7 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
   // ── Phase 5 · compose ───────────────────────────────────────────────
   const t5 = Date.now();
   progress({ phase: 'compose', status: 'start' });
+  let modelInputHash: string | undefined;
   const composed = await compose({
     bundle,
     format,
@@ -314,6 +321,9 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
       userId: input.tenancy.userId,
     },
     onTextDelta: input.onTextDelta,
+    onModelInput: (parts) => {
+      modelInputHash = hashModelInput(parts);
+    },
   });
   const composeMs = Date.now() - t5;
   progress({ phase: 'compose', status: 'complete', latencyMs: composeMs });
@@ -349,6 +359,7 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
     strippedCount: composed.strippedCount,
     session,
     gateSignals,
+    modelInputHash,
     ...finalAdapter,
   };
 }

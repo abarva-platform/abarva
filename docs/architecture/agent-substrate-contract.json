@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agent-substrate-kernel-v1",
+  "owner": "repo-kernel",
+  "releaseLane": "global-control-lane",
+  "purpose": "Define the minimum durable data substrate required before AbarVa can claim agent-grade, cross-client answers from enterprise context.",
+  "nonNegotiables": [
+    "Browser JavaScript may render and collect input, but it must not be the authority for tenant schema, dataset registry, answer ranking, or source truth.",
+    "Every answerable fact must trace to tenant_key or client_id, dimension_key, source file or object, locator, confidence, freshness, and lifecycle state.",
+    "A new dimension must be onboarded through a registry and manifest contract, not by hardcoding a new browser branch.",
+    "File presence, committed database rows, search/index availability, and signed-in answer proof are separate states.",
+    "If the substrate cannot support an answer, the agent must say what is missing rather than synthesize around the gap."
+  ],
+  "layers": {
+    "sourcePreservation": {
+      "required": true,
+      "tables": ["enterprise_context_sources", "enterprise_context_source_files"],
+      "requiredFields": ["tenant_key", "source_system", "source_file", "file_hash", "evidence_pointer"]
+    },
+    "structuredFacts": {
+      "required": true,
+      "tables": ["enterprise_context_records", "enterprise_context_facts"],
+      "requiredFields": ["tenant_key", "record_type", "fact_key", "fact_value", "source_file", "source_row_number", "confidence", "freshness_status", "lifecycle_state"]
+    },
+    "relationships": {
+      "required": true,
+      "tables": ["enterprise_context_relationships"],
+      "requiredFields": ["tenant_key", "relationship_type", "from_record_id", "to_record_id", "from_external_id", "to_external_id", "properties"]
+    },
+    "evidence": {
+      "required": true,
+      "tables": ["enterprise_context_evidence"],
+      "requiredFields": ["tenant_key", "evidence_key", "citation_label", "citation_locator", "evidence_pointer", "evidence_usable"]
+    },
+    "chunksAndRetrieval": {
+      "required": true,
+      "tables": ["enterprise_context_chunks"],
+      "requiredFields": ["tenant_key", "chunk_id", "source_doc", "chunk_text", "embedding_status"]
+    },
+    "aiControlTower": {
+      "required": true,
+      "tables": ["ai_control_refresh_runs", "ai_control_sources", "ai_control_initiatives", "ai_control_evidence_items"],
+      "requiredFields": ["client_id", "refresh_run_id", "source_id", "evidence_state"]
+    },
+    "corpusPatterns": {
+      "required": true,
+      "tables": ["corpus_patterns", "corpus_pattern_content", "client_private_patterns"],
+      "requiredFields": ["slug", "category", "status", "confidence", "evidence_jsonb"]
+    }
+  },
+  "requiredMigrations": [
+    {
+      "path": "supabase/migrations/20260514100000_enterprise_context_layer.sql",
+      "mustContain": [
+        "enterprise_context_sources",
+        "enterprise_context_source_files",
+        "enterprise_context_records",
+        "enterprise_context_facts",
+        "enterprise_context_relationships",
+        "enterprise_context_evidence"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260430130000_enterprise_context_chunks_embedding.sql",
+      "mustContain": ["enterprise_context_chunks", "embedding_status"]
+    },
+    {
+      "path": "supabase/migrations/20260616170000_ai_control_tower_substrate.sql",
+      "mustContain": [
+        "ai_control_refresh_runs",
+        "ai_control_sources",
+        "ai_control_initiatives",
+        "ai_control_evidence_items"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260523050000_corpus_data_layer.sql",
+      "mustContain": ["corpus_patterns", "corpus_pattern_content", "client_private_patterns"]
+    },
+    {
+      "path": "supabase/migrations/20260524080000_evidence_ledger_v1.sql",
+      "mustContain": ["evidence"]
+    }
+  ],
+  "v4DatasetRequirements": {
+    "requiredFiles": ["manifest.yaml", "99-verification/expected-row-counts.json", "graph/context-relationships.jsonl"],
+    "requiredAiControlTowerFiles": [
+      "ai-control-tower/T00_ai-investment-super-template.csv",
+      "ai-control-tower/T01_initiative-registry.csv",
+      "ai-control-tower/T02_project-milestones.csv",
+      "ai-control-tower/T03_tool-usage-monthly.csv",
+      "ai-control-tower/T04_agent-outcomes.csv",
+      "ai-control-tower/T05_persona-productivity.csv",
+      "ai-control-tower/T06_dora-delivery-metrics.csv",
+      "ai-control-tower/T07_benefit-realization.csv",
+      "ai-control-tower/T08_spend-contracts.csv",
+      "ai-control-tower/T09_risk-governance.csv",
+      "ai-control-tower/T10_evidence-items.csv",
+      "ai-control-tower/T11_refresh-log.csv",
+      "ai-control-tower/T12_derived-actions.csv",
+      "ai-control-tower/T13_model-ai-inventory.csv"
+    ]
+  },
+  "currentHomeDimensionCount": 19,
+  "targetDimensionModel": {
+    "registryOwner": "server-or-database",
+    "dimensionKeyRequired": true,
+    "supportsAdditionalDimensionsWithoutBrowserCode": true,
+    "newDimensionAcceptance": [
+      "dimension registry entry exists",
+      "manifest maps source files to dimension_key",
+      "loader commits records, facts, relationships, and evidence",
+      "search index refresh completes",
+      "agent eval includes at least one grounded question for the dimension",
+      "signed-in answer proof names source evidence or states the missing evidence"
+    ]
+  }
+}

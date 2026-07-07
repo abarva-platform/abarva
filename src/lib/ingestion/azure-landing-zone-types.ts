@@ -65,7 +65,9 @@ export type SegmentKey =
   | 'vendor_contracts'
   | 'compliance'
   | 'industry_context'
-  | 'cross_program_signals';
+  | 'cross_program_signals'
+  | 'data_estate'
+  | 'infrastructure';
 
 export const SEGMENT_KEYS: ReadonlyArray<SegmentKey> = [
   'enterprise_profile',
@@ -82,6 +84,8 @@ export const SEGMENT_KEYS: ReadonlyArray<SegmentKey> = [
   'compliance',
   'industry_context',
   'cross_program_signals',
+  'data_estate',
+  'infrastructure',
 ];
 
 /**

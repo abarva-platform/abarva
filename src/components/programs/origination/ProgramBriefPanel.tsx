@@ -253,6 +253,19 @@ export interface ProgramBriefPanelProps {
   /** Deterministic submit action once the structured brief is complete. */
   onSubmitForApproval?: () => void;
   submitError?: string | null;
+  promotionApproval?: IntelligencePromotionApprovalView | null;
+}
+
+export interface IntelligencePromotionApprovalView {
+  required: boolean;
+  sourceThreadId: string | null;
+  selectedPatternKey: string | null;
+  evidenceRefs: string[];
+  rationale: string;
+  minimumRationaleChars: number;
+  approved: boolean;
+  onRationaleChange: (value: string) => void;
+  onApprovedChange: (checked: boolean) => void;
 }
 
 // ── OV2-1b · BriefProgressCard ───────────────────────────────────────────────
@@ -818,9 +831,19 @@ export function ProgramBriefPanel({
   registering = false,
   onSubmitForApproval,
   submitError = null,
+  promotionApproval = null,
 }: ProgramBriefPanelProps) {
   const setupReadiness = buildProgramSetupReadiness(brief, overlapAlerts);
-  const canSubmit = setupReadiness.status === 'ready' && Boolean(onSubmitForApproval);
+  const promotionReady =
+    !promotionApproval?.required ||
+    (promotionApproval.approved &&
+      promotionApproval.rationale.trim().length >=
+        promotionApproval.minimumRationaleChars &&
+      promotionApproval.evidenceRefs.length > 0);
+  const canSubmit =
+    setupReadiness.status === 'ready' &&
+    promotionReady &&
+    Boolean(onSubmitForApproval);
   return (
     <aside
       style={{
@@ -890,6 +913,10 @@ export function ProgramBriefPanel({
         <BriefRow label="Sponsor" value={brief.sponsor} />
         <BriefRow label="Lead" value={brief.lead} />
       </div>
+
+      {promotionApproval?.required ? (
+        <IntelligencePromotionApprovalCard approval={promotionApproval} />
+      ) : null}
 
       {brief.crossProgramDependencies.length > 0 ? (
         <section>
@@ -970,5 +997,171 @@ export function ProgramBriefPanel({
           : 'Brief assembles as Steward extracts each piece from your conversation.'}
       </footer>
     </aside>
+  );
+}
+
+function IntelligencePromotionApprovalCard({
+  approval,
+}: {
+  approval: IntelligencePromotionApprovalView;
+}) {
+  const rationaleLength = approval.rationale.trim().length;
+  const rationaleReady = rationaleLength >= approval.minimumRationaleChars;
+  return (
+    <section
+      aria-label="Intelligence pattern promotion approval"
+      style={{
+        border: `1px solid ${OVERLAP_AMBER_BORDER}`,
+        background: OVERLAP_AMBER_SOFT,
+        borderRadius: 10,
+        padding: '13px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
+      <div>
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: OVERLAP_AMBER,
+            fontWeight: 700,
+          }}
+        >
+          Human promotion gate required
+        </span>
+        <p
+          style={{
+            margin: '5px 0 0',
+            fontSize: 12,
+            color: BrandColors.slate,
+            lineHeight: 1.5,
+          }}
+        >
+          This Move is being shaped from an Intelligence pattern recommendation.
+          A human owner must review the evidence and accept responsibility
+          before the brief can enter the approval queue.
+        </p>
+      </div>
+
+      <dl
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr)',
+          gap: 5,
+          margin: 0,
+          fontSize: 12,
+          color: BrandColors.slate,
+        }}
+      >
+        <BriefMiniRow label="Source thread" value={approval.sourceThreadId} />
+        <BriefMiniRow label="Selected pattern" value={approval.selectedPatternKey} />
+        <BriefMiniRow label="Evidence refs" value={approval.evidenceRefs.join(', ')} />
+      </dl>
+
+      <label
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          fontSize: 12,
+          color: BrandColors.slate,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: BrandColors.stone,
+            fontWeight: 700,
+          }}
+        >
+          Human rationale
+        </span>
+        <textarea
+          value={approval.rationale}
+          onChange={(event) => approval.onRationaleChange(event.target.value)}
+          rows={4}
+          placeholder="Explain why this pattern is appropriate for the Move and which evidence you reviewed."
+          style={{
+            border: `1px solid ${
+              rationaleReady ? 'rgba(12,26,58,0.16)' : OVERLAP_AMBER_BORDER
+            }`,
+            borderRadius: 8,
+            background: '#FFFFFF',
+            padding: '9px 10px',
+            color: BrandColors.inkBlack,
+            fontFamily: BrandTypography.sans,
+            fontSize: 13,
+            lineHeight: 1.45,
+            resize: 'vertical',
+          }}
+        />
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            color: rationaleReady ? BrandColors.signalBlue : OVERLAP_AMBER,
+          }}
+        >
+          {rationaleLength}/{approval.minimumRationaleChars} characters
+        </span>
+      </label>
+
+      <label
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 8,
+          fontSize: 12,
+          color: BrandColors.slate,
+          lineHeight: 1.45,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={approval.approved}
+          onChange={(event) => approval.onApprovedChange(event.target.checked)}
+          style={{ marginTop: 2 }}
+        />
+        <span>
+          I reviewed the selected pattern and evidence refs, and I accept
+          responsibility for promoting this recommendation into a Move brief.
+        </span>
+      </label>
+    </section>
+  );
+}
+
+function BriefMiniRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr)', gap: 8 }}>
+      <dt
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 10,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: BrandColors.stone,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </dt>
+      <dd style={{ margin: 0, color: BrandColors.inkBlack, overflowWrap: 'anywhere' }}>
+        {value || 'Not captured'}
+      </dd>
+    </div>
   );
 }

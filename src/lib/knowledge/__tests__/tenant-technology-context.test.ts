@@ -28,6 +28,11 @@ function systemRecord(
 describe('tenant technology context', () => {
   it('detects current-state analytics technology questions', () => {
     expect(isTenantTechnologyQuestion('what do we have today for data analytics- what technologies?')).toBe(true);
+    expect(
+      isTenantTechnologyQuestion(
+        'Talk about our current data & analytics landscape — name the platforms and owners you can see in our loaded context.',
+      ),
+    ).toBe(true);
     expect(isTenantTechnologyQuestion('which phase gate is blocked?')).toBe(false);
   });
 

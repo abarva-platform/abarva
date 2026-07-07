@@ -1,0 +1,480 @@
+-
+  tenant_key: first-capital-financial
+  source_file: F18_leadership-org-chart.csv
+  business_name: Leadership and accountability context
+  what_this_file_is: Explains named leaders where loaded and role-level accountability where names are missing.
+  why_it_matters: Prevents aVa from treating role-only gaps as total organization unknowns.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F19_team-application-ownership.csv
+  business_name: Team-to-application ownership map
+  what_this_file_is: Connects applications to technical teams, business owners, and executive roles.
+  why_it_matters: Supports application ownership, accountability, and operating-model answers.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F20_capability-system-dependency.csv
+  business_name: Capability-to-system dependency map
+  what_this_file_is: Connects business capabilities and functions to supporting systems.
+  why_it_matters: Enables dependency graphs and capability modernization narratives.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F21_data-product-ownership-lineage.csv
+  business_name: Data product ownership and lineage
+  what_this_file_is: Adds business-readable ownership and source-system context to the data estate.
+  why_it_matters: Improves data and analytics answers without relying on raw chunks first.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F22_contract-system-service-map.csv
+  business_name: Vendor/contract-to-system map
+  what_this_file_is: Links commercial evidence to systems and services where loaded or matched.
+  why_it_matters: Supports vendor dependency and renewal-risk answers.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F23_operational-service-map.csv
+  business_name: Operational service map
+  what_this_file_is: Connects service signals to teams, systems, and automation candidates.
+  why_it_matters: Supports ServiceNow/Jira-style operational reasoning when event-level evidence is present.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F24_ai-use-case-system-value-map.csv
+  business_name: AI use-case value map
+  what_this_file_is: Connects AI assets to business areas, governance, KPIs, and value evidence.
+  why_it_matters: Supports AI investment, automation, and Tower value questions.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F25_context-node-dictionary.csv
+  business_name: Business-readable graph dictionary
+  what_this_file_is: Turns graph/source node IDs into readable labels and types.
+  why_it_matters: Prevents raw node IDs from leaking into diagrams and answers.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F26_dimension-question-contracts.yaml
+  business_name: Dimension question contract
+  what_this_file_is: Defines what each dimension can and cannot answer.
+  why_it_matters: Routes English questions into the right dossier and surface.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl
+-
+  tenant_key: first-capital-financial
+  source_file: F27_source-context-narratives.yaml
+  business_name: Source context narratives
+  what_this_file_is: Explains what the enrichment files mean and how to use them.
+  why_it_matters: Gives aVa/Claude human-readable context without inventing facts.
+  what_questions_it_answers:
+    - What is loaded?
+    - What relationships are supported?
+    - What evidence caveats apply?
+  what_questions_it_cannot_answer:
+    - Client-approved final truth without source validation
+    - Private personnel data not present in evidence
+  source_of_truth_status: synthetic semantic enrichment grounded in loaded V4 and adjacent source evidence
+  caveats: This file improves semantic routing and answer quality; production truth remains the original evidence rows plus approved client enrichment.
+  business_owner_role: Enterprise architecture / transformation sponsor
+  data_steward_role: AbarVa context steward
+  freshness_expectation: Refresh when V4 source files, operational evidence, or client-approved context changes.
+  authoritative_for:
+    - semantic routing
+    - dossier assembly
+    - gap language
+    - artifact planning
+  not_authoritative_for:
+    - final HR records
+    - final finance-approved estimates
+    - raw system-of-record replacement
+  related_dimensions:
+    - organization
+    - applications
+    - vendors
+    - operations
+    - AI
+    - value
+    - risk
+  related_entities:
+    - leader
+    - team
+    - application
+    - vendor
+    - service
+    - AI asset
+    - metric
+  related_files:
+    - F01-F17
+    - D19
+    - O01-O06
+    - context-relationships.jsonl

@@ -33,10 +33,10 @@ interface SourceEventAgentCanvasProps {
   nextGateEvaluations?: GateEvaluation[];
 }
 
-const SENTINEL_EVENT_AGENT = {
-  initials: 'SS',
-  name: 'Sentinel Source',
-  role: 'Source Orchestrator',
+const AVA_EVENT_AGENT = {
+  initials: 'aV',
+  name: 'aVa',
+  role: 'End-to-end sourcing assistant',
 } as const;
 
 export function SourceEventAgentCanvas({
@@ -99,7 +99,7 @@ export function SourceEventAgentCanvas({
     >
       <main
         data-testid="source-event-agent-canvas"
-        aria-label="Sentinel source event canvas"
+        aria-label="Ava source event canvas"
         style={{
           flex: 1,
           minWidth: 0,
@@ -143,7 +143,7 @@ export function SourceEventAgentCanvas({
                       onClose={() => {
                         // Embedded Source event workspace stays visible; it is not a drawer overlay.
                       }}
-                      agent={SENTINEL_EVENT_AGENT}
+                      agent={AVA_EVENT_AGENT}
                       quote={safeQuote}
                       surface="/source"
                       onArtifact={handleArtifact}
@@ -215,7 +215,7 @@ function EventAgentLead({
       <div style={EVENT_LEAD_HEADER}>
         <div>
           <div style={META_LABEL}>Agent-led stage brief</div>
-          <h2 style={EVENT_LEAD_TITLE}>Sentinel is running {stageLabel}</h2>
+          <h2 style={EVENT_LEAD_TITLE}>Ava is running {stageLabel}</h2>
         </div>
         <div style={EVENT_LEAD_VALUE}>
           <div style={META_LABEL}>Value at stake</div>
@@ -231,22 +231,22 @@ function EventAgentLead({
 
       <div style={EVENT_AGENT_GRID} aria-label="Source agent responsibilities for this stage">
         <EventAgentCard
-          agent="Sentinel"
+          agent="Ava"
           role="Workflow conductor"
           detail={`${nextAction} Then prepare the team for the next gate with inputs, session plan, and output packet.`}
         />
         <EventAgentCard
-          agent="Steward"
+          agent="Ava"
           role={event.blocker ? 'Gate / approval blocked' : 'Gate / approval in review'}
           detail={`${blockerCopy} Waivers need explicit rationale; approvals are placeholders until the engine is wired.`}
         />
         <EventAgentCard
-          agent="Sentinel"
+          agent="Ava"
           role="Evidence and files"
           detail="Paperclip uploads, pasted notes, and vendor files must become validated evidence before they support recommendations."
         />
         <EventAgentCard
-          agent="Atlas"
+          agent="Ava"
           role="Artifacts and executive decision"
           detail={`Decision posture: ${stripTrailingPeriod(nextDecision)}. Generate the right HTML, Word, or Excel packet before review.`}
         />
@@ -327,10 +327,10 @@ function StageAction({
       }}
       disabled={disabled}
       onClick={() => pageState?.ask(prompt)}
-      aria-label={`Ask Sentinel Source: ${label}`}
+      aria-label={`Ask Ava: ${label}`}
       data-testid={`source-stage-action-${label.toLowerCase().replaceAll(' ', '-')}`}
     >
-      <div style={EVENT_ACTION_PROMPT}>Ask Sentinel Source</div>
+      <div style={EVENT_ACTION_PROMPT}>Ask Ava</div>
       <div style={EVENT_ACTION_LABEL}>{label}</div>
       <div style={EVENT_ACTION_DETAIL}>{detail}</div>
     </button>
@@ -378,7 +378,7 @@ function SourceEventPromptDeck({
         },
       ];
 
-  const agentName = stageConfig?.leadAgent ?? 'Sentinel';
+  const agentName = stageConfig?.leadAgent ?? 'Ava';
 
   return (
     <div style={{ width: '100%', display: 'grid', gap: 8 }}>
@@ -913,7 +913,7 @@ function StageInitPrompter({
     pageState.ask(
       `We just opened the ${stageLabel} stage for ${eventName}. Give the team a concise brief: ` +
       (intent ? `(1) the objective — ${intent} — ` : '(1) the objective, ') +
-      `(2) the most critical gate to close this week, and (3) Sentinel's recommended first move.`,
+      `(2) the most critical gate to close this week, and (3) Ava's recommended first move.`,
     );
   // Only re-fire if the stageKey changes
   // eslint-disable-next-line react-hooks/exhaustive-deps

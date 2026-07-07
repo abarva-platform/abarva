@@ -1,0 +1,50 @@
+name: License and SBOM Compliance
+
+# Required branch-protection context; keep pull_request paths aligned.
+on:
+  merge_group:
+  pull_request:
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "docs/compliance/**"
+      - "docs/runbooks/license-sbom-compliance.md"
+      - "scripts/compliance/**"
+      - ".github/workflows/license-sbom-compliance.yml"
+  workflow_dispatch:
+
+jobs:
+  license-sbom:
+    name: License and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run supply-chain compliance checks
+        run: npm run compliance:supply-chain
+
+      - name: Generate compliance artifacts
+        if: always()
+        run: |
+          npm run license:check -- --output audit-artifacts/compliance/license-report.json
+          npm run license:check -- --markdown --output audit-artifacts/compliance/license-report.md
+          npm run sbom:generate
+
+      - name: Upload compliance artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: license-sbom-compliance
+          path: audit-artifacts/compliance/
+          if-no-files-found: error

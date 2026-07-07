@@ -3,12 +3,12 @@
  *
  * Regression target: STRESS-P0-001 (2026-05-24 full-module stress test).
  * A Meridian Health CDIO authenticated session on /intelligence/ask
- * CROSS-CORPUS mode received a Sentinel response that asserted "you're
+ * CROSS-CORPUS mode received an aVa response that asserted "you're
  * Apex Retail, a multi-banner specialty retailer" — including Apex's
  * FY2026 capital plan and funding-authority matrix surfaced TO the
  * Meridian session.
  *
- * Root cause: hardcoded Apex pin in the Sentinel synthesizer system prompt.
+ * Root cause: hardcoded Apex pin in the aVa synthesizer system prompt.
  * Fix: dynamic buildTenantIdentityPin(clientKey) + post-response
  * detectCrossTenantIdentityLeak() guard.
  */
@@ -125,10 +125,21 @@ describe('buildTenantIdentityPin', () => {
 });
 
 describe('detectOffTenantMention', () => {
-  it('detects any off-tenant name in a non-comparison SkyHarbor response', () => {
+  it('allows defensive off-tenant references that are not used as evidence', () => {
     const result = detectOffTenantMention({
       clientKey: 'skyharbor',
       response: 'SkyHarbor should avoid importing Apex Retail assumptions into the modernization readout.',
+      query: 'What is one sensible next action for the SkyHarbor CTO?',
+    });
+
+    expect(result.detected).toBe(false);
+  });
+
+  it('detects off-tenant names used as tenant evidence in a non-comparison SkyHarbor response', () => {
+    const result = detectOffTenantMention({
+      clientKey: 'skyharbor',
+      response:
+        'SkyHarbor should use the Apex Retail capital plan facts to size the modernization readout.',
       query: 'What is one sensible next action for the SkyHarbor CTO?',
     });
 

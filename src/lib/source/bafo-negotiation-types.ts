@@ -1,6 +1,11 @@
 import type { SourceDataReadinessState, SourceEvidenceUsability } from './types';
 import type { SourceVendorResponseSeedInput } from './vendor-response-types';
 import type { SourcePricingVendorInput, SourcePricingVendorSnapshot } from './pricing-normalization-types';
+import type {
+  BafoCounterClause,
+  BafoProjectedCallVolume,
+} from './sourcing/bafo-counter-templates';
+import type { VendorInferenceEconomics } from './vendor-inference-economics';
 
 export type SourceBafoNegotiationReadiness = 'ready' | 'partially_ready' | 'not_ready' | 'blocked';
 
@@ -35,6 +40,7 @@ export interface SourceBafoVendorNegotiationPlan {
   riskNotes: string[];
   evidenceStatus: SourceDataReadinessState | SourceEvidenceUsability;
   blockers: string[];
+  counterClauses: BafoCounterClause[];
 }
 
 export interface SourceBafoCommercialTrapSummary {
@@ -62,6 +68,14 @@ export interface SourceBafoNegotiationPlan {
   atlasExecutiveImplication: string;
   blockers: string[];
   nextAction: string;
+  counterClauses: BafoCounterClause[];
+}
+
+export interface SourceBafoVendorInferencePricingInput {
+  vendorId: string;
+  vendorName: string;
+  inferenceEconomics: VendorInferenceEconomics | null;
+  projectedCallRamp: BafoProjectedCallVolume[];
 }
 
 export interface SourceBafoNegotiationInput {
@@ -77,6 +91,7 @@ export interface SourceBafoNegotiationInput {
     }>;
     pricingNormalizationSnapshots?: SourcePricingVendorSnapshot[];
     pricingInputs?: SourcePricingVendorInput[];
+    vendorInferencePricing?: SourceBafoVendorInferencePricingInput[];
   };
   generatedAt?: string;
 }

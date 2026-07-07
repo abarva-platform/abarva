@@ -1,0 +1,57 @@
+{
+  "checkedAt": "2026-06-05T21:21:19.657Z",
+  "html": "/Users/anand/Projects/nexus/docs/build/lakeshore-proof/LAKESHORE_ABARVA_VS_RAW_LLM_PROOF_2026-06-05.html",
+  "errors": [],
+  "desktop": {
+    "title": "AbarVa Proof · Lakeshore",
+    "imageCount": 6,
+    "imgs": [
+      {
+        "src": "assets/03-kyriba-executive-decision.png",
+        "complete": true,
+        "w": 1280,
+        "h": 5347
+      },
+      {
+        "src": "assets/05-kyriba-documents.png",
+        "complete": true,
+        "w": 1280,
+        "h": 732
+      },
+      {
+        "src": "assets/02-kyriba-strategy.png",
+        "complete": true,
+        "w": 1280,
+        "h": 720
+      },
+      {
+        "src": "assets/01-data-trust.png",
+        "complete": true,
+        "w": 1280,
+        "h": 1481
+      },
+      {
+        "src": "assets/04-kyriba-move-detail.png",
+        "complete": true,
+        "w": 1280,
+        "h": 732
+      },
+      {
+        "src": "assets/06-tower-value.png",
+        "complete": true,
+        "w": 1280,
+        "h": 720
+      }
+    ],
+    "overflowCount": 0,
+    "overflow": []
+  },
+  "mobile": {
+    "overflowCount": 0,
+    "overflow": []
+  },
+  "screenshots": [
+    "qa/lakeshore-proof-desktop.png",
+    "qa/lakeshore-proof-mobile.png"
+  ]
+}

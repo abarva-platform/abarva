@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // StewardDockPane · Admin / Setup chat dock built on the shared <AgentDock>.
 //
@@ -17,49 +17,52 @@
 // the splitter handle ends up between the Steward chat lane and the page
 // body — exactly the surface goal of the admin migration chip.
 
-import { useCallback, useMemo, type ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from "react";
 import {
   AgentDock,
   type AttachmentRef,
   type ChatMessage,
   type DockMode,
   type SuggestedAction,
-} from '@/components/agent/AgentDock';
-import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
-import { useAgentStream } from '@/hooks/useAgentStream';
-import type { ChatTurn } from '@/lib/shell/atlas-page-state';
+} from "@/components/agent/AgentDock";
+import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
+import { useAgentStream } from "@/hooks/useAgentStream";
+import type { ChatTurn } from "@/lib/shell/atlas-page-state";
 
 // ── Default suggested actions (mirrors the prior StewardAskBar scaffold) ─────
 
 const DEFAULT_SUGGESTED_ACTIONS: SuggestedAction[] = [
   {
-    id: 'segments',
-    label: 'Which data segments should I upload first to ground the most capabilities?',
-    body: 'Which data segments should I upload first to ground the most capabilities?',
+    id: "segments",
+    label:
+      "Which data segments should I upload first to ground the most capabilities?",
+    body: "Which data segments should I upload first to ground the most capabilities?",
   },
   {
-    id: 'sentinel-unlock',
-    label: 'What can Sentinel reason about once I upload each data family?',
-    body: 'What can Sentinel reason about once I upload each data family?',
+    id: "sentinel-unlock",
+    label: "What can Sentinel reason about once I upload each data family?",
+    body: "What can Sentinel reason about once I upload each data family?",
   },
   {
-    id: 'connectors',
-    label: 'Which connectors are needed before pilot and what is their setup sequence?',
-    body: 'Which connectors are needed before pilot and what is their setup sequence?',
+    id: "connectors",
+    label:
+      "Which connectors are needed before pilot and what is their setup sequence?",
+    body: "Which connectors are needed before pilot and what is their setup sequence?",
   },
   {
-    id: 'blockers',
-    label: 'What are the top blockers I need to resolve before production readiness?',
-    body: 'What are the top blockers I need to resolve before production readiness?',
+    id: "blockers",
+    label:
+      "What are the top blockers I need to resolve before production readiness?",
+    body: "What are the top blockers I need to resolve before production readiness?",
   },
 ];
 
 // ── Steward agent profile ────────────────────────────────────────────────────
 
 const STEWARD_AGENT = {
-  initials: 'St',
-  name: 'Steward',
-  role: 'Setup & Admin Conductor',
+  initials: "Av",
+  name: "Ava",
+  role: "Setup & Admin Conductor",
 } as const;
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -92,10 +95,10 @@ export interface StewardDockPaneProps {
 
 export function StewardDockPane({
   workspace,
-  surface = 'admin',
+  surface = "admin",
   surfaceContext,
   suggestedActions = DEFAULT_SUGGESTED_ACTIONS,
-  defaultMode = 'side-rail',
+  defaultMode = "side-rail",
   defaultLeftPercent = 30,
   minLeftPx = 300,
   initialQuote,
@@ -108,8 +111,8 @@ export function StewardDockPane({
   // fall back to a stateless useAgentStream so the dock still functions.
   const pageState = useAtlasPageState();
   const fallbackStream = useAgentStream({
-    surface: 'setup',
-    agentName: 'Steward',
+    surface: "setup",
+    agentName: "Steward",
   });
 
   // ── Build the dock thread from the live conversation ──────────────────────
@@ -128,7 +131,7 @@ export function StewardDockPane({
     const live = pageState?.currentResponse ?? fallbackStream.response;
     const streaming = pageState?.isStreaming ?? fallbackStream.isStreaming;
     if (streaming && live && live.trim().length > 0) {
-      turns.push({ id: 'agent-streaming', role: 'agent', body: live });
+      turns.push({ id: "agent-streaming", role: "agent", body: live });
     }
     return turns;
   }, [
@@ -145,15 +148,13 @@ export function StewardDockPane({
       if (!trimmed && attachments.length === 0) return;
 
       // Each attachment was already POSTed to /api/v1/agent/attachments by
-      // the dock; we received `AttachmentRef`s back. Pass the IDs through
-      // surfaceContext so a future server-side step (run-side merge of
-      // extracted text into the system prompt — owned by the Steward
-      // runtime) can hydrate them. We also append a brief in-message hint
-      // listing the filenames so Steward at least knows files were
-      // attached even before the runtime-side merge ships.
+      // the dock; we received `AttachmentRef`s back. Pass those refs through
+      // a per-turn surface-context patch so the shared agent route can
+      // hydrate eligible small PDFs into native model document blocks.
+      // Keep the filename hint as user-visible continuity copy.
       const messageWithAttachmentHint =
         attachments.length > 0
-          ? `${trimmed}${trimmed ? '\n\n' : ''}I have uploaded ${attachments.length} attachment${attachments.length === 1 ? '' : 's'}: ${attachments.map((a) => `${a.file_name} (${a.mime})`).join(', ')}. Please ingest and reflect them in your answer.`
+          ? `${trimmed}${trimmed ? "\n\n" : ""}I have uploaded ${attachments.length} attachment${attachments.length === 1 ? "" : "s"}: ${attachments.map((a) => `${a.file_name} (${a.mime})`).join(", ")}. Please ingest and reflect them in your answer.`
           : trimmed;
 
       if (pageState?.ask) {
@@ -164,7 +165,14 @@ export function StewardDockPane({
         // chip; passing raw refs through surfaceContext is the
         // backwards-compatible path that doesn't risk corrupting the
         // existing programs/origination upload pipeline.
-        await pageState.ask(messageWithAttachmentHint);
+        await pageState.ask(
+          messageWithAttachmentHint,
+          undefined,
+          undefined,
+          attachments.length > 0
+            ? { agentAttachments: attachments }
+            : undefined,
+        );
       } else {
         await fallbackStream.ask(messageWithAttachmentHint);
       }

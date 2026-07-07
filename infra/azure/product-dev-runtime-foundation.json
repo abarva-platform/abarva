@@ -1,0 +1,606 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.43.8.12551",
+      "templateHash": "6476096820275258689"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus"
+    },
+    "tags": {
+      "type": "object"
+    },
+    "controlPlaneResourceGroupName": {
+      "type": "string",
+      "defaultValue": "rg-abarva-controlplane-product-dev-eus-001",
+      "metadata": {
+        "description": "Product Dev control-plane resource group."
+      }
+    },
+    "observabilityResourceGroupName": {
+      "type": "string",
+      "defaultValue": "rg-abarva-observability-product-dev-eus-001",
+      "metadata": {
+        "description": "Product Dev observability resource group."
+      }
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "log-abarva-product-dev-eus-001",
+      "metadata": {
+        "description": "Product Dev Log Analytics workspace."
+      }
+    },
+    "applicationInsightsName": {
+      "type": "string",
+      "defaultValue": "appi-abarva-product-dev-eus-001",
+      "metadata": {
+        "description": "Product Dev Application Insights component."
+      }
+    },
+    "actionGroupName": {
+      "type": "string",
+      "defaultValue": "ag-abarva-product-dev-eus-001",
+      "metadata": {
+        "description": "Product Dev action group for platform alerts."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "defaultValue": "pddevops",
+      "metadata": {
+        "description": "Action group short name, max 12 chars."
+      }
+    },
+    "actionGroupEmailAddress": {
+      "type": "string",
+      "defaultValue": "alerts@abarva.ai",
+      "metadata": {
+        "description": "Primary alert email."
+      }
+    },
+    "logAnalyticsRetentionInDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Log Analytics retention in days."
+      }
+    },
+    "logAnalyticsDailyQuotaGb": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Low daily cap for Product Dev spend control."
+      }
+    },
+    "runtimeManagedIdentityName": {
+      "type": "string",
+      "defaultValue": "id-abarva-product-dev-runtime-eus-001",
+      "metadata": {
+        "description": "Product Dev runtime managed identity."
+      }
+    },
+    "containerAppsEnvironmentName": {
+      "type": "string",
+      "defaultValue": "cae-abarva-product-dev-eus-001",
+      "metadata": {
+        "description": "Product Dev Container Apps managed environment."
+      }
+    },
+    "smokeContainerAppName": {
+      "type": "string",
+      "defaultValue": "ca-abarva-product-dev-smoke-eus-001",
+      "metadata": {
+        "description": "Scale-to-zero smoke app. This is not the production AbarVa app."
+      }
+    },
+    "deploySmokeApp": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Whether to deploy the smoke app."
+      }
+    },
+    "smokeMinReplicas": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "Minimum smoke app replicas. Keep 0 for cost control."
+      }
+    },
+    "smokeMaxReplicas": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Maximum smoke app replicas. Keep low for Product Dev cost control."
+      }
+    },
+    "smokeEnvironmentKey": {
+      "type": "string",
+      "defaultValue": "product-dev",
+      "metadata": {
+        "description": "Environment key exposed by the smoke app."
+      }
+    },
+    "smokeDataBoundary": {
+      "type": "string",
+      "defaultValue": "synthetic-no-client-data",
+      "metadata": {
+        "description": "Data boundary label exposed by the smoke app."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('controlPlaneResourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('observabilityResourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "product-dev-observability",
+      "resourceGroup": "[parameters('observabilityResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "subscriptionId": {
+            "value": "[subscription().subscriptionId]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "logAnalyticsWorkspaceName": {
+            "value": "[parameters('logAnalyticsWorkspaceName')]"
+          },
+          "applicationInsightsName": {
+            "value": "[parameters('applicationInsightsName')]"
+          },
+          "actionGroupName": {
+            "value": "[parameters('actionGroupName')]"
+          },
+          "actionGroupShortName": {
+            "value": "[parameters('actionGroupShortName')]"
+          },
+          "actionGroupEmailAddress": {
+            "value": "[parameters('actionGroupEmailAddress')]"
+          },
+          "retentionInDays": {
+            "value": "[parameters('logAnalyticsRetentionInDays')]"
+          },
+          "dailyQuotaGb": {
+            "value": "[parameters('logAnalyticsDailyQuotaGb')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.43.8.12551",
+              "templateHash": "6497452989839888609"
+            }
+          },
+          "parameters": {
+            "subscriptionId": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "logAnalyticsWorkspaceName": {
+              "type": "string"
+            },
+            "applicationInsightsName": {
+              "type": "string"
+            },
+            "actionGroupName": {
+              "type": "string"
+            },
+            "actionGroupShortName": {
+              "type": "string"
+            },
+            "actionGroupEmailAddress": {
+              "type": "string"
+            },
+            "retentionInDays": {
+              "type": "int",
+              "defaultValue": 30
+            },
+            "dailyQuotaGb": {
+              "type": "int",
+              "defaultValue": 1
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "[parameters('logAnalyticsWorkspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": "[parameters('retentionInDays')]",
+                "workspaceCapping": {
+                  "dailyQuotaGb": "[parameters('dailyQuotaGb')]"
+                },
+                "features": {
+                  "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[parameters('applicationInsightsName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+                "RetentionInDays": "[parameters('retentionInDays')]",
+                "IngestionMode": "LogAnalytics"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/actionGroups",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('actionGroupName')]",
+              "location": "global",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "enabled": true,
+                "groupShortName": "[parameters('actionGroupShortName')]",
+                "emailReceivers": [
+                  {
+                    "name": "platform-email",
+                    "emailAddress": "[parameters('actionGroupEmailAddress')]",
+                    "useCommonAlertSchema": true
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Insights/activityLogAlerts",
+              "apiVersion": "2020-10-01",
+              "name": "ala-subscription-deployment-failures",
+              "location": "global",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "enabled": true,
+                "description": "Alerts on failed ARM/Bicep deployments in the subscription.",
+                "scopes": [
+                  "[format('/subscriptions/{0}', parameters('subscriptionId'))]"
+                ],
+                "condition": {
+                  "allOf": [
+                    {
+                      "field": "category",
+                      "equals": "Administrative"
+                    },
+                    {
+                      "field": "operationName",
+                      "equals": "Microsoft.Resources/deployments/write"
+                    },
+                    {
+                      "field": "status",
+                      "equals": "Failed"
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    {
+                      "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "logAnalyticsWorkspaceResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+            },
+            "applicationInsightsConnectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), '2020-02-02').ConnectionString]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('observabilityResourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "product-dev-containerapps-smoke",
+      "resourceGroup": "[parameters('controlPlaneResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "logAnalyticsWorkspaceResourceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('observabilityResourceGroupName')), 'Microsoft.Resources/deployments', 'product-dev-observability'), '2025-04-01').outputs.logAnalyticsWorkspaceResourceId.value]"
+          },
+          "runtimeManagedIdentityName": {
+            "value": "[parameters('runtimeManagedIdentityName')]"
+          },
+          "containerAppsEnvironmentName": {
+            "value": "[parameters('containerAppsEnvironmentName')]"
+          },
+          "smokeContainerAppName": {
+            "value": "[parameters('smokeContainerAppName')]"
+          },
+          "deploySmokeApp": {
+            "value": "[parameters('deploySmokeApp')]"
+          },
+          "smokeMinReplicas": {
+            "value": "[parameters('smokeMinReplicas')]"
+          },
+          "smokeMaxReplicas": {
+            "value": "[parameters('smokeMaxReplicas')]"
+          },
+          "smokeEnvironmentKey": {
+            "value": "[parameters('smokeEnvironmentKey')]"
+          },
+          "smokeDataBoundary": {
+            "value": "[parameters('smokeDataBoundary')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.43.8.12551",
+              "templateHash": "7371477953319462358"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "eastus"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "logAnalyticsWorkspaceResourceId": {
+              "type": "string"
+            },
+            "runtimeManagedIdentityName": {
+              "type": "string"
+            },
+            "containerAppsEnvironmentName": {
+              "type": "string"
+            },
+            "smokeContainerAppName": {
+              "type": "string"
+            },
+            "deploySmokeApp": {
+              "type": "bool",
+              "defaultValue": true
+            },
+            "smokeMinReplicas": {
+              "type": "int",
+              "defaultValue": 0
+            },
+            "smokeMaxReplicas": {
+              "type": "int",
+              "defaultValue": 1
+            },
+            "smokeEnvironmentKey": {
+              "type": "string",
+              "defaultValue": "product-dev"
+            },
+            "smokeDataBoundary": {
+              "type": "string",
+              "defaultValue": "synthetic-no-client-data"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[parameters('runtimeManagedIdentityName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.App/managedEnvironments",
+              "apiVersion": "2024-03-01",
+              "name": "[parameters('containerAppsEnvironmentName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "appLogsConfiguration": {
+                  "destination": "log-analytics",
+                  "logAnalyticsConfiguration": {
+                    "customerId": "[reference(parameters('logAnalyticsWorkspaceResourceId'), '2022-10-01').customerId]",
+                    "sharedKey": "[listKeys(parameters('logAnalyticsWorkspaceResourceId'), '2022-10-01').primarySharedKey]"
+                  }
+                },
+                "workloadProfiles": [
+                  {
+                    "name": "Consumption",
+                    "workloadProfileType": "Consumption"
+                  }
+                ],
+                "zoneRedundant": false
+              }
+            },
+            {
+              "condition": "[parameters('deploySmokeApp')]",
+              "type": "Microsoft.App/containerApps",
+              "apiVersion": "2024-03-01",
+              "name": "[parameters('smokeContainerAppName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('Purpose', format('{0}-runtime-smoke', parameters('smokeEnvironmentKey')), 'RuntimeDataBoundary', parameters('smokeDataBoundary')))]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('runtimeManagedIdentityName')))]": {}
+                }
+              },
+              "properties": {
+                "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppsEnvironmentName'))]",
+                "configuration": {
+                  "activeRevisionsMode": "Single",
+                  "ingress": {
+                    "external": true,
+                    "targetPort": 80,
+                    "transport": "auto",
+                    "allowInsecure": false
+                  }
+                },
+                "template": {
+                  "containers": [
+                    {
+                      "name": "smoke",
+                      "image": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+                      "env": [
+                        {
+                          "name": "ABARVA_ENVIRONMENT_KEY",
+                          "value": "[parameters('smokeEnvironmentKey')]"
+                        },
+                        {
+                          "name": "ABARVA_DATA_BOUNDARY",
+                          "value": "[parameters('smokeDataBoundary')]"
+                        }
+                      ],
+                      "resources": {
+                        "cpu": "[json('0.25')]",
+                        "memory": "0.5Gi"
+                      }
+                    }
+                  ],
+                  "scale": {
+                    "minReplicas": "[parameters('smokeMinReplicas')]",
+                    "maxReplicas": "[parameters('smokeMaxReplicas')]",
+                    "rules": [
+                      {
+                        "name": "http-concurrency",
+                        "http": {
+                          "metadata": {
+                            "concurrentRequests": "25"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppsEnvironmentName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('runtimeManagedIdentityName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "runtimeManagedIdentityPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('runtimeManagedIdentityName')), '2023-01-31').principalId]"
+            },
+            "containerAppsEnvironmentName": {
+              "type": "string",
+              "value": "[parameters('containerAppsEnvironmentName')]"
+            },
+            "smokeContainerAppName": {
+              "type": "string",
+              "value": "[if(parameters('deploySmokeApp'), parameters('smokeContainerAppName'), '')]"
+            },
+            "smokeContainerAppFqdn": {
+              "type": "string",
+              "value": "[if(parameters('deploySmokeApp'), reference(resourceId('Microsoft.App/containerApps', parameters('smokeContainerAppName')), '2024-03-01').configuration.ingress.fqdn, '')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('controlPlaneResourceGroupName'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('observabilityResourceGroupName')), 'Microsoft.Resources/deployments', 'product-dev-observability')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "controlPlaneResourceGroupName": {
+      "type": "string",
+      "value": "[parameters('controlPlaneResourceGroupName')]"
+    },
+    "observabilityResourceGroupName": {
+      "type": "string",
+      "value": "[parameters('observabilityResourceGroupName')]"
+    },
+    "logAnalyticsWorkspaceResourceId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('observabilityResourceGroupName')), 'Microsoft.Resources/deployments', 'product-dev-observability'), '2025-04-01').outputs.logAnalyticsWorkspaceResourceId.value]"
+    },
+    "applicationInsightsName": {
+      "type": "string",
+      "value": "[parameters('applicationInsightsName')]"
+    },
+    "runtimeManagedIdentityPrincipalId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('controlPlaneResourceGroupName')), 'Microsoft.Resources/deployments', 'product-dev-containerapps-smoke'), '2025-04-01').outputs.runtimeManagedIdentityPrincipalId.value]"
+    },
+    "containerAppsEnvironmentName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('controlPlaneResourceGroupName')), 'Microsoft.Resources/deployments', 'product-dev-containerapps-smoke'), '2025-04-01').outputs.containerAppsEnvironmentName.value]"
+    },
+    "smokeContainerAppName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('controlPlaneResourceGroupName')), 'Microsoft.Resources/deployments', 'product-dev-containerapps-smoke'), '2025-04-01').outputs.smokeContainerAppName.value]"
+    },
+    "smokeContainerAppFqdn": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('controlPlaneResourceGroupName')), 'Microsoft.Resources/deployments', 'product-dev-containerapps-smoke'), '2025-04-01').outputs.smokeContainerAppFqdn.value]"
+    }
+  }
+}

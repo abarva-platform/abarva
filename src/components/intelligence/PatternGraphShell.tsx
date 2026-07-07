@@ -294,9 +294,10 @@ function buildGraphProvenanceRibbon(
 interface PatternGraphShellProps {
   shell: PatternGraphShellView;
   graph: PatternGraphView;
+  tenantName: string;
 }
 
-export function PatternGraphShell({ shell, graph }: PatternGraphShellProps) {
+export function PatternGraphShell({ shell, graph, tenantName }: PatternGraphShellProps) {
   const hubPatternKeys = new Set(
     graph.nodes
       .filter((n) => n.degree >= graph.highDegreeThreshold)
@@ -309,7 +310,7 @@ export function PatternGraphShell({ shell, graph }: PatternGraphShellProps) {
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: 'Intelligence · Pattern Graph',
       }}

@@ -603,7 +603,7 @@ export function IsolationLane({
             lineHeight: 1,
           }}
         >
-          Setup · Audit
+          Admin · Audit
         </div>
         <div
           style={{

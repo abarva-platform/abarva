@@ -362,11 +362,14 @@ describe('module hygiene · SentinelActivePatterns.tsx', () => {
     expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
   });
 
-  it('does not import Atlas, Nexus, or agent runtime', () => {
+  it('does not import Atlas or Nexus runtime and only uses deterministic agent mission imports', () => {
     expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
     expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\//);
-    expect(codeOnly).not.toMatch(/from '@\/components\/agent\//);
+    expect(codeOnly).toMatch(/from '@\/lib\/agent\/agent-mission-queue'/);
+    expect(codeOnly).toMatch(/from '@\/lib\/agent\/agent-mission-view'/);
+    expect(codeOnly).toMatch(/from '@\/components\/agent\/AgentMissionPanel'/);
+    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\/runtime/);
+    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\/tools/);
   });
 
   it('does not import Source UI', () => {
@@ -381,6 +384,15 @@ describe('module hygiene · SentinelActivePatterns.tsx', () => {
 
   it('does not import auth implementation', () => {
     expect(codeOnly).not.toMatch(/from '@\/lib\/auth\//);
+  });
+
+  it('renders AI-assisted recommendation controls for active pattern cards', () => {
+    expect(source).toContain('Pattern recommendation controls');
+    expect(source).toContain('AI-assisted pattern recommendation');
+    expect(source).toContain('Evidence refs:');
+    expect(source).toContain('human promotion gate required');
+    expect(source).toContain('Sentinel does not create or advance Moves autonomously');
+    expect(source).toContain('formatEvidenceRefs(detection.sourceSignalIds)');
   });
 });
 
@@ -410,8 +422,8 @@ describe('module hygiene · tenant intelligence route page', () => {
     expect(codeOnly).toMatch(/notFound\(\)/);
   });
 
-  it('renders the SentinelActivePatterns component', () => {
-    expect(codeOnly).toMatch(/SentinelActivePatterns/);
+  it('renders the IntelligenceLensTabs component that owns the Sentinel pattern view', () => {
+    expect(codeOnly).toMatch(/IntelligenceLensTabs/);
   });
 
   it('does not import Sentinel runtime, Atlas runtime, Nexus runtime, or agent runtime', () => {

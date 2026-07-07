@@ -11,14 +11,14 @@ export interface StewardEditorialProps {
   primaryAction: { label: string; href: string };
 }
 
-export function StewardEditorial({
-  title,
-  body,
-  contextUsed,
-  evidenceStrength,
-  blocker,
-  primaryAction,
-}: StewardEditorialProps) {
+export function StewardEditorial(props: StewardEditorialProps) {
+  const {
+    title,
+    body,
+    evidenceStrength,
+    blocker,
+    primaryAction,
+  } = props;
   return (
     <article
       style={{
@@ -56,37 +56,6 @@ export function StewardEditorial({
       >
         {body}
       </p>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.md, flexWrap: 'wrap' }}>
-        <span
-          style={{
-            fontFamily: TYPOGRAPHY.sans,
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: `${COLORS.ink}80`,
-          }}
-        >
-          Context used
-        </span>
-        {contextUsed.map((chip) => (
-          <span
-            key={chip}
-            style={{
-              padding: '4px 12px',
-              borderRadius: RADIUS.pill,
-              background: COLORS.skyPale,
-              color: COLORS.navy,
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 12,
-              fontWeight: 500,
-            }}
-          >
-            {chip}
-          </span>
-        ))}
-      </div>
 
       <div
         style={{

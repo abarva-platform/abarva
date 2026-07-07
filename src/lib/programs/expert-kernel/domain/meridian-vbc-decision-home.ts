@@ -462,7 +462,7 @@ function ungroundedBlocks(
         `carries none of them yet — a precise, named seed gap.`,
       evidenceRestsOnSeedGap: true,
       gestureLabel: 'Review the operating-metric seed gaps',
-      gestureHref: '/home/data-trust',
+      gestureHref: '/admin/data-trust',
     },
     {
       key: 'review_function_frame',
@@ -726,7 +726,7 @@ export const MERIDIAN_DECISION_HOME_BINDING: DecisionHomeBinding = {
           'not yet carry them — a precise, named seed gap.',
         evidenceRestsOnSeedGap: true,
         gestureLabel: 'Review the settlement-data seed gaps',
-        gestureHref: '/home/data-trust',
+        gestureHref: '/admin/data-trust',
       },
     ];
 

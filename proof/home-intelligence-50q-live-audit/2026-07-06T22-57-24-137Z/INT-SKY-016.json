@@ -1,0 +1,57 @@
+{
+  "id": "INT-SKY-016",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "What is the fastest meaningful next action after the airline AI portfolio review?",
+  "expectedTerms": [
+    "next",
+    "action"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:13:09.930Z",
+  "completedAt": "2026-07-06T23:13:46.672Z",
+  "latencyMs": 36742,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-016-prompt-reconstruction.txt",
+  "promptReconstructionHash": "e3cb3c6c5f31dbf0ebd797fa2cf0917dc1ac876829d2757004e8c1a9d0862f26",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-016.ndjson",
+  "claudeResponse": "Airline Demo's fastest meaningful next action is to convene a data and control certification sprint — not another review, not a vendor conversation, but a working session where the VP Data Platforms and AI Governance Lead co-sign the readiness status of the five feeds that gate every IROPS AI initiative.\nHere's why this is the right first move. The loaded evidence shows IROPS recovery decisioning is flagged as early-stage AI maturity and business-critical.\nEight AI initiatives are in flight — IROPS Decision Assistant, Crew Recovery Copilot, Passenger Reaccommodation Agent, and five others — but every one of them sits behind the same four unresolved gates: crew legality feed freshness, PNR/reservation event lineage, operational event store certification, and model-risk tier approval.\nClosing those gates in parallel is the only way to unblock the portfolio without sequencing each initiative separately. The governance evidence reinforces the urgency. Multiple AI and data controls are currently in review-required status across the CISO, CDAO, Chief Safety Officer, and AI Governance Lead roles.\nUntil those controls are signed, any value claim from the portfolio is planning-grade — directionally useful, but not board-presentable.\nThe sprint output should be three deliverables: (1) a data freshness sign-off matrix, owner-signed, covering the five critical feeds; (2) a model-risk tier assignment for at least the top three AI initiatives; and (3) a human-in-loop workflow confirmation for any initiative touching crew or passenger recovery.",
+  "renderedText": "Airline Demo's fastest meaningful next action is to convene a data and control certification sprint — not another review, not a vendor conversation, but a working session where the VP Data Platforms and AI Governance Lead co-sign the readiness status of the five feeds that gate every IROPS AI initiative.\nHere's why this is the right first move. The loaded evidence shows IROPS recovery decisioning is flagged as early-stage AI maturity and business-critical.\nEight AI initiatives are in flight — IROPS Decision Assistant, Crew Recovery Copilot, Passenger Reaccommodation Agent, and five others — but every one of them sits behind the same four unresolved gates: crew legality feed freshness, PNR/reservation event lineage, operational event store certification, and model-risk tier approval.\nClosing those gates in parallel is the only way to unblock the portfolio without sequencing each initiative separately. The governance evidence reinforces the urgency. Multiple AI and data controls are currently in review-required status across the CISO, CDAO, Chief Safety Officer, and AI Governance Lead roles.\nUntil those controls are signed, any value claim from the portfolio is planning-grade — directionally useful, but not board-presentable.\nThe sprint output should be three deliverables: (1) a data freshness sign-off matrix, owner-signed, covering the five critical feeds; (2) a model-risk tier assignment for at least the top three AI initiatives; and (3) a human-in-loop workflow confirmation for any initiative touching crew or passenger recovery.",
+  "sourcesCount": 10,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "Enterprise profile (skyharbor-air)",
+    "IT landscape (skyharbor-air)",
+    "Program inventory (skyharbor-air)"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": null,
+  "score": {
+    "verdict": "pass",
+    "score": 5,
+    "flags": []
+  }
+}

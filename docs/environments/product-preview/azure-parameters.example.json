@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "2026-06",
+  "environmentKey": "product-preview",
+  "status": "example_placeholders_only",
+  "nonMutating": true,
+  "subscription": {
+    "subscriptionId": "<product-preview-subscription-id-after-approval>",
+    "displayName": "sub-abarva-product-preview-eus-001",
+    "managementGroupTarget": "<product-platform-management-group>",
+    "region": "eastus"
+  },
+  "tags": {
+    "Environment": "Product Preview",
+    "EnvironmentKey": "product-preview",
+    "Plane": "control-plane",
+    "Owner": "AbarVa Platform",
+    "CostCenter": "<approved-cost-center>",
+    "DataClassification": "synthetic-or-client-approved-redacted",
+    "ClientCode": "abarva",
+    "ManagedBy": "manual-approved",
+    "Repository": "abarva-platform/abarva",
+    "ReleaseLane": "global-control-lane",
+    "Criticality": "high",
+    "NoPhiPii": "true"
+  },
+  "budget": {
+    "monthlyUsd": 500,
+    "alertThresholdsPercent": [50, 80, 100],
+    "alertRecipients": ["admin@abarva.ai"]
+  },
+  "rbac": {
+    "platformMaintainerGroupObjectId": "<group-object-id-after-approval>",
+    "releaseOperatorGroupObjectId": "<group-object-id-after-approval>",
+    "breakglassOwnerGroupObjectId": "<group-object-id-after-approval>"
+  },
+  "keyVault": {
+    "name": "<kv-product-preview-name>",
+    "secretsModel": "managed-identity-rbac",
+    "repoSecretsAllowed": false
+  },
+  "network": {
+    "privateDataServices": true,
+    "publicDatabaseAccess": false,
+    "privateEndpointRequiredForDataServices": true
+  },
+  "approval": {
+    "approvalFileRequiredForMutation": "docs/approvals/AZURE_MUTATION_APPROVED.md",
+    "approvedCommands": []
+  }
+}

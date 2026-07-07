@@ -1,0 +1,73 @@
+sla_id,commitment,ramp_months,exception_rationale
+SLA-001,commit,,
+SLA-002,commit,,
+SLA-003,commit,,
+SLA-004,exception,,Target above market practice; propose alternative
+SLA-005,commit_with_ramp,3,Tooling/KT dependency
+SLA-006,commit,,
+SLA-007,commit,,
+SLA-008,commit,,
+SLA-009,commit,,
+SLA-010,exception,,Target above market practice; propose alternative
+SLA-011,commit_with_ramp,6,Tooling/KT dependency
+SLA-012,exception,,Target above market practice; propose alternative
+SLA-013,commit_with_ramp,6,Tooling/KT dependency
+SLA-014,commit,,
+SLA-015,commit,,
+SLA-016,commit_with_ramp,6,Tooling/KT dependency
+SLA-017,commit,,
+SLA-018,commit,,
+SLA-019,commit,,
+SLA-020,commit,,
+SLA-021,commit,,
+SLA-022,exception,,Target above market practice; propose alternative
+SLA-023,commit,,
+SLA-024,commit_with_ramp,3,Tooling/KT dependency
+SLA-025,commit,,
+SLA-026,commit,,
+SLA-027,commit,,
+SLA-028,commit,,
+SLA-029,commit,,
+SLA-030,commit,,
+SLA-031,commit_with_ramp,6,Tooling/KT dependency
+SLA-032,commit,,
+SLA-033,commit_with_ramp,6,Tooling/KT dependency
+SLA-034,commit,,
+SLA-035,commit,,
+SLA-036,commit,,
+SLA-037,commit,,
+SLA-038,commit,,
+SLA-039,commit,,
+SLA-040,commit_with_ramp,6,Tooling/KT dependency
+SLA-041,commit,,
+SLA-042,commit,,
+SLA-043,commit_with_ramp,3,Tooling/KT dependency
+SLA-044,commit,,
+SLA-045,commit,,
+SLA-046,commit,,
+SLA-047,commit,,
+SLA-048,commit,,
+SLA-049,commit,,
+SLA-050,commit,,
+SLA-051,commit,,
+SLA-052,commit,,
+SLA-053,commit,,
+SLA-054,commit,,
+SLA-055,commit,,
+SLA-056,commit_with_ramp,3,Tooling/KT dependency
+SLA-057,commit,,
+SLA-058,commit,,
+SLA-059,commit,,
+SLA-060,commit,,
+SLA-061,commit_with_ramp,6,Tooling/KT dependency
+SLA-062,commit,,
+SLA-063,commit,,
+SLA-064,commit_with_ramp,3,Tooling/KT dependency
+SLA-065,commit,,
+SLA-066,commit,,
+SLA-067,commit,,
+SLA-068,commit,,
+SLA-069,commit,,
+SLA-070,exception,,Target above market practice; propose alternative
+SLA-071,commit,,
+SLA-072,commit,,

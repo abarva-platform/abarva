@@ -1,7 +1,7 @@
 // /home/learn/[section] — renders the matching guide section component,
 // or falls back to the placeholder for legacy section slugs.
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { WelcomeSection } from '@/components/home/learn/WelcomeSection';
 import { SetupSection } from '@/components/home/learn/SetupSection';
 import { IntelligenceSection } from '@/components/home/learn/IntelligenceSection';
@@ -16,7 +16,6 @@ import { MovesReferenceCard } from '@/components/home/learn/MovesReferenceCard';
 import { CaseStudySection } from '@/components/home/learn/CaseStudySection';
 import { LearnSectionPlaceholder } from '@/components/home/LearnSectionPlaceholder';
 import { findLearnSection } from '@/lib/home/learn-sections';
-import { findLearnNavItem } from '@/lib/home/learn-nav';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -39,8 +38,11 @@ export default async function LearnSectionPage({ params }: Props) {
     case 'first-steps':
       return <WelcomeSection />;
 
-    case 'setup':
+    case 'admin':
       return <SetupSection />;
+
+    case 'setup':
+      redirect('/home/learn/admin');
 
     case 'intelligence':
       return <IntelligenceSection />;

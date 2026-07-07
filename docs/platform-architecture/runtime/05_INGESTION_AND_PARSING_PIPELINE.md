@@ -32,6 +32,24 @@ The pipeline is:
 
 Models may assist extraction or summarization only after source material is parsed and normalized. Models are not the system of record for parsing.
 
+## Fallback Parser Boundary
+
+When the primary parser fails, returns low confidence, or produces visibly
+garbled output, fallback parsing must follow
+`docs/architecture/azure/PARSER_FALLBACK_DECISION_TREE.md`.
+
+- Marker is the private/self-hosted fallback for sensitive, restricted,
+  regulated, unknown-sensitivity, or no-third-party-consent documents.
+- LlamaParse is permitted only for non-sensitive documents after explicit
+  operator approval and customer third-party processing consent.
+- No fallback output may be committed to indexes, evidence ledgers, graph
+  records, deliverables, or recommendations until a human approves the parsed
+  result.
+
+The testable policy contract lives in
+`src/lib/ingestion/parser-fallback-policy.ts` so future ingestion workers can
+invoke the same decision tree before calling any fallback parser.
+
 ## Readiness States
 
 Ingestion should expose missing, requested, uploaded, connected, loaded, parsed, available, usable evidence, low confidence, stale, access restricted, not applicable, and waived states.

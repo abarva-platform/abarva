@@ -105,13 +105,20 @@ function knowledgeRowMatchesTenant(
     if (!industryTags.some((tag) => allowed.has(tag))) return false;
   }
 
-  const activeTenant = normalizeTenantMarker(
+  const activeTenantSignal =
     opts.tenantInventoryKey ??
     opts.surfaceContext?.clientKey ??
     opts.surfaceContext?.activeClient ??
-    null,
-  );
-  if (!activeTenant) return true;
+    null;
+  const hasActiveTenantSignal = (activeTenantSignal ?? '').trim().length > 0;
+  const activeTenant = normalizeTenantMarker(activeTenantSignal);
+
+  // Tenant-strict fence: only blanket-allow when there is genuinely no active
+  // tenant signal (cross-tenant library browsing). When a tenant IS active,
+  // fail CLOSED — exclude any row carrying another recognized tenant's marker,
+  // even if the active tenant itself is not yet a recognized marker. Defaulting
+  // to another tenant's facts (e.g. Apex) for an un-mapped tenant is a P0 leak.
+  if (!activeTenant && !hasActiveTenantSignal) return true;
 
   const haystack = [
     row.source_key,
@@ -129,6 +136,7 @@ function knowledgeRowMatchesTenant(
 function normalizeTenantMarker(value: string | null): string | null {
   const normalized = value?.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() ?? '';
   if (!normalized) return null;
+  if (/\b(lakeshore|lakeshore holdings|holdco)\b/.test(normalized)) return 'lakeshore';
   if (/\b(apex|apexretail|retail)\b/.test(normalized)) return 'apex';
   if (/\b(meridian|health)\b/.test(normalized)) return 'meridian';
   if (/\b(first capital|firstcapital|arcturus|financial)\b/.test(normalized)) return 'firstcapital';
@@ -144,6 +152,7 @@ function tenantMarkers(): Array<{ tenant: string; pattern: RegExp }> {
     { tenant: 'firstcapital', pattern: /\b(first capital|firstcapital|arcturus|financial)\b/ },
     { tenant: 'northstar', pattern: /\b(northstar|northstar clinical)\b/ },
     { tenant: 'skyharbor', pattern: /\b(skyharbor|skyharbor air)\b/ },
+    { tenant: 'lakeshore', pattern: /\b(lakeshore|lakeshore holdings|holdco)\b/ },
   ];
 }
 

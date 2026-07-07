@@ -17,13 +17,17 @@ import "server-only";
 // layer for the decide path; the migration's RLS is the second line of
 // defense for any direct authenticated client.
 
-import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  getAzureReadFluentClient,
+  getAzureWriteFluentClient,
+} from "@/lib/data-plane/postgresCompat";
 import { emitNotification } from "@/lib/admin/broker/notification-broker";
 import {
   notifyApprovalApproved,
   notifyApprovalRejected,
   notifyApprovalSubmitted,
 } from "@/lib/programs/approval-notifications";
+import type { TenancyCtx } from "@/lib/programs/types.db";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -77,6 +81,21 @@ export interface DecideApprovalInput {
   decision: "approved" | "rejected";
   /** Required (and non-empty) when decision === 'rejected'. */
   rationale?: string;
+  /**
+   * Full signed-in tenancy from the deciding route. P0 close needs this because
+   * agent/demo sessions can use a shorthand client key while the DB row carries
+   * the canonical client id; reconstructing context from only user id + tenant
+   * key can fail the program access check.
+   */
+  actorTenancy?: TenancyCtx;
+}
+
+export interface ListApprovalAuditForTenantInput {
+  tenantKey: string;
+  fromIso?: string | null;
+  toIso?: string | null;
+  status?: ApprovalRequestStatus | "all" | null;
+  limit?: number | null;
 }
 
 // ── Internal helpers ───────────────────────────────────────────────────
@@ -419,7 +438,11 @@ export async function decideApprovalRequest(
       ? {
           lifecycle_state: "approved",
           status: "active",
-          current_phase: 0,
+          // Phase advancement is owned by closeP0OnApproval -> advancePhase.
+          // That path signs the P0 brief, evaluates the governed gate, and
+          // writes the phase_snapshots row the generation guard reads. Do not
+          // set current_phase here, or the close helper will see the Move as
+          // already past P0 and skip the canonical gate write.
           ...(sponsorPersonIdFromBrief
             ? { sponsor_person_id: sponsorPersonIdFromBrief }
             : {}),
@@ -458,6 +481,34 @@ export async function decideApprovalRequest(
       evidenceRefs: [request.id],
     },
   );
+
+  // One approval closes P0 (founder spec 2026-06-11): the sponsor's approval
+  // of the origination request IS the origination-brief sign-off, and the Move
+  // advances P0→P1 through the governed gate in the same act. Best-effort —
+  // a failure logs loudly and leaves the Move at P0 with the approval intact.
+  if (request.requestStatus === "approved") {
+    try {
+      const { closeP0OnApproval } = await import("./origination-close");
+      const closed = await closeP0OnApproval({
+        programId: request.programId,
+        tenantKey: request.tenantKey,
+        deciderUserId: input.decidedByUserId,
+        rationale: input.rationale ?? null,
+        actorTenancy: input.actorTenancy,
+      });
+      if (!closed.advanced && closed.blockedBy.length > 0) {
+        console.error("[approval] P0 close blocked after approval", {
+          requestId: request.id,
+          blockedBy: closed.blockedBy,
+        });
+      }
+    } catch (err) {
+      console.error("[approval] closeP0OnApproval threw", {
+        requestId: request.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
 
   // OV2-2d-NOTIFY · fire-and-forget email to the requester. Email
   // failures must not block the approval workflow.
@@ -606,6 +657,51 @@ export async function getApprovalQueueForTenant(
   return rows.map(rowToApprovalRequest);
 }
 
+export async function listApprovalAuditForTenant(
+  input: ListApprovalAuditForTenantInput,
+): Promise<ApprovalRequest[]> {
+  if (!input.tenantKey) {
+    throw new ApprovalError(
+      "listApprovalAuditForTenant: tenantKey is required",
+      {
+        input,
+      },
+    );
+  }
+
+  const limit =
+    typeof input.limit === "number" && Number.isFinite(input.limit)
+      ? Math.min(Math.max(Math.trunc(input.limit), 1), 5000)
+      : 1000;
+  const sb = getAzureReadFluentClient();
+  let query = sb
+    .from("program_approval_requests")
+    .select(APPROVAL_COLUMNS)
+    .eq("tenant_key", input.tenantKey)
+    .order("requested_at", { ascending: false })
+    .limit(limit);
+
+  if (input.status && input.status !== "all") {
+    query = query.eq("request_status", input.status);
+  }
+  if (input.fromIso) {
+    query = query.gte("requested_at", input.fromIso);
+  }
+  if (input.toIso) {
+    query = query.lte("requested_at", input.toIso);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw wrapDbError("listApprovalAuditForTenant: query failed", error, {
+      input,
+    });
+  }
+
+  const rows = (data ?? []) as unknown as ApprovalRequestRow[];
+  return rows.map(rowToApprovalRequest);
+}
+
 // ── PRE-W4-PR-4 · escalation primitives ───────────────────────────────
 //
 // Two admin-initiated transitions are exposed here. Both are append-only
@@ -657,11 +753,9 @@ export async function markSponsorNotified(
     .maybeSingle();
 
   if (readError) {
-    throw wrapDbError(
-      "markSponsorNotified: lookup failed",
-      readError,
-      { input },
-    );
+    throw wrapDbError("markSponsorNotified: lookup failed", readError, {
+      input,
+    });
   }
   if (!existing) {
     throw new ApprovalError(
@@ -690,11 +784,7 @@ export async function markSponsorNotified(
     .single();
 
   if (error || !data) {
-    throw wrapDbError(
-      "markSponsorNotified: update failed",
-      error,
-      { input },
-    );
+    throw wrapDbError("markSponsorNotified: update failed", error, { input });
   }
   return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
 }

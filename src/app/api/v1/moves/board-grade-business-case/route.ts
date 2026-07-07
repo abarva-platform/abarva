@@ -33,38 +33,46 @@
 // The renderers are deterministic and pure. An honest `shape` / `kill`
 // verdict, or an unbound Move, is a valid rendered outcome, never an error.
 
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
 
-import { getCurrentUser } from '@/lib/auth/current-user';
+import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   renderApexCostedBusinessCaseHtml,
   renderApexCostedBusinessCasePptx,
   renderMoveCostedBusinessCaseHtml,
-} from '@/lib/programs/expert-kernel/exports/board-grade';
+} from "@/lib/programs/expert-kernel/exports/board-grade";
 import {
   cachedRender,
   cachedRenderAsync,
-} from '@/lib/programs/expert-kernel/exports/board-grade/render-cache';
-import { assertBoardGradeTenancy } from '@/lib/programs/board-artifacts/board-grade-route-guard';
-import { loadMoveBusinessCaseInput } from '@/lib/programs/board-artifacts/load-move-business-case-input';
+} from "@/lib/programs/expert-kernel/exports/board-grade/render-cache";
+import { assertBoardGradeTenancy } from "@/lib/programs/board-artifacts/board-grade-route-guard";
+import {
+  generatedArtifactResponseHeaders,
+  persistBoardGradeMoveArtifact,
+} from "@/lib/programs/board-artifacts/board-grade-persistence";
+import { loadMoveBusinessCaseInput } from "@/lib/programs/board-artifacts/load-move-business-case-input";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { runOrchestratedBusinessCase } from "@/lib/programs/deliverables/orchestrated/run-orchestrated-business-case";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+// The orchestrated path runs up to six sequential board-grade LLM passes, so the
+// route needs the platform-max budget. The deterministic path returns instantly.
+export const maxDuration = 300;
 
 export async function GET(req: NextRequest): Promise<Response> {
   // --- Auth — a valid session. -------------------------------------------
   const user = await getCurrentUser().catch(() => null);
   if (!user) {
     return Response.json(
-      { error: 'unauthorized', detail: 'A signed-in session is required.' },
+      { error: "unauthorized", detail: "A signed-in session is required." },
       { status: 401 },
     );
   }
 
   const generatedOn = new Date().toISOString().slice(0, 10);
   const params = new URL(req.url).searchParams;
-  const moveId = params.get('moveId')?.trim() || '';
+  const moveId = params.get("moveId")?.trim() || "";
 
   // ─────────────────────────────────────────────────────────────────────────
   // GENERIC MODE — `?moveId=` present. Render that Move's kernel-derived deck.
@@ -78,48 +86,144 @@ export async function GET(req: NextRequest): Promise<Response> {
       moveInput = await loadMoveBusinessCaseInput(moveId);
     } catch (err) {
       console.error(
-        '[GET /api/v1/moves/board-grade-business-case] move load error',
+        "[GET /api/v1/moves/board-grade-business-case] move load error",
         { err, moveId },
       );
       moveInput = null;
     }
 
     if (moveInput) {
+      // ── Orchestrated authoring path (flag-gated) ──────────────────────────
+      // When the tenant has `moves_orchestrated_deliverables` on, author the
+      // deck through the governed multi-pass orchestrator (uses the Move's
+      // recorded evidence, cites it, enforces the quality gate). The
+      // deterministic deck below is the fallback when the gate blocks or the
+      // Move has no recorded evidence. `?engine=deterministic` forces the old
+      // path even for a flagged tenant.
+      const flagCtx = {
+        clientKey: moveInput.tenant_key,
+        clientId: moveInput.tenant_key,
+      };
+      const orchestrate =
+        params.get("engine") !== "deterministic" &&
+        isFeatureEnabled(flagCtx, "moves_orchestrated_deliverables");
+
+      if (orchestrate) {
+        const run = await runOrchestratedBusinessCase({
+          moveInput,
+          moveId,
+          tenantId: moveInput.tenant_key ?? user.metadataClientKey ?? moveId,
+          userId: user.personId ?? user.clerkUserId,
+          generatedOn,
+        }).catch((err) => {
+          console.error(
+            "[GET /api/v1/moves/board-grade-business-case] orchestration error",
+            { err, moveId },
+          );
+          return null;
+        });
+
+        if (run?.ok && run.html) {
+          const download = params.get("download") === "1";
+          const filename = `costed-business-case-pack-${moveId}-${generatedOn}.html`;
+          const artifactRecord = await persistBoardGradeMoveArtifact({
+            clientId: moveInput.tenant_key ?? user.metadataClientKey,
+            moveId,
+            artifactId: "costed-business-case",
+            title: "Costed Business-Case Pack",
+            html: run.html,
+            renderedBy: user.personId ?? user.clerkUserId,
+            routePath: "/api/v1/moves/board-grade-business-case",
+            generatedOn,
+            citedInputIds: run.citedInputIds,
+          });
+          return new Response(run.html, {
+            status: 200,
+            headers: {
+              "content-type": "text/html; charset=utf-8",
+              "cache-control": "no-store",
+              "x-kernel-move": `move:${moveId}`,
+              "x-deliverable-engine": "orchestrated",
+              "x-deliverable-cited-input-count": String(
+                run.citedInputIds.length,
+              ),
+              ...generatedArtifactResponseHeaders(artifactRecord),
+              ...(download
+                ? {
+                    "content-disposition": `attachment; filename="${filename}"`,
+                  }
+                : {}),
+            },
+          });
+        }
+        // Orchestration blocked or errored — fall through to the deterministic
+        // deck. The block reason is logged; the response is marked as a fallback.
+        console.warn(
+          "[GET /api/v1/moves/board-grade-business-case] orchestration not used; falling back to deterministic deck",
+          { moveId, reason: run?.blockedReason },
+        );
+      }
+
+      // WE-3 — Workforce Economics estimate-twice, gated on the tenant flag.
+      // Flag OFF ⇒ the renderer is called with no opts and is byte-identical to
+      // today. The flag is folded into the cache key so a flagged and an
+      // unflagged tenant never share a memoised render.
+      const workforceEconomicsEnabled = isFeatureEnabled(
+        flagCtx,
+        "moves_workforce_economics",
+      );
+
       // The generic renderer is pure; a throw here would be a renderer bug.
       // Memoised per day, keyed by the move id so two Moves never collide.
       let html: string;
       try {
         html = cachedRender(
-          `move-costed-business-case:html:${moveId}:${generatedOn}`,
-          () => renderMoveCostedBusinessCaseHtml(moveInput!, generatedOn),
+          `move-costed-business-case:html:${moveId}:${generatedOn}:we${
+            workforceEconomicsEnabled ? "1" : "0"
+          }`,
+          () =>
+            renderMoveCostedBusinessCaseHtml(moveInput!, generatedOn, {
+              workforceEconomicsEnabled,
+            }),
         );
       } catch (err) {
         console.error(
-          '[GET /api/v1/moves/board-grade-business-case] move render error',
+          "[GET /api/v1/moves/board-grade-business-case] move render error",
           { err, moveId },
         );
         return Response.json(
           {
-            error: 'render_failed',
+            error: "render_failed",
             detail:
               err instanceof Error
                 ? err.message
-                : 'Move board-grade business-case render failed.',
+                : "Move board-grade business-case render failed.",
           },
           { status: 500 },
         );
       }
 
-      const download = params.get('download') === '1';
+      const download = params.get("download") === "1";
       const filename = `costed-business-case-pack-${moveId}-${generatedOn}.html`;
+      const artifactRecord = await persistBoardGradeMoveArtifact({
+        clientId: moveInput.tenant_key ?? user.metadataClientKey,
+        moveId,
+        artifactId: "costed-business-case",
+        title: "Costed Business-Case Pack",
+        html,
+        renderedBy: user.personId ?? user.clerkUserId,
+        routePath: "/api/v1/moves/board-grade-business-case",
+        generatedOn,
+      });
       return new Response(html, {
         status: 200,
         headers: {
-          'content-type': 'text/html; charset=utf-8',
-          'cache-control': 'no-store',
-          'x-kernel-move': `move:${moveId}`,
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "no-store",
+          "x-kernel-move": `move:${moveId}`,
+          ...generatedArtifactResponseHeaders(artifactRecord),
           ...(download
-            ? { 'content-disposition': `attachment; filename="${filename}"` }
+            ? { "content-disposition": `attachment; filename="${filename}"` }
             : {}),
         },
       });
@@ -135,13 +239,13 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   // --- Tenancy — the reference artifact is Apex-owned. -------------------
   const tenancyDenied = await assertBoardGradeTenancy(
-    'GET /api/v1/moves/board-grade-business-case',
+    "GET /api/v1/moves/board-grade-business-case",
   );
   if (tenancyDenied) return tenancyDenied;
 
   // `?format=pptx` serves the editable PowerPoint of the reference deck; the
   // PowerPoint renderer is async (it rasterises the SVG exhibits).
-  if (params.get('format') === 'pptx') {
+  if (params.get("format") === "pptx") {
     let pptx: Buffer;
     try {
       pptx = await cachedRenderAsync(
@@ -150,16 +254,16 @@ export async function GET(req: NextRequest): Promise<Response> {
       );
     } catch (err) {
       console.error(
-        '[GET /api/v1/moves/board-grade-business-case] pptx render error',
+        "[GET /api/v1/moves/board-grade-business-case] pptx render error",
         { err },
       );
       return Response.json(
         {
-          error: 'render_failed',
+          error: "render_failed",
           detail:
             err instanceof Error
               ? err.message
-              : 'Board-grade business-case PowerPoint render failed.',
+              : "Board-grade business-case PowerPoint render failed.",
         },
         { status: 500 },
       );
@@ -168,12 +272,12 @@ export async function GET(req: NextRequest): Promise<Response> {
     return new Response(new Uint8Array(pptx), {
       status: 200,
       headers: {
-        'content-type':
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'content-disposition': `attachment; filename="${pptxName}"`,
-        'cache-control': 'no-store',
-        'x-kernel-move': 'apex:move:contact-center-ai-routing',
-        'x-kernel-verdict': 'shape',
+        "content-type":
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "content-disposition": `attachment; filename="${pptxName}"`,
+        "cache-control": "no-store",
+        "x-kernel-move": "apex:move:contact-center-ai-routing",
+        "x-kernel-verdict": "shape",
       },
     });
   }
@@ -187,35 +291,35 @@ export async function GET(req: NextRequest): Promise<Response> {
     );
   } catch (err) {
     console.error(
-      '[GET /api/v1/moves/board-grade-business-case] render error',
+      "[GET /api/v1/moves/board-grade-business-case] render error",
       { err },
     );
     return Response.json(
       {
-        error: 'render_failed',
+        error: "render_failed",
         detail:
           err instanceof Error
             ? err.message
-            : 'Board-grade business-case render failed.',
+            : "Board-grade business-case render failed.",
       },
       { status: 500 },
     );
   }
 
   // `?download=1` serves it as a file; default is inline for in-browser view.
-  const download = params.get('download') === '1';
+  const download = params.get("download") === "1";
   const filename = `apex-costed-business-case-pack-${generatedOn}.html`;
 
   return new Response(html, {
     status: 200,
     headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'no-store',
-      'x-kernel-move': 'apex:move:contact-center-ai-routing',
-      'x-kernel-verdict': 'shape',
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "x-kernel-move": "apex:move:contact-center-ai-routing",
+      "x-kernel-verdict": "shape",
       ...(download
         ? {
-            'content-disposition': `attachment; filename="${filename}"`,
+            "content-disposition": `attachment; filename="${filename}"`,
           }
         : {}),
     },

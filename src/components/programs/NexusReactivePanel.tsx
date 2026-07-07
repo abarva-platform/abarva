@@ -31,6 +31,7 @@ import type {
   ProgramFocusArtifact,
   QuestionResolvedArtifact,
 } from '@/lib/agent/artifacts';
+import { AISuggestionFrame } from '@/components/abarva/AISuggestionFrame';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 
 export interface NexusReactivePanelProps {
@@ -112,13 +113,19 @@ function CardShell({
 }) {
   const agentLabel = useContext(CardAgentLabelContext);
   return (
-    <div
+    <AISuggestionFrame
+      status="suggested"
+      detail="Validate before action"
+      ariaLabel={`${agentLabel} AI suggestion: ${kind}`}
       style={{
         background: '#FFFFFF',
         border: `1px solid rgba(12,26,58,0.12)`,
+        borderLeft: `3px solid ${BrandColors.signalBlue}`,
         borderRadius: 8,
         padding: '12px 14px',
         boxShadow: '0 1px 2px rgba(12,26,58,0.04)',
+      }}
+      bodyStyle={{
         fontFamily: BrandTypography.sans,
         color: BrandColors.inkBlack,
       }}
@@ -137,7 +144,7 @@ function CardShell({
         {agentLabel} · {kind}
       </div>
       {children}
-    </div>
+    </AISuggestionFrame>
   );
 }
 

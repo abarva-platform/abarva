@@ -26,9 +26,22 @@
  * union so the registry can be exhaustively type-checked.
  */
 export type FunctionPackIndustryKey =
-  | 'healthcare-provider'
-  | 'retail'
-  | 'financial-services';
+  | "healthcare-provider"
+  | "retail"
+  | "financial-services"
+  | "airline";
+
+/**
+ * The airline (global network carrier) function taxonomy. v1 builds the
+ * irregular-operations recovery + customer-care spine (`irops_recovery`) —
+ * the disruption recovery function where AI decision support and proactive
+ * passenger re-accommodation create the sharpest value.
+ */
+export type AirlineFunctionKey =
+  | "irops_recovery"
+  | "network_operations_control"
+  | "crew_operations"
+  | "loyalty_customer_experience";
 
 /**
  * The healthcare (provider) function taxonomy — the ~12 functions of the
@@ -37,36 +50,36 @@ export type FunctionPackIndustryKey =
  * (`care_delivery_care_management`, `population_health_value_based_care`).
  */
 export type HealthcareFunctionKey =
-  | 'clinical_operations_documentation'
-  | 'care_delivery_care_management'
-  | 'population_health_value_based_care'
-  | 'patient_access_engagement_experience'
-  | 'research_clinical_trials'
-  | 'revenue_cycle'
-  | 'quality_safety_regulatory'
-  | 'clinical_supply_chain'
-  | 'health_information_interoperability'
-  | 'clinical_workforce_staffing'
-  | 'payer_claims_operations'
-  | 'pharmacy';
+  | "clinical_operations_documentation"
+  | "care_delivery_care_management"
+  | "population_health_value_based_care"
+  | "patient_access_engagement_experience"
+  | "research_clinical_trials"
+  | "revenue_cycle"
+  | "quality_safety_regulatory"
+  | "clinical_supply_chain"
+  | "health_information_interoperability"
+  | "clinical_workforce_staffing"
+  | "payer_claims_operations"
+  | "pharmacy";
 
 /**
  * The retail function taxonomy — the twelve functions of the retail vertical
  * (spec §3). A Function Pack is keyed by `(industryKey, functionKey)`.
  */
 export type RetailFunctionKey =
-  | 'merchandising_assortment'
-  | 'pricing_promotions'
-  | 'demand_inventory_planning'
-  | 'supply_chain_fulfillment'
-  | 'store_operations'
-  | 'customer_loyalty_personalization'
-  | 'digital_commerce'
-  | 'marketing_retail_media'
-  | 'customer_care'
-  | 'workforce_labor'
-  | 'returns_reverse_logistics'
-  | 'loss_prevention';
+  | "merchandising_assortment"
+  | "pricing_promotions"
+  | "demand_inventory_planning"
+  | "supply_chain_fulfillment"
+  | "store_operations"
+  | "customer_loyalty_personalization"
+  | "digital_commerce"
+  | "marketing_retail_media"
+  | "customer_care"
+  | "workforce_labor"
+  | "returns_reverse_logistics"
+  | "loss_prevention";
 
 /**
  * The financial-services function taxonomy — the twelve functions of the
@@ -74,18 +87,20 @@ export type RetailFunctionKey =
  * functions, the corporate spine, and the servicing operations.
  */
 export type FinancialServicesFunctionKey =
-  | 'retail_banking_deposits'
-  | 'lending_credit_underwriting'
-  | 'payments_money_movement'
-  | 'wealth_asset_management'
-  | 'capital_markets_trading'
-  | 'commercial_corporate_banking'
-  | 'risk_management'
-  | 'fraud_financial_crime'
-  | 'regulatory_compliance'
-  | 'finance_treasury_alm'
-  | 'customer_servicing_contact_center'
-  | 'collections_recovery';
+  | "retail_banking_deposits"
+  | "lending_credit_underwriting"
+  | "payments_money_movement"
+  | "wealth_asset_management"
+  | "capital_markets_trading"
+  | "commercial_corporate_banking"
+  | "risk_management"
+  | "fraud_financial_crime"
+  | "regulatory_compliance"
+  | "finance_treasury_alm"
+  /** Cross-entity cost reduction & vendor/procurement rationalization — the corporate/G&A spend spine of a diversified HoldCo. */
+  | "cost_optimization_vendor_management"
+  | "customer_servicing_contact_center"
+  | "collections_recovery";
 
 /**
  * Any function key across the three verticals. The named unions document each
@@ -97,6 +112,7 @@ export type FunctionPackFunctionKey =
   | HealthcareFunctionKey
   | RetailFunctionKey
   | FinancialServicesFunctionKey
+  | AirlineFunctionKey
   | string;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,7 +120,7 @@ export type FunctionPackFunctionKey =
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Which direction of movement on a metric is "good". */
-export type MetricDirectionOfGood = 'lower' | 'higher' | 'in-range';
+export type MetricDirectionOfGood = "lower" | "higher" | "in-range";
 
 /**
  * A benchmark range — always a labelled PLANNING range, never asserted as
@@ -122,7 +138,7 @@ export interface BenchmarkRange {
    */
   basis: string;
   /** Explicit honesty marker — every benchmark is a planning range. */
-  label: 'planning-range';
+  label: "planning-range";
 }
 
 /**
@@ -176,17 +192,17 @@ export interface PainTheme {
 
 /** How readily this archetype is being adopted in the function today. */
 export type AdoptionProfile =
-  | 'mainstream'
-  | 'emerging'
-  | 'experimenting'
-  | 'early';
+  | "mainstream"
+  | "emerging"
+  | "experimenting"
+  | "early";
 
 /** The control posture an archetype demands. */
 export type ControlPosture =
-  | 'human-in-the-loop'
-  | 'human-on-the-loop'
-  | 'human-approval-required'
-  | 'autonomous-with-audit';
+  | "human-in-the-loop"
+  | "human-on-the-loop"
+  | "human-approval-required"
+  | "autonomous-with-audit";
 
 /**
  * Layer 3 — a recurring AI bet made in this function. The agent RECOGNISES the
@@ -240,6 +256,14 @@ export interface ReferenceSolutionPattern {
   controlPosture: ControlPosture;
   /** Cross-reference to an existing canonical AI pattern, where one fits. */
   relatedCanonicalPatternId?: string;
+  /**
+   * How this pattern participates in the solution-architecture option
+   * scorecard. Omitted/`'option'` = a competing architecture option (ranked;
+   * one selected, the rest named as alternatives). `'foundation'` = an adopted
+   * platform-foundation component (landing zone, ingestion, governance) shown
+   * as adopted, never ranked or rejected.
+   */
+  dispositionKind?: "option" | "foundation";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -355,10 +379,10 @@ export interface VocabularyAndEntities {
  * Mobilize).
  */
 export type MovesPhaseArtifact =
-  | 'discover_brief'
-  | 'business_case'
-  | 'solution_architecture'
-  | 'mobilization_plan';
+  | "discover_brief"
+  | "business_case"
+  | "solution_architecture"
+  | "mobilization_plan";
 
 /** One section of a deliverable's table of contents. */
 export interface DeliverableSection {
@@ -475,8 +499,8 @@ export const FUNCTION_PACK_DEPTH_MINIMUMS = {
 
 /** The four Moves phase artifacts every reference pack must outline. */
 export const REQUIRED_DELIVERABLE_ARTIFACTS: readonly MovesPhaseArtifact[] = [
-  'discover_brief',
-  'business_case',
-  'solution_architecture',
-  'mobilization_plan',
+  "discover_brief",
+  "business_case",
+  "solution_architecture",
+  "mobilization_plan",
 ] as const;

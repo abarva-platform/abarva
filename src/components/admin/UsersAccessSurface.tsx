@@ -356,11 +356,11 @@ export function UsersAccessSurface({ view }: UsersAccessSurfaceProps) {
 
         {/* Steward guidance */}
         <article
-          aria-label="Steward guidance"
+          aria-label="Ava guidance"
           style={panelStyle}
         >
           <SectionHeader
-            eyebrow="Steward guidance"
+            eyebrow="Ava guidance"
             title="Calm, read-only today"
           />
           <div

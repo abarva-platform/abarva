@@ -347,7 +347,7 @@ export function SourcingEventTable({
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: lightMode ? 1080 : 1160 }}>
           <thead>
             <tr style={{ textAlign: 'left' }}>
-              <th style={headerCell}>Event / Tenant</th>
+              <th style={headerCell}>Event / Company</th>
               <th style={headerCell}>Archetype / Rigor</th>
               <th style={headerCell}>Workflow</th>
               <th style={headerCell}>Owner / Pressure</th>

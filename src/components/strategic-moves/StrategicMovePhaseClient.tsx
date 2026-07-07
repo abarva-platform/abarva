@@ -1,39 +1,88 @@
-'use client';
+"use client";
 
-// StrategicMovePhaseClient · Strategic Moves Phase Workspace (P1–P5)
+// StrategicMovePhaseClient · Strategic Moves Phase Workspace (P0–P5)
 //
 // Two-pane phase workspace: Nexus chat on the left, phase canvas on the right.
 // Uses /api/chat/agent with surface `/strategic-moves/{moveId}/phase/{phaseNum}`
 // and passes moveId + phase in surfaceContext so the agent route loads the
-// correct phase pack (T-P1 through T-P5).
+// correct phase pack (T-P0 through T-P5).
 //
 // Design reference: StrategicMoveOriginateClient.tsx (P0) — same shell,
 // same chat patterns, phase-specific canvas on the right.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { extractArtifacts, visibleArtifactPendingText } from '@/lib/agent/artifacts';
-import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
-import type { StrategicMove } from '@/lib/programs/types.ui';
-import styles from './StrategicMoves.module.css';
-import { PhaseRail } from './PhaseRail';
-import { GeneratePhasePackage } from './GeneratePhasePackage';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  extractArtifacts,
+  visibleArtifactPendingText,
+} from "@/lib/agent/artifacts";
+import {
+  CurrentStateReadinessPanel,
+  WhereToStartBlock,
+  IndicativePlanBlock,
+} from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import { DeliverableArtifactCard } from "@/components/strategic-moves/DeliverableArtifactCard";
+import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
+import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
+import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
+import {
+  shapeAgentResponseForSurface,
+  shapeStreamingAgentTextForSurface,
+} from "@/lib/agent/response-shape";
+import type { StrategicMove } from "@/lib/programs/types.ui";
+import { deliverableBelongsToPhase } from "@/lib/programs/phase-deliverables";
+import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import {
+  parseDiagnosisFacts,
+  serializeDiagnosisFacts,
+  type DiagnosisFact,
+} from "@/lib/programs/diagnosis-facts";
+import styles from "./StrategicMoves.module.css";
+import { PhaseRail } from "./PhaseRail";
+import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
+import {
+  AgentDock,
+  modeStorageKey,
+  type AttachmentRef,
+  type ChatMessage,
+} from "@/components/agent/AgentDock";
+import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
+import { EvidenceWorkbench } from "./EvidenceWorkbench";
+import { conciseSponsorLabel } from "./sponsor-display";
+import type {
+  MoveEvidenceNeedPacket,
+  MoveEvidenceNeedStatus,
+  MoveEvidenceNeedPriority,
+} from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type ChatTurn = {
   id: string;
-  role: 'user' | 'assistant';
-  agentName?: 'Nexus';
+  role: "user" | "assistant";
+  agentName?: "Nexus";
   text: string;
 };
 
-type AttachmentStatus = 'uploading' | 'done' | 'error';
+type AttachmentStatus = "uploading" | "done" | "error";
 interface PendingAttachment {
   id: string;
   name: string;
   status: AttachmentStatus;
   attachmentId?: string;
+  feedbackCount?: number;
+  whatFound?: string[];
+  whereUsed?: string[];
+  parseMethod?: string | null;
   errorMsg?: string;
 }
 
@@ -47,64 +96,85 @@ interface PhaseConfig {
 }
 
 const PHASE_CONFIGS: Record<number, PhaseConfig> = {
+  0: {
+    label: "P0 Originate",
+    shortLabel: "P0 ORIGINATE",
+    firstMessage: (move) =>
+      `**${move.name}** is in P0 Originate. The seed is approved for disciplined shaping, but P0 still has to leave behind a clean handoff: named sponsor, value hypothesis, scope boundary, evidence family, and Discovery capacity. We should close any remaining P0 evidence gaps, then advance to P1 Charter with a human-reviewed rationale.`,
+    suggestedPrompts: [
+      "Show me the P0 gate criteria",
+      "What is missing before P1 Charter?",
+      "Draft the P0 to P1 advance rationale",
+    ],
+  },
   1: {
-    label: 'P1 Charter',
-    shortLabel: 'P1 CHARTER',
+    label: "P1 Charter",
+    shortLabel: "P1 CHARTER",
     firstMessage: (move) => {
       const sponsorName = move.sponsor?.name ?? null;
+      const p1Steps = [
+        `**${move.name}** has been promoted to P1 Charter. The origination brief is complete — now we turn it into a sponsor-committed charter. The five P1 steps:`,
+        "",
+        "1. Confirm sponsor commitment",
+        "2. Map stakeholders & decision rights",
+        "3. Lock success metrics + value range",
+        "4. Draft the charter document",
+        "5. Prepare for gate review",
+        "",
+      ].join("\n");
       if (sponsorName) {
-        return `**${move.name}** has been promoted to P1 Charter. The origination brief is complete — now we turn that into a sponsor-committed charter. P1 has five steps: confirm sponsor commitment, map stakeholders, lock success metrics and value range, draft the charter document, and prepare for gate review. The first thing we need: has **${sponsorName}** formally committed to sponsoring this Move?`;
+        return `${p1Steps}First up: has **${sponsorName}** formally committed to sponsoring this Move?`;
       }
-      return `**${move.name}** has been promoted to P1 Charter. The origination brief is complete — now we turn that into a sponsor-committed charter. P1 has five steps: confirm sponsor commitment, map stakeholders, lock success metrics and value range, draft the charter document, and prepare for gate review. Who should sponsor this Move — which executive owns the outcome this Move is targeting?`;
+      return `${p1Steps}First up: who should sponsor this Move — which executive owns the outcome it targets?`;
     },
     suggestedPrompts: [
-      'Walk me through the P1 gate criteria',
-      'What does the sponsor need to commit to?',
-      'Help me draft the stakeholder map',
+      "Walk me through the P1 gate criteria",
+      "What does the sponsor need to commit to?",
+      "Help me draft the stakeholder map",
     ],
   },
   2: {
-    label: 'P2 Discover & Diagnose',
-    shortLabel: 'P2 DISCOVER',
+    label: "P2 Discover & Diagnose",
+    shortLabel: "P2 DISCOVER",
     firstMessage: (move) =>
-      `**${move.name}** has entered P2 Discover & Diagnose. The charter is signed — now we establish the evidence that will determine whether this move goes to P3 or stops here. P2 has five steps: map the current-state process, capture baseline metrics, identify root causes, assess data readiness, and make the continue/discontinue decision. Where do you want to start — process mapping or baseline data?`,
+      `**${move.name}** has entered P2 Discover & Diagnose. The charter is signed — now we establish the evidence that decides whether this Move goes to P3 or stops here. The five P2 steps:\n\n1. Map the current-state process\n2. Capture baseline metrics (attested, with owners)\n3. Identify root causes\n4. Assess data readiness\n5. Make the continue / discontinue decision\n\nWhere do you want to start — process mapping or baseline data?`,
     suggestedPrompts: [
-      'Start with current-state process mapping',
-      'What baseline metrics do we need to capture?',
-      'Walk me through the P2 gate criteria',
+      "Start with current-state process mapping",
+      "What baseline metrics do we need to capture?",
+      "Walk me through the P2 gate criteria",
     ],
   },
   3: {
-    label: 'P3 Design Future State',
-    shortLabel: 'P3 DESIGN',
+    label: "P3 Design Future State",
+    shortLabel: "P3 DESIGN",
     firstMessage: (move) =>
       `P2 diagnosis is confirmed for **${move.name}**. P3 starts here: for each root cause identified in P2, we need to define the design element that addresses it. That traceability is the foundation. Once all root causes have a design counterpart, we'll work through the operating model shift and solution architecture. Ready to start with the first root cause?`,
     suggestedPrompts: [
-      'Start the root cause trace',
-      'Help me map the operating model shift',
-      'What are the P3 gate criteria?',
+      "Start the root cause trace",
+      "Help me map the operating model shift",
+      "What are the P3 gate criteria?",
     ],
   },
   4: {
-    label: 'P4 Roadmap & Business Case',
-    shortLabel: 'P4 ROADMAP',
+    label: "P4 Roadmap & Business Case",
+    shortLabel: "P4 ROADMAP",
     firstMessage: (move) =>
-      `P3 design is signed off for **${move.name}**. P4 builds the plan and the economics.\n\nBefore we start the roadmap, one thing: we need to define the Tower metric plan — the measurable signals that confirm this program is succeeding post-handoff. Without it, we're measuring at gate, not at execution. We'll lock these alongside the business case, not after.\n\nP4 has four steps: roadmap construction from the P3 design, business case economics, Tower metric plan, and gate review. Ready to start with the roadmap?`,
+      `P3 design is signed off for **${move.name}**. P4 builds the plan and the economics. The four P4 steps:\n\n1. Roadmap construction from the P3 design\n2. Business case economics (derived from approved estimates/value only)\n3. Tower metric plan — the post-handoff success signals, locked alongside the business case, not after\n4. Gate review\n\nReady to start with the roadmap?`,
     suggestedPrompts: [
-      'Start roadmap construction',
-      'Help me draft the business case',
-      'What should go in the Tower metric plan?',
+      "Start roadmap construction",
+      "Help me draft the business case",
+      "What should go in the Tower metric plan?",
     ],
   },
   5: {
-    label: 'P5 Mobilize & Handoff',
-    shortLabel: 'P5 MOBILIZE',
+    label: "P5 Mobilize & Handoff",
+    shortLabel: "P5 MOBILIZE",
     firstMessage: (move) =>
-      `P4 gate passed for **${move.name}**. P5 begins now: mobilize the delivery team and assemble the Tower handoff package.\n\nP5 has five steps: team assembly and RACI confirmation, handoff package assembly, readiness verification, explicit Tower acceptance, and gate-out. P5 ends when a named Tower representative explicitly confirms the package is executable — not when the package is sent, not when Tower attends a session.\n\nFirst: let's confirm the delivery team. For each workstream from the P4 roadmap, we need a named delivery lead with confirmed availability. Ready to go through the workstreams?`,
+      `P4 gate passed for **${move.name}**. P5 begins now: mobilize delivery and hand off to Tower. The five P5 steps:\n\n1. Team assembly + RACI confirmation\n2. Handoff package assembly\n3. Readiness verification\n4. Explicit Tower acceptance — a named Tower representative confirms the package is executable (not "sent", not "attended a session")\n5. Gate-out\n\nFirst: the delivery team. For each P4 workstream we need a named delivery lead with confirmed availability. Ready to go through the workstreams?`,
     suggestedPrompts: [
-      'Confirm the delivery team RACI',
-      'Assemble the Tower handoff package',
-      'What does Tower acceptance require?',
+      "Confirm the delivery team RACI",
+      "Assemble the Tower handoff package",
+      "What does Tower acceptance require?",
     ],
   },
 };
@@ -115,40 +185,274 @@ interface CanvasSection {
   id: string;
   label: string;
   placeholder: string;
+  /** `"facts"` → render a structured metric·value·source table (see diagnosis-facts). */
+  structured?: "facts";
+}
+
+interface PhaseUploadGuidance {
+  title: string;
+  whyItMatters: string;
+  recommendedUploads: string[];
+  expectedLearning: string[];
+  finalUpload?: string;
+}
+
+const PHASE_UPLOAD_GUIDANCE: Record<number, PhaseUploadGuidance> = {
+  2: {
+    title: "Upload evidence to understand current state",
+    whyItMatters:
+      "AbarVa uses this evidence to separate symptoms from root causes before design starts.",
+    recommendedUploads: [
+      "work or activity data",
+      "baseline metrics",
+      "systems and data source list",
+      "policy or control rules",
+      "current-state workshop notes",
+      "final current-state view",
+    ],
+    expectedLearning: [
+      "volumes, aging, and cycle-time baseline",
+      "missing intake or data-quality patterns",
+      "systems and handoffs involved",
+      "root-cause candidates and evidence gaps",
+    ],
+    finalUpload: "Upload Final Current-State View after the review session.",
+  },
+  3: {
+    title: "Upload evidence to choose the approach",
+    whyItMatters:
+      "AbarVa compares solution options before architecture, so the team chooses a path deliberately.",
+    recommendedUploads: [
+      "approved P2 final",
+      "solution options or decision matrix",
+      "human and AI work split",
+      "architecture constraints",
+      "solution workshop notes",
+      "final solution design",
+    ],
+    expectedLearning: [
+      "selected approach and rejected options",
+      "tradeoffs, controls, and decision rationale",
+      "human, AI, and exception responsibilities",
+      "what P4 must review before committing",
+    ],
+    finalUpload: "Upload Final Solution Design after the approach is agreed.",
+  },
+  4: {
+    title: "Upload evidence to build the plan",
+    whyItMatters:
+      "AbarVa turns the approved solution into workstreams, economics, owners, risks, and Tower metrics.",
+    recommendedUploads: [
+      "approved P3 final",
+      "roadmap workstreams",
+      "business case model",
+      "value assumptions",
+      "finance review notes",
+      "Tower metric definitions",
+      "final plan",
+    ],
+    expectedLearning: [
+      "revised value assumptions and caveats",
+      "workstreams, dependencies, and owners",
+      "pilot timeline and readiness risks",
+      "Tower metrics and measurement owners",
+    ],
+    finalUpload: "Upload Final Plan after Finance and delivery review.",
+  },
+  5: {
+    title: "Upload evidence to prepare execution",
+    whyItMatters:
+      "AbarVa checks whether the plan can move from workshop agreement to owned execution.",
+    recommendedUploads: [
+      "approved P4 final",
+      "RACI or owner matrix",
+      "launch readiness checklist",
+      "training or change plan",
+      "approval conditions",
+      "final execution handoff",
+    ],
+    expectedLearning: [
+      "named owners and governance cadence",
+      "launch readiness and open decisions",
+      "handoff risks and acceptance criteria",
+      "Tower measurement readiness",
+    ],
+    finalUpload:
+      "Upload Final Execution Handoff when owners and readiness are confirmed.",
+  },
+};
+
+export function UploadGuidanceCard({ phaseNum }: { phaseNum: number }) {
+  const guidance = PHASE_UPLOAD_GUIDANCE[phaseNum];
+  if (!guidance) return null;
+  return (
+    <section
+      id={`ws-canvas-p${phaseNum}-upload-guidance`}
+      className={styles.detailSection}
+    >
+      <div className={styles.detailSectionTitle}>What to upload</div>
+      <div style={{ display: "grid", gap: 10 }}>
+        <div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              color: "var(--abarva-ink)",
+            }}
+          >
+            {guidance.title}
+          </div>
+          <div
+            style={{
+              marginTop: 3,
+              fontSize: 12,
+              color: "var(--abarva-slate)",
+              lineHeight: 1.5,
+            }}
+          >
+            {guidance.whyItMatters}
+          </div>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            gap: 12,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: "var(--abarva-ink)",
+                marginBottom: 5,
+              }}
+            >
+              Recommended files
+            </div>
+            <ul className={styles.qualityBarList}>
+              {guidance.recommendedUploads.map((item) => (
+                <li key={item}>
+                  <span className={styles.qualityBarDot} aria-hidden />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: "var(--abarva-ink)",
+                marginBottom: 5,
+              }}
+            >
+              What AbarVa should learn
+            </div>
+            <ul className={styles.qualityBarList}>
+              {guidance.expectedLearning.map((item) => (
+                <li key={item}>
+                  <span className={styles.qualityBarDot} aria-hidden />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {guidance.finalUpload && (
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--abarva-slate)",
+              fontWeight: 700,
+            }}
+          >
+            {guidance.finalUpload}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// The phase-workflow capture cards (P1–P5) are DERIVED from the canonical
+// phase-capture contract (`getPhaseCaptureSections`) so that each card's `id`
+// IS the exact server field key. This is load-bearing: the Save step posts
+// `{ [sectionSaveKey(id)]: value }` to POST .../phase-capture, and the route
+// (evaluatePhaseCapture) only counts fields whose key matches a contract
+// section key. When these were hand-authored with drifted ids (e.g. "sponsor"
+// vs the contract's "sponsor_commitment"), every Save persisted 0 fields,
+// Approve never enabled, and no Move could advance past its gate. Deriving
+// from the contract makes that drift structurally impossible — the card set,
+// labels, and keys are one source of truth. See phase-capture-contract.ts.
+function contractCanvasSections(phase: number): CanvasSection[] {
+  return getPhaseCaptureSections(phase).map((section) => ({
+    id: section.key,
+    label: section.label,
+    placeholder: section.description,
+    ...(section.structured ? { structured: section.structured } : {}),
+  }));
 }
 
 const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
-  1: [
-    { id: 'sponsor', label: 'Sponsor commitment', placeholder: 'Confirm sponsor identity, commitment level, and decision rights' },
-    { id: 'stakeholders', label: 'Stakeholders', placeholder: 'Map who has decision rights, contributes, and can block' },
-    { id: 'success-metrics', label: 'Success metrics', placeholder: 'Lock the primary measurable metric and baseline path' },
-    { id: 'value-range', label: 'Value range', placeholder: 'Preliminary value range with stated assumptions (PRELIMINARY_ESTIMATE)' },
-    { id: 'scope', label: 'Scope', placeholder: 'Charter scope — more precise than the P0 scope boundary' },
-  ],
-  2: [
-    { id: 'baseline', label: 'Current-state baseline', placeholder: 'Document current metrics, process state, and pain points — attest with owner' },
-    { id: 'rootcause', label: 'Root cause analysis', placeholder: 'Identify root causes underpinning the problem this move addresses' },
-    { id: 'datareadiness', label: 'Data & readiness assessment', placeholder: 'Assess data foundation readiness — access, quality, governance, AI-readiness' },
-    { id: 'decision', label: 'P2 decision', placeholder: 'Continue to P3 or discontinue — requires gate evaluation first' },
-  ],
-  3: [
-    { id: 'design', label: 'Target state design', placeholder: 'Future workflow, AI/agent placement, human ownership, capability being built' },
-    { id: 'operatingmodel', label: 'Operating model shift', placeholder: 'Who works differently — roles, handoffs, responsibilities — Today → Tomorrow' },
-    { id: 'rootcause-trace', label: 'Root cause → design trace', placeholder: 'Every design element must trace to a P2 root cause (hard requirement)' },
-    { id: 'risks', label: 'Risks & tradeoffs', placeholder: '5–7 named risks with likelihood, impact, and mitigation' },
-  ],
-  4: [
-    { id: 'roadmap', label: 'Execution roadmap', placeholder: 'Workstreams, estimates, timeline, milestones, dependencies, RACI' },
-    { id: 'businesscase', label: 'Business case', placeholder: 'ROM estimate, org-specific rate card, ROI summary — requires sponsor approval' },
-    { id: 'valueplan', label: 'Value plan', placeholder: 'Measurement contract: committed outcomes and how they will be measured' },
-    { id: 'towermetric', label: 'Tower monitoring plan', placeholder: 'Measurable signals Tower tracks post-handoff — must be drafted at mid-P4' },
-  ],
-  5: [
-    { id: 'raci', label: 'Delivery RACI', placeholder: 'Named delivery leads for every workstream — people, not roles' },
-    { id: 'handoffpack', label: 'Tower handoff package', placeholder: 'All phase artifacts assembled: roadmap, monitoring plan, value framework, risk register, RACI, change plan' },
-    { id: 'tower-acceptance', label: 'Tower acceptance', placeholder: 'Explicit Tower acceptance required — acknowledged ≠ accepted' },
-  ],
+  // P0–P5: canonical contract sections. Do NOT hand-author ids here — they must
+  // equal the contract keys or Save silently persists nothing.
+  0: contractCanvasSections(0),
+  1: contractCanvasSections(1),
+  2: contractCanvasSections(2),
+  3: contractCanvasSections(3),
+  4: contractCanvasSections(4),
+  5: contractCanvasSections(5),
 };
+
+// ── Phase capture → save-key + gate-deliverable + orchestrate-key mapping ─────
+//
+// For P1–P5 the capture-card ids ARE the canonical phase-capture contract keys
+// (see contractCanvasSections above), so sectionSaveKey is effectively identity
+// and the Save payload keys always match evaluatePhaseCapture in the route. The
+// hyphen→underscore transform below is retained only for the P0 read-only cards
+// (whose ids are still hyphenated) and as a defensive no-op for the P1–P5 keys.
+//
+// `deliverableTypeKey` is the deliverable type the phase gate checks signed_off
+// against (verified against governance.ts) — used to seed reload state from the
+// persisted Move. `orchestrateKey` is the orchestrate `key=` value for the
+// Generate step (verified present in the archetype deliverablePack).
+//
+//   Phase  Save deliverableTypeKey  Gate criterion / findDeliverable        orchestrateKey
+//   P1     charter                  charter_signed_off / 'charter'          program_charter
+//   P2     discovery_report         discovery_report_signed_off / …         discovery_report
+//   P3     design_spec              design_approved / 'design_spec','design'  ai_enabled_sdlc_architecture
+//   P4     business_case            business_case_approved / …              business_case
+//   P5     tower_handoff_plan       tower_handoff_plan_accepted (soft) / …  handoff_package
+
+interface PhaseWorkflowConfig {
+  deliverableTypeKey: string;
+  orchestrateKey: string;
+}
+
+const PHASE_WORKFLOW: Record<number, PhaseWorkflowConfig> = {
+  1: { deliverableTypeKey: "charter", orchestrateKey: "program_charter" },
+  2: {
+    deliverableTypeKey: "discovery_report",
+    orchestrateKey: "discovery_report",
+  },
+  3: {
+    deliverableTypeKey: "design_spec",
+    orchestrateKey: "ai_enabled_sdlc_architecture",
+  },
+  4: { deliverableTypeKey: "business_case", orchestrateKey: "business_case" },
+  5: {
+    deliverableTypeKey: "tower_handoff_plan",
+    orchestrateKey: "handoff_package",
+  },
+};
+
+/** The phase-capture save key for a section id: hyphens → underscores. */
+function sectionSaveKey(sectionId: string): string {
+  return sectionId.replace(/-/g, "_");
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -156,14 +460,1507 @@ function generateTurnId(): string {
   return `turn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// ── Capture-slot fill derivation (presentational, derived state only) ─────────
+//
+// A capture section is "filled" when the Move already carries real content for
+// it — the origination charter JSONB (`engagements.charter`, snake_case and
+// camelCase variants both occur in the wild) or the structured Move fields
+// (sponsor, participants, valueAtStake). Nothing is fabricated: no matching
+// data → the slot stays hollow.
+
+const SECTION_CHARTER_KEYS: Record<string, string[]> = {
+  // P0
+  business_trigger: [
+    "business_trigger",
+    "businessTrigger",
+    "trigger",
+    "problem_statement",
+    "problemStatement",
+    "problem",
+    "move_seed",
+  ],
+  problem_statement: [
+    "problem_statement",
+    "problemStatement",
+    "problem",
+    "move_seed",
+  ],
+  affected_function_process: [
+    "affected_function_process",
+    "affectedFunctionProcess",
+    "scope_boundary",
+    "scopeBoundary",
+    "initial_scope",
+    "function_process",
+  ],
+  initial_value_hypothesis: [
+    "initial_value_hypothesis",
+    "initialValueHypothesis",
+    "value_hypothesis",
+    "valueHypothesis",
+    "target_outcome",
+    "targetOutcome",
+  ],
+  stakeholder_owner_view: [
+    "stakeholder_owner_view",
+    "stakeholderOwnerView",
+    "sponsor_candidate",
+    "sponsorCandidate",
+    "sponsor",
+  ],
+  known_evidence: [
+    "known_evidence",
+    "knownEvidence",
+    "evidence_family",
+    "evidenceFamily",
+  ],
+  missing_evidence_open_questions: [
+    "missing_evidence_open_questions",
+    "missingEvidenceOpenQuestions",
+    "open_questions",
+    "openQuestions",
+  ],
+  recommendation_to_advance: [
+    "recommendation_to_advance",
+    "recommendationToAdvance",
+    "approval_rationale",
+    "approvalRationale",
+  ],
+  // Legacy P0 ids kept only for old persisted charters/tests.
+  seed: ["problem_statement", "problemStatement", "problem", "move_seed"],
+  "sponsor-candidate": ["sponsor_candidate", "sponsorCandidate", "sponsor"],
+  "value-hypothesis": [
+    "value_hypothesis",
+    "valueHypothesis",
+    "target_outcome",
+    "targetOutcome",
+  ],
+  "scope-boundary": ["scope_boundary", "scopeBoundary", "initial_scope"],
+  "evidence-family": ["evidence_family", "evidenceFamily"],
+  // P1 — keyed by canonical phase-capture contract keys (the card ids). Each
+  // list probes the charter JSONB variants so the P0→P1 carry still pre-fills.
+  sponsor_commitment: [
+    "sponsor_commitment",
+    "sponsorCommitment",
+    "sponsor_candidate",
+    "sponsorCandidate",
+    "sponsor",
+  ],
+  scope_boundary: [
+    "scope_boundary",
+    "scopeBoundary",
+    "charter_scope",
+    "charterScope",
+    "scope",
+    "initial_scope",
+  ],
+  success_criteria: [
+    "success_criteria",
+    "successCriteria",
+    "success_metrics",
+    "successMetrics",
+    "primary_metric",
+    "primaryMetric",
+  ],
+  stakeholder_map: ["stakeholder_map", "stakeholderMap", "stakeholders"],
+  decision_rights: ["decision_rights", "decisionRights"],
+  evidence_plan: [
+    "evidence_plan",
+    "evidencePlan",
+    "evidence_family",
+    "evidenceFamily",
+  ],
+};
+
+function charterText(
+  charter: Record<string, unknown> | null,
+  keys: string[],
+): string | null {
+  const scaffold =
+    charter?.scaffold && typeof charter.scaffold === "object"
+      ? (charter.scaffold as Record<string, unknown>)
+      : null;
+  for (const k of keys) {
+    const v = charter?.[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+    const scaffoldValue = scaffold?.[k];
+    if (typeof scaffoldValue === "string" && scaffoldValue.trim()) {
+      return scaffoldValue.trim();
+    }
+  }
+  return null;
+}
+
+/** Charter keys to probe for a section: explicit map + id-derived variants. */
+function sectionCharterKeys(sectionId: string): string[] {
+  const snake = sectionId.replace(/-/g, "_");
+  const camel = snake.replace(/_(\w)/g, (_, c: string) => c.toUpperCase());
+  return Array.from(
+    new Set([...(SECTION_CHARTER_KEYS[sectionId] ?? []), snake, camel]),
+  );
+}
+
+function formatUsdCompact(n: number): string {
+  return n >= 1_000_000
+    ? `$${(n / 1_000_000).toFixed(1)}M`
+    : `$${Math.round(n / 1000)}k`;
+}
+
+/**
+ * The real content backing a capture section, or null when nothing has been
+ * captured yet ("content beyond placeholder = filled").
+ */
+function sectionCapturedContent(
+  move: StrategicMove,
+  sectionId: string,
+): string | null {
+  const fromCharter = charterText(move.charter, sectionCharterKeys(sectionId));
+  switch (sectionId) {
+    // "sponsor_commitment"/"stakeholder_map" are the canonical P1 card ids;
+    // the hyphenated ids are the P0 read-only cards.
+    case "sponsor_commitment":
+    case "sponsor-candidate":
+      if (move.sponsor?.name) {
+        return `${move.sponsor.name} — ${move.sponsor.role}`;
+      }
+      return fromCharter;
+    case "stakeholder_map":
+      if (move.participants.length > 0) {
+        return move.participants
+          .map((p) => `${p.name} (${p.role})`)
+          .join(" · ");
+      }
+      return fromCharter;
+    case "value-hypothesis": {
+      if (fromCharter) return fromCharter;
+      const projected = move.valueAtStake.projected;
+      if (projected) {
+        return `Projected ${formatUsdCompact(projected.low)}–${formatUsdCompact(
+          projected.high,
+        )} ${projected.currency}`;
+      }
+      return null;
+    }
+    default:
+      return fromCharter;
+  }
+}
+
+// ── Progressive-disclosure panel keys + collapse shell ─────────────────────────
+
+type PanelKey =
+  | "gate"
+  | "needs"
+  | "readiness"
+  | "start"
+  | "plan"
+  | "capture"
+  | "generate"
+  | "artifacts";
+
+/**
+ * Native <details> collapse shell for a canvas panel. Controlled `open` so the
+ * auto-expand state machine (and the capture chips) can drive it; user toggles
+ * are synced back via onToggle. Wraps existing content — never replaces it.
+ */
+function CollapsePanel({
+  id,
+  title,
+  meta,
+  open,
+  onOpenChange,
+  children,
+}: {
+  id: string;
+  title: string;
+  meta?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      id={id}
+      className={styles.panelCollapse}
+      open={open}
+      onToggle={(e) => {
+        const isOpen = (e.currentTarget as HTMLDetailsElement).open;
+        if (isOpen !== open) onOpenChange(isOpen);
+      }}
+    >
+      <summary className={styles.panelSummary}>
+        <span>{title}</span>
+        {meta ? <span className={styles.panelSummaryMeta}>{meta}</span> : null}
+        <span className={styles.panelChevron} aria-hidden>
+          &#9656;
+        </span>
+      </summary>
+      <div className={styles.panelBody}>{children}</div>
+    </details>
+  );
+}
+
+// ── Phase 4-step gated capture workflow (P1–P5) ───────────────────────────────
+//
+// Founder-locked sequence, generalized from the proven P1 charter workflow:
+// (1) capture all → (2) Save the record (deterministic POST to /phase-capture,
+// NOT chat) → (3) Approve the saved record (enabled only when all sections saved)
+// → (4) Generate the board-grade artifact from the approved record (enabled only
+// after approval). Each step is gated on the previous. Reload-safe: Save/Approve/
+// Generate eligibility is SEEDED from persisted Move data on mount so a refresh
+// keeps the user's place.
+
+type GenState =
+  | { status: "idle" }
+  | { status: "generating"; pct?: number; label?: string }
+  | {
+      status: "done";
+      qualityScore: number | null;
+      pass: boolean;
+      // When pass === false, the specific board-grade gate blockers, so the UI
+      // can explain WHY it was held (not just "below gate") and the user can act.
+      blockers?: string[];
+    }
+  | { status: "error"; message: string };
+
+// Structured facts editor — metric · value · source rows, serialized to JSON in
+// the section value. Local state (seeded once from the loaded value) so typing
+// never fights a trim/re-parse round-trip. The parent remounts on capture-load,
+// which re-seeds it.
+function FactsEditor({
+  initial,
+  onChange,
+  idBase,
+}: {
+  initial: string;
+  onChange: (serialized: string) => void;
+  idBase: string;
+}) {
+  const [rows, setRows] = useState<DiagnosisFact[]>(() => {
+    const parsed = parseDiagnosisFacts(initial);
+    return parsed.length ? parsed : [{ metric: "", value: "", source: "" }];
+  });
+  const commit = (next: DiagnosisFact[]) => {
+    setRows(next);
+    onChange(serializeDiagnosisFacts(next));
+  };
+  const setCell = (i: number, patch: Partial<DiagnosisFact>) =>
+    commit(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  return (
+    <div className={styles.factsEditor} id={idBase}>
+      <div className={styles.factsHeadRow}>
+        <span>Metric</span>
+        <span>Value</span>
+        <span>Source / evidence</span>
+        <span aria-hidden />
+      </div>
+      {rows.map((row, i) => (
+        <div className={styles.factsRow} key={i}>
+          <input
+            className={styles.factsInput}
+            value={row.metric}
+            placeholder="e.g. Intake cycle time"
+            onChange={(e) => setCell(i, { metric: e.target.value })}
+          />
+          <input
+            className={styles.factsInput}
+            value={row.value}
+            placeholder="e.g. 18.4 days"
+            onChange={(e) => setCell(i, { value: e.target.value })}
+          />
+          <input
+            className={styles.factsInput}
+            value={row.source}
+            placeholder="e.g. Intake work queue"
+            onChange={(e) => setCell(i, { source: e.target.value })}
+          />
+          <button
+            type="button"
+            className={styles.factsRemove}
+            aria-label="Remove fact"
+            onClick={() =>
+              commit(
+                rows.length > 1
+                  ? rows.filter((_, j) => j !== i)
+                  : [{ metric: "", value: "", source: "" }],
+              )
+            }
+          >
+            &times;
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className={styles.factsAdd}
+        onClick={() => commit([...rows, { metric: "", value: "", source: "" }])}
+      >
+        + Add fact
+      </button>
+    </div>
+  );
+}
+
+function CharterWorkflow({
+  move,
+  phaseNum,
+  canvasSections,
+  capturedSections,
+  isCaptureCardOpen,
+  setOpenCaptureCards,
+  workbench = false,
+  gateItems,
+  evidenceNeedPackets,
+  statusColor,
+  sponsorLine,
+  onAddEvidence,
+  onAskAva,
+}: {
+  move: StrategicMove;
+  phaseNum: number;
+  canvasSections: CanvasSection[];
+  capturedSections: { section: CanvasSection; content: string | null }[];
+  isCaptureCardOpen: (id: string) => boolean;
+  setOpenCaptureCards: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
+  // Workbench mode (P2–P5): render the EvidenceWorkbench with the existing
+  // capture UI embedded as its `captureSlot`. All optional so the P1 call site
+  // is unchanged.
+  workbench?: boolean;
+  gateItems?: StrategicMove["gateCriteria"];
+  evidenceNeedPackets?: MoveEvidenceNeedPacket[];
+  statusColor?: StrategicMove["statusColor"];
+  sponsorLine?: string;
+  onAddEvidence?: () => void;
+  onAskAva?: () => void;
+}) {
+  const wbRouter = useRouter();
+  const workflow = PHASE_WORKFLOW[phaseNum];
+  const sectionIds = useMemo(
+    () => canvasSections.map((s) => s.id),
+    [canvasSections],
+  );
+
+  // Editable textarea values, seeded from already-captured content so pre-filled
+  // slots prefill. Keyed by section id.
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      capturedSections.map(({ section, content }) => [
+        section.id,
+        content ?? "",
+      ]),
+    ),
+  );
+
+  // The persisted gate deliverable for THIS phase, used to seed reload state.
+  const persistedDeliverable = move.deliverables.find(
+    (d) => d.typeKey === workflow?.deliverableTypeKey,
+  );
+
+  // Save state. RELOAD-SEED `allSaved` from persisted data: every section already
+  // carries captured content (sectionCapturedContent reads engagements.charter,
+  // which the Save route wrote) → Approve stays enabled after a refresh.
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [allSaved, setAllSaved] = useState<boolean>(
+    () =>
+      capturedSections.length > 0 &&
+      capturedSections.every(({ content }) => content !== null),
+  );
+  // deliverableId from the save response, or RELOAD-SEEDED from the existing
+  // phase gate deliverable on the Move so Approve works without re-saving.
+  const [deliverableId, setDeliverableId] = useState<string | null>(
+    () => persistedDeliverable?.id ?? null,
+  );
+
+  // Approve state. RELOAD-SEED `approved` from the persisted deliverable status.
+  const [approving, setApproving] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
+  const [approved, setApproved] = useState<boolean>(
+    () => persistedDeliverable?.status === "signed_off",
+  );
+
+  // Generate state
+  const [gen, setGen] = useState<GenState>({ status: "idle" });
+  // Guard async polling against unmount so a 15-min poll loop stops if the user leaves.
+  const genMounted = useRef(true);
+  useEffect(() => {
+    genMounted.current = true;
+    return () => {
+      genMounted.current = false;
+    };
+  }, []);
+  // Whether the last generation produced a clean deliverable (run `succeeded`).
+  // A ref, not state, so the "Build and approve" flow can read the outcome
+  // immediately after awaiting generateArtifact without a stale-closure read.
+  const genSucceededRef = useRef(false);
+
+  const filledNow = sectionIds.filter((id) => (values[id] ?? "").trim()).length;
+
+  const saveRecord = useCallback(async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const items: Record<string, string> = {};
+      for (const id of sectionIds) {
+        const v = (values[id] ?? "").trim();
+        if (v) items[sectionSaveKey(id)] = v;
+      }
+      const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase: phaseNum, items }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        savedFields?: string[];
+        allSaved?: boolean;
+        recordCreated?: boolean;
+        deliverableId?: string;
+        recordError?: string;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          data.detail || data.error || `Save failed (HTTP ${res.status})`,
+        );
+      }
+      setAllSaved(Boolean(data.allSaved));
+      if (data.deliverableId) setDeliverableId(data.deliverableId);
+      if (data.recordCreated === false && data.recordError) {
+        setSaveError(
+          `Inputs saved, but record not created: ${data.recordError}`,
+        );
+      }
+      // Return the fresh id so the combined "Approve & advance" flow can chain
+      // straight into build+advance without waiting for the async deliverableId
+      // state to settle (which would race in the same call stack).
+      return {
+        deliverableId: data.deliverableId ?? null,
+        allSaved: Boolean(data.allSaved),
+      };
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Save failed");
+      return { deliverableId: null, allSaved: false };
+    } finally {
+      setSaving(false);
+    }
+  }, [move.id, phaseNum, sectionIds, values]);
+
+  const approveRecord = useCallback(async (deliverableIdArg?: string) => {
+    const targetDeliverableId = deliverableIdArg ?? deliverableId;
+    if (!targetDeliverableId) {
+      setApproveError("Save the record first.");
+      return;
+    }
+    setApproving(true);
+    setApproveError(null);
+    try {
+      // Rationale draws on the first captured section (sponsor for P1, the
+      // phase's leading input otherwise); falls back to a generic attestation.
+      const leadVal = (values[sectionIds[0]] ?? "").trim();
+      const rationale = leadVal
+        ? `Record reviewed and approved — ${leadVal.slice(0, 160)}`
+        : "Phase record reviewed and approved.";
+      const res = await fetch(
+        `/api/v1/programs/${move.id}/deliverables/${targetDeliverableId}/sign-off`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rationale }),
+        },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        status?: string;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          data.detail || data.error || `Approve failed (HTTP ${res.status})`,
+        );
+      }
+      setApproved(true);
+    } catch (err) {
+      setApproveError(err instanceof Error ? err.message : "Approve failed");
+    } finally {
+      setApproving(false);
+    }
+  }, [deliverableId, move.id, sectionIds, values]);
+
+  const generateArtifact = useCallback(async () => {
+    // Async generation: ENQUEUE then POLL. The board-grade charter is a multi-pass
+    // (~minutes) build that cannot finish inside one HTTP request — the previous
+    // synchronous call to /current-state/deliverable/orchestrate hit the ~240s gateway
+    // timeout and surfaced "Generate failed (HTTP 504)" even though the durable worker
+    // had actually produced the artifact. We now reuse the proven enqueue+poll path that
+    // "Approve & Build" uses (POST /api/v1/deliverables/generate-phase → durable worker →
+    // GET /api/v1/deliverables/runs/{id}), so the request returns immediately and the UI
+    // tracks live progress to completion.
+    setGen({ status: "generating", pct: 0, label: "Queued…" });
+    genSucceededRef.current = false;
+    const gateKey = workflow?.deliverableTypeKey;
+    try {
+      const pollRun = async (runId: string): Promise<void> => {
+        const POLL_MS = 4000;
+        const MAX_MS = 20 * 60 * 1000;
+        const startedAt = Date.now();
+        while (true) {
+          if (!genMounted.current) return;
+          if (Date.now() - startedAt > MAX_MS) {
+            throw new Error("Generation timed out after 20 minutes.");
+          }
+          await new Promise((r) => setTimeout(r, POLL_MS));
+          if (!genMounted.current) return;
+          let poll: {
+            status?: string;
+            progressPct?: number;
+            progressLabel?: string | null;
+            blockers?: string[];
+            error?: string;
+          } = {};
+          try {
+            const pollRes = await fetch(`/api/v1/deliverables/runs/${runId}`, {
+              credentials: "include",
+            });
+            poll = (await pollRes.json().catch(() => ({}))) as typeof poll;
+            if (!pollRes.ok) continue; // transient (e.g. 503) — keep polling
+          } catch {
+            continue; // network blip — keep polling
+          }
+          if (poll.status === "queued" || poll.status === "running") {
+            setGen({
+              status: "generating",
+              pct: poll.progressPct ?? 0,
+              label: poll.progressLabel ?? undefined,
+            });
+            continue;
+          }
+          if (poll.status === "succeeded") {
+            genSucceededRef.current = true;
+            setGen({ status: "done", qualityScore: null, pass: true });
+            return;
+          }
+          if (poll.status === "blocked") {
+            setGen({
+              status: "done",
+              qualityScore: null,
+              pass: false,
+              blockers: Array.isArray(poll.blockers)
+                ? poll.blockers
+                : undefined,
+            });
+            return;
+          }
+          throw new Error(poll.error || "Generation failed.");
+        }
+      };
+
+      if (phaseNum === 2 && gateKey === "discovery_report") {
+        const enqueueRes = await fetch(`/api/v1/programs/${move.id}/generate`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: phaseNum,
+            deliverableTypeKey: gateKey,
+            title: "Current Work Diagnostic",
+            generationMode: "draft",
+          }),
+        });
+        const enqueue = (await enqueueRes.json().catch(() => ({}))) as {
+          runId?: string;
+          error?: string;
+          detail?: string;
+          blockers?: Array<{ reason?: string }>;
+        };
+        if (!enqueueRes.ok || !enqueue.runId) {
+          const blockerReasons = Array.isArray(enqueue.blockers)
+            ? enqueue.blockers
+                .map((blocker) => blocker.reason)
+                .filter(Boolean)
+                .join("; ")
+            : "";
+          throw new Error(
+            blockerReasons ||
+              enqueue.detail ||
+              enqueue.error ||
+              `Generate failed (HTTP ${enqueueRes.status})`,
+          );
+        }
+        await pollRun(enqueue.runId);
+        return;
+      }
+
+      const enqueueRes = await fetch("/api/v1/deliverables/generate-phase", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moveId: move.id,
+          phase: phaseNum,
+          useCaseArchetype: move.archetype,
+          moveName: move.name,
+          clientDisplayName: move.tenant.name,
+        }),
+      });
+      const enqueue = (await enqueueRes.json().catch(() => ({}))) as {
+        deliverables?: Array<{
+          deliverableTypeKey: string;
+          runId: string | null;
+          status: string;
+          error?: string;
+        }>;
+        error?: string;
+        detail?: string;
+      };
+      if (!enqueueRes.ok || !Array.isArray(enqueue.deliverables)) {
+        throw new Error(
+          enqueue.detail ||
+            enqueue.error ||
+            `Generate failed (HTTP ${enqueueRes.status})`,
+        );
+      }
+      // Track the phase's gate deliverable (the charter for P1), else the first queued run.
+      const target =
+        enqueue.deliverables.find(
+          (d) => d.deliverableTypeKey === gateKey && d.runId,
+        ) ?? enqueue.deliverables.find((d) => d.runId);
+      if (!target?.runId) {
+        const failed = enqueue.deliverables.find((d) => d.error);
+        throw new Error(
+          failed?.error || "Generation did not start (no run was queued).",
+        );
+      }
+      const runId = target.runId;
+      await pollRun(runId);
+    } catch (err) {
+      if (!genMounted.current) return;
+      setGen({
+        status: "error",
+        message: err instanceof Error ? err.message : "Generate failed",
+      });
+    }
+  }, [
+    move.id,
+    move.archetype,
+    move.name,
+    move.tenant.name,
+    phaseNum,
+    workflow,
+  ]);
+
+  // Build and approve — one action. Generate the board-grade deliverable, and
+  // ONLY if it cleanly succeeds, sign it off. This is the fix for the old
+  // Save → Approve → Generate ordering: Approve used to sign off the raw,
+  // never-generated capture record (so a Move could advance with an ungenerated
+  // charter), and generating afterward reset the deliverable to `draft` and
+  // un-signed it. Now generation runs first and sign-off acts on the generated
+  // draft (the sign-off route accepts `draft`), so a signed-off gate deliverable
+  // always implies a generated one.
+  const buildAndApprove = useCallback(async (deliverableIdArg?: string) => {
+    const targetDeliverableId = deliverableIdArg ?? deliverableId;
+    if (!targetDeliverableId) {
+      setApproveError("Save the record first.");
+      return;
+    }
+    setApproveError(null);
+    // 1. Finalize the capture. Save leaves the phase modules `in_progress`, but
+    //    the generation gate (assertPhaseReadyForGeneration → captureComplete)
+    //    only counts modules that are `completed`. Without this, generation is
+    //    blocked as "capture incomplete" even at "N of N saved" — and, because a
+    //    pre-gate DRAFT is only allowed when capture is complete, the gate
+    //    blocker fires too ("no generation until the gate is approved"). This
+    //    flip is what makes the just-saved record generatable, and it mirrors the
+    //    finalize step advanceGate already runs.
+    const finalizeRes = await fetch(
+      `/api/v1/programs/${move.id}/phase-capture`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase: phaseNum, complete: true }),
+      },
+    );
+    const finalize = (await finalizeRes.json().catch(() => ({}))) as {
+      ok?: boolean;
+      missing?: string[];
+      error?: string;
+      detail?: string;
+    };
+    if (!finalizeRes.ok || !finalize.ok) {
+      setApproveError(
+        finalize.missing?.length
+          ? `Capture incomplete — still missing: ${finalize.missing.join(", ")}`
+          : finalize.detail ||
+              finalize.error ||
+              `Could not finalize capture (HTTP ${finalizeRes.status})`,
+      );
+      return;
+    }
+    // 2. Generate (sets gen state + polls to completion). genSucceededRef is
+    //    true only when the run finished `succeeded` (a clean deliverable).
+    await generateArtifact();
+    if (!genSucceededRef.current) {
+      // generateArtifact already surfaced the error/blocker in `gen`; don't
+      // sign off a deliverable that wasn't cleanly generated.
+      return;
+    }
+    // 3. Sign off the freshly-generated deliverable (sign-off route accepts
+    //    `draft`). Reuses approveRecord so the sign-off request stays in one place.
+    //    Thread the id so a just-saved (state not yet settled) deliverable signs
+    //    off correctly in the combined flow.
+    await approveRecord(targetDeliverableId);
+  }, [deliverableId, move.id, phaseNum, generateArtifact, approveRecord]);
+
+  // Advance gate: finalize capture (mark the phase modules completed) then
+  // approve the gate and advance the Move. This is the P1–P5 equivalent of the
+  // P0 "Approve brief" button — the phase workspace otherwise had no advance
+  // trigger, so a Move could not move past its gate through the UI even with the
+  // gate deliverable signed off. Reuses the signed-in phase-capture (complete)
+  // + phase-gate-approval routes; the server still enforces the gate.
+  const [advancing, setAdvancing] = useState(false);
+  const [advanceError, setAdvanceError] = useState<string | null>(null);
+  const approveP0AndAdvance = useCallback(async () => {
+    setAdvancing(true);
+    setAdvanceError(null);
+    try {
+      const items: Record<string, string> = {};
+      for (const id of sectionIds) {
+        const v = (values[id] ?? "").trim();
+        if (v) items[sectionSaveKey(id)] = v;
+      }
+      const finalizeRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-capture`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phase: 0, items, complete: true }),
+        },
+      );
+      const finalize = (await finalizeRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        missing?: string[];
+        error?: string;
+        detail?: string;
+      };
+      if (!finalizeRes.ok || !finalize.ok) {
+        throw new Error(
+          finalize.missing?.length
+            ? `P0 capture incomplete — still missing: ${finalize.missing.join(", ")}`
+            : finalize.detail || finalize.error || `Finalize failed (HTTP ${finalizeRes.status})`,
+        );
+      }
+
+      const advanceRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-gate-approval`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: 0,
+            rationale:
+              "P0 origination capture complete; origination brief approved and ready to advance to P1 Charter.",
+          }),
+        },
+      );
+      const advance = (await advanceRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        newPhase?: number;
+        closeResult?: { blockedBy?: string[] };
+        detail?: string;
+        error?: string;
+      };
+      if (!advanceRes.ok || !advance.ok) {
+        const blockedBy = advance.closeResult?.blockedBy?.join("; ");
+        throw new Error(
+          blockedBy || advance.detail || advance.error || `Advance failed (HTTP ${advanceRes.status})`,
+        );
+      }
+      wbRouter.push(`/strategic-moves/${move.id}/phase/${advance.newPhase ?? 1}`);
+    } catch (err) {
+      setAdvanceError(err instanceof Error ? err.message : "Advance failed");
+      setAdvancing(false);
+    }
+  }, [move.id, sectionIds, values, wbRouter]);
+
+  const advanceGate = useCallback(async () => {
+    setAdvancing(true);
+    setAdvanceError(null);
+    try {
+      // 1. Finalize capture — flips the phase capture modules to `completed`
+      //    (Save leaves them `in_progress`), which phase-gate-approval requires.
+      const finalizeRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-capture`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phase: phaseNum, complete: true }),
+        },
+      );
+      const finalize = (await finalizeRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        missing?: string[];
+        error?: string;
+        detail?: string;
+      };
+      if (!finalizeRes.ok || !finalize.ok) {
+        throw new Error(
+          finalize.missing?.length
+            ? `Capture incomplete — still missing: ${finalize.missing.join(", ")}`
+            : finalize.detail || finalize.error || `Finalize failed (HTTP ${finalizeRes.status})`,
+        );
+      }
+      // 2. Approve the gate and advance.
+      const advanceRes = await fetch(
+        `/api/v1/programs/${move.id}/phase-gate-approval`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: phaseNum,
+            rationale: `P${phaseNum} capture complete and gate deliverable signed off; advancing to P${phaseNum + 1}.`,
+          }),
+        },
+      );
+      const advance = (await advanceRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        newPhase?: number;
+        gate?: { failedChecks?: Array<{ severity: string; reason?: string; check: string }> };
+        detail?: string;
+        error?: string;
+      };
+      if (!advanceRes.ok || !advance.ok) {
+        const hard = advance.gate?.failedChecks
+          ?.filter((c) => c.severity === "hard")
+          .map((c) => c.reason || c.check)
+          .join("; ");
+        throw new Error(
+          hard || advance.detail || advance.error || `Advance failed (HTTP ${advanceRes.status})`,
+        );
+      }
+      const newPhase = advance.newPhase ?? phaseNum + 1;
+      // Land the operator on the phase they just advanced into.
+      wbRouter.push(`/strategic-moves/${move.id}/phase/${newPhase}`);
+    } catch (err) {
+      setAdvanceError(err instanceof Error ? err.message : "Advance failed");
+      setAdvancing(false);
+    }
+  }, [move.id, phaseNum, wbRouter]);
+
+  // ── Collapsed one-action flow ────────────────────────────────────────────
+  // "The user provides inputs + makes decisions, never clicks Build."
+  // A single "Approve & advance" runs the backend steps automatically: save the
+  // record (creates the deliverable), generate + sign off the board-grade
+  // artifact, then approve the gate and advance. No separate Save / Build clicks.
+  // The deliverable id is threaded from saveRecord's return so the chain does not
+  // race the async deliverableId state. If already approved (e.g. a retried
+  // advance after a gate rejection), it skips straight to advancing.
+  const [completing, setCompleting] = useState(false);
+  const completeAndAdvance = useCallback(async () => {
+    setCompleting(true);
+    setApproveError(null);
+    setAdvanceError(null);
+    try {
+      if (!approved) {
+        const saved = await saveRecord();
+        const id = saved.deliverableId ?? deliverableId;
+        if (!id) return; // saveRecord surfaced saveError; nothing to build.
+        await buildAndApprove(id);
+        // Only advance if generation cleanly succeeded; buildAndApprove already
+        // surfaced any generation error in `gen`.
+        if (!genSucceededRef.current) return;
+      }
+      // P1–P4 advance to the next phase. P5 is terminal (hands off to Tower via
+      // a separate path), so it stops at build + sign-off — no advance.
+      if (phaseNum >= 1 && phaseNum <= 4) {
+        await advanceGate();
+      }
+    } finally {
+      setCompleting(false);
+    }
+  }, [
+    approved,
+    deliverableId,
+    phaseNum,
+    saveRecord,
+    buildAndApprove,
+    advanceGate,
+  ]);
+
+  const sequenceState = (n: 1 | 2): "done" | "active" | "" => {
+    if (n === 1) return approved || allSaved ? "done" : "active";
+    return approved ? "done" : allSaved ? "active" : "";
+  };
+  const stepClass = (n: 1 | 2) => {
+    const s = sequenceState(n);
+    return `${styles.charterStep} ${
+      s === "done"
+        ? styles.charterStepDone
+        : s === "active"
+          ? styles.charterStepActive
+          : ""
+    }`;
+  };
+
+  // Workbench evidence selection (used only in workbench mode; hooks run
+  // unconditionally so they stay above any early return).
+  // P0 carries no evidence-coverage rail: the evidence needs served here are
+  // Discover-phase (current-state, systems, KPI, cost) and are premature at
+  // Originate, where the job is to *select* the evidence family (a capture
+  // item), not to cover evidence. Empty the rail so P0 focuses on its gate
+  // criteria instead of showing misleading Discover-phase coverage.
+  const wbPackets = useMemo(
+    () =>
+      phaseNum === 0
+        ? []
+        : (evidenceNeedPackets ?? []).filter(
+            (p) => p.status !== "not_applicable",
+          ),
+    [evidenceNeedPackets, phaseNum],
+  );
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!workbench) return;
+    setSelectedEvidenceId((cur) =>
+      cur && wbPackets.some((p) => p.familyId === cur)
+        ? cur
+        : (wbPackets[0]?.familyId ?? null),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workbench, evidenceNeedPackets]);
+
+  // Inline evidence upload — pick a file in the workbench, POST it to the Move
+  // evidence route (records program_evidence_items), then refresh so the
+  // explorer statuses + % update in place. No trip to the File Cabinet.
+  const evFileRef = useRef<HTMLInputElement>(null);
+  const [evUpload, setEvUpload] = useState<{
+    status: "idle" | "uploading" | "done" | "error";
+    msg: string;
+  }>({ status: "idle", msg: "" });
+  const pickEvidence = useCallback(() => evFileRef.current?.click(), []);
+  const onEvidenceFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      setEvUpload({ status: "uploading", msg: `Uploading ${file.name}…` });
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("phase", String(phaseNum));
+        const sel = wbPackets.find((p) => p.familyId === selectedEvidenceId);
+        if (sel) fd.append("artifactType", sel.evidenceSlot);
+        const res = await fetch(
+          `/api/programs/workspace/${move.id}/upload`,
+          { method: "POST", credentials: "include", body: fd },
+        );
+        const j = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+          detail?: string;
+        };
+        if (!res.ok || j?.ok === false) {
+          throw new Error(j?.error || j?.detail || `Upload failed (HTTP ${res.status})`);
+        }
+        setEvUpload({ status: "done", msg: `Ingested ${file.name} — updating…` });
+        wbRouter.refresh();
+      } catch (err) {
+        setEvUpload({
+          status: "error",
+          msg: err instanceof Error ? err.message : "Upload failed",
+        });
+      }
+    },
+    [move.id, phaseNum, wbPackets, selectedEvidenceId, wbRouter],
+  );
+
+  // Hard gate criteria the USER must provide before the single "Approve &
+  // advance" action can succeed — used only as an informational "still needed"
+  // hint, NOT to disable the button. We EXCLUDE the deliverable/report
+  // criterion: that artifact is produced BY this action (generate + sign-off),
+  // so pre-blocking on it would deadlock (you can't sign off the report without
+  // running the action). The remaining evidence criteria are validated by the
+  // server on advance; if any are unmet the advance surfaces a clear error and
+  // the user provides them, then re-clicks (which skips regeneration).
+  const hardGateStillNeeded = (gateItems ?? []).filter(
+    (c) =>
+      !c.completed &&
+      c.severity === "hard" &&
+      !/signed off|report|charter|deliverable/i.test(c.label),
+  );
+
+  // The capture UI. The user provides the section inputs; a single "Approve &
+  // advance" action then saves, generates the board-grade deliverable, signs it
+  // off, and advances — all as backend steps. In workbench mode this is the
+  // EvidenceWorkbench `captureSlot`; otherwise returned as-is (non-current
+  // phases, no action).
+  const captureCards = (
+    <>
+      {phaseNum === 0 && workbench && (
+        <section
+          id="ws-canvas-p0-approve-brief"
+          className={styles.detailSection}
+        >
+          <div className={styles.detailSectionTitle}>
+            Complete P0 &mdash; {filledNow} of {canvasSections.length}{" "}
+            inputs provided
+          </div>
+          <div className={styles.charterSequence}>
+            <div
+              className={`${styles.charterStep} ${styles.charterStepActive}`}
+              id="ws-canvas-p0-approve-brief-action"
+            >
+              <button
+                type="button"
+                className={styles.charterPrimaryBtn}
+                onClick={() => void approveP0AndAdvance()}
+                disabled={advancing || filledNow < canvasSections.length}
+              >
+                {advancing
+                  ? "Approving brief…"
+                  : "Approve brief & advance to P1"}
+              </button>
+              {filledNow < canvasSections.length && !advancing && (
+                <span className={styles.charterStepHint}>
+                  Provide all {canvasSections.length} P0 inputs to approve the
+                  origination brief.
+                </span>
+              )}
+              {filledNow >= canvasSections.length && !advancing && (
+                <span className={styles.charterStepHint}>
+                  One step: saves P0 capture, signs the origination brief, and
+                  advances this Move to P1 Charter through the governed gate.
+                </span>
+              )}
+              {advanceError && (
+                <span className={styles.charterStepError}>{advanceError}</span>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Single "Approve & advance" action for P1–P5. The user provides inputs
+          below; saving the record, generating the board-grade deliverable,
+          signing it off, and advancing all run automatically as backend steps
+          on one click — no separate Save / Build clicks. P0 has the specialized
+          origination-brief action above. */}
+      {phaseNum !== 0 && workbench && (
+      <section
+        id={`ws-canvas-p${phaseNum}-complete`}
+        className={styles.detailSection}
+      >
+        <div className={styles.detailSectionTitle}>
+          Complete P{phaseNum} &mdash; {filledNow} of {canvasSections.length}{" "}
+          inputs provided
+        </div>
+        <div className={styles.charterSequence}>
+          <div
+            className={stepClass(2)}
+            id={`ws-canvas-p${phaseNum}-complete-action`}
+          >
+            <button
+              type="button"
+              className={styles.charterPrimaryBtn}
+              onClick={() => void completeAndAdvance()}
+              disabled={
+                completing ||
+                saving ||
+                advancing ||
+                approving ||
+                gen.status === "generating" ||
+                filledNow < canvasSections.length
+              }
+            >
+              {saving
+                ? "Saving inputs…"
+                : gen.status === "generating"
+                  ? gen.label
+                    ? `Generating… ${gen.pct ? `${gen.pct}%` : ""}`
+                    : "Generating…"
+                  : approving
+                    ? "Signing off…"
+                    : advancing
+                      ? "Advancing…"
+                      : phaseNum <= 4
+                        ? `Approve & advance to P${phaseNum + 1}`
+                        : "Approve & finalize Tower handoff"}
+            </button>
+            {filledNow < canvasSections.length && !completing && (
+              <span className={styles.charterStepHint}>
+                Provide all {canvasSections.length} inputs to continue &mdash;{" "}
+                {filledNow} done.
+              </span>
+            )}
+            {filledNow >= canvasSections.length &&
+              !approved &&
+              gen.status === "idle" &&
+              !completing && (
+                <span className={styles.charterStepHint}>
+                  One step: saves your inputs, generates the board-grade
+                  deliverable, signs it off, and{" "}
+                  {phaseNum <= 4
+                    ? `advances to P${phaseNum + 1}`
+                    : "prepares the Tower handoff"}
+                  . Runs in the background, a few minutes.
+                  {hardGateStillNeeded.length > 0 && (
+                    <>
+                      {" "}
+                      Still needed to clear the gate:{" "}
+                      {hardGateStillNeeded.map((c) => c.label).join("; ")}.
+                    </>
+                  )}
+                </span>
+              )}
+            {gen.status === "generating" && (
+              <span className={styles.charterStepHint}>
+                {gen.label
+                  ? `${gen.label}${gen.pct ? ` · ${gen.pct}%` : ""}`
+                  : "Generating the board-grade deliverable — a few minutes."}
+              </span>
+            )}
+            {approved && !approveError && !advanceError && (
+              <span className={styles.charterStepOk}>
+                Built and signed off ✓ ·{" "}
+                <Link href={`/strategic-moves/${move.id}/evidence`}>
+                  Open File Cabinet →
+                </Link>
+              </span>
+            )}
+            {saveError && (
+              <span className={styles.charterStepError}>{saveError}</span>
+            )}
+            {(approveError || advanceError) && (
+              <span className={styles.charterStepError}>
+                {approveError || advanceError}
+              </span>
+            )}
+            {gen.status === "done" && !gen.pass && !approved && (
+              <div className={styles.gateDetail}>
+                <span className={styles.charterStepError}>
+                  Held below the board-grade gate
+                  {gen.blockers?.length
+                    ? ` — ${gen.blockers.length} reason${
+                        gen.blockers.length > 1 ? "s" : ""
+                      } to resolve, then approve again:`
+                    : ". Refine the inputs and context, then approve again."}
+                </span>
+                {gen.blockers?.length ? (
+                  <div className={styles.charterAdvancedNote}>
+                    {gen.blockers.map((b, i) => (
+                      <span
+                        key={i}
+                        className={`${styles.gateLine} ${styles.gateLineRed}`}
+                      >
+                        <span className={styles.pulse} aria-hidden />
+                        <span className={styles.statusText}>{b}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )}
+            {gen.status === "error" && !approveError && (
+              <span className={styles.charterStepError}>{gen.message}</span>
+            )}
+          </div>
+        </div>
+      </section>
+      )}
+
+      {/* Editable capture cards */}
+      {capturedSections.map(({ section, content }) => {
+        const val = values[section.id] ?? "";
+        const isSaved = val.trim().length > 0;
+        return (
+          <section
+            key={section.id}
+            id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+            className={styles.detailSection}
+          >
+            <details
+              open={isCaptureCardOpen(section.id)}
+              onToggle={(e) => {
+                const isOpen = (e.currentTarget as HTMLDetailsElement).open;
+                setOpenCaptureCards((prev) =>
+                  (prev[section.id] ?? true) === isOpen
+                    ? prev
+                    : { ...prev, [section.id]: isOpen },
+                );
+              }}
+            >
+              <summary className={styles.captureCardSummary}>
+                <span
+                  className={styles.detailSectionTitle}
+                  style={{ marginBottom: 0 }}
+                >
+                  {section.label}
+                </span>
+                <span
+                  className={
+                    isSaved
+                      ? styles.captureBadgeDone
+                      : styles.captureBadgePending
+                  }
+                >
+                  {isSaved ? "✓ Captured" : "Not captured"}
+                </span>
+              </summary>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--abarva-slate)",
+                  fontStyle: "italic",
+                  lineHeight: 1.5,
+                  padding: "4px 0 2px",
+                }}
+              >
+                {section.placeholder}
+              </div>
+              {section.structured === "facts" ? (
+                <FactsEditor
+                  idBase={`ws-canvas-p${phaseNum}-${section.id}-input`}
+                  initial={val}
+                  onChange={(serialized) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      [section.id]: serialized,
+                    }))
+                  }
+                />
+              ) : (
+                <textarea
+                  id={`ws-canvas-p${phaseNum}-${section.id}-input`}
+                  className={styles.captureTextarea}
+                  rows={3}
+                  value={val}
+                  placeholder={section.placeholder}
+                  onChange={(e) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      [section.id]: e.target.value,
+                    }))
+                  }
+                  spellCheck
+                />
+              )}
+              {section.structured !== "facts" &&
+                content !== null &&
+                !val.trim() && (
+                  <div className={styles.captureContent}>{content}</div>
+                )}
+            </details>
+          </section>
+        );
+      })}
+
+
+      {/* The advance is now part of the single "Approve & advance" action above —
+          no separate advance step. */}
+    </>
+  );
+
+  if (!workbench) {
+    return captureCards;
+  }
+
+  // ── Workbench mode: map REAL move data + actions → EvidenceWorkbench props ──
+  const EV_STATUS_LABEL: Record<MoveEvidenceNeedStatus, string> = {
+    missing: "Missing",
+    partial: "Partial",
+    covered: "Covered",
+    waived: "Waived",
+    not_applicable: "N/A",
+  };
+  const groupOrder: Array<[MoveEvidenceNeedPriority, string]> = [
+    ["required", "Required"],
+    ["recommended", "Recommended"],
+    ["optional", "Optional"],
+  ];
+  const evidenceGroups = groupOrder.flatMap(([key, label]) => {
+    const rows = wbPackets
+      .filter((p) => p.priority === key)
+      .map((p) => ({
+        id: p.familyId,
+        name: p.evidenceSlot,
+        status: p.status,
+        statusLabel: EV_STATUS_LABEL[p.status],
+      }));
+    return rows.length ? [{ key, label, rows }] : [];
+  });
+  const evReady = wbPackets.filter(
+    (p) => p.status === "covered" || p.status === "waived",
+  ).length;
+
+  const selPacket =
+    wbPackets.find((p) => p.familyId === selectedEvidenceId) ?? null;
+  const lineageFor = (
+    status: MoveEvidenceNeedStatus,
+  ): Array<{ label: string; meta?: string; done: boolean }> => {
+    if (status === "covered")
+      return [
+        { label: "Uploaded", done: true },
+        { label: "Extracted & classified", done: true },
+        { label: "Ingested to context", done: true },
+        { label: "Cited in deliverable", meta: "on next build", done: false },
+      ];
+    if (status === "partial")
+      return [
+        { label: "Uploaded", done: true },
+        { label: "Extraction pending", done: false },
+        { label: "Ingest to context", done: false },
+        { label: "Cite in deliverable", done: false },
+      ];
+    if (status === "waived")
+      return [{ label: "Waived by owner", meta: "caveat carried", done: true }];
+    return [
+      { label: "Requested", done: true },
+      { label: "Upload evidence", done: false },
+      { label: "Ingest to context", done: false },
+      { label: "Cite in deliverable", done: false },
+    ];
+  };
+  const detail = selPacket
+    ? {
+        name: selPacket.evidenceSlot,
+        status: selPacket.status,
+        statusLabel: EV_STATUS_LABEL[selPacket.status],
+        whyItMatters: selPacket.whyItMatters,
+        nextAction: selPacket.nextAction,
+        acceptedFormats: selPacket.acceptedFormats,
+        evidenceTitles: selPacket.evidenceTitles,
+        lineage: lineageFor(selPacket.status),
+      }
+    : null;
+
+  const items = gateItems ?? [];
+  // Unmet HARD gate criteria — these must all clear before the phase can advance.
+  // The gate steps are now READ-ONLY status (met/unmet + "Add evidence" for hard
+  // criteria). There is no per-criterion "Build report" action: generating the
+  // board-grade deliverable is a backend step of the single "Approve & advance"
+  // action (captureSlot), not a button the user clicks.
+  const steps = items.map((c) => {
+    const base = {
+      id: c.id,
+      label: c.label,
+      done: c.completed,
+      hard: c.severity === "hard",
+    };
+    if (c.completed) return base;
+    if (c.severity === "hard" && onAddEvidence) {
+      return {
+        ...base,
+        action: {
+          label: "Add evidence",
+          onClick: onAddEvidence,
+          kind: "ghost" as const,
+        },
+      };
+    }
+    return base;
+  });
+  steps.sort((a, b) => Number(b.done) - Number(a.done));
+  const doneCount = items.filter((c) => c.completed).length;
+  const nextPhase = phaseNum + 1;
+  // The gate panel carries no separate advance button: the single "Approve &
+  // advance" action (which saves, generates, signs off, and advances in one
+  // step) lives in the captureSlot next to the inputs the user provides. The
+  // panel stays read-only status — criteria met/unmet + "Add evidence".
+  const advance = null;
+
+  // Live % complete: gate = phase-completion signal; evidence = required needs.
+  const gatePct = items.length
+    ? Math.round((doneCount / items.length) * 100)
+    : 0;
+  const requiredPackets = wbPackets.filter((p) => p.priority === "required");
+  const requiredCovered = requiredPackets.filter(
+    (p) => p.status === "covered" || p.status === "waived",
+  ).length;
+  const evidencePct = requiredPackets.length
+    ? Math.round((requiredCovered / requiredPackets.length) * 100)
+    : wbPackets.length
+      ? Math.round((evReady / wbPackets.length) * 100)
+      : 100;
+
+  return (
+    <>
+      <input
+        ref={evFileRef}
+        type="file"
+        accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.json"
+        style={{ display: "none" }}
+        onChange={(e) => void onEvidenceFile(e)}
+      />
+      <EvidenceWorkbench
+        moveName={move.name}
+        displayCode={move.displayCode}
+        tenantName={move.tenant.name}
+        sponsorLine={sponsorLine ?? ""}
+        phaseNum={phaseNum}
+        phaseLabel=""
+        statusColor={statusColor ?? move.statusColor}
+        evidenceGroups={evidenceGroups}
+        evidenceReadyLabel={`${evReady} of ${wbPackets.length} in`}
+        evidencePct={evidencePct}
+        gatePct={gatePct}
+        selectedEvidenceId={selectedEvidenceId}
+        onSelectEvidence={setSelectedEvidenceId}
+        onAddEvidence={pickEvidence}
+        evidenceUploadNote={
+          evUpload.status !== "idle" ? evUpload.msg : undefined
+        }
+        evidenceUploadState={evUpload.status}
+        gateHeading={
+        phaseNum <= 4 ? `To advance to P${nextPhase}` : "To hand off to Tower"
+      }
+      gateSubhead={`${doneCount} of ${items.length} gate criteria met`}
+      gateProgressLabel={`${doneCount} of ${items.length}`}
+      gateSteps={steps}
+      advance={advance}
+      diagnosisTitle="Diagnosis"
+      diagnosis={[]}
+      errorText={approveError ?? advanceError ?? saveError ?? null}
+      detail={detail}
+      onOpenEvidenceFile={onAddEvidence ?? (() => {})}
+      onAskAvaAboutSelected={onAskAva ?? (() => {})}
+      onViewDossier={() => {}}
+      captureSlot={captureCards}
+    />
+    </>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
   move: StrategicMove;
   phaseNum: number;
+  readiness?: CurrentStateReadinessReport | null;
+  recommendation?: CurrentStateRecommendation | null;
+  plan?: CurrentStatePlan | null;
+  evidenceNeedPackets?: MoveEvidenceNeedPacket[];
 }
 
-export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
+export function StrategicMovePhaseClient({
+  move,
+  phaseNum,
+  readiness,
+  recommendation,
+  plan,
+  evidenceNeedPackets = [],
+}: Props) {
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
 
@@ -176,112 +1973,115 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
   const isCurrentPhase = move.currentPhase === phaseNum;
   const gateItemsWithStatus = isCurrentPhase ? move.gateCriteria : [];
 
+  // Evidence Workbench: EVERY current phase (P0–P5) gets the evidence-first
+  // surface with the gate-clarity panel (criteria met/unmet, "N of M met",
+  // "To advance to Pn"), so "what completes this phase" reads the same across
+  // the whole lifecycle. Gate criteria come from move.gateCriteria
+  // (governance GATE_RULES per phase). Phase-specific nuance is handled inside:
+  //  • P0 has no phase deliverable and promotes via approve-brief — its
+  //    Save/Build sequence is hidden and the in-workbench advance stays gated
+  //    to P2–P4 (advance === null for P0); it gains criteria clarity only.
+  //  • P1 has a charter deliverable, so its capture → build → advance sequence
+  //    renders in the captureSlot as before; the workbench adds the gate-clarity
+  //    panel on top. The in-workbench advance stays gated to P2–P4, so P1's
+  //    advance remains the single captureSlot control (no double advance).
+  const useWorkbench = isCurrentPhase && phaseNum >= 0 && phaseNum <= 5;
+  const dockSurface = `/strategic-moves/${move.id}/phase/${phaseNum}`;
+  const [dockRemount, setDockRemount] = useState(0);
+  const openAva = useCallback(() => {
+    try {
+      window.localStorage.setItem(modeStorageKey(dockSurface), "side-rail");
+    } catch {
+      /* localStorage may be unavailable */
+    }
+    setDockRemount((n) => n + 1);
+  }, [dockSurface]);
+  const goAddEvidence = useCallback(() => {
+    window.location.assign(`/strategic-moves/${move.id}?tab=cabinet`);
+  }, [move.id]);
+
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
-      id: 'nexus-open-p' + phaseNum,
-      role: 'assistant',
-      agentName: 'Nexus',
+      id: "nexus-open-p" + phaseNum,
+      role: "assistant",
+      agentName: "Nexus",
       text: config.firstMessage(move),
     },
   ]);
-  const [composer, setComposer] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
+  // Attachment review feedback is surfaced in the canvas (Gate readiness copy
+  // below). Uploads now flow through <AgentDock>'s own attachment pipeline
+  // (/api/v1/agent/attachments), so this legacy per-phase review counter is
+  // no longer populated here; kept as an empty baseline for the canvas read.
+  const [attachments] = useState<PendingAttachment[]>([]);
 
   const turnsRef = useRef<ChatTurn[]>(turns);
   turnsRef.current = turns;
-  const threadRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Auto-scroll thread
-  useEffect(() => {
-    if (threadRef.current) {
-      threadRef.current.scrollTop = threadRef.current.scrollHeight;
-    }
-  }, [turns]);
+  const reviewFeedbackCount = attachments.reduce(
+    (sum, attachment) => sum + (attachment.feedbackCount ?? 0),
+    0,
+  );
 
   const updateTurns = useCallback(
     (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
-      const next = typeof updater === 'function' ? updater(turnsRef.current) : updater;
+      const next =
+        typeof updater === "function" ? updater(turnsRef.current) : updater;
       turnsRef.current = next;
       setTurns(next);
     },
     [],
   );
 
-  const handleFileSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      e.target.value = '';
-      if (!file) return;
-      const pendingId = `att-${Date.now()}`;
-      setAttachments((prev) => [...prev, { id: pendingId, name: file.name, status: 'uploading' }]);
-      try {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('phase', String(phaseNum));
-        const res = await fetch(`/api/programs/workspace/${move.id}/upload`, {
-          method: 'POST',
-          body: fd,
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({})) as { error?: string };
-          throw new Error(body.error ?? `HTTP ${res.status}`);
-        }
-        const data = await res.json() as { attachmentId: string };
-        setAttachments((prev) =>
-          prev.map((a) =>
-            a.id === pendingId ? { ...a, status: 'done', attachmentId: data.attachmentId } : a,
-          ),
-        );
-      } catch (err) {
-        setAttachments((prev) =>
-          prev.map((a) =>
-            a.id === pendingId
-              ? { ...a, status: 'error', errorMsg: err instanceof Error ? err.message : 'upload failed' }
-              : a,
-          ),
-        );
-      }
-    },
-    [move.id, phaseNum],
-  );
-
   const send = useCallback(
-    async (messageOverride?: string) => {
-      const message = (messageOverride ?? composer).trim();
+    async (messageOverride?: string, dockAttachments?: AttachmentRef[]) => {
+      const message = (messageOverride ?? "").trim();
       if (!message || streaming) return;
 
-      const doneAttachments = attachments.filter((a) => a.status === 'done');
-      const attachmentSuffix = doneAttachments.length > 0
-        ? `\n\n[Attached: ${doneAttachments.map((a) => a.name).join(', ')}]`
-        : '';
+      // AgentDock forwards already-uploaded attachment refs on submit; forward
+      // their ids to the agent route in the same `attachmentIds` shape the
+      // route already expects.
+      const refs = dockAttachments ?? [];
+      const attachmentSuffix =
+        refs.length > 0
+          ? `\n\n[Attached: ${refs.map((a) => a.file_name).join(", ")}]`
+          : "";
       const fullMessage = message + attachmentSuffix;
 
       const assistantTurnId = generateTurnId();
       updateTurns((prev) => [
         ...prev,
-        { id: generateTurnId(), role: 'user', text: fullMessage },
-        { id: assistantTurnId, role: 'assistant', agentName: 'Nexus', text: '' },
+        { id: generateTurnId(), role: "user", text: fullMessage },
+        {
+          id: assistantTurnId,
+          role: "assistant",
+          agentName: "Nexus",
+          text: "",
+        },
       ]);
-      if (!messageOverride) setComposer('');
-      setAttachments([]);
       setStreaming(true);
+
+      // A hung request must never brick the dock: abort after 3 minutes so
+      // `finally` re-enables send and the user sees an honest error turn.
+      const abort = new AbortController();
+      const hangTimer = setTimeout(() => abort.abort(), 180_000);
 
       try {
         const conversationHistory = turnsRef.current
           .filter(
-            (t) => t.role === 'user' || (t.role === 'assistant' && t.text.trim().length > 0),
+            (t) =>
+              t.role === "user" ||
+              (t.role === "assistant" && t.text.trim().length > 0),
           )
           .map((t) => ({ role: t.role, content: t.text }));
 
-        const res = await fetch('/api/chat/agent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/chat/agent", {
+          method: "POST",
+          signal: abort.signal,
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: fullMessage,
             tenantName: move.tenant.name,
-            agentName: 'Nexus',
+            agentName: "Nexus",
             surface: `strategic-moves-workspace`,
             conversationHistory,
             surfaceContext: {
@@ -290,7 +2090,7 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
               moveDisplayCode: move.displayCode,
               moveName: move.name,
               phaseLabel: config.label,
-              attachmentIds: doneAttachments.map((a) => a.attachmentId).filter(Boolean),
+              attachmentIds: refs.map((a) => a.id).filter(Boolean),
             },
           }),
         });
@@ -301,15 +2101,16 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let pendingBuffer = '';
-        let committedVisible = '';
+        let pendingBuffer = "";
+        let committedVisible = "";
         const seenArtifacts = new Set<string>();
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           pendingBuffer += decoder.decode(value, { stream: true });
-          const { visibleText, artifacts, remaining } = extractArtifacts(pendingBuffer);
+          const { visibleText, artifacts, remaining } =
+            extractArtifacts(pendingBuffer);
           committedVisible += visibleText;
           pendingBuffer = remaining;
 
@@ -327,7 +2128,9 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
             committedVisible + visibleArtifactPendingText(pendingBuffer),
           ).trimEnd();
           updateTurns((prev) =>
-            prev.map((t) => (t.id === assistantTurnId ? { ...t, text: display } : t)),
+            prev.map((t) =>
+              t.id === assistantTurnId ? { ...t, text: display } : t,
+            ),
           );
         }
 
@@ -336,7 +2139,9 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
           const final = extractArtifacts(pendingBuffer);
           committedVisible +=
             final.visibleText +
-            (final.remaining.length > 0 ? visibleArtifactPendingText(final.remaining) : '');
+            (final.remaining.length > 0
+              ? visibleArtifactPendingText(final.remaining)
+              : "");
         }
 
         updateTurns((prev) =>
@@ -353,160 +2158,233 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
           ),
         );
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Agent error';
+        const msg = err instanceof Error ? err.message : "Agent error";
         updateTurns((prev) =>
           prev.map((t) =>
             t.id === assistantTurnId
-              ? { ...t, text: `I encountered an issue: ${msg}. Please try again.` }
+              ? {
+                  ...t,
+                  text: `I encountered an issue: ${msg}. Please try again.`,
+                }
               : t,
           ),
         );
       } finally {
+        clearTimeout(hangTimer);
         setStreaming(false);
       }
     },
-    [composer, streaming, attachments, move, phaseNum, config.label, updateTurns],
+    [streaming, move, phaseNum, config.label, updateTurns],
   );
 
-  const hardGateCount = gateItemsWithStatus.filter((g) => g.severity === 'hard').length;
-  const hardGateDone = gateItemsWithStatus.filter((g) => g.severity === 'hard' && g.completed).length;
+  const hardGateCount = gateItemsWithStatus.filter(
+    (g) => g.severity === "hard",
+  ).length;
+  const hardGateDone = gateItemsWithStatus.filter(
+    (g) => g.severity === "hard" && g.completed,
+  ).length;
   const totalGateDone = gateItemsWithStatus.filter((g) => g.completed).length;
+
+  // ── Truthful capture state ────────────────────────────────────────────────
+  // The phase-capture inputs are persisted to program_modules (via the Save
+  // path), but sectionCapturedContent only reads the origination charter — so
+  // saved P1–P5 inputs rendered as "not captured" (the workspace lied about the
+  // user's own data). Load the real capture values for this phase and prefer
+  // them; fall back to the charter-derived carry for sections not yet saved.
+  const [serverCapture, setServerCapture] = useState<Record<
+    string,
+    string
+  > | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/v1/programs/${move.id}/phase-capture?phase=${phaseNum}`, {
+      credentials: "include",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (cancelled) return;
+        const sections = j?.capture?.sections;
+        if (!Array.isArray(sections)) {
+          setServerCapture({});
+          return;
+        }
+        const map: Record<string, string> = {};
+        for (const s of sections) {
+          if (typeof s?.value === "string" && s.value.trim())
+            map[s.key] = s.value;
+        }
+        setServerCapture(map);
+      })
+      .catch(() => {
+        if (!cancelled) setServerCapture({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [move.id, phaseNum]);
+
+  // ── Progressive disclosure: derived capture state + auto-expand machine ────
+  const capturedSections = canvasSections.map((section) => ({
+    section,
+    content: serverCapture?.[section.id]?.trim()
+      ? serverCapture[section.id]
+      : sectionCapturedContent(move, section.id),
+  }));
+  const filledCount = capturedSections.filter((c) => c.content !== null).length;
+  const firstUnfilled =
+    capturedSections.find((c) => c.content === null)?.section ?? null;
+  const capturesIncomplete =
+    canvasSections.length > 0 && filledCount < canvasSections.length;
+  const hardGapCount =
+    isCurrentPhase && readiness ? readiness.hardGaps.length : 0;
+  const hasEvidenceNeedPackets = evidenceNeedPackets.length > 0;
+
+  // One state machine drives both the next-action strip and the auto-expand:
+  // captures incomplete → CAPTURE; else hard gaps → READINESS; else GENERATE.
+  const autoOpenPanel: PanelKey = capturesIncomplete
+    ? "capture"
+    : hardGapCount > 0
+      ? "gate"
+      : "generate";
+  const nextActionText = firstUnfilled
+    ? `Next: work with Ava to capture — ${firstUnfilled.label}`
+    : hardGapCount > 0
+      ? `Next: upload evidence — ${hardGapCount} hard gap${
+          hardGapCount > 1 ? "s" : ""
+        } block${hardGapCount === 1 ? "s" : ""} this phase's gate`
+      : "Next: generate the phase deliverable, sign it off, then approve the gate";
+
+  const [openPanels, setOpenPanels] = useState<
+    Partial<Record<PanelKey, boolean>>
+  >(() => ({
+    // Action-forward: on the phase the Move is actually in, the capture +
+    // Save→Approve→Advance workflow is open by default (and rendered first,
+    // below) so the action is visible without scrolling past the readiness
+    // and context panels.
+    capture: isCurrentPhase,
+    [autoOpenPanel]: true,
+    needs: hasEvidenceNeedPackets,
+  }));
+  const isPanelOpen = (key: PanelKey) => openPanels[key] ?? false;
+  const setPanelOpen = useCallback(
+    (key: PanelKey, open: boolean) =>
+      setOpenPanels((prev) =>
+        (prev[key] ?? false) === open ? prev : { ...prev, [key]: open },
+      ),
+    [],
+  );
+
+  // Per-capture-card expansion (default open inside the CAPTURE panel).
+  const [openCaptureCards, setOpenCaptureCards] = useState<
+    Record<string, boolean>
+  >({});
+  const isCaptureCardOpen = (id: string) => openCaptureCards[id] ?? true;
+
+  // Chip click: open the CAPTURE panel, expand that card, scroll to it.
+  const focusCaptureSection = useCallback(
+    (sectionId: string) => {
+      setPanelOpen("capture", true);
+      setOpenCaptureCards((prev) => ({ ...prev, [sectionId]: true }));
+      requestAnimationFrame(() => {
+        document
+          .getElementById(`ws-canvas-p${phaseNum}-${sectionId}-panel`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    },
+    [phaseNum, setPanelOpen],
+  );
+
+  const phaseArtifactCount = move.deliverables.filter((d) =>
+    deliverableBelongsToPhase(
+      d.typeKey,
+      phaseNum,
+      PHASE_CANONICAL_KEYS[phaseNum],
+    ),
+  ).length;
+
+  // Map the phase chat thread → AgentDock ChatMessage[]. While streaming, the
+  // trailing empty assistant turn is kept as a "…" placeholder so the dock's
+  // busy affordance stays visible.
+  const dockThread: ChatMessage[] = turns.map((turn) => ({
+    id: turn.id,
+    role: turn.role === "assistant" ? "agent" : "user",
+    body:
+      turn.text ||
+      (streaming && turn.role === "assistant" ? "…" : turn.text),
+  }));
+  const dockSuggestedActions = config.suggestedPrompts.map((prompt, i) => ({
+    id: String(i),
+    label: prompt,
+    body: prompt,
+  }));
 
   return (
     <div id={`ws-phase-p${phaseNum}-page`} className={styles.page}>
       {/* Phase context bar */}
-      <div id={`ws-phase-p${phaseNum}-context-bar`} className={styles.originContextBar}>
+      <div
+        id={`ws-phase-p${phaseNum}-context-bar`}
+        className={styles.originContextBar}
+      >
         <div className={styles.originContextLeft}>
-          <span className={styles.originBranch} aria-hidden>&#8627;</span>
-          <span className={styles.originLabel}>{move.displayCode}</span>
-          <span className={styles.originDraftBadge}>
-            {config.shortLabel}
+          <span className={styles.originBranch} aria-hidden>
+            &#8627;
           </span>
+          <span className={styles.originLabel}>{move.displayCode}</span>
+          <span className={styles.originDraftBadge}>{config.shortLabel}</span>
         </div>
-        <Link className={styles.originCancel} href={`/strategic-moves/${move.id}`}>
+        <Link
+          className={styles.originCancel}
+          href={`/strategic-moves/${move.id}`}
+        >
           &#8592; Back to overview
         </Link>
       </div>
 
-      {/* Two-pane shell */}
-      <section id={`ws-phase-p${phaseNum}-grid`} className={styles.detailShell}>
-
-        {/* Chat pane */}
-        <aside id={`ws-chat-p${phaseNum}`} className={styles.chatPane}>
-          <div className={styles.chatHead}>
-            <div className={styles.agentRow}>
-              <div className={styles.agentAvatar} aria-hidden>&#10022;</div>
-              <div>
-                <div className={styles.agentName}>Nexus</div>
-                <div className={styles.agentStatus}>
-                  <span className={styles.agentStatusDot} aria-hidden />
-                  {move.displayCode} &middot; {config.shortLabel}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Chat thread */}
-          <div
-            id={`ws-chat-p${phaseNum}-thread`}
-            className={styles.chatThread}
-            ref={threadRef}
-          >
-            {turns.map((turn) => (
-              <div
-                key={turn.id}
-                className={turn.role === 'assistant' ? styles.bubbleNexus : styles.bubbleUser}
-              >
-                {turn.text || (streaming && turn.role === 'assistant' ? '…' : '')}
-              </div>
-            ))}
-          </div>
-
-          {/* Suggested prompts */}
-          <div className={styles.startFromBlock}>
-            <div className={styles.suggestedPrompts}>
-              {config.suggestedPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  className={styles.promptChip}
-                  type="button"
-                  onClick={() => void send(prompt)}
-                  disabled={streaming}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Chat input */}
-          <div id={`ws-chat-p${phaseNum}-input`} className={styles.chatInput}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.json"
-              style={{ display: 'none' }}
-              onChange={(e) => void handleFileSelect(e)}
+      {/* Chat (AgentDock) + phase canvas. AgentDock owns the 6 dock modes
+          (side-rail left/right, pin top/bottom, expand, collapsed); the phase
+          canvas is passed as its workspace pane. */}
+      <AgentDock
+        agent={{
+          initials: "Av",
+          mark: "ava",
+          name: "Ava",
+          role: config.shortLabel,
+        }}
+        key={`dock-${dockRemount}`}
+        surface={`/strategic-moves/${move.id}/phase/${phaseNum}`}
+        defaultMode={useWorkbench ? "collapsed" : "side-rail"}
+        isAgentBusy={streaming}
+        thread={dockThread}
+        suggestedActions={dockSuggestedActions}
+        onMessage={(text, dockAttachments) => void send(text, dockAttachments)}
+        surfaceContext={{
+          moveId: move.id,
+          phase: phaseNum,
+          displayCode: move.displayCode,
+        }}
+        workspace={
+          useWorkbench ? (
+            <CharterWorkflow
+              key={serverCapture ? "wb-loaded" : "wb-loading"}
+              workbench
+              move={move}
+              phaseNum={phaseNum}
+              canvasSections={canvasSections}
+              capturedSections={capturedSections}
+              isCaptureCardOpen={isCaptureCardOpen}
+              setOpenCaptureCards={setOpenCaptureCards}
+              gateItems={gateItemsWithStatus}
+              evidenceNeedPackets={evidenceNeedPackets}
+              statusColor={move.statusColor}
+              sponsorLine={`${config.label} — Sponsor: ${conciseSponsorLabel(
+                move.sponsor,
+              )}`}
+              onAddEvidence={goAddEvidence}
+              onAskAva={openAva}
             />
-            {attachments.length > 0 && (
-              <div className={styles.attachmentStrip}>
-                {attachments.map((a) => (
-                  <span
-                    key={a.id}
-                    className={`${styles.attachmentChip} ${
-                      a.status === 'done' ? styles.attachmentChipDone :
-                      a.status === 'error' ? styles.attachmentChipError : ''
-                    }`}
-                    title={a.status === 'error' ? (a.errorMsg ?? 'upload failed') : a.name}
-                  >
-                    {a.status === 'uploading' ? '⏳' : a.status === 'done' ? '✓' : '✗'}{' '}
-                    {a.name}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className={styles.inputRow}>
-              <button
-                className={styles.uploadBtn}
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={streaming}
-                aria-label="Attach file"
-                title="Attach file"
-              >
-                &#x1F4CE;
-              </button>
-              <textarea
-                id={`ws-chat-p${phaseNum}-input-field`}
-                rows={1}
-                value={composer}
-                onChange={(e) => setComposer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    void send();
-                  }
-                }}
-                placeholder={`Ask Nexus about ${move.displayCode} ${config.label}…`}
-                disabled={streaming}
-                spellCheck
-              />
-              <button
-                id={`ws-chat-p${phaseNum}-send-btn`}
-                className={styles.sendBtn}
-                type="button"
-                onClick={() => void send()}
-                disabled={streaming || !composer.trim()}
-                aria-label="Send"
-              >
-                &#8593;
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        {/* Canvas pane */}
-        <article id={`ws-canvas-p${phaseNum}`} className={styles.rightPane}>
+          ) : (
+          /* Canvas pane */
+          <article id={`ws-canvas-p${phaseNum}`} className={styles.rightPane}>
           {/* Canvas head */}
           <div className={styles.detailHead}>
             <div className={styles.detailHeadTop}>
@@ -518,7 +2396,10 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
                   <span aria-hidden>&rsaquo;</span>
                   <span>{move.tenant.name}</span>
                   <span aria-hidden>&rsaquo;</span>
-                  <Link className={styles.detailCrumb} href={`/strategic-moves/${move.id}`}>
+                  <Link
+                    className={styles.detailCrumb}
+                    href={`/strategic-moves/${move.id}`}
+                  >
                     {move.displayCode}
                   </Link>
                   <span aria-hidden>&rsaquo;</span>
@@ -526,8 +2407,8 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
                 </div>
                 <h1 className={styles.detailTitle}>{move.name}</h1>
                 <div className={styles.detailId}>
-                  {move.archetype} &middot; {config.label} &middot; Sponsor:{' '}
-                  {(move.sponsor?.name ?? 'Unassigned').toUpperCase()}
+                  {move.archetype} &middot; Sponsor:{" "}
+                  {conciseSponsorLabel(move.sponsor).toUpperCase()}
                 </div>
               </div>
             </div>
@@ -536,190 +2417,457 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
 
           {/* Canvas body */}
           <div className={styles.detailBody}>
+            {/* Capture tracker — one chip per capture slot of this phase */}
+            {canvasSections.length > 0 && (
+              <div
+                id={`ws-canvas-p${phaseNum}-capture-tracker`}
+                className={styles.captureTracker}
+              >
+                <div className={styles.captureTrackerHead}>
+                  P{phaseNum} capture &mdash; {filledCount} of{" "}
+                  {canvasSections.length}
+                </div>
+                <div className={styles.captureChipRow}>
+                  {capturedSections.map(({ section, content }) => (
+                    <button
+                      key={section.id}
+                      id={`ws-canvas-p${phaseNum}-capture-chip-${section.id}`}
+                      type="button"
+                      className={`${styles.captureChip} ${
+                        content !== null ? styles.captureChipFilled : ""
+                      }`}
+                      aria-pressed={
+                        isCaptureCardOpen(section.id) && isPanelOpen("capture")
+                      }
+                      onClick={() => focusCaptureSection(section.id)}
+                    >
+                      {content !== null ? "✓ " : ""}
+                      {section.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Next-action strip — same state machine as the auto-expand */}
+                <div
+                  id={`ws-canvas-p${phaseNum}-next-action`}
+                  className={styles.nextActionStrip}
+                >
+                  {nextActionText}
+                </div>
+              </div>
+            )}
+
+            {/* Phase capture sections */}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-capture-collapse`}
+              title="Capture details"
+              meta={
+                canvasSections.length > 0
+                  ? `— ${filledCount} of ${canvasSections.length} captured`
+                  : undefined
+              }
+              open={isPanelOpen("capture")}
+              onOpenChange={(open) => setPanelOpen("capture", open)}
+            >
+              {PHASE_WORKFLOW[phaseNum] && canvasSections.length > 0 ? (
+                <CharterWorkflow
+                  key={serverCapture ? "capture-loaded" : "capture-loading"}
+                  move={move}
+                  phaseNum={phaseNum}
+                  canvasSections={canvasSections}
+                  capturedSections={capturedSections}
+                  isCaptureCardOpen={isCaptureCardOpen}
+                  setOpenCaptureCards={setOpenCaptureCards}
+                />
+              ) : (
+                capturedSections.map(({ section, content }) => (
+                  <section
+                    key={section.id}
+                    id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+                    className={styles.detailSection}
+                  >
+                    <details
+                      open={isCaptureCardOpen(section.id)}
+                      onToggle={(e) => {
+                        const isOpen = (e.currentTarget as HTMLDetailsElement)
+                          .open;
+                        setOpenCaptureCards((prev) =>
+                          (prev[section.id] ?? true) === isOpen
+                            ? prev
+                            : { ...prev, [section.id]: isOpen },
+                        );
+                      }}
+                    >
+                      <summary className={styles.captureCardSummary}>
+                        <span
+                          className={styles.detailSectionTitle}
+                          style={{ marginBottom: 0 }}
+                        >
+                          {section.label}
+                        </span>
+                        <span
+                          className={
+                            content !== null
+                              ? styles.captureBadgeDone
+                              : styles.captureBadgePending
+                          }
+                        >
+                          {content !== null ? "✓ Captured" : "Not captured"}
+                        </span>
+                      </summary>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          color: "var(--abarva-slate)",
+                          fontStyle: "italic",
+                          lineHeight: 1.5,
+                          padding: "4px 0 2px",
+                        }}
+                      >
+                        {section.placeholder}
+                      </div>
+                      {content !== null ? (
+                        <div className={styles.captureContent}>{content}</div>
+                      ) : (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: "8px 10px",
+                            borderRadius: 6,
+                            background: "rgba(0,102,204,0.04)",
+                            border: "1px dashed rgba(0,102,204,0.18)",
+                            fontSize: 12,
+                            color: "var(--abarva-slate)",
+                          }}
+                        >
+                          Work with Ava in the chat pane to populate this
+                          section.
+                        </div>
+                      )}
+                    </details>
+                  </section>
+                ))
+              )}
+            </CollapsePanel>
+
+            <UploadGuidanceCard phaseNum={phaseNum} />
 
             {/* Gate criteria panel */}
-            <section
-              id={`ws-canvas-p${phaseNum}-gate-panel`}
-              className={styles.detailSection}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-gate-collapse`}
+              title="Gate readiness"
+              meta={
+                gateItemsWithStatus.length > 0
+                  ? `— ${totalGateDone} of ${gateItemsWithStatus.length} met (${hardGateDone} of ${hardGateCount} hard)`
+                  : undefined
+              }
+              open={isPanelOpen("gate")}
+              onOpenChange={(open) => setPanelOpen("gate", open)}
             >
-              <div className={styles.detailSectionTitle}>
-                {config.label.toUpperCase()} &middot; Gate criteria
-                {gateItemsWithStatus.length > 0 && (
-                  <span style={{ marginLeft: 8, fontWeight: 400, textTransform: 'none' }}>
-                    &mdash; {totalGateDone} of {gateItemsWithStatus.length} met
-                    ({hardGateDone} of {hardGateCount} hard)
-                  </span>
-                )}
-              </div>
-              {gateItemsWithStatus.length === 0 ? (
-                <p style={{ fontSize: 13, color: 'var(--abarva-stone)', margin: 0 }}>
-                  {isCurrentPhase
-                    ? 'No outgoing gate for this phase — there are no further gate criteria to evaluate.'
-                    : 'Gate criteria are shown on the phase the Move is currently in.'}
-                </p>
-              ) : (
-                <ul id={`ws-canvas-p${phaseNum}-gate-list`} className={styles.critList}>
-                  {gateItemsWithStatus.map((item) => (
-                    <li key={item.id} id={`ws-canvas-p${phaseNum}-gate-item-${item.id}`}>
-                      <span
-                        className={`${styles.critCheck} ${item.completed ? styles.critCheckDone : ''}`}
-                        aria-hidden
+              <section
+                id={`ws-canvas-p${phaseNum}-gate-panel`}
+                className={styles.detailSection}
+              >
+                {gateItemsWithStatus.length === 0 ? (
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--abarva-stone)",
+                      margin: 0,
+                    }}
+                  >
+                    {isCurrentPhase
+                      ? "No outgoing readiness checkpoint for this phase — there are no further criteria to evaluate."
+                      : "Readiness criteria are shown on the phase the Move is currently in."}
+                  </p>
+                ) : (
+                  <ul
+                    id={`ws-canvas-p${phaseNum}-gate-list`}
+                    className={styles.critList}
+                  >
+                    {gateItemsWithStatus.map((item) => (
+                      <li
+                        key={item.id}
+                        id={`ws-canvas-p${phaseNum}-gate-item-${item.id}`}
                       >
-                        {item.completed ? '✓' : ''}
-                      </span>
-                      <span style={{ flex: 1 }}>{item.label}</span>
-                      {!item.verified && (
+                        <span
+                          className={`${styles.critCheck} ${item.completed ? styles.critCheckDone : ""}`}
+                          aria-hidden
+                        >
+                          {item.completed ? "✓" : ""}
+                        </span>
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        {!item.verified && (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontFamily: "var(--abarva-mono)",
+                              letterSpacing: "0.12em",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              color: "var(--abarva-stone)",
+                              flexShrink: 0,
+                              marginLeft: 8,
+                            }}
+                          >
+                            Not yet verified
+                          </span>
+                        )}
                         <span
                           style={{
                             fontSize: 9,
-                            fontFamily: 'var(--abarva-mono)',
-                            letterSpacing: '0.12em',
-                            textTransform: 'uppercase',
+                            fontFamily: "var(--abarva-mono)",
+                            letterSpacing: "0.12em",
+                            textTransform: "uppercase",
                             fontWeight: 700,
-                            color: 'var(--abarva-stone)',
+                            color:
+                              item.severity === "hard"
+                                ? "var(--canon-red)"
+                                : "var(--abarva-stone)",
                             flexShrink: 0,
                             marginLeft: 8,
                           }}
                         >
-                          Not yet verified
+                          {item.severity}
                         </span>
-                      )}
-                      <span
-                        style={{
-                          fontSize: 9,
-                          fontFamily: 'var(--abarva-mono)',
-                          letterSpacing: '0.12em',
-                          textTransform: 'uppercase',
-                          fontWeight: 700,
-                          color: item.severity === 'hard' ? 'var(--canon-red)' : 'var(--abarva-stone)',
-                          flexShrink: 0,
-                          marginLeft: 8,
-                        }}
-                      >
-                        {item.severity}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
 
-            {/* Phase canvas sections */}
-            {canvasSections.map((section) => (
+              {/* Merged into Gate readiness: what evidence is still needed */}
+              {hasEvidenceNeedPackets && (
+                <>
+                  <MoveEvidenceNeedsPanel
+                    packets={evidenceNeedPackets}
+                    title="What we need next"
+                    compact
+                  />
+                  <div
+                    data-testid="moves-phase-review-feedback-loop"
+                    style={{
+                      marginTop: 10,
+                      padding: "9px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(27,43,92,0.14)",
+                      background: "rgba(27,43,92,0.04)",
+                      fontSize: 12,
+                      color: "var(--abarva-slate)",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <strong>Review feedback loop:</strong>{" "}
+                    {reviewFeedbackCount > 0
+                      ? `${reviewFeedbackCount} requested edit${
+                          reviewFeedbackCount === 1 ? "" : "s"
+                        } parsed from uploaded review files. Re-run this phase to create the next artifact version with the approved changes.`
+                      : "Upload client comments or review notes with the paperclip. AbarVa will extract requested edits, show them here, and the next phase run becomes the regenerated version."}
+                  </div>
+                </>
+              )}
+
+              {/* Merged into Gate readiness: estate-derived current-state readiness */}
+              {isCurrentPhase &&
+                readiness &&
+                readiness.instruments.length > 0 && (
+                  <CurrentStateReadinessPanel
+                    readiness={readiness}
+                    programId={move.id}
+                  />
+                )}
+            </CollapsePanel>
+
+            {/* Where to start (estate-derived recommendation) */}
+            {isCurrentPhase &&
+              readiness &&
+              recommendation &&
+              recommendation.ranking.length > 0 && (
+                <CollapsePanel
+                  id={`ws-canvas-p${phaseNum}-where-to-start-collapse`}
+                  title="Where to start"
+                  open={isPanelOpen("start")}
+                  onOpenChange={(open) => setPanelOpen("start", open)}
+                >
+                  <WhereToStartBlock recommendation={recommendation} />
+                </CollapsePanel>
+              )}
+
+            {/* Indicative plan & cost */}
+            {isCurrentPhase &&
+              readiness &&
+              plan &&
+              plan.roadmap.phases.length > 0 && (
+                <CollapsePanel
+                  id={`ws-canvas-p${phaseNum}-plan-collapse`}
+                  title="Indicative plan & cost"
+                  open={isPanelOpen("plan")}
+                  onOpenChange={(open) => setPanelOpen("plan", open)}
+                >
+                  <IndicativePlanBlock plan={plan} />
+                </CollapsePanel>
+              )}
+
+
+            {/* Generate & documents */}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-generate-collapse`}
+              title="Generate & documents"
+              open={isPanelOpen("generate")}
+              onOpenChange={(open) => setPanelOpen("generate", open)}
+            >
+              {/* Grounded deliverable draft (P1 Charter) */}
+              {isCurrentPhase && phaseNum === 1 && (
+                <DeliverableArtifactCard programId={move.id} />
+              )}
+
+              {/* Generate full package */}
               <section
-                key={section.id}
-                id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+                id={`ws-canvas-p${phaseNum}-generate`}
                 className={styles.detailSection}
               >
-                <div className={styles.detailSectionTitle}>{section.label}</div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: 'var(--abarva-slate)',
-                    fontStyle: 'italic',
-                    lineHeight: 1.5,
-                    padding: '4px 0 2px',
-                  }}
-                >
-                  {section.placeholder}
+                <div className={styles.detailSectionTitle}>
+                  Generate full package
                 </div>
+                {PHASE_WORKFLOW[phaseNum] && canvasSections.length > 0 && (
+                  <div className={styles.charterAdvancedNote}>
+                    Manual / advanced path — the gated Save → Approve → Generate
+                    sequence above is the primary route.
+                  </div>
+                )}
                 <div
                   style={{
-                    marginTop: 8,
-                    padding: '8px 10px',
-                    borderRadius: 6,
-                    background: 'rgba(0,102,204,0.04)',
-                    border: '1px dashed rgba(0,102,204,0.18)',
                     fontSize: 12,
-                    color: 'var(--abarva-slate)',
+                    color: "var(--abarva-slate)",
+                    marginBottom: 10,
+                    lineHeight: 1.5,
                   }}
                 >
-                  Work with Nexus in the chat pane to populate this section.
+                  Approve &amp; Build assembles all available context —
+                  engagement data, prior-phase deliverables, client segments,
+                  matched patterns, and phase methodology — and builds every{" "}
+                  {config.label} deliverable in one governed batch. Saves to the
+                  Evidence Hub.
                 </div>
+                <MoveEvidenceNeedsPanel
+                  packets={evidenceNeedPackets}
+                  title="What We Need Before This Package Is Final"
+                  compact
+                />
+                <div
+                  data-testid="moves-review-feedback-loop"
+                  style={{
+                    marginBottom: 10,
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(27,43,92,0.14)",
+                    background: "rgba(27,43,92,0.04)",
+                    fontSize: 12,
+                    color: "var(--abarva-slate)",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>Review feedback loop:</strong>{" "}
+                  {reviewFeedbackCount > 0
+                    ? `${reviewFeedbackCount} requested edit${
+                        reviewFeedbackCount === 1 ? "" : "s"
+                      } parsed from uploaded review files. Re-run this phase to create the next artifact version with the approved changes.`
+                    : "Upload client comments or review notes with the paperclip. AbarVa will extract requested edits, show them here, and the next phase run becomes the regenerated version."}
+                </div>
+                <PhaseApproveAndBuild
+                  moveId={move.id}
+                  phaseNum={phaseNum}
+                  phaseLabel={config.label}
+                  archetype={move.archetype}
+                  moveName={move.name}
+                  clientDisplayName={move.tenant.name}
+                  evidenceNeedPackets={evidenceNeedPackets}
+                />
               </section>
-            ))}
-
-            {/* Generate full package */}
-            <section
-              id={`ws-canvas-p${phaseNum}-generate`}
-              className={styles.detailSection}
-            >
-              <div className={styles.detailSectionTitle}>
-                Generate full package
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--abarva-slate)', marginBottom: 10, lineHeight: 1.5 }}>
-                Assembles all available context — engagement data, prior phase deliverables, client segments,
-                matched patterns, and phase methodology — and generates a complete consulting-grade document.
-                Equivalent to a McKinsey phase deliverable. Saves to the Evidence Hub.
-              </div>
-              <GeneratePhasePackage
-                programId={move.id}
-                phaseNum={phaseNum}
-                phaseLabel={config.label}
-              />
-            </section>
+            </CollapsePanel>
 
             {/* Artifact shelf */}
-            <section
-              id={`ws-canvas-p${phaseNum}-artifact-shelf`}
-              className={styles.detailSection}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-artifacts-collapse`}
+              title="Artifacts"
+              meta={`— ${phaseArtifactCount}`}
+              open={isPanelOpen("artifacts")}
+              onOpenChange={(open) => setPanelOpen("artifacts", open)}
             >
-              <div className={styles.detailSectionTitle}>
-                {config.label} &middot; Artifacts
-              </div>
-              {move.deliverables.filter((d) => {
-                // Show deliverables relevant to this phase by checking naming conventions
-                const phasePrefix = `p${phaseNum}_`;
-                return d.typeKey.startsWith(phasePrefix) || d.typeKey.includes(`_p${phaseNum}`);
-              }).length === 0 ? (
-                <div
-                  id={`ws-canvas-p${phaseNum}-artifact-empty-state`}
-                  style={{
-                    fontSize: 13,
-                    color: 'var(--abarva-slate)',
-                    fontStyle: 'italic',
-                    padding: '4px 0',
-                  }}
-                >
-                  No {config.label} artifacts yet. Nexus will generate artifacts as you work through the phase steps.
-                </div>
-              ) : (
-                <div className={styles.evidenceList}>
-                  {move.deliverables
-                    .filter((d) => {
-                      const phasePrefix = `p${phaseNum}_`;
-                      return d.typeKey.startsWith(phasePrefix) || d.typeKey.includes(`_p${phaseNum}`);
-                    })
-                    .map((deliverable) => (
-                      <a
-                        key={deliverable.id}
-                        className={styles.evItem}
-                        href={deliverable.url}
-                      >
-                        <span className={styles.evNum}>{deliverable.typeKey}</span>
-                        <span className={styles.evText}>{deliverable.title}</span>
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontFamily: 'var(--abarva-mono)',
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            fontWeight: 700,
-                            color: deliverable.status === 'signed' ? 'var(--canon-teal)' : 'var(--abarva-stone)',
-                            flexShrink: 0,
-                          }}
+              <section
+                id={`ws-canvas-p${phaseNum}-artifact-shelf`}
+                className={styles.detailSection}
+              >
+                {move.deliverables.filter((d) =>
+                  deliverableBelongsToPhase(
+                    d.typeKey,
+                    phaseNum,
+                    PHASE_CANONICAL_KEYS[phaseNum],
+                  ),
+                ).length === 0 ? (
+                  <div
+                    id={`ws-canvas-p${phaseNum}-artifact-empty-state`}
+                    style={{
+                      fontSize: 13,
+                      color: "var(--abarva-slate)",
+                      fontStyle: "italic",
+                      padding: "4px 0",
+                    }}
+                  >
+                    No {config.label} artifacts yet. Ava will generate artifacts
+                    as you work through the phase steps.
+                  </div>
+                ) : (
+                  <div className={styles.evidenceList}>
+                    {move.deliverables
+                      .filter((d) =>
+                        deliverableBelongsToPhase(
+                          d.typeKey,
+                          phaseNum,
+                          PHASE_CANONICAL_KEYS[phaseNum],
+                        ),
+                      )
+                      .map((deliverable) => (
+                        <a
+                          key={deliverable.id}
+                          className={styles.evItem}
+                          href={deliverable.url}
                         >
-                          {deliverable.status}
-                        </span>
-                        <span className={styles.evLink} aria-hidden>&#8599;</span>
-                      </a>
-                    ))}
-                </div>
-              )}
-            </section>
+                          <span className={styles.evNum}>
+                            {deliverable.typeKey}
+                          </span>
+                          <span className={styles.evText}>
+                            {deliverable.title}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontFamily: "var(--abarva-mono)",
+                              letterSpacing: "0.1em",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              color:
+                                deliverable.status === "signed"
+                                  ? "var(--canon-teal)"
+                                  : "var(--abarva-stone)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {deliverable.status}
+                          </span>
+                          <span className={styles.evLink} aria-hidden>
+                            &#8599;
+                          </span>
+                        </a>
+                      ))}
+                  </div>
+                )}
+              </section>
+            </CollapsePanel>
           </div>
         </article>
-      </section>
+          )
+        }
+      />
     </div>
   );
 }

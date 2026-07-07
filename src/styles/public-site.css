@@ -72,18 +72,10 @@
   align-items: center;
   text-decoration: none;
 }
-.pub-topnav__wordmark-text {
-  font-family: var(--pub-font-serif);
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1;
-}
-.pub-topnav__wordmark-abar {
-  color: var(--pub-ink);
-}
-.pub-topnav__wordmark-va {
-  color: var(--pub-signal);
+.pub-topnav__wordmark-logo {
+  display: block;
+  width: 122px;
+  height: auto;
 }
 .pub-topnav__nav {
   display: flex;
@@ -92,7 +84,7 @@
   margin-left: auto;
   list-style: none;
 }
-.pub-topnav__link {
+.pub-root .pub-topnav__link {
   font-family: var(--pub-font-sans);
   font-size: 14px;
   font-weight: 500;
@@ -101,11 +93,24 @@
   white-space: nowrap;
   transition: color 150ms ease;
 }
-.pub-topnav__link:hover {
+.pub-root .pub-topnav__link:hover {
   color: var(--pub-ink);
   text-decoration: none;
 }
-.pub-topnav__cta {
+.pub-root .pub-topnav__signin {
+  font-family: var(--pub-font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pub-ink);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 150ms ease;
+}
+.pub-root .pub-topnav__signin:hover {
+  color: var(--pub-signal);
+  text-decoration: none;
+}
+.pub-root .pub-topnav__cta {
   font-family: var(--pub-font-sans);
   font-size: 14px;
   font-weight: 600;
@@ -119,7 +124,7 @@
   white-space: nowrap;
   transition: background 150ms ease;
 }
-.pub-topnav__cta:hover {
+.pub-root .pub-topnav__cta:hover {
   background: var(--pub-signal-dark);
   text-decoration: none;
   color: #fff;
@@ -168,10 +173,23 @@
   grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 40px;
 }
+.pub-footer__inner--lean {
+  grid-template-columns: 1.5fr 0.7fr 1.05fr 0.7fr;
+}
 .pub-footer__brand {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+.pub-footer__brand-link {
+  display: inline-flex;
+  width: fit-content;
+  text-decoration: none;
+}
+.pub-footer__logo {
+  display: block;
+  width: 118px;
+  height: auto;
 }
 .pub-footer__wordmark {
   font-family: var(--pub-font-serif);
@@ -184,6 +202,7 @@
   font-size: 13px;
   color: var(--pub-slate);
   line-height: 1.5;
+  max-width: 280px;
 }
 .pub-footer__col-label {
   font-family: var(--pub-font-mono);
@@ -209,6 +228,12 @@
 .pub-footer__link:hover {
   color: var(--pub-ink);
   text-decoration: none;
+}
+.pub-footer__access-copy {
+  max-width: 260px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--pub-slate);
 }
 .pub-footer__legal {
   max-width: 1200px;

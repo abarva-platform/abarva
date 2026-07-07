@@ -58,7 +58,7 @@ export function InviteList({ invites }: InviteListProps) {
             color: `${COLORS.ink}80`,
           }}
         >
-          {invites.length} seeded invitations · live writes Wave 27
+          {invites.length} prepared invitations · live sends require SSO
         </span>
       </header>
 
@@ -132,7 +132,7 @@ export function InviteList({ invites }: InviteListProps) {
                   aria-disabled="true"
                   data-invite-action="resend"
                   data-invite-action-status="hard_gated"
-                  title="Available in pilot environment (Wave 27)"
+                  title="Available after SSO is enabled"
                   style={{
                     padding: '4px 10px',
                     borderRadius: RADIUS.sm,
@@ -153,7 +153,7 @@ export function InviteList({ invites }: InviteListProps) {
                   aria-disabled="true"
                   data-invite-action="revoke"
                   data-invite-action-status="hard_gated"
-                  title="Available in pilot environment (Wave 27)"
+                  title="Available after SSO is enabled"
                   style={{
                     padding: '4px 10px',
                     borderRadius: RADIUS.sm,

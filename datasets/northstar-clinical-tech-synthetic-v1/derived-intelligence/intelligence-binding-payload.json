@@ -1,0 +1,239 @@
+{
+  "tenant": {
+    "key": "northstar-clinical",
+    "displayName": "Northstar Clinical Technologies",
+    "industry": "Medtech / Clinical Technology"
+  },
+  "ask": {
+    "placeholder": "e.g. Which ERP, QMS, vendor, and clinical-coding AI moves should we accelerate or hold?",
+    "contract": "Every answer is read from the committed Northstar enterprise context and cited to its source - and says so honestly when the evidence isn't there."
+  },
+  "trustLine": {
+    "dimensionsLoaded": 8,
+    "evidencePoints": 6338,
+    "sources": 12,
+    "searchVerifiedPct": 97
+  },
+  "suggestedQuestions": [
+    "Which Northstar moves should we accelerate, restructure, or kill?",
+    "What blocks TSA exit and ERP simplification?",
+    "Where is clinical coding AI exposed to QMS or model-risk controls?",
+    "Which vendor renewals and app run costs deserve CFO/CIO attention first?"
+  ],
+  "signals": [
+    {
+      "id": "SIG-nst-01",
+      "domains": ["OPERATING MODEL", "ERP", "TSA EXIT"],
+      "crossDomain": true,
+      "headline": "TSA exit and ERP simplification are the first constraint on the independent operating model.",
+      "body": "Northstar is a newly independent medtech enterprise with board pressure to exit parent TSAs without disrupting regulated operations. The ERP estate spans SAP S/4HANA, Oracle EBS, JD Edwards, Infor LN, Dynamics AX, AS/400, and mainframe workloads, so independence is an operating-risk question before it is an IT cleanup question.",
+      "confidence": "HIGH CONFIDENCE",
+      "evidencePoints": 393,
+      "sources": 4,
+      "evidenceRefs": [
+        "NST-DEMO-FACT-002",
+        "NST-BOARD-001",
+        "datasets/northstar-clinical-tech-synthetic-v1/06-erp-landscape/erp-landscape-workbook.csv",
+        "datasets/northstar-clinical-tech-synthetic-v1/07-application-portfolio/application-portfolio.csv"
+      ],
+      "move": {
+        "title": "Gate TSA exit by regulated-process and ERP dependency evidence",
+        "owner": "CIO",
+        "impact": "Independent operating model proof"
+      }
+    },
+    {
+      "id": "SIG-nst-02",
+      "domains": ["FINANCE", "PORTFOLIO VALUE", "ERP"],
+      "crossDomain": true,
+      "headline": "$250M margin expansion depends on separating verified moves from projected value.",
+      "body": "The board has a $250M margin-expansion priority, while SAP S/4 Wave 0 and JDE Dental Sunset carry large projected values but different recommendation states. Ava should force the CFO/CIO discussion onto evidence-backed realization, not initiative optimism.",
+      "confidence": "HIGH CONFIDENCE",
+      "evidencePoints": 139,
+      "sources": 3,
+      "evidenceRefs": [
+        "NST-BOARD-002",
+        "NST-DEMO-FACT-003",
+        "NST-INIT-S4-WAVE0",
+        "NST-INIT-JDE-DENTAL-SUNSET"
+      ],
+      "move": {
+        "title": "Re-baseline ERP simplification against verified margin evidence",
+        "owner": "CFO",
+        "impact": "$259.5M projected across two ERP moves"
+      }
+    },
+    {
+      "id": "SIG-nst-03",
+      "domains": ["CLINICAL CODING AI", "QMS", "MODEL RISK"],
+      "crossDomain": true,
+      "headline": "Clinical coding AI should accelerate only with regulated evidence guardrails.",
+      "body": "Clinical coding AI is a board-level modernization priority, but the footprint marks it as a regulated high-risk workflow. QMS events, CAPA history, and model-risk evidence have to travel with the business case before scale.",
+      "confidence": "HIGH CONFIDENCE",
+      "evidencePoints": 362,
+      "sources": 5,
+      "evidenceRefs": [
+        "NST-BOARD-003",
+        "NST-INIT-CODING-AI",
+        "NST-AI-005",
+        "datasets/northstar-clinical-tech-synthetic-v1/13-qms-events/qms-events.csv",
+        "datasets/northstar-clinical-tech-synthetic-v1/14-ai-tool-footprint/ai-tool-footprint.csv"
+      ],
+      "move": {
+        "title": "Accelerate clinical coding AI with QMS and model-risk controls",
+        "owner": "Chief Quality Officer",
+        "impact": "$126M projected"
+      }
+    },
+    {
+      "id": "SIG-nst-04",
+      "domains": ["VENDORS", "CONTRACTS", "FINANCE"],
+      "crossDomain": true,
+      "headline": "Near-term vendor renewals create leverage and data-rights risk.",
+      "body": "SAP, Infosys, Azure, ServiceNow, and PTC renewals are material enough to shape the margin plan. The renewal conversation should join commercial exposure, AI/data-rights terms, exit provisions, and operational dependency instead of treating renewals as procurement events.",
+      "confidence": "HIGH CONFIDENCE",
+      "evidencePoints": 110,
+      "sources": 3,
+      "evidenceRefs": [
+        "NST-DEMO-FACT-005",
+        "datasets/northstar-clinical-tech-synthetic-v1/08-vendor-contracts/vendor-contracts.csv",
+        "datasets/northstar-clinical-tech-synthetic-v1/source-docs/vendor-contracts/"
+      ],
+      "move": {
+        "title": "Bundle renewal decisions with data-rights and exit-term review",
+        "owner": "CFO / CIO",
+        "impact": "$145.8M annual value across exposed renewals"
+      }
+    },
+    {
+      "id": "SIG-nst-05",
+      "domains": ["QMS", "EVIDENCE AUTOMATION", "OPERATIONS"],
+      "crossDomain": true,
+      "headline": "QMS evidence automation is a value move only if source traceability is preserved.",
+      "body": "QMS events include complaint trends, FDA 483 observations, EU MDR remediation, design-history gaps, and CAPA activity. The QMS evidence move can scale if it improves traceability and audit readiness, not if it merely summarizes quality documents.",
+      "confidence": "MEDIUM CONFIDENCE",
+      "evidencePoints": 362,
+      "sources": 4,
+      "evidenceRefs": [
+        "NST-INIT-QMS-EVIDENCE",
+        "datasets/northstar-clinical-tech-synthetic-v1/13-qms-events/qms-events.csv",
+        "datasets/northstar-clinical-tech-synthetic-v1/source-docs/qms-artifacts/",
+        "datasets/northstar-clinical-tech-synthetic-v1/context/knowledge-layer/evidence-ledger-fixtures.jsonl"
+      ],
+      "move": {
+        "title": "Accelerate QMS evidence automation with audit-location receipts",
+        "owner": "CIO",
+        "impact": "$48M projected"
+      }
+    },
+    {
+      "id": "SIG-nst-06",
+      "domains": ["APPLICATIONS", "INCIDENTS", "RUN COST"],
+      "crossDomain": true,
+      "headline": "Application rationalization is operational risk work, not cosmetic portfolio trimming.",
+      "body": "Northstar has 240 application records, critical regulated systems, legacy ERP/platform dependencies, and incident patterns tied to plant edge networks, QMS validation, identity sync, and ERP batch failure. Rationalization should start where run cost, regulated scope, and incident history intersect.",
+      "confidence": "MEDIUM CONFIDENCE",
+      "evidencePoints": 573,
+      "sources": 4,
+      "evidenceRefs": [
+        "NST-DEMO-FACT-004",
+        "NST-INIT-PRODUCT-RATIONALIZATION",
+        "datasets/northstar-clinical-tech-synthetic-v1/07-application-portfolio/application-portfolio.csv",
+        "datasets/northstar-clinical-tech-synthetic-v1/15-incidents/incidents.csv"
+      ],
+      "move": {
+        "title": "Sequence app rationalization by regulated criticality and incident evidence",
+        "owner": "CIO",
+        "impact": "$36M projected"
+      }
+    }
+  ],
+  "context": [
+    {
+      "dimension": "Business strategy & priorities",
+      "status": "LOADED",
+      "description": "Enterprise profile, board priorities, business units, and product portfolio",
+      "evidence": 198,
+      "sources": 5,
+      "trust": 84
+    },
+    {
+      "dimension": "IT systems landscape",
+      "status": "LOADED",
+      "description": "ERP estate, application portfolio, critical systems, and platform era",
+      "evidence": 393,
+      "sources": 3,
+      "trust": 83
+    },
+    {
+      "dimension": "Infrastructure & cloud",
+      "status": "LOADED",
+      "description": "Sites, plants, cloud spend, plant connectivity, and operational incidents",
+      "evidence": 222,
+      "sources": 4,
+      "trust": 82
+    },
+    {
+      "dimension": "Data & connectivity",
+      "status": "LOADED",
+      "description": "Market corpus, named entity facts, source evidence, and knowledge layer",
+      "evidence": 1030,
+      "sources": 4,
+      "trust": 82
+    },
+    {
+      "dimension": "Finance & run cost",
+      "status": "LOADED",
+      "description": "Financial KPI workbooks, segment P&L, IT budget, and initiative value",
+      "evidence": 139,
+      "sources": 4,
+      "trust": 84
+    },
+    {
+      "dimension": "Vendors & contracts",
+      "status": "LOADED",
+      "description": "Vendor contracts, renewal exposure, AI clauses, and data-rights terms",
+      "evidence": 110,
+      "sources": 3,
+      "trust": 83
+    },
+    {
+      "dimension": "Execution & operations",
+      "status": "LOADED",
+      "description": "Active and closed initiatives, IT ecosystem roles, DORA, and incidents",
+      "evidence": 3884,
+      "sources": 5,
+      "trust": 82
+    },
+    {
+      "dimension": "Governance, AI & evidence",
+      "status": "LOADED",
+      "description": "QMS events, QMS artifacts, AI footprint, CAPA context, and evidence ledger",
+      "evidence": 362,
+      "sources": 5,
+      "trust": 83
+    }
+  ],
+  "corpus": [
+    {
+      "patternName": "Medtech carve-out operating model",
+      "domain": "medtech_operating_model",
+      "whenToApply": "Use when a newly independent regulated enterprise has to exit TSAs while protecting plant, ERP, and quality operations."
+    },
+    {
+      "patternName": "Regulated clinical coding AI evidence gate",
+      "domain": "clinical_ai_governance",
+      "whenToApply": "Use when clinical coding, reimbursement, or product AI needs QMS, model-risk, auditability, and restricted-data proof before scale."
+    },
+    {
+      "patternName": "QMS evidence automation with traceability",
+      "domain": "quality_management",
+      "whenToApply": "Use when quality automation is valuable only if CAPA, audit, complaint, and source-location evidence remains inspectable."
+    },
+    {
+      "patternName": "ERP simplification under margin pressure",
+      "domain": "enterprise_architecture",
+      "whenToApply": "Use when SAP, Oracle, JDE, Infor, AS/400, and mainframe dependencies collide with margin commitments and operating-risk constraints."
+    }
+  ]
+}

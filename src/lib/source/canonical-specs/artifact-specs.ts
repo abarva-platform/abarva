@@ -152,8 +152,9 @@ const RFP: SourceArtifactSpec[] = [
   },
   {
     code: 'd11_response_checklist',
-    name: 'Response Checklist',
-    description: 'Vendor-facing list of every required response item with format expectations.',
+    name: 'Vendor Response Control Pack',
+    description:
+      'Vendor-facing response templates, pricing workbook structure, claim register, assumptions/exclusions, SLA commitments, transition plan, and commercial exceptions tables.',
     stage: 'rfp',
     family: 'response_checklist',
     requirementLevel: 'required',
@@ -222,7 +223,7 @@ const EVALUATE: SourceArtifactSpec[] = [
   {
     code: 'd17_weight_log',
     name: 'Weight Set Governance Log',
-    description: 'Versioned weight sets with EA / sponsor / Steward signatures and rationale.',
+    description: 'Versioned weight sets with EA / sponsor / governance signatures and rationale.',
     stage: 'evaluation',
     family: 'scorecard',
     requirementLevel: 'required',
@@ -304,7 +305,7 @@ const BAFO: SourceArtifactSpec[] = [
 const DECISION: SourceArtifactSpec[] = [
   {
     code: 'd24_decision_brief',
-    name: 'Atlas Decision Brief',
+    name: 'Decision Brief',
     description:
       'Executive summary, finalist comparison, tradeoff card (value/risk/transition posture).',
     stage: 'executive_decision',
@@ -315,7 +316,7 @@ const DECISION: SourceArtifactSpec[] = [
   },
   {
     code: 'd25_risk_attestation',
-    name: 'Sentinel Risk Attestation',
+    name: 'Risk Attestation',
     description: 'Aggregated risk register with concentration, security, financial, geopolitical.',
     stage: 'executive_decision',
     family: 'decision_brief',
@@ -325,7 +326,7 @@ const DECISION: SourceArtifactSpec[] = [
   },
   {
     code: 'd26_steward_signoff',
-    name: 'Steward Sign-off Record',
+    name: 'Governance Sign-off Record',
     description: 'Confirmation that scorecard governance is complete and weights are locked.',
     stage: 'executive_decision',
     family: 'decision_brief',

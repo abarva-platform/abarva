@@ -1,0 +1,1 @@
+question_id,tenant_key,domain,subdomain,archetype,expected_answerability,observed_answerability,tenant_resolved_ok,tenant_isolation_ok,retrieved_tenant_context,retrieved_pattern,citations_emitted,consultant_score,production_ready

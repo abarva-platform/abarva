@@ -30,6 +30,24 @@ interface TurnRow {
   payload_jsonb: Record<string, unknown> | null;
 }
 
+const PROMOTION_RATIONALE_MIN_CHARS = 24;
+
+function buildPromotionGate(sourceThreadId: string) {
+  return {
+    required: true,
+    source: 'intelligence_thread',
+    sourceThreadId,
+    minimumRationaleChars: PROMOTION_RATIONALE_MIN_CHARS,
+    requiredEvidence: [
+      'sourceThreadId',
+      'selectedPatternKey',
+      'humanPromotionRationale',
+    ],
+    decisionSupportWarning:
+      'Pattern matches are AI-assisted decision support. A human owner must review evidence, select the pattern, and record a rationale before creating or advancing a Move.',
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireTenancy();
@@ -107,6 +125,7 @@ export async function POST(req: NextRequest) {
         objectives: output.extracted.objectives,
       },
       sourceThreadId: threadRow.id,
+      promotionGate: buildPromotionGate(threadRow.id),
     });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

@@ -1,0 +1,20 @@
+asset_name,class,make_model,location,capacity,virtualization,cloud_account,owner,source
+DC Columbus (primary),datacenter,Owned,"Columbus, OH",illustrative (Tier III),VMware vSphere,,Raj Patel (VP Infra),canonical DC: supply_chain.ts (Columbus primary)
+DC Dallas,datacenter,Owned,"Dallas, TX",illustrative,VMware vSphere,,Raj Patel (VP Infra),canonical DC: supply_chain.ts (Dallas regional)
+DC Reno (west),datacenter,Owned,"Reno, NV",illustrative,VMware vSphere,,Raj Patel (VP Infra),canonical DC: supply_chain.ts (Reno west coast)
+Colo East,datacenter,Equinix colo,"Ashburn, VA",illustrative,VMware vSphere,,Raj Patel (VP Infra),illustrative (10s of DCs at L-tier)
+AWS production,cloud_account,Amazon Web Services,us-east-1 / eu-west-1,illustrative,EKS / EC2,aws-prod-commerce,Raj Patel (VP Infra),illustrative (multi-cloud AWS+Azure+GCP per 00-MODEL.md)
+Azure production,cloud_account,Microsoft Azure,eastus / westeurope,illustrative,AKS,azure-prod-data,Raj Patel (VP Infra),illustrative (multi-cloud)
+GCP production,cloud_account,Google Cloud Platform,us-central1,illustrative,GKE,gcp-prod-erp,Raj Patel (VP Infra),"canonical primary cloud: technology.ts (GCP primary, Salesforce partnership)"
+ERP compute cluster,compute,Dell PowerEdge rack,"Columbus, OH",illustrative,VMware vSphere,,Raj Patel (VP Infra),illustrative
+Store edge nodes,edge,Nutanix hyperconverged,store-edge (per store),illustrative (~800-2500 stores),Nutanix AHV,,Brandon Hayes (Acting VP Store Tech),illustrative (store-edge hyperconverged per 00-MODEL.md)
+DC edge appliances,edge,Dell VxRail,"regional DCs",illustrative,VMware vSphere,,Raj Patel (VP Infra),illustrative
+Kubernetes platform,virtualization,Red Hat OpenShift,"multi-cloud + DC",illustrative,OpenShift / K8s,,Raj Patel (VP Infra),illustrative (VMware+K8s per 00-MODEL.md)
+Primary SAN,storage,Dell EMC PowerStore,"Columbus, OH",illustrative (PB-scale),,,Raj Patel (VP Infra),illustrative (SAN sprawl per 00-MODEL.md)
+Imaging/object storage,storage,Pure Storage FlashBlade,"Dallas, TX",illustrative,,,Raj Patel (VP Infra),illustrative
+Backup storage,storage,NetApp,"Reno, NV",illustrative,,,Raj Patel (VP Infra),illustrative
+SD-WAN fabric,network,Cisco Viptela SD-WAN,"all sites + stores",illustrative,,,Raj Patel (VP Infra),illustrative (SD-WAN per 00-MODEL.md)
+Core network,network,Arista / Cisco,"DCs",illustrative,,,Raj Patel (VP Infra),illustrative
+Load balancing / ADC,network,F5 BIG-IP,"DCs",illustrative,,,Raj Patel (VP Infra),illustrative
+Identity (workforce),identity,Microsoft Entra ID,"Global SaaS",illustrative,,,Kevin Harrison (VP CyberOps),illustrative
+Identity (customer / CIAM),identity,Okta CIAM,"Global SaaS",illustrative,,,Sarah Whitfield (CISO),illustrative

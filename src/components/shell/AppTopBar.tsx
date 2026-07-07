@@ -9,13 +9,10 @@
 //
 // Spec:
 // - True black bar (#000000), 64px tall, sticky, z-index 50
-// - 22px AbarVa wordmark (Claude / ChatGPT scale)
-// - Hairline divider, then compact handwritten "AI Success Platform"
-//   tagline — quiet supporting note, not a second logo
+// - 28px AbarVa Option 2 compact nav lockup
 // - Centered nav · client context sits quietly before Home
-// - Module nav inactive items at 72% white · active = full white
-//   + 600 weight + 3px signal-blue underline
-// - Right rail: Learn, Product, avatar + first name + Sign-out
+// - Module nav inactive items at 72% white · active = white raised pill
+// - Right rail: Learn, avatar + first name + Sign-out
 // - All colors from the locked brand kit (no green / teal in chrome)
 //
 // Backward-compat: the legacy props (showLocked, context, timeString)
@@ -30,11 +27,12 @@ import { useUser } from "@clerk/nextjs";
 import { useSignOut } from "@/lib/auth/use-sign-out";
 import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
 import { useClientContext } from "@/lib/use-client-context";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalClientDisplayName, demoSafeClientText } from "@/lib/client-config";
 import { AdminInboxTopNavBadge } from "@/components/shell/AdminInboxTopNavBadge";
 
 export interface AppTopBarProps {
   tenantName?: string;
+  preserveTenantName?: boolean;
   /** Hide the product nav entirely (used by sign-out / error chrome). */
   showProductNav?: boolean;
   /** @deprecated retained for AppShell call-site compat; unused in v2. */
@@ -51,23 +49,60 @@ const BRAND = {
   hair: "rgba(255,255,255,0.10)",
   textMute: "rgba(255,255,255,0.72)",
   textStrong: "rgba(255,255,255,0.92)",
+  activePillShadow:
+    "0 0 0 1px rgba(255,255,255,0.95), 0 8px 22px rgba(34,174,234,0.28)",
 };
 
-export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps = {}) {
+const OPTION2_NAV_LOGO =
+  "/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg";
+
+function userDisplayName(user: ReturnType<typeof useUser>["user"]): string {
+  const firstName = user?.firstName?.trim();
+  const lastName = user?.lastName?.trim();
+  const explicitPersonName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const fallback =
+    explicitPersonName ||
+    user?.fullName?.split("·")[0]?.trim() ||
+    user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||
+    "User";
+
+  return demoSafeClientText(fallback).trim() || "User";
+}
+
+function shouldPreferTenantOverUserAlias(displayName: string): boolean {
+  return /\b(?:demo|agent)\b/i.test(displayName);
+}
+
+export function AppTopBar({
+  tenantName,
+  preserveTenantName = false,
+  showProductNav = true,
+}: AppTopBarProps = {}) {
   const pathname = usePathname() ?? "";
   const { isLoaded, user } = useUser();
   const signOut = useSignOut();
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
-  const resolvedTenantName =
-    canonicalClientDisplayName({ key: currentClient?.id, name: tenantName ?? currentClient?.name }) ??
-    tenantName ??
-    currentClient?.name ??
-    null;
+  const resolvedTenantNameRaw = preserveTenantName
+    ? (tenantName ?? currentClient?.name ?? null)
+    : (tenantName ? canonicalClientDisplayName({ name: tenantName }) : null) ??
+      canonicalClientDisplayName({
+        key: currentClient?.id,
+        name: currentClient?.name,
+      }) ??
+      tenantName ??
+      currentClient?.name ??
+      null;
+  const resolvedTenantName = resolvedTenantNameRaw
+    ? preserveTenantName
+      ? resolvedTenantNameRaw
+      : demoSafeClientText(resolvedTenantNameRaw)
+    : null;
+  const userName = userDisplayName(user);
   const displayName =
-    user?.fullName ||
-    user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||
-    "User";
+    preserveTenantName && resolvedTenantName && shouldPreferTenantOverUserAlias(userName)
+      ? resolvedTenantName
+      : userName;
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
@@ -75,6 +110,8 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
     .slice(0, 2)
     .toUpperCase();
   const navItems = showProductNav && signedIn ? getVisibleNavItems(user) : [];
+  const learnActive =
+    pathname === "/home/learn" || pathname.startsWith("/home/learn/");
 
   function handleSignOut() {
     void signOut();
@@ -87,12 +124,13 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         background: BRAND.ink,
         color: "white",
         height: 64,
-        display: "flex",
+        // 3-column grid so the product nav is TRUE-centered in the bar
+        // (Snowflake-style), independent of brand/right-rail widths. The 1fr
+        // side columns reserve space so the three groups can never overlap —
+        // the collision that ran the tenant name into the old tagline.
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
         alignItems: "center",
-        justifyContent: "space-between",
-        // Minimum spacing between the three groups (brand · module nav ·
-        // right rail) so they can never overlap under width pressure — the
-        // collision that ran the tenant name into the old tagline.
         gap: 24,
         padding: "0 32px",
         borderBottom: `1px solid ${BRAND.hair}`,
@@ -103,63 +141,96 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
       }}
     >
       <style jsx global>{`
-        .app-top-bar__nav-link { transition: color 140ms ease; }
-        .app-top-bar__nav-link:hover { color: white !important; }
+        .app-top-bar__nav-link {
+          transition:
+            background 140ms ease,
+            color 140ms ease,
+            box-shadow 140ms ease;
+        }
+        .app-top-bar__nav-link:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: white !important;
+        }
+        .app-top-bar__nav-link[aria-current="page"]:hover {
+          background: white;
+          color: #050505 !important;
+        }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flexShrink: 0 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          minWidth: 0,
+          justifySelf: "start",
+        }}
+      >
         <Link
           href="/home"
           aria-label="AbarVa Home"
-          style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            textDecoration: "none",
+            flexShrink: 0,
+          }}
         >
           <Image
-            src="/brand/abarva-logo-inverse.svg"
+            src={OPTION2_NAV_LOGO}
             alt="AbarVa"
-            width={85}
-            height={22}
-            style={{ height: 22, width: "auto", display: "block" }}
+            width={142}
+            height={32}
+            style={{ height: 28, width: "auto", display: "block" }}
             priority
           />
         </Link>
+        {/* Active-client context sits beside the brand (left), so the product
+            nav can be dead-centered in the bar. */}
+        {signedIn && resolvedTenantName && (
+          <>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 1,
+                height: 16,
+                background: BRAND.hair,
+                marginLeft: 4,
+              }}
+            />
+            <span
+              title={resolvedTenantName}
+              aria-label={`Active client ${resolvedTenantName}`}
+              style={{
+                display: "inline-block",
+                maxWidth: 210,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                fontFamily: "Newsreader, Georgia, 'Times New Roman', serif",
+                fontSize: 13,
+                fontStyle: "italic",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.82)",
+                letterSpacing: "0.01em",
+              }}
+            >
+              {resolvedTenantName}
+            </span>
+          </>
+        )}
       </div>
 
       {navItems.length > 0 && (
-        <nav aria-label="Product modules" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {signedIn && resolvedTenantName && (
-            <>
-              <span
-                title={resolvedTenantName}
-                aria-label={`Active client ${resolvedTenantName}`}
-                style={{
-                  display: "inline-block",
-                  maxWidth: 210,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontFamily: "Newsreader, Georgia, 'Times New Roman', serif",
-                  fontSize: 13,
-                  fontStyle: "italic",
-                  fontWeight: 600,
-                  color: "rgba(255,255,255,0.82)",
-                  letterSpacing: "0.01em",
-                  padding: "22px 12px 22px 0",
-                  transform: "translateY(1px)",
-                }}
-              >
-                {resolvedTenantName}
-              </span>
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 1,
-                  height: 16,
-                  background: BRAND.hair,
-                  marginRight: 2,
-                }}
-              />
-            </>
-          )}
+        <nav
+          aria-label="Product modules"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            justifySelf: "center",
+          }}
+        >
           {navItems.map((item) => {
             const active = item.match(pathname);
             return (
@@ -171,81 +242,70 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
                 style={{
                   fontFamily: "Inter, system-ui, sans-serif",
                   fontSize: 13.5,
-                  fontWeight: active ? 600 : 500,
-                  color: active ? "white" : BRAND.textMute,
+                  fontWeight: active ? 750 : 500,
+                  color: active ? "#050505" : BRAND.textMute,
+                  background: active ? "white" : "transparent",
+                  boxShadow: active ? BRAND.activePillShadow : "none",
+                  borderRadius: 7,
                   textDecoration: "none",
-                  padding: "22px 14px",
-                  letterSpacing: "-0.005em",
+                  padding: "0 12px",
+                  minHeight: 34,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                  letterSpacing: 0,
                   position: "relative",
                 }}
-                >
-                  {item.label}
-                  {active && (
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      position: "absolute",
-                      left: 14,
-                      right: 14,
-                      bottom: 0,
-                      height: 3,
-                      background: BRAND.signalBlue,
-                      borderRadius: 2,
-                    }}
-                    />
-                  )}
+              >
+                {item.label}
               </a>
             );
           })}
         </nav>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          justifySelf: "end",
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
         {signedIn && (
           <Link
             href="/home/learn"
             data-nav-key="learn"
-            aria-current={pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "page" : undefined}
+            aria-current={learnActive ? "page" : undefined}
+            className="app-top-bar__nav-link"
             style={{
               fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-              color: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "white" : BRAND.textStrong,
-              textDecoration: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "underline" : "none",
-              textDecorationColor: BRAND.signalBlue,
-              textUnderlineOffset: 6,
-              padding: "22px 0",
+              fontWeight: learnActive ? 750 : 600,
+              letterSpacing: 0,
+              color: learnActive ? "#050505" : BRAND.textStrong,
+              background: learnActive ? "white" : "transparent",
+              boxShadow: learnActive ? BRAND.activePillShadow : "none",
+              borderRadius: 7,
+              textDecoration: "none",
+              padding: "0 12px",
+              minHeight: 34,
+              display: "inline-flex",
+              alignItems: "center",
               whiteSpace: "nowrap",
             }}
           >
             Learn
           </Link>
         )}
-        {signedIn && (
-          <Link
-            href="/product"
-            data-nav-key="product"
-            aria-current={pathname === "/product" || pathname.startsWith("/product/") ? "page" : undefined}
-            style={{
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-              color: pathname === "/product" || pathname.startsWith("/product/") ? "white" : BRAND.textStrong,
-              textDecoration: pathname === "/product" || pathname.startsWith("/product/") ? "underline" : "none",
-              textDecorationColor: BRAND.signalBlue,
-              textUnderlineOffset: 6,
-              padding: "22px 0",
-              whiteSpace: "nowrap",
-              marginRight: 2,
-            }}
-          >
-            Product
-          </Link>
-        )}
         {signedIn && <AdminInboxTopNavBadge />}
-        {signedIn ? (
+        {/* While Clerk is still resolving the session, auth state is
+            indeterminate — render neither chip nor "Sign in" (a signed-in user
+            briefly seeing "Sign in" reads as being logged out; audit F4). */}
+        {!isLoaded ? null : signedIn ? (
           <>
             <div
               title={displayName}

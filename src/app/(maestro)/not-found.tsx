@@ -7,19 +7,19 @@ export default function MaestroNotFound() {
   return (
     <AppShell surface="programs">
       <AgentColumn
-        agent={{ initials: 'Nx', name: 'Nexus', role: 'Platform · Navigator' }}
-        quote="This page doesn't exist or you don't have access to it."
-        agentContext="Nx · Route not found"
+        agent={{ initials: 'aVa', name: 'aVa', role: 'Workspace advisor' }}
+        quote="This item is not available for this account."
+        agentContext="Item unavailable"
         actions={[
           {
             letter: 'A',
-            text: 'Go to programs',
-            detail: 'Return to the programs portfolio',
+            text: 'Go to Moves',
+            detail: 'Return to the Moves portfolio',
           },
           {
             letter: 'B',
-            text: 'Go to home',
-            detail: 'Return to the executive dashboard',
+            text: 'Go to Home',
+            detail: 'Return to the workspace home page',
           },
           {
             letter: 'C',
@@ -70,7 +70,7 @@ export default function MaestroNotFound() {
               letterSpacing: '-0.01em',
             }}
           >
-            404 · Page not found
+            Item unavailable
           </div>
 
           <div
@@ -82,7 +82,8 @@ export default function MaestroNotFound() {
               lineHeight: 1.6,
             }}
           >
-            The page you requested doesn&apos;t exist or has been moved.
+            This item may have moved, or your current account may not have access
+            to it.
           </div>
 
           <Link

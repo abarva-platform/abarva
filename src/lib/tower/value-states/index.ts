@@ -19,3 +19,4 @@ export {
   type ValueStateKind,
   type ValueStateLayer,
 } from './types';
+export type { TowerAiOpsCostLedger } from '@/lib/tower/ai-ops-cost-ledger';

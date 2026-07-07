@@ -4,6 +4,19 @@ function bytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
 }
 
+function pdfBytes(text: string): Uint8Array {
+  return bytes(`%PDF-1.4
+1 0 obj
+<< /Length 44 >>
+stream
+BT
+(${text}) Tj
+ET
+endstream
+endobj
+%%EOF`);
+}
+
 describe('sensitive upload guard', () => {
   it('allows aggregate confidential business context', () => {
     const result = evaluateSensitiveUpload({
@@ -75,5 +88,55 @@ describe('sensitive upload guard', () => {
         expect.objectContaining({ ruleId: 'pii.email', severity: 'medium' }),
       ]),
     );
+  });
+
+  it('allows harmless PDFs even when compressed-looking raw bytes resemble identifiers', () => {
+    const noisyPdf = new Uint8Array([
+      ...bytes('%PDF-1.7\n'),
+      0, 1, 2, 3, 255, 254, 253,
+      ...bytes('4111111111111111 2125551212 4111111111111111'),
+      8, 9, 10, 11,
+      ...bytes('\n%%EOF'),
+    ]);
+
+    const result = evaluateSensitiveUpload({
+      filename: 'contract-control-workshop.pdf',
+      mimeType: 'application/pdf',
+      bytes: noisyPdf,
+      declaredClassification: 'confidential_business',
+    });
+
+    expect(result.decision).toBe('allow');
+    expect(result.matchedRules).toEqual([]);
+  });
+
+  it('quarantines sensitive text when it is extractable from a PDF text object', () => {
+    const result = evaluateSensitiveUpload({
+      filename: 'sensitive-contract-note.pdf',
+      mimeType: 'application/pdf',
+      bytes: pdfBytes('Escalation note includes SSN 123-45-6789'),
+      declaredClassification: 'confidential_business',
+    });
+
+    expect(result.decision).toBe('quarantine');
+    expect(result.matchedRules.map((rule) => rule.ruleId)).toContain('pii.ssn');
+  });
+
+  it('does not scan Office archive bytes as plain text', () => {
+    const noisyDocxBytes = new Uint8Array([
+      ...bytes('PK\u0003\u0004'),
+      ...bytes('4111111111111111 2125551212'),
+      0, 4, 8, 12,
+    ]);
+
+    const result = evaluateSensitiveUpload({
+      filename: 'legal-contract-intake-final.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      bytes: noisyDocxBytes,
+      declaredClassification: 'confidential_business',
+    });
+
+    expect(result.decision).toBe('allow');
+    expect(result.matchedRules).toEqual([]);
   });
 });

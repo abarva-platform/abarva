@@ -1,0 +1,22 @@
+{
+  "brand": "AbarVa",
+  "pronunciation": "Abar-va; Abar is one word, not A-BAR-VA",
+  "selected_mark": "Option 2 \u2014 Intersecting A + V",
+  "recommended_nav": "abarva-option2-hq-nav-dark-compact.svg",
+  "recommended_css": {
+    "height": "30px",
+    "width": "auto",
+    "display": "block"
+  },
+  "colors": {
+    "black": "#050505",
+    "white": "#FFFFFF",
+    "blue": "#22AEEA",
+    "navy": "#071A44"
+  },
+  "notes": [
+    "A/V symbol is vector SVG",
+    "Wordmark uses exact uploaded transparent logo",
+    "Generated toolbar PNGs at 24,28,30,32,36,40 px and 1x-4x"
+  ]
+}

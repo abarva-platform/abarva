@@ -28,23 +28,7 @@ export type MarketingNavGroup = {
   links: MarketingNavLink[]
 }
 
-export const MARKETING_NAV_GROUPS: MarketingNavGroup[] = [
-  {
-    label: 'Platform',
-    links: [
-      { label: 'Product', href: '/product' },
-      { label: 'Learn', href: '/learn' },
-    ],
-  },
-  {
-    label: 'Company',
-    links: [
-      { label: 'Customers', href: '/#customers' },
-      { label: 'Architecture', href: '/architecture' },
-      { label: 'Careers', href: 'mailto:partners@abarva.ai?subject=AbarVa%20careers' },
-    ],
-  },
-]
+export const MARKETING_NAV_GROUPS: MarketingNavGroup[] = []
 
 function isMailto(href: string) {
   return href.startsWith('mailto:')
@@ -385,6 +369,25 @@ function MarketingNavStyles() {
         color: #3c3c3c;
         cursor: pointer;
         border-radius: 8px;
+      }
+
+      .mkt-nav__top-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        color: #3c3c3c;
+        font-size: 14px;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .mkt-nav__top-link:hover,
+      .mkt-nav__top-link:focus-visible {
+        color: #0c0c0c;
+        background: rgba(12, 12, 12, 0.05);
+        outline: none;
       }
 
       .mkt-nav__trigger:hover,

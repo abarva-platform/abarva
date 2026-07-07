@@ -128,6 +128,77 @@ function compact(n: number): string {
   return `${sign}$${Math.round(abs)}`;
 }
 
+function renderDossierAiOpsPanel(
+  s: MoveMasterDossier['sections']['roadmapTower'],
+): string {
+  const maxAxis = Math.max(s.aiBuildCost, s.businessChangeCost, s.aiOpsCost, 1);
+  const axis = (label: string, value: number, cls: string): string =>
+    `<div class="axis-row">` +
+    `<span class="axis-label">${esc(label)}</span>` +
+    `<span class="axis-track">` +
+    `<span class="axis-fill ${cls}" style="width:${Math.max(
+      2,
+      (value / maxAxis) * 100,
+    ).toFixed(1)}%"></span>` +
+    `</span>` +
+    `<span class="axis-value">${compact(value)}</span>` +
+    `</div>`;
+
+  if (!s.aiOps) {
+    return heroExhibitHtml(
+      'Exhibit 4b — Three-axis cost view: AI ops not yet modeled',
+      `<div class="axis-stack">` +
+        axis('Build cost', s.aiBuildCost, 'axis-build') +
+        axis('Change cost', s.businessChangeCost, 'axis-change') +
+        axis('AI Ops cost', 0, 'axis-ops') +
+        `</div>` +
+        `<p class="mini-para">AI Ops cost is not supplied on this Move yet. ` +
+        `The dossier keeps that run-cost gap visible instead of implying ` +
+        `the operating cost is zero.</p>`,
+    );
+  }
+
+  const unitEconomic =
+    s.aiOps.costPerDecisionUsd !== null && s.aiOps.decisionUnit
+      ? `$${s.aiOps.costPerDecisionUsd.toFixed(4)} per ${s.aiOps.decisionUnit}`
+      : `$${s.aiOps.costPerCallUsd.toFixed(4)} per call`;
+  const warnings = [
+    s.aiOps.pricingTierShockWarning
+      ? `<div class="aiops-warning aiops-warning-amber">` +
+        `<strong>Pricing-tier alert</strong><span>${esc(
+          s.aiOps.pricingTierShockWarning,
+        )}</span></div>`
+      : '',
+    s.aiOps.modelTierDriftWarning
+      ? `<div class="aiops-warning aiops-warning-red">` +
+        `<strong>Model-tier drift</strong><span>${esc(
+          s.aiOps.modelTierDriftWarning,
+        )}</span></div>`
+      : '',
+  ].join('');
+
+  return heroExhibitHtml(
+    'Exhibit 4b — Three-axis cost view: Build, Change, and AI Ops',
+    `<div class="axis-stack">` +
+      axis('Build cost', s.aiBuildCost, 'axis-build') +
+      axis('Change cost', s.businessChangeCost, 'axis-change') +
+      axis('AI Ops cost', s.aiOpsCost, 'axis-ops') +
+      `</div>` +
+      `<div class="aiops-metrics">` +
+      `<div><span>3-year AI Ops</span><strong>${compact(
+        s.aiOps.threeYearTotal,
+      )}</strong></div>` +
+      `<div><span>5-year AI Ops</span><strong>${compact(
+        s.aiOps.fiveYearTotal,
+      )}</strong></div>` +
+      `<div><span>Unit economic</span><strong>${esc(
+        unitEconomic,
+      )}</strong></div>` +
+      `</div>` +
+      warnings,
+  );
+}
+
 // ===========================================================================
 // Slide 1 — Executive answer.
 // ===========================================================================
@@ -390,6 +461,7 @@ function renderRoadmapTower(dossier: MoveMasterDossier): string {
         `<tbody>${wsRows}</tbody></table>`,
       s.buildVsChangeNote,
     ) +
+    renderDossierAiOpsPanel(s) +
     detail(
       'Tower measurement handoff — every metric tied to a baseline or a gap',
       `<table class="data-table">` +
@@ -723,6 +795,50 @@ function dossierStyles(): string {
 .ivr-note {
   font-size: 11.5px; color: #5b5852; line-height: 1.5; margin: 12px 2px 0;
 }
+/* --- Three-axis AI operating-cost view. --- */
+.axis-stack { display: grid; gap: 8px; margin-bottom: 12px; }
+.axis-row {
+  display: grid; grid-template-columns: 120px minmax(120px,1fr) 82px;
+  gap: 10px; align-items: center;
+}
+.axis-label { font-size: 10.5px; font-weight: 800; color: #2c2a26; }
+.axis-track {
+  height: 12px; border-radius: 4px; background: #ece7da; overflow: hidden;
+}
+.axis-fill { display: block; height: 100%; border-radius: 4px; }
+.axis-build { background: #0b4a91; }
+.axis-change { background: #a8533a; }
+.axis-ops { background: #7A4F01; }
+.axis-value {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10.5px; font-weight: 800; color: #1c1a17; text-align: right;
+}
+.aiops-metrics {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 8px;
+  margin: 10px 0;
+}
+.aiops-metrics div {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 9px 10px;
+  background: #fff;
+}
+.aiops-metrics span {
+  display: block; font-size: 9px; font-weight: 800; color: #8b8678;
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+}
+.aiops-metrics strong { display: block; font-size: 13px; color: #1c1a17; }
+.aiops-warning {
+  display: grid; gap: 4px; border-radius: 5px; padding: 9px 10px;
+  margin: 8px 0; font-size: 10.5px; line-height: 1.45;
+}
+.aiops-warning strong {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.aiops-warning-amber {
+  background: #fdf6e8; border: 1px solid #e6c884; color: #5f3b00;
+}
+.aiops-warning-red {
+  background: #fff1ee; border: 1px solid #e0a091; color: #6c160a;
+}
 /* --- Blocker strip. --- */
 .blocker-strip { display: flex; flex-direction: column; gap: 8px; }
 .blocker-item {
@@ -813,6 +929,9 @@ function dossierStyles(): string {
 @media (max-width: 880px) {
   .artifact-grid { grid-template-columns: 1fr; }
   .ivr-row { grid-template-columns: 1fr; }
+  .aiops-metrics { grid-template-columns: 1fr; }
+  .axis-row { grid-template-columns: 1fr; }
+  .axis-value { text-align: left; }
 }
 `;
 }

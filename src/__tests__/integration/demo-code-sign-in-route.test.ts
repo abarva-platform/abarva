@@ -135,4 +135,20 @@ describe('POST /api/auth/demo-code-sign-in', () => {
       limit: 1,
     });
   });
+
+  it('returns a sign-in ticket for an Anand single-tenant operator alias', async () => {
+    const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
+    const res = await POST(makeRequest({
+      email: 'anand.sundaram+apex@thesundaram.com',
+      password: 'Demo2026!',
+      code: '424242',
+    }));
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
+    expect(getUserList).toHaveBeenCalledWith({
+      emailAddress: ['anand.sundaram+apex@thesundaram.com'],
+      limit: 1,
+    });
+  });
 });

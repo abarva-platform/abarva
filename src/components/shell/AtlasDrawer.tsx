@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // AtlasDrawer · Shell Layout Spec v2 §5.1 — Mode B right-side chat drawer
 //
@@ -13,12 +13,18 @@
 //
 // Shell Layout Spec v2 §5.1 · April 2026
 
-import { useRef, useEffect, useState, type ReactNode } from 'react';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { useAgentStream } from '@/hooks/useAgentStream';
-import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
-import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
-import { stripArtifactsForDisplay, type Artifact } from '@/lib/agent/artifacts';
+import { useRef, useEffect, useState, type ReactNode } from "react";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { useAgentStream } from "@/hooks/useAgentStream";
+import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import { stripArtifactsForDisplay, type Artifact } from "@/lib/agent/artifacts";
+import { AILabel } from "@/components/abarva/AILabel";
+import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
+import { AgentActionApprovalNotice } from "@/components/agent/AgentActionApprovalNotice";
+import { CitationGapNotice } from "@/components/agent/CitationGapNotice";
+import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -65,7 +71,7 @@ export interface AtlasDrawerProps {
    * drawer behavior or the shared conversation state.
    */
   emptyState?: ReactNode;
-  composerPlacement?: 'bottom' | 'afterHeader';
+  composerPlacement?: "bottom" | "afterHeader";
   sourceUploadContext?: {
     eventId: string;
     stageKey: string;
@@ -78,31 +84,31 @@ type PendingDrawerFile = {
   localId: string;
   name: string;
   size: number;
-  status: 'pending' | 'uploading' | 'registered' | 'failed';
+  status: "pending" | "uploading" | "registered" | "failed";
   artifactId?: string;
   error?: string;
 };
 
-function statusGlyph(status: PendingDrawerFile['status']): string {
-  if (status === 'registered') return 'ok';
-  if (status === 'failed') return '!';
-  if (status === 'uploading') return '...';
-  return '+';
+function statusGlyph(status: PendingDrawerFile["status"]): string {
+  if (status === "registered") return "ok";
+  if (status === "failed") return "!";
+  if (status === "uploading") return "...";
+  return "+";
 }
 
-function statusLabel(status: PendingDrawerFile['status']): string {
-  if (status === 'registered') return 'registered';
-  if (status === 'failed') return 'failed';
-  if (status === 'uploading') return 'uploading';
-  return 'attached';
+function statusLabel(status: PendingDrawerFile["status"]): string {
+  if (status === "registered") return "registered";
+  if (status === "failed") return "failed";
+  if (status === "uploading") return "uploading";
+  return "attached";
 }
 
 function formatPendingFileForPrompt(file: PendingDrawerFile): string {
-  if (file.status === 'registered' && file.artifactId) {
+  if (file.status === "registered" && file.artifactId) {
     return `${file.name} registered as source_artifact ${file.artifactId}; parse/vector/graph pending`;
   }
-  if (file.status === 'failed') {
-    return `${file.name} upload failed${file.error ? ` (${file.error})` : ''}`;
+  if (file.status === "failed") {
+    return `${file.name} upload failed${file.error ? ` (${file.error})` : ""}`;
   }
   return `${file.name} ${statusLabel(file.status)}`;
 }
@@ -119,7 +125,7 @@ export function AtlasDrawer({
   onArtifact,
   embedded = false,
   emptyState,
-  composerPlacement = 'bottom',
+  composerPlacement = "bottom",
   sourceUploadContext,
   conversationWindow,
 }: AtlasDrawerProps) {
@@ -135,26 +141,30 @@ export function AtlasDrawer({
   // Shared AtlasPageState — same conversation as the RibbonSynthesis surface.
   const pageState = useAtlasPageState();
   const localStream = useAgentStream({
-    surface: surface ?? 'home',
+    surface: surface ?? "home",
     programId,
     agentName: agent.name,
     onArtifact,
   });
 
-  const ask          = pageState?.ask             ?? localStream.ask;
-  const response     = pageState?.currentResponse ?? localStream.response;
-  const isStreaming  = pageState?.isStreaming      ?? localStream.isStreaming;
-  const error        = pageState?.error            ?? localStream.error;
-  const clearLocal   = pageState?.clearResponse    ?? localStream.clear;
-  const conversation = pageState?.conversation     ?? [];
+  const ask = pageState?.ask ?? localStream.ask;
+  const response = pageState?.currentResponse ?? localStream.response;
+  const isStreaming = pageState?.isStreaming ?? localStream.isStreaming;
+  const error = pageState?.error ?? localStream.error;
+  const clearLocal = pageState?.clearResponse ?? localStream.clear;
+  const conversation = pageState?.conversation ?? [];
 
-  const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
+  const hasThread =
+    conversation.length > 0 || isStreaming || !!response || !!error;
   const visibleConversation =
-    typeof conversationWindow === 'number' && conversationWindow > 0
+    typeof conversationWindow === "number" && conversationWindow > 0
       ? conversation.slice(-conversationWindow)
       : conversation;
-  const hiddenTurnCount = Math.max(0, conversation.length - visibleConversation.length);
-  const latestFirst = composerPlacement === 'afterHeader';
+  const hiddenTurnCount = Math.max(
+    0,
+    conversation.length - visibleConversation.length,
+  );
+  const latestFirst = composerPlacement === "afterHeader";
   const renderedConversation = latestFirst
     ? [...visibleConversation].reverse()
     : visibleConversation;
@@ -191,47 +201,53 @@ export function AtlasDrawer({
     if (!el) return;
     const text = el.value.trim();
     if ((!text && pendingFiles.length === 0) || isStreaming) return;
-    const fileNote = pendingFiles.length > 0
-      ? `\n[Attached evidence: ${pendingFiles.map(formatPendingFileForPrompt).join('; ')}]`
-      : '';
+    const fileNote =
+      pendingFiles.length > 0
+        ? `\n[Attached evidence: ${pendingFiles.map(formatPendingFileForPrompt).join("; ")}]`
+        : "";
     ask((text + fileNote).trim());
-    el.value = '';
-    el.style.height = 'auto';
+    el.value = "";
+    el.style.height = "auto";
     setPendingFiles([]);
   }
 
-  const plainQuote = quote.replace(/<[^>]+>/g, '');
+  const plainQuote = quote.replace(/<[^>]+>/g, "");
   const showSourcePaperclip =
-    surface === 'source' || surface === '/source' || Boolean(surface?.startsWith('/source/'));
+    surface === "source" ||
+    surface === "/source" ||
+    Boolean(surface?.startsWith("/source/"));
 
   async function uploadSourceFile(file: File, localId: string) {
     if (!sourceUploadContext) return;
 
-    setPendingFiles(prev => prev.map(item => (
-      item.localId === localId ? { ...item, status: 'uploading' } : item
-    )));
+    setPendingFiles((prev) =>
+      prev.map((item) =>
+        item.localId === localId ? { ...item, status: "uploading" } : item,
+      ),
+    );
 
     const formData = new FormData();
-    formData.set('file', file);
-    formData.set('stageKey', sourceUploadContext.stageKey);
-    formData.set('dataClassification', 'Confidential');
-    formData.set('dataProtectionClassification', 'confidential_business');
+    formData.set("file", file);
+    formData.set("stageKey", sourceUploadContext.stageKey);
+    formData.set("dataClassification", "Confidential");
+    formData.set("dataProtectionClassification", "confidential_business");
 
     try {
       const response = await fetch(
         `/api/v1/source/${encodeURIComponent(sourceUploadContext.eventId)}/artifacts/upload`,
         {
-          method: 'POST',
+          method: "POST",
           body: formData,
         },
       );
       const body = await response.json().catch(() => ({}));
       if (!response.ok || !body?.artifact?.id) {
-        const detail = typeof body?.detail === 'string'
-          ? body.detail
-          : typeof body?.error === 'string'
-            ? body.error
-            : 'upload failed';
+        const detail =
+          typeof body?.detail === "string"
+            ? body.detail
+            : typeof body?.error === "string"
+              ? body.error
+              : "upload failed";
         throw new Error(detail);
       }
 
@@ -244,30 +260,36 @@ export function AtlasDrawer({
         evidenceState: string;
       };
 
-      setPendingFiles(prev => prev.map(item => (
-        item.localId === localId
-          ? {
-              ...item,
-              status: 'registered',
-              artifactId: artifact.id,
-              name: artifact.originalName || item.name,
-            }
-          : item
-      )));
+      setPendingFiles((prev) =>
+        prev.map((item) =>
+          item.localId === localId
+            ? {
+                ...item,
+                status: "registered",
+                artifactId: artifact.id,
+                name: artifact.originalName || item.name,
+              }
+            : item,
+        ),
+      );
 
       onArtifact?.({
-        type: 'sourcing-stage-progress',
+        type: "sourcing-stage-progress",
         evidenceItemId: `source-artifact:${artifact.id}`,
         label: `${artifact.originalName || file.name} uploaded`,
-        severity: 'soft',
-        status: 'met',
+        severity: "soft",
+        status: "met",
         detail: `Registry receipt created for ${sourceUploadContext.stageLabel ?? sourceUploadContext.stageKey}. Parse ${artifact.parseStatus}; vector ${artifact.embeddingStatus}; graph ${artifact.graphStatus}. Evidence remains ${artifact.evidenceState} until parsed.`,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'upload failed';
-      setPendingFiles(prev => prev.map(item => (
-        item.localId === localId ? { ...item, status: 'failed', error: message } : item
-      )));
+      const message = error instanceof Error ? error.message : "upload failed";
+      setPendingFiles((prev) =>
+        prev.map((item) =>
+          item.localId === localId
+            ? { ...item, status: "failed", error: message }
+            : item,
+        ),
+      );
     }
   }
 
@@ -277,13 +299,19 @@ export function AtlasDrawer({
       localId: `${Date.now()}-${index}-${file.name}`,
       name: file.name,
       size: file.size,
-      status: sourceUploadContext && showSourcePaperclip ? 'uploading' as const : 'pending' as const,
+      status:
+        sourceUploadContext && showSourcePaperclip
+          ? ("uploading" as const)
+          : ("pending" as const),
     }));
-    setPendingFiles(prev => [...prev, ...next]);
+    setPendingFiles((prev) => [...prev, ...next]);
 
     if (sourceUploadContext && showSourcePaperclip) {
       files.forEach((file, index) => {
-        void uploadSourceFile(file, next[index]?.localId ?? `${Date.now()}-${index}`);
+        void uploadSourceFile(
+          file,
+          next[index]?.localId ?? `${Date.now()}-${index}`,
+        );
       });
     }
   }
@@ -294,43 +322,51 @@ export function AtlasDrawer({
   // like /programs/[id]. Drawer mode is the original Shell Layout
   // Spec v2 §5.1 right-side overlay.
   const panelStyle: React.CSSProperties = embedded
-      ? {
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          minHeight: 0,
-          background: SHELL.INK,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+    ? {
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        minHeight: 0,
+        background: SHELL.INK,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }
     : {
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         right: 0,
         bottom: 0,
         width: 340,
         background: SHELL.INK,
         zIndex: 200,
-        display: 'flex',
-        flexDirection: 'column',
-        transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 220ms ease-out',
-        boxShadow: isOpen ? '-8px 0 32px rgba(0,0,0,0.30)' : 'none',
+        display: "flex",
+        flexDirection: "column",
+        transform: isOpen ? "translateX(0)" : "translateX(100%)",
+        transition: "transform 220ms ease-out",
+        boxShadow: isOpen ? "-8px 0 32px rgba(0,0,0,0.30)" : "none",
       };
 
   const inputBar = (
     <div
       style={{
         flexShrink: 0,
-        padding: composerPlacement === 'afterHeader' ? '10px 18px 12px' : '10px 18px 14px',
+        padding:
+          composerPlacement === "afterHeader"
+            ? "10px 18px 12px"
+            : "10px 18px 14px",
         borderTop:
-          composerPlacement === 'afterHeader' ? 'none' : '1px solid rgba(250,247,241,0.10)',
+          composerPlacement === "afterHeader"
+            ? "none"
+            : "1px solid rgba(250,247,241,0.10)",
         borderBottom:
-          composerPlacement === 'afterHeader' ? '1px solid rgba(250,247,241,0.10)' : 'none',
+          composerPlacement === "afterHeader"
+            ? "1px solid rgba(250,247,241,0.10)"
+            : "none",
         background: SHELL.INK,
-        position: embedded && composerPlacement === 'bottom' ? 'sticky' : undefined,
-        bottom: embedded && composerPlacement === 'bottom' ? 0 : undefined,
+        position:
+          embedded && composerPlacement === "bottom" ? "sticky" : undefined,
+        bottom: embedded && composerPlacement === "bottom" ? 0 : undefined,
         zIndex: embedded ? 1 : undefined,
       }}
     >
@@ -338,8 +374,8 @@ export function AtlasDrawer({
       {pendingFiles.length > 0 ? (
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
+            display: "flex",
+            flexWrap: "wrap",
             gap: 4,
             marginBottom: 6,
           }}
@@ -348,35 +384,43 @@ export function AtlasDrawer({
             <span
               key={f.localId}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
+                display: "inline-flex",
+                alignItems: "center",
                 gap: 4,
-                background: 'rgba(250,247,241,0.10)',
-                border: '1px solid rgba(250,247,241,0.20)',
+                background: "rgba(250,247,241,0.10)",
+                border: "1px solid rgba(250,247,241,0.20)",
                 borderRadius: 999,
-                padding: '3px 8px 3px 6px',
+                padding: "3px 8px 3px 6px",
                 fontFamily: SHELL.MONO,
                 fontSize: 10,
-                color: 'rgba(250,247,241,0.75)',
+                color: "rgba(250,247,241,0.75)",
                 maxWidth: 160,
               }}
             >
               <span style={{ flexShrink: 0 }}>{statusGlyph(f.status)}</span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {f.name}
               </span>
-              <span style={{ color: 'rgba(250,247,241,0.45)', flexShrink: 0 }}>
+              <span style={{ color: "rgba(250,247,241,0.45)", flexShrink: 0 }}>
                 {statusLabel(f.status)}
               </span>
               <button
                 type="button"
-                onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}
+                onClick={() =>
+                  setPendingFiles((prev) => prev.filter((_, j) => j !== i))
+                }
                 aria-label={`Remove ${f.name}`}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'rgba(250,247,241,0.40)',
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "rgba(250,247,241,0.40)",
                   padding: 0,
                   fontFamily: SHELL.MONO,
                   fontSize: 11,
@@ -392,14 +436,14 @@ export function AtlasDrawer({
       ) : null}
       <div
         style={{
-          background: 'rgba(250,247,241,0.08)',
-          border: '1px solid rgba(250,247,241,0.18)',
+          background: "rgba(250,247,241,0.08)",
+          border: "1px solid rgba(250,247,241,0.18)",
           borderRadius: 20,
-          padding: '9px 10px 9px 16px',
-          display: 'flex',
-          flexDirection: 'row',
+          padding: "9px 10px 9px 16px",
+          display: "flex",
+          flexDirection: "row",
           gap: 8,
-          alignItems: 'flex-end',
+          alignItems: "flex-end",
         }}
       >
         {/* Hidden file input — wired to the active 📎 paperclip button below */}
@@ -407,11 +451,18 @@ export function AtlasDrawer({
           ref={fileInputRef}
           type="file"
           multiple
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
           onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
             handleFileSelection(files);
-            if (fileInputRef.current) fileInputRef.current.value = '';
+            if (fileInputRef.current) fileInputRef.current.value = "";
+          }}
+        />
+        <AvaAskMark
+          style={{
+            minWidth: 36,
+            fontSize: 21,
+            alignSelf: "center",
           }}
         />
         <textarea
@@ -425,15 +476,15 @@ export function AtlasDrawer({
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 13,
-            color: 'rgba(250,247,241,0.85)',
+            color: "rgba(250,247,241,0.85)",
             flex: 1,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            resize: 'none',
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            resize: "none",
             lineHeight: 1.5,
             maxHeight: 100,
-            overflowY: 'auto',
+            overflowY: "auto",
             caretColor: SHELL.PAPER,
           }}
           onBlur={(e) => {
@@ -441,13 +492,13 @@ export function AtlasDrawer({
           }}
           onInput={(e) => {
             const el = e.currentTarget;
-            el.style.height = 'auto';
+            el.style.height = "auto";
             el.style.height = `${el.scrollHeight}px`;
             // Collapse prompt deck on first keystroke, not on programmatic focus.
             setInputActive(true);
           }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleSubmit();
             }
@@ -465,27 +516,31 @@ export function AtlasDrawer({
             aria-label="Show prompt suggestions"
             title="Show suggestions"
             style={{
-              background: 'none',
-              border: '1px solid rgba(250,247,241,0.18)',
+              background: "none",
+              border: "1px solid rgba(250,247,241,0.18)",
               borderRadius: 6,
-              cursor: 'pointer',
-              color: 'rgba(250,247,241,0.45)',
+              cursor: "pointer",
+              color: "rgba(250,247,241,0.45)",
               fontSize: 11,
               lineHeight: 1,
-              padding: '3px 6px',
+              padding: "3px 6px",
               flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'color 0.15s, border-color 0.15s',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "color 0.15s, border-color 0.15s",
             }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.80)';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(250,247,241,0.40)';
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "rgba(250,247,241,0.80)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor =
+                "rgba(250,247,241,0.40)";
             }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.45)';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(250,247,241,0.18)';
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "rgba(250,247,241,0.45)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor =
+                "rgba(250,247,241,0.18)";
             }}
           >
             ✦
@@ -497,26 +552,37 @@ export function AtlasDrawer({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isStreaming}
-          aria-label={showSourcePaperclip ? 'Upload Source evidence file' : 'Attach file'}
-          title={showSourcePaperclip ? 'Upload Source evidence file' : 'Attach file'}
+          aria-label={
+            showSourcePaperclip ? "Upload Source evidence file" : "Attach file"
+          }
+          title={
+            showSourcePaperclip ? "Upload Source evidence file" : "Attach file"
+          }
           style={{
-            background: 'none',
-            border: 'none',
-            cursor: isStreaming ? 'default' : 'pointer',
-            color: 'rgba(250,247,241,0.40)',
+            background: "none",
+            border: "none",
+            cursor: isStreaming ? "default" : "pointer",
+            color: "rgba(250,247,241,0.40)",
             fontSize: 14,
             lineHeight: 1,
-            padding: '0 0 2px',
+            padding: "0 0 2px",
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             width: 22,
             height: 22,
-            transition: 'color 0.15s',
+            transition: "color 0.15s",
           }}
-          onMouseEnter={e => { if (!isStreaming) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.80)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.40)'; }}
+          onMouseEnter={(e) => {
+            if (!isStreaming)
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "rgba(250,247,241,0.80)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color =
+              "rgba(250,247,241,0.40)";
+          }}
         >
           📎
         </button>
@@ -525,28 +591,28 @@ export function AtlasDrawer({
         <button
           onClick={handleSubmit}
           disabled={isStreaming}
-          aria-label={isStreaming ? 'Sending…' : 'Send'}
+          aria-label={isStreaming ? "Sending…" : "Send"}
           style={{
             width: 26,
             height: 26,
-            borderRadius: '50%',
-            background: isStreaming
-              ? 'rgba(250,247,241,0.10)'
-              : SHELL.PAPER,
-            border: 'none',
-            cursor: isStreaming ? 'default' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            borderRadius: "50%",
+            background: isStreaming ? "rgba(250,247,241,0.10)" : SHELL.PAPER,
+            border: "none",
+            cursor: isStreaming ? "default" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             flexShrink: 0,
-            transition: 'background 0.15s',
+            transition: "background 0.15s",
             padding: 0,
           }}
         >
           {isStreaming ? (
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
               <circle
-                cx="5.5" cy="5.5" r="4"
+                cx="5.5"
+                cy="5.5"
+                r="4"
                 stroke="rgba(250,247,241,0.3)"
                 strokeWidth="1.4"
                 strokeDasharray="12 6"
@@ -566,6 +632,12 @@ export function AtlasDrawer({
           )}
         </button>
       </div>
+      <AgentActionApprovalNotice
+        tone="dark"
+        compact
+        style={{ marginTop: 8 }}
+      />
+      <AIResponsibilityFooter tone="dark" compact style={{ marginTop: 8 }} />
     </div>
   );
 
@@ -577,13 +649,13 @@ export function AtlasDrawer({
         <div
           onClick={onClose}
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(0,0,0,0.22)',
+            background: "rgba(0,0,0,0.22)",
             zIndex: 190,
-            pointerEvents: isOpen ? 'auto' : 'none',
+            pointerEvents: isOpen ? "auto" : "none",
             opacity: isOpen ? 1 : 0,
-            transition: 'opacity 220ms ease-out',
+            transition: "opacity 220ms ease-out",
           }}
         />
       ) : null}
@@ -593,12 +665,12 @@ export function AtlasDrawer({
         {/* ── Drawer header ── */}
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
             gap: 10,
-            padding: '14px 18px 12px',
-            borderBottom: '1px solid rgba(250,247,241,0.12)',
+            padding: "14px 18px 12px",
+            borderBottom: "1px solid rgba(250,247,241,0.12)",
             flexShrink: 0,
           }}
         >
@@ -607,11 +679,11 @@ export function AtlasDrawer({
             style={{
               width: 28,
               height: 28,
-              borderRadius: '50%',
+              borderRadius: "50%",
               background: SHELL.PAPER,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               flexShrink: 0,
             }}
           >
@@ -635,7 +707,7 @@ export function AtlasDrawer({
                 fontFamily: SHELL.SERIF,
                 fontSize: 14,
                 fontWeight: 600,
-                color: 'rgba(250,247,241,0.95)',
+                color: "rgba(250,247,241,0.95)",
                 lineHeight: 1.2,
               }}
             >
@@ -645,9 +717,9 @@ export function AtlasDrawer({
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 8.5,
-                color: 'rgba(250,247,241,0.45)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
+                color: "rgba(250,247,241,0.45)",
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
                 marginTop: 2,
                 lineHeight: 1,
               }}
@@ -661,16 +733,16 @@ export function AtlasDrawer({
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 8.5,
-              color: 'rgba(250,247,241,0.6)',
-              padding: '3px 8px',
-              background: 'rgba(250,247,241,0.08)',
+              color: "rgba(250,247,241,0.6)",
+              padding: "3px 8px",
+              background: "rgba(250,247,241,0.08)",
               borderRadius: 10,
-              letterSpacing: '0.04em',
+              letterSpacing: "0.04em",
               lineHeight: 1,
               flexShrink: 0,
             }}
           >
-            <span style={{ color: '#9bb87a' }}>●</span>{' '}Active
+            <span style={{ color: "#9bb87a" }}>●</span> Active
           </div>
 
           {/* Close button — hidden in embedded mode (the chat is a
@@ -680,14 +752,14 @@ export function AtlasDrawer({
               onClick={onClose}
               aria-label="Close drawer"
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'rgba(250,247,241,0.4)',
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "rgba(250,247,241,0.4)",
                 fontFamily: SHELL.MONO,
                 fontSize: 16,
                 lineHeight: 1,
-                padding: '0 0 0 6px',
+                padding: "0 0 0 6px",
                 flexShrink: 0,
               }}
             >
@@ -699,8 +771,8 @@ export function AtlasDrawer({
         {/* ── Compact synthesis (Behavior X: synthesis as thread header) ── */}
         <div
           style={{
-            padding: '10px 18px 12px',
-            borderBottom: '1px solid rgba(250,247,241,0.08)',
+            padding: "10px 18px 12px",
+            borderBottom: "1px solid rgba(250,247,241,0.08)",
             flexShrink: 0,
           }}
         >
@@ -708,24 +780,24 @@ export function AtlasDrawer({
             style={{
               fontFamily: SHELL.SERIF,
               fontSize: 12.5,
-              fontStyle: 'italic',
+              fontStyle: "italic",
               // PR-H readability fix · was 0.50 (too dim on dark INK
               // background, founder reported "barely visible" during
               // production walk).
-              color: 'rgba(250,247,241,0.78)',
+              color: "rgba(250,247,241,0.78)",
               lineHeight: 1.45,
               margin: 0,
-              display: '-webkit-box',
-              overflow: 'hidden',
+              display: "-webkit-box",
+              overflow: "hidden",
               WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
+              WebkitBoxOrient: "vertical",
             }}
           >
             {plainQuote}
           </p>
         </div>
 
-        {composerPlacement === 'afterHeader' ? inputBar : null}
+        {composerPlacement === "afterHeader" ? inputBar : null}
 
         {/* ── Conversation thread ── */}
         <div
@@ -733,12 +805,12 @@ export function AtlasDrawer({
           style={{
             flex: 1,
             minHeight: 0,
-            overflowY: 'auto',
-            padding: '12px 18px 0',
-            display: 'flex',
-            flexDirection: 'column',
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'rgba(250,247,241,0.10) transparent',
+            overflowY: "auto",
+            padding: "12px 18px 0",
+            display: "flex",
+            flexDirection: "column",
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(250,247,241,0.10) transparent",
           }}
         >
           {/* Thread label */}
@@ -747,9 +819,9 @@ export function AtlasDrawer({
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 8.5,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                color: 'rgba(250,247,241,0.22)',
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "rgba(250,247,241,0.22)",
                 marginBottom: 12,
                 flexShrink: 0,
               }}
@@ -765,18 +837,18 @@ export function AtlasDrawer({
             <div
               style={{
                 flex: inputActive ? 0 : 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: emptyState ? 'flex-start' : 'center',
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: emptyState ? "flex-start" : "center",
                 paddingBottom: emptyState ? 12 : 40,
                 paddingTop: emptyState ? 6 : 0,
                 // Collapse: fade + clip height to 0 when inputActive
-                maxHeight: inputActive ? 0 : '9999px',
-                overflow: 'hidden',
+                maxHeight: inputActive ? 0 : "9999px",
+                overflow: "hidden",
                 opacity: inputActive ? 0 : 1,
-                pointerEvents: inputActive ? 'none' : undefined,
-                transition: 'opacity 0.18s ease, max-height 0.22s ease',
+                pointerEvents: inputActive ? "none" : undefined,
+                transition: "opacity 0.18s ease, max-height 0.22s ease",
               }}
             >
               {emptyState ?? (
@@ -784,9 +856,9 @@ export function AtlasDrawer({
                   style={{
                     fontFamily: SHELL.SERIF,
                     fontSize: 13,
-                    fontStyle: 'italic',
-                    color: 'rgba(250,247,241,0.30)',
-                    textAlign: 'center',
+                    fontStyle: "italic",
+                    color: "rgba(250,247,241,0.30)",
+                    textAlign: "center",
                     lineHeight: 1.5,
                     maxWidth: 220,
                   }}
@@ -813,11 +885,15 @@ export function AtlasDrawer({
                 sourceUploadContext={sourceUploadContext}
                 onArtifact={onArtifact}
               />
-              {hiddenTurnCount > 0 ? <DrawerHiddenTurnsMarker count={hiddenTurnCount} /> : null}
+              {hiddenTurnCount > 0 ? (
+                <DrawerHiddenTurnsMarker count={hiddenTurnCount} />
+              ) : null}
             </>
           ) : (
             <>
-              {hiddenTurnCount > 0 ? <DrawerHiddenTurnsMarker count={hiddenTurnCount} /> : null}
+              {hiddenTurnCount > 0 ? (
+                <DrawerHiddenTurnsMarker count={hiddenTurnCount} />
+              ) : null}
               <DrawerTurnList
                 turns={renderedConversation}
                 agent={agent}
@@ -842,14 +918,14 @@ export function AtlasDrawer({
                 fontFamily: SHELL.SANS,
                 fontSize: 11.5,
                 color: SHELL.PEACH_TEXT,
-                padding: '7px 11px',
-                background: 'rgba(255,100,60,0.08)',
+                padding: "7px 11px",
+                background: "rgba(255,100,60,0.08)",
                 borderRadius: 6,
                 marginBottom: 8,
                 flexShrink: 0,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 gap: 8,
               }}
             >
@@ -857,12 +933,12 @@ export function AtlasDrawer({
               <button
                 onClick={clearLocal}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
                   fontFamily: SHELL.MONO,
                   fontSize: 9,
-                  color: 'rgba(250,247,241,0.3)',
+                  color: "rgba(250,247,241,0.3)",
                   padding: 0,
                   flexShrink: 0,
                 }}
@@ -877,7 +953,7 @@ export function AtlasDrawer({
         </div>
 
         {/* ── Input bar ── */}
-        {composerPlacement === 'bottom' ? inputBar : null}
+        {composerPlacement === "bottom" ? inputBar : null}
       </div>
     </>
   );
@@ -894,33 +970,37 @@ function DrawerHandoffMarker({ text }: { text: string }) {
   return (
     <div
       style={{
-        margin: '14px 0 12px',
-        display: 'flex',
-        alignItems: 'center',
+        margin: "14px 0 12px",
+        display: "flex",
+        alignItems: "center",
         gap: 10,
         flexShrink: 0,
       }}
     >
-      <div style={{ flex: 1, height: 1, background: 'rgba(250,247,241,0.18)' }} />
+      <div
+        style={{ flex: 1, height: 1, background: "rgba(250,247,241,0.18)" }}
+      />
       <div
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 9.5,
-          letterSpacing: '0.10em',
-          textTransform: 'uppercase',
-          color: 'rgba(250,247,241,0.62)',
+          letterSpacing: "0.10em",
+          textTransform: "uppercase",
+          color: "rgba(250,247,241,0.62)",
           fontWeight: 700,
-          padding: '4px 10px',
-          border: '1px solid rgba(250,247,241,0.18)',
+          padding: "4px 10px",
+          border: "1px solid rgba(250,247,241,0.18)",
           borderRadius: 999,
-          background: 'rgba(250,247,241,0.04)',
-          textAlign: 'center',
-          maxWidth: '70%',
+          background: "rgba(250,247,241,0.04)",
+          textAlign: "center",
+          maxWidth: "70%",
         }}
       >
         {text}
       </div>
-      <div style={{ flex: 1, height: 1, background: 'rgba(250,247,241,0.18)' }} />
+      <div
+        style={{ flex: 1, height: 1, background: "rgba(250,247,241,0.18)" }}
+      />
     </div>
   );
 }
@@ -931,9 +1011,14 @@ function DrawerTurnList({
   sourceUploadContext,
   onArtifact,
 }: {
-  turns: Array<{ id: string; role: 'user' | 'agent'; text: string; agentName: string }>;
+  turns: Array<{
+    id: string;
+    role: "user" | "agent";
+    text: string;
+    agentName: string;
+  }>;
   agent: { initials: string; name: string };
-  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  sourceUploadContext?: AtlasDrawerProps["sourceUploadContext"];
   onArtifact?: (artifact: Artifact) => void;
 }) {
   return (
@@ -944,7 +1029,7 @@ function DrawerTurnList({
           the conversation transitioned from Steward (origination)
           to the active program canvas. */}
       {turns.map((turn) =>
-        turn.agentName === '__handoff__' ? (
+        turn.agentName === "__handoff__" ? (
           <DrawerHandoffMarker key={turn.id} text={turn.text} />
         ) : (
           <DrawerChatBubble
@@ -952,8 +1037,8 @@ function DrawerTurnList({
             role={turn.role}
             text={turn.text}
             label={
-              turn.role === 'user'
-                ? 'You'
+              turn.role === "user"
+                ? "You"
                 : `${agent.initials} · ${turn.agentName}`
             }
             sourceUploadContext={sourceUploadContext}
@@ -977,7 +1062,7 @@ function DrawerStreamingTurn({
   isStreaming: boolean;
   response: string;
   agent: { initials: string; name: string };
-  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  sourceUploadContext?: AtlasDrawerProps["sourceUploadContext"];
   onArtifact?: (artifact: Artifact) => void;
 }) {
   if (!isVisible) return null;
@@ -988,26 +1073,42 @@ function DrawerStreamingTurn({
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 8.5,
-          color: 'rgba(250,247,241,0.28)',
+          color: "rgba(250,247,241,0.28)",
           marginBottom: 4,
-          letterSpacing: '0.08em',
+          letterSpacing: "0.08em",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          flexWrap: "wrap",
         }}
       >
-        {agent.initials} · {agent.name}
+        <span>
+          {agent.initials} · {agent.name}
+        </span>
+        <AILabel
+          status="draft"
+          detail={isStreaming ? "Generating" : "Review before acting"}
+          compact
+          style={{
+            background: "rgba(250,247,241,0.05)",
+            borderColor: "rgba(250,247,241,0.16)",
+            color: "rgba(250,247,241,0.82)",
+          }}
+        />
       </div>
       <div
         style={{
           fontFamily: SHELL.SANS,
           fontSize: 13,
-          color: 'rgba(250,247,241,0.88)',
+          color: "rgba(250,247,241,0.88)",
           lineHeight: 1.65,
         }}
       >
         {isStreaming && !response ? (
           <span
             style={{
-              color: 'rgba(250,247,241,0.35)',
-              fontStyle: 'italic',
+              color: "rgba(250,247,241,0.35)",
+              fontStyle: "italic",
             }}
           >
             thinking…
@@ -1017,6 +1118,9 @@ function DrawerStreamingTurn({
             {/* Surface 2 PR1 — render through AgentMarkdown so Nexus's
                 markdown (bold, tables, IDs, citation chips) renders
                 properly instead of as raw text. */}
+            {shouldShowPlainTextCitationGap(response) ? (
+              <CitationGapNotice tone="dark" compact />
+            ) : null}
             <AgentMarkdown text={response} />
             {isStreaming && (
               <span style={{ opacity: 0.5, marginLeft: 1 }}>▊</span>
@@ -1039,17 +1143,18 @@ function DrawerHiddenTurnsMarker({ count }: { count: number }) {
   return (
     <div
       style={{
-        margin: '2px 0 10px',
+        margin: "2px 0 10px",
         fontFamily: SHELL.MONO,
         fontSize: 9,
-        letterSpacing: '0.10em',
-        textTransform: 'uppercase',
-        color: 'rgba(250,247,241,0.36)',
-        textAlign: 'center',
+        letterSpacing: "0.10em",
+        textTransform: "uppercase",
+        color: "rgba(250,247,241,0.36)",
+        textAlign: "center",
         flexShrink: 0,
       }}
     >
-      {count} earlier turn{count === 1 ? '' : 's'} hidden to keep the live edge visible
+      {count} earlier turn{count === 1 ? "" : "s"} hidden to keep the live edge
+      visible
     </div>
   );
 }
@@ -1063,21 +1168,22 @@ function DrawerChatBubble({
   sourceUploadContext,
   onArtifact,
 }: {
-  role: 'user' | 'agent';
+  role: "user" | "agent";
   text: string;
   label: string;
-  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  sourceUploadContext?: AtlasDrawerProps["sourceUploadContext"];
   onArtifact?: (artifact: Artifact) => void;
 }) {
-  const isUser = role === 'user';
+  const isUser = role === "user";
+  const cleanedAgentText = isUser ? text : stripArtifactsForDisplay(text);
 
   return (
     <div
       style={{
         marginBottom: 12,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: isUser ? 'flex-end' : 'flex-start',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: isUser ? "flex-end" : "flex-start",
         flexShrink: 0,
       }}
     >
@@ -1085,43 +1191,58 @@ function DrawerChatBubble({
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 8.5,
-          color: 'rgba(250,247,241,0.25)',
+          color: "rgba(250,247,241,0.25)",
           marginBottom: 3,
-          letterSpacing: '0.08em',
+          letterSpacing: "0.08em",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          flexWrap: "wrap",
         }}
       >
-        {label}
+        <span>{label}</span>
+        {!isUser ? (
+          <AILabel
+            status="draft"
+            detail="Review before acting"
+            compact
+            style={{
+              background: "rgba(250,247,241,0.05)",
+              borderColor: "rgba(250,247,241,0.16)",
+              color: "rgba(250,247,241,0.82)",
+            }}
+          />
+        ) : null}
       </div>
       <div
         style={{
-          maxWidth: '90%',
-          padding: '8px 12px',
-          borderRadius: isUser ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
+          maxWidth: "90%",
+          padding: "8px 12px",
+          borderRadius: isUser ? "12px 12px 3px 12px" : "12px 12px 12px 3px",
           background: isUser
-            ? 'rgba(250,247,241,0.11)'
-            : 'rgba(250,247,241,0.05)',
+            ? "rgba(250,247,241,0.11)"
+            : "rgba(250,247,241,0.05)",
           border: `1px solid ${
-            isUser
-              ? 'rgba(250,247,241,0.16)'
-              : 'rgba(250,247,241,0.08)'
+            isUser ? "rgba(250,247,241,0.16)" : "rgba(250,247,241,0.08)"
           }`,
           fontFamily: SHELL.SANS,
           fontSize: 11.5,
-          color: isUser
-            ? 'rgba(250,247,241,0.90)'
-            : 'rgba(250,247,241,0.85)',
+          color: isUser ? "rgba(250,247,241,0.90)" : "rgba(250,247,241,0.85)",
           lineHeight: 1.65,
           // User turns are plain text we typed; assistant turns may
           // contain markdown / IDs / citation tags and go through
           // AgentMarkdown below.
-          whiteSpace: isUser ? 'pre-wrap' : undefined,
-          wordBreak: 'break-word',
+          whiteSpace: isUser ? "pre-wrap" : undefined,
+          wordBreak: "break-word",
         }}
       >
-        {isUser ? text : <AgentMarkdown text={stripArtifactsForDisplay(text)} />}
+        {!isUser && shouldShowPlainTextCitationGap(cleanedAgentText) ? (
+          <CitationGapNotice tone="dark" compact />
+        ) : null}
+        {isUser ? text : <AgentMarkdown text={cleanedAgentText} />}
         {!isUser ? (
           <GeneratedSourceArtifactSave
-            text={stripArtifactsForDisplay(text)}
+            text={cleanedAgentText}
             sourceUploadContext={sourceUploadContext}
             onArtifact={onArtifact}
           />
@@ -1137,41 +1258,44 @@ function GeneratedSourceArtifactSave({
   onArtifact,
 }: {
   text: string;
-  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  sourceUploadContext?: AtlasDrawerProps["sourceUploadContext"];
   onArtifact?: (artifact: Artifact) => void;
 }) {
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">(
+    "idle",
+  );
   const [message, setMessage] = useState<string | null>(null);
   const cleaned = text.trim();
 
   if (!sourceUploadContext || cleaned.length === 0) return null;
 
   async function handleSave() {
-    if (!sourceUploadContext || status === 'saving') return;
-    setStatus('saving');
+    if (!sourceUploadContext || status === "saving") return;
+    setStatus("saving");
     setMessage(null);
     try {
       const title = `${sourceUploadContext.stageLabel ?? sourceUploadContext.stageKey} generated packet`;
       const response = await fetch(
         `/api/v1/source/${encodeURIComponent(sourceUploadContext.eventId)}/artifacts/generate`,
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title,
             content: cleaned,
             stageKey: sourceUploadContext.stageKey,
-            artifactKind: 'agent_generated_packet',
+            artifactKind: "agent_generated_packet",
           }),
         },
       );
       const body = await response.json().catch(() => ({}));
       if (!response.ok || !body?.artifact?.id) {
-        const detail = typeof body?.detail === 'string'
-          ? body.detail
-          : typeof body?.error === 'string'
-            ? body.error
-            : 'save failed';
+        const detail =
+          typeof body?.detail === "string"
+            ? body.detail
+            : typeof body?.error === "string"
+              ? body.error
+              : "save failed";
         throw new Error(detail);
       }
 
@@ -1184,19 +1308,19 @@ function GeneratedSourceArtifactSave({
         evidenceState: string;
       };
 
-      setStatus('saved');
-      setMessage('Saved to Source artifacts');
+      setStatus("saved");
+      setMessage("Saved to Source artifacts");
       onArtifact?.({
-        type: 'sourcing-stage-progress',
+        type: "sourcing-stage-progress",
         evidenceItemId: `source-generated-artifact:${artifact.id}`,
         label: `${artifact.originalName} saved`,
-        severity: 'soft',
-        status: 'met',
+        severity: "soft",
+        status: "met",
         detail: `Generated artifact persisted for ${sourceUploadContext.stageLabel ?? sourceUploadContext.stageKey}. Parse ${artifact.parseStatus}; vector ${artifact.embeddingStatus}; graph ${artifact.graphStatus}. Evidence remains ${artifact.evidenceState} until parsed.`,
       });
     } catch (error) {
-      setStatus('failed');
-      setMessage(error instanceof Error ? error.message : 'Save failed');
+      setStatus("failed");
+      setMessage(error instanceof Error ? error.message : "Save failed");
     }
   }
 
@@ -1204,36 +1328,45 @@ function GeneratedSourceArtifactSave({
     <div
       style={{
         marginTop: 10,
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 8,
-        flexWrap: 'wrap',
+        flexWrap: "wrap",
       }}
     >
       <button
         type="button"
         onClick={handleSave}
-        disabled={status === 'saving' || status === 'saved'}
+        disabled={status === "saving" || status === "saved"}
         style={{
-          border: '1px solid rgba(250,247,241,0.24)',
+          border: "1px solid rgba(250,247,241,0.24)",
           borderRadius: 999,
-          background: status === 'saved' ? 'rgba(155,184,122,0.16)' : 'rgba(250,247,241,0.08)',
-          color: 'rgba(250,247,241,0.82)',
-          cursor: status === 'saving' || status === 'saved' ? 'default' : 'pointer',
+          background:
+            status === "saved"
+              ? "rgba(155,184,122,0.16)"
+              : "rgba(250,247,241,0.08)",
+          color: "rgba(250,247,241,0.82)",
+          cursor:
+            status === "saving" || status === "saved" ? "default" : "pointer",
           fontFamily: SHELL.MONO,
           fontSize: 9,
           fontWeight: 700,
-          letterSpacing: '0.08em',
-          padding: '6px 9px',
-          textTransform: 'uppercase',
+          letterSpacing: "0.08em",
+          padding: "6px 9px",
+          textTransform: "uppercase",
         }}
       >
-        {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved artifact' : 'Save generated artifact'}
+        {status === "saving"
+          ? "Saving…"
+          : status === "saved"
+            ? "Saved artifact"
+            : "Save generated artifact"}
       </button>
       {message ? (
         <span
           style={{
-            color: status === 'failed' ? SHELL.PEACH_TEXT : 'rgba(250,247,241,0.48)',
+            color:
+              status === "failed" ? SHELL.PEACH_TEXT : "rgba(250,247,241,0.48)",
             fontFamily: SHELL.SANS,
             fontSize: 10.5,
           }}

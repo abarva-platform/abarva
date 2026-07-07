@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lakeshore x AbarVa - AI Success Platform Detailed Reading Brief</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #5f6b7d;
+      --paper: #f7f5ef;
+      --panel: #ffffff;
+      --line: #d9d4ca;
+      --black: #000000;
+      --blue: #1d5fd1;
+      --teal: #0f766e;
+      --gold: #a16207;
+      --rose: #be123c;
+      --slate: #273243;
+      --soft-blue: #eef5ff;
+      --soft-teal: #edfdf8;
+      --soft-gold: #fff7ed;
+      --soft-rose: #fff1f2;
+      --shadow: 0 18px 42px rgba(15, 23, 42, .10);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    a { color: inherit; text-decoration: none; }
+    img, video { display: block; width: 100%; height: auto; }
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 292px minmax(0, 1fr);
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      color: #fff;
+      background: #000;
+      border-right: 1px solid rgba(255,255,255,.14);
+      padding: 24px 22px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid rgba(255,255,255,.16);
+    }
+    .brand img { width: 124px; height: 28px; object-fit: contain; }
+    .client {
+      color: rgba(255,255,255,.72);
+      font-weight: 760;
+      padding-left: 12px;
+      border-left: 1px solid rgba(255,255,255,.22);
+    }
+    .nav-title {
+      margin: 24px 0 12px;
+      color: rgba(255,255,255,.46);
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .nav a {
+      display: block;
+      padding: 10px 12px;
+      margin: 3px 0;
+      border-radius: 8px;
+      color: rgba(255,255,255,.74);
+      font-size: 13px;
+      font-weight: 720;
+    }
+    .nav a:hover { color: #fff; background: rgba(255,255,255,.10); }
+    .nav .strong { color: #fff; background: rgba(29,95,209,.25); }
+    .side-note {
+      margin-top: 22px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 8px;
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+    }
+    main {
+      max-width: 1120px;
+      padding: 56px 56px 88px;
+    }
+    section {
+      scroll-margin-top: 32px;
+      padding: 42px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero { padding-top: 12px; }
+    .kicker {
+      display: inline-flex;
+      margin-bottom: 14px;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: 0;
+    }
+    h1 {
+      max-width: 980px;
+      font-size: clamp(48px, 6vw, 86px);
+      line-height: .94;
+    }
+    h2 {
+      max-width: 900px;
+      font-size: clamp(34px, 4vw, 56px);
+      line-height: 1;
+    }
+    h3 {
+      font-size: 25px;
+      line-height: 1.1;
+    }
+    p { margin: 12px 0 0; color: #334155; }
+    .lead {
+      max-width: 870px;
+      margin-top: 22px;
+      color: #38465b;
+      font-size: 21px;
+      line-height: 1.48;
+    }
+    .read-box {
+      margin-top: 28px;
+      padding: 22px 24px;
+      border: 1px solid #cbd5e1;
+      border-left: 6px solid var(--blue);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 14px 28px rgba(15, 23, 42, .06);
+    }
+    .read-box strong { display: block; margin-bottom: 6px; }
+    .grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      min-height: 150px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .card.blue { border-top: 5px solid var(--blue); }
+    .card.teal { border-top: 5px solid var(--teal); }
+    .card.gold { border-top: 5px solid var(--gold); }
+    .card.rose { border-top: 5px solid var(--rose); }
+    .card h3 { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 20px; }
+    .card p, .card li { color: var(--muted); font-size: 14px; }
+    ul { margin: 12px 0 0; padding-left: 18px; color: var(--muted); }
+    li { margin: 7px 0; }
+    .figure {
+      margin-top: 26px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .figure img {
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+    .caption {
+      margin: 10px 4px 2px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 720;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #c8dcff;
+      background: var(--soft-blue);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .pill.teal { border-color: #b8eee0; background: var(--soft-teal); color: var(--teal); }
+    .pill.gold { border-color: #fed7aa; background: var(--soft-gold); color: var(--gold); }
+    .pill.rose { border-color: #fecdd3; background: var(--soft-rose); color: var(--rose); }
+    .rail {
+      margin-top: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr) 230px;
+      gap: 18px;
+      padding: 18px 20px;
+      border-top: 1px solid var(--line);
+      align-items: start;
+    }
+    .row:first-child { border-top: 0; }
+    .row b { color: var(--ink); }
+    .row span { color: var(--muted); font-size: 14px; }
+    .value-band {
+      margin-top: 24px;
+      padding: 24px;
+      border-radius: 8px;
+      color: #fff;
+      background: #0f172a;
+    }
+    .value-band p { color: rgba(255,255,255,.78); }
+    .value-band .grid { margin-top: 18px; }
+    .value-item {
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+    }
+    .value-item strong {
+      display: block;
+      color: #fff;
+      font-size: 22px;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      color: #0f172a;
+      background: #e0f2fe;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .video-wrap {
+      margin-top: 28px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .qa-summary {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .qa-metric {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .qa-metric strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+    }
+    .qa-card {
+      margin-top: 14px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--teal);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .qa-card.watch { border-left-color: var(--gold); }
+    .qa-card h3 {
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      font-size: 19px;
+      line-height: 1.25;
+    }
+    .qa-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 820;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .qa-answer {
+      margin-top: 10px;
+      color: #334155;
+      font-size: 14px;
+    }
+    .qa-answer b { color: var(--ink); }
+    .qa-card details { margin-top: 10px; }
+    .qa-card summary { cursor: pointer; font-weight: 850; }
+    .link-button {
+      display: inline-flex;
+      margin-top: 18px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: #fff;
+      background: #0f172a;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    footer {
+      padding: 34px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 980px) {
+      .shell { display: block; }
+      aside { position: relative; height: auto; }
+      main { padding: 32px 20px 64px; }
+      .two, .three, .four { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <img src="assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" />
+        <div class="client">Lakeshore</div>
+      </div>
+      <div class="nav-title">Detailed brief</div>
+      <nav class="nav" aria-label="Section navigation">
+        <a class="strong" href="#top">Executive Read</a>
+        <a href="#who">Who Lakeshore Is</a>
+        <a href="#context">Context Layer</a>
+        <a href="#loaded">What We Loaded</a>
+        <a href="#corpus">Editable Corpus</a>
+        <a href="#kyriba">Kyriba Success</a>
+        <a href="#treasury">Treasury Failure Modes</a>
+        <a href="#strategy">90-Day AI Strategy</a>
+        <a href="#modernization">IT/Data Modernization</a>
+        <a href="#value">Value Case</a>
+        <a href="#product">Product Proof</a>
+        <a href="#qa">Captured Q&A Proof</a>
+        <a href="#roadmap">Six-Month Roadmap</a>
+        <a href="#video">Video Companion</a>
+      </nav>
+      <div class="side-note">
+        Buyer-safe labeling: Northshore is a modeled operating profile used for demo-safe Lakeshore context. Values are hypotheses to validate, not realized savings.
+      </div>
+    </aside>
+
+    <main id="top">
+      <section class="hero">
+        <span class="kicker">Lakeshore x AbarVa</span>
+        <h1>AI success platform for a private holdings operating network.</h1>
+        <p class="lead">
+          The core message for Surekha: AbarVa is not a better chat window. It is a governed execution platform that combines client context, editable corpus doctrine, role-aware agents, evidence gaps, workflow artifacts, tenant boundaries, and value proof.
+        </p>
+        <div class="read-box">
+          <strong>My read</strong>
+          Lakeshore should start with finance and treasury because Kyriba exposes the operating facts that make AI either useful or dangerous. But the six-month program should also stand up the broader corporate AI strategy: growth, cost, risk, IT/data modernization, and a reusable context layer across the portfolio.
+        </div>
+        <div class="grid four">
+          <div class="card blue"><h3>Context</h3><p>Who, which tenant, which company, which system, which evidence, which owner, which decision.</p></div>
+          <div class="card teal"><h3>Corpus</h3><p>Editable operating doctrine for finance, treasury, vendor leverage, modernization, and rollout risk.</p></div>
+          <div class="card gold"><h3>Workflow</h3><p>Moves and Source events turn advice into stage gates, documents, reviews, and commercial actions.</p></div>
+          <div class="card rose"><h3>Proof</h3><p>Forecast value, approved value, negotiated value, and finance-attested value stay separate.</p></div>
+        </div>
+      </section>
+
+      <section id="who">
+        <span class="kicker">Who Lakeshore Is</span>
+        <h2>A holdings company needs operating intelligence, not generic AI.</h2>
+        <p>
+          Lakeshore is treated as a Chicago-rooted private holdings company with permanent-capital operating discipline. The modeled Northshore profile is a demo-safe operating picture for the buyer conversation: supply chain and logistics, brand services, consumer products, and workplace services. The exact portfolio facts should be replaced by Lakeshore-approved data, but the operating logic is the point.
+        </p>
+        <div class="rail">
+          <div class="row"><b>How money is made</b><span>Margin, route density, sourcing spread, service quality, renewal discipline, customer retention, working-capital turns, and program execution.</span><span>AI has to understand economics before giving recommendations.</span></div>
+          <div class="row"><b>Where complexity hides</b><span>ERPs, banks, contracts, local workflows, vendor overlap, manual controls, audit evidence, and disconnected analytics.</span><span>These become context dimensions, not background noise.</span></div>
+          <div class="row"><b>What leadership needs</b><span>Board-grade decision support, not a library of clever answers. Every recommendation needs evidence, owner, next action, and value status.</span><span>This is AbarVa's platform role.</span></div>
+        </div>
+      </section>
+
+      <section id="context">
+        <span class="kicker">Secret Sauce</span>
+        <h2>The context layer is a living graph of operating truth.</h2>
+        <p>
+          The secret sauce is not uploading documents. It is turning uploaded files, product activity, roles, approvals, systems, vendors, banks, and corpus patterns into a governed map. That map lets an agent answer a CFO, CIO, Treasurer, or sponsor differently because it knows their scope, decision rights, evidence access, and workflow state.
+        </p>
+        <div class="pill-row">
+          <span class="pill">Tenant</span><span class="pill teal">Persona</span><span class="pill gold">HoldCo</span><span class="pill">OpCo</span><span class="pill teal">System</span><span class="pill gold">Vendor</span><span class="pill rose">Contract</span><span class="pill">Bank</span><span class="pill teal">Process</span><span class="pill gold">Artifact</span><span class="pill rose">Corpus pattern</span><span class="pill">Value claim</span>
+        </div>
+        <div class="grid three">
+          <div class="card blue"><h3>Why it matters</h3><p>Raw model answers collapse context. AbarVa preserves which fact came from which source, who can see it, and what action it can support.</p></div>
+          <div class="card teal"><h3>What it unlocks</h3><p>Cross-context joins: bank sprawl plus Kyriba timeline plus covenant exposure; vendor overlap plus renewal dates; CMDB gaps plus AI use-case demand.</p></div>
+          <div class="card gold"><h3>How it compounds</h3><p>Every artifact, QA answer, gate review, Source event, and corpus edit improves the institutional memory for the next decision.</p></div>
+        </div>
+        <div class="figure">
+          <img src="assets/01-setup-cxo-intel-index.png" alt="Setup/Admin context upload index screenshot" />
+          <div class="caption">Product proof: Setup/Admin carries CXO context bundles into the platform instead of leaving facts in disconnected files.</div>
+        </div>
+      </section>
+
+      <section id="loaded">
+        <span class="kicker">Loaded Context</span>
+        <h2>What should be visible to Lakeshore on day one.</h2>
+        <p>
+          The demo-ready context should show the shape of the operating picture: CXO bundles, portfolio structure, systems, vendors, contracts, banks, Source events, Moves, artifacts, and agent evidence gaps. Anything synthetic must be labeled. Anything loader-backed should be marked as loaded proof.
+        </p>
+        <div class="grid two">
+          <div class="card blue"><h3>CXO bundles</h3><ul><li>CFO: banks, ERP/TMS/AP/AR/EPM, close metrics, audit/advisory, insurance, tax.</li><li>CIO: app inventory, CMDB, cloud, vendor contracts, AI roadmap, IT spend.</li><li>COO/CHRO/GC: operations, workforce, benefits, contracts, entities, risk.</li></ul></div>
+          <div class="card teal"><h3>Insights to surface</h3><ul><li>Which banks block Kyriba connectivity.</li><li>Which systems produce weak finance feeds.</li><li>Which vendors or SIs overlap across companies.</li><li>Which evidence gaps prevent a board-grade value claim.</li></ul></div>
+        </div>
+      </section>
+
+      <section id="corpus">
+        <span class="kicker">Editable Corpus</span>
+        <h2>The corpus is doctrine that Lakeshore can govern.</h2>
+        <p>
+          The corpus should not feel like a static knowledge base. It should be editable operating doctrine: approved, refined, localized, retired, tagged with evidence, and linked to workflow stages. For finance and treasury, the corpus needs to sound like a treasurer, controller, and CFO who have lived through implementations.
+        </p>
+        <div class="rail">
+          <div class="row"><b>Global baseline</b><span>The buyer brief currently references 8,987 published patterns and 27,052 relationships as the global corpus baseline.</span><span>Keep as platform baseline, not Lakeshore-approved doctrine.</span></div>
+          <div class="row"><b>Lakeshore promotion path</b><span>Kyriba and treasury doctrine exists in the prompt, Move 0 design, proof brief, and detailed video script.</span><span>Promote into editable Lakeshore corpus rows after review.</span></div>
+          <div class="row"><b>Governance</b><span>Every pattern should carry domain, owner, confidence, evidence requirement, failure mode, workflow link, and retirement path.</span><span>This is where the platform learns.</span></div>
+        </div>
+        <div class="grid three">
+          <div class="card blue"><h3>Finance patterns</h3><p>Close variance thresholds, value proof, audit evidence, covenant definitions, finance-attested baselines.</p></div>
+          <div class="card teal"><h3>Treasury patterns</h3><p>Daily cash pre-walk, bank connectivity, payment controls, cash pooling, FX, IC, cash forecast discipline.</p></div>
+          <div class="card gold"><h3>Execution patterns</h3><p>Stage gates, owner assignment, evidence packs, exception logs, adoption metrics, steering decisions.</p></div>
+        </div>
+      </section>
+
+      <section id="kyriba">
+        <span class="kicker">Kyriba</span>
+        <h2>Kyriba is the wedge because treasury exposes operating truth fast.</h2>
+        <p>
+          Kyriba is a treasury operating platform for cash visibility, bank connectivity, payments, liquidity planning, forecasting, bank account management, risk, and controls. For Lakeshore, the vision is not software installation. The vision is a finance-owned operating transformation where treasury facts become reliable enough for the CFO, Treasurer, audit committee, and board.
+        </p>
+        <div class="figure">
+          <img src="assets/09-kyriba-strategy.png" alt="Kyriba Source strategy screenshot" />
+          <div class="caption">Product proof: Source strategy view for the Kyriba treasury rollout, showing stage structure and evidence-driven next steps.</div>
+        </div>
+        <div class="read-box">
+          <strong>Implementation logic</strong>
+          Move 0 de-risks the foundation: banks, feeds, entities, cash history, adoption, intercompany, covenants, and controls. Move 1 adds AI only after the foundation is credible enough. Otherwise AI makes weak data sound confident.
+        </div>
+      </section>
+
+      <section id="treasury">
+        <span class="kicker">Failure Modes</span>
+        <h2>The platform should prevent the six ways treasury rollouts fail.</h2>
+        <div class="grid two">
+          <div class="card blue"><h3>1. Bank connectivity stalls</h3><p>Inventory bank, account, entity, file format, signer, owner, and H2H/SWIFT readiness before schedule commitment.</p></div>
+          <div class="card teal"><h3>2. ERP feeds do not reconcile</h3><p>Score AP, AR, GL, EPM, and cash feeds for completeness, timing, mapping, variance, and owner remediation.</p></div>
+          <div class="card gold"><h3>3. Entity hierarchy breaks rollup</h3><p>Canonical legal, tax, bank-account, reporting, and intercompany hierarchy is required before automation.</p></div>
+          <div class="card rose"><h3>4. Forecasting lacks history</h3><p>Reconstruct 12-24 months of bank/position history into entity-currency-day records before predictive claims.</p></div>
+          <div class="card blue"><h3>5. Adoption falls back to Excel</h3><p>Track role dashboards, active usage, training, exceptions, and a named Excel-elimination sprint.</p></div>
+          <div class="card teal"><h3>6. IC and covenants stay manual</h3><p>Connect IC loans, true-ups, covenant definitions, liquidity thresholds, and board reporting to evidence.</p></div>
+        </div>
+      </section>
+
+      <section id="strategy">
+        <span class="kicker">First 90 Days</span>
+        <h2>Northshore should define the corporate AI strategy in parallel to Kyriba.</h2>
+        <p>
+          Kyriba creates urgency, but the first 90 days should not become a single-system project. AbarVa should help Lakeshore define a portfolio AI agenda: use cases, data readiness, responsible CXO, value hypothesis, evidence requirement, and first workflow artifact.
+        </p>
+        <div class="rail">
+          <div class="row"><b>30 days: fact base</b><span>Load CXO bundles, identify the system/vendor/bank/contract estate, map current initiatives, and classify evidence gaps.</span><span>Output: context completeness report.</span></div>
+          <div class="row"><b>60 days: prioritized use cases</b><span>Score treasury, growth, cost, risk, and modernization use cases by value, data readiness, owner, dependency, and proof path.</span><span>Output: AI opportunity slate.</span></div>
+          <div class="row"><b>90 days: funded roadmap</b><span>Select funded Moves and Source events with artifacts, owners, KPIs, and a finance-governed value ledger.</span><span>Output: board-ready roadmap.</span></div>
+        </div>
+      </section>
+
+      <section id="modernization">
+        <span class="kicker">IT and Data</span>
+        <h2>AI strategy should pull modernization work into the open.</h2>
+        <p>
+          The AI agenda should expose IT and data work that already matters: CMDB cleanup, app rationalization, ERP/TMS/WMS/CRM integration, data products, identity controls, analytics modernization, SaaS spend, cloud spend, SI scope, and vendor contracts. AbarVa sequences that work by AI value and execution risk.
+        </p>
+        <div class="grid three">
+          <div class="card blue"><h3>Application estate</h3><p>What exists, what overlaps, who owns it, what it costs, and which systems are critical for AI use cases.</p></div>
+          <div class="card teal"><h3>Data products</h3><p>Treasury, vendor, customer, contract, entity, workforce, and value-ledger data products with named stewards.</p></div>
+          <div class="card gold"><h3>Analytics layer</h3><p>Move from static reporting to governed decisions, reusable AI patterns, and evidence-backed executive answers.</p></div>
+        </div>
+        <div class="figure">
+          <img src="assets/08-data-trust.png" alt="Data trust and evidence screenshot" />
+          <div class="caption">Product proof: the platform should show what is trusted, what is missing, and which evidence gaps block reliance.</div>
+        </div>
+      </section>
+
+      <section id="value">
+        <span class="kicker">Six-Month Value Case</span>
+        <h2>The $500K case should be justified by 5-10x potential, with proof discipline.</h2>
+        <p>
+          The value case should not rely on hype. It should show avoided failure cost, execution-cost reduction, vendor leverage, and reusable AI capability. The platform must keep forecast value, approved value, negotiated value, and finance-attested value separate.
+        </p>
+        <div class="value-band">
+          <h3>Illustrative value formulas to validate with Lakeshore data</h3>
+          <p>These are not realized savings. They are the buyer-safe way to frame why a six-month program can justify itself.</p>
+          <div class="grid four">
+            <div class="value-item"><strong>10-20%</strong><span>delay/change-order avoidance on a major treasury/SI program.</span></div>
+            <div class="value-item"><strong>15-25%</strong><span>vendor leverage where spend overlaps and renewal timing is favorable.</span></div>
+            <div class="value-item"><strong>20-40%</strong><span>reduced execution effort by reusing artifacts, QA packs, and stage playbooks.</span></div>
+            <div class="value-item"><strong>5-10x</strong><span>target potential when failure avoidance plus optimization exceeds program cost.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="product">
+        <span class="kicker">Product Proof</span>
+        <h2>The app needs to show the work, not just the answer.</h2>
+        <div class="grid two">
+          <div class="card blue"><h3>Moves</h3><p>Runs readiness gates, produces documents, tracks evidence, and persists next actions.</p></div>
+          <div class="card teal"><h3>Source</h3><p>Turns insight into commercial decisions: bank consolidation, SI scope control, renewal optimization, and vendor leverage.</p></div>
+        </div>
+        <div class="figure">
+          <img src="assets/02-moves-kyriba-detail.png" alt="Moves Kyriba detail screenshot" />
+          <div class="caption">Product proof: Move workspace for Kyriba, including phase state, evidence expectations, and agent-generated next work.</div>
+        </div>
+        <div class="figure">
+          <img src="assets/05-tower-source-value.png" alt="Tower Source value screenshot" />
+          <div class="caption">Product proof: Tower should roll up the value story without mixing forecast, approved, negotiated, and realized proof.</div>
+        </div>
+      </section>
+
+      <section id="qa">
+        <span class="kicker">Captured Q&A Proof</span>
+        <h2>The hard-question pack shows how context and patterns change answer quality.</h2>
+        <p>
+          The HTML can carry the detailed proof that would make the MP4 too dense: actual CXO questions, captured agent answers, evidence references, scores, and issues. This is the clearest way to show that AbarVa is not raw Claude with a nicer skin. The model is being forced through Lakeshore context, treasury doctrine, evidence boundaries, tenant scope, and workflow action.
+        </p>
+        <div class="qa-summary">
+          <div class="qa-metric"><strong>100</strong><span>hard questions</span></div>
+          <div class="qa-metric"><strong>60</strong><span>pass</span></div>
+          <div class="qa-metric"><strong>40</strong><span>watch</span></div>
+          <div class="qa-metric"><strong>0</strong><span>hard fail</span></div>
+          <div class="qa-metric"><strong>4.53</strong><span>average / 5</span></div>
+        </div>
+        <div class="grid three">
+          <div class="card blue"><h3>Context effect</h3><p>The answer knows what is loaded, what is synthetic, what remains in review, and what value cannot be claimed yet.</p></div>
+          <div class="card teal"><h3>Pattern effect</h3><p>Treasury and Kyriba doctrine turns broad advice into rollout gates: banks, feeds, entities, history, adoption, and IC controls.</p></div>
+          <div class="card gold"><h3>Workflow effect</h3><p>The answer points to an artifact, owner, Source event, Move gate, or evidence gap instead of ending as chat text.</p></div>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-001 · CFO · finance / treasury · PASS</div>
+          <h3>If Kyriba is not live yet, what exactly can Lakeshore claim today without overstating value?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It tests honesty. AbarVa should say the rollout is artifact-backed and in progress, while refusing to imply live production or realized savings.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The agent correctly separates approved Strategy-through-BAFO artifacts from Executive Decision, Selection, Transition, and Value items still in review. It also flags that full setup/admin approval ledger rows are not complete and that realized savings should not be claimed yet.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-005 · Audit Committee · value proof · PASS</div>
+          <h3>What would make the Kyriba value ledger audit-defensible versus a consulting estimate?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It tests whether AbarVa can protect the CFO from inflated value claims.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The agent ties value claims to concrete artifacts: business case, financial KPI workbook, integration pathways, conservative estimates, documented decision process, and final executive-decision artifacts.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-008 · CFO · board value language · PASS</div>
+          <h3>How should the board distinguish projected, committed, measuring, and realized Kyriba value?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It tests the difference between a sales story and finance-grade governance.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The answer creates separate definitions for projected, committed, measuring, and realized value, then assigns CFO ownership and quarterly reporting as the decision rhythm.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-013 · Controller · ERP feed risk · WATCH</div>
+          <h3>What ERP feed defects would break Kyriba reconciliation even if the treasury tool is configured correctly?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It shows why Kyriba success is an operating-data problem, not just configuration.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The agent names GL/AP/AR defects, data completeness, variance above target, and manual intercompany eliminations. This is useful, but it belongs in watch until the owner/action specificity is sharper.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-021 · CFO · Source event truth · PASS</div>
+          <h3>Show the current Source truth for LSH-KYRIBA-TREASURY-2026 by stage, including what remains in review.</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It proves the agent can distinguish stage truth, artifact truth, and review status.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The answer identifies Executive Decision as current and still under review, while Selection, Transition, and Value are artifact-backed continuity proof but not complete decisions.</p></details>
+        </div>
+        <div class="qa-card watch">
+          <div class="qa-meta">Issue taxonomy · training loop</div>
+          <h3>The watch items are not a weakness to hide; they are the training agenda.</h3>
+          <p class="qa-answer">The main watch themes were missing owner specificity, weaker finance depth in 7 answers, missing evidence references in 3 answers, no next action in 3 answers, and one overclaim warning. That is exactly why the corpus should remain editable and why QA should feed back into prompts, patterns, and workflow rules.</p>
+        </div>
+        <a class="link-button" href="cxo-hard-question-qa/report.html" target="_blank" rel="noreferrer">Open packaged 100-question QA report</a>
+      </section>
+
+      <section id="roadmap">
+        <span class="kicker">Six-Month Roadmap</span>
+        <h2>Build the AI strategy while proving the Kyriba wedge.</h2>
+        <p>
+          Kyriba is the right first proof point because finance and treasury expose the hard parts: bank connectivity, ERP feeds, entities, controls, value proof, and adoption. But the six-month agenda should not be a Kyriba-only workplan. It should leave Lakeshore with an AI operating model, prioritized use-case portfolio, editable corpus, context layer, and value ledger that can compound across the holding company.
+        </p>
+        <div class="grid three">
+          <div class="card blue"><h3>Treasury intelligence</h3><p>Cash forecasting readiness, variance detection, covenant headroom, intercompany matching, bank connectivity, and board-grade value proof.</p></div>
+          <div class="card teal"><h3>Source and vendor leverage</h3><p>Bank consolidation, SI scope control, software renewals, audit/advisory rationalization, cyber insurance, and contract renewal leverage.</p></div>
+          <div class="card gold"><h3>Growth and operations</h3><p>Customer concentration, pricing/margin pockets, promotion ROI, supply-chain exceptions, route density, service recovery, and operating KPI variance.</p></div>
+          <div class="card red"><h3>IT and data modernization</h3><p>CMDB/app inventory, data-product roadmap, integration spine, identity/access controls, observability, and systems rationalization aligned to AI needs.</p></div>
+          <div class="card blue"><h3>CXO operating model</h3><p>Named owners, decision rights, responsible AI gates, evidence standards, persona routing, and audit trails for every recommendation.</p></div>
+          <div class="card teal"><h3>Reusable doctrine</h3><p>Editable corpus patterns, QA feedback loops, Source playbooks, Move artifacts, and repeatable templates for the next portfolio initiative.</p></div>
+        </div>
+        <div class="rail">
+          <div class="row"><b>Month 1</b><span>Load Lakeshore context and run an AI opportunity scan across treasury, finance, Source, IT/data, operations, and growth value pools.</span><span>Decision: approve fact base and candidate use cases.</span></div>
+          <div class="row"><b>Month 2</b><span>Define the AI strategy, use-case portfolio, governance model, and editable corpus doctrine; separate demo-seeded facts from loader-backed proof.</span><span>Decision: approve AI operating model.</span></div>
+          <div class="row"><b>Month 3</b><span>Run Kyriba Move 0 gates while designing the first use cases: forecasting readiness, variance/anomaly, covenant headroom, vendor leverage, and operating exceptions.</span><span>Decision: proceed, remediate, or re-sequence.</span></div>
+          <div class="row"><b>Month 4</b><span>Launch Source value events and the first AI pilots; name data/IT modernization dependencies such as CMDB, integrations, access, and data products.</span><span>Decision: fund pilots and commercial actions.</span></div>
+          <div class="row"><b>Month 5</b><span>Execute pilots, Moves, and Source events; measure value, capture artifacts, resolve evidence gaps, and turn what works into reusable patterns.</span><span>Decision: prove traction and reuse.</span></div>
+          <div class="row"><b>Month 6</b><span>Publish board-ready proof: AI strategy, use-case roadmap, value ledger, context coverage, corpus coverage, risk posture, and scale plan.</span><span>Decision: scale, renew, or redirect.</span></div>
+        </div>
+      </section>
+
+      <section id="video">
+        <span class="kicker">MP4 Companion</span>
+        <h2>The video stays executive. This page carries the detail.</h2>
+        <p>
+          The companion MP4 is designed as the narrated executive walkthrough. It should use the same story arc, correct logo, full-frame slides, no zoom, a softer female advisor voice, and the corrected AbarVa pronunciation.
+        </p>
+        <div class="video-wrap">
+          <video controls preload="metadata" src="video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V3.mp4"></video>
+        </div>
+        <span class="badge">V3 render target</span>
+      </section>
+
+      <footer>
+        Prepared as a buyer-facing reading brief for Lakeshore review. Demo data and modeled Northshore operating profile should be replaced with Lakeshore-approved facts before final client reliance.
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

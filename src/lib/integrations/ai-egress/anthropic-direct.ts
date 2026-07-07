@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import type {
   ContentBlock,
   ContentBlockParam,
+  Message,
+  MessageCreateParamsNonStreaming,
   MessageParam,
   TextBlock,
   ToolResultBlockParam,
@@ -9,6 +11,7 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages';
 
 import type { AiModelAdapter } from './types';
+import { buildAnthropicPromptCachePayload } from './anthropic-prompt-cache';
 import { preflightModelEgress } from './call-model';
 import { createSupabaseAiEgressAuditSink } from './supabase-audit';
 import { loadTenantAiPolicyRecord } from './tenant-policy';
@@ -46,18 +49,30 @@ export function createAnthropicDirectTextAdapter(args: {
 }): AiModelAdapter {
   return async (request) => {
     const client = getAnthropicDirectClient();
+    const promptCache = buildAnthropicPromptCachePayload({
+      system: args.system,
+      prompt: request.prompt,
+      metadata: request.metadata,
+    });
     const response = await client.messages.create({
       model: request.model ?? args.model,
       max_tokens: args.maxTokens,
-      ...(args.system ? { system: args.system } : {}),
+      ...(promptCache.system ? { system: promptCache.system } : {}),
       ...(args.tools && args.tools.length > 0 ? { tools: args.tools } : {}),
-      messages: [{ role: 'user', content: request.prompt }],
-    });
+      messages: promptCache.messages,
+    } satisfies MessageCreateParamsNonStreaming) as Message;
     const text = response.content
-      .filter((block) => block.type === 'text')
+      .filter((block): block is TextBlock => block.type === 'text')
       .map((block) => block.text)
       .join('\n');
-    return { response: text, model: response.model };
+    return {
+      response: text,
+      model: response.model,
+      metadata: {
+        usage: response.usage,
+        anthropicPromptCache: promptCache.auditMetadata,
+      },
+    };
   };
 }
 

@@ -1,0 +1,1 @@
+risk_id,client_key,risk_title,risk_category,related_move_id,related_initiative_id,related_system_id,owner_role,severity,likelihood,impact,watch_state,trigger_condition,mitigation_action,evidence_source_id,last_reviewed_at,decision_needed,notes

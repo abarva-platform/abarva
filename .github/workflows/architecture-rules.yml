@@ -1,0 +1,35 @@
+name: Architecture Rules
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: architecture-rules-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  architecture-rules:
+    name: Azure/Anthropic architecture rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Enforce architecture rules on changed code
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: npm run audit:architecture-rules -- --base=origin/${BASE_REF} --head=HEAD

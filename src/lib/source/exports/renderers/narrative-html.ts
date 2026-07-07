@@ -11,17 +11,20 @@
 //
 // Pure: payload + config → HTML string.
 
-import 'server-only';
+import "server-only";
 
-import { markdownToHtml } from '@/lib/exports-shared/markdown-to-html';
+import { markdownToHtml } from "@/lib/exports-shared/markdown-to-html";
 import {
   DECISION_BRIEF_DOCX_CONFIG,
+  PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG,
   RFP_PACK_DOCX_CONFIG,
   SCOPE_MEMO_DOCX_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG,
+  STRATEGY_MEMO_DOCX_CONFIG,
+  VENDOR_RESPONSE_PACK_DOCX_CONFIG,
   type NarrativeDocxConfig,
   type NarrativeDocxPayload,
-} from './narrative-docx';
+} from "./narrative-docx";
 
 /** Re-export the docx configs as the html configs — shape is identical. */
 export type NarrativeHtmlConfig = NarrativeDocxConfig;
@@ -29,9 +32,12 @@ export type NarrativeHtmlPayload = NarrativeDocxPayload;
 
 export {
   DECISION_BRIEF_DOCX_CONFIG as DECISION_BRIEF_HTML_CONFIG,
+  PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG as PRICING_WORKBOOK_SUMMARY_HTML_CONFIG,
   RFP_PACK_DOCX_CONFIG as RFP_PACK_HTML_CONFIG,
   SCOPE_MEMO_DOCX_CONFIG as SCOPE_MEMO_HTML_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG as SELECTION_MEMO_HTML_CONFIG,
+  STRATEGY_MEMO_DOCX_CONFIG as STRATEGY_MEMO_HTML_CONFIG,
+  VENDOR_RESPONSE_PACK_DOCX_CONFIG as VENDOR_RESPONSE_PACK_HTML_CONFIG,
 };
 
 /** AbarVa typography styles inlined into every HTML export. */
@@ -148,7 +154,7 @@ const STYLE_BLOCK = `
     .source-doc__body table { page-break-inside: avoid; }
     .source-doc__body pre { page-break-inside: avoid; }
   }
-`.replace(/\s{2,}/g, ' ');
+`.replace(/\s{2,}/g, " ");
 
 /** Build the full HTML document. Pure: payload+config → string. */
 export function buildNarrativeHtml(
@@ -160,18 +166,18 @@ export function buildNarrativeHtml(
   const eventCode = escapeHtml(payload.eventCode);
   const issuedBy = payload.issuedBy ? escapeHtml(payload.issuedBy) : null;
   const generatedAt = escapeHtml(payload.generatedAt);
-  const body = markdownToHtml(payload.body || '');
+  const body = markdownToHtml(payload.body || "");
   const headerLabel = escapeHtml(config.headerLabel);
   const confidential = escapeHtml(config.confidentialityNote);
   const docTitle = escapeHtml(`${config.documentTitle} · ${payload.eventCode}`);
 
   const scaffoldWarning = payload.bodyIsAuthored
-    ? ''
+    ? ""
     : `<div class="source-doc__scaffold-warning"><strong>Template scaffold</strong> — body has not been authored yet. The content below is the canonical ${headerLabel} scaffold; replace with the actual authored content before circulating.</div>`;
 
   const issuedByLine = issuedBy
     ? `<p class="source-doc__meta">Issued by: ${issuedBy}</p>`
-    : '';
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -179,8 +185,8 @@ export function buildNarrativeHtml(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${docTitle}</title>
-  <meta name="generator" content="AbarVa · Sentinel" />
-  <meta name="x-source-artifact-code" content="${escapeHtml(config.artifactCode)}" />
+  <meta name="generator" content="AbarVa Source" />
+  <meta name="x-source-document" content="${escapeHtml(config.documentTitle)}" />
   <style>${STYLE_BLOCK}</style>
 </head>
 <body>
@@ -188,7 +194,7 @@ export function buildNarrativeHtml(
     <header class="source-doc__header">
       <div class="source-doc__eyebrow">${eyebrow}</div>
       <h1 class="source-doc__title">${title}</h1>
-      <p class="source-doc__meta">Tenant: ${escapeHtml(payload.tenantName)}</p>
+      <p class="source-doc__meta">Company: ${escapeHtml(payload.tenantName)}</p>
       <p class="source-doc__meta">Event code: ${eventCode}</p>
       ${issuedByLine}
       <p class="source-doc__meta">Generated: ${generatedAt}</p>
@@ -199,7 +205,7 @@ export function buildNarrativeHtml(
       ${body}
     </main>
     <footer class="source-doc__footer">
-      ${confidential} · Source canvas · ${eventCode} · scaffolded by AbarVa Sentinel · generated ${generatedAt}
+      ${confidential} · AbarVa Source · ${eventCode} · generated ${generatedAt}
     </footer>
   </article>
 </body>
@@ -208,12 +214,12 @@ export function buildNarrativeHtml(
 
 function escapeHtml(s: string): string {
   return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** HTML MIME. */
-export const HTML_CONTENT_TYPE = 'text/html; charset=utf-8';
+export const HTML_CONTENT_TYPE = "text/html; charset=utf-8";

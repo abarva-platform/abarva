@@ -979,7 +979,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-retail-readiness',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'retail',
     pattern: 'lead-bullets',
     question: 'Are Apex data connections ready for C-level testing?',
@@ -997,7 +997,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-healthcare-connectors',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'healthcare',
     pattern: 'lead-table',
     question: 'Compare readiness across EHR, claims, and HR connectors.',
@@ -1017,7 +1017,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-fs-data-trust',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'financial_services',
     pattern: 'sequential-steps',
     question: 'How do we prepare data trust for a KYC AI pilot?',
@@ -1036,7 +1036,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-cross-role-mapping',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'cross_industry',
     pattern: 'stat-stack',
     question: 'What setup facts are required before agents can answer CXO questions?',
@@ -1054,7 +1054,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-retail-unknown',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'retail',
     pattern: 'brief-narrative',
     question: 'Is Apex SKU margin data connected?',
@@ -1070,7 +1070,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-healthcare-privacy',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'healthcare',
     pattern: 'lead-bullets',
     question: 'What privacy setup is needed for patient-facing AI?',
@@ -1088,7 +1088,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-fs-permissions',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'financial_services',
     pattern: 'lead-bullets',
     question: 'Can every executive see AML investigation details?',
@@ -1106,7 +1106,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-retail-training-path',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'retail',
     pattern: 'sequential-steps',
     question: 'Walk me through setup before Carlos tests Nexus.',
@@ -1125,7 +1125,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-cross-compare-agents',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'cross_industry',
     pattern: 'lead-table',
     question: 'Compare what setup each agent needs.',
@@ -1146,7 +1146,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-healthcare-sources',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'healthcare',
     pattern: 'stat-stack',
     question: 'What sources prove healthcare agent readiness?',
@@ -1164,7 +1164,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-retail-data-owner',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'retail',
     pattern: 'lead-bullets',
     question: 'Who owns Apex merchandising KPI quality?',
@@ -1182,7 +1182,7 @@ const stewardFixtures: AgentOutputGoldenFixture[] = [
   {
     id: 'steward-cross-narrative',
     agent: 'steward',
-    surface: '/setup',
+    surface: '/admin/setup',
     industry: 'cross_industry',
     pattern: 'brief-narrative',
     question: 'Why do setup issues make agents sound dumb?',

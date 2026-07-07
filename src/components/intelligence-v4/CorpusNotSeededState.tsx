@@ -4,12 +4,10 @@
 // stages when the active tenant has no real seeded Intelligence corpus.
 //
 // No-fabrication rule: every figure on the Intelligence surface must
-// trace to that tenant's real seeded substrate. Apex Retail is the only
-// tenant with a corpus loader (`loadApexRetailIntelligenceData`).
-// Meridian and First Capital previously rendered hand-authored fixture
-// Briefs/Maps with figures that traced to nothing — fabrication shown
-// to a user. Until those tenants are grounded with real corpus data,
-// the Brief and Map render this honest "not yet seeded" state instead.
+// trace to that tenant's real seeded substrate. When the server cannot
+// bind an explicit tenant corpus payload, Brief and Map render this
+// honest "not yet seeded" state instead of inventing ranked bets,
+// values, pattern deltas, or source-backed coverage.
 //
 // Visual language is borrowed from the existing honest empty states on
 // this surface (StrategicPatternsList → StrategicPatternsEmptyState):

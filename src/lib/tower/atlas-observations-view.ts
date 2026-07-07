@@ -333,14 +333,14 @@ export function buildTowerAtlasObservationsView(
 ): AtlasObservationsView {
   if (initiatives.length === 0 && vendors.length === 0) {
     return {
-      headline: 'Atlas needs substrate to synthesize observations.',
+      headline: 'aVa needs substrate to synthesize observations.',
       metaSuffix: 'No initiatives loaded',
       observations: [],
       ifYouOnlyDoOneToday:
-        'Load initiatives via Setup → AI Initiatives so Atlas can observe pressures, value, and renewal posture.',
+        'Load initiatives via Setup → AI Initiatives so aVa can observe pressures, value, and renewal posture.',
       suggestedPrompts: DEFAULT_PROMPTS,
       isEmpty: true,
-      emptyHint: 'Atlas is empty until substrate is loaded.',
+      emptyHint: 'aVa is empty until substrate is loaded.',
       deterministicSeed: true,
     };
   }

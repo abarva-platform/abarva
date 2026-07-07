@@ -1,0 +1,438 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`golden regression — First Capital transformation artifacts (W5) Charter Markdown is byte-stable 1`] = `
+"# Initiative Charter
+*First Capital Financial · AI Trade Finance Letter-of-Credit Automation*
+
+## Decision requested
+We recommend you approve a focused discovery gate. Letter-of-Credit processing is document-heavy and control-sensitive — a strong fit for AI assistance — but the value case rests on five operating facts the bank has not yet supplied.
+
+Approve a six-week discovery to validate the L/C baseline, the control pathway, and the value case before any build commitment.
+
+## Why this matters now
+Manual L/C review is slow to scale and hard to evidence for examiners; an officer-supervised AI path can lift throughput without weakening control.
+
+## What we know
+- L/C review is manual today, with exceptions tracked outside the core system.
+- The bank's target data platform and AML controls are already set and can host this workflow.
+- Regulatory expectations (model risk, financial-crime screening) require a human approval on every exception.
+
+## Recommended discovery scope
+- Quantify the current L/C baseline: volume, touch time, cycle time, discrepancy rate, unit cost.
+- Confirm the control pathway: where a human approves and how decisions are evidenced.
+- Shape the value case and the build scope for a supervised first wave.
+
+## Success criteria
+- A validated baseline the finance team will stand behind.
+- A control design risk and compliance will sign.
+- A funded, scoped first wave with named owners.
+
+## Proceed / hold / stop
+- Proceed if — the baseline and control pathway are validated and the value case clears the hurdle.
+- Hold if — the operating facts remain unconfirmed or the control design is unresolved.
+- Stop if — the process cannot be evidenced to examiner standard even with a human in the loop.
+
+## Immediate decisions required
+- Name the executive sponsor and the trade-finance process owner.
+- Authorise access to the L/C operating data for the baseline.
+
+## Open Inputs Required
+
+| # | Input we need to confirm |
+| --- | --- |
+| 1 | Annual L/C volume |
+| 2 | Manual touch time per L/C |
+| 3 | Average cycle time (receipt to decision) |
+| 4 | Discrepancy rate |
+| 5 | Current fully-loaded unit cost per L/C |
+
+## Appendix — Traceability
+
+| # | Source | Basis | Confidence |
+| --- | --- | --- | --- |
+| 1 | First Capital 2025 Annual Report | annual report | high |
+| 2 | First Capital Model Risk & AI Governance | policy | high |"
+`;
+
+exports[`golden regression — First Capital transformation artifacts (W5) Executive Handoff deck HTML is byte-stable 1`] = `
+"<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AI Trade Finance Letter-of-Credit Automation — Executive Handoff</title>
+<style>
+  :root{--bg:#F8F7F4;--ink:#1a1a1a;--muted:#6b6b66;--line:#e2e0d9;--accent:#1a1a1a;--data:#2f6f6a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;padding:40px 0}
+  h1,h2{font-family:Georgia,serif;font-weight:400}
+  .head{max-width:1000px;margin:0 auto 24px;padding:0 28px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .deck{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:22px;padding:0 28px}
+  .slide{position:relative;aspect-ratio:16/9;background:#fff;border:1px solid var(--line);border-radius:12px;padding:42px 46px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+  .slide-no{position:absolute;top:18px;right:22px;font-family:Georgia,serif;color:var(--muted);font-size:14px}
+  .slide h2{font-size:27px;line-height:1.2;margin:0 0 14px;max-width:80%}
+  .slide ul{margin:6px 0 0;padding-left:20px;font-size:16px;line-height:1.6}
+  .slide li{margin:3px 0}
+  .exhibit{margin-top:18px;align-self:flex-start;border:1px dashed var(--line);border-radius:8px;padding:10px 16px;color:var(--data);font-size:13px;background:#fbfbf9}
+  .notes{position:absolute;left:46px;right:46px;bottom:20px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+  .notes span{text-transform:uppercase;letter-spacing:.06em;font-size:10px;color:#a8a59c;margin-right:6px}
+  [data-kind="decision_headline"]{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+  [data-kind="decision_headline"] .slide-no{color:#888}
+  [data-kind="decision_requested"]{border-left:4px solid var(--accent)}
+</style></head>
+<body>
+  <div class="head"><div class="kicker">First Capital Financial · Executive Handoff</div></div>
+  <div class="deck"><div class="slide" data-kind="decision_headline">
+        <div class="slide-no">1</div>
+        <h2>Approve a supervised AI path for L/C processing — automate the document work, keep an officer on every exception.</h2>
+        <div class="exhibit">Exhibit · decision headline</div><div class="notes"><span>Speaker notes</span> Grounded in the 2025 annual report and the model-risk governance policy; baseline facts pending.</div>
+      </div><div class="slide" data-kind="decision_requested">
+        <div class="slide-no">2</div>
+        <h2>We ask the committee to fund a six-week discovery and a supervised first wave.</h2>
+        
+      </div><div class="slide" data-kind="situation">
+        <div class="slide-no">3</div>
+        <h2>L/C review is manual and hard to evidence; throughput cannot scale without weakening control.</h2>
+        
+      </div><div class="slide" data-kind="findings">
+        <div class="slide-no">4</div>
+        <h2>What we learned</h2>
+        <ul><li>Document review and clause comparison are done by hand today.</li><li>Exceptions live outside the core system, so evidence is fragmented.</li><li>The bank's target platform and AML controls can host this workflow.</li></ul>
+      </div><div class="slide" data-kind="value">
+        <div class="slide-no">5</div>
+        <h2>The value is faster, evidenced L/C decisions at lower unit cost — once the operating baseline is confirmed.</h2>
+        <div class="exhibit">Exhibit · value story</div>
+      </div><div class="slide" data-kind="recommendation">
+        <div class="slide-no">6</div>
+        <h2>Proceed to a supervised first wave on the bank's set platform; do not commit to scale until the baseline clears.</h2>
+        
+      </div><div class="slide" data-kind="solution">
+        <div class="slide-no">7</div>
+        <h2>An agentic workbench extracts and compares clauses; an officer approves every exception.</h2>
+        <div class="exhibit">Exhibit · target state architecture</div>
+      </div><div class="slide" data-kind="roadmap">
+        <div class="slide-no">8</div>
+        <h2>How we deliver it</h2>
+        <ul><li>Foundation: ingest and extract, officer workbench in shadow mode.</li><li>Comparison: AI-assisted clause checks, officer-approved.</li><li>Scale: low-risk straight-through with controls hardened.</li></ul><div class="exhibit">Exhibit · roadmap lanes</div>
+      </div><div class="slide" data-kind="risks">
+        <div class="slide-no">9</div>
+        <h2>Risks we manage from day one</h2>
+        <ul><li>Model risk → validation and monitoring to examiner standard</li><li>Adoption → officer-in-the-loop from day one</li></ul><div class="exhibit">Exhibit · risks and mitigations</div>
+      </div><div class="slide" data-kind="decisions">
+        <div class="slide-no">10</div>
+        <h2>Decisions we need today</h2>
+        <ul><li>Name the sponsor and process owner.</li><li>Authorise access to the L/C operating data.</li></ul>
+      </div></div>
+</body></html>"
+`;
+
+exports[`golden regression — First Capital transformation artifacts (W5) Target Architecture HTML is byte-stable 1`] = `
+"<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AI Trade Finance Letter-of-Credit Automation — Target Architecture</title>
+<style>
+  :root{--bg:#F8F7F4;--ink:#1a1a1a;--muted:#6b6b66;--line:#e2e0d9;--card:#fff;
+    --data:#2f6f6a;--control:#9a5b2f;--new:#2f6f6a;--changed:#9a5b2f;--accent:#1a1a1a;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",-apple-system,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.svc{font-family:Georgia,"Times New Roman",serif;font-weight:400}
+  .header{padding:64px 48px 28px;border-bottom:1px solid var(--line)}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-size:34px;line-height:1.15;margin:10px 0 14px;max-width:900px}
+  .decision{font-size:18px;max-width:880px;border-left:3px solid var(--accent);padding:8px 0 8px 18px;margin:6px 0 8px}
+  .prov-note{font-size:13px;color:var(--muted);font-style:italic;max-width:820px}
+  .nav{position:sticky;top:0;background:rgba(248,247,244,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:12px 48px;display:flex;gap:18px;flex-wrap:wrap;z-index:5}
+  .nav a{color:var(--muted);text-decoration:none;font-size:13px}
+  .nav a:hover{color:var(--ink)}
+  .wrap{padding:8px 48px 80px;max-width:1080px}
+  section{padding:38px 0;border-bottom:1px solid var(--line)}
+  .sec-h{display:flex;align-items:baseline;gap:12px}
+  .num{font-family:Georgia,serif;color:var(--muted);font-size:15px}
+  h2{font-size:24px;margin:0}
+  .caption{color:var(--muted);max-width:760px;margin:8px 0 22px}
+  .statemap{display:flex;flex-direction:column;gap:10px}
+  .band{display:grid;grid-template-columns:170px 1fr;gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .band-label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+  .band-nodes{display:flex;flex-wrap:wrap;gap:10px}
+  .node{background:#fbfbf9;border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-width:150px;max-width:230px}
+  .node-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .node-label{font-weight:600;font-size:13.5px}
+  .svc{font-size:13px;color:var(--data);margin-top:2px}
+  .note{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .badge{font-size:10.5px;letter-spacing:.04em;padding:1px 6px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  .st-new{color:#fff;background:var(--new);border-color:var(--new)}
+  .st-changed{color:#fff;background:var(--changed);border-color:var(--changed)}
+  .st-retired{text-decoration:line-through}
+  .prov{background:#f0eee8}
+  .flow{padding:7px 0}
+  .flow-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:600}
+  .arrow{font-weight:700}
+  .arrow[data-k="data"]{color:var(--data)} .arrow[data-k="control"]{color:var(--control)}
+  .arrow[data-k="human_approval"]{color:var(--accent)}
+  .flbl{font-size:12.5px;color:var(--muted)}
+  .fk-data{color:var(--data);border-color:var(--data)} .fk-control{color:var(--control);border-color:var(--control)}
+  .agents{display:flex;flex-direction:column;gap:12px}
+  .agent{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .agent-h{display:flex;align-items:center;gap:9px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--control)}
+  .role{font-size:12.5px;color:var(--muted)}
+  .line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .lk{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);min-width:74px}
+  .chip{font-size:12px;background:#f3f2ed;border:1px solid var(--line);border-radius:20px;padding:2px 9px}
+  .chip.ground{background:#eef4f3} .chip.guard{background:#f6efe8}
+  .hil{margin-top:9px;font-size:12.5px;color:var(--control)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card-h{font-weight:600;margin-bottom:4px}
+  .owner{font-size:12px;color:var(--muted);margin-top:6px}
+  .waves{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .wave{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .wave-h{display:flex;justify-content:space-between;align-items:baseline}
+  .win{font-size:12px;color:var(--muted)}
+  .wave ul{margin:8px 0;padding-left:18px;font-size:13px}
+  .outcome{font-size:12.5px;color:var(--data);border-top:1px solid var(--line);padding-top:8px;margin-top:6px}
+  .open-inputs{background:#fbfaf6;border:1px dashed var(--line);border-radius:10px;padding:14px 16px}
+  .open-inputs ul{margin:8px 0 0;padding-left:18px;font-size:13.5px}
+  .empty{color:var(--muted);font-style:italic}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-bottom:14px}
+  .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .legend .l-data::before{background:var(--data)} .legend .l-control::before{background:var(--control)}
+  @media(max-width:720px){.header,.nav,.wrap{padding-left:20px;padding-right:20px}.band{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+</style></head>
+<body>
+  <div class="header">
+    <div class="kicker">First Capital Financial · Target Architecture</div>
+    <h1>AI Trade Finance Letter-of-Credit Automation</h1>
+    <div class="decision">Approve an AI-assisted L/C processing design that automates document review and discrepancy detection while keeping a trade-finance officer on every exception — built on the bank's existing AWS/Databricks target, not a new platform.</div>
+    <div class="prov-note">Cloud and services below reflect the solution we designed against First Capital's own target estate (Databricks on AWS + Snowflake finance mart, FIS core integrated not replaced). A different solution would render different providers here.</div>
+  </div>
+  <nav class="nav"><a href="#thesis">Thesis</a><a href="#current">Current state</a><a href="#target">Target state</a><a href="#dataflow">Data flow</a><a href="#aiflow">AI control &amp; agents</a><a href="#patterns">Patterns</a><a href="#controls">Controls</a><a href="#waves">Waves</a><a href="#decisions">Decisions</a></nav>
+  <div class="wrap">
+    <section id="thesis">
+    <div class="sec-h"><span class="num">1</span><h2>Architecture thesis</h2></div>
+    <p class="caption">The single idea the future-state design turns on.</p>
+    <p class="decision" style="border-color:var(--data)">An agentic workbench ingests L/C documents, an agent extracts and compares clauses against the terms and UCP rules, a discrepancy agent flags exceptions, and an officer approves — grounded in governed data and gated by model-risk and AML controls.</p>
+  </section>
+    <section id="current">
+    <div class="sec-h"><span class="num">2</span><h2>Current state (as-is)</h2></div>
+    <p class="caption">L/C processing is manual and mainframe-bound: documents arrive by email, officers compare clauses by hand, and exceptions are tracked in fragmented stores — slow, hard to evidence, and costly to scale.</p>
+    <div class="statemap"><div class="band">
+    <div class="band-label">Experience &amp; Channels</div>
+    <div class="band-nodes"><div class="node k-channel">
+    <div class="node-h"><span class="node-label">Email / courier intake</span><span class="badge st st-existing">Existing</span></div>
+    <div class="note">Unstructured L/C documents arrive ad hoc.</div>
+  </div><div class="node k-application">
+    <div class="node-h"><span class="node-label">Trade Finance ops portal</span><span class="badge st st-existing">Existing</span></div>
+    
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Applications &amp; Services</div>
+    <div class="band-nodes"><div class="node k-application">
+    <div class="node-h"><span class="node-label">Manual document review</span><span class="badge st st-existing">Existing</span></div>
+    <div class="note">Officer reads, compares clauses, keys data.</div>
+  </div><div class="node k-application">
+    <div class="node-h"><span class="node-label">Manual exception tracking</span><span class="badge st st-existing">Existing</span></div>
+    <div class="note">Spreadsheets / email threads.</div>
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Data &amp; ML Platform</div>
+    <div class="band-nodes"><div class="node k-data_store">
+    <div class="node-h"><span class="node-label">Fragmented data stores</span><span class="badge st st-existing">Existing</span></div>
+    <div class="note">Partial lakehouse; core data still on mainframe.</div>
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Core Systems of Record</div>
+    <div class="band-nodes"><div class="node k-system">
+    <div class="node-h"><span class="node-label">Trade Finance system</span><span class="badge st st-existing">Existing</span></div>
+    
+  </div><div class="node k-system">
+    <div class="node-h"><span class="node-label">FIS IST/Profile core</span><span class="badge st st-existing">Existing</span></div>
+    <div class="svc">FIS IST/Profile (mainframe)</div>
+  </div><div class="node k-control">
+    <div class="node-h"><span class="node-label">NICE Actimize</span><span class="badge st st-existing">Existing</span></div>
+    <div class="svc">Actimize + Feedzai</div><div class="note">AML / fraud screening.</div>
+  </div></div>
+  </div></div><h3 style="font-size:15px;margin:20px 0 8px">Today's information flows</h3><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Email / courier intake</span><span class="arrow" data-k="data">→</span><span class="tile">Manual document review</span><span class="flbl">documents</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Manual document review</span><span class="arrow" data-k="data">→</span><span class="tile">Trade Finance system</span><span class="flbl">keyed data</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Manual document review</span><span class="arrow" data-k="data">→</span><span class="tile">Manual exception tracking</span><span class="flbl">exceptions</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Trade Finance system</span><span class="arrow" data-k="data">→</span><span class="tile">FIS IST/Profile core</span><span class="flbl">postings</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-event">
+        <div class="flow-line"><span class="tile">Trade Finance system</span><span class="arrow" data-k="event">→</span><span class="tile">NICE Actimize</span><span class="flbl">screening</span><span class="badge fk fk-event">Event</span></div>
+        
+      </div>
+  </section>
+    <section id="target">
+    <div class="sec-h"><span class="num">3</span><h2>Target state (to-be)</h2></div>
+    <p class="caption">Named services reflect the solution we designed — not a predetermined cloud.</p>
+    <div class="statemap"><div class="band">
+    <div class="band-label">Experience &amp; Channels</div>
+    <div class="band-nodes"><div class="node k-channel">
+    <div class="node-h"><span class="node-label">Trade Finance workbench</span><span class="badge st st-new">New</span></div>
+    <div class="note">Officer reviews AI findings, approves/overrides.</div>
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Agentic Orchestration</div>
+    <div class="band-nodes"><div class="node k-agent">
+    <div class="node-h"><span class="node-label">L/C orchestrator agent</span><span class="badge st st-new">New</span></div>
+    <div class="note">Routes the document through the agent pipeline.</div>
+  </div><div class="node k-agent">
+    <div class="node-h"><span class="node-label">Intake &amp; extraction agent</span><span class="badge st st-new">New</span></div>
+    
+  </div><div class="node k-agent">
+    <div class="node-h"><span class="node-label">Clause-comparison agent</span><span class="badge st st-new">New</span></div>
+    <div class="note">Compares against L/C terms + UCP 600.</div>
+  </div><div class="node k-agent">
+    <div class="node-h"><span class="node-label">Discrepancy / exception agent</span><span class="badge st st-new">New</span></div>
+    
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Applications &amp; Services</div>
+    <div class="band-nodes"><div class="node k-service">
+    <div class="node-h"><span class="node-label">Document AI service</span><span class="badge prov prov-aws">AWS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">Amazon Textract + Bedrock</div>
+  </div><div class="node k-model">
+    <div class="node-h"><span class="node-label">Foundation model serving</span><span class="badge prov prov-aws">AWS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">Amazon Bedrock (Claude)</div>
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Data &amp; ML Platform</div>
+    <div class="band-nodes"><div class="node k-data_store">
+    <div class="node-h"><span class="node-label">Lakehouse</span><span class="badge prov prov-aws">AWS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">Databricks on AWS</div><div class="note">The bank's set target platform.</div>
+  </div><div class="node k-data_store">
+    <div class="node-h"><span class="node-label">Finance mart</span><span class="badge prov prov-saas">SaaS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">Snowflake</div>
+  </div><div class="node k-data_store">
+    <div class="node-h"><span class="node-label">Retrieval / vector index</span><span class="badge prov prov-aws">AWS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">Databricks Vector Search</div><div class="note">Grounds clause comparison in governed terms + rules.</div>
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Integration &amp; Rails</div>
+    <div class="band-nodes"><div class="node k-integration">
+    <div class="node-h"><span class="node-label">Event bus</span><span class="badge prov prov-aws">AWS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">Amazon EventBridge</div><div class="note">Document-arrival events drive the pipeline.</div>
+  </div><div class="node k-integration">
+    <div class="node-h"><span class="node-label">API gateway</span><span class="badge prov prov-aws">AWS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">Amazon API Gateway</div>
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Core Systems of Record</div>
+    <div class="band-nodes"><div class="node k-system">
+    <div class="node-h"><span class="node-label">Trade Finance system</span><span class="badge st st-changed">Changed</span></div>
+    <div class="note">Integrated via API — not replaced.</div>
+  </div><div class="node k-system">
+    <div class="node-h"><span class="node-label">FIS IST/Profile core</span><span class="badge st st-existing">Existing</span></div>
+    <div class="svc">FIS IST/Profile (mainframe)</div>
+  </div><div class="node k-control">
+    <div class="node-h"><span class="node-label">Model-risk control</span><span class="badge st st-new">New</span></div>
+    <div class="note">SR 11-7 validation + monitoring.</div>
+  </div><div class="node k-control">
+    <div class="node-h"><span class="node-label">AML / fraud control</span><span class="badge st st-existing">Existing</span></div>
+    <div class="svc">Actimize + Feedzai</div>
+  </div></div>
+  </div><div class="band">
+    <div class="band-label">Cloud &amp; Platform</div>
+    <div class="band-nodes"><div class="node k-external">
+    <div class="node-h"><span class="node-label">AWS landing zone</span><span class="badge prov prov-aws">AWS</span><span class="badge st st-new">New</span></div>
+    <div class="svc">AWS (VPC, IAM, KMS, CloudTrail)</div><div class="note">Security, lineage, observability.</div>
+  </div></div>
+  </div></div>
+  </section>
+    <section id="dataflow">
+    <div class="sec-h"><span class="num">4</span><h2>End-to-end data flow</h2></div>
+    <p class="caption">Where data moves — rendered distinct from where AI judgment happens.</p>
+    <div class="legend"><span class="l-data">Data flow</span></div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Trade Finance workbench</span><span class="arrow" data-k="data">→</span><span class="tile">API gateway</span><span class="flbl">document upload</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-event">
+        <div class="flow-line"><span class="tile">Event bus</span><span class="arrow" data-k="event">→</span><span class="tile">L/C orchestrator agent</span><span class="flbl">document arrived</span><span class="badge fk fk-event">Event</span></div>
+        
+      </div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Clause-comparison agent</span><span class="arrow" data-k="data">→</span><span class="tile">Retrieval / vector index</span><span class="flbl">retrieve terms + UCP rules</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Trade Finance workbench</span><span class="arrow" data-k="data">→</span><span class="tile">Trade Finance system</span><span class="flbl">approved posting</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Trade Finance system</span><span class="arrow" data-k="data">→</span><span class="tile">FIS IST/Profile core</span><span class="flbl">core update</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div><div class="flow k-event">
+        <div class="flow-line"><span class="tile">Discrepancy / exception agent</span><span class="arrow" data-k="event">→</span><span class="tile">AML / fraud control</span><span class="flbl">AML screening</span><span class="badge fk fk-event">Event</span></div>
+        
+      </div><div class="flow k-data">
+        <div class="flow-line"><span class="tile">Lakehouse</span><span class="arrow" data-k="data">→</span><span class="tile">Retrieval / vector index</span><span class="flbl">governed corpus</span><span class="badge fk fk-data">Data</span></div>
+        
+      </div>
+  </section>
+    <section id="aiflow">
+    <div class="sec-h"><span class="num">5</span><h2>AI decision &amp; control flow — how the services come alive</h2></div>
+    <p class="caption">The agentic overlay: where agents sit, what they call, how they are grounded and guarded, and where humans approve.</p>
+    <div class="legend"><span class="l-control">AI control / decision flow</span></div><div class="flow k-control">
+        <div class="flow-line"><span class="tile">L/C orchestrator agent</span><span class="arrow" data-k="control">→</span><span class="tile">Intake &amp; extraction agent</span><span class="flbl">extract</span><span class="badge fk fk-control">AI control</span></div>
+        
+      </div><div class="flow k-control">
+        <div class="flow-line"><span class="tile">Intake &amp; extraction agent</span><span class="arrow" data-k="control">→</span><span class="tile">Document AI service</span><span class="flbl">OCR + parse</span><span class="badge fk fk-control">AI control</span></div>
+        
+      </div><div class="flow k-control">
+        <div class="flow-line"><span class="tile">L/C orchestrator agent</span><span class="arrow" data-k="control">→</span><span class="tile">Clause-comparison agent</span><span class="flbl">compare clauses</span><span class="badge fk fk-control">AI control</span></div>
+        
+      </div><div class="flow k-control">
+        <div class="flow-line"><span class="tile">L/C orchestrator agent</span><span class="arrow" data-k="control">→</span><span class="tile">Discrepancy / exception agent</span><span class="flbl">flag discrepancies</span><span class="badge fk fk-control">AI control</span></div>
+        
+      </div><div class="flow k-human_approval">
+        <div class="flow-line"><span class="tile">Discrepancy / exception agent</span><span class="arrow" data-k="human_approval">→</span><span class="tile">Trade Finance workbench</span><span class="flbl">officer reviews exception</span><span class="badge fk fk-human_approval">Human approval</span></div>
+        
+      </div><div class="flow k-control">
+        <div class="flow-line"><span class="tile">Clause-comparison agent</span><span class="arrow" data-k="control">→</span><span class="tile">Model-risk control</span><span class="flbl">model-risk check</span><span class="badge fk fk-control">AI control</span></div>
+        
+      </div><h3 style="font-size:15px;margin:22px 0 10px">Agentic overlay</h3><div class="agents"><div class="agent">
+        <div class="agent-h"><span class="dot"></span><strong>Intake &amp; extraction agent</strong><span class="role">Extracts structured fields from unstructured L/C documents</span></div>
+        <div class="line"><span class="lk">Calls</span><span class="chip">Document AI service</span></div>
+        <div class="line"><span class="lk">Grounds on</span><span class="chip ground">Lakehouse</span></div>
+        <div class="line"><span class="lk">Guarded by</span><span class="chip guard">Model-risk control</span></div>
+        
+      </div><div class="agent">
+        <div class="agent-h"><span class="dot"></span><strong>Clause-comparison agent</strong><span class="role">Compares presented documents against L/C terms and UCP 600 rules</span></div>
+        <div class="line"><span class="lk">Calls</span><span class="chip">Foundation model serving</span></div>
+        <div class="line"><span class="lk">Grounds on</span><span class="chip ground">Retrieval / vector index</span></div>
+        <div class="line"><span class="lk">Guarded by</span><span class="chip guard">Model-risk control</span></div>
+        <div class="hil">Human-in-the-loop: Officer confirms any low-confidence clause match</div>
+      </div><div class="agent">
+        <div class="agent-h"><span class="dot"></span><strong>Discrepancy / exception agent</strong><span class="role">Identifies discrepancies and assembles the exception for review</span></div>
+        <div class="line"><span class="lk">Calls</span><span class="chip">Foundation model serving</span><span class="chip">Trade Finance system</span></div>
+        <div class="line"><span class="lk">Grounds on</span><span class="chip ground">Retrieval / vector index</span></div>
+        <div class="line"><span class="lk">Guarded by</span><span class="chip guard">AML / fraud control</span><span class="chip guard">Model-risk control</span></div>
+        <div class="hil">Human-in-the-loop: Trade-finance officer approves, overrides, or rejects every exception</div>
+      </div></div>
+  </section>
+    <section id="patterns">
+    <div class="sec-h"><span class="num">6</span><h2>Architecture patterns</h2></div>
+    <p class="caption">The patterns the design relies on, and why each matters.</p>
+    <div class="grid2"><div class="card"><div class="card-h">RAG (grounded clause comparison)</div><div class="note">Comparisons cite the actual L/C terms and UCP rules — auditable, not a black box.</div></div><div class="card"><div class="card-h">Tool-use</div><div class="note">Agents call governed systems (document AI, trade-finance system) rather than hold private state.</div></div><div class="card"><div class="card-h">Multi-agent orchestration</div><div class="note">Each step is a bounded, testable agent — easier to validate for model risk.</div></div><div class="card"><div class="card-h">Event-driven</div><div class="note">Document arrival drives the pipeline; throughput scales without adding headcount.</div></div><div class="card"><div class="card-h">Human-in-the-loop</div><div class="note">No exception clears without an officer — control and accountability preserved.</div></div></div>
+  </section>
+    <section id="controls">
+    <div class="sec-h"><span class="num">7</span><h2>Control points</h2></div>
+    <p class="caption">Human-in-the-loop, model-risk, and policy checkpoints built in by design.</p>
+    <div class="grid2"><div class="card"><div class="card-h">SR 11-7 model risk</div><div class="note">Every model decision is validated, versioned, and monitored.</div><div class="owner">Model Risk Management</div></div><div class="card"><div class="card-h">BSA/AML screening</div><div class="note">Discrepancies route through Actimize/Feedzai before posting.</div><div class="owner">Financial Crime</div></div><div class="card"><div class="card-h">Officer approval gate</div><div class="note">Exceptions require human approval; AI never auto-clears a discrepancy.</div><div class="owner">Trade Finance Ops</div></div><div class="card"><div class="card-h">Lineage &amp; audit</div><div class="note">Every extraction, comparison, and decision is logged with its evidence.</div><div class="owner">Architecture / Risk</div></div></div>
+  </section>
+    <section id="waves">
+    <div class="sec-h"><span class="num">8</span><h2>Implementation waves</h2></div>
+    <p class="caption">How the target is delivered — sequenced, with the outcome each wave unlocks.</p>
+    <div class="waves"><div class="wave"><div class="wave-h"><strong>Wave 1 — Foundation</strong><span class="win">0–90 days</span></div><ul><li>Lakehouse</li><li>Retrieval / vector index</li><li>Intake &amp; extraction agent</li><li>Trade Finance workbench</li></ul><div class="outcome">Documents ingested and extracted; officer workbench live in shadow mode.</div></div><div class="wave"><div class="wave-h"><strong>Wave 2 — Comparison &amp; exceptions</strong><span class="win">3–6 months</span></div><ul><li>Clause-comparison agent</li><li>Discrepancy / exception agent</li><li>Model-risk control</li></ul><div class="outcome">AI-assisted clause comparison and exception assembly, officer-approved.</div></div><div class="wave"><div class="wave-h"><strong>Wave 3 — Scale &amp; straight-through</strong><span class="win">6–12 months</span></div><ul><li>L/C orchestrator agent</li><li>Event bus</li><li>AML / fraud control</li></ul><div class="outcome">Low-risk cases flow straight through with controls hardened; throughput scales.</div></div></div>
+  </section>
+    <section id="decisions">
+    <div class="sec-h"><span class="num">9</span><h2>Architecture decisions required</h2></div>
+    <p class="caption">What the architecture leadership must decide, and what we still need to confirm.</p>
+    <div class="open-inputs"><div class="card-h">Open Inputs Required</div><ul><li>Annual L/C volume</li><li>Manual touch time per L/C</li><li>Average cycle time (receipt to decision)</li><li>Discrepancy rate</li><li>Current fully-loaded unit cost per L/C</li></ul></div>
+  </section>
+  </div>
+</body></html>"
+`;

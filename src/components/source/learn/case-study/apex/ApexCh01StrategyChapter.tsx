@@ -59,7 +59,7 @@ export function ApexCh01StrategyChapter() {
         <Lead>
           Rachel fills in the seven intake fields in about 25 minutes. The trigger
           paragraph is the most important — it is the spine of d01, and it is the text
-          that Sentinel will cite when it validates that a decision later in the lifecycle
+          that Ava will cite when she validates that a decision later in the lifecycle
           is consistent with the original strategic objective.
         </Lead>
         <Callout kind="info" icon="📋" label="SRC-004 · AMS Outsourcing 2026 · Intake record">
@@ -76,18 +76,18 @@ export function ApexCh01StrategyChapter() {
         </Callout>
         <BodyP>
           On submit, Source opens SRC-004 at Stage 1 / Strategy. The 8-stage rail appears.
-          Sentinel scaffolds the artifact registry — d01 through the award-readiness
+          Ava scaffolds the artifact registry — d01 through the award-readiness
           artifacts — and lands Rachel on the d01 card. She clicks &ldquo;Generate with
-          Sentinel.&rdquo;
+          Ava.&rdquo;
         </BodyP>
       </Section>
 
       <Section>
         <Eyebrow>d01 · Strategy memo</Eyebrow>
-        <SectionTitle>What Sentinel produced and what Rachel kept</SectionTitle>
+        <SectionTitle>What Ava produced and what Rachel kept</SectionTitle>
         <Lead>
-          Sentinel drafts d01 in 45 seconds. The draft is 80% usable — Rachel edits the
-          value band (Sentinel&rsquo;s first estimate was $28M; Chris&rsquo;s run-rate
+          Ava drafts d01 in 45 seconds. The draft is 80% usable — Rachel edits the
+          value band (Ava&rsquo;s first estimate was $28M; Chris&rsquo;s run-rate
           analysis puts the floor at $30M) and adds the Incumbent B clause date explicitly.
           Everything else she keeps verbatim.
         </Lead>
@@ -141,12 +141,12 @@ export function ApexCh01StrategyChapter() {
         <BodyP>
           Chris&rsquo;s note about the Incumbent B clause was a margin annotation on a
           printed slide. If it stays there, it surfaces at contract review — too late.
-          Because Rachel attached the photograph to d01 and Sentinel indexed it into the
+          Because Rachel attached the photograph to d01 and Ava indexed it into the
           artifact registry, the April 2026 exit deadline is visible from Strategy forward.
           Every downstream stage — scope, RFP, vendor selection — is shaped by that constraint.
         </BodyP>
         <Callout kind="info" icon="💡" label="Key pattern: strategy decisions echo through pricing">
-          In Chapter 6 (Pricing), Sentinel will flag that Northstar&rsquo;s original proposal
+          In Chapter 6 (Pricing), Ava will flag that Northstar&rsquo;s original proposal
           has no exit provision within 18 months. That flag lands in the pricing normalisation
           table as a contract risk line item, not as a contract-review surprise. It is traceable
           directly back to the April 2026 exit constraint that was documented here, in d01.

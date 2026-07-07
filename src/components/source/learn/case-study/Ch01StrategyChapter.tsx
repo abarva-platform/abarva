@@ -64,7 +64,7 @@ export function Ch01StrategyChapter() {
         </BodyP>
         <BodyP>
           That last clause — <em>&ldquo;with what exit posture&rdquo;</em> —
-          will show up four chapters from now as the reason Sentinel flags the
+          will show up four chapters from now as the reason Ava flags the
           Vendor A egress structure as P0. Strategy decisions echo through
           pricing.
         </BodyP>
@@ -96,17 +96,17 @@ export function Ch01StrategyChapter() {
         <BodyP>
           On submit, the canvas opens at Stage 1 / Strategy. The 11-stage rail
           appears across the top with everything past Strategy greyed out.
-          Sentinel scaffolds 33 artifact slots — d01 through d33 — and lands
-          Janet on the d01 card with a &ldquo;Generate with Sentinel&rdquo;
+          Ava scaffolds 33 artifact slots — d01 through d33 — and lands
+          Janet on the d01 card with a &ldquo;Generate with Ava&rdquo;
           button.
         </BodyP>
       </Section>
 
       <Section>
         <Eyebrow>1:00 p.m. · d01 generation</Eyebrow>
-        <SectionTitle>What Sentinel produced and what Janet edited</SectionTitle>
+        <SectionTitle>What Ava produced and what Janet edited</SectionTitle>
         <Lead>
-          Janet clicks Generate. Sentinel pulls intake metadata, the tenant
+          Janet clicks Generate. Ava pulls intake metadata, the tenant
           inventory (the colo lease record, the Epic version, headcount in
           Portland IT ops), and the canonical d01 prompt template. Forty
           seconds later there&rsquo;s a draft.
@@ -148,13 +148,13 @@ export function Ch01StrategyChapter() {
           that the cumulative impact figure assumes flat workload growth — a
           panel-readable assumption. Second, she adds a sentence about
           &ldquo;exit posture&rdquo; — Marcus&rsquo;s word — under strategic
-          posture. The provenance receipt shows the original Sentinel draft;
+          posture. The provenance receipt shows Ava&rsquo;s original draft;
           her edits surface as &ldquo;edited since generation.&rdquo;
         </BodyP>
 
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Drafted the strategy memo from intake metadata + tenant
@@ -215,7 +215,7 @@ export function Ch01StrategyChapter() {
           The most common Stage 1 pitfall is a generic trigger paragraph —{' '}
           <em>&ldquo;cloud transformation initiative&rdquo;</em>,{' '}
           <em>&ldquo;modernize infrastructure.&rdquo;</em> Those phrases give
-          Sentinel nothing to bind on in d05 and d09; they read as marketing
+          Ava nothing to bind on in d05 and d09; they read as marketing
           copy in d24. Marcus&rsquo;s actual framing — named lease, named
           rate, explicit out-of-consideration — is what makes the rest of the
           event composable.

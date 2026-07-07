@@ -13,7 +13,8 @@
 import {
   canAccessTenantClient,
   tenantKeyForProgramCode,
-} from '../tenant-access';
+} from "../tenant-access";
+import { AGENT_CLIENT_LOGINS } from "../agent-client-logins";
 import {
   inferSessionRoleFromEmail,
   isLockedTenantRole,
@@ -21,7 +22,7 @@ import {
   resolveSessionClientKey,
   resolveSessionRole,
   shouldStripUnauthorizedClientParam,
-} from '../access-routing';
+} from "../access-routing";
 import {
   ALL_CLIENTS,
   DEFAULT_CLIENT_KEY,
@@ -31,8 +32,8 @@ import {
   industryCodeForClientName,
   isClientKey,
   type ClientKey,
-} from '@/lib/client-config';
-import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
+} from "@/lib/client-config";
+import { findTenantByRouteSlug } from "@/lib/deliverables/seed-route-resolver";
 
 // ----------------------------------------------------------------------
 // Snapshot helpers — mirror the shape produced inside tenant-access.ts.
@@ -43,7 +44,7 @@ type TestSnapshot = Parameters<typeof canAccessTenantClient>[0];
 
 function snapshot(overrides: Partial<TestSnapshot> = {}): TestSnapshot {
   return {
-    sessionRole: 'client',
+    sessionRole: "client",
     pinnedClientKey: null,
     membershipClientKeys: [],
     inferredClientKey: null,
@@ -58,34 +59,40 @@ const CANONICAL_TENANTS: ReadonlyArray<{
   exampleProgramCode: string;
 }> = [
   {
-    tenantKey: 'apexretail',
-    routeSlug: 'apex-retail',
-    programCodePrefix: 'APX',
-    exampleProgramCode: 'APX-01',
+    tenantKey: "apexretail",
+    routeSlug: "apex-retail",
+    programCodePrefix: "APX",
+    exampleProgramCode: "APX-01",
   },
   {
-    tenantKey: 'meridian',
-    routeSlug: 'meridian-health',
-    programCodePrefix: 'MRD',
-    exampleProgramCode: 'MRD-01',
+    tenantKey: "meridian",
+    routeSlug: "meridian-health",
+    programCodePrefix: "MRD",
+    exampleProgramCode: "MRD-01",
   },
   {
-    tenantKey: 'arcturus',
-    routeSlug: 'first-capital-financial',
-    programCodePrefix: 'FCF',
-    exampleProgramCode: 'FCF-01',
+    tenantKey: "arcturus",
+    routeSlug: "first-capital-financial",
+    programCodePrefix: "FCF",
+    exampleProgramCode: "FCF-01",
   },
   {
-    tenantKey: 'northstar',
-    routeSlug: 'northstar-clinical',
-    programCodePrefix: 'NST',
-    exampleProgramCode: '',
+    tenantKey: "northstar",
+    routeSlug: "northstar-clinical",
+    programCodePrefix: "NST",
+    exampleProgramCode: "",
   },
   {
-    tenantKey: 'skyharbor',
-    routeSlug: 'skyharbor-air',
-    programCodePrefix: 'SKY',
-    exampleProgramCode: '',
+    tenantKey: "skyharbor",
+    routeSlug: "skyharbor-air",
+    programCodePrefix: "SKY",
+    exampleProgramCode: "",
+  },
+  {
+    tenantKey: "lakeshore",
+    routeSlug: "lakeshore-holdings",
+    programCodePrefix: "LSH",
+    exampleProgramCode: "",
   },
 ];
 
@@ -93,30 +100,37 @@ const CANONICAL_TENANTS: ReadonlyArray<{
 // Probe 1 · canAccessTenantClient · cross-tenant access denial
 // =====================================================================
 
-describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () => {
-  it('blocks a Meridian-pinned client from reading the Apex Retail tenant', () => {
+describe("Probe 1 · canAccessTenantClient · cross-tenant access denial", () => {
+  it("blocks a Meridian-pinned client from reading the Apex Retail tenant", () => {
     const meridianUser = snapshot({
-      sessionRole: 'client',
-      pinnedClientKey: 'meridian',
-      membershipClientKeys: ['meridian'],
+      sessionRole: "client",
+      pinnedClientKey: "meridian",
+      membershipClientKeys: ["meridian"],
     });
-    expect(canAccessTenantClient(meridianUser, 'apexretail')).toBe(false);
+    expect(canAccessTenantClient(meridianUser, "apexretail")).toBe(false);
   });
 
-  it('blocks an Apex-pinned client from reading the Meridian tenant', () => {
+  it("blocks an Apex-pinned client from reading the Meridian tenant", () => {
     const apexUser = snapshot({
-      sessionRole: 'client',
-      pinnedClientKey: 'apexretail',
-      membershipClientKeys: ['apexretail'],
+      sessionRole: "client",
+      pinnedClientKey: "apexretail",
+      membershipClientKeys: ["apexretail"],
     });
-    expect(canAccessTenantClient(apexUser, 'meridian')).toBe(false);
+    expect(canAccessTenantClient(apexUser, "meridian")).toBe(false);
   });
 
-  it('blocks every cross-tenant pair across the active canonical tenants', () => {
-    const tenants: ClientKey[] = ['meridian', 'apexretail', 'arcturus', 'northstar', 'skyharbor'];
+  it("blocks every cross-tenant pair across the active canonical tenants", () => {
+    const tenants: ClientKey[] = [
+      "meridian",
+      "apexretail",
+      "arcturus",
+      "northstar",
+      "skyharbor",
+      "lakeshore",
+    ];
     for (const userTenant of tenants) {
       const user = snapshot({
-        sessionRole: 'client',
+        sessionRole: "client",
         pinnedClientKey: userTenant,
         membershipClientKeys: [userTenant],
       });
@@ -127,45 +141,52 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
     }
   });
 
-  it('allows a client whose membership list contains the target tenant', () => {
+  it("allows a client whose membership list contains the target tenant", () => {
     const multiTenantUser = snapshot({
-      sessionRole: 'client',
-      membershipClientKeys: ['meridian', 'arcturus'],
+      sessionRole: "client",
+      membershipClientKeys: ["meridian", "arcturus"],
       pinnedClientKey: null,
     });
-    expect(canAccessTenantClient(multiTenantUser, 'meridian')).toBe(true);
-    expect(canAccessTenantClient(multiTenantUser, 'arcturus')).toBe(true);
-    expect(canAccessTenantClient(multiTenantUser, 'apexretail')).toBe(false);
+    expect(canAccessTenantClient(multiTenantUser, "meridian")).toBe(true);
+    expect(canAccessTenantClient(multiTenantUser, "arcturus")).toBe(true);
+    expect(canAccessTenantClient(multiTenantUser, "apexretail")).toBe(false);
   });
 
-  it('allows a client pinned to the target tenant when membership list is empty', () => {
+  it("allows a client pinned to the target tenant when membership list is empty", () => {
     const pinnedOnlyUser = snapshot({
-      sessionRole: 'client',
-      pinnedClientKey: 'skyharbor',
+      sessionRole: "client",
+      pinnedClientKey: "skyharbor",
       membershipClientKeys: [],
     });
-    expect(canAccessTenantClient(pinnedOnlyUser, 'skyharbor')).toBe(true);
-    expect(canAccessTenantClient(pinnedOnlyUser, 'meridian')).toBe(false);
+    expect(canAccessTenantClient(pinnedOnlyUser, "skyharbor")).toBe(true);
+    expect(canAccessTenantClient(pinnedOnlyUser, "meridian")).toBe(false);
   });
 
-  it('prefers email-inferred tenant when no memberships are present for client users', () => {
+  it("prefers email-inferred tenant when no memberships are present for client users", () => {
     const inferredTenantUser = snapshot({
-      sessionRole: 'client',
-      pinnedClientKey: 'meridian',
-      inferredClientKey: 'apexretail',
+      sessionRole: "client",
+      pinnedClientKey: "meridian",
+      inferredClientKey: "apexretail",
       membershipClientKeys: [],
     });
-    expect(canAccessTenantClient(inferredTenantUser, 'apexretail')).toBe(true);
-    expect(canAccessTenantClient(inferredTenantUser, 'meridian')).toBe(false);
+    expect(canAccessTenantClient(inferredTenantUser, "apexretail")).toBe(true);
+    expect(canAccessTenantClient(inferredTenantUser, "meridian")).toBe(false);
   });
 
-  it('blocks a client with no pinned tenant and no membership', () => {
+  it("blocks a client with no pinned tenant and no membership", () => {
     const orphanUser = snapshot({
-      sessionRole: 'client',
+      sessionRole: "client",
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'northstar', 'skyharbor'] as ClientKey[]) {
+    for (const tenant of [
+      "meridian",
+      "apexretail",
+      "arcturus",
+      "northstar",
+      "skyharbor",
+      "lakeshore",
+    ] as ClientKey[]) {
       expect(canAccessTenantClient(orphanUser, tenant)).toBe(false);
     }
   });
@@ -175,45 +196,52 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
 // Probe 2 · canAccessTenantClient · admin / role behavior
 // =====================================================================
 
-describe('Probe 2 · canAccessTenantClient · admin role behavior', () => {
-  it('allows admin role to access every canonical tenant regardless of pinning', () => {
+describe("Probe 2 · canAccessTenantClient · admin role behavior", () => {
+  it("allows admin role to access every canonical tenant regardless of pinning", () => {
     const adminUser = snapshot({
-      sessionRole: 'admin',
+      sessionRole: "admin",
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'northstar', 'skyharbor'] as ClientKey[]) {
+    for (const tenant of [
+      "meridian",
+      "apexretail",
+      "arcturus",
+      "northstar",
+      "skyharbor",
+      "lakeshore",
+    ] as ClientKey[]) {
       expect(canAccessTenantClient(adminUser, tenant)).toBe(true);
     }
   });
 
-  it('does not implicitly elevate maestro role to admin', () => {
+  it("does not implicitly elevate maestro role to admin", () => {
     const maestroUser = snapshot({
-      sessionRole: 'maestro',
+      sessionRole: "maestro",
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
     // Maestro with no pin and no membership should be denied to avoid
     // accidentally widening the surface; explicit admin is required.
-    expect(canAccessTenantClient(maestroUser, 'meridian')).toBe(false);
+    expect(canAccessTenantClient(maestroUser, "meridian")).toBe(false);
   });
 
-  it('does not implicitly elevate investor role to admin', () => {
+  it("does not implicitly elevate investor role to admin", () => {
     const investorUser = snapshot({
-      sessionRole: 'investor',
+      sessionRole: "investor",
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    expect(canAccessTenantClient(investorUser, 'meridian')).toBe(false);
+    expect(canAccessTenantClient(investorUser, "meridian")).toBe(false);
   });
 
-  it('does not allow unknown/external roles to bypass the gate', () => {
+  it("does not allow unknown/external roles to bypass the gate", () => {
     const externalUser = snapshot({
-      sessionRole: 'external',
+      sessionRole: "external",
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    expect(canAccessTenantClient(externalUser, 'meridian')).toBe(false);
+    expect(canAccessTenantClient(externalUser, "meridian")).toBe(false);
   });
 });
 
@@ -221,8 +249,8 @@ describe('Probe 2 · canAccessTenantClient · admin role behavior', () => {
 // Probe 3 · findTenantByRouteSlug · canonical and unknown slugs
 // =====================================================================
 
-describe('Probe 3 · findTenantByRouteSlug · slug resolution', () => {
-  it('resolves the canonical route slug for every canonical tenant', () => {
+describe("Probe 3 · findTenantByRouteSlug · slug resolution", () => {
+  it("resolves the canonical route slug for every canonical tenant", () => {
     for (const t of CANONICAL_TENANTS) {
       const tenant = findTenantByRouteSlug(t.routeSlug);
       expect(tenant).not.toBeNull();
@@ -230,7 +258,7 @@ describe('Probe 3 · findTenantByRouteSlug · slug resolution', () => {
     }
   });
 
-  it('also resolves by tenantKey alias (the seed treats key and slug interchangeably)', () => {
+  it("also resolves by tenantKey alias (the seed treats key and slug interchangeably)", () => {
     for (const t of CANONICAL_TENANTS) {
       const tenant = findTenantByRouteSlug(t.tenantKey);
       expect(tenant).not.toBeNull();
@@ -238,18 +266,18 @@ describe('Probe 3 · findTenantByRouteSlug · slug resolution', () => {
     }
   });
 
-  it('returns null for an unknown tenant slug', () => {
-    expect(findTenantByRouteSlug('not-a-real-tenant')).toBeNull();
-    expect(findTenantByRouteSlug('apex-retial')).toBeNull(); // typo
+  it("returns null for an unknown tenant slug", () => {
+    expect(findTenantByRouteSlug("not-a-real-tenant")).toBeNull();
+    expect(findTenantByRouteSlug("apex-retial")).toBeNull(); // typo
   });
 
-  it('returns null for an empty slug', () => {
-    expect(findTenantByRouteSlug('')).toBeNull();
+  it("returns null for an empty slug", () => {
+    expect(findTenantByRouteSlug("")).toBeNull();
   });
 
-  it('does not match a partial slug substring', () => {
-    expect(findTenantByRouteSlug('apex')).toBeNull();
-    expect(findTenantByRouteSlug('meridian-health-typo')).toBeNull();
+  it("does not match a partial slug substring", () => {
+    expect(findTenantByRouteSlug("apex")).toBeNull();
+    expect(findTenantByRouteSlug("meridian-health-typo")).toBeNull();
   });
 });
 
@@ -257,33 +285,33 @@ describe('Probe 3 · findTenantByRouteSlug · slug resolution', () => {
 // Probe 4 · tenantKeyForProgramCode · seed-driven mapping
 // =====================================================================
 
-describe('Probe 4 · tenantKeyForProgramCode · program → tenant key', () => {
-  it('maps APX-* program codes to the apexretail tenant key', () => {
-    expect(tenantKeyForProgramCode('APX-01')).toBe('apexretail');
-    expect(tenantKeyForProgramCode('APX-02')).toBe('apexretail');
+describe("Probe 4 · tenantKeyForProgramCode · program → tenant key", () => {
+  it("maps APX-* program codes to the apexretail tenant key", () => {
+    expect(tenantKeyForProgramCode("APX-01")).toBe("apexretail");
+    expect(tenantKeyForProgramCode("APX-02")).toBe("apexretail");
   });
 
-  it('maps MRD-* program codes to the meridian tenant key', () => {
-    expect(tenantKeyForProgramCode('MRD-01')).toBe('meridian');
-    expect(tenantKeyForProgramCode('MRD-02')).toBe('meridian');
+  it("maps MRD-* program codes to the meridian tenant key", () => {
+    expect(tenantKeyForProgramCode("MRD-01")).toBe("meridian");
+    expect(tenantKeyForProgramCode("MRD-02")).toBe("meridian");
   });
 
-  it('is case-insensitive and trims whitespace on the program code', () => {
-    expect(tenantKeyForProgramCode(' apx-01 ')).toBe('apexretail');
-    expect(tenantKeyForProgramCode('apx-01')).toBe('apexretail');
+  it("is case-insensitive and trims whitespace on the program code", () => {
+    expect(tenantKeyForProgramCode(" apx-01 ")).toBe("apexretail");
+    expect(tenantKeyForProgramCode("apx-01")).toBe("apexretail");
   });
 
-  it('returns null for an unknown program code', () => {
-    expect(tenantKeyForProgramCode('XXX-99')).toBeNull();
-    expect(tenantKeyForProgramCode('')).toBeNull();
+  it("returns null for an unknown program code", () => {
+    expect(tenantKeyForProgramCode("XXX-99")).toBeNull();
+    expect(tenantKeyForProgramCode("")).toBeNull();
   });
 
-  it('does not cross-bind APX codes to the meridian tenant', () => {
-    expect(tenantKeyForProgramCode('APX-01')).not.toBe('meridian');
+  it("does not cross-bind APX codes to the meridian tenant", () => {
+    expect(tenantKeyForProgramCode("APX-01")).not.toBe("meridian");
   });
 
-  it('does not cross-bind MRD codes to the apexretail tenant', () => {
-    expect(tenantKeyForProgramCode('MRD-01')).not.toBe('apexretail');
+  it("does not cross-bind MRD codes to the apexretail tenant", () => {
+    expect(tenantKeyForProgramCode("MRD-01")).not.toBe("apexretail");
   });
 });
 
@@ -291,54 +319,102 @@ describe('Probe 4 · tenantKeyForProgramCode · program → tenant key', () => {
 // Probe 5 · email-based client inference
 // =====================================================================
 
-describe('Probe 5 · inferClientKeyFromEmail', () => {
-  it('infers meridian from canonical Meridian client emails', () => {
-    expect(inferClientKeyFromEmail('elena.rivera@meridian-health.example.com')).toBe(
-      'meridian',
+describe("Probe 5 · inferClientKeyFromEmail", () => {
+  it("infers meridian from canonical Meridian client emails", () => {
+    expect(
+      inferClientKeyFromEmail("elena.rivera@meridian-health.example.com"),
+    ).toBe("meridian");
+    expect(
+      inferClientKeyFromEmail("nina.patel@meridian-health.example.com"),
+    ).toBe("meridian");
+  });
+
+  it("infers apexretail from canonical Apex Retail client emails", () => {
+    expect(inferClientKeyFromEmail("noah.patel@apex-retail.example.com")).toBe(
+      "apexretail",
     );
-    expect(inferClientKeyFromEmail('nina.patel@meridian-health.example.com')).toBe('meridian');
-  });
-
-  it('infers apexretail from canonical Apex Retail client emails', () => {
-    expect(inferClientKeyFromEmail('noah.patel@apex-retail.example.com')).toBe(
-      'apexretail',
+    expect(inferClientKeyFromEmail("maya.desai@apex-retail.example.com")).toBe(
+      "apexretail",
     );
-    expect(inferClientKeyFromEmail('maya.desai@apex-retail.example.com')).toBe('apexretail');
-    expect(inferClientKeyFromEmail('anand+apex@abarva.com')).toBe('apexretail');
+    expect(inferClientKeyFromEmail("anand+apex@abarva.com")).toBe("apexretail");
   });
 
-  it('infers arcturus from canonical First Capital client emails', () => {
-    expect(inferClientKeyFromEmail('lena.ortiz@firstcapital.example.com')).toBe(
-      'arcturus',
+  it("infers arcturus from canonical First Capital client emails", () => {
+    expect(inferClientKeyFromEmail("lena.ortiz@firstcapital.example.com")).toBe(
+      "arcturus",
     );
-    expect(inferClientKeyFromEmail('ethan.brooks@firstcapital.example.com')).toBe(
-      'arcturus',
+    expect(
+      inferClientKeyFromEmail("ethan.brooks@firstcapital.example.com"),
+    ).toBe("arcturus");
+    expect(inferClientKeyFromEmail("rachel.kim@firstcapital.example.com")).toBe(
+      "arcturus",
     );
-    expect(inferClientKeyFromEmail('rachel.kim@firstcapital.example.com')).toBe('arcturus');
   });
 
-  it('infers skyharbor from canonical SkyHarbor client emails', () => {
-    expect(inferClientKeyFromEmail('cto@skyharbor-air.example.com')).toBe('skyharbor');
-    expect(inferClientKeyFromEmail('admin@skyharbor-air.example.com')).toBe('skyharbor');
-    expect(inferClientKeyFromEmail('anand+skyharbor@abarva.com')).toBe('skyharbor');
+  it("infers skyharbor from canonical SkyHarbor client emails", () => {
+    expect(inferClientKeyFromEmail("cto@skyharbor-air.example.com")).toBe(
+      "skyharbor",
+    );
+    expect(inferClientKeyFromEmail("admin@skyharbor-air.example.com")).toBe(
+      "skyharbor",
+    );
+    expect(inferClientKeyFromEmail("anand+skyharbor@abarva.com")).toBe(
+      "skyharbor",
+    );
   });
 
-  it('does not infer retired energy demo emails', () => {
-    expect(inferClientKeyFromEmail('retired-energy-demo@example.com')).toBeNull();
-    expect(inferClientKeyFromEmail('retired-energy-alias@example.com')).toBeNull();
+  it("infers lakeshore from canonical Lakeshore client emails", () => {
+    expect(inferClientKeyFromEmail("cfo@lakeshore-holdings.example.com")).toBe(
+      "lakeshore",
+    );
+    expect(
+      inferClientKeyFromEmail("admin@lakeshore-holdings.example.com"),
+    ).toBe("lakeshore");
+    expect(inferClientKeyFromEmail("anand+lakeshore@abarva.com")).toBe(
+      "lakeshore",
+    );
   });
 
-  it('returns null for unknown emails', () => {
-    expect(inferClientKeyFromEmail('someone@example.com')).toBeNull();
+  it("does not infer retired energy demo emails", () => {
+    expect(
+      inferClientKeyFromEmail("retired-energy-demo@example.com"),
+    ).toBeNull();
+    expect(
+      inferClientKeyFromEmail("retired-energy-alias@example.com"),
+    ).toBeNull();
+  });
+
+  it("returns null for unknown emails", () => {
+    expect(inferClientKeyFromEmail("someone@example.com")).toBeNull();
     expect(inferClientKeyFromEmail(null)).toBeNull();
     expect(inferClientKeyFromEmail(undefined)).toBeNull();
-    expect(inferClientKeyFromEmail('')).toBeNull();
+    expect(inferClientKeyFromEmail("")).toBeNull();
   });
 
-  it('does not cross-bind a Meridian email to a non-Meridian tenant', () => {
-    expect(inferClientKeyFromEmail('elena.rivera@meridian-health.example.com')).not.toBe(
-      'apexretail',
-    );
+  it("does not cross-bind a Meridian email to a non-Meridian tenant", () => {
+    expect(
+      inferClientKeyFromEmail("elena.rivera@meridian-health.example.com"),
+    ).not.toBe("apexretail");
+  });
+
+  it("pins every automation agent roster email to its client key", () => {
+    for (const agent of AGENT_CLIENT_LOGINS) {
+      expect(inferClientKeyFromEmail(agent.email)).toBe(agent.clientKey);
+      expect(inferClientKeyFromEmail(agent.email.toUpperCase())).toBe(
+        agent.clientKey,
+      );
+    }
+  });
+
+  it("does not infer non-roster automation-domain emails", () => {
+    expect(
+      inferClientKeyFromEmail("unknown-agent@abarva.example.com"),
+    ).toBeNull();
+    expect(
+      resolveSessionClientKey({
+        email: "unknown-agent@abarva.example.com",
+      }),
+    ).toBe(DEFAULT_CLIENT_KEY);
   });
 });
 
@@ -346,20 +422,25 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
 // Probe 5b · industryCodeForClientName · demo-client industry fallback
 // =====================================================================
 
-describe('Probe 5b · industryCodeForClientName', () => {
-  it('maps canonical demo client names to their program industry codes', () => {
-    expect(industryCodeForClientName('Apex Retail')).toBe('RETAIL');
-    expect(industryCodeForClientName('Apex Retail Group')).toBe('RETAIL');
-    expect(industryCodeForClientName('Meridian Health')).toBe('HEALTHCARE_IDN');
-    expect(industryCodeForClientName('Meridian Health System')).toBe('HEALTHCARE_IDN');
-    expect(industryCodeForClientName('First Capital')).toBe('FINSERV');
-    expect(industryCodeForClientName('Arcturus Financial Group')).toBe('FINSERV');
-    expect(industryCodeForClientName('SkyHarbor Air')).toBe('AIRLINE');
+describe("Probe 5b · industryCodeForClientName", () => {
+  it("maps canonical demo client names to their program industry codes", () => {
+    expect(industryCodeForClientName("Apex Retail")).toBe("RETAIL");
+    expect(industryCodeForClientName("Apex Retail Group")).toBe("RETAIL");
+    expect(industryCodeForClientName("Meridian Health")).toBe("HEALTHCARE_IDN");
+    expect(industryCodeForClientName("Meridian Health System")).toBe(
+      "HEALTHCARE_IDN",
+    );
+    expect(industryCodeForClientName("First Capital")).toBe("FINSERV");
+    expect(industryCodeForClientName("Arcturus Financial Group")).toBe(
+      "FINSERV",
+    );
+    expect(industryCodeForClientName("SkyHarbor Air")).toBe("AIRLINE");
+    expect(industryCodeForClientName("Lakeshore Holdings")).toBe("DIVERSIFIED");
   });
 
-  it('returns null for unknown or empty client names', () => {
-    expect(industryCodeForClientName('Unknown Client')).toBeNull();
-    expect(industryCodeForClientName('')).toBeNull();
+  it("returns null for unknown or empty client names", () => {
+    expect(industryCodeForClientName("Unknown Client")).toBeNull();
+    expect(industryCodeForClientName("")).toBeNull();
     expect(industryCodeForClientName(null)).toBeNull();
   });
 });
@@ -368,22 +449,42 @@ describe('Probe 5b · industryCodeForClientName', () => {
 // Probe 5c · First Capital display canonicalization
 // =====================================================================
 
-describe('Probe 5c · canonicalClientDisplayName', () => {
-  it('keeps the internal arcturus key compatible while rendering First Capital to users', () => {
-    expect(getClientOption('arcturus').name).toBe('First Capital Financial');
-    expect(canonicalClientDisplayName({ key: 'arcturus' })).toBe('First Capital Financial');
+describe("Probe 5c · canonicalClientDisplayName", () => {
+  it("renders Meridian aliases as the generic Healthcare Demo name", () => {
+    expect(canonicalClientDisplayName({ key: "meridian" })).toBe(
+      "Healthcare Demo",
+    );
     expect(
       canonicalClientDisplayName({
-        key: 'arcturus',
-        name: 'Arcturus Financial Group',
+        key: "meridian",
+        name: "Meridian Health",
       }),
-    ).toBe('First Capital Financial');
+    ).toBe("Healthcare Demo");
     expect(
       canonicalClientDisplayName({
-        key: 'first-capital',
-        name: 'Arcturus Financial',
+        key: "meridian-health",
+        name: "Heliara Health Alliance",
       }),
-    ).toBe('First Capital Financial');
+    ).toBe("Healthcare Demo");
+  });
+
+  it("keeps the internal arcturus key compatible while rendering Financial Services Demo to users", () => {
+    expect(getClientOption("arcturus").name).toBe("Financial Services Demo");
+    expect(canonicalClientDisplayName({ key: "arcturus" })).toBe(
+      "Financial Services Demo",
+    );
+    expect(
+      canonicalClientDisplayName({
+        key: "arcturus",
+        name: "Arcturus Financial Group",
+      }),
+    ).toBe("Financial Services Demo");
+    expect(
+      canonicalClientDisplayName({
+        key: "first-capital",
+        name: "Arcturus Financial",
+      }),
+    ).toBe("Financial Services Demo");
   });
 });
 
@@ -391,47 +492,63 @@ describe('Probe 5c · canonicalClientDisplayName', () => {
 // Probe 6 · session-role inference
 // =====================================================================
 
-describe('Probe 6 · session role inference', () => {
-  it('does not infer admin from Anand emails without Clerk metadata', () => {
-    expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBeNull();
-    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBeNull();
+describe("Probe 6 · session role inference", () => {
+  it("does not infer admin from Anand emails without Clerk metadata", () => {
+    expect(inferSessionRoleFromEmail("anand+clerk_test@abarva.com")).toBeNull();
+    expect(
+      inferSessionRoleFromEmail("anand.sundaram@thesundaram.com"),
+    ).toBeNull();
   });
 
-  it('does not infer investor from retired investor emails', () => {
-    expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBeNull();
+  it("infers locked client behavior for Anand single-tenant operator aliases only", () => {
+    expect(
+      inferSessionRoleFromEmail("anand.sundaram+apex@thesundaram.com"),
+    ).toBe("client");
+    expect(inferSessionRoleFromEmail("other+apex@thesundaram.com")).toBeNull();
   });
 
-  it('infers client for canonical client emails', () => {
-    expect(inferSessionRoleFromEmail('elena.rivera@meridian-health.example.com')).toBe(
-      'client',
-    );
-    expect(inferSessionRoleFromEmail('noah.patel@apex-retail.example.com')).toBe(
-      'client',
-    );
-    expect(inferSessionRoleFromEmail('anand+apex@abarva.com')).toBe('client');
+  it("does not infer investor from retired investor emails", () => {
+    expect(
+      inferSessionRoleFromEmail("investor+clerk_test@abarva.com"),
+    ).toBeNull();
   });
 
-  it('returns null for unknown emails', () => {
-    expect(inferSessionRoleFromEmail('someone@example.com')).toBeNull();
+  it("infers client for canonical client emails", () => {
+    expect(
+      inferSessionRoleFromEmail("elena.rivera@meridian-health.example.com"),
+    ).toBe("client");
+    expect(
+      inferSessionRoleFromEmail("noah.patel@apex-retail.example.com"),
+    ).toBe("client");
+    expect(inferSessionRoleFromEmail("anand+apex@abarva.com")).toBe("client");
+    expect(
+      inferSessionRoleFromEmail("cfo@lakeshore-holdings.example.com"),
+    ).toBe("client");
+  });
+
+  it("returns null for unknown emails", () => {
+    expect(inferSessionRoleFromEmail("someone@example.com")).toBeNull();
     expect(inferSessionRoleFromEmail(null)).toBeNull();
   });
 
-  it('resolveSessionRole prefers an explicit role over email inference', () => {
-    expect(resolveSessionRole('admin', 'elena.rivera@meridian-health.example.com')).toBe(
-      'admin',
-    );
+  it("resolveSessionRole prefers an explicit role over email inference", () => {
+    expect(
+      resolveSessionRole("admin", "elena.rivera@meridian-health.example.com"),
+    ).toBe("admin");
   });
 
-  it('resolveSessionRole falls back to email when no role is supplied', () => {
-    expect(resolveSessionRole(null, 'investor+clerk_test@abarva.com')).toBeNull();
+  it("resolveSessionRole falls back to email when no role is supplied", () => {
+    expect(
+      resolveSessionRole(null, "investor+clerk_test@abarva.com"),
+    ).toBeNull();
   });
 
-  it('isLockedTenantRole is true for client and maestro, false for admin/investor/external', () => {
-    expect(isLockedTenantRole('client', null)).toBe(true);
-    expect(isLockedTenantRole('maestro', null)).toBe(true);
-    expect(isLockedTenantRole('admin', null)).toBe(false);
-    expect(isLockedTenantRole('investor', null)).toBe(false);
-    expect(isLockedTenantRole('external', null)).toBe(false);
+  it("isLockedTenantRole is true for client and maestro, false for admin/investor/external", () => {
+    expect(isLockedTenantRole("client", null)).toBe(true);
+    expect(isLockedTenantRole("maestro", null)).toBe(true);
+    expect(isLockedTenantRole("admin", null)).toBe(false);
+    expect(isLockedTenantRole("investor", null)).toBe(false);
+    expect(isLockedTenantRole("external", null)).toBe(false);
   });
 });
 
@@ -439,47 +556,89 @@ describe('Probe 6 · session role inference', () => {
 // Probe 7 · pinned client resolution
 // =====================================================================
 
-describe('Probe 7 · resolvePinnedSessionClientKey', () => {
-  it('returns explicit clientId when it is a known ClientKey', () => {
-    expect(resolvePinnedSessionClientKey({ clientId: 'apexretail' })).toBe(
-      'apexretail',
+describe("Probe 7 · resolvePinnedSessionClientKey", () => {
+  it("returns explicit clientId when it is a known ClientKey", () => {
+    expect(resolvePinnedSessionClientKey({ clientId: "apexretail" })).toBe(
+      "apexretail",
     );
   });
 
-  it('falls back to defaultClientId when explicit clientId is invalid', () => {
+  it("falls back to defaultClientId when explicit clientId is invalid", () => {
     expect(
       resolvePinnedSessionClientKey({
-        clientId: 'not-a-tenant',
-        defaultClientId: 'meridian',
+        clientId: "not-a-tenant",
+        defaultClientId: "meridian",
       }),
-    ).toBe('meridian');
+    ).toBe("meridian");
   });
 
-  it('falls back to email inference when neither clientId nor default is set', () => {
+  it("falls back to email inference when neither clientId nor default is set", () => {
     expect(
       resolvePinnedSessionClientKey({
-        email: 'ethan.brooks@firstcapital.example.com',
+        email: "ethan.brooks@firstcapital.example.com",
       }),
-    ).toBe('arcturus');
+    ).toBe("arcturus");
   });
 
-  it('explicit tenant email aliases override stale conflicting metadata', () => {
+  it("explicit tenant email aliases override stale conflicting metadata", () => {
     expect(
       resolvePinnedSessionClientKey({
-        clientId: 'meridian',
-        defaultClientId: 'meridian',
-        email: 'anand+apex@abarva.com',
+        clientId: "meridian",
+        defaultClientId: "meridian",
+        email: "anand+apex@abarva.com",
       }),
-    ).toBe('apexretail');
+    ).toBe("apexretail");
   });
 
-  it('returns null when no signal resolves to a ClientKey', () => {
-    expect(resolvePinnedSessionClientKey({ email: 'unknown@example.com' })).toBeNull();
+  it("Anand single-tenant operator aliases override stale conflicting metadata", () => {
+    expect(
+      resolvePinnedSessionClientKey({
+        clientId: "meridian",
+        defaultClientId: "meridian",
+        email: "anand.sundaram+apex@thesundaram.com",
+      }),
+    ).toBe("apexretail");
+    expect(
+      resolvePinnedSessionClientKey({
+        clientId: "apexretail",
+        defaultClientId: "apexretail",
+        email: "anand.sundaram+skyharbor@thesundaram.com",
+      }),
+    ).toBe("skyharbor");
+  });
+
+  it("Lakeshore tenant emails override stale conflicting metadata", () => {
+    expect(
+      resolvePinnedSessionClientKey({
+        clientId: "apexretail",
+        defaultClientId: "meridian",
+        email: "cfo@lakeshore-holdings.example.com",
+      }),
+    ).toBe("lakeshore");
+  });
+
+  it("agent roster emails override stale conflicting metadata", () => {
+    for (const agent of AGENT_CLIENT_LOGINS) {
+      expect(
+        resolvePinnedSessionClientKey({
+          clientId:
+            agent.clientKey === "apexretail" ? "meridian" : "apexretail",
+          defaultClientId: DEFAULT_CLIENT_KEY,
+          email: agent.email,
+        }),
+      ).toBe(agent.clientKey);
+    }
+  });
+
+  it("returns null when no signal resolves to a ClientKey", () => {
+    expect(
+      resolvePinnedSessionClientKey({ email: "unknown@example.com" }),
+    ).toBeNull();
     expect(resolvePinnedSessionClientKey({})).toBeNull();
   });
 
-  it('resolveSessionClientKey falls back to DEFAULT_CLIENT_KEY when no signal resolves', () => {
-    expect(resolveSessionClientKey({ email: 'unknown@example.com' })).toBe(
+  it("resolveSessionClientKey falls back to DEFAULT_CLIENT_KEY when no signal resolves", () => {
+    expect(resolveSessionClientKey({ email: "unknown@example.com" })).toBe(
       DEFAULT_CLIENT_KEY,
     );
   });
@@ -489,53 +648,63 @@ describe('Probe 7 · resolvePinnedSessionClientKey', () => {
 // Probe 8 · shouldStripUnauthorizedClientParam
 // =====================================================================
 
-describe('Probe 8 · shouldStripUnauthorizedClientParam', () => {
-  it('strips when a locked client requests a different tenant via ?client=', () => {
+describe("Probe 8 · shouldStripUnauthorizedClientParam", () => {
+  it("strips when a locked client requests a different tenant via ?client=", () => {
     expect(
       shouldStripUnauthorizedClientParam(
-        'client',
-        { email: 'elena.rivera@meridian-health.example.com' },
-        'apexretail',
+        "client",
+        { email: "elena.rivera@meridian-health.example.com" },
+        "apexretail",
       ),
     ).toBe(true);
   });
 
-  it('does not strip when the requested tenant matches the pinned tenant', () => {
+  it("does not strip when the requested tenant matches the pinned tenant", () => {
     expect(
       shouldStripUnauthorizedClientParam(
-        'client',
-        { email: 'elena.rivera@meridian-health.example.com' },
-        'meridian',
+        "client",
+        { email: "elena.rivera@meridian-health.example.com" },
+        "meridian",
       ),
     ).toBe(false);
   });
 
-  it('strips for the pinned founder account when a different tenant is requested', () => {
+  it("strips when a locked Lakeshore client requests another tenant via ?client=", () => {
     expect(
       shouldStripUnauthorizedClientParam(
-        'client',
-        { email: 'anand.sundaram@thesundaram.com', clientId: 'meridian' },
-        'apexretail',
+        "client",
+        { email: "cfo@lakeshore-holdings.example.com" },
+        "apexretail",
       ),
     ).toBe(true);
   });
 
-  it('does not strip when no requested client param is present', () => {
+  it("strips for the pinned founder account when a different tenant is requested", () => {
     expect(
       shouldStripUnauthorizedClientParam(
-        'client',
-        { email: 'elena.rivera@meridian-health.example.com' },
+        "client",
+        { email: "anand.sundaram@thesundaram.com", clientId: "meridian" },
+        "apexretail",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not strip when no requested client param is present", () => {
+    expect(
+      shouldStripUnauthorizedClientParam(
+        "client",
+        { email: "elena.rivera@meridian-health.example.com" },
         null,
       ),
     ).toBe(false);
   });
 
-  it('does not strip when the locked role has no resolvable pinned tenant', () => {
+  it("does not strip when the locked role has no resolvable pinned tenant", () => {
     expect(
       shouldStripUnauthorizedClientParam(
-        'client',
-        { email: 'someone@example.com' },
-        'meridian',
+        "client",
+        { email: "someone@example.com" },
+        "meridian",
       ),
     ).toBe(false);
   });
@@ -545,19 +714,19 @@ describe('Probe 8 · shouldStripUnauthorizedClientParam', () => {
 // Probe 9 · isClientKey · tenant key validation
 // =====================================================================
 
-describe('Probe 9 · isClientKey', () => {
-  it('accepts every canonical tenant key', () => {
+describe("Probe 9 · isClientKey", () => {
+  it("accepts every canonical tenant key", () => {
     for (const client of ALL_CLIENTS) {
       expect(isClientKey(client.id)).toBe(true);
     }
   });
 
-  it('rejects unknown strings, null, undefined, and empty', () => {
-    expect(isClientKey('not-a-tenant')).toBe(false);
-    expect(isClientKey('apex-retail')).toBe(false); // route slug, not a key
+  it("rejects unknown strings, null, undefined, and empty", () => {
+    expect(isClientKey("not-a-tenant")).toBe(false);
+    expect(isClientKey("apex-retail")).toBe(false); // route slug, not a key
     expect(isClientKey(null)).toBe(false);
     expect(isClientKey(undefined)).toBe(false);
-    expect(isClientKey('')).toBe(false);
+    expect(isClientKey("")).toBe(false);
   });
 });
 
@@ -565,57 +734,57 @@ describe('Probe 9 · isClientKey', () => {
 // Probe 10 · End-to-end probe walk · "URL says X, user is Y" denial
 // =====================================================================
 
-describe('Probe 10 · End-to-end probe walk', () => {
-  it('mirrors the April 24 finding: Meridian client navigating to /tenant/apex-retail/* is denied', () => {
+describe("Probe 10 · End-to-end probe walk", () => {
+  it("mirrors the April 24 finding: Meridian client navigating to /tenant/apex-retail/* is denied", () => {
     // Step 1: route slug resolves to the apexretail tenant.
-    const tenant = findTenantByRouteSlug('apex-retail');
-    expect(tenant?.tenantKey).toBe('apexretail');
+    const tenant = findTenantByRouteSlug("apex-retail");
+    expect(tenant?.tenantKey).toBe("apexretail");
 
     // Step 2: the user's session resolves as a Meridian client.
-    const userEmail = 'elena.rivera@meridian-health.example.com';
+    const userEmail = "elena.rivera@meridian-health.example.com";
     const role = resolveSessionRole(null, userEmail);
-    expect(role).toBe('client');
+    expect(role).toBe("client");
     const pinnedKey = resolvePinnedSessionClientKey({ email: userEmail });
-    expect(pinnedKey).toBe('meridian');
+    expect(pinnedKey).toBe("meridian");
 
     // Step 3: the access check denies the cross-tenant URL.
     const allowed = canAccessTenantClient(
       snapshot({
         sessionRole: role,
         pinnedClientKey: pinnedKey,
-        membershipClientKeys: ['meridian'],
+        membershipClientKeys: ["meridian"],
       }),
       tenant!.tenantKey as ClientKey,
     );
     expect(allowed).toBe(false);
   });
 
-  it('mirrors the inverse: Apex client navigating to /tenant/meridian-health/* is denied', () => {
-    const tenant = findTenantByRouteSlug('meridian-health');
-    expect(tenant?.tenantKey).toBe('meridian');
+  it("mirrors the inverse: Apex client navigating to /tenant/meridian-health/* is denied", () => {
+    const tenant = findTenantByRouteSlug("meridian-health");
+    expect(tenant?.tenantKey).toBe("meridian");
 
-    const userEmail = 'noah.patel@apex-retail.example.com';
+    const userEmail = "noah.patel@apex-retail.example.com";
     const pinnedKey = resolvePinnedSessionClientKey({ email: userEmail });
-    expect(pinnedKey).toBe('apexretail');
+    expect(pinnedKey).toBe("apexretail");
 
     const allowed = canAccessTenantClient(
       snapshot({
-        sessionRole: 'client',
+        sessionRole: "client",
         pinnedClientKey: pinnedKey,
-        membershipClientKeys: ['apexretail'],
+        membershipClientKeys: ["apexretail"],
       }),
       tenant!.tenantKey as ClientKey,
     );
     expect(allowed).toBe(false);
   });
 
-  it('admin user can reach any tenant URL', () => {
+  it("admin user can reach any tenant URL", () => {
     for (const t of CANONICAL_TENANTS) {
       const tenant = findTenantByRouteSlug(t.routeSlug);
       expect(tenant).not.toBeNull();
       const allowed = canAccessTenantClient(
         snapshot({
-          sessionRole: 'admin',
+          sessionRole: "admin",
           pinnedClientKey: null,
           membershipClientKeys: [],
         }),
@@ -625,7 +794,7 @@ describe('Probe 10 · End-to-end probe walk', () => {
     }
   });
 
-  it('unknown tenant slug never resolves, so no access decision is even reached', () => {
-    expect(findTenantByRouteSlug('totally-fake-tenant')).toBeNull();
+  it("unknown tenant slug never resolves, so no access decision is even reached", () => {
+    expect(findTenantByRouteSlug("totally-fake-tenant")).toBeNull();
   });
 });

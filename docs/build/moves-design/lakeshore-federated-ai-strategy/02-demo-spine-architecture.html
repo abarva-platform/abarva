@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lakeshore Federated · Demo Spine Architecture</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --rule: #e5e1d8;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 64px 96px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 42px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 28px; margin: 56px 0 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 21px; margin: 32px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 24px 0 8px; }
+  p, li { font-size: 15px; }
+  code { background: #efeae0; padding: 1px 6px; border-radius: 3px; font-size: 13px; }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-top: 0; }
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 20px; }
+  .card h5 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-l2 { background: #e5e7eb; color: var(--ink); }
+  .tag-move { background: var(--good-soft); color: var(--good); }
+  .tag-source { background: var(--warn-soft); color: var(--warn); }
+  .tag-loader { background: #ede9fe; color: #6d28d9; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .lane { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 0; margin: 16px 0; overflow: hidden; }
+  .lane-hd { padding: 14px 20px; background: #efeae0; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: baseline; }
+  .lane-hd h3 { margin: 0; font-size: 18px; }
+  .lane-hd .meta { font-size: 12px; }
+  .lane-body { padding: 16px 20px; }
+  .step-row { display: flex; gap: 8px; align-items: stretch; margin: 12px 0; flex-wrap: wrap; }
+  .step { flex: 1; min-width: 150px; background: var(--paper); border: 1px solid var(--rule); padding: 10px 12px; border-radius: 3px; font-size: 13px; }
+  .step .step-num { font-family: var(--serif); font-size: 18px; color: var(--accent); display: block; margin-bottom: 4px; }
+  .step .step-title { font-weight: 600; display: block; margin-bottom: 4px; }
+  .step .step-detail { color: var(--ink-soft); font-size: 12px; }
+  .arrow { display: flex; align-items: center; color: var(--ink-soft); font-size: 18px; padding: 0 4px; }
+  .pill { display: inline-block; background: var(--paper); border: 1px solid var(--rule); padding: 3px 10px; border-radius: 999px; font-size: 12px; margin: 2px; }
+  .gate { display: flex; gap: 12px; margin: 8px 0; padding: 10px 12px; background: var(--paper); border-left: 3px solid var(--accent); border-radius: 0 3px 3px 0; }
+  .gate.gate-warn { border-left-color: var(--warn); }
+  .gate.gate-bad { border-left-color: var(--bad); }
+  .gate.gate-good { border-left-color: var(--good); }
+  .gate-num { font-family: var(--serif); font-size: 22px; color: var(--ink); min-width: 36px; }
+  .gate-body { flex: 1; }
+  .gate-body h6 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .gate-body p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+  .rule { height: 1px; background: var(--rule); margin: 32px 0; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 12px; background: white; border: 1px solid var(--rule); border-radius: 4px; }
+  .approval { font-family: var(--serif); font-style: italic; color: var(--ink-soft); font-size: 13px; }
+  .swimlane { display: grid; grid-template-columns: 140px 1fr; gap: 0; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; margin: 12px 0; background: white; }
+  .swimlane-label { background: #efeae0; padding: 14px 16px; font-weight: 600; font-size: 13px; border-right: 1px solid var(--rule); }
+  .swimlane-content { padding: 12px 16px; font-size: 13px; }
+  details { margin: 8px 0; border: 1px solid var(--rule); border-radius: 4px; background: white; }
+  summary { padding: 10px 14px; cursor: pointer; font-weight: 600; font-size: 14px; }
+  details[open] summary { border-bottom: 1px solid var(--rule); }
+  details > div { padding: 12px 16px; font-size: 13px; }
+  .key-anchor { background: var(--accent); color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Lakeshore Federated · Demo Spine Architecture</h1>
+<p class="sub">The full lifecycle map · five Moves · CXO loader entry · Source event spawn points · Tower L0 surfaces · approval routing</p>
+<p class="meta">Companion to <code>01-lakeshore-federated-structure-brief.md</code> (entities · CXO bench · vendor matrix) and <code>04-artifact-contracts.html</code> (per-artifact specs). Every node here is canon for the package.</p>
+
+<div class="legend">
+  <span><span class="tag tag-l0">L0</span> Lakeshore sponsor (sees aggregates)</span>
+  <span><span class="tag tag-l1">L1</span> HoldCo CXO bench (sees own data)</span>
+  <span><span class="tag tag-l2">L2</span> PortCo (consulted)</span>
+  <span><span class="tag tag-move">Move</span> Workflow-anchored AI strategy track</span>
+  <span><span class="tag tag-source">Source</span> Procurement event (spawned from Move architecture)</span>
+  <span><span class="tag tag-loader">Loader</span> CXO intel ingestion gate</span>
+</div>
+
+<h2>Section 1 · The federated demo arc at a glance</h2>
+
+<p>The demo runs against <strong>three L1 HoldCos</strong> loaded into AbarVa under one Lakeshore <code>holding_group_id</code>. Each HoldCo's CXO bench onboards via the CXO Intel Loader; five Moves run in parallel; the L0 sponsor watches it all from Tower's Federated tab.</p>
+
+<div class="grid cols-3">
+  <div class="card"><h5>Entry — Setup / Admin loader</h5><p>Every HoldCo CXO uploads their bundle (CIO · CFO · COO · CHRO · GC). Loaded data scoped to that HoldCo's tenant; aggregates roll up to L0 only.</p><span class="tag tag-loader">5 bundles per HoldCo · 15 total loads</span></div>
+  <div class="card"><h5>Middle — five Moves in flight</h5><p>Move 0 de-risks Kyriba (HoldCo-scoped). Move 1 adds AI on top. Move 2-4 are L0-led cross-HoldCo optimization tracks. Source events spawn from Move architecture phases when procurement is in scope.</p><span class="tag tag-move">5 Moves · 4-6 Source spawns</span></div>
+  <div class="card"><h5>L0 view — Tower Federated tab</h5><p>Sponsor sees portfolio rollups, cross-HoldCo opportunities surfaced this week, federated savings ledger (projected vs realized), risk concentration trend, CXO performance dashboards.</p><span class="tag tag-l0">Atlas-fronted</span></div>
+</div>
+
+<h2>Section 2 · The L0/L1/L2 entity model</h2>
+
+<table>
+  <tr><th>Layer</th><th>Entity</th><th>Tenant scope</th><th>What they see</th><th>Approval authority</th></tr>
+  <tr><td><span class="tag tag-l0">L0</span></td><td>Lakeshore</td><td>Parent of <code>holding_group_id</code></td><td>Aggregated metrics from all L1 children; opportunities surfaced cross-HoldCo; risk rollup; CXO performance benchmarks</td><td>Cross-HoldCo Source events · federated platform rollout decisions · L0 IC governance</td></tr>
+  <tr><td><span class="tag tag-l1">L1</span></td><td>Morgan Street Holdings Chicago</td><td>Child tenant in group</td><td>All own loaded data · own Moves · own PortCos · cannot read sibling HoldCo transaction grain</td><td>HoldCo-scoped Moves · HoldCo-scoped Source events · own platform rollouts</td></tr>
+  <tr><td><span class="tag tag-l1">L1</span></td><td>Roosevelt Holdings Atlanta</td><td>Child tenant in group</td><td>Same as Morgan Street, scoped to own data</td><td>Same</td></tr>
+  <tr><td><span class="tag tag-l1">L1</span></td><td>Lakefront Capital Boston</td><td>Child tenant in group</td><td>Same</td><td>Same</td></tr>
+  <tr><td><span class="tag tag-l2">L2</span></td><td>PortCos (24 total)</td><td>Sub-tenant under L1</td><td>Own data only · consulted on Moves that affect them</td><td>Own operational decisions; consulted role on HoldCo-level Moves</td></tr>
+</table>
+
+<h3>Substrate posture (demo shortcut)</h3>
+<p>Per the locked tenancy decision: demo uses <code>holding_group_id</code> column on existing tenants table with cross-tenant aggregate-read RLS for users with L0 sponsor role. Proper parent-child tenant hierarchy is post-demo substrate work. Source policy: <code>src/lib/auth/source-access-policy.ts</code> extended to honor <code>holding_group_id</code> for L0 aggregate reads.</p>
+
+<h2>Section 3 · CXO Intel Loader — the gate into the demo</h2>
+
+<p>Each HoldCo onboards by having its CXO bench (or admin acting on their behalf) load five bundles. Wave 1 ships CIO + CFO loaders first; Wave 2 ships COO + CHRO + GC. Every loader has the same shape: schema · upload · parse · validate · approve · land in substrate.</p>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h5>CIO bundle <span class="tag tag-loader">Wave 1</span></h5>
+    <ul style="padding-left: 20px; margin: 0;">
+      <li>Application inventory (per app: name, vendor, criticality, owner, annual cost, renewal date)</li>
+      <li>Cloud/on-prem footprint (Azure/AWS/GCP/on-prem split with annual run cost)</li>
+      <li>Major vendor contracts &gt; $250K annual (vendor, category, $, term, renewal, exit clause)</li>
+      <li>AI roadmap (active POCs, planned use cases, governance state)</li>
+      <li>IT spend by category (run / grow / transform with %)</li>
+      <li>Risk register (cyber, compliance, modernization debt)</li>
+      <li>IT org chart (FTE, contractor, offshore mix)</li>
+    </ul>
+    <p class="approval" style="margin-top: 12px;">Approval routing: HoldCo CIO &middot; data steward acks load</p>
+  </div>
+  <div class="card">
+    <h5>CFO bundle <span class="tag tag-loader">Wave 1</span></h5>
+    <ul style="padding-left: 20px; margin: 0;">
+      <li>Finance system inventory (ERP, treasury, AP/AR, EPM)</li>
+      <li>Banking relationships (per bank: services, fee structure, H2H readiness, annual fees)</li>
+      <li>Audit + advisory firm engagements (firm, scope, annual $, renewal)</li>
+      <li>Insurance brokers + carriers (line, broker, premium, renewal)</li>
+      <li>Close cycle metrics (days, variance trend)</li>
+      <li>IT spend ratios (% of revenue, $ per FTE)</li>
+      <li>Tax advisor + engagements</li>
+    </ul>
+    <p class="approval" style="margin-top: 12px;">Approval routing: HoldCo CFO &middot; controller acks load</p>
+  </div>
+  <div class="card">
+    <h5>COO bundle <span class="tag tag-loader">Wave 2</span></h5>
+    <ul style="padding-left: 20px; margin: 0;">
+      <li>Operations stack (ERP, MES, supply chain, CRM per PortCo)</li>
+      <li>Workforce comp by function</li>
+      <li>Outsourced vs insourced split</li>
+      <li>Operating KPIs (cycle times, throughput, quality)</li>
+      <li>Vendor + 3PL relationships</li>
+    </ul>
+    <p class="approval" style="margin-top: 12px;">Approval routing: HoldCo COO &middot; ops PMO acks</p>
+  </div>
+  <div class="card">
+    <h5>CHRO bundle <span class="tag tag-loader">Wave 2</span></h5>
+    <ul style="padding-left: 20px; margin: 0;">
+      <li>HCM stack (Workday, ADP, SuccessFactors)</li>
+      <li>Benefits stack + broker</li>
+      <li>L&amp;D stack</li>
+      <li>Talent acquisition stack (ATS, sourcing tools)</li>
+      <li>Workforce demographics (FTE, contractor, geography, function)</li>
+    </ul>
+    <p class="approval" style="margin-top: 12px;">Approval routing: HoldCo CHRO &middot; people ops acks</p>
+  </div>
+  <div class="card">
+    <h5>GC / CCO bundle <span class="tag tag-loader">Wave 2</span></h5>
+    <ul style="padding-left: 20px; margin: 0;">
+      <li>Contract index (vendor, type, $, term, renewal, exit)</li>
+      <li>Regulatory inventory (jurisdictions, frameworks, audit schedule)</li>
+      <li>Litigation pipeline (status, exposure)</li>
+      <li>Entity registry (legal structure, board composition)</li>
+      <li>D&amp;O / E&amp;O / cyber insurance program</li>
+    </ul>
+    <p class="approval" style="margin-top: 12px;">Approval routing: HoldCo GC &middot; legal ops acks</p>
+  </div>
+  <div class="card">
+    <h5>The five bundles in <em>holding_group</em> view</h5>
+    <p>Once all 15 bundles (5 CXO × 3 HoldCos) land, AbarVa runs cross-HoldCo joins: vendor overlap detection, contract renewal calendar (federated), AI capability marketplace, risk concentration. These power Tower's "Federated" tab and Move 2-4.</p>
+    <p class="approval">L0 visibility: aggregates only · drill-down requires HoldCo grant</p>
+  </div>
+</div>
+
+<h2>Section 4 · Move 0 — Kyriba De-Risk · the canonical platform rollout pattern</h2>
+
+<p class="sub">Scope: per HoldCo where a platform rollout (Kyriba, Workday, NetSuite, Salesforce) is in flight. Six gates. Reusable pattern. <strong>This is the demo's load-bearing Move</strong> — it goes first because Kyriba is real at Morgan Street and Lakefront's mature deployment is the case-study evidence.</p>
+
+<div class="lane">
+  <div class="lane-hd">
+    <h3>Move 0 — Kyriba De-Risk (per HoldCo)</h3>
+    <span class="meta">Primary scope: Morgan Street &middot; reference: Lakefront (mature) &middot; spans Phase 0 through Phase 5</span>
+  </div>
+  <div class="lane-body">
+
+    <div class="step-row">
+      <div class="step"><span class="step-num">0</span><span class="step-title">Setup load</span><span class="step-detail">CFO bundle + banking inventory + treasury workflow inventory + Kyriba rollout status</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">1</span><span class="step-title">Discovery</span><span class="step-detail">Sentinel diagnoses 6 gates · status per HoldCo · risk-ranked findings</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">2</span><span class="step-title">Strategy</span><span class="step-detail">6-gate remediation roadmap · gate ownership · sequencing</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">3</span><span class="step-title">Architecture</span><span class="step-detail">Data plane gaps · ERP feed fixes · entity hierarchy load · historical reconstruction</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">4</span><span class="step-title">Business case</span><span class="step-detail">Investment + benefits · close acceleration · fraud avoidance · WC unlock</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">5</span><span class="step-title">Mobilization</span><span class="step-detail">30/60/90 + RACI · gate-specific milestones · adoption sprint</span></div>
+    </div>
+
+    <h4>The 6 gates Sentinel diagnoses + remediates</h4>
+
+    <div class="gate gate-bad">
+      <div class="gate-num">G1</div>
+      <div class="gate-body">
+        <h6>Bank connectivity gap</h6>
+        <p>Morgan Street has 14 banks, only 4 H2H-ready. Remediation: pre-rollout banking consolidation RFP (spawns Source event L-S01). Target: 6 strategic banks, all H2H. Owner: Group Treasurer. Reference benchmark: finserv file 08.</p>
+      </div>
+    </div>
+    <div class="gate gate-bad">
+      <div class="gate-num">G2</div>
+      <div class="gate-body">
+        <h6>ERP feed quality</h6>
+        <p>Morgan Street's NetSuite → Kyriba feed has 0.4% daily variance. Remediation: feed audit per source system, mapping cleanup, automated reconciliation. Owner: Controller. Acceptance: variance &lt; 0.05% sustained 30 days.</p>
+      </div>
+    </div>
+    <div class="gate gate-warn">
+      <div class="gate-num">G3</div>
+      <div class="gate-body">
+        <h6>Entity hierarchy + IC mapping</h6>
+        <p>IC mapping for 2 PortCos still under reconciliation. Remediation: canonical entity registry load from corporate secretary + tax data; IC matrix rebuild; one-shot reload to Kyriba. Owner: Controller + Tax. Acceptance: IC eliminations auto-resolve at month-end.</p>
+      </div>
+    </div>
+    <div class="gate gate-bad">
+      <div class="gate-num">G4</div>
+      <div class="gate-body">
+        <h6>Historical position reconstruction</h6>
+        <p>&lt;90 days clean position data; predictive forecasting blocked. Remediation: 24-month bank statement reconstruction; Silver-layer normalized by entity-currency-day; backfilled forecast model training. Owner: Treasury Analytics. Acceptance: 18+ months continuous clean data available for model training.</p>
+      </div>
+    </div>
+    <div class="gate gate-warn">
+      <div class="gate-num">G5</div>
+      <div class="gate-body">
+        <h6>User adoption</h6>
+        <p>32 of 48 expected users logging in weekly. Remediation: role-based dashboards per persona, 30-day Excel-elimination sprint with named KPIs, weekly office hours. Owner: Treasury PM + Change Lead. Acceptance: 90% weekly active sustained 60 days.</p>
+      </div>
+    </div>
+    <div class="gate gate-warn">
+      <div class="gate-num">G6</div>
+      <div class="gate-body">
+        <h6>IC auto-reconciliation</h6>
+        <p>Month-end IC posting manual (4-day cycle). Remediation: transformer-based matching across PortCo books (Move 1 capability shipped early to support Move 0). Owner: Controller. Acceptance: IC posting same-day, T+1 close at HoldCo level.</p>
+      </div>
+    </div>
+
+    <h4>Move 0 → Source event spawn</h4>
+    <p>If G1 remediation requires bank consolidation (Morgan Street's case), Move 0 Architecture phase emits a Source event with 5 pre-filled facts:</p>
+    <div class="step-row">
+      <span class="pill">L-S01 · Banking consolidation RFP</span>
+      <span class="pill">Pre-fill: 14 incumbents</span>
+      <span class="pill">Target: 6 strategic</span>
+      <span class="pill">Rubric: H2H + fees + treasury depth + FX + geography</span>
+      <span class="pill">Owner: Treasurer + Procurement</span>
+    </div>
+
+  </div>
+</div>
+
+<h2>Section 5 · Move 1 — AI on top of Kyriba</h2>
+
+<p class="sub">Scope: per HoldCo, post-Move 0 (all 6 gates green or in remediation). Four AI capabilities. Lakefront is the live reference (case-study evidence); Morgan Street is the rollout target.</p>
+
+<div class="lane">
+  <div class="lane-hd">
+    <h3>Move 1 — AI on top of Kyriba (per HoldCo)</h3>
+    <span class="meta">Prerequisite: Move 0 G1-G4 minimum green &middot; G5-G6 in flight acceptable</span>
+  </div>
+  <div class="lane-body">
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h5>Capability 1 · 12-week forward cash forecast</h5>
+        <p>Bronze: bank transactions + Kyriba positions. Silver: normalized by entity-currency-day. Gold: predicted position per entity per currency, daily refresh, with confidence bands.</p>
+        <p class="approval">Approval: Group Treasurer + CFO &middot; sign-off on model accuracy threshold</p>
+      </div>
+      <div class="card">
+        <h5>Capability 2 · Payment anomaly + BEC fraud detection</h5>
+        <p>Real-time scoring on outgoing wires &gt; $50K. Human-in-loop block on red signals. Lakefront's deployed model reduced false-positive rate to &lt;2% after 6mo tuning.</p>
+        <p class="approval">Approval: Treasurer + CISO &middot; payment threshold policy + escalation matrix</p>
+      </div>
+      <div class="card">
+        <h5>Capability 3 · Covenant headroom forecasting</h5>
+        <p>Predicts debt covenant breach 8 weeks out. Treasurer gets advance warning; CFO + Audit Cmte see trend at monthly close. Tied to specific covenant clauses in loaded contracts.</p>
+        <p class="approval">Approval: CFO + Audit Cmte chair &middot; covenant-specific thresholds</p>
+      </div>
+      <div class="card">
+        <h5>Capability 4 · Intercompany auto-reconciliation</h5>
+        <p>Transformer-based matching across PortCo books → IC eliminations posted same-day, not month-end. Compresses HoldCo close by 4 days.</p>
+        <p class="approval">Approval: Controller + Tax &middot; matching rule confidence threshold</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step"><span class="step-num">0</span><span class="step-title">Setup load</span><span class="step-detail">Inherits Move 0 data + adds: payment policy doc, covenant agreement texts</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">1</span><span class="step-title">Discovery</span><span class="step-detail">Capability readiness scorecard per HoldCo; Lakefront-style benchmark targets</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">2</span><span class="step-title">Strategy</span><span class="step-detail">4-capability portfolio · ranked value × feasibility × risk · waves assigned</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">3</span><span class="step-title">Architecture</span><span class="step-detail">Databricks lakehouse target · Unity Catalog for financial data · model registry + monitoring · HIL gate config</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">4</span><span class="step-title">Business case</span><span class="step-detail">Per-capability investment + benefit · NPV + payback · Lakefront-realized benchmarks cited</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">5</span><span class="step-title">Mobilization</span><span class="step-detail">Foundation-before-AI sequencing · Cap 1+4 first (data dependency low) · Cap 2+3 follow</span></div>
+    </div>
+
+  </div>
+</div>
+
+<h2>Section 6 · Move 2 — Cross-HoldCo Cost Reduction</h2>
+
+<p class="sub">Scope: L0 cross-HoldCo. Vendor consolidation + AI-driven rationalization. Triggered as soon as 2+ HoldCos' CXO bundles are loaded. Output: quarterly rationalization slate to L0 sponsor.</p>
+
+<div class="lane">
+  <div class="lane-hd">
+    <h3>Move 2 — Cross-HoldCo Vendor Consolidation</h3>
+    <span class="meta">L0-led &middot; HoldCo CXOs consulted &middot; runs continuously, refreshed quarterly</span>
+  </div>
+  <div class="lane-body">
+
+    <div class="step-row">
+      <div class="step"><span class="step-num">0</span><span class="step-title">Setup load</span><span class="step-detail">CIO + CFO + GC bundles loaded for ≥ 2 HoldCos</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">1</span><span class="step-title">Discovery</span><span class="step-detail">Cross-HoldCo spend baseline · top 20 vendor categories · data quality scorecard per HoldCo</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">2</span><span class="step-title">Strategy</span><span class="step-detail">5-year addressable spend bucket · categories prioritized · LLM normalization approach</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">3</span><span class="step-title">Architecture</span><span class="step-detail">Databricks spend analytics architecture · Bronze: PortCo APs · Silver: normalized vendors + taxonomy · Gold: rationalization opportunity ranker</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">4</span><span class="step-title">Business case</span><span class="step-detail">Investment from estimation engine · benefits from finserv files 08/13/20 (8-15% on rationalized spend) · 3-yr NPV with bands</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="step-num">5</span><span class="step-title">Mobilization</span><span class="step-detail">Quarterly slate cadence · per-category PortCo CFO socialization &middot; Source events spawned per category</span></div>
+    </div>
+
+    <h4>Source event spawns from Move 2</h4>
+    <table>
+      <tr><th>Spawn ID</th><th>Trigger</th><th>Scope</th><th>Pre-filled facts</th></tr>
+      <tr><td>L-S02</td><td>Microsoft EA overlap detected · $9.1M consolidated spend</td><td>Federated MS EA renegotiation</td><td>3 incumbent contracts · enterprise-rate target · current renewal dates · technical scope inventory</td></tr>
+      <tr><td>L-S03</td><td>Workday consolidation opportunity · $6.1M consolidated spend</td><td>Federated Workday contract</td><td>3 incumbent contracts · in-flight Roosevelt rollout · target single MSA</td></tr>
+      <tr><td>L-S04</td><td>Audit firm federation · KPMG across all 3 HoldCos · $5.4M consolidated fees</td><td>Federated Big-4 audit RFP</td><td>3 incumbent engagements · scope standardization · target fee compression 10-15%</td></tr>
+      <tr><td>L-S05</td><td>Cyber insurance concentration risk · 2 of 3 same carrier</td><td>Federated cyber program with split carrier</td><td>3 incumbent policies · concentration risk thesis · target two-carrier program</td></tr>
+    </table>
+
+  </div>
+</div>
+
+<h2>Section 7 · Move 3 — Federated IT Strategy + AI Use Case Marketplace</h2>
+
+<p class="sub">Scope: L0 cross-HoldCo. Surfaces what one HoldCo built that another can deploy. Coordinates modernization waves. Powered by CIO bundles + AI roadmap data.</p>
+
+<div class="lane">
+  <div class="lane-hd">
+    <h3>Move 3 — Federated IT Strategy</h3>
+    <span class="meta">L0 Operating Partner — Technology &middot; HoldCo CIOs consulted</span>
+  </div>
+  <div class="lane-body">
+
+    <h4>What Move 3 produces</h4>
+    <ul>
+      <li><strong>AI capability marketplace</strong> — Lakefront's 3 production AI workloads cataloged; Morgan Street + Roosevelt browse, reuse, fork. Reduces duplicate POCs across HoldCos.</li>
+      <li><strong>Modernization wave coordinator</strong> — three HoldCos all moving Workday and Snowflake. Coordinated SI selection + change methodology · estimated 20-30% cost reduction.</li>
+      <li><strong>Cloud architecture standards</strong> — Lakefront's mature Azure landing zone shared; Morgan Street + Roosevelt fork-and-customize.</li>
+      <li><strong>Federated AI governance</strong> — single AI ethics + risk framework adopted across HoldCos.</li>
+      <li><strong>Quarterly federated IT operating review</strong> — Marcus Rhee (L0 OP-Tech) + 3 HoldCo CIOs · benchmarks · risk · capability sharing.</li>
+    </ul>
+
+    <h4>Move 3 → Source event spawns</h4>
+    <table>
+      <tr><th>Spawn ID</th><th>Trigger</th><th>Scope</th></tr>
+      <tr><td>L-S06</td><td>Cross-HoldCo SI partner for federated Workday rollout</td><td>SI selection for Roosevelt Workday + Morgan Street Wave 2 PortCo integrations · Lakefront as reference</td></tr>
+    </table>
+
+  </div>
+</div>
+
+<h2>Section 8 · Move 4 — Federated Risk + Governance</h2>
+
+<p class="sub">Scope: L0 cross-HoldCo. Concentration risk · cyber posture · talent benchmarks · compliance rollups. Triggered automatically as bundles land; refreshed quarterly with one-off ad-hoc spawns when concentration risk crosses thresholds.</p>
+
+<div class="lane">
+  <div class="lane-hd">
+    <h3>Move 4 — Federated Risk + Governance</h3>
+    <span class="meta">L0 Compliance Officer + HoldCo GCs consulted</span>
+  </div>
+  <div class="lane-body">
+    <ul>
+      <li><strong>Concentration risk dashboard</strong> — auditor, cyber carrier, banking partner, single-vendor exposures across HoldCos with trend.</li>
+      <li><strong>CXO comp + IT FTE benchmarking</strong> — pulled from CIO/CFO/CHRO bundles, anchored against industry P50/P90.</li>
+      <li><strong>Regulatory inventory roll-up</strong> — federated view of compliance frameworks each HoldCo lives under; gap detection for L0 IC reporting.</li>
+      <li><strong>Cyber posture rollup</strong> — federated view of EDR, SIEM, IAM stack with concentration callouts.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Section 9 · The Tower L0 Federated Command Center</h2>
+
+<p class="sub">Atlas-fronted. New "Federated" tab on Tower. The L0 sponsor's daily-use surface. Pulls from all five Moves + every CXO bundle.</p>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h5>Top of page — portfolio rollup strip</h5>
+    <p>Per HoldCo: active Moves · phase · value at stake · last update. Federated savings ledger (projected vs realized $). Concentration risk indicator (green/amber/red).</p>
+  </div>
+  <div class="card">
+    <h5>Cross-HoldCo opportunities surfaced this week</h5>
+    <p>AbarVa proactively names new vendor overlaps detected, contract renewals approaching, capability-sharing matches, risk concentrations crossing thresholds. Each surfaces with "review" → routes to the relevant Move.</p>
+  </div>
+  <div class="card">
+    <h5>Federated savings ledger</h5>
+    <p>Per Move per Source event: projected savings · realized to date · variance. Drill into per-vendor / per-category breakdown. Tied to corpus-cited benchmarks for credibility (no fake realized claims).</p>
+  </div>
+  <div class="card">
+    <h5>CXO performance dashboards</h5>
+    <p>Per HoldCo CXO: IT spend % vs benchmark · AI maturity score · modernization debt index · talent comp vs P50/P90. L0 sees aggregate; HoldCo CXOs see their own with peer benchmark.</p>
+  </div>
+  <div class="card">
+    <h5>Risk concentration trend</h5>
+    <p>Time series: auditor concentration · cyber carrier concentration · banking concentration · single-vendor concentration. Threshold crossings spawn Move 4 ad-hoc events.</p>
+  </div>
+  <div class="card">
+    <h5>Capability marketplace</h5>
+    <p>Production AI workloads cataloged by HoldCo with metadata: business problem · model · data dependency · realized impact · reusability rating. HoldCo CIOs request fork.</p>
+  </div>
+</div>
+
+<h2>Section 10 · Source event spawn map (all five Moves consolidated)</h2>
+
+<table>
+  <tr><th>Spawn ID</th><th>From Move</th><th>HoldCo scope</th><th>Trigger</th><th>Stakeholders</th><th>Estimated value</th></tr>
+  <tr><td>L-S01</td><td>Move 0 G1</td><td>Morgan Street (HoldCo)</td><td>Bank connectivity gap</td><td>Treasurer + Procurement + CFO</td><td>$2.8M annual fee compression</td></tr>
+  <tr><td>L-S02</td><td>Move 2</td><td>L0 federated</td><td>Microsoft EA overlap</td><td>L0 OP-Tech + 3 HoldCo CIOs</td><td>$1.0-1.4M annual</td></tr>
+  <tr><td>L-S03</td><td>Move 2</td><td>L0 federated</td><td>Workday consolidation</td><td>L0 OP-Tech + 3 HoldCo CHROs + CIOs</td><td>$0.6-0.9M annual + implementation savings</td></tr>
+  <tr><td>L-S04</td><td>Move 2</td><td>L0 federated</td><td>Audit firm federation</td><td>L0 OP-Finance + 3 HoldCo CFOs + audit cmtes</td><td>$0.5-0.8M annual</td></tr>
+  <tr><td>L-S05</td><td>Move 2 + Move 4</td><td>L0 federated</td><td>Cyber insurance concentration</td><td>L0 CCO + 3 HoldCo CISOs + risk officers</td><td>$0.3-0.5M annual + risk reduction</td></tr>
+  <tr><td>L-S06</td><td>Move 3</td><td>L0 federated</td><td>Federated Workday SI</td><td>L0 OP-Tech + Roosevelt CHRO + Morgan Street CIO</td><td>20-30% implementation cost compression</td></tr>
+</table>
+
+<p>Total addressable value across Source events: <strong>$5.2-6.4M annual recurring + $X implementation compression + ongoing operating model standardization</strong>. Demo target: walk one Source event (L-S01 Banking) and one Move (Move 0 Kyriba) all the way through; L0 Tower shows all five Moves and six Source events as portfolio rollup.</p>
+
+<h2>Section 11 · Approval routing matrix</h2>
+
+<table>
+  <tr><th>Artifact / decision</th><th>L1 HoldCo approver</th><th>L0 sponsor visibility</th><th>L0 approval required?</th></tr>
+  <tr><td>CXO bundle load (per CXO)</td><td>That CXO</td><td>Aggregate</td><td>No</td></tr>
+  <tr><td>Move 0 strategy memo</td><td>HoldCo CFO + Treasurer</td><td>Aggregate</td><td>No</td></tr>
+  <tr><td>Move 0 architecture</td><td>HoldCo CIO + CFO</td><td>Aggregate</td><td>No</td></tr>
+  <tr><td>Move 0 business case</td><td>HoldCo CFO + Audit Cmte</td><td>Full view</td><td>If &gt; $5M investment</td></tr>
+  <tr><td>Move 1 capability portfolio</td><td>HoldCo CFO + Treasurer + Audit Cmte</td><td>Full view</td><td>If &gt; $5M investment</td></tr>
+  <tr><td>Move 2 rationalization slate</td><td>HoldCo CFOs consulted</td><td>Owns</td><td>Yes — L0 OP-Finance signs</td></tr>
+  <tr><td>Move 3 federated IT strategy</td><td>HoldCo CIOs consulted</td><td>Owns</td><td>Yes — L0 OP-Tech signs</td></tr>
+  <tr><td>Source event spawn (L-S01 HoldCo)</td><td>HoldCo Treasurer + Procurement</td><td>Aggregate</td><td>No</td></tr>
+  <tr><td>Source event spawn (L-S02–05 federated)</td><td>HoldCo CIOs/CFOs consulted</td><td>Owns</td><td>Yes — L0 OP signs</td></tr>
+</table>
+
+<h2>Section 12 · State machine — cross-Move dependencies</h2>
+
+<div class="swimlane">
+  <div class="swimlane-label">Pre-Move</div>
+  <div class="swimlane-content">CXO bundles loaded (Wave 1 = CIO + CFO; Wave 2 = COO + CHRO + GC). At least Wave 1 must be complete for any HoldCo to enter Move 0 or Move 1.</div>
+</div>
+<div class="swimlane">
+  <div class="swimlane-label">Move 0 entry</div>
+  <div class="swimlane-content">Requires CFO bundle + banking inventory + Kyriba rollout status loaded. Triggers automatically when treasury workflow inventory + Kyriba status loaded for HoldCo with Kyriba "in flight" or "live not optimized" status.</div>
+</div>
+<div class="swimlane">
+  <div class="swimlane-label">Move 0 → Move 1</div>
+  <div class="swimlane-content">Move 1 entry requires Move 0 G1-G4 minimum green. G5-G6 in flight acceptable. <em>This is the foundation-before-AI sequencing rule from the locked rules.</em></div>
+</div>
+<div class="swimlane">
+  <div class="swimlane-label">Move 2 entry</div>
+  <div class="swimlane-content">Requires CIO + CFO bundles loaded for ≥ 2 HoldCos. Triggers L0 cross-HoldCo joins automatically. Refreshed quarterly.</div>
+</div>
+<div class="swimlane">
+  <div class="swimlane-label">Move 3 entry</div>
+  <div class="swimlane-content">Requires CIO bundles for ≥ 2 HoldCos. Triggers AI marketplace + modernization wave coordinator. Refreshed quarterly with named operating review.</div>
+</div>
+<div class="swimlane">
+  <div class="swimlane-label">Move 4 entry</div>
+  <div class="swimlane-content">Auto-runs as soon as bundles land. Continuous. Ad-hoc events spawn when concentration risk crosses thresholds.</div>
+</div>
+<div class="swimlane">
+  <div class="swimlane-label">Source spawn</div>
+  <div class="swimlane-content">Source events spawn from Move architecture phases (Phase 3) when procurement is genuinely in scope. Source module redesign (`docs/build/source-design/`) handles the 11-stage lifecycle; Lakeshore Source events are the first real-world test of that redesign.</div>
+</div>
+
+<div class="rule"></div>
+
+<h2>Section 13 · What Codex builds (Wave 1 Wave 2 Wave 3 Wave 4 map)</h2>
+
+<p>Repeated from README for clarity. Each spec ships as its own PR. Specs reference back to this document by section number.</p>
+
+<table>
+  <tr><th>Wave</th><th>Spec</th><th>Surface</th><th>Reference section here</th></tr>
+  <tr><td>1</td><td>L01</td><td>Holding-group tenancy substrate</td><td>§2</td></tr>
+  <tr><td>1</td><td>L02</td><td>CXO loader UI (CIO + CFO)</td><td>§3</td></tr>
+  <tr><td>1</td><td>L03</td><td>Move 0 page (the 6-gate canvas)</td><td>§4</td></tr>
+  <tr><td>1</td><td>L04</td><td>Tower "Federated" tab scaffold</td><td>§9</td></tr>
+  <tr><td>2</td><td>L05</td><td>Move 0 per-gate artifacts</td><td>§4</td></tr>
+  <tr><td>2</td><td>L06</td><td>Move 2 page (cross-HoldCo vendor)</td><td>§6</td></tr>
+  <tr><td>2</td><td>L07</td><td>Cross-HoldCo opportunity ranker</td><td>§9</td></tr>
+  <tr><td>2</td><td>L08</td><td>CXO loader (COO + CHRO + GC)</td><td>§3</td></tr>
+  <tr><td>3</td><td>L09</td><td>Move 1 page + 4 capabilities</td><td>§5</td></tr>
+  <tr><td>3</td><td>L10</td><td>Move 3 federated IT strategy</td><td>§7</td></tr>
+  <tr><td>3</td><td>L11</td><td>Move 4 federated risk</td><td>§8</td></tr>
+  <tr><td>3</td><td>L12</td><td>Business case pattern setter</td><td>across</td></tr>
+  <tr><td>3</td><td>L13</td><td>Mobilization pattern setter</td><td>across</td></tr>
+  <tr><td>4</td><td>L14</td><td>Source spawn from Move 1 Phase 3</td><td>§4 + §10</td></tr>
+  <tr><td>4</td><td>L15</td><td>Source spawns from Move 2 (per category)</td><td>§6 + §10</td></tr>
+  <tr><td>4</td><td>L16</td><td>Federated savings ledger</td><td>§9</td></tr>
+  <tr><td>4</td><td>L17</td><td>CXO performance dashboards</td><td>§9 + §8</td></tr>
+</table>
+
+<div class="rule"></div>
+
+<p class="meta">End of demo spine. Next: <code>03-cxo-intel-loader-spec.html</code> (CSV schemas + UI flows per CXO bundle), <code>04-artifact-contracts.html</code> (per-Move per-phase per-artifact specs), <code>05-design-module-review.md</code> (verdicts), <code>06-tower-federated-command-center.html</code> (full-fidelity L0 surface), <code>07-kyriba-derisk-pattern-setter.html</code> (Move 0 full-fidelity), <code>08-cross-holdco-vendor-rationalization.html</code> (Move 2 full-fidelity), <code>09-business-case-pattern-setter.html</code>, <code>10-mobilization-pattern-setter.html</code>.</p>
+
+</div>
+</body>
+</html>

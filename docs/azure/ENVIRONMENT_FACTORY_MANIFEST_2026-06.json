@@ -1,0 +1,126 @@
+{
+  "version": "2026-06",
+  "purpose": "AbarVa product development and client private data-plane environment factory baseline.",
+  "principles": [
+    "azure_first_runtime",
+    "no_vercel_production_runtime",
+    "no_supabase_runtime_reintroduction",
+    "no_phi_pii",
+    "client_private_data_planes_are_separate_from_product_development",
+    "context_bundle_proof_is_the_readiness_bar",
+    "ingestion_receipts_required_for_data_loads",
+    "policy_as_code_before_subscription_vending"
+  ],
+  "productEnvironments": [
+    {
+      "key": "product-dev",
+      "displayName": "AbarVa Product Dev",
+      "subscriptionRole": "product-development",
+      "subscriptionBoundary": "dedicated",
+      "allowedData": ["synthetic", "fixture", "engineering-test"],
+      "disallowedData": ["client-confidential", "phi", "pii"],
+      "releasePurpose": "fast engineering integration and non-client experimentation",
+      "promotionTarget": "product-preview"
+    },
+    {
+      "key": "product-preview",
+      "displayName": "AbarVa Product Preview",
+      "subscriptionRole": "product-preprod",
+      "subscriptionBoundary": "dedicated",
+      "allowedData": [
+        "synthetic",
+        "pilot-reference",
+        "client-approved-redacted"
+      ],
+      "disallowedData": ["phi", "pii"],
+      "releasePurpose": "release-candidate validation, signed-in QA, client-demo readiness",
+      "promotionTarget": "product-prod"
+    },
+    {
+      "key": "product-prod",
+      "displayName": "AbarVa Product Prod",
+      "subscriptionRole": "product-production",
+      "subscriptionBoundary": "dedicated",
+      "allowedData": ["production-control-plane", "client-routing-metadata"],
+      "disallowedData": ["phi", "pii", "raw-client-private-documents"],
+      "releasePurpose": "shared product control plane for approved releases",
+      "promotionTarget": null
+    }
+  ],
+  "clientEnvironmentPattern": {
+    "subscriptionBoundary": "dedicated-per-client-per-environment",
+    "environments": [
+      {
+        "key": "client-preprod",
+        "displayName": "Client Preprod",
+        "allowedData": [
+          "client-approved-test",
+          "redacted-client",
+          "synthetic-client-reference"
+        ],
+        "disallowedData": ["phi", "pii"],
+        "purpose": "client validation, ingestion rehearsal, retrieval proof, acceptance testing"
+      },
+      {
+        "key": "client-prod",
+        "displayName": "Client Prod",
+        "allowedData": ["client-approved-production"],
+        "disallowedData": ["phi", "pii"],
+        "purpose": "client private production data plane and production retrieval/runtime evidence"
+      }
+    ]
+  },
+  "requiredSubscriptionBaseline": {
+    "azurePolicy": [
+      "deny_public_blob_access",
+      "deny_public_postgres",
+      "deny_public_keyvault",
+      "require_private_endpoints_for_data_services",
+      "require_tags",
+      "require_budget",
+      "require_diagnostic_settings",
+      "require_purge_protection"
+    ],
+    "identity": [
+      "least_privilege_rbac",
+      "managed_identity_for_runtime",
+      "breakglass_accounts_documented",
+      "agent_operator_access_timeboxed"
+    ],
+    "network": [
+      "private_data_plane",
+      "vnet_integrated_container_apps_jobs",
+      "private_dns_zones",
+      "no_public_database_access"
+    ],
+    "observability": [
+      "log_analytics",
+      "application_insights",
+      "activity_log_alerts",
+      "budget_alerts"
+    ]
+  },
+  "requiredPromotionGates": [
+    "release_record",
+    "production_readiness_gate",
+    "context_corpus_governance",
+    "no_vercel_production_runtime",
+    "runtime_supabase_guard",
+    "tenant_purity_guard",
+    "fresh_migration_replay",
+    "destructive_migration_guard",
+    "ingestion_receipt_or_explicit_no_data_change",
+    "signed_in_browser_qa",
+    "context_bundle_trace_for_agent_surfaces",
+    "rollback_plan",
+    "budget_policy_check"
+  ],
+  "dataRules": {
+    "phiAllowed": false,
+    "piiAllowed": false,
+    "businessNamesPolicy": "title_role_first; named executives require client-approved business-contact classification and tenant-scoped source basis",
+    "uploadPath": "governed_admin_bulk_loader_or_approved_operator_job",
+    "idempotencyRequired": true,
+    "agentReadyAutoPromotionAllowed": false
+  }
+}

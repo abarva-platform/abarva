@@ -4,8 +4,26 @@
 |---|---|
 | **Doc ID** | `SPECIALIST_CATALOG_v0.1` |
 | **Established** | 2026-05-06 |
-| **Status** | Source §3 shipped — 12 specialists route through sentinel-orchestrator · Setup / Moves / Tower / Intelligence pending |
+| **Status** | Current as of 2026-06-01 — canonical lowercase catalog; update required when specialist routing, cite tags, or owner agents change |
 | **Purpose** | The published inventory of every narrow specialist that runs behind the front agents. Architecture reviews use this. Primary product UI does not. |
+
+---
+
+## 0 · Catalog control checkpoint
+
+This lowercase file is the canonical specialist catalog referenced by the pilot readiness tracker. The uppercase `docs/architecture/SPECIALIST_CATALOG.md` remains a legacy scaffold and must not be treated as the current inventory.
+
+| Control | Current source |
+|---|---|
+| Front-agent route ownership | `src/lib/routes/registry.ts` |
+| Moves / Nexus specialist design | `docs/architecture/NEXUS_SPECIALIST_DESIGN.md` |
+| Source specialist mission builders | `src/lib/source/agent-missions.ts` |
+| Agent context boundary | `docs/architecture/adr/ADR-0002-agent-context-broker-boundary.md` |
+| AI-as-advisor governance | `docs/architecture/adr/ADR-0006-ai-as-advisor.md` |
+
+**Maintenance rule:** any PR that adds, renames, retires, or changes a specialist output contract must update this catalog in the same PR. The update must include the owning front agent, served surfaces, cite-tag format, implementation pointer, and status.
+
+**Status vocabulary:** `shipped` means code exists at the implementation pointer; `partial` means a deterministic read model, substrate, prompt rule, or UI binding exists but the specialist is not a complete standalone contract; `not_built` means the concept is cataloged only.
 
 ---
 
@@ -29,7 +47,17 @@ The AbarVa product surface has a layered agent architecture:
 - **Intelligence** → Sentinel (same identity, different surface)
 - **Setup / Admin** → Steward
 
-See `feedback_workflow_first_agents_hidden.md` in user memory for the directive lineage.
+The route registry currently encodes these assignments as `Nexus`, `Sentinel`, `Atlas`, `Steward`, and `none` in `src/lib/routes/registry.ts`.
+
+### 1.1 · Current product inventory checkpoint
+
+| Product surface | Front agent | Current catalog depth | Primary evidence |
+|---|---|---:|---|
+| Source | Sentinel | 12 shipped/partial specialist entries captured | `src/lib/source/agent-missions.ts`, `src/lib/source/source-stage-gates.ts` |
+| Setup / Admin | Steward | 16 shipped/partial/not-built entries captured | `src/lib/admin/setup-acts-registry.ts`, `src/lib/admin/dataset-approval-workflow.ts`, `src/app/api/admin/upload-dataset/route.ts` |
+| Moves / Programs | Nexus | 12 captured in this catalog plus phase design in companion doc | `docs/architecture/NEXUS_SPECIALIST_DESIGN.md`, `src/lib/programs/phase-gate-advancement-flow.ts` |
+| Tower | Atlas | placeholder inventory only | `src/lib/routes/registry.ts` route ownership; Tower audit follow-up still needed |
+| Intelligence | Sentinel | placeholder inventory only | `src/lib/routes/registry.ts` route ownership; Intelligence audit follow-up still needed |
 
 ---
 

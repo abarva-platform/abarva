@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "crypto";
 import { Pool } from "pg";
+import { runtimePostgresPoolConfig } from "@/lib/data-plane/postgresCompat";
 import {
   getTenantMetricPrivatePlane,
   tenantMetricTableRef,
@@ -73,12 +74,7 @@ function getPool(): Pool | null {
     cachedPool = null;
     return cachedPool;
   }
-  cachedPool = new Pool({
-    connectionString,
-    max: 2,
-    idleTimeoutMillis: 10_000,
-    connectionTimeoutMillis: 5_000,
-  });
+  cachedPool = new Pool(runtimePostgresPoolConfig(connectionString, 'nexus-tenant-metric-persistence'));
   return cachedPool;
 }
 

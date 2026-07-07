@@ -496,14 +496,14 @@ function SummaryPanel({ tenant }: { tenant: TenantSeedPlan }) {
           </ul>
           <div style={{ marginTop: 10 }}>
             <Link
-              href="/setup"
+              href="/admin/setup"
               style={{
                 fontSize: 11,
                 color: C.navy,
                 textDecoration: 'underline',
               }}
             >
-              Load substrate in Setup →
+              Load substrate in Admin →
             </Link>
           </div>
         </section>
@@ -1032,36 +1032,6 @@ function SectionMeta({
       </h2>
       <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>{subtitle}</p>
     </header>
-  );
-}
-
-function MetricChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        padding: '8px 10px',
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        borderRadius: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-      }}
-    >
-      <span
-        style={{
-          fontSize: 10,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: '#9AA3B2',
-          fontWeight: 600,
-        }}
-      >
-        {label}
-      </span>
-      <span style={{ fontSize: 14, fontWeight: 600, color: '#FFFFFF' }}>
-        {value}
-      </span>
-    </div>
   );
 }
 

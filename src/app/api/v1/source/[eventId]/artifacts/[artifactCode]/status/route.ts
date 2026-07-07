@@ -31,6 +31,8 @@ import {
   type SourceEventArtifactStateRow,
   type SourceEventArtifactStatus,
 } from '@/lib/source/canvas-substrate/types';
+import { isArtifactHumanReviewed } from '@/lib/source/source-governance-enforcement';
+import { scaffoldNewEventSubstrate } from '@/lib/source/queries';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,6 +57,10 @@ function isCanonicalClientAdminEmail(email: string | null | undefined): boolean 
   return CANONICAL_CLIENT_ADMIN_EMAILS.includes(
     normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number],
   );
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteCtx) {
@@ -86,11 +92,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     }
 
     const supabase = getAzureReadFluentClient();
-    const { data: persistedEvent, error: fetchError } = await supabase
+    const eventQuery = supabase
       .from('source_events')
-      .select('id, client_key')
-      .eq('id', eventId)
-      .maybeSingle();
+      .select('id, client_key');
+    const { data: persistedEvent, error: fetchError } = isUuid(eventId)
+      ? await eventQuery.eq('id', eventId).maybeSingle()
+      : { data: null, error: null };
     if (fetchError) {
       return Response.json(
         { error: 'lookup_failed', detail: fetchError.message },
@@ -122,11 +129,21 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
+    await scaffoldNewEventSubstrate(
+      persistedEvent.id,
+      persistedEvent.client_key,
+    ).catch((error) => {
+      console.warn(
+        '[source artifact status] substrate scaffold repair failed:',
+        error instanceof Error ? error.message : String(error),
+      );
+    });
+
     const accessPolicy =
       tenancy && activeClient
         ? await loadUserSourceAccessPolicy(tenancy, {
             activeClientKey: activeClient.key,
-            sourceEventId: eventId,
+            sourceEventId: persistedEvent.id,
           }).catch(() => null)
         : null;
     const canonicalAdminFallbackAllowed =
@@ -150,7 +167,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const { data: artifactRow, error: artifactFetchError } = await supabase
       .from('source_event_artifact_states')
       .select('*')
-      .eq('source_event_id', eventId)
+      .eq('source_event_id', persistedEvent.id)
       .eq('artifact_code', artifactCode)
       .maybeSingle<SourceEventArtifactStateRow>();
     if (artifactFetchError) {
@@ -163,7 +180,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       return Response.json(
         {
           error: 'artifact_not_found',
-          detail: `No artifact ${artifactCode} on event ${eventId}. Run db:backfill:source-canvas to scaffold.`,
+          detail: `No artifact ${artifactCode} on event ${persistedEvent.id}.`,
         },
         { status: 404 },
       );
@@ -180,6 +197,21 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         {
           error: 'terminal_state',
           detail: `Artifact ${artifactCode} is ${artifactRow.status}; cannot transition to ${status} from the canvas.`,
+        },
+        { status: 409 },
+      );
+    }
+    const artifactView = artifactStateRowToView(artifactRow);
+    if ((status === 'approved' || status === 'locked') && !isArtifactHumanReviewed(artifactView)) {
+      return Response.json(
+        {
+          error: artifactRow.body_generation_metadata
+            ? 'human_review_required'
+            : 'artifact_content_required',
+          detail:
+            artifactRow.body_generation_metadata
+              ? `Artifact ${artifactCode} is AI-generated and must be human-edited before it can be marked ${status}.`
+              : `Artifact ${artifactCode} must have authored body content or a linked uploaded artifact before it can be marked ${status}.`,
         },
         { status: 409 },
       );

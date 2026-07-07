@@ -14,9 +14,9 @@ export interface AdminCanonShellV2Props {
    *      AgentDock-backed Steward chat dock; the shell switches to a 2-col
    *      [sidebar | dock(workspace=children)] layout, where the dock owns
    *      the resizable chat lane via the shared <AgentDock>.
-   *   2. Any other ReactNode — rendered in the legacy 28vw right rail
-   *      (no chat lane resize, used by static-rail admin pages like
-   *      /admin/connectors and /admin/users-access).
+   *   2. Any other ReactNode — available from an on-demand Guidance
+   *      drawer. It no longer consumes a permanent right column; Maestro
+   *      admin pages are content-first by default.
    *   3. Omitted — no rail; main column spans the available width.
    */
   agentRail?: ReactNode;
@@ -57,7 +57,7 @@ export function AdminCanonShellV2({
       topBarProps={{
         tenantName,
         showLocked: true,
-        context: 'Setup / Admin',
+        context: 'Admin workspace',
       }}
     >
       <style>
@@ -73,9 +73,30 @@ export function AdminCanonShellV2({
               overflow: visible !important;
             }
             [data-admin-shell="canon-v2"] [data-admin-agent-rail],
+            [data-admin-shell="canon-v2"] [data-admin-guidance-drawer],
             [data-admin-shell="canon-v2"] [data-admin-chat-dock] {
               display: none !important;
             }
+          }
+          [data-admin-guidance-drawer] > summary {
+            list-style: none;
+          }
+          [data-admin-guidance-drawer] > summary::-webkit-details-marker {
+            display: none;
+          }
+          [data-admin-guidance-drawer]:not([open]) {
+            width: auto !important;
+            border-radius: 999px !important;
+            overflow: visible !important;
+          }
+          [data-admin-guidance-drawer]:not([open]) > summary {
+            height: 52px;
+            padding: 0 18px !important;
+            border-bottom: 0 !important;
+            border-radius: 999px;
+              background: ${SHELL.INK} !important;
+              color: ${SHELL.CARD_WHITE} !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.24);
           }
         `}
       </style>
@@ -85,7 +106,7 @@ export function AdminCanonShellV2({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '240px minmax(0, 1fr)',
+            gridTemplateColumns: '280px minmax(0, 1fr)',
             flex: 1,
             minHeight: 0,
             height: 'calc(100vh - 48px)',
@@ -101,6 +122,8 @@ export function AdminCanonShellV2({
             style={{ minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden', background: COLORS.cream }}
           >
             <StewardDockPane
+              surface="admin-steward-content-first-v1"
+              defaultMode="collapsed"
               workspace={
                 <div
                   data-admin-main-scroll
@@ -120,15 +143,13 @@ export function AdminCanonShellV2({
           </div>
         </div>
       ) : (
-        // ── Layout B · legacy 3-col (sidebar | main | static rail) ────────
-        // Canonical 3-zone dimensions: gridTemplateColumns: '280px 1fr 320px'
-        // (sidebar=280px, main=1fr, agent-rail=320px per ADMIN_LAYOUT_DIMS)
+        // ── Layout B · content-first (sidebar | main) + optional guidance ──
+        // Static AgentRail content is still available, but no longer takes a
+        // permanent 320px column from Maestro work pages.
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: agentRail
-              ? '280px 1fr 320px'
-              : '280px minmax(0, 1fr)',
+            gridTemplateColumns: '280px minmax(0, 1fr)',
             flex: 1,
             minHeight: 0,
             height: 'calc(100vh - 48px)',
@@ -146,19 +167,50 @@ export function AdminCanonShellV2({
             {children}
           </div>
           {agentRail ? (
-            <aside
-              aria-label="Steward setup agent"
+            <details
+              aria-label="Page guidance"
               data-admin-agent-rail
+              data-admin-guidance-drawer
               style={{
-                minWidth: 0,
-                minHeight: 0,
-                height: '100%',
-                overflow: 'hidden',
-                borderLeft: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+                position: 'fixed',
+                right: 24,
+                bottom: 24,
+                zIndex: 860,
+                width: 320,
+                maxWidth: 'calc(100vw - 48px)',
+                maxHeight: 'min(720px, calc(100vh - 96px))',
+                overflow: 'auto',
+                border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+                borderRadius: 8,
+                background: SHELL.CARD_WHITE,
+                boxShadow: '0 18px 48px rgba(0,0,0,0.18)',
               }}
             >
-              {agentRail}
-            </aside>
+              <summary
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '14px 16px',
+                  cursor: 'pointer',
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: SHELL.INK,
+                  background: SHELL.CARD_WHITE,
+                  borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+                }}
+              >
+                <span>Guidance</span>
+                <span aria-hidden="true" style={{ fontFamily: SHELL.MONO, fontSize: 11 }}>
+                  ?
+                </span>
+              </summary>
+              <div style={{ maxHeight: 'calc(min(720px, 100vh - 96px) - 48px)', overflow: 'auto' }}>
+                {agentRail}
+              </div>
+            </details>
           ) : null}
         </div>
       )}

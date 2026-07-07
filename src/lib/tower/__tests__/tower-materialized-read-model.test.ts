@@ -1,0 +1,309 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+import {
+  listMaterializedTowerReadModelForClient,
+  shapeTowerMaterializedReadModel,
+} from "@/lib/tower/tower-materialized-read-model";
+import {
+  listTowerBudgetRollupsForClient,
+  shapeTowerBudgetRollups,
+} from "@/lib/tower/tower-budget-rollups";
+import type {
+  AzureReadClient,
+  AzureReadSelect,
+} from "@/lib/data-plane/azureRead";
+
+function makeDb(
+  tables: Record<string, Array<Record<string, unknown>>>,
+): AzureReadClient {
+  return {
+    async query() {
+      return [];
+    },
+    async select<R = Record<string, unknown>>(request: AzureReadSelect) {
+      return ((tables[request.table] ?? []) as R[]).slice(
+        0,
+        request.limit ?? undefined,
+      );
+    },
+    async maybeSingle<R = Record<string, unknown>>(request: AzureReadSelect) {
+      const rows = ((tables[request.table] ?? []) as R[]).slice(0, 1);
+      return rows[0] ?? null;
+    },
+    async count(request) {
+      return tables[request.table]?.length ?? 0;
+    },
+    async withSession(fn) {
+      return fn(async () => []);
+    },
+  };
+}
+
+describe("tower materialized read model", () => {
+  it("shapes tower_read_model rows into existing Tower UI contracts", () => {
+    const shaped = shapeTowerMaterializedReadModel({
+      initiativeRows: [
+        {
+          initiative_id: "tower:lak:copilot-finance",
+          display_id: "LAK-AI-001",
+          name: "M365 Copilot finance rollout",
+          description: "Finance pilot with measured adoption gap.",
+          category_id: "finance_ai",
+          category_name: "Finance AI",
+          goal_id: "tower_value",
+          goal_name: "Tower value proof",
+          stage: "pilot",
+          stage_detail: "pilot",
+          owner_name: "Finance transformation owner",
+          owner_title: "Finance transformation owner",
+          owner_function: "Finance",
+          committed_annual_usd: "90000",
+          committed_total_usd: "3000000",
+          measured_value_usd: "400000",
+          status_flag: "value_lag",
+          status_summary: "Adoption and value proof lag the business case.",
+          confidence_level: "HIGH",
+          aligned_callout: false,
+          aligned_rationale: null,
+          loaded_via_template: "tower_materialized_read_model",
+          gaps: [],
+        },
+      ],
+      vendorRows: [
+        {
+          vendor_id: "vendor:microsoft",
+          vendor_name: "Microsoft",
+          initiative_id: "tower:lak:copilot-finance",
+          initiative_display_id: "LAK-AI-001",
+          initiative_name: "M365 Copilot finance rollout",
+          contract_value_usd: "90000",
+          renewal_date: "2026-09-30",
+          financial_health: "watch",
+        },
+      ],
+    });
+
+    expect(shaped.source).toBe("tower_materialized_read_model");
+    expect(shaped.initiatives[0]).toMatchObject({
+      initiativeId: "tower:lak:copilot-finance",
+      displayId: "LAK-AI-001",
+      name: "M365 Copilot finance rollout",
+      primaryCategoryName: "Finance AI",
+      committedAnnualUsd: 90_000,
+      committedTotalUsd: 3_000_000,
+      measuredValueUsd: 400_000,
+      statusFlag: "value_lag",
+      confidenceLevel: "HIGH",
+    });
+    expect(shaped.vendors[0]).toMatchObject({
+      vendorName: "Microsoft",
+      initiativeDisplayId: "LAK-AI-001",
+      contractValueUsd: 90_000,
+      renewalDate: "2026-09-30",
+      financialHealth: "watch",
+    });
+  });
+
+  it("shapes portfolio-company budget rollups with YTD and vendor budget totals", () => {
+    const shaped = shapeTowerBudgetRollups([
+      {
+        portfolio_company: "Northline Logistics Group",
+        fiscal_year: "FY2026",
+        total_it_budget_usd: "62000000",
+        actual_spend_ytd_usd: "29761000",
+        forecast_spend_usd: "60760000",
+        opex_amount_usd: "52310000",
+        capex_amount_usd: "9690000",
+        run_amount_usd: "42935000",
+        change_amount_usd: "19065000",
+        vendor_amount_usd: "35686000",
+        labor_amount_usd: "26314000",
+        revenue_usd: "3100000000",
+        employees: "7500",
+        it_spend_as_pct_revenue: "0.02",
+      },
+    ]);
+
+    expect(shaped[0]).toMatchObject({
+      portfolioCompany: "Northline Logistics Group",
+      totalItBudgetUsd: 62_000_000,
+      actualSpendYtdUsd: 29_761_000,
+      forecastSpendUsd: 60_760_000,
+      vendorAmountUsd: 35_686_000,
+      laborAmountUsd: 26_314_000,
+      revenueUsd: 3_100_000_000,
+      employees: 7_500,
+      itSpendAsPctRevenue: 0.02,
+    });
+  });
+
+  it("falls back to F12 source evidence when materialized budget rollups are absent", async () => {
+    const db: AzureReadClient = {
+      async query<R = Record<string, unknown>>(sql: string) {
+        if (sql.includes("cio_tower.facts")) return [] as R[];
+        return [
+          {
+            id: "sha-f12-1",
+            source_file: "family-4-financial-commercial/F12_it-budget-financials.csv",
+            source_row_number: 2,
+            payload: {
+              budget_line_id: "BUD-001",
+              budget_area: "IBM Z / mainframe run",
+              spend_type: "run",
+              fy26_budget_usd: "386000000",
+              owner_team_id: "SHA-IT-009",
+            },
+          },
+          {
+            id: "sha-f12-2",
+            source_file: "family-4-financial-commercial/F12_it-budget-financials.csv",
+            source_row_number: 3,
+            payload: {
+              budget_line_id: "BUD-002",
+              budget_area: "AWS lake and event streams",
+              spend_type: "change",
+              fy26_budget_usd: "74000000",
+              owner_team_id: "SHA-IT-011",
+            },
+          },
+        ] as R[];
+      },
+      async select<R = Record<string, unknown>>(request: AzureReadSelect) {
+        expect(request.table).toBe("tower_budget_rollups");
+        return [] as R[];
+      },
+      async maybeSingle() {
+        return null;
+      },
+      async count() {
+        return 0;
+      },
+      async withSession(fn) {
+        return fn(async () => []);
+      },
+    };
+
+    const rollups = await listTowerBudgetRollupsForClient({
+      clientId: "client-skyharbor",
+      tenantKey: "skyharbor",
+      db,
+    });
+
+    expect(rollups).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          portfolioCompany: "IBM Z / mainframe run",
+          totalItBudgetUsd: 386_000_000,
+          runAmountUsd: 386_000_000,
+          changeAmountUsd: 0,
+        }),
+        expect.objectContaining({
+          portfolioCompany: "AWS lake and event streams",
+          totalItBudgetUsd: 74_000_000,
+          runAmountUsd: 0,
+          changeAmountUsd: 74_000_000,
+        }),
+      ]),
+    );
+  });
+
+  it("prefers governed cio_tower budget facts over legacy budget rollups", async () => {
+    const db: AzureReadClient = {
+      async query<R = Record<string, unknown>>(sql: string) {
+        expect(sql).toContain("cio_tower.facts");
+        return [
+          {
+            portfolio_company: "Cloud and Infrastructure",
+            fiscal_year: "FY2026",
+            total_it_budget_usd: "174840000",
+            run_amount_usd: "120320000",
+            change_amount_usd: "54520000",
+            opex_amount_usd: "125884800",
+            capex_amount_usd: "48955200",
+          },
+        ] as R[];
+      },
+      async select<R = Record<string, unknown>>(request: AzureReadSelect) {
+        if (request.table === "tower_budget_rollups") {
+          return [
+            {
+              portfolio_company: "Stale Cloud Rollup",
+              fiscal_year: "FY2026",
+              total_it_budget_usd: "201200000",
+              run_amount_usd: "0",
+              change_amount_usd: "0",
+            },
+          ] as R[];
+        }
+        return [] as R[];
+      },
+      async maybeSingle() {
+        return null;
+      },
+      async count() {
+        return 0;
+      },
+      async withSession(fn) {
+        return fn(async () => []);
+      },
+    };
+
+    const rollups = await listTowerBudgetRollupsForClient({
+      clientId: "client-lakeshore",
+      tenantKey: "lakeshore",
+      db,
+    });
+
+    expect(rollups).toHaveLength(1);
+    expect(rollups[0]).toMatchObject({
+      portfolioCompany: "Cloud and Infrastructure",
+      totalItBudgetUsd: 174_840_000,
+      runAmountUsd: 120_320_000,
+      changeAmountUsd: 54_520_000,
+    });
+  });
+
+  it("reads only tower read-model tables and budget rollups at runtime", async () => {
+    const calls: string[] = [];
+    const db = makeDb({
+      tower_read_model_initiatives: [],
+      tower_read_model_vendors: [],
+      tower_budget_rollups: [],
+    });
+    const wrapped: AzureReadClient = {
+      ...db,
+      async select(request) {
+        calls.push(request.table);
+        return db.select(request);
+      },
+    };
+
+    await listMaterializedTowerReadModelForClient({
+      clientId: "client-1",
+      tenantKey: "lakeshore-holdings",
+      db: wrapped,
+    });
+
+    expect(calls).toEqual([
+      "tower_read_model_initiatives",
+      "tower_read_model_vendors",
+    ]);
+  });
+
+  it("keeps Tower current-state runtime off the enterprise-context projection fallback", () => {
+    const file = readFileSync(
+      path.join(process.cwd(), "src/lib/atlas/tower-grounding.ts"),
+      "utf8",
+    );
+
+    expect(file).toContain("tower-materialized-read-model");
+    expect(file).toContain("tower-budget-rollups");
+    expect(file).not.toContain("tower-semantic-projection");
+    expect(file).not.toContain("listProjectedTowerReadModelForClient");
+    expect(file).not.toContain("enterprise_context_records");
+    expect(file).not.toContain(
+      "initiatives.length === 0 && vendors.length === 0",
+    );
+  });
+});

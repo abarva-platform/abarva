@@ -94,6 +94,7 @@ describe('buildSentinelIntelContext', () => {
         sentinelFacts: [
           'Meridian Health Enterprise Context: 1030 records, 11428 facts, 220 CI relationships, and 1030 evidence rows are loaded from internal context sources.',
         ],
+        vendorSpendRows: [],
       },
     });
 
@@ -101,6 +102,17 @@ describe('buildSentinelIntelContext', () => {
       activeTab: 'enterprise-context',
       activeClient: 'Meridian Health',
       clientKey: 'meridian',
+      evidenceContext: {
+        kind: 'enterprise_context',
+        tenantKey: 'meridian',
+        recordCount: 1030,
+        factCount: 11428,
+        relationshipCount: 220,
+        evidenceCount: 1030,
+        usableEvidenceCount: 966,
+        sourceCount: 11,
+        sourceSystems: ['ServiceNow', 'Workday'],
+      },
     });
     expect(context).toEqual(expect.objectContaining({
       tenantFacts: expect.arrayContaining([
@@ -147,6 +159,7 @@ describe('buildSentinelIntelContext', () => {
         sentinelFacts: [
           'Northstar Clinical Technologies Enterprise Context: named executives, application portfolio, vendor contracts, and initiatives are loaded.',
         ],
+        vendorSpendRows: [],
       },
     });
     const facts = (context.facts as string[]).join('\n');

@@ -1,0 +1,3661 @@
+{
+  "generatedAt": "2026-06-17T13:07:26.692Z",
+  "packs": [
+    {
+      "key": "first-capital",
+      "label": "First Capital Financial",
+      "root": "datasets/first-capital-financial-synthetic-v1",
+      "loaderRegistered": true,
+      "tenantKey": "first-capital",
+      "target": "banking-grade 50B+ regional/super-regional financial institution",
+      "exists": true,
+      "files": 90,
+      "byExt": {
+        "yaml": 2,
+        "csv": 20,
+        "json": 4,
+        "jsonl": 2,
+        "md": 62
+      },
+      "parseableRows": {
+        "total": 3148,
+        "applications": 180,
+        "integrations": 380,
+        "vendors": 82,
+        "initiatives": 74,
+        "org": 1677,
+        "financial": 291,
+        "ops": 292,
+        "regulatory": 40,
+        "corpus": 400,
+        "uploadTemplatesAndScenarios": 0
+      },
+      "averageAppIntegrationCount": 50.3,
+      "namedSystems": [
+        "mainframe",
+        "sap",
+        "oracle",
+        "workday",
+        "servicenow",
+        "snowflake",
+        "databricks",
+        "ach",
+        "fedwire",
+        "fednow",
+        "rtp",
+        "sftp",
+        "iam",
+        "entra",
+        "sso",
+        "api",
+        "batch",
+        "edw",
+        "crm",
+        "salesforce",
+        "genesys",
+        "aws"
+      ],
+      "riskTerms": [
+        "occ",
+        "ffiec",
+        "glba",
+        "bsa",
+        "aml",
+        "finra",
+        "model risk",
+        "mra",
+        "sox",
+        "pci",
+        "retention",
+        "audit",
+        "control",
+        "rto",
+        "rpo",
+        "regulator"
+      ],
+      "csvSummaries": [
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/01-portfolio/application-portfolio.csv",
+          "localPath": "01-portfolio/application-portfolio.csv",
+          "rows": 180,
+          "headers": [
+            "app_id",
+            "name",
+            "vendor",
+            "category",
+            "business_owner",
+            "it_owner",
+            "deployment",
+            "lifecycle_stage",
+            "criticality",
+            "run_cost_fy25_usd",
+            "primary_dataclass",
+            "integration_count",
+            "last_modernization_review",
+            "ai_eligibility_score",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/01-portfolio/initiatives-active.csv",
+          "localPath": "01-portfolio/initiatives-active.csv",
+          "rows": 32,
+          "headers": [
+            "initiative_id",
+            "title",
+            "status",
+            "accountable",
+            "vendors",
+            "committed_usd",
+            "projected_value_usd",
+            "sentinel_posture",
+            "stage",
+            "evidence_note"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/01-portfolio/initiatives-closed.csv",
+          "localPath": "01-portfolio/initiatives-closed.csv",
+          "rows": 10,
+          "headers": [
+            "initiative_id",
+            "title",
+            "status",
+            "accountable",
+            "vendors",
+            "committed_usd",
+            "projected_value_usd",
+            "sentinel_posture",
+            "stage",
+            "evidence_note"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/02-financial/capex-opex-summary.csv",
+          "localPath": "02-financial/capex-opex-summary.csv",
+          "rows": 5,
+          "headers": [
+            "metric",
+            "fy25_usd",
+            "fy26_plan_usd",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/02-financial/initiative-commitments.csv",
+          "localPath": "02-financial/initiative-commitments.csv",
+          "rows": 32,
+          "headers": [
+            "initiative_id",
+            "committed_usd",
+            "projected_value_usd",
+            "value_basis"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/02-financial/renewal-calendar.csv",
+          "localPath": "02-financial/renewal-calendar.csv",
+          "rows": 70,
+          "headers": [
+            "vendor",
+            "renewal_date",
+            "annual_usd",
+            "owner",
+            "negotiation_theme"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/02-financial/run-cost-by-application.csv",
+          "localPath": "02-financial/run-cost-by-application.csv",
+          "rows": 180,
+          "headers": [
+            "app_id",
+            "run_cost_fy25_usd",
+            "allocated_vendor",
+            "basis"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/03-org/demo-personas.csv",
+          "localPath": "03-org/demo-personas.csv",
+          "rows": 5,
+          "headers": [
+            "email",
+            "name",
+            "role",
+            "persona",
+            "tenant_key"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/03-org/roles.csv",
+          "localPath": "03-org/roles.csv",
+          "rows": 1650,
+          "headers": [
+            "role_id",
+            "team_id",
+            "title",
+            "fte_type",
+            "location",
+            "critical_skill"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/03-org/teams.csv",
+          "localPath": "03-org/teams.csv",
+          "rows": 22,
+          "headers": [
+            "team_id",
+            "team_name",
+            "executive_owner",
+            "domain",
+            "fte_count"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/04-vendors/infrastructure-contracts.csv",
+          "localPath": "04-vendors/infrastructure-contracts.csv",
+          "rows": 12,
+          "headers": [
+            "vendor",
+            "service",
+            "annual_usd",
+            "term_end",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/04-vendors/vendor-contracts.csv",
+          "localPath": "04-vendors/vendor-contracts.csv",
+          "rows": 70,
+          "headers": [
+            "vendor",
+            "type",
+            "annual_usd",
+            "renewal_date",
+            "owner",
+            "data_class",
+            "ai_usage_clauses",
+            "exit_terms",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/05-dora/dora-baseline.csv",
+          "localPath": "05-dora/dora-baseline.csv",
+          "rows": 132,
+          "headers": [
+            "team_id",
+            "measured_at",
+            "deploy_freq_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct",
+            "reliability_pct"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/06-devex/devex-survey-fy25.csv",
+          "localPath": "06-devex/devex-survey-fy25.csv",
+          "rows": 22,
+          "headers": [
+            "team_id",
+            "response_count",
+            "flow_score",
+            "build_pain_score",
+            "legacy_drag_score",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/07-ai-tools/ai-tool-footprint.csv",
+          "localPath": "07-ai-tools/ai-tool-footprint.csv",
+          "rows": 18,
+          "headers": [
+            "tool_id",
+            "tool_name",
+            "owner",
+            "annual_usd",
+            "approved_data_class",
+            "status"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/07-ai-tools/ai-usage-telemetry.csv",
+          "localPath": "07-ai-tools/ai-usage-telemetry.csv",
+          "rows": 72,
+          "headers": [
+            "tool_id",
+            "month",
+            "active_users",
+            "accepted_suggestions",
+            "policy_exceptions"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/10-incidents-changes/changes.csv",
+          "localPath": "10-incidents-changes/changes.csv",
+          "rows": 96,
+          "headers": [
+            "change_id",
+            "team_id",
+            "app_id",
+            "implemented_at",
+            "risk_rating",
+            "outcome"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/10-incidents-changes/incidents.csv",
+          "localPath": "10-incidents-changes/incidents.csv",
+          "rows": 64,
+          "headers": [
+            "incident_id",
+            "app_id",
+            "opened_at",
+            "severity",
+            "customer_impact",
+            "root_cause"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/11-regulatory/regulatory-obligations.csv",
+          "localPath": "11-regulatory/regulatory-obligations.csv",
+          "rows": 40,
+          "headers": [
+            "reg_id",
+            "regulator",
+            "obligation",
+            "affected_apps",
+            "evidence_required"
+          ]
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/12-benchmarks/financial-services-benchmarks.csv",
+          "localPath": "12-benchmarks/financial-services-benchmarks.csv",
+          "rows": 4,
+          "headers": [
+            "benchmark_id",
+            "metric",
+            "first_capital_value",
+            "peer_median",
+            "top_quartile",
+            "notes"
+          ]
+        }
+      ],
+      "jsonlSummaries": [
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/08-sponsor-signal/sponsor-pulse.jsonl",
+          "localPath": "08-sponsor-signal/sponsor-pulse.jsonl",
+          "rows": 32,
+          "errors": []
+        },
+        {
+          "path": "datasets/first-capital-financial-synthetic-v1/13-context/client-data-corpus.jsonl",
+          "localPath": "13-context/client-data-corpus.jsonl",
+          "rows": 400,
+          "errors": []
+        }
+      ],
+      "jsonErrors": [],
+      "manifestClaims": {
+        "datasets/first-capital-financial-synthetic-v1/README.md": [
+          "180 application",
+          "380 integration",
+          "70 vendor",
+          "22 team",
+          "60 source file"
+        ],
+        "datasets/first-capital-financial-synthetic-v1/manifest.yaml": [
+          "180 integration",
+          "380 initiative",
+          "32 initiative",
+          "10 vendor",
+          "70 team",
+          "22 role"
+        ]
+      },
+      "fixtureHits": [],
+      "scores": {
+        "scale": 9,
+        "itComplexity": 10,
+        "financialDepth": 8,
+        "orgDepth": 10,
+        "vendorDepth": 7,
+        "opsDepth": 9,
+        "regulatoryDepth": 8,
+        "evidenceDepth": 8,
+        "corpusDepth": 7,
+        "generationQuality": 10,
+        "loadReadiness": 10
+      },
+      "overall": 8.7,
+      "gaps": [],
+      "augmentation": [],
+      "archiveCandidates": [],
+      "decision": "load_ready_after_live_proof"
+    },
+    {
+      "key": "meridian-health",
+      "label": "Meridian Health",
+      "root": "datasets/meridian-health-synthetic-v1",
+      "loaderRegistered": true,
+      "tenantKey": "meridian-health",
+      "target": "large integrated healthcare delivery network / plan strategy substrate",
+      "exists": true,
+      "files": 184,
+      "byExt": {
+        "yaml": 3,
+        "csv": 65,
+        "json": 7,
+        "xlsx": 2,
+        "pdf": 44,
+        "jsonl": 3,
+        "md": 60
+      },
+      "parseableRows": {
+        "total": 3542,
+        "applications": 149,
+        "integrations": 389,
+        "vendors": 121,
+        "initiatives": 154,
+        "org": 1729,
+        "financial": 320,
+        "ops": 360,
+        "regulatory": 231,
+        "corpus": 327,
+        "uploadTemplatesAndScenarios": 142
+      },
+      "averageAppIntegrationCount": 22.9,
+      "namedSystems": [
+        "sap",
+        "workday",
+        "servicenow",
+        "databricks",
+        "kafka",
+        "mulesoft",
+        "hl7",
+        "fhir",
+        "epic",
+        "pacs",
+        "claims",
+        "ach",
+        "rtp",
+        "sftp",
+        "entra",
+        "sso",
+        "api",
+        "batch",
+        "crm",
+        "azure",
+        "aws",
+        "vmware"
+      ],
+      "riskTerms": [
+        "aml",
+        "model risk",
+        "hipaa",
+        "phi",
+        "hitrust",
+        "fda",
+        "retention",
+        "audit",
+        "control",
+        "downtime",
+        "rto",
+        "rpo",
+        "baa",
+        "regulator"
+      ],
+      "csvSummaries": [
+        {
+          "path": "datasets/meridian-health-synthetic-v1/01-portfolio/application-portfolio.csv",
+          "localPath": "01-portfolio/application-portfolio.csv",
+          "rows": 140,
+          "headers": [
+            "app_id",
+            "name",
+            "vendor",
+            "category",
+            "business_owner",
+            "it_owner",
+            "deployment",
+            "lifecycle_stage",
+            "criticality",
+            "run_cost_fy25_usd",
+            "primary_dataclass",
+            "integration_count",
+            "last_modernization_review",
+            "ai_eligibility_score",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/01-portfolio/initiatives-active.csv",
+          "localPath": "01-portfolio/initiatives-active.csv",
+          "rows": 28,
+          "headers": [
+            "initiative_id",
+            "title",
+            "status",
+            "accountable",
+            "vendors",
+            "committed_usd",
+            "projected_value_usd",
+            "sentinel_posture",
+            "stage",
+            "evidence_note"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/01-portfolio/initiatives-closed.csv",
+          "localPath": "01-portfolio/initiatives-closed.csv",
+          "rows": 14,
+          "headers": [
+            "initiative_id",
+            "title",
+            "status",
+            "accountable",
+            "vendors",
+            "committed_usd",
+            "projected_value_usd",
+            "sentinel_posture",
+            "stage",
+            "evidence_note"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/02-financial/capex-opex-summary.csv",
+          "localPath": "02-financial/capex-opex-summary.csv",
+          "rows": 18,
+          "headers": [
+            "category",
+            "fiscal_year",
+            "amount_usd",
+            "basis"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/02-financial/initiative-commitments.csv",
+          "localPath": "02-financial/initiative-commitments.csv",
+          "rows": 112,
+          "headers": [
+            "initiative_id",
+            "quarter",
+            "committed_usd",
+            "projected_value_usd",
+            "basis"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/02-financial/renewal-calendar.csv",
+          "localPath": "02-financial/renewal-calendar.csv",
+          "rows": 45,
+          "headers": [
+            "vendor",
+            "renewal_date",
+            "annual_usd",
+            "pressure_window",
+            "negotiation_notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/02-financial/run-cost-by-application.csv",
+          "localPath": "02-financial/run-cost-by-application.csv",
+          "rows": 140,
+          "headers": [
+            "app_id",
+            "fy25_actual_usd",
+            "fy26_budget_usd",
+            "cost_basis",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/03-org/leadership-bench.csv",
+          "localPath": "03-org/leadership-bench.csv",
+          "rows": 38,
+          "headers": [
+            "leader_id",
+            "name",
+            "role",
+            "team_id",
+            "hire_date",
+            "prior_employer",
+            "span"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/03-org/roles.csv",
+          "localPath": "03-org/roles.csv",
+          "rows": 1650,
+          "headers": [
+            "person_key",
+            "team_id",
+            "role_family",
+            "employment_type",
+            "level",
+            "location"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/03-org/spans-of-control.csv",
+          "localPath": "03-org/spans-of-control.csv",
+          "rows": 16,
+          "headers": [
+            "team_id",
+            "leader_role",
+            "direct_reports",
+            "manager_layers",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/03-org/teams.csv",
+          "localPath": "03-org/teams.csv",
+          "rows": 16,
+          "headers": [
+            "team_id",
+            "team_name",
+            "team_type",
+            "stack_focus",
+            "vp_owner",
+            "fte_count"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/04-vendors/infrastructure-contracts.csv",
+          "localPath": "04-vendors/infrastructure-contracts.csv",
+          "rows": 14,
+          "headers": [
+            "vendor",
+            "service",
+            "annual_usd",
+            "renewal_date",
+            "owner",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/04-vendors/vendor-contracts.csv",
+          "localPath": "04-vendors/vendor-contracts.csv",
+          "rows": 50,
+          "headers": [
+            "vendor",
+            "type",
+            "annual_usd",
+            "renewal_date",
+            "owner",
+            "data_class",
+            "ai_usage_clauses",
+            "exit_terms",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/04-vendors/vendor-scorecards.csv",
+          "localPath": "04-vendors/vendor-scorecards.csv",
+          "rows": 50,
+          "headers": [
+            "vendor",
+            "relationship_health",
+            "delivery_score",
+            "commercial_risk",
+            "security_posture",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/05-dora/dora-baseline.csv",
+          "localPath": "05-dora/dora-baseline.csv",
+          "rows": 84,
+          "headers": [
+            "team_id",
+            "measured_at",
+            "deploy_freq_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct",
+            "reliability_pct"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/06-devex/devex-survey-fy25.csv",
+          "localPath": "06-devex/devex-survey-fy25.csv",
+          "rows": 48,
+          "headers": [
+            "quarter",
+            "cohort",
+            "respondents",
+            "flow_score_0_10",
+            "tool_satisfaction_0_10",
+            "ai_helpfulness_0_10",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/07-ai-tools/ai-tool-footprint.csv",
+          "localPath": "07-ai-tools/ai-tool-footprint.csv",
+          "rows": 18,
+          "headers": [
+            "tool",
+            "vendor",
+            "use_case",
+            "status",
+            "users",
+            "data_class",
+            "policy_notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/07-ai-tools/ai-usage-telemetry.csv",
+          "localPath": "07-ai-tools/ai-usage-telemetry.csv",
+          "rows": 108,
+          "headers": [
+            "tool",
+            "month",
+            "weekly_active_users",
+            "minutes_saved",
+            "satisfaction_0_10"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/10-incidents-changes/changes.csv",
+          "localPath": "10-incidents-changes/changes.csv",
+          "rows": 180,
+          "headers": [
+            "change_id",
+            "implemented_at",
+            "team_id",
+            "affected_app_id",
+            "risk",
+            "outcome",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/10-incidents-changes/incidents.csv",
+          "localPath": "10-incidents-changes/incidents.csv",
+          "rows": 90,
+          "headers": [
+            "incident_id",
+            "opened_at",
+            "severity",
+            "affected_app_id",
+            "mttr_hours",
+            "root_cause",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/11-regulatory/cms-interoperability-checklist.csv",
+          "localPath": "11-regulatory/cms-interoperability-checklist.csv",
+          "rows": 24,
+          "headers": [
+            "requirement_id",
+            "rule",
+            "status",
+            "owner",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/11-regulatory/hipaa-controls.csv",
+          "localPath": "11-regulatory/hipaa-controls.csv",
+          "rows": 54,
+          "headers": [
+            "control_id",
+            "domain",
+            "maturity",
+            "owner",
+            "evidence_source"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/11-regulatory/hitrust-mapping.csv",
+          "localPath": "11-regulatory/hitrust-mapping.csv",
+          "rows": 18,
+          "headers": [
+            "hitrust_domain",
+            "mapped_controls",
+            "gap_count",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/11-regulatory/information-blocking-attestations.csv",
+          "localPath": "11-regulatory/information-blocking-attestations.csv",
+          "rows": 12,
+          "headers": [
+            "attestation_id",
+            "scope",
+            "status",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/11-regulatory/joint-commission-it-touchpoints.csv",
+          "localPath": "11-regulatory/joint-commission-it-touchpoints.csv",
+          "rows": 16,
+          "headers": [
+            "touchpoint_id",
+            "system_area",
+            "survey_risk",
+            "evidence_owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/12-benchmarks/chime-most-wired-attestation.csv",
+          "localPath": "12-benchmarks/chime-most-wired-attestation.csv",
+          "rows": 10,
+          "headers": [
+            "dimension",
+            "attested_level",
+            "evidence_source",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/12-benchmarks/kaufman-hall-it-spend-quartiles.csv",
+          "localPath": "12-benchmarks/kaufman-hall-it-spend-quartiles.csv",
+          "rows": 3,
+          "headers": [
+            "metric",
+            "meridian_value",
+            "peer_p50",
+            "peer_p75",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/12-benchmarks/klas-arch-research-medians.csv",
+          "localPath": "12-benchmarks/klas-arch-research-medians.csv",
+          "rows": 3,
+          "headers": [
+            "domain",
+            "meridian_position",
+            "median",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/13-context/enterprise-context-source-files.csv",
+          "localPath": "13-context/enterprise-context-source-files.csv",
+          "rows": 48,
+          "headers": [
+            "source_file_id",
+            "title",
+            "instrument",
+            "dataclass",
+            "last_updated",
+            "depth_score"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/ai-tool-footprint.csv",
+          "localPath": "17-upload-templates/ai-tool-footprint.csv",
+          "rows": 2,
+          "headers": [
+            "tool",
+            "owner",
+            "workflow",
+            "phi_access",
+            "monthly_spend_usd"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/ambient-documentation-pilot.csv",
+          "localPath": "17-upload-templates/ambient-documentation-pilot.csv",
+          "rows": 2,
+          "headers": [
+            "specialty",
+            "vendor",
+            "clinicians",
+            "note_time_delta_min",
+            "adoption_pct",
+            "safety_review_state"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/application-portfolio.csv",
+          "localPath": "17-upload-templates/application-portfolio.csv",
+          "rows": 2,
+          "headers": [
+            "app_id",
+            "name",
+            "vendor",
+            "category",
+            "clinical_criticality",
+            "run_cost_fy25_usd",
+            "business_owner",
+            "it_owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/clinical-ai-model-inventory.csv",
+          "localPath": "17-upload-templates/clinical-ai-model-inventory.csv",
+          "rows": 2,
+          "headers": [
+            "model_id",
+            "use_case",
+            "risk_class",
+            "clinical_owner",
+            "validation_status",
+            "phi_touch"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/cms-interoperability.csv",
+          "localPath": "17-upload-templates/cms-interoperability.csv",
+          "rows": 2,
+          "headers": [
+            "requirement",
+            "system",
+            "deadline",
+            "readiness_state",
+            "blocker"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/data-platform-lineage.csv",
+          "localPath": "17-upload-templates/data-platform-lineage.csv",
+          "rows": 2,
+          "headers": [
+            "data_product",
+            "source_system",
+            "phi_class",
+            "refresh_sla",
+            "quality_score"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/dora-baseline.csv",
+          "localPath": "17-upload-templates/dora-baseline.csv",
+          "rows": 2,
+          "headers": [
+            "team",
+            "deploy_frequency",
+            "lead_time_hours",
+            "change_failure_rate_pct",
+            "mttr_hours"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/epic-module-inventory.csv",
+          "localPath": "17-upload-templates/epic-module-inventory.csv",
+          "rows": 2,
+          "headers": [
+            "module",
+            "owning_service_line",
+            "optimization_state",
+            "workflow_risk",
+            "open_decision"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/governance-committee-decisions.csv",
+          "localPath": "17-upload-templates/governance-committee-decisions.csv",
+          "rows": 2,
+          "headers": [
+            "decision_id",
+            "use_case",
+            "decision",
+            "conditions",
+            "review_date"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/hipaa-ai-controls.csv",
+          "localPath": "17-upload-templates/hipaa-ai-controls.csv",
+          "rows": 2,
+          "headers": [
+            "control_id",
+            "control_area",
+            "system",
+            "phi_touch",
+            "status",
+            "evidence_owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/imaging-ai-worklist.csv",
+          "localPath": "17-upload-templates/imaging-ai-worklist.csv",
+          "rows": 2,
+          "headers": [
+            "modality",
+            "algorithm",
+            "study_volume",
+            "turnaround_delta_min",
+            "safety_review_state"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/incident-change-history.csv",
+          "localPath": "17-upload-templates/incident-change-history.csv",
+          "rows": 2,
+          "headers": [
+            "event_id",
+            "system",
+            "severity",
+            "clinical_impact",
+            "root_cause"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/nursing-workload-acuity.csv",
+          "localPath": "17-upload-templates/nursing-workload-acuity.csv",
+          "rows": 2,
+          "headers": [
+            "unit",
+            "patient_days",
+            "acuity_index",
+            "nurse_hours_per_patient_day",
+            "burnout_signal"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/patient-access-contact-center.csv",
+          "localPath": "17-upload-templates/patient-access-contact-center.csv",
+          "rows": 2,
+          "headers": [
+            "queue",
+            "call_volume",
+            "abandon_rate_pct",
+            "digital_deflection_pct",
+            "top_driver"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/patient-digital-front-door.csv",
+          "localPath": "17-upload-templates/patient-digital-front-door.csv",
+          "rows": 2,
+          "headers": [
+            "journey",
+            "channel",
+            "conversion_rate_pct",
+            "dropoff_reason",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/population-health-risk-panels.csv",
+          "localPath": "17-upload-templates/population-health-risk-panels.csv",
+          "rows": 2,
+          "headers": [
+            "panel",
+            "patients",
+            "risk_signal",
+            "intervention_owner",
+            "outcome_metric"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/prior-auth-workqueue.csv",
+          "localPath": "17-upload-templates/prior-auth-workqueue.csv",
+          "rows": 2,
+          "headers": [
+            "payer",
+            "service_line",
+            "volume",
+            "denial_rate_pct",
+            "automation_readiness",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/rcm-denials.csv",
+          "localPath": "17-upload-templates/rcm-denials.csv",
+          "rows": 2,
+          "headers": [
+            "denial_category",
+            "payer",
+            "monthly_cases",
+            "recoverable_usd",
+            "root_cause"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/security-downtime-readiness.csv",
+          "localPath": "17-upload-templates/security-downtime-readiness.csv",
+          "rows": 2,
+          "headers": [
+            "system",
+            "downtime_tier",
+            "rto_hours",
+            "clinical_workaround",
+            "last_drill_date"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/service-line-pnl.csv",
+          "localPath": "17-upload-templates/service-line-pnl.csv",
+          "rows": 2,
+          "headers": [
+            "service_line",
+            "net_revenue_usd",
+            "direct_margin_pct",
+            "avoidable_cost_usd",
+            "ai_opportunity"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/supply-chain-pharmacy.csv",
+          "localPath": "17-upload-templates/supply-chain-pharmacy.csv",
+          "rows": 2,
+          "headers": [
+            "category",
+            "annual_spend_usd",
+            "shortage_risk",
+            "ai_opportunity",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/value-based-care-panel.csv",
+          "localPath": "17-upload-templates/value-based-care-panel.csv",
+          "rows": 2,
+          "headers": [
+            "contract",
+            "covered_lives",
+            "risk_pool_usd",
+            "quality_gap",
+            "ai_use_case"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/vendor-baa-contracts.csv",
+          "localPath": "17-upload-templates/vendor-baa-contracts.csv",
+          "rows": 2,
+          "headers": [
+            "vendor",
+            "contract_id",
+            "baa_status",
+            "ai_clause_status",
+            "renewal_date",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/17-upload-templates/workforce-scheduling.csv",
+          "localPath": "17-upload-templates/workforce-scheduling.csv",
+          "rows": 2,
+          "headers": [
+            "unit",
+            "open_shifts",
+            "premium_labor_usd",
+            "forecast_accuracy_pct",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/corpus_enhancement_backlog.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/corpus_enhancement_backlog.csv",
+          "rows": 7,
+          "headers": [
+            "corpus_area",
+            "priority",
+            "patterns_to_add",
+            "why_it_matters",
+            "example_questions_supported",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/current_state_process.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/current_state_process.csv",
+          "rows": 8,
+          "headers": [
+            "process_name",
+            "step",
+            "owner_role",
+            "system",
+            "pain_point",
+            "cycle_time_range",
+            "control_gap",
+            "evidence_source",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/data_readiness_summary.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/data_readiness_summary.csv",
+          "rows": 7,
+          "headers": [
+            "use_case",
+            "data_domain",
+            "available_summary_level",
+            "quality",
+            "refresh_cadence",
+            "gap",
+            "needed_for_phase",
+            "sensitive_detail_needed"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/decision_log.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/decision_log.csv",
+          "rows": 7,
+          "headers": [
+            "decision",
+            "status",
+            "owner_role",
+            "date_needed",
+            "dependency",
+            "risk_if_delayed",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/evidence_register.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/evidence_register.csv",
+          "rows": 8,
+          "headers": [
+            "artifact_name",
+            "artifact_type",
+            "owner_role",
+            "date",
+            "use_case",
+            "source_basis",
+            "classification",
+            "confidence",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/kpi_baseline.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/kpi_baseline.csv",
+          "rows": 8,
+          "headers": [
+            "use_case_name",
+            "kpi_name",
+            "baseline_value",
+            "target_value",
+            "period",
+            "source",
+            "confidence",
+            "sensitivity",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/operating_model_roles.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/operating_model_roles.csv",
+          "rows": 7,
+          "headers": [
+            "function",
+            "role_title",
+            "decision_right",
+            "pain_point",
+            "capacity_constraint",
+            "required_in_pilot",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/risk_guardrail_register.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/risk_guardrail_register.csv",
+          "rows": 7,
+          "headers": [
+            "use_case",
+            "risk_type",
+            "guardrail",
+            "human_review_required",
+            "blocked_action",
+            "approval_owner",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/system_data_landscape.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/system_data_landscape.csv",
+          "rows": 7,
+          "headers": [
+            "system_name",
+            "category",
+            "owner_role",
+            "data_domain",
+            "integration_role",
+            "known_gap",
+            "criticality",
+            "source",
+            "sensitivity",
+            "move_phase"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/use_case_intake.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/use_case_intake.csv",
+          "rows": 7,
+          "headers": [
+            "use_case_name",
+            "business_area",
+            "sponsor_title",
+            "problem_statement",
+            "value_hypothesis",
+            "target_decision",
+            "move_phase",
+            "confidence",
+            "classification",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/use_case_template_map.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/use_case_template_map.csv",
+          "rows": 7,
+          "headers": [
+            "use_case",
+            "primary_move_phases",
+            "required_templates",
+            "readiness_for_strategy_pilot",
+            "corpus_enhancement_needed"
+          ]
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/vendor_contract_context.csv",
+          "localPath": "19-pilot-strategy-evidence-pack/vendor_contract_context.csv",
+          "rows": 5,
+          "headers": [
+            "vendor",
+            "capability",
+            "contract_status",
+            "renewal_window",
+            "annual_spend_range",
+            "baa_status",
+            "ai_clause_status",
+            "risk",
+            "move_phase"
+          ]
+        }
+      ],
+      "jsonlSummaries": [
+        {
+          "path": "datasets/meridian-health-synthetic-v1/08-sponsor-signal/sponsor-pulse.jsonl",
+          "localPath": "08-sponsor-signal/sponsor-pulse.jsonl",
+          "rows": 35,
+          "errors": []
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/13-context/client-data-corpus.jsonl",
+          "localPath": "13-context/client-data-corpus.jsonl",
+          "rows": 320,
+          "errors": []
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/corpus_pattern_starters.jsonl",
+          "localPath": "19-pilot-strategy-evidence-pack/corpus_pattern_starters.jsonl",
+          "rows": 7,
+          "errors": []
+        }
+      ],
+      "jsonErrors": [],
+      "manifestClaims": {
+        "datasets/meridian-health-synthetic-v1/17-upload-templates/README.md": [],
+        "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/README.md": [],
+        "datasets/meridian-health-synthetic-v1/README.md": [],
+        "datasets/meridian-health-synthetic-v1/manifest.yaml": []
+      },
+      "fixtureHits": [
+        {
+          "path": "datasets/meridian-health-synthetic-v1/13-context/client-data-corpus.jsonl",
+          "hits": 1
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/data_readiness_summary.csv",
+          "hits": 1
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/evidence_register.csv",
+          "hits": 1
+        },
+        {
+          "path": "datasets/meridian-health-synthetic-v1/19-pilot-strategy-evidence-pack/vendor_contract_context.csv",
+          "hits": 1
+        }
+      ],
+      "scores": {
+        "scale": 9,
+        "itComplexity": 10,
+        "financialDepth": 10,
+        "orgDepth": 10,
+        "vendorDepth": 9,
+        "opsDepth": 10,
+        "regulatoryDepth": 10,
+        "evidenceDepth": 8,
+        "corpusDepth": 7,
+        "generationQuality": 9,
+        "loadReadiness": 10
+      },
+      "overall": 9.3,
+      "gaps": [
+        "Fixture-like phrasing detected; rows can be synthetic, but loaded evidence should read like enterprise records, not generated boilerplate."
+      ],
+      "augmentation": [
+        "Add IT estate spine: CMDB/application rows, integration edges, identity/IAM, network/security, data platforms, ERP, observability, workplace, service management, and branch/site technology.",
+        "Regenerate source docs/chunks in document-native voices: board memo, architecture record, finance workbook excerpt, risk register, vendor renewal brief, audit evidence, and operations review."
+      ],
+      "archiveCandidates": [],
+      "decision": "load_ready_after_live_proof"
+    },
+    {
+      "key": "lakeshore",
+      "label": "Lakeshore Kyriba Source Pack",
+      "root": "datasets/lakeshore-kyriba-synthetic-v1",
+      "loaderRegistered": false,
+      "tenantKey": "lakeshore",
+      "target": "large treasury transformation evidence pack for Source generation",
+      "exists": true,
+      "files": 17,
+      "byExt": {
+        "md": 5,
+        "xlsx": 6,
+        "csv": 4,
+        "jsonl": 1,
+        "json": 1
+      },
+      "parseableRows": {
+        "total": 34,
+        "applications": 12,
+        "integrations": 8,
+        "vendors": 6,
+        "initiatives": 0,
+        "org": 0,
+        "financial": 0,
+        "ops": 0,
+        "regulatory": 4,
+        "corpus": 4,
+        "uploadTemplatesAndScenarios": 40
+      },
+      "averageAppIntegrationCount": null,
+      "namedSystems": [
+        "sap",
+        "oracle",
+        "servicenow",
+        "boomi",
+        "claims",
+        "ach",
+        "kyriba",
+        "sftp",
+        "iam",
+        "entra",
+        "sso",
+        "api",
+        "batch",
+        "data lake",
+        "azure"
+      ],
+      "riskTerms": [
+        "aml",
+        "qms",
+        "audit",
+        "control",
+        "rpo"
+      ],
+      "csvSummaries": [
+        {
+          "path": "datasets/lakeshore-kyriba-synthetic-v1/source_uploads/04_cmdb_application_portfolio.csv",
+          "localPath": "source_uploads/04_cmdb_application_portfolio.csv",
+          "rows": 12,
+          "headers": [
+            "app_id",
+            "name",
+            "cmdb_ci_masked",
+            "hostname_masked",
+            "ip_address_masked",
+            "criticality",
+            "owner_role",
+            "system_of_record",
+            "category",
+            "lifecycle_state",
+            "ams_vendor",
+            "time_classification",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/lakeshore-kyriba-synthetic-v1/source_uploads/06_api_file_transfer_landscape.csv",
+          "localPath": "source_uploads/06_api_file_transfer_landscape.csv",
+          "rows": 8,
+          "headers": [
+            "edge_id",
+            "source_app_id",
+            "target_app_id",
+            "endpoint_or_path_masked",
+            "credential_reference_masked",
+            "integration_type",
+            "payload_standard",
+            "frequency",
+            "sla_window",
+            "criticality",
+            "business_purpose",
+            "owner_role",
+            "monitoring_gap"
+          ]
+        },
+        {
+          "path": "datasets/lakeshore-kyriba-synthetic-v1/source_uploads/10_vendor_contract_inventory.csv",
+          "localPath": "source_uploads/10_vendor_contract_inventory.csv",
+          "rows": 6,
+          "headers": [
+            "vendor_id",
+            "vendor_name",
+            "contract_reference_masked",
+            "contract_type",
+            "annual_value_usd",
+            "renewal_date",
+            "owner_role",
+            "data_rights",
+            "exit_terms",
+            "sensitive_terms_detail",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/lakeshore-kyriba-synthetic-v1/source_uploads/14_evidence_pattern_output_trace.csv",
+          "localPath": "source_uploads/14_evidence_pattern_output_trace.csv",
+          "rows": 4,
+          "headers": [
+            "evidence_file",
+            "evidence_fact",
+            "activated_pattern",
+            "rfp_change",
+            "scoring_change",
+            "cost_change",
+            "risk_change"
+          ]
+        }
+      ],
+      "jsonlSummaries": [
+        {
+          "path": "datasets/lakeshore-kyriba-synthetic-v1/source_uploads/13_kyriba_decision_patterns.jsonl",
+          "localPath": "source_uploads/13_kyriba_decision_patterns.jsonl",
+          "rows": 4,
+          "errors": []
+        }
+      ],
+      "jsonErrors": [],
+      "manifestClaims": {
+        "datasets/lakeshore-kyriba-synthetic-v1/README.md": [],
+        "datasets/lakeshore-kyriba-synthetic-v1/source_uploads/manifest.json": []
+      },
+      "fixtureHits": [],
+      "scores": {
+        "scale": 0,
+        "itComplexity": 1,
+        "financialDepth": 0,
+        "orgDepth": 0,
+        "vendorDepth": 2,
+        "opsDepth": 0,
+        "regulatoryDepth": 3,
+        "evidenceDepth": 3,
+        "corpusDepth": 0,
+        "generationQuality": 10,
+        "loadReadiness": 6
+      },
+      "overall": 2.3,
+      "gaps": [
+        "Application / CMDB depth below large-enterprise threshold; add system-of-record, middleware, IAM, data, branch/site, network, and control-plane rows.",
+        "Integration topology is thin for a 50B+ enterprise; add API, batch, event, MFT/SFTP, data replication, and third-party connectivity edges.",
+        "Vendor and contract surface is too small for enterprise concentration-risk analysis.",
+        "Ownership model lacks enough roles/teams for realistic accountability and escalation.",
+        "Ops history is too small to support real DORA, reliability, and risk tradeoff analysis.",
+        "Retrieval corpus has too few chunks/facts to be considered live intelligence substrate.",
+        "No standard tenant-substrate loader registration found; live population needs a governed load path before this pack can be treated as deployed context."
+      ],
+      "augmentation": [
+        "Add IT estate spine: CMDB/application rows, integration edges, identity/IAM, network/security, data platforms, ERP, observability, workplace, service management, and branch/site technology.",
+        "Add run-cost and value spine: app-level run cost, infra consumption, vendor allocation, project commitments, renewals, cloud cost, labor mix, and depreciation/capex treatment.",
+        "Add operational history: incidents, changes, problems, DORA time series, DR tests, SLA exceptions, audit findings, and remediation backlog.",
+        "Add evidence spine: board packs, architecture memos, service owner notes, control evidence, source-file ledger, chunk/fact corpus, and expected Q&A proof."
+      ],
+      "archiveCandidates": [
+        {
+          "scope": "live Source events created from this pack before loader registration",
+          "reason": "ungoverned_source_pack_path",
+          "action": "Do not load as canonical tenant substrate until a tenant registry entry, evidence receipt, and retrieval proof exist.",
+          "examples": [
+            "datasets/lakeshore-kyriba-synthetic-v1"
+          ]
+        }
+      ],
+      "decision": "hold_and_rebuild_before_load"
+    },
+    {
+      "key": "apex-retail",
+      "label": "Apex Retail",
+      "root": "datasets/apex-retail-synthetic-v1",
+      "loaderRegistered": true,
+      "tenantKey": "apex-retail",
+      "target": "large specialty retail enterprise",
+      "exists": true,
+      "files": 141,
+      "byExt": {
+        "csv": 33,
+        "json": 19,
+        "xlsx": 2,
+        "pdf": 40,
+        "jsonl": 1,
+        "md": 45,
+        "yaml": 1
+      },
+      "parseableRows": {
+        "total": 2991,
+        "applications": 120,
+        "integrations": 320,
+        "vendors": 102,
+        "initiatives": 72,
+        "org": 1448,
+        "financial": 201,
+        "ops": 432,
+        "regulatory": 14,
+        "corpus": 280,
+        "uploadTemplatesAndScenarios": 0
+      },
+      "averageAppIntegrationCount": null,
+      "namedSystems": [
+        "mainframe",
+        "sap",
+        "oracle",
+        "workday",
+        "servicenow",
+        "snowflake",
+        "databricks",
+        "kafka",
+        "mulesoft",
+        "ach",
+        "swift",
+        "sftp",
+        "entra",
+        "sso",
+        "api",
+        "batch",
+        "salesforce",
+        "genesys",
+        "azure",
+        "aws",
+        "gcp",
+        "vmware"
+      ],
+      "riskTerms": [
+        "sox",
+        "pci",
+        "audit",
+        "control",
+        "rpo",
+        "regulator"
+      ],
+      "csvSummaries": [
+        {
+          "path": "datasets/apex-retail-synthetic-v1/01-portfolio/application-portfolio.csv",
+          "localPath": "01-portfolio/application-portfolio.csv",
+          "rows": 120,
+          "headers": [
+            "app_id",
+            "name",
+            "description",
+            "stack_era",
+            "primary_language",
+            "primary_framework",
+            "vintage_year",
+            "hosting",
+            "hosting_detail",
+            "lifecycle",
+            "criticality_tier",
+            "time_classification",
+            "workload_type",
+            "owning_team_id",
+            "in_house_fte",
+            "contractor_fte",
+            "si_fte",
+            "ams_vendor",
+            "ams_annual_usd",
+            "license_annual_usd",
+            "infra_annual_usd",
+            "changes_per_year",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct",
+            "regulatory_scope",
+            "channels",
+            "ai_fit_score",
+            "modernization_init_id",
+            "depends_on_count",
+            "consumed_by_count",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/01-portfolio/initiatives-active.csv",
+          "localPath": "01-portfolio/initiatives-active.csv",
+          "rows": 30,
+          "headers": [
+            "initiative_id",
+            "title",
+            "status",
+            "accountable",
+            "vendors",
+            "committed_usd",
+            "projected_value_usd",
+            "sentinel_posture",
+            "evidence_note"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/01-portfolio/initiatives-closed.csv",
+          "localPath": "01-portfolio/initiatives-closed.csv",
+          "rows": 12,
+          "headers": [
+            "initiative_id",
+            "name",
+            "status",
+            "closed_quarter",
+            "committed_usd",
+            "outcome_note"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/01-portfolio/time-classification-output.csv",
+          "localPath": "01-portfolio/time-classification-output.csv",
+          "rows": 120,
+          "headers": [
+            "app_id",
+            "time_classification",
+            "rationale"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/02-financial/annual-run-costs.csv",
+          "localPath": "02-financial/annual-run-costs.csv",
+          "rows": 120,
+          "headers": [
+            "app_id",
+            "app_name",
+            "ams_annual_usd",
+            "license_annual_usd",
+            "infra_annual_usd",
+            "total_run_usd",
+            "vendor"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/02-financial/capex-opex-split-fy26.csv",
+          "localPath": "02-financial/capex-opex-split-fy26.csv",
+          "rows": 3,
+          "headers": [
+            "bucket",
+            "amount_usd",
+            "percent_it_budget",
+            "note"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/02-financial/initiative-commitments.csv",
+          "localPath": "02-financial/initiative-commitments.csv",
+          "rows": 30,
+          "headers": [
+            "initiative_id",
+            "title",
+            "committed_usd",
+            "projected_value_usd",
+            "sentinel_posture"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/02-financial/renewal-calendar-12mo.csv",
+          "localPath": "02-financial/renewal-calendar-12mo.csv",
+          "rows": 45,
+          "headers": [
+            "vendor",
+            "renewal_date",
+            "annual_usd",
+            "leverage_flag",
+            "recommended_action"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/03-org/org-topology.csv",
+          "localPath": "03-org/org-topology.csv",
+          "rows": 14,
+          "headers": [
+            "team_id",
+            "team_name",
+            "team_type",
+            "stack_focus",
+            "vp_owner"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/03-org/roles-inventory.csv",
+          "localPath": "03-org/roles-inventory.csv",
+          "rows": 1420,
+          "headers": [
+            "person_key",
+            "team_id",
+            "role_family",
+            "employment_type",
+            "level",
+            "location"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/03-org/spans-of-control.csv",
+          "localPath": "03-org/spans-of-control.csv",
+          "rows": 14,
+          "headers": [
+            "manager_id",
+            "team_id",
+            "direct_reports"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/04-vendors/infra-ms-contracts.csv",
+          "localPath": "04-vendors/infra-ms-contracts.csv",
+          "rows": 12,
+          "headers": [
+            "vendor",
+            "service",
+            "annual_usd",
+            "renewal_date",
+            "scope"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/04-vendors/vendor-contracts.csv",
+          "localPath": "04-vendors/vendor-contracts.csv",
+          "rows": 45,
+          "headers": [
+            "vendor",
+            "type",
+            "annual_usd",
+            "renewal_date",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/04-vendors/vendor-scorecards-2026q1.csv",
+          "localPath": "04-vendors/vendor-scorecards-2026q1.csv",
+          "rows": 45,
+          "headers": [
+            "vendor",
+            "commercial_health",
+            "delivery_health",
+            "relationship_health",
+            "risk_note"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/05-dora/dora-baseline-consolidated.csv",
+          "localPath": "05-dora/dora-baseline-consolidated.csv",
+          "rows": 84,
+          "headers": [
+            "week",
+            "team_id",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/05-dora/dora-baseline-week-01.csv",
+          "localPath": "05-dora/dora-baseline-week-01.csv",
+          "rows": 14,
+          "headers": [
+            "week",
+            "team_id",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/05-dora/dora-baseline-week-02.csv",
+          "localPath": "05-dora/dora-baseline-week-02.csv",
+          "rows": 14,
+          "headers": [
+            "week",
+            "team_id",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/05-dora/dora-baseline-week-03.csv",
+          "localPath": "05-dora/dora-baseline-week-03.csv",
+          "rows": 14,
+          "headers": [
+            "week",
+            "team_id",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/05-dora/dora-baseline-week-04.csv",
+          "localPath": "05-dora/dora-baseline-week-04.csv",
+          "rows": 14,
+          "headers": [
+            "week",
+            "team_id",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/05-dora/dora-baseline-week-05.csv",
+          "localPath": "05-dora/dora-baseline-week-05.csv",
+          "rows": 14,
+          "headers": [
+            "week",
+            "team_id",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/05-dora/dora-baseline-week-06.csv",
+          "localPath": "05-dora/dora-baseline-week-06.csv",
+          "rows": 14,
+          "headers": [
+            "week",
+            "team_id",
+            "deploys_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/06-devex/time-allocation-diary-2026q1.csv",
+          "localPath": "06-devex/time-allocation-diary-2026q1.csv",
+          "rows": 76,
+          "headers": [
+            "engineer_id",
+            "team_id",
+            "week",
+            "coding_pct",
+            "coordination_pct",
+            "waiting_pct",
+            "support_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/07-ai-tools/ai-tool-cost-ledger.csv",
+          "localPath": "07-ai-tools/ai-tool-cost-ledger.csv",
+          "rows": 3,
+          "headers": [
+            "tool",
+            "monthly_usd",
+            "annual_usd",
+            "owner"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/07-ai-tools/ai-tool-footprint.csv",
+          "localPath": "07-ai-tools/ai-tool-footprint.csv",
+          "rows": 3,
+          "headers": [
+            "tool",
+            "seats",
+            "activated",
+            "daily_active",
+            "annual_usd",
+            "scope"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/07-ai-tools/claude-enterprise-utilization.csv",
+          "localPath": "07-ai-tools/claude-enterprise-utilization.csv",
+          "rows": 1,
+          "headers": [
+            "month",
+            "seats",
+            "activated",
+            "daily_active",
+            "primary_use"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/07-ai-tools/copilot-utilization-export.csv",
+          "localPath": "07-ai-tools/copilot-utilization-export.csv",
+          "rows": 3,
+          "headers": [
+            "month",
+            "seats",
+            "activated",
+            "daily_active",
+            "acceptance_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/07-ai-tools/cursor-utilization-export.csv",
+          "localPath": "07-ai-tools/cursor-utilization-export.csv",
+          "rows": 1,
+          "headers": [
+            "month",
+            "seats",
+            "activated",
+            "daily_active",
+            "acceptance_rate_pct"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/08-sponsor-signal/sponsor-status-update-log.csv",
+          "localPath": "08-sponsor-signal/sponsor-status-update-log.csv",
+          "rows": 90,
+          "headers": [
+            "initiative_id",
+            "month",
+            "status_update_present",
+            "tone"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/08-sponsor-signal/steering-meeting-cadence.csv",
+          "localPath": "08-sponsor-signal/steering-meeting-cadence.csv",
+          "rows": 30,
+          "headers": [
+            "initiative_id",
+            "scheduled_6mo",
+            "held_6mo",
+            "cancelled_6mo"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/10-incidents-changes/change-management-feed-6mo.csv",
+          "localPath": "10-incidents-changes/change-management-feed-6mo.csv",
+          "rows": 180,
+          "headers": [
+            "change_id",
+            "date",
+            "system_id",
+            "risk",
+            "outcome"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/10-incidents-changes/major-incidents-2025.csv",
+          "localPath": "10-incidents-changes/major-incidents-2025.csv",
+          "rows": 56,
+          "headers": [
+            "incident_id",
+            "date",
+            "severity",
+            "system_id",
+            "root_cause",
+            "business_impact"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/10-incidents-changes/problem-records.csv",
+          "localPath": "10-incidents-changes/problem-records.csv",
+          "rows": 28,
+          "headers": [
+            "problem_id",
+            "system_id",
+            "status",
+            "known_error",
+            "linked_initiative"
+          ]
+        },
+        {
+          "path": "datasets/apex-retail-synthetic-v1/13-context/enterprise-context-source-files.csv",
+          "localPath": "13-context/enterprise-context-source-files.csv",
+          "rows": 42,
+          "headers": [
+            "source_file_id",
+            "source_system",
+            "source_file",
+            "source_path",
+            "source_type",
+            "display_name",
+            "target_table",
+            "feature",
+            "row_count",
+            "confidence",
+            "freshness_status"
+          ]
+        }
+      ],
+      "jsonlSummaries": [
+        {
+          "path": "datasets/apex-retail-synthetic-v1/13-context/client-data-corpus.jsonl",
+          "localPath": "13-context/client-data-corpus.jsonl",
+          "rows": 280,
+          "errors": []
+        }
+      ],
+      "jsonErrors": [],
+      "manifestClaims": {
+        "datasets/apex-retail-synthetic-v1/README.md": [
+          "120 application",
+          "45 vendor"
+        ],
+        "datasets/apex-retail-synthetic-v1/manifest.yaml": []
+      },
+      "fixtureHits": [],
+      "scores": {
+        "scale": 9,
+        "itComplexity": 9,
+        "financialDepth": 8,
+        "orgDepth": 10,
+        "vendorDepth": 9,
+        "opsDepth": 10,
+        "regulatoryDepth": 5,
+        "evidenceDepth": 8,
+        "corpusDepth": 7,
+        "generationQuality": 10,
+        "loadReadiness": 10
+      },
+      "overall": 8.6,
+      "gaps": [
+        "Application / CMDB depth below large-enterprise threshold; add system-of-record, middleware, IAM, data, branch/site, network, and control-plane rows."
+      ],
+      "augmentation": [
+        "Add IT estate spine: CMDB/application rows, integration edges, identity/IAM, network/security, data platforms, ERP, observability, workplace, service management, and branch/site technology."
+      ],
+      "archiveCandidates": [],
+      "decision": "load_ready_after_live_proof"
+    },
+    {
+      "key": "northstar-clinical",
+      "label": "Northstar Clinical Tech",
+      "root": "datasets/northstar-clinical-tech-synthetic-v1",
+      "loaderRegistered": true,
+      "tenantKey": "northstar-clinical",
+      "target": "global medtech / regulated manufacturer",
+      "exists": true,
+      "files": 230,
+      "byExt": {
+        "md": 108,
+        "yaml": 3,
+        "csv": 33,
+        "pdf": 67,
+        "docx": 4,
+        "json": 6,
+        "jsonl": 4,
+        "xlsx": 5
+      },
+      "parseableRows": {
+        "total": 7070,
+        "applications": 260,
+        "integrations": 972,
+        "vendors": 90,
+        "initiatives": 80,
+        "org": 3405,
+        "financial": 48,
+        "ops": 524,
+        "regulatory": 120,
+        "corpus": 1038,
+        "uploadTemplatesAndScenarios": 31
+      },
+      "averageAppIntegrationCount": null,
+      "namedSystems": [
+        "mainframe",
+        "sap",
+        "oracle",
+        "servicenow",
+        "hl7",
+        "fhir",
+        "epic",
+        "claims",
+        "entra",
+        "api",
+        "batch",
+        "edw",
+        "salesforce",
+        "azure",
+        "aws",
+        "gcp"
+      ],
+      "riskTerms": [
+        "hipaa",
+        "fda",
+        "qms",
+        "sox",
+        "gdpr",
+        "audit",
+        "control",
+        "rpo",
+        "regulator"
+      ],
+      "csvSummaries": [
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/01-financials/financial-kpi-workbook.csv",
+          "localPath": "01-financials/financial-kpi-workbook.csv",
+          "rows": 24,
+          "headers": [
+            "period",
+            "business_unit_id",
+            "business_unit",
+            "revenue_usd",
+            "gross_margin_pct",
+            "operating_margin_pct",
+            "r_and_d_usd",
+            "sg_and_a_usd",
+            "source_report"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/01-financials/segment-pnl-workbook.csv",
+          "localPath": "01-financials/segment-pnl-workbook.csv",
+          "rows": 24,
+          "headers": [
+            "period",
+            "business_unit_id",
+            "business_unit",
+            "revenue_usd",
+            "gross_margin_pct",
+            "operating_margin_pct",
+            "r_and_d_usd",
+            "sg_and_a_usd",
+            "source_report"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/02-strategy/board-priorities.csv",
+          "localPath": "02-strategy/board-priorities.csv",
+          "rows": 3,
+          "headers": [
+            "priority_id",
+            "priority",
+            "owner_role",
+            "time_horizon",
+            "board_question"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/03-business-units/business-units.csv",
+          "localPath": "03-business-units/business-units.csv",
+          "rows": 6,
+          "headers": [
+            "business_unit_id",
+            "name",
+            "revenue_b",
+            "operating_margin_pct",
+            "president_role"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/04-product-portfolio/product-portfolio.csv",
+          "localPath": "04-product-portfolio/product-portfolio.csv",
+          "rows": 180,
+          "headers": [
+            "product_family_id",
+            "business_unit_id",
+            "name",
+            "revenue_usd",
+            "margin_pct",
+            "lifecycle_state",
+            "regulatory_burden",
+            "plant_dependency"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/04-product-portfolio/sku-product-groups.csv",
+          "localPath": "04-product-portfolio/sku-product-groups.csv",
+          "rows": 1200,
+          "headers": [
+            "sku_group_id",
+            "product_family_id",
+            "business_unit_id",
+            "revenue_usd",
+            "margin_pct",
+            "lifecycle_state"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/05-sites-manufacturing/site-and-plant-inventory.csv",
+          "localPath": "05-sites-manufacturing/site-and-plant-inventory.csv",
+          "rows": 42,
+          "headers": [
+            "site_id",
+            "country",
+            "business_unit_id",
+            "primary_system",
+            "validated_system_flag",
+            "quality_cost_usd",
+            "capacity_utilization_pct",
+            "plant_vp"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/06-erp-landscape/erp-landscape-workbook.csv",
+          "localPath": "06-erp-landscape/erp-landscape-workbook.csv",
+          "rows": 152,
+          "headers": [
+            "erp_object_id",
+            "platform",
+            "process_area",
+            "owner_role",
+            "business_unit_id",
+            "customization_count",
+            "tsa_dependency",
+            "retirement_posture"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/07-application-portfolio/application-portfolio.csv",
+          "localPath": "07-application-portfolio/application-portfolio.csv",
+          "rows": 240,
+          "headers": [
+            "app_id",
+            "name",
+            "stack_era",
+            "criticality",
+            "owner_role",
+            "system_of_record",
+            "business_unit_id",
+            "ams_vendor",
+            "time_classification",
+            "annual_run_cost_usd",
+            "regulatory_scope",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/09-vendors-contracts/vendor-contracts.csv",
+          "localPath": "09-vendors-contracts/vendor-contracts.csv",
+          "rows": 90,
+          "headers": [
+            "vendor_id",
+            "vendor_name",
+            "category",
+            "annual_value_usd",
+            "renewal_date",
+            "exit_terms",
+            "ai_clauses",
+            "data_rights"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/10-initiatives/initiatives-active.csv",
+          "localPath": "10-initiatives/initiatives-active.csv",
+          "rows": 55,
+          "headers": [
+            "initiative_id",
+            "title",
+            "status",
+            "sentinel_posture",
+            "sponsor_role",
+            "committed_usd",
+            "projected_value_usd",
+            "linked_app_ids",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/10-initiatives/initiatives-closed.csv",
+          "localPath": "10-initiatives/initiatives-closed.csv",
+          "rows": 25,
+          "headers": [
+            "initiative_id",
+            "title",
+            "status",
+            "sponsor_role",
+            "committed_usd",
+            "realized_value_usd"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/11-org-roles/demo-personas.csv",
+          "localPath": "11-org-roles/demo-personas.csv",
+          "rows": 5,
+          "headers": [
+            "email",
+            "password",
+            "name",
+            "role",
+            "client_key",
+            "tenant_key"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/11-org-roles/org-roles.csv",
+          "localPath": "11-org-roles/org-roles.csv",
+          "rows": 3400,
+          "headers": [
+            "person_id",
+            "name",
+            "role",
+            "manager_id",
+            "level",
+            "email",
+            "cost_center",
+            "location"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/12-delivery-devex/dora-baseline.csv",
+          "localPath": "12-delivery-devex/dora-baseline.csv",
+          "rows": 224,
+          "headers": [
+            "team_id",
+            "measured_at",
+            "deploy_freq_per_week",
+            "lead_time_hours",
+            "mttr_hours",
+            "change_failure_rate_pct",
+            "reliability_pct"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/13-regulatory-qms/qms-events.csv",
+          "localPath": "13-regulatory-qms/qms-events.csv",
+          "rows": 120,
+          "headers": [
+            "event_id",
+            "event_type",
+            "product_family_id",
+            "severity",
+            "opened_at",
+            "capa_id",
+            "audit_reference"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/14-ai-models-tools/ai-tool-footprint.csv",
+          "localPath": "14-ai-models-tools/ai-tool-footprint.csv",
+          "rows": 42,
+          "headers": [
+            "tool_id",
+            "tool_name",
+            "owner_role",
+            "workflow",
+            "risk_classification",
+            "model_name",
+            "regulated_workflow_flag"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/15-incidents-ops/incidents.csv",
+          "localPath": "15-incidents-ops/incidents.csv",
+          "rows": 180,
+          "headers": [
+            "incident_id",
+            "system_id",
+            "severity",
+            "opened_at",
+            "closed_at",
+            "root_cause"
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/ai-tool-footprint.csv",
+          "localPath": "17-upload-templates/ai-tool-footprint.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar AI tool footprint upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/application-portfolio.csv",
+          "localPath": "17-upload-templates/application-portfolio.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar CMDB application portfolio upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/change-history.csv",
+          "localPath": "17-upload-templates/change-history.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar change history upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/devex-survey.csv",
+          "localPath": "17-upload-templates/devex-survey.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar DevEx survey upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/dora-baseline.csv",
+          "localPath": "17-upload-templates/dora-baseline.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar DORA baseline upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/incidents.csv",
+          "localPath": "17-upload-templates/incidents.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar incidents upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/market-signals.csv",
+          "localPath": "17-upload-templates/market-signals.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar market signals upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/model-inventory.csv",
+          "localPath": "17-upload-templates/model-inventory.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar model inventory upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/org-roles.csv",
+          "localPath": "17-upload-templates/org-roles.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar org roles upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/product-portfolio.csv",
+          "localPath": "17-upload-templates/product-portfolio.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar product portfolio upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/qms-events.csv",
+          "localPath": "17-upload-templates/qms-events.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar QMS events upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/site-and-plant-inventory.csv",
+          "localPath": "17-upload-templates/site-and-plant-inventory.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar manufacturing sites upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/team-topology.csv",
+          "localPath": "17-upload-templates/team-topology.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar team topology upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/vendor-contracts.csv",
+          "localPath": "17-upload-templates/vendor-contracts.csv",
+          "rows": 0,
+          "headers": [
+            "Northstar vendor contracts upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md."
+          ]
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/18-upload-scenarios/sample-cmdb-upload.csv",
+          "localPath": "18-upload-scenarios/sample-cmdb-upload.csv",
+          "rows": 20,
+          "headers": [
+            "app_id",
+            "name",
+            "stack_era",
+            "criticality",
+            "owner_role",
+            "system_of_record",
+            "business_unit_id",
+            "ams_vendor",
+            "time_classification",
+            "annual_run_cost_usd",
+            "regulatory_scope",
+            "notes"
+          ]
+        }
+      ],
+      "jsonlSummaries": [
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/16-market-corpus/client-data-corpus.jsonl",
+          "localPath": "16-market-corpus/client-data-corpus.jsonl",
+          "rows": 720,
+          "errors": []
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/16-market-corpus/demo-critical-facts.jsonl",
+          "localPath": "16-market-corpus/demo-critical-facts.jsonl",
+          "rows": 8,
+          "errors": []
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/16-market-corpus/named-entity-facts.jsonl",
+          "localPath": "16-market-corpus/named-entity-facts.jsonl",
+          "rows": 150,
+          "errors": []
+        },
+        {
+          "path": "datasets/northstar-clinical-tech-synthetic-v1/20-evidence-ledger-fixtures/evidence-rows.jsonl",
+          "localPath": "20-evidence-ledger-fixtures/evidence-rows.jsonl",
+          "rows": 160,
+          "errors": []
+        }
+      ],
+      "jsonErrors": [
+        "datasets/northstar-clinical-tech-synthetic-v1/17-upload-templates/integration-topology.json"
+      ],
+      "manifestClaims": {
+        "datasets/northstar-clinical-tech-synthetic-v1/00-profile/README.md": [],
+        "datasets/northstar-clinical-tech-synthetic-v1/README.md": [],
+        "datasets/northstar-clinical-tech-synthetic-v1/manifest.yaml": [
+          "240 integration",
+          "25 vendor",
+          "36 template"
+        ]
+      },
+      "fixtureHits": [],
+      "scores": {
+        "scale": 10,
+        "itComplexity": 10,
+        "financialDepth": 4,
+        "orgDepth": 10,
+        "vendorDepth": 7,
+        "opsDepth": 10,
+        "regulatoryDepth": 10,
+        "evidenceDepth": 10,
+        "corpusDepth": 10,
+        "generationQuality": 9,
+        "loadReadiness": 9
+      },
+      "overall": 9,
+      "gaps": [
+        "JSON/JSONL parse errors found; fix before load."
+      ],
+      "augmentation": [
+        "Add run-cost and value spine: app-level run cost, infra consumption, vendor allocation, project commitments, renewals, cloud cost, labor mix, and depreciation/capex treatment."
+      ],
+      "archiveCandidates": [],
+      "decision": "load_ready_after_live_proof"
+    },
+    {
+      "key": "skyharbor-air",
+      "label": "SkyHarbor Air",
+      "root": "datasets/skyharbor-air-synthetic-v1",
+      "loaderRegistered": true,
+      "tenantKey": "skyharbor-air",
+      "target": "large airline technology estate",
+      "exists": true,
+      "files": 130,
+      "byExt": {
+        "yaml": 6,
+        "csv": 31,
+        "jsonl": 7,
+        "md": 43,
+        "json": 33,
+        "txt": 2,
+        "pdf": 2,
+        "docx": 1,
+        "xlsx": 3,
+        "html": 2
+      },
+      "parseableRows": {
+        "total": 9428,
+        "applications": 92,
+        "integrations": 321,
+        "vendors": 156,
+        "initiatives": 114,
+        "org": 0,
+        "financial": 52,
+        "ops": 42,
+        "regulatory": 0,
+        "corpus": 6480,
+        "uploadTemplatesAndScenarios": 467
+      },
+      "averageAppIntegrationCount": null,
+      "namedSystems": [
+        "mainframe",
+        "oracle",
+        "workday",
+        "servicenow",
+        "snowflake",
+        "databricks",
+        "mulesoft",
+        "claims",
+        "ach",
+        "entra",
+        "sso",
+        "api",
+        "batch",
+        "salesforce",
+        "genesys",
+        "azure",
+        "aws"
+      ],
+      "riskTerms": [
+        "aml",
+        "model risk",
+        "fda",
+        "retention",
+        "audit",
+        "control",
+        "rpo",
+        "baa",
+        "regulator"
+      ],
+      "csvSummaries": [
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/07-application-portfolio/application-portfolio.csv",
+          "localPath": "07-application-portfolio/application-portfolio.csv",
+          "rows": 92,
+          "headers": [
+            "app_id",
+            "name",
+            "criticality",
+            "business_unit_id",
+            "stack_era",
+            "time_classification",
+            "annual_run_cost_usd",
+            "ams_vendor",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/09-vendors-contracts/vendor-contracts.csv",
+          "localPath": "09-vendors-contracts/vendor-contracts.csv",
+          "rows": 52,
+          "headers": [
+            "vendor_id",
+            "vendor_name",
+            "category",
+            "annual_value_usd",
+            "renewal_date",
+            "exit_terms",
+            "ai_usage_clauses",
+            "data_rights",
+            "notes"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/10-initiatives/initiatives-active.csv",
+          "localPath": "10-initiatives/initiatives-active.csv",
+          "rows": 38,
+          "headers": [
+            "initiative_id",
+            "title",
+            "sponsor_role",
+            "accountable",
+            "stage",
+            "status",
+            "committed_usd",
+            "projected_value_usd",
+            "vendors",
+            "sentinel_posture",
+            "evidence_note"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/10-initiatives/initiatives-closed.csv",
+          "localPath": "10-initiatives/initiatives-closed.csv",
+          "rows": 0,
+          "headers": []
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/azure_load_artifacts/ai_egress_audit_baseline.csv",
+          "localPath": "azure_load_artifacts/ai_egress_audit_baseline.csv",
+          "rows": 0,
+          "headers": [
+            "workflow",
+            "artifact_id",
+            "provider",
+            "model",
+            "status"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/ai_sdlc_opportunity.csv",
+          "localPath": "records/csv/ai_sdlc_opportunity.csv",
+          "rows": 22,
+          "headers": [
+            "opportunity_id",
+            "category",
+            "domain",
+            "current_baseline_metric",
+            "target_metric",
+            "AI_tooling_candidate",
+            "risk_class",
+            "readiness_score",
+            "guardrail",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/aws_native_estate.csv",
+          "localPath": "records/csv/aws_native_estate.csv",
+          "rows": 64,
+          "headers": [
+            "service_id",
+            "app_id",
+            "name",
+            "capability_extracted_from_Z",
+            "AWS_account",
+            "region",
+            "extraction_wave_id",
+            "runtime",
+            "data_store",
+            "event_streams",
+            "criticality",
+            "ops_maturity",
+            "duplicate_complexity_flag",
+            "annual_run_cost_usd",
+            "stack_era",
+            "time_classification",
+            "ams_vendor",
+            "business_unit_id",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/engineering_productivity.csv",
+          "localPath": "records/csv/engineering_productivity.csv",
+          "rows": 42,
+          "headers": [
+            "scorecard_id",
+            "domain",
+            "lead_time_for_change_hours",
+            "deploy_frequency_per_week",
+            "MTTR_hours",
+            "change_failure_rate_pct",
+            "automated_test_coverage_pct",
+            "environment_provisioning_time_hours",
+            "AI_tooling_adoption_pct",
+            "factory_throughput",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "drilldown_id",
+            "metric",
+            "baseline",
+            "target",
+            "insight"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/enterprise_profile.csv",
+          "localPath": "records/csv/enterprise_profile.csv",
+          "rows": 13,
+          "headers": [
+            "fact_id",
+            "name",
+            "legal_name",
+            "revenue_usd",
+            "employees",
+            "tech_employees",
+            "aircraft_total",
+            "loyalty_members",
+            "annual_it_spend_usd",
+            "it_run_usd",
+            "it_grow_usd",
+            "it_transform_usd",
+            "modernization_spend_5yr_usd",
+            "modernization_run_rate_usd",
+            "ibm_engagement_annual_usd",
+            "aws_edp_annual_commit_usd",
+            "day0_mainframe_workloads",
+            "current_mainframe_workloads",
+            "day0_mips_peak",
+            "current_mips_peak",
+            "extracted_capabilities_count",
+            "revenue_critical_volume_extracted_pct",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "fact_type",
+            "narrative"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/executive_decision_map.csv",
+          "localPath": "records/csv/executive_decision_map.csv",
+          "rows": 40,
+          "headers": [
+            "persona_id",
+            "persona",
+            "name",
+            "modernization_thesis",
+            "top_3_concerns",
+            "what_would_change_their_mind",
+            "recent_public_statements_pattern",
+            "alignment_with_CTO",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "tension_id",
+            "from_persona",
+            "to_persona",
+            "tension",
+            "decision_needed"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/gcc_capability.csv",
+          "localPath": "records/csv/gcc_capability.csv",
+          "rows": 23,
+          "headers": [
+            "gcc_id",
+            "locations",
+            "headcount",
+            "engineering_pct",
+            "qa_pct",
+            "ops_pct",
+            "data_ai_pct",
+            "cyber_pct",
+            "peer_average_headcount",
+            "target_24mo_headcount",
+            "unit_cost_vs_onshore_pct",
+            "attrition_pct",
+            "ramp_constraints",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "gcc_record_id",
+            "capability",
+            "current_headcount",
+            "target_headcount_24mo",
+            "skill_gap",
+            "peer_benchmark"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/ibm_engagement.csv",
+          "localPath": "records/csv/ibm_engagement.csv",
+          "rows": 26,
+          "headers": [
+            "engagement_id",
+            "vendor",
+            "start_date",
+            "original_scope",
+            "current_scope",
+            "original_value_usd",
+            "current_value_usd",
+            "annual_value_usd",
+            "productivity_guarantees",
+            "IP_ownership",
+            "exit_rights",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "subrecord_id",
+            "record_type",
+            "description",
+            "target_value",
+            "actual_value",
+            "dispute_status"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/initiatives.csv",
+          "localPath": "records/csv/initiatives.csv",
+          "rows": 38,
+          "headers": [
+            "initiative_id",
+            "title",
+            "name",
+            "sponsor",
+            "accountable",
+            "owner_team",
+            "category",
+            "budget_committed",
+            "committed_usd",
+            "budget_consumed",
+            "projected_value_usd",
+            "started_date",
+            "target_completion",
+            "status",
+            "stage",
+            "benefits_thesis",
+            "dependency_list",
+            "vendors",
+            "executive_visibility",
+            "sentinel_posture",
+            "evidence_note",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/integration_topology.csv",
+          "localPath": "records/csv/integration_topology.csv",
+          "rows": 113,
+          "headers": [
+            "edge_id",
+            "source_system_id",
+            "target_system_id",
+            "integration_type",
+            "latency_class",
+            "business_capability",
+            "fragility",
+            "modernization_blocker_flag",
+            "pattern",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "pattern_id",
+            "pattern_name",
+            "description"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/mainframe_inventory.csv",
+          "localPath": "records/csv/mainframe_inventory.csv",
+          "rows": 28,
+          "headers": [
+            "app_id",
+            "workload_id",
+            "name",
+            "business_capability",
+            "MIPS_peak",
+            "MIPS_avg",
+            "transaction_volume_daily",
+            "criticality",
+            "batch_window_constraint",
+            "regulatory_flag",
+            "modernization_status",
+            "reason_still_on_Z",
+            "last_modified_date",
+            "owner_team",
+            "annual_run_cost_usd",
+            "stack_era",
+            "time_classification",
+            "ams_vendor",
+            "business_unit_id",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/modernization_ledger.csv",
+          "localPath": "records/csv/modernization_ledger.csv",
+          "rows": 60,
+          "headers": [
+            "event_id",
+            "wave_id",
+            "event_date",
+            "capability_name",
+            "action",
+            "outcome",
+            "value_promised_usd",
+            "value_realized_usd",
+            "value_disputed_usd",
+            "lesson_learned",
+            "owner_at_time",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/operational_kpis.csv",
+          "localPath": "records/csv/operational_kpis.csv",
+          "rows": 36,
+          "headers": [
+            "kpi_observation_id",
+            "kpi_id",
+            "name",
+            "category",
+            "period_month",
+            "monthly_value",
+            "target",
+            "peer_benchmark",
+            "trend_24mo",
+            "modernization_correlation_score",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/sourcing_pipeline.csv",
+          "localPath": "records/csv/sourcing_pipeline.csv",
+          "rows": 32,
+          "headers": [
+            "event_id",
+            "vendor_contract_id",
+            "event_type",
+            "trigger_date",
+            "lead_time_required_days",
+            "decision_owner",
+            "current_state",
+            "target_outcome",
+            "leverage_factors",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/value_ledger.csv",
+          "localPath": "records/csv/value_ledger.csv",
+          "rows": 56,
+          "headers": [
+            "value_id",
+            "source_initiative_id",
+            "value_type",
+            "promised_amount",
+            "realized_amount",
+            "disputed_amount",
+            "evidence_status",
+            "validation_owner",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/records/csv/vendor_portfolio.csv",
+          "localPath": "records/csv/vendor_portfolio.csv",
+          "rows": 52,
+          "headers": [
+            "contract_id",
+            "vendor_id",
+            "vendor",
+            "vendor_name",
+            "category",
+            "annual_spend",
+            "annual_usd",
+            "annual_value_usd",
+            "contract_start",
+            "contract_end",
+            "renewal_date",
+            "auto_renewal_flag",
+            "exit_terms",
+            "exit_clause_summary",
+            "ai_usage_clauses",
+            "renegotiation_window_open_date",
+            "strategic_criticality",
+            "notes",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/ai_sdlc_opportunity_assessment.csv",
+          "localPath": "source_uploads/ai_sdlc_opportunity_assessment.csv",
+          "rows": 22,
+          "headers": [
+            "opportunity_id",
+            "category",
+            "domain",
+            "current_baseline_metric",
+            "target_metric",
+            "AI_tooling_candidate",
+            "risk_class",
+            "readiness_score",
+            "guardrail",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/aws_service_inventory.csv",
+          "localPath": "source_uploads/aws_service_inventory.csv",
+          "rows": 64,
+          "headers": [
+            "service_id",
+            "app_id",
+            "name",
+            "capability_extracted_from_Z",
+            "AWS_account",
+            "region",
+            "extraction_wave_id",
+            "runtime",
+            "data_store",
+            "event_streams",
+            "criticality",
+            "ops_maturity",
+            "duplicate_complexity_flag",
+            "annual_run_cost_usd",
+            "stack_era",
+            "time_classification",
+            "ams_vendor",
+            "business_unit_id",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/dora_productivity_baseline.csv",
+          "localPath": "source_uploads/dora_productivity_baseline.csv",
+          "rows": 42,
+          "headers": [
+            "scorecard_id",
+            "domain",
+            "lead_time_for_change_hours",
+            "deploy_frequency_per_week",
+            "MTTR_hours",
+            "change_failure_rate_pct",
+            "automated_test_coverage_pct",
+            "environment_provisioning_time_hours",
+            "AI_tooling_adoption_pct",
+            "factory_throughput",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "drilldown_id",
+            "metric",
+            "baseline",
+            "target",
+            "insight"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/executive_stakeholder_map.csv",
+          "localPath": "source_uploads/executive_stakeholder_map.csv",
+          "rows": 40,
+          "headers": [
+            "persona_id",
+            "persona",
+            "name",
+            "modernization_thesis",
+            "top_3_concerns",
+            "what_would_change_their_mind",
+            "recent_public_statements_pattern",
+            "alignment_with_CTO",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "tension_id",
+            "from_persona",
+            "to_persona",
+            "tension",
+            "decision_needed"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/gcc_capability_roster.csv",
+          "localPath": "source_uploads/gcc_capability_roster.csv",
+          "rows": 23,
+          "headers": [
+            "gcc_id",
+            "locations",
+            "headcount",
+            "engineering_pct",
+            "qa_pct",
+            "ops_pct",
+            "data_ai_pct",
+            "cyber_pct",
+            "peer_average_headcount",
+            "target_24mo_headcount",
+            "unit_cost_vs_onshore_pct",
+            "attrition_pct",
+            "ramp_constraints",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated",
+            "gcc_record_id",
+            "capability",
+            "current_headcount",
+            "target_headcount_24mo",
+            "skill_gap",
+            "peer_benchmark"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/initiative_portfolio.csv",
+          "localPath": "source_uploads/initiative_portfolio.csv",
+          "rows": 38,
+          "headers": [
+            "initiative_id",
+            "title",
+            "name",
+            "sponsor",
+            "accountable",
+            "owner_team",
+            "category",
+            "budget_committed",
+            "committed_usd",
+            "budget_consumed",
+            "projected_value_usd",
+            "started_date",
+            "target_completion",
+            "status",
+            "stage",
+            "benefits_thesis",
+            "dependency_list",
+            "vendors",
+            "executive_visibility",
+            "sentinel_posture",
+            "evidence_note",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/integration_topology_edges.csv",
+          "localPath": "source_uploads/integration_topology_edges.csv",
+          "rows": 95,
+          "headers": [
+            "edge_id",
+            "source_system_id",
+            "target_system_id",
+            "integration_type",
+            "latency_class",
+            "business_capability",
+            "fragility",
+            "modernization_blocker_flag",
+            "pattern",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/operational_kpi_timeseries.csv",
+          "localPath": "source_uploads/operational_kpi_timeseries.csv",
+          "rows": 36,
+          "headers": [
+            "kpi_observation_id",
+            "kpi_id",
+            "name",
+            "category",
+            "period_month",
+            "monthly_value",
+            "target",
+            "peer_benchmark",
+            "trend_24mo",
+            "modernization_correlation_score",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/sourcing_pipeline.csv",
+          "localPath": "source_uploads/sourcing_pipeline.csv",
+          "rows": 32,
+          "headers": [
+            "event_id",
+            "vendor_contract_id",
+            "event_type",
+            "trigger_date",
+            "lead_time_required_days",
+            "decision_owner",
+            "current_state",
+            "target_outcome",
+            "leverage_factors",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/source_uploads/vendor_renewal_calendar.csv",
+          "localPath": "source_uploads/vendor_renewal_calendar.csv",
+          "rows": 52,
+          "headers": [
+            "contract_id",
+            "vendor_id",
+            "vendor",
+            "vendor_name",
+            "category",
+            "annual_spend",
+            "annual_usd",
+            "annual_value_usd",
+            "contract_start",
+            "contract_end",
+            "renewal_date",
+            "auto_renewal_flag",
+            "exit_terms",
+            "exit_clause_summary",
+            "ai_usage_clauses",
+            "renegotiation_window_open_date",
+            "strategic_criticality",
+            "notes",
+            "client_id",
+            "client_key",
+            "segment_id",
+            "data_basis",
+            "source_artifact_path",
+            "source_ref",
+            "parser_used",
+            "approval_status",
+            "confidence",
+            "last_updated"
+          ]
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/verification/checksum_manifest.csv",
+          "localPath": "verification/checksum_manifest.csv",
+          "rows": 128,
+          "headers": [
+            "# SkyHarbor Verification Checksum Manifest"
+          ]
+        }
+      ],
+      "jsonlSummaries": [
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/13-context/client-data-corpus.jsonl",
+          "localPath": "13-context/client-data-corpus.jsonl",
+          "rows": 480,
+          "errors": []
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/16-industry-pattern-overlay/airline-industry-pattern-chunks.jsonl",
+          "localPath": "16-industry-pattern-overlay/airline-industry-pattern-chunks.jsonl",
+          "rows": 2760,
+          "errors": []
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/16-industry-pattern-overlay/airline-industry-pattern-overlay.jsonl",
+          "localPath": "16-industry-pattern-overlay/airline-industry-pattern-overlay.jsonl",
+          "rows": 2760,
+          "errors": []
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/chunks/chunks.jsonl",
+          "localPath": "chunks/chunks.jsonl",
+          "rows": 480,
+          "errors": []
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/graph/edges.jsonl",
+          "localPath": "graph/edges.jsonl",
+          "rows": 259,
+          "errors": []
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/graph/entities.jsonl",
+          "localPath": "graph/entities.jsonl",
+          "rows": 645,
+          "errors": []
+        },
+        {
+          "path": "datasets/skyharbor-air-synthetic-v1/provenance/provenance_ledger.jsonl",
+          "localPath": "provenance/provenance_ledger.jsonl",
+          "rows": 645,
+          "errors": []
+        }
+      ],
+      "jsonErrors": [],
+      "manifestClaims": {
+        "datasets/skyharbor-air-synthetic-v1/README.md": [],
+        "datasets/skyharbor-air-synthetic-v1/manifest.yaml": [
+          "645 chunk"
+        ]
+      },
+      "fixtureHits": [],
+      "scores": {
+        "scale": 10,
+        "itComplexity": 8,
+        "financialDepth": 4,
+        "orgDepth": 0,
+        "vendorDepth": 9,
+        "opsDepth": 4,
+        "regulatoryDepth": 1,
+        "evidenceDepth": 3,
+        "corpusDepth": 10,
+        "generationQuality": 10,
+        "loadReadiness": 10
+      },
+      "overall": 6.3,
+      "gaps": [
+        "Application / CMDB depth below large-enterprise threshold; add system-of-record, middleware, IAM, data, branch/site, network, and control-plane rows.",
+        "Ownership model lacks enough roles/teams for realistic accountability and escalation.",
+        "Ops history is too small to support real DORA, reliability, and risk tradeoff analysis."
+      ],
+      "augmentation": [
+        "Add IT estate spine: CMDB/application rows, integration edges, identity/IAM, network/security, data platforms, ERP, observability, workplace, service management, and branch/site technology.",
+        "Add run-cost and value spine: app-level run cost, infra consumption, vendor allocation, project commitments, renewals, cloud cost, labor mix, and depreciation/capex treatment.",
+        "Add operational history: incidents, changes, problems, DORA time series, DR tests, SLA exceptions, audit findings, and remediation backlog.",
+        "Add evidence spine: board packs, architecture memos, service owner notes, control evidence, source-file ledger, chunk/fact corpus, and expected Q&A proof."
+      ],
+      "archiveCandidates": [],
+      "decision": "augment_before_broad_load"
+    }
+  ]
+}

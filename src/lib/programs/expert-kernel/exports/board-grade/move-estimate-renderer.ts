@@ -129,6 +129,97 @@ function confChip(c: 'high' | 'medium' | 'low'): string {
   return `<span class="chip ${cls}">${c}</span>`;
 }
 
+function renderAiOpsPanel(s: MoveEstimateModel['sections']['workstreamEstimate']): string {
+  const aiOps = s.aiOps;
+  const maxAxis = Math.max(s.aiBuildCost, s.businessChangeCost, s.aiOpsCost, 1);
+  const axis = (label: string, value: number, cls: string): string =>
+    `<div class="axis-row">` +
+    `<span class="axis-label">${esc(label)}</span>` +
+    `<span class="axis-track">` +
+    `<span class="axis-fill ${cls}" style="width:${Math.max(
+      2,
+      (value / maxAxis) * 100,
+    ).toFixed(1)}%"></span>` +
+    `</span>` +
+    `<span class="axis-value">${esc(usd(value))}</span>` +
+    `</div>`;
+
+  if (!aiOps) {
+    return heroExhibitHtml(
+      'Exhibit 3b — Three-axis cost view: AI ops not yet modeled',
+      `<div class="axis-stack">` +
+        axis('Build cost', s.aiBuildCost, 'axis-build') +
+        axis('Change cost', s.businessChangeCost, 'axis-change') +
+        axis('AI Ops cost', 0, 'axis-ops') +
+        `</div>` +
+        `<p class="hero-note">AI Ops cost is not supplied on this Move yet. ` +
+        `The funding view is still honest: build and change cost are shown, ` +
+        `and the run-cost gap remains visible instead of being implied.</p>`,
+    );
+  }
+
+  const warningCards = [
+    aiOps.pricingTierShockWarning
+      ? `<div class="aiops-warning aiops-warning-amber">` +
+        `<strong>Pricing-tier alert</strong><span>${esc(
+          aiOps.pricingTierShockWarning,
+        )}</span></div>`
+      : '',
+    aiOps.modelTierDriftWarning
+      ? `<div class="aiops-warning aiops-warning-red">` +
+        `<strong>Model-tier drift</strong><span>${esc(
+          aiOps.modelTierDriftWarning,
+        )}</span></div>`
+      : '',
+  ].join('');
+  const yearRows = aiOps.perYear
+    .map(
+      (y) =>
+        `<tr>` +
+        `<td class="num">Y${y.year}</td>` +
+        `<td class="num">${esc(usd(y.inferenceUsd))}</td>` +
+        `<td class="num">${esc(usd(y.embeddingUsd))}</td>` +
+        `<td class="num">${esc(usd(y.evalUsd))}</td>` +
+        `<td class="num">${esc(usd(y.fineTuneUsd))}</td>` +
+        `<td class="num"><strong>${esc(usd(y.totalUsd))}</strong></td>` +
+        `</tr>`,
+    )
+    .join('');
+  const unitEconomic =
+    aiOps.costPerDecisionUsd !== null && aiOps.decisionUnit
+      ? `$${aiOps.costPerDecisionUsd.toFixed(4)} per ${aiOps.decisionUnit}`
+      : `$${aiOps.costPerCallUsd.toFixed(4)} per call`;
+
+  return heroExhibitHtml(
+    'Exhibit 3b — Three-axis cost view: Build, Change, and AI Ops',
+    `<div class="axis-stack">` +
+      axis('Build cost', s.aiBuildCost, 'axis-build') +
+      axis('Change cost', s.businessChangeCost, 'axis-change') +
+      axis('AI Ops cost', s.aiOpsCost, 'axis-ops') +
+      `</div>` +
+      `<div class="aiops-metrics">` +
+      `<div><span>3-year AI Ops</span><strong>${esc(
+        usd(aiOps.threeYearTotal),
+      )}</strong></div>` +
+      `<div><span>5-year AI Ops</span><strong>${esc(
+        usd(aiOps.fiveYearTotal),
+      )}</strong></div>` +
+      `<div><span>Unit economic</span><strong>${esc(
+        unitEconomic,
+      )}</strong></div>` +
+      `<div><span>Rate card as of</span><strong>${esc(
+        aiOps.rateCardAsOf,
+      )}</strong></div>` +
+      `</div>` +
+      warningCards +
+      `<table class="data-table aiops-table">` +
+      `<thead><tr><th class="num">Year</th><th class="num">Inference</th>` +
+      `<th class="num">Embedding</th><th class="num">Eval</th>` +
+      `<th class="num">Fine-tune</th><th class="num">Total</th></tr></thead>` +
+      `<tbody>${yearRows}</tbody></table>`,
+  );
+}
+
 // ===========================================================================
 // Slide 1 — Executive summary.
 // ===========================================================================
@@ -286,6 +377,7 @@ function renderWorkstreamEstimate(model: MoveEstimateModel): string {
         'base effort — the outlined bars. Omitting it is the common way an ' +
         'AI estimate fails; here it is a first-class, costed lane.',
     ) +
+    renderAiOpsPanel(s) +
     `<div class="payback-line">` +
     `<span class="payback-line-tag">Build vs change</span>` +
     `<span>${esc(s.buildVsChangeNote)}</span>` +
@@ -662,6 +754,63 @@ function estimateStyles(): string {
 .gap-impact {
   font-size: 11px; color: #7A4F01; background: #fdf6e8 !important;
   line-height: 1.5;
+}
+.axis-stack {
+  display: grid; gap: 8px; margin-bottom: 12px;
+}
+.axis-row {
+  display: grid; grid-template-columns: 120px minmax(120px,1fr) 82px;
+  gap: 10px; align-items: center;
+}
+.axis-label {
+  font-size: 10.5px; font-weight: 800; color: #2c2a26;
+}
+.axis-track {
+  height: 12px; border-radius: 4px; background: #ece7da; overflow: hidden;
+}
+.axis-fill {
+  display: block; height: 100%; border-radius: 4px;
+}
+.axis-build { background: #0b4a91; }
+.axis-change { background: #a8533a; }
+.axis-ops { background: #7A4F01; }
+.axis-value {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10.5px; font-weight: 800; color: #1c1a17; text-align: right;
+}
+.aiops-metrics {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
+  margin: 10px 0;
+}
+.aiops-metrics div {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 9px 10px;
+  background: #fff;
+}
+.aiops-metrics span {
+  display: block; font-size: 9px; font-weight: 800; color: #8b8678;
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+}
+.aiops-metrics strong {
+  display: block; font-size: 13px; color: #1c1a17;
+}
+.aiops-warning {
+  display: grid; gap: 4px; border-radius: 5px; padding: 9px 10px;
+  margin: 8px 0; font-size: 10.5px; line-height: 1.45;
+}
+.aiops-warning strong {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.aiops-warning-amber {
+  background: #fdf6e8; border: 1px solid #e6c884; color: #5f3b00;
+}
+.aiops-warning-red {
+  background: #fff1ee; border: 1px solid #e0a091; color: #6c160a;
+}
+.aiops-table { margin-top: 10px; }
+@media (max-width: 880px) {
+  .aiops-metrics { grid-template-columns: repeat(2,1fr); }
+  .axis-row { grid-template-columns: 1fr; }
+  .axis-value { text-align: left; }
 }
 `;
 }

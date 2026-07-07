@@ -1,4 +1,4 @@
-// BRAND1 · canonical AbarVa wordmark + lockup component (ADMIN1 extends with variant prop).
+// BRAND1 · canonical AbarVa Option 2 compact nav lockup component.
 import type * as React from 'react';
 
 import { clsx } from 'clsx'
@@ -43,8 +43,8 @@ const LOCKUP_SIZE_TO_HEIGHT: Record<AbarVaLogoSize, number> = {
 
 // Asset paths (string-only — no inline markup, NAV1B invariants forbid
 // raw markup tokens in this source file).
-const WORDMARK_ASSET = '/brand/abarva-logo.svg'
-const LOCKUP_ASSET = '/brand/abarva-logo-lockup-v2.svg'
+const WORDMARK_ASSET = '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg'
+const LOCKUP_ASSET = '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg'
 
 const WORDMARK_ASPECT_RATIO = 142.198 / 32
 const LOCKUP_ASPECT_RATIO = 153.277 / 32

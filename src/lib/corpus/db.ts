@@ -3,6 +3,36 @@ import { resolvePostgresPoolMax } from '@/lib/data-plane/postgresCompat';
 
 let pool: Pool | null = null;
 
+export function isLegacySupabaseCorpusUrl(connectionString: string): boolean {
+  try {
+    const hostname = new URL(connectionString).hostname.toLowerCase();
+    return hostname.includes('supabase.co') || hostname.includes('supabase.com');
+  } catch {
+    return false;
+  }
+}
+
+export function resolveCorpusConnectionString(env: NodeJS.ProcessEnv = process.env): string {
+  const azureUrl = env.ABARVA_AZURE_DATABASE_URL?.trim();
+  if (azureUrl) return azureUrl;
+
+  const databaseUrl = env.DATABASE_URL?.trim();
+  if (!databaseUrl) {
+    throw new Error('ABARVA_AZURE_DATABASE_URL is required for corpus data-layer access.');
+  }
+
+  if (
+    isLegacySupabaseCorpusUrl(databaseUrl) &&
+    env.ALLOW_LEGACY_SUPABASE_CORPUS !== '1'
+  ) {
+    throw new Error(
+      'Refusing to use Supabase DATABASE_URL for corpus data-layer access. Set ABARVA_AZURE_DATABASE_URL, or set ALLOW_LEGACY_SUPABASE_CORPUS=1 for an explicit legacy read/write window.',
+    );
+  }
+
+  return databaseUrl;
+}
+
 function shouldDisableSsl(connectionString: string): boolean {
   try {
     const url = new URL(connectionString);
@@ -15,10 +45,7 @@ function shouldDisableSsl(connectionString: string): boolean {
 
 export function getCorpusPool(): Pool {
   if (pool) return pool;
-  const connectionString = process.env.DATABASE_URL?.trim();
-  if (!connectionString) {
-    throw new Error('DATABASE_URL is required for corpus data-layer access.');
-  }
+  const connectionString = resolveCorpusConnectionString();
   pool = new Pool({
     connectionString,
     application_name: 'nexus-corpus-data-layer',

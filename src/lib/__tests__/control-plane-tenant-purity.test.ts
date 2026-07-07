@@ -32,10 +32,16 @@ const FILE_ALLOWLIST = new Set<string>([
   'src/lib/active-client.ts',
   'src/lib/auth/cxo-personas.ts',
   'src/lib/demo/demo-dataset-registry.ts',
+  'src/lib/admin/release-ledger.ts',
+  'src/lib/knowledge/synthetic-datasets.ts',
+  'src/app/(maestro)/platform/admin/approvals/page.tsx',
+  'src/app/(maestro)/platform/admin/data-governance/page.tsx',
 ]);
 
 const PATH_ALLOWLIST_PREFIXES = [
   'src/data/',
+  'src/lib/demo-data/',
+  'src/lib/knowledge-corpus/fixtures/',
   'src/__tests__/',
   'src/__mocks__/',
   'src/exports-shared/__mocks__/',

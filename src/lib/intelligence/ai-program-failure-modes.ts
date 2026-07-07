@@ -33,13 +33,19 @@ export type AiProgramFailureKey =
   | 'no_adoption_change_plan'
   | 'no_operating_model_for_scale'
   | 'pilot_purgatory'
-  | 'ai_tool_sprawl_without_value';
+  | 'ai_tool_sprawl_without_value'
+  | 'token_cost_explosion_at_adoption_inflection'
+  | 'model_selection_drift'
+  | 'embedding_refresh_cost_surprise'
+  | 'eval_cost_growth';
 
 /** S9e signal types this pack correlates with. */
 export type AiProgramFailureSignalType =
   | 'gate_missing_inputs'
   | 'evidence_not_ready'
   | 'value_not_ready'
+  | 'cost_not_ready'
+  | 'operating_cost_variance'
   | 'deliverable_coverage_gap'
   | 'context_insufficient'
   | 'executive_decision_needed';
@@ -70,7 +76,10 @@ export type AiProgramFailureDeliverable =
   | 'integration_plan'
   | 'data_readiness_plan'
   | 'use_case_canvas'
-  | 'portfolio_review';
+  | 'portfolio_review'
+  | 'ai_ops_cost_model'
+  | 'vendor_pricing_review'
+  | 'eval_operating_plan';
 
 export type AiProgramFailureAgent = 'nexus' | 'sentinel' | 'atlas' | 'steward';
 
@@ -367,6 +376,94 @@ const PACK: Record<AiProgramFailureKey, AiProgramFailureMode> = {
     handoffAgents: ['steward', 'sentinel'],
     createdFrom: 'deterministic_pattern_pack',
   },
+  token_cost_explosion_at_adoption_inflection: {
+    key: 'token_cost_explosion_at_adoption_inflection',
+    name: 'Token cost explosion at adoption inflection',
+    definition:
+      'Inference cost is modeled as a linear pilot expense, then jumps when adoption moves into the steep middle of an S-curve.',
+    whyItMatters:
+      'Customer-facing and workforce-wide AI can look affordable in pilot and become financially indefensible at scale if calls, input length, output length, and cache hit rates are not modeled before launch.',
+    commonSignals: ['cost_not_ready', 'operating_cost_variance', 'value_not_ready'],
+    requiredEvidence: [
+      'AI ops cost model with call ramp, input/output tokens, cache assumptions, and tier ladder',
+      'Adoption ramp scenario that includes inflection, not just pilot volume',
+      'Finance sign-off on cost-per-decision or cost-per-workflow economics',
+    ],
+    phaseWhereDetected: ['design', 'execute', 'verify'],
+    recommendedIntervention:
+      'Re-run the AI ops cost model with S-curve adoption, token-volume sensitivity, and pricing-tier breach checks before approving scale.',
+    gateImplication: 'G3',
+    deliverableImplication: 'ai_ops_cost_model',
+    primaryAgent: 'atlas',
+    handoffAgents: ['steward', 'sentinel'],
+    createdFrom: 'deterministic_pattern_pack',
+  },
+  model_selection_drift: {
+    key: 'model_selection_drift',
+    name: 'Model selection drift',
+    definition:
+      'A move launches on a cost-optimized model, then quietly upgrades to a more expensive model tier when quality complaints arrive without reopening the business case.',
+    whyItMatters:
+      'The program may fix user-visible quality while destroying the approved economics. Without a model-tier amendment, the CFO sees cost variance with no governance trail.',
+    commonSignals: ['operating_cost_variance', 'executive_decision_needed'],
+    requiredEvidence: [
+      'Model-tier decision log with reason code for each tier change',
+      'Before/after unit economics showing cost-per-call and cost-per-decision delta',
+      'Quality threshold that justifies any move to a more expensive model tier',
+    ],
+    phaseWhereDetected: ['execute', 'verify'],
+    recommendedIntervention:
+      'Open a model-tier change review and amend the business case before any tier upgrade becomes the production default.',
+    gateImplication: 'G4',
+    deliverableImplication: 'vendor_pricing_review',
+    primaryAgent: 'atlas',
+    handoffAgents: ['steward', 'nexus'],
+    createdFrom: 'deterministic_pattern_pack',
+  },
+  embedding_refresh_cost_surprise: {
+    key: 'embedding_refresh_cost_surprise',
+    name: 'Embedding refresh cost surprise',
+    definition:
+      'The program models first-load embedding cost but misses the recurring cost of re-embedding documents when models, source corpora, or vendor pricing change.',
+    whyItMatters:
+      'At substrate scale, refresh cost can rival inference cost. If refresh frequency and corpus churn are not priced, the run-cost ledger understates the steady-state burden.',
+    commonSignals: ['cost_not_ready', 'deliverable_coverage_gap'],
+    requiredEvidence: [
+      'Embedding corpus size with tokens per document and refresh cadence',
+      'Query-volume estimate and embedding-tier selection',
+      'Refresh trigger list covering model changes, corpus updates, and vendor migration',
+    ],
+    phaseWhereDetected: ['design', 'execute'],
+    recommendedIntervention:
+      'Add embedding refresh economics to the AI ops cost model and make corpus-refresh triggers part of the operating model.',
+    gateImplication: 'G3',
+    deliverableImplication: 'ai_ops_cost_model',
+    primaryAgent: 'steward',
+    handoffAgents: ['atlas', 'sentinel'],
+    createdFrom: 'deterministic_pattern_pack',
+  },
+  eval_cost_growth: {
+    key: 'eval_cost_growth',
+    name: 'Eval cost growth',
+    definition:
+      'Continuous evaluation is treated as a launch activity, then scales with traffic, model changes, high-risk review, and human-rater hours after production.',
+    whyItMatters:
+      'LLM-judge and human-rater costs can become a material run-rate line. If the eval plan is unfunded, teams either stop measuring quality or create surprise operating expense.',
+    commonSignals: ['cost_not_ready', 'evidence_not_ready', 'operating_cost_variance'],
+    requiredEvidence: [
+      'Eval operating plan with LLM-judge calls, judge model tier, human-rater hours, and review cadence',
+      'Quality gate tied to risk level and production traffic',
+      'Budget owner for continuous eval after launch',
+    ],
+    phaseWhereDetected: ['design', 'execute', 'verify'],
+    recommendedIntervention:
+      'Fund continuous eval as a steady-state operating line and tie scale approval to the eval cost model.',
+    gateImplication: 'G3',
+    deliverableImplication: 'eval_operating_plan',
+    primaryAgent: 'sentinel',
+    handoffAgents: ['atlas', 'steward'],
+    createdFrom: 'deterministic_pattern_pack',
+  },
 };
 
 const PACK_KEYS_IN_ORDER: ReadonlyArray<AiProgramFailureKey> = [
@@ -382,6 +479,10 @@ const PACK_KEYS_IN_ORDER: ReadonlyArray<AiProgramFailureKey> = [
   'no_operating_model_for_scale',
   'pilot_purgatory',
   'ai_tool_sprawl_without_value',
+  'token_cost_explosion_at_adoption_inflection',
+  'model_selection_drift',
+  'embedding_refresh_cost_surprise',
+  'eval_cost_growth',
 ];
 
 const ALL_PHASES: ReadonlyArray<AiProgramFailurePhase> = [
@@ -502,6 +603,8 @@ const SIGNAL_TYPE_SET: ReadonlySet<AiProgramFailureSignalType> = new Set([
   'gate_missing_inputs',
   'evidence_not_ready',
   'value_not_ready',
+  'cost_not_ready',
+  'operating_cost_variance',
   'deliverable_coverage_gap',
   'context_insufficient',
   'executive_decision_needed',

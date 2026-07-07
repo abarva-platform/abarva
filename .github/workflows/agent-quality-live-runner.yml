@@ -49,10 +49,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload plan
         if: ${{ always() && hashFiles('agent-quality-plan.json') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-quality-plan
           path: agent-quality-plan.json
@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload answers
         if: ${{ always() && hashFiles('agent-quality-answers.jsonl') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-quality-answers
           path: agent-quality-answers.jsonl

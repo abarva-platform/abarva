@@ -7,7 +7,7 @@ import { listTemplates } from '@/lib/templates/registry';
 import { TemplatesAdminClient } from './TemplatesAdminClient';
 
 export const metadata = {
-  title: 'Templates | AbarVa Setup',
+  title: 'Templates | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export default async function AdminTemplatesPage() {
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
       <EditorialCanvas
-        eyebrow="Setup / Templates"
+        eyebrow="Admin / Templates"
         title="Templates"
         subtitle="Versioned Move and Source workflow templates with gate, artifact, review, and instantiation state."
       >

@@ -1,0 +1,58 @@
+{
+  "loadName": "lakeshore-current-state-v2",
+  "defaultDataClassification": "confidential_business",
+  "files": [
+    {
+      "path": "data/lakeshore-enterprise-profile.json",
+      "templateId": "enterprise-profile"
+    },
+    {
+      "path": "data/lakeshore-org-roles.csv",
+      "templateId": "org-roles"
+    },
+    {
+      "path": "data/lakeshore-infrastructure-estate.csv",
+      "templateId": "infrastructure-estate"
+    },
+    {
+      "path": "data/lakeshore-data-platform-lineage.csv",
+      "templateId": "data-platform-lineage"
+    },
+    {
+      "path": "data/lakeshore-application-portfolio.csv",
+      "templateId": "application-portfolio"
+    },
+    {
+      "path": "data/lakeshore-erp-landscape.csv",
+      "templateId": "erp-landscape-workbook"
+    },
+    {
+      "path": "data/lakeshore-integration-topology.csv",
+      "templateId": "integration-topology"
+    },
+    {
+      "path": "data/lakeshore-vendor-contracts.csv",
+      "templateId": "vendor-contracts"
+    },
+    {
+      "path": "data/lakeshore-financial-kpi-workbook.csv",
+      "templateId": "financial-kpi-workbook"
+    },
+    {
+      "path": "data/lakeshore-initiative-portfolio.csv",
+      "templateId": "initiative-portfolio"
+    },
+    {
+      "path": "data/lakeshore-risks-controls.csv",
+      "templateId": "qms-events"
+    },
+    {
+      "path": "data/lakeshore-business-capability-map.csv",
+      "templateId": "business-capability-map"
+    },
+    {
+      "path": "data/lakeshore-segment-pnl.csv",
+      "templateId": "segment-pnl"
+    }
+  ]
+}

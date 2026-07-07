@@ -1,0 +1,161 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkyHarbor — Synthetic Data & Governed Load Report</title>
+<style>
+:root{--bg:#F8F7F4;--ink:#1a1a1a;--muted:#6b6b6b;--line:#e4e1da;--accent:#23423a;--ok:#1f7a3d;--warn:#8a6d1a;--bad:#b3261e;--gold:#9a7b2e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:38px 28px 90px}
+h1,h2,h3{font-family:Georgia,serif;font-weight:400}
+h1{font-size:32px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 2px}
+h2{font-size:22px;margin:42px 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:16px;margin:22px 0 6px}
+table{border-collapse:collapse;width:100%;margin:10px 0;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f1efe9;font-weight:600}.muted{color:var(--muted)}
+.r{text-align:right;font-variant-numeric:tabular-nums}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700}
+.p-ok{background:#dff3e4;color:var(--ok)}.p-warn{background:#fdf2d6;color:var(--warn)}.p-bad{background:#f6dedc;color:var(--bad)}.p-info{background:#e3eef6;color:#1d5e87}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:12px 0}
+.flow{background:#23423a;color:#fff;border-radius:10px;padding:8px 14px;margin:6px 0;font-size:13.5px}
+.flow b{color:#cfe6d8}
+code{background:#efece5;padding:1px 5px;border-radius:4px;font-size:12px}
+.note{border-left:4px solid var(--gold);background:#fff;padding:10px 14px;border-radius:6px;margin:10px 0;font-size:13.5px}
+.kpi{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:6px 8px 6px 0;min-width:130px}
+.kpi b{display:block;font-size:26px;font-family:Georgia,serif}.kpi span{color:var(--muted);font-size:12px}
+ul{margin:6px 0 6px 20px}li{margin:3px 0;font-size:13.5px}
+</style></head><body><div class="wrap">
+
+<h1>SkyHarbor Air — Synthetic Data &amp; Governed Load Report</h1>
+<p class="sub">Tenant <code>skyharbor-air</code> · client_id <code>6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301</code> · generated 2026-06-10</p>
+<p class="sub muted">All data is 100% synthetic (cover name "SkyHarbor Air"); no real carrier identity or executive. Evidence sourced from live reads of the private Azure/Postgres data plane via VNet ACA jobs + the loader source.</p>
+
+<h2>1 · Executive summary</h2>
+<div class="card">
+A live audit found SkyHarbor's context was <strong>chunk-only</strong>: 3,240 narrative chunks committed but only <strong>2 structured records / 10 facts</strong> (a smoke test) — and <strong>nothing promoted to <code>agent_ready</code></strong>. A comprehensive, template-aligned <strong>v2 dataset (2,839 rows, 14 files, all modules)</strong> was generated so the governed loader commits <em>structured facts</em>, not just text. This report documents: the synthetic files, where originals are stored in Azure, the end-to-end load process, and how data is parsed and routed into which databases — with counts by type (today vs v2 target).
+</div>
+
+<h2>2 · Synthetic files created (v2 dataset)</h2>
+<p class="muted">Generator: <code>scripts/skyharbor/generate-skyharbor-v2.mjs</code> (deterministic). Output: <code>datasets/skyharbor-air-synthetic-v2/</code>. Each CSV's columns match its context template's <code>requiredFields</code> so the loader promotes it to structured facts.</p>
+<table><thead><tr><th>File</th><th>Template</th><th>Dimension → segment</th><th>Module</th><th class="r">Rows</th></tr></thead><tbody>
+<tr><td>enterprise-profile.csv</td><td>enterprise-profile</td><td>enterprise_profile</td><td>All</td><td class="r">1</td></tr>
+<tr><td>it-financials.csv</td><td>financial-kpi-workbook</td><td>financial_kpis → it_financials</td><td>Source/Tower</td><td class="r">168</td></tr>
+<tr><td>org-roles.csv</td><td>org-roles</td><td>org_roles_teams → org_structure</td><td>All</td><td class="r">272</td></tr>
+<tr><td>application-portfolio.csv</td><td>application-portfolio</td><td>application_portfolio → it_landscape</td><td>Source</td><td class="r">600</td></tr>
+<tr><td>infrastructure-estate.csv</td><td>infrastructure-estate</td><td>infrastructure_estate → infrastructure</td><td>Source/Tower</td><td class="r">698</td></tr>
+<tr><td>integration-topology.csv</td><td>integration-topology</td><td>integration_topology → it_landscape</td><td>Source</td><td class="r">500</td></tr>
+<tr><td>vendor-contracts.csv</td><td>vendor-contracts</td><td>vendor_contracts → it_financials</td><td>Source</td><td class="r">120</td></tr>
+<tr><td>sla-register.csv</td><td>sla-register <span class="pill p-info">new</span></td><td>service_levels → it_landscape</td><td>Source</td><td class="r">72</td></tr>
+<tr><td>initiatives.csv</td><td>initiative-portfolio</td><td>transformation_initiatives → program_inventory</td><td>Moves</td><td class="r">60</td></tr>
+<tr><td>dora-baseline.csv</td><td>dora-baseline</td><td>delivery_dora_devex → program_inventory</td><td>Tower</td><td class="r">40</td></tr>
+<tr><td>incidents.csv</td><td>incidents-change-history</td><td>incidents_ops_telemetry → it_landscape</td><td>Tower</td><td class="r">400</td></tr>
+<tr><td>ai-tooling.csv</td><td>ai-tool-footprint</td><td>ai_tooling_model_inventory → it_landscape</td><td>Intelligence</td><td class="r">40</td></tr>
+<tr><td>business-capabilities.csv</td><td>business-capability-map</td><td>business_capability → enterprise_profile</td><td>Intelligence</td><td class="r">80</td></tr>
+<tr><td>erp-landscape.csv</td><td>erp-landscape-workbook</td><td>erp_landscape → it_landscape</td><td>Tower/Moves</td><td class="r">60</td></tr>
+<tr><th colspan="4">Total</th><th class="r">2,839</th></tr>
+</tbody></table>
+<div class="note"><strong>Coverage of the $80B-airline checklist:</strong> mainframe/IBM Z + legacy Teradata/Netezza + AWS/Azure/GCP (infrastructure-estate); ~$1.91B vendor contracts incl. IBM AMS $280M & AWS $180M; ~$2.0B IT budget across 168 lines; org depth (CEO·7 C-Level·9 SVP·37 VP·119 Director·99 Sr Mgr); CMDB (600 apps) + 72 SLAs; CRM/ERP (Salesforce/SAP/Oracle/Workday).</div>
+
+<h2>3 · Where originals are stored in Azure (evidence)</h2>
+<table><tbody>
+<tr><th>Storage account</th><td><code>stabarvaprivatedplab001</code> (private data plane, VNet-restricted)</td></tr>
+<tr><th>Container</th><td><code>context-drops</code> (logical bucket <code>context-uploads</code>)</td></tr>
+<tr><th>Blob path pattern</th><td><code>&lt;tenantSlug&gt;/&lt;loadSlug&gt;/&lt;sha256[0:12]&gt;/&lt;file&gt;</code> — e.g. <code>skyharbor-air/skyharbor-air-synthetic-v2/&lt;hash&gt;/vendor-contracts.csv</code></td></tr>
+<tr><th>Auth</th><td>User-assigned managed identity <code>id-abarva-scale-runtime-lab-eastus</code> (client <code>3b6e0c9d-2265-499f-af46-965e0ad78b95</code>) — no connection-string secret</td></tr>
+<tr><th>Metadata on each blob</th><td>tenant, client_id, segment, templateId, sha256, uploadedBy, source_system <code>admin_bulk_context_upload</code></td></tr>
+<tr><th>Job status ledger</th><td>Blob JSON at <code>&lt;tenant&gt;/_jobs/&lt;jobId&gt;.json</code> (no SQL load-audit table exists)</td></tr>
+</tbody></table>
+<div class="note"><strong>Truth-standard note:</strong> staging an original to Blob is <em>one</em> state. It is distinct from parsed → committed → indexed → promoted. Blob staging happens in <code>stage_and_enqueue</code>/<code>stage_and_process</code> modes (not <code>validate_only</code>).</div>
+
+<h2>4 · The end-to-end load process today</h2>
+<div class="flow"><b>Entry:</b> Admin Context Layer → bulk upload (ZIP or loose multi-file + <code>manifest.json</code>) → <code>POST /api/admin/context-layer/bulk-upload</code> → <code>runBulkContextUpload()</code></div>
+<div class="flow"><b>ZIP:</b> server-side <code>JSZip</code> unzip · ≤25 MB zip · ≤5 MB/file · ≤40 files · ≤2,000 rows/CSV</div>
+<div class="flow"><b>Validate:</b> manifest schema · template exists per file · path safety · attestation · sensitive-data gate (quarantine)</div>
+<div class="flow"><b>Mode — <code>validate_only</code>:</b> checks only, no Blob, no DB writes</div>
+<div class="flow"><b>Mode — <code>stage_and_enqueue</code>:</b> Blob stage → Azure Service Bus (<code>q-context-ingestion-events</code>) → private landing-zone worker (parses binaries: PDF/DOCX/XLSX)</div>
+<div class="flow"><b>Mode — <code>stage_and_process</code> (used for v2, CSV/JSON):</b> Blob stage → parse → <code>enterprise_context_chunks</code> + structured promotion → <code>enterprise_context_sources/records/facts</code></div>
+<div class="note"><strong>Why prior loads were incomplete:</strong> structured facts commit only in <code>stage_and_process</code> for CSV/JSON — binaries are rejected there; loads run from localhost can't reach the private DB; and there is no SQL load-audit, so partial loads were invisible. The v2 dataset is CSV-only and run via a VNet job specifically to close this.</div>
+
+<h2>5 · How data is parsed &amp; loaded — into which databases</h2>
+<p class="muted">Routing is deterministic: <code>template → dimension → segment → record_type → facts</code>. It does <strong>not</strong> overwrite blindly — facts <strong>supersede</strong> by key (one active per <code>fact_key</code>; history kept).</p>
+<table><thead><tr><th>Table</th><th>What lands here</th><th>Idempotency key</th><th>Re-upload behavior</th></tr></thead><tbody>
+<tr><td><code>enterprise_context_chunks</code></td><td>Narrative/retrievable text per row</td><td>(tenant_key, chunk_id) — content-stable</td><td>Upsert (no dupes)</td></tr>
+<tr><td><code>enterprise_context_sources</code></td><td>Source system per load</td><td>(tenant_key, source_system, source_key)</td><td>Upsert</td></tr>
+<tr><td><code>enterprise_context_source_files</code></td><td>One row per uploaded file</td><td>(tenant_key, source_file_id)</td><td>Upsert</td></tr>
+<tr><td><code>enterprise_context_records</code></td><td>One parsed record per CSV row (typed)</td><td>(tenant_key, canonical_record_id)</td><td>Upsert in place</td></tr>
+<tr><td><code>enterprise_context_facts</code></td><td>Extracted field-level facts</td><td>(tenant_key, record_id, fact_key, value_hash)</td><td><strong>Supersede</strong> old active by fact_key, insert new</td></tr>
+</tbody></table>
+<h3>record_type by dimension (where each kind of fact is written)</h3>
+<table><thead><tr><th>Dimension</th><th>record_type</th></tr></thead><tbody>
+<tr><td>org_roles_teams</td><td>org_role</td></tr>
+<tr><td>vendor_contracts</td><td>contract</td></tr>
+<tr><td>financial_kpis</td><td>kpi_metric</td></tr>
+<tr><td>application_portfolio / erp_landscape</td><td>cmdb_application</td></tr>
+<tr><td>infrastructure_estate</td><td>facility / configuration_item</td></tr>
+<tr><td>integration_topology</td><td>integration</td></tr>
+<tr><td>transformation_initiatives</td><td>initiative</td></tr>
+<tr><td>service_levels <span class="pill p-info">new</span></td><td>service_level</td></tr>
+<tr><td>business_capability</td><td>business_capability</td></tr>
+</tbody></table>
+
+<h2>6 · Counts by type — today vs v2 target</h2>
+<h3>Loaded today (live read 2026-06-10)</h3>
+<div>
+<div class="kpi"><b>3,240</b><span>context chunks (2,760 industry-pattern + 480 client + 2 smoke)</span></div>
+<div class="kpi"><b>2</b><span>enterprise_context_records (smoke)</span></div>
+<div class="kpi"><b>10</b><span>enterprise_context_facts (smoke)</span></div>
+<div class="kpi"><b>92</b><span>applications (legacy seed)</span></div>
+<div class="kpi"><b>38</b><span>ai_initiatives</span></div>
+<div class="kpi"><b>0</b><span>agent_ready (nothing promoted)</span></div>
+</div>
+<p class="muted">Chunk segments (client): it_landscape 114 · program_inventory 158 · enterprise_profile 102 · it_financials 66 · org_structure 40. All <code>committed_not_indexed</code> / <code>not_reviewed</code>.</p>
+
+<h3>v2 AFTER governed load — <span class="pill p-ok">LOADED &amp; VERIFIED 2026-06-10</span></h3>
+<p class="muted">Executed via VNet ACA job (image <code>abarva/skyload:v2</code> FROM the web image; DB via <code>DATABASE_URL</code>; 14 originals staged to Blob via managed identity). Independently re-queried from the DB — not the loader's self-report. <strong>3,101 active records · 23,895 active facts · 0 orphan facts · +3,099 chunks · 14 blobs staged.</strong></p>
+<div>
+<div class="kpi"><b>3,101</b><span>active enterprise_context_records (14 types)</span></div>
+<div class="kpi"><b>23,895</b><span>active enterprise_context_facts</span></div>
+<div class="kpi"><b>14</b><span>originals in Azure Blob (context-drops)</span></div>
+<div class="kpi"><b>0</b><span>orphan facts</span></div>
+</div>
+<table><thead><tr><th>record_type</th><th class="r">records (verified)</th></tr></thead><tbody>
+<tr><td>configuration_item (infra)</td><td class="r">680</td></tr>
+<tr><td>cmdb_application (apps + erp)</td><td class="r">660</td></tr>
+<tr><td>integration</td><td class="r">500</td></tr>
+<tr><td>incidents_ops_telemetry</td><td class="r">400</td></tr>
+<tr><td>org_role</td><td class="r">272</td></tr>
+<tr><td>kpi_metric (IT budget)</td><td class="r">168</td></tr>
+<tr><td>contract (vendors)</td><td class="r">122</td></tr>
+<tr><td>business_capability</td><td class="r">80</td></tr>
+<tr><td>service_level (SLA)</td><td class="r">72</td></tr>
+<tr><td>initiative</td><td class="r">60</td></tr>
+<tr><td>ai_tooling_model_inventory</td><td class="r">40</td></tr>
+<tr><td>delivery_dora_devex</td><td class="r">40</td></tr>
+<tr><td>facility (data centers)</td><td class="r">6</td></tr>
+<tr><td>enterprise_profile</td><td class="r">1</td></tr>
+<tr><th>Total active records</th><th class="r">3,101</th></tr>
+</tbody></table>
+<div class="note"><strong>Load notes (truth-standard):</strong> records committed to <code>enterprise_context_records</code>; field-level facts to <code>enterprise_context_facts</code> (active, value-hashed, supersede-ready); retrievable text to <code>enterprise_context_chunks</code>; 14 originals to Azure Blob <code>stabarvaprivatedplab001/context-drops</code> at <code>skyharbor-air/skyharbor-air-synthetic-v2/&lt;hash&gt;/&lt;file&gt;</code>. Post-load fix: the deployed <code>lifecycle_state</code> column did not enforce its <code>DEFAULT 'active'</code>, so the 3,099 new records were set <code>active</code> explicitly (loader updated inline going forward).</div>
+
+<h2>8 · Governed promotion to <code>agent_ready</code> — <span class="pill p-ok">DONE &amp; VERIFIED 2026-06-10</span></h2>
+<p class="muted">The final unlock: loaded evidence is only usable by the governed agent when it reaches <code>agent_ready</code> in <code>governed_object_readiness</code> (source_basis + confidence + provenance + Azure-native index + cite-render verification). Executed via VNet job; independently re-queried.</p>
+<div>
+<div class="kpi"><b>3,099</b><span>chunks → agent_ready (fts_indexed)</span></div>
+<div class="kpi"><b>3,099</b><span>records → agent_ready</span></div>
+<div class="kpi"><b>6 / 6</b><span>segments cite-render verified</span></div>
+<div class="kpi"><b>1</b><span>real Postgres FTS GIN index created</span></div>
+</div>
+<table><thead><tr><th>Step</th><th>What was done (real)</th></tr></thead><tbody>
+<tr><td>Indexing</td><td>Created GIN FTS index <code>idx_ecc_fts</code> on <code>enterprise_context_chunks(to_tsvector(chunk_text))</code> → <code>retrievability='fts_indexed'</code> is legitimate</td></tr>
+<tr><td>Cite-render verify</td><td>Per segment, a real content token was drawn from an actual chunk and confirmed retrievable through the live FTS path (e.g. <code>it_financials</code>→"spend", <code>org_structure</code>→"Marcus", <code>infrastructure</code>→"asset", <code>it_landscape</code>→"Revenue", <code>program_inventory</code>→"Integration") — all 6 hit</td></tr>
+<tr><td>Promote</td><td>Upserted <code>governed_object_readiness</code> rows (source_layer=tenant_context, classification=internal, source_basis, confidence=medium, provenance, applicable_agents=[source,sentinel,nexus], cited_render_verified_at, policy_validation_status=pass) → <code>agent_ready</code></td></tr>
+</tbody></table>
+<div class="note"><strong>Update — agent_ready basis re-grounded on the real retrieval path.</strong> SkyHarbor's governed retrieval path is <em>Azure AI Search</em> (<code>tenant-context-v1</code>, feature flag on), not Postgres FTS. The initial Postgres-FTS-based <code>agent_ready</code> was therefore rolled back to <code>promotion_candidate</code>, the v2 chunks were indexed into Azure AI Search, tenant-scoped retrieval + isolation was proven across <strong>12/12 AMS categories</strong>, and only then were 3,099 chunks + 3,099 records re-promoted to <code>agent_ready</code> with <code>retrievability='search_indexed'</code>. Full evidence: <code>docs/source/SKYHARBOR_V2_INDEXING_RETRIEVAL_PROMOTION_REPORT.html</code>. Old v1 industry-pattern chunks (3,240) remain <code>not_reviewed</code> by design.</div>
+
+<h2>7 · Provenance &amp; governance</h2>
+<ul>
+<li>Dataset manifest: <code>docs/governance/dataset-manifests/skyharbor-air-synthetic-v2.json</code> — <code>validate:context-corpus:manifests</code> ✓</li>
+<li>Source basis: <code>synthetic_comparable</code>; classification <code>internal</code>; cover-name only.</li>
+<li>Every blob + record carries provenance (source_file, sha256, ingestion run, segment, template).</li>
+<li>Plan of record: <code>docs/source/SKYHARBOR_DATASET_AND_INGESTION_PLAN.md</code>.</li>
+</ul>
+
+</div></body></html>

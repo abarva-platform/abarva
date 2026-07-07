@@ -9,7 +9,7 @@ import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import type { CrawlComparison, CrawlRun } from '@/lib/crawl/baseline-compare';
 
 export const metadata = {
-  title: 'Deploy Crawl | AbarVa Setup',
+  title: 'Deploy Crawl | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +30,7 @@ export default async function DeployCrawlPage() {
       agentRail={<AgentRail primaryAgentLabel="Steward" primaryActionLabel="Run crawl" primaryActionHref="/admin/deploy-crawl" />}
     >
       <EditorialCanvas
-        eyebrow="Setup · Post-deploy verification"
+        eyebrow="Admin · Post-deploy verification"
         title="Deploy Crawl"
         subtitle="Authenticated tenant/persona crawl results for trust regressions: tenant identity, evidence chips, screenshots, console/network errors, and hard-question citation depth."
       >

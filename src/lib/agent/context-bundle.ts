@@ -1,4 +1,4 @@
-import { canonicalClientDisplayName } from '@/lib/client-config';
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
 // Platform-wide Context Bundle contract.
 //
@@ -27,11 +27,11 @@ import { canonicalClientDisplayName } from '@/lib/client-config';
  * - blocked: refuse the specific action and explain what is needed.
  */
 export const CONTEXT_BUNDLE_STATES = [
-  'complete',
-  'usable_with_gaps',
-  'pattern_only',
-  'insufficient',
-  'blocked',
+  "complete",
+  "usable_with_gaps",
+  "pattern_only",
+  "insufficient",
+  "blocked",
 ] as const;
 
 export type ContextBundleState = (typeof CONTEXT_BUNDLE_STATES)[number];
@@ -42,14 +42,14 @@ export type ContextBundleState = (typeof CONTEXT_BUNDLE_STATES)[number];
  * structurally (present=false) rather than silently omitted.
  */
 export const CONTEXT_BUNDLE_CATEGORY_KEYS = [
-  'identity',
-  'workObject',
-  'workflowState',
-  'businessContext',
-  'artifacts',
-  'patterns',
-  'evidence',
-  'conversation',
+  "identity",
+  "workObject",
+  "workflowState",
+  "businessContext",
+  "artifacts",
+  "patterns",
+  "evidence",
+  "conversation",
 ] as const;
 
 export type ContextBundleCategoryKey =
@@ -60,12 +60,12 @@ export type ContextBundleCategoryKey =
  * lives in S2.
  */
 export const CONTEXT_BUNDLE_SCORING_DIMENSIONS = [
-  'context_completeness',
-  'pattern_grounding',
-  'evidence_coverage',
-  'workflow_awareness',
-  'actionability',
-  'vanilla_response_risk',
+  "context_completeness",
+  "pattern_grounding",
+  "evidence_coverage",
+  "workflow_awareness",
+  "actionability",
+  "vanilla_response_risk",
 ] as const;
 
 export type ContextBundleScoringDimension =
@@ -73,19 +73,19 @@ export type ContextBundleScoringDimension =
 
 // --- Identity / agent / surface ---------------------------------------
 
-export type ContextBundleAgentKey = 'nexus' | 'sentinel' | 'atlas' | 'steward';
+export type ContextBundleAgentKey = "nexus" | "sentinel" | "atlas" | "steward";
 
 /**
  * Canonical surface keys. `unknown` covers boot/error paths and future
  * surfaces added before the canon updates.
  */
 export type ContextBundleSurfaceKey =
-  | 'programs'
-  | 'source'
-  | 'intelligence'
-  | 'tower'
-  | 'admin'
-  | 'unknown';
+  | "programs"
+  | "source"
+  | "intelligence"
+  | "tower"
+  | "admin"
+  | "unknown";
 
 /**
  * Provenance of a populated category. Tracks where its data came from so
@@ -93,17 +93,17 @@ export type ContextBundleSurfaceKey =
  * that claims trace to deterministic state rather than model inference.
  */
 export type ContextBundleFieldProvenance =
-  | 'deterministic'
-  | 'retrieved'
-  | 'userProvided'
-  | 'modelInference'
-  | 'unknown';
+  | "deterministic"
+  | "retrieved"
+  | "userProvided"
+  | "modelInference"
+  | "unknown";
 
 /**
  * Confidence qualifier applied to substantive claims. Mirrors the tiers
  * used in renderedResponse.ts so UI can render consistently.
  */
-export type ContextBundleConfidenceTier = 'HIGH' | 'MEDIUM' | 'LOW';
+export type ContextBundleConfidenceTier = "HIGH" | "MEDIUM" | "LOW";
 
 // --- Category carrier --------------------------------------------------
 
@@ -144,11 +144,11 @@ export interface ContextBundleEvidenceReference {
   id: string;
   label: string;
   kind:
-    | 'registryEntry'
-    | 'uploadedFile'
-    | 'patternSection'
-    | 'priorTurn'
-    | 'externalReference';
+    | "registryEntry"
+    | "uploadedFile"
+    | "patternSection"
+    | "priorTurn"
+    | "externalReference";
   href?: string;
   confidence: ContextBundleConfidenceTier;
   provenance: ContextBundleFieldProvenance;
@@ -162,16 +162,16 @@ export interface ContextBundleEvidenceReference {
 export interface ContextBundlePatternReference {
   id: string;
   name: string;
-  tier: 'meta' | 'craft' | 'capability' | 'useCase' | 'unknown';
+  tier: "meta" | "craft" | "capability" | "useCase" | "unknown";
   /** 0-100 relevance score from retrieval. */
   relevanceScore: number;
   /** Pattern authoring status per the pattern library canon. */
   authoringStatus:
-    | 'AUTHORED-DRAFT'
-    | 'AUTHORED-REVIEWED'
-    | 'AUTHORED-EXPERT'
-    | 'BATTLE-TESTED'
-    | 'unknown';
+    | "AUTHORED-DRAFT"
+    | "AUTHORED-REVIEWED"
+    | "AUTHORED-EXPERT"
+    | "BATTLE-TESTED"
+    | "unknown";
   /** Pattern sections cited by the agent turn. */
   sectionsCited: string[];
   /** Contradictions with other applicable patterns, if detected. */
@@ -184,7 +184,7 @@ export interface ContextBundleArtifactReference {
   title: string;
   kind: string;
   /** Rich/Outline/Stub per doc 03 artifact tier rules. */
-  tier: 'rich' | 'outline' | 'stub' | 'unknown';
+  tier: "rich" | "outline" | "stub" | "unknown";
   status: string;
   owner?: string;
   /** Inputs the artifact still needs to move toward its declared tier. */
@@ -196,7 +196,7 @@ export interface ContextBundleArtifactReference {
 export interface ContextBundleConversationReference {
   conversationId: string;
   turnIndex: number;
-  role: 'user' | 'agent' | 'system';
+  role: "user" | "agent" | "system";
   /** The agent that produced the turn; only set when role === 'agent'. */
   agent?: ContextBundleAgentKey;
   summary: string;
@@ -213,7 +213,7 @@ export interface ContextBundleMissingInput {
   /** Whether the agent can attempt a downgraded answer without this. */
   blocking: boolean;
   owner?: string;
-  requestedVia?: 'upload' | 'ask' | 'handoff' | 'external';
+  requestedVia?: "upload" | "ask" | "handoff" | "external";
 }
 
 /**
@@ -225,17 +225,17 @@ export interface ContextBundleAllowedAction {
   id: string;
   label: string;
   kind:
-    | 'navigate'
-    | 'ask'
-    | 'requestInput'
-    | 'uploadEvidence'
-    | 'reviewGate'
-    | 'reviewScorecard'
-    | 'openArtifact'
-    | 'assignOwner'
-    | 'handoff'
-    | 'refuse'
-    | 'none';
+    | "navigate"
+    | "ask"
+    | "requestInput"
+    | "uploadEvidence"
+    | "reviewGate"
+    | "reviewScorecard"
+    | "openArtifact"
+    | "assignOwner"
+    | "handoff"
+    | "refuse"
+    | "none";
   allowed: boolean;
   /** Populated only when allowed is false. */
   blockedReason?: string;
@@ -306,12 +306,12 @@ export interface ContextBundleAssemblyInput {
 
 export interface ContextBundleAssemblyFailure {
   code:
-    | 'missingTenant'
-    | 'missingUser'
-    | 'workObjectNotFound'
-    | 'permissionDenied'
-    | 'evidenceUnavailable'
-    | 'unknown';
+    | "missingTenant"
+    | "missingUser"
+    | "workObjectNotFound"
+    | "permissionDenied"
+    | "evidenceUnavailable"
+    | "unknown";
   message: string;
   recoverable: boolean;
   missingFields: string[];
@@ -397,10 +397,12 @@ export interface ContextBundle {
 
 // --- Runtime helpers ---------------------------------------------------
 
-export function isContextBundleState(value: unknown): value is ContextBundleState {
+export function isContextBundleState(
+  value: unknown,
+): value is ContextBundleState {
   return (
-    typeof value === 'string'
-    && (CONTEXT_BUNDLE_STATES as readonly string[]).includes(value)
+    typeof value === "string" &&
+    (CONTEXT_BUNDLE_STATES as readonly string[]).includes(value)
   );
 }
 
@@ -408,8 +410,8 @@ export function isContextBundleCategoryKey(
   value: unknown,
 ): value is ContextBundleCategoryKey {
   return (
-    typeof value === 'string'
-    && (CONTEXT_BUNDLE_CATEGORY_KEYS as readonly string[]).includes(value)
+    typeof value === "string" &&
+    (CONTEXT_BUNDLE_CATEGORY_KEYS as readonly string[]).includes(value)
   );
 }
 
@@ -417,8 +419,8 @@ export function isContextBundleScoringDimension(
   value: unknown,
 ): value is ContextBundleScoringDimension {
   return (
-    typeof value === 'string'
-    && (CONTEXT_BUNDLE_SCORING_DIMENSIONS as readonly string[]).includes(value)
+    typeof value === "string" &&
+    (CONTEXT_BUNDLE_SCORING_DIMENSIONS as readonly string[]).includes(value)
   );
 }
 
@@ -432,15 +434,18 @@ export function createEmptyContextBundle(
 ): ContextBundle {
   const assembledAt = input.requestedAt ?? new Date().toISOString();
 
-  const categories = CONTEXT_BUNDLE_CATEGORY_KEYS.reduce((acc, key) => {
-    acc[key] = {
-      key,
-      present: false,
-      provenance: 'unknown',
-      missingFields: [],
-    };
-    return acc;
-  }, {} as Record<ContextBundleCategoryKey, ContextBundleCategory>);
+  const categories = CONTEXT_BUNDLE_CATEGORY_KEYS.reduce(
+    (acc, key) => {
+      acc[key] = {
+        key,
+        present: false,
+        provenance: "unknown",
+        missingFields: [],
+      };
+      return acc;
+    },
+    {} as Record<ContextBundleCategoryKey, ContextBundleCategory>,
+  );
 
   return {
     bundleId: makeBundleId(input, assembledAt),
@@ -489,7 +494,9 @@ export interface ContextBundleSummary {
   overallConfidence: ContextBundleConfidenceTier | null;
 }
 
-export function summarizeContextBundle(bundle: ContextBundle): ContextBundleSummary {
+export function summarizeContextBundle(
+  bundle: ContextBundle,
+): ContextBundleSummary {
   const present: ContextBundleCategoryKey[] = [];
   const absent: ContextBundleCategoryKey[] = [];
   for (const key of CONTEXT_BUNDLE_CATEGORY_KEYS) {
@@ -521,8 +528,8 @@ function makeBundleId(
   input: ContextBundleAssemblyInput,
   assembledAt: string,
 ): string {
-  const route = input.route.replace(/[^a-z0-9]/gi, '-').replace(/^-+|-+$/g, '');
-  const workObject = input.workObjectId ?? 'no-object';
+  const route = input.route.replace(/[^a-z0-9]/gi, "-").replace(/^-+|-+$/g, "");
+  const workObject = input.workObjectId ?? "no-object";
   return `cb_${input.tenantId}_${route}_${workObject}_${assembledAt}`;
 }
 
@@ -534,21 +541,21 @@ function makeBundleId(
 // surface enough state for posture/editorial/choices generators.
 
 export type AgentSurface =
-  | 'admin'
-  | 'programs'
-  | 'source'
-  | 'intelligence'
-  | 'tower'
-  | 'home';
+  | "admin"
+  | "programs"
+  | "source"
+  | "intelligence"
+  | "tower"
+  | "home";
 
-export type TenantTier = 'rich' | 'thin' | 'shell_only';
+export type TenantTier = "rich" | "thin" | "shell_only";
 
-export type EvidenceStrength = 'strong' | 'partial' | 'thin';
+export type EvidenceStrength = "strong" | "partial" | "thin";
 
 export interface AgentContextBlocker {
   id: string;
   label: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
+  severity: "critical" | "high" | "medium" | "low";
 }
 
 export interface AgentContextDecision {
@@ -584,200 +591,298 @@ export interface AgentContextBundle {
 
 interface AgentContextSeed {
   stage: string | null;
-  evidence: AgentContextBundle['evidence'];
+  evidence: AgentContextBundle["evidence"];
   blockers: ReadonlyArray<AgentContextBlocker>;
   pendingDecisions: ReadonlyArray<AgentContextDecision>;
   contextSources: ReadonlyArray<AgentContextSource>;
 }
 
 const APEX_TENANT = {
-  slug: 'apex-retail',
-  name: 'Apex Retail',
-  tier: 'rich' as TenantTier,
+  slug: "apex-retail",
+  name: "Apex Retail",
+  tier: "rich" as TenantTier,
 };
 
-const TENANT_CONTEXT_BY_SLUG: Record<string, { name: string; tier: TenantTier }> = {
-  'apex-retail': { name: 'Apex Retail', tier: 'rich' },
-  'meridian': { name: 'Meridian Health System', tier: 'rich' },
-  'meridian-health': { name: 'Meridian Health System', tier: 'rich' },
-  'first-capital': { name: 'First Capital Financial', tier: 'rich' },
-  'northstar-clinical': { name: 'Northstar Clinical Technologies', tier: 'rich' },
-  'skyharbor-air': { name: 'SkyHarbor Air', tier: 'rich' },
+const NORTHSTAR_DISPLAY_NAME =
+  canonicalClientDisplayName({ key: "northstar" }) ?? "northstar-clinical";
+
+const TENANT_CONTEXT_BY_SLUG: Record<
+  string,
+  { name: string; tier: TenantTier }
+> = {
+  "apex-retail": { name: "Apex Retail", tier: "rich" },
+  meridian: { name: "Meridian Health System", tier: "rich" },
+  "meridian-health": { name: "Meridian Health System", tier: "rich" },
+  "first-capital": { name: "First Capital Financial", tier: "rich" },
+  "northstar-clinical": { name: NORTHSTAR_DISPLAY_NAME, tier: "rich" },
+  "skyharbor-air": { name: "SkyHarbor Air", tier: "rich" },
 };
 
 const PLATFORM_TENANT = {
-  slug: 'abarva-platform',
-  name: 'AbarVa platform',
-  tier: 'rich' as TenantTier,
+  slug: "abarva-platform",
+  name: "AbarVa platform",
+  tier: "rich" as TenantTier,
 };
 
 const ADMIN_PAGE_SEEDS: Record<string, AgentContextSeed> = {
   architecture: {
-    stage: 'documented',
+    stage: "documented",
     evidence: {
-      strength: 'strong',
+      strength: "strong",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
     blockers: [
       {
-        id: 'lab-not-deployed',
-        label: 'lab not deployed',
-        severity: 'high',
+        id: "lab-not-deployed",
+        label: "lab not deployed",
+        severity: "high",
       },
     ],
     pendingDecisions: [
-      { id: 'azure-private-plane', label: 'Azure private data-plane proof' },
+      { id: "azure-private-plane", label: "Azure private data-plane proof" },
     ],
     contextSources: [
       {
-        id: 'architecture-docs',
-        label: 'architecture docs',
-        lastUpdated: '2026-04-20T00:00:00.000Z',
+        id: "architecture-docs",
+        label: "architecture docs",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
       },
       {
-        id: 'azure-lab-blueprint',
-        label: 'Azure lab blueprint',
-        lastUpdated: '2026-04-20T00:00:00.000Z',
+        id: "azure-lab-blueprint",
+        label: "Azure lab blueprint",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
       },
       {
-        id: 'data-trust-model',
-        label: 'data trust model',
-        lastUpdated: '2026-04-20T00:00:00.000Z',
+        id: "data-trust-model",
+        label: "data trust model",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
       },
     ],
   },
-  'production-readiness': {
-    stage: 'demo-ready',
+  "production-readiness": {
+    stage: "demo-ready",
     evidence: {
-      strength: 'partial',
+      strength: "partial",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
     blockers: [
-      { id: 'production-controls', label: 'production controls', severity: 'critical' },
-      { id: 'live-audit', label: 'live audit', severity: 'critical' },
-      { id: 'model-gateway-execution', label: 'model gateway execution', severity: 'critical' },
-      { id: 'tenant-security-review', label: 'tenant security review', severity: 'high' },
-      { id: 'azure-private-plane-proof', label: 'Azure private data-plane proof', severity: 'high' },
+      {
+        id: "production-controls",
+        label: "production controls",
+        severity: "critical",
+      },
+      { id: "live-audit", label: "live audit", severity: "critical" },
+      {
+        id: "model-gateway-execution",
+        label: "model gateway execution",
+        severity: "critical",
+      },
+      {
+        id: "tenant-security-review",
+        label: "tenant security review",
+        severity: "high",
+      },
+      {
+        id: "azure-private-plane-proof",
+        label: "Azure private data-plane proof",
+        severity: "high",
+      },
     ],
     pendingDecisions: [
-      { id: 'pilot-cutover', label: 'pilot cutover criteria' },
+      { id: "pilot-cutover", label: "pilot cutover criteria" },
     ],
     contextSources: [
-      { id: 'readiness-manifest', label: 'readiness manifest', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'ci-vercel-status', label: 'CI/Vercel status', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'wireframe-audit', label: 'wireframe audit', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      {
+        id: "readiness-manifest",
+        label: "readiness manifest",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "ci-vercel-status",
+        label: "CI/Azure status",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "wireframe-audit",
+        label: "wireframe audit",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
     ],
   },
   overview: {
-    stage: 'setup',
+    stage: "setup",
     evidence: {
-      strength: 'partial',
+      strength: "partial",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
     blockers: [],
     pendingDecisions: [
-      { id: 'pilot-readiness', label: 'pilot readiness assessment' },
+      { id: "pilot-readiness", label: "pilot readiness assessment" },
     ],
     contextSources: [
-      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'readiness-manifest', label: 'readiness manifest', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'connector-readiness', label: 'connector readiness', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      {
+        id: "admin-shell-config",
+        label: "admin shell config",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "readiness-manifest",
+        label: "readiness manifest",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "connector-readiness",
+        label: "connector readiness",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
     ],
   },
-  'data-trust': {
-    stage: 'partial-trust',
+  "data-trust": {
+    stage: "partial-trust",
     evidence: {
-      strength: 'partial',
+      strength: "partial",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
     blockers: [
       {
-        id: 'decision-grade-approvals',
-        label: 'Decision-grade approvals pending',
-        severity: 'high',
+        id: "decision-grade-approvals",
+        label: "Decision-grade approvals pending",
+        severity: "high",
       },
     ],
-    pendingDecisions: [
-      { id: 'dataset-approvals', label: 'dataset approvals' },
-    ],
+    pendingDecisions: [{ id: "dataset-approvals", label: "dataset approvals" }],
     contextSources: [
-      { id: 'evidence-manifest', label: 'evidence manifest', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'dataset-approval-model', label: 'dataset approval model', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'no-raw-copy-enforcement', label: 'no-raw-copy enforcement', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      {
+        id: "evidence-manifest",
+        label: "evidence manifest",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "dataset-approval-model",
+        label: "dataset approval model",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "no-raw-copy-enforcement",
+        label: "no-raw-copy enforcement",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
     ],
   },
   connectors: {
-    stage: 'stub-only',
+    stage: "stub-only",
     evidence: {
-      strength: 'thin',
+      strength: "thin",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
     blockers: [],
     pendingDecisions: [
-      { id: 'connector-config', label: 'connector configuration' },
+      { id: "connector-config", label: "connector configuration" },
     ],
     contextSources: [
-      { id: 'connector-readiness-model', label: 'connector readiness model', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'data-sharing-enforcement', label: 'data sharing enforcement', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      {
+        id: "connector-readiness-model",
+        label: "connector readiness model",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "admin-shell-config",
+        label: "admin shell config",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "data-sharing-enforcement",
+        label: "data sharing enforcement",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
     ],
   },
-  'users-access': {
-    stage: 'roles-seeded',
+  "users-access": {
+    stage: "roles-seeded",
     evidence: {
-      strength: 'partial',
+      strength: "partial",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
-    blockers: [
-      { id: 'no-sso', label: 'No SSO configured', severity: 'high' },
-    ],
-    pendingDecisions: [
-      { id: 'sso-config', label: 'SSO configuration' },
-    ],
+    blockers: [{ id: "no-sso", label: "No SSO configured", severity: "high" }],
+    pendingDecisions: [{ id: "sso-config", label: "SSO configuration" }],
     contextSources: [
-      { id: 'users-access-readiness', label: 'users-access readiness', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'tenant-isolation-guard', label: 'tenant isolation guard', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      {
+        id: "users-access-readiness",
+        label: "users-access readiness",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "tenant-isolation-guard",
+        label: "tenant isolation guard",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "admin-shell-config",
+        label: "admin shell config",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
     ],
   },
-  'agent-readiness': {
-    stage: 'inventory',
+  "agent-readiness": {
+    stage: "inventory",
     evidence: {
-      strength: 'partial',
+      strength: "partial",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
     blockers: [],
     pendingDecisions: [
-      { id: 'agent-posture-review', label: 'agent posture review' },
+      { id: "agent-posture-review", label: "agent posture review" },
     ],
     contextSources: [
-      { id: 'agent-readiness-deep-drill', label: 'agent readiness deep drill', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'mission-queue-model', label: 'mission queue model', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      {
+        id: "agent-readiness-deep-drill",
+        label: "agent readiness deep drill",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "admin-shell-config",
+        label: "admin shell config",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "mission-queue-model",
+        label: "mission queue model",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
     ],
   },
-  'build-progress': {
-    stage: 'in-flight',
+  "build-progress": {
+    stage: "in-flight",
     evidence: {
-      strength: 'partial',
+      strength: "partial",
       sources: 3,
-      lastUpdated: '2026-04-20T00:00:00.000Z',
+      lastUpdated: "2026-04-20T00:00:00.000Z",
     },
     blockers: [],
-    pendingDecisions: [
-      { id: 'wave-cutover', label: 'wave cutover order' },
-    ],
+    pendingDecisions: [{ id: "wave-cutover", label: "wave cutover order" }],
     contextSources: [
-      { id: 'build-manifest-snapshot', label: 'build manifest snapshot', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'wave-lifecycle-catalog', label: 'wave lifecycle catalog', lastUpdated: '2026-04-20T00:00:00.000Z' },
-      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      {
+        id: "build-manifest-snapshot",
+        label: "build manifest snapshot",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "wave-lifecycle-catalog",
+        label: "wave lifecycle catalog",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
+      {
+        id: "admin-shell-config",
+        label: "admin shell config",
+        lastUpdated: "2026-04-20T00:00:00.000Z",
+      },
     ],
   },
 };
@@ -793,16 +898,20 @@ const PAGE_SEEDS: Record<AgentSurface, Record<string, AgentContextSeed>> = {
 
 const EMPTY_SEED: AgentContextSeed = {
   stage: null,
-  evidence: { strength: 'thin', sources: 0, lastUpdated: null },
+  evidence: { strength: "thin", sources: 0, lastUpdated: null },
   blockers: [],
   pendingDecisions: [],
   contextSources: [],
 };
 
-function resolveTenant(tenantSlug: string, surface: AgentSurface, page: string) {
+function resolveTenant(
+  tenantSlug: string,
+  surface: AgentSurface,
+  page: string,
+) {
   // Build progress is platform-scoped (no per-tenant content).
-  if (surface === 'admin' && page === 'build-progress') return PLATFORM_TENANT;
-  if (tenantSlug === 'apex-retail') return APEX_TENANT;
+  if (surface === "admin" && page === "build-progress") return PLATFORM_TENANT;
+  if (tenantSlug === "apex-retail") return APEX_TENANT;
   const canonicalTenant = TENANT_CONTEXT_BY_SLUG[tenantSlug];
   if (canonicalTenant) {
     return {
@@ -824,15 +933,15 @@ function resolveTenant(tenantSlug: string, surface: AgentSurface, page: string) 
   return {
     slug: tenantSlug,
     name: displayName,
-    tier: 'shell_only' as TenantTier,
+    tier: "shell_only" as TenantTier,
   };
 }
 
 const ALLOWED_CANONICAL_DISPLAY_NAMES: ReadonlySet<string> = new Set([
-  'Meridian Health',
-  'First Capital Financial',
-  'Northstar Clinical Technologies',
-  'SkyHarbor Air',
+  "Meridian Health",
+  "First Capital Financial",
+  NORTHSTAR_DISPLAY_NAME,
+  "SkyHarbor Air",
 ]);
 
 function resolveNonCanonicalDisplayName(tenantSlug: string): string {

@@ -43,13 +43,14 @@ export function canonicalizeSurface(
 ): string {
   if (!surface) return surface;
   // Already URL-shaped — no work to do.
-  if (surface.startsWith('/')) return surface;
+  if (surface.startsWith("/")) return surface;
 
   const ctx = surfaceContext ?? {};
 
   switch (surface) {
-    case 'programs-detail': {
-      const programId = typeof ctx.programId === 'string' ? ctx.programId : null;
+    case "programs-detail": {
+      const programId =
+        typeof ctx.programId === "string" ? ctx.programId : null;
       return programId ? `/programs/${programId}` : surface;
     }
     // PR-I · single-segment semantic surfaces have a one-to-one URL form.
@@ -59,20 +60,27 @@ export function canonicalizeSurface(
     // on the 'intelligence' case so Sentinel tools registered for
     // '/intelligence' (URL-shaped) resolve cleanly when AppShell sends
     // the semantic 'intelligence' key.
-    case 'programs':
-      return '/programs';
-    case 'home':
-      return '/home';
-    case 'tower':
-      return '/tower';
-    case 'source':
-      return '/source';
-    case 'intelligence':
-      return '/intelligence';
-    case 'setup':
-      return '/setup';
-    case 'strategic-moves-new':
-      return '/strategic-moves/new';
+    case "programs":
+      return "/programs";
+    case "home":
+      return "/home";
+    case "tower":
+      return "/tower";
+    case "source":
+      return "/source";
+    case "intelligence":
+      return "/intelligence";
+    case "setup":
+      return "/admin/setup";
+    case "strategic-moves-new":
+      return "/strategic-moves/new";
+    // The phase workspace chat sends this semantic key; without a mapping it
+    // bypassed every URL-prefixed doctrine/tool gate (founder-reported: the
+    // Nexus deliverable doctrine silently never applied in the workspace).
+    case "strategic-moves-workspace": {
+      const pid = typeof ctx.programId === "string" ? ctx.programId : null;
+      return pid ? `/strategic-moves/${pid}` : "/strategic-moves";
+    }
     // Add cases here as detail-level surfaces gain canonical URL forms.
     default:
       return surface;
@@ -94,7 +102,12 @@ export function canonicalizeFromBody(body: {
   const surfaceContext = body.surfaceContext ?? {};
   const programId =
     body.programId ??
-    (typeof surfaceContext.programId === 'string' ? surfaceContext.programId : undefined);
-  const surface = canonicalizeSurface(body.surface ?? '', { ...surfaceContext, programId });
+    (typeof surfaceContext.programId === "string"
+      ? surfaceContext.programId
+      : undefined);
+  const surface = canonicalizeSurface(body.surface ?? "", {
+    ...surfaceContext,
+    programId,
+  });
   return { surface, programId };
 }

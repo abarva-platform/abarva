@@ -21,10 +21,10 @@ const VALID_SEGMENTS: readonly TenantContextSegment[] = [
 ];
 
 describe('SOURCE_CATEGORY_TAXONOMY — structure', () => {
-  it('encodes exactly the 8 sourcing categories from the Wave 0 plan', () => {
-    expect(SOURCE_CATEGORY_IDS).toHaveLength(8);
-    expect(SOURCE_CATEGORIES).toHaveLength(8);
-    expect(Object.keys(SOURCE_CATEGORY_TAXONOMY)).toHaveLength(8);
+  it('encodes exactly the 9 sourcing categories from the Wave 0 plan', () => {
+    expect(SOURCE_CATEGORY_IDS).toHaveLength(9);
+    expect(SOURCE_CATEGORIES).toHaveLength(9);
+    expect(Object.keys(SOURCE_CATEGORY_TAXONOMY)).toHaveLength(9);
   });
 
   it('keys every registry entry by its own id (discriminant integrity)', () => {
@@ -123,6 +123,7 @@ describe('discriminated union exhaustiveness', () => {
         case 'saas_renewal':
         case 'cloud_finops':
         case 'bpo_contact_centre':
+        case 'bpo_shared_services':
         case 'cyber_grc':
         case 'staff_aug_vs_managed_service':
           return category.id;

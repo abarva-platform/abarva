@@ -7,7 +7,7 @@ const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPAB
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const FORBIDDEN_LOWER = ['commonspirit health', 'first capital financial', 'hp inc', 'md anderson', 'meridian health system'];
+const FORBIDDEN_LOWER = ['commonspirit health', 'first capital financial', 'hp inc', 'md anderson'];
 
 (async () => {
   // 033 turn_traces

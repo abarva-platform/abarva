@@ -1,13 +1,26 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { ProductionReadinessTracker } from '@/components/admin/ProductionReadinessTracker';
-import { BORDER, COLORS, FONT, RADIUS, SPACING, TYPE } from '@/lib/design/abarva-theme';
-import type { ProductionReadinessApiResponse } from '@/lib/admin/production-readiness';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
+import { ProductionReadinessTracker } from "@/components/admin/ProductionReadinessTracker";
+import {
+  BORDER,
+  COLORS,
+  FONT,
+  RADIUS,
+  SPACING,
+  TYPE,
+} from "@/lib/design/abarva-theme";
+import type { ProductionReadinessApiResponse } from "@/lib/admin/production-readiness";
 
-type RefreshStatus = 'refreshed' | 'refreshing' | 'error';
+type RefreshStatus = "refreshed" | "refreshing" | "error";
 
-const PRODUCTION_READINESS_UI_VERSION = 'ui-c2a81fd-control-plane';
+const PRODUCTION_READINESS_UI_VERSION = "ui-c2a81fd-control-plane";
 
 interface ProductionReadinessLivePanelProps {
   initialResponse: ProductionReadinessApiResponse;
@@ -21,20 +34,20 @@ const statusShellStyle: CSSProperties = {
   borderBottom: BORDER.hairline,
   color: COLORS.ink,
   fontFamily: FONT.body,
-  position: 'sticky',
+  position: "sticky",
   top: 0,
   zIndex: 20,
 };
 
 const statusInnerStyle: CSSProperties = {
   maxWidth: 1480,
-  margin: '0 auto',
+  margin: "0 auto",
   padding: `${SPACING.sm}px ${SPACING.xxl}px`,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
   gap: SPACING.md,
-  flexWrap: 'wrap',
+  flexWrap: "wrap",
 };
 
 const buttonStyle: CSSProperties = {
@@ -43,7 +56,7 @@ const buttonStyle: CSSProperties = {
   borderRadius: RADIUS.sm,
   background: COLORS.navy,
   color: COLORS.card,
-  cursor: 'pointer',
+  cursor: "pointer",
   fontWeight: 700,
   padding: `${SPACING.xs}px ${SPACING.md}px`,
 };
@@ -57,12 +70,13 @@ export function ProductionReadinessLivePanel({
   initialResponse,
   refreshIntervalMs = DEFAULT_REFRESH_INTERVAL_MS,
 }: ProductionReadinessLivePanelProps) {
-  const [response, setResponse] = useState<ProductionReadinessApiResponse>(initialResponse);
-  const [status, setStatus] = useState<RefreshStatus>('refreshed');
+  const [response, setResponse] =
+    useState<ProductionReadinessApiResponse>(initialResponse);
+  const [status, setStatus] = useState<RefreshStatus>("refreshed");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setStatus('refreshing');
+    setStatus("refreshing");
     setErrorMessage(null);
 
     try {
@@ -70,20 +84,23 @@ export function ProductionReadinessLivePanel({
         PRODUCTION_READINESS_UI_VERSION,
       )}&t=${Date.now()}`;
       const apiResponse = await fetch(refreshUrl, {
-        cache: 'no-store',
-        headers: { Accept: 'application/json' },
+        cache: "no-store",
+        headers: { Accept: "application/json" },
       });
 
       if (!apiResponse.ok) {
         throw new Error(`Refresh failed with status ${apiResponse.status}`);
       }
 
-      const nextResponse = (await apiResponse.json()) as ProductionReadinessApiResponse;
+      const nextResponse =
+        (await apiResponse.json()) as ProductionReadinessApiResponse;
       setResponse(nextResponse);
-      setStatus('refreshed');
+      setStatus("refreshed");
     } catch (error) {
-      setStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Refresh failed');
+      setStatus("error");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Refresh failed",
+      );
     }
   }, []);
 
@@ -101,41 +118,67 @@ export function ProductionReadinessLivePanel({
     [response.generatedAt],
   );
   const statusLabel =
-    status === 'refreshing' ? 'Refreshing' : status === 'error' ? 'Refresh error' : 'Refreshed';
+    status === "refreshing"
+      ? "Refreshing"
+      : status === "error"
+        ? "Refresh error"
+        : "Refreshed";
 
   return (
     <>
       <div style={statusShellStyle}>
         <div style={statusInnerStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.md, flexWrap: 'wrap' }}>
-            <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>Production Readiness Control Plane</span>
-            <span style={mutedLabelStyle}>Last refreshed {lastRefreshedLabel}</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: SPACING.md,
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>
+              Production Readiness Control Plane
+            </span>
+            <span style={mutedLabelStyle}>
+              Last refreshed {lastRefreshedLabel}
+            </span>
             <span style={mutedLabelStyle}>{statusLabel}</span>
             <span style={mutedLabelStyle}>
-              {response.refreshMode} - CI/Vercel status {response.liveCiStatus}
+              {response.refreshMode} - CI/Azure status {response.liveCiStatus}
             </span>
             <span style={mutedLabelStyle}>
               {response.updateMode} - {response.freshnessStatus}
             </span>
-            <span style={mutedLabelStyle}>{PRODUCTION_READINESS_UI_VERSION}</span>
+            <span style={mutedLabelStyle}>
+              {PRODUCTION_READINESS_UI_VERSION}
+            </span>
           </div>
           <button
             type="button"
             onClick={() => void refresh()}
-            disabled={status === 'refreshing'}
+            disabled={status === "refreshing"}
             style={{
               ...buttonStyle,
-              opacity: status === 'refreshing' ? 0.68 : 1,
+              opacity: status === "refreshing" ? 0.68 : 1,
             }}
           >
             Refresh
           </button>
           {errorMessage ? (
-            <div style={{ ...TYPE.caption, color: COLORS.red, flexBasis: '100%' }}>
-              Showing the server-rendered manifest while the API refresh recovers: {errorMessage}
+            <div
+              style={{ ...TYPE.caption, color: COLORS.red, flexBasis: "100%" }}
+            >
+              Showing the server-rendered manifest while the API refresh
+              recovers: {errorMessage}
             </div>
           ) : (
-            <div style={{ ...TYPE.caption, color: COLORS.muted, flexBasis: '100%' }}>
+            <div
+              style={{
+                ...TYPE.caption,
+                color: COLORS.muted,
+                flexBasis: "100%",
+              }}
+            >
               {response.note}
             </div>
           )}
@@ -150,8 +193,8 @@ function formatRefreshTimestamp(isoTimestamp: string): string {
   const parsed = Date.parse(isoTimestamp);
   if (Number.isNaN(parsed)) return isoTimestamp;
   return new Date(parsed).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 }

@@ -44,11 +44,13 @@ describe('AskAnythingBar · component contract', () => {
   it('shows a mono eyebrow scoped to the agent and surface', () => {
     expect(componentSource).toContain('Ask {agentName}');
     expect(componentSource).toContain('scoped to');
-    // All four canonical agents are nameable on the bar.
-    expect(componentSource).toContain("nexus: 'Nexus'");
-    expect(componentSource).toContain("sentinel: 'Sentinel'");
-    expect(componentSource).toContain("atlas: 'Atlas'");
-    expect(componentSource).toContain("steward: 'Steward'");
+    // All four canonical agents present as Ava on the bar (specialist
+    // keys survive as code identifiers; the displayed name is Ava).
+    expect(componentSource).toContain("nexus:");
+    expect(componentSource).toContain("sentinel:");
+    expect(componentSource).toContain("atlas:");
+    expect(componentSource).toContain("steward:");
+    expect(componentSource).toContain("name: 'Ava'");
   });
 
   it('renders a Send button that is deterministic-disabled for now', () => {

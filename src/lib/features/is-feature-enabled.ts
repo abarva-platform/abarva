@@ -14,12 +14,12 @@
 // feature-flag service, swap the body for an async lookup and update
 // every call site to `await`.
 
-import type { ClientKey } from '@/lib/client-config';
-import { isClientKey } from '@/lib/client-config';
+import type { ClientKey } from "@/lib/client-config";
+import { isClientKey } from "@/lib/client-config";
 import {
   getFeatureFlagDefinition,
   type FeatureFlagKey,
-} from '@/lib/features/registry';
+} from "@/lib/features/registry";
 
 /**
  * Minimal shape used to evaluate a flag — just the tenant key. Compatible
@@ -38,19 +38,27 @@ export interface FeatureFlagContext {
  * be mapped — in which case every flag falls to its `policy` default.
  */
 const ENV_TENANT_ALIASES: Readonly<Record<string, ClientKey>> = {
-  'apex-retail': 'apexretail',
-  'meridian-health': 'meridian',
-  'first-capital': 'arcturus',
+  "apex-retail": "apexretail",
+  "meridian-health": "meridian",
+  "first-capital": "arcturus",
+  // The SkyHarbor data plane uses the dashed `skyharbor-air` tenant key; the
+  // canonical ClientKey is `skyharbor`. Map it so feature flags (and their env
+  // allowlists) resolve for SkyHarbor Moves whose `tenant_key` is dashed.
+  "skyharbor-air": "skyharbor",
 };
 
-function normalizeTenantKey(value: string | null | undefined): ClientKey | null {
+function normalizeTenantKey(
+  value: string | null | undefined,
+): ClientKey | null {
   const normalized = value?.trim().toLowerCase();
   if (!normalized) return null;
   if (isClientKey(normalized)) return normalized;
   return ENV_TENANT_ALIASES[normalized] ?? null;
 }
 
-function resolveClientKey(ctx: FeatureFlagContext | null | undefined): ClientKey | null {
+function resolveClientKey(
+  ctx: FeatureFlagContext | null | undefined,
+): ClientKey | null {
   if (!ctx) return null;
   return normalizeTenantKey(ctx.clientKey) ?? normalizeTenantKey(ctx.clientId);
 }
@@ -61,7 +69,7 @@ function envTenantListForFlag(key: FeatureFlagKey): ReadonlyArray<ClientKey> {
   if (!raw) return [];
 
   const tenants: ClientKey[] = [];
-  for (const part of raw.split(',')) {
+  for (const part of raw.split(",")) {
     const clientKey = normalizeTenantKey(part);
     if (clientKey && !tenants.includes(clientKey)) tenants.push(clientKey);
   }
@@ -87,7 +95,7 @@ export function isFeatureEnabled(
 
   const tenant = resolveClientKey(ctx);
 
-  if (def.policy === 'platform') {
+  if (def.policy === "platform") {
     if (tenant && def.excludeTenants?.includes(tenant)) return false;
     return true;
   }

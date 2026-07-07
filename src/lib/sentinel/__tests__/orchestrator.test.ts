@@ -39,6 +39,52 @@ describe('runSentinelTurn canonical grounding', () => {
     }
   });
 
+  it('answers portfolio sequencing questions through the live Sentinel turn path', async () => {
+    const canonicalPatternSearch = jest.fn().mockResolvedValue(noMatchCanonicalResult());
+
+    const result = await runSentinelTurn({
+      ctx: {
+        clientKey: 'skyharbor',
+        clientName: 'SkyHarbor Air',
+        industryCode: 'airline',
+        userId: 'user_123',
+      },
+      message: 'What should I sequence next in the portfolio?',
+      canonicalPatternSearch,
+    });
+
+    expect(canonicalPatternSearch).not.toHaveBeenCalled();
+    expect(result.response).toContain('SkyHarbor Air');
+    expect(result.response).toContain('sequence');
+    expect(result.response).toContain('Executive action');
+    expect(result.response).toContain('Basis: signature planning fixture');
+    expect(result.response).not.toMatch(/\bSKY-[A-Z-]+\b/);
+    expect(result.response).not.toMatch(/\bsignal:[a-z0-9:_-]{8,}\b/i);
+    expect(result.citations[0]).toMatchObject({
+      slug: 'portfolio-sequence-packet',
+      label: 'SkyHarbor Air portfolio sequence packet',
+    });
+    expect(result.groundingDisclosure.status).toBe('not_requested');
+  });
+
+  it('answers portfolio capacity questions without leaking another client', async () => {
+    const result = await runSentinelTurn({
+      ctx: {
+        clientKey: 'meridian',
+        clientName: 'Meridian Health',
+        industryCode: 'healthcare',
+        userId: 'user_123',
+      },
+      message: 'Where are we capacity constrained?',
+      canonicalPatternSearch: jest.fn().mockResolvedValue(noMatchCanonicalResult()),
+    });
+
+    expect(result.response).toContain('Meridian Health');
+    expect(result.response).toContain('Executive action');
+    expect(result.response).not.toMatch(/Apex Retail|SkyHarbor|Store Associate|Crew Recovery/i);
+    expect(result.response).not.toMatch(/\bMER-[A-Z-]+\b/);
+  });
+
   it('queries the canonical runtime index and includes grounding flags without writing data', async () => {
     const canonicalPatternSearch = jest.fn().mockResolvedValue(noMatchCanonicalResult());
 

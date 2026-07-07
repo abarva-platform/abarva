@@ -94,12 +94,12 @@ export async function buildOverviewPageView(): Promise<OverviewPageView> {
 
   return {
     eyebrow: 'Steward-led control plane orientation',
-    title: 'Setup overview',
+    title: 'Admin overview',
     subtitle:
-      'What needs setup before AbarVa can run a tenant in pilot. The Steward holds this control plane.',
+      'What needs Admin readiness before AbarVa can run a tenant in pilot. The Steward holds this control plane.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: dataMode === 'live' ? 'Live DB' : 'Manifest + seeds',
       liveStatus: dataMode === 'live' ? 'Live' : 'Fixture',

@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { segmentId } = await params;
   const ref = resolveSegmentRef(segmentId);
   if (!ref) return { title: 'Segment not found · AbarVa' };
-  return { title: `${ref.displayName} · Setup · AbarVa` };
+  return { title: `${ref.displayName} · Admin · AbarVa` };
 }
 
 export default async function AdminSegmentPage({ params }: PageProps) {

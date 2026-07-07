@@ -6,7 +6,7 @@
 // read. AbarVa visual canon only — every token comes from
 // @/lib/design/abarva-theme.
 
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from "react";
 import {
   BORDER,
   COLORS,
@@ -14,35 +14,35 @@ import {
   RADIUS,
   SPACING,
   TYPE,
-} from '@/lib/design/abarva-theme';
+} from "@/lib/design/abarva-theme";
 import type {
   DeploymentStatusLiveStatus,
   DeploymentStatusResult,
   ProductionReadinessDeploymentSignal,
-} from '@/lib/admin/deployment-status-ingestion';
+} from "@/lib/admin/deployment-status-ingestion";
 
 interface DeploymentStatusCardProps {
   signal: ProductionReadinessDeploymentSignal;
 }
 
-const PROVIDER_LABELS: Record<DeploymentStatusResult['provider'], string> = {
-  github: 'GitHub',
-  vercel: 'Vercel',
+const PROVIDER_LABELS: Record<DeploymentStatusResult["provider"], string> = {
+  github: "GitHub",
+  azure: "Azure",
 };
 
 const LIVE_STATUS_LABELS: Record<DeploymentStatusLiveStatus, string> = {
-  unavailable: 'unavailable',
-  configured: 'configured',
-  error: 'error',
+  unavailable: "unavailable",
+  configured: "configured",
+  error: "error",
 };
 
 const cardStyle: CSSProperties = {
   background: COLORS.card,
   border: BORDER.hairline,
   borderRadius: RADIUS.md,
-  boxShadow: '0 18px 45px rgba(10, 12, 18, 0.05)',
+  boxShadow: "0 18px 45px rgba(10, 12, 18, 0.05)",
   padding: SPACING.xxl,
-  display: 'grid',
+  display: "grid",
   gap: SPACING.lg,
   fontFamily: FONT.body,
   color: COLORS.ink,
@@ -65,17 +65,17 @@ const summaryStyle: CSSProperties = {
 };
 
 const providerListStyle: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: SPACING.sm,
   margin: 0,
   padding: 0,
-  listStyle: 'none',
+  listStyle: "none",
 };
 
 const providerRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
   gap: SPACING.md,
   padding: `${SPACING.sm}px ${SPACING.md}px`,
   border: BORDER.hairlineSoft,
@@ -97,15 +97,15 @@ const chipBaseStyle: CSSProperties = {
   fontFamily: FONT.mono,
   fontSize: 10,
   fontWeight: 600,
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
   padding: `${SPACING.xs}px ${SPACING.sm}px`,
   borderRadius: RADIUS.pill,
   border: `1px solid ${COLORS.navy}`,
 };
 
 const noteRowStyle: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: SPACING.xs,
   paddingTop: SPACING.md,
   borderTop: BORDER.hairlineSoft,
@@ -124,7 +124,7 @@ const valueStyle: CSSProperties = {
 const disclaimerStyle: CSSProperties = {
   ...TYPE.caption,
   color: COLORS.muted,
-  fontStyle: 'italic',
+  fontStyle: "italic",
 };
 
 function chipStyleFor(): CSSProperties {
@@ -139,7 +139,7 @@ function chipStyleFor(): CSSProperties {
 }
 
 function formatCheckedAt(checkedAt: string | null): string {
-  if (!checkedAt) return '—';
+  if (!checkedAt) return "—";
   return checkedAt;
 }
 
@@ -149,31 +149,29 @@ function describeLatestCheck(
   for (const result of results) {
     if (result.checkedAt) return result.checkedAt;
   }
-  return '—';
+  return "—";
 }
 
-function deriveNextAction(
-  signal: ProductionReadinessDeploymentSignal,
-): string {
-  if (signal.liveStatus === 'unavailable') {
-    return 'Configure GITHUB_STATUS_TOKEN and VERCEL_STATUS_TOKEN to enable live status. Live polling is deferred to PROD6.';
+function deriveNextAction(signal: ProductionReadinessDeploymentSignal): string {
+  if (signal.liveStatus === "unavailable") {
+    return "Configure GITHUB_STATUS_TOKEN and AZURE_STATUS_TOKEN to enable live status. Live polling is deferred to PROD6.";
   }
-  if (signal.liveStatus === 'configured') {
-    return 'Tokens are configured. PROD5 surfaces token presence only; live polling is deferred to PROD6.';
+  if (signal.liveStatus === "configured") {
+    return "Tokens are configured. PROD5 surfaces token presence only; live polling is deferred to PROD6.";
   }
-  return 'Review provider error messages above. PROD5 does not yet poll provider APIs.';
+  return "Review provider error messages above. PROD5 does not yet poll provider APIs.";
 }
 
 function deriveLimitationNote(
   signal: ProductionReadinessDeploymentSignal,
 ): string {
-  if (signal.liveStatus === 'unavailable') {
-    return 'Tokens not configured. Live polling deferred to PROD6.';
+  if (signal.liveStatus === "unavailable") {
+    return "Tokens not configured. Live polling deferred to PROD6.";
   }
-  if (signal.liveStatus === 'configured') {
-    return 'Token presence detected only. No GitHub or Vercel API call is performed by PROD5.';
+  if (signal.liveStatus === "configured") {
+    return "Token presence detected only. No GitHub or Azure API call is performed by PROD5.";
   }
-  return 'At least one provider reports an error. PROD5 V1 does not call provider APIs.';
+  return "At least one provider reports an error. PROD5 V1 does not call provider APIs.";
 }
 
 /**
@@ -188,22 +186,27 @@ export function DeploymentStatusCard({ signal }: DeploymentStatusCardProps) {
 
   return (
     <section style={cardStyle} aria-label="Deployment status">
-      <div style={{ display: 'grid', gap: SPACING.xs }}>
+      <div style={{ display: "grid", gap: SPACING.xs }}>
         <span style={eyebrowStyle}>DEPLOYMENT STATUS · PROD5</span>
-        <h2 style={titleStyle}>GitHub / Vercel deployment signal</h2>
+        <h2 style={titleStyle}>GitHub / Azure deployment signal</h2>
         <p style={summaryStyle}>{signal.message}</p>
       </div>
 
       <ul style={providerListStyle}>
         {signal.results.map((result) => (
           <li key={result.provider} style={providerRowStyle}>
-            <div style={{ display: 'grid', gap: 2 }}>
-              <span style={providerNameStyle}>{PROVIDER_LABELS[result.provider]}</span>
+            <div style={{ display: "grid", gap: 2 }}>
+              <span style={providerNameStyle}>
+                {PROVIDER_LABELS[result.provider]}
+              </span>
               <span style={providerMetaStyle}>
                 Last checked {formatCheckedAt(result.checkedAt)}
               </span>
             </div>
-            <span style={chipStyleFor()} aria-label={`${PROVIDER_LABELS[result.provider]} live status`}>
+            <span
+              style={chipStyleFor()}
+              aria-label={`${PROVIDER_LABELS[result.provider]} live status`}
+            >
               {LIVE_STATUS_LABELS[result.liveStatus]}
             </span>
           </li>
@@ -211,15 +214,15 @@ export function DeploymentStatusCard({ signal }: DeploymentStatusCardProps) {
       </ul>
 
       <div style={noteRowStyle}>
-        <div style={{ display: 'grid', gap: 2 }}>
+        <div style={{ display: "grid", gap: 2 }}>
           <span style={labelStyle}>Last checked</span>
           <span style={valueStyle}>{lastCheckedLabel}</span>
         </div>
-        <div style={{ display: 'grid', gap: 2 }}>
+        <div style={{ display: "grid", gap: 2 }}>
           <span style={labelStyle}>Current limitation</span>
           <span style={valueStyle}>{limitation}</span>
         </div>
-        <div style={{ display: 'grid', gap: 2 }}>
+        <div style={{ display: "grid", gap: 2 }}>
           <span style={labelStyle}>Next action</span>
           <span style={valueStyle}>{nextAction}</span>
         </div>

@@ -21,19 +21,19 @@
  * Pure presentation: no IO, no Date.now(), no randomness. AbarVa palette only.
  */
 
-import type { CSSProperties, ReactNode } from 'react';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { resolveAnyInstance } from '@/lib/reasoning/instance-resolver';
-import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
-import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
-import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
+import type { CSSProperties, ReactNode } from "react";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { resolveAnyInstance } from "@/lib/reasoning/instance-resolver";
+import { findLifecyclePattern } from "@/lib/reasoning/lifecycle-pattern-lookup";
+import { buildSourceSynthesisContext } from "@/lib/reasoning/synthesis-context-builder";
+import { buildProgramSynthesisContext } from "@/lib/reasoning/program-synthesis-context-builder";
 import {
   deriveMissionsFromInstance,
   type DerivedMission,
-} from '@/lib/reasoning/mission-derivation';
-import type { SynthesisContext } from '@/lib/reasoning/types';
-import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
-import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
+} from "@/lib/reasoning/mission-derivation";
+import type { SynthesisContext } from "@/lib/reasoning/types";
+import { computeInstanceHealth } from "@/lib/reasoning/instance-health";
+import { InstanceHealthBadge } from "@/components/_shared/InstanceHealthBadge";
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -65,13 +65,15 @@ function detailHrefFor(kind: 'source' | 'program', id: string): string {
   return '/tower';
 }
 
-type StageStatus = 'ready' | 'in-progress' | 'blocked';
+type StageStatus = "ready" | "in-progress" | "blocked";
 
 function deriveStageStatus(context: SynthesisContext): StageStatus {
-  if (context.gatesSummary.blocked.length > 0) return 'blocked';
-  const snapshot = context.instanceSnapshot as { canAdvance?: boolean } | undefined;
-  if (snapshot?.canAdvance) return 'ready';
-  return 'in-progress';
+  if (context.gatesSummary.blocked.length > 0) return "blocked";
+  const snapshot = context.instanceSnapshot as
+    | { canAdvance?: boolean }
+    | undefined;
+  if (snapshot?.canAdvance) return "ready";
+  return "in-progress";
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -84,15 +86,15 @@ export interface InstanceSummaryTileProps {
    * portfolio strips; `full` renders an expanded card with all sections.
    * Defaults to `compact`.
    */
-  readonly size?: 'compact' | 'full';
+  readonly size?: "compact" | "full";
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const ANCHOR_RESET: CSSProperties = {
-  display: 'block',
-  textDecoration: 'none',
-  color: 'inherit',
+  display: "block",
+  textDecoration: "none",
+  color: "inherit",
 };
 
 const TILE_BASE: CSSProperties = {
@@ -106,17 +108,17 @@ const TILE_BASE: CSSProperties = {
 
 const COMPACT_TILE: CSSProperties = {
   ...TILE_BASE,
-  padding: '12px 14px',
-  display: 'grid',
-  gridTemplateColumns: '1fr auto',
-  alignItems: 'center',
+  padding: "12px 14px",
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
+  alignItems: "center",
   gap: 12,
   minHeight: 80,
 };
 
 const FULL_TILE: CSSProperties = {
   ...TILE_BASE,
-  display: 'grid',
+  display: "grid",
   gap: 10,
 };
 
@@ -124,29 +126,29 @@ const TITLE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SERIF,
   fontWeight: 600,
-  letterSpacing: '-0.01em',
+  letterSpacing: "-0.01em",
   color: SHELL.INK,
 };
 
 const DISPLAY_ID: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 9,
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
   color: SHELL.INK_MUTED,
 };
 
 const PATTERN_BADGE: CSSProperties = {
-  display: 'inline-block',
-  padding: '2px 8px',
+  display: "inline-block",
+  padding: "2px 8px",
   borderRadius: 999,
   background: SHELL.GRAY_BG,
   color: SHELL.GRAY_TEXT,
   fontFamily: SHELL.MONO,
   fontSize: 9,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  whiteSpace: 'nowrap',
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
 };
 
 const STAGE_LABEL: CSSProperties = {
@@ -156,20 +158,20 @@ const STAGE_LABEL: CSSProperties = {
 };
 
 const STATUS_PILL_BASE: CSSProperties = {
-  display: 'inline-block',
-  padding: '2px 8px',
+  display: "inline-block",
+  padding: "2px 8px",
   borderRadius: 999,
   fontFamily: SHELL.MONO,
   fontSize: 9,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
   fontWeight: 600,
 };
 
 const META_ROW: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
   gap: 8,
   fontFamily: SHELL.MONO,
   fontSize: 10,
@@ -177,15 +179,15 @@ const META_ROW: CSSProperties = {
 };
 
 const RIGHT_COL: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-end",
   gap: 6,
 };
 
 const TOP_MISSION_ROW: CSSProperties = {
-  display: 'flex',
-  alignItems: 'baseline',
+  display: "flex",
+  alignItems: "baseline",
   gap: 8,
   fontFamily: SHELL.SANS,
   fontSize: 12,
@@ -196,21 +198,21 @@ const TOP_MISSION_ROW: CSSProperties = {
 const TOP_MISSION_PREFIX: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 9,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
   color: SHELL.INK_MUTED,
   flexShrink: 0,
 };
 
 function statusPillStyle(status: StageStatus): CSSProperties {
-  if (status === 'blocked') {
+  if (status === "blocked") {
     return {
       ...STATUS_PILL_BASE,
       background: SHELL.RUST_BG,
       color: SHELL.RUST_TEXT,
     };
   }
-  if (status === 'ready') {
+  if (status === "ready") {
     return {
       ...STATUS_PILL_BASE,
       background: SHELL.MINT_BG,
@@ -225,9 +227,9 @@ function statusPillStyle(status: StageStatus): CSSProperties {
 }
 
 function statusLabel(status: StageStatus): string {
-  if (status === 'blocked') return 'Blocked';
-  if (status === 'ready') return 'Ready';
-  return 'In progress';
+  if (status === "blocked") return "Blocked";
+  if (status === "ready") return "Ready";
+  return "In progress";
 }
 
 // ─── Subviews ─────────────────────────────────────────────────────────────────
@@ -241,7 +243,7 @@ function MissingPlaceholder({ instanceId }: { instanceId: string }) {
         fontFamily: SHELL.MONO,
         fontSize: 11,
         color: SHELL.INK_MUTED,
-        fontStyle: 'italic',
+        fontStyle: "italic",
       }}
     >
       Instance not found · {instanceId}
@@ -262,7 +264,7 @@ interface RenderedTileProps {
   readonly riskCount: number;
   readonly topMissionLabel: string | null;
   readonly health: ReturnType<typeof computeInstanceHealth>;
-  readonly size: 'compact' | 'full';
+  readonly size: "compact" | "full";
 }
 
 function GatesAndRisks({
@@ -281,7 +283,9 @@ function GatesAndRisks({
       <span data-testid="instance-summary-tile-gates">
         {gatesPassed}/{gatesTotal} cleared, {gatesPending} pending
       </span>
-      <span aria-hidden style={{ color: SHELL.INK_MUTED }}>·</span>
+      <span aria-hidden style={{ color: SHELL.INK_MUTED }}>
+        ·
+      </span>
       <span
         data-testid="instance-summary-tile-risks"
         style={{
@@ -289,15 +293,26 @@ function GatesAndRisks({
           fontWeight: riskCount > 0 ? 600 : 400,
         }}
       >
-        {riskCount} risk{riskCount === 1 ? '' : 's'}
+        {riskCount} risk{riskCount === 1 ? "" : "s"}
       </span>
     </div>
   );
 }
 
 function CompactTile(props: RenderedTileProps) {
-  const { href, title, displayId, patternTitle, currentStage, status,
-    gatesPassed, gatesTotal, gatesPending, riskCount, topMissionLabel } = props;
+  const {
+    href,
+    title,
+    displayId,
+    patternTitle,
+    currentStage,
+    status,
+    gatesPassed,
+    gatesTotal,
+    gatesPending,
+    riskCount,
+    topMissionLabel,
+  } = props;
   return (
     <a
       href={href}
@@ -306,26 +321,43 @@ function CompactTile(props: RenderedTileProps) {
       style={ANCHOR_RESET}
     >
       <article style={COMPACT_TILE}>
-        <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
             <span style={DISPLAY_ID}>{displayId}</span>
             <h3
               style={{
                 ...TITLE_STYLE,
                 fontSize: 15,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "100%",
               }}
               title={title}
             >
               {title}
             </h3>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
             <span style={STAGE_LABEL}>{currentStage}</span>
-            <span style={statusPillStyle(status)} data-testid="instance-summary-tile-status">
+            <span
+              style={statusPillStyle(status)}
+              data-testid="instance-summary-tile-status"
+            >
               {statusLabel(status)}
             </span>
           </div>
@@ -334,9 +366,9 @@ function CompactTile(props: RenderedTileProps) {
               <span style={TOP_MISSION_PREFIX}>Top</span>
               <span
                 style={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
                 data-testid="instance-summary-tile-top-mission"
                 title={topMissionLabel}
@@ -365,8 +397,20 @@ function CompactTile(props: RenderedTileProps) {
 }
 
 function FullTile(props: RenderedTileProps): ReactNode {
-  const { href, title, displayId, patternTitle, currentStage, status,
-    gatesPassed, gatesTotal, gatesPending, riskCount, topMissionLabel, health } = props;
+  const {
+    href,
+    title,
+    displayId,
+    patternTitle,
+    currentStage,
+    status,
+    gatesPassed,
+    gatesTotal,
+    gatesPending,
+    riskCount,
+    topMissionLabel,
+    health,
+  } = props;
   return (
     <a
       href={href}
@@ -375,8 +419,15 @@ function FullTile(props: RenderedTileProps): ReactNode {
       style={ANCHOR_RESET}
     >
       <article style={FULL_TILE}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ display: 'grid', gap: 2 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "grid", gap: 2 }}>
             <span style={DISPLAY_ID}>{displayId}</span>
             <h3 style={{ ...TITLE_STYLE, fontSize: 18 }}>{title}</h3>
           </div>
@@ -386,9 +437,19 @@ function FullTile(props: RenderedTileProps): ReactNode {
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
           <span style={STAGE_LABEL}>{currentStage}</span>
-          <span style={statusPillStyle(status)} data-testid="instance-summary-tile-status">
+          <span
+            style={statusPillStyle(status)}
+            data-testid="instance-summary-tile-status"
+          >
             {statusLabel(status)}
           </span>
           <InstanceHealthBadge health={health} />
@@ -402,7 +463,10 @@ function FullTile(props: RenderedTileProps): ReactNode {
         {topMissionLabel && (
           <div style={TOP_MISSION_ROW}>
             <span style={TOP_MISSION_PREFIX}>Top mission</span>
-            <span data-testid="instance-summary-tile-top-mission" title={topMissionLabel}>
+            <span
+              data-testid="instance-summary-tile-top-mission"
+              title={topMissionLabel}
+            >
               {topMissionLabel}
             </span>
           </div>
@@ -424,7 +488,7 @@ function FullTile(props: RenderedTileProps): ReactNode {
  */
 export function InstanceSummaryTile({
   instanceId,
-  size = 'compact',
+  size = "compact",
 }: InstanceSummaryTileProps) {
   const resolved = resolveAnyInstance(instanceId);
   if (resolved === null) {
@@ -435,7 +499,7 @@ export function InstanceSummaryTile({
   const pattern = findLifecyclePattern(instance.patternId);
 
   let context: SynthesisContext;
-  if (kind === 'source') {
+  if (kind === "source") {
     // Source events require a typed pattern; if missing we cannot evaluate
     // gates, so fall through to a minimal placeholder.
     if (pattern === undefined) {
@@ -447,9 +511,7 @@ export function InstanceSummaryTile({
     context = buildProgramSynthesisContext(instance, pattern);
   }
 
-  const missions = pattern
-    ? deriveMissionsFromInstance(instance, pattern)
-    : [];
+  const missions = pattern ? deriveMissionsFromInstance(instance, pattern) : [];
   const topMission = pickTopMission(missions);
 
   const gatesPassed = context.gatesSummary.met;
@@ -476,7 +538,11 @@ export function InstanceSummaryTile({
     size,
   };
 
-  return size === 'full' ? <FullTile {...tileProps} /> : <CompactTile {...tileProps} />;
+  return size === "full" ? (
+    <FullTile {...tileProps} />
+  ) : (
+    <CompactTile {...tileProps} />
+  );
 }
 
 export default InstanceSummaryTile;

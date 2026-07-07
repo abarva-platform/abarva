@@ -1,0 +1,67 @@
+{
+  "$schema": "https://abarva.ai/schemas/license-policy.v1.json",
+  "summary": "AbarVa npm dependency license policy for CI license checks. Denied and unclassified licenses fail the gate unless a package exception is recorded here.",
+  "allowedLicenses": [
+    "0BSD",
+    "Apache-2.0",
+    "BSD",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BlueOak-1.0.0",
+    "CC-BY-4.0",
+    "CC0-1.0",
+    "ISC",
+    "MIT",
+    "MIT-0",
+    "MIT/X11",
+    "Python-2.0",
+    "Unlicense",
+    "Zlib"
+  ],
+  "reviewRequiredLicenses": ["LGPL-3.0-or-later", "MPL-2.0"],
+  "deniedLicenses": [
+    "AGPL-3.0",
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later",
+    "BUSL-1.1",
+    "GPL-2.0-only",
+    "GPL-2.0-or-later",
+    "GPL-3.0-only",
+    "GPL-3.0-or-later",
+    "SSPL-1.0"
+  ],
+  "packageExceptions": [
+    {
+      "package": "buffers",
+      "version": "0.1.1",
+      "decision": "allow-transitive",
+      "owner": "engineering",
+      "reviewBy": "2026-07-01",
+      "reason": "Transitive package has no license field in package-lock.json; keep as a named exception until legal metadata is verified or the transitive dependency is removed."
+    },
+    {
+      "package": "png-js",
+      "version": "2.0.0",
+      "decision": "allow-transitive",
+      "owner": "engineering",
+      "reviewBy": "2026-07-01",
+      "reason": "Transitive package has no license field in package-lock.json; keep as a named exception until legal metadata is verified or the transitive dependency is removed."
+    },
+    {
+      "package": "posthog-js",
+      "version": "1.378.1",
+      "decision": "allow-direct-with-review",
+      "owner": "engineering",
+      "reviewBy": "2026-07-01",
+      "reason": "package-lock.json records SEE LICENSE IN LICENSE instead of an SPDX id; named exception keeps the gate deterministic while preserving a follow-up review target."
+    },
+    {
+      "package": "parse-cache-control",
+      "version": "1.0.1",
+      "decision": "allow-transitive",
+      "owner": "engineering",
+      "reviewBy": "2026-07-15",
+      "reason": "Dev-only transitive dependency introduced by @lhci/cli has no license field in package-lock.json; keep as a named exception until legal metadata is verified or the transitive dependency is removed."
+    }
+  ]
+}

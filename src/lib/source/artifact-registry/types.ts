@@ -5,71 +5,92 @@
 // rows that feed later parser, chunking, vector, graph, and agent-context
 // jobs without importing server-only code into UI/test surfaces.
 
-import type { ArtifactDisclosureFlag } from '../disclosure-flag';
-import type { SourceStageKey } from '../types';
+import type { ArtifactDisclosureFlag } from "../disclosure-flag";
+import type { SourceStageKey } from "../types";
 
 // Mirrors the artifact_family CHECK constraint in
 // supabase/migrations/20260507160000_source_substrate_wave1_2.sql.
 // Keep this list in sync with that migration when families are added.
 export type SourceArtifactFamily =
-  | 'rfi'
-  | 'rfp'
-  | 'bafo'
-  | 'scorecard'
-  | 'pricing_workbook'
-  | 'proposal'
-  | 'meeting_notes'
-  | 'workshop_output'
-  | 'decision_brief'
-  | 'transition_risk_register'
-  | 'value_ledger'
-  | 'sourcing_strategy'
-  | 'scope_document'
-  | 'minimum_data_request'
-  | 'vendor_qa'
-  | 'response_checklist'
-  | 'selection_memo'
-  | 'other';
+  | "rfi"
+  | "rfp"
+  | "bafo"
+  | "scorecard"
+  | "pricing_workbook"
+  | "proposal"
+  | "meeting_notes"
+  | "workshop_output"
+  | "decision_brief"
+  | "transition_risk_register"
+  | "value_ledger"
+  | "sourcing_strategy"
+  | "scope_document"
+  | "minimum_data_request"
+  | "vendor_qa"
+  | "response_checklist"
+  | "selection_memo"
+  | "other";
 
 export type SourceArtifactOrigin =
-  | 'uploaded'
-  | 'generated'
-  | 'reuploaded'
-  | 'imported'
-  | 'note_capture';
+  | "uploaded"
+  | "generated"
+  | "reuploaded"
+  | "imported"
+  | "note_capture";
 
 export type SourceArtifactFormat =
-  | 'pdf'
-  | 'docx'
-  | 'xlsx'
-  | 'pptx'
-  | 'html'
-  | 'markdown'
-  | 'csv'
-  | 'txt'
-  | 'image'
-  | 'audio'
-  | 'video'
-  | 'unknown';
+  | "pdf"
+  | "docx"
+  | "xlsx"
+  | "pptx"
+  | "html"
+  | "markdown"
+  | "csv"
+  | "txt"
+  | "image"
+  | "audio"
+  | "video"
+  | "unknown";
 
-export type SourceParseStatus = 'pending' | 'parsing' | 'parsed' | 'failed' | 'needs_review';
-export type SourceEmbeddingStatus = 'pending' | 'embedded' | 'failed' | 'not_applicable';
-export type SourceGraphStatus = 'pending' | 'projected' | 'failed' | 'not_applicable';
-export type SourceClassificationStatus = 'pending' | 'classified' | 'ambiguous' | 'rejected';
-export type SourceDataClassification = 'Public' | 'Internal' | 'Confidential' | 'Restricted';
+export type SourceParseStatus =
+  | "pending"
+  | "parsing"
+  | "parsed"
+  | "failed"
+  | "needs_review";
+export type SourceEmbeddingStatus =
+  | "pending"
+  | "embedded"
+  | "failed"
+  | "not_applicable";
+export type SourceGraphStatus =
+  | "pending"
+  | "projected"
+  | "failed"
+  | "not_applicable";
+export type SourceClassificationStatus =
+  | "pending"
+  | "classified"
+  | "ambiguous"
+  | "rejected";
+export type SourceDataClassification =
+  | "Public"
+  | "Internal"
+  | "Confidential"
+  | "Restricted";
 export type SourceArtifactEvidenceState =
-  | 'unparsed'
-  | 'parsed_uncited'
-  | 'cited'
-  | 'challenged'
-  | 'superseded';
+  | "unparsed"
+  | "parsed_uncited"
+  | "cited"
+  | "challenged"
+  | "superseded";
 export type SourceArtifactApprovalState =
-  | 'not_required'
-  | 'draft'
-  | 'in_review'
-  | 'approved'
-  | 'rejected'
-  | 'locked';
+  | "not_required"
+  | "draft"
+  | "in_review"
+  | "approved"
+  | "rejected"
+  | "locked";
 
 export interface SourceArtifactRegistryRecord {
   id: string;
@@ -94,6 +115,18 @@ export interface SourceArtifactRegistryRecord {
   dataClassification: SourceDataClassification;
   evidenceState: SourceArtifactEvidenceState;
   approvalState: SourceArtifactApprovalState;
+  isClientFinal?: boolean;
+  isCurrentAuthoritative?: boolean;
+  sourceGeneratedArtifactId?: string | null;
+  clientFinalUploadedBy?: string | null;
+  clientFinalUploadedAt?: string | null;
+  clientFinalAcceptedBy?: string | null;
+  clientFinalAcceptedAt?: string | null;
+  clientFinalNote?: string | null;
+  clientFinalReviewMeetingDate?: string | null;
+  clientFinalStakeholderGroup?: string | null;
+  clientFinalChangeSummary?: Record<string, unknown>;
+  citedSourceArtifactIds?: string[];
   /**
    * GAP-9 · artifact-level disclosure-classification flag. Distinct from
    * `dataClassification` (a sensitivity axis): this marks whether the

@@ -10,7 +10,7 @@ export interface EnterpriseContextRecordRow {
   title: string;
   source_system: string;
   owner: string | null;
-  freshness_status: 'fresh' | 'attention' | 'stale' | 'unknown';
+  freshness_status: "fresh" | "attention" | "stale" | "unknown";
   confidence: number | null;
   payload: Record<string, unknown>;
 }
@@ -29,6 +29,18 @@ export interface EnterpriseContextSourceRow {
   system_of_record: boolean;
   source_owner: string | null;
   last_synced_at: string | null;
+}
+
+export interface EnterpriseContextChunkRow {
+  source_doc: string | null;
+  source_record_id: string | null;
+  chunk_id: string | null;
+  chunk_text: string | null;
+  embedding_status: string | null;
+  embedding_model: string | null;
+  embedded_at: string | null;
+  provenance: Record<string, unknown> | null;
+  chunk_metadata: Record<string, unknown> | null;
 }
 
 export interface EnterpriseContextOverviewCard {
@@ -104,45 +116,55 @@ export interface EnterpriseContextOverview {
 }
 
 const TABLES = {
-  sources: 'enterprise_context_sources',
-  records: 'enterprise_context_records',
-  facts: 'enterprise_context_facts',
-  relationships: 'enterprise_context_relationships',
-  evidence: 'enterprise_context_evidence',
-  qualityIssues: 'enterprise_context_quality_issues',
-  stewardshipTasks: 'enterprise_context_stewardship_tasks',
-  chunkQueue: 'enterprise_context_chunk_queue',
+  sources: "enterprise_context_sources",
+  records: "enterprise_context_records",
+  facts: "enterprise_context_facts",
+  relationships: "enterprise_context_relationships",
+  evidence: "enterprise_context_evidence",
+  qualityIssues: "enterprise_context_quality_issues",
+  stewardshipTasks: "enterprise_context_stewardship_tasks",
+  chunkQueue: "enterprise_context_chunk_queue",
 } as const;
 
 export async function getEnterpriseContextOverviewForTenant(
   tenantKey: string | null | undefined,
   tenantName: string | null | undefined,
 ): Promise<EnterpriseContextOverview | null> {
-  const normalizedTenantKey = tenantKey?.trim();
+  const normalizedTenantKey = canonicalTenantKey(tenantKey?.trim());
   if (!normalizedTenantKey) return null;
   const derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(normalizedTenantKey);
 
   try {
     const counts = await countEnterpriseContextRows(normalizedTenantKey);
+
+    if (counts.records === 0) {
+      const chunkOverview = await getChunkBackedEnterpriseContextOverview({
+        tenantKey: normalizedTenantKey,
+        tenantName: tenantName ?? normalizedTenantKey,
+      });
+      if (chunkOverview) return chunkOverview;
+      return null;
+    }
+
     const records = await fetchTenantRows<EnterpriseContextRecordRow>(
       TABLES.records,
       normalizedTenantKey,
-      'record_type,title,source_system,owner,freshness_status,confidence,payload',
+      "record_type,title,source_system,owner,freshness_status,confidence,payload",
     );
     const sources = await fetchTenantRows<EnterpriseContextSourceRow>(
       TABLES.sources,
       normalizedTenantKey,
-      'source_system,display_name,system_of_record,source_owner,last_synced_at',
+      "source_system,display_name,system_of_record,source_owner,last_synced_at",
     );
     const qualityRows = await fetchTenantRows<EnterpriseContextQualityRow>(
       TABLES.qualityIssues,
       normalizedTenantKey,
-      'issue_type,severity,status,source_file,owner',
+      "issue_type,severity,status,source_file,owner",
     );
     const evidenceRows = await fetchTenantRows<{ evidence_usable: boolean }>(
       TABLES.evidence,
       normalizedTenantKey,
-      'evidence_usable',
+      "evidence_usable",
     );
     const insightRows = await fetchTenantRows<EnterpriseContextInsightRow>(
       'context_insights',
@@ -198,7 +220,7 @@ export async function getEnterpriseContextOverviewForTenant(
 export function summarizeEnterpriseContextRows(input: {
   tenantKey: string;
   tenantName: string;
-  counts: EnterpriseContextOverview['counts'];
+  counts: EnterpriseContextOverview["counts"];
   records: EnterpriseContextRecordRow[];
   sources: EnterpriseContextSourceRow[];
   qualityRows: EnterpriseContextQualityRow[];
@@ -208,10 +230,21 @@ export function summarizeEnterpriseContextRows(input: {
 }): EnterpriseContextOverview {
   const recordTypeCounts = countBy(input.records, (row) => row.record_type);
   const freshnessCounts = countBy(input.records, (row) => row.freshness_status);
-  const qualitySummary = countBy(input.qualityRows, (row) => `${row.severity}:${row.status}:${row.issue_type}`);
-  const sourceSystems = [...new Set(input.sources.map((row) => row.source_system))].sort();
-  const evidenceUsableCount = input.evidenceRows.filter((row) => row.evidence_usable).length;
-  const confidenceAverage = average(input.records.map((row) => row.confidence ?? 0).filter((value) => value > 0));
+  const qualitySummary = countBy(
+    input.qualityRows,
+    (row) => `${row.severity}:${row.status}:${row.issue_type}`,
+  );
+  const sourceSystems = [
+    ...new Set(input.sources.map((row) => row.source_system)),
+  ].sort();
+  const evidenceUsableCount = input.evidenceRows.filter(
+    (row) => row.evidence_usable,
+  ).length;
+  const confidenceAverage = average(
+    input.records
+      .map((row) => row.confidence ?? 0)
+      .filter((value) => value > 0),
+  );
 
   const recordsByType = new Map<string, EnterpriseContextRecordRow[]>();
   for (const row of input.records) {
@@ -264,76 +297,111 @@ export function summarizeEnterpriseContextRows(input: {
       // healthcare-specific term that surfaced on Apex Retail and First
       // Capital Enterprise Context cards. The body is industry-neutral
       // CMDB/ITSM narrative; rename the card itself to match.
-      key: 'platform-and-service-reliability',
-      title: 'Platform and service reliability',
+      key: "platform-and-service-reliability",
+      title: "Platform and service reliability",
       whatWeKnow: `${applications.length} systems/services loaded; ${tierOneApps} are Tier 1. ServiceNow contributes ${incidents.length} incidents, ${problems.length} problems, and ${changes.length} changes.`,
-      whyItMatters: 'This turns CMDB and ITSM data into a practical dependency map before approving AI, sourcing, or platform work.',
-      owner: topOwner([...applications, ...incidents, ...problems]) ?? 'CMDB Stewardship',
+      whyItMatters:
+        "This turns CMDB and ITSM data into a practical dependency map before approving AI, sourcing, or platform work.",
+      owner:
+        topOwner([...applications, ...incidents, ...problems]) ??
+        "CMDB Stewardship",
       freshness: freshnessLabel(freshnessCounts),
       confidence: confidenceLabel(confidenceAverage),
       evidenceCount: input.counts.evidence,
       sourceSystems: systemsFor([...applications, ...incidents, ...problems]),
-      actions: ['Ask Sentinel', 'Create Source event', 'Link to Move', 'Add to Tower watchlist'],
+      actions: [
+        "Ask Sentinel",
+        "Create Source event",
+        "Link to Move",
+        "Add to Tower watchlist",
+      ],
     },
     {
-      key: 'incident-problem-pressure',
-      title: 'Incident and problem pressure',
+      key: "incident-problem-pressure",
+      title: "Incident and problem pressure",
       whatWeKnow: `${slaBreaches} incidents breached SLA. ${problems.length} problem records are available to separate noisy symptoms from durable blockers.`,
-      whyItMatters: 'Operational pain can now shape sourcing scope and phase-gate evidence instead of arriving as anecdote.',
-      owner: topOwner([...incidents, ...problems]) ?? 'IT Service Management',
+      whyItMatters:
+        "Operational pain can now shape sourcing scope and phase-gate evidence instead of arriving as anecdote.",
+      owner: topOwner([...incidents, ...problems]) ?? "IT Service Management",
       freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(average([...incidents, ...problems].map((row) => row.confidence ?? 0))),
+      confidence: confidenceLabel(
+        average([...incidents, ...problems].map((row) => row.confidence ?? 0)),
+      ),
       evidenceCount: incidents.length + problems.length,
       sourceSystems: systemsFor([...incidents, ...problems]),
-      actions: ['Ask Sentinel', 'Open blocker brief', 'Link to Move', 'Add to Tower watchlist'],
+      actions: [
+        "Ask Sentinel",
+        "Open blocker brief",
+        "Link to Move",
+        "Add to Tower watchlist",
+      ],
     },
     {
-      key: 'contract-renewal-exposure',
-      title: 'Contract renewal exposure',
+      key: "contract-renewal-exposure",
+      title: "Contract renewal exposure",
       whatWeKnow: `${contracts.length} vendor/contracts and ${renewals.length} renewals are loaded; ${highRenewals} renewals are high risk. Estimated renewal exposure is ${formatUsd(renewalExposure)}.`,
-      whyItMatters: 'Source can prioritize events from renewal exposure instead of waiting for a procurement escalation.',
-      owner: topOwner([...contracts, ...renewals]) ?? 'IT Sourcing',
+      whyItMatters:
+        "Source can prioritize events from renewal exposure instead of waiting for a procurement escalation.",
+      owner: topOwner([...contracts, ...renewals]) ?? "IT Sourcing",
       freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(average([...contracts, ...renewals].map((row) => row.confidence ?? 0))),
+      confidence: confidenceLabel(
+        average([...contracts, ...renewals].map((row) => row.confidence ?? 0)),
+      ),
       evidenceCount: contracts.length + renewals.length,
       sourceSystems: systemsFor([...contracts, ...renewals]),
-      actions: ['Ask Sentinel', 'Create Source event', 'Generate brief', 'Add to Tower watchlist'],
+      actions: [
+        "Ask Sentinel",
+        "Create Source event",
+        "Generate brief",
+        "Add to Tower watchlist",
+      ],
     },
     {
-      key: 'spend-baseline-confidence',
-      title: 'Spend baseline confidence',
+      key: "spend-baseline-confidence",
+      title: "Spend baseline confidence",
       whatWeKnow: `${spendRows.length} spend-baseline rows are loaded across ${new Set(spendRows.map((row) => row.payload.category)).size} categories. Annual run-rate represented is ${formatUsd(annualSpend)}.`,
-      whyItMatters: 'Financial context gives CXOs a credible starting point for value capture, vendor leverage, and sourcing thresholds.',
-      owner: topOwner(spendRows) ?? 'Finance Operations',
+      whyItMatters:
+        "Financial context gives CXOs a credible starting point for value capture, vendor leverage, and sourcing thresholds.",
+      owner: topOwner(spendRows) ?? "Finance Operations",
       freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(average(spendRows.map((row) => row.confidence ?? 0))),
+      confidence: confidenceLabel(
+        average(spendRows.map((row) => row.confidence ?? 0)),
+      ),
       evidenceCount: spendRows.length,
       sourceSystems: systemsFor(spendRows),
-      actions: ['Ask Sentinel', 'Generate brief', 'Create Source event'],
+      actions: ["Ask Sentinel", "Generate brief", "Create Source event"],
     },
     {
-      key: 'policy-ai-guardrails',
-      title: 'Policy constraints for AI use',
+      key: "policy-ai-guardrails",
+      title: "Policy constraints for AI use",
       whatWeKnow: `${policies.length} policies/procedures and ${risks.length} risk/compliance findings are loaded. ${input.counts.qualityIssues} quality issues remain open.`,
-      whyItMatters: 'AI initiatives can be shaped around real governance constraints instead of generic policy warnings.',
-      owner: topOwner([...policies, ...risks]) ?? 'GRC',
+      whyItMatters:
+        "AI initiatives can be shaped around real governance constraints instead of generic policy warnings.",
+      owner: topOwner([...policies, ...risks]) ?? "GRC",
       freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(average([...policies, ...risks].map((row) => row.confidence ?? 0))),
+      confidence: confidenceLabel(
+        average([...policies, ...risks].map((row) => row.confidence ?? 0)),
+      ),
       evidenceCount: policies.length + risks.length,
       sourceSystems: systemsFor([...policies, ...risks]),
-      actions: ['Ask Sentinel', 'Generate brief', 'Link to Move'],
+      actions: ["Ask Sentinel", "Generate brief", "Link to Move"],
     },
     {
-      key: 'initiative-dependency-map',
-      title: 'Initiative dependency map',
+      key: "initiative-dependency-map",
+      title: "Initiative dependency map",
       whatWeKnow: `${initiatives.length} initiatives and ${dataDomains.length} data-domain stewardship records are loaded against ${input.counts.relationships} CI relationships.`,
-      whyItMatters: 'Moves and Tower can see collisions across systems, contracts, data domains, and owners before approvals proceed.',
-      owner: topOwner([...initiatives, ...dataDomains]) ?? 'Enterprise PMO',
+      whyItMatters:
+        "Moves and Tower can see collisions across systems, contracts, data domains, and owners before approvals proceed.",
+      owner: topOwner([...initiatives, ...dataDomains]) ?? "Enterprise PMO",
       freshness: freshnessLabel(freshnessCounts),
-      confidence: confidenceLabel(average([...initiatives, ...dataDomains].map((row) => row.confidence ?? 0))),
+      confidence: confidenceLabel(
+        average(
+          [...initiatives, ...dataDomains].map((row) => row.confidence ?? 0),
+        ),
+      ),
       evidenceCount: initiatives.length + dataDomains.length,
       sourceSystems: systemsFor([...initiatives, ...dataDomains]),
-      actions: ['Ask Sentinel', 'Link to Move', 'Add to Tower watchlist'],
+      actions: ["Ask Sentinel", "Link to Move", "Add to Tower watchlist"],
     },
   ];
 
@@ -349,7 +417,7 @@ export function summarizeEnterpriseContextRows(input: {
       `Sentinel rule: lead with the Derived Enterprise Read before internal substrate counts; use raw context counts only as supporting proof.`,
     ] : []),
     `${input.tenantName} Enterprise Context: ${input.counts.records} records, ${input.counts.facts} facts, ${input.counts.relationships} CI relationships, and ${input.counts.evidence} evidence rows are loaded from internal context sources.`,
-    `Enterprise Context domains include org and decision rights (${recordTypeCounts.org_decision_rights ?? 0}), facilities/business units (${recordTypeCounts.facilities_business_units ?? 0}), systems/services (${recordTypeCounts.cmdb_applications_services ?? 0}), vendors/contracts (${recordTypeCounts.vendors_contract_inventory ?? 0}), renewals (${recordTypeCounts.renewal_calendar ?? 0}), spend baseline (${recordTypeCounts.spend_baseline ?? 0}), incidents (${recordTypeCounts.incidents ?? 0}), problems (${recordTypeCounts.problems ?? 0}), changes (${recordTypeCounts.changes ?? 0}), policies/procedures (${recordTypeCounts.policies_procedures ?? 0}), initiatives (${recordTypeCounts.initiative_portfolio ?? 0}), data domains (${recordTypeCounts.data_domains_stewardship ?? 0}), and risks/compliance (${recordTypeCounts.risk_compliance_register ?? 0}).`,
+    `Enterprise Context domains include org and decision rights (${orgRows.length}), facilities/business units (${businessUnitRows.length}), systems/services (${applications.length}), vendors/contracts (${contracts.length}), renewals (${renewals.length}), spend baseline (${spendRows.length}), KPIs/metrics (${kpis.length}), incidents (${incidents.length}), problems (${problems.length}), changes (${changes.length}), policies/procedures (${policies.length}), initiatives (${initiatives.length}), data domains/capabilities (${dataDomains.length}), and risks/compliance (${risks.length}).`,
     `Evidence posture: ${evidenceUsableCount}/${input.counts.evidence} evidence rows are currently usable; ${input.counts.qualityIssues} quality issues and ${input.counts.stewardshipTasks} stewardship tasks remain open.`,
     `Operational posture: ${incidents.length} incidents, ${problems.length} problems, ${changes.length} changes, and ${slaBreaches} SLA-breaching incidents are available for current-state guidance.`,
     `Commercial posture: ${contracts.length} contracts, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
@@ -468,15 +536,100 @@ async function countEnterpriseContextRows(tenantKey: string): Promise<Enterprise
   for (const [key, table] of Object.entries(TABLES)) {
     counts[key as keyof EnterpriseContextOverview['counts']] = await countRows(table, tenantKey);
   }
-  return counts as EnterpriseContextOverview['counts'];
+
+  const rows = input.contracts
+    .map((contract, index): EnterpriseContextVendorSpendRow | null => {
+      const vendor = vendorNameFor(contract);
+      if (!vendor) return null;
+      const renewal = renewalByVendor.get(normalizeVendorKey(vendor) ?? "");
+      const spend = firstNumeric(
+        contract.payload.annual_spend_usd,
+        contract.payload.annualized_spend_usd,
+        contract.payload.ttm_spend_usd,
+        contract.payload.run_rate_usd,
+        contract.payload.contract_value_usd,
+        contract.payload.annual_value_usd,
+        contract.payload.estimated_annual_value_usd,
+        contract.payload.estimated_value_usd,
+        renewal?.payload.estimated_value_usd,
+        renewal?.payload.contract_value_usd,
+        renewal?.payload.annual_value_usd,
+      );
+      const health = healthFor(contract, renewal);
+      return {
+        vendor,
+        category: categoryFor(contract),
+        subcategory: subcategoryFor(contract),
+        spendUsdM: spend / 1_000_000,
+        spendLabel: spend > 0 ? formatUsd(spend) : "Not sized",
+        tier: tierFor(contract, index),
+        health,
+        renewsInMonths: renewalMonthsFor(contract, renewal),
+        takeaway: takeawayFor(contract, renewal, health),
+      };
+    })
+    .filter((row): row is EnterpriseContextVendorSpendRow => Boolean(row));
+
+  if (rows.length > 0) {
+    return rows.sort((a, b) => b.spendUsdM - a.spendUsdM).slice(0, 25);
+  }
+
+  return input.spendRows
+    .map((row, index): EnterpriseContextVendorSpendRow | null => {
+      const vendor = stringValue(
+        row.payload.vendor_name,
+        row.payload.vendor,
+        row.payload.supplier_name,
+        row.title,
+      );
+      if (!vendor) return null;
+      const spend = firstNumeric(
+        row.payload.run_rate_usd,
+        row.payload.annual_spend_usd,
+        row.payload.annualized_spend_usd,
+        row.payload.ttm_spend_usd,
+      );
+      return {
+        vendor,
+        category: categoryFor(row),
+        subcategory: subcategoryFor(row),
+        spendUsdM: spend / 1_000_000,
+        spendLabel: spend > 0 ? formatUsd(spend) : "Not sized",
+        tier: index === 0 ? "incumbent" : "challenger",
+        health: "watch",
+        renewsInMonths: null,
+        takeaway: `Spend baseline loaded from ${row.source_system}; confirm contract and renewal detail before acting.`,
+      };
+    })
+    .filter((row): row is EnterpriseContextVendorSpendRow => Boolean(row))
+    .sort((a, b) => b.spendUsdM - a.spendUsdM)
+    .slice(0, 25);
+}
+
+async function countEnterpriseContextRows(
+  tenantKey: string,
+): Promise<EnterpriseContextOverview["counts"]> {
+  const counts: Partial<EnterpriseContextOverview["counts"]> = {};
+  for (const [key, table] of Object.entries(TABLES)) {
+    counts[key as keyof EnterpriseContextOverview["counts"]] = await countRows(
+      table,
+      tenantKey,
+    );
+  }
+
+  if ((counts.records ?? 0) > 0 && (counts.evidence ?? 0) === 0) {
+    counts.evidence = await countRows("enterprise_context_chunks", tenantKey);
+  }
+
+  return counts as EnterpriseContextOverview["counts"];
 }
 
 async function countRows(table: string, tenantKey: string): Promise<number> {
   const sb = getAzureReadFluentClient();
   const { count, error } = await sb
     .from(table)
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_key', tenantKey);
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_key", tenantKey);
   if (error) throw new Error(`${table} count failed: ${error.message}`);
   return count ?? 0;
 }
@@ -493,7 +646,7 @@ async function fetchTenantRows<T extends object>(
     const { data, error } = await sb
       .from(table)
       .select(columns)
-      .eq('tenant_key', tenantKey)
+      .eq("tenant_key", tenantKey)
       .range(from, from + pageSize - 1);
     if (error) throw new Error(`${table} page fetch failed: ${error.message}`);
     const page = (data ?? []) as unknown as T[];
@@ -503,25 +656,30 @@ async function fetchTenantRows<T extends object>(
   return rows;
 }
 
-function countBy<T>(rows: T[], keyFn: (row: T) => string | null | undefined): Record<string, number> {
+function countBy<T>(
+  rows: T[],
+  keyFn: (row: T) => string | null | undefined,
+): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const row of rows) {
-    const key = keyFn(row) || 'unknown';
+    const key = keyFn(row) || "unknown";
     counts[key] = (counts[key] ?? 0) + 1;
   }
   return counts;
 }
 
 function average(values: number[]): number {
-  const filtered = values.filter((value) => Number.isFinite(value) && value > 0);
+  const filtered = values.filter(
+    (value) => Number.isFinite(value) && value > 0,
+  );
   if (filtered.length === 0) return 0;
   return filtered.reduce((sum, value) => sum + value, 0) / filtered.length;
 }
 
 function numeric(value: unknown): number {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-  if (typeof value !== 'string') return 0;
-  const parsed = Number(value.replace(/[^0-9.-]/g, ''));
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string") return 0;
+  const parsed = Number(value.replace(/[^0-9.-]/g, ""));
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
@@ -661,22 +819,41 @@ function takeawayFor(
 function topOwner(rows: EnterpriseContextRecordRow[]): string | null {
   const counts = countBy(rows, (row) => row.owner);
   const [owner] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0] ?? [];
-  return owner && owner !== 'unknown' ? owner : null;
+  return owner && owner !== "unknown" ? owner : null;
 }
 
 function systemsFor(rows: EnterpriseContextRecordRow[]): string[] {
-  return [...new Set(rows.map((row) => row.source_system).filter(Boolean))].sort().slice(0, 4);
+  return [...new Set(rows.map((row) => row.source_system).filter(Boolean))]
+    .sort()
+    .slice(0, 4);
+}
+
+function sourceDocLabel(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  return trimmed || "unknown-source";
+}
+
+function recordTypeFromSourceDoc(value: string | null | undefined): string {
+  const sourceDoc = sourceDocLabel(value).split("/").pop() ?? "unknown-source";
+  return (
+    sourceDoc
+      .replace(/\.[^.]+$/, "")
+      .replace(/^\d+[-_]+/, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toLowerCase() || "unknown"
+  );
 }
 
 function freshnessLabel(counts: Record<string, number>): string {
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-  if (total === 0) return 'unknown';
+  if (total === 0) return "unknown";
   const fresh = counts.fresh ?? 0;
   return `${fresh}/${total} fresh`;
 }
 
 function confidenceLabel(value: number): string {
-  if (!value) return 'unknown';
+  if (!value) return "unknown";
   return `${Math.round(value * 100)}%`;
 }
 

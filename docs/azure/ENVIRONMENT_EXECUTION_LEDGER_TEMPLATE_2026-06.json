@@ -1,0 +1,199 @@
+{
+  "ledgerVersion": "2026-06",
+  "purpose": "Planned execution ledger template for AbarVa product subscriptions and repeatable client private data-plane subscriptions. This file is non-mutating and intentionally contains no real subscription ids.",
+  "statusModel": [
+    "planned",
+    "approved",
+    "created",
+    "baseline_applied",
+    "verified",
+    "abandoned"
+  ],
+  "hardApprovalGates": [
+    "subscription_creation",
+    "management_group_assignment",
+    "broad_rbac_assignment",
+    "budget_creation_or_increase",
+    "product_prod_deploy",
+    "client_prod_data_action",
+    "dns_change",
+    "destructive_operation"
+  ],
+  "entries": [
+    {
+      "environmentKey": "product-dev",
+      "subscriptionDisplayName": "AbarVa Product Dev",
+      "subscriptionId": null,
+      "status": "planned",
+      "approval": {
+        "required": true,
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvalEvidence": null
+      },
+      "scope": {
+        "subscriptionRole": "product-development",
+        "managementGroup": null,
+        "regions": ["eastus", "eastus2"],
+        "dataBoundary": "synthetic-fixture-engineering-test-only",
+        "creationOrder": 1
+      },
+      "controls": {
+        "azurePolicyAssigned": false,
+        "budgetCreated": false,
+        "tagsApplied": false,
+        "diagnosticsConfigured": false,
+        "privateNetworkingConfigured": false,
+        "managedIdentityConfigured": false
+      },
+      "evidence": {
+        "resourceParityReport": null,
+        "policyComplianceReport": null,
+        "budgetReport": null,
+        "connectivitySmokeReport": null,
+        "rollbackPlan": null
+      },
+      "exceptions": []
+    },
+    {
+      "environmentKey": "product-preview",
+      "subscriptionDisplayName": "AbarVa Product Preview",
+      "subscriptionId": null,
+      "status": "planned",
+      "approval": {
+        "required": true,
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvalEvidence": null
+      },
+      "scope": {
+        "subscriptionRole": "product-preprod",
+        "managementGroup": null,
+        "regions": ["eastus", "eastus2"],
+        "dataBoundary": "synthetic-pilot-reference-client-approved-redacted-only",
+        "creationOrder": 2
+      },
+      "controls": {
+        "azurePolicyAssigned": false,
+        "budgetCreated": false,
+        "tagsApplied": false,
+        "diagnosticsConfigured": false,
+        "privateNetworkingConfigured": false,
+        "managedIdentityConfigured": false
+      },
+      "evidence": {
+        "resourceParityReport": null,
+        "policyComplianceReport": null,
+        "budgetReport": null,
+        "connectivitySmokeReport": null,
+        "rollbackPlan": null
+      },
+      "exceptions": []
+    },
+    {
+      "environmentKey": "product-prod",
+      "subscriptionDisplayName": "AbarVa Product Prod",
+      "subscriptionId": null,
+      "status": "planned",
+      "approval": {
+        "required": true,
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvalEvidence": null
+      },
+      "scope": {
+        "subscriptionRole": "product-production",
+        "managementGroup": null,
+        "regions": ["eastus", "eastus2"],
+        "dataBoundary": "production-control-plane-metadata-only-no-raw-client-private-documents",
+        "creationOrder": 3
+      },
+      "controls": {
+        "azurePolicyAssigned": false,
+        "budgetCreated": false,
+        "tagsApplied": false,
+        "diagnosticsConfigured": false,
+        "privateNetworkingConfigured": false,
+        "managedIdentityConfigured": false
+      },
+      "evidence": {
+        "resourceParityReport": null,
+        "policyComplianceReport": null,
+        "budgetReport": null,
+        "connectivitySmokeReport": null,
+        "rollbackPlan": null
+      },
+      "exceptions": []
+    },
+    {
+      "environmentKey": "client-preprod",
+      "subscriptionDisplayName": "Client Preprod",
+      "subscriptionId": null,
+      "status": "planned",
+      "approval": {
+        "required": true,
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvalEvidence": null
+      },
+      "scope": {
+        "subscriptionRole": "client-preprod",
+        "managementGroup": null,
+        "regions": ["eastus", "eastus2"],
+        "dataBoundary": "client-approved-test-redacted-client-synthetic-reference-only-no-phi-pii",
+        "creationOrder": 4
+      },
+      "controls": {
+        "azurePolicyAssigned": false,
+        "budgetCreated": false,
+        "tagsApplied": false,
+        "diagnosticsConfigured": false,
+        "privateNetworkingConfigured": false,
+        "managedIdentityConfigured": false
+      },
+      "evidence": {
+        "resourceParityReport": null,
+        "policyComplianceReport": null,
+        "budgetReport": null,
+        "connectivitySmokeReport": null,
+        "rollbackPlan": null
+      },
+      "exceptions": []
+    },
+    {
+      "environmentKey": "client-prod",
+      "subscriptionDisplayName": "Client Prod",
+      "subscriptionId": null,
+      "status": "planned",
+      "approval": {
+        "required": true,
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvalEvidence": null
+      },
+      "scope": {
+        "subscriptionRole": "client-prod",
+        "managementGroup": null,
+        "regions": ["eastus", "eastus2"],
+        "dataBoundary": "client-approved-production-only-no-phi-pii",
+        "creationOrder": 5
+      },
+      "controls": {
+        "azurePolicyAssigned": false,
+        "budgetCreated": false,
+        "tagsApplied": false,
+        "diagnosticsConfigured": false,
+        "privateNetworkingConfigured": false,
+        "managedIdentityConfigured": false
+      },
+      "evidence": {
+        "resourceParityReport": null,
+        "policyComplianceReport": null,
+        "budgetReport": null,
+        "connectivitySmokeReport": null,
+        "rollbackPlan": null
+      },
+      "exceptions": []
+    }
+  ]
+}

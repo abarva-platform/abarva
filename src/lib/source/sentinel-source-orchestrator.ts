@@ -352,6 +352,7 @@ export function buildSentinelSourceBriefing(
     blockers: multi.blockers,
     defers: multi.defers,
     recommendedNextSlice: multi.recommendedNextSlice,
+    functionGrounding: input.contextBundle.functionGrounding,
   };
 }
 
@@ -390,5 +391,6 @@ export function adaptSentinelBriefingToMultiAgent(
     blockers: brief.blockers,
     defers: brief.defers,
     recommendedNextSlice: brief.recommendedNextSlice,
+    functionGrounding: brief.functionGrounding,
   };
 }

@@ -33,16 +33,28 @@ param plainRuntimeEnv = [
     value: readEnvironmentVariable('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', '')
   }
   {
-    name: 'NEXT_PUBLIC_SUPABASE_URL'
-    value: readEnvironmentVariable('NEXT_PUBLIC_SUPABASE_URL', '')
+    name: 'AZURE_SEARCH_SERVICE_NAME'
+    value: 'srch-abarva-context-lab-eastus'
   }
   {
-    name: 'NEXT_PUBLIC_SUPABASE_ANON_KEY'
-    value: readEnvironmentVariable('NEXT_PUBLIC_SUPABASE_ANON_KEY', '')
+    name: 'ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS'
+    value: 'apex-retail,meridian-health,first-capital,lakeshore-holdings,skyharbor-air,northstar-clinical'
   }
   {
-    name: 'PINECONE_INDEX'
-    value: readEnvironmentVariable('PINECONE_INDEX', 'nexus-knowledge')
+    name: 'AZURE_CLIENT_ID'
+    value: '3b6e0c9d-2265-499f-af46-965e0ad78b95'
+  }
+  {
+    name: 'ABARVA_DATA_PLANE'
+    value: 'azure-postgres'
+  }
+  {
+    name: 'DATA_PLANE_OBJECT_STORE_ACCOUNT'
+    value: 'stabarvaprivatedplab001'
+  }
+  {
+    name: 'DATA_PLANE_OBJECT_STORE_CONTAINER'
+    value: 'context-drops'
   }
   {
     name: 'AZURE_CONNECTIVITY_SERVICE_BUS_QUEUE_NAME'
@@ -61,11 +73,6 @@ param keyVaultSecretRefs = [
     keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/clerk-secret-key'
   }
   {
-    envName: 'SUPABASE_SERVICE_ROLE_KEY'
-    containerAppSecretName: 'supabase-service-role-key'
-    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/supabase-service-role-key'
-  }
-  {
     envName: 'DATABASE_URL'
     containerAppSecretName: 'azure-postgres-control-database-url'
     keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/azure-postgres-control-database-url'
@@ -79,26 +86,6 @@ param keyVaultSecretRefs = [
     envName: 'OPENAI_API_KEY'
     containerAppSecretName: 'openai-api-key'
     keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/openai-api-key'
-  }
-  {
-    envName: 'PINECONE_API_KEY'
-    containerAppSecretName: 'pinecone-api-key'
-    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/pinecone-api-key'
-  }
-  {
-    envName: 'NEO4J_URI'
-    containerAppSecretName: 'neo4j-uri'
-    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/neo4j-uri'
-  }
-  {
-    envName: 'NEO4J_USERNAME'
-    containerAppSecretName: 'neo4j-username'
-    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/neo4j-username'
-  }
-  {
-    envName: 'NEO4J_PASSWORD'
-    containerAppSecretName: 'neo4j-password'
-    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/neo4j-password'
   }
   {
     envName: 'DEMO_LOGIN_PASSWORD'

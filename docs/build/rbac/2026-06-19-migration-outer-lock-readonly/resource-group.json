@@ -1,0 +1,18 @@
+{
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus",
+  "location": "eastus",
+  "managedBy": null,
+  "name": "rg-abarva-controlplane-lab-eastus",
+  "properties": {
+    "provisioningState": "Succeeded"
+  },
+  "tags": {
+    "app": "AbarVa",
+    "costControl": "founder-review",
+    "dataClassification": "no-client-data",
+    "environment": "lab",
+    "owner": "Anand",
+    "purpose": "enterprise-saas-scale-test"
+  },
+  "type": "Microsoft.Resources/resourceGroups"
+}

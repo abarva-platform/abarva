@@ -59,10 +59,10 @@ export const ATRIUM_MODULES: readonly AtriumModuleContract[] = [
   {
     id: 'setup',
     route: '/admin',
-    productNavLabel: 'Setup',
-    canonicalName: 'Setup',
+    productNavLabel: 'Admin',
+    canonicalName: 'Admin',
     agent: 'Steward',
-    canvasCharacter: 'Foundation status; tenant metric ingestion; readiness.',
+    canvasCharacter: 'Admin foundation status; tenant metric ingestion; readiness.',
     defaultSubmenuKey: 'overview',
     submenus: [
       { key: 'overview', label: 'Overview', purpose: 'Foundation health summary.' },

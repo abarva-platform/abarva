@@ -106,8 +106,15 @@ async function resolveClientRow(
       });
       if (data) return data;
     }
-  } catch {
-    return null;
+  } catch (error) {
+    // Fix B: any error reaching here is a real DB/lookup failure. azureRead.maybeSingle
+    // returns null (not an error) for a genuine zero-row result, so this catch only fires
+    // on a query/connection error. Previously we swallowed all non-infra DB errors to null,
+    // which surfaced as a confusing `no_client` 403 on a transient DB blip. Re-throw ALL DB
+    // errors (infra and otherwise) so the caller can distinguish a retryable lookup failure
+    // from a user who genuinely has no client. The caller (getActiveClientRow) classifies
+    // infra vs other; requireTenancy maps any DB error to a retryable 503.
+    throw error;
   }
   return null;
 }

@@ -5,15 +5,17 @@
 // regulated identifiers are stopped before storage, vector indexing, graph
 // extraction, or evidence ingestion.
 
-export type UploadDataClassification =
-  | 'public'
-  | 'internal'
-  | 'confidential_business'
-  | 'restricted_financial'
-  | 'regulated_phi_pii_suspected';
+import { scanPreIngestSensitiveText } from "./preingest-sensitive-scanner";
 
-export type UploadProtectionDecision = 'allow' | 'quarantine';
-export type UploadProtectionSeverity = 'low' | 'medium' | 'high';
+export type UploadDataClassification =
+  | "public"
+  | "internal"
+  | "confidential_business"
+  | "restricted_financial"
+  | "regulated_phi_pii_suspected";
+
+export type UploadProtectionDecision = "allow" | "quarantine";
+export type UploadProtectionSeverity = "low" | "medium" | "high";
 
 export interface UploadProtectionRuleMatch {
   ruleId: string;
@@ -42,150 +44,168 @@ type GuardInput = {
   declaredClassification?: FormDataEntryValue | string | null;
 };
 
-const DEFAULT_CLASSIFICATION: UploadDataClassification = 'confidential_business';
+const DEFAULT_CLASSIFICATION: UploadDataClassification =
+  "confidential_business";
 const SAMPLE_BYTES = 1024 * 1024;
+const PDF_TEXT_SAMPLE_BYTES = 2 * 1024 * 1024;
+
+const PLAIN_TEXT_SCAN_MIME_TYPES = new Set([
+  "text/plain",
+  "text/markdown",
+  "text/csv",
+  "application/json",
+]);
+
+const PDF_MIME_TYPE = "application/pdf";
 
 const CLASSIFICATION_ALIASES: Record<string, UploadDataClassification> = {
-  public: 'public',
-  internal: 'internal',
-  confidential: 'confidential_business',
-  confidential_business: 'confidential_business',
-  confidentialbusiness: 'confidential_business',
-  restricted: 'restricted_financial',
-  restricted_financial: 'restricted_financial',
-  restrictedfinancial: 'restricted_financial',
-  phi: 'regulated_phi_pii_suspected',
-  pii: 'regulated_phi_pii_suspected',
-  phi_pii: 'regulated_phi_pii_suspected',
-  regulated: 'regulated_phi_pii_suspected',
-  regulated_phi_pii_suspected: 'regulated_phi_pii_suspected',
-  regulatedphipiisuspected: 'regulated_phi_pii_suspected',
+  public: "public",
+  internal: "internal",
+  confidential: "confidential_business",
+  confidential_business: "confidential_business",
+  confidentialbusiness: "confidential_business",
+  restricted: "restricted_financial",
+  restricted_financial: "restricted_financial",
+  restrictedfinancial: "restricted_financial",
+  phi: "regulated_phi_pii_suspected",
+  pii: "regulated_phi_pii_suspected",
+  phi_pii: "regulated_phi_pii_suspected",
+  regulated: "regulated_phi_pii_suspected",
+  regulated_phi_pii_suspected: "regulated_phi_pii_suspected",
+  regulatedphipiisuspected: "regulated_phi_pii_suspected",
 };
 
-function normalizeClassification(raw: FormDataEntryValue | string | null | undefined): UploadDataClassification {
+function normalizeClassification(
+  raw: FormDataEntryValue | string | null | undefined,
+): UploadDataClassification {
   if (raw === null || raw === undefined) return DEFAULT_CLASSIFICATION;
   const value = String(raw).trim();
   if (!value) return DEFAULT_CLASSIFICATION;
   const normalized = value
     .toLowerCase()
-    .replace(/[\s-]+/g, '_')
-    .replace(/[^a-z0-9_]/g, '');
+    .replace(/[\s-]+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
   return CLASSIFICATION_ALIASES[normalized] ?? DEFAULT_CLASSIFICATION;
 }
 
-function byteSample(bytes: GuardInput['bytes']): Uint8Array {
-  const normalized = bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : new Uint8Array(bytes);
+function byteSample(bytes: GuardInput["bytes"]): Uint8Array {
+  const normalized =
+    bytes instanceof ArrayBuffer
+      ? new Uint8Array(bytes)
+      : new Uint8Array(bytes);
   return normalized.slice(0, SAMPLE_BYTES);
 }
 
+function byteSampleWithLimit(
+  bytes: GuardInput["bytes"],
+  limit: number,
+): Uint8Array {
+  const normalized =
+    bytes instanceof ArrayBuffer
+      ? new Uint8Array(bytes)
+      : new Uint8Array(bytes);
+  return normalized.slice(0, limit);
+}
+
+function normalizeMimeType(mimeType: string | null | undefined): string {
+  return (mimeType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+}
+
+function decodeBytes(bytes: Uint8Array): string {
+  return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+}
+
+function unescapePdfString(value: string): string {
+  return value
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\\(/g, "(")
+    .replace(/\\\)/g, ")")
+    .replace(/\\\\/g, "\\");
+}
+
+function extractLikelyPdfText(input: GuardInput): string {
+  const sample = byteSampleWithLimit(input.bytes, PDF_TEXT_SAMPLE_BYTES);
+  const decoded = decodeBytes(sample);
+  if (!decoded.includes("%PDF")) return "";
+
+  const matches = [...decoded.matchAll(/\(([^()\r\n]{3,240})\)\s*(?:Tj|'|"|TJ)?/g)]
+    .map((match) => unescapePdfString(match[1] ?? "").trim())
+    .filter((value) => /[A-Za-z0-9]/.test(value));
+
+  return matches.join("\n").slice(0, SAMPLE_BYTES);
+}
+
 function decodeSample(input: GuardInput): string {
-  const sample = byteSample(input.bytes);
-  const decoded = new TextDecoder('utf-8', { fatal: false }).decode(sample);
-  return `${input.filename}\n${input.mimeType ?? ''}\n${decoded}`.slice(0, SAMPLE_BYTES);
-}
-
-function countPattern(text: string, pattern: RegExp): number {
-  return [...text.matchAll(pattern)].length;
-}
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, '');
-}
-
-function luhnPasses(raw: string): boolean {
-  const digits = digitsOnly(raw);
-  if (digits.length < 13 || digits.length > 19) return false;
-  let sum = 0;
-  let doubleDigit = false;
-  for (let i = digits.length - 1; i >= 0; i -= 1) {
-    let n = Number(digits[i]);
-    if (Number.isNaN(n)) return false;
-    if (doubleDigit) {
-      n *= 2;
-      if (n > 9) n -= 9;
-    }
-    sum += n;
-    doubleDigit = !doubleDigit;
+  const mimeType = normalizeMimeType(input.mimeType);
+  if (PLAIN_TEXT_SCAN_MIME_TYPES.has(mimeType)) {
+    return `${input.filename}\n${input.mimeType ?? ""}\n${decodeBytes(byteSample(input.bytes))}`.slice(
+      0,
+      SAMPLE_BYTES,
+    );
   }
-  return sum % 10 === 0;
+
+  if (mimeType === PDF_MIME_TYPE) {
+    const extractedPdfText = extractLikelyPdfText(input);
+    return `${input.filename}\n${input.mimeType ?? ""}\n${extractedPdfText}`.slice(
+      0,
+      SAMPLE_BYTES,
+    );
+  }
+
+  // Known Office, image, audio, and video uploads are binary or archive-like.
+  // Regex-scanning their raw bytes creates false positives because compressed
+  // payloads can accidentally resemble phone/card/account patterns. Deep
+  // document inspection belongs to the parser/evidence pipeline; this
+  // synchronous guard scans declared classification plus safe text surfaces.
+  return `${input.filename}\n${input.mimeType ?? ""}`.slice(0, SAMPLE_BYTES);
 }
 
-function countLikelyCardNumbers(text: string): number {
-  const candidates = text.match(/\b(?:\d[ -]*?){13,19}\b/g) ?? [];
-  return candidates.filter(luhnPasses).length;
-}
-
-function addMatch(
-  matches: UploadProtectionRuleMatch[],
-  ruleId: string,
-  label: string,
-  severity: UploadProtectionSeverity,
-  count: number,
-) {
-  if (count <= 0) return;
-  matches.push({ ruleId, label, severity, count });
-}
-
-export function evaluateSensitiveUpload(input: GuardInput): UploadProtectionResult {
-  const declaredClassification = normalizeClassification(input.declaredClassification);
+export function evaluateSensitiveUpload(
+  input: GuardInput,
+): UploadProtectionResult {
+  const declaredClassification = normalizeClassification(
+    input.declaredClassification,
+  );
   const text = decodeSample(input);
-  const matches: UploadProtectionRuleMatch[] = [];
-
-  addMatch(matches, 'pii.ssn', 'US Social Security number pattern', 'high', countPattern(text, /\b\d{3}-\d{2}-\d{4}\b/g));
-  addMatch(
-    matches,
-    'phi.mrn',
-    'Medical record or patient identifier label',
-    'high',
-    countPattern(text, /\b(?:MRN|medical record number|patient(?:\s+id)?|member(?:\s+id)?|subscriber(?:\s+id)?)\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{5,}\b/gi),
-  );
-  addMatch(
-    matches,
-    'phi.dob',
-    'Date-of-birth label with date value',
-    'high',
-    countPattern(text, /\b(?:DOB|date of birth)\s*[:#-]?\s*(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2})\b/gi),
-  );
-  addMatch(
-    matches,
-    'financial.routing_or_account',
-    'Bank routing/account number label',
-    'high',
-    countPattern(text, /\b(?:routing number|account number|acct(?:\.|ount)?\s+#?)\s*[:#-]?\s*\d{6,17}\b/gi),
-  );
-  addMatch(matches, 'financial.card', 'Likely payment card number', 'high', countLikelyCardNumbers(text));
-  addMatch(matches, 'pii.email', 'Email address', 'medium', countPattern(text, /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi));
-  addMatch(matches, 'pii.phone', 'US phone number', 'medium', countPattern(text, /\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b/g));
-
-  const highRisk = matches.some((match) => match.severity === 'high');
-  const suspectedPhi = matches.some((match) => match.ruleId.startsWith('phi.'));
-  const suspectedFinancialIdentifiers = matches.some((match) => match.ruleId.startsWith('financial.'));
-  const suspectedPii = matches.some((match) => match.ruleId.startsWith('pii.')) || suspectedPhi || suspectedFinancialIdentifiers;
+  const scan = scanPreIngestSensitiveText(text);
+  const matches: UploadProtectionRuleMatch[] = scan.findings.map((finding) => ({
+    ruleId: finding.ruleId,
+    label: finding.label,
+    severity: finding.severity,
+    count: finding.count,
+  }));
   const decision =
-    declaredClassification === 'regulated_phi_pii_suspected' || highRisk ? 'quarantine' : 'allow';
+    declaredClassification === "regulated_phi_pii_suspected" ||
+    scan.requiresQuarantine
+      ? "quarantine"
+      : "allow";
 
   return {
     declaredClassification,
     decision,
-    storageAllowed: decision === 'allow',
-    indexingAllowed: decision === 'allow',
-    evidenceExtractionAllowed: decision === 'allow',
-    suspectedPhi,
-    suspectedPii,
-    suspectedFinancialIdentifiers,
+    storageAllowed: decision === "allow",
+    indexingAllowed: decision === "allow",
+    evidenceExtractionAllowed: decision === "allow",
+    suspectedPhi: scan.suspectedPhi,
+    suspectedPii: scan.suspectedPii,
+    suspectedFinancialIdentifiers: scan.suspectedFinancialIdentifiers,
     matchedRules: matches,
     message:
-      decision === 'allow'
-        ? 'Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant.'
-        : 'Upload quarantined before storage/indexing because regulated PHI/PII or high-risk identifiers were declared or detected. Remove direct identifiers or route through the private data-lane approval process.',
+      decision === "allow"
+        ? "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        : "Upload quarantined before storage/indexing because regulated PHI/PII or high-risk identifiers were declared or detected. Remove direct identifiers or route through the private data-lane approval process.",
   };
 }
 
-export function sensitiveUploadRejectedResponse(result: UploadProtectionResult): Response {
+export function sensitiveUploadRejectedResponse(
+  result: UploadProtectionResult,
+): Response {
   return Response.json(
     {
       ok: false,
-      error: 'sensitive_data_quarantined',
+      error: "sensitive_data_quarantined",
       detail: result.message,
       dataProtection: result,
     },

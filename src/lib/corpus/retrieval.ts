@@ -91,6 +91,15 @@ function buildAzureFilter(opts: CorpusSearchOptions): string | undefined {
   const filters: string[] = [`confidence ge ${opts.minConfidence ?? 0}`, `depth_score ge ${opts.minDepthScore ?? 0}`];
   if (opts.category) filters.push(`category eq '${opts.category.replace(/'/g, "''")}'`);
   if (typeof opts.versionPin === 'number') filters.push(`version eq ${Math.trunc(opts.versionPin)}`);
+  const collectionFilter = (field: string, values: string[] | undefined): string | null => {
+    if (!values || values.length === 0) return null;
+    const escaped = values.map((value) => value.replace(/'/g, "''"));
+    return `${field}/any(item: ${escaped.map((value) => `item eq '${value}'`).join(' or ')})`;
+  };
+  const verticalFilter = collectionFilter('vertical_overlays', opts.verticalOverlays);
+  if (verticalFilter) filters.push(verticalFilter);
+  const regionFilter = collectionFilter('region_overlays', opts.regionOverlays);
+  if (regionFilter) filters.push(regionFilter);
   return filters.join(' and ');
 }
 
@@ -151,6 +160,61 @@ async function postgresSearch(query: string, opts: CorpusSearchOptions): Promise
   });
 }
 
+async function hydrateAzureOnlyHits(
+  azureHits: Array<{ slug?: string; version?: number; score: number }>,
+  postgresHits: CorpusSearchHit[],
+  opts: CorpusSearchOptions,
+): Promise<CorpusSearchHit[]> {
+  const existingSlugs = new Set(postgresHits.map((hit) => hit.slug));
+  const scoreBySlug = new Map<string, number>();
+  for (const hit of azureHits) {
+    if (!hit.slug || existingSlugs.has(hit.slug)) continue;
+    scoreBySlug.set(hit.slug, Math.max(scoreBySlug.get(hit.slug) ?? 0, hit.score));
+  }
+  const slugs = Array.from(scoreBySlug.keys());
+  if (slugs.length === 0) return [];
+
+  return withCorpusClient(async (client) => {
+    const args: unknown[] = [slugs];
+    const clauses = [`p.status = 'published'`, `p.slug = ANY($1::text[])`];
+    if (opts.category) {
+      args.push(opts.category);
+      clauses.push(`p.category = $${args.length}`);
+    }
+    if (typeof opts.minConfidence === 'number') {
+      args.push(opts.minConfidence);
+      clauses.push(`p.confidence >= $${args.length}`);
+    }
+    if (typeof opts.minDepthScore === 'number') {
+      args.push(opts.minDepthScore);
+      clauses.push(`p.depth_score >= $${args.length}`);
+    }
+    if (typeof opts.versionPin === 'number') {
+      args.push(opts.versionPin);
+      clauses.push(`p.version = $${args.length}`);
+    }
+    overlapFilterSql('p.vertical_overlays', opts.verticalOverlays, args, clauses);
+    overlapFilterSql('p.region_overlays', opts.regionOverlays, args, clauses);
+    const { rows } = await client.query<PatternSearchRow>(
+      `
+        SELECT
+          p.*,
+          c.markdown_body,
+          c.claims_jsonb,
+          c.evidence_jsonb,
+          c.counterarguments_jsonb,
+          c.synthesis_jsonb,
+          0 AS text_rank
+        FROM public.corpus_patterns p
+        JOIN public.corpus_pattern_content c ON c.pattern_id = p.id
+        WHERE ${clauses.join(' AND ')}
+      `,
+      args,
+    );
+    return rows.map((row) => mapRow(row, scoreBySlug.get(row.slug) ?? 0, 'azure'));
+  });
+}
+
 function reciprocalRankFusion(
   postgresHits: CorpusSearchHit[],
   azureSlugs: Array<{ slug?: string; version?: number; score: number }>,
@@ -199,6 +263,7 @@ export async function searchCorpus(query: string, opts: CorpusSearchOptions): Pr
         return await queryCorpusSearch({
           query: normalizedQuery,
           clientId: opts.clientId,
+          clientKey: opts.clientKey,
           includePrivate: opts.includePrivate,
           vector: embedding.embedding,
           filter: buildAzureFilter(opts),
@@ -209,6 +274,7 @@ export async function searchCorpus(query: string, opts: CorpusSearchOptions): Pr
           return await queryCorpusSearch({
             query: normalizedQuery,
             clientId: opts.clientId,
+            clientKey: opts.clientKey,
             includePrivate: opts.includePrivate,
             filter: buildAzureFilter(opts),
             top: opts.limit ?? 10,
@@ -220,7 +286,8 @@ export async function searchCorpus(query: string, opts: CorpusSearchOptions): Pr
     })(),
   ]);
 
-  const hits = reciprocalRankFusion(pgHits, azureHits).slice(0, opts.limit ?? 10);
+  const hydratedAzureHits = await hydrateAzureOnlyHits(azureHits, pgHits, opts);
+  const hits = reciprocalRankFusion([...pgHits, ...hydratedAzureHits], azureHits).slice(0, opts.limit ?? 10);
   cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, hits });
   return hits;
 }

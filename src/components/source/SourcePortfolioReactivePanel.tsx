@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import { AISuggestionFrame } from '@/components/abarva/AISuggestionFrame';
 import type {
   Artifact,
   AntiPatternFlagArtifact,
@@ -94,7 +95,7 @@ export function SourcePortfolioReactivePanel({
           fontWeight: 700,
         }}
       >
-        Sentinel mission preview - seeded
+        Ava mission preview - seeded
       </header>
 
       <SourceOperatingModelCard />
@@ -107,7 +108,7 @@ export function SourcePortfolioReactivePanel({
           <Metric label="Value" value={formatUsd(valueAtStake)} />
         </div>
         <p style={{ ...MUTED, marginTop: 10 }}>
-          Current view: {filterLabel}. Sentinel is using seeded portfolio facts only; no live procurement write-back is implied.
+          Current view: {filterLabel}. Ava is using seeded portfolio facts only; no live procurement write-back is implied.
         </p>
       </Card>
 
@@ -125,7 +126,7 @@ export function SourcePortfolioReactivePanel({
         </Card>
       ) : (
         <Card kind="Top mission signal">
-            <p style={MUTED}>No seeded source events match this filter posture. Reset filters to restore the Sentinel portfolio read.</p>
+            <p style={MUTED}>No seeded source events match this filter posture. Reset filters to restore the Ava portfolio read.</p>
         </Card>
       )}
 
@@ -138,7 +139,7 @@ export function SourcePortfolioReactivePanel({
             {topEvent.isAtRisk
               ? 'Commercial leverage is not credible until the named blocker is resolved.'
               : openAlerts > 0
-                ? 'There is leverage, but Sentinel should verify unresolved alerts before recommending a sourcing move.'
+                ? 'There is leverage, but Ava should verify unresolved alerts before recommending a sourcing move.'
                 : 'No seeded blockers are visible in this portfolio view.'}
           </p>
         </Card>
@@ -178,14 +179,14 @@ export function SourcePortfolioReactivePanel({
 function SourceOperatingModelCard() {
   const rows = [
     'Create a sourcing event when there is a real business trigger, not just vendor noise.',
-    'Use Sentinel to turn intake into scope, evidence, gates, and deal strategy.',
+    'Use Ava to turn intake into scope, evidence, gates, and deal strategy.',
     'Open an existing event when you need stage work: shortlist, RFP, demo, BAFO, contract, or activation.',
   ];
 
   return (
     <Card kind="Operating model">
       <p style={{ ...MUTED, marginBottom: 10 }}>
-        Source is the IT sourcing command center. Sentinel leads the sourcing motion while Sentinel challenges evidence,
+        Source is the IT sourcing command center. Ava leads the sourcing motion while challenging evidence,
         Steward protects gates, and Atlas frames value and executive consequence.
       </p>
       <div style={{ display: 'grid', gap: 7 }}>
@@ -354,10 +355,18 @@ function selectSourceArtifacts(artifacts: Artifact[]): Artifact[] {
 
 function Card({ kind, children }: { kind: string; children: React.ReactNode }) {
   return (
-    <article style={CARD}>
-      <div style={EYEBROW}>Sentinel - {kind}</div>
+    <AISuggestionFrame
+      status="suggested"
+      detail="Validate before action"
+      ariaLabel={`Ava portfolio AI suggestion: ${kind}`}
+      style={{
+        ...CARD,
+        borderLeft: '3px solid #1B2B5C',
+      }}
+    >
+      <div style={EYEBROW}>Ava - {kind}</div>
       {children}
-    </article>
+    </AISuggestionFrame>
   );
 }
 

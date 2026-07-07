@@ -432,7 +432,7 @@ function emptyStatePromptsFor(agentName: string): { primary: string; secondary: 
         primary: "show me patterns like CDP activation",
         secondary: "cite evidence for vendor lock-in risk",
       };
-    case 'Nexus':
+    case 'Ava':
     default:
       return {
         primary: "where are we?",

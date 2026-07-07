@@ -38,7 +38,7 @@ export function Ch07BafoChapter() {
       <StoryRecap>
         Pricing closed with B at 87, A at 76 (2 P0s open), D at 75 (1 P0
         open). Janet has spent the last 5 days authoring d22 — the BAFO
-        question pack — with Sentinel binding to d20 and the d09
+        question pack — with Ava binding to d20 and the d09
         commitment language. Today she sends 12 questions to two finalists.
         (Vendor A&rsquo;s pack arrived first; their initial decline drives
         the rest of the chapter.) The job here is to either close the open
@@ -49,7 +49,7 @@ export function Ch07BafoChapter() {
         <Eyebrow>The d22 pack structure</Eyebrow>
         <SectionTitle>Two question patterns, used differently</SectionTitle>
         <Lead>
-          Sentinel&rsquo;s BAFO question generator emits questions in two
+          Ava&rsquo;s BAFO question generator emits questions in two
           canonical shapes. Knowing the shapes helps the reader see why
           some vendors close cleanly and others walk.
         </Lead>
@@ -182,13 +182,13 @@ export function Ch07BafoChapter() {
           the BAA encryption-at-rest line (P1, easy). They propose
           adjusting the egress schedule to a tiered structure that{' '}
           <em>looks</em> better but still computes to ~$3.6M / 5-year on
-          Sentinel&rsquo;s remodel (vs A&rsquo;s original $4.14M). On
+          Ava&rsquo;s remodel (vs A&rsquo;s original $4.14M). On
           §7.4 exclusivity: <em>decline</em>.
         </Lead>
 
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Re-ran trap-egress-asymmetric@v1.4 against A&rsquo;s
@@ -216,8 +216,8 @@ export function Ch07BafoChapter() {
         />
 
         <BodyP>
-          Janet asks Sentinel to draft the day-62 vendor letter to A.
-          Sentinel produces a clean, factual paragraph: the BAFO
+          Janet asks Ava to draft the day-62 vendor letter to A.
+          Ava produces a clean, factual paragraph: the BAFO
           response retained §7.4 unchanged; this clause is inconsistent
           with Meridian&rsquo;s strategic posture; Vendor A is therefore
           withdrawn from further consideration; a formal close-out letter
@@ -240,10 +240,10 @@ export function Ch07BafoChapter() {
           than 8%, worse than the assumption.
         </BodyP>
         <BodyP>
-          Sentinel re-runs the TCO model with D&rsquo;s 5% cap: 5-year
+          Ava re-runs the TCO model with D&rsquo;s 5% cap: 5-year
           TCO drops from $54.2M (8%) to $52.4M (5%) vs the protected-4%
           model at $51.0M. Gap to assumption: $1.4M over 5 years.
-          Sentinel flags this as a P1 residual — not deal-shaping, but
+          Ava flags this as a P1 residual — not deal-shaping, but
           not a clean close either.
         </BodyP>
 
@@ -253,7 +253,7 @@ export function Ch07BafoChapter() {
           the full 920 workloads at the unit pricing already submitted.
           They also volunteer a 4% blended discount on Tier-2 unit pricing
           conditional on a 5-year initial term commitment (no renewal
-          lock-in). The discount is a sales move; Sentinel logs it but
+          lock-in). The discount is a sales move; Ava logs it but
           doesn&rsquo;t change the d20 status — it&rsquo;s additive, not a
           trap.
         </BodyP>

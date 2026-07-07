@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // OV2-2c · Tenant-admin approval queue · decision panel (client)
 //
@@ -24,9 +24,14 @@
 // Client-side validation: rationale is required (non-empty) for
 // 'rejected'. The server enforces the same rule.
 
-import { useCallback, useId, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { useCallback, useId, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  COLORS,
+  RADIUS,
+  SPACING,
+  TYPOGRAPHY,
+} from "@/lib/design/design-tokens";
 
 export interface ApprovalDecisionPanelProps {
   requestId: string;
@@ -82,10 +87,10 @@ export interface SlaBadgeProps {
 
 export function computeSlaBucket(
   hoursPending: number,
-): 'fresh' | 'warning' | 'breach' {
-  if (hoursPending >= 48) return 'breach';
-  if (hoursPending >= 24) return 'warning';
-  return 'fresh';
+): "fresh" | "warning" | "breach" {
+  if (hoursPending >= 48) return "breach";
+  if (hoursPending >= 24) return "warning";
+  return "fresh";
 }
 
 export function SlaBadge({ requestedAt, now }: SlaBadgeProps) {
@@ -95,9 +100,9 @@ export function SlaBadge({ requestedAt, now }: SlaBadgeProps) {
   const hours = Math.max(0, Math.round(ms / (60 * 60 * 1000)));
   const bucket = computeSlaBucket(hours);
   const palette =
-    bucket === 'breach'
+    bucket === "breach"
       ? { bg: COLORS.coralSoft, fg: COLORS.coralInk }
-      : bucket === 'warning'
+      : bucket === "warning"
         ? { bg: COLORS.amberSoft, fg: COLORS.amberInk }
         : { bg: `${COLORS.ink}10`, fg: `${COLORS.ink}99` };
   return (
@@ -105,17 +110,17 @@ export function SlaBadge({ requestedAt, now }: SlaBadgeProps) {
       data-testid="approval-sla-badge"
       data-sla-bucket={bucket}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 6,
-        padding: '4px 10px',
+        padding: "4px 10px",
         borderRadius: RADIUS.pill,
         background: palette.bg,
         color: palette.fg,
         fontFamily: TYPOGRAPHY.mono,
         fontSize: 11,
         fontWeight: 600,
-        letterSpacing: '0.04em',
+        letterSpacing: "0.04em",
       }}
     >
       Pending {hours}h
@@ -123,7 +128,7 @@ export function SlaBadge({ requestedAt, now }: SlaBadgeProps) {
   );
 }
 
-type Decision = 'approved' | 'rejected';
+type Decision = "approved" | "rejected";
 
 interface ApiResponse {
   ok?: boolean;
@@ -143,15 +148,17 @@ export function ApprovalDecisionPanel({
   escalateApproval,
 }: ApprovalDecisionPanelProps) {
   const router = useRouter();
-  const [rationale, setRationale] = useState('');
+  const [rationale, setRationale] = useState("");
   const [submitting, setSubmitting] = useState<Decision | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [localNotifyCount, setLocalNotifyCount] = useState(notifyCount);
-  const [localEscalationLevel, setLocalEscalationLevel] =
-    useState<0 | 1 | 2>(escalationLevel);
-  const [localLastNotifiedAt, setLocalLastNotifiedAt] =
-    useState<string | null>(lastNotifiedAt);
+  const [localEscalationLevel, setLocalEscalationLevel] = useState<0 | 1 | 2>(
+    escalationLevel,
+  );
+  const [localLastNotifiedAt, setLocalLastNotifiedAt] = useState<string | null>(
+    lastNotifiedAt,
+  );
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [actionPending, startActionTransition] = useTransition();
   const rationaleId = useId();
@@ -160,17 +167,20 @@ export function ApprovalDecisionPanel({
     async (decision: Decision) => {
       setError(null);
       const trimmed = rationale.trim();
-      if (decision === 'rejected' && trimmed.length === 0) {
-        setError('Rationale is required to reject.');
+      if (trimmed.length === 0) {
+        setError(
+          decision === "rejected"
+            ? "Rationale is required to reject."
+            : "Rationale is required to approve.",
+        );
         return;
       }
       setSubmitting(decision);
       try {
-        const url =
-          postUrl ?? `/api/admin/programs/approvals/${requestId}`;
+        const url = postUrl ?? `/api/admin/programs/approvals/${requestId}`;
         const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             decision,
             rationale: trimmed.length > 0 ? trimmed : undefined,
@@ -184,10 +194,10 @@ export function ApprovalDecisionPanel({
           setSubmitting(null);
           return;
         }
-        router.push('/admin/programs/approvals');
+        router.push("/admin/programs/approvals");
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'request failed');
+        setError(err instanceof Error ? err.message : "request failed");
         setSubmitting(null);
       }
     },
@@ -196,7 +206,7 @@ export function ApprovalDecisionPanel({
 
   const handleNotifySponsor = useCallback(() => {
     if (!notifySponsor) {
-      setError('notify-sponsor action is not wired in this surface.');
+      setError("notify-sponsor action is not wired in this surface.");
       return;
     }
     setError(null);
@@ -206,9 +216,7 @@ export function ApprovalDecisionPanel({
         try {
           const result = await notifySponsor(requestId);
           if (!result.ok) {
-            setError(
-              result.detail ?? result.error ?? 'notify-sponsor failed',
-            );
+            setError(result.detail ?? result.error ?? "notify-sponsor failed");
             return;
           }
           setLocalNotifyCount(result.notifyCount);
@@ -220,7 +228,7 @@ export function ApprovalDecisionPanel({
           setNotice(`Reminder logged · sponsor notified at ${ts}`);
           router.refresh();
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'notify_failed');
+          setError(err instanceof Error ? err.message : "notify_failed");
         }
       })();
     });
@@ -228,7 +236,7 @@ export function ApprovalDecisionPanel({
 
   const handleEscalateConfirmed = useCallback(() => {
     if (!escalateApproval) {
-      setError('escalate-approval action is not wired in this surface.');
+      setError("escalate-approval action is not wired in this surface.");
       setShowEscalateConfirm(false);
       return;
     }
@@ -239,7 +247,7 @@ export function ApprovalDecisionPanel({
         try {
           const result = await escalateApproval(requestId);
           if (!result.ok) {
-            setError(result.detail ?? result.error ?? 'escalate failed');
+            setError(result.detail ?? result.error ?? "escalate failed");
             setShowEscalateConfirm(false);
             return;
           }
@@ -247,12 +255,10 @@ export function ApprovalDecisionPanel({
           setShowEscalateConfirm(false);
           // Bounce back to the queue so the admin sees the escalated
           // request has moved out of their primary review path.
-          router.push(
-            '/admin/programs/approvals?banner=escalated',
-          );
+          router.push("/admin/programs/approvals?banner=escalated");
           router.refresh();
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'escalate_failed');
+          setError(err instanceof Error ? err.message : "escalate_failed");
           setShowEscalateConfirm(false);
         }
       })();
@@ -275,13 +281,13 @@ export function ApprovalDecisionPanel({
           lineHeight: 1.5,
         }}
       >
-        This request has already been decided. See the audit trail
-        below.
+        This request has already been decided. See the audit trail below.
       </section>
     );
   }
 
   const inFlight = submitting !== null;
+  const rationaleEmpty = rationale.trim().length === 0;
 
   return (
     <section
@@ -292,16 +298,16 @@ export function ApprovalDecisionPanel({
         border: `1px solid ${COLORS.ink}12`,
         borderRadius: RADIUS.lg,
         padding: SPACING.lg,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: SPACING.md,
       }}
     >
       <header
         style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
           gap: SPACING.sm,
         }}
       >
@@ -310,8 +316,8 @@ export function ApprovalDecisionPanel({
             style={{
               fontFamily: TYPOGRAPHY.mono,
               fontSize: 10,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
               color: COLORS.navy,
               fontWeight: 700,
             }}
@@ -323,12 +329,12 @@ export function ApprovalDecisionPanel({
               fontFamily: TYPOGRAPHY.sans,
               fontSize: 13,
               color: `${COLORS.ink}99`,
-              margin: '6px 0 0',
+              margin: "6px 0 0",
               lineHeight: 1.55,
             }}
           >
-            Your decision approves Phase 0 unlock or rejects with
-            rationale. Both are audited.
+            Your decision approves Phase 0 unlock or rejects with rationale.
+            Both are audited.
           </p>
         </div>
         {requestedAt ? <SlaBadge requestedAt={requestedAt} /> : null}
@@ -351,19 +357,19 @@ export function ApprovalDecisionPanel({
         </div>
       ) : null}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <label
           htmlFor={rationaleId}
           style={{
             fontFamily: TYPOGRAPHY.mono,
             fontSize: 11,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
             color: `${COLORS.ink}80`,
             fontWeight: 600,
           }}
         >
-          Rationale (required to reject)
+          Rationale (required)
         </label>
         <textarea
           id={rationaleId}
@@ -373,7 +379,9 @@ export function ApprovalDecisionPanel({
           rows={4}
           spellCheck
           disabled={inFlight}
-          placeholder="Why are you approving or rejecting this brief? Optional for approve; required for reject."
+          placeholder="Why are you approving or rejecting this brief? Required for both."
+          aria-describedby={`${rationaleId}-help${error ? ` ${rationaleId}-error` : ""}`}
+          aria-invalid={error ? true : undefined}
           style={{
             fontFamily: TYPOGRAPHY.sans,
             fontSize: 14,
@@ -382,15 +390,26 @@ export function ApprovalDecisionPanel({
             borderRadius: RADIUS.md,
             border: `1px solid ${COLORS.ink}24`,
             background: COLORS.white,
-            resize: 'vertical',
+            resize: "vertical",
             minHeight: 100,
           }}
         />
+        <div
+          id={`${rationaleId}-help`}
+          style={{
+            color: `${COLORS.ink}99`,
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 12,
+          }}
+        >
+          Add a rationale before approving or rejecting this request.
+        </div>
       </div>
 
       {error ? (
         <div
           role="alert"
+          id={`${rationaleId}-error`}
           data-testid="approval-decision-error"
           style={{
             background: COLORS.coralSoft,
@@ -405,34 +424,41 @@ export function ApprovalDecisionPanel({
         </div>
       ) : null}
 
-      <div style={{ display: 'flex', gap: SPACING.sm, flexWrap: 'wrap' }}>
+      <div style={{ display: "flex", gap: SPACING.sm, flexWrap: "wrap" }}>
         <button
           type="button"
           data-testid="approval-approve-button"
           aria-label="Approve request"
-          onClick={() => submit('approved')}
-          disabled={inFlight || actionPending}
+          onClick={() => submit("approved")}
+          disabled={inFlight || actionPending || rationaleEmpty}
+          title={rationaleEmpty ? "Add a rationale to approve" : undefined}
           style={{
             padding: `${SPACING.sm} ${SPACING.lg}`,
             background: COLORS.ink,
             color: COLORS.cream,
             borderRadius: RADIUS.md,
-            border: 'none',
+            border: "none",
             fontFamily: TYPOGRAPHY.sans,
             fontWeight: 600,
             fontSize: 14,
-            cursor: inFlight ? 'progress' : 'pointer',
-            opacity: inFlight ? 0.7 : 1,
+            cursor:
+              inFlight || rationaleEmpty
+                ? inFlight
+                  ? "progress"
+                  : "not-allowed"
+                : "pointer",
+            opacity: inFlight || rationaleEmpty ? 0.55 : 1,
           }}
         >
-          {submitting === 'approved' ? 'Approving…' : 'Approve'}
+          {submitting === "approved" ? "Approving…" : "Approve"}
         </button>
         <button
           type="button"
           data-testid="approval-reject-button"
           aria-label="Reject request"
-          onClick={() => submit('rejected')}
-          disabled={inFlight || actionPending}
+          onClick={() => submit("rejected")}
+          disabled={inFlight || actionPending || rationaleEmpty}
+          title={rationaleEmpty ? "Add a rationale to reject" : undefined}
           style={{
             padding: `${SPACING.sm} ${SPACING.lg}`,
             background: COLORS.white,
@@ -442,11 +468,16 @@ export function ApprovalDecisionPanel({
             fontFamily: TYPOGRAPHY.sans,
             fontWeight: 600,
             fontSize: 14,
-            cursor: inFlight ? 'progress' : 'pointer',
-            opacity: inFlight ? 0.7 : 1,
+            cursor:
+              inFlight || rationaleEmpty
+                ? inFlight
+                  ? "progress"
+                  : "not-allowed"
+                : "pointer",
+            opacity: inFlight || rationaleEmpty ? 0.55 : 1,
           }}
         >
-          {submitting === 'rejected' ? 'Rejecting…' : 'Reject'}
+          {submitting === "rejected" ? "Rejecting…" : "Reject"}
         </button>
 
         {/*
@@ -463,8 +494,7 @@ export function ApprovalDecisionPanel({
           style={{
             padding: `${SPACING.sm} ${SPACING.lg}`,
             background: COLORS.white,
-            color:
-              localNotifyCount > 0 ? COLORS.amberInk : `${COLORS.ink}cc`,
+            color: localNotifyCount > 0 ? COLORS.amberInk : `${COLORS.ink}cc`,
             border: `1px solid ${
               localNotifyCount > 0 ? COLORS.amberInk : `${COLORS.ink}40`
             }`,
@@ -472,16 +502,15 @@ export function ApprovalDecisionPanel({
             fontFamily: TYPOGRAPHY.sans,
             fontWeight: 600,
             fontSize: 14,
-            cursor:
-              inFlight || actionPending ? 'progress' : 'pointer',
+            cursor: inFlight || actionPending ? "progress" : "pointer",
             opacity: inFlight || actionPending ? 0.7 : 1,
           }}
         >
           {actionPending
-            ? 'Notifying…'
+            ? "Notifying…"
             : localNotifyCount > 0
               ? `Notify sponsor (${localNotifyCount})`
-              : 'Notify sponsor'}
+              : "Notify sponsor"}
         </button>
         <button
           type="button"
@@ -492,17 +521,13 @@ export function ApprovalDecisionPanel({
             setNotice(null);
             setShowEscalateConfirm(true);
           }}
-          disabled={
-            inFlight || actionPending || localEscalationLevel === 2
-          }
+          disabled={inFlight || actionPending || localEscalationLevel === 2}
           style={{
             padding: `${SPACING.sm} ${SPACING.lg}`,
             background: COLORS.white,
             color: COLORS.coralInk,
             border: `1px solid ${
-              localEscalationLevel === 0
-                ? COLORS.coralInk
-                : `${COLORS.ink}40`
+              localEscalationLevel === 0 ? COLORS.coralInk : `${COLORS.ink}40`
             }`,
             borderRadius: RADIUS.md,
             fontFamily: TYPOGRAPHY.sans,
@@ -510,8 +535,8 @@ export function ApprovalDecisionPanel({
             fontSize: 14,
             cursor:
               inFlight || actionPending || localEscalationLevel === 2
-                ? 'not-allowed'
-                : 'pointer',
+                ? "not-allowed"
+                : "pointer",
             opacity:
               inFlight || actionPending || localEscalationLevel === 2
                 ? 0.55
@@ -519,8 +544,8 @@ export function ApprovalDecisionPanel({
           }}
         >
           {localEscalationLevel === 2
-            ? 'Escalated'
-            : 'Escalate to platform admin'}
+            ? "Escalated"
+            : "Escalate to platform admin"}
         </button>
       </div>
 
@@ -533,7 +558,7 @@ export function ApprovalDecisionPanel({
             color: `${COLORS.ink}80`,
           }}
         >
-          Last sponsor reminder ·{' '}
+          Last sponsor reminder ·{" "}
           {new Date(localLastNotifiedAt).toLocaleString()}
         </div>
       ) : null}
@@ -553,17 +578,17 @@ export function ApprovalDecisionPanel({
             fontFamily: TYPOGRAPHY.sans,
             fontSize: 13,
             lineHeight: 1.5,
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             gap: SPACING.sm,
           }}
         >
           <div>
-            Re-route this request to the platform-admin queue? The
-            tenant admin will no longer be responsible for the
-            decision; the escalation is logged to the audit trail.
+            Re-route this request to the platform-admin queue? The tenant admin
+            will no longer be responsible for the decision; the escalation is
+            logged to the audit trail.
           </div>
-          <div style={{ display: 'flex', gap: SPACING.sm }}>
+          <div style={{ display: "flex", gap: SPACING.sm }}>
             <button
               type="button"
               data-testid="approval-escalate-confirm-button"
@@ -573,15 +598,15 @@ export function ApprovalDecisionPanel({
                 padding: `${SPACING.xs} ${SPACING.md}`,
                 background: COLORS.coralInk,
                 color: COLORS.white,
-                border: 'none',
+                border: "none",
                 borderRadius: RADIUS.sm,
                 fontFamily: TYPOGRAPHY.sans,
                 fontWeight: 600,
                 fontSize: 13,
-                cursor: actionPending ? 'progress' : 'pointer',
+                cursor: actionPending ? "progress" : "pointer",
               }}
             >
-              {actionPending ? 'Escalating…' : 'Yes, escalate'}
+              {actionPending ? "Escalating…" : "Yes, escalate"}
             </button>
             <button
               type="button"
@@ -597,7 +622,7 @@ export function ApprovalDecisionPanel({
                 fontFamily: TYPOGRAPHY.sans,
                 fontWeight: 600,
                 fontSize: 13,
-                cursor: 'pointer',
+                cursor: "pointer",
               }}
             >
               Cancel

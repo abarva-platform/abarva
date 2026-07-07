@@ -62,6 +62,11 @@ export interface AIInitiative {
   alignedCallout: boolean;
   alignedRationale: string | null;
   loadedViaTemplate: string;
+  portfolioCompany?: string | null;
+  operatingCompany?: string | null;
+  legalEntity?: string | null;
+  businessUnit?: string | null;
+  businessFunction?: string | null;
 }
 
 interface InitiativeRow {
@@ -106,6 +111,12 @@ function toNumber(v: number | string | null | undefined): number | null {
   if (v === null || v === undefined) return null;
   const n = typeof v === 'string' ? Number.parseFloat(v) : v;
   return Number.isFinite(n) ? n : null;
+}
+
+function toIsoDateString(value: string | Date | null | undefined): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return value;
 }
 
 export async function listCategories(): Promise<ReadonlyArray<AICategory>> {
@@ -277,7 +288,7 @@ interface VendorRow {
   initiative_id: string;
   vendor_name: string;
   contract_value_usd: number | string | null;
-  renewal_date: string | null;
+  renewal_date: string | Date | null;
   financial_health: 'strong' | 'moderate' | 'watch' | 'at_risk' | null;
 }
 
@@ -312,7 +323,7 @@ export async function listVendorsForClient(
       initiativeName: initiative?.name ?? r.initiative_id,
       vendorName: r.vendor_name,
       contractValueUsd: toNumber(r.contract_value_usd),
-      renewalDate: r.renewal_date,
+      renewalDate: toIsoDateString(r.renewal_date),
       financialHealth: r.financial_health,
     };
   });

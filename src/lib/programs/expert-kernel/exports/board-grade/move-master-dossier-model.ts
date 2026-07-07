@@ -248,7 +248,21 @@ export interface MoveDossierRoadmapSection {
   }>;
   wiredCount: number;
   unwiredCount: number;
+  aiBuildCost: number;
+  businessChangeCost: number;
+  aiOpsCost: number;
+  aiOps: MoveDossierAiOpsSummary | null;
   buildVsChangeNote: string;
+}
+
+export interface MoveDossierAiOpsSummary {
+  threeYearTotal: number;
+  fiveYearTotal: number;
+  costPerCallUsd: number;
+  costPerDecisionUsd: number | null;
+  decisionUnit: string | null;
+  pricingTierShockWarning: string | null;
+  modelTierDriftWarning: string | null;
 }
 
 // --- §5 Evidence and gaps ---------------------------------------------------
@@ -852,6 +866,23 @@ function buildRoadmapTower(
     })),
     wiredCount: wired.length,
     unwiredCount: unwired.length,
+    aiBuildCost: skeleton.effort.buildVsChange.aiBuildCost,
+    businessChangeCost: skeleton.effort.buildVsChange.businessChangeCost,
+    aiOpsCost: skeleton.effort.buildVsChange.aiOpsCost,
+    aiOps: skeleton.aiOpsCost
+      ? {
+          threeYearTotal: skeleton.aiOpsCost.threeYearTotal,
+          fiveYearTotal: skeleton.aiOpsCost.fiveYearTotal,
+          costPerCallUsd: skeleton.aiOpsCost.unitEconomic.costPerCallUsd,
+          costPerDecisionUsd:
+            skeleton.aiOpsCost.unitEconomic.costPerDecisionUsd ?? null,
+          decisionUnit:
+            skeleton.aiOpsCost.unitEconomic.decisionUnit ?? null,
+          pricingTierShockWarning:
+            skeleton.aiOpsCost.pricingTierShockWarning,
+          modelTierDriftWarning: skeleton.aiOpsCost.modelTierDriftWarning,
+        }
+      : null,
     buildVsChangeNote: skeleton.effort.buildVsChange.note,
   };
 }

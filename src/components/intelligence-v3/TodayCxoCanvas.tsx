@@ -54,7 +54,7 @@ export function TodayCxoCanvas({
           </>
         }
         title="Three things that need your attention this morning."
-        lead="Sentinel's overnight read · ranked by what changes if you don't act today. Each item names the bet, the why, and the dependency."
+        lead="Ava's overnight read · ranked by what changes if you don't act today. Each item names the bet, the why, and the dependency."
         meta={<>As of <strong style={{ color: COLORS.ink }}>{asOfLabel}</strong></>}
       />
 

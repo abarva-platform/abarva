@@ -270,7 +270,7 @@ function CenterCanvas({
   if (nextWorkshop === null) {
     return (
       <main
-        aria-label="Nexus workshop canvas"
+        aria-label="Ava workshop canvas"
         data-region="center-canvas"
         style={{
           padding: '18px 22px',
@@ -289,7 +289,7 @@ function CenterCanvas({
             fontWeight: 700,
           }}
         >
-          Nexus · workshop canvas
+          Ava · workshop canvas
         </span>
         <p style={{ margin: 0, fontSize: 13, color: COLORS.muted, lineHeight: 1.6 }}>
           No workshop is recommended for this program in P{phaseOrdinal} {phaseName}.
@@ -301,7 +301,7 @@ function CenterCanvas({
 
   return (
     <main
-      aria-label="Nexus workshop canvas"
+      aria-label="Ava workshop canvas"
       data-region="center-canvas"
       style={{
         padding: '18px 22px',
@@ -322,7 +322,7 @@ function CenterCanvas({
             fontWeight: 700,
           }}
         >
-          Nexus · workshop canvas · P{phaseOrdinal} {phaseName}
+          Ava · workshop canvas · P{phaseOrdinal} {phaseName}
         </span>
         <h2
           style={{

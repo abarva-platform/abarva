@@ -1,4 +1,4 @@
-import type { ArchetypeKey } from './types.ui';
+import type { ArchetypeKey } from "./types.ui";
 
 // DB-layer types · Packet 13 §13.5 data access layer
 // The types above are UI view-models. The types below match DB shape
@@ -6,31 +6,73 @@ import type { ArchetypeKey } from './types.ui';
 // governance,nexus,execute}.ts.
 // ─────────────────────────────────────────────────────────────────────
 
-export type OriginSource = 'tower_triggered' | 'user_initiated' | 'intelligence_promoted';
-export type OversightLevel = 'full' | 'partial' | 'none';
+export type OriginSource =
+  | "tower_triggered"
+  | "user_initiated"
+  | "intelligence_promoted";
+export type OversightLevel = "full" | "partial" | "none";
 export type ProgramLifecycleState =
-  | 'draft'
-  | 'submitted_for_approval'
-  | 'approved'
-  | 'rejected'
-  | 'paused'
-  | 'canceled'
-  | 'completed';
-export type PromotionState = 'draft' | 'pilot' | 'mature' | 'deprecated';
-export type ModuleStatus = 'not_started' | 'in_progress' | 'blocked' | 'completed' | 'skipped';
-export type WorkItemType = 'workstream' | 'use_case' | 'solution' | 'execution_plan' | 'task';
-export type WorkItemStatus = 'open' | 'in_progress' | 'blocked' | 'done' | 'cancelled';
-export type RiskLikelihood = 'low' | 'medium' | 'high';
-export type RiskImpact = 'low' | 'medium' | 'high';
-export type RiskStatus = 'open' | 'mitigating' | 'accepted' | 'transferred' | 'closed';
-export type MilestoneStatus = 'upcoming' | 'at_risk' | 'hit' | 'missed' | 'cancelled';
-export type ApprovalAuthority = 'sponsor' | 'approver' | 'contributor' | 'observer';
-export type NexusThreadMode = 'side_panel' | 'module_drafting' | 'cxo_takeover';
-export type ApprovalRequestStatus = 'pending' | 'approved' | 'denied' | 'expired' | 'withdrawn';
+  | "draft"
+  | "submitted_for_approval"
+  | "approved"
+  | "rejected"
+  | "paused"
+  | "canceled"
+  | "completed"
+  | "archived";
+export type PromotionState = "draft" | "pilot" | "mature" | "deprecated";
+export type ModuleStatus =
+  | "not_started"
+  | "in_progress"
+  | "blocked"
+  | "completed"
+  | "skipped";
+export type WorkItemType =
+  | "workstream"
+  | "use_case"
+  | "solution"
+  | "execution_plan"
+  | "task";
+export type WorkItemStatus =
+  | "open"
+  | "in_progress"
+  | "blocked"
+  | "done"
+  | "cancelled";
+export type RiskLikelihood = "low" | "medium" | "high";
+export type RiskImpact = "low" | "medium" | "high";
+export type RiskStatus =
+  | "open"
+  | "mitigating"
+  | "accepted"
+  | "transferred"
+  | "closed";
+export type MilestoneStatus =
+  | "upcoming"
+  | "at_risk"
+  | "hit"
+  | "missed"
+  | "cancelled";
+export type ApprovalAuthority =
+  | "sponsor"
+  | "approver"
+  | "contributor"
+  | "observer";
+export type NexusThreadMode = "side_panel" | "module_drafting" | "cxo_takeover";
+export type ApprovalRequestStatus =
+  | "pending"
+  | "approved"
+  | "denied"
+  | "expired"
+  | "withdrawn";
 export type FlagType =
-  | 'decision_required' | 'approval_needed' | 'quality_concern'
-  | 'risk_detected' | 'policy_violation' | 'scope_drift';
-export type FlagSeverity = 'critical' | 'warning' | 'info';
+  | "decision_required"
+  | "approval_needed"
+  | "quality_concern"
+  | "risk_detected"
+  | "policy_violation"
+  | "scope_drift";
+export type FlagSeverity = "critical" | "warning" | "info";
 
 // 6-Phase Strategic Moves model.
 // Doctrine: docs/design/strategic-moves/PHASE_MODEL_V2_DOCTRINE.md
@@ -43,12 +85,12 @@ export type FlagSeverity = 'critical' | 'warning' | 'info';
 // the internal short name for back-compat with transformers and audit
 // callers that key on the seed-era short labels.
 export const PHASE_LABELS: Record<number, string> = {
-  0: 'Originate',
-  1: 'Charter',
-  2: 'Discover & Diagnose',
-  3: 'Design Future State',
-  4: 'Roadmap & Business Case',
-  5: 'Mobilize & Handoff',
+  0: "Originate",
+  1: "Charter",
+  2: "Discover & Diagnose",
+  3: "Design Future State",
+  4: "Roadmap & Business Case",
+  5: "Mobilize & Handoff",
 };
 
 export interface TenancyCtx {
@@ -56,6 +98,10 @@ export interface TenancyCtx {
   /** Tenant key (e.g. 'apexretail', 'meridian', 'arcturus') — string form alongside the UUID clientId. */
   clientKey?: string;
   userId: string;
+  /** Clerk user id for the signed-in session; present even when userId resolves to a persons UUID. */
+  clerkUserId?: string;
+  /** Clerk tenant role for the active client, when explicitly assigned. */
+  tenantRole?: string | null;
   role?: string;
   email?: string | null;
 }
@@ -71,7 +117,7 @@ export interface ProgramCore {
   valueProjectedLowUsd: number | null;
   valueProjectedHighUsd: number | null;
   valueVerifiedUsd: number | null;
-  valueVerifiedStatus: 'pending' | 'tracked' | 'final' | null;
+  valueVerifiedStatus: "pending" | "tracked" | "final" | null;
   valueCurrency: string | null;
   valueAssumptions: Record<string, unknown> | null;
   archetype: ArchetypeKey | null;
@@ -88,6 +134,14 @@ export interface ProgramCore {
   dataResidencyRegion: string | null;
   retentionPolicyYears: number | null;
   archivedAt: string | null;
+  // Manage Moves archive provenance. `archivedFromState` is the lifecycle_state
+  // the Move held before it was archived — Restore returns it here. All null
+  // for Moves that have never been archived. Optional so producers/fixtures that
+  // predate the Manage Moves archive columns still satisfy the type.
+  archivedBy?: string | null;
+  archiveReason?: string | null;
+  archiveExplanation?: string | null;
+  archivedFromState?: string | null;
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
@@ -133,7 +187,7 @@ export interface ProgramWorkItemRow {
   description: string | null;
   itemType: WorkItemType;
   status: WorkItemStatus;
-  priority: 'critical' | 'high' | 'medium' | 'low' | null;
+  priority: "critical" | "high" | "medium" | "low" | null;
   assignedUserId: string | null;
   moduleKey: string | null;
   phaseNumber: number | null;
@@ -177,8 +231,8 @@ export interface PatternClassifierMatch {
   archetype: ArchetypeKey | null;
   industry: string | null;
   canonicalShape: Record<string, unknown> | null;
-  band: 'high' | 'medium' | 'low' | 'no_match';
-  suggestedAction: 'pattern' | 'template' | 'custom';
+  band: "high" | "medium" | "low" | "no_match";
+  suggestedAction: "pattern" | "template" | "custom";
   rationale: string;
 }
 
@@ -212,8 +266,13 @@ export interface FounderApprovalRequestRow {
   id: string;
   engagementId: string;
   requestType:
-    | 'phase_gate' | 'budget_change' | 'scope_change'
-    | 'vendor_selection' | 'program_close' | 'risk_acceptance' | 'milestone_slip';
+    | "phase_gate"
+    | "budget_change"
+    | "scope_change"
+    | "vendor_selection"
+    | "program_close"
+    | "risk_acceptance"
+    | "milestone_slip";
   status: ApprovalRequestStatus;
   requestedByUserId: string;
   approverUserId: string | null;
@@ -231,7 +290,7 @@ export interface MaestroFlag {
   engagementId: string;
   flagType: FlagType;
   severity: FlagSeverity;
-  raisedBy: 'maestro' | 'nexus' | 'system' | 'user';
+  raisedBy: "maestro" | "nexus" | "system" | "user";
   raisedByUserId: string | null;
   headline: string;
   context: Record<string, unknown>;
@@ -249,13 +308,17 @@ export interface PhaseSnapshot {
   snapshot: Record<string, unknown>;
   lockedByUserId: string | null;
   lockedAt: string | null;
-  approvalStatus: 'draft' | 'pending' | 'approved' | 'rejected';
+  approvalStatus: "draft" | "pending" | "approved" | "rejected";
   createdAt: string;
 }
 
 export interface GateCheck {
   pass: boolean;
-  failedChecks: Array<{ check: string; reason: string; severity: 'hard' | 'soft' }>;
+  failedChecks: Array<{
+    check: string;
+    reason: string;
+    severity: "hard" | "soft";
+  }>;
   requiresApproval: boolean;
   approverRole: ApprovalAuthority | null;
 }

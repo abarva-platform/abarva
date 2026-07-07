@@ -335,11 +335,11 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
         }}
       >
         <Image
-          src="/brand/abarva-logo.svg"
+          src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg"
           alt="AbarVa"
           width={29}
           height={24}
-          style={{ height: 24, width: 'auto', display: 'block' }}
+          style={{ display: 'block' }}
           priority
         />
         <div aria-hidden="true" style={{ width: 1, height: 18, background: BRAND.hair }} />

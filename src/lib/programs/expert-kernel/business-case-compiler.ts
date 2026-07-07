@@ -21,7 +21,8 @@
 
 import type { BaselineModel } from './baseline-model';
 import type { AssumptionLedger, Assumption } from './assumption-ledger';
-import type { EffortEstimate } from './effort-estimator';
+import type { BuildVsChangeSplit, EffortEstimate } from './effort-estimator';
+import type { AiOpsCostEstimate } from './ai-ops-cost';
 import type { ValueForecast } from './value-forecast';
 import type { Roadmap } from './roadmap';
 import type { RaciMatrix } from './raci';
@@ -71,6 +72,8 @@ export interface BusinessCaseSkeleton {
   effortRange: Range;
   /** The full effort estimate (per-workstream detail for the in-app view). */
   effort: EffortEstimate;
+  /** AI operating-cost estimate, when the Move supplied run-cost inputs. */
+  aiOpsCost: AiOpsCostEstimate | null;
   /** 4 — named assumptions. */
   assumptions: AssumptionLedger;
   /** 5 — sensitivity. */
@@ -121,6 +124,7 @@ export function compileBusinessCase(
     point: effort.totalCost.point,
     high: effort.totalCost.high,
   };
+  const aiOpsPoint = effort.aiOpsCost?.threeYearTotal ?? 0;
   const valueRange: Range = {
     low: value.totalNetValue.low,
     point: value.totalNetValue.point,
@@ -130,14 +134,14 @@ export function compileBusinessCase(
   // Economics. Investment = conservative effort (CFO funds the high case).
   // Net return = net value minus base effort.
   const investment: Range = {
-    low: effortRange.low,
-    point: effortRange.point,
-    high: effortRange.high,
+    low: round2(effortRange.low + aiOpsPoint),
+    point: round2(effortRange.point + aiOpsPoint),
+    high: round2(effortRange.high + aiOpsPoint),
   };
   const netReturn: Range = {
-    low: round2(valueRange.low - effortRange.high),
-    point: round2(valueRange.point - effortRange.point),
-    high: round2(valueRange.high - effortRange.low),
+    low: round2(valueRange.low - investment.high),
+    point: round2(valueRange.point - investment.point),
+    high: round2(valueRange.high - investment.low),
   };
   const monetisable = !value.monetisationBlocked;
   // Payback: months until cumulative net value covers base effort.
@@ -145,7 +149,7 @@ export function compileBusinessCase(
   if (monetisable && value.totalNetValue.point > 0) {
     const annualNet = value.totalNetValue.point / value.curve.length;
     if (annualNet > 0) {
-      paybackMonths = round2((effortRange.point / annualNet) * 12);
+      paybackMonths = round2((investment.point / annualNet) * 12);
     }
   }
 
@@ -230,6 +234,7 @@ export function compileBusinessCase(
     valueRange,
     effortRange,
     effort,
+    aiOpsCost: effort.aiOpsCost,
     assumptions,
     sensitivity,
     killCriteria,
@@ -339,12 +344,7 @@ export interface FullBusinessCase {
   /** Payback in months at the base case, or null when not monetisable. */
   paybackMonths: number | null;
   /** AI-build vs. business-change effort split. */
-  buildVsChange: {
-    aiBuildCost: number;
-    businessChangeCost: number;
-    businessChangeFraction: number;
-    note: string;
-  };
+  buildVsChange: BuildVsChangeSplit;
   /** CFO-grade three-scenario sensitivity. */
   sensitivity: FullSensitivity;
   /** fund / shape / kill. */

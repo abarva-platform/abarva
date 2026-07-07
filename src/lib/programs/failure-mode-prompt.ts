@@ -188,7 +188,11 @@ export function composeBriefProgressCadenceDirective(
   ) {
     return '';
   }
-  return "- After every turn that captures or refines a new-program brief field, emit a `brief-progress` artifact summarizing the brief's field states. The user's right pane only updates when you emit it.";
+  return [
+    "- MANDATORY EVERY TURN: end the turn by emitting ONE `brief-progress` artifact that lists ALL scaffold fields with their current status and value — including fields that did not change this turn. The right pane and the Promote gate read ONLY this artifact; your prose is never parsed.",
+    "- Capturing a field in prose does NOT update the scaffold. If you say a section is captured, confirmed, or locked — or that the user can promote — you MUST have emitted it in this same turn's `brief-progress`. Omitting the artifact silently stalls the scaffold and dead-ends the user at a disabled Promote button.",
+    "- Re-emit the full brief-progress (all fields) on every turn even when nothing changed, so the pane always reflects the latest known state.",
+  ].join("\n");
 }
 
 /**

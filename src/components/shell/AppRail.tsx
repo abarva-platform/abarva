@@ -13,7 +13,7 @@ export interface AppRailProps {}
 
 const NAV_ITEMS = [
   { key: 'home',         label: 'Home',     glyph: 'Hm', href: '/home' },
-  { key: 'setup',        label: 'Setup',    glyph: 'St', href: '/admin' },
+  { key: 'setup',        label: 'Admin',    glyph: 'Ad', href: '/admin' },
   { key: 'programs',     label: 'Moves',    glyph: 'Mv', href: '/strategic-moves' },
   { key: 'source',       label: 'Source',   glyph: 'So', href: '/source' },
   { key: 'intelligence', label: 'Intel',    glyph: 'In', href: '/intelligence' },
@@ -204,7 +204,7 @@ export function AppRail() {
                 onClick={() => setMenuOpen(false)}
                 style={{ display: 'block', padding: '7px 12px', textDecoration: 'none', fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK }}
               >
-                Setup / Admin
+                Admin workspace
               </Link>
             )}
             <button

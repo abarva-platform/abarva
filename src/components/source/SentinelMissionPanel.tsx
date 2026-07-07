@@ -50,7 +50,7 @@ export function SentinelMissionPanel({
       }}
     >
       <div>
-        <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Sentinel guidance</div>
+        <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Ava guidance</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: SHELL.INK }}>
           Lead sourcing agent
         </div>
@@ -59,7 +59,7 @@ export function SentinelMissionPanel({
         {event.leadAgent} / {event.currentStageLabel} / current context
       </div>
 
-      <div style={LIGHT_INSET} data-boundary="Deterministic guidance only">
+      <div style={LIGHT_INSET} data-boundary="Current-event guidance only">
         <div style={{ fontWeight: 800, color: SHELL.INK }}>What matters now</div>
         <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
           {event.blocker ?? event.nextDecision}
@@ -111,7 +111,7 @@ export function SentinelMissionPanel({
       <div style={LIGHT_INSET}>
         <div style={{ fontWeight: 800, color: SHELL.INK }}>Quiet handoff</div>
         <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
-          {handoff ?? 'No deterministic handoff is required beyond the current mission queue.'}
+          {handoff ?? 'No additional handoff is needed beyond the current mission queue.'}
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export function SentinelMissionPanel({
         </div>
         <div style={{ color: SHELL.INK, fontWeight: 800 }}>Event, stage, gate, and mission state</div>
         <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
-          Sentinel guidance is limited to the current event context and readiness signals.
+          Ava guidance is limited to the current event context and readiness signals.
         </div>
       </div>
     </aside>

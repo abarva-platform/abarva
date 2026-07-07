@@ -19,7 +19,7 @@ import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 
 export const metadata = {
-  title: 'Connectors | AbarVa Setup',
+  title: 'Connectors | AbarVa Admin',
 };
 
 interface ConnectorsSearchParams {

@@ -180,7 +180,7 @@ function StrategicPatternsEmptyState() {
             color: SHELL.INK_SOFT,
           }}
         >
-          Use this surface to see which operating patterns support, contradict, or constrain the bets in flight. Start by asking Sentinel to review the current tenant signals or originate a Move from the strongest pressure.
+          Use this surface to see which operating patterns support, contradict, or constrain the bets in flight. Start by asking Ava to review the current tenant signals or originate a Move from the strongest pressure.
         </p>
         <Link
           href="/strategic-moves/new"

@@ -6,12 +6,12 @@ import { getSourceValueSeed } from '@/lib/source/mock-seed';
 import { SourceValueLedger } from '@/components/source/SourceValueLedger';
 
 describe('Source value ledger shell', () => {
-  it('renders Atlas-led value context, summary distinctions, and action layer', () => {
+  it('renders Ava-led value context, summary distinctions, and action layer', () => {
     const snapshot = getSourceValueSeed();
 
     const html = renderToStaticMarkup(createElement(SourceValueLedger, { snapshot }));
 
-    expect(html).toContain('Atlas value ledger lead');
+    expect(html).toContain('Ava value ledger lead');
     expect(html).toContain('Projected');
     expect(html).toContain('Committed');
     expect(html).toContain('Measuring');
@@ -26,7 +26,7 @@ describe('Source value ledger shell', () => {
     expect(html).toContain('Show assumptions');
     expect(html).toContain('Show evidence gaps');
     expect(html).toContain('Explain value confidence');
-    expect(html).toContain('Ask Atlas about this value ledger');
+    expect(html).toContain('Ask Ava about this value ledger');
     expect(html).toContain('Submit (disabled until runtime)');
     expect(html).toContain('deterministic, seed-backed');
     expect(html).toContain('live realized-savings claim');
@@ -46,7 +46,7 @@ describe('Source value ledger shell', () => {
     expect(routeSource).toContain('AppShell');
     expect(routeSource).toContain('surface="source"');
     expect(routeSource).toContain('SourceValueLedger');
-    expect(componentSource).toContain('Atlas value ledger lead');
+    expect(componentSource).toContain('Ava value ledger lead');
 
     for (const source of [routeSource, componentSource]) {
       expect(source).not.toContain('openai');
@@ -59,5 +59,19 @@ describe('Source value ledger shell', () => {
       expect(source).not.toContain('approval engine');
       expect(source).not.toContain('live savings');
     }
+  });
+
+  it('keeps event value proof route free of raw DB and developer recovery copy', () => {
+    const routeSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/value/page.tsx'),
+      'utf8',
+    );
+
+    expect(routeSource).toContain('Value proof not loaded yet');
+    expect(routeSource).toContain('Do not use this');
+    expect(routeSource).toContain('page as savings proof');
+    expect(routeSource).not.toContain('invalid input syntax');
+    expect(routeSource).not.toContain('computeBaseline()');
+    expect(routeSource).not.toContain('source value states load failed');
   });
 });

@@ -1,3 +1,5 @@
+import type { TowerAiOpsCostLedger } from '@/lib/tower/ai-ops-cost-ledger';
+
 export const VALUE_STATE_LAYERS = [
   'adoption',
   'dora_delta',
@@ -137,6 +139,7 @@ export interface TowerMoveValueDetail {
     trackedHours: number;
     verifiedHours: number;
   };
+  aiOpsCost: TowerAiOpsCostLedger;
   canAttest: boolean;
   p10: {
     source: 'move_dependencies' | 'fallback';

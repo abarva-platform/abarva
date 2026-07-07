@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // AgentResponse · File 08 Sections 4.6, 4.7, 7, 9, 10, 12 rendering contract
 //
@@ -17,15 +17,19 @@
 // patterns. It assumes the `RenderedResponse` is already assembled.
 // Codex's runtime produces the shape; this component trusts it.
 
-import type { ReactNode } from 'react';
-import type { Citation, RenderedResponse } from '@/lib/agent/renderedResponse';
-import { getHonestDisclosureViewModel } from '@/lib/agent/rendered-response-ui';
-import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
-import { AgentCitation } from './AgentCitation';
-import { SparsitySignal } from './SparsitySignal';
-import { HandoffAffordance } from './HandoffAffordance';
-import { HonestDisclosureBanner } from './HonestDisclosureBanner';
-import { ConfidenceQualifier } from './ConfidenceQualifier';
+import type { ReactNode } from "react";
+import type { Citation, RenderedResponse } from "@/lib/agent/renderedResponse";
+import { getHonestDisclosureViewModel } from "@/lib/agent/rendered-response-ui";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import { AgentCitation } from "./AgentCitation";
+import { SparsitySignal } from "./SparsitySignal";
+import { HandoffAffordance } from "./HandoffAffordance";
+import { HonestDisclosureBanner } from "./HonestDisclosureBanner";
+import { AILabel } from "@/components/abarva/AILabel";
+import { AIConfidenceIndicator } from "@/components/abarva/AIConfidenceIndicator";
+import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
+import { CitationGapNotice } from "./CitationGapNotice";
+import { shouldShowRenderedResponseCitationGap } from "@/lib/agent/citation-gap";
 
 interface AgentResponseProps {
   response: RenderedResponse;
@@ -83,15 +87,27 @@ function buildCitationNodeMap(
 
 export function AgentResponse({
   response,
-  accent = '#0E9F8C',
+  accent = "#0E9F8C",
   onFollowUp,
   compactCitations = true,
 }: AgentResponseProps) {
-  const citationNodes = buildCitationNodeMap(response.citations, accent, compactCitations);
+  const citationNodes = buildCitationNodeMap(
+    response.citations,
+    accent,
+    compactCitations,
+  );
   const viewModel = getHonestDisclosureViewModel(response);
+  const showCitationGap = shouldShowRenderedResponseCitationGap(response);
 
   return (
-    <div className="agent-response" style={{ fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
+    <div
+      className="agent-response"
+      style={{ fontFamily: "DM Sans, -apple-system, sans-serif" }}
+    >
+      <div style={{ marginBottom: 10 }}>
+        <AILabel status="draft" detail="Review before acting" />
+      </div>
+
       {viewModel.bannerKind ? (
         <div style={{ marginBottom: 12 }}>
           <HonestDisclosureBanner
@@ -111,47 +127,61 @@ export function AgentResponse({
         style={{
           fontSize: 14,
           lineHeight: 1.65,
-          color: '#1a1612',
+          color: "#1a1612",
         }}
       >
-        <AgentMarkdown text={response.response_text} inlineNodes={citationNodes} />
+        <AgentMarkdown
+          text={response.response_text}
+          inlineNodes={citationNodes}
+        />
       </div>
 
-      {viewModel.confidence
-        || viewModel.contextCategoriesUsed.length > 0
-        || viewModel.missingInputs.length > 0 ? (
+      {showCitationGap ? <CitationGapNotice /> : null}
+
+      {viewModel.confidence ||
+      viewModel.contextCategoriesUsed.length > 0 ||
+      viewModel.missingInputs.length > 0 ? (
         <div
           className="agent-response-disclosure-footer"
           style={{
             marginTop: 12,
             paddingTop: 10,
-            borderTop: '1px dashed rgba(26,22,18,0.08)',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
+            borderTop: "1px dashed rgba(26,22,18,0.08)",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
             gap: 8,
-            fontFamily: 'JetBrains Mono, monospace',
+            fontFamily: "JetBrains Mono, monospace",
             fontSize: 11,
-            color: '#5a5148',
+            color: "#5a5148",
           }}
         >
           {viewModel.confidence ? (
-            <ConfidenceQualifier
+            <AIConfidenceIndicator
               tier={viewModel.confidence.tier}
-              accent={accent}
-              detail={viewModel.confidence.reason}
+              rationale={viewModel.confidence.reason}
+              compact
             />
           ) : null}
 
           {viewModel.contextCategoriesUsed.length > 0 ? (
-            <div className="agent-context-used" aria-label="Context used" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div
+              className="agent-context-used"
+              aria-label="Context used"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                flexWrap: "wrap",
+              }}
+            >
               <span
                 style={{
                   fontSize: 10,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
                   fontWeight: 700,
-                  color: '#8a7e72',
+                  color: "#8a7e72",
                 }}
               >
                 Context used
@@ -161,11 +191,11 @@ export function AgentResponse({
                   key={`ctx-${label}`}
                   className="agent-context-chip"
                   style={{
-                    padding: '1px 8px',
+                    padding: "1px 8px",
                     borderRadius: 999,
-                    background: 'rgba(26,22,18,0.04)',
-                    border: '1px solid rgba(26,22,18,0.08)',
-                    color: '#3d342d',
+                    background: "rgba(26,22,18,0.04)",
+                    border: "1px solid rgba(26,22,18,0.08)",
+                    color: "#3d342d",
                     fontSize: 11,
                   }}
                 >
@@ -176,14 +206,23 @@ export function AgentResponse({
           ) : null}
 
           {viewModel.missingInputs.length > 0 ? (
-            <div className="agent-missing-inputs" aria-label="Missing inputs" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div
+              className="agent-missing-inputs"
+              aria-label="Missing inputs"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                flexWrap: "wrap",
+              }}
+            >
               <span
                 style={{
                   fontSize: 10,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
                   fontWeight: 700,
-                  color: '#8a7e72',
+                  color: "#8a7e72",
                 }}
               >
                 Missing
@@ -193,11 +232,11 @@ export function AgentResponse({
                   key={`miss-${label}`}
                   className="agent-missing-chip"
                   style={{
-                    padding: '1px 8px',
+                    padding: "1px 8px",
                     borderRadius: 999,
-                    background: 'rgba(217,119,6,0.08)',
-                    border: '1px solid rgba(217,119,6,0.18)',
-                    color: '#7c4a04',
+                    background: "rgba(217,119,6,0.08)",
+                    border: "1px solid rgba(217,119,6,0.18)",
+                    color: "#7c4a04",
                     fontSize: 11,
                   }}
                 >
@@ -205,7 +244,7 @@ export function AgentResponse({
                 </span>
               ))}
               {viewModel.missingInputs.length > 3 ? (
-                <span style={{ fontSize: 11, color: '#8a7e72' }}>
+                <span style={{ fontSize: 11, color: "#8a7e72" }}>
                   +{viewModel.missingInputs.length - 3}
                 </span>
               ) : null}
@@ -220,61 +259,74 @@ export function AgentResponse({
           style={{
             marginTop: 14,
             paddingTop: 12,
-            borderTop: '1px solid rgba(26,22,18,0.08)',
-            display: 'flex',
-            flexDirection: 'column',
+            borderTop: "1px solid rgba(26,22,18,0.08)",
+            display: "flex",
+            flexDirection: "column",
             gap: 6,
           }}
         >
           <div
             style={{
-              fontFamily: 'JetBrains Mono, monospace',
+              fontFamily: "JetBrains Mono, monospace",
               fontSize: 10,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: '#8a7e72',
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "#8a7e72",
               fontWeight: 700,
               marginBottom: 4,
             }}
           >
             Next
           </div>
+          <AgentActionApprovalNotice compact />
           {response.follow_up_actions.map((action) => (
             <button
               key={action.id}
               type="button"
               onClick={() => {
-                if (action.kind === 'navigate' && action.target) {
-                  if (typeof window !== 'undefined') window.location.assign(action.target);
+                if (action.kind === "navigate" && action.target) {
+                  if (typeof window !== "undefined")
+                    window.location.assign(action.target);
                   return;
                 }
                 onFollowUp?.(action.id);
               }}
               className="agent-followup-chip"
               style={{
-                textAlign: 'left',
-                padding: '8px 12px',
-                background: '#FFFFFF',
-                border: '1px solid rgba(26,22,18,0.12)',
+                textAlign: "left",
+                padding: "8px 12px",
+                background: "#FFFFFF",
+                border: "1px solid rgba(26,22,18,0.12)",
                 borderRadius: 8,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
+                cursor: "pointer",
+                fontFamily: "inherit",
                 fontSize: 13,
-                color: '#1a1612',
-                transition: 'border-color 0.15s, background 0.15s',
+                color: "#1a1612",
+                transition: "border-color 0.15s, background 0.15s",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = accent;
                 e.currentTarget.style.background = `${accent}0A`;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(26,22,18,0.12)';
-                e.currentTarget.style.background = '#FFFFFF';
+                e.currentTarget.style.borderColor = "rgba(26,22,18,0.12)";
+                e.currentTarget.style.background = "#FFFFFF";
               }}
             >
-              <span style={{ display: 'block', fontWeight: 500 }}>{action.label}</span>
+              <span style={{ display: "block", fontWeight: 500 }}>
+                {action.label}
+              </span>
               {action.sub ? (
-                <span style={{ display: 'block', marginTop: 2, fontSize: 11, color: '#8a7e72' }}>{action.sub}</span>
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: 2,
+                    fontSize: 11,
+                    color: "#8a7e72",
+                  }}
+                >
+                  {action.sub}
+                </span>
               ) : null}
             </button>
           ))}

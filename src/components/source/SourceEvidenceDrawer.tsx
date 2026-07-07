@@ -147,7 +147,7 @@ export function SourceEvidenceDrawerContent({ items }: { items: EvidenceItem[] }
     <>
       <DrawerBanner variant={usable === total ? 'green' : 'amber'}>
         <span>
-          <strong>Sentinel · Evidence attestation</strong>
+          <strong>Ava · Evidence attestation</strong>
           {' — '}
           All {total} required evidence items received · {usable} of {total} confirmed usable ·{' '}
           {total - usable} item{total - usable !== 1 ? 's' : ''} in validation
@@ -182,7 +182,7 @@ export function SourceEvidenceDrawerContent({ items }: { items: EvidenceItem[] }
           letterSpacing: '0.08em',
         }}
       >
-        Evidence posture derived from Sentinel attestation log · AMS outsourcing event 2026
+        Evidence posture derived from Ava attestation log · AMS outsourcing event 2026
       </div>
     </>
   );
@@ -216,7 +216,7 @@ export const AMS_EVIDENCE_ITEMS: EvidenceItem[] = [
     id: 'E-AMS-004',
     name: 'Pricing normalization model',
     state: 'usable',
-    provenance: 'Sentinel automated analysis · assumption set v2',
+    provenance: 'Ava automated analysis · assumption set v2',
     receivedAt: '2026-04-10',
   },
   {

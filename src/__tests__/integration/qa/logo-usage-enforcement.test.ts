@@ -54,7 +54,7 @@ describe('BRAND2 Logo Usage Enforcement', () => {
     const report = runLogoUsageEnforcement();
     const c1 = report.checks.find(c => c.checkId === 'BRAND2-C1');
     expect(c1).toBeDefined();
-    expect(c1!.targetFile).toBe('public/brand/abarva-logo.svg');
+    expect(c1!.targetFile).toBe('public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg');
   });
 
   it('BRAND2-C2 check (component) is present and pass or deferred', () => {
@@ -62,6 +62,15 @@ describe('BRAND2 Logo Usage Enforcement', () => {
     const c2 = report.checks.find(c => c.checkId === 'BRAND2-C2');
     expect(c2).toBeDefined();
     expect(['pass', 'deferred']).toContain(c2!.status);
+  });
+
+  it('guards against ghost top-bar variants and retired root logo assets returning', () => {
+    const report = runLogoUsageEnforcement();
+    const retiredChecks = report.checks.filter((check) =>
+      check.checkId.startsWith('BRAND2-C9-') || check.checkId.startsWith('BRAND2-C10-'),
+    );
+    expect(retiredChecks.length).toBeGreaterThanOrEqual(10);
+    expect(retiredChecks.every((check) => check.status === 'pass')).toBe(true);
   });
 
   it('getBannedLogoPatterns() returns non-empty array', () => {

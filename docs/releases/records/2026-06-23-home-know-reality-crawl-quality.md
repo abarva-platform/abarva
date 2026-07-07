@@ -1,0 +1,77 @@
+# 2026-06-23-home-know-reality-crawl-quality — Home KNOW Reality Crawl Quality
+
+## Release ID
+
+`2026-06-23-home-know-reality-crawl-quality`
+
+## Status
+
+`candidate`
+
+## Plain-English Summary
+
+Home-mode ask requests now route lookup, table, chart, graph, and gap questions through the backend Home KNOW engine before the strategy engine can run. The backend emits deterministic tables, charts, graphs, citations, and gaps from tenant read models; Ava prose remains a short explanatory layer only. The reality crawl judge now fails missing visual artifacts, DECIDE-template leaks, raw ID prose leaks, and "the cited record" prose leaks.
+
+This follow-up tightens classification and fallback source selection after the deployed #3904 crawl improved the deep score to 190/290 but still left strategy and SkyHarbor below bar. It keeps precise row citations ahead of coverage citations, routes more factual Home questions through deterministic KNOW mode, and returns honest chart/graph artifacts from loaded records/relationships when a narrower read model is unavailable.
+
+## Layer Impact
+
+- `global-control-lane`: updates the shared `/api/intelligence/ask` route behavior when the caller is the Home surface and asks a KNOW-mode question.
+- `client-data-lane`: reads existing Home KNOW read models and relationship rows for all tenant-specific table/chart/graph artifacts; no schema or data migration is included.
+
+## Client Applicability
+
+- All clients: yes, applies to all tenants using the shared Home KNOW and Intelligence ask route.
+- Specific clients: none.
+- Internal only: no.
+- Public/demo only: no.
+- Feature flag: none; this is mode isolation for Home-surface requests only.
+
+## Changes Included
+
+- Extends the shared Home KNOW contract with typed chart metadata and graph artifacts.
+- Adds deterministic graph assembly from `enterprise_context_relationships` plus display labels from `enterprise_context_records`.
+- Adds deterministic chart assembly from Home read models and explicit caveats for missing fields.
+- Adds a Home KNOW to `AgentAnswer` adapter and routes Home KNOW requests through it in `/api/intelligence/ask`.
+- Strengthens `scripts/qa/reality-crawl.mjs` to fail missing chart/graph artifacts, DECIDE-template leakage, raw IDs, and unresolved citation labels.
+- Follow-up: expands Home KNOW mode detection for data, analytics, applications, systems, vendors, contracts, cloud, infrastructure, security, budget, initiatives, and automation questions.
+- Follow-up: preserves source-row citations before coverage citations so lookup answers point first to the loaded evidence row.
+- Follow-up: adds record-distribution chart fallback and broader relationship graph fallback with explicit caveats/gaps instead of empty visual answers.
+
+## QA / Validation
+
+- `npx eslint src/lib/home/know/home-know-contract.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/home-know-agent-answer.ts src/app/api/intelligence/ask/route.ts src/app/api/home/know/ask/route.ts scripts/qa/reality-crawl.mjs` passed.
+- `npm test -- --runTestsByPath src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand` passed, with pre-existing duplicate manual mock warnings.
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` reached the repo's known ambient declaration gaps (`js-yaml`, `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`) and did not surface touched-file diagnostics.
+- Deployed #3904 baseline crawl: `190/290` overall, tables `47/50`, charts `30/50`, graphs `32/40`, data+strategy `42/100`, fence `20/20`.
+- Follow-up local validation: `npx eslint src/lib/home/know/home-know-engine.ts src/lib/home/know/home-know-agent-answer.ts` passed.
+- Follow-up local validation: `npm test -- --runTestsByPath src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand` passed 7/7, with pre-existing duplicate manual mock warnings.
+
+## Rollout Plan
+
+Merge to `main`, build the exact git SHA into an Azure Container Apps image, deploy to `ca-abarva-web-lab-eastus`, shift 100% traffic to the healthy revision, then rerun the signed-in reality crawl against `https://app.abarva.ai`.
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: required.
+- Shared runtime mutators: Azure Container Apps web runtime only.
+- Approved image digest: to be recorded after deploy.
+- ACA runtime invariant: template image, active revision image, and 100% traffic revision must match.
+- Worker image invariant: no worker image change.
+- Feature/env flag update path: none.
+- Live signed-in proof required: yes, full `scripts/qa/reality-crawl.mjs` plus report refresh.
+
+## Rollback Plan
+
+Rollback the ACA web app to the previous approved digest. No data migration or schema rollback is required.
+
+## Audit Evidence
+
+- PR URL: pending follow-up.
+- CI run: pending.
+- Deploy digest: pending.
+- Reality crawl report: current deployed baseline `out/reality-crawl/summary.json` is 190/290; refreshed HTML report pending after follow-up deploy.
+
+## Known Gaps
+
+This PR improves backend Home KNOW mode isolation and typed artifacts. It does not wire new frontend surfaces, does not change tenant data, and does not attempt the 100-question stress test. Full acceptance still requires deployed reality crawl scores to meet the target thresholds.

@@ -1,0 +1,8 @@
+source_type,label,tenant_key,period,metric,contract_baseline,current_actual,unit,trend,evidence_reference
+synthetic_demo,Synthetic demo evidence,skyharbor-air,FY26,Monthly AMS tickets,7420,8610,tickets,above baseline,ITSM export FY26 Q1-Q4
+synthetic_demo,Synthetic demo evidence,skyharbor-air,FY26,P1 restore SLA attainment,95,91.8,percent,below target,ITSM export FY26 Q1-Q4
+synthetic_demo,Synthetic demo evidence,skyharbor-air,FY26,P2 restore SLA attainment,92,93.4,percent,met,ITSM export FY26 Q1-Q4
+synthetic_demo,Synthetic demo evidence,skyharbor-air,FY26,Change success,98,96.9,percent,below target,ITSM export FY26 Q1-Q4
+synthetic_demo,Synthetic demo evidence,skyharbor-air,FY26,Reopened incidents,4.8,7.1,percent,above baseline,ITSM export FY26 Q1-Q4
+synthetic_demo,Synthetic demo evidence,skyharbor-air,FY26,Emergency changes,31,44,per month,above baseline,ITSM export FY26 Q1-Q4
+synthetic_demo,Synthetic demo evidence,skyharbor-air,FY26,Knowledge article freshness,95,87,percent,below target,ITSM export FY26 Q1-Q4

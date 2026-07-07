@@ -321,7 +321,7 @@ function VendorResponseModal({ onClose }: VendorResponseModalProps) {
               color: SHELL.INK_MUTED,
             }}
           >
-            Sentinel will extract scoring signals from this response and update the vendor comparison matrix.
+            Ava will extract scoring signals from this response and update the vendor comparison matrix.
           </span>
         </div>
 
@@ -336,7 +336,7 @@ function VendorResponseModal({ onClose }: VendorResponseModalProps) {
               letterSpacing: '0.04em',
             }}
           >
-            ✓ {vendorName} response recorded · Sentinel will process and update rankings
+            ✓ {vendorName} response recorded · Ava will process and update rankings
           </div>
         )}
 
@@ -389,15 +389,15 @@ function SourceEmptyState() {
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: 'Retail Demo',
         showLocked: true,
         context: 'Source · No active events',
       }}
     >
       <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Source Coordinator' }}
+        agent={{ initials: 'aV', name: 'aVa', role: 'Source advisor' }}
         quote="No source events have been created for this tenant yet. Source events track structured procurement and vendor activity — from initial planning through award and onboarding."
-        agentContext="Steward · Source · No events · Apr 27 2026"
+        agentContext="Source workspace · No active events"
         actions={[
           { letter: 'A', text: 'Originate a source event', detail: 'Start a new vendor consolidation or procurement exercise' },
           { letter: 'B', text: 'Browse event templates', detail: 'Pre-configured event structures for common source types' },
@@ -491,7 +491,7 @@ export function SourceIndexPage() {
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: 'Retail Demo',
         showLocked: true,
         context: 'Source · AMS Vendor Consolidation 2026 · BAFO',
       }}

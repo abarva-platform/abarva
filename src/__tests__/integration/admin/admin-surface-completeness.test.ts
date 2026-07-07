@@ -101,9 +101,10 @@ describe('buildAdminPanelInventory()', () => {
     expect(panel!.componentPath).toBe('src/components/admin/DeploymentStatusCard.tsx')
   })
 
-  test('Steward Setup Control Center panel is present with correct slice', () => {
+  test('Steward Admin Control Center panel is present with correct slice', () => {
     const panel = panels.find((p) => p.panelId === 'steward-setup-control-center')
     expect(panel).toBeDefined()
+    expect(panel!.label).toBe('Steward Admin Control Center')
     expect(panel!.sliceId).toBe('ADM6')
     expect(panel!.status).toBe('implemented')
     expect(panel!.componentPath).toBe('src/components/admin/StewardSetupControlCenter.tsx')

@@ -161,12 +161,16 @@ export function gateCriteriaForPhase(fromPhase: number): GateRuleCriterion[] | n
   return rule.checks.map((c) => ({ key: c.key, describe: c.describe, severity: c.severity }));
 }
 
-async function hasProgramEvidence(programId: string, phase: number, sb: SupabaseClient): Promise<boolean> {
+async function hasProgramEvidence(programId: string, phase: number | number[], sb: SupabaseClient): Promise<boolean> {
+  // Discovery / current-state evidence is ingested with an inconsistent phase tag
+  // across routes (current-state/ingest → 1, …/orchestrate → 2). Accept any of the
+  // supplied phases so a gate check isn't starved by which intake route was used.
+  const phases = Array.isArray(phase) ? phase : [phase];
   const { data } = await sb
     .from('program_evidence_items')
     .select('id')
     .eq('program_id', programId)
-    .eq('phase', phase)
+    .in('phase', phases)
     .limit(1);
   return ((data as Array<{ id: string }> | null) ?? []).length > 0;
 }
@@ -387,7 +391,7 @@ export async function evaluateGate(
       case 'discovery_notes_ingested':
         pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
           moduleCompleted('discovery_notes_ingest', 'workshop_notes_ingest') ||
-          (await hasProgramEvidence(programId, 1, sb)) ||
+          (await hasProgramEvidence(programId, [1, 2], sb)) ||
           discoveryReportHasWorkshopEvidence;
         break;
       case 'current_state_summary_drafted':

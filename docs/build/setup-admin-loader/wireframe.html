@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin Loader — wireframe</title>
+<style>
+  :root{--bg:#F8F7F4;--ink:#1a1a1a;--muted:#6b6b6b;--line:#e3e0d8;--card:#fff;--good:#0f766e;--warn:#b45309;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto;padding:36px 22px 80px}
+  h1{font-family:Georgia,serif;font-weight:400;font-size:30px;margin:0 0 4px}
+  h2{font-family:Georgia,serif;font-weight:400;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:40px 0 10px}
+  .sub{color:var(--muted);margin:0 0 6px;font-size:14px}
+  /* the "screen" frame */
+  .screen{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .ttl{font-family:Georgia,serif;font-size:22px;margin:0 0 4px}
+  .note{font-size:12.5px;color:var(--muted);background:#efece5;border-radius:8px;padding:8px 12px;margin:10px 0 0}
+  .note b{color:var(--ink)}
+  .btn{display:inline-block;background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:9px;padding:10px 18px;font-size:14px;font-weight:600;text-decoration:none}
+  .ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .link{color:var(--ink);font-size:13px;text-decoration:underline;text-underline-offset:3px;margin-right:18px}
+  /* drop zone */
+  .drop{border:2px dashed #cfcabf;border-radius:14px;padding:54px 20px;text-align:center;background:#fcfbf8}
+  .drop .big{font-family:Georgia,serif;font-size:24px;margin:6px 0}
+  .drop .hint{color:var(--muted);font-size:14px;margin:4px 0 18px}
+  /* table */
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+  th,td{border-bottom:1px solid var(--line);padding:10px 8px;text-align:left}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .chip{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--line)}
+  .hi{color:var(--good);border-color:#bfe0da} .lo{color:var(--warn);border-color:#eccfa6}
+  .sel{border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-size:13px;background:#fff;display:inline-block}
+  .banner{display:flex;justify-content:space-between;align-items:center;background:#f4f1ea;border-radius:10px;padding:12px 16px;margin:4px 0 14px}
+  .pill{display:inline-block;font-size:11px;padding:3px 10px;border-radius:999px;background:#eef6f4;color:var(--good);margin-right:6px}
+  .pill.todo{background:#f0eee8;color:var(--muted)}
+  .q{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;background:#fcfbf8}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#efece5;padding:2px 6px;border-radius:5px}
+</style></head>
+<body><div class="wrap">
+<h1>Admin Loader — wireframe</h1>
+<p class="sub">Low-fidelity. Locked design system (off-white · Georgia · DM Sans · black/ghost buttons). Flow: Add → Understanding → Here's what I found → Loaded.</p>
+
+<h2>Screen 1 · Add your data (empty state)</h2>
+<div class="screen">
+  <div class="ttl">Add Meridian's data</div>
+  <p class="sub">Drop your files. I'll figure out what they are.</p>
+  <div class="drop">
+    <div class="big">Drop files or a ZIP here</div>
+    <div class="hint">CSV · Excel · PDF · PowerPoint · Word — one file or a whole folder. No template needed.</div>
+    <a class="btn">Choose files</a>
+  </div>
+  <div style="margin-top:14px">
+    <a class="link">Load into a specific area ▾</a>
+    <a class="link">Use Azure Storage (advanced)</a>
+  </div>
+  <div class="note"><b>Apple-simple:</b> one primary action, no template picker, no dimension required up front. The two secondary links are the power-user + IT on-ramps (progressive disclosure).</div>
+</div>
+
+<h2>Screen 2 · Understanding</h2>
+<div class="screen">
+  <div class="ttl">Reading 12 files…</div>
+  <p class="sub">Preserving originals · parsing · understanding what each file is.</p>
+  <div class="row"><span class="pill">Preserved in Blob ✓</span><span class="pill">Parsed 12/12 ✓</span><span class="pill todo">Understanding…</span></div>
+  <div class="note"><b>Calm progress</b>, file counts not spinners. Originals are already safe in Blob (Gate 0) before anything else happens.</div>
+</div>
+
+<h2>Screen 3 · Here's what I found (the only screen they act on)</h2>
+<div class="screen">
+  <div class="banner"><div><b>10 ready · 2 need a quick answer</b></div><a class="btn">Answer 2 questions</a></div>
+  <table>
+    <tr><th>File</th><th>Area</th><th>Facts</th><th>Confidence</th><th></th></tr>
+    <tr><td>cmdb_export.xlsx</td><td><span class="sel">Applications / Systems ▾</span></td><td>412</td><td><span class="chip hi">High ✓</span></td><td><a class="link">preview</a></td></tr>
+    <tr><td>vendors_contracts.csv</td><td><span class="sel">Vendors / Contracts ▾</span></td><td>286</td><td><span class="chip hi">High ✓</span></td><td><a class="link">preview</a></td></tr>
+    <tr><td>leadership.pdf<br/><span class="chip lo" style="margin-top:4px">⚠ Steward: two people titled "CFO" — pick current</span></td><td><span class="sel">Org & Leadership ▾</span></td><td>38</td><td><span class="chip hi">High ✓</span></td><td><a class="link">resolve</a></td></tr>
+    <tr><td>Q3_board.pptx</td><td><span class="sel lo">needs answer ▾</span></td><td>—</td><td><span class="chip lo">Low ⚠</span></td><td><a class="link">ask Steward</a></td></tr>
+    <tr><td>budget_2026.xlsx<br/><span class="chip lo" style="margin-top:4px">⚠ Steward: IT budget reads 0.3% of revenue — confirm</span></td><td><span class="sel">Financial baseline ▾</span></td><td>54</td><td><span class="chip lo">Med — confirm</span></td><td><a class="link">preview</a></td></tr>
+  </table>
+  <div class="note"><b>One table, 1 file or 30.</b> Area is a dropdown pre-filled with the AI's pick (one-tap correct). "preview" shows source-column → canonical-field mapping with citations. <b>Steward (the Setup agent)</b> adds open-ended validation flags inline — conflicts, realism, implied gaps — each a one-tap confirm/correct. A file it can't resolve inline routes to <i>ask Steward</i> (Screen 7). Primary button: <i>Answer N questions</i> → <i>Confirm & load 12</i>.</div>
+</div>
+
+<h2>Screen 4 · Clarify (only the low-confidence ones, batched)</h2>
+<div class="screen">
+  <div class="ttl">Two quick questions</div>
+  <div class="q"><div><b>Q3_board.pptx</b> — I think this is <b>Financials</b>. Is that right?</div>
+    <div class="row" style="margin-top:8px"><span class="sel">Financials ▾</span><a class="link">Skip this file</a></div></div>
+  <div class="q"><div><b>budget_2026.xlsx</b> — the column <span class="mono">Amount</span>: annual value or monthly run-rate?</div>
+    <div class="row" style="margin-top:8px"><span class="sel">Annual contract value ▾</span></div></div>
+  <div class="row" style="margin-top:6px"><a class="btn">Confirm & load 12</a><a class="link">Back to review</a></div>
+  <div class="note"><b>Mapping questions only</b> — never "supply the missing number." Best guess pre-selected. Skipping leaves a file un-ingested (no half-commit).</div>
+</div>
+
+<h2>Screen 5 · Loaded</h2>
+<div class="screen">
+  <div class="ttl">Loaded ✓</div>
+  <p class="sub">12 files · 838 facts · originals preserved · sources cited.</p>
+  <div class="row" style="margin:6px 0 4px">
+    <span class="pill">Preserved ✓</span><span class="pill">Parsed ✓</span><span class="pill">Committed ✓</span><span class="pill">Indexed ✓</span><span class="pill">Answerable ✓</span>
+  </div>
+  <div class="row" style="margin-top:12px"><a class="btn">Ask Sentinel a question</a><a class="ghost btn">Add more data</a></div>
+  <div class="note"><b>Honest state pills</b> (the intake state machine, rendered calmly). "Answerable" is the real done — proven by the golden questions.</div>
+</div>
+
+<h2>Screen 6 · Azure Storage (IT exception — direct-to-Blob)</h2>
+<div class="screen">
+  <div class="ttl">Use your own tools</div>
+  <p class="sub">Prefer Azure Storage Explorer or azcopy? Upload straight to your governed landing zone — we'll ingest it the same way.</p>
+  <div class="row" style="margin:4px 0"><span class="mono">landing/meridian-health/inbox/</span><a class="link">Open in Azure Storage Explorer</a><a class="link">Copy azcopy command</a></div>
+  <div class="banner" style="margin-top:14px"><div><b>3 new files detected in your landing zone</b></div><a class="btn">Review &amp; ingest</a></div>
+  <div class="note"><b>Same pipeline, different on-ramp.</b> Because the bytes are already in Blob, Gate 0 (preservation) is satisfied by construction. Files flow into the <i>same</i> "Here's what I found" review (Screen 3). Auto-pickup via Event Grid also supported; this button is the manual "process one time."</div>
+</div>
+
+<h2>Screen 7 · Ask Steward (scoped dock — the escalation path)</h2>
+<div class="screen">
+  <div class="row" style="justify-content:space-between;align-items:flex-start">
+    <div style="flex:1;min-width:240px">
+      <div class="ttl" style="font-size:18px">Q3_board.pptx</div>
+      <p class="sub" style="font-size:13px">Parsed preview · 18 slides · tables on 4, 9, 12</p>
+      <div class="mono" style="display:block;padding:10px;white-space:pre-wrap;font-size:11.5px">Slide 9 · "FY26 Financial Plan"
+Net revenue 11.2B · Op margin 1.8%→4.0%
+IT transformation $84M · …</div>
+    </div>
+    <div style="flex:1;min-width:300px;border-left:1px solid var(--line);padding-left:18px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Ask Steward · scoped to this file</div>
+      <div class="q" style="background:#f4f1ea">Steward: This looks like a board strategy deck — mostly <b>Financials</b> + some <b>Initiatives/Roadmap</b>. The slide-9 table reads as financial baseline. Load it as <b>Financials</b>, and pull the roadmap items into <b>Initiatives</b>?</div>
+      <div class="q" style="margin-left:24px">You: yes — and the $84M is the IT transformation program, not run-rate.</div>
+      <div class="q" style="background:#f4f1ea">Steward: Got it — mapping $84M → <span class="mono">initiative.budget</span> (program), not <span class="mono">spend.run_rate</span>. 12 facts ready, each cited to its slide. Confirm?</div>
+      <div class="row" style="margin-top:8px"><a class="btn">Confirm mapping</a><a class="link">Back to review</a></div>
+    </div>
+  </div>
+  <div class="note"><b>Escalation, not the front door.</b> Opens only when a file can't be resolved by an inline flag (multi-step ambiguity, a conflict, or you tap "ask Steward"). Scoped to one file, carries its parsed preview, writes the resolved mapping back into Screen 3. Anthropic-only; the whole exchange is saved as provenance ("how this fact came to be"); document facts still go through review. Most uploads never reach this screen.</div>
+</div>
+
+<p style="font-size:12px;color:var(--muted);margin-top:34px;border-top:1px solid var(--line);padding-top:12px">Wireframe only — low fidelity, for workflow review. Visual system is the locked AbarVa design language; final UI inherits the production component library. Spec: <span class="mono">UX_WORKFLOW.md</span>.</p>
+</div></body></html>

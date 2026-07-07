@@ -1,0 +1,145 @@
+{
+  "version": "2026-06",
+  "status": "non_mutating_scaffold",
+  "purpose": "Verifier-backed what-if and evidence packet for product-dev, product-preview, and product-prod subscription baselines before any Azure subscription is created.",
+  "hardRule": "This packet may be used to prepare commands and evidence paths only. It must not create subscriptions, assign RBAC, create budgets, deploy resources, change DNS, or shift traffic without a separate explicit approval.",
+  "sourceOfTruth": {
+    "factoryManifest": "docs/azure/ENVIRONMENT_FACTORY_MANIFEST_2026-06.json",
+    "executionLedger": "docs/azure/ENVIRONMENT_EXECUTION_LEDGER_TEMPLATE_2026-06.json",
+    "namingBudgetModel": "docs/azure/ENVIRONMENT_NAMING_TAGGING_BUDGETS_2026-06.json",
+    "identityRbacModel": "docs/azure/ENVIRONMENT_IDENTITY_RBAC_MODEL_2026-06.json",
+    "subscriptionCommandPacket": "docs/azure/PRODUCT_SUBSCRIPTION_COMMAND_PACKET_2026-06.md"
+  },
+  "approvalGates": [
+    "subscription_creation",
+    "management_group_assignment",
+    "broad_rbac_assignment",
+    "budget_creation_or_increase",
+    "resource_deployment",
+    "product_prod_deploy",
+    "dns_change",
+    "traffic_shift"
+  ],
+  "environmentOrder": ["product-dev", "product-preview", "product-prod"],
+  "environmentWhatIfPlans": [
+    {
+      "environmentKey": "product-dev",
+      "subscriptionDisplayName": "sub-abarva-product-dev-eus-001",
+      "managementGroupTarget": "abarva-product",
+      "monthlyBudgetUsd": 500,
+      "whatIfOnly": true,
+      "requiredBeforeWhatIf": [
+        "approved_subscription_id_placeholder_or_real_id_after_creation",
+        "approved_region",
+        "approved_budget_owner",
+        "approved_cost_center",
+        "approved_policy_bundle",
+        "approved_rbac_bundle"
+      ],
+      "templateCommands": {
+        "setSubscriptionContext": "az account set --subscription \"<product-dev-subscription-id>\"",
+        "subscriptionFoundationWhatIf": "az deployment sub what-if --location eastus --template-file infra/azure/foundation.bicep --parameters tags=@<generated-product-dev-tags.json>",
+        "appRuntimeWhatIf": "az deployment sub what-if --location eastus --template-file infra/azure/app-runtime-foundation.bicep --parameters tags=@<generated-product-dev-tags.json>",
+        "budgetEvidenceRead": "az consumption budget list --subscription \"<product-dev-subscription-id>\" -o json",
+        "policyEvidenceRead": "az policy assignment list --subscription \"<product-dev-subscription-id>\" -o json",
+        "rbacEvidenceRead": "az role assignment list --subscription \"<product-dev-subscription-id>\" -o json"
+      },
+      "expectedEvidence": [
+        "what_if_foundation_json",
+        "what_if_app_runtime_json",
+        "policy_assignment_export",
+        "budget_export",
+        "rbac_export",
+        "tag_export",
+        "execution_ledger_reference"
+      ]
+    },
+    {
+      "environmentKey": "product-preview",
+      "subscriptionDisplayName": "sub-abarva-product-preview-eus-001",
+      "managementGroupTarget": "abarva-product",
+      "monthlyBudgetUsd": 500,
+      "whatIfOnly": true,
+      "requiredBeforeWhatIf": [
+        "product_dev_verified_or_explicit_waiver",
+        "approved_subscription_id_placeholder_or_real_id_after_creation",
+        "approved_region",
+        "approved_budget_owner",
+        "approved_cost_center",
+        "approved_policy_bundle",
+        "approved_rbac_bundle",
+        "release_candidate_gate_definition"
+      ],
+      "templateCommands": {
+        "setSubscriptionContext": "az account set --subscription \"<product-preview-subscription-id>\"",
+        "subscriptionFoundationWhatIf": "az deployment sub what-if --location eastus --template-file infra/azure/foundation.bicep --parameters tags=@<generated-product-preview-tags.json>",
+        "appRuntimeWhatIf": "az deployment sub what-if --location eastus --template-file infra/azure/app-runtime-foundation.bicep --parameters tags=@<generated-product-preview-tags.json>",
+        "budgetEvidenceRead": "az consumption budget list --subscription \"<product-preview-subscription-id>\" -o json",
+        "policyEvidenceRead": "az policy assignment list --subscription \"<product-preview-subscription-id>\" -o json",
+        "rbacEvidenceRead": "az role assignment list --subscription \"<product-preview-subscription-id>\" -o json"
+      },
+      "expectedEvidence": [
+        "what_if_foundation_json",
+        "what_if_app_runtime_json",
+        "policy_assignment_export",
+        "budget_export",
+        "rbac_export",
+        "tag_export",
+        "release_candidate_gate_export",
+        "execution_ledger_reference"
+      ]
+    },
+    {
+      "environmentKey": "product-prod",
+      "subscriptionDisplayName": "sub-abarva-product-prod-eus-001",
+      "managementGroupTarget": "abarva-product",
+      "monthlyBudgetUsd": 500,
+      "whatIfOnly": true,
+      "requiredBeforeWhatIf": [
+        "product_preview_verified_or_explicit_waiver",
+        "approved_subscription_id_placeholder_or_real_id_after_creation",
+        "approved_region",
+        "approved_budget_owner",
+        "approved_cost_center",
+        "approved_policy_bundle",
+        "approved_rbac_bundle",
+        "rollback_plan",
+        "explicit_public_cutover_approval_placeholder"
+      ],
+      "templateCommands": {
+        "setSubscriptionContext": "az account set --subscription \"<product-prod-subscription-id>\"",
+        "subscriptionFoundationWhatIf": "az deployment sub what-if --location eastus --template-file infra/azure/foundation.bicep --parameters tags=@<generated-product-prod-tags.json>",
+        "appRuntimeWhatIf": "az deployment sub what-if --location eastus --template-file infra/azure/app-runtime-foundation.bicep --parameters tags=@<generated-product-prod-tags.json>",
+        "budgetEvidenceRead": "az consumption budget list --subscription \"<product-prod-subscription-id>\" -o json",
+        "policyEvidenceRead": "az policy assignment list --subscription \"<product-prod-subscription-id>\" -o json",
+        "rbacEvidenceRead": "az role assignment list --subscription \"<product-prod-subscription-id>\" -o json"
+      },
+      "expectedEvidence": [
+        "what_if_foundation_json",
+        "what_if_app_runtime_json",
+        "policy_assignment_export",
+        "budget_export",
+        "rbac_export",
+        "tag_export",
+        "rollback_plan_export",
+        "execution_ledger_reference"
+      ]
+    }
+  ],
+  "forbiddenCommandPrefixesWithoutSeparateApproval": [
+    "az account alias create",
+    "az account management-group subscription add",
+    "az role assignment create",
+    "az consumption budget create",
+    "az deployment sub create",
+    "az deployment group create",
+    "az containerapp update",
+    "az containerapp ingress traffic set",
+    "az network dns"
+  ],
+  "verification": {
+    "script": "scripts/azure/verify-product-baseline-whatif-packet.mjs",
+    "npmScript": "npm run azure:product-baseline-whatif:verify",
+    "ciExpectation": "pass"
+  }
+}

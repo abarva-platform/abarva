@@ -61,22 +61,26 @@
     .topbar {
       position: fixed;
       top: 0; left: 0; right: 0;
-      height: 52px;
-      background: var(--navy);
+      height: 64px;
+      background: #020304;
       display: flex;
       align-items: center;
-      padding: 0 24px;
-      gap: 16px;
+      padding: 0 32px;
+      gap: 20px;
       z-index: 200;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.24);
     }
     .topbar-brand {
-      font-family: var(--f-disp);
-      font-size: 20px;
-      font-weight: 400;
-      color: #fff;
-      letter-spacing: -0.01em;
+      display: inline-flex;
+      align-items: center;
       text-decoration: none;
+      flex-shrink: 0;
+    }
+    .topbar-brand img {
+      width: 126px;
+      height: auto;
+      display: block;
     }
     .topbar-sep { color: rgba(255,255,255,0.25); font-size: 18px; }
     .topbar-title {
@@ -87,19 +91,29 @@
       text-transform: uppercase;
       color: rgba(255,255,255,0.6);
     }
-    .topbar-search {
+    .topbar-actions {
       margin-left: auto;
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 6px;
-      padding: 5px 12px;
-      color: rgba(255,255,255,0.55);
+      gap: 18px;
       font-family: var(--f-body);
       font-size: 12px;
-      cursor: default;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .topbar-actions a {
+      color: rgba(255,255,255,0.72);
+      text-decoration: none;
+    }
+    .topbar-actions a:hover {
+      color: #fff;
+    }
+    .topbar-actions .topbar-cta {
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 999px;
+      padding: 8px 14px;
+      color: #fff;
     }
 
     /* ═══════════════════════════════════
@@ -107,7 +121,7 @@
     ═══════════════════════════════════ */
     .layout {
       display: flex;
-      padding-top: 52px;
+      padding-top: 64px;
       min-height: 100vh;
     }
 
@@ -118,7 +132,7 @@
       width: var(--nav-w);
       flex-shrink: 0;
       position: fixed;
-      top: 52px;
+      top: 64px;
       bottom: 0;
       left: 0;
       overflow-y: auto;
@@ -851,7 +865,15 @@
       align-items: center;
       justify-content: space-between;
     }
-    .doc-footer-brand { font-family: var(--f-disp); font-size: 16px; color: var(--navy); }
+    .doc-footer-brand {
+      display: inline-flex;
+      align-items: center;
+    }
+    .doc-footer-brand img {
+      width: 88px;
+      height: auto;
+      display: block;
+    }
     .doc-footer-meta  { font-family: var(--f-mono); font-size: 10px; color: var(--faint); }
 
     /* ═══════════════════════════════════
@@ -879,6 +901,10 @@
     @media (max-width: 900px) {
       :root { --nav-w: 0px; }
       .leftnav { display: none; }
+      .topbar { padding: 0 20px; }
+      .topbar-title { display: none; }
+      .topbar-actions { gap: 10px; font-size: 11px; }
+      .topbar-actions a:not(.topbar-cta) { display: none; }
       .content { margin-left: 0; }
       .section, .section-band { padding: 48px 28px; }
       .phase-grid { grid-template-columns: 1fr; }
@@ -895,10 +921,16 @@
 
 <!-- ════ TOP BAR ════ -->
 <header class="topbar">
-  <span class="topbar-brand">AbarVa</span>
+  <a class="topbar-brand" href="/product" aria-label="AbarVa product page">
+    <img src="../brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg" alt="AbarVa" />
+  </a>
   <span class="topbar-sep">·</span>
   <span class="topbar-title">User Guide</span>
-  <div class="topbar-search">🔍&nbsp; Search this guide…</div>
+  <nav class="topbar-actions" aria-label="Training quick links">
+    <a href="/product">Product</a>
+    <a href="/training/how-to-create-a-move.html">Training</a>
+    <a class="topbar-cta" href="/sign-in">Sign in</a>
+  </nav>
 </header>
 
 <div class="layout">
@@ -1769,7 +1801,7 @@
 </div><!-- /layout -->
 
 <footer class="doc-footer">
-  <span class="doc-footer-brand">AbarVa</span>
+  <span class="doc-footer-brand"><img src="../brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg" alt="AbarVa" /></span>
   <span class="doc-footer-meta">User Guide · v2.0 · 2026-05-08</span>
 </footer>
 

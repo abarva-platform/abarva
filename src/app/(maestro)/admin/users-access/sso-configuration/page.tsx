@@ -17,7 +17,7 @@ import { AgentRail } from '@/components/admin/AgentRail';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const metadata = {
-  title: 'Configure SSO | AbarVa Setup',
+  title: 'Configure SSO | AbarVa Admin',
 };
 
 export default async function SsoConfigurationPage() {
@@ -148,11 +148,11 @@ export default async function SsoConfigurationPage() {
                 <strong>Sponsor access to Tower briefs.</strong> Executive sponsors can read scorecards and pressure cards.
               </li>
               <li>
-                <strong>Cross-tenant role assignment.</strong> Platform admins can manage role assignments across tenants.
+                <strong>Single-client role assignment.</strong> Tenant admins can manage role assignments only inside {tenant.tenantName}.
               </li>
             </ul>
             <p style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: `${COLORS.ink}cc`, margin: 0, lineHeight: 1.6 }}>
-              Until SSO is configured, the user roster is read-only and reflects deterministic seed data. Live invite and revoke pipelines come online with Wave 27 once SSO is live and the audit event store ships.
+              Until SSO is configured, the user roster is read-only and reflects prepared setup data. Live invite and revoke actions come online after SSO and audit logging are fully enabled.
             </p>
           </section>
 

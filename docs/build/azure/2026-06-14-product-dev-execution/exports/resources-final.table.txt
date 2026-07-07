@@ -1,0 +1,3 @@
+Name                    ResourceGroup                               Location    Type                       Status
+----------------------  ------------------------------------------  ----------  -------------------------  ---------
+kv-abarva-pdev-eus-001  rg-abarva-controlplane-product-dev-eus-001  eastus      Microsoft.KeyVault/vaults  Succeeded

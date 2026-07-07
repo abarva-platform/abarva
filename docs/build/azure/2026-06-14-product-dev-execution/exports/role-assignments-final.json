@@ -1,0 +1,21 @@
+[
+  {
+    "condition": null,
+    "conditionVersion": null,
+    "createdBy": "",
+    "createdOn": "2026-06-15T02:03:33.285600+00:00",
+    "delegatedManagedIdentityResourceId": null,
+    "description": null,
+    "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/providers/Microsoft.Authorization/roleAssignments/59b2df14-d3da-477c-a619-9bd850f966c0",
+    "name": "59b2df14-d3da-477c-a619-9bd850f966c0",
+    "principalId": "dafa217b-8d21-4e15-9efb-40b9517bd959",
+    "principalName": "anand.sundaram_thesundaram.com#EXT#@anandsundaramthesundaram.onmicrosoft.com",
+    "principalType": "User",
+    "roleDefinitionId": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+    "roleDefinitionName": "Owner",
+    "scope": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401",
+    "type": "Microsoft.Authorization/roleAssignments",
+    "updatedBy": "",
+    "updatedOn": "2026-06-15T02:03:33.285600+00:00"
+  }
+]

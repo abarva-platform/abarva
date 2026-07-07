@@ -1,8 +1,9 @@
-import 'server-only';
+import "server-only";
 
-import type { PoolClient } from 'pg';
-import { azureRead } from '@/lib/data-plane/azureRead';
-import type { TenancyCtx } from '@/lib/programs/types.db';
+import type { PoolClient } from "pg";
+import { azureRead } from "@/lib/data-plane/azureRead";
+import type { TenancyCtx } from "@/lib/programs/types.db";
+import { buildTowerAiOpsCostLedgerFromValueLayers } from "@/lib/tower/ai-ops-cost-ledger";
 import {
   buildLayerState,
   buildProjectedAndTrackedCells,
@@ -10,8 +11,8 @@ import {
   sumLayerHours,
   sumLayerUsd,
   type TowerValueTelemetry,
-} from './calculations';
-import { firstRow, toRecord, withValueStateTransaction } from './db';
+} from "./calculations";
+import { firstRow, toRecord, withValueStateTransaction } from "./db";
 import {
   VALUE_LAYER_DEFINITIONS,
   VALUE_STATE_LAYERS,
@@ -22,7 +23,7 @@ import {
   type ValueLayerState,
   type ValueStateCell,
   type ValueStateLayer,
-} from './types';
+} from "./types";
 
 type MoveRow = {
   id: string;
@@ -31,7 +32,7 @@ type MoveRow = {
   lifecycle_state: string | null;
   current_phase: number | null;
   current_gate: string | null;
-  template_kind: 'Move' | 'SourceWorkflow' | null;
+  template_kind: "Move" | "SourceWorkflow" | null;
   template_slug: string | null;
   template_name: string | null;
 };
@@ -79,7 +80,6 @@ const PORTFOLIO_ROWS_SQL = `
       LEFT JOIN public.move_instances mi
         ON mi.engagement_id = e.id
        AND mi.client_id = e.client_id
-       AND mi.deleted_at IS NULL
       LEFT JOIN public.move_templates mt
         ON mt.id = mi.template_id
       LEFT JOIN public.value_states vs
@@ -117,14 +117,14 @@ function p10ArrowsSql(hasMoveFilter: boolean): string {
       JOIN public.engagements to_move ON to_move.id = md.to_move_id
       WHERE md.client_id = $1
         AND md.deleted_at IS NULL
-        ${hasMoveFilter ? 'AND (md.from_move_id = ANY($2::uuid[]) OR md.to_move_id = ANY($2::uuid[]))' : ''}
+        ${hasMoveFilter ? "AND (md.from_move_id = ANY($2::uuid[]) OR md.to_move_id = ANY($2::uuid[]))" : ""}
       ORDER BY from_move.name ASC, to_move.name ASC
     `;
 }
 
 function asNumber(value: unknown): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
@@ -132,30 +132,45 @@ function asNumber(value: unknown): number {
 }
 
 function isUuid(value: string | null | undefined): boolean {
-  return Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value));
+  return Boolean(
+    value &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value,
+    ),
+  );
 }
 
-export function canAttestTowerValue(ctx: Pick<TenancyCtx, 'role' | 'email'>): boolean {
-  const role = (ctx.role ?? '').toLowerCase();
-  const email = (ctx.email ?? '').toLowerCase();
-  return [
-    'cfo',
-    'finance',
-    'finance_admin',
-    'client_admin',
-    'tenant_admin',
-    'admin',
-    'maestro',
-  ].includes(role) || email.includes('cfo');
+export function canAttestTowerValue(
+  ctx: Pick<TenancyCtx, "role" | "email">,
+): boolean {
+  const role = (ctx.role ?? "").toLowerCase();
+  const email = (ctx.email ?? "").toLowerCase();
+  return (
+    [
+      "cfo",
+      "finance",
+      "finance_admin",
+      "client_admin",
+      "tenant_admin",
+      "admin",
+      "maestro",
+    ].includes(role) || email.includes("cfo")
+  );
 }
 
 function clientKeyForAudit(ctx: TenancyCtx): string {
   return ctx.clientKey?.trim() || ctx.clientId;
 }
 
-async function getMove(client: PoolClient, clientId: string, moveId: string): Promise<MoveRow | null> {
-  return firstRow((await client.query<MoveRow>(
-    `
+async function getMove(
+  client: PoolClient,
+  clientId: string,
+  moveId: string,
+): Promise<MoveRow | null> {
+  return firstRow(
+    (
+      await client.query<MoveRow>(
+        `
       SELECT
         e.id,
         e.name,
@@ -170,7 +185,6 @@ async function getMove(client: PoolClient, clientId: string, moveId: string): Pr
       LEFT JOIN public.move_instances mi
         ON mi.engagement_id = e.id
        AND mi.client_id = e.client_id
-       AND mi.deleted_at IS NULL
       LEFT JOIN public.move_templates mt
         ON mt.id = mi.template_id
       WHERE e.client_id = $1
@@ -178,19 +192,18 @@ async function getMove(client: PoolClient, clientId: string, moveId: string): Pr
         AND e.deleted_at IS NULL
       LIMIT 1
     `,
-    [clientId, moveId],
-  )).rows);
+        [clientId, moveId],
+      )
+    ).rows,
+  );
 }
 
-async function getTelemetry(client: PoolClient, clientId: string, moveId: string): Promise<TowerValueTelemetry> {
-  const [
-    app,
-    roles,
-    dora,
-    tools,
-    discovery,
-    kill,
-  ] = await Promise.all([
+async function getTelemetry(
+  client: PoolClient,
+  clientId: string,
+  moveId: string,
+): Promise<TowerValueTelemetry> {
+  const [app, roles, dora, tools, discovery, kill] = await Promise.all([
     client.query<{
       application_count: string;
       modern_app_count: string;
@@ -347,9 +360,14 @@ async function getTelemetry(client: PoolClient, clientId: string, moveId: string
   };
 }
 
-async function getValueRows(client: PoolClient, clientId: string, moveId: string): Promise<ValueStateRow[]> {
-  return (await client.query<ValueStateRow>(
-    `
+async function getValueRows(
+  client: PoolClient,
+  clientId: string,
+  moveId: string,
+): Promise<ValueStateRow[]> {
+  return (
+    await client.query<ValueStateRow>(
+      `
       SELECT id, layer_type, projected_jsonb, tracked_jsonb, verified_jsonb, updated_at
       FROM public.value_states
       WHERE client_id = $1
@@ -357,15 +375,19 @@ async function getValueRows(client: PoolClient, clientId: string, moveId: string
         AND deleted_at IS NULL
       ORDER BY array_position($3::value_state_layer_type[], layer_type)
     `,
-    [clientId, moveId, VALUE_STATE_LAYERS],
-  )).rows;
+      [clientId, moveId, VALUE_STATE_LAYERS],
+    )
+  ).rows;
 }
 
 async function upsertProjectedTrackedRows(
   client: PoolClient,
   ctx: TenancyCtx,
   moveId: string,
-  computed: Record<ValueStateLayer, { projected: ValueStateCell; tracked: ValueStateCell }>,
+  computed: Record<
+    ValueStateLayer,
+    { projected: ValueStateCell; tracked: ValueStateCell }
+  >,
 ): Promise<void> {
   for (const layer of VALUE_STATE_LAYERS) {
     const cells = computed[layer];
@@ -403,19 +425,22 @@ async function upsertProjectedTrackedRows(
 function rowsToLayers(
   moveId: string,
   rows: ValueStateRow[],
-  computed: Record<ValueStateLayer, { projected: ValueStateCell; tracked: ValueStateCell }>,
+  computed: Record<
+    ValueStateLayer,
+    { projected: ValueStateCell; tracked: ValueStateCell }
+  >,
 ): ValueLayerState[] {
   const byLayer = new Map(rows.map((row) => [row.layer_type, row]));
   return VALUE_STATE_LAYERS.map((layer) => {
     const row = byLayer.get(layer);
     const fallback = computed[layer];
     const verifiedFallback = {
-      kind: 'verified' as const,
+      kind: "verified" as const,
       value: null,
       unit: VALUE_LAYER_DEFINITIONS[layer].format,
-      label: 'Not attested',
-      confidence: 'stub' as const,
-      basis: 'CFO attestation has not been recorded for this value layer.',
+      label: "Not attested",
+      confidence: "stub" as const,
+      basis: "CFO attestation has not been recorded for this value layer.",
       computedAt: null,
       evidence: [],
     };
@@ -423,19 +448,33 @@ function rowsToLayers(
       id: row?.id ?? null,
       moveId,
       layer,
-      projected: normalizeCell(row?.projected_jsonb, fallback.projected, 'projected'),
-      tracked: normalizeCell(row?.tracked_jsonb, fallback.tracked, 'tracked'),
-      verified: normalizeCell(row?.verified_jsonb, verifiedFallback, 'verified'),
+      projected: normalizeCell(
+        row?.projected_jsonb,
+        fallback.projected,
+        "projected",
+      ),
+      tracked: normalizeCell(row?.tracked_jsonb, fallback.tracked, "tracked"),
+      verified: normalizeCell(
+        row?.verified_jsonb,
+        verifiedFallback,
+        "verified",
+      ),
       updatedAt: row?.updated_at ?? null,
     });
   });
 }
 
-async function loadP10Arrows(client: PoolClient, clientId: string, moveIds?: string[]): Promise<TowerPortfolioArrow[]> {
+async function loadP10Arrows(
+  client: PoolClient,
+  clientId: string,
+  moveIds?: string[],
+): Promise<TowerPortfolioArrow[]> {
   const params: unknown[] = [clientId];
   const hasMoveFilter = Boolean(moveIds && moveIds.length > 0);
   if (hasMoveFilter) params.push(moveIds);
-  const rows = (await client.query<ArrowRow>(p10ArrowsSql(hasMoveFilter), params)).rows;
+  const rows = (
+    await client.query<ArrowRow>(p10ArrowsSql(hasMoveFilter), params)
+  ).rows;
   return rows.map((row) => ({
     id: row.id,
     fromMoveId: row.from_move_id,
@@ -448,16 +487,18 @@ async function loadP10Arrows(client: PoolClient, clientId: string, moveIds?: str
 }
 
 function buildFallbackArrow(move: MoveRow): TowerPortfolioArrow[] {
-  if (!move.template_slug?.includes('it-productivity')) return [];
-  return [{
-    id: `fallback-${move.id}-source`,
-    fromMoveId: move.id,
-    fromMoveName: move.name,
-    toMoveId: move.id,
-    toMoveName: 'Source workflows',
-    relationType: 'informs',
-    note: 'P10 dependency DAG is parallel; fallback shows IT-Productivity value depends on Source workflow value realization.',
-  }];
+  if (!move.template_slug?.includes("it-productivity")) return [];
+  return [
+    {
+      id: `fallback-${move.id}-source`,
+      fromMoveId: move.id,
+      fromMoveName: move.name,
+      toMoveId: move.id,
+      toMoveName: "Source workflows",
+      relationType: "informs",
+      note: "P10 dependency DAG is parallel; fallback shows IT-Productivity value depends on Source workflow value realization.",
+    },
+  ];
 }
 
 async function writeAttestationAudit(
@@ -492,23 +533,34 @@ async function writeAttestationAudit(
       input.moveId,
       isUuid(ctx.userId) ? ctx.userId : null,
       ctx.role ?? null,
-      input.note ?? `Verified ${input.layer} as ${String(input.value ?? 'blank')}`,
+      input.note ??
+        `Verified ${input.layer} as ${String(input.value ?? "blank")}`,
       [`value_states:${input.moveId}:${input.layer}`],
     ],
   );
 }
 
-export async function getMoveValueDetail(ctx: TenancyCtx, moveId: string): Promise<TowerMoveValueDetail> {
+export async function getMoveValueDetail(
+  ctx: TenancyCtx,
+  moveId: string,
+): Promise<TowerMoveValueDetail> {
   return withValueStateTransaction(async (client) => {
     const move = await getMove(client, ctx.clientId, moveId);
-    if (!move) throw new Error('move_not_found');
+    if (!move) throw new Error("move_not_found");
     const telemetry = await getTelemetry(client, ctx.clientId, moveId);
-    const computed = buildProjectedAndTrackedCells(telemetry, new Date().toISOString());
+    const computed = buildProjectedAndTrackedCells(
+      telemetry,
+      new Date().toISOString(),
+    );
     await upsertProjectedTrackedRows(client, ctx, moveId, computed);
     const rows = await getValueRows(client, ctx.clientId, moveId);
     const layers = rowsToLayers(moveId, rows, computed);
     const arrows = await loadP10Arrows(client, ctx.clientId, [moveId]);
     const p10Arrows = arrows.length > 0 ? arrows : buildFallbackArrow(move);
+    const aiOpsCost = buildTowerAiOpsCostLedgerFromValueLayers(
+      layers,
+      new Date().toISOString(),
+    );
 
     return {
       move: {
@@ -528,16 +580,17 @@ export async function getMoveValueDetail(ctx: TenancyCtx, moveId: string): Promi
       },
       layers,
       totals: {
-        projectedUsd: sumLayerUsd(layers, 'projected'),
-        trackedUsd: sumLayerUsd(layers, 'tracked'),
-        verifiedUsd: sumLayerUsd(layers, 'verified'),
-        projectedHours: sumLayerHours(layers, 'projected'),
-        trackedHours: sumLayerHours(layers, 'tracked'),
-        verifiedHours: sumLayerHours(layers, 'verified'),
+        projectedUsd: sumLayerUsd(layers, "projected"),
+        trackedUsd: sumLayerUsd(layers, "tracked"),
+        verifiedUsd: sumLayerUsd(layers, "verified"),
+        projectedHours: sumLayerHours(layers, "projected"),
+        trackedHours: sumLayerHours(layers, "tracked"),
+        verifiedHours: sumLayerHours(layers, "verified"),
       },
+      aiOpsCost,
       canAttest: canAttestTowerValue(ctx),
       p10: {
-        source: arrows.length > 0 ? 'move_dependencies' : 'fallback',
+        source: arrows.length > 0 ? "move_dependencies" : "fallback",
         arrows: p10Arrows,
       },
     };
@@ -552,24 +605,30 @@ export async function attestValueLayer(
     note?: string | null;
   },
 ): Promise<TowerMoveValueDetail> {
-  if (!VALUE_STATE_LAYERS.includes(input.layer)) throw new Error('invalid_layer');
-  if (!canAttestTowerValue(ctx)) throw new Error('forbidden_cfo_attestation_required');
+  if (!VALUE_STATE_LAYERS.includes(input.layer))
+    throw new Error("invalid_layer");
+  if (!canAttestTowerValue(ctx))
+    throw new Error("forbidden_cfo_attestation_required");
 
   return withValueStateTransaction(async (client) => {
     const move = await getMove(client, ctx.clientId, input.moveId);
-    if (!move) throw new Error('move_not_found');
+    if (!move) throw new Error("move_not_found");
     const telemetry = await getTelemetry(client, ctx.clientId, input.moveId);
-    const computed = buildProjectedAndTrackedCells(telemetry, new Date().toISOString());
+    const computed = buildProjectedAndTrackedCells(
+      telemetry,
+      new Date().toISOString(),
+    );
     await upsertProjectedTrackedRows(client, ctx, input.moveId, computed);
     const rowsBefore = await getValueRows(client, ctx.clientId, input.moveId);
-    const beforeLayer = rowsToLayers(input.moveId, rowsBefore, computed)
-      .find((row) => row.layer === input.layer);
-    if (!beforeLayer) throw new Error('value_layer_not_found');
+    const beforeLayer = rowsToLayers(input.moveId, rowsBefore, computed).find(
+      (row) => row.layer === input.layer,
+    );
+    if (!beforeLayer) throw new Error("value_layer_not_found");
 
     const verified: ValueStateCell = {
       ...beforeLayer.tracked,
-      kind: 'verified',
-      confidence: 'attested',
+      kind: "verified",
+      confidence: "attested",
       label: `Verified: ${beforeLayer.tracked.label}`,
       basis: input.note?.trim()
         ? input.note.trim()
@@ -578,9 +637,9 @@ export async function attestValueLayer(
         ...beforeLayer.tracked.evidence,
         {
           id: `attestation-${input.moveId}-${input.layer}`,
-          label: 'CFO attestation event',
-          source: 'program_audit_log',
-          confidence: 'high',
+          label: "CFO attestation event",
+          source: "program_audit_log",
+          confidence: "high",
         },
       ],
       computedAt: new Date().toISOString(),
@@ -625,6 +684,10 @@ export async function attestValueLayer(
     const rowsAfter = await getValueRows(client, ctx.clientId, input.moveId);
     const layers = rowsToLayers(input.moveId, rowsAfter, computed);
     const arrows = await loadP10Arrows(client, ctx.clientId, [input.moveId]);
+    const aiOpsCost = buildTowerAiOpsCostLedgerFromValueLayers(
+      layers,
+      new Date().toISOString(),
+    );
     return {
       move: {
         id: move.id,
@@ -643,25 +706,28 @@ export async function attestValueLayer(
       },
       layers,
       totals: {
-        projectedUsd: sumLayerUsd(layers, 'projected'),
-        trackedUsd: sumLayerUsd(layers, 'tracked'),
-        verifiedUsd: sumLayerUsd(layers, 'verified'),
-        projectedHours: sumLayerHours(layers, 'projected'),
-        trackedHours: sumLayerHours(layers, 'tracked'),
-        verifiedHours: sumLayerHours(layers, 'verified'),
+        projectedUsd: sumLayerUsd(layers, "projected"),
+        trackedUsd: sumLayerUsd(layers, "tracked"),
+        verifiedUsd: sumLayerUsd(layers, "verified"),
+        projectedHours: sumLayerHours(layers, "projected"),
+        trackedHours: sumLayerHours(layers, "tracked"),
+        verifiedHours: sumLayerHours(layers, "verified"),
       },
+      aiOpsCost,
       canAttest: canAttestTowerValue(ctx),
       p10: {
-        source: arrows.length > 0 ? 'move_dependencies' : 'fallback',
+        source: arrows.length > 0 ? "move_dependencies" : "fallback",
         arrows: arrows.length > 0 ? arrows : buildFallbackArrow(move),
       },
     };
   });
 }
 
-async function listPortfolioRowsViaAzure(clientId: string): Promise<PortfolioMoveRow[]> {
+async function listPortfolioRowsViaAzure(
+  clientId: string,
+): Promise<PortfolioMoveRow[]> {
   return azureRead.query<PortfolioMoveRow>(PORTFOLIO_ROWS_SQL, [clientId], {
-    missingTable: 'throw',
+    missingTable: "throw",
   });
 }
 
@@ -670,7 +736,7 @@ async function sourceProjectedUsdViaAzure(clientId: string): Promise<number> {
     const rows = await azureRead.query<{ projected_usd: string | null }>(
       SOURCE_PROJECTED_USD_SQL,
       [clientId],
-      { missingTable: 'throw' },
+      { missingTable: "throw" },
     );
     return asNumber(firstRow(rows)?.projected_usd);
   } catch {
@@ -685,9 +751,13 @@ async function loadP10ArrowsViaAzure(
   const hasMoveFilter = Boolean(moveIds && moveIds.length > 0);
   const params: unknown[] = [clientId];
   if (hasMoveFilter) params.push(moveIds);
-  const rows = await azureRead.query<ArrowRow>(p10ArrowsSql(hasMoveFilter), params, {
-    missingTable: 'throw',
-  });
+  const rows = await azureRead.query<ArrowRow>(
+    p10ArrowsSql(hasMoveFilter),
+    params,
+    {
+      missingTable: "throw",
+    },
+  );
   return rows.map((row) => ({
     id: row.id,
     fromMoveId: row.from_move_id,
@@ -714,18 +784,29 @@ function rowToPortfolioMove(row: PortfolioMoveRow): TowerPortfolioMove {
   };
 }
 
-export async function getPortfolioValueRollup(ctx: TenancyCtx): Promise<TowerPortfolioValueRollup> {
+export async function getPortfolioValueRollup(
+  ctx: TenancyCtx,
+): Promise<TowerPortfolioValueRollup> {
   const rows = await listPortfolioRowsViaAzure(ctx.clientId);
   const moves = rows.map(rowToPortfolioMove);
   const sourceProjected = await sourceProjectedUsdViaAzure(ctx.clientId);
-  const arrows = await loadP10ArrowsViaAzure(ctx.clientId, moves.map((move) => move.moveId));
-  const fallbackArrows = arrows.length > 0
-    ? []
-    : rows.flatMap((row) => buildFallbackArrow(row));
+  const arrows = await loadP10ArrowsViaAzure(
+    ctx.clientId,
+    moves.map((move) => move.moveId),
+  );
+  const fallbackArrows =
+    arrows.length > 0 ? [] : rows.flatMap((row) => buildFallbackArrow(row));
 
-  const activeSourceWorkflowCount = moves.filter((move) => move.templateKind === 'SourceWorkflow').length;
-  const activeMoveCount = moves.filter((move) => move.templateKind !== 'SourceWorkflow').length;
-  const projectedFromMoves = moves.reduce((sum, move) => sum + move.projectedUsd, 0);
+  const activeSourceWorkflowCount = moves.filter(
+    (move) => move.templateKind === "SourceWorkflow",
+  ).length;
+  const activeMoveCount = moves.filter(
+    (move) => move.templateKind !== "SourceWorkflow",
+  ).length;
+  const projectedFromMoves = moves.reduce(
+    (sum, move) => sum + move.projectedUsd,
+    0,
+  );
   const trackedUsd = moves.reduce((sum, move) => sum + move.trackedUsd, 0);
   const verifiedUsd = moves.reduce((sum, move) => sum + move.verifiedUsd, 0);
 
@@ -733,7 +814,7 @@ export async function getPortfolioValueRollup(ctx: TenancyCtx): Promise<TowerPor
     clientId: ctx.clientId,
     moves,
     arrows: arrows.length > 0 ? arrows : fallbackArrows,
-    p10Source: arrows.length > 0 ? 'move_dependencies' : 'fallback',
+    p10Source: arrows.length > 0 ? "move_dependencies" : "fallback",
     totals: {
       projectedUsd: projectedFromMoves + sourceProjected,
       trackedUsd,
@@ -744,26 +825,38 @@ export async function getPortfolioValueRollup(ctx: TenancyCtx): Promise<TowerPor
   };
 }
 
-export function errorCode(error: unknown): { code: string; message: string; status: number } {
+export function errorCode(error: unknown): {
+  code: string;
+  message: string;
+  status: number;
+} {
   const message = error instanceof Error ? error.message : String(error);
-  if (message === 'move_not_found') return { code: 'not_found', message: 'Move not found.', status: 404 };
-  if (message === 'invalid_layer') return { code: 'invalid_layer', message: 'Unknown Tower value layer.', status: 400 };
-  if (message === 'forbidden_cfo_attestation_required') {
+  if (message === "move_not_found")
+    return { code: "not_found", message: "Move not found.", status: 404 };
+  if (message === "invalid_layer")
     return {
-      code: 'forbidden',
-      message: 'Verified value attestation requires CFO or finance-admin authority.',
+      code: "invalid_layer",
+      message: "Unknown Tower value layer.",
+      status: 400,
+    };
+  if (message === "forbidden_cfo_attestation_required") {
+    return {
+      code: "forbidden",
+      message:
+        "Verified value attestation requires CFO or finance-admin authority.",
       status: 403,
     };
   }
-  if (message.includes('DATABASE_URL')) {
-    return { code: 'db_unavailable', message, status: 503 };
+  if (message.includes("DATABASE_URL")) {
+    return { code: "db_unavailable", message, status: 503 };
   }
-  return { code: 'tower_value_error', message, status: 500 };
+  return { code: "tower_value_error", message, status: 500 };
 }
 
 export function parseLayer(value: unknown): ValueStateLayer | null {
-  return typeof value === 'string' && VALUE_STATE_LAYERS.includes(value as ValueStateLayer)
-    ? value as ValueStateLayer
+  return typeof value === "string" &&
+    VALUE_STATE_LAYERS.includes(value as ValueStateLayer)
+    ? (value as ValueStateLayer)
     : null;
 }
 

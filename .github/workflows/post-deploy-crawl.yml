@@ -7,17 +7,36 @@ on:
         description: Production URL to crawl
         default: https://app.abarva.ai
         required: true
-  push:
-    branches: [main]
+      persona:
+        description: Optional comma-separated persona keys, for example meridian-cdio,meridian-cdao
+        required: false
+      surface:
+        description: Optional comma-separated crawl surface IDs, for example intelligence-ask
+        required: false
+      question_set:
+        description: Optional question bank, for example phs-meridian
+        required: false
+  workflow_run:
+    workflows: ["ACA main deploy"]
+    types: [completed]
+
+concurrency:
+  group: post-deploy-crawl-production
+  cancel-in-progress: true
 
 jobs:
   crawl:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
       CRAWL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
       CRAWL_ENABLE_AUTO_ROLLBACK: ${{ vars.CRAWL_ENABLE_AUTO_ROLLBACK || 'false' }}
+      CRAWL_PERSONA: ${{ inputs.persona || '' }}
+      CRAWL_SURFACE: ${{ inputs.surface || '' }}
+      CRAWL_QUESTION_SET: ${{ inputs.question_set || '' }}
       PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v6
@@ -31,10 +50,15 @@ jobs:
       - name: Wait briefly for production alias
         run: sleep 60
       - name: Run authenticated crawl
-        run: npm run crawl:post-deploy -- --base-url "$CRAWL_BASE_URL" --output-dir audit-artifacts/post-deploy-crawl
+        run: |
+          args=(--base-url "$CRAWL_BASE_URL" --output-dir audit-artifacts/post-deploy-crawl)
+          if [ -n "$CRAWL_PERSONA" ]; then args+=(--persona "$CRAWL_PERSONA"); fi
+          if [ -n "$CRAWL_SURFACE" ]; then args+=(--surface "$CRAWL_SURFACE"); fi
+          if [ -n "$CRAWL_QUESTION_SET" ]; then args+=(--question-set "$CRAWL_QUESTION_SET"); fi
+          npm run crawl:post-deploy -- "${args[@]}"
       - name: Upload crawl artifacts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: post-deploy-crawl
           path: audit-artifacts/post-deploy-crawl

@@ -9,6 +9,10 @@ import {
   patternMatchesIndustry,
 } from '@/lib/intelligence/pattern-manifest';
 import { searchIndustryScopedCorpusPatternIndex } from '@/lib/intelligence/canonical/scoped-corpus-pattern-index';
+import { answerSentinelPortfolioQuestion, classifySentinelPortfolioQuestion } from '@/lib/admin/broker/sentinel/portfolio-intents';
+import type { CannibalizationFinding } from '@/lib/admin/broker/portfolio/cannibalization';
+import type { PortfolioSequence } from '@/lib/admin/broker/portfolio/sequence-optimizer';
+import { buildPortfolioSequenceView, type PortfolioSequenceViewModel } from '@/lib/tower/portfolio-sequence-view';
 import {
   buildSentinelGroundingDisclosure,
   buildSentinelGroundingSummary,
@@ -22,6 +26,11 @@ import type {
   SentinelConfidenceBand,
   SentinelQueryResponse,
 } from '@/lib/sentinel/types';
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  sanitizeAutonomousDecisionLanguage,
+} from '@/lib/ai-liability/human-decision-controls';
+import { buildAgentGroundingDisclosure } from '@/lib/intelligence/canonical/agent-grounding-disclosure';
 
 export interface SentinelTenancyCtx {
   clientKey: string;
@@ -211,6 +220,135 @@ function buildFallbackResponse(args: {
   };
 }
 
+function normalizePortfolioClientKey(clientKey: string): string {
+  if (clientKey === 'apex-retail') return 'apexretail';
+  if (clientKey === 'meridian-health') return 'meridian';
+  if (clientKey === 'skyharbor-air') return 'skyharbor';
+  return clientKey;
+}
+
+function maybeAnswerPortfolioQuestion(args: {
+  ctx: SentinelTenancyCtx;
+  message: string;
+}): SentinelQueryResponse | null {
+  const intent = classifySentinelPortfolioQuestion(args.message);
+  if (intent === 'unsupported') return null;
+
+  const model = buildPortfolioSequenceView({
+    clientKey: normalizePortfolioClientKey(args.ctx.clientKey),
+    clientName: args.ctx.clientName,
+  });
+  if (model.dataBasis === 'empty' || model.quarters.length === 0) return null;
+
+  const { sequence, programNames, cannibalizationFindings } = portfolioModelToSentinelInput(model);
+  const answer = answerSentinelPortfolioQuestion({
+    prompt: args.message,
+    clientName: args.ctx.clientName,
+    sequence,
+    programNames,
+    cannibalizationFindings,
+  });
+  const basis = model.dataBasis === 'program-instance-substrate'
+    ? 'Basis: current program-instance substrate and Wave 4 portfolio sequence packet.'
+    : 'Basis: signature planning fixture until this client has loaded program-instance substrate.';
+
+  return {
+    response: sanitizeAutonomousDecisionLanguage(`${answer.answer} ${basis}`),
+    routeType: 'manifest_fallback',
+    confidence: answer.confidence === 'high' ? 'high' : answer.confidence === 'medium' ? 'medium' : 'thin',
+    citations: [{
+      slug: 'portfolio-sequence-packet',
+      label: `${args.ctx.clientName} portfolio sequence packet`,
+      href: '/tower',
+      evidenceCount: model.quarters.length,
+      observationCount: model.scheduledMoves + model.blockedMoves + model.overlapFindings,
+      deliverableCount: answer.citedMoves.length,
+      freshnessLabel: 'today',
+    }],
+    suggestions: [
+      'Open Tower portfolio sequence',
+      ...(answer.citedMoves.length > 0 ? answer.citedMoves.map((move) => `Open ${move}`) : []),
+    ].slice(0, 3),
+    activePatternSlug: null,
+    grounding: {
+      source: 'canonical_pattern_index',
+      status: 'ready',
+      checkedPatternCount: 0,
+      canonicalPatternIds: [],
+      warnings: ['Portfolio sequencing answers are grounded in the Tower sequence packet, not the canonical pattern index.'],
+      gaps: [],
+    },
+    groundingDisclosure: buildAgentGroundingDisclosure({
+      source: null,
+      status: 'not_requested',
+      warnings: ['Portfolio sequencing answer used Tower sequence packet grounding.'],
+    }),
+  };
+}
+
+function portfolioModelToSentinelInput(model: PortfolioSequenceViewModel): {
+  sequence: PortfolioSequence;
+  programNames: Record<string, string>;
+  cannibalizationFindings: CannibalizationFinding[];
+} {
+  const programNames: Record<string, string> = {};
+  const totalValueRealizedByQuarter: Record<string, number> = {};
+
+  for (const quarter of model.quarters) {
+    for (const move of quarter.moves) programNames[move.name] = move.name;
+    for (const move of quarter.blockedMoves) programNames[move.name] = move.name;
+    totalValueRealizedByQuarter[quarter.quarterId] = parseUsdLabel(quarter.totalValueLabel);
+  }
+
+  const sequence: PortfolioSequence = {
+    quarters: model.quarters.map((quarter) => ({
+      quarterId: quarter.quarterId,
+      moves: quarter.moves.map((move) => ({
+        moveId: move.name,
+        phase: move.phase,
+        reasoning: move.reasoning,
+      })),
+      blockedMoves: quarter.blockedMoves.map((blocked) => ({
+        moveId: blocked.name,
+        blockedBy: blocked.blockedBy,
+        recommendedAction: blocked.recommendedAction,
+      })),
+      resourceUtilization: Object.fromEntries(
+        quarter.resourceUtilization.map((resource) => [resource.label, resource.percent / 100]),
+      ),
+    })),
+    unmetDependencies: [],
+    totalValueRealizedByQuarter,
+    alternativeSequences: model.alternatives,
+  };
+
+  const cannibalizationFindings: CannibalizationFinding[] = model.overlaps.map((overlap) => ({
+    moveA: overlap.moveA,
+    moveB: overlap.moveB,
+    overlapKpi: overlap.overlapKpi,
+    overlapMagnitudeUsd: parseUsdLabel(overlap.overlapMagnitudeLabel),
+    recommendation: overlap.recommendation.replace(/\s+/g, '_') as CannibalizationFinding['recommendation'],
+    rationale: overlap.rationale,
+  }));
+
+  return { sequence, programNames, cannibalizationFindings };
+}
+
+function parseUsdLabel(label: string): number {
+  const match = label.match(/\$([0-9.]+)\s*([KMB])?/i);
+  if (!match) return 0;
+  const value = Number(match[1]);
+  if (Number.isNaN(value)) return 0;
+  const multiplier = match[2]?.toUpperCase() === 'B'
+    ? 1_000_000_000
+    : match[2]?.toUpperCase() === 'M'
+      ? 1_000_000
+      : match[2]?.toUpperCase() === 'K'
+        ? 1_000
+        : 1;
+  return value * multiplier;
+}
+
 async function synthesizeWithClaude(args: {
   message: string;
   ctx: SentinelTenancyCtx;
@@ -248,7 +386,10 @@ async function synthesizeWithClaude(args: {
     null,
     2,
   );
-  const system = args.activePrompt.buildSystemPrompt();
+  const system = [
+    args.activePrompt.buildSystemPrompt(),
+    AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  ].join('\n\n');
   const { client } = await getAuditedAnthropicClient({
     tenantId: args.ctx.clientKey,
     userId: args.ctx.userId ?? undefined,
@@ -294,6 +435,12 @@ export async function runSentinelTurn(args: {
   activePatternSlug?: string | null;
   canonicalPatternSearch?: typeof searchIndustryScopedCorpusPatternIndex;
 }): Promise<SentinelQueryResponse> {
+  const portfolioAnswer = maybeAnswerPortfolioQuestion({
+    ctx: args.ctx,
+    message: args.message,
+  });
+  if (portfolioAnswer) return portfolioAnswer;
+
   const patterns = getPatternManifestEntriesWithMetrics(args.ctx.clientKey)
     .filter((pattern) => patternMatchesIndustry(pattern, args.ctx.industryCode));
   const anchorSlug = args.activePatternSlug ?? null;
@@ -344,7 +491,7 @@ export async function runSentinelTurn(args: {
     rankedPatterns,
     activePrompt,
   }).catch(() => null);
-  const responseText = [llmText ?? fallback.text, groundingFlagText]
+  const responseText = [sanitizeAutonomousDecisionLanguage(llmText ?? fallback.text), groundingFlagText]
     .filter(Boolean)
     .join(' ');
 

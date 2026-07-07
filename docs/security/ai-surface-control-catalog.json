@@ -1,0 +1,787 @@
+{
+  "schema": "abarva.ai-surface-control-catalog.v1",
+  "description": "Audit truth source for AI output and consequential-action controls. CI validates every cataloged control has concrete code evidence.",
+  "controls": [
+    {
+      "id": "agent-response-output",
+      "surface": "Shared structured agent response renderer",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/agent/AgentResponse.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "AILabel",
+            "status=\"draft\"",
+            "Review before acting"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "AgentCitation",
+            "response.citations",
+            "inlineNodes"
+          ]
+        },
+        {
+          "kind": "citation-gap",
+          "evidence": [
+            "CitationGapNotice",
+            "shouldShowRenderedResponseCitationGap"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "AIConfidenceIndicator",
+            "viewModel.confidence.tier"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "follow_up_actions"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-dock-chat-turns",
+      "surface": "Shared AgentDock chat rail",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/agent/AgentDock.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "AILabel",
+            "status=\"draft\"",
+            "Review before acting"
+          ]
+        },
+        {
+          "kind": "responsibility-footer",
+          "evidence": [
+            "AIResponsibilityFooter",
+            "compact"
+          ]
+        },
+        {
+          "kind": "citation-gap",
+          "evidence": [
+            "CitationGapNotice",
+            "shouldShowPlainTextCitationGap"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "ACTION_APPROVAL_NOTICE_WRAP_STYLE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "atlas-drawer-chat-shell",
+      "surface": "AtlasDrawer embedded and overlay chat shell",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/shell/AtlasDrawer.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "AILabel",
+            "status=\"draft\"",
+            "Review before acting"
+          ]
+        },
+        {
+          "kind": "responsibility-footer",
+          "evidence": [
+            "AIResponsibilityFooter",
+            "tone=\"dark\"",
+            "compact"
+          ]
+        },
+        {
+          "kind": "citation-gap",
+          "evidence": [
+            "CitationGapNotice",
+            "shouldShowPlainTextCitationGap"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "tone=\"dark\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "program-gate-approval",
+      "surface": "Programs gate approval modal",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/programs/ProgramDetailPage.tsx",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "HumanApprovalGate",
+            "canSubmitHumanApproval",
+            "MOVES_HUMAN_RATIONALE_MIN_CHARS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "program-deliverable-approval-actions",
+      "surface": "Programs rich deliverable approval actions",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/deliverables/ApproveActions.tsx",
+      "requiredControls": [
+        {
+          "kind": "edit-before-commit",
+          "evidence": [
+            "data-edit-before-commit=\"true\"",
+            "approve-actions-editable-decision",
+            "reviewedDecision"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "canApprove",
+            "Approval not available to this viewer",
+            "Logs you as approver"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tower-atlas-program-pressure-brief",
+      "surface": "Tower Atlas program pressure executive brief",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/tower/ProgramPressureCards.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "data-testid=\"atlas-brief-accountability\"",
+            "AI-assisted decision support",
+            "brief.accountability.watermark"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "Evidence basis",
+            "brief.accountability.evidenceBasis"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "confidence ·",
+            "brief.confidenceLabel"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "brief.accountability.humanApprovalRequired",
+            "brief.accountability.sanitizedRecommendation"
+          ]
+        },
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "brief.accountability.missingDataBanner",
+            "evidenceValueWarning"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-admin-event-approval-queue",
+      "surface": "Source admin event approval queue",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/source/AdminSourceEventApprovalQueue.tsx",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "SOURCE_APPROVAL_REASON_MIN_LENGTH",
+            "confirmed: true",
+            "I confirm this is my accountable human approval decision."
+          ]
+        },
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "Self-approval notice",
+            "Approval action failed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-estimate-assumption-disclosure",
+      "surface": "Source savings and cost estimate assumption disclosure",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/source/EstimateAssumptionDisclosure.tsx",
+      "requiredControls": [
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "data-source-estimate-disclosure=\"true\"",
+            "Directional estimate only",
+            "assumptions.map"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-chat-route-decision-boundary",
+      "surface": "Universal agent route decision boundary",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/chat/agent/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "sanitizeAutonomousDecisionLanguage",
+            "PHASE ADVANCE APPROVALS",
+            "Do not claim the user can see, approve"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moves-phase-gate-route",
+      "surface": "Moves phase gate approval route",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/programs/phase-gate/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "human_rationale_required",
+            "buildMovesPhaseDecisionEvidencePacket",
+            "aiDecisionEvidencePacket"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moves-phase-advance-route",
+      "surface": "Moves phase advance route",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/v1/programs/[programId]/advance/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "human_rationale_required",
+            "buildMovesPhaseDecisionEvidencePacket",
+            "approval_required"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moves-agent-phase-advance-tool",
+      "surface": "Moves agent phase advance tool",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/lib/agent/tools/program/advancePhase.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "This tool never SATISFIES a gate approval",
+            "human_rationale_required",
+            "approval_required"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moves-phase-advance-button",
+      "surface": "Moves phase advance button",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/programs/PhaseAdvanceButton.tsx",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "Human rationale for phase advance",
+            "Commit human decision",
+            "MOVES_HUMAN_RATIONALE_MIN_CHARS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-work-item-external-action-route",
+      "surface": "Source external-action work item route",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/v1/source/work-items/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "human_external_action_gate_required",
+            "humanConfirmed",
+            "externalActionGate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intelligence-ava-reasoning-cards",
+      "surface": "aVa reasoning cards",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/(maestro)/intelligence/ask/AvaReasoningCards.tsx",
+      "requiredControls": [
+        {
+          "kind": "citation",
+          "evidence": [
+            "card.citations.map",
+            "citation.sourceType",
+            "citation.id"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "Math.round(card.confidence * 100)",
+            "card.confidence"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intelligence-atlas-synthesis-output",
+      "surface": "Atlas synthesis output citations",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/intelligence/SynthesisOutput.tsx",
+      "requiredControls": [
+        {
+          "kind": "citation",
+          "evidence": [
+            "result.citations.length",
+            "result.citations.map",
+            "renderCitationLabel"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intelligence-sentinel-active-patterns",
+      "surface": "Sentinel active pattern recommendations",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/intelligence/SentinelActivePatterns.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "AI-assisted pattern recommendation"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "Evidence refs",
+            "detection.sourceSignalIds"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "confidence ·",
+            "card.confidenceLabel"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intelligence-pattern-to-move-promotion-submit",
+      "surface": "Intelligence pattern to Move promotion submit gate",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/lib/programs/origination-submit.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "validateIntelligencePromotionApproval",
+            "intelligence_promotion_approval_required",
+            "human_promotion_rationale",
+            "evidence_refs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moves-deliverable-canvas-view",
+      "surface": "Moves deliverable canvas view model",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/lib/programs/deliverable-canvas-polish-view.ts",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "MOVES_AI_DRAFT_LABEL",
+            "AI Draft"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "evidenceCitations"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "confidence"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moves-decision-evidence-packet",
+      "surface": "Moves Nexus decision evidence packet",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/lib/programs/moves-ai-liability.ts",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "agentName: \"Nexus\"",
+            "HUMAN_DECISION_ATTESTATION_TEXT"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "evidenceIds",
+            "buildMovesPhaseDecisionAuditRefs"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "assumptions",
+            "alternativesConsidered"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-event-report-footer",
+      "surface": "Source printed event report footer",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/(maestro)/source/events/[eventId]/report/page.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "Generated by AbarVa reasoning layer"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "Evidence inventory",
+            "buildSourceSynthesisContext"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-renewal-cockpit-external-action",
+      "surface": "Source renewal cockpit draft and serve-notice UI",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/source/RenewalCockpitActionBar.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "Vendor email draft",
+            "draft, not sent"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "Human approval rationale",
+            "humanConfirmed: true",
+            "serveNoticeRationaleReady"
+          ]
+        }
+      ]
+    }
+  ],
+  "catalogClaimCoverage": [
+    {
+      "key": "consequential|Agent chat|Universal agent route can propose actions and sanitize autonomous wording|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "agent-chat-route-decision-boundary",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Moves|Phase gate approval|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "moves-phase-gate-route",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Moves|Phase advance API|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "moves-phase-advance-route",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Moves|Agent tool phase advance|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "moves-agent-phase-advance-tool",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Moves|Phase advance button|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "moves-phase-advance-button",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Source|Vendor-facing artifact renders/exports|human-approval-gate",
+      "status": "deferred",
+      "controlKind": "human-approval-gate",
+      "reason": "Export watermark exists, but artifact routes vary and send/approval enforcement is not universal enough for machine-covered status."
+    },
+    {
+      "key": "consequential|Source|Work item mutation|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "source-work-item-external-action-route",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Tower|Portfolio data upload/ingest|human-approval-gate",
+      "status": "deferred",
+      "controlKind": "human-approval-gate",
+      "reason": "Catalog claim is access/quarantine coverage, not a completed human decision gate for AI-derived action."
+    },
+    {
+      "key": "consequential|Intelligence|Gate waiver / approval|human-approval-gate",
+      "status": "deferred",
+      "controlKind": "human-approval-gate",
+      "reason": "Approval rationale is covered, but waiver remains lighter and needs separate evidence-packet parity before covered status."
+    },
+    {
+      "key": "consequential|Intelligence|Pattern to Move promotion|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "intelligence-pattern-to-move-promotion-submit",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "generated-ui|Intelligence|aVa reasoning cards|citation",
+      "status": "covered",
+      "surfaceId": "intelligence-ava-reasoning-cards",
+      "controlKind": "citation"
+    },
+    {
+      "key": "generated-ui|Intelligence|aVa reasoning cards|confidence",
+      "status": "covered",
+      "surfaceId": "intelligence-ava-reasoning-cards",
+      "controlKind": "confidence"
+    },
+    {
+      "key": "generated-ui|Intelligence|Atlas synthesis answer|citation",
+      "status": "covered",
+      "surfaceId": "intelligence-atlas-synthesis-output",
+      "controlKind": "citation"
+    },
+    {
+      "key": "generated-ui|Intelligence|Sentinel pattern rail replies|confidence",
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "The rail has thin-evidence language, but the current machine catalog does not yet pin a stable confidence control token."
+    },
+    {
+      "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|ai-label",
+      "status": "covered",
+      "surfaceId": "intelligence-sentinel-active-patterns",
+      "controlKind": "ai-label"
+    },
+    {
+      "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|citation",
+      "status": "covered",
+      "surfaceId": "intelligence-sentinel-active-patterns",
+      "controlKind": "citation"
+    },
+    {
+      "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|confidence",
+      "status": "covered",
+      "surfaceId": "intelligence-sentinel-active-patterns",
+      "controlKind": "confidence"
+    },
+    {
+      "key": "generated-ui|Moves|Deliverables canvas|ai-label",
+      "status": "covered",
+      "surfaceId": "moves-deliverable-canvas-view",
+      "controlKind": "ai-label"
+    },
+    {
+      "key": "generated-ui|Moves|Deliverables canvas|citation",
+      "status": "covered",
+      "surfaceId": "moves-deliverable-canvas-view",
+      "controlKind": "citation"
+    },
+    {
+      "key": "generated-ui|Moves|Deliverables canvas|confidence",
+      "status": "covered",
+      "surfaceId": "moves-deliverable-canvas-view",
+      "controlKind": "confidence"
+    },
+    {
+      "key": "generated-ui|Moves|Phase advance / gate approval UI|citation",
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "Rationale prompts ask for reviewed evidence, but this row is not yet represented as a citation control in the machine catalog."
+    },
+    {
+      "key": "generated-ui|Moves|Phase advance / gate approval UI|confidence",
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "The UI has rationale and attestation controls, but no dedicated confidence or assumption control is machine-pinned yet."
+    },
+    {
+      "key": "generated-ui|Moves|Nexus decision evidence packet view model|ai-label",
+      "status": "covered",
+      "surfaceId": "moves-decision-evidence-packet",
+      "controlKind": "ai-label"
+    },
+    {
+      "key": "generated-ui|Moves|Nexus decision evidence packet view model|citation",
+      "status": "covered",
+      "surfaceId": "moves-decision-evidence-packet",
+      "controlKind": "citation"
+    },
+    {
+      "key": "generated-ui|Moves|Nexus decision evidence packet view model|confidence",
+      "status": "covered",
+      "surfaceId": "moves-decision-evidence-packet",
+      "controlKind": "confidence"
+    },
+    {
+      "key": "generated-ui|Moves|Nexus current-state briefing panel|citation",
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "Briefing citations exist in the component, but AI Draft/edit-before-commit framing still needs a dedicated machine catalog entry."
+    },
+    {
+      "key": "generated-ui|Moves|Nexus current-state briefing panel|confidence",
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "Briefing confidence exists, but the surface is still pending AI Draft/edit-before-commit framing before full coverage."
+    },
+    {
+      "key": "generated-ui|Source|Artifact detail/provenance drawer|citation",
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "Provenance exists on the artifact detail surface, but generated/AI-assisted labels remain partial before full machine coverage."
+    },
+    {
+      "key": "generated-ui|Source|Printed event report footer|ai-label",
+      "status": "covered",
+      "surfaceId": "source-event-report-footer",
+      "controlKind": "ai-label"
+    },
+    {
+      "key": "generated-ui|Source|Printed event report footer|citation",
+      "status": "covered",
+      "surfaceId": "source-event-report-footer",
+      "controlKind": "citation"
+    },
+    {
+      "key": "generated-ui|Source|Scorecard generated/default state|citation",
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "Approval counts and blockers exist, but scorecard generated/default state still lacks full BAFO-decision approval coverage."
+    },
+    {
+      "key": "generated-ui|Source|Renewal cockpit vendor email draft and serve-notice work item|ai-label",
+      "status": "covered",
+      "surfaceId": "source-renewal-cockpit-external-action",
+      "controlKind": "ai-label"
+    },
+    {
+      "key": "generated-ui|Source|Commercial summary surface|confidence",
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "The control is deterministic/no-live-benchmark limitation copy, not a formal confidence control yet."
+    },
+    {
+      "key": "generated-ui|Tower|Atlas observations and chat opener|citation",
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "Tower provenance exists, but visible Atlas recommendation labeling still needs closer surface-level control coverage."
+    },
+    {
+      "key": "generated-ui|Tower|Atlas observations and chat opener|confidence",
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "Tower low-confidence fallback exists, but the badge is not yet consistently visible beside the opener."
+    },
+    {
+      "key": "generated-ui|Tower|Atlas synthesis API response|citation",
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "Telemetry records citation counts, but streamed UI response-level watermark and assumption controls remain follow-on."
+    },
+    {
+      "key": "generated-ui|Tower|Pressure/action cards|confidence",
+      "status": "covered",
+      "surfaceId": "tower-atlas-program-pressure-brief",
+      "controlKind": "confidence"
+    },
+    {
+      "key": "generated-ui|Setup|Steward setup guidance|confidence",
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "Setup guidance separates seeded/live state, but it is not yet a formal confidence control in the machine catalog."
+    },
+    {
+      "key": "generated-ui|Setup|Agent readiness drill-down|confidence",
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "Agent readiness has deterministic source captions, but factor-level evidence links and formal confidence coverage remain follow-on."
+    }
+  ]
+}

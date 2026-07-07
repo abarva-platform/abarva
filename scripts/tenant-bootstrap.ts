@@ -17,7 +17,7 @@
 //   npx tsx scripts/tenant-bootstrap.ts --tenant meridian --refresh-only --apply
 //
 // What it does (in order):
-//   1. Validate tenant key (must be 'apexretail' | 'meridian' | 'arcturus' for now)
+//   1. Validate tenant key
 //   2. Verify required env vars are set (CLERK_SECRET_KEY, SUPABASE service role,
 //      ANTHROPIC_API_KEY for broker rebuild)
 //   3. Provision Clerk CXO personas       (scripts/provision-cxo-personas.ts)
@@ -47,8 +47,8 @@ import process from 'node:process';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 
-type TenantKey = 'apexretail' | 'meridian' | 'arcturus';
-const CANONICAL_TENANTS: ReadonlyArray<TenantKey> = ['apexretail', 'meridian', 'arcturus'];
+type TenantKey = 'apexretail' | 'meridian' | 'arcturus' | 'lakeshore';
+const CANONICAL_TENANTS: ReadonlyArray<TenantKey> = ['apexretail', 'meridian', 'arcturus', 'lakeshore'];
 
 interface CliArgs {
   tenant: TenantKey | null;
@@ -207,7 +207,20 @@ const SETUP_DATA_LOADERS: Record<TenantKey, string> = {
   apexretail: 'src/scripts/setup-data/load-apex-setup-data.ts',
   meridian: 'src/scripts/setup-data/load-meridian-setup-data.ts',
   arcturus: 'src/scripts/setup-data/load-firstcapital-setup-data.ts',
+  lakeshore: 'src/scripts/lakeshore/rehearse-governed-load.ts',
 };
+
+function setupDataArgs(tenant: TenantKey, loader: string, apply: boolean): string[] {
+  if (tenant !== 'lakeshore') return [loader];
+
+  const clientId = process.env.LAKESHORE_CLIENT_ID ?? 'f2ef0b6a-9f20-4d3d-9dd9-8f8ec01f2a61';
+  return [
+    loader,
+    `--mode=${apply ? 'commit' : 'dry-run'}`,
+    `--client-id=${clientId}`,
+    '--out=docs/build/lakeshore/loaded/load-runs/lakeshore-governed-load-latest.json',
+  ];
+}
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
@@ -266,6 +279,8 @@ A2c · tenant-bootstrap
         const r = await runShell('npx', [
           'tsx',
           'scripts/provision-cxo-personas.ts',
+          '--client',
+          tenant,
           '--apply',
         ]);
         if (!r.ok) {
@@ -327,16 +342,19 @@ A2c · tenant-bootstrap
     results.push(skipped('6 · setup-data pack', '--skip-seed-pack'));
   } else {
     const loader = SETUP_DATA_LOADERS[tenant];
+    const loaderArgs = setupDataArgs(tenant, loader, args.apply);
     if (!args.apply) {
-      results.push(dryRun('6 · setup-data pack', `Would run \`npx tsx ${loader}\`.`));
+      results.push(dryRun('6 · setup-data pack', `Would run \`npx tsx ${loaderArgs.join(' ')}\`.`));
     } else {
       results.push(
         await runStep('6 · setup-data pack', async () => {
-          const r = await runShell('npx', ['tsx', loader]);
+          const r = await runShell('npx', ['tsx', ...loaderArgs]);
           if (!r.ok) {
             throw new Error(`${loader} exited ${r.code}`);
           }
-          return `14-segment pack loaded via ${loader}`;
+          return tenant === 'lakeshore'
+            ? `Lakeshore governed load committed via ${loader}`
+            : `14-segment pack loaded via ${loader}`;
         }),
       );
     }

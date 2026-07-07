@@ -11,11 +11,12 @@
 //
 // Structure:
 //   1. Hero — 5-minute "who we are + what we solve" pitch with 3 tenant tabs
-//   2. Vision — three agents (Sentinel / Nexus / Source) and the corpus thesis
+//   2. Vision — Ava (one assistant) and the specialist expertise she draws on,
+//      plus the corpus thesis
 //   3. Case study (active tab) — composite tenant: who, leadership, data
 //      loaded, what's at stake. All numbers traced to executive_bench.json
 //      and function_capacity.csv on disk.
-//   4. Agent intelligence — concrete Q&A pairs showing the agent reaching
+//   4. Agent intelligence — concrete Q&A pairs showing Ava reaching
 //      into the tenant's substrate to answer sized/scoped/funded questions.
 //   5. Walkthrough — the 5-minute path with explicit clicks.
 
@@ -40,7 +41,8 @@ type CxoLogin = {
 type DataLoadedRow = { kind: string; count: string; example: string };
 
 type AgentQA = {
-  agent: 'Sentinel' | 'Nexus' | 'Source';
+  agent: 'Ava';
+  expertise: string;
   question: string;
   groundedAnswer: string;
   citesFrom: string;
@@ -114,7 +116,7 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     visionLead:
       'Apex is not asking for another AI roadmap deck. It needs a platform that can stand in the room, name owners and authorities, and turn a candidate AI bet into governed, ROI-defensible product change — fast enough that activist investors stop drafting the narrative for them.',
     dataLoadedLead:
-      'The Apex tenant is loaded with composite enterprise depth. When a CXO asks any sized/scoped/funded question, the agent reaches into these substrates first.',
+      'The Apex tenant is loaded with composite enterprise depth. When a CXO asks any sized/scoped/funded question, Ava reaches into these substrates first.',
     dataLoaded: [
       { kind: 'Named persons', count: '79', example: 'CEO + 11 C-suite + SVPs of Merch (4) + Stores (W/E/Central) + Supply Chain + 27 IT leaders' },
       { kind: 'Functions sized', count: '30', example: 'Each with FTE / onshore / offshore / contractor split + FY26 budget + system count' },
@@ -125,28 +127,31 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     ],
     whatsAtStakeTitle: 'What\'s at stake on the Apex narrative',
     whatsAtStakeBullets: [
-      'The CDP Activation 2026 program is mid-flight under Stratham; vendor BAFO open. Tester should pressure-test whether Sentinel surfaces the failure modes before Source kicks in.',
-      'Activist investors are watching cost-to-revenue. Any Move with a payback profile longer than 24 months gets challenged by Chen — and the agent had better cite real numbers.',
-      'Self-checkout deployment + RFID rollout to 1,200 stores is in flight; the agent should ground vendor and platform advice in the actual store-tech footprint.',
-      'AI workforce scheduling is the candidate Move closest to launch. Tester can shape it as a real Move via Nexus and watch the funding authority + governance gate trigger.',
+      'The CDP Activation 2026 program is mid-flight under Stratham; vendor BAFO open. Tester should pressure-test whether Ava surfaces the failure modes as she moves from strategy into sourcing.',
+      'Activist investors are watching cost-to-revenue. Any Move with a payback profile longer than 24 months gets challenged by Chen — and Ava had better cite real numbers.',
+      'Self-checkout deployment + RFID rollout to 1,200 stores is in flight; Ava should ground vendor and platform advice in the actual store-tech footprint.',
+      'AI workforce scheduling is the candidate Move closest to launch. Tester can shape it as a real Move with Ava and watch the funding authority + governance gate trigger.',
     ],
     agentSamples: [
       {
-        agent: 'Sentinel',
+        agent: 'Ava',
+        expertise: 'AI strategy',
         question: 'What AI bets are common at multi-banner retailers our size, and which ones actually hold up?',
         groundedAnswer:
           'My view: at $80-150B mass-and-specialty retailers, the bets that hold up cluster in three lanes — labor optimization (workforce scheduling, store labor productivity), demand & assortment (forecasting, allocation accuracy), and customer activation (NBO, loyalty, CDP). Personalization is overhyped at this scale because the data plumbing eats two years before ROI shows up. For Apex specifically, your workforce-scheduling pilot is the cleanest of the seven AI lines because the value lever (store labor cost) is concrete and the vendor space is mature. Demand sensing has the next-best ROI shape but depends on planning data that\'s still cleaning up post-AMS.',
         citesFrom: 'Apex AI portfolio (7 initiatives) + retail benchmark patterns + AMS rebuild context',
       },
       {
-        agent: 'Nexus',
+        agent: 'Ava',
+        expertise: 'investment shaping',
         question: 'I want to fund a $4M AI workforce-scheduling pilot. What\'s the approval path?',
         groundedAnswer:
           'At $4M you\'re below the joint CFO+CIO threshold ($25M+) and inside CIO Carlos Rivera\'s single-decision authority ($5-25M band). But two parallel gates apply regardless of dollar: AI Governance Council attestation (use case design + bias assessment + workforce-data handling) and Internal Audit liaison via Joaquin Mendoza-Levitt. CFO Margaret Chen will still want a 1-page business case and 24-month payback evidence — she\'s the gating signature on activist-investor narrative even when she isn\'t a formal approver.',
         citesFrom: 'funding_authority_matrix.csv (9 bands) + 2 parallel gates',
       },
       {
-        agent: 'Source',
+        agent: 'Ava',
+        expertise: 'vendor & sourcing',
         question: 'How is Salesforce Einstein performing for us right now? Anything to renegotiate?',
         groundedAnswer:
           'Einstein scorecard: 3.6 performance / 2.6 risk / A financial health / High strategic alignment. Owned by CMO Park\'s org. License-and-usage audit was last refreshed Mar 15. The leverage point is that your Salesforce Financial Services Cloud + Tableau renewal sits Mar 31, 2027 — bundle the negotiation. Open issue: license utilization is below the contracted seat count, which is the recurring gap to fix before BAFO on the next CDP-related contract.',
@@ -155,8 +160,8 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     ],
     walkStart: {
       href: '/intelligence?client=apexretail',
-      label: 'Sentinel · Apex Intelligence',
-      reason: 'Open with the workforce-scheduling question above; watch how the agent reaches into the IT financials and vendor scorecards.',
+      label: 'Ava · Apex Intelligence',
+      reason: 'Open with the workforce-scheduling question above; watch how Ava reaches into the IT financials and vendor scorecards.',
     },
   },
   meridian: {
@@ -201,7 +206,7 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     visionLead:
       'Healthcare AI dies one of two deaths: governance theatre or sprawl. Meridian needs a platform that can sequence ambient documentation, prior authorization, RCM modernization, and clinical AI under one operating discipline — without letting any single bet bypass clinical sign-off, model risk attestation, or the AI Governance Council.',
     dataLoadedLead:
-      'The Meridian tenant is loaded with composite enterprise depth across provider, plan, and research. When a CXO asks a sized/scoped/funded question, the agent reaches into these substrates first.',
+      'The Meridian tenant is loaded with composite enterprise depth across provider, plan, and research. When a CXO asks a sized/scoped/funded question, Ava reaches into these substrates first.',
     dataLoaded: [
       { kind: 'Named persons', count: '106', example: 'CEO Morales + EC + SVPs of Hospital Ops (CA/HI) + Plan Ops (Hartwell) + 39 IT leaders' },
       { kind: 'Functions sized', count: '26', example: 'Data & Analytics 185 FTE / $38.5M / 14 systems · App Services 680 FTE · RCM 1,820 FTE' },
@@ -212,28 +217,31 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     ],
     whatsAtStakeTitle: 'What\'s at stake on the Meridian narrative',
     whatsAtStakeBullets: [
-      'DENIALS-2024 sunk-cost narrative is alive in the C-suite. Q4 FY2025 denial spike is the operational pain — Sentinel should surface it without prompting.',
+      'DENIALS-2024 sunk-cost narrative is alive in the C-suite. Q4 FY2025 denial spike is the operational pain — Ava should surface it without prompting.',
       'AI Governance Council is operating: 23 use cases under review, chaired by CMIO Dr. Jennifer Wexler. Any AI Move triggers parallel-gate attestation regardless of dollar.',
       'Hawaii integration funding deferred to FY2027 — capital allocation pressure is real; the agent should know this before recommending any net-new clinical AI capex.',
       'Ambient documentation rollout is in flight; Abridge contract renewal April 2026; Cohere Health prior-auth program is in P4 build with $6.1M of $9.8M consumed.',
     ],
     agentSamples: [
       {
-        agent: 'Sentinel',
+        agent: 'Ava',
+        expertise: 'AI strategy',
         question: 'How big is the data analytics function vs. industry standard?',
         groundedAnswer:
           'Meridian Data & Analytics is sized to industry standard for a $16-20B IDN with both provider and plan analytics needs. 185 FTE total — 152 onshore, 18 offshore, 15 contractor. FY2026 budget $38.5M ($5.5M capex + $33M opex). Owns 14 systems including Snowflake, Epic Cogito, Epic Cosmos, the Atlas custom plan-provider platform, dbt, Tableau, Arcadia for population health, and Databricks under evaluation. Reports to VP Jordan McKenzie (CDIO direct). The onshore-heavy mix is typical because clinical data sensitivity makes offshore analytics hard at scale.',
         citesFrom: 'function_capacity.csv (Data & Analytics row) + benchmark notes',
       },
       {
-        agent: 'Nexus',
+        agent: 'Ava',
+        expertise: 'investment shaping',
         question: 'I want to fund a $6M ambient documentation expansion. Walk me through the parallel gates.',
         groundedAnswer:
           'At $6M you\'re inside CDIO Anita Krishnamurthy\'s single-decision authority ($2-10M band). But two parallel gates apply regardless of dollar: AI Governance Council attestation chaired by CMIO Dr. Jennifer Wexler (use case design + clinical safety + PHI handling — required because ambient is in the 23-case active review cycle), and Board Risk Committee oversight if scope creates new enterprise risk concentration. CFO David Park is not a formal approver here but he\'s the gating signature on FY2026 transformation envelope, and the deferred Hawaii line tightens his envelope this year. Sponsor pickup: COO Sarah O\'Brien partners on rollout to nursing.',
         citesFrom: 'funding_authority_matrix.csv (10 bands + 2 parallel gates)',
       },
       {
-        agent: 'Source',
+        agent: 'Ava',
+        expertise: 'vendor & sourcing',
         question: 'How is Cohere Health performing for us, and what\'s the renewal posture?',
         groundedAnswer:
           'Cohere Health is owned by VP Thomas Hartwell on the plan side. The prior-auth automation program is in P4 Build, $6.1M of $9.8M budget consumed. My read on renewal: don\'t open it cold — your leverage is concentrated in the integration tail, not the core spec. Push for outcome-based fee structure tied to first-pass denial reduction (which is your DENIALS-2024 anchor). The healthier negotiation is bundling Cohere with the Abridge renewal in April 2026 — different categories but overlapping change-management surface area, and Hartwell + Krishnamurthy have the mandate to do it.',
@@ -242,7 +250,7 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     ],
     walkStart: {
       href: '/strategic-moves?client=meridian',
-      label: 'Nexus · Meridian Strategic Moves',
+      label: 'Ava · Meridian Strategic Moves',
       reason: 'Pose the $6M ambient documentation question as a CDIO-sponsored Move; watch the parallel gates surface.',
     },
   },
@@ -288,7 +296,7 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     visionLead:
       'Banks don\'t fail on AI strategy — they fail on AI governance. First Capital needs a platform that respects SR 11-7 model risk attestation, fair-lending review, OCC examination posture, and the three-signature approval reality without reducing every conversation to compliance theater. Patricia Huang needs the platform to make her FedNow build defensible to James Park\'s risk org without 14 PowerPoints.',
     dataLoadedLead:
-      'The First Capital tenant is the most recently authored composite (full JSON authoring on 2026-05-10). When a CXO asks any sized/scoped/funded question, the agent reaches into these substrates first.',
+      'The First Capital tenant is the most recently authored composite (full JSON authoring on 2026-05-10). When a CXO asks any sized/scoped/funded question, Ava reaches into these substrates first.',
     dataLoaded: [
       { kind: 'Named persons', count: '92', example: 'CEO Morrison + Operating Committee + 4 LOB CEOs (Osei/Walsh/Vasquez-Roth/Fontaine) + 22 IT leaders' },
       { kind: 'Functions sized', count: '25', example: 'Compliance/BSA-AML 1,180 FTE largest · App Services 820 FTE · Data & Analytics 245 FTE under MRM' },
@@ -306,21 +314,24 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
     ],
     agentSamples: [
       {
-        agent: 'Sentinel',
+        agent: 'Ava',
+        expertise: 'AI strategy',
         question: 'Walk me through the parallel gates for any new ML model — MRM, fair lending, board risk.',
         groundedAnswer:
           'Three parallel gates that fire regardless of dollar threshold. (1) Model Risk Management (SR 11-7): VP Ferris Adekoya-Park reporting to CRO James Park. Any ML model deployment requires model documentation, validation, monitoring, lineage, and bias assessment. Bi-weekly attestation cycle during active program windows. (2) Fair Lending compliance review: VP Brendan Castellanos-Liu reporting to CCO Westbrook. Required for any consumer-facing AI/ML touching credit decisions — disparate impact testing, variable selection review. (3) Board Risk Committee oversight: any spend creating new risk concentration. CRO Park is independent voice; reports dotted-line to Board Risk. These are concurrent with — not subordinate to — your CIO/CFO dollar approvals.',
         citesFrom: 'funding_authority_matrix.csv (3 parallel gates) + risk function org',
       },
       {
-        agent: 'Nexus',
+        agent: 'Ava',
+        expertise: 'investment shaping',
         question: 'I want to ship an AI-assisted regulatory reporting Move. Where does it land politically?',
         groundedAnswer:
           'You\'re sitting at the highest-leverage AI Move in the bank — compliance is 34% of IT budget, highest in peer. Sponsor structure that actually works: VP Eleanora Ouellette-Park (Reg Reporting Tech) as program lead, CRO James Park as accountable sponsor (his org owns the outcome), CIO Patricia Huang as funding sponsor. CFO Torres will care about cost-to-income, not the technology — frame the value lever as compliance FTE reduction (1,180 today) and OCC examination cycle compression. The AxiomSL renegotiation flag (Adenza price increase post-Nasdaq) is your best leverage on the platform side. This is a P0 originate-able now if Park\'s MRM intake clears the architecture review.',
         citesFrom: 'function_capacity.csv (Compliance + Reg Reporting) + vendor_scorecards.csv (Adenza)',
       },
       {
-        agent: 'Source',
+        agent: 'Ava',
+        expertise: 'vendor & sourcing',
         question: 'Which vendors are on renegotiation flags right now?',
         groundedAnswer:
           'Three vendor scorecards in renegotiation status. (1) Adenza (Nasdaq) — AxiomSL ControllerView + Calypso treasury at $9.2M annual; renewal Jun 30, 2027; price increase post-Nasdaq acquisition is the flag. (2) NICE Actimize — Fraud + AML platform at $10M annual; renewal Apr 30, 2027; expanding under OCC findings, but VP Quintero is sitting on a Verafin pilot that could shift the leverage. (3) Black Knight (ICE Mortgage) — Mortgage Origination + Default at $9.2M annual; renewal Sep 30, 2026; volume in current rate environment makes this a price re-cut conversation. CPO Nadia Rahman owns the bundling logic; Brooks (Director, IT Sourcing) runs the platform-tier negotiations.',
@@ -334,36 +345,38 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
       // in user-visible URLs. The proxy resolves the active client from
       // the session, so `?client=...` is unnecessary here.
       href: '/source',
-      label: 'Source · First Capital Vendor Operations',
-      reason: 'Pose the renegotiation question above; the agent should ground in the renewal calendar with named owners.',
+      label: 'Ava · First Capital Vendor Operations',
+      reason: 'Pose the renegotiation question above; Ava should ground in the renewal calendar with named owners.',
     },
   },
 };
 
 // ───────────────────────────────────────────────────────────────────────────
 // Vision content — the AbarVa "what + why" for the first 5 minutes.
+// One assistant, Ava, presented through the specialist expertise she draws on
+// as you move across surfaces.
 // ───────────────────────────────────────────────────────────────────────────
 
 const AGENT_TRIO = [
   {
-    name: 'Sentinel',
-    archetype: 'Senior AI strategy advisor',
+    name: 'Ava on Intelligence',
+    archetype: 'Drawing on senior AI-strategy expertise',
     job: 'Forms views. Pressure-tests bets. Surfaces failure modes. Decides what is worth a Move and what is theatre.',
     color: T.purple,
     colorSoft: T.purpleSoft,
     surface: 'Intelligence',
   },
   {
-    name: 'Nexus',
-    archetype: 'Senior consultant for shaping enterprise AI investments',
+    name: 'Ava on Strategic Moves',
+    archetype: 'Drawing on senior investment-shaping expertise',
     job: 'Turns a candidate bet into a governed Move. Names sponsor, decision rights, gates, business case, and evidence.',
     color: T.teal,
     colorSoft: T.tealSoft,
     surface: 'Strategic Moves',
   },
   {
-    name: 'Source',
-    archetype: 'Senior IT vendor selection advisor',
+    name: 'Ava on Source',
+    archetype: 'Drawing on senior vendor-selection expertise',
     job: 'Vets vendors. Checks financial health. Constructs RFI/RFP. Names which logos to drop. Defends the contract.',
     color: T.navy,
     colorSoft: T.navySoft,
@@ -390,13 +403,13 @@ export function WelcomeSection() {
           The AI strategy operating system for <span style={{ fontStyle: 'italic' }}>your</span> enterprise.
         </SectionTitle>
         <Lead light>
-          AbarVa is one platform with three agents that ground every recommendation in your enterprise truth — your org, your systems, your funding authority — not generic AI patterns. Pick a composite tenant below and pressure-test what the agents actually know.
+          AbarVa is one platform with one assistant — Ava — who grounds every recommendation in your enterprise truth — your org, your systems, your funding authority — not generic AI patterns. She is present on every surface and draws on a faculty of specialist expertise as the work demands. Pick a composite tenant below and pressure-test what Ava actually knows.
         </Lead>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 18 }}>
           {[
-            'Sentinel · Intelligence',
-            'Nexus · Moves',
-            'Source · Vendor selection',
+            'Ava · Intelligence',
+            'Ava · Moves',
+            'Ava · Vendor selection',
           ].map((tag) => (
             <span key={tag} style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 4, background: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.92)', border: '1px solid rgba(255,255,255,0.18)' }}>{tag}</span>
           ))}
@@ -452,9 +465,9 @@ export function WelcomeSection() {
       {/* WHO WE ARE + AGENT TRIO — the why-use-us framing */}
       <Section>
         <Eyebrow>Who we are · Why this matters</Eyebrow>
-        <SectionTitle>Three agents. One enterprise truth. Zero generic AI advice.</SectionTitle>
+        <SectionTitle>One assistant. One enterprise truth. Zero generic AI advice.</SectionTitle>
         <Lead>
-          Every other AI tool starts with the model. AbarVa starts with your enterprise — your org chart, your IT financials, your funding authority matrix, your vendor scorecards, your in-flight programs. The agents reach into that substrate every time they answer. Their views are opinions, calibrated, and grounded in your real numbers.
+          Every other AI tool starts with the model. AbarVa starts with your enterprise — your org chart, your IT financials, your funding authority matrix, your vendor scorecards, your in-flight programs. You always talk to Ava; she adapts to what you are doing and reaches into that substrate every time she answers. Her views are opinions, calibrated, and grounded in your real numbers. Behind her sits a faculty of specialist expertise — strategy, investment shaping, sourcing — but you never switch agents or get handed off.
         </Lead>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, margin: '24px 0 8px' }}>
           {AGENT_TRIO.map((a) => (
@@ -475,7 +488,7 @@ export function WelcomeSection() {
           ))}
         </div>
         <Callout kind="info" icon="◆" label="The corpus thesis">
-          Tenant truth + curated industry corpus + senior-advisor expertise — three sources, every response. The corpus is one input, not a refusal trigger. When your tenant data answers a sized/scoped/funded question directly, the agents reach for it first; when the question is judgment, they form a view and call out their confidence.
+          Tenant truth + curated industry corpus + senior-advisor expertise — three sources, every response. The corpus is one input, not a refusal trigger. When your tenant data answers a sized/scoped/funded question directly, Ava reaches for it first; when the question is judgment, she forms a view and calls out her confidence.
         </Callout>
       </Section>
 
@@ -548,7 +561,7 @@ export function WelcomeSection() {
           </table>
         </div>
         <Callout kind="info" icon="✓" label="No dummy wiring">
-          {`Every record above flows through the production setup pipeline (load-${activeKey === 'meridian' ? 'meridian' : activeKey === 'apex' ? 'apex' : 'firstcapital'}-setup-data.ts → Supabase data_inventory_records → enterprise_context_chunks → agent retrieval). The agent's tenant_grounded retrieval whitelist explicitly includes org_structure, it_landscape, and it_financials so these rows surface at every relevant question.`}
+          {`Every record above flows through the production setup pipeline (load-${activeKey === 'meridian' ? 'meridian' : activeKey === 'apex' ? 'apex' : 'firstcapital'}-setup-data.ts → Supabase data_inventory_records → enterprise_context_chunks → agent retrieval). Ava's tenant_grounded retrieval whitelist explicitly includes org_structure, it_landscape, and it_financials so these rows surface at every relevant question.`}
         </Callout>
       </Section>
 
@@ -557,13 +570,13 @@ export function WelcomeSection() {
         <Eyebrow>{active.shortLabel} · Agent intelligence</Eyebrow>
         <SectionTitle>Three questions, three grounded answers</SectionTitle>
         <Lead>
-          These are not scripts. They are the kind of answer the agent produces when the underlying tenant data has been loaded properly. Ask any one of them once you sign in as a CXO and watch the agent reach for the canonical row.
+          These are not scripts. They are the kind of answer Ava produces when the underlying tenant data has been loaded properly — same assistant each time, drawing on the expertise the question demands. Ask any one of them once you sign in as a CXO and watch Ava reach for the canonical row.
         </Lead>
         <div style={{ display: 'grid', gap: 18, margin: '20px 0' }}>
           {active.agentSamples.map((qa, idx) => (
             <div key={idx} style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: 'hidden', background: T.surface }}>
               <div style={{ padding: '14px 20px', borderBottom: `1px solid ${T.borderLt}`, background: active.accentSoft, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: active.accent }}>{qa.agent}</span>
+                <span style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: active.accent }}>{`${qa.agent} · ${qa.expertise}`}</span>
                 <span style={{ fontFamily: T.fBody, fontSize: 14, fontWeight: 700, color: T.ink }}>{`"${qa.question}"`}</span>
               </div>
               <div style={{ padding: '18px 20px' }}>
@@ -582,7 +595,7 @@ export function WelcomeSection() {
         <Eyebrow>Walkthrough · {active.shortLabel}</Eyebrow>
         <SectionTitle>The 5-minute first session</SectionTitle>
         <Lead>
-          {"Sign in as one of the three CXOs above. Open the surface below. Ask the question shown. Watch the agent reach into this tenant's substrate to ground the answer in named owners, real budgets, and the right approval path."}
+          {"Sign in as one of the three CXOs above. Open the surface below. Ask the question shown. Watch Ava reach into this tenant's substrate to ground the answer in named owners, real budgets, and the right approval path."}
         </Lead>
         <Callout kind="success" icon="→" label="Best first click">
           <Link href={active.walkStart.href} style={{ color: active.accent, fontWeight: 700, textDecoration: 'none' }}>{active.walkStart.label}</Link>
@@ -591,9 +604,9 @@ export function WelcomeSection() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden', margin: '24px 0 8px' }}>
           {[
             { step: 'Sign in', body: `Use any of the 3 CXOs above. Each lands you in the right workspace pinned to ${active.shortLabel}.` },
-            { step: 'Ask Sentinel', body: 'Pose any of the agent-intelligence questions. The agent grounds its answer in the org/IT-financials substrate.' },
-            { step: 'Shape a Nexus Move', body: 'Take a finding from Sentinel and originate a Move. The funding authority matrix surfaces named approvers + parallel gates.' },
-            { step: 'Run Source', body: 'When the Move depends on a vendor, Source pulls the scorecard + renewal calendar with renegotiation flags.' },
+            { step: 'Ask Ava on Intelligence', body: 'Pose any of the agent-intelligence questions. Ava grounds her answer in the org/IT-financials substrate.' },
+            { step: 'Shape a Move with Ava', body: 'Take a finding from Intelligence and originate a Move. Ava draws on her investment-shaping expertise; the funding authority matrix surfaces named approvers + parallel gates.' },
+            { step: 'Run Source with Ava', body: 'When the Move depends on a vendor, Ava pulls the scorecard + renewal calendar with renegotiation flags — same assistant, sourcing expertise.' },
           ].map((s, i) => (
             <div key={s.step} style={{ padding: 22, borderRight: `1px solid ${T.borderLt}`, background: i === 0 ? active.accentSoft : T.surface }}>
               <div style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: active.accent, marginBottom: 10 }}>Step {i + 1}</div>

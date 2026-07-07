@@ -4,6 +4,7 @@
 
 > Parent standard: `CXO-ARTIFACT-EXCELLENCE-FRAMEWORK.md`. This Source blueprint
 > specializes the cross-module CXO artifact bar for IT sourcing deliverables.
+> Storytelling contract: `CXO-ARTIFACT-STORYTELLING-CONTRACT.md`.
 
 **Date:** 2026-05-20  
 **Status:** v1 alignment blueprint - deliverable content standard before renderer
@@ -43,6 +44,36 @@ If a deliverable only summarizes content, it is not Source-grade. Source should
 behave like an expert IT sourcing advisor: it challenges demand, sizes hidden
 cost, exposes vendor traps, protects negotiation leverage, and keeps the event
 gate-governed.
+
+## 2.1 Source Advisory Story Rule
+
+Source artifacts must not stop at "facts -> insights -> recommendation." They
+must carry the full advisory chain:
+
+`evidence -> finding -> why it happened -> commercial opportunity -> business impact -> decision -> next action`
+
+For contract optimization, renewal, vendor evaluation and BAFO artifacts, the
+first five pages or screens should be:
+
+1. **Executive message:** renew / renegotiate / rebid / select / defer, with value
+   at stake and decision owner.
+2. **Where money/value is moving:** exposure bridge, value tree, invoice trend,
+   TCO waterfall or commercial normalization.
+3. **Why it happened:** commercial/operating mechanism such as stale baseline,
+   weak SLA economics, scope drift, pricing opacity or productivity not priced back.
+4. **What should happen:** timeline from current action to vendor response,
+   executive decision and fallback path.
+5. **Commercial strategy:** negotiation themes and opportunity map.
+
+The Commercial Opportunity Map should group findings into:
+
+- recover cash;
+- reduce future spend;
+- reduce operational risk;
+- increase vendor accountability.
+
+Every material Source finding should also map to the universal business-impact
+categories: revenue, cost, risk, speed, customer and compliance.
 
 ## 3. Consulting Exhibit Anatomy
 
@@ -251,6 +282,58 @@ Purpose: enforce comparable, complete vendor responses.
 | 7 | Gate impact | What blocks evaluation or BAFO. | Gate impact table. | Incomplete responses still evaluated equally. |
 
 Minimum quality: a vendor cannot submit vague prose and still look complete.
+
+### 9.5 Vendor Response Control Pack
+
+Purpose: allow realistic long-form vendor responses while preserving a
+structured evaluation record.
+
+Vendor responses may include detailed narrative by RFP section, but the required
+structured exhibits are mandatory and control the evaluation record. Narrative
+responses may supplement, but may not replace, the required pricing workbook,
+claim register, SLA table, staffing model, transition plan, assumptions and
+exclusions log, and exceptions table.
+
+If a claim appears in narrative but is not included in the Vendor Claim Register
+or supported by the required exhibit, the buyer may treat it as unsupported for
+evaluation and BAFO purposes.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Section map | Vendor response section, page/file reference, matching RFP requirement, complete/partial/missing status. | Section map table. | Narrative accepted without mapping to the RFP. |
+| 2 | Required narrative | Executive summary, scope, delivery model, support model, transition, staffing, SLA, automation, governance, security, pricing, assumptions, exceptions. | Section completeness heatmap. | Vendor response skips required sections without explicit gap. |
+| 3 | Claim register | Claim, section, evidence, owner, structured exhibit reference, evaluation status. | Claim register table. | Claims hidden only in prose. |
+| 4 | Pricing workbook | Run cost, transition cost, one-time cost, optional cost, pass-throughs, 5-year TCO. | Pricing workbook / TCO bridge. | Narrative pricing replaces workbook pricing. |
+| 5 | Productivity commitments | Baseline, use case, impact, year, measurement method, pricing credit, dependencies. | Productivity commitment table. | Automation savings not tied to pricing or measurement. |
+| 6 | Staffing and SLA exhibits | FTE, role, location, coverage, SLA target, credit, cap, exclusion, reporting. | Staffing and SLA tables. | 24x7 or SLA claims lack staffed/exhibit proof. |
+| 7 | Assumptions and exceptions | Buyer dependencies, exclusions, legal/commercial deviations, change-order exposure. | Exception and assumption log. | Assumptions buried in appendix prose. |
+| 8 | Transition plan | KT, mobilization, cutover, stabilization, milestones, exit criteria, payment linkage. | Milestone plan. | Transition fee not linked to milestones. |
+| 9 | Evidence attachment index | File/page/sheet references for claims and exhibits. | Evidence index. | Unsupported claims treated as scored evidence. |
+
+Minimum quality: the response can be long and nuanced, but AbarVa can reduce it
+to a minimum viable sourcing record for comparison, challenge, BAFO, and
+executive decision.
+
+### 9.6 Minimum Viable Vendor Extraction
+
+Purpose: convert long vendor responses into sourcing-critical evidence, not
+generic summaries.
+
+| Order | Extraction area | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Completeness | Required RFP sections answered, partial, missing, or exceptioned. | Completeness heatmap. | No section-level readiness. |
+| 2 | Claims | Major vendor claims, section reference, evidence, confidence. | Claim register. | Marketing claims treated as proof. |
+| 3 | Evidence | Supporting file/page/sheet references and missing proof. | Evidence index. | Claims without evidence status. |
+| 4 | Pricing | Run, transition, one-time, optional, pass-through, 5-year TCO. | TCO bridge. | Submitted totals treated as normalized. |
+| 5 | Productivity | Automation commitment, baseline, timing, priced-back credit, measurement. | Productivity table. | Productivity claim not reconciled to pricing. |
+| 6 | Staffing | Role mix, location mix, FTEs, coverage, retained dependencies. | Staffing model. | Coverage claim not staffed. |
+| 7 | SLA | Targets, credits, caps, exclusions, reporting cadence. | SLA commitment matrix. | SLA target shown without credit/cap economics. |
+| 8 | Assumptions | Buyer obligations, exclusions, dependencies, change-order risk. | Assumption/exclusion log. | Risk-shifting assumptions ignored. |
+| 9 | Exceptions | Commercial, legal, RFP, SLA, and pricing deviations. | Exception table. | Exceptions mixed into narrative. |
+| 10 | Transition | KT, dependencies, milestones, exit criteria, payment linkage. | Transition milestone plan. | Transition plan not tied to gates. |
+
+Minimum quality: the product can say where the vendor story does not match its
+commercial commitment.
 
 ## 10. Stage 4 - Pricing / TCO
 

@@ -1,0 +1,100 @@
+{
+  "version": "2026-06",
+  "environmentKey": "product-preview",
+  "purpose": "Non-mutating approval and execution packet for creating AbarVa Product Preview.",
+  "status": "approval_required_before_mutation",
+  "subscription": {
+    "displayName": "sub-abarva-product-preview-eus-001",
+    "environmentKey": "product-preview",
+    "managementGroupTarget": "abarva-product",
+    "regionSet": ["eastus"],
+    "budgetUsdMonthly": 500,
+    "budgetAlertThresholdsPercent": [50, 80, 100],
+    "dataBoundary": {
+      "allowed": ["synthetic", "pilot-reference", "client-approved-redacted"],
+      "disallowed": [
+        "client-confidential-unapproved",
+        "phi",
+        "pii",
+        "raw-client-private-documents"
+      ]
+    }
+  },
+  "approvalGates": [
+    "create_subscription",
+    "move_subscription_to_management_group",
+    "assign_breakglass_owner",
+    "assign_platform_maintainer",
+    "assign_release_operator",
+    "create_budget",
+    "apply_policy_assignments",
+    "create_baseline_resources",
+    "deploy_release_candidate",
+    "run_preview_acceptance",
+    "approve_promotion_to_product_prod"
+  ],
+  "baselineControls": [
+    "deny_public_blob_access",
+    "deny_public_postgres",
+    "deny_public_keyvault",
+    "require_private_endpoints_for_data_services",
+    "require_tags",
+    "require_budget",
+    "require_diagnostic_settings",
+    "require_purge_protection",
+    "require_release_candidate_digest",
+    "require_context_healthcheck",
+    "require_signed_in_browser_qa",
+    "no_phi_pii"
+  ],
+  "requiredTags": {
+    "Environment": "Product Preview",
+    "EnvironmentKey": "product-preview",
+    "Plane": "control-plane",
+    "Owner": "AbarVa Platform",
+    "CostCenter": "product-development",
+    "DataClassification": "synthetic-or-client-approved-redacted",
+    "ClientCode": "abarva",
+    "ManagedBy": "manual-approved",
+    "Repository": "abarva-platform/abarva",
+    "ReleaseLane": "global-control-lane",
+    "Criticality": "high",
+    "NoPhiPii": "true"
+  },
+  "plannedResources": [
+    "resource_group_controlplane",
+    "log_analytics_workspace",
+    "key_vault",
+    "container_apps_environment",
+    "container_app_web",
+    "container_app_operator_jobs",
+    "azure_container_registry_pull_scope",
+    "storage_account_for_preview_artifacts",
+    "postgres_for_preview_release_validation",
+    "azure_ai_search_for_preview_release_validation",
+    "application_insights_or_managed_prometheus",
+    "private_dns_zones_if_private_data_services_exist"
+  ],
+  "evidenceRequired": [
+    "explicit_approval_record",
+    "subscription_id",
+    "management_group_path",
+    "role_assignment_export",
+    "policy_assignment_export",
+    "budget_id",
+    "budget_alert_recipients",
+    "tag_export",
+    "diagnostic_settings_export",
+    "pinned_image_digest",
+    "aca_revision_export",
+    "health_endpoint_200",
+    "no_vercel_headers",
+    "context_healthcheck_report",
+    "signed_in_browser_qa_report",
+    "accessibility_smoke_report",
+    "rollback_revision_or_digest",
+    "execution_ledger_entry"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true
+}

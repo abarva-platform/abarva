@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" role="img" aria-label="AbarVa Option 2 Intersecting A plus V symbol">
+
+  <g fill="none" stroke-linecap="butt" stroke-linejoin="miter">
+    <!-- Selected #2 black/white angular A -->
+    <path d="M18 80 L50 20 L82 80" stroke="#FFFFFF" stroke-width="14"/>
+    <!-- Selected #2 blue V rising to the right -->
+    <path d="M62 55 L82 80 L110 20" stroke="#22AEEA" stroke-width="14"/>
+  </g>
+  <!-- Intersecting bridge, the visual cue from selected #2 -->
+  <path d="M48 52 L74 52 L83 61 L57 61 Z" fill="#22AEEA" opacity="0.58"/>
+  <path d="M62 55 L74 52 L83 61 L70 65 Z" fill="#0A76D8" opacity="0.38"/>
+</svg>

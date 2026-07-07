@@ -26,8 +26,8 @@ export function SourceTowerSection() {
           The event doesn&rsquo;t end at Stage 9. Stages 10 (Transition) and 11
           (Value) are where the sourcing decision either delivers or
           doesn&rsquo;t. After Stage 11 is promoted, the event surfaces in
-          Tower&rsquo;s handoff panel and Atlas takes over the ongoing
-          monitoring.
+          Tower&rsquo;s handoff panel — and Ava keeps watching it, now drawing
+          on her portfolio-monitoring expertise.
         </Lead>
       </HeroBand>
 
@@ -36,14 +36,15 @@ export function SourceTowerSection() {
         <Eyebrow>After the event · 01</Eyebrow>
         <SectionTitle>What Tower observes</SectionTitle>
         <Lead>
-          Tower (fronted by Atlas, not Sentinel) watches three data streams
-          after a Source event closes. These become Tower observations that
-          Atlas surfaces to the procurement lead and decision sponsors.
+          In the Tower, Ava watches three data streams after a Source event
+          closes — the same assistant you ran the event with, now leaning on
+          her portfolio-monitoring expertise. These become Tower observations
+          that she surfaces to the procurement lead and decision sponsors.
         </Lead>
         <SubHead>Vendor onboarding milestones (Stage 10 / Transition)</SubHead>
         <BodyP>
           During Stage 10, the winning vendor&rsquo;s onboarding milestones are
-          tracked against the d26 transition plan. Atlas monitors completion
+          tracked against the d26 transition plan. Ava monitors completion
           status, flags delayed milestones, and surfaces escalation prompts
           when a milestone is overdue by more than the threshold configured on
           the event (default: 7 days). Each milestone check-in is a Tower
@@ -52,7 +53,7 @@ export function SourceTowerSection() {
         <SubHead>KPI realization (Stage 11 / Value)</SubHead>
         <BodyP>
           The d15 value scorecard (authored at Stage 5 / Evaluation) lists the
-          KPI targets you required from the winning vendor. In Stage 11, Atlas
+          KPI targets you required from the winning vendor. In Stage 11, Ava
           compares realized values to those targets on a monthly cadence. The
           gap between target and realized becomes the <strong>variance
           report</strong> — mandatory before the event can be closed.
@@ -60,7 +61,7 @@ export function SourceTowerSection() {
         <SubHead>Contract compliance signals (d28 contract record)</SubHead>
         <BodyP>
           The d28 contract record (authored at Stage 9 / Selection) contains
-          the key contractual obligations. Atlas monitors compliance signals —
+          the key contractual obligations. Ava monitors compliance signals —
           renewal windows, SLA thresholds, audit obligations — and surfaces
           them as Tower observations ahead of the relevant dates.
         </BodyP>
@@ -73,17 +74,17 @@ export function SourceTowerSection() {
         <Lead>
           The d15 value scorecard is authored at Stage 5 / Evaluation. It lists
           the specific KPI targets you required from the winning vendor. In
-          Stage 11, Atlas reads d15 to know what to measure.
+          Stage 11, Ava reads d15 to know what to measure.
         </Lead>
         <BodyP>
           Each row in d15 has: a KPI label (e.g. &ldquo;AHT reduction
           &ge;&nbsp;15%&rdquo;), a target value, a measurement method (e.g.
           &ldquo;call center ops dashboard monthly export&rdquo;), and a
           realization deadline (e.g. &ldquo;Month 6 post go-live&rdquo;). The
-          rows are the Atlas monitoring contract.
+          rows are Ava&rsquo;s monitoring contract.
         </BodyP>
         <BodyP>
-          In Stage 11, Atlas compares each d15 row&rsquo;s target to the
+          In Stage 11, Ava compares each d15 row&rsquo;s target to the
           realized value you or the vendor submits. The gap — positive or
           negative — is the variance. Positive variance (beat the target) is
           surfaced as a win. Negative variance (missed the target) is surfaced
@@ -97,17 +98,19 @@ export function SourceTowerSection() {
         </BodyP>
       </Section>
 
-      {/* Atlas's role */}
+      {/* Ava's portfolio-monitoring role */}
       <Section>
         <Eyebrow>After the event · 03</Eyebrow>
-        <SectionTitle>Atlas&rsquo;s role after the gate</SectionTitle>
+        <SectionTitle>How Ava&rsquo;s role shifts after the gate</SectionTitle>
         <Lead>
-          Sentinel is the agent for Stages 1 through 9. Atlas takes over at the
-          Stage 10 gate. The chat lane changes branding at that point — you are
-          now talking to Atlas.
+          Ava runs the Source event end to end — Stages 1 through 11 and into
+          the Tower — and there is no handoff to a different agent. At the Stage
+          10 gate the work changes character, and she leans into her
+          portfolio-monitoring expertise. You are talking to the same assistant
+          the whole way through.
         </Lead>
         <BodyP>
-          Atlas specializes in three areas that Sentinel does not:
+          Past the Stage 10 gate, Ava draws on three monitoring specialties:
         </BodyP>
         <ul style={{ marginLeft: 24, lineHeight: 1.8, fontSize: 14 }}>
           <li>
@@ -128,11 +131,11 @@ export function SourceTowerSection() {
           </li>
         </ul>
         <BodyP>
-          You do not address Atlas by a different name in the chat lane — the
-          lane still shows the AbarVa interface. The agent branding in the
-          readiness count area changes from &ldquo;Sentinel&rdquo; to
-          &ldquo;Atlas&rdquo; at the Stage 10 gate so you know which specialist
-          catalog is active.
+          The chat lane never swaps to a different agent — it stays Ava in the
+          AbarVa interface from intake through close-out. What changes at the
+          Stage 10 gate is the kind of work she does for you: the readiness
+          count shifts from authoring the next stage to monitoring the
+          portfolio you just stood up.
         </BodyP>
       </Section>
 
@@ -143,7 +146,7 @@ export function SourceTowerSection() {
         <Lead>
           After Stage 11 Value is promoted — the event &ldquo;closed&rdquo; —
           it surfaces in Tower&rsquo;s handoff panel. Open variance items
-          become Tower observations. Atlas continues watching until the
+          become Tower observations. Ava continues watching until the
           contract term ends or you manually remove the observation.
         </Lead>
         <StepList>
@@ -160,13 +163,13 @@ export function SourceTowerSection() {
           </Step>
           <Step title="Variance items become Tower observations">
             Any KPI row with negative variance that has not been resolved
-            becomes a Tower observation. Atlas continues to monitor those items
+            becomes a Tower observation. Ava continues to monitor those items
             monthly — checking vendor submissions, updating variance, and
             surfacing escalation prompts to the procurement lead.
           </Step>
           <Step title="Ongoing monitoring">
-            Atlas watches the contract until one of two things happens: the
-            contract term end date passes (and Atlas surfaces a contract
+            Ava watches the contract until one of two things happens: the
+            contract term end date passes (and she surfaces a contract
             closeout observation), or the procurement lead manually removes the
             observation from Tower. Neither action deletes the event record —
             the Source record is permanent.
@@ -179,14 +182,14 @@ export function SourceTowerSection() {
         <Eyebrow>After the event · 05</Eyebrow>
         <SectionTitle>Before you close Stage 11</SectionTitle>
         <Lead>
-          Run &ldquo;Generate Value Summary&rdquo; in the Atlas chat lane
-          before promoting Stage 11. Atlas drafts the d30 Realized Value Report
+          Run &ldquo;Generate Value Summary&rdquo; in the Ava chat lane
+          before promoting Stage 11. Ava drafts the d30 Realized Value Report
           — the event&rsquo;s permanent close-out document.
         </Lead>
         <BodyP>
           The d30 report is assembled from three sources: d15 (the value
           scorecard with targets), d28 (the contract record), and the realized
-          KPI evidence you submitted during Stage 11. Atlas reads all three,
+          KPI evidence you submitted during Stage 11. Ava reads all three,
           computes the final variance table, writes a narrative summary, and
           flags any open items that require remediation or waivers before
           promotion.
@@ -200,9 +203,9 @@ export function SourceTowerSection() {
         </BodyP>
         <Callout kind="info" icon="📂" label="The event is the audit unit, not the contract">
           The event record — all 11 stages, all artifacts, all gate timestamps
-          — lives in Source permanently. The Tower observation record — all
-          Atlas analyses, all variance reports, all contract compliance checks
-          — lives in Tower. Together they are the sourcing governance file for
+          — lives in Source permanently. The Tower observation record — all of
+          Ava&rsquo;s analyses, all variance reports, all contract compliance
+          checks — lives in Tower. Together they are the sourcing governance file for
           that contract. Neither record is deleted when the contract ends;
           neither is deleted when you remove a Tower observation. They are the
           institutional memory of the sourcing decision.

@@ -48,17 +48,18 @@
  * half-stamped row. No silent failures.
  */
 
-import 'server-only';
+import "server-only";
 
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { emitNotification } from '@/lib/admin/broker/notification-broker';
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { emitNotification } from "@/lib/admin/broker/notification-broker";
+import { resolveTenantClientUuid } from "@/lib/integrations/ai-egress/tenant-client-resolver";
 import type {
   AiDataClass,
   AiEgressAuditRecord,
   AiPolicyDecision,
   AiProvider,
   AiRoute,
-} from '@/lib/integrations/ai-egress/types';
+} from "@/lib/integrations/ai-egress/types";
 
 // ── Contract ────────────────────────────────────────────────────────────────
 
@@ -107,26 +108,26 @@ export interface EgressAuditTenantContext {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function nonEmptyString(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function validateContext(ctx: EgressAuditTenantContext): void {
   if (!nonEmptyString(ctx.intendedTenantKey)) {
     throw new Error(
-      'writeEgressAudit: ctx.intendedTenantKey is required (non-empty string). '
-        + 'Tenant stamping is default-on; a row cannot be written without intended/resolved keys.',
+      "writeEgressAudit: ctx.intendedTenantKey is required (non-empty string). " +
+        "Tenant stamping is default-on; a row cannot be written without intended/resolved keys.",
     );
   }
   if (!nonEmptyString(ctx.resolvedTenantKey)) {
     throw new Error(
-      'writeEgressAudit: ctx.resolvedTenantKey is required (non-empty string). '
-        + 'Tenant stamping is default-on; a row cannot be written without intended/resolved keys.',
+      "writeEgressAudit: ctx.resolvedTenantKey is required (non-empty string). " +
+        "Tenant stamping is default-on; a row cannot be written without intended/resolved keys.",
     );
   }
   if (!nonEmptyString(ctx.tenantId)) {
     throw new Error(
-      'writeEgressAudit: ctx.tenantId is required (non-empty string). '
-        + 'The row needs a tenant_id for RLS to bite.',
+      "writeEgressAudit: ctx.tenantId is required (non-empty string). " +
+        "The row needs a tenant_id for RLS to bite.",
     );
   }
 }
@@ -145,14 +146,17 @@ function mergeMetadata(
   };
 }
 
-function emitMismatchWarn(input: EgressAuditWriteInput, ctx: EgressAuditTenantContext): void {
+function emitMismatchWarn(
+  input: EgressAuditWriteInput,
+  ctx: EgressAuditTenantContext,
+): void {
   if (ctx.intendedTenantKey === ctx.resolvedTenantKey) return;
   // Structured warn — write-time anomaly signal. The lane-time
   // isolation broker still flags this row, but a write-time signal
   // lets ops alert before someone opens the lane.
   console.warn(
     JSON.stringify({
-      event: 'ai_egress_audit.tenant_mismatch',
+      event: "ai_egress_audit.tenant_mismatch",
       workflow: input.workflow,
       provider: input.provider,
       route: input.route,
@@ -180,21 +184,21 @@ function emitIsolationAnomalyBestEffort(
   if (ctx.intendedTenantKey === ctx.resolvedTenantKey) return;
   void emitNotification({
     tenantKey: ctx.resolvedTenantKey,
-    eventType: 'isolation.anomaly',
+    eventType: "isolation.anomaly",
     payload: {
       intendedTenantKey: ctx.intendedTenantKey,
       resolvedTenantKey: ctx.resolvedTenantKey,
       intendedTenantSlug: ctx.intendedTenantKey,
       resolvedTenantSlug: ctx.resolvedTenantKey,
       detector: `ai_egress_audit.tenant_mismatch:${input.workflow}`,
-      severity: 'critical',
+      severity: "critical",
       producedAtIso: new Date().toISOString(),
     },
     targetResourceId: ctx.tenantId,
   }).catch((err: unknown) => {
     console.warn(
       JSON.stringify({
-        event: 'isolation_anomaly.notification_emit_failed',
+        event: "isolation_anomaly.notification_emit_failed",
         intended_tenant: ctx.intendedTenantKey,
         resolved_tenant: ctx.resolvedTenantKey,
         error: err instanceof Error ? err.message : String(err),
@@ -232,23 +236,35 @@ function fromDbRow(row: Record<string, unknown>): AiEgressAuditRecord {
   return {
     id: String(row.id),
     tenantId: String(row.tenant_id),
-    userId: typeof row.user_id === 'string' ? row.user_id : undefined,
+    userId: typeof row.user_id === "string" ? row.user_id : undefined,
     workflow: String(row.workflow),
-    artifactId: typeof row.artifact_id === 'string' ? row.artifact_id : undefined,
-    artifactType: typeof row.artifact_type === 'string' ? row.artifact_type : undefined,
-    provider: row.provider as AiEgressAuditRecord['provider'],
-    model: typeof row.model === 'string' ? row.model : undefined,
-    route: row.route as AiEgressAuditRecord['route'],
-    dataClass: row.data_class as AiEgressAuditRecord['dataClass'],
-    policyDecision: row.policy_decision as AiEgressAuditRecord['policyDecision'],
+    artifactId:
+      typeof row.artifact_id === "string" ? row.artifact_id : undefined,
+    artifactType:
+      typeof row.artifact_type === "string" ? row.artifact_type : undefined,
+    provider: row.provider as AiEgressAuditRecord["provider"],
+    model: typeof row.model === "string" ? row.model : undefined,
+    route: row.route as AiEgressAuditRecord["route"],
+    dataClass: row.data_class as AiEgressAuditRecord["dataClass"],
+    policyDecision:
+      row.policy_decision as AiEgressAuditRecord["policyDecision"],
     decisionReason: String(row.decision_reason),
-    promptHash: typeof row.prompt_hash === 'string' ? row.prompt_hash : undefined,
-    responseHash: typeof row.response_hash === 'string' ? row.response_hash : undefined,
-    promptSnapshotRef: typeof row.prompt_snapshot_ref === 'string' ? row.prompt_snapshot_ref : undefined,
+    promptHash:
+      typeof row.prompt_hash === "string" ? row.prompt_hash : undefined,
+    responseHash:
+      typeof row.response_hash === "string" ? row.response_hash : undefined,
+    promptSnapshotRef:
+      typeof row.prompt_snapshot_ref === "string"
+        ? row.prompt_snapshot_ref
+        : undefined,
     responseSnapshotRef:
-      typeof row.response_snapshot_ref === 'string' ? row.response_snapshot_ref : undefined,
-    requestMetadata: (row.request_metadata as Record<string, unknown> | null) ?? {},
-    errorMessage: typeof row.error_message === 'string' ? row.error_message : undefined,
+      typeof row.response_snapshot_ref === "string"
+        ? row.response_snapshot_ref
+        : undefined,
+    requestMetadata:
+      (row.request_metadata as Record<string, unknown> | null) ?? {},
+    errorMessage:
+      typeof row.error_message === "string" ? row.error_message : undefined,
     createdAt: String(row.created_at),
   };
 }
@@ -266,18 +282,45 @@ function fromDbRow(row: Record<string, unknown>): AiEgressAuditRecord {
  * MUST handle the throw themselves — the writer does not silently
  * swallow.
  */
+const TENANT_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const tenantUuidCache = new Map<string, string>();
+
+/**
+ * `ai_egress_audit.tenant_id` is a UUID column, but call sites have repeatedly
+ * passed the tenant KEY ("skyharbor") — each one failing the whole egress with
+ * `invalid input syntax for type uuid`. Fix the class at the sink: resolve a
+ * non-UUID tenantId to the client UUID here, once, for every caller.
+ */
+async function resolveTenantUuid(tenantId: string): Promise<string> {
+  if (TENANT_UUID_RE.test(tenantId)) return tenantId;
+  const cached = tenantUuidCache.get(tenantId);
+  if (cached) return cached;
+  try {
+    const id = await resolveTenantClientUuid(tenantId);
+    if (id && TENANT_UUID_RE.test(id)) {
+      tenantUuidCache.set(tenantId, id);
+      return id;
+    }
+  } catch {
+    /* fall through — let the insert fail loudly as before */
+  }
+  return tenantId;
+}
+
 export async function writeEgressAudit(
   input: EgressAuditWriteInput,
   ctx: EgressAuditTenantContext,
 ): Promise<AiEgressAuditRecord> {
   validateContext(ctx);
+  ctx = { ...ctx, tenantId: await resolveTenantUuid(ctx.tenantId) };
   emitMismatchWarn(input, ctx);
 
   const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
-    .from('ai_egress_audit')
+    .from("ai_egress_audit")
     .insert(toDbRow(input, ctx))
-    .select('*')
+    .select("*")
     .single();
 
   if (error) {

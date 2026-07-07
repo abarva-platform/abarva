@@ -8,7 +8,7 @@
  * `resolveBoardGradeTenantLabel` is the helper the 8 generic Move renderer
  * models now use. This test pins its honesty contract:
  *
- *   1. A recognised tenant key resolves to the canonical client display name.
+ *   1. A recognised tenant key resolves to the demo-safe client display name.
  *   2. A threaded tenant name (no key) resolves to that name.
  *   3. An unknown tenant with neither key nor name resolves to the honest
  *      "Tenant" placeholder.
@@ -40,31 +40,31 @@ const INDUSTRY_SLUGS = [
 ];
 
 describe('resolveBoardGradeTenantLabel — P1-3 honesty contract', () => {
-  it('resolves a recognised ClientKey (apexretail) to the canonical display name', () => {
+  it('resolves a recognised ClientKey (apexretail) to the demo-safe display name', () => {
     const { tenantLabel, tenantKey } = resolveBoardGradeTenantLabel(
       { tenant_key: 'apexretail', tenant_name: 'Apex Retail Group' },
       'retail',
     );
-    expect(tenantLabel).toBe('Apex Retail Group');
+    expect(tenantLabel).toBe('Retail Demo');
     expect(tenantKey).toBe('apexretail');
     expect(INDUSTRY_SLUGS).not.toContain(tenantLabel);
   });
 
-  it('resolves a recognised ClientKey (meridian) to canonical display name', () => {
+  it('resolves a recognised ClientKey (meridian) to demo-safe display name', () => {
     const { tenantLabel } = resolveBoardGradeTenantLabel(
       { tenant_key: 'meridian', tenant_name: 'Meridian Health System' },
       'healthcare-provider',
     );
-    expect(tenantLabel).toBe('Meridian Health');
+    expect(tenantLabel).toBe('Healthcare Demo');
     expect(INDUSTRY_SLUGS).not.toContain(tenantLabel);
   });
 
-  it('resolves a recognised ClientKey (arcturus / firstcapital) to canonical display name', () => {
+  it('resolves a recognised ClientKey (arcturus / firstcapital) to demo-safe display name', () => {
     const { tenantLabel } = resolveBoardGradeTenantLabel(
       { tenant_key: 'arcturus', tenant_name: 'First Capital Financial' },
       'financial-services',
     );
-    expect(tenantLabel).toBe('First Capital Financial');
+    expect(tenantLabel).toBe('Financial Services Demo');
     expect(INDUSTRY_SLUGS).not.toContain(tenantLabel);
   });
 
@@ -73,7 +73,7 @@ describe('resolveBoardGradeTenantLabel — P1-3 honesty contract', () => {
       { tenantKey: 'apexretail', tenantName: 'Apex Retail Group' } as MoveBusinessCaseInput,
       'retail',
     );
-    expect(tenantLabel).toBe('Apex Retail Group');
+    expect(tenantLabel).toBe('Retail Demo');
   });
 
   it('falls back to threaded tenant_name when the key is unknown', () => {
@@ -169,7 +169,7 @@ describe('Board-grade Move model files — P1-3 end-to-end', () => {
   ];
 
   it.each(RENDERERS)(
-    '$name: a recognised tenant (apexretail) resolves to the canonical display name',
+    '$name: a recognised tenant (apexretail) resolves to the demo-safe display name',
     ({ build }) => {
       const result = build() as { bound?: boolean; tenantLabel?: string };
       // The Apex × customer-care binding is catalogued, so the Move binds and
@@ -177,7 +177,7 @@ describe('Board-grade Move model files — P1-3 end-to-end', () => {
       // reason, the model file's unbound path doesn't carry tenantLabel —
       // skip the assertion in that case.
       if (result.bound !== false && typeof result.tenantLabel === 'string') {
-        expect(result.tenantLabel).toBe('Apex Retail Group');
+        expect(result.tenantLabel).toBe('Retail Demo');
         expect(INDUSTRY_SLUGS).not.toContain(result.tenantLabel);
       }
     },

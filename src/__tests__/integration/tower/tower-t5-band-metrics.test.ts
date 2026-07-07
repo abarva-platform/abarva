@@ -188,8 +188,10 @@ describe('buildTowerBandMetrics — Meridian fixture', () => {
     const renewals = pick(view, 'renewals_90d');
     expect(renewals.value).toBe('2');
     // Soonest = Vendor A (39 days from 2026-05-07 to 2026-06-15)
-    expect(renewals.subtext).toMatch(/MH-X 39d/);
+    expect(renewals.subtext).toMatch(/Vendor A 39d/);
     expect(renewals.subtext).toMatch(/\$2\.8M/);
+    expect(renewals.subtext).not.toMatch(/\b[A-Z]{2,}-[A-Z0-9-]+\b/);
+    expect(renewals.tooltip).not.toMatch(/\b[A-Z]{2,}-[A-Z0-9-]+\b/);
   });
 
   it('Adoption rate = % of non-foundation initiatives in scaled stage (Meridian: 2 of 4 = 50%)', () => {
@@ -238,7 +240,23 @@ describe('buildTowerBandMetrics — edge cases', () => {
     ];
     const view = buildTowerBandMetrics(initiatives, [], TODAY);
     const roi = view.metrics.find((m) => m.key === 'portfolio_roi')!;
-    expect(roi.value).toBe('0.0×');
+    expect(roi.value).toBe('gap');
+    expect(roi.subtext).toBe('measured value missing');
+    expect(roi.tooltip).toMatch(/ROI is a gap, not 0\.0x/);
+  });
+
+  it('does not expose raw initiative IDs in spend-at-risk tooltips', () => {
+    const initiatives = [
+      makeInitiative({
+        displayId: 'LAK-INIT-001',
+        name: 'Finance platform modernization',
+        statusFlag: 'value_lag',
+      }),
+    ];
+    const view = buildTowerBandMetrics(initiatives, [], TODAY);
+    const spend = view.metrics.find((m) => m.key === 'spend_at_risk')!;
+    expect(spend.tooltip).toContain('Finance platform modernization');
+    expect(spend.tooltip).not.toContain('LAK-INIT-001');
   });
 
   it('Spend at risk = $0 when no initiatives are pressuring', () => {

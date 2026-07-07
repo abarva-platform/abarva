@@ -67,21 +67,51 @@ describe('proxy public route patterns', () => {
     }
   });
 
-  it('exposes /product as the public Product overview page', () => {
-    const request = new NextRequest('https://app.abarva.ai/product');
-    expect(isPublicRoute(request)).toBe(true);
-    expect(isAuthRequiredRoute(request)).toBe(false);
-  });
-
-  it('exposes the public How it works demo pages without Clerk protection', () => {
+  it('keeps detailed marketing, trust, and training pages behind sign-in', () => {
     for (const path of [
+      '/product',
       '/how-it-works',
       '/how-it-works/it-productivity-comparison',
-      '/how-it-works/frameworks/ai-it-productivity',
+      '/model-card',
+      '/responsible-ai',
+      '/contact',
+      '/status',
+      '/subprocessors',
     ]) {
-      const request = new NextRequest(`https://www.abarva.ai${path}`);
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(false);
+      expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
+
+  it('keeps Responsible AI checkpoint pages public at proxy level to avoid Clerk redirects in RSC fetches', () => {
+    for (const path of [
+      '/responsible-ai/acknowledgment',
+      '/responsible-ai/training',
+    ]) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
       expect(isPublicRoute(request)).toBe(true);
       expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
+
+  it('keeps the signed-out entry surfaces public', () => {
+    for (const path of ['/', '/sign-in', '/signed-out', '/invite/start', '/demo']) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(true);
+      expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
+
+  it('keeps product demo workspaces auth-gated while the marketing demo is public', () => {
+    for (const path of [
+      '/demo/programs/new',
+      '/demo/explore',
+      '/demo/agent-markdown-fixture',
+    ]) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(false);
+      expect(isAuthRequiredRoute(request)).toBe(true);
     }
   });
 });

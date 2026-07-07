@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { SHELL } from "@/lib/shell/shell-tokens";
 
 const ROUTES = [
   { label: 'Home', path: '/home', surface: 'Home', key: 'hom' },
@@ -27,7 +27,7 @@ type Route = (typeof ROUTES)[number];
 export function CommandPalette() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ export function CommandPalette() {
     (path: string) => {
       router.push(path);
       setIsOpen(false);
-      setQuery('');
+      setQuery("");
       setSelectedIndex(0);
     },
     [router],
@@ -53,15 +53,15 @@ export function CommandPalette() {
   // Keyboard shortcut to open
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setIsOpen((prev) => !prev);
-        setQuery('');
+        setQuery("");
         setSelectedIndex(0);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Arrow / Enter / Escape when palette is open
@@ -69,27 +69,29 @@ export function CommandPalette() {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setIsOpen(false);
-        setQuery('');
+        setQuery("");
         setSelectedIndex(0);
         return;
       }
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.min(prev + 1, filteredRoutes.length - 1));
-      } else if (e.key === 'ArrowUp') {
+        setSelectedIndex((prev) =>
+          Math.min(prev + 1, filteredRoutes.length - 1),
+        );
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setSelectedIndex((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === 'Enter') {
+      } else if (e.key === "Enter") {
         e.preventDefault();
         const route = filteredRoutes[selectedIndex];
         if (route) navigate(route.path);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, filteredRoutes, selectedIndex, navigate]);
 
   // Auto-focus input when opened
@@ -107,14 +109,14 @@ export function CommandPalette() {
       <div
         onClick={() => {
           setIsOpen(false);
-          setQuery('');
+          setQuery("");
           setSelectedIndex(0);
         }}
         style={{
-          position: 'fixed',
+          position: "fixed",
           inset: 0,
           zIndex: 2000,
-          background: 'rgba(12,26,58,0.7)',
+          background: "rgba(12,26,58,0.7)",
         }}
         aria-hidden="true"
       />
@@ -125,15 +127,15 @@ export function CommandPalette() {
         aria-modal="true"
         aria-label="Command palette"
         style={{
-          position: 'fixed',
-          top: '20vh',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          position: "fixed",
+          top: "20vh",
+          left: "50%",
+          transform: "translateX(-50%)",
           width: 560,
           background: SHELL.PAPER,
           borderRadius: 12,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          overflow: 'hidden',
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          overflow: "hidden",
           zIndex: 2001,
         }}
       >
@@ -150,16 +152,16 @@ export function CommandPalette() {
           autoComplete="off"
           spellCheck={true}
           style={{
-            display: 'block',
-            width: '100%',
-            boxSizing: 'border-box',
-            border: 'none',
-            outline: 'none',
-            background: 'transparent',
+            display: "block",
+            width: "100%",
+            boxSizing: "border-box",
+            border: "none",
+            outline: "none",
+            background: "transparent",
             fontFamily: SHELL.SERIF,
             fontSize: 16,
             color: SHELL.INK,
-            padding: '16px 20px',
+            padding: "16px 20px",
           }}
         />
 
@@ -171,13 +173,13 @@ export function CommandPalette() {
           ref={listRef}
           style={{
             maxHeight: 360,
-            overflowY: 'auto',
+            overflowY: "auto",
           }}
         >
           {filteredRoutes.length === 0 ? (
             <div
               style={{
-                padding: '14px 20px',
+                padding: "14px 20px",
                 fontFamily: SHELL.SANS,
                 fontSize: 13,
                 color: SHELL.INK_MUTED,
@@ -191,13 +193,14 @@ export function CommandPalette() {
                 key={route.path}
                 onClick={() => navigate(route.path)}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '11px 20px',
-                  cursor: 'pointer',
-                  background: i === selectedIndex ? SHELL.GRAY_BG : 'transparent',
-                  transition: 'background 0.1s',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "11px 20px",
+                  cursor: "pointer",
+                  background:
+                    i === selectedIndex ? SHELL.GRAY_BG : "transparent",
+                  transition: "background 0.1s",
                 }}
                 onMouseEnter={() => setSelectedIndex(i)}
               >
@@ -214,11 +217,11 @@ export function CommandPalette() {
                   style={{
                     fontFamily: SHELL.MONO,
                     fontSize: 9,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
                     color: SHELL.INK_MUTED,
                     background: SHELL.GRAY_BG,
-                    padding: '3px 7px',
+                    padding: "3px 7px",
                     borderRadius: 999,
                   }}
                 >

@@ -7,7 +7,7 @@ export type GeneratedArtifactType =
   | 'watchlist_review_pack'
   | 'dossier_board_pack';
 
-export type GeneratedArtifactFormat = 'pptx' | 'pdf' | 'html' | 'docx';
+export type GeneratedArtifactFormat = 'pptx' | 'pdf' | 'html' | 'docx' | 'xlsx';
 export type GeneratedArtifactRenderEngine = 'gamma' | 'internal' | 'gamma_with_internal_fallback';
 
 export interface BoardPackFact {

@@ -13,7 +13,6 @@ const SHELL_SURFACE_PREFIXES = [
   '/source',
   '/intelligence',
   '/learn',
-  '/product',
   '/strategic-moves',
 ] as const;
 

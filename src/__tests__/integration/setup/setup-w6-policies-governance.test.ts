@@ -17,16 +17,19 @@ describe('Setup W6 policies and tenant governance lock', () => {
     expect(policiesRoute).toContain('<SetupPoliciesPage />');
   });
 
-  it('demotes /admin/tenant to a tab inside /admin Overview', () => {
+  it('retains the retired /admin/tenant redirect while /admin hosts the Maestro home', () => {
     const tenantRouteAbsent = !existsSync(
       join(process.cwd(), 'src/app/(maestro)/admin/tenant/page.tsx'),
     );
     expect(tenantRouteAbsent).toBe(true);
 
     const adminRoute = readWorkspaceFile('src/app/(maestro)/admin/page.tsx');
-    expect(adminRoute).toContain("import { AdminOverviewTabs");
-    expect(adminRoute).toContain("import { AdminTenantTab }");
-    expect(adminRoute).toContain('<AdminTenantTab');
+    expect(adminRoute).toContain('data-admin-home-native');
+    expect(adminRoute).toContain('AdminCanonShellV2');
+    expect(adminRoute).toContain('resolveAdminTenant');
+    expect(adminRoute).not.toContain('AdminOverviewTabs');
+    expect(adminRoute).not.toContain('AdminTenantTab');
+    expect(adminRoute).not.toContain('iframe');
 
     const proxy = readWorkspaceFile('src/proxy.ts');
     expect(proxy).toContain("'/admin/tenant'");
@@ -34,13 +37,10 @@ describe('Setup W6 policies and tenant governance lock', () => {
   });
 
   it('keeps architecture platform route as a redirect-only legacy bridge', () => {
-    const platformArchitectureRoute = readWorkspaceFile(
-      'src/app/(maestro)/platform/admin/architecture/page.tsx',
-    );
+    const platformArchitecturePath = 'src/app/(maestro)/platform/admin/architecture/page.tsx';
+    const platformArchitectureAbsent = !existsSync(join(process.cwd(), platformArchitecturePath));
 
-    expect(platformArchitectureRoute).toContain("redirect('/admin/architecture')");
-    expect(platformArchitectureRoute).not.toContain('SetupArchitecturePage');
-    expect(platformArchitectureRoute).not.toContain('AppShell');
+    expect(platformArchitectureAbsent).toBe(true);
   });
 
   it('locks the seeded policy governance posture', () => {

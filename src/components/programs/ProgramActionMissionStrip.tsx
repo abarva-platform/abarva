@@ -56,7 +56,7 @@ const FONT_BODY =
 // ---------------------------------------------------------------------
 
 const AGENT_LABEL: Record<StripAgentKey, string> = {
-  nexus: 'Nexus',
+  nexus: 'Ava',
   sentinel: 'Sentinel',
   atlas: 'Atlas',
   steward: 'Steward',

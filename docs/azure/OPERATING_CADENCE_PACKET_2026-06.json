@@ -1,0 +1,133 @@
+{
+  "version": "2026-06",
+  "environmentKey": "operating-cadence",
+  "purpose": "Non-mutating operating cadence packet for ENV-18.",
+  "status": "scaffold_ready_before_recurring_operations",
+  "dependsOn": [
+    "docs/azure/PRODUCT_PROD_CUTOVER_PACKET_2026-06.json",
+    "docs/azure/CLIENT_PREPROD_REHEARSAL_PACKET_2026-06.json",
+    "docs/azure/CLIENT_PROD_GO_NO_GO_PACKET_2026-06.json",
+    "docs/governance/CONTEXT_CORPUS_POLICY.md"
+  ],
+  "scope": {
+    "targetPlanes": [
+      "product-dev",
+      "product-preview",
+      "product-prod",
+      "client-preprod",
+      "client-prod"
+    ],
+    "recurringOperations": true,
+    "nonMutatingPacket": true,
+    "explicitApprovalRequiredBeforeDrillExecution": true,
+    "explicitApprovalRequiredBeforeAccessRevocation": true,
+    "explicitApprovalRequiredBeforeClientProdAction": true
+  },
+  "cadences": [
+    {
+      "key": "weekly_release_readiness",
+      "frequency": "weekly",
+      "owner": "release_lead",
+      "requiredEvidence": [
+        "open_pr_summary",
+        "release_candidate_status",
+        "ci_gate_summary",
+        "azure_deploy_status",
+        "rollback_readiness",
+        "known_risks",
+        "next_week_actions"
+      ]
+    },
+    {
+      "key": "monthly_access_review",
+      "frequency": "monthly",
+      "owner": "security_operations",
+      "requiredEvidence": [
+        "clerk_role_export",
+        "azure_rbac_export",
+        "database_role_export",
+        "service_principal_export",
+        "stale_access_list",
+        "proposed_changes",
+        "approval_or_defer_record"
+      ]
+    },
+    {
+      "key": "quarterly_dr_restore_drill",
+      "frequency": "quarterly",
+      "owner": "platform_operations",
+      "requiredEvidence": [
+        "restore_scope",
+        "restore_target_environment",
+        "backup_snapshot_id",
+        "restore_execution_log",
+        "rto_rpo_result",
+        "validation_queries",
+        "lessons_learned",
+        "follow_up_actions"
+      ]
+    },
+    {
+      "key": "post_release_retrospective",
+      "frequency": "per_release",
+      "owner": "product_operations",
+      "requiredEvidence": [
+        "release_id",
+        "change_summary",
+        "user_visible_outcome",
+        "incidents_or_near_misses",
+        "test_escape_analysis",
+        "process_improvements",
+        "backlog_actions"
+      ]
+    }
+  ],
+  "requiredDashboardsOrRegisters": [
+    "release_readiness_register",
+    "access_review_register",
+    "dr_restore_register",
+    "post_release_retro_register",
+    "risk_and_exception_register",
+    "client_plane_evidence_register"
+  ],
+  "hardStops": [
+    "missing_release_record",
+    "failed_required_ci_gate",
+    "unreviewed_owner_or_user_access_admin_grant",
+    "stale_service_principal_without_owner",
+    "dr_restore_not_tested_within_quarter",
+    "rollback_plan_missing_for_material_release",
+    "client_prod_action_without_explicit_approval",
+    "phi_or_pii_exception_requested",
+    "context_bundle_proof_missing_for_data_release",
+    "tenant_leakage_not_investigated"
+  ],
+  "automationPolicy": {
+    "allowed": [
+      "send_progress_email",
+      "generate_status_report",
+      "summarize_ci_status",
+      "prepare_approval_request",
+      "collect_read_only_evidence"
+    ],
+    "requiresExplicitApproval": [
+      "revoke_access",
+      "grant_access",
+      "run_dr_restore_drill",
+      "deploy_to_client_prod",
+      "change_dns",
+      "shift_traffic",
+      "mutate_client_data",
+      "accept_phi_or_pii_exception"
+    ]
+  },
+  "completionBar": {
+    "scaffoldReadyWhenPacketMerged": true,
+    "completeRequiresFirstWeeklyReleaseReadinessRecord": true,
+    "completeRequiresFirstMonthlyAccessReviewRecord": true,
+    "completeRequiresFirstQuarterlyDrRestoreDrillRecord": true,
+    "completeRequiresFirstPostReleaseRetroRecord": true
+  },
+  "commandsAreTemplatesOnly": true,
+  "doNotMutateWithoutApproval": true
+}

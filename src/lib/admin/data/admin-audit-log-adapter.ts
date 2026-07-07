@@ -18,6 +18,12 @@ import {
 import { azureRead } from '@/lib/data-plane/azureRead';
 import { requireClientId } from './admin-db-helpers';
 
+function toIsoString(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') return value;
+  return String(value ?? '');
+}
+
 export async function getAdminAuditEvents(
   tenantSlug: string,
   options?: AdminAuditLogQueryOptions,
@@ -48,7 +54,7 @@ export async function getAdminAuditEvents(
     target_kind: string | null;
     target_id: string | null;
     summary: string;
-    created_at: string;
+    created_at: string | Date;
   }>(
     `SELECT id, category, action, actor_person_id, target_kind, target_id, summary, created_at
        FROM admin_audit_log
@@ -65,7 +71,7 @@ export async function getAdminAuditEvents(
     targetKind: row.target_kind ?? null,
     targetId: row.target_id ?? null,
     summary: row.summary,
-    createdAt: row.created_at,
+    createdAt: toIsoString(row.created_at),
   }));
 }
 

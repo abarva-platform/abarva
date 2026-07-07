@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbarVa Proof · Lakeshore</title>
+  <style>
+    :root {
+      --ink: #151515;
+      --muted: #5f625d;
+      --paper: #f7f5ef;
+      --panel: #ffffff;
+      --line: #d8d2c4;
+      --accent: #2457d6;
+      --accent-soft: #e9eefc;
+      --ok: #0f766e;
+      --watch: #a16207;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--line);
+      background: #171717;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+    .mark {
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+    }
+    nav {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: rgba(255,255,255,.72);
+      font-size: 13px;
+    }
+    nav a { color: inherit; text-decoration: none; }
+    nav a.active { color: #fff; font-weight: 700; }
+    main { max-width: 1180px; margin: 0 auto; padding: 34px 24px 64px; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: 28px;
+      align-items: start;
+      padding: 12px 0 28px;
+    }
+    h1 {
+      font-size: clamp(32px, 4vw, 56px);
+      line-height: 1.02;
+      margin: 0 0 14px;
+      max-width: 780px;
+      letter-spacing: 0;
+    }
+    h2 { font-size: 25px; margin: 0 0 12px; letter-spacing: 0; }
+    h3 { font-size: 18px; margin: 0 0 8px; letter-spacing: 0; }
+    p { margin: 0 0 12px; }
+    .lede { font-size: 18px; color: #3f413d; max-width: 760px; }
+    .proof-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 22px 0 0;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .metric strong { display: block; font-size: 25px; line-height: 1; margin-bottom: 6px; }
+    .metric span { color: var(--muted); font-size: 13px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .compare .raw { border-left: 4px solid #a8a29e; }
+    .compare .abarva { border-left: 4px solid var(--accent); }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: #4b4d49;
+      background: #fbfaf7;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .section { margin-top: 34px; }
+    .vignette {
+      display: grid;
+      grid-template-columns: minmax(0, .98fr) minmax(0, 1.02fr);
+      gap: 18px;
+      align-items: start;
+      margin-top: 16px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+    .shot {
+      overflow: hidden;
+      border: 1px solid #cfc7b7;
+      border-radius: 8px;
+      background: #111;
+      box-shadow: 0 18px 38px rgba(40, 35, 24, .12);
+    }
+    .shot img { display: block; width: 100%; height: auto; }
+    .answer {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 16px;
+    }
+    .answer blockquote {
+      margin: 10px 0;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      color: #1f2f5c;
+      border-radius: 0 6px 6px 0;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: #fff;
+    }
+    .mini b { display: block; margin-bottom: 5px; }
+    .evidence {
+      font-size: 13px;
+      color: #565a54;
+      margin-top: 12px;
+    }
+    .evidence code {
+      display: block;
+      white-space: normal;
+      margin-top: 4px;
+      color: #24305c;
+    }
+    .status-ok { color: var(--ok); font-weight: 750; }
+    .status-watch { color: var(--watch); font-weight: 750; }
+    footer {
+      margin-top: 40px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 860px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .hero, .vignette, .compare { grid-template-columns: 1fr; }
+      .proof-strip, .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      main { padding: 24px 14px 48px; }
+      .proof-strip, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="mark">A</span><span>AbarVa</span></div>
+    <nav aria-label="Proof page sections">
+      <a class="active" href="#proof">Proof</a>
+      <a href="#vignettes">Vignettes</a>
+      <a href="#honesty">Honesty</a>
+      <a href="#next">Next</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="proof">
+      <div>
+        <span class="tag">Lakeshore Holdings · buyer proof</span>
+        <h1>From AI answer to governed execution.</h1>
+        <p class="lede">This page uses live production screenshots and the Final4 hard-question QA packet to show the difference between asking a model a question and using AbarVa to turn context, evidence, controls, and workflow into an executive-ready decision path.</p>
+        <div class="proof-strip" aria-label="Proof metrics">
+          <div class="metric"><strong>26/26</strong><span>live production screenshots passed</span></div>
+          <div class="metric"><strong>100</strong><span>CXO hard questions captured</span></div>
+          <div class="metric"><strong>88</strong><span>pass, with 12 watch and 0 fail</span></div>
+          <div class="metric"><strong>4.08</strong><span>average overall QA score out of 5</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Why this is not raw LLM chat</h2>
+        <div class="compare">
+          <div class="mini raw">
+            <b>Raw model</b>
+            Produces a plausible answer from prompt context. It may be useful, but the buyer still has to verify facts, owners, evidence, approval state, and what happens next.
+          </div>
+          <div class="mini abarva">
+            <b>AbarVa</b>
+            Binds the answer to tenant context, evidence references, Source stages, Move artifacts, value posture, owner/action/gap structure, and human approval.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>What the product proof covers</h2>
+      <div class="grid-3">
+        <div class="mini"><b>Context layer</b>Data Trust and setup screens show the tenant data posture before the AI answer is trusted.</div>
+        <div class="mini"><b>Source workflow</b>Kyriba treasury spans Strategy through Value, with Executive Decision and downstream artifacts visible.</div>
+        <div class="mini"><b>Moves + Tower</b>Rollout success is linked to Move evidence, documents, and the value/control tower.</div>
+      </div>
+    </section>
+
+    <section class="section" id="vignettes">
+      <h2>Three proof vignettes</h2>
+
+      <article class="vignette">
+        <div class="shot"><img src="assets/03-kyriba-executive-decision.png" alt="Kyriba executive decision stage in Source" /></div>
+        <div class="answer">
+          <span class="tag">Final4 · LSH-CXO-001</span>
+          <h3>What can Lakeshore safely claim before Kyriba is live?</h3>
+          <blockquote>Lakeshore can claim that Kyriba is in the rollout phase, but should avoid overstating current value. The rollout is still under Executive Decision, and realized savings are not yet complete.</blockquote>
+          <div class="grid-3">
+            <div class="mini"><b>Owner</b>CFO</div>
+            <div class="mini"><b>Next action</b>Finalize or hold the executive decision artifacts.</div>
+            <div class="mini"><b>Evidence gap</b>Full setup/admin approval ledger is not yet populated.</div>
+          </div>
+          <p class="evidence">Evidence references include:<code>LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md#77</code><code>LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md#83</code></p>
+        </div>
+      </article>
+
+      <article class="vignette">
+        <div class="shot"><img src="assets/05-kyriba-documents.png" alt="Kyriba Move documents and rollout-gate evidence" /></div>
+        <div class="answer">
+          <span class="tag">Final4 · LSH-CXO-002</span>
+          <h3>What stalls Kyriba rollouts, and how does Move 0 de-risk them?</h3>
+          <blockquote>AbarVa turns rollout failure modes into gates and artifacts: bank connectivity, ERP feed quality, entity hierarchy, historical cash reconstruction, adoption, and intercompany reconciliation.</blockquote>
+          <div class="grid-3">
+            <div class="mini"><b>Pattern</b>Platform Rollout De-Risk, not generic AI-on-treasury.</div>
+            <div class="mini"><b>Workflow</b>Move evidence links back into Source and Tower.</div>
+            <div class="mini"><b>Watch item</b>Final4 passed this, but the buyer page should be more explicit about all six gates.</div>
+          </div>
+          <p class="evidence">Evidence references include:<code>LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md#83</code><code>LAKESHORE_KYRIBA_SUCCESS_AGENT_PACK_2026-06-04.md#12</code></p>
+        </div>
+      </article>
+
+      <article class="vignette">
+        <div class="shot"><img src="assets/02-kyriba-strategy.png" alt="Kyriba Source strategy stage" /></div>
+        <div class="answer">
+          <span class="tag">Final4 · LSH-CXO-003</span>
+          <h3>How do we sequence bank connectivity without letting tail banks stall?</h3>
+          <blockquote>Prioritize the critical cash-visibility banks first, while building a separate path for remaining banks so lower-priority integrations do not stall the main rollout.</blockquote>
+          <div class="grid-3">
+            <div class="mini"><b>Decision shape</b>Sequence by cash visibility and operational dependency.</div>
+            <div class="mini"><b>Next action</b>Build bank readiness and integration timeline.</div>
+            <div class="mini"><b>Control</b>Do not let tail-bank readiness block the flagship rollout.</div>
+          </div>
+          <p class="evidence">Evidence references include:<code>LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md#77</code><code>LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md#80</code></p>
+        </div>
+      </article>
+    </section>
+
+    <section class="section">
+      <h2>Proof gallery anchors</h2>
+      <div class="grid-3">
+        <div class="shot"><img src="assets/01-data-trust.png" alt="Data Trust page" /></div>
+        <div class="shot"><img src="assets/04-kyriba-move-detail.png" alt="Kyriba Move detail" /></div>
+        <div class="shot"><img src="assets/06-tower-value.png" alt="Tower source portfolio value" /></div>
+      </div>
+    </section>
+
+    <section class="section panel" id="honesty">
+      <h2>Honesty boundary</h2>
+      <p><span class="status-ok">Safe to say:</span> Lakeshore has a synthetic demo tenant with committed loader-backed context records, a document-real Kyriba Source and Moves story, Azure-backed artifacts, and live production screenshots captured through the app.</p>
+      <p><span class="status-watch">Do not overstate:</span> value ranges are planning values, not realized savings; downstream Source stages after Executive Decision are artifact-backed preview/review states; the full setup/admin approval ledger is not yet populated.</p>
+    </section>
+
+    <section class="section" id="next">
+      <h2>What this proves</h2>
+      <p>AbarVa helps an executive decide what to do next, what evidence supports the recommendation, what is still missing, and who must approve or hold the move. That is the operating difference: the model is inside a governed execution loop, not floating outside the business.</p>
+    </section>
+
+    <footer>
+      Sources: live production screenshot pack `lakeshore-app-demo-readiness-2026-06-05T19-32-58-793Z-277cb8eb3`; Final4 QA packet `lakeshore-cxo-hard-question-qa-2026-06-05T20-16-23-176Z-d0215cec`.
+    </footer>
+  </main>
+</body>
+</html>

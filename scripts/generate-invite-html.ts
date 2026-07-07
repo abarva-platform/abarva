@@ -24,7 +24,7 @@ const DEMO_CODE = '424242';
 const SIGN_IN_URL = 'https://app.abarva.ai/sign-in';
 const HOSTED_INVITE_BASE = 'https://app.abarva.ai/invite';
 
-const LOGO_SVG_PATH = path.resolve(process.cwd(), 'public/brand/abarva-logo-inverse.svg');
+const LOGO_SVG_PATH = path.resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg');
 const OUTPUT_DIR = path.resolve(process.cwd(), 'out/invites');
 
 function loadInverseLogo(): string {

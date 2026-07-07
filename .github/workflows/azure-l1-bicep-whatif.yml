@@ -35,11 +35,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Azure login
         if: ${{ inputs.build_only == false }}
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_LAB_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_LAB_TENANT_ID }}
@@ -141,7 +141,7 @@ jobs:
 
       - name: Upload Bicep build artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: azure-l1-bicep-build
           path: azure-l1-bicep-build/
@@ -149,7 +149,7 @@ jobs:
 
       - name: Upload what-if reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: azure-l1-bicep-whatif
           path: azure-l1-whatif/

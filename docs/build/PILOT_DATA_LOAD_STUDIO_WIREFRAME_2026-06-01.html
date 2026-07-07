@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AbarVa Pilot Data Load Studio Wireframe</title>
+  <style>
+    :root {
+      --ink: #070707;
+      --navy: #0b4a91;
+      --cream: #fbfaf7;
+      --white: #ffffff;
+      --sky: #e8f0fa;
+      --mint: #e8f5e8;
+      --mint-ink: #1b5e20;
+      --amber: #fff4e1;
+      --amber-ink: #7a4f01;
+      --coral: #ffe6e1;
+      --coral-ink: #8b1f0f;
+      --line: rgba(7, 7, 7, 0.12);
+      --muted: rgba(7, 7, 7, 0.68);
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .topbar {
+      height: 72px;
+      background: var(--ink);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .logo {
+      font-family: var(--serif);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .logo span {
+      color: #2f8cff;
+    }
+
+    .client-pill {
+      border-left: 1px solid rgba(255, 255, 255, 0.22);
+      padding-left: 24px;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: flex;
+      gap: 22px;
+      margin-left: auto;
+      font-size: 14px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .nav .active {
+      color: var(--white);
+      border-bottom: 3px solid #2f8cff;
+      padding-bottom: 22px;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: calc(100vh - 72px);
+    }
+
+    aside {
+      border-right: 1px solid var(--line);
+      background: var(--white);
+      padding: 24px 18px;
+    }
+
+    .side-title {
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(7, 7, 7, 0.46);
+      margin: 22px 0 10px;
+    }
+
+    .side-item {
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 3px;
+      margin-bottom: 4px;
+    }
+
+    .side-item strong {
+      font-size: 14px;
+    }
+
+    .side-item span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .side-item.active {
+      background: var(--sky);
+      color: var(--navy);
+    }
+
+    main {
+      padding: 28px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    h1 {
+      font-family: var(--serif);
+      font-size: 48px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 20px;
+    }
+
+    h3 {
+      font-size: 16px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .button {
+      border-radius: 8px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      background: var(--white);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 900;
+      display: inline-flex;
+      width: fit-content;
+    }
+
+    .button.primary {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+
+    .decision-card {
+      background: var(--amber);
+      border: 1px solid rgba(122, 79, 1, 0.24);
+      border-radius: 8px;
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric, .card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .metric {
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+      min-height: 118px;
+    }
+
+    .metric strong {
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .studio {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card-head {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 7px;
+    }
+
+    .dimension-grid {
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .dimension {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      min-height: 184px;
+      background: var(--white);
+    }
+
+    .dimension.selected {
+      background: var(--sky);
+      border-color: rgba(11, 74, 145, 0.45);
+    }
+
+    .progress {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(7, 7, 7, 0.12);
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: var(--navy);
+    }
+
+    .chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border-radius: 999px;
+      background: var(--sky);
+      color: var(--navy);
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .workflow {
+      display: grid;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .step:last-child {
+      border-bottom: 0;
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 900;
+      width: fit-content;
+    }
+
+    .status.ready {
+      background: var(--mint);
+      color: var(--mint-ink);
+    }
+
+    .status.blocked {
+      background: var(--coral);
+      color: var(--coral-ink);
+    }
+
+    .status.waiting {
+      background: var(--amber);
+      color: var(--amber-ink);
+    }
+
+    .load-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
+      gap: 18px;
+    }
+
+    .panels {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--white);
+      display: grid;
+      gap: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: left;
+      color: rgba(7, 7, 7, 0.56);
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(7, 7, 7, 0.08);
+      vertical-align: top;
+    }
+
+    .footer-note {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--white);
+      padding: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1180px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        display: none;
+      }
+
+      .hero, .studio, .load-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .dimension-grid, .metrics, .panels {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      h1 {
+        font-size: 36px;
+      }
+
+      .topbar {
+        height: auto;
+        flex-wrap: wrap;
+        padding: 16px;
+      }
+
+      .nav {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      .dimension-grid, .metrics, .panels {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">Abar<span>Va</span></div>
+    <div class="client-pill">SkyHarbor Air</div>
+    <nav class="nav" aria-label="Top navigation">
+      <span>Home</span>
+      <span class="active">Setup</span>
+      <span>Intelligence</span>
+      <span>Moves</span>
+      <span>Source</span>
+      <span>Tower</span>
+    </nav>
+  </header>
+
+  <div class="shell">
+    <aside>
+      <div class="side-title">Review</div>
+      <div class="side-item"><strong>Overview</strong><span>What is in the system</span></div>
+      <div class="side-item active"><strong>Data Loads</strong><span>Load, process, approve, commit</span></div>
+      <div class="side-item"><strong>Data Trust</strong><span>Evidence, gaps, rollback</span></div>
+      <div class="side-item"><strong>Connectors</strong><span>Systems and landing zones</span></div>
+      <div class="side-title">Governance</div>
+      <div class="side-item"><strong>Users & Access</strong><span>Roles, SSO, upload permission</span></div>
+      <div class="side-item"><strong>Approvals</strong><span>Owner signoff and waivers</span></div>
+      <div class="side-item"><strong>Quarantine</strong><span>Blocked files and exceptions</span></div>
+      <div class="side-title">Audit</div>
+      <div class="side-item"><strong>Run Ledger</strong><span>Uploads, commits, rollbacks</span></div>
+      <div class="side-item"><strong>Audit Export</strong><span>Evidence package</span></div>
+    </aside>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">Setup / Data Load Studio / SkyHarbor Air</div>
+          <h1>Load client data with controls intact.</h1>
+          <p>Choose a business dimension, select the right template and format, attest that the data can be loaded, then move through scan, quarantine, validation, owner approval, commit, and rollback.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#active-load">Start governed load</a>
+            <a class="button" href="#dimension-library">Browse dimensions</a>
+            <a class="button" href="#audit">Export audit trail</a>
+          </div>
+        </div>
+        <div class="decision-card">
+          <div class="eyebrow">Next decision</div>
+          <h2>ERP landscape is blocked at malware scan</h2>
+          <p>Retry scan or quarantine the file before parsing. Nothing reaches the context layer until this gate clears.</p>
+          <span class="status blocked">Action required</span>
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="Load readiness metrics">
+        <div class="metric"><div class="eyebrow">Readiness</div><strong>75%</strong><p>Average across required dimensions</p></div>
+        <div class="metric"><div class="eyebrow">Loaded</div><strong>1 / 18</strong><p>Committed dimensions for this client</p></div>
+        <div class="metric"><div class="eyebrow">Blocked</div><strong>3</strong><p>Quarantine, clarification, approval</p></div>
+        <div class="metric"><div class="eyebrow">Templates</div><strong>33</strong><p>Registry and Day One workbooks</p></div>
+      </section>
+
+      <section class="studio">
+        <article id="dimension-library" class="card">
+          <div class="card-head">
+            <div class="eyebrow">Dimension library</div>
+            <h2>Pick the business dimension first.</h2>
+            <p>Formats and templates come from the selected dimension. CSV is one option, not the product experience.</p>
+          </div>
+          <div class="dimension-grid">
+            <div class="dimension selected">
+              <div class="eyebrow">Template validation</div>
+              <h3>Application portfolio</h3>
+              <p>Systems, owners, criticality, lifecycle, source of record.</p>
+              <div class="progress"><span style="width:72%"></span></div>
+              <div class="chips"><span class="chip">CSV</span><span class="chip">XLSX</span></div>
+              <a class="button primary" href="#active-load">Start load</a>
+            </div>
+            <div class="dimension">
+              <div class="eyebrow">Committed</div>
+              <h3>Vendor contracts</h3>
+              <p>Supplier agreements, renewal dates, spend terms, data rights.</p>
+              <div class="progress"><span style="width:100%"></span></div>
+              <div class="chips"><span class="chip">CSV</span><span class="chip">XLSX</span><span class="chip">PDF</span></div>
+              <a class="button" href="#audit">Review load</a>
+            </div>
+            <div class="dimension">
+              <div class="eyebrow">Upload scan</div>
+              <h3>ERP landscape</h3>
+              <p>ERP platforms, process areas, business units, owners.</p>
+              <div class="progress"><span style="width:48%"></span></div>
+              <div class="chips"><span class="chip">XLSX</span><span class="chip">CSV</span></div>
+              <a class="button" href="#quarantine">Resolve</a>
+            </div>
+            <div class="dimension">
+              <div class="eyebrow">Approval</div>
+              <h3>Org, roles, and teams</h3>
+              <p>Named owners, approvers, teams, and escalation paths.</p>
+              <div class="progress"><span style="width:81%"></span></div>
+              <div class="chips"><span class="chip">CSV</span><span class="chip">XLSX</span><span class="chip">JSON</span></div>
+              <a class="button" href="#approval">Approve</a>
+            </div>
+            <div class="dimension">
+              <div class="eyebrow">Ready</div>
+              <h3>Financial KPIs</h3>
+              <p>Margin, revenue, capex, opex, and segment performance.</p>
+              <div class="progress"><span style="width:0%"></span></div>
+              <div class="chips"><span class="chip">XLSX</span><span class="chip">CSV</span></div>
+              <a class="button" href="#active-load">Start load</a>
+            </div>
+            <div class="dimension">
+              <div class="eyebrow">Ready</div>
+              <h3>Incidents and ops telemetry</h3>
+              <p>Incidents, change history, outages, and root causes.</p>
+              <div class="progress"><span style="width:0%"></span></div>
+              <div class="chips"><span class="chip">CSV</span><span class="chip">JSON</span><span class="chip">JSONL</span></div>
+              <a class="button" href="#active-load">Start load</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div class="eyebrow">Workflow and controls</div>
+            <h2>Every load follows the same gates.</h2>
+            <p>Controls marked blocked stop processing. Controls marked waiting require human action.</p>
+          </div>
+          <div class="workflow">
+            <div class="step"><div class="eyebrow">01</div><div><h3>Select template</h3><p>Dimension, format, required fields, template version.</p></div><span class="status ready">Ready</span></div>
+            <div class="step"><div class="eyebrow">02</div><div><h3>Consent and attestation</h3><p>Uploader confirms data-use permission and source ownership.</p></div><span class="status waiting">Required</span></div>
+            <div class="step"><div class="eyebrow">03</div><div><h3>Upload to landing zone</h3><p>Client-scoped file key, hash, manifest, idempotency key.</p></div><span class="status ready">Ready</span></div>
+            <div class="step" id="quarantine"><div class="eyebrow">04</div><div><h3>Scan and quarantine</h3><p>Malware, sensitive data, tenant mismatch, unsupported format.</p></div><span class="status blocked">Blocked</span></div>
+            <div class="step"><div class="eyebrow">05</div><div><h3>Parse, map, validate</h3><p>Preview extracted facts before approval.</p></div><span class="status waiting">Pending</span></div>
+            <div class="step" id="approval"><div class="eyebrow">06</div><div><h3>Owner approval</h3><p>Owner role approves or rejects the exact load batch.</p></div><span class="status waiting">Waiting</span></div>
+            <div class="step"><div class="eyebrow">07</div><div><h3>Commit or roll back</h3><p>Batch-scoped commit with unload path and audit history.</p></div><span class="status waiting">Locked</span></div>
+          </div>
+        </article>
+      </section>
+
+      <section id="active-load" class="load-panel">
+        <article class="card">
+          <div class="card-head">
+            <div class="eyebrow">Active load draft</div>
+            <h2>Application portfolio / CMDB template</h2>
+            <p>This is the guided workflow opened by Start Load. It should be a drawer or native route, not an inline raw connector.</p>
+          </div>
+          <div class="panels">
+            <div class="panel"><div class="eyebrow">Template</div><h3>CMDB / application portfolio</h3><p>Required: app_id, name, criticality, owner_role, system_of_record.</p></div>
+            <div class="panel"><div class="eyebrow">Consent</div><h3>Data-use attestation</h3><p>Uploader confirms authorized source and no prohibited data.</p></div>
+            <div class="panel"><div class="eyebrow">Upload</div><h3>Drop files here</h3><p>Accepts CSV or XLSX for this dimension. Generates file manifest and hash.</p></div>
+            <div class="panel"><div class="eyebrow">Preview</div><h3>Parsed fact review</h3><p>Rows, mappings, confidence, source locators, validation findings.</p></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div class="eyebrow">Checks and balances</div>
+            <h2>No context without approval.</h2>
+          </div>
+          <table>
+            <thead><tr><th>Control</th><th>State</th></tr></thead>
+            <tbody>
+              <tr><td>Client access</td><td><span class="status ready">Verified</span></td></tr>
+              <tr><td>Consent</td><td><span class="status waiting">Required</span></td></tr>
+              <tr><td>Malware scan</td><td><span class="status blocked">Blocked</span></td></tr>
+              <tr><td>Sensitive data guard</td><td><span class="status ready">Ready</span></td></tr>
+              <tr><td>Owner approval</td><td><span class="status waiting">Waiting</span></td></tr>
+              <tr><td>Commit ledger</td><td><span class="status waiting">Locked</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section id="audit" class="card">
+        <div class="card-head">
+          <div class="eyebrow">Template and audit library</div>
+          <h2>All templates remain visible, but below the decision area.</h2>
+          <p>Operators can inspect accepted formats and required fields without scrolling past implementation noise.</p>
+        </div>
+        <table>
+          <thead><tr><th>Dimension</th><th>Formats</th><th>Owner</th><th>Controls</th></tr></thead>
+          <tbody>
+            <tr><td>Enterprise profile</td><td>Markdown, JSON, PDF</td><td>Chief Strategy Officer</td><td>Consent, scan, validate, approve, commit</td></tr>
+            <tr><td>Application portfolio</td><td>CSV, XLSX</td><td>VP Enterprise Architecture</td><td>Consent, scan, validate, approve, commit</td></tr>
+            <tr><td>Vendor contracts</td><td>CSV, XLSX, PDF</td><td>VP Procurement</td><td>Consent, scan, quarantine, approve, commit</td></tr>
+            <tr><td>ERP landscape</td><td>XLSX, CSV</td><td>CIO ERP Transformation</td><td>Consent, scan, validate, approve, commit</td></tr>
+            <tr><td>Org, roles, and teams</td><td>CSV, XLSX, JSON</td><td>CHRO</td><td>Consent, scan, validate, approve, commit</td></tr>
+            <tr><td>Incidents and ops telemetry</td><td>CSV, JSON, JSONL</td><td>VP IT Operations</td><td>Consent, scan, validate, approve, commit</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <div class="footer-note">
+        Wireframe only. This document defines the desired operator experience and control contract. It must not be treated as proof that the full private data-plane workflow is implemented until the corresponding backlog slices, tests, and production verification land.
+      </div>
+    </main>
+  </div>
+</body>
+</html>

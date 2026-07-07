@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { azureRead } from '@/lib/data-plane/azureRead';
 
 export const metadata = { title: 'Engineering traces · AbarVa' };
@@ -39,7 +40,7 @@ type TraceListDbRow = Omit<TraceListRow, 'clients'> & { client_name: string | nu
 type TraceDetailDbRow = Omit<TraceDetailRow, 'clients'> & { client_name?: string | null };
 
 interface TraceFilters {
-  tenantId?: string;
+  tenantId: string;
   promptVersion?: string;
   fallbackUsed?: 'true' | 'false';
   traceId?: string;
@@ -54,10 +55,13 @@ function one(value: string | string[] | undefined): string | undefined {
   return value;
 }
 
-function readFilters(searchParams: Record<string, string | string[] | undefined>): TraceFilters {
+function readFilters(
+  searchParams: Record<string, string | string[] | undefined>,
+  tenantId: string,
+): TraceFilters {
   const fallbackRaw = one(searchParams.fallbackUsed);
   return {
-    tenantId: one(searchParams.tenantId) || undefined,
+    tenantId,
     promptVersion: one(searchParams.promptVersion) || undefined,
     fallbackUsed: fallbackRaw === 'true' || fallbackRaw === 'false' ? fallbackRaw : undefined,
     traceId: one(searchParams.traceId) || undefined,
@@ -104,12 +108,12 @@ async function listTraces(filters: TraceFilters): Promise<ReadonlyArray<TraceLis
   return rows.map((row) => ({ ...row, clients: { name: row.client_name } }));
 }
 
-async function getTraceDetail(traceId: string | undefined): Promise<TraceDetailRow | null> {
+async function getTraceDetail(traceId: string | undefined, tenantId: string): Promise<TraceDetailRow | null> {
   if (!traceId) return null;
   const row = await azureRead.maybeSingle<TraceDetailDbRow>({
     table: 'atlas_reasoning_traces',
     columns: '*',
-    where: { trace_id: traceId },
+    where: { trace_id: traceId, tenant_id: tenantId },
   });
   if (!row) return null;
   const [client] = await azureRead.select<{ name: string | null }>({
@@ -123,26 +127,16 @@ async function getTraceDetail(traceId: string | undefined): Promise<TraceDetailR
   return { ...trace, clients: { name: client?.name ?? null } };
 }
 
-async function listPromptVersions(): Promise<ReadonlyArray<string>> {
-  const rows = await azureRead.select<{ prompt_version: string }>({
-    table: 'atlas_reasoning_traces',
-    columns: ['prompt_version'],
-    orderBy: { column: 'prompt_version', direction: 'asc' },
-    limit: 500,
-  }).catch(() => []);
+async function listPromptVersions(tenantId: string): Promise<ReadonlyArray<string>> {
+  const rows = await azureRead.query<{ prompt_version: string }>(
+    `SELECT DISTINCT prompt_version
+     FROM atlas_reasoning_traces
+     WHERE tenant_id = $1
+     ORDER BY prompt_version ASC
+     LIMIT 500`,
+    [tenantId],
+  ).catch(() => []);
   return [...new Set(rows.map((row) => row.prompt_version))];
-}
-
-async function listTenants(): Promise<ReadonlyArray<{ id: string; name: string }>> {
-  const rows = await azureRead.select<{ id: string; name: string }>({
-    table: 'clients',
-    columns: ['id', 'name'],
-    orderBy: { column: 'name', direction: 'asc' },
-  }).catch(() => []);
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-  }));
 }
 
 function formatTimestamp(value: string): string {
@@ -157,7 +151,6 @@ function formatTimestamp(value: string): string {
 function filterHref(filters: TraceFilters, patch: Partial<TraceFilters>): string {
   const next = { ...filters, ...patch };
   const params = new URLSearchParams();
-  if (next.tenantId) params.set('tenantId', next.tenantId);
   if (next.promptVersion) params.set('promptVersion', next.promptVersion);
   if (next.fallbackUsed) params.set('fallbackUsed', next.fallbackUsed);
   if (next.traceId) params.set('traceId', next.traceId);
@@ -220,13 +213,13 @@ const S = {
 } as const;
 
 export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageProps) {
+  const tenant = await resolveAdminTenant();
   const params = await searchParams;
-  const filters = readFilters(params ?? {});
-  const [traces, detail, tenants, promptVersions] = await Promise.all([
+  const filters = readFilters(params ?? {}, tenant.clientId);
+  const [traces, detail, promptVersions] = await Promise.all([
     listTraces(filters),
-    getTraceDetail(filters.traceId),
-    listTenants(),
-    listPromptVersions(),
+    getTraceDetail(filters.traceId, filters.tenantId),
+    listPromptVersions(filters.tenantId),
   ]);
 
   const fallbackCount = traces.filter((trace) => trace.fallback_used).length;
@@ -238,7 +231,7 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
 
   return (
     <AdminCanonShellV2
-      tenantName="AbarVa Engineering"
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel="Atlas"
@@ -249,8 +242,8 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
     >
       <EditorialCanvas
         eyebrow="Diagnostics · Reasoning observability"
-        title="Engineering reasoning traces"
-        subtitle="Operator audit log for Tower right-rail renders and metric explanations. Sample here after each CXO pilot session. Relocated from /admin/atlas/traces per Setup Audit 2026-05-30 §5.5 (wrong altitude — raw trace inspector belongs in the Engineering surface, not Setup)."
+        title="Reasoning audit"
+        subtitle={`Engineering review for ${tenant.tenantName}. This page is tenant-scoped so Maestros only inspect the active client's traces.`}
       >
         <div style={S.page} data-testid="atlas-traces-page">
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
@@ -261,12 +254,9 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
           </section>
 
           <form action="/engineering/traces" style={S.toolbar}>
-            <select name="tenantId" defaultValue={filters.tenantId ?? ''} style={S.control} aria-label="Tenant filter">
-              <option value="">All tenants</option>
-              {tenants.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
-              ))}
-            </select>
+            <div style={S.control} aria-label="Tenant scope">
+              Tenant: <strong>{tenant.tenantName}</strong>
+            </div>
             <select name="promptVersion" defaultValue={filters.promptVersion ?? ''} style={S.control} aria-label="Prompt version filter">
               <option value="">All prompt versions</option>
               {promptVersions.map((version) => (

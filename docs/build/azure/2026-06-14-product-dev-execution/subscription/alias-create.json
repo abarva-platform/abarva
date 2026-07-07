@@ -1,0 +1,20 @@
+{
+  "id": "/providers/Microsoft.Subscription/aliases/sub-abarva-product-dev-eus-001",
+  "name": "sub-abarva-product-dev-eus-001",
+  "properties": {
+    "acceptOwnershipState": null,
+    "acceptOwnershipUrl": null,
+    "billingScope": null,
+    "createdTime": null,
+    "displayName": null,
+    "managementGroupId": null,
+    "provisioningState": "Succeeded",
+    "resellerId": null,
+    "subscriptionId": "58eef48c-3ed6-48e6-9af4-de1848ad3401",
+    "subscriptionOwnerId": null,
+    "tags": null,
+    "workload": null
+  },
+  "systemData": null,
+  "type": "Microsoft.Subscription/aliases"
+}

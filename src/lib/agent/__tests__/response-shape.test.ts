@@ -36,7 +36,7 @@ describe('agent response shape', () => {
     expect(shaped).toContain("I'd push back on parallel scope");
   });
 
-  it('compacts Tower Atlas answers into short readable bullets', () => {
+  it('preserves Tower Atlas prose instead of compacting into template bullets', () => {
     const raw = [
       '**Apex Retail Tower read: APX-04 is the highest risk.**',
       'Portfolio KPI evidence shows gate slippage, sponsor ambiguity, and unresolved value-baseline ownership across three programs.',
@@ -47,13 +47,69 @@ describe('agent response shape', () => {
     const shaped = shapeAgentResponseForSurface('/tower', raw);
 
     expect(shaped).not.toContain('**');
-    expect(shaped).toMatch(/^- Evidence:/m);
-    expect(shaped).toMatch(/^- Next:/m);
-    expect(shaped.split('\n').length).toBeLessThanOrEqual(5);
-    expect(shaped.split(/\s+/).length).toBeLessThanOrEqual(75);
+    expect(shaped).toContain('Portfolio KPI evidence shows gate slippage');
+    expect(shaped).toContain('I recommend pausing new scope');
+    expect(shaped).not.toMatch(/^- Evidence:/m);
+    expect(shaped).not.toMatch(/^- Next:/m);
   });
 
-  it('uses a comparison table when the answer is choosing between options', () => {
+  it('scrubs raw portfolio signal ids from Tower copy', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/tower',
+      'Demand Forecasting attestation is overdue — warning, signal: 39901c16-2e8b-4c8c-80aa-8a0182f26754.',
+    );
+
+    expect(shaped).not.toContain('39901c16-2e8b-4c8c-80aa-8a0182f26754');
+    expect(shaped).not.toContain('signal:');
+    expect(shaped).toContain('the referenced portfolio signal');
+  });
+
+  it('scrubs bare UUIDs from Tower copy even without a signal prefix', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/tower',
+      'Demand Forecasting attestation is overdue on record 39901c16-2e8b-4c8c-80aa-8a0182f26754.',
+    );
+
+    expect(shaped).not.toContain('39901c16-2e8b-4c8c-80aa-8a0182f26754');
+    expect(shaped).toContain('the referenced record');
+  });
+
+  it('adds an executable next action when Tower prose has no action cue', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/tower',
+      'Apex Retail has pressure in value attainment. The evidence points to adoption and gate timing.',
+    );
+
+    expect(shaped).toMatch(/^- Next: open the cited initiative/m);
+  });
+
+  it('scrubs internal evidence plumbing terms from Tower copy', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/tower',
+      'The tenant substrate has no canonical value pattern in the retrieved corpus chunk.',
+    );
+
+    expect(shaped).not.toMatch(/substrate|canonical value pattern|retrieved corpus chunk/i);
+    expect(shaped).toContain('tenant evidence base');
+    expect(shaped).toContain('validated benchmark pattern');
+    expect(shaped).toContain('retrieved industry evidence');
+  });
+
+  it('does not turn ordinary dash-separated Tower prose into a fake comparison table', () => {
+    const raw = [
+      'My read: Apex Retail is past the activity question.',
+      'There is a second pressure behind it - returns fraud model accuracy has slipped 8 points - so I would avoid treating this as a one-metric problem.',
+      'Next step: open the signal evidence chain and assign the owner before the next governance review.',
+    ].join(' ');
+
+    const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+    expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+    expect(shaped).toContain('returns fraud model accuracy has slipped');
+    expect(shaped).toContain('Next');
+  });
+
+  it('preserves Tower option prose instead of synthesizing a comparison table', () => {
     const raw = [
       'Markdown optimization is the better second Move, but compare the two paths carefully.',
       'Demand Forecasting — Strength: directly attacks MAPE and stockouts. Weakness: already active in P0. Fit: deepen current program.',
@@ -62,17 +118,13 @@ describe('agent response shape', () => {
 
     const shaped = shapeAgentResponseForSurface('/tower', raw);
 
-    expect(shaped).toContain('| Option | Strength | Weakness | Fit |');
-    expect(shaped).toContain('| Demand Forecasting |');
-    expect(shaped).toContain('| Markdown Optimization |');
+    expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+    expect(shaped).toContain('Demand Forecasting');
+    expect(shaped).toContain('Markdown Optimization');
     expect(shaped).not.toContain('**');
   });
 
-  it('uses a stat-and-stack when the answer is primarily evidence (Tower surface)', () => {
-    // INT-VOICE.STRAT-2026-05-10e — moved from '/intelligence' to '/tower'.
-    // The compaction template is still in scope for Tower but is a Brief A
-    // violation on Intelligence; see the Intelligence prose-preservation
-    // test below.
+  it('preserves evidence prose on the Tower surface', () => {
     const raw = [
       'The data says merchandising value is concentrated in forecast quality.',
       'MAPE is 28.4% against a 20% target.',
@@ -83,10 +135,10 @@ describe('agent response shape', () => {
 
     const shaped = shapeAgentResponseForSurface('/tower', raw);
 
-    expect(shaped).toMatch(/^MAPE is 28\.4%/m);
-    expect(shaped).toMatch(/^· Inventory turns fell/m);
-    expect(shaped).toMatch(/^· Markdown rate is 12\.8%/m);
-    expect(shaped).toMatch(/^Source:/m);
+    expect(shaped).toContain('MAPE is 28.4%');
+    expect(shaped).toContain('Inventory turns fell from 4.2x to 3.6x');
+    expect(shaped).toContain('Markdown rate is 12.8%');
+    expect(shaped).toContain('Source basis');
   });
 
   // INT-VOICE.STRAT-2026-05-10e · Intelligence surface preserves Brief A
@@ -210,11 +262,7 @@ describe('agent response shape', () => {
     });
   });
 
-  it('uses sequential steps when the answer explains a path (Tower surface)', () => {
-    // VOICE.STRAT-2026-05-10f — moved from '/source' to '/tower'. Source is
-    // now a Brief C advisor surface and passes through; Tower keeps
-    // compaction (separate doctrine, no Brief A/B/C). The
-    // compactStepText branch logic is exercised here.
+  it('preserves sequential steps when the answer explains a path (Tower surface)', () => {
     const raw = [
       'The path is a three-step operating-model shift.',
       '1. Baseline. Confirm KPI owner, current value, target, and source system.',
@@ -225,9 +273,9 @@ describe('agent response shape', () => {
 
     const shaped = shapeAgentResponseForSurface('/tower', raw);
 
-    expect(shaped).toMatch(/^1\. Baseline\./m);
-    expect(shaped).toMatch(/^2\. Design\./m);
-    expect(shaped).toMatch(/^3\. Mobilize\./m);
+    expect(shaped).toContain('1. Baseline.');
+    expect(shaped).toContain('2. Design.');
+    expect(shaped).toContain('3. Mobilize.');
     expect(shaped).not.toMatch(/^- Evidence:/m);
   });
 
@@ -436,7 +484,9 @@ describe('agent response shape', () => {
 
         const shaped = shapeAgentResponseForSurface('/tower', raw);
 
-        expect(shaped).toContain('| Option | Strength | Weakness | Fit |');
+        expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+        expect(shaped).toContain('Algonomy');
+        expect(shaped).toContain('Daisy Intelligence');
         expect(shaped).not.toContain('Needs validation.');
         expect(shaped).not.toContain('Medium pending evidence.');
       });

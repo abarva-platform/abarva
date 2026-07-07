@@ -1,0 +1,147 @@
+tower,role,grade,location,country,location_type,fte,loaded_cost_usd_per_fte,annual_cost_usd,attrition_pct_ttm,avg_tenure_years,current_employer
+Application Support,App Support Engineer L2,A2,Dallas TX,US,onshore,104.7,156000,15987915,7.2,4.9,Meridian Systems
+Application Support,App Support Engineer L2,A2,San Jose,Costa Rica,nearshore,119.7,74000,9199294,6.8,4.5,Northwind IT
+Application Support,App Support Engineer L2,A2,Chennai,India,offshore,329.1,38500,11967138,15.8,2.1,Meridian Systems
+Application Support,App Support Engineer L2,A2,Pune,India,offshore,194.5,36800,7201445,9.1,4.5,Northwind IT
+Application Support,App Support Engineer L3,A3,Dallas TX,US,onshore,55.4,156000,8777870,10.7,2.1,SkyHarbor employee
+Application Support,App Support Engineer L3,A3,San Jose,Costa Rica,nearshore,63.4,74000,4438022,7.8,4.4,Northwind IT
+Application Support,App Support Engineer L3,A3,Chennai,India,offshore,174.2,38500,6537376,10.6,2.4,Apex Digital
+Application Support,App Support Engineer L3,A3,Pune,India,offshore,103.0,36800,3817807,20.3,2.3,Northwind IT
+Application Support,Sr App Engineer / SME,A4,Dallas TX,US,onshore,37.0,156000,5683617,10.4,2.1,Meridian Systems
+Application Support,Sr App Engineer / SME,A4,San Jose,Costa Rica,nearshore,42.2,74000,3167397,10.0,4.3,Apex Digital
+Application Support,Sr App Engineer / SME,A4,Chennai,India,offshore,116.2,38500,4455233,24.6,3.5,Northwind IT
+Application Support,Sr App Engineer / SME,A4,Pune,India,offshore,68.6,36800,2613658,20.6,2.9,Apex Digital
+Application Support,Mainframe Engineer (COBOL/CICS),A4,Dallas TX,US,onshore,21.6,156000,3379788,13.0,5.2,Apex Digital
+Application Support,Mainframe Engineer (COBOL/CICS),A4,San Jose,Costa Rica,nearshore,24.6,74000,1844201,6.6,4.2,Northwind IT
+Application Support,Mainframe Engineer (COBOL/CICS),A4,Chennai,India,offshore,67.8,38500,2690845,10.7,4.1,Meridian Systems
+Application Support,Mainframe Engineer (COBOL/CICS),A4,Pune,India,offshore,40.0,36800,1553611,9.4,4.4,Apex Digital
+Application Support,TPF Specialist,A5,Dallas TX,US,onshore,6.2,156000,948643,8.8,4.1,SkyHarbor employee
+Application Support,TPF Specialist,A5,San Jose,Costa Rica,nearshore,7.0,74000,491194,6.7,3.1,Meridian Systems
+Application Support,TPF Specialist,A5,Chennai,India,offshore,19.4,38500,707523,20.6,4.8,SkyHarbor employee
+Application Support,TPF Specialist,A5,Pune,India,offshore,11.4,36800,408676,14.9,4.9,Meridian Systems
+Application Support,Batch Ops Analyst,A2,Dallas TX,US,onshore,18.5,156000,3038605,8.8,4.7,SkyHarbor employee
+Application Support,Batch Ops Analyst,A2,San Jose,Costa Rica,nearshore,21.1,74000,1478762,12.1,2.4,Northwind IT
+Application Support,Batch Ops Analyst,A2,Chennai,India,offshore,58.1,38500,2209443,24.5,4.1,Northwind IT
+Application Support,Batch Ops Analyst,A2,Pune,India,offshore,34.3,36800,1254543,17.9,6.0,SkyHarbor employee
+Application Support,Integration Engineer (MQ/API),A3,Dallas TX,US,onshore,21.6,156000,3516777,8.2,3.8,Apex Digital
+Application Support,Integration Engineer (MQ/API),A3,San Jose,Costa Rica,nearshore,24.6,74000,1860315,9.0,2.9,Meridian Systems
+Application Support,Integration Engineer (MQ/API),A3,Chennai,India,offshore,67.8,38500,2508879,12.2,2.9,SkyHarbor employee
+Application Support,Integration Engineer (MQ/API),A3,Pune,India,offshore,40.0,36800,1530484,11.3,3.1,Northwind IT
+Application Support,DBA,A4,Dallas TX,US,onshore,15.4,156000,2379033,9.0,4.5,Northwind IT
+Application Support,DBA,A4,San Jose,Costa Rica,nearshore,17.6,74000,1332171,10.1,4.7,Meridian Systems
+Application Support,DBA,A4,Chennai,India,offshore,48.4,38500,1853705,23.7,6.3,SkyHarbor employee
+Application Support,DBA,A4,Pune,India,offshore,28.6,36800,1039606,15.1,4.1,SkyHarbor employee
+Application Support,Test/QA Engineer,A2,Dallas TX,US,onshore,15.4,156000,2276201,6.5,2.8,Northwind IT
+Application Support,Test/QA Engineer,A2,San Jose,Costa Rica,nearshore,17.6,74000,1241436,10.8,2.3,Northwind IT
+Application Support,Test/QA Engineer,A2,Chennai,India,offshore,48.4,38500,1871588,25.1,4.7,Meridian Systems
+Application Support,Test/QA Engineer,A2,Pune,India,offshore,28.6,36800,1099757,19.1,2.5,Apex Digital
+Application Support,Team Lead,L1,Dallas TX,US,onshore,9.2,156000,1513642,10.8,4.0,Meridian Systems
+Application Support,Team Lead,L1,San Jose,Costa Rica,nearshore,10.6,74000,817244,13.9,4.0,SkyHarbor employee
+Application Support,Team Lead,L1,Chennai,India,offshore,29.0,38500,1091291,10.6,5.3,Apex Digital
+Application Support,Team Lead,L1,Pune,India,offshore,17.2,36800,631336,20.5,4.2,Northwind IT
+Application Support,Delivery Manager,M1,Dallas TX,US,onshore,3.1,156000,509771,10.2,2.5,Meridian Systems
+Application Support,Delivery Manager,M1,San Jose,Costa Rica,nearshore,3.5,74000,267023,8.4,4.8,Meridian Systems
+Application Support,Delivery Manager,M1,Chennai,India,offshore,9.7,38500,382242,12.7,3.5,Northwind IT
+Application Support,Delivery Manager,M1,Pune,India,offshore,5.7,36800,206127,12.0,4.3,Apex Digital
+Infrastructure Ops,Sysadmin (VMware/Linux),A3,Dallas TX,US,onshore,38.4,162000,6322653,10.9,5.5,Northwind IT
+Infrastructure Ops,Sysadmin (VMware/Linux),A3,Krakow,Poland,nearshore,34.6,82000,2941408,12.5,5.3,Northwind IT
+Infrastructure Ops,Sysadmin (VMware/Linux),A3,Hyderabad,India,offshore,119.0,41200,4726250,16.9,5.2,Meridian Systems
+Infrastructure Ops,zOS Systems Programmer,A5,Dallas TX,US,onshore,10.2,162000,1709926,9.8,2.7,Apex Digital
+Infrastructure Ops,zOS Systems Programmer,A5,Krakow,Poland,nearshore,9.2,82000,749622,13.5,6.4,Apex Digital
+Infrastructure Ops,zOS Systems Programmer,A5,Hyderabad,India,offshore,31.7,41200,1240299,9.8,4.0,Apex Digital
+Infrastructure Ops,Cloud Ops Engineer (AWS/Azure),A3,Dallas TX,US,onshore,23.0,162000,3593819,11.0,6.0,Meridian Systems
+Infrastructure Ops,Cloud Ops Engineer (AWS/Azure),A3,Krakow,Poland,nearshore,20.7,82000,1693218,11.2,5.6,Meridian Systems
+Infrastructure Ops,Cloud Ops Engineer (AWS/Azure),A3,Hyderabad,India,offshore,71.4,41200,3059811,10.2,3.6,Northwind IT
+Infrastructure Ops,Storage/Backup Engineer,A3,Dallas TX,US,onshore,12.8,162000,2068133,7.4,5.5,Apex Digital
+Infrastructure Ops,Storage/Backup Engineer,A3,Krakow,Poland,nearshore,11.5,82000,896236,13.6,5.2,SkyHarbor employee
+Infrastructure Ops,Storage/Backup Engineer,A3,Hyderabad,India,offshore,39.7,41200,1616284,25.0,5.2,Northwind IT
+Infrastructure Ops,Monitoring/Event Mgmt,A2,Dallas TX,US,onshore,17.9,162000,3071391,6.2,4.6,SkyHarbor employee
+Infrastructure Ops,Monitoring/Event Mgmt,A2,Krakow,Poland,nearshore,16.1,82000,1368757,7.2,5.7,SkyHarbor employee
+Infrastructure Ops,Monitoring/Event Mgmt,A2,Hyderabad,India,offshore,55.6,41200,2333950,14.3,4.4,Northwind IT
+Infrastructure Ops,DB Platform Engineer,A4,Dallas TX,US,onshore,10.2,162000,1557498,12.4,5.2,Meridian Systems
+Infrastructure Ops,DB Platform Engineer,A4,Krakow,Poland,nearshore,9.2,82000,756806,13.5,3.8,Northwind IT
+Infrastructure Ops,DB Platform Engineer,A4,Hyderabad,India,offshore,31.7,41200,1357156,11.8,3.0,Apex Digital
+Infrastructure Ops,Team Lead,L1,Dallas TX,US,onshore,5.1,162000,826315,12.1,3.3,SkyHarbor employee
+Infrastructure Ops,Team Lead,L1,Krakow,Poland,nearshore,4.6,82000,392327,6.5,5.3,SkyHarbor employee
+Infrastructure Ops,Team Lead,L1,Hyderabad,India,offshore,15.9,41200,667852,22.7,4.2,Northwind IT
+Infrastructure Ops,Shift Manager,M1,Dallas TX,US,onshore,2.6,162000,422808,10.2,1.9,SkyHarbor employee
+Infrastructure Ops,Shift Manager,M1,Krakow,Poland,nearshore,2.3,82000,194857,10.9,5.4,Northwind IT
+Infrastructure Ops,Shift Manager,M1,Hyderabad,India,offshore,7.9,41200,312682,16.5,5.2,Meridian Systems
+Service Desk (L1/L1.5),L1 Agent (voice),A1,Dallas TX,US,onshore,27.5,98000,2638722,10.1,4.4,Meridian Systems
+Service Desk (L1/L1.5),L1 Agent (voice),A1,San Jose,Costa Rica,nearshore,109.8,52000,5972169,6.5,2.7,Meridian Systems
+Service Desk (L1/L1.5),L1 Agent (voice),A1,Manila,Philippines,offshore,320.3,27400,9062950,17.1,4.4,Meridian Systems
+Service Desk (L1/L1.5),L1 Agent (chat/portal),A1,Dallas TX,US,onshore,10.6,98000,1031725,10.9,4.2,Northwind IT
+Service Desk (L1/L1.5),L1 Agent (chat/portal),A1,San Jose,Costa Rica,nearshore,42.2,52000,2245151,9.6,4.3,SkyHarbor employee
+Service Desk (L1/L1.5),L1 Agent (chat/portal),A1,Manila,Philippines,offshore,123.2,27400,3378820,12.5,4.3,Apex Digital
+Service Desk (L1/L1.5),L1.5 Technical Resolver,A2,Dallas TX,US,onshore,7.4,98000,761992,13.1,2.8,SkyHarbor employee
+Service Desk (L1/L1.5),L1.5 Technical Resolver,A2,San Jose,Costa Rica,nearshore,29.6,52000,1472177,7.0,3.9,Meridian Systems
+Service Desk (L1/L1.5),L1.5 Technical Resolver,A2,Manila,Philippines,offshore,86.2,27400,2410389,15.7,2.8,Apex Digital
+Service Desk (L1/L1.5),Crew-line Specialist,A2,Dallas TX,US,onshore,2.1,98000,212812,13.2,2.5,Apex Digital
+Service Desk (L1/L1.5),Crew-line Specialist,A2,San Jose,Costa Rica,nearshore,8.4,52000,418086,13.1,6.3,Northwind IT
+Service Desk (L1/L1.5),Crew-line Specialist,A2,Manila,Philippines,offshore,24.6,27400,693992,9.7,6.0,Northwind IT
+Service Desk (L1/L1.5),QA/Coach,A2,Dallas TX,US,onshore,2.1,98000,217897,12.7,2.6,SkyHarbor employee
+Service Desk (L1/L1.5),QA/Coach,A2,San Jose,Costa Rica,nearshore,8.4,52000,462697,9.2,3.8,Apex Digital
+Service Desk (L1/L1.5),QA/Coach,A2,Manila,Philippines,offshore,24.6,27400,659361,21.0,1.9,SkyHarbor employee
+Service Desk (L1/L1.5),Workforce Mgmt Analyst,A3,Dallas TX,US,onshore,1.1,98000,107029,6.1,3.4,Apex Digital
+Service Desk (L1/L1.5),Workforce Mgmt Analyst,A3,San Jose,Costa Rica,nearshore,4.2,52000,218721,6.5,6.4,Northwind IT
+Service Desk (L1/L1.5),Workforce Mgmt Analyst,A3,Manila,Philippines,offshore,12.3,27400,356096,9.9,3.0,Meridian Systems
+Service Desk (L1/L1.5),Team Lead,L1,Dallas TX,US,onshore,1.6,98000,164437,7.5,5.4,SkyHarbor employee
+Service Desk (L1/L1.5),Team Lead,L1,San Jose,Costa Rica,nearshore,6.3,52000,341342,11.4,6.2,SkyHarbor employee
+Service Desk (L1/L1.5),Team Lead,L1,Manila,Philippines,offshore,18.5,27400,485571,24.5,4.5,Apex Digital
+Service Desk (L1/L1.5),Ops Manager,M1,Dallas TX,US,onshore,0.5,98000,46586,6.5,5.0,SkyHarbor employee
+Service Desk (L1/L1.5),Ops Manager,M1,San Jose,Costa Rica,nearshore,2.1,52000,114379,8.2,1.9,Meridian Systems
+Service Desk (L1/L1.5),Ops Manager,M1,Manila,Philippines,offshore,6.2,27400,176028,9.5,5.8,Meridian Systems
+EUC / Field Services,Hub Field Technician,A2,US hub airports (14),US,onshore,96.4,118000,11053669,7.0,1.9,SkyHarbor employee
+EUC / Field Services,Hub Field Technician,A2,Amsterdam,NL,onshore-EU,20.7,126000,2741740,8.1,2.4,Northwind IT
+EUC / Field Services,Hub Field Technician,A2,Chennai,India,offshore-remote,55.1,33900,1966094,25.4,3.0,Northwind IT
+EUC / Field Services,Depot/IMACD Technician,A1,US hub airports (14),US,onshore,50.5,118000,5745740,8.5,3.2,Northwind IT
+EUC / Field Services,Depot/IMACD Technician,A1,Amsterdam,NL,onshore-EU,10.8,126000,1326501,10.0,2.6,Apex Digital
+EUC / Field Services,Depot/IMACD Technician,A1,Chennai,India,offshore-remote,28.9,33900,1015412,25.9,2.0,Meridian Systems
+EUC / Field Services,SOE/Intune Engineer,A3,US hub airports (14),US,onshore,32.1,118000,3893743,10.4,2.7,SkyHarbor employee
+EUC / Field Services,SOE/Intune Engineer,A3,Amsterdam,NL,onshore-EU,6.9,126000,842867,9.6,4.9,SkyHarbor employee
+EUC / Field Services,SOE/Intune Engineer,A3,Chennai,India,offshore-remote,18.4,33900,635474,17.8,6.0,Apex Digital
+EUC / Field Services,Jamf/Mobile Engineer,A3,US hub airports (14),US,onshore,16.1,118000,1942600,13.9,3.4,Northwind IT
+EUC / Field Services,Jamf/Mobile Engineer,A3,Amsterdam,NL,onshore-EU,3.4,126000,423500,8.8,2.1,Northwind IT
+EUC / Field Services,Jamf/Mobile Engineer,A3,Chennai,India,offshore-remote,9.2,33900,293700,19.3,5.9,SkyHarbor employee
+EUC / Field Services,Patch/Vuln Ops,A2,US hub airports (14),US,onshore,18.4,118000,2083460,6.7,5.8,Apex Digital
+EUC / Field Services,Patch/Vuln Ops,A2,Amsterdam,NL,onshore-EU,3.9,126000,497224,11.5,2.0,Northwind IT
+EUC / Field Services,Patch/Vuln Ops,A2,Chennai,India,offshore-remote,10.5,33900,341321,16.0,3.0,Apex Digital
+EUC / Field Services,Team Lead,L1,US hub airports (14),US,onshore,11.5,118000,1433961,10.4,2.9,Apex Digital
+EUC / Field Services,Team Lead,L1,Amsterdam,NL,onshore-EU,2.5,126000,304335,7.5,3.4,Meridian Systems
+EUC / Field Services,Team Lead,L1,Chennai,India,offshore-remote,6.6,33900,223059,17.0,2.7,Meridian Systems
+EUC / Field Services,Field Ops Manager,M1,US hub airports (14),US,onshore,4.6,118000,516149,12.5,2.5,Meridian Systems
+EUC / Field Services,Field Ops Manager,M1,Amsterdam,NL,onshore-EU,1.0,126000,124396,8.4,4.8,Meridian Systems
+EUC / Field Services,Field Ops Manager,M1,Chennai,India,offshore-remote,2.6,33900,89045,17.5,5.3,SkyHarbor employee
+Network Ops,NOC Analyst,A2,Dallas TX,US,onshore,18.0,158000,2934204,11.8,4.1,Apex Digital
+Network Ops,NOC Analyst,A2,Krakow,Poland,nearshore,12.0,84000,1035113,11.1,2.0,SkyHarbor employee
+Network Ops,NOC Analyst,A2,Chennai,India,offshore,30.0,42600,1313863,22.6,2.5,Meridian Systems
+Network Ops,Network Engineer,A3,Dallas TX,US,onshore,13.5,158000,2216547,10.7,6.0,Northwind IT
+Network Ops,Network Engineer,A3,Krakow,Poland,nearshore,9.0,84000,718359,6.3,4.8,Meridian Systems
+Network Ops,Network Engineer,A3,Chennai,India,offshore,22.5,42600,944308,16.1,2.0,Meridian Systems
+Network Ops,Sr Network/SDN Engineer,A4,Dallas TX,US,onshore,7.2,158000,1154831,11.4,4.1,Meridian Systems
+Network Ops,Sr Network/SDN Engineer,A4,Krakow,Poland,nearshore,4.8,84000,401116,6.6,6.2,Meridian Systems
+Network Ops,Sr Network/SDN Engineer,A4,Chennai,India,offshore,12.0,42600,520972,9.2,5.3,Apex Digital
+Network Ops,Voice/CC Engineer,A3,Dallas TX,US,onshore,3.6,158000,589906,12.8,2.9,Northwind IT
+Network Ops,Voice/CC Engineer,A3,Krakow,Poland,nearshore,2.4,84000,195085,11.2,4.0,SkyHarbor employee
+Network Ops,Voice/CC Engineer,A3,Chennai,India,offshore,6.0,42600,242617,24.4,3.2,Meridian Systems
+Network Ops,Team Lead,L1,Dallas TX,US,onshore,2.7,158000,432588,11.1,2.2,Northwind IT
+Network Ops,Team Lead,L1,Krakow,Poland,nearshore,1.8,84000,148147,11.2,5.1,Northwind IT
+Network Ops,Team Lead,L1,Chennai,India,offshore,4.5,42600,180484,9.1,3.1,Meridian Systems
+Cross-tower (SRE/tooling/automation),SRE,A4,Dallas TX,US,onshore,15.1,171000,2641648,11.4,3.2,Apex Digital
+Cross-tower (SRE/tooling/automation),SRE,A4,Krakow,Poland,nearshore,13.0,88000,1139148,9.7,2.4,Northwind IT
+Cross-tower (SRE/tooling/automation),SRE,A4,Pune,India,offshore,25.9,46100,1167006,9.5,4.0,Apex Digital
+Cross-tower (SRE/tooling/automation),Automation Engineer (RPA/Ansible),A3,Dallas TX,US,onshore,14.1,171000,2399228,12.6,6.4,SkyHarbor employee
+Cross-tower (SRE/tooling/automation),Automation Engineer (RPA/Ansible),A3,Krakow,Poland,nearshore,12.1,88000,1127917,9.1,6.1,Northwind IT
+Cross-tower (SRE/tooling/automation),Automation Engineer (RPA/Ansible),A3,Pune,India,offshore,24.2,46100,1058671,9.6,5.3,Apex Digital
+Cross-tower (SRE/tooling/automation),Observability Engineer,A3,Dallas TX,US,onshore,8.1,171000,1460350,7.1,5.7,Apex Digital
+Cross-tower (SRE/tooling/automation),Observability Engineer,A3,Krakow,Poland,nearshore,6.9,88000,635388,11.6,2.9,SkyHarbor employee
+Cross-tower (SRE/tooling/automation),Observability Engineer,A3,Pune,India,offshore,13.8,46100,628093,10.9,6.3,SkyHarbor employee
+Cross-tower (SRE/tooling/automation),ServiceNow Platform Eng,A3,Dallas TX,US,onshore,7.1,171000,1200320,11.8,3.8,SkyHarbor employee
+Cross-tower (SRE/tooling/automation),ServiceNow Platform Eng,A3,Krakow,Poland,nearshore,6.0,88000,516346,12.7,1.8,Apex Digital
+Cross-tower (SRE/tooling/automation),ServiceNow Platform Eng,A3,Pune,India,offshore,12.1,46100,580509,10.2,6.2,Meridian Systems
+Cross-tower (SRE/tooling/automation),Chapter Lead,L1,Dallas TX,US,onshore,4.0,171000,716960,8.3,3.5,SkyHarbor employee
+Cross-tower (SRE/tooling/automation),Chapter Lead,L1,Krakow,Poland,nearshore,3.5,88000,303940,13.0,2.2,SkyHarbor employee
+Cross-tower (SRE/tooling/automation),Chapter Lead,L1,Pune,India,offshore,6.9,46100,327848,23.4,3.1,Meridian Systems
+Cross-tower (SRE/tooling/automation),Practice Manager,M1,Dallas TX,US,onshore,2.0,171000,355735,8.3,6.2,Northwind IT
+Cross-tower (SRE/tooling/automation),Practice Manager,M1,Krakow,Poland,nearshore,1.7,88000,158056,9.5,3.3,Apex Digital
+Cross-tower (SRE/tooling/automation),Practice Manager,M1,Pune,India,offshore,3.5,46100,166870,15.7,1.9,SkyHarbor employee

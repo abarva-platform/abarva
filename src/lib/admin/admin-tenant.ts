@@ -20,18 +20,25 @@
  *   on the `/admin/error.tsx` boundary to render the unresolved state.
  */
 
-import { canonicalClientDisplayName, isClientKey, type ClientKey } from '@/lib/client-config';
-import { getActiveClientRow } from '@/lib/active-client';
+import {
+  canonicalClientDisplayName,
+  isClientKey,
+  type ClientKey,
+} from "@/lib/client-config";
+import { getActiveClientRow } from "@/lib/active-client";
 
 const ADMIN_TENANT_SLUG_BY_CLIENT_KEY: Record<ClientKey, string> = {
-  apexretail: 'apex-retail',
-  meridian: 'meridian',
-  arcturus: 'first-capital',
-  northstar: 'northstar-clinical',
-  skyharbor: 'skyharbor-air',
+  apexretail: "apex-retail",
+  meridian: "meridian",
+  arcturus: "first-capital",
+  northstar: "northstar-clinical",
+  skyharbor: "skyharbor-air",
+  lakeshore: "lakeshore-holdings",
 };
 
 export interface AdminTenantContext {
+  /** Canonical `clients.id` value used by RLS-backed control-plane tables. */
+  clientId: string;
   /** App-side ClientKey (e.g. 'arcturus'). */
   clientKey: ClientKey;
   /** Slug used by Setup page-view builders + agent context broker (e.g. 'first-capital'). */
@@ -50,7 +57,7 @@ export interface AdminTenantContext {
 export class AdminTenantUnresolvedError extends Error {
   constructor(reason: string) {
     super(`No active tenant resolved for admin surface: ${reason}`);
-    this.name = 'AdminTenantUnresolvedError';
+    this.name = "AdminTenantUnresolvedError";
   }
 }
 
@@ -64,19 +71,24 @@ export async function resolveAdminTenant(): Promise<AdminTenantContext> {
     );
   }
   if (!row) {
-    throw new AdminTenantUnresolvedError('no active client row');
+    throw new AdminTenantUnresolvedError("no active client row");
   }
   if (!isClientKey(row.key)) {
-    throw new AdminTenantUnresolvedError(`unknown client key: ${row.key ?? '<undefined>'}`);
+    throw new AdminTenantUnresolvedError(
+      `unknown client key: ${row.key ?? "<undefined>"}`,
+    );
   }
   const clientKey: ClientKey = row.key;
   const tenantSlug = ADMIN_TENANT_SLUG_BY_CLIENT_KEY[clientKey];
   if (!tenantSlug) {
     throw new AdminTenantUnresolvedError(`no slug mapping for ${clientKey}`);
   }
-  const tenantName = canonicalClientDisplayName({ key: row.key, name: row.name });
+  const tenantName = canonicalClientDisplayName({
+    key: row.key,
+    name: row.name,
+  });
   if (!tenantName) {
     throw new AdminTenantUnresolvedError(`no canonical name for ${clientKey}`);
   }
-  return { clientKey, tenantSlug, tenantName };
+  return { clientId: row.id, clientKey, tenantSlug, tenantName };
 }

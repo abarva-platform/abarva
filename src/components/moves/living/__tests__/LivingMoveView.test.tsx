@@ -52,6 +52,16 @@ describe('LivingMoveView — the living surface', () => {
     ).toBeInTheDocument();
   });
 
+  it('can lock the tenant case switcher off for tenant-scoped production sessions', () => {
+    render(<LivingMoveView allowCaseSwitching={false} caseId="meridian" />);
+
+    expect(
+      screen.queryByTestId('living-move-case-switcher'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText('CDI query volume')).toBeInTheDocument();
+    expect(screen.queryByText('Apex Retail')).not.toBeInTheDocument();
+  });
+
   it('switching the case re-renders the surface with that tenant case', () => {
     render(<LivingMoveView caseId="apexretail" />);
     // Apex opens on its containment-uplift lever.

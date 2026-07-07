@@ -6,10 +6,104 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(186);
+    expect(corpus.patterns).toHaveLength(510);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
+  });
+
+  it('loads Source pricing, BAFO, and retail overlay pilot patterns', () => {
+    expect(corpus.patternsById.get('PAT-SRC-PNG-001')).toMatchObject({
+      slug: 'ams-transition-cost-burial',
+      category: 'pricing_intelligence',
+      vendorClass: 'service',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-PNG-007')?.industryVariants?.[0]).toMatchObject({
+      industry: 'retail_cpg',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-PNG-009')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Price for term',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-PNG-011')?.standardClauses?.[0]).toMatchObject({
+      clauseArea: 'Benchmarking and exit',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BAFO-003')).toMatchObject({
+      slug: 'transition-holdback-and-warranty',
+      category: 'contract_intelligence',
+      vendorClass: 'service',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BAFO-008')?.standardClauses?.[0]).toMatchObject({
+      clauseArea: 'Benchmarking',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-LEV-008')).toMatchObject({
+      slug: 'benchmark-remedy-envelope',
+      category: 'contract_intelligence',
+      vendorClass: 'service',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-LEV-018')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Redline value control',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RIT-001')).toMatchObject({
+      slug: 'pos-peak-freeze-readiness',
+      vertical: 'retail-cpg',
+      category: 'customer_facing',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RIT-005')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-inventory-authority-ambiguity',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-AFM-001')).toMatchObject({
+      slug: 'incumbent-renegotiation-fact-base',
+      category: 'process_methodology',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-AFM-012')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-benchmark-theater',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-VPR-WIPRO')).toMatchObject({
+      slug: 'wipro-profile-evidence-requirements',
+      category: 'services',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-VPR-WIPRO')?.pricingBenchmarks?.[0].sourceBasis[0]).toMatchObject({
+      type: 'founder-data-gap',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BEN-AMS-FTE-RATE-CARD')).toMatchObject({
+      slug: 'ams-fte-rate-card-benchmark-governance',
+      category: 'pricing_intelligence',
+    });
+    const amsRateCardBenchmark = corpus.patternsById.get('PAT-SRC-BEN-AMS-FTE-RATE-CARD')?.pricingBenchmarks?.[0];
+    expect(amsRateCardBenchmark).toMatchObject({
+      sourceBasis: [expect.objectContaining({ type: 'founder-data-gap' })],
+    });
+    expect(amsRateCardBenchmark).not.toHaveProperty('rangeLow');
+    expect(amsRateCardBenchmark).not.toHaveProperty('rangeHigh');
+    expect(amsRateCardBenchmark).not.toHaveProperty('median');
+    expect(corpus.patternsById.get('PAT-SRC-CGV-TENANT-EVIDENCE-SCOPING')).toMatchObject({
+      slug: 'tenant-evidence-scoping',
+      category: 'process_methodology',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-CGV-SAVINGS-CLAIM-GATE')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-pattern-generated-savings',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-VPF-NO-EVIDENCE-NO-NUMBER')).toMatchObject({
+      slug: 'no-evidence-no-number',
+      category: 'pricing_intelligence',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-VPF-BAFO-DELTA-LEDGER')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Evidence-backed value proof',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RFP-EVAL-018')).toMatchObject({
+      slug: 'weight-set-governance',
+      category: 'process_methodology',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RFP-EVAL-023')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Tradeoff clarity before BAFO',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-ART-PRICING-WORKBOOK')).toMatchObject({
+      slug: 'pricing-normalization-workbook-quality-gate',
+      category: 'pricing_intelligence',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-ART-DEAL-PACK')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-deal-pack-caveat-loss',
+    });
   });
 
   it('indexes every loaded entity by id', () => {

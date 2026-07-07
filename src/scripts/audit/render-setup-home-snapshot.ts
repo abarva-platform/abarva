@@ -753,8 +753,8 @@ function renderHtml(t: Tenant, d: SnapshotData): string {
 
     <section class="section" id="s05">
       <div class="section-eyebrow">05 · <span>WHERE TO GO</span></div>
-      <h2 class="section-title">Setup panels</h2>
-      <p class="section-lead">Eight panels for tenant administration. Status pill is derived from live substrate state.</p>
+      <h2 class="section-title">Admin workspace</h2>
+      <p class="section-lead">Tenant setup, users, connectors, templates, and data-load controls live in Admin. Status pill is derived from live substrate state.</p>
       <div class="panel-grid">${renderPanels}</div>
     </section>
   </main>

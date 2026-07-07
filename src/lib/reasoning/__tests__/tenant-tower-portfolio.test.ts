@@ -32,6 +32,25 @@ describe('loadTenantTowerPortfolio — P0 cross-tenant invariants', () => {
     expect(out.sourceEventInstances).toEqual([]);
   });
 
+  it('returns Lakeshore-scoped Kyriba portfolio instances for the Lakeshore tenant', () => {
+    const out = loadTenantTowerPortfolio({ clientKey: 'lakeshore' });
+    expect(out.fromApexFixture).toBe(false);
+    expect(out.programInstances.map((program) => program.id)).toEqual([
+      'LSH-KYRIBA-2026',
+    ]);
+    expect(out.sourceEventInstances.map((event) => event.id)).toEqual([
+      'LSH-KYRIBA-TREASURY-2026',
+    ]);
+    expect(out.programInstances.every((program) => program.tenantId === 'lakeshore-holdings')).toBe(true);
+    expect(out.sourceEventInstances.every((event) => event.tenantId === 'lakeshore-holdings')).toBe(true);
+  });
+
+  it('normalizes the Lakeshore broker tenant key', () => {
+    const out = loadTenantTowerPortfolio({ clientKey: 'LAKESHORE-HOLDINGS' });
+    expect(out.programInstances[0]?.id).toBe('LSH-KYRIBA-2026');
+    expect(out.sourceEventInstances[0]?.id).toBe('LSH-KYRIBA-TREASURY-2026');
+  });
+
   it('returns EMPTY for an unknown / missing tenant key — never Apex content', () => {
     const unknown = loadTenantTowerPortfolio({ clientKey: 'some-new-tenant' });
     expect(unknown.fromApexFixture).toBe(false);
@@ -59,6 +78,18 @@ describe('loadTenantTowerPortfolio — P0 cross-tenant invariants', () => {
     }
     for (const s of out.sourceEventInstances) {
       expect(s.id.toLowerCase()).not.toContain('apex');
+    }
+  });
+
+  it('Meridian fixture data MUST NOT contain Lakeshore program identifiers', () => {
+    const out = loadTenantTowerPortfolio({ clientKey: 'meridian' });
+    for (const p of out.programInstances) {
+      expect(p.id.toLowerCase()).not.toContain('lsh');
+      expect(p.id.toLowerCase()).not.toContain('lakeshore');
+    }
+    for (const s of out.sourceEventInstances) {
+      expect(s.id.toLowerCase()).not.toContain('lsh');
+      expect(s.id.toLowerCase()).not.toContain('lakeshore');
     }
   });
 });

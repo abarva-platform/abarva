@@ -13,6 +13,11 @@
 // Pure module: deterministic, no I/O.
 
 import { rangeOf, round2, type Range } from './types';
+import {
+  buildValueForecastDistributions,
+  type ProbabilisticInputs,
+  type ValueForecastDistributions,
+} from './probabilistic';
 
 /** The six haircut dimensions. Each score is 0..1, where 1 = full confidence. */
 export interface HaircutScores {
@@ -71,6 +76,8 @@ export interface ValueForecastInput {
    * a missing cost-per-contact baseline). Forces `monetisationBlocked`.
    */
   grossValueIsProxy?: boolean;
+  /** Optional probabilistic wrapper inputs. Omitted preserves deterministic output. */
+  probabilistic?: ProbabilisticInputs | null;
 }
 
 export interface HaircutFactor {
@@ -108,6 +115,8 @@ export interface ValueForecast {
    * rests on a seed gap. The compiler must surface this, not paper over it.
    */
   monetisationBlocked: boolean;
+  /** Optional distribution wrappers for a later Monte Carlo sampler. */
+  probabilistic?: ValueForecastDistributions | null;
 }
 
 function assertWeightsSumToOne(w: HaircutWeights): void {
@@ -215,5 +224,9 @@ export function buildValueForecast(
     totalNetValue: sumRange((y) => y.netValue),
     totalGrossValue: sumRange((y) => y.grossValue),
     monetisationBlocked: input.grossValueIsProxy ?? false,
+    probabilistic: buildValueForecastDistributions(
+      input.adoptionCurve,
+      input.probabilistic,
+    ),
   };
 }

@@ -35,15 +35,21 @@ export interface CxoPersona {
    * Canonical app ClientKey — matches src/lib/client-config.ts.
    * Used for active-client resolution and Supabase clients-table
    * lookup (clients.name LIKE: Apex Retail / Meridian / Arcturus or
-   * First Capital). MUST be one of: apexretail · meridian · arcturus · northstar · skyharbor.
+   * First Capital). MUST be one of: apexretail · meridian · arcturus · northstar · skyharbor · lakeshore.
    */
-  clientKey: 'apexretail' | 'meridian' | 'arcturus' | 'northstar' | 'skyharbor';
+  clientKey: 'apexretail' | 'meridian' | 'arcturus' | 'northstar' | 'skyharbor' | 'lakeshore';
   /**
    * Tenant key used by the data-room / broker layer — a parallel
    * namespace per project memory ("App ClientKey is `apexretail`;
    * broker is `apex-retail`"). Kept for chrome rendering.
    */
-  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical' | 'skyharbor-air';
+  tenantKey:
+    | 'apex-retail'
+    | 'meridian-health'
+    | 'firstcapital'
+    | 'northstar-clinical'
+    | 'skyharbor-air'
+    | 'lakeshore-holdings';
   /** Clerk publicMetadata.role override for demo operations accounts. */
   authRole?: 'maestro' | 'admin';
   /** Graph node id used by persons.graph_node_id (Supabase). */
@@ -522,6 +528,70 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
       'Owen Mercer is the SkyHarbor tenant-admin persona for setup and stewardship. He owns user access, upload approval workflows, rejected-fact review, template governance, ingestion sync status, and context-layer audit trails.',
     workspaceTeaser:
       'Your workspace includes Setup/Admin, user access, context-layer uploads, ingestion history, approval queues, source-file provenance, and cross-module continuity checks.',
+  },
+  {
+    slug: 'cio-lakeshore',
+    email: 'cio@lakeshore-holdings.example.com',
+    shortLabel: 'cio@lakeshore',
+    firstName: 'Meera',
+    lastName: 'Rao',
+    personaName: 'Meera Rao',
+    monogram: 'MR',
+    titleShort: 'CIO',
+    titleFull: 'Global Chief Information Officer',
+    tenant: 'Lakeshore Holdings',
+    clientKey: 'lakeshore',
+    tenantKey: 'lakeshore-holdings',
+    graphNodeId: 'person:lakeshore:meera-rao',
+    monogramBg: '#2563EB',
+    bioShort: 'Global CIO. Owns holdco standards, opco CIO alignment, AI/delivery agenda, and data-plane readiness.',
+    bioLong:
+      'Meera Rao is the Global CIO for Lakeshore Holdings, a Chicago diversified holdco with Northline Supply Chain, Brightmark Marketing Services, Forge & Field Consumer Products, and Great Lakes Pantry Services. She owns enterprise architecture, cyber, shared IT standards, the AI/delivery agenda, and the governance tension between holdco standards and opco autonomy. Her immediate focus is proving the private data-plane load path, then using the loaded corpus to govern Kyriba, modernization, sourcing, and AI initiatives across all operating companies.',
+    workspaceTeaser:
+      'Your workspace shows the private data-plane load ledger, opco-specific IT landscapes, CIO decision-rights, application and vendor portfolios, AI initiative coverage, modernization candidates, and agent-grounding readiness across Moves, Source, Tower, and Intelligence.',
+  },
+  {
+    slug: 'cfo-lakeshore',
+    email: 'cfo@lakeshore-holdings.example.com',
+    shortLabel: 'cfo@lakeshore',
+    firstName: 'Daniel',
+    lastName: 'Whitaker',
+    personaName: 'Daniel Whitaker',
+    monogram: 'DW',
+    titleShort: 'CFO',
+    titleFull: 'Chief Financial Officer and Treasury Sponsor',
+    tenant: 'Lakeshore Holdings',
+    clientKey: 'lakeshore',
+    tenantKey: 'lakeshore-holdings',
+    graphNodeId: 'person:lakeshore:daniel-whitaker',
+    monogramBg: '#2563EB',
+    bioShort: 'CFO/Treasury sponsor. Owns multi-entity cash, Kyriba business case, FX, and value realization.',
+    bioLong:
+      'Daniel Whitaker runs Finance, Treasury, FP&A, Procurement, and value realization for Lakeshore Holdings. He is the business sponsor for the Kyriba rollout because Lakeshore manages cash, FX, working capital, and treasury controls across 50 countries and four operating companies. His executive lens is disciplined: quantify value, separate approved data from estimated data, prove sourcing leverage, and prevent AI or modernization programs from overstating benefits before the evidence layer supports them.',
+    workspaceTeaser:
+      'Your workspace shows the Kyriba rollout, SI and vendor contracts, treasury KPI baselines, multi-entity cash and FX exposure, opco P&L trends, rate-card-informed delivery estimates, sourcing events, and value-realization evidence linked back to loaded documents and templates.',
+  },
+  {
+    slug: 'admin-lakeshore',
+    email: 'admin@lakeshore-holdings.example.com',
+    shortLabel: 'admin@lakeshore',
+    firstName: 'Nora',
+    lastName: 'Fields',
+    personaName: 'Nora Fields',
+    monogram: 'NF',
+    titleShort: 'Admin',
+    titleFull: 'Tenant Admin / Context Layer Steward',
+    tenant: 'Lakeshore Holdings',
+    clientKey: 'lakeshore',
+    tenantKey: 'lakeshore-holdings',
+    graphNodeId: 'person:lakeshore:nora-fields',
+    monogramBg: '#2563EB',
+    authRole: 'admin',
+    bioShort: 'Tenant admin. Owns Lakeshore user access, setup-data approval, and context-layer stewardship.',
+    bioLong:
+      'Nora Fields is the Lakeshore Holdings tenant-admin persona for setup and stewardship. She owns user access, upload approvals, ingestion history, rejected-fact review, template governance, and tenant-pinning proof for the Lakeshore demo.',
+    workspaceTeaser:
+      'Your workspace includes Setup/Admin, context-layer uploads, data trust, user access, Source artifact governance, and tenant-isolation evidence for the Lakeshore/Kyriba walkthrough.',
   },
 ];
 

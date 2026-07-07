@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import type { CSSProperties } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { SourceSubNav } from '@/components/source/SourceSubNav';
@@ -45,30 +46,39 @@ export default async function SourceEventScorecardPage({
         />
       }
     >
-      <SentinelAgentColumn
-        quote={`Scorecard at ${event.scorecard?.approvalState ?? 'default_generated'}. ${approvedCriteriaCount} criteria approved · ${pendingCriteriaCount} pending review. Locks when all criteria reach 'approved'.`}
-        agentContext={`Sentinel · ${event.name} · Scorecard`}
-        actions={[
-          { letter: 'A', text: 'Review approval blockers', detail: 'Criteria pending approval or still carrying blocked status' },
-          { letter: 'B', text: 'Inspect rationale gaps', detail: 'Criteria where deterministic rationale is still incomplete' },
-          { letter: 'C', text: 'Explain BAFO gate impact', detail: `How scorecard state affects ${evaluationToBafoGate.transitionLabel}` },
-        ]}
-      />
-      <SourceWorkingPane>
-        <ScorecardGovernancePanel
-          scorecard={event.scorecard}
-          eventName={event.name}
-          currentStageLabel={event.currentStageLabel}
-          currentBlocker={event.blocker}
-          gateImpact={{
-            label: evaluationToBafoGate.transitionLabel,
-            state: evaluationToBafoGate.state,
-            blocker: evaluationToBafoGate.blocker,
-            requiredArtifacts: evaluationToBafoGate.requiredArtifacts,
-            requiredApprovals: evaluationToBafoGate.requiredApprovals,
-          }}
+      <main data-testid="source-scorecard-layout" style={SCORECARD_LAYOUT_STYLE}>
+        <SentinelAgentColumn
+          quote={`Scorecard at ${event.scorecard?.approvalState ?? 'default_generated'}. ${approvedCriteriaCount} criteria approved · ${pendingCriteriaCount} pending review. Locks when all criteria reach 'approved'.`}
+          agentContext={`Scorecard review · ${event.name}`}
+          actions={[
+            { letter: 'A', text: 'Review approval blockers', detail: 'Criteria pending approval or still carrying blocked status' },
+            { letter: 'B', text: 'Inspect rationale gaps', detail: 'Criteria where deterministic rationale is still incomplete' },
+            { letter: 'C', text: 'Explain BAFO gate impact', detail: `How scorecard state affects ${evaluationToBafoGate.transitionLabel}` },
+          ]}
         />
-      </SourceWorkingPane>
+        <SourceWorkingPane>
+          <ScorecardGovernancePanel
+            scorecard={event.scorecard}
+            eventName={event.name}
+            currentStageLabel={event.currentStageLabel}
+            currentBlocker={event.blocker}
+            gateImpact={{
+              label: evaluationToBafoGate.transitionLabel,
+              state: evaluationToBafoGate.state,
+              blocker: evaluationToBafoGate.blocker,
+              requiredArtifacts: evaluationToBafoGate.requiredArtifacts,
+              requiredApprovals: evaluationToBafoGate.requiredApprovals,
+            }}
+          />
+        </SourceWorkingPane>
+      </main>
     </AppShell>
   );
 }
+
+const SCORECARD_LAYOUT_STYLE: CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  display: 'flex',
+  overflow: 'hidden',
+};

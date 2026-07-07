@@ -17,17 +17,28 @@
 //   404  — program or deliverable not found, or no content exists yet
 //   500  — render failure
 
-import 'server-only';
+import "server-only";
 
-import ExcelJS from 'exceljs';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
-import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
-import { azureRead } from '@/lib/data-plane/azureRead';
+import ExcelJS from "exceljs";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+} from "docx";
+import {
+  requireTenancy,
+  tenancyErrorResponse,
+} from "@/app/api/v1/programs/_auth";
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-type Format = 'html' | 'docx' | 'xlsx';
+type Format = "html" | "docx" | "xlsx";
 
 type ExportDeliverableRow = {
   id: string;
@@ -43,17 +54,103 @@ type ExportDeliverableVersionRow = {
 };
 
 function jsonError(status: number, code: string, detail?: string): Response {
-  return Response.json({ error: code, ...(detail ? { detail } : {}) }, { status });
+  return Response.json(
+    { error: code, ...(detail ? { detail } : {}) },
+    { status },
+  );
 }
 
 function safeFilename(title: string, ext: string): string {
-  const base = title
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .toLowerCase()
-    .slice(0, 60)
-    .replace(/-+$/, '') || 'deliverable';
+  const base =
+    title
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase()
+      .slice(0, 60)
+      .replace(/-+$/, "") || "deliverable";
   return `${base}.${ext}`;
+}
+
+function safeArtifactType(deliverableTypeKey: string, format: Format): string {
+  const normalized =
+    deliverableTypeKey
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_:-]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "") || "deliverable";
+  return `${normalized}_${format}`;
+}
+
+async function persistExportedArtifact(args: {
+  ctx: Awaited<ReturnType<typeof requireTenancy>>;
+  programId: string;
+  deliverable: ExportDeliverableRow;
+  version: ExportDeliverableVersionRow;
+  format: Format;
+  filename: string;
+  body: Buffer | Uint8Array | string;
+}): Promise<{
+  artifactId: string | null;
+  blobStored: boolean;
+  blobPath: string | null;
+}> {
+  try {
+    const saved = await saveMoveArtifact(args.ctx, {
+      moveId: args.programId,
+      phase: 0,
+      artifactType: safeArtifactType(
+        args.deliverable.deliverable_type_key,
+        args.format,
+      ),
+      artifactFamily: "generated_deliverable",
+      title: args.deliverable.title ?? args.deliverable.deliverable_type_key,
+      description:
+        "Exported deliverable binary rendered from the latest approved draft content.",
+      fileName: args.filename,
+      fileFormat: args.format,
+      body: args.body,
+      status: "exported",
+      sourceBasis: "deliverables_v2",
+      confidence: "high",
+      citationReady: true,
+      generatedBy: args.ctx.email ?? args.ctx.userId ?? "content-export",
+      metadata: {
+        exportedFrom: "deliverables_v2",
+        deliverableId: args.deliverable.id,
+        deliverableTypeKey: args.deliverable.deliverable_type_key,
+        deliverableVersion: args.version.version,
+        deliverableGeneratedAt: args.version.generated_at,
+        exportFormat: args.format,
+        route: "/api/programs/[id]/deliverables/[deliverableId]/content-export",
+      },
+    });
+    return {
+      artifactId: saved.artifactId,
+      blobStored: saved.blobStored,
+      blobPath: saved.blobPath,
+    };
+  } catch (err) {
+    console.error("[content-export] artifact vault persist failed", {
+      deliverableId: args.deliverable.id,
+      format: args.format,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { artifactId: null, blobStored: false, blobPath: null };
+  }
+}
+
+function vaultHeaders(
+  result: Awaited<ReturnType<typeof persistExportedArtifact>>,
+): Record<string, string> {
+  return {
+    "X-Move-Artifact-Persisted": result.artifactId ? "true" : "false",
+    "X-Move-Artifact-Blob-Stored": String(result.blobStored),
+    ...(result.artifactId ? { "X-Move-Artifact-Id": result.artifactId } : {}),
+    ...(result.blobPath
+      ? { "X-Move-Artifact-Blob-Path": result.blobPath }
+      : {}),
+  };
 }
 
 // ── Markdown → HTML ───────────────────────────────────────────────────────────
@@ -64,27 +161,27 @@ function safeFilename(title: string, ext: string): string {
 
 function escapeHtml(s: string): string {
   return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function inlineMarkdown(text: string): string {
   return escapeHtml(text)
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code>$1</code>');
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, "<code>$1</code>");
 }
 
 function markdownToHtml(md: string, title: string): string {
-  const lines = md.split('\n');
+  const lines = md.split("\n");
   const bodyParts: string[] = [];
   let inUl = false;
 
   function closeUl() {
     if (inUl) {
-      bodyParts.push('</ul>');
+      bodyParts.push("</ul>");
       inUl = false;
     }
   }
@@ -102,15 +199,20 @@ function markdownToHtml(md: string, title: string): string {
       closeUl();
       bodyParts.push(`<h3>${inlineMarkdown(line.slice(4))}</h3>`);
     } else if (/^[-*] /.test(line)) {
-      if (!inUl) { bodyParts.push('<ul>'); inUl = true; }
+      if (!inUl) {
+        bodyParts.push("<ul>");
+        inUl = true;
+      }
       bodyParts.push(`<li>${inlineMarkdown(line.slice(2))}</li>`);
     } else if (/^> /.test(line)) {
       closeUl();
-      bodyParts.push(`<blockquote>${inlineMarkdown(line.slice(2))}</blockquote>`);
+      bodyParts.push(
+        `<blockquote>${inlineMarkdown(line.slice(2))}</blockquote>`,
+      );
     } else if (/^---+$/.test(line)) {
       closeUl();
-      bodyParts.push('<hr>');
-    } else if (line.trim() === '') {
+      bodyParts.push("<hr>");
+    } else if (line.trim() === "") {
       closeUl();
     } else {
       closeUl();
@@ -119,7 +221,7 @@ function markdownToHtml(md: string, title: string): string {
   }
   closeUl();
 
-  const body = bodyParts.join('\n');
+  const body = bodyParts.join("\n");
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -178,24 +280,42 @@ function parseInline(text: string): ParsedInline[] {
   const result: ParsedInline[] = [];
   // Simple state machine: scan for **bold**, *italic*, `code`
   let i = 0;
-  let buf = '';
+  let buf = "";
   while (i < text.length) {
-    if (text.startsWith('**', i)) {
-      if (buf) { result.push({ text: buf }); buf = ''; }
-      const end = text.indexOf('**', i + 2);
-      if (end === -1) { buf += text.slice(i); break; }
+    if (text.startsWith("**", i)) {
+      if (buf) {
+        result.push({ text: buf });
+        buf = "";
+      }
+      const end = text.indexOf("**", i + 2);
+      if (end === -1) {
+        buf += text.slice(i);
+        break;
+      }
       result.push({ text: text.slice(i + 2, end), bold: true });
       i = end + 2;
-    } else if (text[i] === '*' && text[i + 1] !== '*') {
-      if (buf) { result.push({ text: buf }); buf = ''; }
-      const end = text.indexOf('*', i + 1);
-      if (end === -1) { buf += text.slice(i); break; }
+    } else if (text[i] === "*" && text[i + 1] !== "*") {
+      if (buf) {
+        result.push({ text: buf });
+        buf = "";
+      }
+      const end = text.indexOf("*", i + 1);
+      if (end === -1) {
+        buf += text.slice(i);
+        break;
+      }
       result.push({ text: text.slice(i + 1, end), italics: true });
       i = end + 1;
-    } else if (text[i] === '`') {
-      if (buf) { result.push({ text: buf }); buf = ''; }
-      const end = text.indexOf('`', i + 1);
-      if (end === -1) { buf += text.slice(i); break; }
+    } else if (text[i] === "`") {
+      if (buf) {
+        result.push({ text: buf });
+        buf = "";
+      }
+      const end = text.indexOf("`", i + 1);
+      if (end === -1) {
+        buf += text.slice(i);
+        break;
+      }
       result.push({ text: text.slice(i + 1, end), monospace: true });
       i = end + 1;
     } else {
@@ -213,14 +333,14 @@ function textRuns(text: string): TextRun[] {
         text: p.text,
         bold: p.bold,
         italics: p.italics,
-        font: p.monospace ? 'Courier New' : undefined,
+        font: p.monospace ? "Courier New" : undefined,
         size: p.monospace ? 20 : undefined,
       }),
   );
 }
 
 function markdownToDocx(md: string, title: string): Promise<Uint8Array> {
-  const lines = md.split('\n');
+  const lines = md.split("\n");
   const paragraphs: Paragraph[] = [];
 
   // Document title as H1
@@ -236,13 +356,37 @@ function markdownToDocx(md: string, title: string): Promise<Uint8Array> {
     const line = rawLine.trimEnd();
 
     if (/^# /.test(line)) {
-      paragraphs.push(new Paragraph({ children: textRuns(line.slice(2)), heading: HeadingLevel.HEADING_1, spacing: { before: 240, after: 120 } }));
+      paragraphs.push(
+        new Paragraph({
+          children: textRuns(line.slice(2)),
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 240, after: 120 },
+        }),
+      );
     } else if (/^## /.test(line)) {
-      paragraphs.push(new Paragraph({ children: textRuns(line.slice(3)), heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } }));
+      paragraphs.push(
+        new Paragraph({
+          children: textRuns(line.slice(3)),
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 200, after: 80 },
+        }),
+      );
     } else if (/^### /.test(line)) {
-      paragraphs.push(new Paragraph({ children: textRuns(line.slice(4)), heading: HeadingLevel.HEADING_3, spacing: { before: 160, after: 60 } }));
+      paragraphs.push(
+        new Paragraph({
+          children: textRuns(line.slice(4)),
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 160, after: 60 },
+        }),
+      );
     } else if (/^[-*] /.test(line)) {
-      paragraphs.push(new Paragraph({ children: textRuns(line.slice(2)), bullet: { level: 0 }, spacing: { after: 60 } }));
+      paragraphs.push(
+        new Paragraph({
+          children: textRuns(line.slice(2)),
+          bullet: { level: 0 },
+          spacing: { after: 60 },
+        }),
+      );
     } else if (/^> /.test(line)) {
       paragraphs.push(
         new Paragraph({
@@ -254,20 +398,24 @@ function markdownToDocx(md: string, title: string): Promise<Uint8Array> {
       );
     } else if (/^---+$/.test(line)) {
       // Blank spacer paragraph as section separator
-      paragraphs.push(new Paragraph({ text: '', spacing: { after: 200, before: 200 } }));
-    } else if (line.trim() === '') {
+      paragraphs.push(
+        new Paragraph({ text: "", spacing: { after: 200, before: 200 } }),
+      );
+    } else if (line.trim() === "") {
     } else {
-      paragraphs.push(new Paragraph({ children: textRuns(line), spacing: { after: 100 } }));
+      paragraphs.push(
+        new Paragraph({ children: textRuns(line), spacing: { after: 100 } }),
+      );
     }
   }
 
   const doc = new Document({
-    creator: 'Nexus',
+    creator: "Nexus",
     title,
     styles: {
       default: {
         document: {
-          run: { font: 'Calibri', size: 22 }, // 11pt
+          run: { font: "Calibri", size: 22 }, // 11pt
         },
       },
     },
@@ -293,11 +441,14 @@ function markdownToDocx(md: string, title: string): Promise<Uint8Array> {
 type ParsedTable = { headers: string[]; rows: string[][] };
 
 function parseMarkdownTable(lines: string[]): ParsedTable | null {
-  const tableLines = lines.filter((l) => l.trim().startsWith('|'));
+  const tableLines = lines.filter((l) => l.trim().startsWith("|"));
   if (tableLines.length < 2) return null;
 
   const parseRow = (line: string): string[] =>
-    line.split('|').slice(1, -1).map((cell) => cell.trim());
+    line
+      .split("|")
+      .slice(1, -1)
+      .map((cell) => cell.trim());
 
   const headers = parseRow(tableLines[0]);
   // Skip separator row (---|---|...)
@@ -312,8 +463,8 @@ function extractSections(md: string): Map<string, ParsedTable> {
   // parts = [before, sectionName1, content1, sectionName2, content2, ...]
   for (let i = 1; i < parts.length - 1; i += 2) {
     const sectionKey = parts[i].trim();
-    const sectionContent = parts[i + 1] ?? '';
-    const tableLines = sectionContent.split('\n').filter(Boolean);
+    const sectionContent = parts[i + 1] ?? "";
+    const tableLines = sectionContent.split("\n").filter(Boolean);
     const table = parseMarkdownTable(tableLines);
     if (table) result.set(sectionKey, table);
   }
@@ -326,36 +477,72 @@ const SHEET_CONFIG: Array<{
   headerColor: string; // ARGB hex
   editable: boolean;
 }> = [
-  { sectionKey: 'ASSUMPTIONS',          sheetName: 'Assumptions',          headerColor: 'FF1B2B5C', editable: true },
-  { sectionKey: 'BENEFIT_LEVERS',        sheetName: 'Benefit Levers',        headerColor: 'FF166534', editable: true },
-  { sectionKey: 'IMPLEMENTATION_COSTS',  sheetName: 'Implementation Costs',  headerColor: 'FF92400E', editable: true },
-  { sectionKey: 'VALUE_MODEL',           sheetName: 'Value Model',           headerColor: 'FF1E3A5F', editable: false },
-  { sectionKey: 'SCENARIOS',             sheetName: 'Scenarios',             headerColor: 'FF4C1D95', editable: false },
+  {
+    sectionKey: "ASSUMPTIONS",
+    sheetName: "Assumptions",
+    headerColor: "FF1B2B5C",
+    editable: true,
+  },
+  {
+    sectionKey: "BENEFIT_LEVERS",
+    sheetName: "Benefit Levers",
+    headerColor: "FF166534",
+    editable: true,
+  },
+  {
+    sectionKey: "IMPLEMENTATION_COSTS",
+    sheetName: "Implementation Costs",
+    headerColor: "FF92400E",
+    editable: true,
+  },
+  {
+    sectionKey: "VALUE_MODEL",
+    sheetName: "Value Model",
+    headerColor: "FF1E3A5F",
+    editable: false,
+  },
+  {
+    sectionKey: "SCENARIOS",
+    sheetName: "Scenarios",
+    headerColor: "FF4C1D95",
+    editable: false,
+  },
 ];
 
 async function markdownToXlsx(md: string, title: string): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Nexus';
+  workbook.creator = "Nexus";
   workbook.created = new Date();
   workbook.title = title;
 
   const sections = extractSections(md);
 
   // Add a cover sheet
-  const cover = workbook.addWorksheet('Cover');
+  const cover = workbook.addWorksheet("Cover");
   cover.getColumn(1).width = 60;
   cover.getRow(2).getCell(1).value = title;
-  cover.getRow(2).getCell(1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FF1B2B5C' } };
-  cover.getRow(3).getCell(1).value = `Generated by Nexus · ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
-  cover.getRow(3).getCell(1).font = { name: 'Calibri', size: 10, color: { argb: 'FF6B7280' } };
-  cover.getRow(5).getCell(1).value = 'This workbook contains the following sheets:';
-  cover.getRow(5).getCell(1).font = { name: 'Calibri', size: 11, bold: true };
+  cover.getRow(2).getCell(1).font = {
+    name: "Calibri",
+    size: 16,
+    bold: true,
+    color: { argb: "FF1B2B5C" },
+  };
+  cover.getRow(3).getCell(1).value =
+    `Generated by Nexus · ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
+  cover.getRow(3).getCell(1).font = {
+    name: "Calibri",
+    size: 10,
+    color: { argb: "FF6B7280" },
+  };
+  cover.getRow(5).getCell(1).value =
+    "This workbook contains the following sheets:";
+  cover.getRow(5).getCell(1).font = { name: "Calibri", size: 11, bold: true };
   let coverRow = 6;
   for (const cfg of SHEET_CONFIG) {
     if (sections.has(cfg.sectionKey)) {
       const cell = cover.getRow(coverRow++).getCell(1);
-      cell.value = `• ${cfg.sheetName}${cfg.editable ? ' (editable inputs)' : ' (calculated)'}`;
-      cell.font = { name: 'Calibri', size: 10 };
+      cell.value = `• ${cfg.sheetName}${cfg.editable ? " (editable inputs)" : " (calculated)"}`;
+      cell.font = { name: "Calibri", size: 10 };
     }
   }
 
@@ -368,8 +555,15 @@ async function markdownToXlsx(md: string, title: string): Promise<Buffer> {
 
     // Column widths
     table.headers.forEach((_, colIdx) => {
-      sheet.getColumn(colIdx + 1).width = Math.max(18,
-        Math.min(40, Math.max(...table.rows.map((r) => (r[colIdx] ?? '').length), table.headers[colIdx].length) + 4)
+      sheet.getColumn(colIdx + 1).width = Math.max(
+        18,
+        Math.min(
+          40,
+          Math.max(
+            ...table.rows.map((r) => (r[colIdx] ?? "").length),
+            table.headers[colIdx].length,
+          ) + 4,
+        ),
       );
     });
 
@@ -378,11 +572,20 @@ async function markdownToXlsx(md: string, title: string): Promise<Buffer> {
     table.headers.forEach((h, colIdx) => {
       const cell = headerRow.getCell(colIdx + 1);
       cell.value = h;
-      cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cfg.headerColor } };
-      cell.alignment = { vertical: 'middle', wrapText: true };
+      cell.font = {
+        name: "Calibri",
+        size: 10,
+        bold: true,
+        color: { argb: "FFFFFFFF" },
+      };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: cfg.headerColor },
+      };
+      cell.alignment = { vertical: "middle", wrapText: true };
       cell.border = {
-        bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        bottom: { style: "thin", color: { argb: "FFFFFFFF" } },
       };
     });
     headerRow.height = 24;
@@ -393,49 +596,63 @@ async function markdownToXlsx(md: string, title: string): Promise<Buffer> {
       row.forEach((val, colIdx) => {
         const cell = sheetRow.getCell(colIdx + 1);
         // Try to parse as number
-        const asNum = val.replace(/[$%,]/g, '').trim();
+        const asNum = val.replace(/[$%,]/g, "").trim();
         const num = Number(asNum);
-        if (!Number.isNaN(num) && asNum !== '' && !/[a-zA-Z]/.test(asNum)) {
+        if (!Number.isNaN(num) && asNum !== "" && !/[a-zA-Z]/.test(asNum)) {
           cell.value = num;
-          if (val.includes('%')) {
-            cell.numFmt = '0.0%';
+          if (val.includes("%")) {
+            cell.numFmt = "0.0%";
             cell.value = num / 100; // store as decimal
-          } else if (val.includes('$') || /^\d+\.\d/.test(asNum)) {
-            cell.numFmt = '#,##0.0';
+          } else if (val.includes("$") || /^\d+\.\d/.test(asNum)) {
+            cell.numFmt = "#,##0.0";
           }
         } else {
           cell.value = val;
         }
-        cell.font = { name: 'Calibri', size: 10 };
+        cell.font = { name: "Calibri", size: 10 };
         const isAlt = rowIdx % 2 === 1;
         if (isAlt) {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F7F4' } };
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF8F7F4" },
+          };
         }
         if (cfg.editable && colIdx === 1) {
           // Highlight the value column for editable sheets
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isAlt ? 'FFFFFBE6' : 'FFFFFFF0' } };
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: isAlt ? "FFFFFBE6" : "FFFFFFF0" },
+          };
         }
       });
       sheetRow.height = 18;
     });
 
     // Freeze header row
-    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    sheet.views = [{ state: "frozen", ySplit: 1 }];
 
     // Note for editable sheets
     if (cfg.editable) {
       const noteRow = sheet.getRow(table.rows.length + 3);
       const noteCell = noteRow.getCell(1);
-      noteCell.value = '← Yellow cells are input assumptions. Update these to run scenarios.';
-      noteCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF92400E' } };
+      noteCell.value =
+        "← Yellow cells are input assumptions. Update these to run scenarios.";
+      noteCell.font = {
+        name: "Calibri",
+        size: 9,
+        italic: true,
+        color: { argb: "FF92400E" },
+      };
     }
   }
 
   // If no sections were parsed, add a fallback raw-content sheet
   if (workbook.worksheets.length === 1) {
-    const raw = workbook.addWorksheet('Content');
+    const raw = workbook.addWorksheet("Content");
     raw.getColumn(1).width = 80;
-    md.split('\n').forEach((line, idx) => {
+    md.split("\n").forEach((line, idx) => {
       raw.getRow(idx + 1).getCell(1).value = line;
     });
   }
@@ -454,17 +671,28 @@ export async function GET(
   try {
     ctx = await requireTenancy();
   } catch (err) {
-    try { return tenancyErrorResponse(err); } catch { return jsonError(500, 'internal_error'); }
+    try {
+      return tenancyErrorResponse(err);
+    } catch {
+      return jsonError(500, "internal_error");
+    }
   }
-  void ctx; // used implicitly by requireTenancy side-effects (session + tenant check)
 
   const { id: programId, deliverableId } = await params;
-  if (!programId || !deliverableId) return jsonError(400, 'missing_params');
+  if (!programId || !deliverableId) return jsonError(400, "missing_params");
 
   const url = new URL(req.url);
-  const formatParam = url.searchParams.get('format') ?? 'html';
-  if (formatParam !== 'html' && formatParam !== 'docx' && formatParam !== 'xlsx') {
-    return jsonError(400, 'invalid_format', 'format must be html, docx, or xlsx');
+  const formatParam = url.searchParams.get("format") ?? "html";
+  if (
+    formatParam !== "html" &&
+    formatParam !== "docx" &&
+    formatParam !== "xlsx"
+  ) {
+    return jsonError(
+      400,
+      "invalid_format",
+      "format must be html, docx, or xlsx",
+    );
   }
   const format: Format = formatParam;
 
@@ -472,54 +700,81 @@ export async function GET(
   let deliverable: ExportDeliverableRow | null;
   try {
     deliverable = await azureRead.maybeSingle<ExportDeliverableRow>({
-      table: 'deliverables_v2',
-      columns: ['id', 'engagement_id', 'deliverable_type_key', 'title'],
+      table: "deliverables_v2",
+      columns: ["id", "engagement_id", "deliverable_type_key", "title"],
       where: { id: deliverableId, engagement_id: programId },
     });
   } catch (err) {
-    console.error('[content-export] deliverable fetch error', err);
-    return jsonError(500, 'db_error');
+    console.error("[content-export] deliverable fetch error", err);
+    return jsonError(500, "db_error");
   }
-  if (!deliverable) return jsonError(404, 'deliverable_not_found');
+  if (!deliverable) return jsonError(404, "deliverable_not_found");
 
   // Fetch latest version content
   let version: ExportDeliverableVersionRow | null;
   try {
     version = await azureRead.maybeSingle<ExportDeliverableVersionRow>({
-      table: 'deliverable_versions',
-      columns: ['content', 'version', 'generated_at'],
+      table: "deliverable_versions",
+      columns: ["content", "version", "generated_at"],
       where: { deliverable_id: deliverableId },
-      orderBy: { column: 'version', direction: 'desc' },
+      orderBy: { column: "version", direction: "desc" },
     });
   } catch (err) {
-    console.error('[content-export] version fetch error', err);
-    return jsonError(500, 'db_error');
+    console.error("[content-export] version fetch error", err);
+    return jsonError(500, "db_error");
   }
 
   const content = version?.content ?? null;
-  if (!content || content.trim().length === 0) {
-    return jsonError(404, 'no_content', 'This deliverable has no content yet. Generate it in the phase workspace first.');
+  if (!version || !content || content.trim().length === 0) {
+    return jsonError(
+      404,
+      "no_content",
+      "This deliverable has no content yet. Generate it in the phase workspace first.",
+    );
   }
+  const latestVersion = version;
 
-  const title = deliverable.title || deliverable.deliverable_type_key.replace(/_/g, ' ');
+  const title =
+    deliverable.title || deliverable.deliverable_type_key.replace(/_/g, " ");
 
   try {
-    if (format === 'html') {
+    if (format === "html") {
       const html = markdownToHtml(content, title);
       const encoder = new TextEncoder();
       const bytes = encoder.encode(html);
+      const filename = safeFilename(title, "html");
+      const vault = await persistExportedArtifact({
+        ctx,
+        programId,
+        deliverable,
+        version: latestVersion,
+        format,
+        filename,
+        body: bytes,
+      });
       return new Response(bytes, {
         status: 200,
         headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Content-Disposition': `attachment; filename="${safeFilename(title, 'html')}"`,
-          'Cache-Control': 'private, max-age=0',
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "private, max-age=0",
+          ...vaultHeaders(vault),
         },
       });
     }
 
-    if (format === 'docx') {
+    if (format === "docx") {
       const rawBuffer = await markdownToDocx(content, title);
+      const filename = safeFilename(title, "docx");
+      const vault = await persistExportedArtifact({
+        ctx,
+        programId,
+        deliverable,
+        version: latestVersion,
+        format,
+        filename,
+        body: rawBuffer,
+      });
       // Copy into a guaranteed ArrayBuffer-backed Uint8Array (Node Buffer's
       // backing is ArrayBufferLike which may not satisfy BodyInit in strict mode).
       const arrayBuffer = new ArrayBuffer(rawBuffer.byteLength);
@@ -527,27 +782,45 @@ export async function GET(
       return new Response(arrayBuffer, {
         status: 200,
         headers: {
-          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'Content-Disposition': `attachment; filename="${safeFilename(title, 'docx')}"`,
-          'Cache-Control': 'private, max-age=0',
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "private, max-age=0",
+          ...vaultHeaders(vault),
         },
       });
     }
 
     // xlsx — financial model
     const xlsxBuffer = await markdownToXlsx(content, title);
+    const filename = safeFilename(title, "xlsx");
+    const vault = await persistExportedArtifact({
+      ctx,
+      programId,
+      deliverable,
+      version: latestVersion,
+      format,
+      filename,
+      body: xlsxBuffer,
+    });
     const xlsxArrayBuffer = new ArrayBuffer(xlsxBuffer.byteLength);
     new Uint8Array(xlsxArrayBuffer).set(xlsxBuffer);
     return new Response(xlsxArrayBuffer, {
       status: 200,
       headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${safeFilename(title, 'xlsx')}"`,
-        'Cache-Control': 'private, max-age=0',
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "private, max-age=0",
+        ...vaultHeaders(vault),
       },
     });
   } catch (err) {
-    console.error('[content-export] render error', err);
-    return jsonError(500, 'render_failed', err instanceof Error ? err.message : 'render_failed');
+    console.error("[content-export] render error", err);
+    return jsonError(
+      500,
+      "render_failed",
+      err instanceof Error ? err.message : "render_failed",
+    );
   }
 }

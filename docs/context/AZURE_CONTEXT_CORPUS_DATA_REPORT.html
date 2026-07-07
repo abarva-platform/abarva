@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Azure Context &amp; Corpus — Data Report</title>
+<style>
+  :root{
+    --bg:#F8F7F4; --ink:#15171c; --mute:#6c6f78; --line:#e6e3dc; --card:#ffffff;
+    --navy:#0f2540; --navy2:#1b3a63; --teal:#0a9d9d; --blue:#2563eb; --gold:#9a6a00;
+    --ok:#1c7c4a; --okbg:#e7f4ec; --ctx:#13315c; --cor:#7a4d12; --ctxbg:#eaf0f8; --corbg:#f6efe2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,Arial,sans-serif;line-height:1.5}
+  .wrap{max-width:1240px;margin:0 auto;padding:36px 30px 120px}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:normal}
+  h1{font-size:34px;margin:0 0 6px;letter-spacing:-.3px}
+  h2{font-size:23px;margin:46px 0 6px;padding-top:22px;border-top:1px solid var(--line)}
+  h3{font-size:16.5px;margin:20px 0 8px}
+  .lede{color:var(--mute);font-size:15px;max-width:880px}
+  .stamp{display:inline-block;background:var(--navy);color:#fff;font-size:11.5px;padding:5px 11px;border-radius:6px;margin-top:10px}
+  .mute{color:var(--mute)} code{background:#efeee9;padding:1px 6px;border-radius:5px;font-size:12.5px}
+  /* metric hero */
+  .hero{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 6px}
+  .metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px}
+  .metric .v{font-family:Georgia,serif;font-size:30px;line-height:1;color:var(--navy)}
+  .metric .l{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin-top:8px}
+  .metric .s{font-size:12px;color:var(--mute);margin-top:3px}
+  .metric.ctx{border-top:3px solid var(--ctx)} .metric.cor{border-top:3px solid var(--cor)}
+  /* tables */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr:hover td{background:#faf9f6}
+  .pill{font-size:10.5px;padding:2px 9px;border-radius:20px;display:inline-block;font-weight:600}
+  .ready{background:var(--okbg);color:var(--ok)} .tagctx{background:var(--ctxbg);color:var(--ctx)} .tagcor{background:var(--corbg);color:var(--cor)}
+  .bar{height:8px;border-radius:6px;background:linear-gradient(90deg,var(--teal),var(--navy2));display:inline-block;vertical-align:middle}
+  .barc{height:8px;border-radius:6px;background:linear-gradient(90deg,#d9a23a,#7a4d12);display:inline-block;vertical-align:middle}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:12px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--mute);margin:6px 0 0}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  ul{margin:8px 0 8px 18px;padding:0} li{margin:5px 0}
+  /* wireframe mock */
+  .wf{border:1.5px solid #cdd3dc;border-radius:12px;background:#fff;overflow:hidden;font-size:12px}
+  .wf .bar0{background:#0c1118;color:#fff;padding:8px 12px;font-weight:600;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+  .wf .body{padding:14px}
+  .wf .q{background:#f1f4f8;border:1px solid #e0e5ec;border-radius:8px;padding:9px 11px;color:#33414f}
+  .wf .ans{margin:10px 0;color:#1d2630;line-height:1.55}
+  .wf .ev{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .wf .evcol{border:1px solid #e3e7ee;border-radius:8px;padding:9px}
+  .wf .evh{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#7b8594;margin-bottom:5px}
+  .wf .cite{font-size:11px;color:#36506e;background:#eef3f9;border-radius:5px;padding:3px 7px;margin:3px 0;display:inline-block}
+  .wf .corcite{color:#7a4d12;background:#f6efe2}
+  .anno{font-size:11px;color:var(--mute);border-left:2px solid var(--teal);padding-left:8px;margin:6px 0}
+  .step{display:flex;gap:10px;align-items:flex-start;margin:7px 0}
+  .step .n{flex:0 0 22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .step .t{font-size:12.5px}
+  @media(max-width:900px){.hero{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Azure Context &amp; Corpus — Data Report</h1>
+  <p class="lede">A live view of the AbarVa private Azure data plane: the per-tenant <b>Context layer</b>
+    (enterprise facts) and the shared <b>Corpus layer</b> (industry &amp; expert patterns), the volumetrics of
+    each, and the wireflows showing how this substrate makes <b>Sentinel</b> (Intelligence) and <b>Nexus</b>
+    (Moves) answer with grounded, cited, board-grade intelligence.</p>
+  <span class="stamp">Source: live private Postgres + Azure AI Search (read-only ACA/VNet probes) · 2026-06-10 · tenants: Apex Retail · Meridian Health · Lakeshore Holdings</span>
+
+  <!-- ===== HERO METRICS ===== -->
+  <div class="hero">
+    <div class="metric ctx"><div class="v">52,999</div><div class="l">Structured facts</div><div class="s">100% active · citation-ready</div></div>
+    <div class="metric ctx"><div class="v">12,574</div><div class="l">Context chunks</div><div class="s">100% embedded (1536-d)</div></div>
+    <div class="metric ctx"><div class="v">11,545</div><div class="l">agent_ready objects</div><div class="s">gate-verified, 0 violations</div></div>
+    <div class="metric cor"><div class="v">9,026</div><div class="l">Governed corpus patterns</div><div class="s">depth 9–10 · conf 0.92</div></div>
+    <div class="metric cor"><div class="v">27,169</div><div class="l">Pattern relationships</div><div class="s">+43,436 genome patterns</div></div>
+  </div>
+  <p class="mute" style="font-size:12.5px">Two planes, one governed retrieval contract: <span class="pill tagctx">CONTEXT = what is true for THIS client</span> &nbsp; <span class="pill tagcor">CORPUS = what is true across the industry &amp; expert practice</span></p>
+
+  <!-- ===== ARCHITECTURE WIREFLOW ===== -->
+  <h2>1 · The data plane — how context &amp; corpus flow to the agents</h2>
+  <div class="card">
+  <svg viewBox="0 0 1180 430" width="100%" style="display:block" font-family="DM Sans,sans-serif">
+    <defs>
+      <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5b6675"/></marker>
+      <style>.t{font-size:12px;fill:#1d2630}.tn{font-size:11px;fill:#5b6675}.h{font-size:12.5px;fill:#fff;font-weight:700}.box{rx:10}</style>
+    </defs>
+    <!-- Azure plane -->
+    <rect x="20" y="20" width="270" height="390" rx="14" fill="#eef2f7" stroke="#d4dbe5"/>
+    <text x="38" y="46" class="t" font-weight="700">Azure private data plane</text>
+    <text x="38" y="63" class="tn">VNet · private endpoints only</text>
+    <rect x="38" y="78" width="234" height="60" rx="9" fill="#fff" stroke="#cdd6e2"/><text x="50" y="103" class="t" font-weight="600">Postgres (Flexible Server)</text><text x="50" y="122" class="tn">enterprise_context_* · corpus_*</text>
+    <rect x="38" y="150" width="234" height="56" rx="9" fill="#fff" stroke="#cdd6e2"/><text x="50" y="173" class="t" font-weight="600">Azure AI Search</text><text x="50" y="191" class="tn">tenant-context-v1 · HNSW 1536-d</text>
+    <rect x="38" y="218" width="234" height="52" rx="9" fill="#fff" stroke="#cdd6e2"/><text x="50" y="240" class="t" font-weight="600">Blob storage</text><text x="50" y="257" class="tn">source originals · evidence</text>
+    <rect x="38" y="282" width="234" height="52" rx="9" fill="#fff" stroke="#cdd6e2"/><text x="50" y="304" class="t" font-weight="600">Anthropic + OpenAI</text><text x="50" y="321" class="tn">synthesis · embeddings (private)</text>
+    <text x="38" y="362" class="tn">Managed identity · RLS · disableLocalAuth</text>
+
+    <!-- Context + Corpus -->
+    <rect x="330" y="34" width="300" height="170" rx="14" fill="#eaf0f8" stroke="#c2d0e3"/>
+    <text x="348" y="60" class="t" font-weight="700" fill="#13315c">CONTEXT layer · per tenant</text>
+    <text x="348" y="80" class="tn">4,711 records → 52,999 facts</text>
+    <text x="348" y="99" class="tn">12,574 embedded chunks → indexed</text>
+    <text x="348" y="118" class="tn">tenant_key isolation · RLS-fenced</text>
+    <rect x="348" y="132" width="86" height="26" rx="13" fill="#13315c"/><text x="360" y="149" class="h">Apex</text>
+    <rect x="442" y="132" width="100" height="26" rx="13" fill="#13315c"/><text x="454" y="149" class="h">Meridian</text>
+    <rect x="550" y="132" width="68" height="26" rx="13" fill="#13315c"/><text x="560" y="149" class="h" font-size="10.5">Lake…</text>
+    <text x="348" y="184" class="tn">→ 11,545 promoted <tspan fill="#1c7c4a" font-weight="700">agent_ready</tspan></text>
+
+    <rect x="330" y="232" width="300" height="160" rx="14" fill="#f6efe2" stroke="#e1cfab"/>
+    <text x="348" y="258" class="t" font-weight="700" fill="#7a4d12">CORPUS layer · shared</text>
+    <text x="348" y="278" class="tn">9,026 governed patterns (depth 9–10)</text>
+    <text x="348" y="297" class="tn">27,169 relationships · 312 canonical</text>
+    <text x="348" y="316" class="tn">43,436 genome patterns</text>
+    <text x="348" y="335" class="tn">17 dimensions · overlays (industry/region)</text>
+    <text x="348" y="372" class="tn">cross-tenant · never carries client facts</text>
+
+    <!-- Governed retrieval -->
+    <rect x="680" y="120" width="190" height="190" rx="14" fill="#0f2540"/>
+    <text x="698" y="150" class="h" font-size="13">Governed retrieval</text>
+    <text x="698" y="172" class="tn" fill="#b9c6d8">tenant resolve →</text>
+    <text x="698" y="190" class="tn" fill="#b9c6d8">segment routing →</text>
+    <text x="698" y="208" class="tn" fill="#b9c6d8">context + corpus →</text>
+    <text x="698" y="226" class="tn" fill="#b9c6d8">grounding report →</text>
+    <text x="698" y="244" class="tn" fill="#b9c6d8">citations + leakage gate</text>
+    <rect x="698" y="258" width="154" height="34" rx="8" fill="#0a9d9d"/><text x="712" y="280" class="h" font-size="11.5">ContextBundle (8 cats)</text>
+
+    <!-- Agents -->
+    <rect x="918" y="96" width="242" height="110" rx="14" fill="#13315c"/>
+    <text x="936" y="124" class="h" font-size="14">SENTINEL · Intelligence</text>
+    <text x="936" y="146" class="tn" fill="#c2d0e3">grounded answers · evidence basis</text>
+    <text x="936" y="165" class="tn" fill="#c2d0e3">client facts vs industry patterns</text>
+    <text x="936" y="190" class="pill" fill="#9ff0d8" font-size="11">PROVEN: real cited answers ✓</text>
+
+    <rect x="918" y="224" width="242" height="110" rx="14" fill="#7a4d12"/>
+    <text x="936" y="252" class="h" font-size="14">NEXUS · Moves</text>
+    <text x="936" y="274" class="tn" fill="#ecd9b6">archetype + current-state evidence</text>
+    <text x="936" y="293" class="tn" fill="#ecd9b6">charter · roadmap · deliverables</text>
+    <text x="936" y="318" class="tn" fill="#ecd9b6">grounded, no-fabrication</text>
+
+    <!-- arrows -->
+    <line x1="272" y1="108" x2="328" y2="108" stroke="#5b6675" marker-end="url(#ar)"/>
+    <line x1="272" y1="178" x2="328" y2="150" stroke="#5b6675" marker-end="url(#ar)"/>
+    <line x1="630" y1="120" x2="678" y2="170" stroke="#5b6675" marker-end="url(#ar)"/>
+    <line x1="630" y1="300" x2="678" y2="250" stroke="#5b6675" marker-end="url(#ar)"/>
+    <line x1="870" y1="170" x2="916" y2="150" stroke="#5b6675" marker-end="url(#ar)"/>
+    <line x1="870" y1="250" x2="916" y2="270" stroke="#5b6675" marker-end="url(#ar)"/>
+  </svg>
+  <div class="legend"><span><span class="dot" style="background:#13315c"></span>Context (tenant)</span><span><span class="dot" style="background:#7a4d12"></span>Corpus (industry)</span><span><span class="dot" style="background:#0a9d9d"></span>Governed bundle</span></div>
+  </div>
+
+  <!-- ===== CONTEXT VOLUMETRICS ===== -->
+  <h2>2 · Context layer — volumetrics by tenant</h2>
+  <p class="lede">Every fact is <code>lifecycle_state=active</code>, carries a source file + evidence pointer + confidence (citation-ready), is embedded into <code>tenant-context-v1</code>, and is governed-promoted to <code>agent_ready</code> (gate-verified, 0 violations). Tenant isolation enforced by <code>tenant_key</code> + RLS.</p>
+  <table>
+    <tr><th>Tenant</th><th class="num">Records</th><th class="num">Facts (active)</th><th class="num">Chunks (embedded)</th><th class="num">Index docs</th><th class="num">Evidence</th><th class="num">Relationships</th><th class="num">agent_ready</th><th>Dimensions</th></tr>
+    <tr><td><b>Meridian Health</b><div class="mute" style="font-size:11px">healthcare IDN</div></td><td class="num">3,503</td><td class="num">38,640</td><td class="num">3,506</td><td class="num">3,506</td><td class="num">3,503</td><td class="num">820</td><td class="num"><span class="pill ready">3,506</span></td><td class="mute">15</td></tr>
+    <tr><td><b>Apex Retail</b><div class="mute" style="font-size:11px">multi-banner retail</div></td><td class="num">1,029</td><td class="num">11,410</td><td class="num">7,526</td><td class="num">7,526</td><td class="num">1,029</td><td class="num">220</td><td class="num"><span class="pill ready">6,497</span></td><td class="mute">15</td></tr>
+    <tr><td><b>Lakeshore Holdings</b><div class="mute" style="font-size:11px">diversified holdings</div></td><td class="num">179</td><td class="num">2,949</td><td class="num">1,542</td><td class="num">1,542</td><td class="num">—</td><td class="num">—</td><td class="num"><span class="pill ready">1,542</span></td><td class="mute">13</td></tr>
+    <tr style="font-weight:700;background:#f3f1ec"><td>Total</td><td class="num">4,711</td><td class="num">52,999</td><td class="num">12,574</td><td class="num">12,574</td><td class="num">4,532</td><td class="num">1,040</td><td class="num">11,545</td><td></td></tr>
+  </table>
+
+  <h3>Apex Retail — facts by enterprise dimension <span class="mute" style="font-size:12px">(15 dims; the same shape Meridian carries at 2–4× depth)</span></h3>
+  <div class="card">
+    <table style="margin:0">
+      <tr><th>Dimension (record_type)</th><th class="num">Facts</th><th style="width:46%">&nbsp;</th></tr>
+      <tr><td>ci_relationships_dependencies</td><td class="num">2,000</td><td><span class="bar" style="width:100%"></span></td></tr>
+      <tr><td>incidents</td><td class="num">1,970</td><td><span class="bar" style="width:98%"></span></td></tr>
+      <tr><td>spend_baseline</td><td class="num">1,728</td><td><span class="bar" style="width:86%"></span></td></tr>
+      <tr><td>cmdb_applications_services</td><td class="num">1,148</td><td><span class="bar" style="width:57%"></span></td></tr>
+      <tr><td>changes</td><td class="num">999</td><td><span class="bar" style="width:50%"></span></td></tr>
+      <tr><td>problems · risk_compliance · policies · initiatives · org · data · vendors · slas · facilities · renewals</td><td class="num">3,565</td><td><span class="bar" style="width:44%"></span></td></tr>
+    </table>
+    <p class="mute" style="font-size:12px;margin:8px 0 0">Lakeshore leads with <code>kpi_metric</code> 800 · <code>cmdb_application</code> 510 · <code>org_role</code> 339. Meridian leads with <code>ci_relationships</code> 7,428 · <code>spend_baseline</code> 4,320 · <code>facilities_business_units</code> 3,619.</p>
+  </div>
+
+  <!-- ===== CORPUS VOLUMETRICS ===== -->
+  <h2>3 · Corpus layer — the industry &amp; expert pattern library</h2>
+  <p class="lede">The corpus is the shared worldview Sentinel and Nexus reason <i>with</i> — never client-specific, always cross-tenant. It is a governed, graph-linked pattern library at depth, layered by industry/region overlays.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">Corpus inventory</h3>
+      <table style="margin:0">
+        <tr><th>Asset</th><th class="num">Count</th></tr>
+        <tr><td>Governed corpus patterns <span class="mute">(published)</span></td><td class="num">9,026</td></tr>
+        <tr><td>Pattern content bodies</td><td class="num">9,026</td></tr>
+        <tr><td>Pattern relationships <span class="mute">(graph)</span></td><td class="num">27,169</td></tr>
+        <tr><td>Canonical industry AI patterns</td><td class="num">312</td></tr>
+        <tr><td>Genome patterns <span class="mute">(foundational)</span></td><td class="num">43,436</td></tr>
+        <tr><td>Foundational pattern packs</td><td class="num">1</td></tr>
+      </table>
+      <p class="mute" style="font-size:12px;margin:8px 0 0">Quality: <b>depth_score 9–10</b> on 9,026 patterns · <b>confidence 0.92</b> on 8,850 · status <b>100% published</b>.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Top corpus dimensions (categories)</h3>
+      <table style="margin:0">
+        <tr><th>Category</th><th class="num">Patterns</th><th style="width:38%">&nbsp;</th></tr>
+        <tr><td>D17 · sector playbook</td><td class="num">281</td><td><span class="barc" style="width:100%"></span></td></tr>
+        <tr><td>D07 · portfolio operations</td><td class="num">217</td><td><span class="barc" style="width:77%"></span></td></tr>
+        <tr><td>D05 · deal structuring</td><td class="num">186</td><td><span class="barc" style="width:66%"></span></td></tr>
+        <tr><td>D09 · tax structuring</td><td class="num">170</td><td><span class="barc" style="width:60%"></span></td></tr>
+        <tr><td>D01 · capital allocation</td><td class="num">151</td><td><span class="barc" style="width:54%"></span></td></tr>
+        <tr><td>D13 · exit / liquidity events</td><td class="num">143</td><td><span class="barc" style="width:51%"></span></td></tr>
+      </table>
+      <p class="mute" style="font-size:12px;margin:8px 0 0">Overlays index the patterns by context: <code>private-holdings</code> 8,987 · <code>permanent-capital</code> 2,089 · <code>governance</code> 2,005 · <code>treasury</code> 1,209 · <code>anti-pattern</code> 847.</p>
+    </div>
+  </div>
+
+  <!-- ===== SENTINEL ===== -->
+  <h2>4 · How this makes <span style="color:#13315c">Sentinel</span> shine</h2>
+  <p class="lede">Sentinel answers like a senior advisor because it fuses two evidence classes the model could never invent: <b>this client's facts</b> (context) and <b>industry/expert patterns</b> (corpus) — every claim mapped to a citation, every gap stated honestly, zero cross-tenant bleed.</p>
+  <div class="grid2">
+    <div>
+      <h3>Wireflow — question → grounded, cited answer</h3>
+      <div class="step"><div class="n">1</div><div class="t"><b>Resolve tenant</b> from session → <code>tenant_id</code> + canonical key (RLS fence).</div></div>
+      <div class="step"><div class="n">2</div><div class="t"><b>Route segments</b> from intent → e.g. "critical apps + renewals" → <code>cmdb_applications_services</code>, <code>renewal_calendar</code>, <code>vendors_contract_inventory</code>.</div></div>
+      <div class="step"><div class="n">3</div><div class="t"><b>Retrieve CONTEXT</b> — tenant facts/chunks (search_indexed, tenant_key-filtered).</div></div>
+      <div class="step"><div class="n">4</div><div class="t"><b>Retrieve CORPUS</b> — matching industry/expert patterns (cross-tenant worldview).</div></div>
+      <div class="step"><div class="n">5</div><div class="t"><b>Assemble ContextBundle</b> (8 categories) + grounding report; exclude stale / wrong-tenant.</div></div>
+      <div class="step"><div class="n">6</div><div class="t"><b>Synthesize</b> (Anthropic) on the governed bundle only → claims mapped to sources, missing evidence flagged.</div></div>
+      <p class="anno">Proven live (job uo8edvw): grounded on each client's own facts, <b>0 cross-tenant leakage</b>, honest coverage gaps.</p>
+    </div>
+    <div>
+      <h3>Wireframe — the Sentinel answer card</h3>
+      <div class="wf">
+        <div class="bar0"><span>Sentinel · Ask the corpus</span><span style="opacity:.7">Meridian Health</span></div>
+        <div class="body">
+          <div class="q">Which applications are most critical and which vendor contracts renew next?</div>
+          <div class="ans">Your most critical applications are the <b>Epic stack</b> and imaging: <b>Epic Hyperspace $13M</b>/yr, <b>Sectra PACS $6.5M</b>, <b>Epic Hyperdrive $6.1M</b> — all tier-1. Next renewals cluster in the contract register…</div>
+          <div class="ev">
+            <div class="evcol"><div class="evh">Client facts · CONTEXT</div>
+              <span class="cite">cmdb_applications_services</span>
+              <span class="cite">vendors_contract_inventory</span>
+              <span class="cite">06-renewal-calendar.csv</span></div>
+            <div class="evcol"><div class="evh">Industry patterns · CORPUS</div>
+              <span class="cite corcite">D16 vendor-management</span>
+              <span class="cite corcite">D07 portfolio-ops</span>
+              <span class="cite corcite">anti-pattern: renewal cliff</span></div>
+          </div>
+          <p class="mute" style="font-size:11px;margin:9px 0 0">Confidence: <b>partial</b> · Missing evidence: <code>it_landscape</code> flagged (not invented).</p>
+        </div>
+      </div>
+      <p class="anno">Left column = your 52,999 facts. Right column = the 9,026-pattern corpus. The split is the trust contract.</p>
+    </div>
+  </div>
+
+  <!-- ===== NEXUS ===== -->
+  <h2>5 · How this makes <span style="color:#7a4d12">Nexus</span> shine</h2>
+  <p class="lede">Nexus turns an AI ambition into a board-grade Move because the same substrate supplies both halves of a strategy: the client's <b>real current state</b> (context) and the <b>expert playbook</b> for the archetype (corpus) — so charters, roadmaps and deliverables are grounded, not generic templates.</p>
+  <div class="grid2">
+    <div>
+      <h3>Wireflow — ambition → grounded Move</h3>
+      <div class="step"><div class="n">1</div><div class="t"><b>Originate</b> a Move → resolve archetype (e.g. "merchandising AI", "prior-auth automation").</div></div>
+      <div class="step"><div class="n">2</div><div class="t"><b>Evidence requirements</b> per phase (P0→P5) resolved from the archetype.</div></div>
+      <div class="step"><div class="n">3</div><div class="t"><b>Current-state from CONTEXT</b> — applications, spend, org, KPIs, risks, initiatives (real facts).</div></div>
+      <div class="step"><div class="n">4</div><div class="t"><b>Playbook from CORPUS</b> — sector playbooks (D17), portfolio-ops (D07), capital allocation (D01), anti-patterns.</div></div>
+      <div class="step"><div class="n">5</div><div class="t"><b>Promotion-only evidence</b> — only <code>agent_ready</code> facts enter the bundle (11,545 promoted).</div></div>
+      <div class="step"><div class="n">6</div><div class="t"><b>Generate deliverables</b> — charter · solution architecture · roadmap · value case, each cited; gaps shown.</div></div>
+      <p class="anno">Substrate ready: current-state facts span all 15 dimensions Nexus needs (apps, spend, vendors, KPIs, risks, initiatives).</p>
+    </div>
+    <div>
+      <h3>Wireframe — the Nexus Move workspace</h3>
+      <div class="wf">
+        <div class="bar0"><span>Nexus · Move — Demand Forecasting AI</span><span style="opacity:.7">Apex Retail</span></div>
+        <div class="body">
+          <div style="display:flex;gap:6px;margin-bottom:9px">
+            <span class="pill tagctx">P0 Discover</span><span class="pill tagctx">P1 Shape</span><span class="pill" style="background:#0c1118;color:#fff">P2 Charter ●</span><span class="pill" style="background:#eee;color:#999">P3–P5</span>
+          </div>
+          <div class="ans"><b>Charter · grounded current state.</b> Apex runs <b>APX-STERLING-OMS</b> ($7.7M/yr, migrate — 40% rerouted via strangler) and <b>APX-WMS-MANHATTAN-EXT</b>; forecast accuracy gaps trace to fragmented demand signals across <b>2,000 CI relationships</b>…</div>
+          <div class="ev">
+            <div class="evcol"><div class="evh">Current state · CONTEXT</div>
+              <span class="cite">cmdb_applications_services</span>
+              <span class="cite">spend_baseline</span>
+              <span class="cite">initiative_portfolio</span></div>
+            <div class="evcol"><div class="evh">Playbook · CORPUS</div>
+              <span class="cite corcite">D17 sector-playbook</span>
+              <span class="cite corcite">D07 portfolio-operations</span>
+              <span class="cite corcite">D01 capital-allocation</span></div>
+          </div>
+          <p class="mute" style="font-size:11px;margin:9px 0 0">Deliverables: Charter ✓ · Solution Arch (draft) · Roadmap · Value case — all evidence-linked.</p>
+        </div>
+      </div>
+      <p class="anno">Nexus phase gates only admit <code>agent_ready</code> evidence — promotion is the guardrail against confident-but-ungrounded strategy.</p>
+    </div>
+  </div>
+
+  <!-- ===== GOVERNANCE / INSIGHTS ===== -->
+  <h2>6 · Why this substrate is trustworthy — and what it unlocks</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">Governance &amp; integrity (live-verified)</h3>
+      <ul>
+        <li><b>0 duplicate-active facts · 0 orphans · 0 null-lifecycle</b> across all tenants.</li>
+        <li><b>Tenant isolation</b>: every retrieval <code>tenant_key</code>-filtered; bundle proof showed 0 cross-tenant leakage.</li>
+        <li><b>Promotion gate</b>: 11,545 objects <code>agent_ready</code> with <b>0 gate violations</b> — each has source_basis, confidence, cited-render-verified, indexed, tenant-scoped.</li>
+        <li><b>Corpus never carries client facts</b> — the two planes are kept separate by contract.</li>
+        <li><b>Embeddings</b>: 100% real <code>text-embedding-3-small</code> (1536-d), one consistent vector space.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">What "good data" buys the agents</h3>
+      <ul>
+        <li><b>Specificity</b>: named systems, dollar figures, renewal dates — not generic advice (Epic $13M; Sterling-OMS $7.7M).</li>
+        <li><b>Defensibility</b>: every claim → a citation a CXO can audit; every gap stated, never invented.</li>
+        <li><b>Cross-leverage</b>: corpus patterns let Sentinel/Nexus reason about a client they've "never seen" using 9,026 expert patterns + 43,436 genome patterns.</li>
+        <li><b>Scale path</b>: the same pipeline (load → index → promote → bundle-prove) extends to any new tenant or dimension with zero bespoke code.</li>
+        <li><b>Module reach</b>: Intelligence proven; Source (vendor/renewal/spend facts), Tower (KPI/risk facts), Moves (current-state + initiatives) are data-ready on the same substrate.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="mute" style="font-size:12px;margin-top:30px">Numbers are a live read of the private data plane (read-only ACA/VNet probes, 2026-06-10). Context = <code>enterprise_context_*</code>; Corpus = <code>corpus_patterns</code> + siblings. Report is part of the Context Layer Factory remediation (PR #3385).</p>
+</div>
+</body>
+</html>

@@ -1,22 +1,29 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
-import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { APX_CDP_SCOPE, type KPICard, type TrendPoint } from '@/lib/tower/shell-program-scope-fixture';
-import { PatternChip } from '@/components/tower/PatternChip';
-import { buildTowerStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
+import Link from "next/link";
+import { AppShell } from "@/components/shell/AppShell";
+import { AgentColumn } from "@/components/shell/AgentColumn";
+import { FilterPillStrip } from "@/components/shell/FilterPillStrip";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import {
+  APX_CDP_SCOPE,
+  type KPICard,
+  type TrendPoint,
+} from "@/lib/tower/shell-program-scope-fixture";
+import { PatternChip } from "@/components/tower/PatternChip";
+import {
+  buildTowerStorylineContext,
+  matchStorylinePatterns,
+} from "@/lib/intelligence/storyline-matcher";
 
 // ---------------------------------------------------------------------------
 // KPI card
 // ---------------------------------------------------------------------------
 
-function statusDotColor(status: KPICard['status']): string {
-  if (status === 'on-track') return SHELL.MINT_TEXT;
-  if (status === 'at-risk') return SHELL.AMBER_DOT;
-  if (status === 'off-track') return SHELL.RUST_TEXT;
+function statusDotColor(status: KPICard["status"]): string {
+  if (status === "on-track") return SHELL.MINT_TEXT;
+  if (status === "at-risk") return SHELL.AMBER_DOT;
+  if (status === "off-track") return SHELL.RUST_TEXT;
   return SHELL.INK_MUTED;
 }
 
@@ -28,19 +35,26 @@ function KpiCard({ card }: { card: KPICard }) {
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 10,
         padding: 16,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 4,
       }}
     >
       {/* Label row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 4,
+        }}
+      >
         <span
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 9,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
             color: SHELL.INK_MUTED,
           }}
         >
@@ -50,16 +64,16 @@ function KpiCard({ card }: { card: KPICard }) {
           style={{
             width: 8,
             height: 8,
-            borderRadius: '50%',
+            borderRadius: "50%",
             background: statusDotColor(card.status),
             flexShrink: 0,
-            display: 'inline-block',
+            display: "inline-block",
           }}
         />
       </div>
 
       {/* Value + unit */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
         <span
           style={{
             fontFamily: SHELL.SERIF,
@@ -90,7 +104,7 @@ function KpiCard({ card }: { card: KPICard }) {
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 11,
-            fontStyle: 'italic',
+            fontStyle: "italic",
             color: SHELL.INK_MUTED,
             marginTop: 2,
           }}
@@ -128,8 +142,11 @@ function EvidenceSparkline({ points }: { points: TrendPoint[] }) {
   }
 
   const linePath = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${xOf(i).toFixed(1)},${yOf(p.value).toFixed(1)}`)
-    .join(' ');
+    .map(
+      (p, i) =>
+        `${i === 0 ? "M" : "L"} ${xOf(i).toFixed(1)},${yOf(p.value).toFixed(1)}`,
+    )
+    .join(" ");
 
   const areaPath =
     linePath +
@@ -145,7 +162,7 @@ function EvidenceSparkline({ points }: { points: TrendPoint[] }) {
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      style={{ width: '100%', height: H, display: 'block' }}
+      style={{ width: "100%", height: H, display: "block" }}
       aria-label="Evidence coverage trend"
     >
       <defs>
@@ -186,7 +203,13 @@ function EvidenceSparkline({ points }: { points: TrendPoint[] }) {
       <path d={areaPath} fill="url(#evidenceAreaFill)" />
 
       {/* Line */}
-      <path d={linePath} fill="none" stroke={SHELL.AMBER_DOT} strokeWidth={2} strokeLinejoin="round" />
+      <path
+        d={linePath}
+        fill="none"
+        stroke={SHELL.AMBER_DOT}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
 
       {/* Data points */}
       {points.map((p, i) => {
@@ -242,17 +265,17 @@ function EvidenceSparkline({ points }: { points: TrendPoint[] }) {
 // Phase timeline
 // ---------------------------------------------------------------------------
 
-type PhaseStatus = 'done' | 'current' | 'pending' | 'locked';
+type PhaseStatus = "done" | "current" | "pending" | "locked";
 
 function phaseStatusColor(status: PhaseStatus): string {
-  if (status === 'done') return SHELL.MINT_TEXT;
-  if (status === 'current') return SHELL.INK;
+  if (status === "done") return SHELL.MINT_TEXT;
+  if (status === "current") return SHELL.INK;
   return SHELL.INK_MUTED;
 }
 
 function phaseBorderColor(status: PhaseStatus): string {
-  if (status === 'done') return SHELL.MINT_LINE;
-  if (status === 'current') return SHELL.AMBER_DOT;
+  if (status === "done") return SHELL.MINT_LINE;
+  if (status === "current") return SHELL.AMBER_DOT;
   return SHELL.GRAY_LINE;
 }
 
@@ -267,38 +290,50 @@ interface PhaseRow {
 
 function PhaseTimeline({ phases }: { phases: PhaseRow[] }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: "flex", flexDirection: "column" }}>
       {phases.map((p, i) => {
         const status = p.status as PhaseStatus;
         const borderColor = phaseBorderColor(status);
         const nameColor = phaseStatusColor(status);
-        const rightNote = p.completedDate ?? p.estDuration ?? p.startDate ?? '';
+        const rightNote = p.completedDate ?? p.estDuration ?? p.startDate ?? "";
         return (
           <div
             key={p.phase}
             style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
               gap: 14,
               height: 40,
               paddingLeft: 12,
               borderLeft: `3px solid ${borderColor}`,
-              borderBottom: i < phases.length - 1 ? `1px solid ${SHELL.CARD_LINE_SOFT}` : undefined,
+              borderBottom:
+                i < phases.length - 1
+                  ? `1px solid ${SHELL.CARD_LINE_SOFT}`
+                  : undefined,
             }}
           >
             {/* Status indicator */}
-            {status === 'done' ? (
-              <span style={{ fontFamily: SHELL.MONO, fontSize: 12, color: SHELL.MINT_TEXT, flexShrink: 0 }}>✓</span>
-            ) : status === 'current' ? (
+            {status === "done" ? (
+              <span
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 12,
+                  color: SHELL.MINT_TEXT,
+                  flexShrink: 0,
+                }}
+              >
+                ✓
+              </span>
+            ) : status === "current" ? (
               <span
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: SHELL.AMBER_DOT,
                   flexShrink: 0,
-                  display: 'inline-block',
+                  display: "inline-block",
                 }}
               />
             ) : (
@@ -306,10 +341,10 @@ function PhaseTimeline({ phases }: { phases: PhaseRow[] }) {
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: SHELL.GRAY_LINE,
                   flexShrink: 0,
-                  display: 'inline-block',
+                  display: "inline-block",
                 }}
               />
             )}
@@ -320,7 +355,7 @@ function PhaseTimeline({ phases }: { phases: PhaseRow[] }) {
                 fontFamily: SHELL.SANS,
                 fontSize: 13,
                 color: nameColor,
-                fontWeight: status === 'current' ? 600 : 400,
+                fontWeight: status === "current" ? 600 : 400,
                 flex: 1,
               }}
             >
@@ -332,7 +367,7 @@ function PhaseTimeline({ phases }: { phases: PhaseRow[] }) {
                     fontSize: 10,
                     color: SHELL.PEACH_TEXT,
                     marginLeft: 10,
-                    letterSpacing: '0.08em',
+                    letterSpacing: "0.08em",
                   }}
                 >
                   · {p.note}
@@ -347,7 +382,7 @@ function PhaseTimeline({ phases }: { phases: PhaseRow[] }) {
                 fontSize: 10,
                 color: SHELL.INK_MUTED,
                 flexShrink: 0,
-                textAlign: 'right',
+                textAlign: "right",
               }}
             >
               {rightNote}
@@ -363,15 +398,21 @@ function PhaseTimeline({ phases }: { phases: PhaseRow[] }) {
 // Section wrapper
 // ---------------------------------------------------------------------------
 
-function Section({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
+function Section({
+  eyebrow,
+  children,
+}: {
+  eyebrow: string;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ marginBottom: 32 }}>
       <div
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 9,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
           color: SHELL.INK_MUTED,
           marginBottom: 12,
         }}
@@ -388,30 +429,37 @@ function Section({ eyebrow, children }: { eyebrow: string; children: React.React
 // ---------------------------------------------------------------------------
 
 const FILTER_PILLS = [
-  { key: 'overview', label: 'Overview', active: true },
-  { key: 'adoption', label: 'Adoption' },
-  { key: 'value', label: 'Value' },
-  { key: 'cost', label: 'Cost' },
-  { key: 'risk', label: 'Risk' },
-  { key: 'activity', label: 'Activity' },
+  { key: "overview", label: "Overview", active: true },
+  { key: "adoption", label: "Adoption" },
+  { key: "value", label: "Value" },
+  { key: "cost", label: "Cost" },
+  { key: "risk", label: "Risk" },
+  { key: "activity", label: "Activity" },
 ];
 
 export function ProgramScopePage() {
   const scope = APX_CDP_SCOPE;
-  const storylineMatches = matchStorylinePatterns(buildTowerStorylineContext(), { limit: 3 });
+  const storylineMatches = matchStorylinePatterns(
+    buildTowerStorylineContext(),
+    { limit: 3 },
+  );
 
   return (
     <AppShell
       surface="tower"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: "Apex Retail Group",
         showLocked: true,
-        context: 'Tower · APX-CDP-2026 · program scope',
+        context: "Tower · APX-CDP-2026 · program scope",
       }}
       middleStrip={<FilterPillStrip pills={FILTER_PILLS} />}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
+        agent={{
+          initials: "Av",
+          name: "Ava",
+          role: "Cross-Program Synthesizer",
+        }}
         quote={scope.agentQuote}
         agentContext={scope.agentContext}
         actions={scope.actions}
@@ -422,9 +470,9 @@ export function ProgramScopePage() {
       <div
         style={{
           flex: 1,
-          overflowY: 'auto',
+          overflowY: "auto",
           background: SHELL.PAPER,
-          padding: '24px 32px',
+          padding: "24px 32px",
         }}
       >
         {/* ------------------------------------------------------------------ */}
@@ -437,11 +485,11 @@ export function ProgramScopePage() {
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 10,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
               color: SHELL.INK_SOFT,
-              textDecoration: 'none',
-              display: 'inline-block',
+              textDecoration: "none",
+              display: "inline-block",
               marginBottom: 12,
             }}
           >
@@ -453,8 +501,8 @@ export function ProgramScopePage() {
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
               color: SHELL.INK_MUTED,
               marginBottom: 6,
             }}
@@ -469,7 +517,7 @@ export function ProgramScopePage() {
               fontSize: 22,
               fontWeight: 700,
               color: SHELL.INK,
-              margin: '0 0 12px 0',
+              margin: "0 0 12px 0",
               lineHeight: 1.2,
             }}
           >
@@ -477,36 +525,52 @@ export function ProgramScopePage() {
           </h1>
 
           {/* Gate status chip + evidence bar row */}
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 20,
+              flexWrap: "wrap",
+            }}
+          >
             {/* Gate chip */}
             <span
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 10,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                background: scope.gateStatus === 'cleared' ? SHELL.MINT_BG : SHELL.PEACH_BG,
-                color: scope.gateStatus === 'cleared' ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
-                padding: '4px 12px',
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                background:
+                  scope.gateStatus === "cleared"
+                    ? SHELL.MINT_BG
+                    : SHELL.PEACH_BG,
+                color:
+                  scope.gateStatus === "cleared"
+                    ? SHELL.MINT_TEXT
+                    : SHELL.PEACH_TEXT,
+                padding: "4px 12px",
                 borderRadius: 12,
-                border: `1px solid ${scope.gateStatus === 'cleared' ? SHELL.MINT_LINE : SHELL.PEACH_LINE}`,
+                border: `1px solid ${scope.gateStatus === "cleared" ? SHELL.MINT_LINE : SHELL.PEACH_LINE}`,
                 flexShrink: 0,
               }}
             >
-              {scope.gateStatus === 'cleared' ? 'Design gate cleared · Apr 27' : 'Gate pending'}
+              {scope.gateStatus === "cleared"
+                ? "Design gate cleared · Apr 27"
+                : "Gate pending"}
             </span>
 
             {/* Execution Roadmap gate chip — always shown when in Design phase */}
-            {scope.phase === 'P3 Design' && (
+            {scope.phase === "P3 Design" && (
               <span
                 style={{
                   fontFamily: SHELL.MONO,
                   fontSize: 10,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
                   background: SHELL.PEACH_BG,
                   color: SHELL.PEACH_TEXT,
-                  padding: '4px 12px',
+                  padding: "4px 12px",
                   borderRadius: 12,
                   border: `1px solid ${SHELL.PEACH_LINE}`,
                   flexShrink: 0,
@@ -522,7 +586,7 @@ export function ProgramScopePage() {
                 style={{
                   fontFamily: SHELL.MONO,
                   fontSize: 9,
-                  letterSpacing: '0.12em',
+                  letterSpacing: "0.12em",
                   color: SHELL.INK_MUTED,
                   marginBottom: 5,
                 }}
@@ -531,17 +595,17 @@ export function ProgramScopePage() {
               </div>
               <div
                 style={{
-                  width: '100%',
+                  width: "100%",
                   height: 6,
                   background: SHELL.GRAY_BG,
                   borderRadius: 3,
-                  overflow: 'hidden',
+                  overflow: "hidden",
                 }}
               >
                 <div
                   style={{
                     width: `${scope.evidenceCoverage}%`,
-                    height: '100%',
+                    height: "100%",
                     background: `linear-gradient(90deg, ${SHELL.PEACH_BG}, ${SHELL.AMBER_DOT})`,
                     borderRadius: 3,
                   }}
@@ -554,8 +618,8 @@ export function ProgramScopePage() {
             <div
               data-testid="tower-storyline-pattern-chips"
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
+                display: "flex",
+                flexWrap: "wrap",
                 gap: 8,
                 marginTop: 16,
               }}
@@ -573,8 +637,8 @@ export function ProgramScopePage() {
         <Section eyebrow="Key metrics">
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
               gap: 12,
             }}
           >
@@ -593,7 +657,7 @@ export function ProgramScopePage() {
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 10,
-              padding: '16px 16px 8px',
+              padding: "16px 16px 8px",
             }}
           >
             <EvidenceSparkline points={scope.evidenceTrend} />
@@ -609,7 +673,7 @@ export function ProgramScopePage() {
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 10,
-              overflow: 'hidden',
+              overflow: "hidden",
             }}
           >
             <PhaseTimeline phases={scope.phaseTimeline} />
@@ -619,51 +683,53 @@ export function ProgramScopePage() {
         {/* ------------------------------------------------------------------ */}
         {/* Section 5: Connected pressures */}
         {/* ------------------------------------------------------------------ */}
-        <Section eyebrow={`Connected pressures · ${scope.connectedPressures.length}`}>
+        <Section
+          eyebrow={`Connected pressures · ${scope.connectedPressures.length}`}
+        >
           <div
             style={{
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 10,
-              overflow: 'hidden',
+              overflow: "hidden",
             }}
           >
             {scope.connectedPressures.map((pressure) => {
               const severityColor =
-                pressure.severity === 'high'
+                pressure.severity === "high"
                   ? SHELL.RUST_TEXT
-                  : pressure.severity === 'medium'
-                  ? SHELL.AMBER_DOT
-                  : SHELL.MINT_TEXT;
+                  : pressure.severity === "medium"
+                    ? SHELL.AMBER_DOT
+                    : SHELL.MINT_TEXT;
               const severityBg =
-                pressure.severity === 'high'
+                pressure.severity === "high"
                   ? SHELL.RUST_BG
-                  : pressure.severity === 'medium'
-                  ? SHELL.PEACH_BG
-                  : SHELL.MINT_BG;
+                  : pressure.severity === "medium"
+                    ? SHELL.PEACH_BG
+                    : SHELL.MINT_BG;
               return (
                 <Link
                   key={pressure.id}
                   href="/tower"
                   style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
                     gap: 14,
-                    padding: '12px 16px',
+                    padding: "12px 16px",
                     borderLeft: `3px solid ${severityColor}`,
-                    textDecoration: 'none',
+                    textDecoration: "none",
                   }}
                 >
                   <span
                     style={{
                       fontFamily: SHELL.MONO,
                       fontSize: 9,
-                      letterSpacing: '0.14em',
-                      textTransform: 'uppercase',
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
                       background: severityBg,
                       color: severityColor,
-                      padding: '3px 8px',
+                      padding: "3px 8px",
                       borderRadius: 8,
                       flexShrink: 0,
                     }}
@@ -716,22 +782,26 @@ export function ProgramScopePage() {
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 10,
-              overflow: 'hidden',
+              overflow: "hidden",
             }}
           >
             {scope.activityLog.map((entry, i) => {
               const actorInitials =
-                entry.actor === 'Nexus' ? 'Nx' : entry.actor === 'Steward' ? 'St' : 'Sn';
+                entry.actor === "Nexus"
+                  ? "Nx"
+                  : entry.actor === "Steward"
+                    ? "St"
+                    : "Sn";
               return (
                 <div
                   key={i}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
                     gap: 12,
                     height: 44,
-                    padding: '0 16px',
+                    padding: "0 16px",
                     borderBottom:
                       i < scope.activityLog.length - 1
                         ? `1px solid ${SHELL.CARD_LINE_SOFT}`
@@ -756,12 +826,12 @@ export function ProgramScopePage() {
                     style={{
                       width: 20,
                       height: 20,
-                      borderRadius: '50%',
+                      borderRadius: "50%",
                       background: SHELL.BLUE_BG,
                       border: `1px solid ${SHELL.BLUE_LINE}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       flexShrink: 0,
                     }}
                   >
@@ -772,7 +842,7 @@ export function ProgramScopePage() {
                         fontWeight: 700,
                         color: SHELL.INK_MID,
                         lineHeight: 1,
-                        letterSpacing: '0.02em',
+                        letterSpacing: "0.02em",
                       }}
                     >
                       {actorInitials}

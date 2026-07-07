@@ -1,0 +1,66 @@
+{
+  "eTag": "\"1dcfc6e2270ca03\"",
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Consumption/budgets/budget-abarva-lab-monthly",
+  "name": "budget-abarva-lab-monthly",
+  "properties": {
+    "amount": 250.0,
+    "category": "Cost",
+    "filter": {},
+    "notifications": {
+      "actual_GreaterThan_100_Percent": {
+        "contactEmails": [
+          "alerts@abarva.ai",
+          "admin@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 100.0,
+        "thresholdType": "Actual"
+      },
+      "actual_GreaterThan_50_Percent": {
+        "contactEmails": [
+          "alerts@abarva.ai",
+          "admin@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 50.0,
+        "thresholdType": "Actual"
+      },
+      "actual_GreaterThan_80_Percent": {
+        "contactEmails": [
+          "alerts@abarva.ai",
+          "admin@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 80.0,
+        "thresholdType": "Actual"
+      },
+      "forecasted_GreaterThan_100_Percent": {
+        "contactEmails": [
+          "alerts@abarva.ai",
+          "admin@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 100.0,
+        "thresholdType": "Forecasted"
+      }
+    },
+    "timeGrain": "Monthly",
+    "timePeriod": {
+      "endDate": "2027-05-01T00:00:00Z",
+      "startDate": "2026-05-01T00:00:00Z"
+    }
+  },
+  "type": "Microsoft.Consumption/budgets"
+}

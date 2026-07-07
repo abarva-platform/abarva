@@ -3,15 +3,16 @@
  *
  * Mirrors the gate used by `/admin` layout: a caller is allowed to
  * change the active-tenant view-context only when:
- *   1. publicMetadata.role === 'admin', OR
- *   2. unsafeMetadata.role === 'admin' / publicMetadata.legacyRole === 'admin', OR
- *   3. primary email ∈ ADMIN_EMAIL_ALLOWLIST.
+ *   1. ABARVA_ENABLE_TENANT_SWITCHER === '1', AND
+ *   2. publicMetadata.role === 'admin', OR
+ *   3. unsafeMetadata.role === 'admin' / publicMetadata.legacyRole === 'admin', OR
+ *   4. primary email ∈ ADMIN_EMAIL_ALLOWLIST.
  *
  * The allowlist is the same set the /admin route gates on. If/when
  * that set moves to a single shared module this helper should re-export
  * from there.
  *
- * The 5 canonical tenant options come from the canonical alias table
+ * The canonical tenant options come from the canonical alias table
  * (`src/lib/tenant/aliases.ts`) — the switcher hard-validates against
  * this exact list and never accepts free-form keys.
  *
@@ -55,11 +56,14 @@ export interface TenantSwitchOption {
   industryLabel: string;
 }
 
+export function isTenantSwitcherEnabled(): boolean {
+  return process.env.ABARVA_ENABLE_TENANT_SWITCHER === '1';
+}
+
 /**
- * Returns the 5 canonical tenant options the switcher renders.
+ * Returns the canonical tenant options the switcher renders.
  *
- * The order matches `ALL_CLIENTS` (apex-retail, meridian-health,
- * first-capital, northstar-clinical, skyharbor-air) so the dropdown
+ * The order matches `ALL_CLIENTS` so the dropdown
  * stays stable across renders. Each option carries the canonical key
  * (NOT the legacy app-client-key) — POST payloads echo this exact
  * value back, and the server re-validates membership in
@@ -87,6 +91,7 @@ export function getCanonicalTenantSwitchOptions(): ReadonlyArray<TenantSwitchOpt
  * to flip the active-tenant view-context. Mirrors the /admin route gate.
  */
 export async function canSwitchActiveTenant(): Promise<boolean> {
+  if (!isTenantSwitcherEnabled()) return false;
   try {
     const user = await currentUser();
     if (!user) return false;
@@ -129,7 +134,7 @@ export async function canSwitchActiveTenant(): Promise<boolean> {
 
 /**
  * Hard-validate a requested canonical tenant key against the locked
- * 5-tenant list. Free-form keys, legacy aliases, and unknown values
+ * canonical tenant list. Free-form keys, legacy aliases, and unknown values
  * all return false.
  */
 export function isCanonicalTenantKey(value: unknown): value is string {

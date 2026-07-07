@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbarVa Corpus and Context Operating Model</title>
+  <style>
+    :root {
+      --ink: #101522;
+      --muted: #667085;
+      --paper: #f7f4ee;
+      --card: #fffdf8;
+      --line: #ded7c8;
+      --blue: #2457a6;
+      --blue-soft: #e8f0fb;
+      --green: #2f6f4e;
+      --green-soft: #edf7ef;
+      --amber: #9a6616;
+      --amber-soft: #fff4dd;
+      --red: #9b2c2c;
+      --red-soft: #fff1f1;
+      --black: #050505;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    header {
+      background: var(--black);
+      color: white;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 1px solid #242424;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      color: #2f80ed;
+    }
+
+    .header-note {
+      color: #c9ced8;
+      font-size: 13px;
+      text-align: right;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 38px 32px 72px;
+      display: grid;
+      gap: 28px;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin: 0 0 10px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 44px;
+      line-height: 1.08;
+      max-width: 880px;
+    }
+
+    h2 {
+      font-size: 24px;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 17px;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin: 0;
+      color: #344054;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 28px;
+      align-items: end;
+      padding: 28px 0 8px;
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero-copy .lead {
+      max-width: 830px;
+      font-size: 18px;
+      color: #475467;
+    }
+
+    .decision-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+      box-shadow: 0 12px 30px rgba(16, 21, 34, 0.06);
+    }
+
+    .decision-card strong {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .decision-card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 122px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .metric .value {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 24px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #ffffff;
+      min-height: 160px;
+    }
+
+    .step .num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .step p,
+    .card p,
+    .guardrail p {
+      font-size: 13px;
+      color: #475467;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .tag.blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .tag.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .tag.amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .tag.red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #ebe5d8;
+    }
+
+    th {
+      color: #667085;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: #fbf9f4;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .guardrails {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .dataflow {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 210px minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .lane-title {
+      background: #fbf9f4;
+      padding: 16px;
+      border-right: 1px solid var(--line);
+      font-weight: 800;
+    }
+
+    .lane-title span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .lane-body {
+      padding: 14px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .chain {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chain .node {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #344054;
+      white-space: nowrap;
+    }
+
+    .chain .arrow {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .example {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .example ol {
+      margin: 0;
+      padding-left: 20px;
+      color: #475467;
+      font-size: 13px;
+    }
+
+    .example li {
+      margin: 6px 0;
+    }
+
+    .binding {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .binding-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      color: #344054;
+      background: #f7f4ee;
+      border: 1px solid #e5dece;
+      border-radius: 6px;
+      padding: 10px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .guardrail {
+      border-left: 4px solid var(--blue);
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .callout {
+      background: #101522;
+      color: white;
+      border: 0;
+    }
+
+    .callout p {
+      color: #d8deea;
+      max-width: 900px;
+    }
+
+    .callout h2 {
+      color: white;
+    }
+
+    .footer {
+      color: #667085;
+      font-size: 12px;
+      text-align: center;
+      padding: 8px 0 0;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .two-col,
+      .summary-grid,
+      .cards,
+      .guardrails,
+      .example-grid,
+      .binding {
+        grid-template-columns: 1fr;
+      }
+
+      .lane {
+        grid-template-columns: 1fr;
+      }
+
+      .lane-title {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .flow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      header {
+        padding: 16px 20px;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main {
+        padding: 24px 16px 48px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Abar<span>Va</span></div>
+    <div class="header-note">CXO operating model · Corpus, context, agents, and trust controls · June 3, 2026</div>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Executive summary">
+      <div class="hero-copy">
+        <p class="eyebrow">Executive Answer</p>
+        <h1>How AbarVa gets smarter without becoming a black box.</h1>
+        <p class="lead">
+          AbarVa does not rely on vague model memory. It improves through governed knowledge layers:
+          researched corpus, industry pattern packs, tenant context, client-approved overrides, and
+          audited data loads. Moves and Source use those layers at runtime through brokers, retrieval,
+          validation rules, and citations.
+        </p>
+      </div>
+      <aside class="decision-card" aria-label="CXO headline">
+        <span>What changes for a client?</span>
+        <strong>Sharper decisions, not looser AI.</strong>
+        <p>Every new rate card, modernization pattern, or client file must be parsed, validated, approved, versioned, and cited before it can influence an answer or estimate.</p>
+      </aside>
+    </section>
+
+    <div class="summary-grid" aria-label="Top-level operating model">
+      <div class="metric">
+        <div class="label">Knowledge Layers</div>
+        <div class="value">5</div>
+        <p>Research, corpus, industry patterns, tenant context, client overrides.</p>
+      </div>
+      <div class="metric">
+        <div class="label">Commit Gates</div>
+        <div class="value">6</div>
+        <p>Attest, scan, parse, validate, approve, commit.</p>
+      </div>
+      <div class="metric">
+        <div class="label">Agent Access</div>
+        <div class="value">Brokered</div>
+        <p>Agents read through typed tools and tenant-scoped brokers, not raw tables.</p>
+      </div>
+      <div class="metric">
+        <div class="label">Hallucination Control</div>
+        <div class="value">Cited</div>
+        <p>Unsupported claims must degrade, ask for clarification, or say not enough evidence.</p>
+      </div>
+    </div>
+
+    <section aria-label="Knowledge layer model">
+      <h2>The five knowledge layers</h2>
+      <p>
+        Each layer has a different owner, update path, and trust level. The agent does not treat all
+        text equally. Client-approved context outranks generic research; tenant-specific rate cards
+        outrank benchmark rate cards; unsupported model guesses do not outrank evidence.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>What it contains</th>
+            <th>Who can update it</th>
+            <th>How agents use it</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Research Spine</strong></td>
+            <td>Official sources, citations, confidence, extraction notes, open gaps.</td>
+            <td>AbarVa research and engineering.</td>
+            <td>Provides benchmark fallback and explains assumptions.</td>
+          </tr>
+          <tr>
+            <td><strong>Global Corpus</strong></td>
+            <td>Reusable playbooks, standards, rate-card methods, modernization archetypes.</td>
+            <td>AbarVa release process.</td>
+            <td>Gives Moves and Source a structured operating model.</td>
+          </tr>
+          <tr>
+            <td><strong>Industry Pattern Packs</strong></td>
+            <td>Healthcare, retail, airline, banking, and other industry-specific patterns.</td>
+            <td>AbarVa plus expert review.</td>
+            <td>Shapes domain-specific recommendations and evaluation criteria.</td>
+          </tr>
+          <tr>
+            <td><strong>Tenant Context</strong></td>
+            <td>Client apps, vendors, systems, contracts, org roles, KPIs, evidence files.</td>
+            <td>Client admins through Data Loads.</td>
+            <td>Grounds answers in the client reality, not generic market advice.</td>
+          </tr>
+          <tr>
+            <td><strong>Client Overrides</strong></td>
+            <td>Approved client rate cards, policy choices, mappings, exceptions, preferences.</td>
+            <td>Client stewards and approvers.</td>
+            <td>Overrides generic benchmarks and changes estimates for that tenant only.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-label="Integration flow">
+      <h2>How an update becomes available</h2>
+      <p>
+        Whether the update is a rate card, modernization research, a pattern pack, or a client data
+        file, the path is deliberately controlled. The goal is speed with evidence, not uncontrolled
+        training.
+      </p>
+
+      <div class="flow">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Register</h3>
+          <p>A template or corpus object defines required fields, formats, owner, cadence, and what it unlocks.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>Load</h3>
+          <p>Admin uploads through Data Loads with tenant identity and operator attestation.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>Protect</h3>
+          <p>Files pass sensitive-data, malware, format, tenant, and size controls before parsing.</p>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <h3>Parse</h3>
+          <p>Deterministic parsers extract rows, facts, evidence, rates, or workload inventory. Formula cells are not trusted.</p>
+        </div>
+        <div class="step">
+          <div class="num">5</div>
+          <h3>Validate</h3>
+          <p>Required fields, ranges, enums, provenance, confidence, source dates, and tenant boundaries are checked.</p>
+        </div>
+        <div class="step">
+          <div class="num">6</div>
+          <h3>Commit</h3>
+          <p>Approved data is versioned into the data plane, indexed, and made available through brokered agent tools.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Database and parsing model">
+      <h2>How it integrates into the data plane</h2>
+      <div class="two-col">
+        <div class="card">
+          <span class="tag blue">Current Pattern</span>
+          <h3>Parse first, commit only after gates pass</h3>
+          <p>
+            Data Loads first creates a validation preview. For context files, approved rows become
+            tenant-scoped chunks/facts and are queued for embedding. For rate cards, the new path
+            validates rows today; the commit table slice will write approved rates as tenant-scoped
+            pricing corpus.
+          </p>
+        </div>
+        <div class="card">
+          <span class="tag green">Availability</span>
+          <h3>Brokers make the data usable</h3>
+          <p>
+            Moves and Source do not query random tables directly. A typed broker resolves the right
+            tenant, pulls the approved corpus/context, applies precedence rules, and returns a
+            compact evidence bundle to the agent.
+          </p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Data type</th>
+            <th>Parsed into</th>
+            <th>Available to</th>
+            <th>Precedence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Rate card</strong></td>
+            <td>Internal loaded-cost rows, vendor/SI bill rates, geo modifiers.</td>
+            <td>Moves estimates, Source pricing normalization, BAFO questions.</td>
+            <td>Client-approved rates over researched benchmark.</td>
+          </tr>
+          <tr>
+            <td><strong>Modernization pack</strong></td>
+            <td>Archetypes, disposition rules, automation ranges, effort coefficients.</td>
+            <td>Moves modernization baseline, Source SI scorecard, divergence report.</td>
+            <td>Analyzer inventory over generic industry defaults.</td>
+          </tr>
+          <tr>
+            <td><strong>Tenant context</strong></td>
+            <td>Evidence chunks, structured facts, provenance, audit trail.</td>
+            <td>Intelligence, Moves, Source, Tower, Steward.</td>
+            <td>Approved tenant evidence over global corpus.</td>
+          </tr>
+          <tr>
+            <td><strong>Research ledger</strong></td>
+            <td>Source IDs, URLs, as-of dates, confidence, extraction status.</td>
+            <td>All agents as provenance and fallback explanation.</td>
+            <td>Official source rows over uncited assumptions.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-label="Detailed workflow and dataflow">
+      <h2>Detail view: how the pieces come together</h2>
+      <p>
+        The simple version is this: every important update becomes a typed object, every typed object
+        has a parser and validation contract, approved objects are committed with provenance, and the
+        product pages bind to brokered read models. The user sees a calm page; underneath it is a
+        controlled dataflow.
+      </p>
+
+      <div class="dataflow">
+        <div class="lane">
+          <div class="lane-title">
+            Business workflow
+            <span>What the Maestro experiences</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain" aria-label="Business workflow chain">
+              <span class="node">Select template</span>
+              <span class="arrow">→</span>
+              <span class="node">Upload file</span>
+              <span class="arrow">→</span>
+              <span class="node">Review findings</span>
+              <span class="arrow">→</span>
+              <span class="node">Approve</span>
+              <span class="arrow">→</span>
+              <span class="node">Use in Moves / Source</span>
+            </div>
+            <p>
+              The page should not expose implementation language. It should say: what was loaded,
+              what failed validation, what needs approval, and which decisions become sharper after
+              approval.
+            </p>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-title">
+            Technical dataflow
+            <span>What the platform does</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain" aria-label="Technical dataflow chain">
+              <span class="node">Next.js route</span>
+              <span class="arrow">→</span>
+              <span class="node">Tenancy check</span>
+              <span class="arrow">→</span>
+              <span class="node">Parser</span>
+              <span class="arrow">→</span>
+              <span class="node">Validator</span>
+              <span class="arrow">→</span>
+              <span class="node">Data-plane write</span>
+              <span class="arrow">→</span>
+              <span class="node">Read broker</span>
+            </div>
+            <p>
+              The write path and read path are deliberately separate. Upload APIs validate and commit.
+              Product pages read through brokers. Agents receive a compact evidence bundle, not raw
+              database access.
+            </p>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-title">
+            Agent grounding flow
+            <span>What the model receives</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain" aria-label="Agent grounding flow chain">
+              <span class="node">User question</span>
+              <span class="arrow">→</span>
+              <span class="node">Surface context</span>
+              <span class="arrow">→</span>
+              <span class="node">Tenant evidence</span>
+              <span class="arrow">→</span>
+              <span class="node">Corpus pattern</span>
+              <span class="arrow">→</span>
+              <span class="node">Rules and citations</span>
+              <span class="arrow">→</span>
+              <span class="node">Answer</span>
+            </div>
+            <p>
+              This is runtime grounding. The agent is not asked to remember everything. It is handed
+              the approved facts and rules needed for this client, this page, and this decision.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="What is inside the corpus">
+      <h2>What is actually inside the corpus?</h2>
+      <p>
+        In plain terms, the corpus is AbarVa's structured business knowledge library. It is not a
+        pile of PDFs and it is not a hidden model brain. It is a set of versioned, reviewed building
+        blocks that tell agents how to reason about a business problem, what evidence to look for,
+        what standards apply, what good looks like, and what questions to ask when the data is
+        incomplete.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Corpus item</th>
+            <th>Plain-English example</th>
+            <th>What it teaches the agent</th>
+            <th>Where it shows up</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Pattern</strong></td>
+            <td>"How a healthcare system should modernize Epic/Clarity analytics to a lakehouse."</td>
+            <td>The standard approach, common traps, target architecture, and governance expectations.</td>
+            <td>Moves modernization plan; Source SI evaluation.</td>
+          </tr>
+          <tr>
+            <td><strong>Rate-card method</strong></td>
+            <td>"How to compare internal labor cost, SI onshore rates, offshore rates, and geo modifiers."</td>
+            <td>How to calculate planning cost without trusting spreadsheet formulas or vague benchmarks.</td>
+            <td>Moves cost baseline; Source commercial negotiation.</td>
+          </tr>
+          <tr>
+            <td><strong>Archetype</strong></td>
+            <td>"A SAS workload with macros is harder than a simple report repoint."</td>
+            <td>How to classify work, estimate complexity, and explain why effort differs.</td>
+            <td>Modernization estimates and SI bid normalization.</td>
+          </tr>
+          <tr>
+            <td><strong>Scorecard</strong></td>
+            <td>"Do not pick the lowest-cost SI if architecture, security, or delivery risk is weak."</td>
+            <td>How to evaluate vendors using weighted criteria, not opinion.</td>
+            <td>Source RFP, BAFO, and recommendation summary.</td>
+          </tr>
+          <tr>
+            <td><strong>Evidence rule</strong></td>
+            <td>"A claim about vendor spend must cite a contract, invoice, or approved client file."</td>
+            <td>What evidence is acceptable, stale, missing, or low-confidence.</td>
+            <td>Sentinel answers; Steward governance checks.</td>
+          </tr>
+          <tr>
+            <td><strong>Prompt discipline</strong></td>
+            <td>"Answer like a CIO advisor, but disclose missing data and do not invent exact numbers."</td>
+            <td>How the agent should communicate, what to refuse, and when to ask for clarification.</td>
+            <td>Sentinel, Nexus, Moves, Source, and Steward.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="example-grid">
+        <div class="example">
+          <span class="tag blue">Corpus example</span>
+          <h3>Modernization pattern pack</h3>
+          <ol>
+            <li>Legacy archetypes: DataStage, stored procedures, SAS, marts, Tableau/BO.</li>
+            <li>Disposition rules: retire, retain, replatform, re-architect.</li>
+            <li>Standards: Databricks Well-Architected pillars, medallion model, Unity Catalog.</li>
+            <li>Effort logic: foundation work, framework work, per-workload work.</li>
+            <li>Questions to ask SIs: automation proof, reconciliation plan, security model, delivery team.</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <span class="tag green">Corpus example</span>
+          <h3>Rate-card pack</h3>
+          <ol>
+            <li>Internal loaded-cost method from official wage and benefits sources.</li>
+            <li>Vendor/SI rate method from public schedules and client-approved quotes.</li>
+            <li>Geo modifier method for national baseline to local region.</li>
+            <li>Validation rules: low cannot exceed high, source and as-of date required.</li>
+            <li>Output rule: always label planning range, confidence, and source.</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <span class="tag amber">Corpus example</span>
+          <h3>Source procurement pack</h3>
+          <ol>
+            <li>RFP structure and required vendor response sections.</li>
+            <li>Commercial normalization model: compare bids on equal scope.</li>
+            <li>Risk flags: vague automation claims, missing transition plan, weak security detail.</li>
+            <li>BAFO question patterns: ask vendors to close specific evidence gaps.</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <span class="tag red">Corpus example</span>
+          <h3>Hallucination rules</h3>
+          <ol>
+            <li>If no tenant evidence exists, say the answer is benchmark-based.</li>
+            <li>If a value is stale, label it stale.</li>
+            <li>If a required file is missing, ask for that file.</li>
+            <li>If the user asks for an exact number, show range and assumptions unless approved data supports exactness.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Example journeys">
+      <h2>Examples that make it concrete</h2>
+      <p>
+        These examples show how the same operating model supports a rate-card update, a modernization
+        baseline, and a Source vendor evaluation.
+      </p>
+
+      <div class="example-grid">
+        <div class="example">
+          <span class="tag green">Example 1</span>
+          <h3>Client uploads a rate card</h3>
+          <ol>
+            <li>The client selects <strong>Internal loaded cost rates</strong> or <strong>Vendor and SI hourly rates</strong>.</li>
+            <li>The CSV is checked for tenant identity, attestation, sensitive data, and file limits.</li>
+            <li>The parser normalizes headers like <strong>Function Group</strong>, <strong>Role Level</strong>, and <strong>Hourly Low USD</strong>.</li>
+            <li>The validator checks ranges, enums, as-of date, confidence, and source.</li>
+            <li>After approval, the rate rows become the tenant's pricing corpus.</li>
+            <li>Moves uses those rates before falling back to benchmark rates.</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <span class="tag blue">Example 2</span>
+          <h3>Client loads a modernization inventory</h3>
+          <ol>
+            <li>The client runs Databricks Lakebridge/Analyzer or supplies a similar inventory export.</li>
+            <li>AbarVa ingests metadata: platform, artifact type, complexity, LOC/counts, dependencies, and disposition.</li>
+            <li>Raw code bodies are rejected because AbarVa does not rescan or convert code.</li>
+            <li>The modernization pack maps each workload to an archetype and effort range.</li>
+            <li>Moves combines workload effort with the approved rate card to produce a planning baseline.</li>
+            <li>Source uses the baseline to evaluate SI bids and find divergence.</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <span class="tag amber">Example 3</span>
+          <h3>CDAO evaluates three SI bids</h3>
+          <ol>
+            <li>AbarVa creates the independent baseline from inventory, archetypes, standards, and rate cards.</li>
+            <li>Each SI response is normalized to the same scope and scoring dimensions.</li>
+            <li>Source compares price, architecture fit, automation leverage, security, team model, and timeline.</li>
+            <li>The divergence report shows where an SI bid is cheaper because it changed scope or assumed easier work.</li>
+            <li>BAFO questions are generated from the gaps, not generic procurement text.</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <span class="tag red">Example 4</span>
+          <h3>Evidence is missing or stale</h3>
+          <ol>
+            <li>The broker cannot find an approved client rate card, current inventory, or required source field.</li>
+            <li>The page shows an honest empty state or warning, not a fabricated number.</li>
+            <li>The agent can use a benchmark only if it labels it as benchmark and shows confidence.</li>
+            <li>The recommended action becomes a data-load or clarification task.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Next.js and React data binding">
+      <h2>How the Next.js / React page binds to actual data</h2>
+      <p>
+        AbarVa pages should look simple, but they should not be static mockups. The page loads a
+        tenant-scoped read model on the server, passes typed data into React components, and renders
+        clear states: ready, blocked, empty, or degraded.
+      </p>
+
+      <div class="binding">
+        <div class="binding-box">
+          <span class="tag blue">Server page</span>
+          <h3>Server component resolves tenant and read model</h3>
+          <p>
+            The Next.js page runs on the server. It resolves the active client, calls a broker, and
+            passes only the display-ready model to the React view.
+          </p>
+          <div class="mono">page.tsx
+resolveActiveClient()
+→ getMovesRateCardReadModel(clientKey)
+→ getModernizationBaseline(clientKey)
+→ &lt;MovesPage model={model} /&gt;</div>
+        </div>
+
+        <div class="binding-box">
+          <span class="tag green">React view</span>
+          <h3>Component renders facts, not assumptions</h3>
+          <p>
+            The component does not invent rows. It receives a typed model with values, provenance,
+            warnings, and empty states. If the broker says no live data, the page says no live data.
+          </p>
+          <div class="mono">model.rateCard.status
+  ready → show client rates
+  benchmark → show benchmark label
+  missing → show upload action
+  blocked → show validation findings</div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Page element</th>
+            <th>Data binding</th>
+            <th>What a CXO sees</th>
+            <th>Failure behavior</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Rate-card status tile</strong></td>
+            <td>Tenant rate-card broker reads approved rows and source ledger.</td>
+            <td>Client-specific, benchmark, or missing.</td>
+            <td>Show upload/approval action, not a fake rate.</td>
+          </tr>
+          <tr>
+            <td><strong>Modernization baseline</strong></td>
+            <td>Analyzer inventory broker + archetype coefficients + approved rate card.</td>
+            <td>Planning range by workstream and disposition.</td>
+            <td>Show planning assumptions and missing inventory gaps.</td>
+          </tr>
+          <tr>
+            <td><strong>Source scorecard</strong></td>
+            <td>SI response parser + weighted scorecard + baseline comparison.</td>
+            <td>Why one bid is stronger, weaker, cheaper, or riskier.</td>
+            <td>Block final recommendation if required SI fields are missing.</td>
+          </tr>
+          <tr>
+            <td><strong>Agent answer panel</strong></td>
+            <td>Brokered evidence bundle, corpus pattern, user question, permission scope.</td>
+            <td>Answer with citations, confidence, and next action.</td>
+            <td>Ask for clarification or disclose insufficient evidence.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-label="Parsing and Azure services">
+      <h2>What parsing means, and where the data lives</h2>
+      <p>
+        Parsing means turning an uploaded file into structured, usable, governed data. A spreadsheet,
+        PDF, Analyzer export, or contract is not directly useful to an agent. AbarVa has to identify
+        the file type, extract the right rows or facts, validate them, attach provenance, and store
+        them in the right tenant-scoped data plane so pages and agents can retrieve them safely.
+      </p>
+
+      <div class="dataflow">
+        <div class="lane">
+          <div class="lane-title">
+            Landing and protection
+            <span>Before parsing</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain">
+              <span class="node">Admin upload</span>
+              <span class="arrow">→</span>
+              <span class="node">Azure Blob landing zone</span>
+              <span class="arrow">→</span>
+              <span class="node">Tenant key</span>
+              <span class="arrow">→</span>
+              <span class="node">Malware / sensitive scan</span>
+              <span class="arrow">→</span>
+              <span class="node">Quarantine if needed</span>
+            </div>
+            <p>
+              Raw files should land as tenant-keyed objects first. If the file contains restricted
+              data, malformed content, or suspicious payloads, it is held before any parser or agent
+              can use it.
+            </p>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-title">
+            Parse and validate
+            <span>Turning files into records</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain">
+              <span class="node">CSV / XLSX parser</span>
+              <span class="arrow">→</span>
+              <span class="node">Document Intelligence</span>
+              <span class="arrow">→</span>
+              <span class="node">Analyzer parser</span>
+              <span class="arrow">→</span>
+              <span class="node">Validation rules</span>
+              <span class="arrow">→</span>
+              <span class="node">Approval queue</span>
+            </div>
+            <p>
+              Different file types use different parsers. CSV and workbook rows use deterministic
+              row parsers. PDFs and documents can use Azure Document Intelligence for layout/text
+              extraction. Lakebridge-style inventory files use a metadata parser and reject raw code
+              bodies.
+            </p>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-title">
+            Store and index
+            <span>Making data live</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain">
+              <span class="node">Azure/Postgres tables</span>
+              <span class="arrow">→</span>
+              <span class="node">Audit ledger</span>
+              <span class="arrow">→</span>
+              <span class="node">Embeddings / search index</span>
+              <span class="arrow">→</span>
+              <span class="node">Read broker</span>
+              <span class="arrow">→</span>
+              <span class="node">Pages and agents</span>
+            </div>
+            <p>
+              Structured rows live in Azure/Postgres data-plane tables. Text evidence can also be
+              chunked and indexed for retrieval. The audit ledger records who loaded it, when it was
+              approved, which parser ran, and what version became active.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Service / layer</th>
+            <th>What it stores or does</th>
+            <th>Why it matters</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Azure Blob landing zone</strong></td>
+            <td>Raw uploaded files, tenant-keyed and scan-gated.</td>
+            <td>Keeps raw files controlled before parsing or indexing.</td>
+            <td>Rate-card workbook, Analyzer export, PDF contract.</td>
+          </tr>
+          <tr>
+            <td><strong>Azure Document Intelligence</strong></td>
+            <td>Extracted document layout, text, tables, and page anchors.</td>
+            <td>Makes PDFs and documents parseable without treating them as magic text blobs.</td>
+            <td>Contract clauses, board report tables, policy documents.</td>
+          </tr>
+          <tr>
+            <td><strong>Azure/Postgres data plane</strong></td>
+            <td>Tenant-scoped structured records, inventory rows, rates, facts, run ledgers.</td>
+            <td>Provides the durable system of record for approved data.</td>
+            <td>Vendor rate rows, workload inventory, enterprise context facts.</td>
+          </tr>
+          <tr>
+            <td><strong>Embedding / search index</strong></td>
+            <td>Searchable chunks with source locators and freshness metadata.</td>
+            <td>Lets agents retrieve the right evidence quickly without reading every file.</td>
+            <td>"Show me evidence for Apex vendor concentration risk."</td>
+          </tr>
+          <tr>
+            <td><strong>Audit ledger</strong></td>
+            <td>Load runs, parser version, validation findings, approvals, commit history.</td>
+            <td>Lets AbarVa replay why an answer or estimate used a source.</td>
+            <td>"Carlos approved Vendor Contracts v3 on June 3."</td>
+          </tr>
+          <tr>
+            <td><strong>Typed brokers</strong></td>
+            <td>Read models that enforce tenant, precedence, and evidence rules.</td>
+            <td>Pages and agents get clean facts and states, not raw database access.</td>
+            <td>Moves gets approved rate card; Source gets normalized baseline.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="example-grid">
+        <div class="example">
+          <span class="tag green">What parsing does</span>
+          <h3>Rate-card CSV</h3>
+          <ol>
+            <li>Reads columns like function group, role level, low/high rate, source, and confidence.</li>
+            <li>Normalizes human headers into canonical fields.</li>
+            <li>Rejects bad math, missing source, invalid confidence, or low greater than high.</li>
+            <li>Stores approved rows as tenant pricing data that Moves can use.</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <span class="tag blue">What parsing does</span>
+          <h3>Analyzer inventory</h3>
+          <ol>
+            <li>Reads metadata about jobs, reports, SQL objects, SAS programs, and dependencies.</li>
+            <li>Classifies each workload by archetype and complexity.</li>
+            <li>Rejects raw code bodies because AbarVa is not the conversion tool.</li>
+            <li>Stores workload metadata for modernization estimates and SI evaluation.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Agent grounding">
+      <h2>How agents get smarter</h2>
+      <p>
+        The word training can be misleading. AbarVa does not need to fine-tune the base model every
+        time a client uploads a file. The safer model is runtime grounding: each agent is given the
+        right facts, patterns, policies, and examples at the moment it works.
+      </p>
+
+      <div class="cards">
+        <div class="card">
+          <span class="tag blue">Moves</span>
+          <h3>Smarter estimates and choices</h3>
+          <p>Moves uses rate cards, modernization archetypes, tenant inventory, value logic, and assumptions to produce planning ranges, not unsupported precision.</p>
+        </div>
+        <div class="card">
+          <span class="tag blue">Source</span>
+          <h3>Smarter vendor evaluation</h3>
+          <p>Source uses the same corpus to normalize SI bids, compare sourcing models, flag divergence, and generate BAFO questions.</p>
+        </div>
+        <div class="card">
+          <span class="tag blue">Steward</span>
+          <h3>Smarter governance</h3>
+          <p>Steward uses approvals, data quality, tenant isolation, and audit history to decide what the agent is allowed to rely on.</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Agent input</th>
+            <th>How it is controlled</th>
+            <th>What the agent must show</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Retrieved tenant evidence</td>
+            <td>Tenant-scoped broker, approved-only filters, source locators.</td>
+            <td>Client-specific citations and freshness.</td>
+          </tr>
+          <tr>
+            <td>Corpus pattern</td>
+            <td>Versioned release record, source ledger, confidence tags.</td>
+            <td>Pattern source and whether it is benchmark or client-specific.</td>
+          </tr>
+          <tr>
+            <td>Client override</td>
+            <td>Approval queue, version history, rollback path.</td>
+            <td>Override label and who approved it.</td>
+          </tr>
+          <tr>
+            <td>Missing evidence</td>
+            <td>Validation findings and clarification workflow.</td>
+            <td>Explicit gap, not a guessed answer.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-label="Sentinel Nexus and training model">
+      <h2>How Sentinel and Nexus use the corpus differently</h2>
+      <p>
+        Think of the corpus as the playbook library. Sentinel is the evidence-grounded analyst.
+        Nexus is the orchestration brain that decides which playbooks, tools, and surfaces should be
+        used for a larger workflow. Both use the corpus, but they use it in different ways.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Role in plain terms</th>
+            <th>Example question</th>
+            <th>How the corpus helps</th>
+            <th>Hallucination control</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Sentinel</strong></td>
+            <td>Answers questions using approved client evidence.</td>
+            <td>"What is our biggest modernization risk?"</td>
+            <td>Pulls tenant inventory, modernization pattern, risk rules, and citations.</td>
+            <td>Must cite files or say the evidence is missing.</td>
+          </tr>
+          <tr>
+            <td><strong>Nexus</strong></td>
+            <td>Chooses the workflow and coordinates tools.</td>
+            <td>"Build a plan to evaluate three lakehouse SI bids."</td>
+            <td>Selects Source RFP pack, modernization scorecard, rate-card method, and BAFO workflow.</td>
+            <td>Routes to structured tools and approval gates rather than free-form improvisation.</td>
+          </tr>
+          <tr>
+            <td><strong>Moves</strong></td>
+            <td>Turns a business move into cost, value, risk, and decision artifacts.</td>
+            <td>"What should this modernization cost?"</td>
+            <td>Combines workload archetypes, rate cards, tenant inventory, and value model.</td>
+            <td>Shows planning range, assumptions, source, and confidence.</td>
+          </tr>
+          <tr>
+            <td><strong>Source</strong></td>
+            <td>Helps buy better by structuring vendor decisions.</td>
+            <td>"Which SI bid is most credible?"</td>
+            <td>Uses RFP scorecard, baseline, rate normalization, and divergence patterns.</td>
+            <td>Flags missing vendor evidence and prevents lowest-price-only answers.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="dataflow">
+        <div class="lane">
+          <div class="lane-title">
+            Training in layman terms
+            <span>What we do and do not do</span>
+          </div>
+          <div class="lane-body">
+            <p>
+              We do not "train" the agent by dumping client documents into the model and hoping it
+              remembers them. That would be risky, hard to audit, and hard to update. Instead, we
+              ground the agent at runtime: when the agent answers, AbarVa supplies the exact approved
+              evidence, patterns, rules, and sources relevant to that tenant and task.
+            </p>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-title">
+            Specific example
+            <span>Sentinel answering a CIO</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain">
+              <span class="node">CIO asks risk question</span>
+              <span class="arrow">→</span>
+              <span class="node">Retrieve app inventory</span>
+              <span class="arrow">→</span>
+              <span class="node">Apply modernization pattern</span>
+              <span class="arrow">→</span>
+              <span class="node">Check evidence freshness</span>
+              <span class="arrow">→</span>
+              <span class="node">Answer with citations</span>
+            </div>
+            <p>
+              If the application inventory is missing owner fields, Sentinel does not invent owners.
+              It says the risk view is incomplete and asks for the owner-mapping file or steward
+              approval.
+            </p>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-title">
+            Specific example
+            <span>Nexus coordinating Source</span>
+          </div>
+          <div class="lane-body">
+            <div class="chain">
+              <span class="node">CDAO wants SI evaluation</span>
+              <span class="arrow">→</span>
+              <span class="node">Nexus selects Source workflow</span>
+              <span class="arrow">→</span>
+              <span class="node">Loads scorecard</span>
+              <span class="arrow">→</span>
+              <span class="node">Uses rate-card baseline</span>
+              <span class="arrow">→</span>
+              <span class="node">Produces BAFO questions</span>
+            </div>
+            <p>
+              Nexus is not making up procurement strategy. It is orchestrating the approved Source
+              playbook, the client's baseline, and the vendor response evidence.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Client customization model">
+      <h2>How clients customize patterns</h2>
+      <p>
+        The near-term model is template-driven uploads. The future model is an admin studio where a
+        client can review, edit, approve, version, and simulate overrides before they affect agents.
+      </p>
+
+      <div class="cards">
+        <div class="card">
+          <span class="tag green">Now</span>
+          <h3>Template uploads</h3>
+          <p>Clients upload rate cards, context files, mappings, and evidence through governed templates. Bad rows are blocked before commit.</p>
+        </div>
+        <div class="card">
+          <span class="tag amber">Next</span>
+          <h3>Review and approve</h3>
+          <p>Admins see parsed rows, validation gaps, provenance, confidence, and the exact agent surfaces that will be affected.</p>
+        </div>
+        <div class="card">
+          <span class="tag blue">Future</span>
+          <h3>Pattern Studio</h3>
+          <p>Clients maintain their own approved patterns: rate cards, sourcing policies, modernization rules, risk weights, and scoring criteria.</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Client action</th>
+            <th>Example</th>
+            <th>Control</th>
+            <th>Agent impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Upload a rate card</td>
+            <td>Internal loaded-cost rates and vendor hourly bands.</td>
+            <td>Parser validation, approval, versioning.</td>
+            <td>Moves estimate uses client rates instead of benchmark.</td>
+          </tr>
+          <tr>
+            <td>Override a modernization rule</td>
+            <td>Classify SAS workloads as re-architect, not replatform.</td>
+            <td>Impact preview, approver signoff, rollback.</td>
+            <td>Moves baseline and Source scorecard reflect client policy.</td>
+          </tr>
+          <tr>
+            <td>Update RFP weights</td>
+            <td>Increase security from 10% to 20% for healthcare.</td>
+            <td>Governed settings with audit trail.</td>
+            <td>Source ranks SI bids with the client's priority model.</td>
+          </tr>
+          <tr>
+            <td>Retire a pattern</td>
+            <td>Mark an old vendor benchmark as stale.</td>
+            <td>Effective date, replacement rule, audit note.</td>
+            <td>Agents stop using stale assumptions.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-label="Hallucination controls">
+      <h2>How hallucination is minimized</h2>
+      <p>
+        Hallucination is reduced by narrowing what the agent is allowed to rely on, making missing
+        data visible, and forcing every important number or claim to carry provenance.
+      </p>
+
+      <div class="guardrails">
+        <div class="guardrail">
+          <h3>Evidence before assertion</h3>
+          <p>Agent answers must cite tenant evidence, a corpus source, or a benchmark source. If none exists, the answer should say so.</p>
+        </div>
+        <div class="guardrail">
+          <h3>Tenant isolation</h3>
+          <p>Every retrieval and write path is scoped to the active client. Cross-tenant data cannot be used to fill a gap.</p>
+        </div>
+        <div class="guardrail">
+          <h3>Confidence and freshness</h3>
+          <p>Sources carry as-of dates, confidence, and extraction status. Stale or low-confidence evidence is labelled.</p>
+        </div>
+        <div class="guardrail">
+          <h3>Validation before commit</h3>
+          <p>Rates, enums, required fields, ranges, and provenance are checked before data becomes agent-available.</p>
+        </div>
+        <div class="guardrail">
+          <h3>No silent fallback</h3>
+          <p>If a client rate card is missing, the estimate can use a benchmark only if it is clearly labelled as benchmark.</p>
+        </div>
+        <div class="guardrail">
+          <h3>Audit and replay</h3>
+          <p>Data loads, approvals, agent source bundles, and release records make important answers reconstructable.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="callout" aria-label="Bottom line">
+      <h2>The board-level answer</h2>
+      <p>
+        AbarVa becomes smarter by expanding controlled knowledge, not by letting the model improvise.
+        Research updates become versioned corpus. Client uploads become validated tenant context.
+        Approved overrides change Moves and Source through brokered retrieval. Every important number
+        must show where it came from, how current it is, whether it is client-specific, and what is
+        still missing.
+      </p>
+    </section>
+
+    <p class="footer">
+      AbarVa internal working artifact. Designed for CXO review and product alignment. Generated June 3, 2026.
+    </p>
+  </main>
+</body>
+</html>

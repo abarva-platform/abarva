@@ -1,0 +1,49 @@
+{
+  "properties": {
+    "category": "Cost",
+    "amount": 500,
+    "timeGrain": "Monthly",
+    "timePeriod": {
+      "startDate": "2026-06-01T00:00:00Z",
+      "endDate": "2026-12-31T00:00:00Z"
+    },
+    "notifications": {
+      "actual_GreaterThan_50_Percent": {
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 50,
+        "thresholdType": "Actual",
+        "contactEmails": ["admin@abarva.ai", "alerts@abarva.ai"],
+        "contactGroups": [],
+        "contactRoles": []
+      },
+      "actual_GreaterThan_80_Percent": {
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 80,
+        "thresholdType": "Actual",
+        "contactEmails": ["admin@abarva.ai", "alerts@abarva.ai"],
+        "contactGroups": [],
+        "contactRoles": []
+      },
+      "actual_GreaterThan_100_Percent": {
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 100,
+        "thresholdType": "Actual",
+        "contactEmails": ["admin@abarva.ai", "alerts@abarva.ai"],
+        "contactGroups": [],
+        "contactRoles": []
+      },
+      "forecasted_GreaterThan_100_Percent": {
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 100,
+        "thresholdType": "Forecasted",
+        "contactEmails": ["admin@abarva.ai", "alerts@abarva.ai"],
+        "contactGroups": [],
+        "contactRoles": []
+      }
+    }
+  }
+}

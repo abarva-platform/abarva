@@ -1,10 +1,13 @@
-import manifestJson from './generated/pattern-manifest.json';
-import { buildAllProgramsSeedPlan } from '@/lib/programs/enhancement-seed-planner';
-import type { DeliverableSeedPlan, ProgramSeedPlan } from '@/lib/programs/enhancement-seed-planner';
+import manifestJson from "./generated/pattern-manifest.json";
+import { buildAllProgramsSeedPlan } from "@/lib/programs/enhancement-seed-planner";
+import type {
+  DeliverableSeedPlan,
+  ProgramSeedPlan,
+} from "@/lib/programs/enhancement-seed-planner";
 import {
   getPatternEvidenceMetrics,
   type EvidenceRegistryEntry,
-} from '@/lib/deliverables/evidence-registry';
+} from "@/lib/deliverables/evidence-registry";
 
 export interface PatternManifestSection {
   id: string;
@@ -42,12 +45,25 @@ export interface PatternManifestEntry {
   diagnosticQuestions: string[];
   evidenceRequirements: string[];
   interventions: string[];
+  sourceSystem?:
+    | "pattern_seed"
+    | "source_lifecycle_pattern"
+    | "genome_seed_jsonl"
+    | "legacy_design_pack_compat";
 }
 
 interface PatternManifestPayload {
   generatedAt: string;
   sourceDir: string;
   patternCount: number;
+  authoredCounts?: {
+    patternSeed: number;
+    sourceLifecyclePattern: number;
+    genomeSeedJsonl: number;
+    legacyDesignPackCompatibility?: number;
+    authoredTotalBeforeDedupe: number;
+    duplicateIdsRemoved: number;
+  };
   demoCriticalSlugs: string[];
   patterns: PatternManifestEntry[];
 }
@@ -58,8 +74,8 @@ export interface PatternApplicableDeliverable {
   code: string;
   title: string;
   phaseSpec: number;
-  renderTier: DeliverableSeedPlan['renderTier'];
-  lifecycleState: DeliverableSeedPlan['lifecycleState'];
+  renderTier: DeliverableSeedPlan["renderTier"];
+  lifecycleState: DeliverableSeedPlan["lifecycleState"];
   routePath: string;
 }
 
@@ -71,7 +87,7 @@ export interface PatternApplicableProgram {
   name: string;
   programSlug: string;
   currentPhaseSpec: number;
-  status: ProgramSeedPlan['status'];
+  status: ProgramSeedPlan["status"];
   roleInDemo: string;
   routePath: string;
   deliverables: PatternApplicableDeliverable[];
@@ -88,16 +104,22 @@ export function getPatternManifestEntries(): PatternManifestEntry[] {
 export function getPatternManifestEntriesWithMetrics(
   tenantScope?: string | null,
 ): PatternManifestEntry[] {
-  return manifest.patterns.map((pattern) => withBrowsablePatternMetrics(pattern, tenantScope));
+  return manifest.patterns.map((pattern) =>
+    withBrowsablePatternMetrics(pattern, tenantScope),
+  );
 }
 
-export function getPatternManifestEntry(key: string): PatternManifestEntry | null {
+export function getPatternManifestEntry(
+  key: string,
+): PatternManifestEntry | null {
   const normalized = normalizePatternKey(key);
   return (
     manifest.patterns.find((pattern) => {
-      return normalizePatternKey(pattern.slug) === normalized
-        || normalizePatternKey(pattern.id) === normalized
-        || normalizePatternKey(patternIdToSlug(pattern.id)) === normalized;
+      return (
+        normalizePatternKey(pattern.slug) === normalized ||
+        normalizePatternKey(pattern.id) === normalized ||
+        normalizePatternKey(patternIdToSlug(pattern.id)) === normalized
+      );
     }) ?? null
   );
 }
@@ -120,7 +142,7 @@ export function getPatternBrowsableEvidence(
 }
 
 export function patternIdToSlug(patternId: string): string {
-  return patternId.replace(/^pattern_/, '').replace(/_/g, '-');
+  return patternId.replace(/^pattern_/, "").replace(/_/g, "-");
 }
 
 export function patternRouteFor(patternKey: string): string {
@@ -128,11 +150,17 @@ export function patternRouteFor(patternKey: string): string {
   return `/intelligence/patterns/${encodeURIComponent(pattern?.slug ?? patternIdToSlug(patternKey))}`;
 }
 
-export function getPatternApplicablePrograms(patternKey: string): PatternApplicableProgram[] {
+export function getPatternApplicablePrograms(
+  patternKey: string,
+): PatternApplicableProgram[] {
   const pattern = getPatternManifestEntry(patternKey);
   const normalized = normalizePatternKey(pattern?.slug ?? patternKey);
-  return buildAllProgramsSeedPlan().programs
-    .filter((program) => program.patternSlug && normalizePatternKey(program.patternSlug) === normalized)
+  return buildAllProgramsSeedPlan()
+    .programs.filter(
+      (program) =>
+        program.patternSlug &&
+        normalizePatternKey(program.patternSlug) === normalized,
+    )
     .map(mapApplicableProgram);
 }
 
@@ -141,31 +169,47 @@ export function getPatternApplicableProgramsForTenant(
   tenantRouteSlug: string,
 ): PatternApplicableProgram[] {
   const normalizedTenant = normalizePatternKey(tenantRouteSlug);
-  return getPatternApplicablePrograms(patternKey)
-    .filter((program) => {
-      return normalizePatternKey(program.tenantRouteSlug) === normalizedTenant
-        || normalizePatternKey(program.tenantKey) === normalizedTenant;
-    });
+  return getPatternApplicablePrograms(patternKey).filter((program) => {
+    return (
+      normalizePatternKey(program.tenantRouteSlug) === normalizedTenant ||
+      normalizePatternKey(program.tenantKey) === normalizedTenant
+    );
+  });
 }
 
-export function patternMatchesIndustry(pattern: PatternManifestEntry, industryCode: string | null | undefined): boolean {
+export function patternMatchesIndustry(
+  pattern: PatternManifestEntry,
+  industryCode: string | null | undefined,
+): boolean {
   if (!industryCode) return true;
   if (pattern.crossIndustry) return true;
   const normalizedIndustry = normalizeIndustry(industryCode);
   const sectors = pattern.sectorApplicability.map(normalizeIndustry);
-  return sectors.includes(normalizedIndustry) || sectors.includes('cross_sector');
+  return (
+    sectors.includes(normalizedIndustry) || sectors.includes("cross_sector")
+  );
 }
 
 function normalizeIndustry(value: string): string {
-  const normalized = value.trim().toLowerCase().replace(/-/g, '_');
-  if (normalized === 'healthcare_idn' || normalized === 'health') return 'healthcare';
-  if (normalized === 'finserv' || normalized === 'finance' || normalized === 'financial_services') return 'financial_services';
-  if (normalized === 'retail_omni') return 'retail';
+  const normalized = value.trim().toLowerCase().replace(/-/g, "_");
+  if (normalized === "healthcare_idn" || normalized === "health")
+    return "healthcare";
+  if (
+    normalized === "finserv" ||
+    normalized === "finance" ||
+    normalized === "financial_services"
+  )
+    return "financial_services";
+  if (normalized === "retail_omni") return "retail";
   return normalized;
 }
 
 function normalizePatternKey(value: string): string {
-  return value.trim().toLowerCase().replace(/^pattern[-_]/, '').replace(/_/g, '-');
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^pattern[-_]/, "")
+    .replace(/_/g, "-");
 }
 
 function withBrowsablePatternMetrics(
@@ -180,7 +224,9 @@ function withBrowsablePatternMetrics(
   };
 }
 
-function mapApplicableProgram(program: ProgramSeedPlan): PatternApplicableProgram {
+function mapApplicableProgram(
+  program: ProgramSeedPlan,
+): PatternApplicableProgram {
   return {
     tenantKey: program.tenantKey,
     tenantRouteSlug: program.tenantRouteSlug,

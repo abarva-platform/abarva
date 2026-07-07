@@ -536,7 +536,7 @@ export function StewardAskBar({
                 lineHeight: 1.5,
               }}
             >
-              Ask Steward anything about setup
+              Ask Ava anything about setup
             </span>
           </div>
         )}
@@ -621,7 +621,7 @@ export function StewardAskBar({
             spellCheck
             autoCorrect="on"
             autoCapitalize="sentences"
-            placeholder={hasThread ? 'Follow up…' : 'Ask Steward…'}
+            placeholder={hasThread ? 'Follow up…' : 'Ask Ava…'}
             disabled={isStreaming}
             style={{
               fontFamily: SHELL.SANS,

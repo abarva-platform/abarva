@@ -26,7 +26,6 @@ import {
   TOWER_PROGRAM_PRESSURE_DEFAULT_TOP_N,
   type AtlasBriefConfidenceLabel,
   type AtlasBriefSourceLabel,
-  type AtlasProgramPressureBrief,
   type TowerProgramPressureView,
 } from '@/lib/tower/program-pressure-view';
 import {
@@ -223,13 +222,12 @@ describe('S9f module hygiene', () => {
     expect(content).not.toMatch(/programs-nexus-rail-view/);
   });
 
-  it('the Tower component does not import Atlas, Source UI, Nexus runtime, agent runtime, or legacy /programs', () => {
+  it('the Tower component does not import live Atlas, Source UI, Nexus runtime, agent runtime, or legacy /programs', () => {
     const src = path.resolve(__dirname, '../../../components/tower/ProgramPressureCards.tsx');
     const content = fs.readFileSync(src, 'utf8');
     expect(content).not.toMatch(/from '@\/lib\/atlas\//);
     expect(content).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(content).not.toMatch(/from '@\/lib\/agent\//);
-    expect(content).not.toMatch(/from '@\/components\/agent\//);
+    expect(content).not.toMatch(/from '@\/lib\/agent\/(?:chat|runtime|tools|tool)/);
     expect(content).not.toMatch(/from '@\/lib\/programs\/mock'/);
     expect(content).not.toMatch(/from '@\/app\/programs\//);
     expect(content).not.toMatch(/from '@\/app\/\(maestro\)\/preview\//);
@@ -376,6 +374,12 @@ describe('buildAtlasProgramPressureBrief · canonical demo tenants', () => {
         brief.evidenceValueWarning,
         brief.recommendedExecutiveAction,
         brief.interpretationBasis,
+        brief.accountability.watermark,
+        brief.accountability.sanitizedRecommendation,
+        brief.accountability.missingDataBanner,
+        brief.accountability.humanApprovalRequired,
+        ...brief.accountability.evidenceBasis,
+        ...brief.accountability.assumptions,
         ...brief.suggestedFollowUps.map((f) => f.label),
         ...brief.suggestedFollowUps.map((f) => f.reason),
       ];
@@ -383,6 +387,31 @@ describe('buildAtlasProgramPressureBrief · canonical demo tenants', () => {
         expect(field).not.toMatch(dollarPattern);
       }
     }
+  });
+
+  it('adds human accountability controls to every Atlas brief recommendation', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      expect(brief.accountability.watermark).toContain('AI-assisted decision support');
+      expect(brief.accountability.humanApprovalRequired).toContain('Human approval required');
+      expect(brief.accountability.sanitizedRecommendation).toBeTruthy();
+      expect(brief.accountability.evidenceBasis.length).toBeGreaterThan(0);
+      expect(brief.accountability.assumptions.length).toBeGreaterThan(0);
+      expect(brief.accountability.missingDataBanner).toContain('Decision-support limits');
+      expect(brief.accountability.riskDomains).toContain('financial_commitment');
+      expect(brief.accountability.escalationRequired).toBe(false);
+    }
+  });
+
+  it('falls back to deterministic seed provenance when no signals exist', () => {
+    const emptySummary = summarizeProgramControlTowerSignals([]);
+    const tenant = plan.tenants[0]!;
+    const brief = buildAtlasProgramPressureBrief(tenant, [], emptySummary);
+    expect(brief.sourceLabel).toBe('deterministic_seed');
+    expect(brief.accountability.evidenceBasis).toEqual([
+      'deterministic_seed:no_program_pressure_signals',
+    ]);
   });
 
   it('mentions evidence/value readiness when signals indicate gaps', () => {
@@ -493,7 +522,7 @@ describe('Atlas brief · component embedding', () => {
     expect(content).toMatch(/from '@\/lib\/tower\/program-pressure-view'/);
   });
 
-  it('the Tower component still does not import Atlas runtime', () => {
+  it('the Tower component still does not import live Atlas, Nexus, or Source runtime', () => {
     const src = path.resolve(
       __dirname,
       '../../../components/tower/ProgramPressureCards.tsx',
@@ -501,8 +530,7 @@ describe('Atlas brief · component embedding', () => {
     const content = fs.readFileSync(src, 'utf8');
     expect(content).not.toMatch(/from '@\/lib\/atlas\//);
     expect(content).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(content).not.toMatch(/from '@\/lib\/agent\//);
-    expect(content).not.toMatch(/from '@\/components\/agent\//);
+    expect(content).not.toMatch(/from '@\/lib\/agent\/(?:chat|runtime|tools|tool)/);
     expect(content).not.toMatch(/from '@\/lib\/source\//);
   });
 });

@@ -8,7 +8,7 @@ import { buildReleaseLedgerView } from '@/lib/admin/release-ledger';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const metadata = {
-  title: 'Release Ledger | AbarVa Setup',
+  title: 'Release Ledger | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -34,7 +34,7 @@ export default async function AdminReleaseLedgerPage() {
       }
     >
       <EditorialCanvas
-        eyebrow="Setup · Release Control"
+        eyebrow="Admin · Release Control"
         title="Release Ledger"
         subtitle="Plain-English record of what changed, which layer moved, who is affected, how it was validated, and how it can be rolled back."
       >

@@ -1,0 +1,8 @@
+site_id,site_type,region,ownership,physical_servers,installed_mips,vmware_clusters,storage_pb,primary_stack,next_refresh_window,refresh_risk,supported_workloads,tier,notes
+DC-Northlake,Primary data center,US-Midwest,owned,1260,38450,5.8,3.9,"Dell VxRail / VMware, zOS, Oracle RAC",Q2-2027,At risk,"Primary for PSS adjacent, finance, OCC, identity",Tier-0,N+1 power; dual carrier; immutable backup gap 14%
+DC-Prairie,Secondary data center,US-Central,colo,910,0,3.7,2.6,"Dell VxRail / VMware, OpenShift, SQL Server",Q4-2026,Due,DR for Northlake; primary for integration workloads,Tier-1,28% host refresh due before transition wave 2
+DC-Riverbend,DR / archive facility,US-South,colo,420,0,1.6,1.9,"NetApp, backup, archive, limited VMware",Q1-2028,Healthy,"Archive, backup restore, DR exercises",Tier-2,Network dual-home incomplete for 11 retained apps
+HUB-HBV-MDF,Hub airport MDF/IDF estate,US-East,airport,188,0,0.9,0.3,"Cisco LAN/WLAN, gate devices, kiosk edge",Q3-2026,Due,Pilot hub airport operations and crew emergency desk,Tier-0,No transition cutover during holiday/IRROPS blackout
+HUB-LAX-MDF,Hub airport MDF/IDF estate,US-West,airport,176,0,0.8,0.3,"Cisco LAN/WLAN, field EUC, contact-center edge",Q2-2027,At risk,West hub operations and international connections,Tier-1,Single carrier exception at satellite terminal
+CLOUD-AWS-EAST,AWS landing zone,us-east-1/us-east-2,public_cloud,0,0,0,1.1,EC2/RDS/EKS/S3/CloudWatch,continuous,Healthy,"Digital, data products, customer comms",Tier-1,FinOps retained; MSP handles operations
+CLOUD-AZURE-EAST,Azure landing zone,East US/Central US,public_cloud,0,0,0,0.8,"App Service, Functions, AKS, SQL MI, Event Hub",continuous,Healthy,"Integration, telemetry, ServiceNow connectors",Tier-1,Private endpoints for regulated stores

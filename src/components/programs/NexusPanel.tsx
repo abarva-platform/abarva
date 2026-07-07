@@ -107,12 +107,12 @@ export function NexusPanel(props: NexusPanelProps) {
             <div className="programs-stack" style={{ gap: 14 }}>
               <div className="programs-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div className="programs-eyebrow">Nexus side-panel</div>
+                  <div className="programs-eyebrow">Ava side-panel</div>
                   <div className="programs-muted" style={{ fontSize: 13 }}>
                     Static shell now. Delivery wiring lands after Intelligence merges.
                   </div>
                 </div>
-                <button className="programs-icon-button" type="button" onClick={() => setExpanded(false)} aria-label="Collapse Nexus panel">
+                <button className="programs-icon-button" type="button" onClick={() => setExpanded(false)} aria-label="Collapse Ava panel">
                   ←
                 </button>
               </div>
@@ -136,7 +136,7 @@ export function NexusPanel(props: NexusPanelProps) {
             </div>
           ) : (
             <div className="programs-nexus-icon-rail">
-              <button className="programs-icon-button" type="button" onClick={() => setExpanded(true)} aria-label="Expand Nexus panel">
+              <button className="programs-icon-button" type="button" onClick={() => setExpanded(true)} aria-label="Expand Ava panel">
                 →
               </button>
               {TABS.map((tab) => (
@@ -176,7 +176,7 @@ export function CxoTakeover(props: CxoTakeoverProps) {
         {props.mode === 'phase_3_interview' ? 'Phase 3 CXO interview takeover' : 'Phase 6 verification takeover'}
       </div>
       <div className="programs-muted" style={{ marginTop: 8 }}>
-        Preview mode. The structured pacing, question bank, and transcript layout are ready; live interview orchestration remains deferred until the shared Nexus interaction layer ships.
+        Preview mode. The structured pacing, question bank, and transcript layout are ready; live interview orchestration remains deferred until the shared Ava interaction layer ships.
       </div>
       <div className="programs-takeover-preview" style={{ marginTop: 18 }}>
         <div className="programs-stack">
@@ -200,7 +200,7 @@ export function CxoTakeover(props: CxoTakeoverProps) {
             </div>
           ))}
           <div className="programs-hero-note">
-            Next activation step: connect this preview to the shared Nexus interview layer for live turn-taking, capture, and synthesis.
+            Next activation step: connect this preview to the shared Ava interview layer for live turn-taking, capture, and synthesis.
           </div>
           <button className="programs-button" type="button" onClick={handleClose}>
             {closed ? 'Static synthesis closed' : 'Close preview'}

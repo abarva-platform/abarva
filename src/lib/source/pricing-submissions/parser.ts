@@ -294,6 +294,8 @@ function extractPricingNotes(sheet: ExcelJS.Worksheet): {
     if (topic) lines.push(`${topic}: ${narrative}`);
     else lines.push(narrative);
 
+    if (isNoDeviationNarrative(narrative)) return;
+
     // Best-effort deviation extraction. The d19a template's Sheet 5 has
     // seed topics like "Assumption challenge — which row in Sheet 2 do
     // you contest? (state row + your alternative)" — when the vendor
@@ -329,6 +331,14 @@ function extractPricingNotes(sheet: ExcelJS.Worksheet): {
     pricingNotes: lines.join('\n\n'),
     deviations,
   };
+}
+
+function isNoDeviationNarrative(text: string): boolean {
+  const normalized = text.trim().toLowerCase();
+  if (!normalized) return true;
+  return /^(?:n\/a|na|none|no|not applicable)\b/.test(normalized) ||
+    /\bno\s+(?:assumption\s+)?(?:challenge|deviation|exception|alternative|change|issue)s?\b/.test(normalized) ||
+    /\b(?:conform|conforms|conforming|accept|accepts|accepted)\s+(?:to|with)\b/.test(normalized);
 }
 
 const ASSUMPTION_KEYWORDS: Array<[RegExp, string]> = [

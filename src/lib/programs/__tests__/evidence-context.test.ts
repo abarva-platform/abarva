@@ -32,7 +32,10 @@ describe('program evidence context prompt block', () => {
         evidence_type: 'meeting_notes',
         summary: 'Parsed evidence summary',
         extracted_text: 'Baseline candidate: application inventory completeness is 72 percent.',
-        extracted_structured: { parse_method: 'text-line-parser' },
+        extracted_structured: {
+          parse_method: 'text-line-parser',
+          baseline_candidates: ['Application inventory completeness is 72 percent.'],
+        },
         created_at: '2026-05-02T03:36:02.000Z',
       },
     ]);
@@ -50,6 +53,7 @@ describe('program evidence context prompt block', () => {
       expect.objectContaining({
         title: 'pasted-workshop-notes-2026-05-02.txt',
         parseMethod: 'text-line-parser',
+        structuredSignals: ['Application inventory completeness is 72 percent.'],
       }),
     ]);
     expect(mockAzureSelect).toHaveBeenCalledWith(expect.objectContaining({
@@ -69,12 +73,21 @@ describe('program evidence context prompt block', () => {
         summary: 'Parsed workshop notes',
         extractedText: 'Baseline candidate: application inventory completeness is 72 percent.',
         parseMethod: 'text-line-parser',
+        structuredSignals: [
+          'Average monthly invoice exceptions: 1,872.',
+          'Manual touch hours per month: 2,345.',
+          'Average resolution days: 7.4.',
+        ],
         createdAt: '2026-05-02T03:36:02.000Z',
       },
     ]);
 
     expect(block).toContain('PROGRAM EVIDENCE LEDGER');
     expect(block).toContain('pasted-workshop-notes-2026-05-02.txt');
+    expect(block).toContain('Structured signals');
+    expect(block).toContain('1,872');
+    expect(block).toContain('2,345');
+    expect(block).toContain('7.4');
     expect(block).toContain('application inventory completeness is 72 percent');
     expect(block).toContain('Do not say there are zero uploaded items');
   });

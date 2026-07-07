@@ -7,9 +7,9 @@ import {
   listAtlasPrograms,
   listAtlasSignals,
   listAtlasUseCases,
-} from '@/lib/atlas/repository';
-import { buildAtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
-import type { AtlasSignalSummary, AtlasTenancyCtx } from '@/lib/atlas/types';
+} from "@/lib/atlas/repository";
+import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
+import type { AtlasSignalSummary, AtlasTenancyCtx } from "@/lib/atlas/types";
 
 export async function query_portfolio_aggregates(ctx: AtlasTenancyCtx) {
   return getAtlasPortfolioSummary(ctx);
@@ -17,18 +17,24 @@ export async function query_portfolio_aggregates(ctx: AtlasTenancyCtx) {
 
 export async function query_signals(
   ctx: AtlasTenancyCtx,
-  options?: { severity?: AtlasSignalSummary['severity']; limit?: number },
+  options?: { severity?: AtlasSignalSummary["severity"]; limit?: number },
 ) {
   const signals = await listAtlasSignals(ctx, options?.limit ?? 5);
   if (!options?.severity) return signals;
   return signals.filter((signal) => signal.severity === options.severity);
 }
 
-export async function query_signal_evidence(ctx: AtlasTenancyCtx, signalId: string) {
+export async function query_signal_evidence(
+  ctx: AtlasTenancyCtx,
+  signalId: string,
+) {
   return getAtlasSignalDetail(ctx, signalId);
 }
 
-export async function query_cohort_benchmarks(ctx: AtlasTenancyCtx, metricName: string) {
+export async function query_cohort_benchmarks(
+  ctx: AtlasTenancyCtx,
+  metricName: string,
+) {
   return getAtlasBenchmark(ctx, metricName);
 }
 
@@ -46,6 +52,7 @@ export async function query_tower_current_state(
 ) {
   return buildAtlasTowerCurrentState({
     clientId: ctx.clientId,
+    clientKey: ctx.clientKey,
     surfaceContext,
   });
 }

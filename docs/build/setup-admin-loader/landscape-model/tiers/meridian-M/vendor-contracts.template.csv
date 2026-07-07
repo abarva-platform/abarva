@@ -1,0 +1,14 @@
+vendor,product,contract_type,annual_spend_usd,renewal_date,support_tier,baa_status,owner,notes,source
+Epic,Hyperspace EHR + Cogito/Clarity/Caboodle,vendor_hosted_subscription,28500000,2026-01-10,Platinum,executed,CIO (Marcus Webb),"Largest vendor ~9% of spend; 90-day exit term; renewal leverage window",canonical
+Ensemble Health Partners,RCM outsourcing,managed_service,28000000,2026-06-30,Standard,executed,CFO (Robert Chen),"18.2% denial rate vs 12% SLA; penalties unenforced; termination clause",canonical
+Microsoft,Azure + M365 Enterprise Agreement,ea_subscription,9800000,2024-10-31,Premier,executed,VP IT Operations,"Hybrid cloud + productivity; FinOps governance gap",illustrative
+Intelerad,IntelePACS 8.5,perpetual_plus_maintenance,3100000,2026-09-15,Premium,executed,VP Infrastructure,"Enterprise PACS; Blue Ridge on separate Merge PACS",illustrative
+Workday,HCM + Financials,saas_subscription,4200000,2027-03-31,Standard,executed,CHRO,"Module underutilization; ADP/Kronos overlap",illustrative
+UKG,Workforce Dimensions,saas_subscription,2800000,2025-08-31,Standard,executed,CHRO,"Scheduling overlap with Workday Time",illustrative
+Waystar,Clearinghouse,saas_transaction,1900000,2025-12-31,Standard,executed,VP Revenue Cycle,"Claims + eligibility clearinghouse",illustrative
+ServiceNow,ITSM,saas_subscription,1400000,2026-02-28,Standard,executed,VP IT Operations,"ITSM platform",illustrative
+Oracle Health (Cerner),Cerner Millennium (legacy),maintenance,2400000,2024-12-31,Standard,executed,VP Clinical Apps,"2 acquired hospitals migrating to Epic; decommission target",illustrative
+MEDITECH,MEDITECH Expanse (Blue Ridge),maintenance,14000000,month-to-month,Standard,executed,VP Clinical Apps,"Stranded duplicate EHR; 90-day termination; consolidation debt",illustrative
+Broadcom (Symantec),Endpoint Protection,perpetual_plus_maintenance,1200000,2024-11-30,Standard,executed,CISO,"Being replaced; renewal not planned",illustrative
+Genesys,Cloud CX,saas_subscription,1600000,2026-05-31,Standard,executed,VP Patient Access,"Contact center / patient access; PHI in scope",illustrative
+ADP,Vantage payroll (acquired sites),saas_subscription,800000,2025-06-30,Standard,executed,CHRO,"Duplicate payroll at 6 Blue Ridge hospitals",illustrative

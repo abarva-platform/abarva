@@ -1,0 +1,30 @@
+{
+  "eTag": "\"1dcfc6e1fbbecdf\"",
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Consumption/budgets/abarva_budget",
+  "name": "abarva_budget",
+  "properties": {
+    "amount": 250.0,
+    "category": "Cost",
+    "filter": {},
+    "notifications": {
+      "actual_GreaterThan_80_Percent": {
+        "contactEmails": [
+          "alerts@abarva.ai",
+          "admin@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 80.0,
+        "thresholdType": "Actual"
+      }
+    },
+    "timeGrain": "Monthly",
+    "timePeriod": {
+      "endDate": "2028-03-31T00:00:00Z",
+      "startDate": "2026-04-01T00:00:00Z"
+    }
+  },
+  "type": "Microsoft.Consumption/budgets"
+}

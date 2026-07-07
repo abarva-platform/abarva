@@ -46,8 +46,8 @@ export const clinicalOperationsDocumentationPack: FunctionPack = {
     'and quality credit the organisation has genuinely earned. It is the ' +
     'function where clinician experience and revenue integrity are the same ' +
     'problem seen from two sides.',
-  version: '1.0.0',
-  lastReviewed: '2026-05-21',
+  version: '1.1.0',
+  lastReviewed: '2026-06-06',
 
   // ── Layer 1 — Operating metrics ───────────────────────────────────────────
   operatingMetrics: [
@@ -539,6 +539,38 @@ export const clinicalOperationsDocumentationPack: FunctionPack = {
         'When documentation is AI-drafted, what is the clinician review and ' +
         'attestation discipline, and how is draft accuracy actually ' +
         'monitored?',
+    },
+    {
+      key: 'rented_black_box_clinical_models',
+      name: 'Rented black-box clinical models the organisation cannot ' +
+        'validate',
+      description:
+        'The documentation, coding, and clinical-decision models the ' +
+        'organisation depends on are proprietary vendor models that run on ' +
+        'the vendor side and cannot be inspected, validated on the ' +
+        'organisation’s own population, or recalibrated when that population ' +
+        'drifts. The organisation rents intelligence derived from its own ' +
+        'clinical data and takes the vendor’s marketed accuracy on faith — a ' +
+        'liability it cannot fix because it cannot see inside it. The ' +
+        'canonical cautionary case is the Epic Sepsis Model: when externally ' +
+        'validated (Wong et al., JAMA Internal Medicine 2021) its real-world ' +
+        'discrimination was AUC ≈0.63, far below the vendor’s marketed ' +
+        'performance, while it missed roughly two-thirds of sepsis cases and ' +
+        'fired on a large share of all patients. A model you cannot inspect ' +
+        'or recalibrate is a liability, not an asset, and marketed accuracy ' +
+        'is not real-world accuracy on your population.',
+      detectionSignal:
+        'The coding, CDI, or clinical models cannot be inspected at the ' +
+        'feature or logic level, were never validated against the ' +
+        'organisation’s own labelled outcomes, report only a marketed ' +
+        'accuracy figure rather than tenant discrimination and calibration, ' +
+        'and have no drift-monitoring or recalibration path the organisation ' +
+        'controls.',
+      diagnosticQuestion:
+        'Are the documentation and coding models owned and validated on the ' +
+        'organisation’s own data — auditable, locally calibrated, and ' +
+        'monitored for drift — or are they black-box vendor models the ' +
+        'organisation rents and cannot inspect, recalibrate, or move?',
     },
   ],
 
@@ -1337,11 +1369,40 @@ export const clinicalOperationsDocumentationPack: FunctionPack = {
             'which apply and how they connect.',
         },
         {
+          heading: 'Platform landing zone & private data plane',
+          guidance:
+            'Specify the cloud landing zone and private data plane the ' +
+            'capability runs on — multi-account governance, private ' +
+            'networking with no public-IP compute and an egress allowlist, ' +
+            'PrivateLink to the lakehouse, a regional Unity Catalog metastore, ' +
+            'and identity federation. State the platform-readiness gate that ' +
+            'must be green before PHI and clinical documentation land. Do not ' +
+            'present an architecture with no landing zone (cross-cutting ' +
+            'pattern cc_cloud_landing_zone_private_data_plane).',
+        },
+        {
+          heading: 'Ingestion & data-integration framework (own-it)',
+          guidance:
+            'Specify the metadata-driven ingestion framework that onboards ' +
+            'Epic Clarity/Caboodle, clinical-documentation, CDI, coding, and ' +
+            'EHR-telemetry feeds by configuration rather than per-pipeline ' +
+            'code — name the own-it choice (e.g. DLT-META / the Databricks ' +
+            'four-config framework, Lakeflow Connect landing in the client’s ' +
+            'own Unity Catalog) and reject reinventing a bespoke framework or ' +
+            'renting an outsourced destination platform that holds the ' +
+            'documentation data on the vendor side (cross-cutting pattern ' +
+            'cc_metadata_driven_ingestion_framework).',
+        },
+        {
           heading: 'EHR integration and the note write-back path',
           guidance:
             'Specify the EHR integration for ambient note write-back, the ' +
             'CDI and coding integration, the telemetry feeds, and the ' +
-            'identity and encounter-context resolution each depends on.',
+            'identity and encounter-context resolution each depends on — as ' +
+            'an own-it, lakehouse-native integration where the documentation ' +
+            'data products, models, and IP stay in the client’s estate, not a ' +
+            'rented documentation or coding platform that holds the data and ' +
+            'models on the vendor side.',
         },
         {
           heading: 'AI use-case design and control posture',
@@ -1363,9 +1424,21 @@ export const clinicalOperationsDocumentationPack: FunctionPack = {
           heading: 'Clinician-safety and responsible-AI controls',
           guidance:
             'State the draft-accuracy monitoring, edit-rate telemetry, ' +
-            'over-trust detection, PHI handling, and the regulatory frames ' +
-            '(HIPAA, Part 2, E/M guidelines, RADV, information blocking) that ' +
-            'bound the design.',
+            'over-trust detection, and PHI handling. Require that any coding, ' +
+            'CDI, or clinical model is validated on the organisation’s own ' +
+            'labelled data and reports tenant discrimination and calibration ' +
+            '— never a marketed accuracy figure — with continuous drift ' +
+            'monitoring and a recalibration path the organisation controls ' +
+            '(the Epic Sepsis Model lesson: a black-box model you cannot ' +
+            'inspect or recalibrate is a liability, not an asset). Make the ' +
+            'governance spine explicit: Unity Catalog access/lineage controls, ' +
+            'a HITRUST CSF control mapping over the cloud + lakehouse ' +
+            'services, and HIPAA via the compliance security profile + BAA ' +
+            'with both the cloud provider and the lakehouse vendor, with PHI ' +
+            'processed in the client’s own account (cross-cutting pattern ' +
+            'cc_unity_catalog_hitrust_governance). Name the regulatory frames ' +
+            '(HIPAA, 42 CFR Part 2, E/M guidelines, RADV, information ' +
+            'blocking) that bound the design.',
         },
         {
           heading: 'Integration and build approach',
@@ -1520,6 +1593,33 @@ export const clinicalOperationsDocumentationPack: FunctionPack = {
         'A single blended savings number, a recovered-time dollar figure ' +
         'built on an unattested coefficient presented as a return, or a ' +
         'vendor ROI claim taken at face value.',
+    },
+    {
+      claim:
+        'That the documentation and coding models are OWNED and validated by ' +
+        'the organisation, not rented as a black box',
+      authoritativeSource:
+        'The architecture decision record and the data-platform contract ' +
+        'terms — where the documentation data products, the coding/CDI ' +
+        'models, and the clinical models physically reside, plus the ' +
+        'model-validation report showing tenant discrimination, calibration, ' +
+        'and drift monitoring on the organisation’s own labelled data.',
+      whatGoodEvidenceLooksLike:
+        'The documentation data products and the coding/CDI models run in ' +
+        'the organisation’s own governed lakehouse (its own cloud account, ' +
+        'under Unity Catalog), are auditable and recalibratable, the IP is ' +
+        'owned by the organisation, and any clinical model reports tenant ' +
+        'AUC and calibration with a drift-monitoring and recalibration path ' +
+        'the organisation controls. Managed connectors and licensed coding ' +
+        'reference content are acceptable where the destination catalog is ' +
+        'the organisation’s own.',
+      weakEvidenceToReject:
+        'A claim of having a documentation or coding platform whose models ' +
+        'and data are held by the vendor and cannot be inspected, validated ' +
+        'on the tenant population, or recalibrated, or a model accepted on a ' +
+        'marketed accuracy figure with no tenant validation — that is rented ' +
+        'black-box intelligence (the Epic Sepsis Model failure mode), not an ' +
+        'owned asset.',
     },
   ],
 };

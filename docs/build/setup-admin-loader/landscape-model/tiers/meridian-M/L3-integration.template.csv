@@ -1,0 +1,17 @@
+interface_name,source_app,target_app,pattern,middleware,direction,frequency,data_volume,criticality,source
+ADT feed Epic to Intelerad,Epic EHR,Intelerad PACS,hl7v2,Epic Bridges,outbound,real_time,~120k msg/day,Tier 0,illustrative
+Lab orders Epic to Beaker,Epic EHR,Epic Beaker,hl7v2,Epic Interconnect,bidirectional,real_time,~45k msg/day,Tier 1,illustrative
+Lab results Beaker to Epic,Epic Beaker,Epic EHR,hl7v2,Epic Interconnect,inbound,real_time,~45k msg/day,Tier 1,illustrative
+Radiology results to Epic,Intelerad PACS,Epic EHR,hl7v2,Mirth Connect,inbound,real_time,~30k msg/day,Tier 1,illustrative
+Claims Epic to Waystar,Epic EHR,Waystar,edi_x12,Mirth Connect,outbound,batch_hourly,~18k claims/day,Tier 1,illustrative
+Eligibility 270/271 Waystar to Epic,Waystar,Epic EHR,edi_x12,Mirth Connect,bidirectional,real_time,~22k txn/day,Tier 1,illustrative
+RCM extract Epic to Ensemble,Epic EHR,Ensemble RCM,file_batch,Mirth Connect,outbound,nightly,~2.4 GB/night,Tier 1,illustrative
+ADT to Ensemble RCM,Epic EHR,Ensemble RCM,hl7v2,Epic Bridges,outbound,real_time,~120k msg/day,Tier 1,illustrative
+HR feed Workday to Epic,Workday,Epic EHR,rest_api,Mirth Connect,inbound,nightly,~42k records,Tier 2,illustrative
+Patient access FHIR API,Epic EHR,MyChart third-party apps,fhir,Epic Interconnect,outbound,on_demand,~6% of integrations,Tier 2,illustrative
+SIU scheduling to Genesys,Epic EHR,Genesys Cloud CX,hl7v2,Mirth Connect,outbound,real_time,~14k msg/day,Tier 2,illustrative
+Charge capture Epic to Lawson,Epic EHR,Infor Lawson,file_batch,BizTalk (legacy),outbound,nightly,~1.1 GB/night,Tier 2,illustrative
+Cerner ADT bridge to Epic,Cerner Millennium,Epic EHR,hl7v2,Mirth Connect,bidirectional,real_time,~9k msg/day,Tier 1,illustrative
+Blue Ridge Meditech to Epic,Meditech (Blue Ridge),Epic EHR,hl7v2,BizTalk (legacy),bidirectional,real_time,~11k msg/day,Tier 1,illustrative
+Clarity ETL extract,Epic EHR,Epic Clarity,db_link,Epic Cogito ETL,outbound,nightly,~280 GB/night,Tier 1,illustrative
+Caboodle load,Epic Clarity,Epic Caboodle,db_link,Epic Cogito ETL,outbound,nightly,~180 GB/night,Tier 1,illustrative

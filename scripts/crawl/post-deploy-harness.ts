@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import {
-  POST_DEPLOY_HARD_QUESTIONS,
   createIsolatedPersonaContext,
+  resolveCrawlQuestions,
   resolveCrawlPersonas,
   resolveCrawlSurfaces,
   type CrawlSurface,
@@ -21,6 +21,7 @@ interface Args {
   outputDir: string;
   persona?: string;
   surface?: string;
+  questionSet?: string;
   baseline?: string;
   noAuth: boolean;
   rollbackOnP0: boolean;
@@ -36,36 +37,65 @@ async function main() {
   await fs.mkdir(path.join(out, 'transcripts'), { recursive: true });
 
   const observations: CrawlPageObservation[] = [];
+  const personas = resolveCrawlPersonas(args.persona);
+  const surfaces = resolveCrawlSurfaces(args.surface);
+  const questions = resolveCrawlQuestions(args.questionSet);
+  const plannedObservationCount = personas.length * surfaces.length;
+  console.log(
+    `crawl_plan:${personas.map((persona) => persona.key).join(",")}:${surfaces.map((surface) => surface.id).join(",")}:questions=${questions.length}`,
+  );
+  const baseline = args.baseline ? await readBaseline(args.baseline) : null;
+  const persistProgress = async (complete: boolean) => {
+    const run = buildCrawlRun(args.baseUrl, runId, observations);
+    const comparison = buildCrawlComparison(run, baseline, complete, plannedObservationCount);
+    await writeCrawlArtifacts(args.outputDir, out, run, comparison);
+  };
+
   let fatalError: unknown = null;
   try {
-    for (const persona of resolveCrawlPersonas(args.persona)) {
+    for (const persona of personas) {
+      console.log(`crawl_persona_start:${persona.key}:${persona.tenantKey}`);
       const browser = await launchCrawlBrowser();
-      const surfaces = resolveCrawlSurfaces(args.surface);
       let personaContext: { context: BrowserContext; page: Page } | null = null;
       try {
-        const activeContext = args.noAuth
-          ? await createNoAuthPersonaContext(browser, persona, args.baseUrl)
-          : await createIsolatedPersonaContext(browser, persona, { baseUrl: args.baseUrl });
+        let activeContext: {
+          context: BrowserContext;
+          page: Page;
+          persona: unknown;
+        };
+        try {
+          activeContext = args.noAuth
+            ? await createNoAuthPersonaContext(browser, persona, args.baseUrl)
+            : await createIsolatedPersonaContext(browser, persona, {
+                baseUrl: args.baseUrl,
+              });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn(`crawl_auth_bootstrap_failed:${persona.key}:${message}`);
+          observations.push(
+            buildAuthBootstrapObservation(persona, args.baseUrl, message),
+          );
+          await persistProgress(false);
+          continue;
+        }
         personaContext = activeContext;
         for (const surface of surfaces) {
-          observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out));
+          console.log(`crawl_surface_start:${persona.key}:${surface.id}:${surface.path}`);
+          observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out, questions));
+          await persistProgress(false);
+          console.log(`crawl_surface_complete:${persona.key}:${surface.id}:captured=${observations.length}/${plannedObservationCount}`);
         }
       } finally {
         await personaContext?.context.close().catch(() => undefined);
         await browser.close().catch(() => undefined);
+        console.log(`crawl_persona_complete:${persona.key}`);
       }
     }
   } catch (error) {
     fatalError = error;
   }
 
-  const run: CrawlRun = {
-    runId,
-    baseUrl: args.baseUrl,
-    commitSha: process.env.VERCEL_GIT_COMMIT_SHA,
-    createdAt: new Date().toISOString(),
-    observations,
-  };
+  const run = buildCrawlRun(args.baseUrl, runId, observations);
 
   if (fatalError) {
     const comparison: CrawlComparison = {
@@ -86,8 +116,7 @@ async function main() {
     throw fatalError;
   }
 
-  const baseline = args.baseline ? await readBaseline(args.baseline) : null;
-  const comparison = compareCrawlToBaseline(run, baseline);
+  const comparison = buildCrawlComparison(run, baseline, true, plannedObservationCount);
   await writeCrawlArtifacts(args.outputDir, out, run, comparison);
 
   console.log(`Post-deploy crawl complete: ${comparison.p0} P0, ${comparison.p1} P1, ${comparison.p2} P2`);
@@ -99,6 +128,71 @@ async function main() {
       console.error('P0 findings detected. Run scripts/crawl/auto-rollback.ts with --execute only from the controlled deploy workflow.');
     }
   }
+}
+
+function buildAuthBootstrapObservation(
+  persona: { key: string; tenantKey: string; tenantName: string },
+  baseUrl: string,
+  message: string,
+): CrawlPageObservation {
+  return {
+    tenantKey: persona.tenantKey,
+    expectedTenantName: persona.tenantName,
+    personaKey: persona.key,
+    surfaceId: 'auth-bootstrap',
+    path: '/sign-in',
+    url: new URL('/sign-in', baseUrl).toString(),
+    visibleText: `Auth bootstrap failed for ${persona.tenantName}: ${message}`,
+    consoleErrors: [],
+    networkErrors: [],
+    evidenceChipCount: 0,
+    proofPointCount: 0,
+    citationDensity: 0,
+    hardQuestionExactFieldCitations: 0,
+    hardQuestionGroundingEvidence: 0,
+    watchlistTopEntries: [],
+    visualCanon: {
+      backgroundOk: true,
+      headersOk: true,
+      bodyOk: true,
+      buttonsOk: true,
+    },
+  };
+}
+
+function buildCrawlRun(baseUrl: string, runId: string, observations: CrawlPageObservation[]): CrawlRun {
+  return {
+    runId,
+    baseUrl,
+    commitSha: process.env.VERCEL_GIT_COMMIT_SHA,
+    createdAt: new Date().toISOString(),
+    observations,
+  };
+}
+
+function buildCrawlComparison(
+  run: CrawlRun,
+  baseline: CrawlBaseline | null,
+  complete: boolean,
+  plannedObservationCount: number,
+): CrawlComparison {
+  const comparison = compareCrawlToBaseline(run, baseline);
+  if (!complete) {
+    comparison.findings.push({
+      severity: 'P1',
+      tenantKey: 'unknown',
+      personaKey: 'crawl-harness',
+      surfaceId: 'partial-run',
+      dimension: 'crawl-execution',
+      message: `Post-deploy crawl is still partial: captured ${run.observations.length} of ${plannedObservationCount} planned observations.`,
+      evidence: {
+        capturedObservationCount: run.observations.length,
+        plannedObservationCount,
+      },
+    });
+    comparison.p1 += 1;
+  }
+  return comparison;
 }
 
 async function writeCrawlArtifacts(
@@ -137,6 +231,7 @@ async function crawlSurface(
   surface: CrawlSurface,
   baseUrl: string,
   out: string,
+  questions: readonly string[],
 ): Promise<CrawlPageObservation> {
   const consoleErrors: string[] = [];
   const networkErrors: Array<{ url: string; status: number }> = [];
@@ -156,8 +251,11 @@ async function crawlSurface(
   await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
 
   const transcript = surface.requiresAgentProbe
-    ? await askHardQuestions(page, safeName, out)
-    : { exactFieldCitations: 0 };
+    ? await askHardQuestions(page, persona, surface, safeName, out, questions)
+    : { exactFieldCitations: 0, groundingEvidence: 0 };
+  if (surface.requiresContextDemoVectorProof) {
+    await proveContextDemoVectorPath(page, persona, safeName, out);
+  }
 
   const html = await page.content();
   const visibleText = await page.locator('body').innerText({ timeout: 10_000 }).catch(() => '');
@@ -191,6 +289,7 @@ async function crawlSurface(
     proofPointCount: counts.proofPointCount,
     citationDensity: counts.citationDensity,
     hardQuestionExactFieldCitations: transcript.exactFieldCitations,
+    hardQuestionGroundingEvidence: transcript.groundingEvidence,
     watchlistTopEntries: counts.watchlistTopEntries,
     visualCanon: counts.visualCanon,
     metrics: counts.metrics,
@@ -257,21 +356,324 @@ interface PageCounts {
   watchlistTopEntries: string[];
 }
 
-async function askHardQuestions(page: Page, safeName: string, out: string): Promise<{ exactFieldCitations: number }> {
-  const transcript: Array<{ question: string; answer: string }> = [];
+async function askHardQuestions(
+  page: Page,
+  persona: { key: string; tenantKey: string; tenantName: string },
+  surface: CrawlSurface,
+  safeName: string,
+  out: string,
+  questions: readonly string[],
+): Promise<{ exactFieldCitations: number; groundingEvidence: number }> {
+  const transcript: Array<{
+    question: string;
+    answer: string;
+    status: 'answered' | 'error';
+    error?: string;
+    eventCount?: number;
+    sourceEventCitations?: number;
+    exactFieldCitations?: number;
+    concreteFactSignals?: number;
+    groundingEvidence?: number;
+  }> = [];
   let exactFieldCitations = 0;
-  for (const question of POST_DEPLOY_HARD_QUESTIONS) {
-    const input = page.getByRole('textbox').first();
-    if (!(await input.isVisible().catch(() => false))) break;
-    await input.fill(question);
-    await input.press('Enter');
-    await page.waitForTimeout(2500);
-    const answer = (await page.locator('body').innerText().catch(() => '')).slice(-5000);
-    exactFieldCitations += (answer.match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi) ?? []).length;
-    transcript.push({ question, answer });
+  let groundingEvidence = 0;
+  for (const question of questions) {
+    const questionNumber = transcript.length + 1;
+    console.log(`crawl_question_start:${persona.key}:${surface.id}:${questionNumber}/${questions.length}`);
+    const response = await askIntelligenceApi(page, question, persona, surface);
+    const answer = response.answer;
+    const answerExactFieldCitations = countExactFieldCitations(answer);
+    const concreteFactSignals = countConcreteFactSignals(answer);
+    const answerGroundingEvidence =
+      response.sourceEventCitations +
+      answerExactFieldCitations +
+      concreteFactSignals;
+    exactFieldCitations += answerExactFieldCitations;
+    groundingEvidence += answerGroundingEvidence;
+    transcript.push({
+      question,
+      answer,
+      status: response.ok ? 'answered' : 'error',
+      error: response.error,
+      eventCount: response.eventCount,
+      sourceEventCitations: response.sourceEventCitations,
+      exactFieldCitations: answerExactFieldCitations,
+      concreteFactSignals,
+      groundingEvidence: answerGroundingEvidence,
+    });
+    console.log(
+      `crawl_question_complete:${persona.key}:${surface.id}:${questionNumber}/${questions.length}:ok=${response.ok}:events=${response.eventCount}`,
+    );
   }
   await fs.writeFile(path.join(out, 'transcripts', `${safeName}.json`), JSON.stringify(transcript, null, 2));
-  return { exactFieldCitations };
+  return { exactFieldCitations, groundingEvidence };
+}
+
+async function askIntelligenceApi(
+  page: Page,
+  question: string,
+  persona: { tenantKey: string; tenantName: string },
+  surface: CrawlSurface,
+): Promise<{ ok: boolean; answer: string; error?: string; eventCount: number; sourceEventCitations: number }> {
+  return page.evaluate(async ({ question: q, persona: p, surface: s }) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 55_000);
+    try {
+      const response = await fetch('/api/intelligence/ask', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/x-ndjson',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q,
+          client: p.tenantKey,
+          surfaceContext: {
+            activeTab: s.id,
+            activeClient: p.tenantKey,
+            clientKey: p.tenantKey,
+            facts: [
+              `crawl_persona_tenant=${p.tenantName}`,
+              `crawl_surface=${s.path}`,
+            ],
+          },
+        }),
+        signal: controller.signal,
+      });
+      if (!response.ok || !response.body) {
+        return {
+          ok: false,
+          answer: '',
+          error: `ask_api_http_${response.status}`,
+          eventCount: 0,
+          sourceEventCitations: 0,
+        };
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let answer = '';
+      let eventCount = 0;
+      let sourceEventCitations = 0;
+      let error: string | undefined;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          eventCount += 1;
+          const event = JSON.parse(line) as {
+            type?: string;
+            text?: string;
+            delta?: string;
+            error?: string;
+            stage?: { name?: string; content?: string };
+            sources?: unknown[];
+          };
+          if (event.type === 'delta' && event.text) answer += event.text;
+          if (event.type === 'delta' && event.delta) answer += event.delta;
+          if (event.type === 'sources' && Array.isArray(event.sources)) {
+            sourceEventCitations += event.sources.length;
+          }
+          if (event.type === 'sentinel-stage' && event.stage?.content) {
+            answer += `${event.stage.name ?? 'Stage'}: ${event.stage.content}\n`;
+          }
+          if (event.type === 'error') error = event.error ?? 'ask_api_stream_error';
+        }
+      }
+
+      return {
+        ok: !error && answer.trim().length > 0,
+        answer: answer.trim(),
+        error,
+        eventCount,
+        sourceEventCitations,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        answer: '',
+        error: err instanceof Error ? err.message : String(err),
+        eventCount: 0,
+        sourceEventCitations: 0,
+      };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }, { question, persona, surface });
+}
+
+const EXACT_FIELD_CITATION_PATTERN =
+  /\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi;
+
+function countExactFieldCitations(answer: string): number {
+  return (answer.match(EXACT_FIELD_CITATION_PATTERN) ?? []).length;
+}
+
+function countConcreteFactSignals(answer: string): number {
+  const signals = new Set<string>();
+  for (const match of answer.matchAll(/\$\s?\d[\d,.]*(?:\s?(?:k|m|b|million|billion))?/gi)) {
+    signals.add(`money:${match[0].toLowerCase()}`);
+  }
+  for (const match of answer.matchAll(/\b\d+(?:\.\d+)?\s?%/g)) {
+    signals.add(`percent:${match[0]}`);
+  }
+  for (const match of answer.matchAll(/\b(?:FY\s?)?20\d{2}\b|\bQ[1-4]\s+20\d{2}\b/gi)) {
+    signals.add(`date:${match[0].toLowerCase()}`);
+  }
+  for (const match of answer.matchAll(/\b[\w./-]+\.(?:csv|json|jsonl|md|pdf|docx|xlsx|pptx)\b/gi)) {
+    signals.add(`file:${match[0].toLowerCase()}`);
+  }
+  return signals.size;
+}
+
+interface ContextDemoVectorProof {
+  ok: boolean;
+  status: number;
+  brokerTenantKey: string;
+  vectorInfoTag: string | null;
+  semanticChunkCount: number;
+  topScore: number | null;
+  topChunkId: string | null;
+  topSourceDoc: string | null;
+  topTenantKey: string | null;
+  warnings: string[];
+  error?: string;
+  responseSnippet?: string;
+}
+
+async function proveContextDemoVectorPath(
+  page: Page,
+  persona: { key: string; tenantKey: string; tenantName: string },
+  safeName: string,
+  out: string,
+): Promise<void> {
+  const brokerTenantKey = brokerTenantKeyForClient(persona.tenantKey);
+  const proof = await page.evaluate(
+    async ({ tenantKey, tenantName }) => {
+      const response = await fetch("/api/context/demo", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `Which ${tenantName} context chunks best explain AI automation, spend, initiatives, and risk?`,
+          mode: "tenant",
+          tenantKey,
+          maxFacts: 8,
+          maxChunks: 5,
+          graphTraversalDepth: 2,
+        }),
+      });
+      const text = await response.text();
+      let body: unknown = null;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        body = null;
+      }
+      return {
+        ok: response.ok,
+        status: response.status,
+        body,
+        responseSnippet: text.slice(0, 800),
+      };
+    },
+    { tenantKey: brokerTenantKey, tenantName: persona.tenantName },
+  );
+
+  const body = asRecord(proof.body);
+  const bundle = asRecord(body?.bundle);
+  const infoTags = stringArray(bundle?.infoTags);
+  const warnings = stringArray(bundle?.warnings);
+  const semanticChunks = arrayOfRecords(bundle?.semanticChunks);
+  const topHit = asRecord(semanticChunks[0]);
+  const topChunk = asRecord(topHit?.chunk);
+  const topScore = typeof topHit?.score === "number" ? topHit.score : null;
+  const vectorInfoTag =
+    infoTags.find((tag) => /Postgres pgvector/i.test(tag)) ?? null;
+  const summary: ContextDemoVectorProof = {
+    ok: proof.ok,
+    status: proof.status,
+    brokerTenantKey,
+    vectorInfoTag,
+    semanticChunkCount: semanticChunks.length,
+    topScore,
+    topChunkId: stringOrNull(topChunk?.chunkId),
+    topSourceDoc: stringOrNull(topChunk?.sourceDoc),
+    topTenantKey: stringOrNull(topChunk?.tenantKey),
+    warnings,
+    responseSnippet: proof.responseSnippet,
+  };
+
+  const failures = [
+    proof.ok ? null : `context_demo_http_${proof.status}`,
+    vectorInfoTag ? null : "missing_pgvector_info_tag",
+    semanticChunks.length > 0 ? null : "no_semantic_chunks",
+    typeof topScore === "number" && topScore > 0 ? null : "missing_positive_vector_score",
+    summary.topTenantKey === brokerTenantKey
+      ? null
+      : `top_chunk_tenant_mismatch:${summary.topTenantKey ?? "missing"}`,
+    warnings.some((warning) => /Vector retrieval pending/i.test(warning))
+      ? "vector_retrieval_fell_back_to_keyword"
+      : null,
+  ].filter((failure): failure is string => Boolean(failure));
+
+  summary.error = failures.length > 0 ? failures.join(",") : undefined;
+  await fs.writeFile(
+    path.join(out, "transcripts", `${safeName}.context-demo-vector.json`),
+    JSON.stringify(summary, null, 2),
+  );
+
+  if (failures.length > 0) {
+    throw new Error(
+      `context_demo_vector_proof_failed:${persona.key}:${failures.join(",")}`,
+    );
+  }
+
+  console.log(
+    `context_demo_vector_proof:${persona.key}:${brokerTenantKey}:chunks=${summary.semanticChunkCount}:topScore=${summary.topScore}:topChunk=${summary.topChunkId}`,
+  );
+}
+
+function brokerTenantKeyForClient(clientKey: string): string {
+  const map: Record<string, string> = {
+    apexretail: "apex-retail",
+    arcturus: "firstcapital",
+    firstcapital: "firstcapital",
+    lakeshore: "lakeshore-holdings",
+    meridian: "meridian-health",
+    northstar: "northstar-clinical",
+    skyharbor: "skyharbor-air",
+  };
+  return map[clientKey] ?? clientKey;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function arrayOfRecords(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value)
+    ? value.map(asRecord).filter((item): item is Record<string, unknown> => Boolean(item))
+    : [];
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 async function readBaseline(file: string): Promise<CrawlBaseline | null> {
@@ -296,6 +698,7 @@ function parseArgs(argv: string[]): Args {
     if (arg === '--output-dir' && next) args.outputDir = next;
     if (arg === '--persona' && next) args.persona = next;
     if (arg === '--surface' && next) args.surface = next;
+    if (arg === '--question-set' && next) args.questionSet = next;
     if (arg === '--baseline' && next) args.baseline = next;
     if (arg === '--no-auth') args.noAuth = true;
     if (arg === '--rollback-on-p0') args.rollbackOnP0 = true;

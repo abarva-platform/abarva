@@ -90,9 +90,9 @@ export const CANONICAL_TENANTS = [
   },
   {
     key: "meridian-health",
-    name: "Meridian Health",
+    name: "Meridian Health System",
     industry: "healthcare_provider",
-    mimics: "PHS-shape hospital system",
+    mimics: "Sacramento-based integrated delivery network plus health plan",
     patternOverlays: ["core"],
     compliance: MERIDIAN_PHS_COMPLIANCE_METADATA,
   },
@@ -116,6 +116,13 @@ export const CANONICAL_TENANTS = [
     industry: "airline",
     mimics: "Delta-shape global airline",
     patternOverlays: ["core", "airline-industry-v1"],
+  },
+  {
+    key: "lakeshore-holdings",
+    name: "Lakeshore Holdings",
+    industry: "diversified",
+    mimics: "Morgan Street Holdings-shape diversified holding company",
+    patternOverlays: ["core"],
   },
 ] as const satisfies readonly CanonicalTenant[];
 

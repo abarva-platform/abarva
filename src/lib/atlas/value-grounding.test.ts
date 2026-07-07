@@ -103,7 +103,7 @@ describe('Atlas value grounding', () => {
     expect(search).toHaveBeenCalledWith(expect.objectContaining({
       client_id: 'client-1',
       tenant_key: 'meridian',
-      industry: 'healthcare',
+      industry: 'healthcare_provider',
       limit: 3,
     }), expect.any(Object));
     expect(grounding.valueSeparation.projected).toMatchObject({

@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-29T13:02:33.601Z",
+  "generatedAt": "2026-06-13T11:16:34.102Z",
   "notes": "Captured by scripts/audit/control-plane-tenant-purity.mjs --baseline. Existing hardcoded tenant strings in control-plane code (src/lib, src/app, src/components) excluding allowlisted files (client-config.ts, active-client.ts, cxo-personas.ts, demo-dataset-registry.ts, src/data/**, tests, mocks). A future run with --check FAILS if any tenant count exceeds this baseline. Reducing the baseline = paying down debt.",
   "perTermCount": {
-    "Apex Retail": 644,
-    "Meridian Health": 132,
+    "Apex Retail": 618,
+    "Meridian Health": 122,
     "Meridian Hospital": 0,
-    "First Capital": 307,
+    "First Capital": 297,
     "Heliara": 17,
-    "Arcturus Financial": 11,
-    "Northstar Clinical": 3
+    "Arcturus Financial": 4,
+    "Northstar Clinical": 5
   },
-  "total": 1114
+  "total": 1063
 }

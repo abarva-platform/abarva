@@ -59,7 +59,7 @@ function ModuleDashboard({
               </div>
               <div className="programs-row" style={{ justifyContent: 'space-between' }}>
                 <span className="programs-chip">{getModuleName(module.moduleKey)}</span>
-                {module.nexusDraftPending ? <span className="programs-chip teal">Nexus assist</span> : null}
+                {module.nexusDraftPending ? <span className="programs-chip teal">Ava assist</span> : null}
               </div>
             </Link>
           ))}
@@ -223,7 +223,7 @@ export function ProgramSurface(props: ProgramDetailProps) {
         </div>
       </div>
       <div className="programs-hero-note">
-        Nexus Mode B drafting and Mode C takeover are preview surfaces in this release. Live drafting, interview capture, and synthesis will activate through the shared Nexus interaction layer.
+        Ava Mode B drafting and Mode C takeover are preview surfaces in this release. Live drafting, interview capture, and synthesis will activate through the shared Ava interaction layer.
       </div>
     </ProgramShell>
   );

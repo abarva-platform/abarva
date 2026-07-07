@@ -1,0 +1,16 @@
+vendor,product,contract_type,annual_spend_usd,renewal_date,support_tier,owner,notes,source
+Kyriba,Treasury Management,SaaS subscription,520000,2027-03-31,Premier,Daniel Whitaker (Holdco CFO),"Holdco-led treasury platform; multi-currency/FX, 50 countries; the one standardized stack",illustrative-sample
+SAP,S/4HANA + Concur,Enterprise license + SaaS,1850000,2026-12-31,Enterprise,Meera Rao (Global CIO),Holdco GL/consolidation; private-cloud on VMware,illustrative-sample
+Microsoft,Azure EA + Dynamics 365 F&O,Enterprise Agreement,1240000,2027-06-30,Enterprise,Meera Rao (Global CIO),"Single Azure EA; Northline ERP is D365 F&O — duplicate ERP footprint",illustrative-sample
+Workday,HCM,SaaS subscription,610000,2026-09-30,Premier,Holdco CHRO,Holdco HR; ADP at Northline being retired into this,illustrative-sample
+Oracle,NetSuite + TMS,SaaS subscription,670000,2026-11-15,Standard,Forge & Field CIO,"NetSuite at Forge & Field, TMS at Northline — two Oracle relationships",illustrative-sample
+Manhattan Associates,Warehouse Management,On-prem license + maintenance,470000,2027-01-31,Standard,Northline IT Director,On-prem WMS on VMware at Columbus colo,illustrative-sample
+Salesforce,Sales Cloud,SaaS subscription,240000,2026-10-31,Standard,Brightmark Commercial,Brightmark CRM; small footprint,illustrative-sample
+ServiceNow,ITSM,SaaS subscription,260000,2027-02-28,Premier,Meera Rao (Global CIO),Holdco-wide ITSM; consolidation candidate for opco ticketing,illustrative-sample
+Coupa,Procurement / AP,SaaS subscription,170000,2026-08-31,Standard,Holdco Procurement,Holdco procurement; opcos partly outside it,illustrative-sample
+Sage,Intacct,SaaS subscription,210000,2027-04-30,Standard,Brightmark CFO,Brightmark ERP — fourth distinct finance system,illustrative-sample
+Dell Technologies,PowerEdge + hardware support,Hardware + ProSupport,310000,2027-05-31,ProSupport Plus,Holdco IT Ops,VMware host fleet; refresh cycle approaching,illustrative-sample
+NetApp,AFF/FAS storage + support,Hardware + support,180000,2027-03-15,Premium,Holdco IT Ops,Primary SAN/NAS; EUC fileshare on same vendor,illustrative-sample
+Dell Boomi,iPaaS,SaaS subscription,140000,2026-12-15,Standard,Surekha (VP Innovation/Delivery),Only modern integration layer; most flows still SFTP,illustrative-sample
+Snowflake,Cloud Data Platform,Capacity / consumption,90000,2026-07-31,Standard,Surekha (VP Innovation/Delivery),Early pilot at holdco; not yet primary DW,illustrative-sample
+Okta,Identity (Brightmark),SaaS subscription,60000,2026-09-15,Standard,Brightmark IT Lead,Separate IdP — identity fragmentation across opcos,illustrative-sample

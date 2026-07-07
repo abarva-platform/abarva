@@ -5,14 +5,20 @@ import { SynthesisOutput } from '@/components/intelligence/SynthesisOutput';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { IntelligenceSynthesisPageView } from '@/lib/intelligence/intelligence-i6-view';
 
-export function IntelligenceSynthesisPage({ view }: { view: IntelligenceSynthesisPageView }) {
+export function IntelligenceSynthesisPage({
+  view,
+  tenantName,
+}: {
+  view: IntelligenceSynthesisPageView;
+  tenantName: string;
+}) {
   return (
     <AppShell
       surface="intelligence"
-      topBarProps={{ tenantName: 'Apex Retail Group', showLocked: true, context: 'Intelligence · Atlas synthesis' }}
+      topBarProps={{ tenantName, showLocked: true, context: 'Intelligence · Atlas synthesis' }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Synthesizer' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Synthesizer' }}
         quote={`Deterministic synthesis ready. ${view.result.wordCount} words, ${view.result.citations.length} corpus citations, no live model call.`}
         agentContext="Atlas · deterministic synthesis · I6"
         actions={[

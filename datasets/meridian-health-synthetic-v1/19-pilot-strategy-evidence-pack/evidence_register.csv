@@ -1,0 +1,9 @@
+artifact_name,artifact_type,owner_role,date,use_case,source_basis,classification,confidence,move_phase
+Prior auth workqueue summary,csv,VP Revenue Cycle,2026-06-14,Prior auth and denials automation,Aggregated payer and service-line workqueue metrics,internal,medium,P2
+RCM denials summary,csv,Revenue Integrity Director,2026-06-14,Payment integrity and leakage reduction,Aggregated denial category and recoverable value summary,internal,medium,P2
+Patient access contact center summary,csv,VP Member Experience,2026-06-14,Call center and member experience optimization,Aggregated queue volume and deflection metrics,internal,medium,P2
+Service-line P&L summary,csv,CFO FP&A,2026-06-14,Cost transparency by product provider population,Aggregated service-line revenue margin and avoidable cost summary,internal,medium,P2
+Value-based care panel summary,csv,Chief Population Health Officer,2026-06-14,Provider quality and performance,Aggregated contract quality gap and covered lives summary,internal,low,P2
+Data platform lineage summary,csv,Chief Data Officer,2026-06-14,Unified clinical and claims data foundation,Data product source system PHI class refresh SLA and quality score,internal,medium,P2
+Vendor BAA and AI clause summary,csv,VP Procurement,2026-06-14,Cross-use-case governance,Vendor BAA status AI clause status and renewal window,confidential,medium,P2
+Finance close intake placeholder,csv,Controller,2026-06-14,Automated close and reporting,Template placeholder requiring close-cycle and reconciliation evidence,internal,low,P2

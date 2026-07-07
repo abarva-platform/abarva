@@ -1,0 +1,150 @@
+import {
+  buildValidatedAgentContextBundle,
+  buildDecisionReasoningRequest,
+  type GovernedCandidate,
+} from "../agent-context-bundle";
+import {
+  fromEnterpriseBundle,
+  fromAskSource,
+} from "../context-bundle-adapters";
+
+function candidate(over: Partial<GovernedCandidate> = {}): GovernedCandidate {
+  return {
+    id: "c1",
+    client_key: "lakeshore-holdings",
+    tenant_id: "tenant-1",
+    source_layer: "tenant_context",
+    source_basis: "tenant_admin_upload",
+    classification: "internal",
+    retrievability: "committed_not_indexed",
+    agent_readiness_status: "not_reviewed",
+    confidence_level: null,
+    cited_render_verified_at: null,
+    citations: [],
+    ...over,
+  };
+}
+
+describe("buildValidatedAgentContextBundle", () => {
+  it("keeps usable (warn-level) candidates and surfaces caveats", () => {
+    const b = buildValidatedAgentContextBundle([candidate()]);
+    expect(b.usable).toHaveLength(1);
+    expect(b.blocked).toHaveLength(0);
+    expect(b.decision).toBe("warn"); // usable for grounding, not yet agent-ready
+    expect(b.agentReadyCount).toBe(0);
+  });
+
+  it("blocks a tenant candidate missing tenant_id — it never reaches the model", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({ tenant_id: null }),
+    ]);
+    expect(b.usable).toHaveLength(0);
+    expect(b.blocked).toHaveLength(1);
+    expect(b.blocked[0].errors.join(" ")).toMatch(/tenant_id/);
+  });
+
+  it("blocks sensitive data destined for shared corpus", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({
+        client_key: "corpus_global",
+        tenant_id: null,
+        source_layer: "industry_corpus",
+        classification: "phi",
+      }),
+    ]);
+    expect(b.usable).toHaveLength(0);
+    expect(b.blocked).toHaveLength(1);
+  });
+
+  it("blocks a non-canonical client_key (real client name leak guard)", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({ client_key: "morgan-street", tenant_id: "t" }),
+    ]);
+    expect(b.blocked).toHaveLength(1);
+  });
+
+  it("counts a fully agent-ready candidate and de-dupes citations", () => {
+    const ready = candidate({
+      retrievability: "search_indexed",
+      agent_readiness_status: "agent_ready",
+      confidence_level: "high",
+      cited_render_verified_at: "2026-06-08T00:00:00Z",
+      citations: ["doc#1", "doc#1", "doc#2"],
+    });
+    const b = buildValidatedAgentContextBundle([ready]);
+    expect(b.agentReadyCount).toBe(1);
+    expect(b.citations.sort()).toEqual(["doc#1", "doc#2"]);
+  });
+
+  it("decision is block when every candidate is blocked", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({ tenant_id: null }),
+      candidate({ id: "c2", tenant_id: null }),
+    ]);
+    expect(b.decision).toBe("block");
+    expect(b.usable).toHaveLength(0);
+  });
+
+  it("decision is pass for an empty candidate set (nothing to govern)", () => {
+    expect(buildValidatedAgentContextBundle([]).decision).toBe("pass");
+  });
+});
+
+describe("buildDecisionReasoningRequest", () => {
+  it("wraps the validated bundle in the reasoning envelope", () => {
+    const req = buildDecisionReasoningRequest({
+      task: "summarize cloud posture",
+      agent: "sentinel",
+      tenantKey: "lakeshore-holdings",
+      candidates: [candidate()],
+    });
+    expect(req.task).toMatch(/cloud posture/);
+    expect(req.agent).toBe("sentinel");
+    expect(req.retrievalBundle.usable).toHaveLength(1);
+    expect(req.policy_version).toBeTruthy();
+  });
+});
+
+describe("bundle-shape adapters", () => {
+  it("adapts a broker EnterpriseAgentContextBundle, fencing restricted items", () => {
+    const bundle = {
+      tenantKey: "lakeshore-holdings",
+      items: [
+        {
+          id: "i1",
+          kind: "kpi_metric",
+          title: "ARR",
+          sourceBasis: "tenant_admin_upload",
+          dataClassification: "internal",
+          linkedEvidence: [{ citationLocator: "ev#1" }],
+        },
+        {
+          id: "i2",
+          kind: "doc",
+          dataClassification: "restricted",
+          linkedEvidence: [],
+        },
+      ],
+    };
+    const candidates = fromEnterpriseBundle(
+      bundle,
+      "lakeshore-holdings",
+      "lakeshore-holdings",
+    );
+    expect(candidates).toHaveLength(2);
+    const b = buildValidatedAgentContextBundle(candidates);
+    // restricted item is fenced; the internal kpi is usable.
+    expect(b.usable.map((c) => c.id)).toContain("i1");
+    expect(b.usable.some((c) => c.id === "i2")).toBe(false);
+  });
+
+  it("maps AskSource confidence to a confidence level", () => {
+    const c = fromAskSource(
+      { id: "s1", name: "Annual report", confidence: 0.9 },
+      "lakeshore-holdings",
+      "lakeshore-holdings",
+    );
+    expect(c.confidence_level).toBe("high");
+    expect(c.citations).toEqual(["s1"]);
+  });
+});

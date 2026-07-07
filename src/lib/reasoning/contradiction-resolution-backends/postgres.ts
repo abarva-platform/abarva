@@ -19,6 +19,7 @@
  */
 
 import type { ContradictionResolutionBackend } from '@/lib/reasoning/contradiction-resolution-state';
+import { runtimePostgresPoolConfig } from '@/lib/data-plane/postgresCompat';
 
 export interface PostgresSqlExecutor {
   query<TRow = unknown>(
@@ -38,11 +39,7 @@ function defaultExecutorFactory(): PostgresSqlExecutor {
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require('pg') as typeof import('pg');
-  return new Pool({
-    connectionString: url,
-    ssl: { rejectUnauthorized: false },
-    max: 4,
-  });
+  return new Pool(runtimePostgresPoolConfig(url, 'nexus-reasoning-contradiction-resolution'));
 }
 
 const INSERT_SQL = `

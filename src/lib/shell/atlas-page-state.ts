@@ -10,29 +10,41 @@
 // ── Surface + stage IDs ───────────────────────────────────────────────────────
 
 export type SurfaceId =
-  | 'tower'
-  | 'programs'
-  | 'programs-detail'
-  | 'source'
-  | 'source-detail'
-  | 'intelligence'
-  | 'home'
-  | 'product'
-  | 'setup'
-  | 'setup-detail';
+  | "tower"
+  | "programs"
+  | "programs-detail"
+  | "source"
+  | "source-detail"
+  | "intelligence"
+  | "home"
+  | "product"
+  | "setup"
+  | "setup-detail";
 
 /** P0-P6 for program phases, S1-S7 for source event stages. */
 export type StageId =
-  | 'P0' | 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'P6'
-  | 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7';
+  | "P0"
+  | "P1"
+  | "P2"
+  | "P3"
+  | "P4"
+  | "P5"
+  | "P6"
+  | "S1"
+  | "S2"
+  | "S3"
+  | "S4"
+  | "S5"
+  | "S6"
+  | "S7";
 
 // ── Conversation ──────────────────────────────────────────────────────────────
 
-import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
+import type { AttachmentChipRef } from "@/lib/programs/attachments/types";
 // CB-6 · type-only import — the broker module is server-only, but type
 // imports are erased at compile time so this never traverses the
 // client bundle's webpack graph.
-import type { BrokerMode, ContextBundle } from '@/lib/knowledge/context-broker';
+import type { BrokerMode, ContextBundle } from "@/lib/knowledge/context-broker";
 
 /**
  * Wave 1 inline attachment — client-side text extracted via FileReader.
@@ -50,7 +62,7 @@ export interface InlineFile {
 
 export interface ChatTurn {
   id: string;
-  role: 'user' | 'agent';
+  role: "user" | "agent";
   text: string;
   /** The agent name for display (Nexus, Sentinel, Atlas, Steward). */
   agentName: string;
@@ -149,7 +161,12 @@ export interface AtlasPageContextValue extends AtlasPageState {
    * surfaceContext.attachments. Optional inlineFiles (Wave 1, all surfaces)
    * are passed directly in the request body for client-side text injection.
    */
-  ask: (text: string, attachments?: AttachmentChipRef[], inlineFiles?: InlineFile[]) => void;
+  ask: (
+    text: string,
+    attachments?: AttachmentChipRef[],
+    inlineFiles?: InlineFile[],
+    surfaceContextPatch?: Record<string, unknown>,
+  ) => void;
   /** Clear the in-flight response / error (does not clear conversation). */
   clearResponse: () => void;
   /**
@@ -190,7 +207,7 @@ export interface AtlasPageStateProviderProps {
    * Caller should hold a stable reference (useCallback) so we don't
    * re-create the streaming closure on every render.
    */
-  onArtifact?: (artifact: import('@/lib/agent/artifacts').Artifact) => void;
+  onArtifact?: (artifact: import("@/lib/agent/artifacts").Artifact) => void;
 }
 
 export interface AtlasPageStateSeed extends AtlasPageStateProviderProps {
@@ -203,23 +220,27 @@ export interface AppendAtlasTurnOptions {
   agentName?: string;
 }
 
-export const ATLAS_SYNTHESIS_TURN_ID = 'atlas-synthesis-turn-0';
-export const DEFAULT_ATLAS_AGENT_NAME = 'Atlas';
-export const DEFAULT_ATLAS_TENANT_NAME = 'Apex Retail Group';
+export const ATLAS_SYNTHESIS_TURN_ID = "atlas-synthesis-turn-0";
+export const DEFAULT_ATLAS_AGENT_NAME = "Atlas";
+export const DEFAULT_ATLAS_TENANT_NAME = "Apex Retail Group";
 
 function normalizeTenantName(tenantName: string) {
   const normalized = tenantName.trim();
   return normalized.length > 0 ? normalized : DEFAULT_ATLAS_TENANT_NAME;
 }
 
-function createTurnId(role: ChatTurn['role'], timestamp: number, index: number) {
+function createTurnId(
+  role: ChatTurn["role"],
+  timestamp: number,
+  index: number,
+) {
   return `atlas-${role}-${timestamp}-${index}`;
 }
 
 function createDefaultSynthesis(seed: AtlasPageStateSeed) {
   const tenantName = normalizeTenantName(seed.tenantName);
   const agentName = seed.agentName ?? DEFAULT_ATLAS_AGENT_NAME;
-  const stageLabel = seed.stage ? ` at ${seed.stage}` : '';
+  const stageLabel = seed.stage ? ` at ${seed.stage}` : "";
 
   return `${agentName} is initialized for ${tenantName} on ${seed.surface}${stageLabel}. Ask for the page context, current pressures, or next best action.`;
 }
@@ -228,7 +249,9 @@ export function createAtlasPageState(seed: AtlasPageStateSeed): AtlasPageState {
   const tenantName = normalizeTenantName(seed.tenantName);
   const agentName = seed.agentName ?? DEFAULT_ATLAS_AGENT_NAME;
   const timestamp = seed.timestamp ?? Date.now();
-  const synthesisText = seed.synthesisText?.trim() || createDefaultSynthesis({ ...seed, tenantName, agentName });
+  const synthesisText =
+    seed.synthesisText?.trim() ||
+    createDefaultSynthesis({ ...seed, tenantName, agentName });
 
   return {
     tenantName,
@@ -240,13 +263,13 @@ export function createAtlasPageState(seed: AtlasPageStateSeed): AtlasPageState {
     conversation: [
       {
         id: ATLAS_SYNTHESIS_TURN_ID,
-        role: 'agent',
+        role: "agent",
         text: synthesisText,
         agentName,
         timestamp,
       },
     ],
-    currentResponse: '',
+    currentResponse: "",
     isStreaming: false,
     error: null,
     suggestedActions: seed.suggestedActions ?? [],
@@ -270,8 +293,9 @@ export function appendAtlasUserTurn(
 
   const timestamp = options.timestamp ?? Date.now();
   const turn: ChatTurn = {
-    id: options.id ?? createTurnId('user', timestamp, state.conversation.length),
-    role: 'user',
+    id:
+      options.id ?? createTurnId("user", timestamp, state.conversation.length),
+    role: "user",
     text: cleanText,
     agentName: options.agentName ?? state.agentName,
     timestamp,
@@ -280,7 +304,7 @@ export function appendAtlasUserTurn(
   return {
     ...state,
     conversation: [...state.conversation, turn],
-    currentResponse: '',
+    currentResponse: "",
     isStreaming: false,
     error: null,
   };
@@ -296,8 +320,9 @@ export function appendAtlasAgentTurn(
 
   const timestamp = options.timestamp ?? Date.now();
   const turn: ChatTurn = {
-    id: options.id ?? createTurnId('agent', timestamp, state.conversation.length),
-    role: 'agent',
+    id:
+      options.id ?? createTurnId("agent", timestamp, state.conversation.length),
+    role: "agent",
     text: cleanText,
     agentName: options.agentName ?? state.agentName,
     timestamp,
@@ -306,7 +331,7 @@ export function appendAtlasAgentTurn(
   return {
     ...state,
     conversation: [...state.conversation, turn],
-    currentResponse: '',
+    currentResponse: "",
     isStreaming: false,
     error: null,
   };
@@ -315,13 +340,16 @@ export function appendAtlasAgentTurn(
 export function clearAtlasResponse(state: AtlasPageState): AtlasPageState {
   return {
     ...state,
-    currentResponse: '',
+    currentResponse: "",
     isStreaming: false,
     error: null,
   };
 }
 
-export function buildAtlasContextualReply(state: AtlasPageState, prompt: string) {
-  const stageLabel = state.stage ? `, stage ${state.stage}` : '';
+export function buildAtlasContextualReply(
+  state: AtlasPageState,
+  prompt: string,
+) {
+  const stageLabel = state.stage ? `, stage ${state.stage}` : "";
   return `${state.agentName} has ${state.tenantName} context for ${state.surface}${stageLabel}. I will use the page synthesis and ${Object.keys(state.surfaceContext).length} context fields to answer: "${prompt.trim()}".`;
 }

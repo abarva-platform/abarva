@@ -70,7 +70,7 @@ export function ReadinessTileExpanded({
               marginBottom: SPACING.xs,
             }}
           >
-            Tier detail · deterministic seed
+            Tier detail
           </div>
           <h3
             style={{

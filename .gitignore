@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/.auth/
 
 # next.js
 /.next/
@@ -75,3 +76,7 @@ supabase/.branches/
 # Parallel-run diff harness default output (run artifacts, not committed)
 parallel-run-diff-results.json
 parallel-run-diff-results.md
+
+# Playwright auth state (Source E2E)
+.auth/
+out/

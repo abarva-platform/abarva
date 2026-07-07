@@ -60,6 +60,14 @@ export const MERIDIAN_AOP_DEMO: ArtOfPossibleData = {
   ],
 };
 
+export const EMPTY_AOP_DEMO: ArtOfPossibleData = {
+  totalPossibleLabel: 'Not loaded',
+  totalCapturingLabel: 'Not loaded',
+  cxoFrame:
+    'Tenant-specific Art of Possible data has not been loaded yet. AbarVa will not borrow another client fixture to fill this surface.',
+  bands: [],
+};
+
 export const APEX_RETAIL_AOP_DEMO: ArtOfPossibleData = {
   totalPossibleLabel: '$72-180M possible',
   totalCapturingLabel: '~$18M (~16%)',

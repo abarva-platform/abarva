@@ -104,7 +104,7 @@ export function EnterpriseContextCanvas({ overview, tenantName }: Props) {
       <section style={domainStyle} aria-label="Context domains">
         <div>
           <p style={eyebrowStyle}>Coverage by domain</p>
-          <h2 style={sectionTitleStyle}>What Sentinel can browse now</h2>
+          <h2 style={sectionTitleStyle}>What Ava can browse now</h2>
         </div>
         <div style={domainGridStyle}>
           {Object.entries(overview.recordTypeCounts).map(([key, count]) => (

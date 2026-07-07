@@ -1,10 +1,10 @@
-import 'server-only';
+import "server-only";
 
 /**
  * ContextBundle types — slice CB-1.
  *
  * Typed contracts for the retrieval broker that returns a single
- * `ContextBundle` (Postgres facts + graph paths + Pinecone semantic
+ * `ContextBundle` (Postgres facts + graph paths + pgvector semantic
  * chunks + corpus pattern hits) for the 4-mode answer comparison and
  * the "Context Assembled" panel.
  *
@@ -27,7 +27,7 @@ import type {
   GraphNode,
   GraphPath,
   TenantRecord,
-} from '@/lib/knowledge/tenant-data/types';
+} from "@/lib/knowledge/tenant-data/types";
 
 // Re-export the tenant-data shapes that app-tier consumers
 // need so they don't have to reach into tenant-data/types
@@ -52,7 +52,7 @@ export type {
  * - `tenant` — Postgres facts + graph + chunks for one tenant; no corpus.
  * - `full`  — `tenant` + `corpus` composed.
  */
-export type BrokerMode = 'generic' | 'corpus' | 'tenant' | 'full';
+export type BrokerMode = "generic" | "corpus" | "tenant" | "full";
 
 /**
  * Per-source citation discipline. Every emitted item in a `ContextBundle`
@@ -66,12 +66,12 @@ export type BrokerMode = 'generic' | 'corpus' | 'tenant' | 'full';
 export interface ContextProvenance {
   /** Source class — drives panel color coding + downstream filters. */
   sourceClass:
-    | 'private_client_data'
-    | 'tenant_admin_upload'
-    | 'corpus'
-    | 'pattern_catalog'
-    | 'synthetic'
-    | 'unknown';
+    | "private_client_data"
+    | "tenant_admin_upload"
+    | "corpus"
+    | "pattern_catalog"
+    | "synthetic"
+    | "unknown";
   /** Stable id of the source record / chunk / pattern. */
   sourceId: string;
   /** Optional: source document or url the source was authored from. */
@@ -79,19 +79,18 @@ export interface ContextProvenance {
   /** Confidence 0..1 if available. */
   confidence?: number;
   /** Data classification for the panel's privacy badge. */
-  classification?: 'public' | 'internal' | 'confidential' | 'restricted';
+  classification?: "public" | "internal" | "confidential" | "restricted";
 }
 
 /**
- * Pinecone hit — chunk + similarity score.
+ * Tenant semantic hit — chunk + similarity score.
  *
- * In CB-1 vector retrieval is not yet live; the broker falls back to
- * keyword retrieval and tags the bundle with a warning. Score is `0`
- * for keyword-only hits since we don't have a similarity to report.
+ * Score is `0` for keyword-only fallback hits since we don't have a
+ * similarity to report.
  */
 export interface SemanticChunkHit {
   chunk: ContextChunk;
-  /** Cosine similarity 0..1 from Pinecone; `0` for keyword-fallback hits. */
+  /** Cosine similarity 0..1 from Postgres pgvector; `0` for keyword-fallback hits. */
   score: number;
 }
 
@@ -137,7 +136,7 @@ export interface WorldviewChunkHit {
   chunkTitle?: string;
   /** claim / evidence / counterargument / vendor-analysis / etc. */
   chunkType?: string;
-  /** Similarity 0..1 from Pinecone cosine score. */
+  /** Similarity 0..1 from worldview vector retrieval. */
   score: number;
   /** Primary audience tag (cio / cfo / investor / consulting-partner / ...). */
   primaryAudience?: string;
@@ -168,7 +167,7 @@ export interface ContextBundle {
   facts: TenantRecord[];
   /** Graph fragments traversed during assembly. */
   graphPaths: Array<GraphNeighborhood | GraphPath>;
-  /** Semantic chunks retrieved from Pinecone. Empty until CB-3 lights the index. */
+  /** Semantic chunks retrieved from Postgres pgvector, or keyword fallback hits with score 0. */
   semanticChunks: SemanticChunkHit[];
   /** Corpus pattern hits. Empty until CB-6 wires the pattern catalog. */
   corpusPatterns: CorpusPatternHit[];
@@ -192,7 +191,7 @@ export interface ContextBundle {
   /** Warnings (e.g. `'Vector retrieval pending — using keyword-only chunk retrieval'`). */
   warnings: string[];
   /**
-   * CB-10 · informational tags (e.g. `'Vector retrieval via Pinecone (top-K=8).'`).
+   * CB-10 · informational tags (e.g. `'Vector retrieval via Postgres pgvector (top-K=8).'`).
    * Distinct from `warnings` — these are *success metadata* about how
    * retrieval ran. Rendered as a separate slate-toned strip below the
    * bundle so success notes don't read like an amber-strip warning.
@@ -243,11 +242,9 @@ export interface ContextAssembleInput {
  * without string matching.
  */
 export class MissingTenantKeyError extends Error {
-  readonly code = 'CONTEXT_BROKER_TENANT_KEY_REQUIRED' as const;
+  readonly code = "CONTEXT_BROKER_TENANT_KEY_REQUIRED" as const;
   constructor(mode: BrokerMode) {
-    super(
-      `ContextBroker.assemble requires a tenantKey for mode='${mode}'.`,
-    );
-    this.name = 'MissingTenantKeyError';
+    super(`ContextBroker.assemble requires a tenantKey for mode='${mode}'.`);
+    this.name = "MissingTenantKeyError";
   }
 }

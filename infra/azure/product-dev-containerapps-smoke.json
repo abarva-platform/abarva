@@ -1,0 +1,168 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.43.8.12551",
+      "templateHash": "7371477953319462358"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus"
+    },
+    "tags": {
+      "type": "object"
+    },
+    "logAnalyticsWorkspaceResourceId": {
+      "type": "string"
+    },
+    "runtimeManagedIdentityName": {
+      "type": "string"
+    },
+    "containerAppsEnvironmentName": {
+      "type": "string"
+    },
+    "smokeContainerAppName": {
+      "type": "string"
+    },
+    "deploySmokeApp": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "smokeMinReplicas": {
+      "type": "int",
+      "defaultValue": 0
+    },
+    "smokeMaxReplicas": {
+      "type": "int",
+      "defaultValue": 1
+    },
+    "smokeEnvironmentKey": {
+      "type": "string",
+      "defaultValue": "product-dev"
+    },
+    "smokeDataBoundary": {
+      "type": "string",
+      "defaultValue": "synthetic-no-client-data"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[parameters('runtimeManagedIdentityName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('containerAppsEnvironmentName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(parameters('logAnalyticsWorkspaceResourceId'), '2022-10-01').customerId]",
+            "sharedKey": "[listKeys(parameters('logAnalyticsWorkspaceResourceId'), '2022-10-01').primarySharedKey]"
+          }
+        },
+        "workloadProfiles": [
+          {
+            "name": "Consumption",
+            "workloadProfileType": "Consumption"
+          }
+        ],
+        "zoneRedundant": false
+      }
+    },
+    {
+      "condition": "[parameters('deploySmokeApp')]",
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('smokeContainerAppName')]",
+      "location": "[parameters('location')]",
+      "tags": "[union(parameters('tags'), createObject('Purpose', format('{0}-runtime-smoke', parameters('smokeEnvironmentKey')), 'RuntimeDataBoundary', parameters('smokeDataBoundary')))]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('runtimeManagedIdentityName')))]": {}
+        }
+      },
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppsEnvironmentName'))]",
+        "configuration": {
+          "activeRevisionsMode": "Single",
+          "ingress": {
+            "external": true,
+            "targetPort": 80,
+            "transport": "auto",
+            "allowInsecure": false
+          }
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "smoke",
+              "image": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+              "env": [
+                {
+                  "name": "ABARVA_ENVIRONMENT_KEY",
+                  "value": "[parameters('smokeEnvironmentKey')]"
+                },
+                {
+                  "name": "ABARVA_DATA_BOUNDARY",
+                  "value": "[parameters('smokeDataBoundary')]"
+                }
+              ],
+              "resources": {
+                "cpu": "[json('0.25')]",
+                "memory": "0.5Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": "[parameters('smokeMinReplicas')]",
+            "maxReplicas": "[parameters('smokeMaxReplicas')]",
+            "rules": [
+              {
+                "name": "http-concurrency",
+                "http": {
+                  "metadata": {
+                    "concurrentRequests": "25"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppsEnvironmentName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('runtimeManagedIdentityName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "runtimeManagedIdentityPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('runtimeManagedIdentityName')), '2023-01-31').principalId]"
+    },
+    "containerAppsEnvironmentName": {
+      "type": "string",
+      "value": "[parameters('containerAppsEnvironmentName')]"
+    },
+    "smokeContainerAppName": {
+      "type": "string",
+      "value": "[if(parameters('deploySmokeApp'), parameters('smokeContainerAppName'), '')]"
+    },
+    "smokeContainerAppFqdn": {
+      "type": "string",
+      "value": "[if(parameters('deploySmokeApp'), reference(resourceId('Microsoft.App/containerApps', parameters('smokeContainerAppName')), '2024-03-01').configuration.ingress.fqdn, '')]"
+    }
+  }
+}

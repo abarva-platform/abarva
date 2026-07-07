@@ -1,0 +1,21 @@
+{
+  "canvasType": "architecture-dependency-map",
+  "title": "Enterprise landscape dependency map",
+  "items": [
+    {
+      "label": "Identity",
+      "status": "Required",
+      "dependency": "Clerk tenant membership",
+      "owner": "Platform"
+    },
+    {
+      "label": "Context layer",
+      "status": "Required",
+      "dependency": "Azure/Postgres read model and retrieval index",
+      "owner": "Data plane"
+    }
+  ],
+  "sourceNotes": [
+    "Home/Context should render this through the shared registry, not a forked diagram path."
+  ]
+}

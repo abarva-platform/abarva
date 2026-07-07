@@ -341,7 +341,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                       >
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                           <span style={{ ...SOURCE_METRIC_LABEL, color: '#5EEAD4' }}>
-                            {mission.agentName === 'sentinel' ? 'Sentinel lead' : agentLabel(mission.agentName)}
+                            {mission.agentName === 'sentinel' ? 'aVa lead' : agentLabel(mission.agentName)}
                           </span>
                           <span style={{ ...SOURCE_METRIC_DETAIL, color: 'rgba(248,250,252,0.70)', fontWeight: 800 }}>
                             {mission.priority} / {mission.state}
@@ -513,8 +513,8 @@ function getDashboardMissionPreviewMissions(report: SourceAgentMissionReport): S
 }
 
 function agentLabel(agentName: SourceAgentMission['agentName']): string {
-  if (agentName === 'nexus') return 'Sentinel';
-  if (agentName === 'sentinel') return 'Sentinel';
-  if (agentName === 'atlas') return 'Atlas';
-  return 'Steward';
+  if (agentName === 'nexus') return 'aVa';
+  if (agentName === 'sentinel') return 'aVa';
+  if (agentName === 'atlas') return 'aVa';
+  return 'aVa';
 }

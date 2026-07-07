@@ -1,5 +1,6 @@
 name: Azure L5 reset-and-replay
 
+# Required branch-protection context; keep pull_request paths aligned.
 # L5 data-integrity gate: prove the repo migrations can replay into a fresh
 # Postgres database with the Azure/Supabase compatibility shims present.
 #
@@ -9,6 +10,7 @@ name: Azure L5 reset-and-replay
 
 on:
   workflow_dispatch:
+  merge_group:
   pull_request:
     paths:
       - ".github/workflows/azure-l5-reset-replay.yml"
@@ -49,10 +51,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
@@ -68,4 +70,3 @@ jobs:
 
       - name: Verify schema baseline
         run: npm run db:azure:verify
-

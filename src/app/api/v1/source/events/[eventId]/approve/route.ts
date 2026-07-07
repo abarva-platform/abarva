@@ -61,7 +61,10 @@ export async function POST(
 
   const activeClient = await getActiveClientRow();
   if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for Source approval' }, { status: 403 });
+    return Response.json(
+      { error: "no_client", detail: "No active client for Source approval" },
+      { status: 403 },
+    );
   }
 
   const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
@@ -70,17 +73,21 @@ export async function POST(
   }).catch(() => null);
 
   if (!accessPolicy?.canApproveSourceStages) {
-    return Response.json({
-      error: 'forbidden_source_admin_required',
-      detail: 'Client admin or explicit Source stage approval rights are required to approve sourcing events.',
-    }, { status: 403 });
+    return Response.json(
+      {
+        error: "forbidden_source_admin_required",
+        detail:
+          "Client admin or explicit Source stage approval rights are required to approve sourcing events.",
+      },
+      { status: 403 },
+    );
   }
 
   let body: ApproveBody;
   try {
     body = (await request.json()) as ApproveBody;
   } catch {
-    return Response.json({ error: 'invalid_json' }, { status: 400 });
+    return Response.json({ error: "invalid_json" }, { status: 400 });
   }
 
   const supabase = getAzureReadFluentClient();
@@ -94,7 +101,7 @@ export async function POST(
     .single();
 
   if (fetchError || !event) {
-    return Response.json({ error: 'not_found' }, { status: 404 });
+    return Response.json({ error: "not_found" }, { status: 404 });
   }
 
   // Resolve the decision (validates action + confirmations, decides the
@@ -135,7 +142,7 @@ export async function POST(
 
   if (!approvalWrite.ok) {
     return Response.json(
-      { error: 'update_failed', detail: approvalWrite.error },
+      { error: "update_failed", detail: approvalWrite.error },
       { status: 500 },
     );
   }

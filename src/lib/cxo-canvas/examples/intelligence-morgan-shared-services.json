@@ -1,0 +1,35 @@
+{
+  "canvasType": "executive-canvas-sequencing",
+  "title": "Shared services AI sequence",
+  "lanes": [
+    {
+      "label": "Scale now",
+      "items": [
+        {
+          "label": "Treasury / Kyriba controls",
+          "value": 8,
+          "readiness": 8,
+          "risk": 4,
+          "action": "Scale now",
+          "owner": "CFO + Treasurer",
+          "gate": "Bank, SAP, signer, and SOX evidence"
+        }
+      ]
+    },
+    {
+      "label": "Fund readiness",
+      "items": [
+        {
+          "label": "Shared services operating model",
+          "value": 9,
+          "readiness": 4,
+          "risk": 7,
+          "action": "Fund readiness",
+          "owner": "VP Shared Services",
+          "gate": "Service baseline and process ownership"
+        }
+      ]
+    }
+  ],
+  "decisionRequired": "Approve one lighthouse value-office lane and require control evidence before scale funding."
+}

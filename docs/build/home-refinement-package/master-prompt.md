@@ -8,7 +8,7 @@
 
 Three structural changes to AbarVa's tenant-side surface:
 
-1. Rename Setup → Home, change route from `/setup` to `/`
+1. Separate Home from Admin: Home is product work; Admin is setup, users, connectors, templates, tenant policy, and data-load operations.
 2. Reorganize top nav to Home · Intelligence · Moves · Source · Tower
 3. Add a Learn panel shell inside Home for product info / training
 
@@ -98,7 +98,7 @@ If running concurrently with other packages, coordinate merges:
 
 - **Setup Fix Package PR-9** must land before this package starts (otherwise rename creates conflicts with shipping panels)
 - **Setup Redesign Package** can land before OR after this package; if before, panels are already in shape; if after, the Setup Redesign PRs need their references updated to Home (this is a small fix-up)
-- **AI Initiatives Substrate Package** can land before OR after; if before, AI Initiatives panel already exists at `/setup/ai-initiatives` and this package re-routes to `/home/ai-initiatives` (or `/ai-initiatives` flat) per route plan
+- **AI Initiatives Substrate Package** can land before OR after; AI Initiatives belongs in Home as a product insight surface. Setup/admin routes continue to resolve under `/admin`.
 - **Journey Kit** depends on this package landing before kit runs (kit's waypoints reference Home, not Setup)
 
 If unsure about order: follow option 1 from README.md (sequential, low risk).

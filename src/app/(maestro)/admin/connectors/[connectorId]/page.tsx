@@ -16,7 +16,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { connectorId } = await params;
   const detail = getSetupConnectorDetail(connectorId);
-  return { title: detail ? `${detail.name} · Setup` : 'Connector · Setup' };
+  return { title: detail ? `${detail.name} · Admin` : 'Connector · Admin' };
 }
 
 export default async function Page({ params }: Props) {

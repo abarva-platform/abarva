@@ -16,9 +16,11 @@
 import { useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceEventRow } from '@/lib/source/queries';
+import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from '@/lib/source/source-governance-enforcement';
 
 interface Props {
   events: SourceEventRow[];
+  currentUserId?: string | null;
 }
 
 type Confirmations = {
@@ -59,6 +61,11 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
 
   async function handleAction(eventId: string, action: 'approve' | 'reject' | 'send_back') {
     setProcessing((p) => ({ ...p, [eventId]: true }));
+    setErrors((e) => {
+      const next = { ...e };
+      delete next[eventId];
+      return next;
+    });
     try {
       const res = await fetch(`/api/v1/source/events/${eventId}/approve`, {
         method: 'POST',
@@ -81,6 +88,12 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
             return next;
           });
         }, 2000);
+      } else {
+        const detail = await res.json().catch(() => null);
+        setErrors((e) => ({
+          ...e,
+          [eventId]: detail?.detail ?? 'Approval action failed.',
+        }));
       }
     } finally {
       setProcessing((p) => ({ ...p, [eventId]: false }));

@@ -1,0 +1,120 @@
+{
+  "version": "2026-06",
+  "purpose": "Naming, required tags, and budget-control baseline for AbarVa product and client environments.",
+  "principles": [
+    "canonical_environment_keys_only",
+    "no_real_client_names_in_resource_names",
+    "required_tags_before_resource_creation",
+    "budget_before_workload",
+    "cost_alerts_before_runtime",
+    "owner_and_data_classification_visible",
+    "no_phi_pii"
+  ],
+  "environmentKeys": [
+    "product-dev",
+    "product-preview",
+    "product-prod",
+    "client-preprod",
+    "client-prod"
+  ],
+  "naming": {
+    "subscriptionPattern": "sub-abarva-{environmentKey}-{regionCode}-{sequence}",
+    "clientSubscriptionPattern": "sub-abarva-{clientCode}-{environmentKey}-{regionCode}-{sequence}",
+    "resourceGroupPattern": "rg-abarva-{plane}-{environmentKey}-{regionCode}-{sequence}",
+    "resourcePattern": "{resourceAbbrev}-abarva-{plane}-{environmentKey}-{regionCode}-{sequence}",
+    "clientCodeRule": "Use canonical short client codes only. Do not use legal/client display names in Azure resource names.",
+    "sequenceRule": "Three digits, starting at 001.",
+    "allowedRegionCodes": ["eus", "eus2", "cus"],
+    "examples": [
+      "sub-abarva-product-dev-eus-001",
+      "rg-abarva-controlplane-product-preview-eus-001",
+      "ca-abarva-web-product-prod-eus-001",
+      "sub-abarva-sha-client-preprod-eus2-001"
+    ]
+  },
+  "requiredTags": [
+    "Environment",
+    "EnvironmentKey",
+    "Plane",
+    "Owner",
+    "CostCenter",
+    "DataClassification",
+    "ClientCode",
+    "ManagedBy",
+    "Repository",
+    "ReleaseLane",
+    "Criticality",
+    "CreatedBy",
+    "CreatedAt",
+    "Expiry",
+    "NoPhiPii"
+  ],
+  "tagRules": {
+    "EnvironmentKey": [
+      "product-dev",
+      "product-preview",
+      "product-prod",
+      "client-preprod",
+      "client-prod"
+    ],
+    "Plane": [
+      "control-plane",
+      "data-plane",
+      "observability",
+      "security",
+      "network"
+    ],
+    "DataClassification": [
+      "synthetic",
+      "client-approved-redacted",
+      "client-private",
+      "production-control",
+      "public"
+    ],
+    "ManagedBy": ["iac", "aca-job", "manual-approved"],
+    "Repository": ["abarva-platform/abarva"],
+    "ReleaseLane": [
+      "global-control-lane",
+      "client-data-lane",
+      "internal-admin",
+      "public-demo",
+      "experimental"
+    ],
+    "Criticality": ["low", "medium", "high", "critical"],
+    "NoPhiPii": ["true"]
+  },
+  "budgetRules": {
+    "budgetRequiredBeforeRuntime": true,
+    "alertsRequired": true,
+    "alertThresholdsPercent": [50, 80, 100],
+    "alertRecipientsRequired": true,
+    "defaultMonthlyBudgetUsd": {
+      "product-dev": 500,
+      "product-preview": 500,
+      "product-prod": 500,
+      "client-preprod": 500,
+      "client-prod": 500
+    },
+    "budgetChangeRequiresApproval": true,
+    "overBudgetAction": "report_and_pause_nonessential_creation"
+  },
+  "forbidden": [
+    "untagged_resource_creation",
+    "runtime_without_budget",
+    "real_client_legal_name_in_resource_name",
+    "missing_owner_tag",
+    "missing_data_classification_tag",
+    "no_phi_pii_false",
+    "manual_resource_creation_without_ledger"
+  ],
+  "evidenceRequired": [
+    "subscription_name",
+    "resource_group_name",
+    "tag_export",
+    "budget_id",
+    "budget_thresholds",
+    "budget_alert_recipients",
+    "cost_owner",
+    "execution_ledger_entry"
+  ]
+}

@@ -1,0 +1,48 @@
+name: Context Corpus Governance
+
+# The hard gate for the Context & Corpus Governance Framework. Static, DB-free
+# enforcement: a future change from ANY agent (Codex or Claude Code) cannot
+# quietly weaken the policy contract, mint agent_ready outside the gate, hand-type
+# tenant lists, or leave an expired exception in place. Keep pull_request paths
+# aligned with branch protection.
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/lib/governance/**
+      - src/scripts/governance/**
+      - src/config/tenants/CANONICAL_TENANTS.ts
+      - docs/governance/policy-exceptions.json
+      - .github/workflows/context-corpus-governance.yml
+      - package.json
+      - package-lock.json
+  workflow_dispatch:
+  schedule:
+    - cron: "23 8 * * *"
+
+jobs:
+  context-corpus-governance:
+    name: Context corpus governance gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate context & corpus governance
+        run: npm run validate:context-corpus
+
+      - name: Policy exception tests
+        run: npx jest src/lib/governance/__tests__/policy-exceptions.test.ts

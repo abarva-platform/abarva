@@ -21,7 +21,7 @@
   - "Setup → Data Trust" → "Home → Data Trust"
   - "Setup → Agent Readiness" → "Home → Agent Readiness"
   - "Setup nav" → "Home nav"
-  - URL references: `/setup/*` → `/home/*` (per ROUTE_MIGRATION.md)
+  - URL references: `/setup/*` → `/admin/*` for setup/admin surfaces (per ROUTE_MIGRATION.md)
 
 **PR titles in the package:**
 - PR-A · Compress Overview → Compress Home Overview (or just keep as PR-A · Compress Overview · Home)
@@ -42,8 +42,8 @@
 - Internal references:
   - "Setup → AI Initiatives" → "Home → AI Initiatives"
   - "Setup nav" → "Home nav"
-  - Routes: `/setup/ai-initiatives` → `/home/ai-initiatives`
-  - Routes: `/setup/ai-initiatives/[id]` → `/home/ai-initiatives/[id]`
+  - Routes: AI Initiatives product surfaces live under `/home/ai-initiatives`
+  - Setup/admin references stay under `/admin`
 
 **Doctrine carried over unchanged:**
 - The 21 initiatives, 12 business goals, 8 categories, Three Tests gate, Load Path Manifest, Wireframe Addendum content all unchanged
@@ -69,7 +69,7 @@ In `WAYPOINTS.md`:
 - Waypoint 03 "Setup → AI Initiatives" → "Home → AI Initiatives"
 - Waypoint 04 "Setup → MH-04 detail" → "Home → MH-04 detail"
 - Waypoint 05 "Setup nav return" → "Home nav return"
-- All URL references `/setup/*` → `/home/*`
+- Setup/admin URL references `/setup/*` → `/admin/*`
 - Cross-cutting acceptance criteria gain one item: "Each panel has visibleToRoles metadata even if not enforced" (per ROLE_READINESS_DOCTRINE.md)
 
 In `PERSONA_SCENARIO.md`:
@@ -157,7 +157,7 @@ My pick for Claude Code: **Option B** unless you instruct otherwise. Setup Redes
 ✓ Setup Redesign Package files moved to home-redesign-package/ directory
 ✓ AI Initiatives Substrate Package SETUP_UI_SPEC.md renamed and references updated
 ✓ Journey Kit WAYPOINTS, PERSONA_SCENARIO, BASELINE_DIAGNOSTIC, PREREQUISITES, claude-code-runbook updated
-✓ All URL references in all packages updated from /setup/* to /home/*
+✓ Setup/admin URL references in all packages updated from /setup/* to /admin/*
 ✓ All "Setup" references in user-facing copy updated to "Home"
 ✓ All package READMEs updated to reflect new naming
 ✓ Cross-references between packages still resolve correctly

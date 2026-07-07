@@ -18,8 +18,8 @@ type Row = {
   stage_key: SourceStageKey;
   artifact_family: 'proposal';
   artifact_kind: string;
-  source_origin: 'uploaded';
-  source_format: 'pdf';
+  source_origin: 'uploaded' | 'generated';
+  source_format: 'pdf' | 'markdown';
   original_name: string;
   blob_uri: string;
   uploader_user_id: string;
@@ -32,6 +32,7 @@ type Row = {
   classification_status: 'pending' | 'classified';
   data_classification: 'Confidential';
   disclosure_classification?: unknown;
+  client_final_change_summary?: Record<string, unknown> | string | null;
   evidence_state: 'unparsed' | 'parsed_uncited';
   approval_state: 'draft' | 'approved';
   version: number | string;
@@ -246,9 +247,11 @@ describe('registerSourceArtifactUpload', () => {
 
     const rec: SourceArtifactRegistryRecord = await registerSourceArtifactUpload(baseInput);
 
-    expect(insertCaptures).toHaveLength(1);
-    expect(insertCaptures[0].table).toBe('source_artifacts');
-    expect(insertCaptures[0].payload).toMatchObject({
+    const sourceArtifactInserts = insertCaptures.filter(
+      (capture) => capture.table === 'source_artifacts',
+    );
+    expect(sourceArtifactInserts).toHaveLength(1);
+    expect(sourceArtifactInserts[0].payload).toMatchObject({
       tenant_key: 'apex-retail',
       source_event_id: 'apex-retail-ams-outsourcing-2026',
       stage_key: 'orals_bafo',
@@ -265,6 +268,122 @@ describe('registerSourceArtifactUpload', () => {
     expect(rec.graphStatus).toBe('pending');
     expect(rec.evidenceState).toBe('unparsed');
     expect(rec.approvalState).toBe('draft');
+  });
+
+  it('optionally writes File Cabinet columns for generated artifacts', async () => {
+    nextSingle = async () => ({
+      data: {
+        ...baseRow,
+        source_origin: 'generated',
+        source_format: 'markdown',
+        mime_type: 'text/markdown',
+      },
+      error: null,
+    });
+
+    await registerSourceArtifactUpload({
+      ...baseInput,
+      sourceOrigin: 'generated',
+      sourceFormat: 'markdown',
+      mimeType: 'text/markdown',
+      originalName: 'd05_scope_memo.md',
+      artifactKind: 'd05_scope_memo',
+      blobUri: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+      fileCabinet: {
+        clientId: 'client-skyh',
+        sourcingStage: 'scope',
+        artifactGroup: 'generated',
+        artifactType: 'd05_scope_memo',
+        title: 'Scope Memo with Boundaries',
+        description: 'In-scope, out-of-scope, target support tier, transition assumptions.',
+        fileName: 'd05_scope_memo.md',
+        fileFormat: 'md',
+        blobContainer: 'source-artifacts',
+        blobPath: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+        fileSize: 1024,
+        version: 3,
+        status: 'draft',
+        generatedBy: 'user_123',
+        sourceBasis: 'source_event_artifact_states:state-1',
+        citationReady: false,
+        supersedesArtifactId: 'prior-artifact',
+        blobSha256: 'c'.repeat(64),
+      },
+    });
+
+    expect(insertCaptures[0].payload).toMatchObject({
+      blob_uri: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+      client_id: 'client-skyh',
+      artifact_group: 'generated',
+      artifact_type: 'd05_scope_memo',
+      title: 'Scope Memo with Boundaries',
+      file_name: 'd05_scope_memo.md',
+      file_format: 'md',
+      blob_container: 'source-artifacts',
+      blob_path: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+      version: 3,
+      status: 'draft',
+      lifecycle_state: 'current',
+      supersedes_artifact_id: 'prior-artifact',
+      blob_sha256: 'c'.repeat(64),
+    });
+  });
+
+  it('serializes client-final File Cabinet JSONB metadata for registry inserts', async () => {
+    nextSingle = async () => ({
+      data: {
+        ...baseRow,
+        client_final_change_summary:
+          '{"summary":"Client final accepted","changeAnalysisCompleted":false}',
+      },
+      error: null,
+    });
+
+    const rec = await registerSourceArtifactUpload({
+      ...baseInput,
+      artifactId: 'client-final-1',
+      artifactKind: 'd09_rfp_pack',
+      fileCabinet: {
+        clientId: 'client-skyh',
+        sourcingStage: 'responses',
+        artifactGroup: 'approval',
+        artifactType: 'd09_rfp_pack',
+        artifactFamily: 'proposal',
+        title: 'RFP Pack — Client Final',
+        description: 'Client-approved final artifact of record.',
+        fileName: 'rfp-final.docx',
+        fileFormat: 'docx',
+        blobContainer: 'source-artifacts',
+        blobPath: 'skyharbor-air/event-1/client-final-1/rfp-final.docx',
+        fileSize: 1024,
+        version: 4,
+        status: 'client_final',
+        generatedBy: null,
+        sourceBasis: 'client-final:state-1',
+        citationReady: true,
+        supersedesArtifactId: 'generated-1',
+        blobSha256: 'd'.repeat(64),
+        isClientFinal: true,
+        isCurrentAuthoritative: true,
+        sourceGeneratedArtifactId: 'generated-1',
+        clientFinalChangeSummary: {
+          summary: 'Client final accepted',
+          changeAnalysisCompleted: false,
+        },
+      },
+    });
+
+    const sourceArtifactInserts = insertCaptures.filter(
+      (capture) => capture.table === 'source_artifacts',
+    );
+    expect(sourceArtifactInserts).toHaveLength(1);
+    expect(sourceArtifactInserts[0].payload.client_final_change_summary).toBe(
+      '{"summary":"Client final accepted","changeAnalysisCompleted":false}',
+    );
+    expect(rec.clientFinalChangeSummary).toMatchObject({
+      summary: 'Client final accepted',
+      changeAnalysisCompleted: false,
+    });
   });
 
   it('coerces bigint/string fields back to numbers', async () => {

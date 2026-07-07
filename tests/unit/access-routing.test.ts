@@ -1,4 +1,5 @@
 import {
+  inferSourceEventClientKeyFromSlug,
   inferSessionRoleFromEmail,
   isLockedTenantRole,
   isExternalOnlyRole,
@@ -7,6 +8,8 @@ import {
   resolvePostSignInPath,
   resolveSessionClientKey,
   resolveSessionRole,
+  shouldDenySourceEventSlugForActiveClient,
+  shouldDenySourceEventSlugForPinnedClient,
   shouldStripUnauthorizedClientParam,
 } from '@/lib/auth/access-routing';
 
@@ -23,6 +26,7 @@ describe('access-routing', () => {
     expect(resolveSessionClientKey({ email: 'noah.patel@apex-retail.example.com' })).toBe('apexretail');
     expect(resolveSessionClientKey({ email: 'lena.ortiz@firstcapital.example.com' })).toBe('arcturus');
     expect(resolveSessionClientKey({ email: 'elena.rivera@meridian-health.example.com' })).toBe('meridian');
+    expect(resolveSessionClientKey({ email: 'cfo@lakeshore-holdings.example.com' })).toBe('lakeshore');
   });
 
   test('falls back to global default for invalid values', () => {
@@ -32,6 +36,11 @@ describe('access-routing', () => {
   test('strict pinned client resolver never falls back to the global default', () => {
     expect(resolvePinnedSessionClientKey({ clientId: 'unknown', defaultClientId: 'nope' })).toBeNull();
     expect(resolvePinnedSessionClientKey({ email: 'noah.patel@apex-retail.example.com' })).toBe('apexretail');
+    expect(resolvePinnedSessionClientKey({ email: 'anand.sundaram@thesundaram.com' })).toBeNull();
+  });
+
+  test('founder domain does not implicitly resolve to a client workspace', () => {
+    expect(resolveSessionClientKey({ email: 'anand.sundaram@thesundaram.com' })).toBe('apexretail');
   });
 
   test('infers roles for canonical client logins only', () => {
@@ -40,6 +49,7 @@ describe('access-routing', () => {
     expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBeNull();
     expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBeNull();
     expect(inferSessionRoleFromEmail('elena.rivera@meridian-health.example.com')).toBe('client');
+    expect(inferSessionRoleFromEmail('cfo@lakeshore-holdings.example.com')).toBe('client');
     expect(resolveSessionRole(undefined, 'noah.patel@apex-retail.example.com')).toBe('client');
   });
 
@@ -64,6 +74,7 @@ describe('access-routing', () => {
   test('recognizes locked tenant roles from role or canonical email domain', () => {
     expect(isLockedTenantRole('client', null)).toBe(true);
     expect(isLockedTenantRole(undefined, 'ethan.brooks@firstcapital.example.com')).toBe(true);
+    expect(isLockedTenantRole(undefined, 'cfo@lakeshore-holdings.example.com')).toBe(true);
     expect(isLockedTenantRole(undefined, 'retired-energy-demo@example.com')).toBe(false);
     expect(isLockedTenantRole(undefined, 'anand.sundaram@thesundaram.com')).toBe(false);
   });
@@ -97,6 +108,65 @@ describe('access-routing', () => {
         'apexretail',
       ),
     ).toBe(true);
+  });
+
+  test('infers client ownership from Source event slugs with tenant hints', () => {
+    expect(inferSourceEventClientKeyFromSlug('apex-retail-ams-outsourcing-2026')).toBe('apexretail');
+    expect(inferSourceEventClientKeyFromSlug('SRC-MER-046')).toBe('meridian');
+    expect(inferSourceEventClientKeyFromSlug('skyharbor-air-renewal-2026')).toBe('skyharbor');
+    expect(inferSourceEventClientKeyFromSlug('lakeshore-kyriba-rollout-2026')).toBe('lakeshore');
+    expect(inferSourceEventClientKeyFromSlug('unknown-source-event')).toBeNull();
+  });
+
+  test('denies locked client users when a Source event slug clearly belongs to another client', () => {
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cdio@meridian-health.example.com' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(true);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cio@apex-retail.example.com' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(false);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        'admin',
+        { email: 'anand.sundaram@thesundaram.com', defaultClientId: 'meridian' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(false);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cfo@lakeshore-holdings.example.com' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(true);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cfo@lakeshore-holdings.example.com' },
+        'lakeshore-kyriba-rollout-2026',
+      ),
+    ).toBe(false);
+  });
+
+  test('denies Source event slugs that conflict with the active client cookie', () => {
+    expect(shouldDenySourceEventSlugForActiveClient('meridian', 'apex-retail-ams-outsourcing-2026')).toBe(true);
+    expect(shouldDenySourceEventSlugForActiveClient('apexretail', 'apex-retail-ams-outsourcing-2026')).toBe(false);
+    expect(shouldDenySourceEventSlugForActiveClient('lakeshore', 'lakeshore-kyriba-rollout-2026')).toBe(false);
+    expect(shouldDenySourceEventSlugForActiveClient('meridian', 'lakeshore-kyriba-rollout-2026')).toBe(true);
+    expect(shouldDenySourceEventSlugForActiveClient('unknown', 'apex-retail-ams-outsourcing-2026')).toBe(false);
+    expect(shouldDenySourceEventSlugForActiveClient('meridian', 'source-event-without-tenant-hint')).toBe(false);
   });
 
   test('routes external users to the public surface', () => {

@@ -1,0 +1,100 @@
+{
+  "dataset_id": "lakeshore-kyriba-synthetic-v1",
+  "generated_at": "2026-06-14T00:00:00.000Z",
+  "tenant_key": "lakeshore",
+  "synthetic_label": "Synthetic demo pack. No real client confidential data.",
+  "purpose": "Demonstrate how volumetric, architecture, CMDB, integration, cost, control, and vendor evidence change Source RFP outputs, scoring, cost, risk, and executive recommendations.",
+  "upload_files": [
+    {
+      "file": "00_upload_instructions_and_sensitivity.md",
+      "template": "upload-guidance",
+      "owner": "AbarVa Steward",
+      "plane": "demo_guidance",
+      "sensitivity": "public_demo_synthetic"
+    },
+    {
+      "file": "01_treasury_volume_baseline.xlsx",
+      "template": "financial-kpi-workbook",
+      "owner": "Treasurer",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "02_bank_connectivity_inventory.xlsx",
+      "template": "integration-topology",
+      "owner": "Treasury Ops",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "03_erp_feed_landscape.xlsx",
+      "template": "erp-landscape-workbook",
+      "owner": "CIO ERP",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "04_cmdb_application_portfolio.csv",
+      "template": "application-portfolio",
+      "owner": "Enterprise Architecture",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "05_current_state_architecture.md",
+      "template": "strategy-memo",
+      "owner": "Enterprise Architecture",
+      "plane": "event_evidence_review_required"
+    },
+    {
+      "file": "06_api_file_transfer_landscape.csv",
+      "template": "integration-topology",
+      "owner": "Integration Lead",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "07_treasury_controls_matrix.xlsx",
+      "template": "qms-events",
+      "owner": "Treasurer / Audit",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "08_current_run_cost_baseline.xlsx",
+      "template": "financial-kpi-workbook",
+      "owner": "FP&A",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "09_rate_card_resource_model.xlsx",
+      "template": "rate-card",
+      "owner": "Procurement",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "10_vendor_contract_inventory.csv",
+      "template": "vendor-contracts",
+      "owner": "Procurement",
+      "plane": "enterprise_context"
+    },
+    {
+      "file": "11_project_roadmap_constraints.md",
+      "template": "initiative-portfolio",
+      "owner": "PMO",
+      "plane": "event_evidence_review_required"
+    },
+    {
+      "file": "12_security_network_topology.md",
+      "template": "infrastructure-estate",
+      "owner": "Security",
+      "plane": "event_evidence_review_required"
+    },
+    {
+      "file": "13_kyriba_decision_patterns.jsonl",
+      "template": "pattern-layer",
+      "owner": "AbarVa PatternOps",
+      "plane": "corpus_patterns"
+    },
+    {
+      "file": "14_evidence_pattern_output_trace.csv",
+      "template": "trace",
+      "owner": "AbarVa Steward",
+      "plane": "demo_trace"
+    }
+  ]
+}

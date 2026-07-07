@@ -1,0 +1,250 @@
+import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
+
+export type IntelligenceTabId =
+  | "decision"
+  | "industry_insights"
+  | "chart"
+  | "table"
+  | "evidence";
+
+export interface ParsedIntelligenceTab {
+  id: IntelligenceTabId;
+  label: string;
+  grounding:
+    | "tenant-evidence"
+    | "function-context"
+    | "category-context"
+    | "industry-context"
+    | "corpus-pattern"
+    | "benchmark"
+    | "mixed"
+    | "unknown";
+  content: string;
+}
+
+export interface ParsedIntelligenceTabbedResponse {
+  mainAnswer: string;
+  tabs: ParsedIntelligenceTab[];
+  rawText: string;
+}
+
+const TAB_LABELS: Record<IntelligenceTabId, string> = {
+  decision: "Decision",
+  industry_insights: "Industry Insights",
+  chart: "Chart",
+  table: "Table",
+  evidence: "Evidence",
+};
+
+const TAB_MARKER_RE =
+  /^\s*<<<TAB:\s*(Decision|Industry Insights|Chart|Table|Evidence)(?:\s*\|\s*grounding:\s*([^>]+?))?\s*>>>\s*$/gim;
+
+export const INTELLIGENCE_TABBED_OUTPUT_CONTRACT = `INTELLIGENCE COMPANION-CANVAS OUTPUT
+
+Return one main answer, then mandatory right-canvas companion cards using the exact markers below.
+
+Main answer:
+- Put the executive answer before any tab marker.
+- Do not include tables in the main answer.
+- Do not put an \`abarva-canvas\` fenced block in the main answer. A native canvas block is valid only inside the Chart tab.
+- Do not expose raw IDs, field names, debug labels, or implementation terms.
+- Keep the main answer concise and decision-led. It should not duplicate the right-canvas tabs.
+
+Companion canvas:
+- The renderer places each marked section as a separate card on the right side. It does not rewrite your prose, tables, or chart data.
+- Always provide all five companion cards for Intelligence answers. The response is invalid unless it contains all five exact \`<<<TAB: ...>>>\` markers.
+- Do not describe which canvas you chose in the main answer. Put the chosen exhibit or chart data inside the Chart tab.
+- Do not omit a card because the question is broad, narrative, or lacks perfect tenant data.
+- The right canvas should add decision support, not duplicate the main answer. Bring useful adjacent views: exact tenant metric when available; otherwise a relevant function, category, industry, corpus-pattern, benchmark, peer-pattern, risk, value-model, assumption, or planning view with honest grounding.
+- Use these exact start markers, in this order:
+  <<<TAB: Decision | grounding: tenant-evidence>>>
+  <<<TAB: Industry Insights | grounding: industry-context>>>
+  <<<TAB: Chart | grounding: tenant-evidence>>>
+  <<<TAB: Table | grounding: tenant-evidence>>>
+  <<<TAB: Evidence | grounding: tenant-evidence>>>
+- End each tab by starting the next tab marker or the end of the response.
+- Decision should state the executive choice, tradeoff, decision required, owner when known, and the next move. If the answer needs an interactive branch, put the branch choice here.
+- Industry Insights must provide the most relevant industry signal, peer pattern, benchmark, trend, or outside-in case example. It must be explicitly labeled as industry context or benchmark context, not tenant proof. Never say the tenant "has" an industry fact unless it is in tenant evidence.
+- Chart must include chart-ready data or a native abarva-canvas exhibit. It may be tenant-specific, or it may be an industry trend, directional benchmark, peer-pattern map, or function/category opportunity map. If the chart is not tenant evidence, set grounding to industry-context, benchmark, corpus-pattern, function-context, or category-context and make the first line say that clearly.
+- Table must preserve a compact Markdown table that helps the decision. The table can be directly about the answer or an adjacent function/category/pattern view that helps the CXO reason about the question.
+- If you emit any Markdown table, it must appear inside the Table tab or Chart tab, never inside the main answer, Decision tab, Industry Insights tab, or Evidence tab.
+- If the answer includes a decision plus a comparison table, put the choice and tradeoff in Decision, then start a separate <<<TAB: Table | grounding: tenant-evidence>>> marker before the table.
+- Evidence must show the most relevant tenant facts first, then separate industry/pattern context, benchmarks, planning assumptions, missing evidence, and what the executive should validate next. Do not dump source registers or debug labels.
+
+Executive visual payload:
+- For strategic prioritization, sequencing, investment, value/readiness, transformation, gate, roadmap, risk-boundary, proof-boundary, broad CIO/CTO/CXO planning, or transformation questions, include one fenced JSON block inside the Chart tab using this exact fence language: \`\`\`abarva-canvas
+- For narrow factual questions, use the fenced block only when it would add decision value.
+- Do not write HTML, SVG, CSS, or arbitrary chart code. Choose one supported canvasType and provide the structured advisory data. The renderer draws the exhibit consistently.
+- Canvas selection rules:
+  funding, prioritization, scale/hold/stop, or sequencing question -> executive-canvas-sequencing.
+  portfolio tradeoff, value vs readiness, risk vs value, or where-to-place-bets question -> value-readiness-matrix.
+  "what has to happen first", prerequisite, dependency, gate, roadmap, or unlock-value question -> gate-to-value-roadmap.
+  trust, governance, proof, evidence quality, assumption, missing-data, or signoff question -> proof-boundary-card.
+- Prefer the native exhibit over a plain Markdown table when the question is executive, strategic, or investment-facing. Use Markdown tables only as supporting detail.
+- Do not duplicate the main answer on the right canvas. The right canvas should show the decision exhibit, proof boundary, industry signal, or adjacent view that helps the CXO decide.
+- Supported canvasType values:
+  executive-canvas-sequencing: lanes with labels such as Scale now, Certify then scale, Fund readiness, Hold / stop. Initiative items should be objects with label, value, readiness, risk, action, owner, gate, and note when known.
+  value-readiness-matrix: items with label, value, readiness, optional risk, action, owner, gate, and note. Use a 0-10 scale when scores are directional.
+  gate-to-value-roadmap: gates with label, owner, dependency, valueUnlocked, and status.
+  proof-boundary-card: proofBoundary with known, assumed, missing, and decisionRequired.
+- MANDATORY signals array (renders the Signals zone): every abarva-canvas payload MUST include a "signals" array of AT LEAST 4 items — the metrics that most govern THIS decision for THIS tenant. Each signal is an object:
+    {"label": string, "state": "measured"|"benchmark"|"expected_uncaptured"|"none", "value"?: string, "context"?: string, "provenance": "enterprise-evidence"|"industry-context"|"inference", "whyItMatters": string, "loadHint"?: string}
+  Rules: include "value" ONLY for measured (a real tenant figure from SOURCES) or benchmark (a concrete industry range); NEVER fabricate a tenant number — express absence as expected_uncaptured with a specific loadHint. "whyItMatters" is required on every signal. The signals array is SEPARATE from lanes/items/proofBoundary (those render The Picture exhibit).
+- Put visible executive prose before or after the fenced block. The fenced block is a renderer contract and should not be repeated as raw JSON in prose.
+- Example:
+  \`\`\`abarva-canvas
+  {"canvasType":"executive-canvas-sequencing","title":"AI funding sequence","signals":[{"label":"Contract renewals / 18mo","state":"measured","value":"$22M across 6 vendors","provenance":"enterprise-evidence","whyItMatters":"Concentrated renewal window is negotiation leverage"},{"label":"Largest single renewal","state":"measured","value":"Oracle Hyperion $3.13M (Oct)","provenance":"enterprise-evidence","whyItMatters":"Anchors the sequencing decision"},{"label":"Avg contract cycle time","state":"benchmark","value":"30-45 days","context":"industry range; your value not captured","provenance":"industry-context","whyItMatters":"Baseline for renewal-risk automation ROI"},{"label":"Obligation-tracking coverage","state":"expected_uncaptured","provenance":"inference","whyItMatters":"Untracked obligations leak SLA leverage","loadHint":"Load CLM obligation register to Source"}],"lanes":[{"label":"Scale now","items":[{"label":"Loyalty","value":8,"readiness":8,"risk":4,"action":"Scale now","owner":"Chief Digital Officer","gate":"Certified customer engagement data"}]},{"label":"Certify then scale","items":[{"label":"Crew Recovery","value":8,"readiness":6,"risk":6,"action":"Certify then scale","owner":"EVP Operations","gate":"Crew legality and disruption data signoff"}]},{"label":"Fund readiness","items":[{"label":"IROPS","value":10,"readiness":3,"risk":8,"action":"Fund readiness","owner":"CDAO + COO","gate":"Certified operational data product"}]}],"proofBoundary":{"known":["Loyalty has certified engagement data"],"missing":["IROPS data certification"],"decisionRequired":"Give CDAO gate authority"}}
+  \`\`\`
+
+Grounding:
+- Clearly distinguish tenant facts, industry context, corpus/pattern context, benchmarks, planning assumptions, and missing evidence.
+- Chart and Table should use tenant evidence when the tenant packet contains the needed facts. When industry trend, benchmark, corpus-pattern, function, category, or planning-assumption data is more useful, use it, but say so in the tab marker grounding and in the first line of the tab.
+- Accepted grounding labels include tenant-evidence, function-context, category-context, industry-context, corpus-pattern, benchmark, and mixed.
+
+DATA RICHNESS, RELEVANCE & HONESTY MANDATE (mandatory on every question):
+- Every companion card must be RICH and SPECIFIC. Thin, generic, or padded cards are a contract violation — regenerate before returning.
+- Evidence tab: surface AT LEAST 4 specific signal items that most govern THIS decision for THIS tenant. Each item must be a named metric with a concrete value, an explicit industry range, or a named missing metric — never a vague label ("various KPIs"), a round-number placeholder, or empty scaffold. For each item, state its honest grounding:
+    measured -> mine the tenant SOURCES hard; if a real relevant figure exists you MUST surface it with its named system/owner. Richness = extracting real tenant numbers, never inventing them.
+    benchmark -> a concrete industry RANGE (e.g. "12-15%"), never a fake decimal, labeled industry-context, with "your value: not captured".
+    uncaptured -> name the missing metric, why it governs the decision, and a SPECIFIC load hint (what to ingest). No generic "load more data".
+- Chart / abarva-canvas exhibit: MUST contain AT LEAST 3 real, specific, labeled elements (lane items, matrix items, gates, or proof-boundary entries), each grounded in tenant evidence or a clearly-labeled industry/planning pattern. No empty axes, single-item exhibits, or placeholder boxes. If tenant evidence is thin, the exhibit is still SPECIFIC (real named industry structure) and its grounding says so.
+- RELEVANCE GATE: every card element must trace to the question's decision AND to a named tenant system/initiative or a specific industry benchmark. Reject generic content that could apply to any company.
+- RICH NEVER MEANS FABRICATED: maximum relevant specificity extracted from real evidence, never maximum invention. NEVER state a tenant number that is not in the tenant SOURCES. When evidence is thin, richness shows up as specific benchmarks, named gaps, and concrete load hints — not vague prose and not invented figures.
+- SIGNAL SELECTION DISCIPLINE (anti-recycling): Pick the signals that are most decision-governing for THIS SPECIFIC QUESTION — not the most-available facts from the evidence pool. Before finalising signals, ask: "Would I pick this exact signal if answering a completely different question from this tenant?" If the answer is yes for more than 2 of your signals, you have recycled availability over relevance — regenerate the signals. A question about acquisition readiness must emphasise the payments-mapping defect and the renewal-window collision that lands mid-integration; a question about vendor leverage must make the back-to-back BI renewal timing the lead signal; a question about the kill list must foreground the stop-evidence, not the renewal calendar. The same 5-6 facts MUST NOT dominate every canvas — differentiation of signal selection per question is mandatory.
+
+- PEER-GROUP BENCHMARKS — no generic ranges: benchmark signals must name the peer group precisely: "among diversified private holding companies with $3-10B portfolio revenue," "for PE-backed industrials with shared corporate services," "for holdco-level treasury programs at 80k+ payments/month" — never "enterprises" or "large organizations." A range like "10-30% savings" with no named peer cohort is a placeholder, not a benchmark. If you cannot cite a sector-specific peer group for a benchmark, make it an expected_uncaptured tile with a specific loadHint, not a vague benchmark tile.
+
+- EXHIBIT STRUCTURE FOLLOWS THE DECISION — no stencilling: choose the exhibit shape AFTER reading what the question is actually asking the CXO to decide. Do not default to scale/certify/stop lanes because they fit the evidence pool. If the question asks the CXO to choose between two governance models, the exhibit must illuminate that fork and the asymmetric risks on each path — not recycle a portfolio sequencing frame. If the question is about negotiation leverage, the exhibit must show the sequencing of the window and the specific leverage angles per vendor — not a generic readiness matrix. The exhibit must look as if it was designed for this question, not stamped from a template applied to every question.
+
+- SELF-CHECK before returning — the answer is INVALID and must be regenerated if any of: Evidence has < 4 specific items; the Chart exhibit has < 3 substantive labeled elements; any element is generic/valueless/vague; any element fails the relevance gate; any tenant number appears that is not in the SOURCES; more than 2 signals could appear unchanged in a canvas answering a completely different question from this tenant; any benchmark lacks a named peer-group cohort.`;
+
+function normalizeTabId(label: string): IntelligenceTabId | null {
+  const normalized = label.trim().toLowerCase();
+  if (normalized === "decision") return "decision";
+  if (normalized === "industry insights") return "industry_insights";
+  if (normalized === "chart") return "chart";
+  if (normalized === "table") return "table";
+  if (normalized === "evidence") return "evidence";
+  return null;
+}
+
+function normalizeGrounding(
+  value: string | undefined,
+): ParsedIntelligenceTab["grounding"] {
+  const normalized = (value ?? "").trim().toLowerCase();
+  if (normalized === "tenant-evidence" || normalized === "tenant evidence") {
+    return "tenant-evidence";
+  }
+  if (normalized === "function-context" || normalized === "function context") {
+    return "function-context";
+  }
+  if (normalized === "category-context" || normalized === "category context") {
+    return "category-context";
+  }
+  if (normalized === "industry-context" || normalized === "industry context") {
+    return "industry-context";
+  }
+  if (normalized === "corpus-pattern" || normalized === "corpus pattern") {
+    return "corpus-pattern";
+  }
+  if (normalized === "benchmark" || normalized === "benchmarks") {
+    return "benchmark";
+  }
+  if (normalized === "mixed") return "mixed";
+  return "unknown";
+}
+
+export function parseIntelligenceTabbedResponse(
+  text: string,
+): ParsedIntelligenceTabbedResponse {
+  const rawText = text.replace(/\r\n/g, "\n").trim();
+  TAB_MARKER_RE.lastIndex = 0;
+  const matches = Array.from(rawText.matchAll(TAB_MARKER_RE));
+  if (matches.length === 0) {
+    return {
+      rawText,
+      mainAnswer: rawText,
+      tabs: [],
+    };
+  }
+
+  const mainAnswer = rawText.slice(0, matches[0].index).trim();
+  const tabs: ParsedIntelligenceTab[] = [];
+  for (let index = 0; index < matches.length; index += 1) {
+    const match = matches[index];
+    const id = normalizeTabId(match[1] ?? "");
+    if (!id) continue;
+    const start = (match.index ?? 0) + match[0].length;
+    const end =
+      index + 1 < matches.length
+        ? (matches[index + 1].index ?? rawText.length)
+        : rawText.length;
+    const content = rawText.slice(start, end).trim();
+    if (!content) continue;
+    if (
+      id === "chart" &&
+      !hasChartReadyMarkdownData(content) &&
+      !hasExecutiveCanvasPayload(content)
+    ) {
+      continue;
+    }
+    tabs.push({
+      id,
+      label: TAB_LABELS[id],
+      grounding: normalizeGrounding(match[2]),
+      content,
+    });
+  }
+
+  return {
+    rawText,
+    mainAnswer,
+    tabs,
+  };
+}
+
+export function hasIntelligenceTabMarkers(text: string): boolean {
+  TAB_MARKER_RE.lastIndex = 0;
+  return TAB_MARKER_RE.test(text.replace(/\r\n/g, "\n"));
+}
+
+export function visibleIntelligenceMainAnswer(text: string): string {
+  const parsed = parseIntelligenceTabbedResponse(text);
+  if (hasIntelligenceTabMarkers(text)) return parsed.mainAnswer;
+  const partialMarkerIndex = parsed.rawText.search(/(?:^|\n)\s*<<<TAB:/i);
+  if (partialMarkerIndex >= 0) {
+    return parsed.rawText.slice(0, partialMarkerIndex).trim();
+  }
+  return parsed.rawText;
+}
+
+export function hasChartReadyMarkdownData(content: string): boolean {
+  const lines = content.split(/\n/);
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const header = splitMarkdownTableLine(lines[index] ?? "");
+    if (header.length < 2 || !isMarkdownSeparator(lines[index + 1] ?? "")) {
+      continue;
+    }
+    for (let rowIndex = index + 2; rowIndex < lines.length; rowIndex += 1) {
+      const cells = splitMarkdownTableLine(lines[rowIndex] ?? "");
+      if (cells.length < 2) break;
+      if (cells.some((cell) => /(?:^|[^A-Za-z])\$?-?\d[\d,.]*%?/.test(cell))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function splitMarkdownTableLine(line: string): string[] {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
+  return trimmed
+    .slice(1, -1)
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function isMarkdownSeparator(line: string): boolean {
+  return /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+}

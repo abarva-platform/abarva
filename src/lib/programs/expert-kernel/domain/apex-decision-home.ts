@@ -364,7 +364,7 @@ export const APEX_DECISION_HOME_BINDING: DecisionHomeBinding = {
           'carry it — a precise, named seed gap.',
         evidenceRestsOnSeedGap: true,
         gestureLabel: 'Review the cost-per-contact seed gap',
-        gestureHref: '/home/data-trust',
+        gestureHref: '/admin/data-trust',
       },
     ];
 

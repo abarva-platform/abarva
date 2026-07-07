@@ -1,202 +1,343 @@
+// POST /api/v1/programs/[programId]/generate — Moves deliverable redo route contract.
+//
+// The durable-run enqueue path was retired for this route in the Moves redo.
+// The route is now intentionally thin: tenancy + program lookup, then the
+// tested generateArtifact(args, deps) keystone with injected sources/model deps.
+
 const requireTenancy = jest.fn();
 const tenancyErrorResponse = jest.fn();
 const getProgramById = jest.fn();
-const getModuleState = jest.fn();
-const mockAzureRead = {
-  query: jest.fn(),
-  select: jest.fn(),
-  maybeSingle: jest.fn(),
-  count: jest.fn(),
-  withSession: jest.fn(),
-};
-const getActiveClientRow = jest.fn();
-const buildTenantContextBlock = jest.fn();
-const clientKeyToInventorySubstrateKey = jest.fn();
-const streamAgentTurn = jest.fn();
+const generateArtifact = jest.fn();
+const createMovesGenerateArtifactDeps = jest.fn();
 const draftModuleDeliverable = jest.fn();
-const getDeliverableSpec = jest.fn();
-const getPhasePackV2 = jest.fn();
-const formatPhasePackV2ForPrompt = jest.fn();
+const saveMoveArtifact = jest.fn();
 
-jest.mock('@/app/api/v1/programs/_auth', () => ({
+jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy,
   tenancyErrorResponse,
 }));
 
-jest.mock('@/lib/programs/queries', () => ({
+jest.mock("@/lib/programs/queries", () => ({
   getProgramById,
-  getModuleState,
 }));
 
-jest.mock('@/lib/data-plane/azureRead', () => ({
-  azureRead: mockAzureRead,
+jest.mock("@/lib/deliverables/generate-artifact", () => ({
+  generateArtifact,
 }));
 
-jest.mock('@/lib/active-client', () => ({
-  getActiveClientRow,
+jest.mock("@/lib/deliverables/moves-generate-deps", () => ({
+  createMovesGenerateArtifactDeps,
+  normalizeMovesDeliverableKey: jest.fn(
+    (key: string | undefined, phase: number) =>
+      key === "p2_package"
+        ? "discovery_report"
+        : (key ?? `phase_${phase}_artifact`),
+  ),
 }));
 
-jest.mock('@/lib/intelligence/persistence', () => ({
-  buildTenantContextBlock,
+jest.mock("@/lib/deliverables/profiles/registry", () => ({
+  getDeliverableProfile: jest.fn(() => ({
+    title: "Discovery & Diagnosis Report",
+  })),
 }));
 
-jest.mock('@/lib/agent/tools/intelligence/_shared', () => ({
-  clientKeyToInventorySubstrateKey,
+jest.mock("@/lib/deliverables/generated-phase-digest", () => ({
+  buildGeneratedPhaseDigest: jest.fn(() => ({
+    decisions: [
+      { phase: 2, decision: "Discovery generated", rationale: "test" },
+    ],
+  })),
 }));
 
-jest.mock('@/lib/agent/stream', () => ({
-  streamAgentTurn,
-}));
-
-jest.mock('@/lib/programs/nexus', () => ({
+jest.mock("@/lib/programs/nexus", () => ({
   draftModuleDeliverable,
 }));
 
-jest.mock('@/lib/programs/deliverable-registry', () => ({
-  getDeliverableSpec,
-}));
-
-jest.mock('@/lib/programs/phase-packs', () => ({
-  getPhasePackV2,
-}));
-
-jest.mock('@/lib/programs/phase-packs/format-v2', () => ({
-  formatPhasePackV2ForPrompt,
+jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
+  saveMoveArtifact,
 }));
 
 function makeRequest(body: unknown): Request {
-  return new Request('http://localhost/api/v1/programs/program_1/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  return new Request("http://localhost/api/v1/programs/program_1/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 }
 
-describe('POST /api/v1/programs/[programId]/generate read plane', () => {
+describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifact", () => {
   beforeEach(() => {
+    jest.resetModules();
     jest.clearAllMocks();
-    requireTenancy.mockResolvedValue({ clientId: 'client_1', clientKey: 'apex-retail', userId: 'user_1' });
+    requireTenancy.mockResolvedValue({
+      clientId: "client_1",
+      clientKey: "apex-retail",
+      userId: "user_1",
+    });
     tenancyErrorResponse.mockImplementation((err: unknown) => {
       throw err;
     });
     getProgramById.mockResolvedValue({
-      id: 'program_1',
-      name: 'Owned Brand Margin Recovery',
+      id: "program_1",
+      name: "Owned Brand Margin Recovery",
       currentPhase: 2,
-      archetype: 'operational_optimization',
+      archetype: "operational_optimization",
+      problemStatement: "Improve margin leakage using current-state evidence.",
+      targetOutcome: "Reduce leakage.",
     });
-    getModuleState.mockResolvedValue([{ moduleKey: 'diagnose', status: 'in_progress' }]);
-    getActiveClientRow.mockResolvedValue({
-      id: 'client_1',
-      key: 'apex-retail',
-      name: 'Apex Retail',
-      industry_code: 'retail',
+    createMovesGenerateArtifactDeps.mockReturnValue({
+      contextSources: {},
+      gateSources: {},
+      callModel: jest.fn(),
     });
-    clientKeyToInventorySubstrateKey.mockReturnValue('apex-retail');
-    buildTenantContextBlock.mockResolvedValue('--- TENANT CONTEXT ---\nMargin pressure context');
-    getDeliverableSpec.mockReturnValue(null);
-    getPhasePackV2.mockReturnValue(null);
-    formatPhasePackV2ForPrompt.mockReturnValue('');
-    streamAgentTurn.mockImplementation(async function* () {
-      yield '# Generated Deliverable\n';
-      yield 'Specific content.';
-    });
-    draftModuleDeliverable.mockResolvedValue({ deliverableId: 'deliv_1', versionId: 'ver_1' });
-    mockAzureRead.query.mockResolvedValue([
-      {
-        deliverable_type_key: 'p1_package',
-        title: 'Program Charter',
-        status: 'published',
-        content: 'Prior charter content',
-        version: 3,
+    generateArtifact.mockResolvedValue({
+      status: "generated",
+      html: "<html><body><svg></svg><table><tr><td>Discovery</td></tr></table></body></html>",
+      context: {
+        moveId: "program_1",
+        tenantKey: "apex-retail",
+        targetPhase: 2,
       },
-    ]);
-    mockAzureRead.select.mockImplementation(async (request) => {
-      if (request.table === 'program_milestones') {
-        return [{ id: 'ms_1', name: 'Gate 2', status: 'open', target_date: '2026-06-30' }];
-      }
-      if (request.table === 'program_risks') {
-        return [{ id: 'risk_1', title: 'Data quality', likelihood: 'medium', impact: 'high', status: 'open' }];
-      }
-      if (request.table === 'persons') {
-        return [
-          { id: 'person_sponsor', name: 'Maya Patel', role: 'CFO' },
-          { id: 'person_lead', name: 'Leo Chen', role: 'Program Lead' },
-        ];
-      }
-      return [];
+      goldenBar: {
+        pass: true,
+        reasons: [],
+        hasDataGap: false,
+        proseOnly: false,
+      },
+      generationMode: "final",
+      draftOnly: false,
+      draftCaveats: [],
+      contextCaveats: [],
     });
-    mockAzureRead.maybeSingle.mockImplementation(async (request) => {
-      if (request.table === 'engagements') {
-        return {
-          id: 'program_1',
-          name: 'Owned Brand Margin Recovery',
-          status: 'active',
-          lifecycle_state: 'approved',
-          current_phase: 2,
-          program_archetype: 'operational_optimization',
-          maestro_oversight_level: 'standard',
-          sponsor_person_id: 'person_sponsor',
-          maestro_person_id: 'person_lead',
-          charter: { objective: 'Recover owned-brand margin' },
-        };
-      }
-      if (request.table === 'pattern_match_logs') return { pattern_key: 'owned-brand-margin-recovery' };
-      if (request.table === 'engagement_topics') {
-        return {
-          topic_key: 'owned-brand-margin-recovery',
-          title: 'Owned Brand Margin Recovery',
-          phase_playbook: { diagnose: ['margin waterfall'] },
-          failure_modes: { risks: ['supplier leakage'] },
-          success_signals: { signals: ['basis point recovery'] },
-        };
-      }
-      return null;
+    draftModuleDeliverable.mockResolvedValue({
+      deliverableId: "deliverable_1",
+      versionId: "version_1",
+    });
+    saveMoveArtifact.mockResolvedValue({
+      artifactId: "artifact_1",
+      version: 1,
+      blobStored: true,
     });
   });
 
-  it('assembles generation context through azureRead and preserves save response', async () => {
-    const { POST } = await import('@/app/api/v1/programs/[programId]/generate/route');
-    const res = await POST(makeRequest({ phase: 2, deliverableTypeKey: 'p2_package' }), {
-      params: Promise.resolve({ programId: 'program_1' }),
-    });
+  it("calls generateArtifact with injected deps and persists the HTML artifact", async () => {
+    const { POST } =
+      await import("@/app/api/v1/programs/[programId]/generate/route");
+    const res = await POST(
+      makeRequest({ phase: 2, deliverableTypeKey: "p2_package" }),
+      {
+        params: Promise.resolve({ programId: "program_1" }),
+      },
+    );
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      deliverableId: 'deliv_1',
-      versionId: 'ver_1',
-      deliverableTypeKey: 'p2_package',
-      saved: true,
+      deliverableId: "deliverable_1",
+      versionId: "version_1",
+      artifactId: "artifact_1",
+      artifactVersion: 1,
+      artifactBlobStored: true,
       phase: 2,
+      deliverableKey: "discovery_report",
+      outputFormat: "html",
     });
-    expect(getProgramById).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: 'client_1' }),
-      'program_1',
+
+    expect(createMovesGenerateArtifactDeps).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "apex-retail" }),
     );
-    expect(getModuleState).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: 'client_1' }),
-      'program_1',
-    );
-    expect(mockAzureRead.query).toHaveBeenCalledWith(
-      expect.stringContaining('FROM deliverables_v2 d'),
-      ['program_1'],
-    );
-    expect(mockAzureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
-      table: 'engagements',
-      where: { id: 'program_1' },
-    }));
-    expect(mockAzureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
-      table: 'pattern_match_logs',
-      where: { engagement_id: 'program_1', acted_upon: true },
-    }));
-    expect(draftModuleDeliverable).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: 'client_1' }),
+    expect(generateArtifact).toHaveBeenCalledWith(
       expect.objectContaining({
-        programId: 'program_1',
-        deliverableTypeKey: 'p2_package',
-        draftContent: expect.stringContaining('Generated Deliverable'),
+        moveId: "program_1",
+        tenantKey: "apex-retail",
+        phase: 2,
+        artifact: "discovery_report",
+        allowApprovedRetry: true,
+        generationMode: "final",
+        useCaseQuery: "Improve margin leakage using current-state evidence.",
+      }),
+      expect.objectContaining({
+        contextSources: expect.any(Object),
+        gateSources: expect.any(Object),
+        callModel: expect.any(Function),
       }),
     );
+    expect(draftModuleDeliverable).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "apex-retail" }),
+      expect.objectContaining({
+        programId: "program_1",
+        moduleKey: "discovery_report",
+        deliverableTypeKey: "discovery_report",
+        draftContent: expect.stringContaining("<svg"),
+        structuredData: expect.objectContaining({
+          output_format: "html",
+          mode: "program_generate",
+          solution_context: expect.objectContaining({
+            moveId: "program_1",
+            tenantKey: "apex-retail",
+          }),
+        }),
+      }),
+    );
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "apex-retail" }),
+      expect.objectContaining({
+        moveId: "program_1",
+        phase: 2,
+        artifactType: "discovery_report",
+        artifactFamily: "generated_deliverable",
+        title: "Discovery & Diagnosis Report",
+        fileFormat: "html",
+        body: expect.stringContaining("<svg"),
+        status: "draft",
+        qualityScore: 96,
+        sourceBasis: "moves_solution_context",
+        confidence: "high",
+        citationReady: true,
+        metadata: expect.objectContaining({
+          deliverableId: "deliverable_1",
+          versionId: "version_1",
+          goldenBarStatus: "Passed",
+          reviewStatus: "not_reviewed",
+        }),
+      }),
+    );
+  });
+
+  it("persists pre-gate draft generation as review_required with gate caveats", async () => {
+    generateArtifact.mockResolvedValueOnce({
+      status: "generated",
+      html: "<html><body><section>Pre-gate draft — for review, not final</section><svg></svg><table><tr><td>Charter</td></tr></table></body></html>",
+      context: {
+        moveId: "program_1",
+        tenantKey: "apex-retail",
+        targetPhase: 1,
+      },
+      goldenBar: {
+        pass: true,
+        reasons: [],
+        hasDataGap: false,
+        proseOnly: false,
+      },
+      generationMode: "draft",
+      draftOnly: true,
+      draftCaveats: [
+        {
+          code: "gate_not_approved",
+          phase: 1,
+          severity: "hard",
+          reason: "Phase 1 gate is not approved — no generation until the gate is approved.",
+        },
+      ],
+      contextCaveats: ["kpis"],
+    });
+
+    const { POST } =
+      await import("@/app/api/v1/programs/[programId]/generate/route");
+    const res = await POST(
+      makeRequest({
+        phase: 1,
+        deliverableTypeKey: "charter",
+        generationMode: "draft",
+      }),
+      {
+        params: Promise.resolve({ programId: "program_1" }),
+      },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      deliverableId: "deliverable_1",
+      versionId: "version_1",
+      artifactId: "artifact_1",
+      phase: 1,
+      deliverableKey: "charter",
+      generationMode: "draft",
+      draftOnly: true,
+      artifactStatus: "Pre-gate draft — review required",
+      goldenBar: expect.objectContaining({ pass: true }),
+    });
+
+    expect(generateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        moveId: "program_1",
+        tenantKey: "apex-retail",
+        phase: 1,
+        artifact: "charter",
+        allowApprovedRetry: true,
+        generationMode: "draft",
+      }),
+      expect.any(Object),
+    );
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "apex-retail" }),
+      expect.objectContaining({
+        moveId: "program_1",
+        phase: 1,
+        artifactType: "charter",
+        body: expect.stringContaining("Pre-gate draft"),
+        status: "review_required",
+        metadata: expect.objectContaining({
+          generationMode: "draft",
+          draftOnly: true,
+          qualityStatus: "Draft quality passed",
+          goldenBarStatus: "Passed with caveats",
+          artifactStatus: "Pre-gate draft — review required",
+          reviewStatus: "pre_gate_review_required",
+          preliminaryCaveat: expect.stringContaining("not final or board-ready"),
+          openItems: expect.arrayContaining([
+            "Sponsor assignment required before final approval.",
+            "Charter signoff required before final approval.",
+            "Phase gate approval required before final generation.",
+          ]),
+        }),
+      }),
+    );
+  });
+
+  it("returns a structured 409 when the phase gate blocks generation", async () => {
+    generateArtifact.mockResolvedValueOnce({
+      status: "blocked_gate",
+      httpStatus: 409,
+      blockers: [
+        {
+          code: "gate_not_approved",
+          phase: 2,
+          severity: "hard",
+          reason: "Phase 2 gate is not approved.",
+        },
+      ],
+    });
+
+    const { POST } =
+      await import("@/app/api/v1/programs/[programId]/generate/route");
+    const res = await POST(
+      makeRequest({ phase: 2, deliverableTypeKey: "p2_package" }),
+      {
+        params: Promise.resolve({ programId: "program_1" }),
+      },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "generation_gate_blocked",
+      phase: 2,
+      deliverableKey: "discovery_report",
+    });
+    expect(draftModuleDeliverable).not.toHaveBeenCalled();
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the program is not found", async () => {
+    getProgramById.mockResolvedValueOnce(null);
+    const { POST } =
+      await import("@/app/api/v1/programs/[programId]/generate/route");
+    const res = await POST(makeRequest({ phase: 2 }), {
+      params: Promise.resolve({ programId: "missing" }),
+    });
+    expect(res.status).toBe(404);
+    expect(generateArtifact).not.toHaveBeenCalled();
+    expect(draftModuleDeliverable).not.toHaveBeenCalled();
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
   });
 });
 

@@ -166,6 +166,7 @@ const CATEGORY_DEFAULT_MODEL: Readonly<Record<SourceCategoryId, DeliveryModel>> 
   saas_renewal: 'buy', // Already a bought product — renewal stays buy.
   cloud_finops: 'buy', // Cloud capacity is a bought commitment.
   bpo_contact_centre: 'partner', // Process operation is a vendor-run service.
+  bpo_shared_services: 'partner', // Transaction-processing operation is a vendor-run service.
   cyber_grc: 'buy', // Security tooling is predominantly a product buy.
   staff_aug_vs_managed_service: 'partner', // Managed-service outcome ownership.
 };

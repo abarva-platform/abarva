@@ -49,8 +49,8 @@ export const financeTreasuryAlmPack: FunctionPack = {
     'earns it across the spread, net of the risk it runs — so the function ' +
     'is judged on how well the whole balance sheet is optimised against ' +
     'risk, not on any single position.',
-  version: '1.0.0',
-  lastReviewed: '2026-05-21',
+  version: '1.1.0',
+  lastReviewed: '2026-06-06',
 
   // ── Layer 1 — Operating metrics ───────────────────────────────────────────
   operatingMetrics: [
@@ -517,6 +517,38 @@ export const financeTreasuryAlmPack: FunctionPack = {
         'Can a key figure be traced from management reporting through the ' +
         'ALM model to the source ledger with a documented, repeatable ' +
         'lineage?',
+    },
+    {
+      key: 'rented_treasury_intelligence',
+      name: 'Rented treasury intelligence',
+      description:
+        'The forecasting, anomaly, and covenant-headroom models — the ' +
+        'analytical intelligence the function steers by — live inside a ' +
+        'treasury management system or treasury-analytics SaaS that holds ' +
+        'the models on the vendor side, scored by the vendor’s black-box ' +
+        'logic and returned as a dashboard the institution cannot tune, ' +
+        'audit, or recalibrate on its own balance sheet. The institution ' +
+        'rents access to insight derived from its own cash, ledger, and ' +
+        'market data: it cannot inspect why a forecast is off, extend a ' +
+        'model to its actual debt stack or entity structure, or improve it ' +
+        'with its own behaviour signal, and it pays in perpetuity for the ' +
+        'privilege. The own-it thesis is the opposite — rent the rails (the ' +
+        'TMS, the SWIFT bureau, the payment factory) but own the ' +
+        'intelligence (the forecasting, anomaly, and covenant models built ' +
+        'on the institution’s own lakehouse, trained on its own history).',
+      detectionSignal:
+        'The forecasting and anomaly logic is a vendor module that cannot ' +
+        'be queried at the model level; forecast and covenant projections ' +
+        'cannot be inspected, recalibrated, or exported; the only bank, ' +
+        'cash, and ledger history is the vendor’s, accumulated from its own ' +
+        'go-live, and exit would mean rebuilding the analytics layer from ' +
+        'zero.',
+      diagnosticQuestion:
+        'Does the institution own its treasury intelligence — the ' +
+        'forecasting, anomaly, and covenant models, trainable and auditable ' +
+        'on its own governed lakehouse — or does that intelligence live ' +
+        'inside a TMS or treasury-analytics platform it rents and cannot ' +
+        'inspect?',
     },
   ],
 
@@ -1353,12 +1385,45 @@ export const financeTreasuryAlmPack: FunctionPack = {
             'which apply and how they connect.',
         },
         {
+          heading: 'Platform landing zone & private data plane',
+          guidance:
+            'Specify the cloud landing zone and private data plane the ' +
+            'capability runs on — multi-account governance, private ' +
+            'networking with no public-IP compute and an egress allowlist, ' +
+            'PrivateLink to the lakehouse, a regional Unity Catalog ' +
+            'metastore, and identity federation. State the platform-' +
+            'readiness gate that must be green before regulated financial ' +
+            'and customer data lands. Do not present an architecture with no ' +
+            'landing zone (cross-cutting pattern ' +
+            'cc_cloud_landing_zone_private_data_plane).',
+        },
+        {
+          heading: 'Ingestion & data-integration framework (own-it)',
+          guidance:
+            'Specify the metadata-driven ingestion framework that onboards ' +
+            'the treasury feeds by configuration rather than per-pipeline ' +
+            'code — bank statements (BAI2 / MT940 / camt), the ERP/GL, the ' +
+            'TMS (Kyriba and peers), and market-data feeds. Name the own-it ' +
+            'choice (e.g. DLT-META / the Databricks four-config framework, ' +
+            'Lakeflow Connect landing in the institution’s own Unity ' +
+            'Catalog) and reject reinventing a bespoke ingestion framework ' +
+            'or renting an outsourced destination SaaS that holds the bank, ' +
+            'cash, and ledger data on the vendor side — the own-it lakehouse ' +
+            'ingests the raw feeds in parallel with the TMS so the ' +
+            'institution owns an independent, complete history ' +
+            '(cross-cutting pattern cc_metadata_driven_ingestion_framework).',
+        },
+        {
           heading: 'Data architecture and integrations',
           guidance:
             'Specify the ALM, general-ledger, FP&A, treasury, and ' +
             'liquidity-reporting integrations, the data lineage from source ' +
             'ledger to management, ALM, and regulatory views, and the ' +
-            'driver and behavioural data the use cases depend on.',
+            'driver and behavioural data the use cases depend on — as an ' +
+            'own-it, lakehouse-native layer where the institution owns the ' +
+            'reconciled bank, cash, ledger, and market history and the ' +
+            'models trained on it, not a rented treasury-analytics SaaS that ' +
+            'holds the data and models on the vendor side.',
         },
         {
           heading: 'AI use-case design and control posture',
@@ -1383,7 +1448,15 @@ export const financeTreasuryAlmPack: FunctionPack = {
             'State the model risk-management treatment, validation, and ' +
             'explainability for any ALM, capital, forecasting, or ' +
             'behavioural model, and the regulatory frames (IRRBB, LCR/NSFR, ' +
-            'the capital rules, CCAR/DFAST, CECL) that bound the design.',
+            'the capital rules, CCAR/DFAST, CECL) that bound the design. ' +
+            'Make the governance spine explicit: Unity Catalog access and ' +
+            'lineage controls over the cloud + lakehouse services, SOX-' +
+            'auditable evidence for every reported figure and model output, ' +
+            'and preserved segregation of duties between initiation, ' +
+            'approval, and release wherever a model touches payment or ' +
+            'capital action — AI surfaces and scores, a human with the right ' +
+            'authority decides, and every action is logged ' +
+            '(cross-cutting pattern cc_unity_catalog_hitrust_governance).',
         },
         {
           heading: 'Integration and build approach',
@@ -1532,6 +1605,31 @@ export const financeTreasuryAlmPack: FunctionPack = {
         'A single-point savings number, a rate-dependent margin gain ' +
         'presented as certain, or a buffer-release figure that ignores the ' +
         'regulatory floor it is bounded by.',
+    },
+    {
+      claim:
+        'That the treasury intelligence layer is OWNED by the institution, ' +
+        'not rented from a vendor platform',
+      authoritativeSource:
+        'The architecture decision record and the treasury-platform ' +
+        'contract terms — where the reconciled bank, cash, ledger, and ' +
+        'market history, the forecasting and anomaly models, and the ' +
+        'covenant logic physically reside, and who can audit, extend, and ' +
+        'move them.',
+      whatGoodEvidenceLooksLike:
+        'The reconciled treasury data, the forecasting and anomaly models, ' +
+        'and the covenant-headroom logic run in the institution’s own ' +
+        'governed lakehouse (its own cloud account, under Unity Catalog), ' +
+        'are auditable and extensible, trained on the institution’s own ' +
+        'history, and the IP is owned by the institution. Renting the rails ' +
+        '— the TMS, the SWIFT bureau, the payment factory — is acceptable ' +
+        'where the analytical destination is the institution’s own.',
+      weakEvidenceToReject:
+        'A claim of having a treasury-analytics platform where the data, ' +
+        'forecasting and anomaly models, and covenant logic are held by the ' +
+        'vendor and cannot be audited, recalibrated, or moved — that is ' +
+        'rented intelligence, not an owned asset, and must not be presented ' +
+        'as the institution owning its treasury strategy.',
     },
   ],
 };

@@ -246,7 +246,7 @@ export function SourceStageCanvasPanel({
                           disabled={disabled}
                           onClick={() =>
                             pageState?.ask(
-                              `I need to upload a completed ${artifact.label} for ${stageLabel}. What format should it be, what must it contain, and how will Sentinel validate it?`,
+                              `I need to upload a completed ${artifact.label} for ${stageLabel}. What format should it be, what must it contain, and how will aVa validate it?`,
                             )
                           }
                           style={{
@@ -270,7 +270,7 @@ export function SourceStageCanvasPanel({
                 disabled={disabled}
                 onClick={() =>
                   pageState?.ask(
-                    `Review the deliverables gap for ${stageLabel}. For each required artifact, tell me: what's missing, who needs to provide it, what format it must be, and how Sentinel will validate it once uploaded.`,
+                    `Review the deliverables gap for ${stageLabel}. For each required artifact, tell me: what's missing, who needs to provide it, what format it must be, and how will aVa validate it once uploaded.`,
                   )
                 }
                 style={{

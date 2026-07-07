@@ -1,100 +1,120 @@
-'use client';
+"use client";
 
 // SHELL-B — Program Detail Page adapted to AppShell.
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import type { Artifact as NexusArtifact } from '@/lib/agent/artifacts';
+import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
+import type { Artifact as NexusArtifact } from "@/lib/agent/artifacts";
 // NexusReactivePanel renders inside AgentCanvas now; the import here is
 // no longer needed at the page level.
-import { AgentCanvas } from '@/components/programs/AgentCanvas';
-import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/shell/AppShell';
-import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
+import { AgentCanvas } from "@/components/programs/AgentCanvas";
+import { useRouter } from "next/navigation";
+import { AppShell } from "@/components/shell/AppShell";
+import { RibbonSynthesis } from "@/components/shell/RibbonSynthesis";
 // AtlasDrawer used to render here as a Mode B overlay drawer. Surface
 // 2 PR-F replaced it with the embedded chat inside <AgentCanvas>; the
 // import lives on through AgentCanvas (which embeds AtlasDrawer with
 // `embedded` prop).
-import { WorkingPaneContainer } from '@/components/shell/WorkingPaneContainer';
-import { programsShapeResolver } from '@/lib/programs/programs-shape-resolver';
-import { PhaseStrip } from '@/components/shell/PhaseStrip';
-import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
-import { ProgramJourneyRail } from '@/components/programs/ProgramJourneyRail';
-import type { ProgramPhaseSlot } from '@/components/programs/ProgramJourneyRail';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import type { ProgramDetailView, ProgramPhaseId, EvidenceItem } from '@/lib/programs/programs-types';
-import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
-import type { StageId } from '@/lib/shell/atlas-page-state';
-import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
-import { SubNavStrip } from '@/components/shell/SubNavStrip';
-import { useToast } from '@/components/shell/Toast';
-import { PatternChip } from '@/components/programs/PatternChip';
-import { NexusSynthesisQuote } from '@/components/programs/NexusSynthesisQuote';
-import { ProgramProvenanceRibbon } from '@/components/programs/ProgramProvenanceRibbon';
-import { DownloadContextButton } from '@/components/reasoning/DownloadContextButton';
-import { SourceEventChip } from '@/components/programs/SourceEventChip';
-import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
-import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
-import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
-import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
-import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
-import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
-import { StaleEvidenceChip } from '@/components/reasoning/StaleEvidenceChip';
-import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
-import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
+import { WorkingPaneContainer } from "@/components/shell/WorkingPaneContainer";
+import { programsShapeResolver } from "@/lib/programs/programs-shape-resolver";
+import { PhaseStrip } from "@/components/shell/PhaseStrip";
+import type { PhaseStripSlot } from "@/components/shell/PhaseStrip";
+import { ProgramJourneyRail } from "@/components/programs/ProgramJourneyRail";
+import type { ProgramPhaseSlot } from "@/components/programs/ProgramJourneyRail";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import type {
+  ProgramDetailView,
+  ProgramPhaseId,
+  EvidenceItem,
+} from "@/lib/programs/programs-types";
+import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
+import type { StageId } from "@/lib/shell/atlas-page-state";
+import { LinkedProgramChip } from "@/components/shell/LinkedProgramChip";
+import { SubNavStrip } from "@/components/shell/SubNavStrip";
+import { useToast } from "@/components/shell/Toast";
+import { PatternChip } from "@/components/programs/PatternChip";
+import { NexusSynthesisQuote } from "@/components/programs/NexusSynthesisQuote";
+import { ProgramProvenanceRibbon } from "@/components/programs/ProgramProvenanceRibbon";
+import { DownloadContextButton } from "@/components/reasoning/DownloadContextButton";
+import { SourceEventChip } from "@/components/programs/SourceEventChip";
+import { buildProgramSourceLinkView } from "@/lib/programs/program-source-link-view";
+import { APEX_RETAIL_PROGRAM_INSTANCES } from "@/lib/programs/program-instances";
+import { buildProgramSynthesisContext } from "@/lib/reasoning/program-synthesis-context-builder";
+import { summarizeFailureModes } from "@/lib/reasoning/provenance-ribbon-helpers";
+import { FailureModeWarningChip } from "@/components/_shared/FailureModeWarningChip";
+import { EvidenceQualityChip } from "@/components/_shared/EvidenceQualityChip";
+import { StaleEvidenceChip } from "@/components/reasoning/StaleEvidenceChip";
+import { InstanceHealthBadge } from "@/components/_shared/InstanceHealthBadge";
+import { computeInstanceHealth } from "@/lib/reasoning/instance-health";
 import {
   summarizeEvidenceQuality,
   summaryGrade,
   scoreEvidenceItem,
-} from '@/lib/reasoning/evidence-quality';
-import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
-import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
-import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
-import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
-import { buildRiskRegisterForInstance } from '@/lib/reasoning/risk-register';
-import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
-import { LinkedInstanceTilesGrid } from '@/components/_shared/LinkedInstanceTilesGrid';
-import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
-import { InstanceEventTimelineFilterBar } from '@/components/_shared/InstanceEventTimelineFilterBar';
-import type { TimelineFilters } from '@/lib/reasoning/instance-event-timeline-filters';
-import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
-import { StageSynthesisDrawer } from '@/components/_shared/StageSynthesisDrawer';
-import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
-import type { StageStatus } from '@/components/shell/StageTrackerStrip';
-import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
-import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
-import { buildStageMicroSynthesisMap } from '@/lib/reasoning/stage-micro-synthesis';
-import { buildStageHandoffNarratives } from '@/lib/reasoning/stage-handoff-narrative';
-import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
-import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
-import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
-import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
-import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
-import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
-import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
-import { buildDeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
-import type { DeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
-import { buildMaestroNextActionView } from '@/lib/programs/maestro-next-action-view';
-import { buildWorkshopNotesActionPlanView } from '@/lib/programs/workshop-notes-action-plan-view';
-import { WorkshopNotesActionPlanPanel } from '@/components/programs/WorkshopNotesActionPlanPanel';
-import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
-import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
-import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
-import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidenceForm';
-import { BulkEvidenceImportButton } from '@/components/programs/BulkEvidenceImportButton';
-import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
-import { PhaseAdvanceButton } from '@/components/programs/PhaseAdvanceButton';
-import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
-import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGraph';
-import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
-import { EvidenceTagChips } from '@/components/reasoning/EvidenceTagChips';
-import { EvidenceSuggestionsPanel } from '@/components/reasoning/EvidenceSuggestionsPanel';
-import { buildEvidenceSuggestions } from '@/lib/reasoning/evidence-suggestions';
-import { GateHistorySidebar } from '@/components/reasoning/GateHistorySidebar';
-import { Phase0Primer } from '@/components/programs/Phase0Primer';
-import type { ArchetypePrimer } from '@/lib/programs/archetype-primers';
+} from "@/lib/reasoning/evidence-quality";
+import { CompareWithDropdown } from "@/components/_shared/CompareWithDropdown";
+import { getAllInstanceIds } from "@/lib/reasoning/instance-resolver";
+import { ContradictionDetailCardClient } from "@/components/_shared/ContradictionDetailCardClient";
+import { RiskRegisterPanel } from "@/components/_shared/RiskRegisterPanel";
+import { buildRiskRegisterForInstance } from "@/lib/reasoning/risk-register";
+import {
+  CascadeImpactCard,
+  ReverseCascadeCard,
+} from "@/components/_shared/CascadeImpactCard";
+import { LinkedInstanceTilesGrid } from "@/components/_shared/LinkedInstanceTilesGrid";
+import { InstanceEventTimeline } from "@/components/_shared/InstanceEventTimeline";
+import { InstanceEventTimelineFilterBar } from "@/components/_shared/InstanceEventTimelineFilterBar";
+import type { TimelineFilters } from "@/lib/reasoning/instance-event-timeline-filters";
+import { LifecycleMiniGraph } from "@/components/_shared/LifecycleMiniGraph";
+import { StageSynthesisDrawer } from "@/components/_shared/StageSynthesisDrawer";
+import { HandoffNarrativePanel } from "@/components/_shared/HandoffNarrativePanel";
+import type { StageStatus } from "@/components/shell/StageTrackerStrip";
+import { findLifecyclePattern } from "@/lib/reasoning/lifecycle-pattern-lookup";
+import { createGateEvaluator } from "@/lib/reasoning/gate-evaluator";
+import { buildStageMicroSynthesisMap } from "@/lib/reasoning/stage-micro-synthesis";
+import { buildStageHandoffNarratives } from "@/lib/reasoning/stage-handoff-narrative";
+import { buildProgramEvidenceMap } from "@/lib/programs/program-instance";
+import { computeReverseCascade } from "@/lib/reasoning/cross-instance-reasoner";
+import { buildInstanceEventTimeline } from "@/lib/reasoning/instance-event-timeline";
+import {
+  AI_DECISION_SUPPORT_WATERMARK,
+  HUMAN_DECISION_ATTESTATION_TEXT,
+} from "@/lib/ai-liability/human-decision-controls";
+import { MOVES_HUMAN_RATIONALE_MIN_CHARS } from "@/lib/programs/moves-ai-liability";
+import { isResolved as isContradictionResolved } from "@/lib/reasoning/contradiction-resolution-state";
+import {
+  buildProgramStorylineContext,
+  matchStorylinePatterns,
+} from "@/lib/intelligence/storyline-matcher";
+import { buildGateApprovalDrawerView } from "@/lib/programs/gate-approval-drawer-view";
+import type { GateApprovalDrawerView } from "@/lib/programs/gate-approval-drawer-view";
+import { buildDeliverablesCanvasView } from "@/lib/programs/deliverable-canvas-polish-view";
+import type { DeliverablesCanvasView } from "@/lib/programs/deliverable-canvas-polish-view";
+import { buildMaestroNextActionView } from "@/lib/programs/maestro-next-action-view";
+import { buildWorkshopNotesActionPlanView } from "@/lib/programs/workshop-notes-action-plan-view";
+import { WorkshopNotesActionPlanPanel } from "@/components/programs/WorkshopNotesActionPlanPanel";
+import { MissionListInteractive } from "@/components/_shared/MissionListInteractive";
+import { RecentMissionStates } from "@/components/_shared/RecentMissionStates";
+import { getMissionsForProgram } from "@/lib/agent/agent-mission-derived";
+import { AddProgramEvidenceForm } from "@/components/programs/AddProgramEvidenceForm";
+import { BulkEvidenceImportButton } from "@/components/programs/BulkEvidenceImportButton";
+import { CascadeImpactSection } from "@/components/_shared/CascadeImpactSection";
+import { PhaseAdvanceButton } from "@/components/programs/PhaseAdvanceButton";
+import {
+  canSubmitHumanApproval,
+  HumanApprovalGate,
+} from "@/components/abarva/HumanApprovalGate";
+import { EvidenceCoverageHeatmap } from "@/components/reasoning/EvidenceCoverageHeatmap";
+import { EvidenceNetworkGraph } from "@/components/reasoning/EvidenceNetworkGraph";
+import { ReasoningErrorBoundary } from "@/components/reasoning/ReasoningErrorBoundary";
+import { EvidenceTagChips } from "@/components/reasoning/EvidenceTagChips";
+import { EvidenceSuggestionsPanel } from "@/components/reasoning/EvidenceSuggestionsPanel";
+import { buildEvidenceSuggestions } from "@/lib/reasoning/evidence-suggestions";
+import { GateHistorySidebar } from "@/components/reasoning/GateHistorySidebar";
+import { Phase0Primer } from "@/components/programs/Phase0Primer";
+import type { ArchetypePrimer } from "@/lib/programs/archetype-primers";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isUuidLike(value: string) {
   return UUID_PATTERN.test(value);
@@ -138,55 +158,62 @@ export interface ProgramDetailPageProps {
   hasTenantKey?: boolean;
 }
 
-type SectionKey = 'overview' | 'gate' | 'evidence' | 'deliverables' | 'workshop' | 'actions' | 'decisions';
+type SectionKey =
+  | "overview"
+  | "gate"
+  | "evidence"
+  | "deliverables"
+  | "workshop"
+  | "actions"
+  | "decisions";
 
 // ─── Gate pill ────────────────────────────────────────────────────────────────
 
-function GatePill({ status }: { status: ProgramDetailView['gateStatus'] }) {
+function GatePill({ status }: { status: ProgramDetailView["gateStatus"] }) {
   let bg: string;
   let color: string;
   let label: string;
 
   switch (status) {
-    case 'pending':
+    case "pending":
       bg = SHELL.PEACH_BG;
       color = SHELL.PEACH_TEXT;
-      label = 'Gate Pending';
+      label = "Gate Pending";
       break;
-    case 'open':
+    case "open":
       bg = SHELL.MINT_BG;
       color = SHELL.MINT_TEXT;
-      label = 'Gate Open';
+      label = "Gate Open";
       break;
-    case 'approved':
+    case "approved":
       bg = SHELL.MINT_BG;
       color = SHELL.MINT_TEXT;
-      label = 'Gate Approved';
+      label = "Gate Approved";
       break;
-    case 'completed':
+    case "completed":
       bg = SHELL.MINT_BG;
       color = SHELL.MINT_TEXT;
-      label = 'Completed';
+      label = "Completed";
       break;
     default:
       bg = SHELL.GRAY_BG;
       color = SHELL.GRAY_TEXT;
-      label = status === 'idle' ? 'Idle' : 'Gate N/A';
+      label = status === "idle" ? "Idle" : "Gate N/A";
   }
 
   return (
     <span
       style={{
-        display: 'inline-block',
-        padding: '3px 10px',
+        display: "inline-block",
+        padding: "3px 10px",
         borderRadius: 999,
         background: bg,
         color,
         fontFamily: SHELL.MONO,
         fontSize: 11,
         fontWeight: 700,
-        letterSpacing: '0.06em',
-        whiteSpace: 'nowrap',
+        letterSpacing: "0.06em",
+        whiteSpace: "nowrap",
       }}
     >
       {label}
@@ -196,17 +223,20 @@ function GatePill({ status }: { status: ProgramDetailView['gateStatus'] }) {
 
 function LifecycleStateBanner({ view }: { view: ProgramDetailView }) {
   const state = view.lifecycleState;
-  if (state !== 'submitted_for_approval' && !(state === 'approved' && view.currentPhase === 0)) {
+  if (
+    state !== "submitted_for_approval" &&
+    !(state === "approved" && view.currentPhase === 0)
+  ) {
     return null;
   }
 
-  const isPendingSetup = state === 'submitted_for_approval';
+  const isPendingSetup = state === "submitted_for_approval";
   return (
     <div
       data-testid="program-lifecycle-state-banner"
       style={{
-        margin: '14px 0 4px',
-        padding: '14px 16px',
+        margin: "14px 0 4px",
+        padding: "14px 16px",
         borderRadius: 10,
         border: `1px solid ${isPendingSetup ? SHELL.PEACH_LINE : SHELL.MINT_LINE}`,
         background: isPendingSetup ? SHELL.PEACH_BG : SHELL.MINT_BG,
@@ -219,32 +249,32 @@ function LifecycleStateBanner({ view }: { view: ProgramDetailView }) {
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 10,
-          letterSpacing: '0.10em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.10em",
+          textTransform: "uppercase",
           color: isPendingSetup ? SHELL.PEACH_TEXT : SHELL.MINT_TEXT,
           fontWeight: 800,
           marginBottom: 6,
         }}
       >
-        {isPendingSetup ? 'Waiting on Setup approval' : 'Approved for Phase 0'}
+        {isPendingSetup ? "Waiting on Setup approval" : "Approved for Phase 0"}
       </div>
       <div style={{ fontSize: 13 }}>
         {isPendingSetup
-          ? 'The strategic move seed has been captured, but Phase 0 is locked until a tenant admin approves it in Setup. Nexus should preserve the draft and avoid pretending the move is active.'
-          : 'This strategic move can now begin P0 Origination. Nexus should complete the P0 entry and exit criteria, generate/save the seed outputs, and submit the P0 exit approval before Discovery unlocks.'}
+          ? "The strategic move seed has been captured, but Phase 0 is locked until a tenant admin approves it in Setup. Ava should preserve the draft and avoid pretending the move is active."
+          : "This strategic move can now begin P0 Origination. Ava should complete the P0 entry and exit criteria, generate/save the seed outputs, and submit the P0 exit approval before Discovery unlocks."}
       </div>
       {isPendingSetup && (
         <Link
           href="/admin/programs/approvals"
           style={{
-            display: 'inline-block',
+            display: "inline-block",
             marginTop: 8,
             fontFamily: SHELL.MONO,
             fontSize: 10,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             color: SHELL.INK,
-            textDecoration: 'none',
+            textDecoration: "none",
             borderBottom: `1px dashed ${SHELL.INK}`,
           }}
         >
@@ -270,14 +300,24 @@ function PhaseArchiveQuickNav({
   gateCount?: number;
   actionCount: number;
 }) {
-  const items: Array<{ key: SectionKey; label: string; count?: number; emphasis?: boolean }> = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'deliverables', label: 'Outputs', count: deliverablesCount, emphasis: true },
-    { key: 'evidence', label: 'Evidence', count: evidenceCount },
-    { key: 'gate', label: 'Gate', count: gateCount },
-    { key: 'workshop', label: 'Workshop' },
-    { key: 'decisions', label: 'Decisions' },
-    { key: 'actions', label: 'Actions', count: actionCount },
+  const items: Array<{
+    key: SectionKey;
+    label: string;
+    count?: number;
+    emphasis?: boolean;
+  }> = [
+    { key: "overview", label: "Overview" },
+    {
+      key: "deliverables",
+      label: "Outputs",
+      count: deliverablesCount,
+      emphasis: true,
+    },
+    { key: "evidence", label: "Evidence", count: evidenceCount },
+    { key: "gate", label: "Gate", count: gateCount },
+    { key: "workshop", label: "Workshop" },
+    { key: "decisions", label: "Decisions" },
+    { key: "actions", label: "Actions", count: actionCount },
   ];
 
   return (
@@ -285,24 +325,24 @@ function PhaseArchiveQuickNav({
       data-testid="program-phase-archive-quicknav"
       aria-label="Strategic move record quick navigation"
       style={{
-        margin: '14px 0 10px',
+        margin: "14px 0 10px",
         padding: 0,
-        border: 'none',
+        border: "none",
         borderRadius: 0,
-        background: 'transparent',
-        display: 'flex',
-        alignItems: 'center',
+        background: "transparent",
+        display: "flex",
+        alignItems: "center",
         gap: 14,
-        flexWrap: 'wrap',
+        flexWrap: "wrap",
       }}
     >
-      <div style={{ minWidth: 220, flex: '1 1 260px' }}>
+      <div style={{ minWidth: 220, flex: "1 1 260px" }}>
         <div
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 11,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
             color: SHELL.INK_MUTED,
             fontWeight: 800,
             marginBottom: 3,
@@ -310,7 +350,14 @@ function PhaseArchiveQuickNav({
         >
           Strategic move record
         </div>
-        <div style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>
+        <div
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 14,
+            color: SHELL.INK_SOFT,
+            lineHeight: 1.4,
+          }}
+        >
           Select one area; the readable record opens immediately below.
         </div>
       </div>
@@ -318,10 +365,10 @@ function PhaseArchiveQuickNav({
         role="group"
         aria-label="Open phase archive section"
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 8,
-          flexWrap: 'wrap',
-          justifyContent: 'flex-end',
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
         }}
       >
         {items.map((item) => {
@@ -335,32 +382,42 @@ function PhaseArchiveQuickNav({
               onClick={() => onSelect(item.key)}
               aria-pressed={active}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
+                display: "inline-flex",
+                alignItems: "center",
                 gap: 6,
                 minHeight: 44,
-                padding: '10px 15px',
+                padding: "10px 15px",
                 borderRadius: 999,
                 border: `1px solid ${active ? SHELL.INK : item.emphasis ? SHELL.PEACH_LINE : SHELL.CARD_LINE}`,
-                background: active ? SHELL.INK : item.emphasis ? SHELL.PEACH_BG : SHELL.PAPER,
-                color: active ? SHELL.PAPER : item.emphasis ? SHELL.PEACH_TEXT : SHELL.INK,
+                background: active
+                  ? SHELL.INK
+                  : item.emphasis
+                    ? SHELL.PEACH_BG
+                    : SHELL.PAPER,
+                color: active
+                  ? SHELL.PAPER
+                  : item.emphasis
+                    ? SHELL.PEACH_TEXT
+                    : SHELL.INK,
                 fontFamily: SHELL.MONO,
                 fontSize: 12,
                 fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                cursor: "pointer",
               }}
             >
               <span>{item.label}</span>
-              {typeof item.count === 'number' ? (
+              {typeof item.count === "number" ? (
                 <span
                   aria-label={`${item.count} ${item.label.toLowerCase()} items`}
                   style={{
                     minWidth: 18,
-                    padding: '1px 6px',
+                    padding: "1px 6px",
                     borderRadius: 999,
-                    background: active ? 'rgba(255,255,255,0.18)' : SHELL.GRAY_BG,
+                    background: active
+                      ? "rgba(255,255,255,0.18)"
+                      : SHELL.GRAY_BG,
                     color: active ? SHELL.PAPER : SHELL.INK_MUTED,
                   }}
                 >
@@ -386,33 +443,36 @@ function ProgramRecordBrowser({
   deliverablesCanvasView: DeliverablesCanvasView | null;
   onOpenFullRecord: () => void;
 }) {
-  const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
+  const phaseLabel =
+    PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
   const deliverables = view.phasePanel.deliverables ?? [];
   const evidenceItems = view.phasePanel.evidenceItems ?? [];
   const gateCriteria = view.phasePanel.gateCriteria ?? [];
-  const completedDeliverables = deliverables.filter((item) => item.status === 'done').length;
+  const completedDeliverables = deliverables.filter(
+    (item) => item.status === "done",
+  ).length;
   const selectedLabel =
-    activeSection === 'deliverables'
-      ? 'Outputs'
-      : activeSection === 'evidence'
-      ? 'Evidence'
-      : activeSection === 'gate'
-      ? 'Gate'
-      : activeSection === 'workshop'
-      ? 'Workshop'
-      : activeSection === 'decisions'
-      ? 'Decisions'
-      : activeSection === 'actions'
-      ? 'Actions'
-      : 'Overview';
+    activeSection === "deliverables"
+      ? "Outputs"
+      : activeSection === "evidence"
+        ? "Evidence"
+        : activeSection === "gate"
+          ? "Gate"
+          : activeSection === "workshop"
+            ? "Workshop"
+            : activeSection === "decisions"
+              ? "Decisions"
+              : activeSection === "actions"
+                ? "Actions"
+                : "Overview";
 
   const metricStyle = {
     border: `1px solid ${SHELL.CARD_LINE}`,
     borderRadius: 12,
     background: SHELL.PAPER,
-    padding: '12px 14px',
+    padding: "12px 14px",
     minWidth: 150,
-    flex: '1 1 150px',
+    flex: "1 1 150px",
   } as const;
 
   return (
@@ -421,31 +481,31 @@ function ProgramRecordBrowser({
       data-testid="program-record-browser"
       aria-live="polite"
       style={{
-        margin: '-6px 0 18px',
+        margin: "-6px 0 18px",
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 18,
         background: SHELL.CARD_WHITE,
-        boxShadow: '0 12px 32px rgba(10, 20, 40, 0.06)',
-        overflow: 'hidden',
+        boxShadow: "0 12px 32px rgba(10, 20, 40, 0.06)",
+        overflow: "hidden",
       }}
     >
       <div
         style={{
-          padding: '18px 20px',
+          padding: "18px 20px",
           borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-          display: 'flex',
-          justifyContent: 'space-between',
+          display: "flex",
+          justifyContent: "space-between",
           gap: 16,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
         }}
       >
-        <div style={{ minWidth: 260, flex: '1 1 420px' }}>
+        <div style={{ minWidth: 260, flex: "1 1 420px" }}>
           <div
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 11,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
               color: SHELL.INK_MUTED,
               fontWeight: 800,
               marginBottom: 6,
@@ -458,16 +518,18 @@ function ProgramRecordBrowser({
               fontFamily: SHELL.SERIF,
               fontSize: 26,
               lineHeight: 1.2,
-              letterSpacing: '-0.01em',
+              letterSpacing: "-0.01em",
               margin: 0,
               color: SHELL.INK,
             }}
           >
-            {selectedLabel === 'Overview' ? 'Move status and record' : `${selectedLabel} record`}
+            {selectedLabel === "Overview"
+              ? "Move status and record"
+              : `${selectedLabel} record`}
           </h2>
           <p
             style={{
-              margin: '8px 0 0',
+              margin: "8px 0 0",
               maxWidth: 760,
               fontFamily: SHELL.SANS,
               fontSize: 15,
@@ -475,27 +537,28 @@ function ProgramRecordBrowser({
               color: SHELL.INK_SOFT,
             }}
           >
-            This is the working record for the selected phase of the strategic move. The detailed archive remains below,
-            but the status and outputs should be readable here first.
+            This is the working record for the selected phase of the strategic
+            move. The detailed archive remains below, but the status and outputs
+            should be readable here first.
           </p>
         </div>
         <button
           type="button"
           onClick={onOpenFullRecord}
           style={{
-            alignSelf: 'flex-start',
+            alignSelf: "flex-start",
             minHeight: 42,
             borderRadius: 999,
             border: `1px solid ${SHELL.INK}`,
             background: SHELL.INK,
             color: SHELL.PAPER,
-            padding: '10px 16px',
+            padding: "10px 16px",
             fontFamily: SHELL.MONO,
             fontSize: 11,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             fontWeight: 800,
-            cursor: 'pointer',
+            cursor: "pointer",
           }}
         >
           Open detailed record below
@@ -503,51 +566,120 @@ function ProgramRecordBrowser({
       </div>
 
       <div style={{ padding: 20 }}>
-        {activeSection === 'overview' && (
+        {activeSection === "overview" && (
           <div data-testid="program-record-browser-overview">
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
               <div style={metricStyle}>
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    color: SHELL.INK_MUTED,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
                   Gate
                 </div>
-                <div style={{ fontFamily: SHELL.SANS, fontSize: 18, color: SHELL.INK, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.SANS,
+                    fontSize: 18,
+                    color: SHELL.INK,
+                    fontWeight: 800,
+                  }}
+                >
                   {view.gateStatus}
                 </div>
               </div>
               <div style={metricStyle}>
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    color: SHELL.INK_MUTED,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
                   Outputs
                 </div>
-                <div style={{ fontFamily: SHELL.SANS, fontSize: 18, color: SHELL.INK, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.SANS,
+                    fontSize: 18,
+                    color: SHELL.INK,
+                    fontWeight: 800,
+                  }}
+                >
                   {completedDeliverables} / {deliverables.length || 0}
                 </div>
               </div>
               <div style={metricStyle}>
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    color: SHELL.INK_MUTED,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
                   Evidence
                 </div>
-                <div style={{ fontFamily: SHELL.SANS, fontSize: 18, color: SHELL.INK, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.SANS,
+                    fontSize: 18,
+                    color: SHELL.INK,
+                    fontWeight: 800,
+                  }}
+                >
                   {evidenceItems.length}
                 </div>
               </div>
             </div>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 15, lineHeight: 1.65, color: SHELL.INK }}>
-              {view.phasePanel.summary ?? `No phase summary logged for P${view.viewingPhase}.`}
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 15,
+                lineHeight: 1.65,
+                color: SHELL.INK,
+              }}
+            >
+              {view.phasePanel.summary ??
+                `No phase summary logged for P${view.viewingPhase}.`}
             </div>
           </div>
         )}
 
-        {activeSection === 'deliverables' && (
+        {activeSection === "deliverables" && (
           <div data-testid="program-record-browser-deliverables">
             {deliverablesCanvasView ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                  gap: 14,
+                }}
+              >
                 {deliverablesCanvasView.items.map((item, index) => {
                   const tone =
-                    item.readiness === 'trustworthy'
+                    item.readiness === "trustworthy"
                       ? SHELL.MINT_TEXT
-                      : item.readiness === 'blocked'
-                      ? SHELL.RUST_TEXT
-                      : SHELL.PEACH_TEXT;
+                      : item.readiness === "blocked"
+                        ? SHELL.RUST_TEXT
+                        : SHELL.PEACH_TEXT;
                   return (
                     <article
                       key={`record-deliverable-${index}`}
@@ -560,7 +692,14 @@ function ProgramRecordBrowser({
                         minHeight: 150,
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          alignItems: "flex-start",
+                        }}
+                      >
                         <h3
                           style={{
                             margin: 0,
@@ -578,12 +717,12 @@ function ProgramRecordBrowser({
                             background: SHELL.PAPER_DEEP,
                             border: `1px solid ${SHELL.CARD_LINE}`,
                             color: tone,
-                            padding: '5px 9px',
+                            padding: "5px 9px",
                             fontFamily: SHELL.MONO,
                             fontSize: 10,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                            whiteSpace: 'nowrap',
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            whiteSpace: "nowrap",
                             fontWeight: 800,
                           }}
                         >
@@ -599,11 +738,20 @@ function ProgramRecordBrowser({
                           color: SHELL.INK_SOFT,
                         }}
                       >
-                        <strong style={{ color: SHELL.INK }}>Next:</strong> {item.nextAction}
+                        <strong style={{ color: SHELL.INK }}>Next:</strong>{" "}
+                        {item.nextAction}
                       </div>
                       {item.evidenceCitations.length > 0 && (
-                        <div style={{ marginTop: 10, fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.5, color: SHELL.INK_MUTED }}>
-                          Evidence: {item.evidenceCitations.join('; ')}
+                        <div
+                          style={{
+                            marginTop: 10,
+                            fontFamily: SHELL.SANS,
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            color: SHELL.INK_MUTED,
+                          }}
+                        >
+                          Evidence: {item.evidenceCitations.join("; ")}
                         </div>
                       )}
                     </article>
@@ -611,82 +759,153 @@ function ProgramRecordBrowser({
                 })}
               </div>
             ) : (
-              <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK_MUTED }}>
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 15,
+                  color: SHELL.INK_MUTED,
+                }}
+              >
                 No outputs logged for P{view.viewingPhase}.
               </div>
             )}
           </div>
         )}
 
-        {activeSection === 'gate' && (
-          <div data-testid="program-record-browser-gate" style={{ display: 'grid', gap: 10 }}>
-            {gateCriteria.length > 0 ? gateCriteria.map((criterion, index) => (
+        {activeSection === "gate" && (
+          <div
+            data-testid="program-record-browser-gate"
+            style={{ display: "grid", gap: 10 }}
+          >
+            {gateCriteria.length > 0 ? (
+              gateCriteria.map((criterion, index) => (
+                <div
+                  key={`record-gate-${index}`}
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "flex-start",
+                    padding: "13px 14px",
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 12,
+                    background: SHELL.PAPER,
+                    fontFamily: SHELL.SANS,
+                    fontSize: 15,
+                    lineHeight: 1.45,
+                    color: SHELL.INK,
+                  }}
+                >
+                  <span
+                    style={{
+                      color: criterion.met ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
+                      fontWeight: 900,
+                    }}
+                  >
+                    {criterion.met ? "●" : "○"}
+                  </span>
+                  <span>{criterion.criterion}</span>
+                </div>
+              ))
+            ) : (
               <div
-                key={`record-gate-${index}`}
                 style={{
-                  display: 'flex',
-                  gap: 12,
-                  alignItems: 'flex-start',
-                  padding: '13px 14px',
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  borderRadius: 12,
-                  background: SHELL.PAPER,
                   fontFamily: SHELL.SANS,
                   fontSize: 15,
-                  lineHeight: 1.45,
-                  color: SHELL.INK,
+                  color: SHELL.INK_MUTED,
                 }}
               >
-                <span style={{ color: criterion.met ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT, fontWeight: 900 }}>
-                  {criterion.met ? '●' : '○'}
-                </span>
-                <span>{criterion.criterion}</span>
+                No gate criteria logged.
               </div>
-            )) : (
-              <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK_MUTED }}>No gate criteria logged.</div>
             )}
           </div>
         )}
 
-        {activeSection === 'evidence' && (
-          <div data-testid="program-record-browser-evidence" style={{ display: 'grid', gap: 12 }}>
-            {evidenceItems.length > 0 ? evidenceItems.slice(0, 4).map((item) => (
-              <article
-                key={item.id}
+        {activeSection === "evidence" && (
+          <div
+            data-testid="program-record-browser-evidence"
+            style={{ display: "grid", gap: 12 }}
+          >
+            {evidenceItems.length > 0 ? (
+              evidenceItems.slice(0, 4).map((item) => (
+                <article
+                  key={item.id}
+                  style={{
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 12,
+                    background: SHELL.PAPER,
+                    padding: 14,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 10,
+                      color: SHELL.INK_MUTED,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {item.confidence} confidence · {item.source}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: SHELL.SANS,
+                      fontSize: 15,
+                      color: SHELL.INK,
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {item.citation}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontFamily: SHELL.SANS,
+                      fontSize: 14,
+                      color: SHELL.INK_SOFT,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {item.excerpt}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div
                 style={{
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  borderRadius: 12,
-                  background: SHELL.PAPER,
-                  padding: 14,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 15,
+                  color: SHELL.INK_MUTED,
                 }}
               >
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
-                  {item.confidence} confidence · {item.source}
-                </div>
-                <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK, lineHeight: 1.55 }}>
-                  {item.citation}
-                </div>
-                <div style={{ marginTop: 6, fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
-                  {item.excerpt}
-                </div>
-              </article>
-            )) : (
-              <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK_MUTED }}>No evidence citations logged.</div>
+                No evidence citations logged.
+              </div>
             )}
           </div>
         )}
 
-        {(activeSection === 'workshop' || activeSection === 'actions' || activeSection === 'decisions') && (
+        {(activeSection === "workshop" ||
+          activeSection === "actions" ||
+          activeSection === "decisions") && (
           <div data-testid={`program-record-browser-${activeSection}`}>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK, lineHeight: 1.6, marginBottom: 14 }}>
-              {activeSection === 'workshop'
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 15,
+                color: SHELL.INK,
+                lineHeight: 1.6,
+                marginBottom: 14,
+              }}
+            >
+              {activeSection === "workshop"
                 ? view.workbench.prose
-                : activeSection === 'decisions'
-                ? 'Decision log is tracked in the full phase record below. Use this area to confirm sponsor decisions, waivers, and unresolved dissent before advancing.'
-                : view.workbench.actionsLabel}
+                : activeSection === "decisions"
+                  ? "Decision log is tracked in the full phase record below. Use this area to confirm sponsor decisions, waivers, and unresolved dissent before advancing."
+                  : view.workbench.actionsLabel}
             </div>
-            {activeSection === 'actions' && (
-              <div style={{ display: 'grid', gap: 10 }}>
+            {activeSection === "actions" && (
+              <div style={{ display: "grid", gap: 10 }}>
                 {view.workbench.actions.map((action) => (
                   <div
                     key={action.letter}
@@ -701,7 +920,15 @@ function ProgramRecordBrowser({
                     }}
                   >
                     <strong>{action.letter}.</strong> {action.text}
-                    <div style={{ marginTop: 4, color: SHELL.INK_MUTED, fontSize: 14 }}>{action.detail}</div>
+                    <div
+                      style={{
+                        marginTop: 4,
+                        color: SHELL.INK_MUTED,
+                        fontSize: 14,
+                      }}
+                    >
+                      {action.detail}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -730,20 +957,22 @@ function GateRibbon({
   metCriteria,
   onRequestApproval,
 }: GateRibbonProps) {
-  const fromPhaseLabel = PHASE_LABEL_MAP[fromPhase as ProgramPhaseId] ?? `Phase ${fromPhase}`;
-  const toPhaseLabel = PHASE_LABEL_MAP[toPhase as ProgramPhaseId] ?? `Phase ${toPhase}`;
+  const fromPhaseLabel =
+    PHASE_LABEL_MAP[fromPhase as ProgramPhaseId] ?? `Phase ${fromPhase}`;
+  const toPhaseLabel =
+    PHASE_LABEL_MAP[toPhase as ProgramPhaseId] ?? `Phase ${toPhase}`;
 
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 16,
         marginBottom: 20,
         background: SHELL.PEACH_BG,
         border: `1px solid ${SHELL.PEACH_LINE}`,
         borderRadius: 10,
-        padding: '14px 20px',
+        padding: "14px 20px",
       }}
     >
       {/* Amber dot */}
@@ -751,7 +980,7 @@ function GateRibbon({
         style={{
           width: 8,
           height: 8,
-          borderRadius: '50%',
+          borderRadius: "50%",
           background: SHELL.AMBER_DOT,
           flexShrink: 0,
         }}
@@ -762,10 +991,10 @@ function GateRibbon({
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 10,
-          letterSpacing: '0.14em',
+          letterSpacing: "0.14em",
           color: SHELL.PEACH_TEXT,
-          textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
+          textTransform: "uppercase",
+          whiteSpace: "nowrap",
         }}
       >
         Gate Review
@@ -788,7 +1017,7 @@ function GateRibbon({
           fontFamily: SHELL.SERIF,
           fontSize: 15,
           color: SHELL.INK,
-          whiteSpace: 'nowrap',
+          whiteSpace: "nowrap",
         }}
       >
         P{fromPhase} {fromPhaseLabel} → P{toPhase} {toPhaseLabel}
@@ -804,9 +1033,9 @@ function GateRibbon({
           fontSize: 11,
           color: SHELL.PEACH_TEXT,
           background: SHELL.PEACH_LINE,
-          padding: '3px 10px',
+          padding: "3px 10px",
           borderRadius: 6,
-          whiteSpace: 'nowrap',
+          whiteSpace: "nowrap",
         }}
       >
         {metCriteria} of {totalCriteria} criteria met
@@ -820,11 +1049,11 @@ function GateRibbon({
           color: SHELL.PAPER,
           fontFamily: SHELL.MONO,
           fontSize: 11,
-          padding: '6px 14px',
+          padding: "6px 14px",
           borderRadius: 6,
-          border: 'none',
-          cursor: 'pointer',
-          whiteSpace: 'nowrap',
+          border: "none",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
         }}
       >
         Request gate approval
@@ -854,33 +1083,38 @@ function GateApproveModal({
   isLoading = false,
   error = null,
 }: GateApproveModalProps) {
-  const [rationale, setRationale] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [rationale, setRationale] = useState("");
+  const [acceptedResponsibility, setAcceptedResponsibility] = useState(false);
   void fromPhase;
-  const toPhaseLabel = PHASE_LABEL_MAP[toPhase as ProgramPhaseId] ?? `Phase ${toPhase}`;
+  const toPhaseLabel =
+    PHASE_LABEL_MAP[toPhase as ProgramPhaseId] ?? `Phase ${toPhase}`;
 
-  const canApprove = rationale.trim().length > 10;
+  const canApprove = canSubmitHumanApproval({
+    acceptedResponsibility,
+    justification: rationale,
+    minChars: MOVES_HUMAN_RATIONALE_MIN_CHARS,
+  });
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
-        background: 'rgba(0,0,0,0.35)',
+        background: "rgba(0,0,0,0.35)",
         zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <div
         style={{
           background: SHELL.PAPER,
           borderRadius: 12,
-          padding: '28px 32px',
+          padding: "28px 32px",
           maxWidth: 520,
-          width: '90%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          width: "90%",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
         }}
       >
         {/* Header */}
@@ -890,8 +1124,8 @@ function GateApproveModal({
               fontFamily: SHELL.MONO,
               fontSize: 10,
               color: SHELL.INK_MUTED,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
               marginBottom: 6,
             }}
           >
@@ -916,17 +1150,17 @@ function GateApproveModal({
               background: SHELL.PEACH_BG,
               border: `1px solid ${SHELL.PEACH_LINE}`,
               borderRadius: 8,
-              padding: '12px 14px',
+              padding: "12px 14px",
               marginBottom: 20,
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {unmetCriteria.map((criterion, i) => (
                 <div
                   key={`unmet-${i}`}
                   style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
+                    display: "flex",
+                    alignItems: "flex-start",
                     gap: 8,
                     fontFamily: SHELL.SANS,
                     fontSize: 12,
@@ -942,49 +1176,24 @@ function GateApproveModal({
           </div>
         )}
 
-        {/* Rationale textarea */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: SHELL.INK_MUTED,
-              marginBottom: 6,
-            }}
-          >
-            Approval Rationale (required)
-          </div>
-          <textarea
-            ref={textareaRef}
-            rows={4}
-            value={rationale}
-            onChange={(e) => setRationale(e.target.value)}
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              background: SHELL.CARD_WHITE,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 6,
-              padding: 10,
-              width: '100%',
-              boxSizing: 'border-box',
-              resize: 'vertical',
-              color: SHELL.INK,
-              outline: 'none',
-              lineHeight: 1.5,
-            }}
-            placeholder="Describe why this gate advance is approved despite any open criteria…"
-          />
-        </div>
+        <HumanApprovalGate
+          justification={rationale}
+          onJustificationChange={setRationale}
+          acceptedResponsibility={acceptedResponsibility}
+          onAcceptedResponsibilityChange={setAcceptedResponsibility}
+          minChars={MOVES_HUMAN_RATIONALE_MIN_CHARS}
+          disabled={isLoading}
+          label="Approval rationale"
+          placeholder="State the human reason for this gate advance and the evidence you reviewed..."
+          style={{ marginBottom: 24 }}
+        />
 
         {/* Error message */}
         {error && (
           <div
             style={{
               marginBottom: 16,
-              padding: '8px 12px',
+              padding: "8px 12px",
               background: SHELL.PEACH_BG,
               border: `1px solid ${SHELL.PEACH_LINE}`,
               borderRadius: 6,
@@ -1001,8 +1210,8 @@ function GateApproveModal({
         {/* Buttons */}
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
+            display: "flex",
+            justifyContent: "flex-end",
             gap: 10,
           }}
         >
@@ -1011,12 +1220,12 @@ function GateApproveModal({
             disabled={isLoading}
             style={{
               border: `1px solid ${SHELL.CARD_LINE}`,
-              background: 'transparent',
+              background: "transparent",
               fontFamily: SHELL.SANS,
               fontSize: 12,
-              padding: '8px 16px',
+              padding: "8px 16px",
               borderRadius: 6,
-              cursor: isLoading ? 'not-allowed' : 'pointer',
+              cursor: isLoading ? "not-allowed" : "pointer",
               color: SHELL.INK,
               opacity: isLoading ? 0.5 : 1,
             }}
@@ -1031,13 +1240,13 @@ function GateApproveModal({
               color: canApprove && !isLoading ? SHELL.PAPER : SHELL.GRAY_TEXT,
               fontFamily: SHELL.SANS,
               fontSize: 12,
-              padding: '8px 16px',
+              padding: "8px 16px",
               borderRadius: 6,
-              border: 'none',
-              cursor: canApprove && !isLoading ? 'pointer' : 'not-allowed',
+              border: "none",
+              cursor: canApprove && !isLoading ? "pointer" : "not-allowed",
             }}
           >
-            {isLoading ? 'Approving...' : 'Approve gate'}
+            {isLoading ? "Approving..." : "Approve human decision"}
           </button>
         </div>
       </div>
@@ -1048,7 +1257,7 @@ function GateApproveModal({
 // ─── Gate criteria ────────────────────────────────────────────────────────────
 
 // Types for the gate approval inline workflow.
-type ApprovalAction = 'approve' | 'reject';
+type ApprovalAction = "approve" | "reject";
 interface ApprovalRecord {
   action: ApprovalAction;
   justification: string;
@@ -1058,31 +1267,36 @@ function GateCriteriaList({
   criteria,
   instanceId,
 }: {
-  criteria: NonNullable<ProgramDetailView['phasePanel']['gateCriteria']>;
+  criteria: NonNullable<ProgramDetailView["phasePanel"]["gateCriteria"]>;
   instanceId: string;
 }) {
   // Local waiver state — demo only, no persistence.
   // Key: criterion index (stable within a single view render).
   const [waivedIndices, setWaivedIndices] = useState<Set<number>>(new Set());
-  const [inFlightIndices, setInFlightIndices] = useState<Set<number>>(new Set());
+  const [inFlightIndices, setInFlightIndices] = useState<Set<number>>(
+    new Set(),
+  );
 
   // Approval workflow state. expandedApproval: index of row with open justification input.
-  const [approvedMap, setApprovedMap] = useState<Map<number, ApprovalRecord>>(new Map());
+  const [approvedMap, setApprovedMap] = useState<Map<number, ApprovalRecord>>(
+    new Map(),
+  );
   const [expandedApproval, setExpandedApproval] = useState<number | null>(null);
-  const [justificationText, setJustificationText] = useState('');
+  const [justificationText, setJustificationText] = useState("");
   const [approvalInFlight, setApprovalInFlight] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
 
   async function handleWaive(index: number, criterion: string) {
     setInFlightIndices((prev) => new Set(prev).add(index));
     try {
-      await fetch('/api/reasoning/gate-waiver', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/reasoning/gate-waiver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: 'gate_waiver',
+          type: "gate_waiver",
           criterionId: `${instanceId}::${index}`,
           instanceId,
-          reason: 'demo',
+          reason: "demo",
           criterion,
         }),
       });
@@ -1103,38 +1317,54 @@ function GateCriteriaList({
 
   function openApprovalInput(index: number) {
     setExpandedApproval(index);
-    setJustificationText('');
+    setJustificationText("");
+    setApprovalError(null);
   }
 
   function cancelApproval() {
     setExpandedApproval(null);
-    setJustificationText('');
+    setJustificationText("");
+    setApprovalError(null);
   }
 
   async function confirmApproval(index: number, action: ApprovalAction) {
-    if (justificationText.trim().length === 0) return;
+    const justification = justificationText.trim().replace(/\s+/g, " ");
+    if (justification.length < MOVES_HUMAN_RATIONALE_MIN_CHARS) {
+      setApprovalError(
+        `Human justification must be at least ${MOVES_HUMAN_RATIONALE_MIN_CHARS} characters.`,
+      );
+      return;
+    }
     setApprovalInFlight(true);
+    setApprovalError(null);
     try {
-      await fetch('/api/reasoning/gate-approval', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/reasoning/gate-approval", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instanceId,
           criterionId: `${instanceId}::${index}`,
-          justification: justificationText.trim(),
+          justification,
           action,
         }),
       });
-    } finally {
-      setApprovalInFlight(false);
-      // Optimistic update regardless of server response — demo state only.
+      const data = (await res.json().catch(() => ({}))) as {
+        detail?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        setApprovalError(data.detail ?? data.error ?? "Gate approval failed.");
+        return;
+      }
       setApprovedMap((prev) => {
         const next = new Map(prev);
-        next.set(index, { action, justification: justificationText.trim() });
+        next.set(index, { action, justification });
         return next;
       });
       setExpandedApproval(null);
-      setJustificationText('');
+      setJustificationText("");
+    } finally {
+      setApprovalInFlight(false);
     }
   }
 
@@ -1147,60 +1377,65 @@ function GateCriteriaList({
           fontFamily: SHELL.MONO,
           fontSize: 9,
           fontWeight: 700,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
           color: SHELL.INK_MUTED,
           marginBottom: 8,
         }}
       >
         Gate criteria
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {criteria.map((g, i) => {
           const isWaived = waivedIndices.has(i);
           const isInFlight = inFlightIndices.has(i);
           const isUnmet = !g.met;
           const canWaive = isUnmet && !isWaived;
           const approvalRecord = approvedMap.get(i);
-          const isApproved = approvalRecord?.action === 'approve';
-          const isRejected = approvalRecord?.action === 'reject';
+          const isApproved = approvalRecord?.action === "approve";
+          const isRejected = approvalRecord?.action === "reject";
           const isExpanded = expandedApproval === i;
+          const canSubmitApproval =
+            justificationText.trim().length >= MOVES_HUMAN_RATIONALE_MIN_CHARS;
           // Pending approval action for this row.
-          const pendingAction: ApprovalAction = g.met ? 'approve' : 'reject';
+          const pendingAction: ApprovalAction = g.met ? "approve" : "reject";
 
           // Resolve row colours.
           // approved-met → mint, approved-rejected → rust, waived → gray, unmet → peach.
           const rowBg = isApproved
             ? SHELL.MINT_BG
             : isRejected
-            ? SHELL.RUST_BG
-            : g.met
-            ? SHELL.MINT_BG
-            : isWaived
-            ? SHELL.GRAY_BG
-            : SHELL.PEACH_BG;
+              ? SHELL.RUST_BG
+              : g.met
+                ? SHELL.MINT_BG
+                : isWaived
+                  ? SHELL.GRAY_BG
+                  : SHELL.PEACH_BG;
           const rowBorder = isApproved
             ? SHELL.MINT_LINE
             : isRejected
-            ? '#d4a898'
-            : g.met
-            ? SHELL.MINT_LINE
-            : isWaived
-            ? SHELL.GRAY_LINE
-            : SHELL.PEACH_LINE;
+              ? "#d4a898"
+              : g.met
+                ? SHELL.MINT_LINE
+                : isWaived
+                  ? SHELL.GRAY_LINE
+                  : SHELL.PEACH_LINE;
 
           return (
-            <div key={`gc-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <div
+              key={`gc-${i}`}
+              style={{ display: "flex", flexDirection: "column", gap: 0 }}
+            >
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 10,
-                  padding: '7px 12px',
-                  borderRadius: isExpanded ? '7px 7px 0 0' : 7,
+                  padding: "7px 12px",
+                  borderRadius: isExpanded ? "7px 7px 0 0" : 7,
                   background: rowBg,
                   border: `1px solid ${rowBorder}`,
-                  borderBottom: isExpanded ? 'none' : undefined,
+                  borderBottom: isExpanded ? "none" : undefined,
                 }}
               >
                 {/* Circle icon */}
@@ -1208,31 +1443,35 @@ function GateCriteriaList({
                   style={{
                     width: 16,
                     height: 16,
-                    borderRadius: '50%',
+                    borderRadius: "50%",
                     flexShrink: 0,
                     background: isApproved
                       ? SHELL.MINT_TEXT
                       : isRejected
-                      ? SHELL.RUST_TEXT
-                      : g.met
-                      ? SHELL.MINT_TEXT
-                      : isWaived
-                      ? SHELL.GRAY_TEXT
-                      : 'transparent',
+                        ? SHELL.RUST_TEXT
+                        : g.met
+                          ? SHELL.MINT_TEXT
+                          : isWaived
+                            ? SHELL.GRAY_TEXT
+                            : "transparent",
                     border:
                       isApproved || isRejected || g.met || isWaived
-                        ? 'none'
+                        ? "none"
                         : `1.5px solid ${SHELL.INK}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   {(isApproved || g.met || isWaived) && (
-                    <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✓</span>
+                    <span style={{ color: "#fff", fontSize: 9, lineHeight: 1 }}>
+                      ✓
+                    </span>
                   )}
                   {isRejected && (
-                    <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✗</span>
+                    <span style={{ color: "#fff", fontSize: 9, lineHeight: 1 }}>
+                      ✗
+                    </span>
                   )}
                 </div>
                 <span
@@ -1242,14 +1481,14 @@ function GateCriteriaList({
                     color: isApproved
                       ? SHELL.MINT_TEXT
                       : isRejected
-                      ? SHELL.RUST_TEXT
-                      : g.met
-                      ? SHELL.MINT_TEXT
-                      : isWaived
-                      ? SHELL.GRAY_TEXT
-                      : SHELL.INK,
+                        ? SHELL.RUST_TEXT
+                        : g.met
+                          ? SHELL.MINT_TEXT
+                          : isWaived
+                            ? SHELL.GRAY_TEXT
+                            : SHELL.INK,
                     lineHeight: 1.4,
-                    textDecoration: isWaived ? 'line-through' : undefined,
+                    textDecoration: isWaived ? "line-through" : undefined,
                   }}
                 >
                   {g.criterion}
@@ -1257,9 +1496,9 @@ function GateCriteriaList({
                 {/* Right-side: approval chip / approval button / waive button / status label */}
                 <div
                   style={{
-                    marginLeft: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
+                    marginLeft: "auto",
+                    display: "flex",
+                    alignItems: "center",
                     gap: 6,
                     flexShrink: 0,
                   }}
@@ -1271,12 +1510,12 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: SHELL.MINT_TEXT,
                         background: SHELL.MINT_LINE,
                         borderRadius: 4,
-                        padding: '2px 6px',
+                        padding: "2px 6px",
                       }}
                     >
                       Approved · demo-user
@@ -1288,12 +1527,12 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: SHELL.RUST_TEXT,
-                        background: '#e8c4b4',
+                        background: "#e8c4b4",
                         borderRadius: 4,
-                        padding: '2px 6px',
+                        padding: "2px 6px",
                       }}
                     >
                       Rejected · demo-user
@@ -1306,12 +1545,12 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: SHELL.GRAY_TEXT,
                         background: SHELL.GRAY_LINE,
                         borderRadius: 4,
-                        padding: '2px 6px',
+                        padding: "2px 6px",
                       }}
                     >
                       Waived
@@ -1325,18 +1564,18 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: g.met ? SHELL.MINT_TEXT : SHELL.RUST_TEXT,
-                        background: 'none',
-                        border: `1px solid ${g.met ? SHELL.MINT_LINE : '#d4a898'}`,
+                        background: "none",
+                        border: `1px solid ${g.met ? SHELL.MINT_LINE : "#d4a898"}`,
                         borderRadius: 4,
-                        padding: '2px 8px',
-                        cursor: 'pointer',
+                        padding: "2px 8px",
+                        cursor: "pointer",
                         lineHeight: 1.6,
                       }}
                     >
-                      {g.met ? '✓ Approve' : '✗ Reject'}
+                      {g.met ? "✓ Approve" : "✗ Reject"}
                     </button>
                   )}
                   {/* Waive button — only for unmet, un-waived, unsettled rows */}
@@ -1348,18 +1587,18 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: isInFlight ? SHELL.INK_MUTED : SHELL.PEACH_TEXT,
-                        background: 'none',
+                        background: "none",
                         border: `1px solid ${isInFlight ? SHELL.GRAY_LINE : SHELL.PEACH_LINE}`,
                         borderRadius: 4,
-                        padding: '2px 8px',
-                        cursor: isInFlight ? 'not-allowed' : 'pointer',
+                        padding: "2px 8px",
+                        cursor: isInFlight ? "not-allowed" : "pointer",
                         lineHeight: 1.6,
                       }}
                     >
-                      {isInFlight ? '…' : 'Waive'}
+                      {isInFlight ? "…" : "Waive"}
                     </button>
                   )}
                   {/* Plain status label for met rows that have neither been actioned nor expanded */}
@@ -1369,8 +1608,8 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: SHELL.MINT_TEXT,
                       }}
                     >
@@ -1384,8 +1623,8 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: SHELL.PEACH_TEXT,
                       }}
                     >
@@ -1398,38 +1637,64 @@ function GateCriteriaList({
               {isExpanded && (
                 <div
                   style={{
-                    padding: '8px 12px 10px',
+                    padding: "8px 12px 10px",
                     background: rowBg,
                     border: `1px solid ${rowBorder}`,
                     borderTop: `1px solid ${rowBorder}`,
-                    borderRadius: '0 0 7px 7px',
+                    borderRadius: "0 0 7px 7px",
                   }}
                 >
                   <textarea
                     autoFocus
                     maxLength={200}
                     rows={2}
-                    placeholder="Justification (required, max 200 chars)"
+                    placeholder="Human justification with evidence reviewed (required, max 200 chars)"
                     value={justificationText}
                     onChange={(e) => setJustificationText(e.target.value)}
                     style={{
-                      width: '100%',
+                      width: "100%",
                       fontFamily: SHELL.SANS,
                       fontSize: 11,
                       color: SHELL.INK,
                       background: SHELL.CARD_WHITE,
                       border: `1px solid ${SHELL.CARD_LINE}`,
                       borderRadius: 4,
-                      padding: '5px 8px',
-                      resize: 'none',
-                      boxSizing: 'border-box',
-                      outline: 'none',
+                      padding: "5px 8px",
+                      resize: "none",
+                      boxSizing: "border-box",
+                      outline: "none",
                     }}
                   />
                   <div
                     style={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
+                      marginTop: 5,
+                      fontFamily: SHELL.MONO,
+                      fontSize: 9,
+                      color: canSubmitApproval
+                        ? SHELL.MINT_TEXT
+                        : SHELL.INK_MUTED,
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Minimum {MOVES_HUMAN_RATIONALE_MIN_CHARS} characters ·
+                    evidence bundle recorded
+                  </div>
+                  {approvalError && (
+                    <div
+                      style={{
+                        marginTop: 5,
+                        fontFamily: SHELL.SANS,
+                        fontSize: 10,
+                        color: SHELL.RUST_TEXT,
+                      }}
+                    >
+                      {approvalError}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
                       gap: 6,
                       marginTop: 6,
                     }}
@@ -1440,52 +1705,52 @@ function GateCriteriaList({
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color: SHELL.INK_MUTED,
-                        background: 'none',
+                        background: "none",
                         border: `1px solid ${SHELL.GRAY_LINE}`,
                         borderRadius: 4,
-                        padding: '2px 8px',
-                        cursor: 'pointer',
+                        padding: "2px 8px",
+                        cursor: "pointer",
                         lineHeight: 1.6,
                       }}
                     >
                       Cancel
                     </button>
                     <button
-                      disabled={approvalInFlight || justificationText.trim().length === 0}
+                      disabled={approvalInFlight || !canSubmitApproval}
                       onClick={() => confirmApproval(i, pendingAction)}
                       style={{
                         fontFamily: SHELL.MONO,
                         fontSize: 9,
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         color:
-                          approvalInFlight || justificationText.trim().length === 0
+                          approvalInFlight || !canSubmitApproval
                             ? SHELL.INK_MUTED
-                            : pendingAction === 'approve'
-                            ? SHELL.MINT_TEXT
-                            : SHELL.RUST_TEXT,
-                        background: 'none',
+                            : pendingAction === "approve"
+                              ? SHELL.MINT_TEXT
+                              : SHELL.RUST_TEXT,
+                        background: "none",
                         border: `1px solid ${
-                          approvalInFlight || justificationText.trim().length === 0
+                          approvalInFlight || !canSubmitApproval
                             ? SHELL.GRAY_LINE
-                            : pendingAction === 'approve'
-                            ? SHELL.MINT_LINE
-                            : '#d4a898'
+                            : pendingAction === "approve"
+                              ? SHELL.MINT_LINE
+                              : "#d4a898"
                         }`,
                         borderRadius: 4,
-                        padding: '2px 8px',
+                        padding: "2px 8px",
                         cursor:
-                          approvalInFlight || justificationText.trim().length === 0
-                            ? 'not-allowed'
-                            : 'pointer',
+                          approvalInFlight || !canSubmitApproval
+                            ? "not-allowed"
+                            : "pointer",
                         lineHeight: 1.6,
                       }}
                     >
-                      {approvalInFlight ? '…' : 'Confirm'}
+                      {approvalInFlight ? "…" : "Confirm"}
                     </button>
                   </div>
                 </div>
@@ -1496,18 +1761,18 @@ function GateCriteriaList({
       </div>
       {/* Reset waivers link — only shown when at least one criterion is waived */}
       {hasWaivers && (
-        <div style={{ marginTop: 8, textAlign: 'right' }}>
+        <div style={{ marginTop: 8, textAlign: "right" }}>
           <button
             onClick={handleResetWaivers}
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
+              background: "none",
+              border: "none",
+              cursor: "pointer",
               fontFamily: SHELL.MONO,
               fontSize: 9,
               color: SHELL.INK_MUTED,
-              letterSpacing: '0.08em',
-              textDecoration: 'underline',
+              letterSpacing: "0.08em",
+              textDecoration: "underline",
               padding: 0,
             }}
           >
@@ -1524,7 +1789,7 @@ function GateCriteriaList({
 function DeliverablesList({
   deliverables,
 }: {
-  deliverables: NonNullable<ProgramDetailView['phasePanel']['deliverables']>;
+  deliverables: NonNullable<ProgramDetailView["phasePanel"]["deliverables"]>;
 }) {
   return (
     <div>
@@ -1533,31 +1798,31 @@ function DeliverablesList({
           fontFamily: SHELL.MONO,
           fontSize: 9,
           fontWeight: 700,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
           color: SHELL.INK_MUTED,
           marginBottom: 8,
         }}
       >
         Outputs
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {deliverables.map((d, i) => {
           const statusDotColor =
-            d.status === 'done'
+            d.status === "done"
               ? SHELL.MINT_TEXT
-              : d.status === 'blocked'
-              ? SHELL.RUST_TEXT
-              : SHELL.AMBER_DOT;
+              : d.status === "blocked"
+                ? SHELL.RUST_TEXT
+                : SHELL.AMBER_DOT;
 
           return (
             <div
               key={`del-${i}`}
               style={{
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 10,
-                padding: '7px 12px',
+                padding: "7px 12px",
                 borderRadius: 7,
                 background: SHELL.CARD_WHITE,
                 border: `1px solid ${SHELL.CARD_LINE}`,
@@ -1567,7 +1832,7 @@ function DeliverablesList({
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: statusDotColor,
                   flexShrink: 0,
                 }}
@@ -1588,8 +1853,8 @@ function DeliverablesList({
                   fontFamily: SHELL.MONO,
                   fontSize: 9,
                   fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
                   color: statusDotColor,
                 }}
               >
@@ -1605,28 +1870,57 @@ function DeliverablesList({
 
 // ─── Deliverables canvas (PROG22) ─────────────────────────────────────────────
 
-function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView }) {
-  function readinessDot(r: DeliverablesCanvasView['items'][number]['readiness']): string {
-    if (r === 'trustworthy') return SHELL.MINT_TEXT;
-    if (r === 'blocked') return SHELL.RUST_TEXT;
-    if (r === 'partial') return SHELL.AMBER_DOT;
+function DeliverablesCanvas({
+  canvasView,
+}: {
+  canvasView: DeliverablesCanvasView;
+}) {
+  function readinessDot(
+    r: DeliverablesCanvasView["items"][number]["readiness"],
+  ): string {
+    if (r === "trustworthy") return SHELL.MINT_TEXT;
+    if (r === "blocked") return SHELL.RUST_TEXT;
+    if (r === "partial") return SHELL.AMBER_DOT;
     return SHELL.INK_MUTED;
   }
 
   return (
     <div data-testid="deliverables-canvas">
       {/* Canvas header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, fontWeight: 800 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 11,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: SHELL.INK_MUTED,
+            fontWeight: 800,
+          }}
+        >
           {canvasView.phaseLabel} outputs
         </div>
-        <div style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 11,
+            color: SHELL.INK_MUTED,
+            letterSpacing: "0.06em",
+          }}
+        >
           {canvasView.canvasSummary}
         </div>
       </div>
 
       {/* Items */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {canvasView.items.map((item, i) => (
           <div
             key={`del-canvas-${i}`}
@@ -1635,31 +1929,79 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 12,
-              padding: '16px 18px',
+              padding: "16px 18px",
             }}
           >
             {/* Item header row */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 12,
+                marginBottom: 10,
+              }}
+            >
               <span
                 style={{
                   width: 10,
                   height: 10,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: readinessDot(item.readiness),
                   flexShrink: 0,
                   marginTop: 6,
                 }}
               />
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: SHELL.SANS, fontSize: 16, color: SHELL.INK, lineHeight: 1.35, marginBottom: 6, fontWeight: 700 }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.SANS,
+                    fontSize: 16,
+                    color: SHELL.INK,
+                    lineHeight: 1.35,
+                    marginBottom: 6,
+                    fontWeight: 700,
+                  }}
+                >
                   {item.label}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: readinessDot(item.readiness), fontWeight: 800 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: readinessDot(item.readiness),
+                      fontWeight: 800,
+                    }}
+                  >
                     {item.readinessLabel}
                   </span>
-                  <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+                  <span
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 11,
+                      color: SHELL.INK_MUTED,
+                      letterSpacing: "0.06em",
+                    }}
+                  >
                     · {item.status}
+                  </span>
+                  <span
+                    data-testid="moves-deliverable-ai-draft-label"
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 10,
+                      color: SHELL.INK_MUTED,
+                      background: SHELL.GRAY_BG,
+                      border: `1px solid ${SHELL.CARD_LINE}`,
+                      borderRadius: 4,
+                      padding: "2px 6px",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {item.aiDraftLabel} · {item.editBeforeCommitRequirement}
                   </span>
                 </div>
               </div>
@@ -1667,12 +2009,37 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
 
             {/* Evidence citations */}
             {item.evidenceCitations.length > 0 && (
-              <div style={{ marginBottom: 10, paddingTop: 10, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 6, textTransform: 'uppercase', fontWeight: 800 }}>
+              <div
+                style={{
+                  marginBottom: 10,
+                  paddingTop: 10,
+                  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    letterSpacing: "0.08em",
+                    color: SHELL.INK_MUTED,
+                    marginBottom: 6,
+                    textTransform: "uppercase",
+                    fontWeight: 800,
+                  }}
+                >
                   Evidence
                 </div>
                 {item.evidenceCitations.map((cite, j) => (
-                  <div key={`cite-${j}`} style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.5, marginBottom: 3 }}>
+                  <div
+                    key={`cite-${j}`}
+                    style={{
+                      fontFamily: SHELL.SANS,
+                      fontSize: 14,
+                      color: SHELL.INK_SOFT,
+                      lineHeight: 1.5,
+                      marginBottom: 3,
+                    }}
+                  >
                     · {cite}
                   </div>
                 ))}
@@ -1681,12 +2048,39 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
 
             {/* Missing inputs */}
             {item.missingInputs.length > 0 && (
-              <div style={{ marginBottom: 10, paddingTop: 10, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 6, textTransform: 'uppercase', fontWeight: 800 }}>
+              <div
+                style={{
+                  marginBottom: 10,
+                  paddingTop: 10,
+                  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    letterSpacing: "0.08em",
+                    color: SHELL.INK_MUTED,
+                    marginBottom: 6,
+                    textTransform: "uppercase",
+                    fontWeight: 800,
+                  }}
+                >
                   Missing inputs
                 </div>
                 {item.missingInputs.map((input, j) => (
-                  <div key={`miss-${j}`} style={{ display: 'flex', gap: 8, fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.PEACH_TEXT, lineHeight: 1.45, marginBottom: 3 }}>
+                  <div
+                    key={`miss-${j}`}
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      fontFamily: SHELL.SANS,
+                      fontSize: 14,
+                      color: SHELL.PEACH_TEXT,
+                      lineHeight: 1.45,
+                      marginBottom: 3,
+                    }}
+                  >
                     <span style={{ flexShrink: 0 }}>✗</span>
                     <span>{input}</span>
                   </div>
@@ -1695,37 +2089,66 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
             )}
 
             {/* Next action */}
-            <div style={{ marginBottom: 12, fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.45 }}>
+            <div
+              style={{
+                marginBottom: 12,
+                fontFamily: SHELL.SANS,
+                fontSize: 14,
+                color: SHELL.INK_SOFT,
+                lineHeight: 1.45,
+              }}
+            >
               Next: {item.nextAction}
             </div>
 
             {/* Disabled actions — rendered explicitly so testids appear as static strings */}
-            <div style={{ display: 'flex', gap: 10, paddingTop: 10, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-              {item.actions.find((a) => a.key === 'approve') && (
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                paddingTop: 10,
+                borderTop: `1px solid ${SHELL.CARD_LINE}`,
+              }}
+            >
+              {item.actions.find((a) => a.key === "approve") && (
                 <button
                   data-testid="deliverable-approve-action"
                   disabled={true}
-                  title={item.actions.find((a) => a.key === 'approve')!.reason}
+                  title={item.actions.find((a) => a.key === "approve")!.reason}
                   style={{
-                    fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
-                    color: SHELL.INK_MUTED, background: SHELL.GRAY_BG,
-                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 7,
-                    padding: '8px 12px', cursor: 'not-allowed', opacity: 0.55,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 11,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: SHELL.INK_MUTED,
+                    background: SHELL.GRAY_BG,
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 7,
+                    padding: "8px 12px",
+                    cursor: "not-allowed",
+                    opacity: 0.55,
                   }}
                 >
                   Approve
                 </button>
               )}
-              {item.actions.find((a) => a.key === 'export') && (
+              {item.actions.find((a) => a.key === "export") && (
                 <button
                   data-testid="deliverable-export-action"
                   disabled={true}
-                  title={item.actions.find((a) => a.key === 'export')!.reason}
+                  title={item.actions.find((a) => a.key === "export")!.reason}
                   style={{
-                    fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
-                    color: SHELL.INK_MUTED, background: SHELL.GRAY_BG,
-                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 7,
-                    padding: '8px 12px', cursor: 'not-allowed', opacity: 0.55,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 11,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: SHELL.INK_MUTED,
+                    background: SHELL.GRAY_BG,
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 7,
+                    padding: "8px 12px",
+                    cursor: "not-allowed",
+                    opacity: 0.55,
                   }}
                 >
                   Export
@@ -1740,9 +2163,16 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
       <div
         data-testid="deliverables-canvas-disclaimer"
         data-honest-disclaimer="deliverables-canvas"
-        style={{ marginTop: 16, fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.6 }}
+        style={{
+          marginTop: 16,
+          fontFamily: SHELL.MONO,
+          fontSize: 10,
+          color: SHELL.INK_MUTED,
+          letterSpacing: "0.08em",
+          lineHeight: 1.6,
+        }}
       >
-        {canvasView.honestDisclaimer}
+        {canvasView.honestDisclaimer} {AI_DECISION_SUPPORT_WATERMARK}
       </div>
     </div>
   );
@@ -1755,57 +2185,62 @@ interface ScorecardOverrideModalProps {
   currentScore: string;
 }
 
-function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModalProps) {
+function ScorecardOverrideModal({
+  onClose,
+  currentScore,
+}: ScorecardOverrideModalProps) {
   const [selectedScore, setSelectedScore] = useState<string | null>(null);
   const [customMode, setCustomMode] = useState(false);
-  const [customValue, setCustomValue] = useState('');
-  const [rationale, setRationale] = useState('');
+  const [customValue, setCustomValue] = useState("");
+  const [rationale, setRationale] = useState("");
   const [confirmed, setConfirmed] = useState(false);
 
-  const presetScores = ['20%', '40%', '60%', '80%'];
+  const presetScores = ["20%", "40%", "60%", "80%"];
 
   function handleConfirm() {
-    if (rationale.trim() === '') return;
+    if (rationale.trim() === "") return;
     setConfirmed(true);
     setTimeout(() => onClose(), 2000);
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%',
+    width: "100%",
     border: `1px solid ${SHELL.CARD_LINE}`,
     borderRadius: 6,
-    padding: '8px 12px',
+    padding: "8px 12px",
     fontFamily: SHELL.SANS,
     fontSize: 13,
     background: SHELL.PAPER,
     color: SHELL.INK,
-    boxSizing: 'border-box',
-    outline: 'none',
-    resize: 'none',
+    boxSizing: "border-box",
+    outline: "none",
+    resize: "none",
   };
 
   const labelStyle: React.CSSProperties = {
     fontFamily: SHELL.MONO,
     fontSize: 9,
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase',
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
     color: SHELL.INK_MUTED,
-    display: 'block',
+    display: "block",
     marginBottom: 5,
   };
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
         zIndex: 1300,
-        background: 'rgba(12,26,58,0.6)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
+        background: "rgba(12,26,58,0.6)",
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         style={{
@@ -1813,9 +2248,9 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
           borderRadius: 12,
           padding: 32,
           maxWidth: 480,
-          width: '100%',
-          margin: '10vh auto',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+          width: "100%",
+          margin: "10vh auto",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
         }}
       >
         {/* Header */}
@@ -1837,7 +2272,7 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
               fontFamily: SHELL.MONO,
               fontSize: 9,
               color: SHELL.INK_MUTED,
-              letterSpacing: '0.1em',
+              letterSpacing: "0.1em",
             }}
           >
             Ste · Steward override · rationale required
@@ -1848,7 +2283,7 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
           <div>
             <div
               style={{
-                padding: '14px 16px',
+                padding: "14px 16px",
                 background: SHELL.PEACH_BG,
                 border: `1px solid ${SHELL.PEACH_LINE}`,
                 borderRadius: 8,
@@ -1861,7 +2296,7 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
             </div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Current score */}
             <div>
               <label style={labelStyle}>Current assessed score</label>
@@ -1881,42 +2316,55 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
             {/* New score pills */}
             <div>
               <label style={labelStyle}>New score</label>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {presetScores.map((s) => (
                   <button
                     key={s}
-                    onClick={() => { setSelectedScore(s); setCustomMode(false); setCustomValue(''); }}
+                    onClick={() => {
+                      setSelectedScore(s);
+                      setCustomMode(false);
+                      setCustomValue("");
+                    }}
                     style={{
-                      padding: '5px 14px',
+                      padding: "5px 14px",
                       borderRadius: 999,
-                      border: 'none',
-                      cursor: 'pointer',
+                      border: "none",
+                      cursor: "pointer",
                       fontFamily: SHELL.MONO,
                       fontSize: 10,
                       fontWeight: 600,
-                      letterSpacing: '0.08em',
-                      background: selectedScore === s && !customMode ? SHELL.PEACH_BG : SHELL.GRAY_BG,
-                      color: selectedScore === s && !customMode ? SHELL.PEACH_TEXT : SHELL.INK_SOFT,
-                      transition: 'background 120ms ease, color 120ms ease',
+                      letterSpacing: "0.08em",
+                      background:
+                        selectedScore === s && !customMode
+                          ? SHELL.PEACH_BG
+                          : SHELL.GRAY_BG,
+                      color:
+                        selectedScore === s && !customMode
+                          ? SHELL.PEACH_TEXT
+                          : SHELL.INK_SOFT,
+                      transition: "background 120ms ease, color 120ms ease",
                     }}
                   >
                     {s}
                   </button>
                 ))}
                 <button
-                  onClick={() => { setCustomMode(true); setSelectedScore(null); }}
+                  onClick={() => {
+                    setCustomMode(true);
+                    setSelectedScore(null);
+                  }}
                   style={{
-                    padding: '5px 14px',
+                    padding: "5px 14px",
                     borderRadius: 999,
-                    border: 'none',
-                    cursor: 'pointer',
+                    border: "none",
+                    cursor: "pointer",
                     fontFamily: SHELL.MONO,
                     fontSize: 10,
                     fontWeight: 600,
-                    letterSpacing: '0.08em',
+                    letterSpacing: "0.08em",
                     background: customMode ? SHELL.PEACH_BG : SHELL.GRAY_BG,
                     color: customMode ? SHELL.PEACH_TEXT : SHELL.INK_SOFT,
-                    transition: 'background 120ms ease, color 120ms ease',
+                    transition: "background 120ms ease, color 120ms ease",
                   }}
                 >
                   Custom
@@ -1926,7 +2374,10 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
                 <input
                   type="text"
                   value={customValue}
-                  onChange={(e) => { setCustomValue(e.target.value); setSelectedScore(e.target.value); }}
+                  onChange={(e) => {
+                    setCustomValue(e.target.value);
+                    setSelectedScore(e.target.value);
+                  }}
                   placeholder="e.g. 55%"
                   style={{ ...inputStyle, marginTop: 8 }}
                 />
@@ -1946,17 +2397,24 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
             </div>
 
             {/* Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 4,
+              }}
+            >
               <button
                 onClick={onClose}
                 style={{
                   fontFamily: SHELL.MONO,
                   fontSize: 10,
-                  letterSpacing: '0.08em',
+                  letterSpacing: "0.08em",
                   color: SHELL.INK_SOFT,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
                   padding: 0,
                 }}
               >
@@ -1964,18 +2422,20 @@ function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModa
               </button>
               <button
                 onClick={handleConfirm}
-                disabled={rationale.trim() === ''}
+                disabled={rationale.trim() === ""}
                 style={{
                   fontFamily: SHELL.MONO,
                   fontSize: 10,
-                  letterSpacing: '0.08em',
-                  background: rationale.trim() === '' ? SHELL.GRAY_BG : SHELL.INK,
-                  color: rationale.trim() === '' ? SHELL.INK_MUTED : SHELL.PAPER,
-                  border: 'none',
+                  letterSpacing: "0.08em",
+                  background:
+                    rationale.trim() === "" ? SHELL.GRAY_BG : SHELL.INK,
+                  color:
+                    rationale.trim() === "" ? SHELL.INK_MUTED : SHELL.PAPER,
+                  border: "none",
                   borderRadius: 6,
-                  padding: '9px 18px',
-                  cursor: rationale.trim() === '' ? 'not-allowed' : 'pointer',
-                  transition: 'background 120ms ease, color 120ms ease',
+                  padding: "9px 18px",
+                  cursor: rationale.trim() === "" ? "not-allowed" : "pointer",
+                  transition: "background 120ms ease, color 120ms ease",
                 }}
               >
                 Confirm override
@@ -1996,9 +2456,9 @@ interface EvidenceSectionProps {
 }
 
 function EvidenceSection({ items, onView }: EvidenceSectionProps) {
-  function confidenceDotColor(confidence: EvidenceItem['confidence']): string {
-    if (confidence === 'high') return SHELL.MINT_TEXT;
-    if (confidence === 'medium') return SHELL.AMBER_DOT;
+  function confidenceDotColor(confidence: EvidenceItem["confidence"]): string {
+    if (confidence === "high") return SHELL.MINT_TEXT;
+    if (confidence === "medium") return SHELL.AMBER_DOT;
     return SHELL.RUST_TEXT;
   }
 
@@ -2009,15 +2469,15 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
           fontFamily: SHELL.MONO,
           fontSize: 9,
           fontWeight: 700,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
           color: SHELL.INK_MUTED,
           marginBottom: 8,
         }}
       >
         Evidence · {items.length} citations
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {items.map((item) => {
           // Score this evidence item for the quality chip. Map program-side
           // fields onto the scorer's EvidenceLikeItem shape.
@@ -2029,9 +2489,9 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
           });
           const itemQualitySummary = {
             mean: itemScore.score,
-            weakCount: itemScore.grade === 'weak' ? 1 : 0,
-            fairCount: itemScore.grade === 'fair' ? 1 : 0,
-            strongCount: itemScore.grade === 'strong' ? 1 : 0,
+            weakCount: itemScore.grade === "weak" ? 1 : 0,
+            fairCount: itemScore.grade === "fair" ? 1 : 0,
+            strongCount: itemScore.grade === "strong" ? 1 : 0,
             total: 1,
           };
           return (
@@ -2039,15 +2499,15 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
               key={item.id}
               onClick={() => onView(item)}
               style={{
-                padding: '8px 12px',
+                padding: "8px 12px",
                 borderRadius: 6,
                 border: `1px solid ${SHELL.CARD_LINE}`,
                 background: SHELL.CARD_WHITE,
                 marginBottom: 0,
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 10,
-                cursor: 'pointer',
+                cursor: "pointer",
               }}
             >
               {/* Confidence dot */}
@@ -2055,7 +2515,7 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
                 style={{
                   width: 6,
                   height: 6,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: confidenceDotColor(item.confidence),
                   flexShrink: 0,
                 }}
@@ -2079,7 +2539,7 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
                       fontFamily: SHELL.MONO,
                       fontSize: 9,
                       color: SHELL.INK_MUTED,
-                      letterSpacing: '0.08em',
+                      letterSpacing: "0.08em",
                     }}
                   >
                     {item.provenanceNote}
@@ -2115,9 +2575,9 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
                     color: SHELL.PEACH_TEXT,
                     fontFamily: SHELL.MONO,
                     fontSize: 9,
-                    padding: '2px 7px',
+                    padding: "2px 7px",
                     borderRadius: 4,
-                    whiteSpace: 'nowrap',
+                    whiteSpace: "nowrap",
                   }}
                 >
                   ⚠ conflict
@@ -2129,7 +2589,7 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
                   fontFamily: SHELL.MONO,
                   fontSize: 10,
                   color: SHELL.INK_MUTED,
-                  whiteSpace: 'nowrap',
+                  whiteSpace: "nowrap",
                 }}
               >
                 View →
@@ -2150,23 +2610,27 @@ interface EvidenceDrawerProps {
   onResolveContradiction: (item: EvidenceItem) => void;
 }
 
-function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawerProps) {
-  function confidenceDotColor(confidence: EvidenceItem['confidence']): string {
-    if (confidence === 'high') return SHELL.MINT_TEXT;
-    if (confidence === 'medium') return SHELL.AMBER_DOT;
+function EvidenceDrawer({
+  item,
+  onClose,
+  onResolveContradiction,
+}: EvidenceDrawerProps) {
+  function confidenceDotColor(confidence: EvidenceItem["confidence"]): string {
+    if (confidence === "high") return SHELL.MINT_TEXT;
+    if (confidence === "medium") return SHELL.AMBER_DOT;
     return SHELL.RUST_TEXT;
   }
 
-  function confidenceLabel(confidence: EvidenceItem['confidence']): string {
-    if (confidence === 'high') return 'High confidence';
-    if (confidence === 'medium') return 'Medium confidence';
-    return 'Low confidence';
+  function confidenceLabel(confidence: EvidenceItem["confidence"]): string {
+    if (confidence === "high") return "High confidence";
+    if (confidence === "medium") return "Medium confidence";
+    return "Low confidence";
   }
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         right: 0,
         bottom: 0,
@@ -2174,19 +2638,19 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
         background: SHELL.PAPER,
         borderLeft: `1px solid ${SHELL.CARD_LINE}`,
         zIndex: 900,
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.10)',
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "-4px 0 24px rgba(0,0,0,0.10)",
       }}
     >
       {/* Header */}
       <div
         style={{
           height: 48,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: '0 20px',
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          padding: "0 20px",
           borderBottom: `1px solid ${SHELL.CARD_LINE}`,
           flexShrink: 0,
         }}
@@ -2195,8 +2659,8 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 10,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
             color: SHELL.INK_MUTED,
           }}
         >
@@ -2209,9 +2673,9 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
             fontFamily: SHELL.SANS,
             fontSize: 20,
             color: SHELL.INK_SOFT,
-            cursor: 'pointer',
-            background: 'none',
-            border: 'none',
+            cursor: "pointer",
+            background: "none",
+            border: "none",
             lineHeight: 1,
             padding: 0,
           }}
@@ -2224,8 +2688,8 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
       <div
         style={{
           flex: 1,
-          overflow: 'auto',
-          padding: '24px 24px',
+          overflow: "auto",
+          padding: "24px 24px",
         }}
       >
         {/* Citation */}
@@ -2234,7 +2698,7 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
             fontFamily: SHELL.SERIF,
             fontSize: 16,
             color: SHELL.INK,
-            fontWeight: 'bold',
+            fontWeight: "bold",
             marginBottom: 4,
           }}
         >
@@ -2247,8 +2711,8 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
             fontFamily: SHELL.MONO,
             fontSize: 9,
             color: SHELL.INK_MUTED,
-            textTransform: 'uppercase',
-            letterSpacing: '0.12em',
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
             marginBottom: 16,
           }}
         >
@@ -2258,9 +2722,9 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
         {item.provenanceNote ? (
           <div
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '4px 8px',
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "4px 8px",
               marginBottom: 16,
               borderRadius: 999,
               background: SHELL.PAPER_SOFT,
@@ -2268,7 +2732,7 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
               fontFamily: SHELL.MONO,
               fontSize: 9,
               color: SHELL.INK_MUTED,
-              letterSpacing: '0.06em',
+              letterSpacing: "0.06em",
             }}
           >
             {item.provenanceNote}
@@ -2293,8 +2757,8 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
         {/* Confidence */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 8,
             marginBottom: item.hasContradiction ? 20 : 0,
           }}
@@ -2303,7 +2767,7 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
             style={{
               width: 8,
               height: 8,
-              borderRadius: '50%',
+              borderRadius: "50%",
               background: confidenceDotColor(item.confidence),
               flexShrink: 0,
             }}
@@ -2312,8 +2776,8 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
               color: SHELL.INK_MUTED,
             }}
           >
@@ -2328,7 +2792,7 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
               background: SHELL.PEACH_BG,
               border: `1px solid ${SHELL.PEACH_LINE}`,
               borderRadius: 8,
-              padding: '12px 14px',
+              padding: "12px 14px",
             }}
           >
             <div
@@ -2350,12 +2814,12 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
                 fontFamily: SHELL.MONO,
                 fontSize: 10,
                 color: SHELL.INK,
-                background: 'none',
-                border: 'none',
+                background: "none",
+                border: "none",
                 padding: 0,
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                letterSpacing: '0.06em',
+                cursor: "pointer",
+                textDecoration: "underline",
+                letterSpacing: "0.06em",
               }}
             >
               Resolve contradiction →
@@ -2375,36 +2839,40 @@ interface ContradictionModalProps {
   onClose: () => void;
 }
 
-function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProps) {
+function ContradictionModal({
+  item,
+  onResolve,
+  onClose,
+}: ContradictionModalProps) {
   const [selected, setSelected] = useState<number | null>(null);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
 
   const options = [
-    'Accept this evidence — discard conflicting item',
-    'Accept conflicting item — flag this as superseded',
-    'Defer — flag both items for sponsor review',
+    "Accept this evidence — discard conflicting item",
+    "Accept conflicting item — flag this as superseded",
+    "Defer — flag both items for sponsor review",
   ];
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
-        background: 'rgba(0,0,0,0.35)',
+        background: "rgba(0,0,0,0.35)",
         zIndex: 1100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <div
         style={{
           background: SHELL.PAPER,
           borderRadius: 12,
-          padding: '28px 32px',
+          padding: "28px 32px",
           maxWidth: 500,
-          width: '90%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          width: "90%",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
         }}
       >
         {/* Header */}
@@ -2414,8 +2882,8 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
               fontFamily: SHELL.MONO,
               fontSize: 10,
               color: SHELL.INK_MUTED,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
               marginBottom: 6,
             }}
           >
@@ -2453,11 +2921,12 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
               key={`opt-${i}`}
               onClick={() => setSelected(i)}
               style={{
-                padding: '10px 14px',
+                padding: "10px 14px",
                 borderRadius: 6,
                 border: `1.5px solid ${selected === i ? SHELL.INK : SHELL.CARD_LINE}`,
-                background: selected === i ? SHELL.PAPER_DEEP : SHELL.CARD_WHITE,
-                cursor: 'pointer',
+                background:
+                  selected === i ? SHELL.PAPER_DEEP : SHELL.CARD_WHITE,
+                cursor: "pointer",
                 marginBottom: 6,
                 fontFamily: SHELL.SANS,
                 fontSize: 13,
@@ -2476,8 +2945,8 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
               color: SHELL.INK_MUTED,
               marginBottom: 6,
             }}
@@ -2495,11 +2964,11 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 6,
               padding: 10,
-              width: '100%',
-              boxSizing: 'border-box',
-              resize: 'vertical',
+              width: "100%",
+              boxSizing: "border-box",
+              resize: "vertical",
               color: SHELL.INK,
-              outline: 'none',
+              outline: "none",
               lineHeight: 1.5,
             }}
             placeholder="Optional note about this resolution…"
@@ -2507,17 +2976,17 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
         </div>
 
         {/* Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
           <button
             onClick={onClose}
             style={{
               border: `1px solid ${SHELL.CARD_LINE}`,
-              background: 'transparent',
+              background: "transparent",
               fontFamily: SHELL.SANS,
               fontSize: 12,
-              padding: '8px 16px',
+              padding: "8px 16px",
               borderRadius: 6,
-              cursor: 'pointer',
+              cursor: "pointer",
               color: SHELL.INK,
             }}
           >
@@ -2525,18 +2994,18 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
           </button>
           <button
             onClick={() => {
-              const resolution = selected !== null ? options[selected] : '';
-              onResolve(resolution + (note ? ` — ${note}` : ''));
+              const resolution = selected !== null ? options[selected] : "";
+              onResolve(resolution + (note ? ` — ${note}` : ""));
             }}
             style={{
               background: SHELL.INK,
               color: SHELL.PAPER,
               fontFamily: SHELL.SANS,
               fontSize: 12,
-              padding: '8px 16px',
+              padding: "8px 16px",
               borderRadius: 6,
-              border: 'none',
-              cursor: 'pointer',
+              border: "none",
+              cursor: "pointer",
             }}
           >
             Record resolution
@@ -2550,46 +3019,56 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
 // ─── SuggestedActionOverlay (PRG-STA-SUGGESTED-ACTION) ────────────────────────
 
 interface SuggestedActionOverlayProps {
-  action: { letter: 'A' | 'B' | 'C'; text: string; detail?: string; href?: string; frame: 1 | 2 | 3 };
+  action: {
+    letter: "A" | "B" | "C";
+    text: string;
+    detail?: string;
+    href?: string;
+    frame: 1 | 2 | 3;
+  };
   onAdvance: () => void;
   onDismiss: () => void;
 }
 
-function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActionOverlayProps) {
+function SuggestedActionOverlay({
+  action,
+  onAdvance,
+  onDismiss,
+}: SuggestedActionOverlayProps) {
   const ghostBtn: React.CSSProperties = {
     fontFamily: SHELL.MONO,
     fontSize: 10,
-    color: 'rgba(250,247,241,0.8)',
-    background: 'none',
-    border: '1px solid rgba(250,247,241,0.3)',
+    color: "rgba(250,247,241,0.8)",
+    background: "none",
+    border: "1px solid rgba(250,247,241,0.3)",
     borderRadius: 6,
-    padding: '7px 14px',
-    cursor: 'pointer',
-    letterSpacing: '0.06em',
+    padding: "7px 14px",
+    cursor: "pointer",
+    letterSpacing: "0.06em",
   };
   const solidBtn: React.CSSProperties = {
     fontFamily: SHELL.MONO,
     fontSize: 10,
     color: SHELL.INK,
     background: SHELL.PAPER,
-    border: 'none',
+    border: "none",
     borderRadius: 6,
-    padding: '7px 14px',
-    cursor: 'pointer',
-    letterSpacing: '0.06em',
+    padding: "7px 14px",
+    cursor: "pointer",
+    letterSpacing: "0.06em",
   };
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         bottom: 80,
         right: 320,
         background: SHELL.INK,
         borderRadius: 12,
-        padding: '20px 24px',
+        padding: "20px 24px",
         width: 340,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.24)',
+        boxShadow: "0 8px 32px rgba(0,0,0,0.24)",
         zIndex: 800,
       }}
     >
@@ -2599,13 +3078,13 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              color: 'rgba(250,247,241,0.7)',
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
+              color: "rgba(250,247,241,0.7)",
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
               marginBottom: 10,
             }}
           >
-            Nexus suggests
+            Ava suggests
           </div>
           <div
             style={{
@@ -2623,7 +3102,7 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
               style={{
                 fontFamily: SHELL.SANS,
                 fontSize: 12,
-                color: 'rgba(250,247,241,0.7)',
+                color: "rgba(250,247,241,0.7)",
                 marginBottom: 16,
                 lineHeight: 1.5,
               }}
@@ -2632,9 +3111,13 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
             </div>
           )}
           {!action.detail && <div style={{ marginBottom: 16 }} />}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button style={ghostBtn} onClick={onDismiss}>Dismiss</button>
-            <button style={solidBtn} onClick={onAdvance}>Proceed →</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={ghostBtn} onClick={onDismiss}>
+              Dismiss
+            </button>
+            <button style={solidBtn} onClick={onAdvance}>
+              Proceed →
+            </button>
           </div>
         </>
       )}
@@ -2645,9 +3128,9 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              color: 'rgba(250,247,241,0.7)',
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
+              color: "rgba(250,247,241,0.7)",
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
               marginBottom: 10,
             }}
           >
@@ -2668,28 +3151,40 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 12,
-              color: 'rgba(250,247,241,0.7)',
+              color: "rgba(250,247,241,0.7)",
               marginBottom: 16,
               lineHeight: 1.5,
             }}
           >
-            This will queue a deterministic follow-up on the current program surface.
+            This will queue a deterministic follow-up on the current program
+            surface.
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button style={ghostBtn} onClick={onDismiss}>← Back</button>
-            <button style={solidBtn} onClick={onAdvance}>Confirm and proceed</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={ghostBtn} onClick={onDismiss}>
+              ← Back
+            </button>
+            <button style={solidBtn} onClick={onAdvance}>
+              Confirm and proceed
+            </button>
           </div>
         </>
       )}
 
       {action.frame === 3 && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 10,
+            }}
+          >
             <div
               style={{
                 width: 7,
                 height: 7,
-                borderRadius: '50%',
+                borderRadius: "50%",
                 background: SHELL.MINT_TEXT,
                 flexShrink: 0,
               }}
@@ -2699,8 +3194,8 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
                 fontFamily: SHELL.MONO,
                 fontSize: 9,
                 color: SHELL.MINT_TEXT,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
               }}
             >
               Action logged
@@ -2721,14 +3216,15 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 12,
-              color: 'rgba(250,247,241,0.7)',
+              color: "rgba(250,247,241,0.7)",
               marginBottom: 16,
               lineHeight: 1.5,
             }}
           >
-            Action queued in the current preview state. Nexus follow-up remains seeded until runtime automation is wired.
+            Action queued in the current preview state. Ava follow-up remains
+            seeded until runtime automation is wired.
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {action.href && (
               <a
                 href={action.href}
@@ -2736,20 +3232,22 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
                   fontFamily: SHELL.MONO,
                   fontSize: 10,
                   color: SHELL.PAPER,
-                  background: 'rgba(250,247,241,0.15)',
-                  border: '1px solid rgba(250,247,241,0.4)',
-                  padding: '6px 12px',
+                  background: "rgba(250,247,241,0.15)",
+                  border: "1px solid rgba(250,247,241,0.4)",
+                  padding: "6px 12px",
                   borderRadius: 6,
-                  textDecoration: 'none',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
+                  textDecoration: "none",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
                 }}
               >
                 Open →
               </a>
             )}
-            <button style={solidBtn} onClick={onDismiss}>Close</button>
+            <button style={solidBtn} onClick={onDismiss}>
+              Close
+            </button>
           </div>
         </>
       )}
@@ -2768,13 +3266,13 @@ interface FileUploadOverlayProps {
 type UploadEvidenceResult =
   | {
       id: string;
-      status: 'captured';
+      status: "captured";
       parseMethod?: string | null;
       warnings?: string[];
     }
   | {
       id: null;
-      status: 'not_captured';
+      status: "not_captured";
       warning?: string | null;
     };
 
@@ -2789,93 +3287,112 @@ function formatFileSize(bytes: number): string {
 }
 
 function getUploadStageMessage(uploadState: {
-  stage: 'uploading' | 'capturing' | 'done';
+  stage: "uploading" | "capturing" | "done";
   evidence?: UploadEvidenceResult | null;
 }): string {
-  if (uploadState.stage === 'uploading') return 'Uploading...';
-  if (uploadState.stage === 'capturing') return 'Nexus is capturing evidence...';
+  if (uploadState.stage === "uploading") return "Uploading...";
+  if (uploadState.stage === "capturing")
+    return "Ava is capturing evidence...";
   const evidence = uploadState.evidence;
-  if (evidence?.status === 'captured') {
-    return evidence.parseMethod === 'metadata-only'
-      ? 'File captured · structured parsing pending'
-      : 'Evidence captured · text parsed';
+  if (evidence?.status === "captured") {
+    return evidence.parseMethod === "metadata-only"
+      ? "File captured · structured parsing pending"
+      : "Evidence captured · text parsed";
   }
-  return 'File uploaded · evidence capture needs review';
+  return "File uploaded · evidence capture needs review";
 }
 
 function getUploadEvidenceChips(
   evidence: UploadEvidenceResult | null | undefined,
 ): Array<{ label: string; bg: string }> {
-  if (evidence?.status === 'captured') {
-    if (evidence.parseMethod === 'metadata-only') {
+  if (evidence?.status === "captured") {
+    if (evidence.parseMethod === "metadata-only") {
       return [
-        { label: 'Attachment saved', bg: SHELL.BLUE_BG },
-        { label: 'Evidence shell captured', bg: SHELL.PEACH_BG },
-        { label: 'Structured parser pending', bg: SHELL.RUST_BG },
+        { label: "Attachment saved", bg: SHELL.BLUE_BG },
+        { label: "Evidence shell captured", bg: SHELL.PEACH_BG },
+        { label: "Structured parser pending", bg: SHELL.RUST_BG },
       ];
     }
     return [
-      { label: 'Text evidence parsed', bg: SHELL.MINT_BG },
-      { label: 'Evidence item saved', bg: SHELL.BLUE_BG },
-      { label: `Parser: ${evidence.parseMethod ?? 'text parser'}`, bg: SHELL.PEACH_BG },
+      { label: "Text evidence parsed", bg: SHELL.MINT_BG },
+      { label: "Evidence item saved", bg: SHELL.BLUE_BG },
+      {
+        label: `Parser: ${evidence.parseMethod ?? "text parser"}`,
+        bg: SHELL.PEACH_BG,
+      },
     ];
   }
   return [
-    { label: 'Attachment saved', bg: SHELL.BLUE_BG },
-    { label: 'Evidence capture warning', bg: SHELL.RUST_BG },
+    { label: "Attachment saved", bg: SHELL.BLUE_BG },
+    { label: "Evidence capture warning", bg: SHELL.RUST_BG },
   ];
 }
 
-function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverlayProps) {
+function FileUploadOverlay({
+  programName,
+  programId,
+  onClose,
+}: FileUploadOverlayProps) {
   const { toast } = useToast();
   const [uploadState, setUploadState] = useState<{
     name: string;
     size: string;
-    stage: 'uploading' | 'capturing' | 'done';
+    stage: "uploading" | "capturing" | "done";
     evidence?: UploadEvidenceResult | null;
   } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [pastedNotes, setPastedNotes] = useState('');
+  const [pastedNotes, setPastedNotes] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = async (file: File) => {
     if (!file || uploadState) return;
 
     setUploadError(null);
-    setUploadState({ name: file.name, size: formatFileSize(file.size), stage: 'uploading' });
+    setUploadState({
+      name: file.name,
+      size: formatFileSize(file.size),
+      stage: "uploading",
+    });
 
     const form = new FormData();
-    form.append('file', file);
-    form.append('dataClassification', 'confidential_business');
-    form.append('sessionId', `prog-${Date.now()}`);
+    form.append("file", file);
+    form.append("dataClassification", "confidential_business");
+    form.append("sessionId", `prog-${Date.now()}`);
 
     try {
-      const res = await fetch(`/api/programs/${encodeURIComponent(programId)}/attachments/upload`, { method: 'POST', body: form });
+      const res = await fetch(
+        `/api/programs/${encodeURIComponent(programId)}/attachments/upload`,
+        { method: "POST", body: form },
+      );
       if (!res.ok) {
-        const msg = await res.text().catch(() => 'Upload failed');
+        const msg = await res.text().catch(() => "Upload failed");
         setUploadState(null);
-        setUploadError(msg || 'Upload failed');
+        setUploadError(msg || "Upload failed");
         return;
       }
-      const body = (await res.json().catch(() => null)) as UploadResponseBody | null;
+      const body = (await res
+        .json()
+        .catch(() => null)) as UploadResponseBody | null;
       setUploadState((s) =>
-        s ? { ...s, stage: 'capturing', evidence: body?.evidence ?? null } : null,
+        s
+          ? { ...s, stage: "capturing", evidence: body?.evidence ?? null }
+          : null,
       );
       setTimeout(() => {
-        setUploadState((s) => (s ? { ...s, stage: 'done' } : null));
+        setUploadState((s) => (s ? { ...s, stage: "done" } : null));
         toast({
-          type: 'success',
-          title: 'Evidence uploaded',
+          type: "success",
+          title: "Evidence uploaded",
           message:
-            body?.evidence?.status === 'captured' &&
-            body.evidence.parseMethod !== 'metadata-only'
-              ? 'File received · text evidence parsed'
-              : 'File received · evidence metadata captured',
+            body?.evidence?.status === "captured" &&
+            body.evidence.parseMethod !== "metadata-only"
+              ? "File received · text evidence parsed"
+              : "File received · evidence metadata captured",
         });
       }, 500);
     } catch {
       setUploadState(null);
-      setUploadError('Upload failed — network error');
+      setUploadError("Upload failed — network error");
       return;
     }
   };
@@ -2890,46 +3407,48 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
     const trimmed = pastedNotes.trim();
     if (uploadState) return;
     if (trimmed.length < 20) {
-      setUploadError('Paste at least a few lines of notes before capturing evidence.');
+      setUploadError(
+        "Paste at least a few lines of notes before capturing evidence.",
+      );
       return;
     }
     const filename = `pasted-workshop-notes-${new Date().toISOString().slice(0, 10)}.txt`;
-    const file = new File([`${trimmed}\n`], filename, { type: 'text/plain' });
+    const file = new File([`${trimmed}\n`], filename, { type: "text/plain" });
     await uploadFile(file);
   };
 
   const progressPct =
-    uploadState?.stage === 'uploading'
+    uploadState?.stage === "uploading"
       ? 33
-      : uploadState?.stage === 'capturing'
-      ? 70
-      : 100;
+      : uploadState?.stage === "capturing"
+        ? 70
+        : 100;
 
   const insightChips = getUploadEvidenceChips(uploadState?.evidence);
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         right: 0,
         bottom: 0,
         width: 420,
         background: SHELL.PAPER,
         borderLeft: `1px solid ${SHELL.CARD_LINE}`,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         zIndex: 910,
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.08)',
+        boxShadow: "-4px 0 24px rgba(0,0,0,0.08)",
       }}
     >
       {/* Header */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 20px',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "16px 20px",
           borderBottom: `1px solid ${SHELL.CARD_LINE}`,
           flexShrink: 0,
         }}
@@ -2939,8 +3458,8 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
             fontFamily: SHELL.MONO,
             fontSize: 10,
             fontWeight: 700,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
             color: SHELL.INK,
           }}
         >
@@ -2949,11 +3468,11 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
         <div
           style={{
             marginLeft: 12,
-            marginRight: 'auto',
+            marginRight: "auto",
             fontFamily: SHELL.MONO,
             fontSize: 9,
             color: SHELL.INK_MUTED,
-            letterSpacing: '0.08em',
+            letterSpacing: "0.08em",
           }}
         >
           {programId}
@@ -2962,14 +3481,14 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
           onClick={onClose}
           aria-label="Close"
           style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
+            background: "none",
+            border: "none",
+            cursor: "pointer",
             fontFamily: SHELL.SANS,
             fontSize: 18,
             color: SHELL.INK_MUTED,
             lineHeight: 1,
-            padding: '0 2px',
+            padding: "0 2px",
           }}
         >
           ×
@@ -2977,12 +3496,12 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
       </div>
 
       {/* Upload zone / progress */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 16px' }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 0 16px" }}>
         <input
           ref={fileInputRef}
           type="file"
           accept=".pdf,.docx,.xlsx,.pptx,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.mp3,.m4a,.mp4"
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
           onChange={handleFileChange}
         />
         {!uploadState ? (
@@ -2993,9 +3512,9 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                 margin: 24,
                 border: `2px dashed ${SHELL.CARD_LINE}`,
                 borderRadius: 10,
-                padding: '40px 20px',
-                textAlign: 'center',
-                cursor: 'pointer',
+                padding: "40px 20px",
+                textAlign: "center",
+                cursor: "pointer",
                 background: SHELL.PAPER_SOFT,
               }}
             >
@@ -3016,7 +3535,8 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                   color: SHELL.INK_MUTED,
                 }}
               >
-                {programName} · click to browse · documents, images, text, CSV, JSON, audio/video up to 100MB
+                {programName} · click to browse · documents, images, text, CSV,
+                JSON, audio/video up to 100MB
               </div>
               <div
                 style={{
@@ -3035,10 +3555,10 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
             {uploadError && (
               <div
                 style={{
-                  margin: '0 24px',
+                  margin: "0 24px",
                   fontFamily: SHELL.SANS,
                   fontSize: 12,
-                  color: '#c0392b',
+                  color: "#c0392b",
                 }}
               >
                 {uploadError}
@@ -3046,7 +3566,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
             )}
             <div
               style={{
-                margin: '24px',
+                margin: "24px",
                 borderTop: `1px solid ${SHELL.CARD_LINE}`,
                 paddingTop: 18,
               }}
@@ -3056,8 +3576,8 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                   fontFamily: SHELL.MONO,
                   fontSize: 9,
                   fontWeight: 700,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
                   color: SHELL.INK_MUTED,
                   marginBottom: 8,
                 }}
@@ -3070,9 +3590,9 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                 onChange={(event) => setPastedNotes(event.target.value)}
                 placeholder="Paste meeting notes, workshop outputs, decisions, action items, risks, or baseline observations..."
                 style={{
-                  width: '100%',
+                  width: "100%",
                   minHeight: 130,
-                  resize: 'vertical',
+                  resize: "vertical",
                   border: `1px solid ${SHELL.CARD_LINE}`,
                   borderRadius: 8,
                   background: SHELL.CARD_WHITE,
@@ -3081,17 +3601,19 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                   fontSize: 12,
                   lineHeight: 1.5,
                   padding: 12,
-                  boxSizing: 'border-box',
-                  outline: 'none',
+                  boxSizing: "border-box",
+                  outline: "none",
                 }}
               />
               <button
                 type="button"
                 onClick={handlePastedNotesCapture}
-                disabled={pastedNotes.trim().length < 20 || Boolean(uploadState)}
+                disabled={
+                  pastedNotes.trim().length < 20 || Boolean(uploadState)
+                }
                 style={{
                   marginTop: 10,
-                  width: '100%',
+                  width: "100%",
                   fontFamily: SHELL.MONO,
                   fontSize: 10,
                   color:
@@ -3108,13 +3630,13 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                       : SHELL.GRAY_LINE
                   }`,
                   borderRadius: 7,
-                  padding: '10px 12px',
+                  padding: "10px 12px",
                   cursor:
                     pastedNotes.trim().length >= 20 && !uploadState
-                      ? 'pointer'
-                      : 'not-allowed',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                      ? "pointer"
+                      : "not-allowed",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                 }}
               >
                 Capture pasted notes as evidence
@@ -3134,12 +3656,12 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
             </div>
           </>
         ) : (
-          <div style={{ padding: '24px 24px 0' }}>
+          <div style={{ padding: "24px 24px 0" }}>
             {/* File info */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'baseline',
+                display: "flex",
+                alignItems: "baseline",
                 gap: 8,
                 marginBottom: 10,
               }}
@@ -3159,7 +3681,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                   fontFamily: SHELL.MONO,
                   fontSize: 9,
                   color: SHELL.INK_MUTED,
-                  letterSpacing: '0.06em',
+                  letterSpacing: "0.06em",
                 }}
               >
                 {uploadState.size}
@@ -3169,8 +3691,8 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
             {/* Stage indicator */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 6,
                 marginBottom: 10,
               }}
@@ -3179,10 +3701,12 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                 style={{
                   width: 7,
                   height: 7,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   flexShrink: 0,
                   background:
-                    uploadState.stage === 'done' ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
+                    uploadState.stage === "done"
+                      ? SHELL.MINT_TEXT
+                      : SHELL.AMBER_DOT,
                 }}
               />
               <span
@@ -3190,9 +3714,11 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                   fontFamily: SHELL.MONO,
                   fontSize: 9,
                   color:
-                    uploadState.stage === 'done' ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
+                    uploadState.stage === "done"
+                      ? SHELL.MINT_TEXT
+                      : SHELL.INK_MUTED,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
                 }}
               >
                 {getUploadStageMessage(uploadState)}
@@ -3206,30 +3732,30 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                 borderRadius: 2,
                 background: SHELL.CARD_LINE,
                 marginBottom: 20,
-                overflow: 'hidden',
+                overflow: "hidden",
               }}
             >
               <div
                 style={{
-                  height: '100%',
+                  height: "100%",
                   borderRadius: 2,
                   background: SHELL.MINT_TEXT,
                   width: `${progressPct}%`,
-                  transition: 'width 0.4s ease',
+                  transition: "width 0.4s ease",
                 }}
               />
             </div>
 
             {/* Insight chips (shown when done) */}
-            {uploadState.stage === 'done' && (
+            {uploadState.stage === "done" && (
               <>
                 <div
                   style={{
                     fontFamily: SHELL.MONO,
                     fontSize: 9,
                     fontWeight: 700,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
                     color: SHELL.INK_MUTED,
                     marginBottom: 10,
                   }}
@@ -3245,10 +3771,10 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                         fontSize: 9,
                         color: SHELL.INK,
                         background: chip.bg,
-                        padding: '4px 10px',
+                        padding: "4px 10px",
                         borderRadius: 10,
                         marginBottom: 6,
-                        display: 'inline-block',
+                        display: "inline-block",
                         marginRight: 4,
                       }}
                     >
@@ -3263,11 +3789,11 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                     fontSize: 11,
                     color: SHELL.PAPER,
                     background: SHELL.INK,
-                    border: 'none',
+                    border: "none",
                     borderRadius: 6,
-                    padding: '8px 14px',
-                    cursor: 'pointer',
-                    letterSpacing: '0.06em',
+                    padding: "8px 14px",
+                    cursor: "pointer",
+                    letterSpacing: "0.06em",
                   }}
                 >
                   Return to program evidence →
@@ -3282,7 +3808,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
       <div
         style={{
           background: SHELL.PAPER_SOFT,
-          padding: '12px 16px',
+          padding: "12px 16px",
           borderTop: `1px solid ${SHELL.CARD_LINE}`,
           flexShrink: 0,
         }}
@@ -3292,13 +3818,13 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
             fontFamily: SHELL.MONO,
             fontSize: 8,
             fontWeight: 700,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
             color: SHELL.INK_MUTED,
             marginBottom: 4,
           }}
         >
-          Nexus
+          Ava
         </div>
         <div
           style={{
@@ -3309,8 +3835,8 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
           }}
         >
           Uploads are linked to {programName}. Text, Markdown, CSV, and JSON are
-          parsed into evidence synchronously; PDF, Office, image, and media files
-          are captured with metadata and flagged for follow-up parsing.
+          parsed into evidence synchronously; PDF, Office, image, and media
+          files are captured with metadata and flagged for follow-up parsing.
         </div>
       </div>
     </div>
@@ -3332,11 +3858,13 @@ function AgentHandoffOverlay({
   context,
   onComplete,
 }: AgentHandoffOverlayProps) {
-  const [status, setStatus] = useState<'idle' | 'transferring' | 'complete'>('idle');
+  const [status, setStatus] = useState<"idle" | "transferring" | "complete">(
+    "idle",
+  );
 
   useEffect(() => {
-    const t1 = setTimeout(() => setStatus('transferring'), 600);
-    const t2 = setTimeout(() => setStatus('complete'), 2200);
+    const t1 = setTimeout(() => setStatus("transferring"), 600);
+    const t2 = setTimeout(() => setStatus("complete"), 2200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -3346,23 +3874,23 @@ function AgentHandoffOverlay({
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
-        background: 'rgba(12,26,58,0.85)',
+        background: "rgba(12,26,58,0.85)",
         zIndex: 1200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <div
         style={{
           background: SHELL.INK,
           borderRadius: 16,
-          padding: '40px 48px',
+          padding: "40px 48px",
           maxWidth: 460,
-          width: '90%',
-          textAlign: 'center',
+          width: "90%",
+          textAlign: "center",
         }}
       >
         {/* Top label */}
@@ -3370,9 +3898,9 @@ function AgentHandoffOverlay({
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 9,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: 'rgba(250,247,241,0.5)',
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "rgba(250,247,241,0.5)",
           }}
         >
           Agent Handoff
@@ -3381,12 +3909,12 @@ function AgentHandoffOverlay({
         {/* Agent transfer visualization */}
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
             gap: 20,
-            margin: '24px 0',
+            margin: "24px 0",
           }}
         >
           {/* From-agent circle */}
@@ -3394,11 +3922,11 @@ function AgentHandoffOverlay({
             style={{
               width: 48,
               height: 48,
-              borderRadius: '50%',
+              borderRadius: "50%",
               background: SHELL.PAPER_DEEP,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <span
@@ -3418,7 +3946,7 @@ function AgentHandoffOverlay({
             style={{
               fontFamily: SHELL.SERIF,
               fontSize: 20,
-              color: 'rgba(250,247,241,0.4)',
+              color: "rgba(250,247,241,0.4)",
             }}
           >
             →
@@ -3429,12 +3957,12 @@ function AgentHandoffOverlay({
             style={{
               width: 48,
               height: 48,
-              borderRadius: '50%',
+              borderRadius: "50%",
               background: SHELL.MINT_BG,
               border: `2px solid ${SHELL.MINT_LINE}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <span
@@ -3454,7 +3982,7 @@ function AgentHandoffOverlay({
           style={{
             fontFamily: SHELL.SERIF,
             fontSize: 20,
-            color: 'rgba(250,247,241,1)',
+            color: "rgba(250,247,241,1)",
             fontWeight: 600,
             marginBottom: 8,
           }}
@@ -3467,7 +3995,7 @@ function AgentHandoffOverlay({
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 13,
-            color: 'rgba(250,247,241,0.65)',
+            color: "rgba(250,247,241,0.65)",
             marginBottom: 24,
           }}
         >
@@ -3477,34 +4005,34 @@ function AgentHandoffOverlay({
         {/* Transfer items box */}
         <div
           style={{
-            background: 'rgba(237,231,213,0.10)',
+            background: "rgba(237,231,213,0.10)",
             borderRadius: 8,
-            padding: '12px 16px',
-            textAlign: 'left',
+            padding: "12px 16px",
+            textAlign: "left",
           }}
         >
           <div
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 8,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'rgba(250,247,241,0.5)',
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "rgba(250,247,241,0.5)",
               marginBottom: 8,
             }}
           >
             Transferring
           </div>
           {[
-            'Evidence citations → Evidence ledger',
-            'Gate criteria status → Readiness assessment',
+            "Evidence citations → Evidence ledger",
+            "Gate criteria status → Readiness assessment",
             `${context} → Active review`,
           ].map((row, i) => (
             <div
               key={`tr-${i}`}
               style={{
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 8,
                 marginBottom: i < 2 ? 6 : 0,
               }}
@@ -3513,7 +4041,7 @@ function AgentHandoffOverlay({
                 style={{
                   width: 6,
                   height: 6,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: SHELL.MINT_BG,
                   flexShrink: 0,
                 }}
@@ -3522,7 +4050,7 @@ function AgentHandoffOverlay({
                 style={{
                   fontFamily: SHELL.SANS,
                   fontSize: 12,
-                  color: 'rgba(250,247,241,0.8)',
+                  color: "rgba(250,247,241,0.8)",
                 }}
               >
                 {row}
@@ -3532,13 +4060,13 @@ function AgentHandoffOverlay({
         </div>
 
         {/* Status line */}
-        {status !== 'idle' && (
+        {status !== "idle" && (
           <div
             style={{
               marginTop: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               gap: 8,
             }}
           >
@@ -3546,8 +4074,9 @@ function AgentHandoffOverlay({
               style={{
                 width: 6,
                 height: 6,
-                borderRadius: '50%',
-                background: status === 'complete' ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
+                borderRadius: "50%",
+                background:
+                  status === "complete" ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
                 flexShrink: 0,
               }}
             />
@@ -3555,19 +4084,20 @@ function AgentHandoffOverlay({
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 9,
-                color: status === 'complete' ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
+                color:
+                  status === "complete" ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
               }}
             >
-              {status === 'complete'
-                ? '✓ Sentinel review is ready'
-                : 'Transferring context...'}
+              {status === "complete"
+                ? "✓ Sentinel review is ready"
+                : "Transferring context..."}
             </span>
           </div>
         )}
 
         {/* Action button */}
         <div style={{ marginTop: 24 }}>
-          {status !== 'complete' ? (
+          {status !== "complete" ? (
             <button
               disabled
               style={{
@@ -3575,10 +4105,10 @@ function AgentHandoffOverlay({
                 fontSize: 11,
                 background: SHELL.GRAY_BG,
                 color: SHELL.GRAY_TEXT,
-                border: 'none',
+                border: "none",
                 borderRadius: 6,
-                padding: '10px 24px',
-                cursor: 'not-allowed',
+                padding: "10px 24px",
+                cursor: "not-allowed",
               }}
             >
               Please wait...
@@ -3593,8 +4123,8 @@ function AgentHandoffOverlay({
                 color: SHELL.MINT_TEXT,
                 border: `1px solid ${SHELL.MINT_LINE}`,
                 borderRadius: 6,
-                padding: '10px 24px',
-                cursor: 'pointer',
+                padding: "10px 24px",
+                cursor: "pointer",
               }}
             >
               Open Sentinel review →
@@ -3614,26 +4144,35 @@ interface GateApprovalDrawerProps {
 }
 
 function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
-  function statusDot(status: GateApprovalDrawerView['criteriaRows'][number]['status']): string {
-    if (status === 'known') return SHELL.MINT_TEXT;
-    if (status === 'blocked') return SHELL.RUST_TEXT;
+  function statusDot(
+    status: GateApprovalDrawerView["criteriaRows"][number]["status"],
+  ): string {
+    if (status === "known") return SHELL.MINT_TEXT;
+    if (status === "blocked") return SHELL.RUST_TEXT;
     return SHELL.AMBER_DOT;
   }
 
-  function statusLabel(status: GateApprovalDrawerView['criteriaRows'][number]['status']): string {
-    if (status === 'known') return 'Known';
-    if (status === 'blocked') return 'Blocked';
-    return 'Missing';
+  function statusLabel(
+    status: GateApprovalDrawerView["criteriaRows"][number]["status"],
+  ): string {
+    if (status === "known") return "Known";
+    if (status === "blocked") return "Blocked";
+    return "Missing";
   }
 
-  function postureBg(posture: GateApprovalDrawerView['approvalPosture']): string {
-    if (posture === 'ready') return SHELL.MINT_BG;
-    if (posture === 'blocked' || posture === 'waiver_needed') return SHELL.PEACH_BG;
+  function postureBg(
+    posture: GateApprovalDrawerView["approvalPosture"],
+  ): string {
+    if (posture === "ready") return SHELL.MINT_BG;
+    if (posture === "blocked" || posture === "waiver_needed")
+      return SHELL.PEACH_BG;
     return SHELL.PEACH_BG;
   }
 
-  function postureText(posture: GateApprovalDrawerView['approvalPosture']): string {
-    if (posture === 'ready') return SHELL.MINT_TEXT;
+  function postureText(
+    posture: GateApprovalDrawerView["approvalPosture"],
+  ): string {
+    if (posture === "ready") return SHELL.MINT_TEXT;
     return SHELL.PEACH_TEXT;
   }
 
@@ -3641,7 +4180,7 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
     <div
       data-testid="gate-approval-drawer"
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         right: 0,
         bottom: 0,
@@ -3649,77 +4188,132 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
         background: SHELL.PAPER,
         borderLeft: `1px solid ${SHELL.CARD_LINE}`,
         zIndex: 900,
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.10)',
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "-4px 0 24px rgba(0,0,0,0.10)",
       }}
     >
       {/* Header */}
       <div
         style={{
           height: 52,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: '0 20px',
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          padding: "0 20px",
           borderBottom: `1px solid ${SHELL.CARD_LINE}`,
           flexShrink: 0,
         }}
       >
         <div>
-          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 2 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: SHELL.INK_MUTED,
+              marginBottom: 2,
+            }}
+          >
             Gate Review
           </div>
-          <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, fontWeight: 500 }}>
+          <div
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              color: SHELL.INK,
+              fontWeight: 500,
+            }}
+          >
             {drawerView.transitionLabel}
           </div>
         </div>
         <div style={{ flex: 1 }} />
         <button
           onClick={onClose}
-          style={{ fontFamily: SHELL.SANS, fontSize: 20, color: SHELL.INK_SOFT, cursor: 'pointer', background: 'none', border: 'none', lineHeight: 1, padding: 0 }}
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 20,
+            color: SHELL.INK_SOFT,
+            cursor: "pointer",
+            background: "none",
+            border: "none",
+            lineHeight: 1,
+            padding: 0,
+          }}
         >
           ×
         </button>
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 0' }}>
-
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 0" }}>
         {/* Posture badge */}
         <div
           data-testid="gate-approval-posture-badge"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
+            display: "inline-flex",
+            alignItems: "center",
             gap: 6,
             background: postureBg(drawerView.approvalPosture),
             borderRadius: 4,
-            padding: '5px 10px',
+            padding: "5px 10px",
             marginBottom: 20,
           }}
         >
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: postureText(drawerView.approvalPosture) }}>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: postureText(drawerView.approvalPosture),
+            }}
+          >
             {drawerView.postureLabel}
           </span>
         </div>
 
         {/* Gate summary */}
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: SHELL.INK_MUTED,
+              marginBottom: 8,
+            }}
+          >
             Gate Summary
           </div>
-          <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}>
+          <div
+            style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}
+          >
             {drawerView.gateSummary}
           </div>
         </div>
 
         {/* Criteria rows */}
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 10 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: SHELL.INK_MUTED,
+              marginBottom: 10,
+            }}
+          >
             Gate Criteria
           </div>
-          <div data-testid="gate-approval-criteria-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div
+            data-testid="gate-approval-criteria-list"
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          >
             {drawerView.criteriaRows.map((row, i) => (
               <div
                 key={`gate-criterion-${i}`}
@@ -3727,42 +4321,96 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
                   background: SHELL.CARD_WHITE,
                   border: `1px solid ${SHELL.CARD_LINE}`,
                   borderRadius: 8,
-                  padding: '12px 14px',
+                  padding: "12px 14px",
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    marginBottom: 6,
+                  }}
+                >
                   <span
                     style={{
                       width: 8,
                       height: 8,
-                      borderRadius: '50%',
+                      borderRadius: "50%",
                       background: statusDot(row.status),
                       flexShrink: 0,
                       marginTop: 4,
                     }}
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, lineHeight: 1.4, marginBottom: 4 }}>
+                    <div
+                      style={{
+                        fontFamily: SHELL.SANS,
+                        fontSize: 13,
+                        color: SHELL.INK,
+                        lineHeight: 1.4,
+                        marginBottom: 4,
+                      }}
+                    >
                       {row.criterion}
                     </div>
-                    <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: statusDot(row.status) }}>
+                    <div
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: statusDot(row.status),
+                      }}
+                    >
                       {statusLabel(row.status)}
                     </div>
                   </div>
                 </div>
                 {row.linkedEvidence.length > 0 && (
-                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-                    <div style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', marginBottom: 4 }}>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      paddingTop: 8,
+                      borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        color: SHELL.INK_MUTED,
+                        letterSpacing: "0.08em",
+                        marginBottom: 4,
+                      }}
+                    >
                       Evidence
                     </div>
                     {row.linkedEvidence.map((cite, j) => (
-                      <div key={`cite-${j}`} style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, lineHeight: 1.4, marginBottom: 2 }}>
+                      <div
+                        key={`cite-${j}`}
+                        style={{
+                          fontFamily: SHELL.SANS,
+                          fontSize: 11,
+                          color: SHELL.INK_SOFT,
+                          lineHeight: 1.4,
+                          marginBottom: 2,
+                        }}
+                      >
                         · {cite}
                       </div>
                     ))}
                   </div>
                 )}
-                <div style={{ marginTop: 8, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em' }}>
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    color: SHELL.INK_MUTED,
+                    letterSpacing: "0.08em",
+                  }}
+                >
                   Next: {row.nextAction}
                 </div>
               </div>
@@ -3772,10 +4420,21 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
 
         {/* Approval authority */}
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 6 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: SHELL.INK_MUTED,
+              marginBottom: 6,
+            }}
+          >
             Approval Authority
           </div>
-          <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}>
+          <div
+            style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}
+          >
             {drawerView.approvalAuthority}
           </div>
         </div>
@@ -3787,14 +4446,30 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
             background: SHELL.PEACH_BG,
             border: `1px solid ${SHELL.PEACH_LINE}`,
             borderRadius: 8,
-            padding: '12px 14px',
+            padding: "12px 14px",
             marginBottom: 20,
           }}
         >
-          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.PEACH_TEXT, marginBottom: 6 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: SHELL.PEACH_TEXT,
+              marginBottom: 6,
+            }}
+          >
             Waiver caveat
           </div>
-          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.PEACH_TEXT, lineHeight: 1.5 }}>
+          <div
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              color: SHELL.PEACH_TEXT,
+              lineHeight: 1.5,
+            }}
+          >
             {drawerView.waiverCaveat}
           </div>
         </div>
@@ -3804,16 +4479,22 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
       <div
         style={{
           borderTop: `1px solid ${SHELL.CARD_LINE}`,
-          padding: '12px 20px',
+          padding: "12px 20px",
           flexShrink: 0,
         }}
       >
         <div
           data-testid="gate-approval-drawer-disclaimer"
           data-honest-disclaimer="gate-approval"
-          style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            color: SHELL.INK_MUTED,
+            letterSpacing: "0.08em",
+            lineHeight: 1.5,
+          }}
         >
-          {drawerView.honestDisclaimer}
+          {drawerView.honestDisclaimer} {AI_DECISION_SUPPORT_WATERMARK}
         </div>
       </div>
     </div>
@@ -3824,9 +4505,9 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
 
 interface MaestroNextActionComposerProps {
   composerView: ReturnType<typeof buildMaestroNextActionView>;
-  selectedChoice: 'A' | 'B' | 'C' | 'custom' | null;
+  selectedChoice: "A" | "B" | "C" | "custom" | null;
   customText: string;
-  onSelectChoice: (key: 'A' | 'B' | 'C' | 'custom') => void;
+  onSelectChoice: (key: "A" | "B" | "C" | "custom") => void;
   onCustomTextChange: (text: string) => void;
 }
 
@@ -3839,7 +4520,7 @@ function MaestroNextActionComposer({
 }: MaestroNextActionComposerProps) {
   const canSubmit =
     selectedChoice !== null &&
-    (selectedChoice !== 'custom' || customText.trim().length > 5);
+    (selectedChoice !== "custom" || customText.trim().length > 5);
 
   return (
     <div
@@ -3849,104 +4530,275 @@ function MaestroNextActionComposer({
         background: SHELL.PAPER_SOFT,
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 10,
-        padding: '16px 18px',
+        padding: "16px 18px",
       }}
     >
       {/* Header */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 4 }}>
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: SHELL.INK_MUTED,
+            marginBottom: 4,
+          }}
+        >
           Client Maestro
         </div>
-        <div style={{ fontFamily: SHELL.SERIF, fontSize: 16, color: SHELL.INK, marginBottom: 4 }}>
+        <div
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 16,
+            color: SHELL.INK,
+            marginBottom: 4,
+          }}
+        >
           {composerView.headline}
         </div>
-        <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>
+        <div
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            color: SHELL.INK_SOFT,
+            lineHeight: 1.4,
+          }}
+        >
           {composerView.contextLine}
         </div>
       </div>
 
       {/* 3 Choices — explicit static testids required by integration tests */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          marginBottom: 10,
+        }}
+      >
         {/* Choice A */}
         <button
           data-testid="maestro-action-choice-A"
-          onClick={() => onSelectChoice('A')}
+          onClick={() => onSelectChoice("A")}
           style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px',
-            background: selectedChoice === 'A' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
-            border: `1px solid ${selectedChoice === 'A' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
-            borderRadius: 8, cursor: 'pointer', textAlign: 'left', width: '100%',
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            padding: "10px 14px",
+            background:
+              selectedChoice === "A" ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === "A" ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            borderRadius: 8,
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
           }}
         >
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'A' ? SHELL.MINT_TEXT : SHELL.INK_MUTED, background: selectedChoice === 'A' ? SHELL.MINT_BG : SHELL.PAPER_DEEP, borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>A</span>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              color: selectedChoice === "A" ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
+              background:
+                selectedChoice === "A" ? SHELL.MINT_BG : SHELL.PAPER_DEEP,
+              borderRadius: 4,
+              padding: "2px 7px",
+              minWidth: 22,
+              textAlign: "center",
+              flexShrink: 0,
+            }}
+          >
+            A
+          </span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>{composerView.choices[0].label}</div>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>{composerView.choices[0].detail}</div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                fontWeight: 600,
+                color: SHELL.INK,
+                marginBottom: 2,
+              }}
+            >
+              {composerView.choices[0].label}
+            </div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK_SOFT,
+                lineHeight: 1.4,
+              }}
+            >
+              {composerView.choices[0].detail}
+            </div>
           </div>
         </button>
         {/* Choice B */}
         <button
           data-testid="maestro-action-choice-B"
-          onClick={() => onSelectChoice('B')}
+          onClick={() => onSelectChoice("B")}
           style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px',
-            background: selectedChoice === 'B' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
-            border: `1px solid ${selectedChoice === 'B' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
-            borderRadius: 8, cursor: 'pointer', textAlign: 'left', width: '100%',
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            padding: "10px 14px",
+            background:
+              selectedChoice === "B" ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === "B" ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            borderRadius: 8,
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
           }}
         >
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'B' ? SHELL.MINT_TEXT : SHELL.INK_MUTED, background: selectedChoice === 'B' ? SHELL.MINT_BG : SHELL.PAPER_DEEP, borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>B</span>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              color: selectedChoice === "B" ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
+              background:
+                selectedChoice === "B" ? SHELL.MINT_BG : SHELL.PAPER_DEEP,
+              borderRadius: 4,
+              padding: "2px 7px",
+              minWidth: 22,
+              textAlign: "center",
+              flexShrink: 0,
+            }}
+          >
+            B
+          </span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>{composerView.choices[1].label}</div>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>{composerView.choices[1].detail}</div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                fontWeight: 600,
+                color: SHELL.INK,
+                marginBottom: 2,
+              }}
+            >
+              {composerView.choices[1].label}
+            </div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK_SOFT,
+                lineHeight: 1.4,
+              }}
+            >
+              {composerView.choices[1].detail}
+            </div>
           </div>
         </button>
         {/* Choice C */}
         <button
           data-testid="maestro-action-choice-C"
-          onClick={() => onSelectChoice('C')}
+          onClick={() => onSelectChoice("C")}
           style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px',
-            background: selectedChoice === 'C' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
-            border: `1px solid ${selectedChoice === 'C' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
-            borderRadius: 8, cursor: 'pointer', textAlign: 'left', width: '100%',
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            padding: "10px 14px",
+            background:
+              selectedChoice === "C" ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === "C" ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            borderRadius: 8,
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
           }}
         >
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'C' ? SHELL.MINT_TEXT : SHELL.INK_MUTED, background: selectedChoice === 'C' ? SHELL.MINT_BG : SHELL.PAPER_DEEP, borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>C</span>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              color: selectedChoice === "C" ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
+              background:
+                selectedChoice === "C" ? SHELL.MINT_BG : SHELL.PAPER_DEEP,
+              borderRadius: 4,
+              padding: "2px 7px",
+              minWidth: 22,
+              textAlign: "center",
+              flexShrink: 0,
+            }}
+          >
+            C
+          </span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>{composerView.choices[2].label}</div>
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>{composerView.choices[2].detail}</div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                fontWeight: 600,
+                color: SHELL.INK,
+                marginBottom: 2,
+              }}
+            >
+              {composerView.choices[2].label}
+            </div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK_SOFT,
+                lineHeight: 1.4,
+              }}
+            >
+              {composerView.choices[2].detail}
+            </div>
           </div>
         </button>
 
         {/* Custom option */}
         <button
           data-testid="maestro-action-choice-custom"
-          onClick={() => onSelectChoice('custom')}
+          onClick={() => onSelectChoice("custom")}
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 10,
-            padding: '9px 14px',
-            background: selectedChoice === 'custom' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
-            border: `1px solid ${selectedChoice === 'custom' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            padding: "9px 14px",
+            background:
+              selectedChoice === "custom" ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === "custom" ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
             borderRadius: 8,
-            cursor: 'pointer',
-            textAlign: 'left',
-            width: '100%',
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
           }}
         >
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'custom' ? SHELL.MINT_TEXT : SHELL.INK_MUTED }}>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              color:
+                selectedChoice === "custom" ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
+            }}
+          >
             ✎
           </span>
-          <span style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT }}>
+          <span
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              color: SHELL.INK_SOFT,
+            }}
+          >
             Write a custom action
           </span>
         </button>
       </div>
 
       {/* Custom text area (shown when custom selected) */}
-      {selectedChoice === 'custom' && (
+      {selectedChoice === "custom" && (
         <div style={{ marginBottom: 12 }}>
           <textarea
             rows={3}
@@ -3954,17 +4806,17 @@ function MaestroNextActionComposer({
             onChange={(e) => onCustomTextChange(e.target.value)}
             placeholder={composerView.customPlaceholder}
             style={{
-              width: '100%',
+              width: "100%",
               fontFamily: SHELL.SANS,
               fontSize: 13,
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 6,
               padding: 10,
-              boxSizing: 'border-box',
-              resize: 'vertical',
+              boxSizing: "border-box",
+              resize: "vertical",
               color: SHELL.INK,
-              outline: 'none',
+              outline: "none",
               lineHeight: 1.5,
             }}
           />
@@ -3972,7 +4824,14 @@ function MaestroNextActionComposer({
       )}
 
       {/* Submit row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
         <button
           data-testid="maestro-action-submit"
           disabled={true}
@@ -3980,18 +4839,25 @@ function MaestroNextActionComposer({
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 12,
-            padding: '8px 18px',
+            padding: "8px 18px",
             borderRadius: 6,
-            border: 'none',
+            border: "none",
             background: canSubmit ? SHELL.INK : SHELL.GRAY_BG,
             color: canSubmit ? SHELL.PAPER : SHELL.GRAY_TEXT,
-            cursor: 'not-allowed',
+            cursor: "not-allowed",
             opacity: 0.6,
           }}
         >
           {composerView.submitLabel}
         </button>
-        <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+        <span
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            color: SHELL.INK_MUTED,
+            letterSpacing: "0.06em",
+          }}
+        >
           Deferred · live dispatch not yet wired
         </span>
       </div>
@@ -4000,7 +4866,13 @@ function MaestroNextActionComposer({
       <div
         data-testid="maestro-action-composer-disclaimer"
         data-honest-disclaimer="maestro-next-action"
-        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          color: SHELL.INK_MUTED,
+          letterSpacing: "0.08em",
+          lineHeight: 1.5,
+        }}
       >
         {composerView.honestDisclaimer}
       </div>
@@ -4027,17 +4899,19 @@ function PhaseTransitionOverlay({
   programName,
   onComplete,
 }: PhaseTransitionOverlayProps) {
-  const [animState, setAnimState] = useState<'entering' | 'showing' | 'complete'>('entering');
+  const [animState, setAnimState] = useState<
+    "entering" | "showing" | "complete"
+  >("entering");
   const [barWidth, setBarWidth] = useState(0);
 
   useEffect(() => {
     // entering → showing at 300ms
-    const t1 = setTimeout(() => setAnimState('showing'), 300);
+    const t1 = setTimeout(() => setAnimState("showing"), 300);
     // start progress bar fill after showing begins
     const t2 = setTimeout(() => setBarWidth(100), 350);
     // complete at 2500ms
     const t3 = setTimeout(() => {
-      setAnimState('complete');
+      setAnimState("complete");
     }, 2500);
     // call onComplete slightly after fade-out starts
     const t4 = setTimeout(() => onComplete(), 2800);
@@ -4049,21 +4923,22 @@ function PhaseTransitionOverlay({
     };
   }, [onComplete]);
 
-  const opacity = animState === 'entering' ? 0 : animState === 'complete' ? 0 : 1;
+  const opacity =
+    animState === "entering" ? 0 : animState === "complete" ? 0 : 1;
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
         background: SHELL.INK,
         zIndex: 1500,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
         opacity,
-        transition: 'opacity 0.3s ease',
+        transition: "opacity 0.3s ease",
       }}
     >
       {/* PHASE ADVANCE label */}
@@ -4071,9 +4946,9 @@ function PhaseTransitionOverlay({
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 9,
-          color: 'rgba(250,247,241,0.5)',
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
+          color: "rgba(250,247,241,0.5)",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
           marginBottom: 32,
         }}
       >
@@ -4083,40 +4958,59 @@ function PhaseTransitionOverlay({
       {/* Phase transition row */}
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'row',
+          display: "flex",
+          flexDirection: "row",
           gap: 40,
-          alignItems: 'center',
+          alignItems: "center",
         }}
       >
         {/* From phase */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
           <div
             style={{
               width: 20,
               height: 20,
-              borderRadius: '50%',
+              borderRadius: "50%",
               background: SHELL.MINT_BG,
               border: `1px solid ${SHELL.MINT_LINE}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.MINT_TEXT }}>
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.MINT_TEXT,
+              }}
+            >
               P{fromPhase}
             </span>
           </div>
-          <span style={{ fontFamily: SHELL.SERIF, fontSize: 16, color: SHELL.PAPER }}>
+          <span
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 16,
+              color: SHELL.PAPER,
+            }}
+          >
             {fromPhaseLabel}
           </span>
           <span
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              color: 'rgba(250,247,241,0.5)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              color: "rgba(250,247,241,0.5)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
             }}
           >
             Complete
@@ -4124,28 +5018,49 @@ function PhaseTransitionOverlay({
         </div>
 
         {/* Arrow */}
-        <span style={{ fontFamily: SHELL.SERIF, fontSize: 28, color: 'rgba(250,247,241,0.3)' }}>
+        <span
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 28,
+            color: "rgba(250,247,241,0.3)",
+          }}
+        >
           →
         </span>
 
         {/* To phase */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
           <div
             style={{
               width: 24,
               height: 24,
-              borderRadius: '50%',
+              borderRadius: "50%",
               background: SHELL.PAPER,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK }}>
+            <span
+              style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK }}
+            >
               P{toPhase}
             </span>
           </div>
-          <span style={{ fontFamily: SHELL.SERIF, fontSize: 20, color: SHELL.PAPER }}>
+          <span
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 20,
+              color: SHELL.PAPER,
+            }}
+          >
             {toPhaseLabel}
           </span>
           <span
@@ -4153,8 +5068,8 @@ function PhaseTransitionOverlay({
               fontFamily: SHELL.MONO,
               fontSize: 9,
               color: SHELL.AMBER_DOT,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
             }}
           >
             Starting now
@@ -4167,7 +5082,7 @@ function PhaseTransitionOverlay({
         style={{
           fontFamily: SHELL.SANS,
           fontSize: 13,
-          color: 'rgba(250,247,241,0.5)',
+          color: "rgba(250,247,241,0.5)",
           marginTop: 24,
         }}
       >
@@ -4182,16 +5097,16 @@ function PhaseTransitionOverlay({
           borderRadius: 2,
           background: SHELL.CARD_LINE,
           marginTop: 32,
-          overflow: 'hidden',
+          overflow: "hidden",
         }}
       >
         <div
           style={{
-            height: '100%',
+            height: "100%",
             borderRadius: 2,
             background: SHELL.MINT_TEXT,
             width: `${barWidth}%`,
-            transition: 'width 2s linear',
+            transition: "width 2s linear",
           }}
         />
       </div>
@@ -4226,17 +5141,25 @@ export function ProgramDetailPage({
   const maestroActionView = buildMaestroNextActionView(view);
   // PROG25 — Workshop notes to actions/deliverables plan
   const workshopNotesPlanView = buildWorkshopNotesActionPlanView(view);
-  const [maestroSelectedChoice, setMaestroSelectedChoice] = useState<'A' | 'B' | 'C' | 'custom' | null>(null);
-  const [maestroCustomText, setMaestroCustomText] = useState('');
-  const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
-  const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
+  const [maestroSelectedChoice, setMaestroSelectedChoice] = useState<
+    "A" | "B" | "C" | "custom" | null
+  >(null);
+  const [maestroCustomText, setMaestroCustomText] = useState("");
+  const [evidenceDrawerItem, setEvidenceDrawerItem] =
+    useState<EvidenceItem | null>(null);
+  const [contradictionItem, setContradictionItem] =
+    useState<EvidenceItem | null>(null);
   const isLiveDbProgram = isUuidLike(view.programId);
-  const programEyebrow = isLiveDbProgram ? 'Live strategic move' : view.displayId;
-  const programSourceLabel = isLiveDbProgram ? 'Live DB record' : 'Deterministic seed';
+  const programEyebrow = isLiveDbProgram
+    ? "Live strategic move"
+    : view.displayId;
+  const programSourceLabel = isLiveDbProgram
+    ? "Live DB record"
+    : "Deterministic seed";
 
   // PRG-STA-SUGGESTED-ACTION state
   const [suggestedAction, setSuggestedAction] = useState<{
-    letter: 'A' | 'B' | 'C';
+    letter: "A" | "B" | "C";
     text: string;
     detail?: string;
     href?: string;
@@ -4263,13 +5186,16 @@ export function ProgramDetailPage({
   // existing static phase/gate/evidence regions. Subsequent PRs
   // progressively replace the static regions with reactive equivalents
   // driven by the same channel.
-  const [nexusArtifacts, setNexusArtifacts] = useState<NexusArtifact[]>(initialNexusArtifacts);
+  const [nexusArtifacts, setNexusArtifacts] = useState<NexusArtifact[]>(
+    initialNexusArtifacts,
+  );
   useEffect(() => {
     setNexusArtifacts((prev) => {
       const merged = [...initialNexusArtifacts];
       for (const artifact of prev) {
         const key = JSON.stringify(artifact);
-        if (!merged.some((item) => JSON.stringify(item) === key)) merged.push(artifact);
+        if (!merged.some((item) => JSON.stringify(item) === key))
+          merged.push(artifact);
       }
       return merged;
     });
@@ -4286,7 +5212,7 @@ export function ProgramDetailPage({
       // emits this artifact via ctx.writer; we refresh server data
       // without unmounting the React tree, so the chat thread and
       // reactive panel survive the P3 → P4 transition.
-      if (artifact.type === 'program-phase-changed') {
+      if (artifact.type === "program-phase-changed") {
         router.refresh();
       }
     },
@@ -4300,7 +5226,7 @@ export function ProgramDetailPage({
   }, [view.workbench.prose]);
 
   // PROG20 — Section tab navigation
-  const [activeSection, setActiveSection] = useState<SectionKey>('overview');
+  const [activeSection, setActiveSection] = useState<SectionKey>("overview");
   const [archiveOpen, setArchiveOpen] = useState(false);
   const archiveDetailsRef = useRef<HTMLDetailsElement>(null);
   const openArchiveSection = useCallback((section: SectionKey) => {
@@ -4309,38 +5235,53 @@ export function ProgramDetailPage({
   }, []);
   const revealFullArchive = useCallback(() => {
     setArchiveOpen(true);
-    setTimeout(() => archiveDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(
+      () =>
+        archiveDetailsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
+      50,
+    );
   }, []);
 
-  const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
+  const phaseLabel =
+    PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
   // PROG23 — linked source event context (deterministic, matches displayId casing)
   const sourceLinkView = buildProgramSourceLinkView(view.displayId);
   const currentScore =
-    view.programId === 'apx-cdp-2026' && view.viewingPhase === 2
-      ? '36%'
-      : view.programId === 'apx-cdp-2026' && view.viewingPhase === 3
-        ? '100%'
-        : '—';
+    view.programId === "apx-cdp-2026" && view.viewingPhase === 2
+      ? "36%"
+      : view.programId === "apx-cdp-2026" && view.viewingPhase === 3
+        ? "100%"
+        : "—";
 
   // Map ProgramPhaseSlot to PhaseStripSlot
   const stripPhases: PhaseStripSlot[] = view.phases.map((s) => ({
-    id: s.id as PhaseStripSlot['id'],
+    id: s.id as PhaseStripSlot["id"],
     label: s.label,
     state: s.state,
   }));
 
-  const handlePhaseSelect = (id: PhaseStripSlot['id']) => {
+  const handlePhaseSelect = (id: PhaseStripSlot["id"]) => {
     router.push(`/programs/${view.programId}?phase=${id}`, { scroll: false });
   };
 
-  const handleActionClick = (letter: 'A' | 'B' | 'C') => {
-    if (letter === 'A') {
+  const handleActionClick = (letter: "A" | "B" | "C") => {
+    if (letter === "A") {
       // Switch to Gate tab so the gate criteria section is visible
-      setActiveSection('gate');
-      setTimeout(() => gateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      setActiveSection("gate");
+      setTimeout(
+        () =>
+          gateSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
+        50,
+      );
       return;
     }
-    if (letter === 'B') {
+    if (letter === "B") {
       setShowHandoff(true);
       return;
     }
@@ -4348,7 +5289,7 @@ export function ProgramDetailPage({
     const action = view.workbench.actions.find((a) => a.letter === letter);
     if (action) {
       setSuggestedAction({
-        letter: action.letter as 'A' | 'B' | 'C',
+        letter: action.letter as "A" | "B" | "C",
         text: action.text,
         detail: action.detail,
         href: action.href,
@@ -4529,24 +5470,23 @@ export function ProgramDetailPage({
       const idx = sortedStages.findIndex((s) => s.id === stage.id);
       const slot = stripPhases[idx];
       if (!slot) {
-        states[stage.label] = 'upcoming';
+        states[stage.label] = "upcoming";
         continue;
       }
       switch (slot.state) {
-        case 'done':
-          states[stage.label] = 'passed';
+        case "done":
+          states[stage.label] = "passed";
           break;
-        case 'current':
-          states[stage.label] = view.gateStatus === 'pending'
-            ? 'blocked'
-            : 'current';
+        case "current":
+          states[stage.label] =
+            view.gateStatus === "pending" ? "blocked" : "current";
           break;
-        case 'pending':
-          states[stage.label] = 'upcoming';
+        case "pending":
+          states[stage.label] = "upcoming";
           break;
-        case 'locked':
+        case "locked":
         default:
-          states[stage.label] = 'upcoming';
+          states[stage.label] = "upcoming";
           break;
       }
     }
@@ -4559,10 +5499,12 @@ export function ProgramDetailPage({
     // ordinal position matches `currentPhase` so `evaluateAllStages` can
     // distinguish passed/current/blocked/upcoming buckets.
     const orderedStages = [...pattern.stages].sort((a, b) => a.order - b.order);
-    const currentStageId = orderedStages[instance.currentPhase]?.id
-      ?? orderedStages[0]?.id
-      ?? '';
-    const evaluations = evaluator.evaluateAllStages(currentStageId, evidenceMap);
+    const currentStageId =
+      orderedStages[instance.currentPhase]?.id ?? orderedStages[0]?.id ?? "";
+    const evaluations = evaluator.evaluateAllStages(
+      currentStageId,
+      evidenceMap,
+    );
     const microSynthesis = buildStageMicroSynthesisMap(evaluations, pattern);
 
     // REASON-31 — Stage handoff narratives describing the evidence handoff
@@ -4617,7 +5559,10 @@ export function ProgramDetailPage({
         i.id.toLowerCase() === view.programId.toLowerCase(),
     );
     if (!instance) return null;
-    return { instanceId: instance.id, entries: buildInstanceEventTimeline(instance.id) };
+    return {
+      instanceId: instance.id,
+      entries: buildInstanceEventTimeline(instance.id),
+    };
   })();
 
   return (
@@ -4642,10 +5587,18 @@ export function ProgramDetailPage({
       onArtifact={handleNexusArtifact}
     >
       {/* Mode B: full-width canvas column with ribbon + scrollable work pane */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          minWidth: 0,
+        }}
+      >
         <RibbonSynthesis
-          agentInitials="Nx"
-          agentName="Nexus"
+          agentInitials="Av"
+          agentName="Ava"
           quote={synthesisQuote}
           isOpen={drawerOpen}
           onToggle={() => setDrawerOpen((v) => !v)}
@@ -4663,11 +5616,14 @@ export function ProgramDetailPage({
           return <ProgramProvenanceRibbon context={synthesisContext} />;
         })()}
         <div style={{ marginTop: 4 }}>
-          <DownloadContextButton instanceId={view.programId} surface="program" />
+          <DownloadContextButton
+            instanceId={view.programId}
+            surface="program"
+          />
         </div>
 
         {/* REASON-15 — hidden synthesis node; streams live Nexus quote into ribbon */}
-        <div style={{ display: 'none' }} aria-hidden>
+        <div style={{ display: "none" }} aria-hidden>
           <NexusSynthesisQuote
             programId={view.programId}
             fallback={view.workbench.prose}
@@ -4681,918 +5637,1114 @@ export function ProgramDetailPage({
           shapeResolver={programsShapeResolver}
           style={{ background: SHELL.PAPER }}
         >
-        <div data-testid="program-detail-page" style={{ padding: '24px 32px' }}>
-        {/* Program header */}
-        <div style={{ marginBottom: 20 }}>
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              flexWrap: 'wrap',
-              marginBottom: 6,
-            }}
+            data-testid="program-detail-page"
+            style={{ padding: "24px 32px" }}
           >
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 11,
-                fontWeight: 700,
-                color: SHELL.INK_MUTED,
-                letterSpacing: '0.06em',
-              }}
-            >
-              {programEyebrow}
-            </span>
-            <GatePill status={view.gateStatus} />
-            {headerHealth && <InstanceHealthBadge health={headerHealth} />}
-            {failureModeHeaderInfo && (
-              <FailureModeWarningChip
-                topLabel={failureModeHeaderInfo.topLabel}
-                topConfidence={failureModeHeaderInfo.topConfidence}
-                highCount={failureModeHeaderInfo.highCount}
-                mitigations={failureModeHeaderInfo.mitigations}
-              />
-            )}
-            {evidenceQualityHeader && (
-              <EvidenceQualityChip
-                summary={evidenceQualityHeader.summary}
-                grade={evidenceQualityHeader.grade}
-              />
-            )}
-            {compareInstanceId && (
-              <CompareWithDropdown
-                currentInstanceId={compareInstanceId}
-                allOtherIds={getAllInstanceIds()}
-              />
-            )}
-            {/* Upload affordance */}
-            <button
-              onClick={() => setShowFileUpload(true)}
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.INK_SOFT,
-                background: 'none',
-                border: `1px solid ${SHELL.CARD_LINE}`,
-                borderRadius: 5,
-                padding: '4px 10px',
-                cursor: 'pointer',
-              }}
-            >
-              ↑ Upload document
-            </button>
-            {/* Phase advance demo affordance */}
-            <PhaseAdvanceButton
-              programId={view.programId}
-              currentPhase={view.currentPhase}
-              disabledReason={
-                view.lifecycleState === 'submitted_for_approval'
-                  ? 'Setup approval is required before Phase 0 can start.'
-                  : view.lifecycleState === 'completed'
-                  ? 'Strategic move lifecycle is complete. Tower owns observation from here.'
-                  : view.lifecycleState === 'approved' && view.currentPhase === 0 && view.gateStatus === 'pending'
-                  ? 'Complete and sign off the P0 seed artifacts before requesting Discovery.'
-                  : null
-              }
-            />
-          </div>
-          <h1
-            style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 22,
-              fontWeight: 600,
-              color: SHELL.INK,
-              margin: 0,
-              lineHeight: 1.25,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {view.name}
-          </h1>
-          <div
-            style={{
-              marginTop: 8,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              color: SHELL.INK_MUTED,
-              letterSpacing: '0.06em',
-            }}
-          >
-            <span data-honest-disclaimer="programs-detail">
-              {programEyebrow} · {programSourceLabel}
-            </span>
-            <a
-              href={`/programs/${view.programId}/report`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.INK_MUTED,
-                textDecoration: 'none',
-                borderBottom: `1px dashed ${SHELL.INK_MUTED}`,
-                paddingBottom: 1,
-              }}
-            >
-              Full report →
-            </a>
-          </div>
-          <LifecycleStateBanner view={view} />
-        </div>
-
-        <PhaseArchiveQuickNav
-          activeSection={activeSection}
-          onSelect={openArchiveSection}
-          deliverablesCount={view.phasePanel.deliverables?.length}
-          evidenceCount={view.phasePanel.evidenceItems?.length}
-          gateCount={view.phasePanel.gateCriteria?.length}
-          actionCount={view.workbench.actions.length}
-        />
-
-        <ProgramRecordBrowser
-          view={view}
-          activeSection={activeSection}
-          deliverablesCanvasView={deliverablesCanvasView}
-          onOpenFullRecord={revealFullArchive}
-        />
-
-        {/* REASON-30 — Inline lifecycle mini-graph (sits below the PhaseStrip
-            in the AppShell middleStrip; complements but does not replace it) */}
-        {lifecycleMiniGraph && (
-          <div
-            data-testid="program-lifecycle-mini-graph"
-            style={{
-              padding: '4px 0 12px',
-              marginBottom: 4,
-              borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-            }}
-          >
-            <LifecycleMiniGraph
-              stages={lifecycleMiniGraph.stages}
-              stageStates={lifecycleMiniGraph.states}
-              gateCriteriaCount={lifecycleMiniGraph.counts}
-              microSynthesis={lifecycleMiniGraph.microSynthesis}
-              onStageClick={setOpenStageId}
-            />
-          </div>
-        )}
-
-        {/* REASON-31 — Stage handoff narrative panel: describes the
-            evidence/gate handoff between consecutive phases. Sits directly
-            below the lifecycle mini-graph. */}
-        {lifecycleMiniGraph && (
-          <div
-            data-testid="program-handoff-narrative"
-            style={{
-              padding: '4px 0 12px',
-              marginBottom: 4,
-              borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-            }}
-          >
-            <HandoffNarrativePanel narratives={lifecycleMiniGraph.handoffNarratives} />
-          </div>
-        )}
-
-        {/* REASON-32 — ProgramJourneyRail with "View synthesis →" per phase.
-            Complements the LifecycleMiniGraph by surfacing the phase-level
-            navigator with per-chip synthesis triggers. Only rendered when the
-            lifecycle pattern resolves to a full phase set. */}
-        {lifecycleMiniGraph && view.phases.length > 0 && (() => {
-          // Build sorted stage list to map phase ordinal (P0-P6) → pattern stageId
-          const sortedPatternStages = [...lifecycleMiniGraph.stages].sort(
-            (a, b) => a.order - b.order,
-          );
-          const handleSynthesisClick = (phaseId: ProgramPhaseId) => {
-            const stageId = sortedPatternStages[phaseId]?.id;
-            if (stageId) setOpenStageId(stageId);
-          };
-          const railPhases: ProgramPhaseSlot[] = view.phases.map((s) => ({
-            id: s.id as ProgramPhaseSlot['id'],
-            label: s.label,
-            state: s.state,
-          }));
-          return (
-            <div
-              data-testid="program-journey-rail"
-              style={{
-                padding: '4px 0 12px',
-                marginBottom: 4,
-                borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-              }}
-            >
+            {/* Program header */}
+            <div style={{ marginBottom: 20 }}>
               <div
                 style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 9,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.14em',
-                  color: SHELL.INK_MUTED,
-                  marginBottom: 8,
-                }}
-              >
-                Phase navigator
-              </div>
-              <ProgramJourneyRail
-                phases={railPhases}
-                viewingPhase={view.viewingPhase as ProgramPhaseSlot['id']}
-                onPhaseSelect={handlePhaseSelect as (id: ProgramPhaseSlot['id']) => void}
-                onSynthesisClick={handleSynthesisClick}
-              />
-            </div>
-          );
-        })()}
-
-        {/* OV2-3b · Phase-0 archetype primer. Renders ABOVE the agent
-            canvas when (a) the program is in P0 and (b) a primer is
-            registered for the program's resolved patternId. Per design
-            doc Section D.0.6 the primer is the platform's voice at the
-            moment of approval — it should be visible by default, not
-            hidden behind a tab. Silent fallback when no primer matches. */}
-        {view.currentPhase === 0 && phase0Primer ? (
-          <Phase0Primer
-            primer={phase0Primer}
-            // OV2-3c · downloadable HTML brief endpoint. Wires the prop
-            // OV2-3b shipped behind, now that the renderer + API route
-            // are live.
-            downloadHref={`/api/programs/${encodeURIComponent(view.programId)}/primer-html`}
-          />
-        ) : null}
-
-        {/* Surface 2 PR-F — agent-centric primary canvas. Chat with
-            Nexus + reactive panel occupy the dominant viewport real
-            estate. The static legacy content (storyline, missions,
-            sub-nav, sections) collapses below in a details accordion. */}
-        <AgentCanvas
-          surface={`/programs/${view.programId}`}
-          programId={view.programId}
-          agent={{ initials: 'Nx', name: 'Nexus', role: 'Move Orchestrator' }}
-          quote={view.workbench.prose}
-          artifacts={nexusArtifacts}
-          onArtifact={handleNexusArtifact}
-        />
-
-        <details
-          ref={archiveDetailsRef}
-          open={archiveOpen}
-          onToggle={(event) => setArchiveOpen(event.currentTarget.open)}
-          data-testid="program-details-legacy"
-          style={{
-            marginBottom: 20,
-            border: `1px solid ${SHELL.CARD_LINE}`,
-            borderRadius: 10,
-            background: SHELL.PAPER,
-          }}
-        >
-          <summary
-            style={{
-              cursor: 'pointer',
-              padding: '12px 16px',
-              fontFamily: SHELL.MONO,
-              fontSize: 11,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: SHELL.GRAY_TEXT,
-              fontWeight: 700,
-              userSelect: 'none',
-            }}
-          >
-            Move record · outputs · evidence · gate · workshop
-          </summary>
-          <div style={{ padding: '8px 16px 16px' }}>
-
-        {storylineMatches.length > 0 && (
-          <div
-            data-testid="program-storyline-pattern-chips"
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
-              margin: '-8px 0 16px',
-            }}
-          >
-            {storylineMatches.map((pattern) => (
-              <PatternChip key={pattern.id} pattern={pattern} />
-            ))}
-          </div>
-        )}
-
-        {/* Mission queue · derived from the program's pending gate criteria.
-            TASK-oriented complement to the Gate section's STATUS view. */}
-        {(() => {
-          const missions = getMissionsForProgram(view.programId);
-          // Use the first mission's `instanceId` to anchor the
-          // "Recently completed" subsection — every mission for this
-          // program shares the same resolved instance id, so the first
-          // entry is a stable lookup key. Fall back to view.programId
-          // when there are no active missions (recent list will simply
-          // render nothing if no entries match).
-          const recentInstanceId = missions[0]?.instanceId ?? view.programId;
-          return (
-            <div style={{ marginBottom: 20, display: 'grid', gap: 8 }}>
-              {/* Legacy static mission queue — kept inside the
-                  collapsed details so users who want the old view can
-                  still get to it. The reactive equivalent runs in the
-                  AgentCanvas reactive panel above. */}
-              <MissionListInteractive
-                missions={missions}
-                title="Pending gates · this move"
-                maxRows={6}
-              />
-              <RecentMissionStates instanceId={recentInstanceId} limit={3} />
-            </div>
-          );
-        })()}
-
-        {/* PROG20 — Section tab strip */}
-        <div
-          data-testid="program-section-tabs"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-            marginBottom: 20,
-            gap: 0,
-          }}
-        >
-          <SubNavStrip
-            items={[
-              { key: 'overview', label: 'Overview', active: activeSection === 'overview', onClick: () => setActiveSection('overview') },
-              { key: 'gate', label: 'Gate', count: view.phasePanel.gateCriteria?.length, active: activeSection === 'gate', onClick: () => setActiveSection('gate') },
-              { key: 'evidence', label: 'Evidence', count: view.phasePanel.evidenceItems?.length, active: activeSection === 'evidence', onClick: () => setActiveSection('evidence') },
-              { key: 'deliverables', label: 'Outputs', count: view.phasePanel.deliverables?.length, active: activeSection === 'deliverables', onClick: () => setActiveSection('deliverables') },
-              { key: 'workshop', label: 'Workshop', active: activeSection === 'workshop', onClick: () => setActiveSection('workshop') },
-              { key: 'actions', label: 'Actions', count: view.workbench.actions.length, active: activeSection === 'actions', onClick: () => setActiveSection('actions') },
-              { key: 'decisions', label: 'Decisions', active: activeSection === 'decisions', onClick: () => setActiveSection('decisions') },
-            ]}
-          />
-        </div>
-
-        {/* ── Overview section ──────────────────────────────────────── */}
-        {activeSection === 'overview' && (
-          <div data-testid="program-section-overview">
-            {view.phasePanel.summary && (
-              <div
-                style={{
-                  marginBottom: 16,
-                  padding: '10px 14px',
-                  background: SHELL.PAPER_DEEP,
-                  borderRadius: 7,
-                  fontFamily: SHELL.SANS,
-                  fontSize: 13,
-                  color: SHELL.INK,
-                  lineHeight: 1.7,
-                }}
-              >
-                {view.phasePanel.summary}
-              </div>
-            )}
-            {view.phasePanel.blockerNote && (
-              <div
-                style={{
-                  marginBottom: 16,
-                  padding: '10px 14px',
-                  background: SHELL.PEACH_BG,
-                  border: `1px solid ${SHELL.PEACH_LINE}`,
-                  borderRadius: 7,
-                  fontFamily: SHELL.SANS,
-                  fontSize: 12,
-                  color: SHELL.PEACH_TEXT,
-                  lineHeight: 1.5,
-                }}
-              >
-                {view.phasePanel.blockerNote}
-              </div>
-            )}
-            {view.linkedSourceEvent && (
-              <div data-testid="program-linked-source-chip" style={{ marginBottom: 12 }}>
-                <LinkedProgramChip
-                  direction="program-to-source"
-                  linkedId="SRC-AMS-2026"
-                  linkedName="AMS Vendor Consolidation 2026"
-                  linkedStage="BAFO · Stage 7"
-                  href="/source/events/apex-retail-ams-outsourcing-2026"
-                />
-              </div>
-            )}
-            {/* PROG23 — Source event commercial context card */}
-            {sourceLinkView && (
-              <div
-                data-testid="program-source-context-card"
-                style={{ marginBottom: 20 }}
-              >
-                <SourceEventChip view={sourceLinkView} />
-              </div>
-            )}
-            {!view.phasePanel.summary && !view.phasePanel.blockerNote && !view.linkedSourceEvent && !sourceLinkView && (
-              <div
-                style={{
-                  padding: '20px 0',
-                  fontFamily: SHELL.SANS,
-                  fontSize: 13,
-                  color: SHELL.INK_MUTED,
-                }}
-              >
-                No phase summary available for P{view.viewingPhase}.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Gate section ──────────────────────────────────────────── */}
-        {activeSection === 'gate' && (
-          <div data-testid="program-section-gate">
-            <div data-testid="program-gate-ribbon">
-            {view.gateStatus === 'pending' && view.phasePanel.gateCriteria && (
-              <>
-                <GateRibbon
-                  fromPhase={view.viewingPhase}
-                  toPhase={view.viewingPhase + 1}
-                  totalCriteria={view.phasePanel.gateCriteria.length}
-                  metCriteria={view.phasePanel.gateCriteria.filter((c) => c.met).length}
-                  onRequestApproval={() => setShowGateModal(true)}
-                />
-                {/* PRG-STA-PHASE-TRANSITION preview trigger */}
-                <div style={{ marginBottom: 8, textAlign: 'right' }}>
-                  <button
-                    onClick={() => setShowPhaseTransition(true)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontFamily: SHELL.MONO,
-                      fontSize: 9,
-                      color: SHELL.INK_MUTED,
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    Preview phase transition →
-                  </button>
-                </div>
-              </>
-            )}
-            </div>
-            {view.phasePanel.gateCriteria && view.phasePanel.gateCriteria.length > 0 && (
-              <div ref={gateSectionRef} style={{ marginBottom: 20 }}>
-                <GateCriteriaList criteria={view.phasePanel.gateCriteria} instanceId={view.programId} />
-              </div>
-            )}
-            {!view.phasePanel.gateCriteria && (
-              <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
-                Gate criteria not defined for P{view.viewingPhase}.
-              </div>
-            )}
-            {/* REASON-38 — Gate history sidebar: session audit trail of waivers/approvals/rejections */}
-            <GateHistorySidebar instanceId={view.programId} />
-            {/* REASON-35 — Evidence coverage heatmap: visual grid of which gate
-                criteria have supporting evidence across all lifecycle stages. */}
-            {heatmapInfo && (
-              <ReasoningErrorBoundary section="Coverage Heatmap">
-                <EvidenceCoverageHeatmap
-                  instance={heatmapInfo.instance}
-                  pattern={heatmapInfo.pattern}
-                />
-              </ReasoningErrorBoundary>
-            )}
-            {/* REASON-30 — Contradiction detail card sits below gate criteria */}
-            {contradictionInfo && contradictionInfo.contradictions.length > 0 && (
-              <ContradictionDetailCardClient
-                contradictions={contradictionInfo.contradictions}
-                instanceId={contradictionInfo.instanceId}
-              />
-            )}
-            {/* Risk register — unified view of contradictions + failure modes. */}
-            {riskRegisterInfo && riskRegisterInfo.risks.length > 0 && (
-              <ReasoningErrorBoundary section="Risk Register">
-                <RiskRegisterPanel
-                  risks={riskRegisterInfo.risks}
-                  title="Risk register · this move"
-                />
-              </ReasoningErrorBoundary>
-            )}
-            {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
-            {cascadeInfo && (
-              <>
-                <CascadeImpactCard
-                  impacts={cascadeInfo.impacts}
-                  title="Downstream impacts"
-                />
-                {cascadeInfo.upstream.length > 0 && (
-                  <ReverseCascadeCard
-                    upstream={cascadeInfo.upstream}
-                    thisInstanceId={cascadeInfo.instanceId}
-                    title="Upstream dependencies"
-                  />
-                )}
-                {/* Cross-instance linked tiles — compact summary of every
-                    instance this one cascades to or from, deduped across
-                    both directions. */}
-                <LinkedInstanceTilesGrid
-                  currentInstanceId={cascadeInfo.canonicalInstanceId}
-                />
-              </>
-            )}
-            {/* REASON-32 — Per-instance reasoning event timeline + filter bar.
-                Filters are URL-driven (`?tlKind=…&tlSince=…&tlSearch=…`) so
-                the filter survives a hard reload and works without JS. */}
-            {timelineEntries && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <InstanceEventTimelineFilterBar
-                  filters={timelineFilters ?? {}}
-                  preserveParams={preservedSearchParams}
-                />
-                <InstanceEventTimeline
-                  entries={timelineEntries.entries}
-                  filters={timelineFilters}
-                />
-              </div>
-            )}
-            {/* PRG-EVIDENCE-INGEST — demo form to POST evidence and watch
-                gates flip on next render via buildProgramEvidenceMapWithIngestions. */}
-            {evidenceIngestionInfo && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                  <BulkEvidenceImportButton instanceId={evidenceIngestionInfo.instanceId} />
-                </div>
-                <AddProgramEvidenceForm
-                  instanceId={evidenceIngestionInfo.instanceId}
-                  currentPhase={evidenceIngestionInfo.currentPhase}
-                />
-              </div>
-            )}
-            {/* PROG21 — Gate approval interaction drawer trigger */}
-            {gateApprovalDrawerView && (
-              <div style={{ marginTop: 12 }}>
-                <button
-                  data-testid="gate-approval-drawer-trigger"
-                  onClick={() => setShowGateApprovalDrawer(true)}
-                  style={{
-                    fontFamily: SHELL.MONO,
-                    fontSize: 9,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: SHELL.INK_MUTED,
-                    background: 'none',
-                    border: `1px solid ${SHELL.CARD_LINE}`,
-                    borderRadius: 4,
-                    padding: '6px 12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Review gate readiness →
-                </button>
-              </div>
-            )}
-            {/* REASON-34 — Cascade impact graph for this program instance */}
-            <ReasoningErrorBoundary section="Cascade Impact">
-              <CascadeImpactSection
-                instanceId={evidenceIngestionInfo?.instanceId ?? view.programId}
-              />
-            </ReasoningErrorBoundary>
-          </div>
-        )}
-
-        {/* ── Evidence section ──────────────────────────────────────── */}
-        {activeSection === 'evidence' && (
-          <div data-testid="program-section-evidence">
-            {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 ? (
-              <>
-                <div style={{ marginBottom: 20 }}>
-                  <EvidenceSection
-                    items={view.phasePanel.evidenceItems}
-                    onView={(item) => setEvidenceDrawerItem(item)}
-                  />
-                </div>
-                <div style={{ marginBottom: 12 }}>
-                  <button
-                    onClick={() => setShowScorecardOverride(true)}
-                    style={{
-                      fontFamily: SHELL.MONO,
-                      fontSize: 9,
-                      letterSpacing: '0.1em',
-                      color: SHELL.INK_MUTED,
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                      padding: 0,
-                    }}
-                  >
-                    Ste · Override coverage score →
-                  </button>
-                </div>
-                <div style={{ marginBottom: 20 }}>
-                  <button
-                    onClick={() => setShowHandoff(true)}
-                    style={{
-                      fontFamily: SHELL.MONO,
-                      fontSize: 10,
-                      color: SHELL.INK_SOFT,
-                      background: 'none',
-                      border: `1px solid ${SHELL.CARD_LINE}`,
-                      borderRadius: 5,
-                      padding: '5px 12px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Sn · Request Sentinel evidence review →
-                  </button>
-                </div>
-                {/* REASON-36 — Evidence network graph: SVG bipartite graph
-                    linking evidence items to the gate criteria they support. */}
-                {heatmapInfo && (
-                  <ReasoningErrorBoundary section="Evidence Network">
-                    <EvidenceNetworkGraph
-                      instance={heatmapInfo.instance}
-                      pattern={heatmapInfo.pattern}
-                    />
-                  </ReasoningErrorBoundary>
-                )}
-                {/* REASON-37 — Evidence suggestions panel: context-sensitive
-                    hints for what documents to upload to satisfy each unmet
-                    gate criterion. Only shown when heatmapInfo is available
-                    (i.e., the instance has a recognised lifecycle pattern). */}
-                {heatmapInfo && (
-                  <EvidenceSuggestionsPanel
-                    suggestions={buildEvidenceSuggestions(
-                      heatmapInfo.instance,
-                      heatmapInfo.pattern,
-                    )}
-                  />
-                )}
-              </>
-            ) : (
-              <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
-                No evidence citations logged for P{view.viewingPhase}.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Outputs / deliverables section ─────────────────────────── */}
-        {activeSection === 'deliverables' && (
-          <div data-testid="program-section-deliverables">
-            {deliverablesCanvasView ? (
-              <div style={{ marginBottom: 20 }}>
-                <DeliverablesCanvas canvasView={deliverablesCanvasView} />
-              </div>
-            ) : view.phasePanel.deliverables && view.phasePanel.deliverables.length > 0 ? (
-              <div style={{ marginBottom: 20 }}>
-                <DeliverablesList deliverables={view.phasePanel.deliverables} />
-              </div>
-            ) : (
-              <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
-                No outputs logged for P{view.viewingPhase}.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Workshop section ──────────────────────────────────────── */}
-        {activeSection === 'workshop' && (
-          <div data-testid="program-section-workshop">
-            <div
-              style={{
-                marginBottom: 16,
-                padding: '12px 16px',
-                background: SHELL.MINT_BG,
-                borderRadius: 8,
-                border: `1px solid ${SHELL.MINT_LINE}`,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: SHELL.MINT_TEXT,
-                  marginBottom: 8,
-                }}
-              >
-                Nexus · {view.workbench.title}
-              </div>
-              <p style={{ fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.7, color: SHELL.INK, margin: 0 }}>
-                {view.workbench.prose}
-              </p>
-            </div>
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
-                marginBottom: 10,
-              }}
-            >
-              {view.workbench.actionsLabel}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {view.workbench.actions.map((a) => (
-                <div
-                  key={a.letter}
-                  style={{
-                    padding: '10px 14px',
-                    background: SHELL.PAPER_DEEP,
-                    borderRadius: 7,
-                    display: 'flex',
-                    gap: 12,
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: SHELL.MONO,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: SHELL.INK,
-                      minWidth: 16,
-                    }}
-                  >
-                    {a.letter}
-                  </span>
-                  <div>
-                    <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>
-                      {a.text}
-                    </div>
-                    <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
-                      {a.detail}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <WorkshopNotesActionPlanPanel view={workshopNotesPlanView} />
-            {/* PROG24 — Maestro next action composer */}
-            <MaestroNextActionComposer
-              composerView={maestroActionView}
-              selectedChoice={maestroSelectedChoice}
-              customText={maestroCustomText}
-              onSelectChoice={setMaestroSelectedChoice}
-              onCustomTextChange={setMaestroCustomText}
-            />
-          </div>
-        )}
-
-        {/* ── Actions section ───────────────────────────────────────── */}
-        {activeSection === 'actions' && (
-          <div data-testid="program-section-actions">
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
-                marginBottom: 12,
-              }}
-            >
-              Nexus · Next actions · P{view.viewingPhase} {phaseLabel}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {view.workbench.actions.map((a) => (
-                <button
-                  key={a.letter}
-                  onClick={() => handleActionClick(a.letter as 'A' | 'B' | 'C')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '10px 14px',
-                    background: SHELL.PAPER,
-                    border: `1px solid ${SHELL.CARD_LINE}`,
-                    borderRadius: 7,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: SHELL.MONO,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: SHELL.INK,
-                      background: SHELL.PAPER_DEEP,
-                      borderRadius: 4,
-                      padding: '2px 7px',
-                      minWidth: 22,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {a.letter}
-                  </span>
-                  <span style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}>
-                    {a.text}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Decisions section ─────────────────────────────────────── */}
-        {activeSection === 'decisions' && (
-          <div data-testid="program-section-decisions">
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
-                marginBottom: 12,
-              }}
-            >
-              Decisions · P{view.viewingPhase} {phaseLabel}
-            </div>
-            {[
-              {
-                id: 'DEC-01',
-                label: 'Data architecture vendor',
-                status: view.linkedSourceEvent ? 'pending' : 'open',
-                note: view.linkedSourceEvent
-                  ? 'Pending AMS BAFO outcome (Stage 7) — Vendor C preferred'
-                  : 'No linked sourcing event',
-              },
-              {
-                id: 'DEC-02',
-                label: 'AI Cloud Spend rate card',
-                status: 'pending',
-                note: 'Rate card recovery option available · spend 33% over budget',
-              },
-              {
-                id: 'DEC-03',
-                label: 'Gate approval authority',
-                status: view.gateStatus === 'approved' ? 'closed' : 'open',
-                note: view.gateStatus === 'approved'
-                  ? 'Gate approved — next phase unlocked'
-                  : `Gate ${view.gateStatus} — Steward review required`,
-              },
-            ].map((dec) => (
-              <div
-                key={dec.id}
-                style={{
-                  marginBottom: 10,
-                  padding: '10px 14px',
-                  background: SHELL.PAPER_DEEP,
-                  borderRadius: 7,
-                  display: 'flex',
-                  gap: 12,
-                  alignItems: 'flex-start',
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  marginBottom: 6,
                 }}
               >
                 <span
                   style={{
                     fontFamily: SHELL.MONO,
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: 700,
-                    color: dec.status === 'closed' ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
-                    background: dec.status === 'closed' ? SHELL.MINT_BG : SHELL.PEACH_BG,
-                    borderRadius: 4,
-                    padding: '2px 6px',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    minWidth: 48,
-                    textAlign: 'center',
+                    color: SHELL.INK_MUTED,
+                    letterSpacing: "0.06em",
                   }}
                 >
-                  {dec.status}
+                  {programEyebrow}
                 </span>
-                <div>
-                  <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>
-                    {dec.label}
-                  </div>
-                  <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
-                    {dec.note}
-                  </div>
-                </div>
+                <GatePill status={view.gateStatus} />
+                {headerHealth && <InstanceHealthBadge health={headerHealth} />}
+                {failureModeHeaderInfo && (
+                  <FailureModeWarningChip
+                    topLabel={failureModeHeaderInfo.topLabel}
+                    topConfidence={failureModeHeaderInfo.topConfidence}
+                    highCount={failureModeHeaderInfo.highCount}
+                    mitigations={failureModeHeaderInfo.mitigations}
+                  />
+                )}
+                {evidenceQualityHeader && (
+                  <EvidenceQualityChip
+                    summary={evidenceQualityHeader.summary}
+                    grade={evidenceQualityHeader.grade}
+                  />
+                )}
+                {compareInstanceId && (
+                  <CompareWithDropdown
+                    currentInstanceId={compareInstanceId}
+                    allOtherIds={getAllInstanceIds()}
+                  />
+                )}
+                {/* Upload affordance */}
+                <button
+                  onClick={() => setShowFileUpload(true)}
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    color: SHELL.INK_SOFT,
+                    background: "none",
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 5,
+                    padding: "4px 10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  ↑ Upload document
+                </button>
+                {/* Phase advance demo affordance */}
+                <PhaseAdvanceButton
+                  programId={view.programId}
+                  currentPhase={view.currentPhase}
+                  disabledReason={
+                    view.lifecycleState === "submitted_for_approval"
+                      ? "Setup approval is required before Phase 0 can start."
+                      : view.lifecycleState === "completed"
+                        ? "Strategic move lifecycle is complete. Tower owns observation from here."
+                        : view.lifecycleState === "approved" &&
+                            view.currentPhase === 0 &&
+                            view.gateStatus === "pending"
+                          ? "Complete and sign off the P0 seed artifacts before requesting Discovery."
+                          : null
+                  }
+                />
               </div>
-            ))}
-            <div
-              style={{ marginTop: 8, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em' }}
-              data-honest-disclaimer="programs-decisions"
-            >
-              Deterministic seed · decisions reflect fixture context only
+              <h1
+                style={{
+                  fontFamily: SHELL.SERIF,
+                  fontSize: 22,
+                  fontWeight: 600,
+                  color: SHELL.INK,
+                  margin: 0,
+                  lineHeight: 1.25,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {view.name}
+              </h1>
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  color: SHELL.INK_MUTED,
+                  letterSpacing: "0.06em",
+                }}
+              >
+                <span data-honest-disclaimer="programs-detail">
+                  {programEyebrow} · {programSourceLabel}
+                </span>
+                <a
+                  href={`/programs/${view.programId}/report`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    color: SHELL.INK_MUTED,
+                    textDecoration: "none",
+                    borderBottom: `1px dashed ${SHELL.INK_MUTED}`,
+                    paddingBottom: 1,
+                  }}
+                >
+                  Full report →
+                </a>
+              </div>
+              <LifecycleStateBanner view={view} />
             </div>
-          </div>
-        )}
 
-          {/* close: details > div (legacy collapsible content from
+            <PhaseArchiveQuickNav
+              activeSection={activeSection}
+              onSelect={openArchiveSection}
+              deliverablesCount={view.phasePanel.deliverables?.length}
+              evidenceCount={view.phasePanel.evidenceItems?.length}
+              gateCount={view.phasePanel.gateCriteria?.length}
+              actionCount={view.workbench.actions.length}
+            />
+
+            <ProgramRecordBrowser
+              view={view}
+              activeSection={activeSection}
+              deliverablesCanvasView={deliverablesCanvasView}
+              onOpenFullRecord={revealFullArchive}
+            />
+
+            {/* REASON-30 — Inline lifecycle mini-graph (sits below the PhaseStrip
+            in the AppShell middleStrip; complements but does not replace it) */}
+            {lifecycleMiniGraph && (
+              <div
+                data-testid="program-lifecycle-mini-graph"
+                style={{
+                  padding: "4px 0 12px",
+                  marginBottom: 4,
+                  borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+                }}
+              >
+                <LifecycleMiniGraph
+                  stages={lifecycleMiniGraph.stages}
+                  stageStates={lifecycleMiniGraph.states}
+                  gateCriteriaCount={lifecycleMiniGraph.counts}
+                  microSynthesis={lifecycleMiniGraph.microSynthesis}
+                  onStageClick={setOpenStageId}
+                />
+              </div>
+            )}
+
+            {/* REASON-31 — Stage handoff narrative panel: describes the
+            evidence/gate handoff between consecutive phases. Sits directly
+            below the lifecycle mini-graph. */}
+            {lifecycleMiniGraph && (
+              <div
+                data-testid="program-handoff-narrative"
+                style={{
+                  padding: "4px 0 12px",
+                  marginBottom: 4,
+                  borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+                }}
+              >
+                <HandoffNarrativePanel
+                  narratives={lifecycleMiniGraph.handoffNarratives}
+                />
+              </div>
+            )}
+
+            {/* REASON-32 — ProgramJourneyRail with "View synthesis →" per phase.
+            Complements the LifecycleMiniGraph by surfacing the phase-level
+            navigator with per-chip synthesis triggers. Only rendered when the
+            lifecycle pattern resolves to a full phase set. */}
+            {lifecycleMiniGraph &&
+              view.phases.length > 0 &&
+              (() => {
+                // Build sorted stage list to map phase ordinal (P0-P6) → pattern stageId
+                const sortedPatternStages = [...lifecycleMiniGraph.stages].sort(
+                  (a, b) => a.order - b.order,
+                );
+                const handleSynthesisClick = (phaseId: ProgramPhaseId) => {
+                  const stageId = sortedPatternStages[phaseId]?.id;
+                  if (stageId) setOpenStageId(stageId);
+                };
+                const railPhases: ProgramPhaseSlot[] = view.phases.map((s) => ({
+                  id: s.id as ProgramPhaseSlot["id"],
+                  label: s.label,
+                  state: s.state,
+                }));
+                return (
+                  <div
+                    data-testid="program-journey-rail"
+                    style={{
+                      padding: "4px 0 12px",
+                      marginBottom: 4,
+                      borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.14em",
+                        color: SHELL.INK_MUTED,
+                        marginBottom: 8,
+                      }}
+                    >
+                      Phase navigator
+                    </div>
+                    <ProgramJourneyRail
+                      phases={railPhases}
+                      viewingPhase={view.viewingPhase as ProgramPhaseSlot["id"]}
+                      onPhaseSelect={
+                        handlePhaseSelect as (
+                          id: ProgramPhaseSlot["id"],
+                        ) => void
+                      }
+                      onSynthesisClick={handleSynthesisClick}
+                    />
+                  </div>
+                );
+              })()}
+
+            {/* OV2-3b · Phase-0 archetype primer. Renders ABOVE the agent
+            canvas when (a) the program is in P0 and (b) a primer is
+            registered for the program's resolved patternId. Per design
+            doc Section D.0.6 the primer is the platform's voice at the
+            moment of approval — it should be visible by default, not
+            hidden behind a tab. Silent fallback when no primer matches. */}
+            {view.currentPhase === 0 && phase0Primer ? (
+              <Phase0Primer
+                primer={phase0Primer}
+                // OV2-3c · downloadable HTML brief endpoint. Wires the prop
+                // OV2-3b shipped behind, now that the renderer + API route
+                // are live.
+                downloadHref={`/api/programs/${encodeURIComponent(view.programId)}/primer-html`}
+              />
+            ) : null}
+
+            {/* Surface 2 PR-F — agent-centric primary canvas. Chat with
+            Nexus + reactive panel occupy the dominant viewport real
+            estate. The static legacy content (storyline, missions,
+            sub-nav, sections) collapses below in a details accordion. */}
+            <AgentCanvas
+              surface={`/programs/${view.programId}`}
+              programId={view.programId}
+              agent={{
+                initials: "Av",
+                name: "Ava",
+                role: "Move Orchestrator",
+              }}
+              quote={view.workbench.prose}
+              artifacts={nexusArtifacts}
+              onArtifact={handleNexusArtifact}
+            />
+
+            <details
+              ref={archiveDetailsRef}
+              open={archiveOpen}
+              onToggle={(event) => setArchiveOpen(event.currentTarget.open)}
+              data-testid="program-details-legacy"
+              style={{
+                marginBottom: 20,
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 10,
+                background: SHELL.PAPER,
+              }}
+            >
+              <summary
+                style={{
+                  cursor: "pointer",
+                  padding: "12px 16px",
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
+                  color: SHELL.GRAY_TEXT,
+                  fontWeight: 700,
+                  userSelect: "none",
+                }}
+              >
+                Move record · outputs · evidence · gate · workshop
+              </summary>
+              <div style={{ padding: "8px 16px 16px" }}>
+                {storylineMatches.length > 0 && (
+                  <div
+                    data-testid="program-storyline-pattern-chips"
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      margin: "-8px 0 16px",
+                    }}
+                  >
+                    {storylineMatches.map((pattern) => (
+                      <PatternChip key={pattern.id} pattern={pattern} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Mission queue · derived from the program's pending gate criteria.
+            TASK-oriented complement to the Gate section's STATUS view. */}
+                {(() => {
+                  const missions = getMissionsForProgram(view.programId);
+                  // Use the first mission's `instanceId` to anchor the
+                  // "Recently completed" subsection — every mission for this
+                  // program shares the same resolved instance id, so the first
+                  // entry is a stable lookup key. Fall back to view.programId
+                  // when there are no active missions (recent list will simply
+                  // render nothing if no entries match).
+                  const recentInstanceId =
+                    missions[0]?.instanceId ?? view.programId;
+                  return (
+                    <div style={{ marginBottom: 20, display: "grid", gap: 8 }}>
+                      {/* Legacy static mission queue — kept inside the
+                  collapsed details so users who want the old view can
+                  still get to it. The reactive equivalent runs in the
+                  AgentCanvas reactive panel above. */}
+                      <MissionListInteractive
+                        missions={missions}
+                        title="Pending gates · this move"
+                        maxRows={6}
+                      />
+                      <RecentMissionStates
+                        instanceId={recentInstanceId}
+                        limit={3}
+                      />
+                    </div>
+                  );
+                })()}
+
+                {/* PROG20 — Section tab strip */}
+                <div
+                  data-testid="program-section-tabs"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+                    marginBottom: 20,
+                    gap: 0,
+                  }}
+                >
+                  <SubNavStrip
+                    items={[
+                      {
+                        key: "overview",
+                        label: "Overview",
+                        active: activeSection === "overview",
+                        onClick: () => setActiveSection("overview"),
+                      },
+                      {
+                        key: "gate",
+                        label: "Gate",
+                        count: view.phasePanel.gateCriteria?.length,
+                        active: activeSection === "gate",
+                        onClick: () => setActiveSection("gate"),
+                      },
+                      {
+                        key: "evidence",
+                        label: "Evidence",
+                        count: view.phasePanel.evidenceItems?.length,
+                        active: activeSection === "evidence",
+                        onClick: () => setActiveSection("evidence"),
+                      },
+                      {
+                        key: "deliverables",
+                        label: "Outputs",
+                        count: view.phasePanel.deliverables?.length,
+                        active: activeSection === "deliverables",
+                        onClick: () => setActiveSection("deliverables"),
+                      },
+                      {
+                        key: "workshop",
+                        label: "Workshop",
+                        active: activeSection === "workshop",
+                        onClick: () => setActiveSection("workshop"),
+                      },
+                      {
+                        key: "actions",
+                        label: "Actions",
+                        count: view.workbench.actions.length,
+                        active: activeSection === "actions",
+                        onClick: () => setActiveSection("actions"),
+                      },
+                      {
+                        key: "decisions",
+                        label: "Decisions",
+                        active: activeSection === "decisions",
+                        onClick: () => setActiveSection("decisions"),
+                      },
+                    ]}
+                  />
+                </div>
+
+                {/* ── Overview section ──────────────────────────────────────── */}
+                {activeSection === "overview" && (
+                  <div data-testid="program-section-overview">
+                    {view.phasePanel.summary && (
+                      <div
+                        style={{
+                          marginBottom: 16,
+                          padding: "10px 14px",
+                          background: SHELL.PAPER_DEEP,
+                          borderRadius: 7,
+                          fontFamily: SHELL.SANS,
+                          fontSize: 13,
+                          color: SHELL.INK,
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {view.phasePanel.summary}
+                      </div>
+                    )}
+                    {view.phasePanel.blockerNote && (
+                      <div
+                        style={{
+                          marginBottom: 16,
+                          padding: "10px 14px",
+                          background: SHELL.PEACH_BG,
+                          border: `1px solid ${SHELL.PEACH_LINE}`,
+                          borderRadius: 7,
+                          fontFamily: SHELL.SANS,
+                          fontSize: 12,
+                          color: SHELL.PEACH_TEXT,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {view.phasePanel.blockerNote}
+                      </div>
+                    )}
+                    {view.linkedSourceEvent && (
+                      <div
+                        data-testid="program-linked-source-chip"
+                        style={{ marginBottom: 12 }}
+                      >
+                        <LinkedProgramChip
+                          direction="program-to-source"
+                          linkedId="SRC-AMS-2026"
+                          linkedName="AMS Vendor Consolidation 2026"
+                          linkedStage="BAFO · Stage 7"
+                          href="/source/events/apex-retail-ams-outsourcing-2026"
+                        />
+                      </div>
+                    )}
+                    {/* PROG23 — Source event commercial context card */}
+                    {sourceLinkView && (
+                      <div
+                        data-testid="program-source-context-card"
+                        style={{ marginBottom: 20 }}
+                      >
+                        <SourceEventChip view={sourceLinkView} />
+                      </div>
+                    )}
+                    {!view.phasePanel.summary &&
+                      !view.phasePanel.blockerNote &&
+                      !view.linkedSourceEvent &&
+                      !sourceLinkView && (
+                        <div
+                          style={{
+                            padding: "20px 0",
+                            fontFamily: SHELL.SANS,
+                            fontSize: 13,
+                            color: SHELL.INK_MUTED,
+                          }}
+                        >
+                          No phase summary available for P{view.viewingPhase}.
+                        </div>
+                      )}
+                  </div>
+                )}
+
+                {/* ── Gate section ──────────────────────────────────────────── */}
+                {activeSection === "gate" && (
+                  <div data-testid="program-section-gate">
+                    <div data-testid="program-gate-ribbon">
+                      {view.gateStatus === "pending" &&
+                        view.phasePanel.gateCriteria && (
+                          <>
+                            <GateRibbon
+                              fromPhase={view.viewingPhase}
+                              toPhase={view.viewingPhase + 1}
+                              totalCriteria={
+                                view.phasePanel.gateCriteria.length
+                              }
+                              metCriteria={
+                                view.phasePanel.gateCriteria.filter(
+                                  (c) => c.met,
+                                ).length
+                              }
+                              onRequestApproval={() => setShowGateModal(true)}
+                            />
+                            {/* PRG-STA-PHASE-TRANSITION preview trigger */}
+                            <div
+                              style={{ marginBottom: 8, textAlign: "right" }}
+                            >
+                              <button
+                                onClick={() => setShowPhaseTransition(true)}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  fontFamily: SHELL.MONO,
+                                  fontSize: 9,
+                                  color: SHELL.INK_MUTED,
+                                  letterSpacing: "0.08em",
+                                }}
+                              >
+                                Preview phase transition →
+                              </button>
+                            </div>
+                          </>
+                        )}
+                    </div>
+                    {view.phasePanel.gateCriteria &&
+                      view.phasePanel.gateCriteria.length > 0 && (
+                        <div ref={gateSectionRef} style={{ marginBottom: 20 }}>
+                          <GateCriteriaList
+                            criteria={view.phasePanel.gateCriteria}
+                            instanceId={view.programId}
+                          />
+                        </div>
+                      )}
+                    {!view.phasePanel.gateCriteria && (
+                      <div
+                        style={{
+                          padding: "20px 0",
+                          fontFamily: SHELL.SANS,
+                          fontSize: 13,
+                          color: SHELL.INK_MUTED,
+                        }}
+                      >
+                        Gate criteria not defined for P{view.viewingPhase}.
+                      </div>
+                    )}
+                    {/* REASON-38 — Gate history sidebar: session audit trail of waivers/approvals/rejections */}
+                    <GateHistorySidebar instanceId={view.programId} />
+                    {/* REASON-35 — Evidence coverage heatmap: visual grid of which gate
+                criteria have supporting evidence across all lifecycle stages. */}
+                    {heatmapInfo && (
+                      <ReasoningErrorBoundary section="Coverage Heatmap">
+                        <EvidenceCoverageHeatmap
+                          instance={heatmapInfo.instance}
+                          pattern={heatmapInfo.pattern}
+                        />
+                      </ReasoningErrorBoundary>
+                    )}
+                    {/* REASON-30 — Contradiction detail card sits below gate criteria */}
+                    {contradictionInfo &&
+                      contradictionInfo.contradictions.length > 0 && (
+                        <ContradictionDetailCardClient
+                          contradictions={contradictionInfo.contradictions}
+                          instanceId={contradictionInfo.instanceId}
+                        />
+                      )}
+                    {/* Risk register — unified view of contradictions + failure modes. */}
+                    {riskRegisterInfo && riskRegisterInfo.risks.length > 0 && (
+                      <ReasoningErrorBoundary section="Risk Register">
+                        <RiskRegisterPanel
+                          risks={riskRegisterInfo.risks}
+                          title="Risk register · this move"
+                        />
+                      </ReasoningErrorBoundary>
+                    )}
+                    {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
+                    {cascadeInfo && (
+                      <>
+                        <CascadeImpactCard
+                          impacts={cascadeInfo.impacts}
+                          title="Downstream impacts"
+                        />
+                        {cascadeInfo.upstream.length > 0 && (
+                          <ReverseCascadeCard
+                            upstream={cascadeInfo.upstream}
+                            thisInstanceId={cascadeInfo.instanceId}
+                            title="Upstream dependencies"
+                          />
+                        )}
+                        {/* Cross-instance linked tiles — compact summary of every
+                    instance this one cascades to or from, deduped across
+                    both directions. */}
+                        <LinkedInstanceTilesGrid
+                          currentInstanceId={cascadeInfo.canonicalInstanceId}
+                        />
+                      </>
+                    )}
+                    {/* REASON-32 — Per-instance reasoning event timeline + filter bar.
+                Filters are URL-driven (`?tlKind=…&tlSince=…&tlSearch=…`) so
+                the filter survives a hard reload and works without JS. */}
+                    {timelineEntries && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
+                        <InstanceEventTimelineFilterBar
+                          filters={timelineFilters ?? {}}
+                          preserveParams={preservedSearchParams}
+                        />
+                        <InstanceEventTimeline
+                          entries={timelineEntries.entries}
+                          filters={timelineFilters}
+                        />
+                      </div>
+                    )}
+                    {/* PRG-EVIDENCE-INGEST — demo form to POST evidence and watch
+                gates flip on next render via buildProgramEvidenceMapWithIngestions. */}
+                    {evidenceIngestionInfo && (
+                      <div style={{ marginTop: 12 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            marginBottom: 8,
+                          }}
+                        >
+                          <BulkEvidenceImportButton
+                            instanceId={evidenceIngestionInfo.instanceId}
+                          />
+                        </div>
+                        <AddProgramEvidenceForm
+                          instanceId={evidenceIngestionInfo.instanceId}
+                          currentPhase={evidenceIngestionInfo.currentPhase}
+                        />
+                      </div>
+                    )}
+                    {/* PROG21 — Gate approval interaction drawer trigger */}
+                    {gateApprovalDrawerView && (
+                      <div style={{ marginTop: 12 }}>
+                        <button
+                          data-testid="gate-approval-drawer-trigger"
+                          onClick={() => setShowGateApprovalDrawer(true)}
+                          style={{
+                            fontFamily: SHELL.MONO,
+                            fontSize: 9,
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            color: SHELL.INK_MUTED,
+                            background: "none",
+                            border: `1px solid ${SHELL.CARD_LINE}`,
+                            borderRadius: 4,
+                            padding: "6px 12px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Review gate readiness →
+                        </button>
+                      </div>
+                    )}
+                    {/* REASON-34 — Cascade impact graph for this program instance */}
+                    <ReasoningErrorBoundary section="Cascade Impact">
+                      <CascadeImpactSection
+                        instanceId={
+                          evidenceIngestionInfo?.instanceId ?? view.programId
+                        }
+                      />
+                    </ReasoningErrorBoundary>
+                  </div>
+                )}
+
+                {/* ── Evidence section ──────────────────────────────────────── */}
+                {activeSection === "evidence" && (
+                  <div data-testid="program-section-evidence">
+                    {view.phasePanel.evidenceItems &&
+                    view.phasePanel.evidenceItems.length > 0 ? (
+                      <>
+                        <div style={{ marginBottom: 20 }}>
+                          <EvidenceSection
+                            items={view.phasePanel.evidenceItems}
+                            onView={(item) => setEvidenceDrawerItem(item)}
+                          />
+                        </div>
+                        <div style={{ marginBottom: 12 }}>
+                          <button
+                            onClick={() => setShowScorecardOverride(true)}
+                            style={{
+                              fontFamily: SHELL.MONO,
+                              fontSize: 9,
+                              letterSpacing: "0.1em",
+                              color: SHELL.INK_MUTED,
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              textDecoration: "underline",
+                              padding: 0,
+                            }}
+                          >
+                            Ste · Override coverage score →
+                          </button>
+                        </div>
+                        <div style={{ marginBottom: 20 }}>
+                          <button
+                            onClick={() => setShowHandoff(true)}
+                            style={{
+                              fontFamily: SHELL.MONO,
+                              fontSize: 10,
+                              color: SHELL.INK_SOFT,
+                              background: "none",
+                              border: `1px solid ${SHELL.CARD_LINE}`,
+                              borderRadius: 5,
+                              padding: "5px 12px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Sn · Request Sentinel evidence review →
+                          </button>
+                        </div>
+                        {/* REASON-36 — Evidence network graph: SVG bipartite graph
+                    linking evidence items to the gate criteria they support. */}
+                        {heatmapInfo && (
+                          <ReasoningErrorBoundary section="Evidence Network">
+                            <EvidenceNetworkGraph
+                              instance={heatmapInfo.instance}
+                              pattern={heatmapInfo.pattern}
+                            />
+                          </ReasoningErrorBoundary>
+                        )}
+                        {/* REASON-37 — Evidence suggestions panel: context-sensitive
+                    hints for what documents to upload to satisfy each unmet
+                    gate criterion. Only shown when heatmapInfo is available
+                    (i.e., the instance has a recognised lifecycle pattern). */}
+                        {heatmapInfo && (
+                          <EvidenceSuggestionsPanel
+                            suggestions={buildEvidenceSuggestions(
+                              heatmapInfo.instance,
+                              heatmapInfo.pattern,
+                            )}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div
+                        style={{
+                          padding: "20px 0",
+                          fontFamily: SHELL.SANS,
+                          fontSize: 13,
+                          color: SHELL.INK_MUTED,
+                        }}
+                      >
+                        No evidence citations logged for P{view.viewingPhase}.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Outputs / deliverables section ─────────────────────────── */}
+                {activeSection === "deliverables" && (
+                  <div data-testid="program-section-deliverables">
+                    {deliverablesCanvasView ? (
+                      <div style={{ marginBottom: 20 }}>
+                        <DeliverablesCanvas
+                          canvasView={deliverablesCanvasView}
+                        />
+                      </div>
+                    ) : view.phasePanel.deliverables &&
+                      view.phasePanel.deliverables.length > 0 ? (
+                      <div style={{ marginBottom: 20 }}>
+                        <DeliverablesList
+                          deliverables={view.phasePanel.deliverables}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          padding: "20px 0",
+                          fontFamily: SHELL.SANS,
+                          fontSize: 13,
+                          color: SHELL.INK_MUTED,
+                        }}
+                      >
+                        No outputs logged for P{view.viewingPhase}.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Workshop section ──────────────────────────────────────── */}
+                {activeSection === "workshop" && (
+                  <div data-testid="program-section-workshop">
+                    <div
+                      style={{
+                        marginBottom: 16,
+                        padding: "12px 16px",
+                        background: SHELL.MINT_BG,
+                        borderRadius: 8,
+                        border: `1px solid ${SHELL.MINT_LINE}`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: SHELL.MONO,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          color: SHELL.MINT_TEXT,
+                          marginBottom: 8,
+                        }}
+                      >
+                        Ava · {view.workbench.title}
+                      </div>
+                      <p
+                        style={{
+                          fontFamily: SHELL.SANS,
+                          fontSize: 13,
+                          lineHeight: 1.7,
+                          color: SHELL.INK,
+                          margin: 0,
+                        }}
+                      >
+                        {view.workbench.prose}
+                      </p>
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        color: SHELL.INK_MUTED,
+                        marginBottom: 10,
+                      }}
+                    >
+                      {view.workbench.actionsLabel}
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                      }}
+                    >
+                      {view.workbench.actions.map((a) => (
+                        <div
+                          key={a.letter}
+                          style={{
+                            padding: "10px 14px",
+                            background: SHELL.PAPER_DEEP,
+                            borderRadius: 7,
+                            display: "flex",
+                            gap: 12,
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: SHELL.MONO,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: SHELL.INK,
+                              minWidth: 16,
+                            }}
+                          >
+                            {a.letter}
+                          </span>
+                          <div>
+                            <div
+                              style={{
+                                fontFamily: SHELL.SANS,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: SHELL.INK,
+                                marginBottom: 2,
+                              }}
+                            >
+                              {a.text}
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: SHELL.SANS,
+                                fontSize: 12,
+                                color: SHELL.INK_SOFT,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {a.detail}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <WorkshopNotesActionPlanPanel
+                      view={workshopNotesPlanView}
+                    />
+                    {/* PROG24 — Maestro next action composer */}
+                    <MaestroNextActionComposer
+                      composerView={maestroActionView}
+                      selectedChoice={maestroSelectedChoice}
+                      customText={maestroCustomText}
+                      onSelectChoice={setMaestroSelectedChoice}
+                      onCustomTextChange={setMaestroCustomText}
+                    />
+                  </div>
+                )}
+
+                {/* ── Actions section ───────────────────────────────────────── */}
+                {activeSection === "actions" && (
+                  <div data-testid="program-section-actions">
+                    <div
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        color: SHELL.INK_MUTED,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Ava · Next actions · P{view.viewingPhase} {phaseLabel}
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                      }}
+                    >
+                      {view.workbench.actions.map((a) => (
+                        <button
+                          key={a.letter}
+                          onClick={() =>
+                            handleActionClick(a.letter as "A" | "B" | "C")
+                          }
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            padding: "10px 14px",
+                            background: SHELL.PAPER,
+                            border: `1px solid ${SHELL.CARD_LINE}`,
+                            borderRadius: 7,
+                            cursor: "pointer",
+                            textAlign: "left",
+                            width: "100%",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: SHELL.MONO,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: SHELL.INK,
+                              background: SHELL.PAPER_DEEP,
+                              borderRadius: 4,
+                              padding: "2px 7px",
+                              minWidth: 22,
+                              textAlign: "center",
+                            }}
+                          >
+                            {a.letter}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: SHELL.SANS,
+                              fontSize: 13,
+                              color: SHELL.INK,
+                            }}
+                          >
+                            {a.text}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Decisions section ─────────────────────────────────────── */}
+                {activeSection === "decisions" && (
+                  <div data-testid="program-section-decisions">
+                    <div
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        color: SHELL.INK_MUTED,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Decisions · P{view.viewingPhase} {phaseLabel}
+                    </div>
+                    {[
+                      {
+                        id: "DEC-01",
+                        label: "Data architecture vendor",
+                        status: view.linkedSourceEvent ? "pending" : "open",
+                        note: view.linkedSourceEvent
+                          ? "Pending AMS BAFO outcome (Stage 7) — Vendor C preferred"
+                          : "No linked sourcing event",
+                      },
+                      {
+                        id: "DEC-02",
+                        label: "AI Cloud Spend rate card",
+                        status: "pending",
+                        note: "Rate card recovery option available · spend 33% over budget",
+                      },
+                      {
+                        id: "DEC-03",
+                        label: "Gate approval authority",
+                        status:
+                          view.gateStatus === "approved" ? "closed" : "open",
+                        note:
+                          view.gateStatus === "approved"
+                            ? "Gate approved — next phase unlocked"
+                            : `Gate ${view.gateStatus} — Steward review required`,
+                      },
+                    ].map((dec) => (
+                      <div
+                        key={dec.id}
+                        style={{
+                          marginBottom: 10,
+                          padding: "10px 14px",
+                          background: SHELL.PAPER_DEEP,
+                          borderRadius: 7,
+                          display: "flex",
+                          gap: 12,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: SHELL.MONO,
+                            fontSize: 9,
+                            fontWeight: 700,
+                            color:
+                              dec.status === "closed"
+                                ? SHELL.MINT_TEXT
+                                : SHELL.PEACH_TEXT,
+                            background:
+                              dec.status === "closed"
+                                ? SHELL.MINT_BG
+                                : SHELL.PEACH_BG,
+                            borderRadius: 4,
+                            padding: "2px 6px",
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            minWidth: 48,
+                            textAlign: "center",
+                          }}
+                        >
+                          {dec.status}
+                        </span>
+                        <div>
+                          <div
+                            style={{
+                              fontFamily: SHELL.SANS,
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: SHELL.INK,
+                              marginBottom: 2,
+                            }}
+                          >
+                            {dec.label}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: SHELL.SANS,
+                              fontSize: 12,
+                              color: SHELL.INK_SOFT,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {dec.note}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        color: SHELL.INK_MUTED,
+                        letterSpacing: "0.08em",
+                      }}
+                      data-honest-disclaimer="programs-decisions"
+                    >
+                      Deterministic seed · decisions reflect fixture context
+                      only
+                    </div>
+                  </div>
+                )}
+
+                {/* close: details > div (legacy collapsible content from
               Surface 2 PR-F agent-centric reshape) */}
+              </div>
+            </details>
           </div>
-        </details>
-
-        </div>
-      </WorkingPaneContainer>
+        </WorkingPaneContainer>
       </div>
 
       {/* Surface 2 PR-F — agent-centric layout reshape.
@@ -5616,47 +6768,79 @@ export function ProgramDetailPage({
             setIsApprovingGate(true);
             setGateApproveError(null);
             try {
-              const res = await fetch(`/api/v1/programs/${view.programId}/advance`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  toPhase: view.viewingPhase + 1,
-                  bypassGate: true,
-                  snapshot: { rationale, approvedAt: new Date().toISOString() },
-                }),
-              });
+              const res = await fetch(
+                `/api/v1/programs/${view.programId}/advance`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    toPhase: view.viewingPhase + 1,
+                    bypassGate: true,
+                    humanRationale: rationale,
+                    snapshot: {
+                      rationale,
+                      humanRationale: rationale,
+                      approvedAt: new Date().toISOString(),
+                    },
+                  }),
+                },
+              );
               const data = await res.json();
               if (data.ok) {
                 setShowGateModal(false);
                 const advancedPhase = data.newPhase as ProgramPhaseId;
-                const advancedLabel = PHASE_LABEL_MAP[advancedPhase] ?? `Phase ${data.newPhase}`;
+                const advancedLabel =
+                  PHASE_LABEL_MAP[advancedPhase] ?? `Phase ${data.newPhase}`;
                 toast({
-                  type: 'success',
-                  title: 'Gate approved',
+                  type: "success",
+                  title: "Gate approved",
                   message: `${view.displayId} advancing to P${data.newPhase} ${advancedLabel}`,
                 });
                 setShowPhaseTransition(true);
                 setTimeout(() => {
                   setShowPhaseTransition(false);
-                  router.push(`/programs/${view.programId}?phase=${data.newPhase}`);
+                  router.push(
+                    `/programs/${view.programId}?phase=${data.newPhase}`,
+                  );
                 }, 2500);
-              } else if (data.error === 'gate_blocked') {
-                const errMsg = 'Gate blocked — hard gate criteria must be met before advancing';
+              } else if (data.error === "gate_blocked") {
+                const errMsg =
+                  "Gate blocked — hard gate criteria must be met before advancing";
                 setGateApproveError(errMsg);
-                toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
-              } else if (data.error === 'approval_required') {
-                const errMsg = 'Approval request created — waiting for founder sign-off';
+                toast({
+                  type: "error",
+                  title: "Gate approval failed",
+                  message: errMsg,
+                });
+              } else if (data.error === "approval_required") {
+                const errMsg =
+                  "Approval request created — waiting for founder sign-off";
                 setGateApproveError(errMsg);
-                toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
+                toast({
+                  type: "error",
+                  title: "Gate approval failed",
+                  message: errMsg,
+                });
               } else {
-                const errMsg = data.detail ?? data.message ?? 'Phase advance failed — please try again';
+                const errMsg =
+                  data.detail ??
+                  data.message ??
+                  "Phase advance failed — please try again";
                 setGateApproveError(errMsg);
-                toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
+                toast({
+                  type: "error",
+                  title: "Gate approval failed",
+                  message: errMsg,
+                });
               }
             } catch {
-              const errMsg = 'Network error — please try again';
+              const errMsg = "Network error — please try again";
               setGateApproveError(errMsg);
-              toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
+              toast({
+                type: "error",
+                title: "Gate approval failed",
+                message: errMsg,
+              });
             } finally {
               setIsApprovingGate(false);
             }
@@ -5690,7 +6874,7 @@ export function ProgramDetailPage({
         <ContradictionModal
           item={contradictionItem}
           onResolve={(res) => {
-            console.log('Resolved', res);
+            console.log("Resolved", res);
             setContradictionItem(null);
           }}
           onClose={() => setContradictionItem(null)}
@@ -5703,7 +6887,9 @@ export function ProgramDetailPage({
           action={suggestedAction}
           onAdvance={() =>
             setSuggestedAction((s) =>
-              s ? { ...s, frame: (s.frame < 3 ? s.frame + 1 : 3) as 1 | 2 | 3 } : null,
+              s
+                ? { ...s, frame: (s.frame < 3 ? s.frame + 1 : 3) as 1 | 2 | 3 }
+                : null,
             )
           }
           onDismiss={() => setSuggestedAction(null)}
@@ -5722,8 +6908,8 @@ export function ProgramDetailPage({
       {/* PRG-STA-AGENT-HANDOFF overlay */}
       {showHandoff && (
         <AgentHandoffOverlay
-          fromAgent={{ initials: 'Nx', name: 'Nexus' }}
-          toAgent={{ initials: 'Sn', name: 'Sentinel' }}
+          fromAgent={{ initials: "Av", name: "Ava" }}
+          toAgent={{ initials: "Av", name: "Ava" }}
           context={`${view.displayId} · P${view.viewingPhase} ${phaseLabel} evidence review`}
           onComplete={() => setShowHandoff(false)}
         />
@@ -5733,9 +6919,13 @@ export function ProgramDetailPage({
       {showPhaseTransition && (
         <PhaseTransitionOverlay
           fromPhase={view.viewingPhase}
-          fromPhaseLabel={PHASE_LABEL_MAP[view.viewingPhase as ProgramPhaseId] ?? ''}
+          fromPhaseLabel={
+            PHASE_LABEL_MAP[view.viewingPhase as ProgramPhaseId] ?? ""
+          }
           toPhase={view.viewingPhase + 1}
-          toPhaseLabel={PHASE_LABEL_MAP[(view.viewingPhase + 1) as ProgramPhaseId] ?? ''}
+          toPhaseLabel={
+            PHASE_LABEL_MAP[(view.viewingPhase + 1) as ProgramPhaseId] ?? ""
+          }
           programName={view.name}
           onComplete={() => setShowPhaseTransition(false)}
         />
@@ -5756,8 +6946,8 @@ export function ProgramDetailPage({
           instanceId={lifecycleMiniGraph.instanceId}
           stageId={openStageId}
           stageLabel={
-            lifecycleMiniGraph.stages.find((s) => s.id === openStageId)?.label
-            ?? openStageId
+            lifecycleMiniGraph.stages.find((s) => s.id === openStageId)
+              ?.label ?? openStageId
           }
           onClose={() => setOpenStageId(null)}
         />

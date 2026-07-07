@@ -1,6 +1,6 @@
 version: 1.0.0
 tenant: meridian
-display_name: Meridian Health System
+display_name: Healthcare Composite Demo Tenant
 files:
   - path: 01-portfolio/application-portfolio.csv
     row_count: 140
@@ -34,6 +34,14 @@ files:
     template_count: 26
   - path: 18-upload-scenarios
     scenario_count: 8
+  - path: 19-pilot-strategy-evidence-pack/template-catalog.json
+    template_count: 10
+  - path: 19-pilot-strategy-evidence-pack/use_case_template_map.csv
+    row_count: 7
+  - path: 19-pilot-strategy-evidence-pack/corpus_enhancement_backlog.csv
+    row_count: 7
+  - path: 19-pilot-strategy-evidence-pack/corpus_pattern_starters.jsonl
+    row_count: 7
   - path: 99-verification/expected-sentinel-answers.json
     question_count: 14
 checksums:

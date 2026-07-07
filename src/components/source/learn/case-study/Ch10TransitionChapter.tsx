@@ -40,8 +40,9 @@ export function Ch10TransitionChapter() {
         weeks; contract is fully executed on Day 100. Janet hands the
         day-to-day relationship over to Karen Liu and her migration
         program team. We&rsquo;re now out of the Source canvas as the
-        primary surface — Tower (Atlas&rsquo;s home) takes over for
-        execution tracking. The job of this chapter is the discipline of
+        primary surface — the Tower takes over for execution tracking,
+        with Ava still the assistant in the lane, now drawing on
+        portfolio-monitoring expertise. The job of this chapter is the discipline of
         watching a real cutover unfold and surfacing variance honestly.
       </StoryRecap>
 
@@ -58,7 +59,7 @@ export function Ch10TransitionChapter() {
         </Lead>
         <BodyP>
           Karen authors d28 (the transition runbook) over Days 100–115.
-          Sentinel binds d28 to d24 (committed terms), d05 (in-scope
+          Ava binds d28 to d24 (committed terms), d05 (in-scope
           systems), and the BAFO migration approach. The 6-month cutover
           plan from Vendor B&rsquo;s response becomes Section 4 of d28
           with named checkpoints: Month 1 (architecture lock), Month 2
@@ -75,15 +76,15 @@ export function Ch10TransitionChapter() {
           Architecture lock completes Month 1; the 47 DR-IN systems are
           replicated to Vendor B&rsquo;s DR region by Month 2; the 180
           Tier-2/3 in-house apps complete migration in Month 3. Karen&rsquo;s
-          weekly status to Marcus reads green-green-green. Atlas&rsquo;s
+          weekly status to Marcus reads green-green-green. Ava&rsquo;s
           Tower view shows the same.
         </Lead>
         <Callout
           kind="info"
           icon="🪪"
-          label="Atlas tracks against d24, not against the runbook"
+          label="Ava tracks against d24, not against the runbook"
         >
-          The Tower view in Atlas tracks against the d24-committed
+          The Tower view Ava maintains tracks against the d24-committed
           milestones (cutover Month 7, DR validation by cutover, value
           realization start at cutover). The d28 runbook checkpoints are
           internal to Karen&rsquo;s program. This is deliberate — d24 is
@@ -138,11 +139,11 @@ export function Ch10TransitionChapter() {
 
       <Section>
         <Eyebrow>Month 5 · The slip is named</Eyebrow>
-        <SectionTitle>Atlas surfaces the variance</SectionTitle>
+        <SectionTitle>Ava surfaces the variance</SectionTitle>
         <Lead>
-          Atlas&rsquo;s d29 milestone tracker registers Month 4 as
+          Ava&rsquo;s d29 milestone tracker registers Month 4 as
           orange (Tier-1 first wave delayed). By Month 5 it goes red.
-          Atlas surfaces the variance with the named owner (Karen),
+          Ava surfaces the variance with the named owner (Karen),
           measurement cadence (weekly), and impact on d24 commitments
           (cutover slip from Month 7 to Month 8 confirmed; Month 9
           worst-case under review).
@@ -198,7 +199,7 @@ export function Ch10TransitionChapter() {
 
         <AgentSplitBox
           agent={{
-            who: 'Atlas',
+            who: 'Ava',
             did: (
               <>
                 Updated d29 with the new cutover target (Month 9 best
@@ -257,7 +258,7 @@ export function Ch10TransitionChapter() {
         <Eyebrow>Day 1 · Month 9</Eyebrow>
         <SectionTitle>The day-1 checkpoint</SectionTitle>
         <Lead>
-          Atlas&rsquo;s d30 day-1 checkpoint runs at Month 9 (vs the
+          Ava&rsquo;s d30 day-1 checkpoint runs at Month 9 (vs the
           d24-committed Month 7). The checkpoint is binary: have we
           successfully cut over, are the 47 DR-IN systems active in DR,
           and is value realization (cost reduction relative to colo
@@ -295,8 +296,8 @@ export function Ch10TransitionChapter() {
           (variance acknowledged by Patricia); 2 of 134 Cloverleaf
           integrations on workaround. Both overrides are documented
           with rationale + remediation owner + remediation date. The
-          d29 milestone tracker is now stable; ownership transfers to
-          Atlas&rsquo;s d32 value ledger for Chapter 11.
+          d29 milestone tracker is now stable; tracking continues in
+          Ava&rsquo;s d32 value ledger for Chapter 11.
         </BodyP>
       </Section>
 

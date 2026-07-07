@@ -1,0 +1,66 @@
+{
+  "policy_version": "1.0.0",
+  "updated_at": "2026-06-08",
+  "decisions": {
+    "rls_timing": "phase-2",
+    "signals_plane": "fast-follow",
+    "client_private_data_plane": "when-first-client-signs",
+    "compat_bridge_retirement": "gradual-block-new-after-pr5"
+  },
+  "slices": [
+    {
+      "id": "PR-0",
+      "title": "data architecture design",
+      "status": "done",
+      "pr": 3328
+    },
+    {
+      "id": "PR-1",
+      "title": "policy + canonical contract (types/zod/enums/trackers/AGENTS hook)",
+      "status": "done",
+      "pr": 3329
+    },
+    {
+      "id": "PR-2",
+      "title": "inventory scanner + report",
+      "status": "done",
+      "pr": 3330
+    },
+    {
+      "id": "PR-3",
+      "title": "readiness sidecar + additive migration + dry-run/backfill",
+      "status": "done",
+      "pr": 3332
+    },
+    {
+      "id": "PR-4",
+      "title": "CI validators + workflow + exception file (the hard gate)",
+      "status": "done",
+      "pr": 3333
+    },
+    {
+      "id": "PR-5",
+      "title": "runtime buildValidatedAgentContextBundle + adapters + broker wiring",
+      "status": "done",
+      "pr": 3334
+    },
+    {
+      "id": "PR-6",
+      "title": "tenant coverage report (end-to-end, readiness ledger)",
+      "status": "done",
+      "pr": 3335
+    },
+    {
+      "id": "PR-7",
+      "title": "visible citations — 7a Sentinel #3322; 7b Nexus citation-gap",
+      "status": "done",
+      "pr": 3322
+    },
+    {
+      "id": "PR-8",
+      "title": "new-dataset onboarding gate (manifest required)",
+      "status": "done",
+      "pr": 3336
+    }
+  ]
+}

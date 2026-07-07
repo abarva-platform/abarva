@@ -13,6 +13,7 @@ import { VendorDetailPage } from '@/components/source/VendorDetailPage';
 import { AppShell } from '@/components/shell/AppShell';
 import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { getActiveClientRow } from '@/lib/active-client';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,11 @@ export default async function VendorDetailRoute({ params }: PageProps) {
 
   if (!vendor) notFound();
 
-  const tenantName = activeClient?.name ?? 'Apex Retail Group';
+  const tenantName =
+    canonicalClientDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ?? 'AbarVa Client';
   const eventName = event?.name ?? eventId;
 
   return (

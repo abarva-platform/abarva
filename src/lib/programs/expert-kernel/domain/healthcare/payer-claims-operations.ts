@@ -46,8 +46,8 @@ export const payerClaimsOperationsPack: FunctionPack = {
     'judged on how much it adjudicates correctly without a human touch, how ' +
     'accurately it pays, and how little leakage and rework it generates ' +
     'doing so.',
-  version: '1.0.0',
-  lastReviewed: '2026-05-21',
+  version: '1.1.0',
+  lastReviewed: '2026-06-06',
 
   // ── Layer 1 — Operating metrics ───────────────────────────────────────────
   operatingMetrics: [
@@ -529,6 +529,37 @@ export const payerClaimsOperationsPack: FunctionPack = {
         'How precise is fraud-waste-abuse detection — how much flagged ' +
         'volume is genuine loss versus false positive — and what is the ' +
         'provider-abrasion cost of the recovery approach?',
+    },
+    {
+      key: 'rented_fragmented_point_solutions',
+      name: 'Rented fragmented point-solution intelligence',
+      description:
+        'Each capability of the operation runs on a separate point-solution ' +
+        'SaaS — one vendor for Stars, another for risk adjustment, another ' +
+        'for prior auth, another for payment integrity — and every vendor ' +
+        'ingests the plan’s data to its own cloud, scores on its own logic, ' +
+        'and returns dashboards. No vendor sees the whole picture, none can ' +
+        'unify the plan-side claims and enrollment data with the ' +
+        'provider-side EHR and encounter data the organisation already ' +
+        'holds, and the models, features, and IP stay on the vendor side. ' +
+        'For an integrated payer-provider this is the decisive trap: it ' +
+        'forfeits the one structural advantage — a single source of truth ' +
+        'across plan and provider — and leaves the organisation with vendor ' +
+        'lock-in and no compounding data asset, renting back intelligence ' +
+        'derived from its own data.',
+      detectionSignal:
+        'Stars, RA, prior auth, and payment integrity each sit on a ' +
+        'different vendor platform; the plan cannot inspect or recalibrate ' +
+        'the scoring logic; provider-side EHR data the organisation owns ' +
+        'cannot be fused into the claims-side models; and exit from any ' +
+        'vendor would mean rebuilding that capability from scratch.',
+      diagnosticQuestion:
+        'Does the organisation own a unified lakehouse that fuses its ' +
+        'plan-side and provider-side data and runs its own ' +
+        'claims-operations models — auditable, recalibratable, and ' +
+        'extensible — or is each capability rented from a separate ' +
+        'point-solution SaaS that holds the data and logic on the vendor ' +
+        'side?',
     },
   ],
 
@@ -1413,13 +1444,45 @@ export const payerClaimsOperationsPack: FunctionPack = {
             'across the function.',
         },
         {
+          heading: 'Platform landing zone & private data plane',
+          guidance:
+            'Specify the cloud landing zone and private data plane the ' +
+            'capability runs on — multi-account governance, private ' +
+            'networking with no public-IP compute and an egress allowlist, ' +
+            'PrivateLink to the lakehouse, a regional Unity Catalog metastore, ' +
+            'and identity federation. State the platform-readiness gate that ' +
+            'must be green before PHI and claims data land. Do not present ' +
+            'an architecture with no landing zone (cross-cutting pattern ' +
+            'cc_cloud_landing_zone_private_data_plane).',
+        },
+        {
+          heading: 'Ingestion & data-integration framework (own-it)',
+          guidance:
+            'Specify the metadata-driven ingestion framework that onboards ' +
+            'claims, enrollment, provider-data, utilisation-management, and ' +
+            '— for an integrated payer-provider — Epic Clarity/Caboodle and ' +
+            'encounter feeds by configuration rather than per-pipeline code, ' +
+            'so plan-side and provider-side data are unified on one ' +
+            'lakehouse. Name the own-it choice (e.g. DLT-META / the ' +
+            'Databricks four-config framework, Lakeflow Connect landing in ' +
+            'the client’s own Unity Catalog) and reject reinventing a ' +
+            'bespoke framework or renting fragmented point-solution ' +
+            'destination platforms that each hold a slice of the data on the ' +
+            'vendor side (cross-cutting pattern ' +
+            'cc_metadata_driven_ingestion_framework).',
+        },
+        {
           heading: 'Data architecture and integrations',
           guidance:
             'Specify the claims-processing, utilisation-management, ' +
             'provider-data, payment-integrity, and appeals integrations, ' +
             'the X12 transaction flows (837, 276/277, 835, 270/271), ' +
             'latency, and the benefit, contract, and clinical-criteria ' +
-            'reference data the use cases depend on.',
+            'reference data the use cases depend on — built as an own-it, ' +
+            'lakehouse-native unified layer where the models, features, and ' +
+            'IP stay in the client’s estate, not stitched across rented ' +
+            'point-solution platforms that each hold a slice of the data and ' +
+            'logic on the vendor side.',
         },
         {
           heading: 'AI use-case design and control posture',
@@ -1441,10 +1504,17 @@ export const payerClaimsOperationsPack: FunctionPack = {
           heading: 'Regulatory and responsible-AI controls',
           guidance:
             'State the prompt-pay, prior-authorisation decision-timeframe, ' +
-            'directory-accuracy, and appeals-timeframe controls, the ' +
-            'explainability requirement for any payment-integrity flag, ' +
-            'and the regulatory frames (HIPAA, CMS rules, state prompt-pay ' +
-            'and directory law) that bound the design.',
+            'directory-accuracy, and appeals-timeframe controls, and the ' +
+            'explainability requirement for any payment-integrity flag. Make ' +
+            'the governance spine explicit: Unity Catalog access/lineage ' +
+            'controls over the unified plan + provider data, a HITRUST CSF ' +
+            'control mapping over the cloud + lakehouse services, and HIPAA ' +
+            'via the compliance security profile + BAA with both the cloud ' +
+            'provider and the lakehouse vendor, with PHI processed in the ' +
+            'client’s own account (cross-cutting pattern ' +
+            'cc_unity_catalog_hitrust_governance). Name the regulatory frames ' +
+            '(HIPAA, CMS rules, state prompt-pay and directory law) that ' +
+            'bound the design.',
         },
         {
           heading: 'Integration and build approach',
@@ -1592,6 +1662,35 @@ export const payerClaimsOperationsPack: FunctionPack = {
         'A single-point savings number, a vendor ROI claim taken at face ' +
         'value, or a forecast that ignores benefit complexity, workforce ' +
         'redeployment, or the regulatory and abrasion ceiling.',
+    },
+    {
+      claim:
+        'That the claims-operations intelligence is OWNED on a unified ' +
+        'lakehouse, not rented across fragmented point-solution platforms',
+      authoritativeSource:
+        'The architecture decision record and the data-platform contract ' +
+        'terms — where the claims, enrollment, provider-data, and (for an ' +
+        'integrated payer-provider) EHR data products and the operation’s ' +
+        'models physically reside, and who can audit, recalibrate, extend, ' +
+        'and move them.',
+      whatGoodEvidenceLooksLike:
+        'The unified claims-operations data layer and the adjudication, ' +
+        'payment-integrity, prior-auth, and provider-data models run in the ' +
+        'organisation’s own governed lakehouse (its own cloud account, under ' +
+        'Unity Catalog), fuse plan-side and provider-side data into a single ' +
+        'source of truth, are auditable and recalibratable, and the IP is ' +
+        'owned by the organisation. Managed connectors and licensed criteria ' +
+        'content (InterQual/MCG) are acceptable where the destination ' +
+        'catalog is the organisation’s own and the executable logic stays ' +
+        'own-it.',
+      weakEvidenceToReject:
+        'A claim of capability where Stars, RA, prior auth, and payment ' +
+        'integrity each run on a separate vendor platform that holds the ' +
+        'data and scoring logic on its own cloud, cannot be inspected or ' +
+        'recalibrated, and cannot fuse the provider-side data the ' +
+        'organisation already owns — that is rented, fragmented ' +
+        'intelligence, not an owned unified asset, and must not be presented ' +
+        'as the organisation owning its claims-operations strategy.',
     },
   ],
 };

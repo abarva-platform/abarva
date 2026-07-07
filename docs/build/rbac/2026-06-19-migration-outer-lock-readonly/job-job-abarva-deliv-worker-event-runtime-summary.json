@@ -1,0 +1,13 @@
+{
+  "name": "job-abarva-deliv-worker-event",
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/jobs/job-abarva-deliv-worker-event",
+  "location": "East US",
+  "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:f7287907e61182e6a3a50f368fb7737135556c4a983c73b415d16e961faa48a9",
+  "identity": {
+    "type": "UserAssigned",
+    "principalId": null,
+    "userAssignedIdentities": [
+      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourcegroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abarva-scale-runtime-lab-eastus"
+    ]
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "version": "2026-06",
+  "name": "AbarVa Azure Cost Circuit Breaker",
+  "mode": "read-only-first",
+  "defaultMonthlyBudgetUsd": 500,
+  "purpose": "Detect budget breach and surge risk across AbarVa product/control-plane and client private data-plane subscriptions without mutating Azure resources.",
+  "environmentScopes": [
+    {
+      "key": "lab",
+      "model": "product-control-plane",
+      "status": "active",
+      "notes": "Existing lab subscription; monitored because it currently hosts shared lab runtime and app.abarva.ai until the product environment cutover is complete."
+    },
+    {
+      "key": "product-dev",
+      "model": "product-control-plane",
+      "status": "active",
+      "notes": "New Product Dev subscription. No PHI/PII. Synthetic/product engineering workloads only."
+    },
+    {
+      "key": "product-preview",
+      "model": "product-control-plane",
+      "status": "planned",
+      "notes": "Future product preprod/preview environment."
+    },
+    {
+      "key": "product-prod",
+      "model": "product-control-plane",
+      "status": "planned",
+      "notes": "Future product production control plane."
+    },
+    {
+      "key": "client-preprod",
+      "model": "client-private-data-plane",
+      "status": "planned",
+      "notes": "Per-client private preprod subscription. Requires client-specific approval before creation."
+    },
+    {
+      "key": "client-prod",
+      "model": "client-private-data-plane",
+      "status": "planned",
+      "notes": "Per-client private production subscription. Requires explicit client prod approval before creation or mutation."
+    }
+  ],
+  "thresholds": {
+    "watchPercent": 50,
+    "warnPercent": 80,
+    "breachPercent": 100
+  },
+  "signals": [
+    "current_spend_percent",
+    "forecast_spend_percent",
+    "missing_budget",
+    "inaccessible_subscription",
+    "missing_corporate_alert_contacts"
+  ],
+  "requiredBudgetContacts": [
+    "admin@abarva.ai",
+    "alerts@abarva.ai"
+  ],
+  "mutationPolicy": {
+    "automaticMutation": false,
+    "humanApprovalRequired": true,
+    "approvalArtifacts": [
+      "docs/approvals/AZURE_MUTATION_APPROVED.md",
+      "environment execution ledger entry",
+      "rollback owner"
+    ],
+    "forbiddenAutomaticActions": [
+      "delete_resource",
+      "scale_down_runtime",
+      "disable_container_app",
+      "disable_container_app_job",
+      "change_dns",
+      "change_traffic",
+      "change_rbac",
+      "rotate_secret"
+    ]
+  },
+  "recommendedControls": [
+    "monthly_budgets_with_actual_and_forecast_alerts",
+    "read_only_cost_circuit_breaker_report",
+    "sku_and_location_policy",
+    "aca_max_replicas_and_job_timeout_limits",
+    "azure_ai_search_sku_policy",
+    "openai_anthropic_usage_telemetry",
+    "manual_pause_runbook_for_nonessential_jobs",
+    "weekly_cost_review"
+  ],
+  "script": "scripts/azure/cost-circuit-breaker.mjs",
+  "verifyCommand": "npm run azure:cost-circuit-breaker:verify"
+}

@@ -65,13 +65,20 @@ const FILE_ALLOWLIST = new Set([
   'src/lib/client-config.ts',           // canonical tenant registry
   'src/lib/active-client.ts',           // slug-to-key resolver
   'src/lib/auth/cxo-personas.ts',       // demo persona registry (tenant-scoped by design)
+  'src/lib/auth/agent-client-logins.ts', // non-human proof/crawl agent registry (tenant-scoped by design)
   'src/lib/demo/demo-dataset-registry.ts', // demo-fixture registry (tenant-tagged)
+  'src/lib/admin/release-ledger.ts',     // internal audit sanitizer replaces tenant names before display
+  'src/lib/knowledge/synthetic-datasets.ts', // tenant-tagged corpus fixture data
+  'src/app/(maestro)/platform/admin/approvals/page.tsx', // internal cross-tenant admin queue
+  'src/app/(maestro)/platform/admin/data-governance/page.tsx', // internal cross-tenant governance inventory
 ]);
 
 // Path-prefix allowlist: anything under these prefixes is data-plane or
 // verification code, not control-plane runtime.
 const PATH_ALLOWLIST_PREFIXES = [
   'src/data/',                          // tenant-tagged data-plane subtree
+  'src/lib/demo-data/',                 // tenant-tagged demo fixture data
+  'src/lib/knowledge-corpus/fixtures/', // tenant-tagged corpus fixture data
   'src/__tests__/',                     // tests
   'src/__mocks__/',                     // mocks
   'src/exports-shared/__mocks__/',      // shared mocks
@@ -98,6 +105,7 @@ function isAllowlistedFile(relPath) {
   if (FILENAME_ALLOWLIST_SUFFIXES.some((s) => relPath.endsWith(s))) return true;
   if (relPath.includes('/__tests__/')) return true;
   if (relPath.includes('/__mocks__/')) return true;
+  if (relPath.includes('/__fixtures__/')) return true; // test fixtures — verification data, never runtime
   return false;
 }
 

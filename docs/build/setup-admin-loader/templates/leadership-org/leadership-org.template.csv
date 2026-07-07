@@ -1,0 +1,15 @@
+person_name,title,function,role_level,reports_to,entity,location,team_fte,budget_owned_usd,decision_rights,source
+Maria Alvarez,Chief Executive Officer,Executive,C-suite,Board,System,Charlotte NC,42000,11200000000,Final approver: strategy/M&A/capital >$10M,exec-roster.csv
+David Chen,Chief Financial Officer,Finance,C-suite,Maria Alvarez,System,Charlotte NC,1100,,Approves budgets/capital plan/contracts >$1M,exec-roster.csv
+Priya Nair,Chief Operating Officer,Operations,C-suite,Maria Alvarez,System,Charlotte NC,33000,,Owns throughput/labor/facilities,exec-roster.csv
+Dr. James Okafor,Chief Medical Officer,Clinical,C-suite,Maria Alvarez,System,Charlotte NC,,,Owns quality/safety/clinical policy,exec-roster.csv
+Susan Park,Chief Nursing Officer,Nursing,C-suite,Priya Nair,System,Charlotte NC,16000,,Owns nursing practice/staffing,exec-roster.csv
+Marcus Webb,Chief Information Officer,IT,C-suite,David Chen,System,Charlotte NC,900,340000000,Owns IT strategy/EHR/infrastructure,exec-roster.csv
+Anita Desai,Chief Data & Analytics Officer,Data,C-suite,Marcus Webb,System,Charlotte NC,120,,Owns analytics/AI/data governance,exec-roster.csv
+Karen White,Chief Human Resources Officer,HR,C-suite,Maria Alvarez,System,Charlotte NC,380,,Owns workforce/labor relations,exec-roster.csv
+Tom Bradley,General Counsel,Legal,C-suite,Maria Alvarez,System,Charlotte NC,60,,Owns legal/compliance/risk,exec-roster.csv
+Dr. Helen Cho,Hospital CEO,Operations,EVP,Priya Nair,Meridian Central Hospital,Charlotte NC,4200,,Owns hospital P&L,exec-roster.csv
+Dr. Omar Farouk,Hospital CEO,Operations,EVP,Priya Nair,Meridian Blue Ridge,Asheville NC,2600,,Owns hospital P&L,exec-roster.csv
+Grace Liu,VP Revenue Cycle,Finance,VP,David Chen,System,Charlotte NC,520,,Owns AR/denials/collections,exec-roster.csv
+Daniel Reyes,VP Information Security (CISO),IT,VP,Marcus Webb,System,Charlotte NC,60,34000000,Owns cyber/IR/identity,exec-roster.csv
+Rachel Green,VP Health Plan Operations,Operations,VP,Priya Nair,Meridian Health Plan,Charlotte NC,300,,Owns plan ops (187k lives),exec-roster.csv

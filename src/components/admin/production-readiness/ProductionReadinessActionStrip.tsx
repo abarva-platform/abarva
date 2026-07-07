@@ -80,7 +80,7 @@ export function ProductionReadinessActionStrip({
               disabled
               aria-disabled="true"
               data-action-button={action.id}
-              title={action.reason ?? 'Available in pilot environment (Wave 27)'}
+              title={action.reason ?? 'Available after pilot controls are enabled'}
               style={{
                 padding: `${SPACING.xs} ${SPACING.md}`,
                 borderRadius: RADIUS.sm,
@@ -107,7 +107,7 @@ export function ProductionReadinessActionStrip({
                 fontWeight: 600,
               }}
             >
-              {action.reason ?? 'Available in pilot environment (Wave 27)'}
+              {action.reason ?? 'Available after pilot controls are enabled'}
             </span>
           </span>
         );

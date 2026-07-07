@@ -227,7 +227,7 @@ export function MetricProvenance({
               }}
             >
               <AskAtlasButton onClick={() => askAtlas('why')}>
-                Ask Atlas why this is {displayValue ? `at ${displayValue}` : 'here'}
+                Ask aVa why this is {displayValue ? `at ${displayValue}` : 'here'}
               </AskAtlasButton>
               <AskAtlasButton onClick={() => askAtlas('levers')}>
                 See the lever map

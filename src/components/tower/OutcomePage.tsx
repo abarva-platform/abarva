@@ -311,7 +311,7 @@ export function OutcomePage() {
       middleStrip={<FilterPillStrip pills={FILTER_PILLS} />}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Cross-Program Synthesizer' }}
         quote={OUTCOME_AGENT_VOICE.quote}
         agentContext={OUTCOME_AGENT_VOICE.agentContext}
         actions={OUTCOME_AGENT_VOICE.actions}

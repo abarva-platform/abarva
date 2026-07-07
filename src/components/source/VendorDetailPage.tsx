@@ -328,7 +328,7 @@ function PricingSection({ vendor }: { vendor: VendorDetail }) {
 function RiskPostureSection({ vendor }: { vendor: VendorDetail }) {
   return (
     <div style={KV_SECTION}>
-      <div style={SECTION_TITLE}>Risk posture · Sentinel</div>
+      <div style={SECTION_TITLE}>Risk posture · Ava</div>
       {vendor.riskFinancial ? (
         <KV
           label="Financial"

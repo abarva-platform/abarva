@@ -71,7 +71,7 @@ export function SourceVendorResponseCompletenessPanel({
       </div>
 
       <div style={GRID_TWO_COL}>
-        <InfoCard title="Sentinel guidance">
+        <InfoCard title="Ava guidance">
           <div style={{ ...sourceSectionLabel, color: SHELL.INK_MUTED }}>
             Recommended next action
           </div>

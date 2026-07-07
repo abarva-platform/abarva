@@ -36,6 +36,8 @@ import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
+import { embedDiscoveryPlanInCharter } from '@/lib/programs/discovery/charter-transformers';
+import type { DiscoveryPlan } from '@/lib/programs/discovery/discovery-intake';
 
 // --- domain shapes ----------------------------------------------------------
 
@@ -102,6 +104,10 @@ export interface AdvancePhaseTxInput {
   readonly snapshot: Record<string, unknown>;
   readonly approvedByUserId?: string;
   readonly bypassGate?: boolean;
+  // Discovery Intake (S2c): when present, the P1 plan is merged into the
+  // engagements.charter JSONB during the phase advance. Already flag-gated
+  // upstream in mutations.advancePhase — the adapter just persists it.
+  readonly discoveryPlan?: DiscoveryPlan | null;
 }
 
 /** The `requestFounderApproval` insert into `founder_approval_requests`. */
@@ -133,6 +139,13 @@ export interface DraftModuleDeliverableTxInput {
  * participant insert that fails is logged and skipped by the caller; the
  * adapter surfaces the failure and lets the route keep its existing policy.
  */
+/** The `updateEngagementCharter` write: replace an engagement's charter JSONB. */
+export interface UpdateEngagementCharterTxInput {
+  readonly programId: string;
+  readonly clientId: string;
+  readonly charter: Record<string, unknown>;
+}
+
 export interface ProgramsWriteAdapter {
   readonly name: DataPlane;
   /**
@@ -182,6 +195,14 @@ export interface ProgramsWriteAdapter {
    * Supabase they are the same statements the helper issued. On a DB error
    * returns `ok:false` — the helper re-throws.
    */
+  /**
+   * Update an engagement's `charter` JSONB (e.g. merge discovery extraction on
+   * upload). On a DB error returns `ok:false` — the caller surfaces it.
+   */
+  updateEngagementCharter(
+    input: UpdateEngagementCharterTxInput,
+  ): Promise<ProgramsWriteOutcome<{ updated: boolean }>>;
+
   runDraftModuleDeliverable(
     input: DraftModuleDeliverableTxInput,
   ): Promise<ProgramsWriteOutcome<{ deliverableId: string; versionId: string }>>;
@@ -288,13 +309,28 @@ export function createSupabaseProgramsWriteAdapter(
       if (snapErr) return { ok: false, error: snapErr.message };
       const snapshotId = (snap as { id: string }).id;
 
+      // Discovery Intake (S2c): merge the P1 plan into the charter JSONB on
+      // advance (read-modify-write via the shared, tested planner). No plan →
+      // the update is byte-identical to today's.
+      const engUpdate: Record<string, unknown> = {
+        current_phase: input.toPhase,
+        phase_locked_at: nowIso,
+        phase_locked_by_user_id: input.userId,
+      };
+      if (input.discoveryPlan) {
+        const { data: cur } = await sb
+          .from('engagements')
+          .select('charter')
+          .eq('id', input.programId)
+          .eq('client_id', input.clientId)
+          .maybeSingle();
+        const currentCharter =
+          (cur as { charter: Record<string, unknown> | null } | null)?.charter ?? null;
+        engUpdate.charter = embedDiscoveryPlanInCharter(currentCharter, input.discoveryPlan);
+      }
       const { error: eErr } = await sb
         .from('engagements')
-        .update({
-          current_phase: input.toPhase,
-          phase_locked_at: nowIso,
-          phase_locked_by_user_id: input.userId,
-        })
+        .update(engUpdate)
         .eq('id', input.programId)
         .eq('client_id', input.clientId);
       if (eErr) return { ok: false, error: eErr.message };
@@ -336,8 +372,37 @@ export function createSupabaseProgramsWriteAdapter(
       return { ok: true, data: { approvalId: (data as { id: string }).id } };
     },
 
+    async updateEngagementCharter(input) {
+      const sb = getClient();
+      const { error } = await sb
+        .from('engagements')
+        .update({ charter: input.charter })
+        .eq('id', input.programId)
+        .eq('client_id', input.clientId);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, data: { updated: true } };
+    },
+
     async runDraftModuleDeliverable(input) {
       const sb = getClient();
+      const { error: typeErr } = await sb.from('deliverable_types').upsert(
+        {
+          type_key: input.deliverableTypeKey,
+          title: input.title,
+          description: `Generated Moves deliverable: ${input.title}`,
+          applicable_phases: [],
+          applicable_topics: [],
+          template_structure: {},
+          required_data_inputs: {},
+          quality_rubric: {},
+          generation_prompt_template: '',
+          output_format: 'markdown',
+          maturity: 'pilot',
+        },
+        { onConflict: 'type_key' },
+      );
+      if (typeErr) return { ok: false, error: typeErr.message };
+
       const { data: existing, error: existingErr } = await sb
         .from('deliverables_v2')
         .select('id, current_version')
@@ -497,13 +562,33 @@ export function createAzureProgramsWriteAdapter(
               input.approvedByUserId ? 'approved' : 'pending',
             ],
           );
-          await run(
-            'UPDATE engagements '
-              + 'SET current_phase = $1, phase_locked_at = now(), '
-              + 'phase_locked_by_user_id = $2 '
-              + 'WHERE id = $3 AND client_id = $4',
-            [input.toPhase, input.userId, input.programId, input.clientId],
-          );
+          // Discovery Intake (S2c): merge the P1 plan into the charter inside
+          // the SAME transaction (read-modify-write via the shared planner).
+          if (input.discoveryPlan) {
+            const curRows = await run<{ charter: Record<string, unknown> | null }>(
+              'SELECT charter FROM engagements WHERE id = $1 AND client_id = $2',
+              [input.programId, input.clientId],
+            );
+            const mergedCharter = embedDiscoveryPlanInCharter(
+              curRows[0]?.charter ?? null,
+              input.discoveryPlan,
+            );
+            await run(
+              'UPDATE engagements '
+                + 'SET current_phase = $1, phase_locked_at = now(), '
+                + 'phase_locked_by_user_id = $2, charter = $3 '
+                + 'WHERE id = $4 AND client_id = $5',
+              [input.toPhase, input.userId, mergedCharter, input.programId, input.clientId],
+            );
+          } else {
+            await run(
+              'UPDATE engagements '
+                + 'SET current_phase = $1, phase_locked_at = now(), '
+                + 'phase_locked_by_user_id = $2 '
+                + 'WHERE id = $3 AND client_id = $4',
+              [input.toPhase, input.userId, input.programId, input.clientId],
+            );
+          }
           await run(
             'INSERT INTO module_state_log '
               + '(engagement_id, module_key, previous_state, new_state, '
@@ -557,10 +642,47 @@ export function createAzureProgramsWriteAdapter(
       }
     },
 
+    async updateEngagementCharter(input) {
+      try {
+        await session((run) =>
+          run('UPDATE engagements SET charter = $1 WHERE id = $2 AND client_id = $3', [
+            input.charter,
+            input.programId,
+            input.clientId,
+          ]),
+        );
+        return { ok: true, data: { updated: true } };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+
     async runDraftModuleDeliverable(input) {
       try {
         // One transaction: deliverables_v2 upsert + deliverable_versions insert.
         const result = await session(async (run) => {
+          await run(
+            'INSERT INTO deliverable_types '
+              + '(type_key, title, description, applicable_phases, applicable_topics, '
+              + 'template_structure, required_data_inputs, quality_rubric, '
+              + 'generation_prompt_template, output_format, maturity) '
+              + 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) '
+              + 'ON CONFLICT (type_key) DO UPDATE SET '
+              + 'title = EXCLUDED.title, description = EXCLUDED.description',
+            [
+              input.deliverableTypeKey,
+              input.title,
+              `Generated Moves deliverable: ${input.title}`,
+              [],
+              [],
+              {},
+              {},
+              {},
+              '',
+              'markdown',
+              'pilot',
+            ],
+          );
           const existingRows = await run<{ id: string; current_version: number }>(
             'SELECT id, current_version FROM deliverables_v2 '
               + 'WHERE engagement_id = $1 AND deliverable_type_key = $2 LIMIT 1',

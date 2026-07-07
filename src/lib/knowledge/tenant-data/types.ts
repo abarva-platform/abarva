@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 
 /**
  * Typed contracts for the persisted tenant-data layer.
@@ -16,30 +16,64 @@ import 'server-only';
  * once the founder shares the schema.
  */
 export type SegmentId =
-  | 'enterprise_profile'
-  | 'org_structure'
-  | 'it_landscape'
-  | 'it_financials'
-  | 'kpi_dictionary'
-  | 'program_inventory'
-  | 'evidence_ledger'
-  | 'vendor_contracts'
-  | 'cross_program_signals'
+  | "enterprise_profile"
+  | "org_structure"
+  | "it_landscape"
+  | "it_financials"
+  | "kpi_dictionary"
+  | "program_inventory"
+  | "evidence_ledger"
+  | "vendor_contracts"
+  | "cross_program_signals"
   // The remaining 6 segments are unknown to this codebase as of TD-1.
   // Document the gap; TD-2 confirms or extends this union.
-  | 'risk_register'        // provisional
-  | 'compliance_posture'   // provisional
-  | 'data_estate'          // provisional
-  | 'workflow_inventory'   // provisional
-  | 'capability_map'       // provisional
-  | 'org_change_signals'   // provisional
+  | "risk_register" // provisional
+  | "compliance_posture" // provisional
+  | "data_estate" // provisional
+  | "workflow_inventory" // provisional
+  | "capability_map" // provisional
+  | "org_change_signals" // provisional
   // Packet 18 Apex synthetic pack segments. These arrive as
   // enterprise_context_chunks even when data_inventory_records are empty.
-  | 'application_portfolio'
-  | 'initiative_financials'
-  | 'regulatory_and_dependency_context'
-  | 'vendor_contract'
-  | 'sponsor_signal';
+  | "application_portfolio"
+  | "initiative_financials"
+  | "regulatory_and_dependency_context"
+  | "vendor_contract"
+  | "sponsor_signal"
+  // Landscape-model dedicated segments (data/analytics + infrastructure layers)
+  // so these questions retrieve from clean segments instead of being starved
+  // inside the overloaded it_landscape segment.
+  | "infrastructure"
+  // Meridian enterprise-context-layer segments. These literal record_type
+  // values arrive as enterprise_context_chunks for the Meridian synthetic pack.
+  | "cmdb_applications_services"
+  | "data_domains_stewardship"
+  | "ci_relationships_dependencies"
+  | "facilities_business_units"
+  | "incidents"
+  | "changes"
+  | "problems"
+  | "slas"
+  | "spend_baseline"
+  | "vendors_contract_inventory"
+  | "renewal_calendar"
+  | "risk_compliance_register"
+  | "org_decision_rights"
+  | "policies_procedures"
+  | "initiative_portfolio"
+  // Lakeshore Holdings enterprise-context-layer segments (literal record_type values).
+  | "business_capability"
+  | "business_unit"
+  | "cmdb_application"
+  | "configuration_item"
+  | "contract"
+  | "data_asset"
+  | "facility"
+  | "initiative"
+  | "integration"
+  | "kpi_metric"
+  | "org_role"
+  | "risk";
 
 /** Coverage / health status per segment, from segment rollups. See design doc §2. */
 export interface SegmentRollup {
@@ -48,7 +82,7 @@ export interface SegmentRollup {
   recordCount: number;
   /** 0..100. */
   coveragePct: number;
-  health: 'complete' | 'partial' | 'thin' | 'shell_only';
+  health: "complete" | "partial" | "thin" | "shell_only";
   staleCount: number;
   missingCount: number;
   expectedRecordCount?: number;
@@ -72,7 +106,7 @@ export interface TenantRecord {
   /** Segment-specific structured payload. Typed via narrow types below. */
   payload: Record<string, unknown>;
   sourceBasis?: string;
-  classification?: 'public' | 'internal' | 'confidential' | 'restricted';
+  classification?: "public" | "internal" | "confidential" | "restricted";
   /** 0..1 where applicable. */
   confidence?: number;
   caveat?: string;
@@ -82,15 +116,15 @@ export interface TenantRecord {
 
 /** Graph node ids follow stable patterns (see design doc §4). */
 export type GraphNodeKind =
-  | 'enterprise'
-  | 'person'
-  | 'system'
-  | 'vendor'
-  | 'kpi'
-  | 'program'
-  | 'evidence'
-  | 'capability'             // provisional
-  | 'workflow';              // provisional
+  | "enterprise"
+  | "person"
+  | "system"
+  | "vendor"
+  | "kpi"
+  | "program"
+  | "evidence"
+  | "capability" // provisional
+  | "workflow"; // provisional
 
 /** A graph node. Node ids look like `enterprise:apex-retail`, `person:apex:diana-lopez`, etc. */
 export interface GraphNode {
@@ -104,15 +138,15 @@ export interface GraphNode {
 
 /** Typed graph edge kinds. The last three are provisional pending TD-2 schema confirmation. */
 export type GraphEdgeKind =
-  | 'HAS_EXECUTIVE'
-  | 'OWNED_BY'
-  | 'LICENSED_FROM'
-  | 'SPONSORED_BY'
-  | 'MEASURED_FROM'
-  | 'LED_BY'
-  | 'DEPENDS_ON'             // provisional
-  | 'CONTRADICTS'            // provisional
-  | 'REPORTS_TO';            // provisional
+  | "HAS_EXECUTIVE"
+  | "OWNED_BY"
+  | "LICENSED_FROM"
+  | "SPONSORED_BY"
+  | "MEASURED_FROM"
+  | "LED_BY"
+  | "DEPENDS_ON" // provisional
+  | "CONTRADICTS" // provisional
+  | "REPORTS_TO"; // provisional
 
 /** A graph edge. */
 export interface GraphEdge {
@@ -139,8 +173,12 @@ export interface GraphPath {
   edges: GraphEdge[];
 }
 
-/** Embedding status mirrors the founder's data drop flag. */
-export type ChunkEmbeddingStatus = 'pending' | 'embedding' | 'embedded' | 'error';
+/** Embedding status mirrors the persisted enterprise_context_chunks CHECK constraint. */
+export type ChunkEmbeddingStatus =
+  | "pending"
+  | "skipped"
+  | "embedded"
+  | "failed";
 
 /** A retrieval-friendly text chunk linked back to its source record. See design doc §5. */
 export interface ContextChunk {
@@ -155,9 +193,9 @@ export interface ContextChunk {
   /** Populated only when status === 'embedded'. */
   embedding?: number[];
   sourceBasis?: string;
-  classification?: 'public' | 'internal' | 'confidential' | 'restricted';
+  classification?: "public" | "internal" | "confidential" | "restricted";
   /**
-   * Cosine similarity 0..1 from the vector index. Populated only when
+   * Cosine similarity 0..1 from Postgres pgvector. Populated only when
    * the chunk arrives via `chunksByVector` (CB-3); undefined for
    * keyword / record-scoped retrieval. The broker maps this into
    * `SemanticChunkHit.score`.
@@ -172,7 +210,7 @@ export interface EvidenceRecord {
   evidenceId: string;
   claim: string;
   sourceDoc: string;
-  classification: 'public' | 'internal' | 'confidential' | 'restricted';
+  classification: "public" | "internal" | "confidential" | "restricted";
   /** 0..1. */
   confidence: number;
   caveat?: string;

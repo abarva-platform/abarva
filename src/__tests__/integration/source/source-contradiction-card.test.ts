@@ -19,7 +19,7 @@ describe('SourceContradictionCard (SRC-MOD-CONTRADICTION)', () => {
   });
 
   it('renders the Sentinel diagnosis section label', () => {
-    expect(html).toContain('Sentinel diagnosis');
+    expect(html).toContain('Ava diagnosis');
   });
 
   it('renders the $600K delta in the diagnosis', () => {

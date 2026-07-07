@@ -1,0 +1,57 @@
+{
+  "id": "INT-SKY-007",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "What operational guardrails are needed before agentic crew recovery can scale?",
+  "expectedTerms": [
+    "crew",
+    "guardrail"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:08:53.849Z",
+  "completedAt": "2026-07-06T23:09:30.264Z",
+  "latencyMs": 36415,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-007-prompt-reconstruction.txt",
+  "promptReconstructionHash": "52a5dc2c2ac23278b9ce093fe961407ffee4e281d26f985495700aab3fc5e0ae",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-007.ndjson",
+  "claudeResponse": "Airline Demo needs five guardrails in place before agentic crew recovery can scale — and right now, the loaded sources show open gates on most of them. First, crew legality data must be certified.\nThe Crew Legality Feed and Crew Availability Feed are loaded as critical data assets, but owner-signed freshness and lineage attestation are still open checklist items. An agent acting on stale legality data creates immediate regulatory and labor-agreement exposure. This gate cannot be bypassed. Second, model-risk tiering and human-in-the-loop controls must be explicit.\nThe Crew Recovery Copilot and crew recovery capability are flagged as AI maturity \"emerging\" with no loaded model-risk tier approval. Any autonomous crew action — reassignment, rest-rule override recommendation, deadhead decision — requires a signed HITL workflow, override log, and a named control owner before the agent acts without confirmation.\nThird, the operational event store needs to be live and reliable. The Crew Recovery Optimizer and IROPS Decision Assistant both depend on the Operational Event Store. If event latency or completeness is unvalidated, the agent's decision surface is unreliable and recovery sequencing will degrade under actual disruption load.\nFourth, adoption telemetry must be instrumented from day one. Decision latency, override rate, and recommendation acceptance need measured baselines before scale. Without them, there is no way to distinguish agent improvement from agent drift — and no defensible evidence for the board. Fifth, disruption-cost baseline needs Finance sign-off before value claims travel upward.\nPlanning-grade value is acceptable for internal prioritization, but any board-level or investor-facing claim on crew recovery value requires a Finance-approved cost-per-event baseline. The crew recovery capability is flagged as business-critical with 340 primary users and 132,000 supporting-system users — the blast radius of a guardrail failure here is not small.\n--- Decision Tab Scale agentic crew recovery only after: (1) Crew Legality Feed certified with freshness SLA, (2) model-risk tier approved, (3) HITL override log active, (4) Operational Event Store validated, (5) Finance baseline signed. Hold autonomous action on any open gate; copilot/assist mode is the right posture until all five close.\n--- Industry Insights Tab Airlines that have moved agentic crew recovery to scale — pattern from comparable carriers — consistently gate on three things before autonomous\nNext, regulatory/labor auditability (every decision must be reconstructable for DOT and union grievance processes), real-time data fidelity (crew legality rules are time-sensitive to the minute), and crew trust adoption (agents that override or surprise crews generate friction that slows recovery, not speeds it). The copilot pattern — agent recommends, dispatcher confirms — has proven faster to value with lower rollback risk than fully autonomous deployment.",
+  "renderedText": "Airline Demo needs five guardrails in place before agentic crew recovery can scale — and right now, the loaded sources show open gates on most of them. First, crew legality data must be certified.\nThe Crew Legality Feed and Crew Availability Feed are loaded as critical data assets, but owner-signed freshness and lineage attestation are still open checklist items. An agent acting on stale legality data creates immediate regulatory and labor-agreement exposure. This gate cannot be bypassed. Second, model-risk tiering and human-in-the-loop controls must be explicit.\nThe Crew Recovery Copilot and crew recovery capability are flagged as AI maturity \"emerging\" with no loaded model-risk tier approval. Any autonomous crew action — reassignment, rest-rule override recommendation, deadhead decision — requires a signed HITL workflow, override log, and a named control owner before the agent acts without confirmation.\nThird, the operational event store needs to be live and reliable. The Crew Recovery Optimizer and IROPS Decision Assistant both depend on the Operational Event Store. If event latency or completeness is unvalidated, the agent's decision surface is unreliable and recovery sequencing will degrade under actual disruption load.\nFourth, adoption telemetry must be instrumented from day one. Decision latency, override rate, and recommendation acceptance need measured baselines before scale. Without them, there is no way to distinguish agent improvement from agent drift — and no defensible evidence for the board. Fifth, disruption-cost baseline needs Finance sign-off before value claims travel upward.\nPlanning-grade value is acceptable for internal prioritization, but any board-level or investor-facing claim on crew recovery value requires a Finance-approved cost-per-event baseline. The crew recovery capability is flagged as business-critical with 340 primary users and 132,000 supporting-system users — the blast radius of a guardrail failure here is not small.\n--- Decision Tab Scale agentic crew recovery only after: (1) Crew Legality Feed certified with freshness SLA, (2) model-risk tier approved, (3) HITL override log active, (4) Operational Event Store validated, (5) Finance baseline signed. Hold autonomous action on any open gate; copilot/assist mode is the right posture until all five close.\n--- Industry Insights Tab Airlines that have moved agentic crew recovery to scale — pattern from comparable carriers — consistently gate on three things before autonomous\nNext, regulatory/labor auditability (every decision must be reconstructable for DOT and union grievance processes), real-time data fidelity (crew legality rules are time-sensitive to the minute), and crew trust adoption (agents that override or surprise crews generate friction that slows recovery, not speeds it). The copilot pattern — agent recommends, dispatcher confirms — has proven faster to value with lower rollback risk than fully autonomous deployment.",
+  "sourcesCount": 8,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "Enterprise initiative portfolio sequencing pattern"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/screenshots/INT-SKY-007-api-proof.png",
+  "score": {
+    "verdict": "watch",
+    "score": 4.5,
+    "flags": [
+      "answer_too_long"
+    ]
+  }
+}

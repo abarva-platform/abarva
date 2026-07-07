@@ -298,7 +298,7 @@ function SentinelBriefPanel({ brief }: { brief: SentinelBrief }) {
             color: COLORS.mutedSoft,
           }}
         >
-          Ask Sentinel Intel · suggested follow-ups · {brief.suggestedFollowUps.length}
+          Ask Ava · suggested follow-ups · {brief.suggestedFollowUps.length}
         </span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {brief.suggestedFollowUps.map((followUp) => (
@@ -424,6 +424,48 @@ function PatternCard({ card }: { card: SentinelPatternCard }) {
       <p style={{ margin: 0, fontSize: 13, color: COLORS.muted, lineHeight: 1.55 }}>
         {detection.summary}
       </p>
+
+      <div
+        aria-label="Pattern recommendation controls"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          padding: '10px 12px',
+          background: COLORS.accentSoft,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 10,
+        }}
+      >
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <MiniChip
+            label="AI-assisted pattern recommendation"
+            color={COLORS.accent}
+            background={COLORS.card}
+          />
+          <MiniChip
+            label={`confidence · ${card.confidenceLabel.toLowerCase()}`}
+            color={COLORS.teal}
+            background={COLORS.card}
+          />
+          <MiniChip
+            label="human promotion gate required"
+            color={COLORS.amber}
+            background={COLORS.card}
+          />
+        </div>
+        <span
+          style={{
+            fontSize: 11,
+            color: COLORS.muted,
+            lineHeight: 1.45,
+          }}
+        >
+          Evidence refs: {formatEvidenceRefs(detection.sourceSignalIds)}.
+          Promotion into Moves requires a human rationale and selected evidence;
+          Sentinel does not create or advance Moves autonomously.
+        </span>
+      </div>
 
       <p
         style={{
@@ -734,6 +776,12 @@ function Stat({ label, value }: { label: string; value: string }) {
       <span style={{ color: COLORS.ink, fontWeight: 600 }}>{value}</span>
     </div>
   );
+}
+
+function formatEvidenceRefs(ids: ReadonlyArray<string>): string {
+  if (ids.length === 0) return 'not yet available';
+  const head = ids.slice(0, 3).join(' · ');
+  return ids.length > 3 ? `${head} · +${ids.length - 3} more` : head;
 }
 
 function EmptyState() {

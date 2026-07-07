@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // AgentDock · shared chat-dock foundation for every agent surface.
 //
@@ -20,7 +20,7 @@
 //   - No external icon library — chevrons are inline SVG
 //   - Tokens borrowed from canvas-tokens (CHAT_BG, INK, RULE, etc.)
 //
-// Spec source: this PR · feat(agent): shared AgentDock with 5 modes.
+// Spec source: this PR · feat(agent): shared AgentDock with 6 modes.
 
 import {
   useCallback,
@@ -49,7 +49,118 @@ import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 // real values in the browser, so fall back to the no-op effect on the
 // server. This keeps the API call-site simple and SSR-safe.
 const useIsoLayoutEffect =
-  typeof window === 'undefined' ? useEffect : useLayoutEffect;
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+function hasRenderableAvaArtifacts(
+  answer?: AvaAnswerPacket | null,
+): answer is AvaAnswerPacket {
+  return hasVisibleAvaArtifacts(answer);
+}
+
+function shouldRenderAvaArtifactsInDock(
+  surface: string,
+  answer?: AvaAnswerPacket | null,
+): answer is AvaAnswerPacket {
+  return surface !== "intelligence" && hasRenderableAvaArtifacts(answer);
+}
+
+function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
+  if (!answer) return "";
+  return (
+    answer.prose?.trim() ||
+    answer.directAnswer?.trim() ||
+    [answer.interpretation, answer.businessImplication, answer.recommendation]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n")
+      .trim()
+  );
+}
+
+const TECHNICAL_STRING_FIELDS = new Set([
+  "id",
+  "key",
+  "client",
+  "clientKey",
+  "tenantId",
+  "tenantKey",
+]);
+
+function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
+  if (
+    typeof value === "string" &&
+    fieldName &&
+    TECHNICAL_STRING_FIELDS.has(fieldName)
+  ) {
+    return value;
+  }
+  if (typeof value === "string") return demoSafeClientText(value) as T;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeVisibleStrings(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        sanitizeVisibleStrings(entry, key),
+      ]),
+    ) as T;
+  }
+  return value;
+}
+
+const MOVES_CHROME_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> =
+  [
+    [/\bNo outgoing gate\b/gi, "No outgoing readiness checkpoint"],
+    [
+      /\bShow me what is still missing for this gate\./gi,
+      "Show me what is still missing for this phase.",
+    ],
+    [/\bWhat's blocking the gate\?/gi, "What's blocking progress?"],
+    [/\bOpen gate review\b/gi, "Open readiness review"],
+    [/\bGate criteria\b/g, "Readiness criteria"],
+    [/\bgate criteria\b/g, "readiness criteria"],
+    [/\bthis gate\b/gi, "this phase"],
+  ];
+
+function normalizeMovesChromeText<T>(value: T, fieldName?: string): T {
+  if (
+    typeof value === "string" &&
+    fieldName &&
+    TECHNICAL_STRING_FIELDS.has(fieldName)
+  ) {
+    return value;
+  }
+  if (typeof value === "string") {
+    let text: string = value;
+    for (const [pattern, replacement] of MOVES_CHROME_TEXT_REPLACEMENTS) {
+      text = text.replace(pattern, replacement);
+    }
+    return text as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeMovesChromeText(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        normalizeMovesChromeText(entry, key),
+      ]),
+    ) as T;
+  }
+  return value;
+}
+
+function visibleAgentDockBody(
+  surface: string,
+  body: string,
+  agentAnswer?: AvaAnswerPacket | null,
+  preserveVisibleText = false,
+): string {
+  void surface;
+  const text = avaAnswerTextForDock(agentAnswer) || body;
+  return preserveVisibleText ? text : demoSafeClientText(text);
+}
 
 /**
  * Auto-measure the dock's distance from the top of the viewport.
@@ -89,7 +200,7 @@ function useDockSelfTop(ref: RefObject<HTMLDivElement | null>) {
       const value = Math.max(0, Math.round(rect.top));
       if (!Number.isFinite(value) || value === lastValue) return;
       lastValue = value;
-      node.style.setProperty('--agent-dock-self-top', `${value}px`);
+      node.style.setProperty("--agent-dock-self-top", `${value}px`);
     };
 
     const schedule = () => {
@@ -114,23 +225,23 @@ function useDockSelfTop(ref: RefObject<HTMLDivElement | null>) {
 
     measure();
 
-    window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", schedule, { passive: true });
 
     let observer: MutationObserver | null = null;
-    if (typeof MutationObserver !== 'undefined') {
+    if (typeof MutationObserver !== "undefined") {
       observer = new MutationObserver(onMutation);
       observer.observe(document.body, {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['style', 'class', 'hidden'],
+        attributeFilter: ["style", "class", "hidden"],
       });
     }
 
     return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', schedule);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", schedule);
       if (resizeTimer) clearTimeout(resizeTimer);
       if (mutationTimer) clearTimeout(mutationTimer);
       if (observer) observer.disconnect();
@@ -141,23 +252,27 @@ function useDockSelfTop(ref: RefObject<HTMLDivElement | null>) {
 // ── Types ─────────────────────────────────────────────────────────────────
 
 export type DockMode =
-  | 'side-rail'
-  | 'pin-bottom'
-  | 'pin-top'
-  | 'expand'
-  | 'collapsed';
+  | "side-rail"
+  | "side-rail-right"
+  | "pin-bottom"
+  | "pin-top"
+  | "expand"
+  | "collapsed";
 
 export const DOCK_MODES: readonly DockMode[] = [
-  'side-rail',
-  'pin-bottom',
-  'pin-top',
-  'expand',
-  'collapsed',
+  "side-rail",
+  "side-rail-right",
+  "pin-bottom",
+  "pin-top",
+  "expand",
+  "collapsed",
 ] as const;
 
 export interface AgentProfile {
   /** 1–2 character glyph or initials shown in the avatar. */
   initials: string;
+  /** Optional branded mark for Ava surfaces. */
+  mark?: "ava";
   /** Full name shown in the header. */
   name: string;
   /** Eyebrow under the name. Action verbs the user can ask for. */
@@ -166,12 +281,21 @@ export interface AgentProfile {
 
 export interface ChatMessage {
   id: string;
-  role: 'agent' | 'user';
+  role: "agent" | "user";
   body: string;
+  /** Optional structured UI parts, used by Source/aVa for tables and charts. */
+  parts?: AgentResponsePart[];
   /** Optional createdAt for byline rendering. */
   at?: string;
   /** Optional telemetry event id that can receive thumbs feedback. */
   feedbackEventId?: string;
+  /** Evidence sources the answer was grounded in (client context, corpus
+   *  patterns, industry/research). Streamed from the `sources` event and
+   *  surfaced via <EvidenceBasis>; when present the citation-gap warning is
+   *  suppressed because the answer is visibly grounded. */
+  citations?: AskSource[];
+  /** Structured Ava answer channels (tables/charts/graphs) emitted by SCB surfaces. */
+  agentAnswer?: AvaAnswerPacket;
 }
 
 export interface AttachmentRef {
@@ -182,6 +306,36 @@ export interface AttachmentRef {
   storage_path: string;
   /** First ~4000 chars of extracted text. Empty string for images / parse failures. */
   extracted_text_preview?: string;
+  parse_metadata?: {
+    page_count?: number | null;
+    table_count?: number | null;
+    parser_id?: string | null;
+    small_doc_shortcut?: {
+      eligible: boolean;
+      route: "claude-native-pdf" | "parser";
+      reason: string;
+      byte_size: number;
+      page_count: number | null;
+      thresholds: {
+        max_bytes: number;
+        max_pages_exclusive: number;
+      };
+    } | null;
+    raw_mode_escape?: {
+      eligible: boolean;
+      requires_user_approval: boolean;
+      route: "claude-native-pdf";
+      reason: string;
+      estimated_tokens_per_turn: number;
+      parser_bug_ticket_id: string | null;
+      cost_warning: string;
+    } | null;
+  };
+  raw_mode_requested?: {
+    acknowledged_at: string;
+    parser_bug_ticket_id: string | null;
+    estimated_tokens_per_turn: number;
+  };
 }
 
 export interface SuggestedAction {
@@ -197,6 +351,14 @@ export interface AgentDockProps {
   agent: AgentProfile;
   /** Used as the localStorage namespace + telemetry key. */
   surface: string;
+  /**
+   * `standard` keeps the full operational dock used by Source/Moves/Tower.
+   * `focused` keeps the chat rail quiet for GPT-like advisor surfaces and
+   * leaves citations, artifacts, feedback, and guardrails to the workspace.
+   */
+  variant?: "standard" | "focused";
+  /** Suppress loud draft/citation review chrome while preserving the normal rail layout. */
+  quietReviewChrome?: boolean;
   defaultMode?: DockMode;
   /** Free-form context passed back to the API on submit. */
   surfaceContext?: Record<string, unknown>;
@@ -204,14 +366,28 @@ export interface AgentDockProps {
   initialQuote?: string;
   /** Three-or-fewer suggested actions surfaced above the composer. */
   suggestedActions?: SuggestedAction[];
+  /** Keep suggested actions visible even after an opening advisor turn exists. */
+  keepSuggestedActionsVisible?: boolean;
+  /** Human-facing composer placeholder. Defaults to "Ask {agent.name}…". */
+  placeholder?: string;
   thread: ChatMessage[];
   /** Caller handles network. We pass plain text + attachment refs. */
-  onMessage: (text: string, attachments: AttachmentRef[]) => void | Promise<void>;
-  /** For side-rail mode this becomes the right pane; other modes flow normally. */
+  onMessage: (
+    text: string,
+    attachments: AttachmentRef[],
+  ) => void | Promise<void>;
+  /** For side-rail modes this becomes the opposite pane; other modes flow normally. */
   workspace: ReactNode;
   /** Side-rail splitter overrides. */
   minLeftPx?: number;
   defaultLeftPercent?: number;
+  /** Preserve caller-provided visible text when the surface has already applied its own naming policy. */
+  preserveVisibleText?: boolean;
+  /** Optional copy for the collapsed chip. Defaults to the legacy "Ask {agent}". */
+  collapsedSummary?: {
+    label: string;
+    detail?: string;
+  };
   /**
    * Optional override: when true, AgentDock shows a throbber turn at the
    * end of the thread even if no agent message is in flight via
@@ -237,7 +413,7 @@ export function splitStorageKey(surface: string): string {
 }
 
 function readStoredMode(surface: string): DockMode | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(modeStorageKey(surface));
     if (raw && (DOCK_MODES as readonly string[]).includes(raw)) {
@@ -250,7 +426,7 @@ function readStoredMode(surface: string): DockMode | null {
 }
 
 function writeStoredMode(surface: string, mode: DockMode): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(modeStorageKey(surface), mode);
   } catch {
@@ -261,14 +437,14 @@ function writeStoredMode(surface: string, mode: DockMode): void {
 // ── Mime allowlist (matches API + spec) ───────────────────────────────────
 
 export const AGENT_DOCK_MIME_ALLOWLIST: readonly string[] = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'text/csv',
-  'text/plain',
-  'text/markdown',
-  'image/png',
-  'image/jpeg',
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+  "text/plain",
+  "text/markdown",
+  "image/png",
+  "image/jpeg",
 ];
 
 // ── Local upload state ────────────────────────────────────────────────────
@@ -277,27 +453,135 @@ interface PendingUpload {
   /** Stable client-side id while the upload is in flight. */
   localId: string;
   file: File;
-  status: 'uploading' | 'done' | 'error';
+  status: "uploading" | "done" | "error";
+  startedAtMs: number;
+  estimatedPages: number | null;
   errorMessage?: string;
   /** Server-assigned record (only when status === 'done'). */
   ref?: AttachmentRef;
+}
+
+export interface UploadParsedPreview {
+  snippet: string;
+  pageSignal: string;
+  tableSignal: string;
+  hasExtractedText: boolean;
+  rawModeEscape:
+    | NonNullable<AttachmentRef["parse_metadata"]>["raw_mode_escape"]
+    | null;
+  rawModeRequested: boolean;
+}
+
+export interface UploadParsingProgress {
+  label: string;
+  elapsedSeconds: number;
+  currentPage: number | null;
+  estimatedPages: number | null;
+}
+
+export interface UploadParsingProgressInput {
+  file: Pick<File, "size" | "type">;
+  startedAtMs: number;
+  estimatedPages: number | null;
+  status: "uploading" | "done" | "error";
+}
+
+export function estimateUploadParsePages(
+  file: Pick<File, "size" | "type">,
+): number | null {
+  if (file.type !== "application/pdf") return null;
+  // The browser cannot know true PDF page count without parsing bytes.
+  // Use a deliberately conservative size heuristic for UX only; server-side
+  // parser metadata remains the source of truth once upload completes.
+  return Math.max(1, Math.min(50, Math.ceil(file.size / 65_000)));
+}
+
+export function buildUploadParsingProgress(
+  upload: UploadParsingProgressInput,
+  nowMs: number,
+): UploadParsingProgress | null {
+  if (upload.status !== "uploading") return null;
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor((nowMs - upload.startedAtMs) / 1000),
+  );
+  const estimatedPages = upload.estimatedPages;
+  const currentPage =
+    estimatedPages === null
+      ? null
+      : Math.min(
+          estimatedPages,
+          Math.max(1, Math.floor(elapsedSeconds / 2) + 1),
+        );
+  const stage =
+    upload.file.type === "application/pdf"
+      ? "Parsing PDF"
+      : upload.file.type.includes("spreadsheet")
+        ? "Parsing workbook"
+        : upload.file.type.includes("wordprocessingml")
+          ? "Parsing document"
+          : "Processing upload";
+  const pageLabel =
+    currentPage !== null && estimatedPages !== null
+      ? ` · page ${currentPage} of ~${estimatedPages}`
+      : "";
+  return {
+    label: `${stage}${pageLabel} · ${elapsedSeconds}s elapsed`,
+    elapsedSeconds,
+    currentPage,
+    estimatedPages,
+  };
+}
+
+export function buildUploadParsedPreview(
+  upload: Pick<PendingUpload, "estimatedPages" | "ref" | "status">,
+): UploadParsedPreview | null {
+  if (upload.status !== "done" || !upload.ref) return null;
+  const rawPreview = upload.ref.extracted_text_preview?.trim() ?? "";
+  const snippet = rawPreview
+    ? rawPreview.length > 200
+      ? `${rawPreview.slice(0, 200).trimEnd()}...`
+      : rawPreview
+    : "No readable text extracted.";
+  return {
+    snippet,
+    pageSignal:
+      typeof upload.ref.parse_metadata?.page_count === "number"
+        ? `Pages: ${upload.ref.parse_metadata.page_count}`
+        : upload.estimatedPages === null
+          ? "Pages: not reported"
+          : `Pages: ~${upload.estimatedPages} estimated`,
+    tableSignal:
+      typeof upload.ref.parse_metadata?.table_count === "number"
+        ? `Tables: ${upload.ref.parse_metadata.table_count}`
+        : "Tables: not reported",
+    hasExtractedText: rawPreview.length > 0,
+    rawModeEscape: upload.ref.parse_metadata?.raw_mode_escape ?? null,
+    rawModeRequested: Boolean(upload.ref.raw_mode_requested),
+  };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
 
 export function AgentDock(props: AgentDockProps) {
   const {
-    agent,
+    agent: rawAgent,
     surface,
-    defaultMode = 'side-rail',
-    surfaceContext,
-    initialQuote,
-    suggestedActions = [],
-    thread,
+    variant = "standard",
+    quietReviewChrome = false,
+    defaultMode = "side-rail",
+    surfaceContext: rawSurfaceContext,
+    initialQuote: rawInitialQuote,
+    suggestedActions: rawSuggestedActions = [],
+    keepSuggestedActionsVisible = false,
+    placeholder: rawPlaceholder,
+    thread: rawThread,
     onMessage,
     workspace,
     minLeftPx = 320,
     defaultLeftPercent = 38,
+    preserveVisibleText = false,
+    collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
   } = props;
   const displayAgentName = 'aVa';
@@ -310,45 +594,56 @@ export function AgentDock(props: AgentDockProps) {
   // an explicit prop override for callers that wire their own state.
   const atlasPageState = useAtlasPageState();
   const isAgentBusy =
-    typeof isAgentBusyOverride === 'boolean'
+    typeof isAgentBusyOverride === "boolean"
       ? isAgentBusyOverride
       : Boolean(
           atlasPageState &&
-            (atlasPageState.isStreaming || atlasPageState.isAssemblingContextBundle),
+          (atlasPageState.isStreaming ||
+            atlasPageState.isAssemblingContextBundle),
         );
 
   // Mode state (persisted)
   const [mode, setModeState] = useState<DockMode>(() => {
     return readStoredMode(surface) ?? defaultMode;
   });
+  const previousSurfaceRef = useRef(surface);
   // Last non-collapsed mode — used when restoring from the floating chip.
   const [lastRichMode, setLastRichMode] = useState<DockMode>(
-    mode === 'collapsed' ? defaultMode : mode,
+    mode === "collapsed" ? defaultMode : mode,
   );
+
+  useEffect(() => {
+    if (previousSurfaceRef.current === surface) return;
+    previousSurfaceRef.current = surface;
+    const nextMode = readStoredMode(surface) ?? defaultMode;
+    setModeState(nextMode);
+    setLastRichMode(nextMode === "collapsed" ? defaultMode : nextMode);
+  }, [defaultMode, surface]);
 
   const setMode = useCallback(
     (next: DockMode) => {
       setModeState(next);
       writeStoredMode(surface, next);
-      if (next !== 'collapsed') setLastRichMode(next);
+      if (next !== "collapsed") setLastRichMode(next);
     },
     [surface],
   );
 
   // Esc closes (collapses)
   useEffect(() => {
-    if (mode !== 'expand') return;
+    if (mode !== "expand") return;
     function onKey(e: globalThis.KeyboardEvent) {
-      if (e.key === 'Escape') setMode(lastRichMode === 'expand' ? 'side-rail' : lastRichMode);
+      if (e.key === "Escape")
+        setMode(lastRichMode === "expand" ? "side-rail" : lastRichMode);
     }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [mode, lastRichMode, setMode]);
 
   // Composer state
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const threadEndRef = useRef<HTMLDivElement | null>(null);
+  const threadScrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const dropZoneRef = useRef<HTMLDivElement | null>(null);
 
@@ -364,29 +659,44 @@ export function AgentDock(props: AgentDockProps) {
   const [uploads, setUploads] = useState<PendingUpload[]>([]);
   const [draggingOver, setDraggingOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadProgressNowMs, setUploadProgressNowMs] = useState(() =>
+    Date.now(),
+  );
 
-  const anyUploading = uploads.some((u) => u.status === 'uploading');
+  const anyUploading = uploads.some((u) => u.status === "uploading");
   const sendDisabled =
-    submitting || anyUploading || (draft.trim().length === 0 && uploads.length === 0);
+    submitting ||
+    anyUploading ||
+    (draft.trim().length === 0 && uploads.length === 0);
 
   // Auto-grow textarea (cap ~6 rows / 160px)
   const onChangeDraft = useCallback((value: string) => {
     setDraft(value);
     const ta = inputRef.current;
     if (ta) {
-      ta.style.height = 'auto';
+      ta.style.height = "auto";
       ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
     }
   }, []);
 
-  // Scroll to bottom on new turns (or attempted send). Guarded because
-  // jsdom doesn't implement scrollIntoView.
+  // Scroll only the dock's internal thread pane. DOM-level scrollIntoView()
+  // can move the hosting admin page when this dock is embedded in /admin.
   useEffect(() => {
-    const node = threadEndRef.current;
-    if (node && typeof node.scrollIntoView === 'function') {
-      node.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (thread.length === 0 && !isAgentBusy) return;
+    const scroller = threadScrollRef.current;
+    if (scroller) {
+      scroller.scrollTop = scroller.scrollHeight;
     }
-  }, [thread.length]);
+  }, [thread.length, isAgentBusy]);
+
+  useEffect(() => {
+    if (!anyUploading) return;
+    setUploadProgressNowMs(Date.now());
+    const timer = window.setInterval(() => {
+      setUploadProgressNowMs(Date.now());
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [anyUploading]);
 
   // Submit
   const submit = useCallback(
@@ -394,16 +704,19 @@ export function AgentDock(props: AgentDockProps) {
       e?.preventDefault();
       const trimmed = draft.trim();
       const refs = uploads
-        .filter((u): u is PendingUpload & { ref: AttachmentRef } => u.status === 'done' && !!u.ref)
+        .filter(
+          (u): u is PendingUpload & { ref: AttachmentRef } =>
+            u.status === "done" && !!u.ref,
+        )
         .map((u) => u.ref);
       if (trimmed.length === 0 && refs.length === 0) return;
+      setDraft("");
+      setUploads([]);
+      const ta = inputRef.current;
+      if (ta) ta.style.height = "auto";
       try {
         setSubmitting(true);
         await onMessage(trimmed, refs);
-        setDraft('');
-        setUploads([]);
-        const ta = inputRef.current;
-        if (ta) ta.style.height = 'auto';
       } finally {
         setSubmitting(false);
       }
@@ -417,11 +730,15 @@ export function AgentDock(props: AgentDockProps) {
     (files: FileList | File[]) => {
       const list = Array.from(files);
       if (list.length === 0) return;
-      const allowed = list.filter((f) => AGENT_DOCK_MIME_ALLOWLIST.includes(f.type));
+      const allowed = list.filter((f) =>
+        AGENT_DOCK_MIME_ALLOWLIST.includes(f.type),
+      );
       const nextPending: PendingUpload[] = allowed.map((file) => ({
         localId: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         file,
-        status: 'uploading',
+        status: "uploading",
+        startedAtMs: Date.now(),
+        estimatedPages: estimateUploadParsePages(file),
       }));
       if (nextPending.length === 0) return;
       setUploads((prev) => [...prev, ...nextPending]);
@@ -429,19 +746,21 @@ export function AgentDock(props: AgentDockProps) {
       // Fire each upload independently so a single slow file doesn't block.
       for (const pending of nextPending) {
         const fd = new FormData();
-        fd.append('file', pending.file);
-        fd.append('surface', surface);
-        fd.append('agent', agent.name.toLowerCase());
+        fd.append("file", pending.file);
+        fd.append("surface", surface);
+        fd.append("agent", agent.name.toLowerCase());
         if (surfaceContext) {
-          fd.append('surfaceContext', JSON.stringify(surfaceContext));
+          fd.append("surfaceContext", JSON.stringify(surfaceContext));
         }
-        void fetch('/api/v1/agent/attachments', {
-          method: 'POST',
+        void fetch("/api/v1/agent/attachments", {
+          method: "POST",
           body: fd,
         })
           .then(async (res) => {
             if (!res.ok) {
-              const errBody = (await res.json().catch(() => ({}))) as { error?: string };
+              const errBody = (await res.json().catch(() => ({}))) as {
+                error?: string;
+              };
               throw new Error(errBody.error ?? `upload_failed_${res.status}`);
             }
             return (await res.json()) as AttachmentRef;
@@ -449,16 +768,19 @@ export function AgentDock(props: AgentDockProps) {
           .then((ref) => {
             setUploads((prev) =>
               prev.map((u) =>
-                u.localId === pending.localId ? { ...u, status: 'done', ref } : u,
+                u.localId === pending.localId
+                  ? { ...u, status: "done", ref }
+                  : u,
               ),
             );
           })
           .catch((err: unknown) => {
-            const message = err instanceof Error ? err.message : 'upload_failed';
+            const message =
+              err instanceof Error ? err.message : "upload_failed";
             setUploads((prev) =>
               prev.map((u) =>
                 u.localId === pending.localId
-                  ? { ...u, status: 'error', errorMessage: message }
+                  ? { ...u, status: "error", errorMessage: message }
                   : u,
               ),
             );
@@ -470,6 +792,33 @@ export function AgentDock(props: AgentDockProps) {
 
   const removeUpload = useCallback((localId: string) => {
     setUploads((prev) => prev.filter((u) => u.localId !== localId));
+  }, []);
+
+  const requestRawMode = useCallback((localId: string) => {
+    setUploads((prev) =>
+      prev.map((u) => {
+        const rawMode = u.ref?.parse_metadata?.raw_mode_escape;
+        if (
+          u.localId !== localId ||
+          u.status !== "done" ||
+          !u.ref ||
+          !rawMode?.eligible
+        ) {
+          return u;
+        }
+        return {
+          ...u,
+          ref: {
+            ...u.ref,
+            raw_mode_requested: {
+              acknowledged_at: new Date().toISOString(),
+              parser_bug_ticket_id: rawMode.parser_bug_ticket_id,
+              estimated_tokens_per_turn: rawMode.estimated_tokens_per_turn,
+            },
+          },
+        };
+      }),
+    );
   }, []);
 
   // Drag-drop handlers (cover the entire dock panel)
@@ -497,12 +846,21 @@ export function AgentDock(props: AgentDockProps) {
 
   const onComposerKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         void submit();
       }
     },
     [submit],
+  );
+  const collapsedSummaryLabel = collapsedSummary?.label;
+  const collapsedSummaryDetail = collapsedSummary?.detail;
+  const visibleSuggestedActions = useMemo(
+    () =>
+      focused && thread.length > 0 && !keepSuggestedActionsVisible
+        ? []
+        : suggestedActions,
+    [focused, keepSuggestedActionsVisible, suggestedActions, thread.length],
   );
 
   // Render the chat panel inner — used by every mode (side-rail, pin-*,
@@ -513,17 +871,18 @@ export function AgentDock(props: AgentDockProps) {
         ref={dropZoneRef}
         data-testid="agent-dock-panel"
         data-mode={mode}
-        data-dragging={draggingOver ? 'true' : 'false'}
+        data-dragging={draggingOver ? "true" : "false"}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         style={{
           ...PANEL_STYLE,
+          ...(focused ? FOCUSED_PANEL_STYLE : null),
           outline: draggingOver
             ? `2px dashed ${CANVAS.SPLITTER_ACTIVE}`
-            : 'none',
+            : "none",
           outlineOffset: -2,
-          background: draggingOver ? 'rgba(12,26,58,0.04)' : CANVAS.CHAT_BG,
+          background: draggingOver ? "rgba(12,26,58,0.04)" : CANVAS.CHAT_BG,
         }}
       >
         {/* Spinner keyframes are scoped to this dock instance. */}
@@ -544,11 +903,7 @@ export function AgentDock(props: AgentDockProps) {
               <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
             </div>
           </div>
-          <ModePicker
-            mode={mode}
-            onChange={setMode}
-            dockId={dockId}
-          />
+          <ModePicker mode={mode} onChange={setMode} dockId={dockId} />
         </div>
 
         {/* Optional quote */}
@@ -560,7 +915,11 @@ export function AgentDock(props: AgentDockProps) {
         ) : null}
 
         {/* Thread */}
-        <div style={THREAD_STYLE} data-testid="agent-dock-thread">
+        <div
+          ref={threadScrollRef}
+          style={focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE}
+          data-testid="agent-dock-thread"
+        >
           {thread.length === 0 ? (
             <div style={EMPTY_STATE_STYLE}>
               <p style={EMPTY_TITLE_STYLE}>Ask {displayAgentName} anything.</p>
@@ -573,7 +932,13 @@ export function AgentDock(props: AgentDockProps) {
               <div
                 key={turn.id}
                 data-testid={`agent-dock-turn-${turn.role}`}
-                style={turn.role === 'user' ? USER_TURN_STYLE : AGENT_TURN_STYLE}
+                style={
+                  turn.role === "user"
+                    ? focused
+                      ? FOCUSED_USER_TURN_STYLE
+                      : USER_TURN_STYLE
+                    : AGENT_TURN_STYLE
+                }
               >
                 {turn.role === 'agent' ? (
                   <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
@@ -585,11 +950,27 @@ export function AgentDock(props: AgentDockProps) {
                     turn.body
                   )}
                 </div>
-                {turn.role === 'agent' && turn.feedbackEventId ? (
+                {showReviewChrome &&
+                turn.role === "agent" &&
+                surface !== "intelligence" &&
+                turn.citations &&
+                turn.citations.length > 0 ? (
+                  <EvidenceBasis citations={turn.citations} />
+                ) : null}
+                {!focused &&
+                turn.role === "agent" &&
+                shouldRenderAvaArtifactsInDock(surface, turn.agentAnswer) ? (
+                  <div style={{ marginTop: 12 }}>
+                    <AgentAnswerRenderer answer={turn.agentAnswer} />
+                  </div>
+                ) : null}
+                {!focused && turn.role === "agent" && turn.feedbackEventId ? (
                   <div style={FEEDBACK_ROW_STYLE}>
                     <SynthesisFeedbackWidget
                       synthesisId={turn.feedbackEventId}
-                      surface={surface === 'intelligence' ? 'sentinel' : 'program'}
+                      surface={
+                        surface === "intelligence" ? "sentinel" : "program"
+                      }
                     />
                   </div>
                 ) : null}
@@ -602,8 +983,8 @@ export function AgentDock(props: AgentDockProps) {
               indicator next to the streaming text. */}
           {isAgentBusy &&
           (thread.length === 0 ||
-            thread[thread.length - 1].role === 'user' ||
-            (thread[thread.length - 1].role === 'agent' &&
+            thread[thread.length - 1].role === "user" ||
+            (thread[thread.length - 1].role === "agent" &&
               thread[thread.length - 1].body.trim().length === 0)) ? (
             <div
               data-testid="agent-dock-throbber"
@@ -613,20 +994,19 @@ export function AgentDock(props: AgentDockProps) {
               <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
               <div style={{ ...BUBBLE_STYLE, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <AgentBusyThrobber />
-                <span style={{ fontStyle: 'italic', opacity: 0.75 }}>
+                <span style={{ fontStyle: "italic", opacity: 0.75 }}>
                   Working — retrieving tenant context and forming a view…
                 </span>
               </div>
             </div>
           ) : null}
-          <div ref={threadEndRef} />
         </div>
 
         {/* Suggested actions */}
-        {suggestedActions.length > 0 ? (
+        {visibleSuggestedActions.length > 0 ? (
           <div style={SUGGESTIONS_STYLE} aria-label="Suggested actions">
-            <div style={SUGGESTIONS_LABEL_STYLE}>Try one</div>
-            {suggestedActions.map((action) => (
+            <div style={SUGGESTIONS_LABEL_STYLE}>Suggested questions</div>
+            {visibleSuggestedActions.map((action) => (
               <button
                 key={action.id}
                 type="button"
@@ -652,7 +1032,14 @@ export function AgentDock(props: AgentDockProps) {
         {uploads.length > 0 ? (
           <div style={CHIPS_ROW_STYLE} data-testid="agent-dock-chips">
             {uploads.map((u) => (
-              <UploadChip key={u.localId} upload={u} onRemove={() => removeUpload(u.localId)} />
+              <UploadChip
+                key={u.localId}
+                upload={u}
+                progress={buildUploadParsingProgress(u, uploadProgressNowMs)}
+                parsedPreview={buildUploadParsedPreview(u)}
+                onRemove={() => removeUpload(u.localId)}
+                onRequestRawMode={() => requestRawMode(u.localId)}
+              />
             ))}
           </div>
         ) : null}
@@ -678,16 +1065,17 @@ export function AgentDock(props: AgentDockProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept={AGENT_DOCK_MIME_ALLOWLIST.join(',')}
+            accept={AGENT_DOCK_MIME_ALLOWLIST.join(",")}
             multiple
             data-testid="agent-dock-file-input"
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
             onChange={(e) => {
               if (e.target.files) startUploads(e.target.files);
               // Reset so re-selecting the same file fires onChange again.
-              e.target.value = '';
+              e.target.value = "";
             }}
           />
+          <AvaAskMark style={AVA_MARK_STYLE} />
           <textarea
             ref={inputRef}
             value={draft}
@@ -708,12 +1096,22 @@ export function AgentDock(props: AgentDockProps) {
             style={{
               ...SUBMIT_BUTTON_STYLE,
               opacity: sendDisabled ? 0.45 : 1,
-              cursor: sendDisabled ? 'not-allowed' : 'pointer',
+              cursor: sendDisabled ? "not-allowed" : "pointer",
             }}
           >
             ↑
           </button>
         </form>
+        {showReviewChrome ? (
+          <>
+            <div style={ACTION_APPROVAL_NOTICE_WRAP_STYLE}>
+              <AgentActionApprovalNotice compact />
+            </div>
+            <div style={RESPONSIBILITY_FOOTER_WRAP_STYLE}>
+              <AIResponsibilityFooter compact />
+            </div>
+          </>
+        ) : null}
       </div>
     );
   }, [
@@ -721,29 +1119,36 @@ export function AgentDock(props: AgentDockProps) {
     dockId,
     draft,
     draggingOver,
+    focused,
     initialQuote,
     isAgentBusy, // throbber visibility flips when this changes
     mode,
     onChangeDraft,
     onComposerKeyDown,
+    placeholder,
+    preserveVisibleText,
     onDragLeave,
     onDragOver,
     onDrop,
     removeUpload,
+    requestRawMode,
     sendDisabled,
     setMode,
+    showReviewChrome,
     surface,
+    surfaceContext,
     startUploads,
     submit,
     submitting,
-    suggestedActions,
     thread,
     uploads,
+    uploadProgressNowMs,
+    visibleSuggestedActions,
   ]);
 
   // ── Render by mode ──────────────────────────────────────────────────────
 
-  if (mode === 'collapsed') {
+  if (mode === "collapsed") {
     return (
       <>
         {workspace}
@@ -751,8 +1156,12 @@ export function AgentDock(props: AgentDockProps) {
           type="button"
           aria-label={`Restore ${displayAgentName} chat`}
           data-testid="agent-dock-collapsed-chip"
-          onClick={() => setMode(lastRichMode === 'collapsed' ? 'side-rail' : lastRichMode)}
-          onDoubleClick={() => setMode(lastRichMode === 'collapsed' ? 'side-rail' : lastRichMode)}
+          onClick={() =>
+            setMode(lastRichMode === "collapsed" ? "side-rail" : lastRichMode)
+          }
+          onDoubleClick={() =>
+            setMode(lastRichMode === "collapsed" ? "side-rail" : lastRichMode)
+          }
           style={COLLAPSED_CHIP_STYLE}
         >
           <span style={COLLAPSED_CHIP_INITIALS_STYLE}>
@@ -763,7 +1172,7 @@ export function AgentDock(props: AgentDockProps) {
     );
   }
 
-  if (mode === 'side-rail') {
+  if (mode === "side-rail" || mode === "side-rail-right") {
     // The dock is always viewport-bounded — height is NEVER inherited from
     // the workspace pane. This guarantees the composer is always above the
     // fold even when the workspace renders a 3000px-tall scroll body.
@@ -773,16 +1182,32 @@ export function AgentDock(props: AgentDockProps) {
     // `--agent-dock-self-top`. The calc() expressions consume it. Surfaces
     // with custom chrome don't need to set anything; the dock figures out
     // its own offset.
+    const dockOnRight = mode === "side-rail-right";
     return (
       <div
         ref={shellRef}
         data-testid="agent-dock-side-rail-shell"
+        data-side={dockOnRight ? "right" : "left"}
         style={SIDE_RAIL_SHELL_STYLE}
       >
         <ResizableSplitter
-          left={chatPanel}
-          right={<div style={WORKSPACE_PANE_STYLE}>{workspace}</div>}
-          defaultLeftPercent={defaultLeftPercent}
+          left={
+            dockOnRight ? (
+              <div style={WORKSPACE_PANE_STYLE}>{workspace}</div>
+            ) : (
+              chatPanel
+            )
+          }
+          right={
+            dockOnRight ? (
+              chatPanel
+            ) : (
+              <div style={WORKSPACE_PANE_STYLE}>{workspace}</div>
+            )
+          }
+          defaultLeftPercent={
+            dockOnRight ? 100 - defaultLeftPercent : defaultLeftPercent
+          }
           minLeftPx={minLeftPx}
           minRightPx={Math.max(420, minLeftPx)}
           storageKey={splitStorageKey(surface)}
@@ -791,10 +1216,14 @@ export function AgentDock(props: AgentDockProps) {
     );
   }
 
-  if (mode === 'pin-bottom' || mode === 'pin-top') {
-    const pinTop = mode === 'pin-top';
+  if (mode === "pin-bottom" || mode === "pin-top") {
+    const pinTop = mode === "pin-top";
     return (
-      <div ref={shellRef} style={PIN_LAYOUT_STYLE} data-testid="agent-dock-pin-shell">
+      <div
+        ref={shellRef}
+        style={PIN_LAYOUT_STYLE}
+        data-testid="agent-dock-pin-shell"
+      >
         {pinTop ? (
           <div style={PIN_PANEL_STYLE_TOP} data-testid="agent-dock-pin-top">
             {chatPanel}
@@ -802,7 +1231,10 @@ export function AgentDock(props: AgentDockProps) {
         ) : null}
         <div style={WORKSPACE_PANE_STYLE}>{workspace}</div>
         {!pinTop ? (
-          <div style={PIN_PANEL_STYLE_BOTTOM} data-testid="agent-dock-pin-bottom">
+          <div
+            style={PIN_PANEL_STYLE_BOTTOM}
+            data-testid="agent-dock-pin-bottom"
+          >
             {chatPanel}
           </div>
         ) : null}
@@ -883,7 +1315,7 @@ interface ModeButtonProps {
   mode: DockMode;
   active: boolean;
   onClick: () => void;
-  ['aria-label']: string;
+  ["aria-label"]: string;
   title: string;
   children: ReactNode;
   dockId: string;
@@ -893,7 +1325,7 @@ function ModeButton({
   mode,
   active,
   onClick,
-  'aria-label': ariaLabel,
+  "aria-label": ariaLabel,
   title,
   children,
   dockId,
@@ -905,11 +1337,11 @@ function ModeButton({
       title={title}
       onClick={onClick}
       data-testid={`agent-dock-mode-${mode}`}
-      data-active={active ? 'true' : 'false'}
+      data-active={active ? "true" : "false"}
       data-dock-id={dockId}
       style={{
         ...MODE_BUTTON_STYLE,
-        background: active ? 'rgba(12,26,58,0.08)' : 'transparent',
+        background: active ? "rgba(12,26,58,0.08)" : "transparent",
         color: active ? CANVAS.INK : CANVAS.GRAY_DK,
       }}
     >
@@ -922,22 +1354,36 @@ function ModeButton({
 
 interface UploadChipProps {
   upload: PendingUpload;
+  progress: UploadParsingProgress | null;
+  parsedPreview: UploadParsedPreview | null;
   onRemove: () => void;
+  onRequestRawMode: () => void;
 }
 
-function UploadChip({ upload, onRemove }: UploadChipProps) {
+function UploadChip({
+  upload,
+  progress,
+  parsedPreview,
+  onRemove,
+  onRequestRawMode,
+}: UploadChipProps) {
   const sizeLabel = formatBytes(upload.file.size);
-  const isError = upload.status === 'error';
-  const isUploading = upload.status === 'uploading';
+  const isError = upload.status === "error";
+  const isUploading = upload.status === "uploading";
   return (
     <span
       data-testid={`agent-dock-chip-${upload.localId}`}
       data-status={upload.status}
+      aria-label={
+        progress
+          ? `${upload.file.name}: ${progress.label}`
+          : `${upload.file.name}: ${upload.status}`
+      }
       style={{
         ...CHIP_STYLE,
-        borderColor: isError ? '#FCA5A5' : CANVAS.RULE,
-        background: isError ? '#FEE2E2' : CANVAS.CARD,
-        color: isError ? '#991B1B' : CANVAS.INK,
+        borderColor: isError ? "#FCA5A5" : CANVAS.RULE,
+        background: isError ? "#FEE2E2" : CANVAS.CARD,
+        color: isError ? "#991B1B" : CANVAS.INK,
       }}
     >
       {isUploading ? (
@@ -948,12 +1394,68 @@ function UploadChip({ upload, onRemove }: UploadChipProps) {
           className="agent-dock-spinner"
         />
       ) : null}
-      <span style={CHIP_NAME_STYLE} title={upload.file.name}>
-        {upload.file.name}
+      <span style={CHIP_TEXT_STACK_STYLE}>
+        <span style={CHIP_MAIN_ROW_STYLE}>
+          <span style={CHIP_NAME_STYLE} title={upload.file.name}>
+            {upload.file.name}
+          </span>
+          <span style={CHIP_SIZE_STYLE}>{sizeLabel}</span>
+        </span>
+        {progress ? (
+          <span
+            style={CHIP_PROGRESS_STYLE}
+            aria-live="polite"
+            data-testid={`agent-dock-chip-progress-${upload.localId}`}
+          >
+            {progress.label}
+          </span>
+        ) : null}
+        {parsedPreview ? (
+          <span
+            style={{
+              ...CHIP_PREVIEW_STYLE,
+              color: parsedPreview.hasExtractedText
+                ? CANVAS.INK
+                : CANVAS.GRAY_DK,
+            }}
+            data-testid={`agent-dock-chip-preview-${upload.localId}`}
+          >
+            <span style={CHIP_PREVIEW_LABEL_STYLE}>Parsed preview</span>
+            <span>{parsedPreview.snippet}</span>
+            <span style={CHIP_PREVIEW_META_STYLE}>
+              {parsedPreview.pageSignal} · {parsedPreview.tableSignal}
+            </span>
+            {parsedPreview.rawModeEscape?.eligible ? (
+              <span style={CHIP_RAW_MODE_STYLE}>
+                <span>{parsedPreview.rawModeEscape.cost_warning}</span>
+                {parsedPreview.rawModeRequested ? (
+                  <span
+                    data-testid={`agent-dock-chip-raw-mode-requested-${upload.localId}`}
+                    style={CHIP_RAW_MODE_STATUS_STYLE}
+                  >
+                    Raw mode requested · ticket{" "}
+                    {parsedPreview.rawModeEscape.parser_bug_ticket_id}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid={`agent-dock-chip-raw-mode-${upload.localId}`}
+                    onClick={onRequestRawMode}
+                    style={CHIP_RAW_MODE_BUTTON_STYLE}
+                  >
+                    Use raw mode
+                  </button>
+                )}
+              </span>
+            ) : null}
+          </span>
+        ) : null}
       </span>
-      <span style={CHIP_SIZE_STYLE}>{sizeLabel}</span>
       {isError ? (
-        <span style={CHIP_ERROR_STYLE} title={upload.errorMessage ?? 'Upload failed'}>
+        <span
+          style={CHIP_ERROR_STYLE}
+          title={upload.errorMessage ?? "Upload failed"}
+        >
           failed
         </span>
       ) : null}
@@ -971,7 +1473,7 @@ function UploadChip({ upload, onRemove }: UploadChipProps) {
 }
 
 function formatBytes(n: number): string {
-  if (!Number.isFinite(n) || n <= 0) return '0 B';
+  if (!Number.isFinite(n) || n <= 0) return "0 B";
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
@@ -981,7 +1483,17 @@ function formatBytes(n: number): string {
 
 function PaperclipIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.93 8.83l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
     </svg>
   );
@@ -989,7 +1501,17 @@ function PaperclipIcon() {
 function SideRailIcon() {
   // PanelLeft-equivalent
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <line x1="9" y1="3" x2="9" y2="21" />
     </svg>
@@ -997,7 +1519,17 @@ function SideRailIcon() {
 }
 function MaximizeIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="15 3 21 3 21 9" />
       <polyline points="9 21 3 21 3 15" />
       <line x1="21" y1="3" x2="14" y2="10" />
@@ -1007,7 +1539,17 @@ function MaximizeIcon() {
 }
 function CloseIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -1043,36 +1585,41 @@ function CloseIcon() {
 // subtracted from 100vh to keep height in lockstep, so the composer
 // never falls below the fold.
 const SIDE_RAIL_SHELL_STYLE: CSSProperties = {
-  position: 'sticky',
-  top: 'var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px))',
-  display: 'flex',
-  alignItems: 'stretch',
-  width: '100%',
+  position: "sticky",
+  top: "var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px))",
+  display: "flex",
+  alignItems: "stretch",
+  width: "100%",
   height:
-    'calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))',
+    "calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
   maxHeight:
-    'calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))',
+    "calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
   minHeight: 0,
-  overflow: 'hidden',
+  overflow: "hidden",
 };
 
 const PANEL_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100%',
-  width: '100%',
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  width: "100%",
   background: CANVAS.CHAT_BG,
   borderRight: `1px solid ${CANVAS.HAIRLINE}`,
   minHeight: 0,
-  position: 'relative',
+  position: "relative",
+};
+
+const FOCUSED_PANEL_STYLE: CSSProperties = {
+  background: "#FFFFFF",
+  borderRight: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
 const HEADER_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
   gap: 12,
-  padding: '14px 18px 12px',
+  padding: "14px 18px 12px",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
   flexShrink: 0,
 };
@@ -1098,8 +1645,8 @@ const AGENT_ROLE_STYLE: CSSProperties = {
 };
 
 const MODE_PICKER_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   gap: 2,
   padding: 2,
   borderRadius: 6,
@@ -1107,31 +1654,31 @@ const MODE_PICKER_STYLE: CSSProperties = {
 };
 
 const MODE_BUTTON_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   width: 26,
   height: 24,
   borderRadius: 4,
-  border: 'none',
-  cursor: 'pointer',
-  transition: 'background 120ms ease',
+  border: "none",
+  cursor: "pointer",
+  transition: "background 120ms ease",
 };
 
 const QUOTE_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 4,
-  padding: '10px 18px',
+  padding: "10px 18px",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
-  background: 'rgba(12,26,58,0.025)',
+  background: "rgba(12,26,58,0.025)",
   flexShrink: 0,
 };
 
 const QUOTE_LABEL_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
   fontWeight: 600,
 };
@@ -1144,22 +1691,29 @@ const QUOTE_BODY_STYLE: CSSProperties = {
 };
 
 const THREAD_STYLE: CSSProperties = {
-  flex: '1 1 auto',
+  flex: "1 1 auto",
   minHeight: 0,
-  overflowY: 'auto',
-  padding: '20px 18px',
-  display: 'grid',
+  overflowY: "auto",
+  padding: "20px 18px",
+  display: "grid",
   gap: 14,
-  alignContent: 'start',
+  alignContent: "start",
   // Same chat-panel background as the panel + composer so the three regions
   // never appear striped. User flagged this explicitly as "must be same
   // color background".
   background: CANVAS.CHAT_BG,
 };
 
+const FOCUSED_THREAD_STYLE: CSSProperties = {
+  ...THREAD_STYLE,
+  padding: "18px 18px 16px",
+  gap: 16,
+  background: "#FFFFFF",
+};
+
 const EMPTY_STATE_STYLE: CSSProperties = {
   paddingTop: 12,
-  display: 'grid',
+  display: "grid",
   gap: 8,
 };
 
@@ -1181,21 +1735,29 @@ const EMPTY_SUBTITLE_STYLE: CSSProperties = {
 };
 
 const AGENT_TURN_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 4,
 };
 
 const USER_TURN_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 4,
-  justifyItems: 'end',
+  justifyItems: "end",
+};
+
+const FOCUSED_USER_TURN_STYLE: CSSProperties = {
+  ...USER_TURN_STYLE,
+  justifyItems: "end",
 };
 
 const AGENT_BYLINE_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  flexWrap: "wrap",
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.10em",
   color: CANVAS.GRAY_DK,
   fontWeight: 600,
 };
@@ -1210,15 +1772,15 @@ const BUBBLE_STYLE: CSSProperties = {
 };
 
 const FEEDBACK_ROW_STYLE: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'flex-end',
+  display: "flex",
+  justifyContent: "flex-end",
   paddingTop: 6,
 };
 
 const SUGGESTIONS_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 6,
-  padding: '12px 18px',
+  padding: "12px 18px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
   flexShrink: 0,
 };
@@ -1226,17 +1788,17 @@ const SUGGESTIONS_STYLE: CSSProperties = {
 const SUGGESTIONS_LABEL_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
   marginBottom: 2,
 };
 
 const SUGGESTION_BUTTON_STYLE: CSSProperties = {
-  display: 'block',
-  width: '100%',
-  textAlign: 'left',
-  padding: '10px 12px',
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  padding: "10px 12px",
   background: CANVAS.CARD,
   border: `1px solid ${CANVAS.RULE}`,
   borderRadius: CANVAS.RADIUS_TIGHT,
@@ -1244,37 +1806,50 @@ const SUGGESTION_BUTTON_STYLE: CSSProperties = {
   fontSize: 13,
   lineHeight: 1.45,
   color: CANVAS.INK,
-  cursor: 'pointer',
-  transition: 'background 120ms ease, border-color 120ms ease',
+  cursor: "pointer",
+  transition: "background 120ms ease, border-color 120ms ease",
 };
 
 const CHIPS_ROW_STYLE: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
+  display: "flex",
+  flexWrap: "wrap",
   gap: 6,
-  padding: '8px 18px',
+  padding: "8px 18px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
   flexShrink: 0,
 };
 
 const CHIP_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "flex-start",
   gap: 6,
-  padding: '3px 8px',
+  padding: "3px 8px",
   borderRadius: 6,
   border: `1px solid ${CANVAS.RULE}`,
   fontFamily: CANVAS.SANS,
   fontSize: 11.5,
   background: CANVAS.CARD,
   color: CANVAS.INK,
-  maxWidth: '100%',
+  maxWidth: "100%",
+};
+
+const CHIP_TEXT_STACK_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 1,
+  minWidth: 0,
+};
+
+const CHIP_MAIN_ROW_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  minWidth: 0,
 };
 
 const CHIP_NAME_STYLE: CSSProperties = {
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
   maxWidth: 200,
 };
 
@@ -1284,18 +1859,78 @@ const CHIP_SIZE_STYLE: CSSProperties = {
   fontSize: 10,
 };
 
+const CHIP_PROGRESS_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+  lineHeight: 1.25,
+  whiteSpace: "nowrap",
+};
+
+const CHIP_PREVIEW_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 2,
+  maxWidth: 260,
+  paddingTop: 3,
+  fontSize: 10.5,
+  lineHeight: 1.35,
+};
+
+const CHIP_PREVIEW_LABEL_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+  textTransform: "uppercase",
+  letterSpacing: 0,
+};
+
+const CHIP_PREVIEW_META_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+};
+
+const CHIP_RAW_MODE_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  marginTop: 3,
+  padding: "5px 6px",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 6,
+  background: "#FFF7ED",
+  color: "#7C2D12",
+};
+
+const CHIP_RAW_MODE_BUTTON_STYLE: CSSProperties = {
+  justifySelf: "start",
+  border: "1px solid #FDBA74",
+  borderRadius: 5,
+  background: "#FFFFFF",
+  color: "#9A3412",
+  cursor: "pointer",
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+  padding: "3px 6px",
+};
+
+const CHIP_RAW_MODE_STATUS_STYLE: CSSProperties = {
+  color: "#166534",
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+};
+
 const CHIP_ERROR_STYLE: CSSProperties = {
-  color: '#991B1B',
+  color: "#991B1B",
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
 };
 
 const CHIP_REMOVE_STYLE: CSSProperties = {
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
+  background: "none",
+  border: "none",
+  cursor: "pointer",
   color: CANVAS.GRAY_DK,
   fontSize: 14,
   lineHeight: 1,
@@ -1309,8 +1944,8 @@ const CHIP_SPINNER_STYLE: CSSProperties = {
   borderRadius: 999,
   border: `2px solid ${CANVAS.RULE}`,
   borderTopColor: CANVAS.INK,
-  display: 'inline-block',
-  animation: 'agent-dock-spin 800ms linear infinite',
+  display: "inline-block",
+  animation: "agent-dock-spin 800ms linear infinite",
 };
 
 // Composer · `flex: 0 0 auto` keeps it pinned at the bottom of the panel's
@@ -1320,27 +1955,45 @@ const CHIP_SPINNER_STYLE: CSSProperties = {
 // Background matches CHAT_BG so the composer doesn't visually stripe
 // against the thread or panel.
 const INPUT_FORM_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-end',
+  display: "flex",
+  alignItems: "flex-end",
   gap: 8,
-  padding: '12px 18px 16px',
+  padding: "12px 18px 8px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
   background: CANVAS.CHAT_BG,
-  flex: '0 0 auto',
+  flex: "0 0 auto",
+};
+
+const RESPONSIBILITY_FOOTER_WRAP_STYLE: CSSProperties = {
+  padding: "0 18px 14px",
+  background: CANVAS.CHAT_BG,
+  flex: "0 0 auto",
+};
+
+const ACTION_APPROVAL_NOTICE_WRAP_STYLE: CSSProperties = {
+  padding: "0 18px 8px",
+  background: CANVAS.CHAT_BG,
+  flex: "0 0 auto",
 };
 
 const ATTACH_BUTTON_STYLE: CSSProperties = {
   width: 32,
   height: 32,
   borderRadius: 6,
-  background: 'transparent',
+  background: "transparent",
   color: CANVAS.GRAY_DK,
   border: `1px solid ${CANVAS.RULE}`,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
   flexShrink: 0,
+};
+
+const AVA_MARK_STYLE: CSSProperties = {
+  minWidth: 32,
+  fontSize: 19,
+  alignSelf: "center",
 };
 
 const INPUT_STYLE: CSSProperties = {
@@ -1348,12 +2001,12 @@ const INPUT_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 14,
   lineHeight: 1.5,
-  padding: '10px 12px',
+  padding: "10px 12px",
   borderRadius: CANVAS.RADIUS_TIGHT,
   border: `1px solid ${CANVAS.RULE}`,
   background: CANVAS.CARD,
   color: CANVAS.INK,
-  resize: 'none',
+  resize: "none",
   minHeight: 40,
   maxHeight: 160,
   overflowY: 'hidden',
@@ -1365,8 +2018,8 @@ const SUBMIT_BUTTON_STYLE: CSSProperties = {
   height: 36,
   borderRadius: 999,
   background: CANVAS.INK,
-  color: '#fff',
-  border: 'none',
+  color: "#fff",
+  border: "none",
   fontSize: 16,
   fontWeight: 500,
   flexShrink: 0,
@@ -1376,9 +2029,9 @@ const WORKSPACE_PANE_STYLE: CSSProperties = {
   flex: 1,
   minWidth: 0,
   minHeight: 0,
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'hidden',
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
 };
 
 // Pin layout — same viewport-bound contract as the side-rail shell so
@@ -1386,23 +2039,23 @@ const WORKSPACE_PANE_STYLE: CSSProperties = {
 // workspace pane keeps internal scroll behavior; the dock bar stays
 // visible above the fold. Same self-top measurement applies.
 const PIN_LAYOUT_STYLE: CSSProperties = {
-  position: 'sticky',
-  top: 'var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px))',
-  display: 'flex',
-  flexDirection: 'column',
+  position: "sticky",
+  top: "var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px))",
+  display: "flex",
+  flexDirection: "column",
   height:
-    'calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))',
+    "calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
   maxHeight:
-    'calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))',
-  width: '100%',
+    "calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
+  width: "100%",
   minHeight: 0,
-  overflow: 'hidden',
+  overflow: "hidden",
 };
 
 const PIN_PANEL_STYLE_BOTTOM: CSSProperties = {
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
   height: 480,
-  maxHeight: '60vh',
+  maxHeight: "60vh",
   flexShrink: 0,
   background: CANVAS.CHAT_BG,
 };
@@ -1410,50 +2063,52 @@ const PIN_PANEL_STYLE_BOTTOM: CSSProperties = {
 const PIN_PANEL_STYLE_TOP: CSSProperties = {
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
   height: 480,
-  maxHeight: '60vh',
+  maxHeight: "60vh",
   flexShrink: 0,
   background: CANVAS.CHAT_BG,
 };
 
 const EXPAND_OVERLAY_STYLE: CSSProperties = {
-  position: 'fixed',
+  position: "fixed",
   inset: 0,
-  background: 'rgba(10,10,11,0.55)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  background: "rgba(10,10,11,0.55)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   zIndex: 1000,
-  padding: '5vh 5vw',
+  padding: "5vh 5vw",
 };
 
 const EXPAND_PANEL_STYLE: CSSProperties = {
-  width: '90vw',
-  height: '90vh',
+  width: "90vw",
+  height: "90vh",
   maxWidth: 1400,
   maxHeight: 1000,
   background: CANVAS.CHAT_BG,
   borderRadius: 8,
-  boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
-  overflow: 'hidden',
-  display: 'flex',
-  flexDirection: 'column',
+  boxShadow: "0 30px 80px rgba(0,0,0,0.35)",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
 };
 
 const COLLAPSED_CHIP_STYLE: CSSProperties = {
-  position: 'fixed',
+  position: "fixed",
   bottom: 24,
   right: 24,
-  width: 56,
+  minWidth: 56,
   height: 56,
+  padding: "0 18px",
+  gap: 10,
   borderRadius: 999,
   background: CANVAS.INK,
-  color: '#fff',
-  border: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-  boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
+  color: "#fff",
+  border: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  boxShadow: "0 12px 28px rgba(0,0,0,0.35)",
   zIndex: 900,
   fontFamily: CANVAS.SERIF,
   fontSize: 18,
@@ -1467,7 +2122,37 @@ const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
   fontFamily: CANVAS.SERIF,
   fontSize: 18,
   fontWeight: 500,
-  letterSpacing: '0.02em',
+  letterSpacing: "0.02em",
+};
+
+const COLLAPSED_CHIP_AVA_MARK_STYLE: CSSProperties = {
+  minWidth: 41,
+  width: 41,
+  fontSize: 22,
+};
+
+const COLLAPSED_CHIP_LABEL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  fontWeight: 700,
+  letterSpacing: 0,
+  whiteSpace: "nowrap",
+};
+
+const COLLAPSED_CHIP_TEXT_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 2,
+  textAlign: "left",
+  lineHeight: 1.1,
+};
+
+const COLLAPSED_CHIP_DETAIL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: 0,
+  whiteSpace: "nowrap",
+  opacity: 0.78,
 };
 
 // ── Agent busy throbber ───────────────────────────────────────────────────
@@ -1478,7 +2163,7 @@ const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
 // query, query Pinecone, run lexical fallback, etc. — the round-trip
 // can be 2-6 seconds and a static empty bubble feels frozen.
 
-const THROBBER_KEYFRAMES_ID = 'agent-dock-throbber-keyframes';
+const THROBBER_KEYFRAMES_ID = "agent-dock-throbber-keyframes";
 const THROBBER_KEYFRAMES = `
 @keyframes agent-dock-throbber-bounce {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.45; }
@@ -1487,9 +2172,9 @@ const THROBBER_KEYFRAMES = `
 `;
 
 function ensureThrobberKeyframes(): void {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
   if (document.getElementById(THROBBER_KEYFRAMES_ID)) return;
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = THROBBER_KEYFRAMES_ID;
   style.textContent = THROBBER_KEYFRAMES;
   document.head.appendChild(style);
@@ -1504,8 +2189,8 @@ function AgentBusyThrobber() {
       role="status"
       aria-label="Agent is working"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 4,
         flexShrink: 0,
       }}
@@ -1514,7 +2199,7 @@ function AgentBusyThrobber() {
         <span
           key={i}
           style={{
-            display: 'inline-block',
+            display: "inline-block",
             width: 7,
             height: 7,
             borderRadius: 999,

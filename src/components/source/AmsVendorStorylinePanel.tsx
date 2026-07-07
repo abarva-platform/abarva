@@ -131,7 +131,7 @@ function VendorCard({ vendor }: { vendor: AmsVendorStorylineItem }) {
             letterSpacing: '0.06em',
             marginBottom: '6px',
           }}>
-            Sentinel risk signals
+            aVa risk signals
           </div>
           <div style={{ display: 'grid', gap: '6px' }}>
             {vendor.riskFlags.map((flag, i) => {
@@ -184,7 +184,7 @@ function VendorCard({ vendor }: { vendor: AmsVendorStorylineItem }) {
                       color: '#1B2B5C',
                       fontStyle: 'italic',
                     }}>
-                      Sentinel: {flag.sentinelPatternRef}
+                      aVa: {flag.sentinelPatternRef}
                     </div>
                   )}
                 </div>

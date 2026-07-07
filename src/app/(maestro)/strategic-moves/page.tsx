@@ -1,27 +1,35 @@
-import { redirect } from 'next/navigation';
-import { requireProductModule } from '@/lib/auth/server-module-access';
-import { getStrategicMovePortfolio } from '@/lib/programs/queries';
-import { getStrategicMovesTenancy } from '@/lib/programs/strategic-moves-context';
-import { DEFAULT_STRATEGIC_MOVES_PREFERENCES, getStrategicMovesPreferences } from '@/lib/programs/strategic-moves-preferences';
-import { StrategicMovesHomeClient } from '@/components/strategic-moves/StrategicMovesHomeClient';
-import { AppShell } from '@/components/shell/AppShell';
+import { redirect } from "next/navigation";
+import { requireProductModule } from "@/lib/auth/server-module-access";
+import { getStrategicMovePortfolio } from "@/lib/programs/queries";
+import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
+import {
+  DEFAULT_STRATEGIC_MOVES_PREFERENCES,
+  getStrategicMovesPreferences,
+} from "@/lib/programs/strategic-moves-preferences";
+import { StrategicMovesHomeClient } from "@/components/strategic-moves/StrategicMovesHomeClient";
+import { AppShell } from "@/components/shell/AppShell";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: 'Strategic Moves · AbarVa',
+  title: "Strategic Moves · AbarVa",
 };
 
 export default async function StrategicMovesPage() {
-  await requireProductModule('programs');
+  await requireProductModule("programs");
   const ctx = await getStrategicMovesTenancy();
   if (!ctx) {
-    redirect('/sign-in');
+    redirect("/sign-in");
   }
 
+  // Include archived rows so the landing can power the Archived chip and an
+  // accurate active/archived split client-side. The list view shows the full
+  // portfolio, so the prior limit of 8 is raised.
   const [portfolio, prefs] = await Promise.all([
-    getStrategicMovePortfolio(ctx, { limit: 8 }),
-    getStrategicMovesPreferences(ctx).catch(() => DEFAULT_STRATEGIC_MOVES_PREFERENCES),
+    getStrategicMovePortfolio(ctx, { limit: 100, includeArchived: true }),
+    getStrategicMovesPreferences(ctx).catch(
+      () => DEFAULT_STRATEGIC_MOVES_PREFERENCES,
+    ),
   ]);
 
   return (

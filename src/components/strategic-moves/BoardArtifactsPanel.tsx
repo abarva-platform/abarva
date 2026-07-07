@@ -22,28 +22,44 @@
 import {
   boardArtifactsForMove,
   type BoardArtifact,
-} from '@/lib/programs/board-artifacts/board-artifacts-registry';
-import type { StrategicMove } from '@/lib/programs/types.ui';
+} from "@/lib/programs/board-artifacts/board-artifacts-registry";
+import type { StrategicMove } from "@/lib/programs/types.ui";
 
 interface Props {
   move: StrategicMove;
 }
 
-function linkStyle(variant: 'primary' | 'ghost'): React.CSSProperties {
+function linkStyle(variant: "primary" | "ghost"): React.CSSProperties {
   const base: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
+    display: "inline-flex",
+    alignItems: "center",
     gap: 3,
-    padding: '4px 10px',
+    padding: "4px 10px",
     borderRadius: 4,
     fontSize: 11,
     fontWeight: 600,
-    textDecoration: 'none',
-    whiteSpace: 'nowrap',
+    textDecoration: "none",
+    whiteSpace: "nowrap",
   };
-  return variant === 'primary'
-    ? { ...base, backgroundColor: '#1B2B5C', border: '1px solid #1B2B5C', color: '#FFFFFF' }
-    : { ...base, backgroundColor: '#ffffff', border: '1px solid #e5e5e5', color: '#1A1A18' };
+  return variant === "primary"
+    ? {
+        ...base,
+        backgroundColor: "#1B2B5C",
+        border: "1px solid #1B2B5C",
+        color: "#FFFFFF",
+      }
+    : {
+        ...base,
+        backgroundColor: "#ffffff",
+        border: "1px solid #e5e5e5",
+        color: "#1A1A18",
+      };
+}
+
+function presentationBlurb(blurb: string): string {
+  return blurb
+    .replace(/\bboard-grade\b/gi, "executive-ready")
+    .replace(/\bBoard-grade\b/g, "Executive-ready");
 }
 
 function ArtifactRow({ artifact }: { artifact: BoardArtifact }) {
@@ -51,51 +67,67 @@ function ArtifactRow({ artifact }: { artifact: BoardArtifact }) {
     <div
       data-testid="board-artifact-row"
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 12,
-        padding: '10px 12px',
-        background: '#FFFFFF',
-        border: '1px solid #e5e5e5',
-        borderLeft: '3px solid #1B2B5C',
+        padding: "10px 12px",
+        background: "#FFFFFF",
+        border: "1px solid #e5e5e5",
+        borderLeft: "3px solid #1B2B5C",
         borderRadius: 6,
-        flexWrap: 'wrap',
+        flexWrap: "wrap",
       }}
     >
       {/* Left: label + phase + blurb */}
-      <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2, flexWrap: 'wrap' }}>
-          <span
-            style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              color: '#1B2B5C',
-              backgroundColor: 'rgba(27,43,92,0.07)',
-              border: '1px solid rgba(27,43,92,0.2)',
-              padding: '1px 5px',
-              borderRadius: 2,
-              fontFamily: 'JetBrains Mono, monospace',
-              textTransform: 'uppercase',
-            }}
-          >
-            Board-grade
+      <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            marginBottom: 2,
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ fontSize: 10, color: "#6B7280" }}>
+            {artifact.phase}
           </span>
-          <span style={{ fontSize: 10, color: '#9AA3B2' }}>{artifact.phase}</span>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A18', lineHeight: 1.3 }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#1A1A18",
+            lineHeight: 1.3,
+          }}
+        >
           {artifact.label}
         </div>
-        <div style={{ fontSize: 10, color: '#9AA3B2', marginTop: 1 }}>{artifact.blurb}</div>
+        <div style={{ fontSize: 10, color: "#9AA3B2", marginTop: 1 }}>
+          {presentationBlurb(artifact.blurb)}
+        </div>
       </div>
 
       {/* Right: actions */}
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
-        <a href={artifact.htmlHref} target="_blank" rel="noopener noreferrer" style={linkStyle('primary')}>
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          flexShrink: 0,
+          flexWrap: "wrap",
+        }}
+      >
+        <a
+          href={artifact.htmlHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={linkStyle("primary")}
+        >
           View →
         </a>
         {artifact.pptxHref && (
-          <a href={artifact.pptxHref} style={linkStyle('ghost')}>
+          <a href={artifact.pptxHref} style={linkStyle("ghost")}>
             ↓ PowerPoint
           </a>
         )}
@@ -117,23 +149,30 @@ export function BoardArtifactsPanel({ move }: Props) {
       {/* Section header — mirrors the Documents-tab phase headers */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 8,
           paddingBottom: 8,
           marginBottom: 8,
-          borderBottom: '2px solid #1B2B5C',
+          borderBottom: "2px solid #1B2B5C",
         }}
       >
-        <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 15, color: '#1A1A18' }}>
-          Board artifacts
+        <span
+          style={{
+            fontFamily: "Fraunces, Georgia, serif",
+            fontSize: 15,
+            fontWeight: 650,
+            color: "#1A1A18",
+          }}
+        >
+          Executive artifacts
         </span>
-        <span style={{ fontSize: 10, color: '#9AA3B2' }}>
-          {artifacts.length} {artifacts.length === 1 ? 'deck' : 'decks'}
+        <span style={{ fontSize: 10, color: "#9AA3B2" }}>
+          {artifacts.length} {artifacts.length === 1 ? "deck" : "decks"}
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {artifacts.map((artifact) => (
           <ArtifactRow key={artifact.id} artifact={artifact} />
         ))}

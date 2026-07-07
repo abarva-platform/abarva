@@ -1,0 +1,71 @@
+name: Atlas production CXO gauntlet
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  schedule:
+    - cron: "17 10 * * *"
+  workflow_dispatch:
+    inputs:
+      prod_url:
+        description: Production URL to test
+        default: https://app.abarva.ai
+        required: true
+      profile:
+        description: Gauntlet profile to run
+        default: full
+        required: true
+        type: choice
+        options:
+          - full
+          - smoke
+
+jobs:
+  atlas-prod-cxo-gauntlet:
+    name: Apex + Meridian + SkyHarbor CXO gauntlet
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PROD_URL: ${{ inputs.prod_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      ATLAS_GAUNTLET_REPORT_DIR: reports/atlas-prod-comprehensive-surface
+      ATLAS_GAUNTLET_API_TIMEOUT_MS: "90000"
+      ATLAS_GAUNTLET_RETRIES: "2"
+      ATLAS_GAUNTLET_PROFILE: ${{ inputs.profile || 'full' }}
+      PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Verify system Chrome
+        run: google-chrome --version
+
+      - name: Verify production auth secret
+        shell: bash
+        run: |
+          if [ -z "$CLERK_SECRET_KEY" ]; then
+            echo "::error title=Missing CLERK_SECRET_KEY::Atlas production CXO gauntlet requires repository secret CLERK_SECRET_KEY."
+            exit 1
+          fi
+
+      - name: Run comprehensive Atlas production surface gauntlet
+        run: npm run qa:atlas-prod-comprehensive
+
+      - name: Upload gauntlet report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: atlas-prod-comprehensive-surface
+          path: reports/atlas-prod-comprehensive-surface
+          retention-days: 30

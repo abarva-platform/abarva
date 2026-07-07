@@ -1,6 +1,8 @@
 name: Canonical Tenant Drift
 
+# Required branch-protection context; keep pull_request paths aligned.
 on:
+  merge_group:
   pull_request:
     branches:
       - main
@@ -17,7 +19,7 @@ on:
       - package-lock.json
   workflow_dispatch:
   schedule:
-    - cron: '17 8 * * *'
+    - cron: "17 8 * * *"
 
 jobs:
   canonical-tenant-drift:
@@ -27,21 +29,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Verify canonical tenant drift
         run: npm run db:verify:canonical-tenants
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Verify retired tenant references
         run: npm run db:verify:retired-tenants

@@ -149,5 +149,104 @@ describe('Atlas /tower response-shaper · HI-3 damage regressions', () => {
       expect(shaped).not.toMatch(/\|.*the markdown rate has climbed.*\|/);
       expect(shaped).not.toMatch(/\|.*inventory turns are flat.*\|/);
     });
+
+    it('does not end compacted Tower lines on dangling conjunctions or connective fragments', () => {
+      // L6 Wave 0 retest caught two executive-answer endings that were
+      // syntactically damaged after the Tower compactor trimmed a sentence:
+      //   - "or to proceed with."
+      //   - "and."
+      // The shaper may compact loose prose, but the final line still has to
+      // read as a complete executive sentence.
+      const raw = [
+        'The highest-priority decision is whether the current value evidence is strong enough to let SkyHarbor treat the portfolio as governed rather than only inventoried.',
+        'Evidence: $606M is flagged as exposed value across the Tower view, 16 of 16 pressure cards mention value-lag risk, and the cited operating picture depends on initiative-level measured-value rows.',
+        'Missing: verified realized value, finance-attested baseline, tracked attainment, and owner-signed measurement method are not loaded yet.',
+        'Next: require the governance forum to decide whether the portfolio is allowed to keep using the $606M figure, whether to pause dependent executive claims, or to proceed with a narrowed evidence-only read until Finance signs the baseline.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toMatch(/\bor to proceed with\.$/m);
+      expect(shaped).not.toMatch(/\band\.$/m);
+      expect(shaped).not.toMatch(/\b(with|and|or|but|to|of|for|against)\.$/m);
+    });
+
+    it('does not synthesize a broken comparison table for the SkyHarbor P1 decision answer', () => {
+      // L6 Wave 0 retest against the deployed preview saw this answer
+      // compacted into "| Option | Strength | Weakness | Fit |" rows,
+      // ending on "re-baseline now vs." The prompt is a decision read,
+      // not a vendor/path comparison, so the synthetic comparison table
+      // should not run.
+      const raw = [
+        'The read: Tower is signaling one decision, not many.',
+        'Every active pressure — 16 of 16 — is a value-lag flag, and the portfolio ROI is un-instrumented.',
+        'Authorize a portfolio-wide value re-baseline — start with the three HIGH-confidence pressures: SHA-012 Data Product Catalog, SHA-023 Baggage, and SHA-034 Maintenance.',
+        'The actual choice — re-baseline now vs. letting executive claims continue before Finance signs the baseline.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+      expect(shaped).not.toMatch(/\bvs\.$/m);
+      expect(shaped).not.toMatch(/\bre-baseline now vs\.\s*(?:\n|$)/i);
+      expect(shaped).toContain('re-baseline now vs. letting executive claims continue');
+    });
+
+    it('does not truncate the SkyHarbor P3 assumption warning into has/no fragments', () => {
+      // L6 Wave 0 retest saw a malformed table row that repeated and
+      // truncated "not because SkyHarbor has no..." The answer is a set
+      // of assumptions to avoid, not a comparison matrix.
+      const raw = [
+        'Good question to ask before a governance review.',
+        'Treat it as a hypothesis — over-promised business cases or under-instrumented adoption telemetry, not a finding.',
+        '90d shows 0 and vendor count looks empty — but that is because no vendor records are loaded, not because SkyHarbor has no vendor estate.',
+        'Do not assume adoption is weak at 39% until the telemetry source and tracked attainment field are reconciled.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+      expect(shaped).not.toMatch(/\bSkyHarbor has\.$/m);
+      expect(shaped).not.toMatch(/\bSkyHarbor has no\.$/m);
+      expect(shaped).not.toMatch(/\b(has|no|and|or|but)\.$/m);
+    });
+
+    it('repairs malformed option tables emitted by live SkyHarbor P1 output', () => {
+      // Production retest after the first hotfix showed the LLM/table
+      // preservation path could still keep a malformed comparison table:
+      // "Which room are you walking" was rendered as an Option. The
+      // response shaper should degrade that table to prose instead.
+      const raw = [
+        "The read: Your highest-priority decision isn't picking one program to fix — it's deciding whether to re-baseline the portfolio's value math before",
+        '',
+        '| Option | Strength | Weakness | Fit |',
+        '|---|---|---|---|',
+        "| SHA-012 Data Product Catalog Adoption | it's the only HIGH-confidence value-lag card, and adoption is a foundational dependency. | — | — |",
+        '| Which room are you walking | finance or delivery? | — | — |',
+        '',
+        'But projected, tracked attainment, and verified realized value are all missing from the aggregate — so the gap is partly a measurement artifact, not just performance.',
+      ].join('\n');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+      expect(shaped).not.toMatch(/\bbefore\s*(?:\n|$)/i);
+      expect(shaped).toContain('SHA-012 Data Product Catalog Adoption');
+      expect(shaped).toContain('Question: finance or delivery?');
+    });
+
+    it('does not duplicate an existing Next label in Tower output', () => {
+      const raw = [
+        'Every flagged initiative shows measured value above committed.',
+        'Evidence: Until projected vs. committed vs. realized are reconciled, treat the 16 value-lag flags as a measurement question, not a delivery verdict.',
+        'Next: open the cited initiative, signal, or evidence item in Tower and assign the owner for the first missing decision input.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).toContain('Next: open the cited initiative');
+      expect(shaped).not.toContain('- Next: - Next:');
+      expect(shaped).not.toContain('Next: Next:');
+    });
   });
 });

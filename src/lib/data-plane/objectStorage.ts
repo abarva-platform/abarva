@@ -30,6 +30,12 @@ export interface ObjectStorageAdapter {
   createSignedUrl(bucket: string, path: string, expiresInSeconds: number, options?: ObjectStorageSignedUrlOptions): Promise<string>;
 }
 
+export interface ObjectStorageResolvedLocation {
+  accountName: string;
+  containerName: string;
+  blobPath: string;
+}
+
 type BodyInitLike = Buffer | Uint8Array | ArrayBuffer | Blob | string;
 
 interface AzureStorageConfig {
@@ -177,6 +183,19 @@ function containerClient(bucket: string, path: string): { container: ContainerCl
   };
 }
 
+export function describeObjectStorageLocation(
+  bucket: string,
+  path: string,
+): ObjectStorageResolvedLocation {
+  const { config } = bundle();
+  const location = resolveLocation(bucket, path);
+  return {
+    accountName: config.accountName,
+    containerName: location.containerName,
+    blobPath: location.blobName,
+  };
+}
+
 async function normalizeBody(body: BodyInitLike): Promise<Buffer> {
   if (Buffer.isBuffer(body)) return body;
   if (body instanceof Uint8Array) return Buffer.from(body);
@@ -193,6 +212,53 @@ function headersFromOptions(options?: ObjectStorageUploadOptions): BlobHTTPHeade
     blobContentType: options?.contentType,
     blobCacheControl: options?.cacheControl,
   };
+}
+
+function isAzureAuthorizationFailure(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as {
+    statusCode?: unknown;
+    code?: unknown;
+    details?: { errorCode?: unknown };
+    message?: unknown;
+  };
+  if (candidate.statusCode === 403) return true;
+  const code = String(candidate.code ?? candidate.details?.errorCode ?? '');
+  return (
+    code === 'AuthorizationPermissionMismatch' ||
+    code === 'AuthorizationFailure'
+  );
+}
+
+function azureErrorSummary(error: unknown): string {
+  if (!error || typeof error !== 'object') return String(error);
+  const candidate = error as {
+    statusCode?: unknown;
+    code?: unknown;
+    details?: { errorCode?: unknown };
+    name?: unknown;
+    message?: unknown;
+  };
+  const parts = [
+    candidate.code || candidate.details?.errorCode
+      ? `code=${String(candidate.code ?? candidate.details?.errorCode)}`
+      : null,
+    candidate.statusCode ? `status=${String(candidate.statusCode)}` : null,
+    candidate.name ? `name=${String(candidate.name)}` : null,
+    candidate.message ? `message=${String(candidate.message)}` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(';') : 'unknown_azure_storage_error';
+}
+
+async function createContainerIfAllowed(
+  container: ContainerClient,
+): Promise<void> {
+  try {
+    await container.createIfNotExists();
+  } catch (error) {
+    if (isAzureAuthorizationFailure(error)) return;
+    throw error;
+  }
 }
 
 function contentDisposition(download: string | boolean | undefined): string | undefined {
@@ -233,16 +299,18 @@ async function createReadSasUrl(
 class AzureBlobObjectStorageAdapter implements ObjectStorageAdapter {
   async upload(bucket: string, path: string, body: BodyInitLike, options: ObjectStorageUploadOptions = {}): Promise<void> {
     const { container, blobName } = containerClient(bucket, path);
-    await container.createIfNotExists();
+    await createContainerIfAllowed(container);
     const blob = container.getBlockBlobClient(blobName);
-    if (!options.upsert && await blob.exists()) {
-      throw new Error(`object_exists:${bucket}/${path}`);
-    }
     const bytes = await normalizeBody(body);
-    await blob.uploadData(bytes, {
-      blobHTTPHeaders: headersFromOptions(options),
-      metadata: options.metadata,
-    });
+    try {
+      await blob.uploadData(bytes, {
+        blobHTTPHeaders: headersFromOptions(options),
+        metadata: options.metadata,
+        conditions: options.upsert ? undefined : { ifNoneMatch: '*' },
+      });
+    } catch (error) {
+      throw new Error(`object_upload_failed:${azureErrorSummary(error)}`);
+    }
   }
 
   async remove(bucket: string, paths: string[]): Promise<void> {

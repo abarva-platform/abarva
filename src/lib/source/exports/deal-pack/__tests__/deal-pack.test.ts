@@ -25,6 +25,19 @@ import type {
 
 const GENERATED_AT = '2026-05-19T12:00:00.000Z';
 
+const PASSED_RFP_QUALITY_METADATA = {
+  qualityGate: {
+    required: true,
+    standardId: 'partner-grade-consulting-deliverable-v1',
+    minRequiredScore: 8,
+    passed: true,
+    rewriteAttempted: false,
+    attempts: 1,
+    finalSummary: 'Passed partner-grade gate.',
+    reviews: [],
+  },
+};
+
 // ── Fixture builders ──────────────────────────────────────────────────────
 
 function makeArtifactState(
@@ -179,7 +192,9 @@ function meridianHealthFixture(): TenantFixture {
       },
       artifactStates: [
         makeArtifactState('d05_scope_memo', scopeBody),
-        makeArtifactState('d09_rfp_pack', '# RFP package\n\nIssued 2026-05-01.'),
+        makeArtifactState('d09_rfp_pack', '# RFP package\n\nIssued 2026-05-01.', {
+          bodyGenerationMetadata: PASSED_RFP_QUALITY_METADATA,
+        }),
       ],
       gateCriteria: [makeGateCriterion('rfp-issued', 'met')],
       evidence: [makeEvidence('rfp-001', 'Available')],
@@ -240,12 +255,19 @@ describe('Source Deal Pack · assemble-deal-pack', () => {
         expect(out.filename).toContain('2026-05-19');
       });
 
-      it('renders 8 stage anchors (Stage 0 through Stage 7)', async () => {
+      it('renders lifecycle anchors including Stage 10 Transition', async () => {
         const { html } = await assembleDealPack(fixture.ctx, GENERATED_AT);
         for (let i = 0; i <= 7; i++) {
           expect(html).toContain(`id="stage-${i}"`);
           expect(html).toContain(`href="#stage-${i}"`);
         }
+        expect(html).toContain('id="stage-10"');
+        expect(html).toContain('href="#stage-10"');
+        expect(html).toContain('Stage 10 — Transition');
+        expect(html).toContain('Transition Readiness');
+        expect(html).toContain('KT milestone plan');
+        expect(html).toContain('Go-live readiness scorecard');
+        expect(html).toContain('APX-CDP-2026 Q3 2026 data-migration freeze window');
       });
 
       it('renders the Headline strip (decided or honestly pending)', async () => {
@@ -293,10 +315,14 @@ describe('Source Deal Pack · assemble-deal-pack', () => {
 
       it('exposes the right artifact codes for every stage that has artifacts', async () => {
         const { input } = await assembleDealPack(fixture.ctx, GENERATED_AT);
-        expect(input.stages).toHaveLength(8);
+        expect(input.stages).toHaveLength(9);
         for (let i = 0; i <= 7; i++) {
           expect(input.stages[i].stage).toBe(i);
         }
+        expect(input.stages[8].stage).toBe(10);
+        expect(input.stages[8].artifacts[0]?.code).toBe(
+          'stage10_transition_readiness',
+        );
       });
 
       it('renders the Evidence Ledger + Decision History blocks (even when empty)', async () => {

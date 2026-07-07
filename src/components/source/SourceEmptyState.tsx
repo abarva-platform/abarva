@@ -18,7 +18,7 @@ const NEXT_STEPS: ReadonlyArray<{ label: string; detail: string; href: string }>
   {
     label: 'Review setup connectors',
     detail: 'Confirm contract, spend, and telemetry connectors are configured before sourcing.',
-    href: '/setup',
+    href: '/admin/setup',
   },
   {
     label: 'Portfolio guide',

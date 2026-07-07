@@ -1,0 +1,11 @@
+function_id,function_name,executive_owner_role,head_count,description
+LAK-BF-001,Corporate Treasury,Treasurer,280,"Cash positioning, debt, FX, bank connectivity, payments"
+LAK-BF-002,Finance and Controller,Controller,1250,"Close, consolidation, management reporting, SOX"
+LAK-BF-003,FP&A and Business Finance,CFO,820,"Forecasting, margin, working capital, segment planning"
+LAK-BF-004,Procurement and Supplier Management,Chief Procurement Officer,960,"Direct materials, indirect, vendor risk, contracts"
+LAK-BF-005,Manufacturing Operations,COO,18800,"Plants, MES, quality, maintenance, production planning"
+LAK-BF-006,Supply Chain and Logistics,Chief Supply Chain Officer,5200,"S&OP, inventory, logistics, transport"
+LAK-BF-007,Sales and Customer Operations,Chief Commercial Officer,3400,"Order-to-cash, pricing, customer service"
+LAK-BF-008,Digital and IT,CIO,4200,"ERP, data, integrations, cyber, AI, service management"
+LAK-BF-009,Data and Analytics,Chief Data Officer,460,"Data platform, reporting, semantic layer, AI/ML"
+LAK-BF-010,Cybersecurity and Risk,CISO,390,"Identity, network, OT security, SOX evidence"

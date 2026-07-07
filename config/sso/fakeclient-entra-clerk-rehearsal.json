@@ -1,0 +1,69 @@
+{
+  "rehearsalId": "fakeclient-entra-clerk-2026-06-03",
+  "clientKey": "fakeclient",
+  "identityProvider": "Microsoft Entra ID dev tenant",
+  "clerkOrganization": {
+    "required": true,
+    "slug": "fakeclient",
+    "domainVerificationRequired": true,
+    "allowedProtocols": ["SAML 2.0", "OIDC"],
+    "scimRequired": true
+  },
+  "claimsContract": {
+    "clientId": "fakeclient",
+    "metadataTargets": [
+      "publicMetadata.clientId",
+      "publicMetadata.role",
+      "publicMetadata.tenantRoles",
+      "publicMetadata.person_id"
+    ],
+    "tenantRolesShape": {
+      "fakeclient": ["tenant_admin", "sponsor", "sme", "viewer"]
+    },
+    "platformAdminMappingAllowed": false
+  },
+  "entraGroups": [
+    {
+      "groupName": "AbarVa FakeClient Admins",
+      "tenantRole": "tenant_admin",
+      "minimumUsers": 2,
+      "routeSmoke": ["/admin", "/admin/users-access", "/admin/ops"]
+    },
+    {
+      "groupName": "AbarVa FakeClient Sponsors",
+      "tenantRole": "sponsor",
+      "minimumUsers": 2,
+      "routeSmoke": ["/home", "/tower", "/source"]
+    },
+    {
+      "groupName": "AbarVa FakeClient SMEs",
+      "tenantRole": "sme",
+      "minimumUsers": 3,
+      "routeSmoke": ["/home", "/intelligence", "/source"]
+    },
+    {
+      "groupName": "AbarVa FakeClient Viewers",
+      "tenantRole": "viewer",
+      "minimumUsers": 3,
+      "routeSmoke": ["/home", "/tower"]
+    }
+  ],
+  "syntheticUsers": {
+    "minimumTotal": 10,
+    "emailDomain": "fakeclient.example",
+    "namingPattern": "fc-{role}-{number}@fakeclient.example",
+    "noRealCustomerData": true
+  },
+  "requiredEvidence": [
+    "Entra tenant id",
+    "Clerk organization id",
+    "verified test domain",
+    "SAML metadata URL or OIDC issuer URL",
+    "SCIM provisioning proof",
+    "10 synthetic user sign-in proofs",
+    "allowed route smoke",
+    "denied route smoke",
+    "tenant isolation probe output",
+    "rollback transcript"
+  ]
+}

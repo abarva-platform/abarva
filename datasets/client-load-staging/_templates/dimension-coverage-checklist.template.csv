@@ -1,0 +1,13 @@
+dimension,required,raw_sources_present,normalized_template_present,parser_supported,review_required,context_rows_committed,retrieval_proven,insights_supported,gaps,owner,next_action
+public_company_evidence,yes,no,no,no,yes,no,no,no,,,
+strategy_and_finance,yes,no,no,no,yes,no,no,no,,,
+org_and_operating_model,yes,no,no,no,yes,no,no,no,,,
+it_systems_landscape,yes,no,no,no,yes,no,no,no,,,
+architecture_infrastructure,yes,no,no,no,yes,no,no,no,,,
+data_and_integration,yes,no,no,no,yes,no,no,no,,,
+security_risk_compliance,yes,no,no,no,yes,no,no,no,,,
+vendors_contracts_sourcing,yes,no,no,no,yes,no,no,no,,,
+operations_service_management,yes,no,no,no,yes,no,no,no,,,
+ai_data_science_automation,yes,no,no,no,yes,no,no,no,,,
+customer_product_market,no,no,no,no,yes,no,no,no,,,
+ad_hoc_raw_uploads,no,no,no,no,yes,no,no,no,,,

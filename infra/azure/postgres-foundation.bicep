@@ -74,8 +74,8 @@ param postgresDatabaseNames array = [
   'abarva_audit'
 ]
 
-@description('Azure Postgres allow-listed extensions needed by the current Supabase-compatible schema.')
-param postgresAllowedExtensions string = 'PGCRYPTO,UUID-OSSP'
+@description('Azure Postgres allow-listed extensions needed by the current Azure/Postgres context schema.')
+param postgresAllowedExtensions string = 'PGCRYPTO,UUID-OSSP,VECTOR'
 
 @description('Log Analytics workspace name.')
 param logAnalyticsWorkspaceName string
@@ -160,6 +160,9 @@ module privateToDatabasePeering './vnet-peering.bicep' = {
 module databaseToPrivatePeering './vnet-peering.bicep' = {
   name: 'azfound-database-to-private-peering'
   scope: databaseRg
+  dependsOn: [
+    postgresPrivate
+  ]
   params: {
     localVnetName: databaseVnetName
     remoteVnetResourceId: privateDataplaneVnet.id

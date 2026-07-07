@@ -169,7 +169,7 @@ const EVALUATE: SourceEvidenceRequirement[] = [
     minimumState: 'Available',
     level: 'required',
     description: '≥2 raters per vendor with deviation logged.',
-    unlocks: 'Steward sign-off.',
+    unlocks: 'Governance sign-off.',
   },
   {
     requirementId: 'EVID-SRC-EVAL-WEIGHT-RATIONALE',

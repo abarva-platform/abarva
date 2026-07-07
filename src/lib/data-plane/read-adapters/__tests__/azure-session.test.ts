@@ -33,10 +33,21 @@ describe('Azure read adapter session fallback', () => {
     ))).toBe(false);
   });
 
-  it('keeps the default runtime pool tiny for Azure session-mode Postgres', () => {
+  it('keeps the default runtime pool tiny but allows higher caps for prod', () => {
+    // Default stays at 1 — bare CI/preview/local without env vars
+    // should never accidentally allocate large pools.
     expect(resolveAzurePoolMax({} as NodeJS.ProcessEnv)).toBe(1);
+    // Operator-set values within the cap are honored exactly.
     expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: '3' } as unknown as NodeJS.ProcessEnv)).toBe(3);
-    expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: '99' } as unknown as NodeJS.ProcessEnv)).toBe(5);
+    expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: '15' } as unknown as NodeJS.ProcessEnv)).toBe(15);
+    // Cap raised to 20 (was 5) on 2026-05-30 — Azure Postgres
+    // Flexible Server B-tier supports 100+ concurrent connections;
+    // /admin fan-out (~12 distinct queries) was being throttled by
+    // the prior 5-cap. See docs/build/BROKER_THROW_DIAGNOSIS_2026-05-30.md.
+    expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: '20' } as unknown as NodeJS.ProcessEnv)).toBe(20);
+    expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: '99' } as unknown as NodeJS.ProcessEnv)).toBe(20);
     expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: 'nope' } as unknown as NodeJS.ProcessEnv)).toBe(1);
+    // PGPOOL_MAX legacy alias still works.
+    expect(resolveAzurePoolMax({ PGPOOL_MAX: '8' } as unknown as NodeJS.ProcessEnv)).toBe(8);
   });
 });

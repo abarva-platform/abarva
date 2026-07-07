@@ -23,11 +23,11 @@ export function SourceWelcomeSection() {
       <HeroBand color="navy">
         <Eyebrow light>Source · Buyer&rsquo;s Primer</Eyebrow>
         <SectionTitle light size="xl">
-          Run a sourcing event with Sentinel.
+          Run a sourcing event with Ava.
         </SectionTitle>
         <Lead light>
           Source is the AbarVa surface for running a real sourcing event end-to-end —
-          strategy memo through value realization. Sentinel drafts, evaluates, and
+          strategy memo through value realization. Ava drafts, evaluates, and
           flags gaps; you decide. This primer walks you through the lifecycle so a
           first-time user can ship a defensible event.
         </Lead>
@@ -64,7 +64,7 @@ export function SourceWelcomeSection() {
           A Source event is a single sourcing decision that walks through eleven
           canonical stages. Each stage produces specific artifacts and earns its
           way to the next via gate criteria. You don&rsquo;t skip stages — but
-          most stages take days, not weeks, with Sentinel doing the drafting.
+          most stages take days, not weeks, with Ava doing the drafting.
         </Lead>
         <Flow>
           <FlowStep badge="01" badgeColor="slate" icon="🎯" label="Strategy" desc="Why are we doing this?" />
@@ -82,37 +82,39 @@ export function SourceWelcomeSection() {
         <Callout kind="info" icon="🧭" label="Stages are gates, not phases">
           Each stage has a small set of <strong>gate criteria</strong>. Until those are met
           you cannot promote the event forward. The criteria are the discipline; the
-          artifacts are the evidence. Sentinel surfaces the gaps; you make the call.
+          artifacts are the evidence. Ava surfaces the gaps; you make the call.
         </Callout>
       </Section>
 
-      {/* Sentinel */}
+      {/* Ava */}
       <Section>
         <Eyebrow>Lifecycle · 02</Eyebrow>
-        <SectionTitle>Sentinel is your sourcing copilot</SectionTitle>
+        <SectionTitle>Ava is your sourcing copilot</SectionTitle>
         <Lead>
-          Every Source event is co-led by Sentinel. Sentinel is one named agent
-          sitting in front of a deep specialist catalog (RFP drafting, scoring,
-          pricing-trap detection, BAFO question generation, contract redlines).
-          You see one chat lane; Sentinel routes specialist work behind it.
+          Every Source event is co-led by Ava — the one assistant you talk to
+          across every AbarVa surface. On a Source event she runs the whole
+          thing end to end, drawing on a deep sourcing-specialist toolkit (RFP
+          drafting, scoring, pricing-trap detection, BAFO question generation,
+          contract redlines). You see one chat lane; Ava routes that specialist
+          work behind it.
         </Lead>
         <BodyP>
-          Behind <strong>Sentinel</strong> sit specialist functions you never address
+          Behind <strong>Ava</strong> sit specialist capabilities you never address
           directly — they read the substrate (event metadata, authored artifacts,
           gate states, evidence) and produce drafts, summaries, scoring, redlines,
-          and trap flags. The result: you ask Sentinel a question; it consults the
-          specialists; it answers in the canvas with provenance receipts you can
-          audit.
+          and trap flags. The result: you ask Ava a question; she draws on the
+          right specialty; she answers in the canvas with provenance receipts you
+          can audit.
         </BodyP>
         <Callout kind="info" icon="🪪" label="Provenance receipts">
-          Every Sentinel-generated artifact carries a receipt: which model, which
+          Every Ava-generated artifact carries a receipt: which model, which
           upstream artifacts it bound (e.g. d05 scope memo + d21 assumption set →
           d09 RFP package), how many tokens, what stop reason. You can challenge
           the output by reading the receipt; nothing is opaque.
         </Callout>
       </Section>
 
-      {/* What you do, what Sentinel does */}
+      {/* What you do, what Ava does */}
       <Section>
         <Eyebrow>Lifecycle · 03</Eyebrow>
         <SectionTitle>Your first 30 minutes on Source</SectionTitle>
@@ -129,16 +131,15 @@ export function SourceWelcomeSection() {
             the chat lane on the left, and the document workspace on the right.
           </Step>
           <Step title="Read the stage frame">
-            The chat lane shows you the current stage&rsquo;s lead agent
-            (<em>Sentinel for Strategy through Selection</em>; <em>Atlas for
-            Decision and Value</em>) and the readiness count (e.g. &ldquo;Artifacts
-            2 / 5 · Evidence 1 source&rdquo;). The right side shows artifact slots —
-            click any to see the canonical template plus the per-event authored
-            body.
+            The chat lane shows you Ava — the same assistant from Strategy all the
+            way through Value, no handoff to a different agent — and the readiness
+            count (e.g. &ldquo;Artifacts 2 / 5 · Evidence 1 source&rdquo;). The
+            right side shows artifact slots — click any to see the canonical
+            template plus the per-event authored body.
           </Step>
           <Step title="Generate the d01 strategy memo">
             On Stage 1 / Strategy, click into <strong>d01 Strategy Memo</strong>.
-            Hit <strong>Generate with Sentinel</strong>. Sentinel pulls the event
+            Hit <strong>Generate with Ava</strong>. Ava pulls the event
             intake metadata, drafts a strategy memo, persists it to the substrate,
             and stamps a provenance receipt. Review the body, edit if needed.
           </Step>
@@ -170,16 +171,16 @@ export function SourceWelcomeSection() {
           archetype + rigor + value band. After that, jump straight to the lifecycle
           stage you&rsquo;re on.
         </BodyP>
-        <SubHead>Want to understand Sentinel deeply?</SubHead>
+        <SubHead>Want to understand Ava deeply?</SubHead>
         <BodyP>
-          Read <strong>Working with Sentinel</strong> — covers the chat lane vs the
-          canvas substrate, the &ldquo;Generate with Sentinel&rdquo; flow,
-          provenance receipts, and how to read what specialists Sentinel routed to.
+          Read <strong>Working with Ava</strong> — covers the chat lane vs the
+          canvas substrate, the &ldquo;Generate with Ava&rdquo; flow,
+          provenance receipts, and how to read which specialty Ava drew on.
         </BodyP>
         <SubHead>Need a term?</SubHead>
         <BodyP>
           The <strong>Glossary</strong> page has alphabetical definitions for every
-          term Sentinel and the canvas use — archetype, rigor, gate, artifact, tier,
+          term Ava and the canvas use — archetype, rigor, gate, artifact, tier,
           scaffold, body, generate, evidence, plus procurement acronyms (TCO, BAFO,
           RFI, RFP, MSA, DPA, SOW).
         </BodyP>

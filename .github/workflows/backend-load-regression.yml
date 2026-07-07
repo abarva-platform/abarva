@@ -1,0 +1,42 @@
+name: Backend Load Regression
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  backend-load-regression:
+    name: Backend load regression contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify backend load runner contract
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/performance
+          npm run load:backend-regression:check | tee audit-artifacts/performance/backend-load-regression-contract.json
+
+      - name: Upload backend load regression contract
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-load-regression-contract
+          path: audit-artifacts/performance/backend-load-regression-contract.json
+          retention-days: 14
+          if-no-files-found: warn

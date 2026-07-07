@@ -1,0 +1,38 @@
+name: AI Surface Control Catalog
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ai-surface-control-catalog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ai-surface-control-catalog:
+    name: AI surface control catalog
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Check AI surface controls
+        run: npm run audit:ai-surface-controls

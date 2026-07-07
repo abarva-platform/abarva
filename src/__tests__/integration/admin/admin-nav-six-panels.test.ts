@@ -1,5 +1,5 @@
 /**
- * Setup nav · 6 panels (PR 1 of Setup Fix Package).
+ * Setup nav · core panels (PR 1 of Setup Fix Package + pilot data-load center).
  *
  * Per docs/setup-fix-package/PR_01_REMOVE_4_PANELS.md, AI Initiatives,
  * Build Progress, Architecture, and Reasoning were removed from the
@@ -16,14 +16,21 @@ const REPO_ROOT = path.join(__dirname, '..', '..', '..', '..');
 const ROUTE_BASE = path.join(REPO_ROOT, 'src', 'app', '(maestro)', 'admin');
 
 describe('Setup left-nav after PR 1 (4 panels removed)', () => {
-  it('contains exactly 6 panels in the documented order', () => {
+  it('contains the documented core panels in order', () => {
     expect(ADMIN_SUB_SECTIONS.map((s) => s.id)).toEqual([
       'overview',
+      'data-loads',
       'data-trust',
       'connectors',
       'users-access',
+      'inbox',
+      'customer-admin',
       'agent-readiness',
+      'patternops',
       'production-readiness',
+      'compliance',
+      'engineering-traces',
+      'releases',
     ]);
   });
 
@@ -44,8 +51,9 @@ describe('Setup left-nav after PR 1 (4 panels removed)', () => {
     expect(fs.existsSync(path.join(ROUTE_BASE, slug))).toBe(false);
   });
 
-  it('the six remaining panel routes still exist on disk', () => {
+  it('the core panel routes still exist on disk', () => {
     expect(fs.existsSync(path.join(ROUTE_BASE, 'page.tsx'))).toBe(true);
+    expect(fs.existsSync(path.join(ROUTE_BASE, 'setup'))).toBe(true);
     expect(fs.existsSync(path.join(ROUTE_BASE, 'data-trust'))).toBe(true);
     expect(fs.existsSync(path.join(ROUTE_BASE, 'connectors'))).toBe(true);
     expect(fs.existsSync(path.join(ROUTE_BASE, 'users-access'))).toBe(true);

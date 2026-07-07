@@ -1,8 +1,7 @@
-// Home Panel Grid · canonical 8-panel navigation per
+// Home Panel Grid · pure Home navigation per
 // docs/build/home-refinement-package/HOME_PANELS_INVENTORY.md.
 // Renders below the existing Home content (HomeIndexPage) so the
-// programs/portfolio dashboard isn't displaced. Three groups —
-// Explore, Configure, Learn — each with a small card per panel.
+// programs/portfolio dashboard isn't displaced.
 
 import Link from 'next/link';
 import { COLORS, FONT, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme';
@@ -63,8 +62,7 @@ export function HomePanelGrid() {
             marginTop: SPACING.xs,
           }}
         >
-          Eight panels — the canonical Home structure. Explore for daily use,
-          Configure for admin work, Learn for orientation.
+          Insight, decisions, action follow-through, and learning.
         </p>
       </header>
 

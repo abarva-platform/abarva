@@ -32,6 +32,9 @@ describe('Atlas Tower grounding contract', () => {
     expect(prompt).toContain('If asked what Tower can answer');
     expect(prompt).toContain('Do not execute or simulate operational actions');
     expect(prompt).toContain('Never answer from another tenant');
+    expect(prompt).toContain('AGENT OUTPUT CONTRACT v2026-06-05');
+    expect(prompt).toContain('CXO decision digest labels: My read; Why; Decision fork; What I would do next; Evidence gap');
+    expect(prompt).toContain('Simple factual questions stay simple');
     expect(prompt).not.toContain('Apex Retail Group');
   });
 
@@ -45,9 +48,9 @@ describe('Atlas Tower grounding contract', () => {
     expect(source).toContain('sanitizeForTenantPrompt');
   });
 
-  it('retrieval has a Postgres corpus fallback when vector search is unavailable', () => {
+  it('retrieval has an Azure context-chunk fallback when vector search is unavailable', () => {
     const source = readFileSync('src/lib/agent/retrieval.ts', 'utf8');
-    expect(source).toContain('queryPostgresContextChunks');
+    expect(source).toContain('queryAzureContextChunks');
     expect(source).toContain('enterprise_context_chunks');
   });
 });

@@ -1,138 +1,152 @@
 /**
- * Unit tests for the Source sub-nav active-tab resolver.
+ * Unit tests for the Source sub-nav active-tab resolver and tab catalogue,
+ * across both information-architecture states.
  *
- * The Source surface gained a Snowflake-style secondary nav strip
- * (Queue / Events / Portfolio) after the redesign that made `/source`
- * redirect straight to `/source/queue` orphaned the events portfolio at
- * `/source/events`. `resolveActiveSourceTab` decides which tab lights up
- * for a given pathname.
- *
- * Pure-function tests — no browser, no router. They lock the rule:
- *  - a tab is active when the pathname starts with its href
- *  - detail routes keep their parent tab lit
- *  - renewal cockpit routes (and any unmatched Source path) fall back to Queue
+ * IA v2 (audit 2026-06-03, Tier 1, default ON) consolidates Source around
+ * Decisions (the Queue) + Approvals + Portfolio + Capabilities + Setup —
+ * folding the standalone Events surface into Portfolio while keeping artifact
+ * operations and capability storytelling discoverable.
+ * `NEXT_PUBLIC_SOURCE_IA_V2=0` restores the legacy
+ * three-tab IA (Queue / Events / Portfolio). These pure-function tests lock
+ * both states. `resolveActiveSourceTab` and `activeSourceSubNavTabs` read the
+ * flag at call time, so each block sets the env explicitly.
  */
 
 import {
   resolveActiveSourceTab,
+  activeSourceSubNavTabs,
   SOURCE_SUBNAV_TABS,
+  SOURCE_SUBNAV_TABS_V2,
 } from '@/components/source/SourceSubNav';
 
-// ── Exact top-level routes ───────────────────────────────────────────────────
+const FLAG = 'NEXT_PUBLIC_SOURCE_IA_V2';
+const original = process.env[FLAG];
+afterAll(() => {
+  if (original === undefined) delete process.env[FLAG];
+  else process.env[FLAG] = original;
+});
 
-describe('exact top-level Source routes resolve to their own tab', () => {
-  test('/source/queue → queue', () => {
+// ── IA v2 (default — flag unset or on) ───────────────────────────────────────
+
+describe('IA v2 (default) — operating surfaces', () => {
+  beforeEach(() => {
+    delete process.env[FLAG]; // unset ⇒ default ON
+  });
+
+  test('catalogue is exactly Decisions + Approvals + Portfolio + Capabilities + Setup, in order', () => {
+    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual([
+      'queue',
+      'approvals',
+      'portfolio',
+      'capabilities',
+      'setup',
+    ]);
+    expect(activeSourceSubNavTabs().map((t) => t.label)).toEqual([
+      'Decisions',
+      'Approvals',
+      'Portfolio',
+      'Capabilities',
+      'Setup',
+    ]);
+  });
+
+  test('the Queue tab is labelled "Decisions"', () => {
+    expect(SOURCE_SUBNAV_TABS_V2.find((t) => t.key === 'queue')?.label).toBe('Decisions');
+  });
+
+  test('/source/queue → queue (Decisions)', () => {
     expect(resolveActiveSourceTab('/source/queue')).toBe('queue');
   });
-  test('/source/events → events', () => {
-    expect(resolveActiveSourceTab('/source/events')).toBe('events');
-  });
+
   test('/source/portfolio → portfolio', () => {
     expect(resolveActiveSourceTab('/source/portfolio')).toBe('portfolio');
   });
-});
 
-// ── Detail routes keep the parent tab lit ────────────────────────────────────
-
-describe('detail routes keep their parent tab active', () => {
-  test('/source/events/[eventId] → events', () => {
-    expect(resolveActiveSourceTab('/source/events/evt-ams-001')).toBe('events');
-  });
-  test('/source/events/[eventId]/scorecard → events', () => {
-    expect(resolveActiveSourceTab('/source/events/evt-ams-001/scorecard')).toBe(
-      'events',
-    );
-  });
-  test('/source/events/[eventId]/artifacts/[artifactId] → events', () => {
-    expect(
-      resolveActiveSourceTab('/source/events/evt-ams-001/artifacts/art-7'),
-    ).toBe('events');
-  });
-  test('/source/events/[eventId]/vendors/[vendorId] → events', () => {
-    expect(
-      resolveActiveSourceTab('/source/events/evt-ams-001/vendors/v-2'),
-    ).toBe('events');
-  });
-});
-
-// ── Renewal cockpit routes fall back to Queue ────────────────────────────────
-
-describe('renewal cockpit routes fall back to the Queue tab', () => {
-  test('/source/renewal/[contractId] → queue', () => {
-    expect(resolveActiveSourceTab('/source/renewal/contract-9')).toBe('queue');
-  });
-  test('/source/renewal/[contractId]/execution → queue', () => {
-    expect(
-      resolveActiveSourceTab('/source/renewal/contract-9/execution'),
-    ).toBe('queue');
-  });
-});
-
-// ── Unmatched Source paths fall back to Queue ────────────────────────────────
-
-describe('unmatched Source paths fall back to the Queue tab', () => {
-  test.each([
-    '/source',
-    '/source/value',
-    '/source/new',
-    '/source/compare',
-    '/source/patterns',
-    '/source/patterns/PAT-SRC-AMS-001',
-    '/source/learn',
-  ])('%s → queue', (path) => {
-    expect(resolveActiveSourceTab(path)).toBe('queue');
+  test('/source/capabilities → capabilities', () => {
+    expect(resolveActiveSourceTab('/source/capabilities')).toBe('capabilities');
   });
 
-  test('null / undefined pathname → queue', () => {
-    expect(resolveActiveSourceTab(null)).toBe('queue');
-    expect(resolveActiveSourceTab(undefined)).toBe('queue');
-    expect(resolveActiveSourceTab('')).toBe('queue');
+  test('/source/setup → setup', () => {
+    expect(resolveActiveSourceTab('/source/setup')).toBe('setup');
   });
-});
 
-// ── No false-prefix matches ──────────────────────────────────────────────────
+  test('Events paths fold into Portfolio', () => {
+    expect(resolveActiveSourceTab('/source/events')).toBe('portfolio');
+    expect(resolveActiveSourceTab('/source/events/evt-ams-001')).toBe('portfolio');
+    expect(resolveActiveSourceTab('/source/events/evt-ams-001/scorecard')).toBe('portfolio');
+    expect(resolveActiveSourceTab('/source/events/evt-ams-001/vendors/v-2')).toBe('portfolio');
+  });
 
-describe('a tab href is not matched as a bare string prefix', () => {
-  // `/source/events-archive` must NOT light "Events" — only `/source/events`
-  // and `/source/events/...` may.
-  test('/source/events-archive → queue (not events)', () => {
+  test('renewal + unmatched Source paths fall back to Decisions (queue)', () => {
+    for (const p of ['/source/renewal/contract-9', '/source/new', '/source/value', '/source/compare', '/source']) {
+      expect(resolveActiveSourceTab(p)).toBe('queue');
+    }
+  });
+
+  test('no false-prefix match — only exact /source/events(/...) folds to Portfolio', () => {
+    // `/source/events-archive` is not the Events index nor a child route, so it
+    // does not fold; it falls back to Decisions.
     expect(resolveActiveSourceTab('/source/events-archive')).toBe('queue');
-  });
-  test('/source/queue-legacy → queue is exact, suffix does not match', () => {
-    // `/source/queue-legacy` does not start with `/source/queue/`, so it
-    // falls back rather than matching the Queue tab by accident.
     expect(resolveActiveSourceTab('/source/queue-legacy')).toBe('queue');
   });
 });
 
-// ── Tab catalogue invariants ─────────────────────────────────────────────────
+// ── IA v1 (legacy — flag explicitly off) ─────────────────────────────────────
 
-describe('SOURCE_SUBNAV_TABS catalogue', () => {
-  test('exposes exactly the three canonical tabs in order', () => {
+describe('IA v1 (NEXT_PUBLIC_SOURCE_IA_V2=0) — legacy three tabs', () => {
+  beforeEach(() => {
+    process.env[FLAG] = '0';
+  });
+
+  test('catalogue is the canonical tabs in order', () => {
     expect(SOURCE_SUBNAV_TABS.map((t) => t.key)).toEqual([
       'queue',
       'events',
+      'capabilities',
+      'portfolio',
+    ]);
+    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual([
+      'queue',
+      'events',
+      'capabilities',
       'portfolio',
     ]);
   });
 
-  test('every tab href is under /source/', () => {
-    for (const tab of SOURCE_SUBNAV_TABS) {
-      expect(tab.href.startsWith('/source/')).toBe(true);
-    }
+  test('exact top-level routes resolve to their own tab', () => {
+    expect(resolveActiveSourceTab('/source/queue')).toBe('queue');
+    expect(resolveActiveSourceTab('/source/events')).toBe('events');
+    expect(resolveActiveSourceTab('/source/capabilities')).toBe('capabilities');
+    expect(resolveActiveSourceTab('/source/portfolio')).toBe('portfolio');
   });
 
-  test('does NOT include a Renewals tab (renewals have no index route)', () => {
-    expect(
-      SOURCE_SUBNAV_TABS.some(
-        (t) => t.key === 'renewals' || t.href.includes('renewal'),
-      ),
-    ).toBe(false);
+  test('detail routes keep the Events tab lit', () => {
+    expect(resolveActiveSourceTab('/source/events/evt-ams-001')).toBe('events');
+    expect(resolveActiveSourceTab('/source/events/evt-ams-001/scorecard')).toBe('events');
+    expect(resolveActiveSourceTab('/source/events/evt-ams-001/vendors/v-2')).toBe('events');
   });
 
-  test('every tab resolves to itself for its own href', () => {
-    for (const tab of SOURCE_SUBNAV_TABS) {
-      expect(resolveActiveSourceTab(tab.href)).toBe(tab.key);
+  test('renewal + unmatched paths fall back to Queue', () => {
+    expect(resolveActiveSourceTab('/source/renewal/contract-9')).toBe('queue');
+    expect(resolveActiveSourceTab('/source/new')).toBe('queue');
+    expect(resolveActiveSourceTab(null)).toBe('queue');
+  });
+
+  test('no false-prefix match', () => {
+    expect(resolveActiveSourceTab('/source/events-archive')).toBe('queue');
+    expect(resolveActiveSourceTab('/source/queue-legacy')).toBe('queue');
+  });
+});
+
+// ── Invariants across both states ────────────────────────────────────────────
+
+describe('catalogue invariants (both IA states)', () => {
+  test('every tab href is under /source/ and no Renewals tab', () => {
+    for (const set of [SOURCE_SUBNAV_TABS, SOURCE_SUBNAV_TABS_V2]) {
+      for (const tab of set) {
+        expect(tab.href.startsWith('/source/')).toBe(true);
+        expect(tab.href.includes('renewal')).toBe(false);
+      }
     }
   });
 });

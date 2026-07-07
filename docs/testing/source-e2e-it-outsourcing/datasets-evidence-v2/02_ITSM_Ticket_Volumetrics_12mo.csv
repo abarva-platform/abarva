@@ -1,0 +1,229 @@
+month,tower,level,priority_or_channel,ticket_volume,avg_handle_min,fcr_pct,csat_pct,reopened_count,mttr_hours
+2025-06,Service Desk (L1/L1.5),L1,All,101045,10.9,76.4,82.7,4146,4.3
+2025-06,Service Desk (L1/L1.5),L1,Chat/portal share,33392,8.5,80.9,89.1,,
+2025-06,Application Support,L2L3,P1,348,,,,10,5.2
+2025-06,Application Support,L2L3,P2,2556,,,,129,17.6
+2025-06,Application Support,L2L3,P3,12085,,,,677,42.3
+2025-06,Application Support,L2L3,P4,8250,,,,248,144.7
+2025-06,Infrastructure Ops,L2L3,P1,181,,,,6,6.1
+2025-06,Infrastructure Ops,L2L3,P2,1328,,,,67,15.5
+2025-06,Infrastructure Ops,L2L3,P3,6280,,,,225,55.0
+2025-06,Infrastructure Ops,L2L3,P4,4287,,,,97,70.1
+2025-06,EUC / Field Services,L2,P2,1816,,,,63,14.9
+2025-06,EUC / Field Services,L2,P3,8587,,,,326,34.6
+2025-06,EUC / Field Services,L2,P4,5862,,,,295,86.4
+2025-06,Network Ops,L2L3,P1,92,,,,5,5.9
+2025-06,Network Ops,L2L3,P2,678,,,,22,11.6
+2025-06,Network Ops,L2L3,P3,3206,,,,71,52.2
+2025-06,Security Ops (in-scope subset),L2,P1,66,,,,2,3.4
+2025-06,Security Ops (in-scope subset),L2,P2,488,,,,27,14.4
+2025-06,Security Ops (in-scope subset),L2,P3,2308,,,,128,43.5
+2025-07,Service Desk (L1/L1.5),L1,All,108820,11.6,75.5,85.7,5588,2.3
+2025-07,Service Desk (L1/L1.5),L1,Chat/portal share,33569,9.0,80.0,87.0,,
+2025-07,Application Support,L2L3,P1,348,,,,8,4.7
+2025-07,Application Support,L2L3,P2,2553,,,,134,16.8
+2025-07,Application Support,L2L3,P3,12070,,,,440,51.7
+2025-07,Application Support,L2L3,P4,8240,,,,170,143.1
+2025-07,Infrastructure Ops,L2L3,P1,190,,,,8,3.5
+2025-07,Infrastructure Ops,L2L3,P2,1398,,,,80,14.5
+2025-07,Infrastructure Ops,L2L3,P3,6613,,,,326,58.9
+2025-07,Infrastructure Ops,L2L3,P4,4514,,,,193,116.8
+2025-07,EUC / Field Services,L2,P2,1928,,,,90,10.2
+2025-07,EUC / Field Services,L2,P3,9114,,,,224,34.0
+2025-07,EUC / Field Services,L2,P4,6222,,,,288,137.8
+2025-07,Network Ops,L2L3,P1,95,,,,5,4.6
+2025-07,Network Ops,L2L3,P2,701,,,,39,11.0
+2025-07,Network Ops,L2L3,P3,3314,,,,78,47.2
+2025-07,Security Ops (in-scope subset),L2,P1,69,,,,3,5.8
+2025-07,Security Ops (in-scope subset),L2,P2,509,,,,23,15.5
+2025-07,Security Ops (in-scope subset),L2,P3,2408,,,,59,57.1
+2025-08,Service Desk (L1/L1.5),L1,All,99331,10.9,69.7,87.6,6192,2.5
+2025-08,Service Desk (L1/L1.5),L1,Chat/portal share,30734,8.5,74.2,90.1,,
+2025-08,Application Support,L2L3,P1,365,,,,19,5.0
+2025-08,Application Support,L2L3,P2,2683,,,,139,11.9
+2025-08,Application Support,L2L3,P3,12685,,,,526,36.0
+2025-08,Application Support,L2L3,P4,8660,,,,346,145.3
+2025-08,Infrastructure Ops,L2L3,P1,188,,,,9,5.1
+2025-08,Infrastructure Ops,L2L3,P2,1383,,,,82,11.8
+2025-08,Infrastructure Ops,L2L3,P3,6542,,,,315,57.8
+2025-08,Infrastructure Ops,L2L3,P4,4466,,,,126,144.5
+2025-08,EUC / Field Services,L2,P2,1874,,,,50,15.3
+2025-08,EUC / Field Services,L2,P3,8860,,,,477,63.4
+2025-08,EUC / Field Services,L2,P4,6049,,,,360,131.0
+2025-08,Network Ops,L2L3,P1,99,,,,2,4.5
+2025-08,Network Ops,L2L3,P2,726,,,,31,12.5
+2025-08,Network Ops,L2L3,P3,3433,,,,91,53.5
+2025-08,Security Ops (in-scope subset),L2,P1,65,,,,3,5.3
+2025-08,Security Ops (in-scope subset),L2,P2,478,,,,22,9.1
+2025-08,Security Ops (in-scope subset),L2,P3,2261,,,,121,62.2
+2025-09,Service Desk (L1/L1.5),L1,All,96293,11.7,69.8,82.3,4003,4.7
+2025-09,Service Desk (L1/L1.5),L1,Chat/portal share,31970,9.1,74.3,88.6,,
+2025-09,Application Support,L2L3,P1,332,,,,13,5.2
+2025-09,Application Support,L2L3,P2,2435,,,,116,17.6
+2025-09,Application Support,L2L3,P3,11513,,,,529,56.0
+2025-09,Application Support,L2L3,P4,7860,,,,183,80.8
+2025-09,Infrastructure Ops,L2L3,P1,171,,,,7,5.3
+2025-09,Infrastructure Ops,L2L3,P2,1257,,,,49,15.7
+2025-09,Infrastructure Ops,L2L3,P3,5946,,,,134,48.6
+2025-09,Infrastructure Ops,L2L3,P4,4059,,,,84,143.2
+2025-09,EUC / Field Services,L2,P2,1675,,,,72,16.3
+2025-09,EUC / Field Services,L2,P3,7920,,,,464,32.5
+2025-09,EUC / Field Services,L2,P4,5407,,,,228,86.2
+2025-09,Network Ops,L2L3,P1,90,,,,3,3.7
+2025-09,Network Ops,L2L3,P2,660,,,,22,9.3
+2025-09,Network Ops,L2L3,P3,3122,,,,99,62.0
+2025-09,Security Ops (in-scope subset),L2,P1,63,,,,2,4.9
+2025-09,Security Ops (in-scope subset),L2,P2,462,,,,19,13.7
+2025-09,Security Ops (in-scope subset),L2,P3,2186,,,,60,57.5
+2025-10,Service Desk (L1/L1.5),L1,All,92572,11.7,75.7,85.2,4302,3.1
+2025-10,Service Desk (L1/L1.5),L1,Chat/portal share,26871,9.1,80.2,88.7,,
+2025-10,Application Support,L2L3,P1,312,,,,7,4.1
+2025-10,Application Support,L2L3,P2,2290,,,,52,12.8
+2025-10,Application Support,L2L3,P3,10829,,,,377,53.1
+2025-10,Application Support,L2L3,P4,7392,,,,193,107.8
+2025-10,Infrastructure Ops,L2L3,P1,180,,,,4,4.6
+2025-10,Infrastructure Ops,L2L3,P2,1322,,,,45,13.9
+2025-10,Infrastructure Ops,L2L3,P3,6249,,,,127,59.3
+2025-10,Infrastructure Ops,L2L3,P4,4266,,,,243,79.5
+2025-10,EUC / Field Services,L2,P2,1641,,,,67,11.8
+2025-10,EUC / Field Services,L2,P3,7760,,,,433,47.9
+2025-10,EUC / Field Services,L2,P4,5297,,,,263,101.1
+2025-10,Network Ops,L2L3,P1,92,,,,2,4.9
+2025-10,Network Ops,L2L3,P2,676,,,,23,13.6
+2025-10,Network Ops,L2L3,P3,3196,,,,154,54.1
+2025-10,Security Ops (in-scope subset),L2,P1,60,,,,3,5.1
+2025-10,Security Ops (in-scope subset),L2,P2,442,,,,24,11.5
+2025-10,Security Ops (in-scope subset),L2,P3,2089,,,,75,58.9
+2025-11,Service Desk (L1/L1.5),L1,All,96453,8.7,69.7,86.1,6592,2.6
+2025-11,Service Desk (L1/L1.5),L1,Chat/portal share,27449,6.8,74.2,89.5,,
+2025-11,Application Support,L2L3,P1,338,,,,13,4.8
+2025-11,Application Support,L2L3,P2,2479,,,,137,13.3
+2025-11,Application Support,L2L3,P3,11719,,,,584,50.2
+2025-11,Application Support,L2L3,P4,8000,,,,396,92.0
+2025-11,Infrastructure Ops,L2L3,P1,187,,,,8,5.7
+2025-11,Infrastructure Ops,L2L3,P2,1371,,,,39,15.1
+2025-11,Infrastructure Ops,L2L3,P3,6484,,,,239,46.5
+2025-11,Infrastructure Ops,L2L3,P4,4426,,,,132,152.3
+2025-11,EUC / Field Services,L2,P2,1759,,,,50,10.1
+2025-11,EUC / Field Services,L2,P3,8318,,,,476,35.8
+2025-11,EUC / Field Services,L2,P4,5678,,,,253,111.7
+2025-11,Network Ops,L2L3,P1,92,,,,1,4.4
+2025-11,Network Ops,L2L3,P2,677,,,,26,10.7
+2025-11,Network Ops,L2L3,P3,3203,,,,126,33.5
+2025-11,Security Ops (in-scope subset),L2,P1,62,,,,2,5.2
+2025-11,Security Ops (in-scope subset),L2,P2,456,,,,24,16.3
+2025-11,Security Ops (in-scope subset),L2,P3,2159,,,,118,43.6
+2025-12,Service Desk (L1/L1.5),L1,All,110547,8.5,70.5,83.8,6889,4.5
+2025-12,Service Desk (L1/L1.5),L1,Chat/portal share,32370,6.6,75.0,86.2,,
+2025-12,Application Support,L2L3,P1,388,,,,20,5.3
+2025-12,Application Support,L2L3,P2,2850,,,,114,11.9
+2025-12,Application Support,L2L3,P3,13476,,,,327,42.0
+2025-12,Application Support,L2L3,P4,9200,,,,271,139.1
+2025-12,Infrastructure Ops,L2L3,P1,211,,,,6,4.4
+2025-12,Infrastructure Ops,L2L3,P2,1553,,,,62,15.8
+2025-12,Infrastructure Ops,L2L3,P3,7343,,,,219,59.1
+2025-12,Infrastructure Ops,L2L3,P4,5013,,,,240,142.9
+2025-12,EUC / Field Services,L2,P2,2029,,,,59,17.9
+2025-12,EUC / Field Services,L2,P3,9594,,,,355,63.7
+2025-12,EUC / Field Services,L2,P4,6550,,,,211,106.7
+2025-12,Network Ops,L2L3,P1,108,,,,4,4.0
+2025-12,Network Ops,L2L3,P2,793,,,,29,11.4
+2025-12,Network Ops,L2L3,P3,3749,,,,186,29.5
+2025-12,Security Ops (in-scope subset),L2,P1,72,,,,4,4.7
+2025-12,Security Ops (in-scope subset),L2,P2,530,,,,22,11.7
+2025-12,Security Ops (in-scope subset),L2,P3,2508,,,,128,54.7
+2026-01,Service Desk (L1/L1.5),L1,All,107768,10.6,72.0,82.5,5552,4.5
+2026-01,Service Desk (L1/L1.5),L1,Chat/portal share,31300,8.3,76.5,89.5,,
+2026-01,Application Support,L2L3,P1,358,,,,17,5.0
+2026-01,Application Support,L2L3,P2,2628,,,,128,9.7
+2026-01,Application Support,L2L3,P3,12423,,,,343,53.9
+2026-01,Application Support,L2L3,P4,8481,,,,477,146.8
+2026-01,Infrastructure Ops,L2L3,P1,205,,,,4,5.9
+2026-01,Infrastructure Ops,L2L3,P2,1508,,,,66,17.4
+2026-01,Infrastructure Ops,L2L3,P3,7133,,,,369,29.6
+2026-01,Infrastructure Ops,L2L3,P4,4869,,,,266,131.6
+2026-01,EUC / Field Services,L2,P2,1998,,,,71,15.8
+2026-01,EUC / Field Services,L2,P3,9448,,,,452,33.8
+2026-01,EUC / Field Services,L2,P4,6450,,,,264,133.7
+2026-01,Network Ops,L2L3,P1,99,,,,2,4.0
+2026-01,Network Ops,L2L3,P2,733,,,,41,9.4
+2026-01,Network Ops,L2L3,P3,3465,,,,183,51.1
+2026-01,Security Ops (in-scope subset),L2,P1,70,,,,1,3.4
+2026-01,Security Ops (in-scope subset),L2,P2,517,,,,22,13.9
+2026-01,Security Ops (in-scope subset),L2,P3,2444,,,,70,57.4
+2026-02,Service Desk (L1/L1.5),L1,All,93598,11.7,70.4,84.8,6492,4.2
+2026-02,Service Desk (L1/L1.5),L1,Chat/portal share,32051,9.1,74.9,85.6,,
+2026-02,Application Support,L2L3,P1,316,,,,13,4.5
+2026-02,Application Support,L2L3,P2,2319,,,,121,11.0
+2026-02,Application Support,L2L3,P3,10964,,,,380,36.3
+2026-02,Application Support,L2L3,P4,7485,,,,407,86.7
+2026-02,Infrastructure Ops,L2L3,P1,162,,,,4,4.8
+2026-02,Infrastructure Ops,L2L3,P2,1189,,,,27,12.5
+2026-02,Infrastructure Ops,L2L3,P3,5623,,,,230,62.9
+2026-02,Infrastructure Ops,L2L3,P4,3839,,,,79,104.0
+2026-02,EUC / Field Services,L2,P2,1658,,,,38,14.8
+2026-02,EUC / Field Services,L2,P3,7841,,,,457,28.5
+2026-02,EUC / Field Services,L2,P4,5353,,,,150,133.7
+2026-02,Network Ops,L2L3,P1,85,,,,2,5.0
+2026-02,Network Ops,L2L3,P2,624,,,,33,15.2
+2026-02,Network Ops,L2L3,P3,2950,,,,75,46.4
+2026-02,Security Ops (in-scope subset),L2,P1,60,,,,1,3.5
+2026-02,Security Ops (in-scope subset),L2,P2,446,,,,10,12.5
+2026-02,Security Ops (in-scope subset),L2,P3,2113,,,,72,31.7
+2026-03,Service Desk (L1/L1.5),L1,All,97857,11.5,69.9,87.4,6543,3.8
+2026-03,Service Desk (L1/L1.5),L1,Chat/portal share,28793,9.0,74.4,88.2,,
+2026-03,Application Support,L2L3,P1,335,,,,17,5.3
+2026-03,Application Support,L2L3,P2,2463,,,,141,9.9
+2026-03,Application Support,L2L3,P3,11646,,,,667,30.7
+2026-03,Application Support,L2L3,P4,7950,,,,388,105.2
+2026-03,Infrastructure Ops,L2L3,P1,182,,,,5,4.7
+2026-03,Infrastructure Ops,L2L3,P2,1340,,,,43,18.0
+2026-03,Infrastructure Ops,L2L3,P3,6338,,,,211,42.9
+2026-03,Infrastructure Ops,L2L3,P4,4327,,,,172,107.7
+2026-03,EUC / Field Services,L2,P2,1741,,,,64,16.4
+2026-03,EUC / Field Services,L2,P3,8233,,,,242,54.9
+2026-03,EUC / Field Services,L2,P4,5620,,,,327,120.3
+2026-03,Network Ops,L2L3,P1,94,,,,4,3.6
+2026-03,Network Ops,L2L3,P2,694,,,,39,10.3
+2026-03,Network Ops,L2L3,P3,3282,,,,191,30.0
+2026-03,Security Ops (in-scope subset),L2,P1,64,,,,3,4.5
+2026-03,Security Ops (in-scope subset),L2,P2,472,,,,10,9.7
+2026-03,Security Ops (in-scope subset),L2,P3,2233,,,,117,30.8
+2026-04,Service Desk (L1/L1.5),L1,All,92376,10.9,70.5,86.2,5630,3.0
+2026-04,Service Desk (L1/L1.5),L1,Chat/portal share,28906,8.5,75.0,87.0,,
+2026-04,Application Support,L2L3,P1,334,,,,7,5.3
+2026-04,Application Support,L2L3,P2,2449,,,,115,13.5
+2026-04,Application Support,L2L3,P3,11580,,,,464,57.9
+2026-04,Application Support,L2L3,P4,7905,,,,322,157.6
+2026-04,Infrastructure Ops,L2L3,P1,181,,,,4,3.8
+2026-04,Infrastructure Ops,L2L3,P2,1334,,,,51,14.0
+2026-04,Infrastructure Ops,L2L3,P3,6306,,,,328,57.8
+2026-04,Infrastructure Ops,L2L3,P4,4305,,,,189,77.0
+2026-04,EUC / Field Services,L2,P2,1749,,,,76,11.5
+2026-04,EUC / Field Services,L2,P3,8271,,,,176,47.9
+2026-04,EUC / Field Services,L2,P4,5646,,,,291,120.7
+2026-04,Network Ops,L2L3,P1,86,,,,2,4.3
+2026-04,Network Ops,L2L3,P2,634,,,,37,10.8
+2026-04,Network Ops,L2L3,P3,2999,,,,72,42.7
+2026-04,Security Ops (in-scope subset),L2,P1,63,,,,3,3.8
+2026-04,Security Ops (in-scope subset),L2,P2,466,,,,11,10.4
+2026-04,Security Ops (in-scope subset),L2,P3,2207,,,,112,57.1
+2026-05,Service Desk (L1/L1.5),L1,All,93396,10.2,76.7,86.1,5560,4.6
+2026-05,Service Desk (L1/L1.5),L1,Chat/portal share,28701,8.0,81.2,89.7,,
+2026-05,Application Support,L2L3,P1,325,,,,16,4.4
+2026-05,Application Support,L2L3,P2,2388,,,,62,10.9
+2026-05,Application Support,L2L3,P3,11292,,,,619,57.0
+2026-05,Application Support,L2L3,P4,7709,,,,183,77.8
+2026-05,Infrastructure Ops,L2L3,P1,174,,,,4,6.0
+2026-05,Infrastructure Ops,L2L3,P2,1278,,,,38,15.9
+2026-05,Infrastructure Ops,L2L3,P3,6044,,,,258,33.1
+2026-05,Infrastructure Ops,L2L3,P4,4126,,,,233,147.1
+2026-05,EUC / Field Services,L2,P2,1668,,,,78,16.6
+2026-05,EUC / Field Services,L2,P3,7888,,,,353,59.5
+2026-05,EUC / Field Services,L2,P4,5385,,,,109,143.9
+2026-05,Network Ops,L2L3,P1,93,,,,3,4.2
+2026-05,Network Ops,L2L3,P2,683,,,,38,9.8
+2026-05,Network Ops,L2L3,P3,3232,,,,183,54.3
+2026-05,Security Ops (in-scope subset),L2,P1,64,,,,2,4.0
+2026-05,Security Ops (in-scope subset),L2,P2,470,,,,12,13.3
+2026-05,Security Ops (in-scope subset),L2,P3,2222,,,,97,39.5

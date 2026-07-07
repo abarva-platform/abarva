@@ -279,7 +279,7 @@ export function RiskLensPage() {
       }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Cross-Program Synthesizer' }}
         quote={RISK_AGENT_VOICE.quote}
         agentContext={RISK_AGENT_VOICE.agentContext}
         actions={RISK_AGENT_VOICE.actions}

@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { QueueActions } from './QueueActions';
+import { TenantIdentityStrip } from '@/components/tenant/TenantIdentityStrip';
+import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 
 export const dynamic = 'force-dynamic';
@@ -66,6 +68,7 @@ export default async function QueuePage() {
   // account label, not by their modeled role. getCurrentUser resolves the
   // linked persons row when one exists, falls back to Clerk metadata.
   const currentUser = await getCurrentUser();
+  const activeClient = await getActiveClientRow().catch(() => null);
   const clerkDisplay = [user.firstName, user.lastName].filter(Boolean).join(' ');
   const myName = currentUser?.name ?? clerkDisplay ?? myEmail;
 
@@ -97,6 +100,7 @@ export default async function QueuePage() {
       <style>{pageCss}</style>
       <div className="q-shell">
         <header className="q-header">
+          <TenantIdentityStrip clientName={activeClient?.name} surface="Home queue" />
           <div className="q-eyebrow">Home · Queue</div>
           <h1 className="q-title">{myName}, what needs you</h1>
           <p className="q-lede">

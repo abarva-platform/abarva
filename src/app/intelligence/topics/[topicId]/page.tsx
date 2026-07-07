@@ -89,6 +89,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
 
   // Tenant detection for telemetry — same pattern as J0 page.
   const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantName = activeClient?.name ?? 'Client workspace';
   const tenantKey = activeClient?.key ?? null;
   const visitorType: 'cold' | 'authenticated' =
     activeClient ? 'authenticated' : 'cold';
@@ -97,7 +98,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: `Intelligence · ${topic.title}`,
       }}
@@ -494,7 +495,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                 fontWeight: 500,
               }}
             >
-              Ask Sentinel Intel about this topic →
+              Ask Ava Intel about this topic →
             </J1TopicLink>
             <Link
               href="/intelligence/topics"
@@ -528,3 +529,6 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
     </AppShell>
   );
 }
+
+// Per-request render (tenant-scoped reads / useSearchParams CSR bailout) — no static prerender.
+export const dynamic = 'force-dynamic';

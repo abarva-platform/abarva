@@ -1,63 +1,74 @@
-import type { PatternSeed } from './seed-types';
-import { SOURCING_CATEGORY_PATTERNS } from './seed-patterns-sourcing-categories';
-import { SOURCING_CONTRACT_AUDIT_PATTERNS } from './seed-patterns-sourcing-contracts-audit';
-import { SOURCING_CONTRACTS_COMMERCIAL_PATTERNS } from './seed-patterns-sourcing-contracts-commercial';
-import { SOURCING_CONTRACT_PATTERNS } from './seed-patterns-sourcing-contracts';
-import { SOURCING_PRICING_CLOUD_PATTERNS } from './seed-patterns-sourcing-pricing-cloud';
-import { SOURCING_PRICING_PATTERNS } from './seed-patterns-sourcing-pricing';
-import { SOURCING_PROCESS_ADVANCED_PATTERNS } from './seed-patterns-sourcing-process-advanced';
-import { SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS } from './seed-patterns-sourcing-process-renewals';
-import { SOURCING_PROCESS_PATTERNS } from './seed-patterns-sourcing-process';
-import { SOURCING_REGULATORY_AI_PATTERNS } from './seed-patterns-sourcing-regulatory-ai';
-import { SOURCING_REGULATORY_PATTERNS } from './seed-patterns-sourcing-regulatory';
-import { PAT_SRC_VEN_CLOUDFLARE_001 } from './seed-patterns-sourcing-vendors-cloudflare';
-import { PAT_SRC_VEN_CONTENTSTACK_001 } from './seed-patterns-sourcing-vendors-contentstack';
-import { SOURCING_VENDOR_COUPA_PATTERNS } from './seed-patterns-sourcing-vendors-coupa';
-import { DOCUSIGN_VENDOR_PROFILE_PATTERN } from './seed-patterns-sourcing-vendors-docusign';
-import { SOURCING_VENDOR_GITHUB_PATTERNS } from './seed-patterns-sourcing-vendors-github';
-import { PAT_SRC_VEN_ACQUIA_001 } from './seed-patterns-sourcing-vendors-acquia';
-import { PAT_SRC_VEN_ADYEN_001 } from './seed-patterns-sourcing-vendors-adyen';
-import { PAT_SRC_VEN_ALGOLIA_001 } from './seed-patterns-sourcing-vendors-algolia';
-import { PAT_SRC_VEN_AZURE_001 } from './seed-patterns-sourcing-vendors-azure';
-import { PAT_SRC_VEN_BLOOMREACH_001 } from './seed-patterns-sourcing-vendors-bloomreach';
-import { PAT_SRC_VEN_ELASTIC_001 } from './seed-patterns-sourcing-vendors-elastic';
-import { PAT_SRC_VEN_GOOGLECLOUD_001 } from './seed-patterns-sourcing-vendors-googlecloud';
-import { SOURCING_VENDOR_ORACLECLOUD_PATTERNS } from './seed-patterns-sourcing-vendors-oraclecloud';
-import { PAT_SRC_VEN_OPTIMIZELY_001 } from './seed-patterns-sourcing-vendors-optimizely';
-import { PAT_SRC_VEN_NEWRELIC_001 } from './seed-patterns-sourcing-vendors-newrelic';
-import { PAT_SRC_VEN_SQUARE_001 } from './seed-patterns-sourcing-vendors-square';
-import { SOURCING_VENDOR_SAP_PATTERNS } from './seed-patterns-sourcing-vendors-sap';
-import { SMARTSHEET_VENDOR_PROFILE_PATTERNS } from './seed-patterns-sourcing-vendors-smartsheet';
-import { SOURCING_VENDOR_GITLAB_PATTERNS } from './seed-patterns-sourcing-vendors-gitlab';
-import { ASANA_VENDOR_PROFILE_PATTERNS } from './seed-patterns-sourcing-vendors-asana';
-import { SOURCING_VENDOR_SPLUNK_PATTERNS } from './seed-patterns-sourcing-vendors-splunk';
+import type { PatternSeed } from "./seed-types";
+import { SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS } from "./seed-patterns-sourcing-archetypes-failure-modes";
+import { SOURCING_ARTIFACT_TEMPLATE_PATTERNS } from "./seed-patterns-sourcing-artifact-templates";
+import { SOURCING_BAFO_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-bafo-contracts";
+import { SOURCING_BENCHMARK_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-benchmark-governance";
+import { SOURCING_CATEGORY_PATTERNS } from "./seed-patterns-sourcing-categories";
+import { SOURCING_COMMERCIAL_LEVER_PATTERNS } from "./seed-patterns-sourcing-commercial-levers";
+import { SOURCING_CORPUS_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-corpus-governance";
+import { SOURCING_CONTRACT_AUDIT_PATTERNS } from "./seed-patterns-sourcing-contracts-audit";
+import { SOURCING_CONTRACTS_COMMERCIAL_PATTERNS } from "./seed-patterns-sourcing-contracts-commercial";
+import { SOURCING_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-contracts";
+import { SOURCING_PRICING_CLOUD_PATTERNS } from "./seed-patterns-sourcing-pricing-cloud";
+import { SOURCING_PRICING_GAMING_PATTERNS } from "./seed-patterns-sourcing-pricing-gaming";
+import { SOURCING_PRICING_PATTERNS } from "./seed-patterns-sourcing-pricing";
+import { SOURCING_PROCESS_ADVANCED_PATTERNS } from "./seed-patterns-sourcing-process-advanced";
+import { SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS } from "./seed-patterns-sourcing-process-renewals";
+import { SOURCING_PROCESS_PATTERNS } from "./seed-patterns-sourcing-process";
+import { SOURCING_REGULATORY_AI_PATTERNS } from "./seed-patterns-sourcing-regulatory-ai";
+import { SOURCING_REGULATORY_PATTERNS } from "./seed-patterns-sourcing-regulatory";
+import { SOURCING_RETAIL_IT_PATTERNS } from "./seed-patterns-sourcing-retail-it";
+import { SOURCING_RFP_EVALUATION_PATTERNS } from "./seed-patterns-sourcing-rfp-evaluation";
+import { SOURCING_VALUE_PROOF_PATTERNS } from "./seed-patterns-sourcing-value-proof";
+import { PAT_SRC_VEN_CLOUDFLARE_001 } from "./seed-patterns-sourcing-vendors-cloudflare";
+import { PAT_SRC_VEN_CONTENTSTACK_001 } from "./seed-patterns-sourcing-vendors-contentstack";
+import { SOURCING_VENDOR_COUPA_PATTERNS } from "./seed-patterns-sourcing-vendors-coupa";
+import { DOCUSIGN_VENDOR_PROFILE_PATTERN } from "./seed-patterns-sourcing-vendors-docusign";
+import { SOURCING_VENDOR_GITHUB_PATTERNS } from "./seed-patterns-sourcing-vendors-github";
+import { PAT_SRC_VEN_ACQUIA_001 } from "./seed-patterns-sourcing-vendors-acquia";
+import { PAT_SRC_VEN_ADYEN_001 } from "./seed-patterns-sourcing-vendors-adyen";
+import { PAT_SRC_VEN_ALGOLIA_001 } from "./seed-patterns-sourcing-vendors-algolia";
+import { PAT_SRC_VEN_AZURE_001 } from "./seed-patterns-sourcing-vendors-azure";
+import { PAT_SRC_VEN_BLOOMREACH_001 } from "./seed-patterns-sourcing-vendors-bloomreach";
+import { PAT_SRC_VEN_ELASTIC_001 } from "./seed-patterns-sourcing-vendors-elastic";
+import { PAT_SRC_VEN_GOOGLECLOUD_001 } from "./seed-patterns-sourcing-vendors-googlecloud";
+import { SOURCING_VENDOR_ORACLECLOUD_PATTERNS } from "./seed-patterns-sourcing-vendors-oraclecloud";
+import { PAT_SRC_VEN_OPTIMIZELY_001 } from "./seed-patterns-sourcing-vendors-optimizely";
+import { PAT_SRC_VEN_NEWRELIC_001 } from "./seed-patterns-sourcing-vendors-newrelic";
+import { PAT_SRC_VEN_SQUARE_001 } from "./seed-patterns-sourcing-vendors-square";
+import { SOURCING_VENDOR_SAP_PATTERNS } from "./seed-patterns-sourcing-vendors-sap";
+import { SMARTSHEET_VENDOR_PROFILE_PATTERNS } from "./seed-patterns-sourcing-vendors-smartsheet";
+import { SOURCING_VENDOR_GITLAB_PATTERNS } from "./seed-patterns-sourcing-vendors-gitlab";
+import { ASANA_VENDOR_PROFILE_PATTERNS } from "./seed-patterns-sourcing-vendors-asana";
+import { SOURCING_VENDOR_SPLUNK_PATTERNS } from "./seed-patterns-sourcing-vendors-splunk";
+import { SOURCING_VENDOR_PROFILE_REQUIREMENT_PATTERNS } from "./seed-patterns-sourcing-vendor-profile-requirements";
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
   {
-    id: 'PAT-SRC-001',
-    slug: 'vendor-bafo-orchestration',
-    title: 'Vendor BAFO Orchestration',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-001",
+    slug: "vendor-bafo-orchestration",
+    title: "Vendor BAFO Orchestration",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Late-stage sourcing events produce reliable decisions when the BAFO round is treated as a governed evidence-collection sequence rather than an informal commercial follow-up.',
+      "Late-stage sourcing events produce reliable decisions when the BAFO round is treated as a governed evidence-collection sequence rather than an informal commercial follow-up.",
     applicability:
-      'Apply when a sourcing event has narrowed to a finalist set and the commercial decision must be made on comparable submissions, explicit dates, and named decision owners.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when a sourcing event has narrowed to a finalist set and the commercial decision must be made on comparable submissions, explicit dates, and named decision owners.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.86,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 4,
     sourceDocuments: [
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-002', 'PAT-SRC-007', 'PAT-SRC-011'],
+    relatedPatternIds: ["PAT-SRC-002", "PAT-SRC-007", "PAT-SRC-011"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -85,30 +96,30 @@ The pattern fails when BAFO is treated as an unstructured pricing chase, when th
 Issue BAFO invitation letter to 2–3 vendors (down-selecting from initial-bid field); include: specific areas for improvement (price levers, SLA uplifts, commercial term changes), a revised pricing template, and a firm deadline — no extensions. Conduct bilateral negotiation sessions before BAFO close: use competitive tension explicitly ("another vendor has addressed X, we expect you to match or exceed"); push on: unit pricing, implementation risk transfer, payment milestones, warranty periods, exit provisions. Identify price levers: volume commitments, payment terms acceleration, multi-year lock-in in exchange for rate card reduction, reduced scope optionality. Evaluate BAFO responses against the updated scorecard; re-run TCO model with final pricing; document final technical and commercial scores. Gate criteria before advancing: BAFO responses received by all invited vendors; evaluation panel scores finalised, documented, and signed by panel members; recommended vendor identified with full rationale; approval authority notified. Outputs: BAFO invitation letters, bilateral negotiation records, updated TCO model, BAFO evaluation report, panel scoring sign-off sheet.`,
   },
   {
-    id: 'PAT-SRC-002',
-    slug: 'vendor-response-completeness-threshold',
-    title: 'Vendor Response Completeness Threshold',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-002",
+    slug: "vendor-response-completeness-threshold",
+    title: "Vendor Response Completeness Threshold",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Final-round vendor decisions improve when response completeness is enforced as a threshold gate instead of being compensated for during subjective committee discussion.',
+      "Final-round vendor decisions improve when response completeness is enforced as a threshold gate instead of being compensated for during subjective committee discussion.",
     applicability:
-      'Apply when proposals or BAFO responses vary in completeness across pricing, staffing, governance, transition, or service-scope sections.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when proposals or BAFO responses vary in completeness across pricing, staffing, governance, transition, or service-scope sections.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.81,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 4,
     sourceDocuments: [
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-001', 'PAT-SRC-006', 'PAT-SRC-007'],
+    relatedPatternIds: ["PAT-SRC-001", "PAT-SRC-006", "PAT-SRC-007"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -133,29 +144,29 @@ The pattern loses value if reviewers silently score around missing sections, if 
 - Vendor responses are evaluated before selection, not after award`,
   },
   {
-    id: 'PAT-SRC-003',
-    slug: 'ten-stage-sourcing-event-governance',
-    title: 'Ten-Stage Sourcing Event Governance',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-003",
+    slug: "ten-stage-sourcing-event-governance",
+    title: "Ten-Stage Sourcing Event Governance",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Strategic sourcing work is more explainable and reusable when the event lifecycle is modelled as a fixed stage system with explicit stage and gate status values.',
+      "Strategic sourcing work is more explainable and reusable when the event lifecycle is modelled as a fixed stage system with explicit stage and gate status values.",
     applicability:
-      'Apply to sourcing programmes that need transparent progression from intake through value realization and must expose status to downstream users or agents.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply to sourcing programmes that need transparent progression from intake through value realization and must expose status to downstream users or agents.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.85,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 10,
     sourceDocuments: [
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-001', 'PAT-SRC-004', 'PAT-SRC-011'],
+    relatedPatternIds: ["PAT-SRC-001", "PAT-SRC-004", "PAT-SRC-011"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -180,30 +191,30 @@ The pattern weakens when teams invent one-off stage names, collapse evaluation a
 - Smoke tests are defined against stage-correct rendering of the AMS storyline`,
   },
   {
-    id: 'PAT-SRC-004',
-    slug: 'linked-program-commercial-dependency-mapping',
-    title: 'Linked-Program Commercial Dependency Mapping',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-004",
+    slug: "linked-program-commercial-dependency-mapping",
+    title: "Linked-Program Commercial Dependency Mapping",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'A sourcing event becomes strategically useful when its downstream programme dependencies are explicit, traceable, and visible on the event itself.',
+      "A sourcing event becomes strategically useful when its downstream programme dependencies are explicit, traceable, and visible on the event itself.",
     applicability:
-      'Apply when a commercial event informs a transformation programme gate, architecture choice, or value-hypothesis decision outside the sourcing workflow.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when a commercial event informs a transformation programme gate, architecture choice, or value-hypothesis decision outside the sourcing workflow.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.84,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 3,
     sourceDocuments: [
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-001', 'PAT-SRC-003', 'PAT-SRC-012'],
+    relatedPatternIds: ["PAT-SRC-001", "PAT-SRC-003", "PAT-SRC-012"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -227,30 +238,30 @@ The pattern fails when linkages are implied verbally but not represented in the 
 - Tower spec cites source events as upstream inputs for vendor and spend decisions`,
   },
   {
-    id: 'PAT-SRC-005',
-    slug: 'vendor-consolidation-event-architecture',
-    title: 'Vendor Consolidation Event Architecture',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-005",
+    slug: "vendor-consolidation-event-architecture",
+    title: "Vendor Consolidation Event Architecture",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Multi-vendor consolidation decisions are more defensible when the event is structured around comparative architecture, commercial scope, and elimination logic rather than price-alone shortlisting.',
+      "Multi-vendor consolidation decisions are more defensible when the event is structured around comparative architecture, commercial scope, and elimination logic rather than price-alone shortlisting.",
     applicability:
-      'Apply to sourcing events where an enterprise is reducing vendors, rationalizing operating scope, or selecting a strategic long-horizon managed-services partner.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply to sourcing events where an enterprise is reducing vendors, rationalizing operating scope, or selecting a strategic long-horizon managed-services partner.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.83,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 4,
     sourceDocuments: [
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-      'docs/build/PATTERNS_AND_KNOWLEDGE_LAYER_BACKLOG.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/build/PATTERNS_AND_KNOWLEDGE_LAYER_BACKLOG.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-006', 'PAT-SRC-008', 'PAT-SRC-009'],
+    relatedPatternIds: ["PAT-SRC-006", "PAT-SRC-008", "PAT-SRC-009"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -274,28 +285,26 @@ The pattern degrades when vendor elimination is narrative-only, when the event i
 - The event feeds a linked transformation programme, not a stand-alone procurement award`,
   },
   {
-    id: 'PAT-SRC-006',
-    slug: 'transition-plan-sufficiency-screen',
-    title: 'Transition Plan Sufficiency Screen',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-006",
+    slug: "transition-plan-sufficiency-screen",
+    title: "Transition Plan Sufficiency Screen",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Transition plans should function as a hard screening device in managed-services sourcing because inadequate transition detail predicts delivery instability after award.',
+      "Transition plans should function as a hard screening device in managed-services sourcing because inadequate transition detail predicts delivery instability after award.",
     applicability:
-      'Apply when vendors will assume live operational scope and must show migration sequencing, staffing, governance, and change-control readiness before award.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when vendors will assume live operational scope and must show migration sequencing, staffing, governance, and change-control readiness before award.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.82,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 2,
-    sourceDocuments: [
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-    ],
+    sourceDocuments: ["docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-002', 'PAT-SRC-005', 'PAT-SRC-012'],
+    relatedPatternIds: ["PAT-SRC-002", "PAT-SRC-005", "PAT-SRC-012"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -318,30 +327,30 @@ Teams often rationalize a weak transition plan because the vendor is inexpensive
 - Expected transition-plan depth cited as 25-40 pages for the AMS event`,
   },
   {
-    id: 'PAT-SRC-007',
-    slug: 'vendor-bafo-scoring-rubric',
-    title: 'Vendor BAFO Scoring Rubric',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-007",
+    slug: "vendor-bafo-scoring-rubric",
+    title: "Vendor BAFO Scoring Rubric",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Final-round vendor comparison is reusable at scale when BAFO submissions are scored through a stable rubric that binds pricing, scope, staffing, governance, and risk into one comparable frame.',
+      "Final-round vendor comparison is reusable at scale when BAFO submissions are scored through a stable rubric that binds pricing, scope, staffing, governance, and risk into one comparable frame.",
     applicability:
-      'Apply when a sourcing team needs to compare finalist vendors fairly, explain the ranking to executives, and reuse the structure across events.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when a sourcing team needs to compare finalist vendors fairly, explain the ranking to executives, and reuse the structure across events.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.87,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 23,
     sourceDocuments: [
-      'docs/build/INTELLIGENCE_DESIGN_SPEC.md',
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
+      "docs/build/INTELLIGENCE_DESIGN_SPEC.md",
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-001', 'PAT-SRC-002', 'PAT-SRC-008'],
+    relatedPatternIds: ["PAT-SRC-001", "PAT-SRC-002", "PAT-SRC-008"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -365,30 +374,30 @@ The rubric loses value if criteria are changed after responses arrive, if missin
 - BAFO negotiation points for Northstar and ArcVault map naturally into rubric dimensions`,
   },
   {
-    id: 'PAT-SRC-008',
-    slug: 'vendor-price-benchmarking-and-variance-normalization',
-    title: 'Vendor Price Benchmarking and Variance Normalization',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-008",
+    slug: "vendor-price-benchmarking-and-variance-normalization",
+    title: "Vendor Price Benchmarking and Variance Normalization",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Commercial decisions improve when vendor pricing is normalized against scope and benchmark variance instead of being read as absolute numbers in isolation.',
+      "Commercial decisions improve when vendor pricing is normalized against scope and benchmark variance instead of being read as absolute numbers in isolation.",
     applicability:
-      'Apply when pricing bands vary significantly across proposals or when downstream strategy questions depend on understanding commercial spread, not just list rates.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when pricing bands vary significantly across proposals or when downstream strategy questions depend on understanding commercial spread, not just list rates.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.8,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 4,
     sourceDocuments: [
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-005', 'PAT-SRC-007', 'PAT-SRC-010'],
+    relatedPatternIds: ["PAT-SRC-005", "PAT-SRC-007", "PAT-SRC-010"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -412,29 +421,29 @@ The pattern fails when price is compared without scope normalization, when bench
 - AI cloud spend pressure storyline reuses sourcing-style normalization thinking for vendor economics`,
   },
   {
-    id: 'PAT-SRC-009',
-    slug: 'negotiation-leverage-preservation',
-    title: 'Negotiation Leverage Preservation',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-009",
+    slug: "negotiation-leverage-preservation",
+    title: "Negotiation Leverage Preservation",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Enterprises preserve negotiating power by keeping finalists comparable, deferring premature commitment signals, and separating base scope from advisory or optional commercial add-ons.',
+      "Enterprises preserve negotiating power by keeping finalists comparable, deferring premature commitment signals, and separating base scope from advisory or optional commercial add-ons.",
     applicability:
-      'Apply when a sourcing team is managing a finalist round and wants to avoid giving away leverage through unclear scope, single-vendor dependence, or bundled commercial asks.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when a sourcing team is managing a finalist round and wants to avoid giving away leverage through unclear scope, single-vendor dependence, or bundled commercial asks.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.78,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 3,
     sourceDocuments: [
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-      'docs/build/PATTERNS_AND_KNOWLEDGE_LAYER_BACKLOG.md',
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/build/PATTERNS_AND_KNOWLEDGE_LAYER_BACKLOG.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-001', 'PAT-SRC-005', 'PAT-SRC-008'],
+    relatedPatternIds: ["PAT-SRC-001", "PAT-SRC-005", "PAT-SRC-008"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -458,32 +467,32 @@ The pattern weakens when the team signals a preferred vendor too early, accepts 
 - Vendor consolidation playbook in the backlog references this pattern with PAT-SRC-005`,
   },
   {
-    id: 'PAT-SRC-010',
-    slug: 'vendor-claim-verification-protocol',
-    title: 'Vendor-Claim Verification Protocol',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-010",
+    slug: "vendor-claim-verification-protocol",
+    title: "Vendor-Claim Verification Protocol",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Commercial claims should be handled as testable assertions with evidence and contradiction hooks, not accepted at face value during sourcing.',
+      "Commercial claims should be handled as testable assertions with evidence and contradiction hooks, not accepted at face value during sourcing.",
     applicability:
-      'Apply when vendors make delivery, staffing, pricing, or implementation claims that materially affect selection and cannot be trusted without corroboration.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when vendors make delivery, staffing, pricing, or implementation claims that materially affect selection and cannot be trusted without corroboration.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.88,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 5,
     sourceDocuments: [
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-008', 'PAT-SRC-010', 'PAT-SRC-012'],
+    relatedPatternIds: ["PAT-SRC-008", "PAT-SRC-010", "PAT-SRC-012"],
     derivedFromPatternIds: [],
-    taggedContradictionIds: ['CON-001'],
+    taggedContradictionIds: ["CON-001"],
     body: `## Summary
 The Source build spec defines Sentinel's voice around verified, asserted, and inferred facts. That is a sourcing protocol: separate what is evidenced from what a vendor claims, then trace unresolved gaps into contradiction handling. The pattern is critical when claims about implementation speed, staffing sufficiency, or scope completeness would alter the selection outcome.
 
@@ -506,28 +515,26 @@ The pattern breaks when teams collapse verified and asserted facts into a single
 - CON-001 is pre-linked for contradiction resolution in Phase 1`,
   },
   {
-    id: 'PAT-SRC-011',
-    slug: 'selection-committee-governance-cadence',
-    title: 'Selection Committee Governance Cadence',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-011",
+    slug: "selection-committee-governance-cadence",
+    title: "Selection Committee Governance Cadence",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Final vendor decisions are more durable when the approval forum, chair, participants, and calendar are explicit before BAFO responses arrive.',
+      "Final vendor decisions are more durable when the approval forum, chair, participants, and calendar are explicit before BAFO responses arrive.",
     applicability:
-      'Apply when a sourcing event requires executive or cross-functional approval and committee timing can become the hidden critical path.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when a sourcing event requires executive or cross-functional approval and committee timing can become the hidden critical path.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.79,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 3,
-    sourceDocuments: [
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-    ],
+    sourceDocuments: ["docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-001', 'PAT-SRC-003', 'PAT-SRC-007'],
+    relatedPatternIds: ["PAT-SRC-001", "PAT-SRC-003", "PAT-SRC-007"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -554,30 +561,30 @@ The pattern fails when sourcing assumes approval will materialize after analysis
 Prepare Award Recommendation Paper: summarise evaluation methodology, scoring outcomes, BAFO results, TCO comparison, and a clear recommendation with supporting rationale; include risk assessment of the recommended vendor. Present to the approval authority (CPO, CFO, board committee, or delegated approver per the Scheme of Delegation); obtain written approval before communicating to vendors. Initiate legal review of Heads of Terms and preferred contractual framework; identify material negotiation points (liability caps, IP ownership, data protection schedules, termination rights). Issue standstill notification to unsuccessful vendors (mandatory in regulated procurement; best practice in commercial); document debrief availability. Gate criteria before advancing: written award approval obtained from required authority; standstill period complete (or explicitly waived with legal sign-off); Heads of Terms agreed; contract negotiation formally commenced. Outputs: Award Recommendation Paper, approval authority sign-off, standstill notification letters, Heads of Terms, Negotiation Issues Log.`,
   },
   {
-    id: 'PAT-SRC-012',
-    slug: 'mobilization-timeline-reality-check',
-    title: 'Mobilization Timeline Reality Check',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-012",
+    slug: "mobilization-timeline-reality-check",
+    title: "Mobilization Timeline Reality Check",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Sourcing decisions should explicitly discount vendors whose onboarding or mobilization timelines conflict with programme dependency windows, even when the proposal is otherwise attractive.',
+      "Sourcing decisions should explicitly discount vendors whose onboarding or mobilization timelines conflict with programme dependency windows, even when the proposal is otherwise attractive.",
     applicability:
-      'Apply when award timing affects a downstream delivery milestone, integration window, or seasonal operating commitment.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply when award timing affects a downstream delivery milestone, integration window, or seasonal operating commitment.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.86,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 3,
     sourceDocuments: [
-      'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md',
-      'docs/build/SOURCE_BUILD_SPEC.md',
-      'docs/source-material/build-specs/abarva-source-build-spec.md',
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/source-material/build-specs/abarva-source-build-spec.md",
     ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-004', 'PAT-SRC-006', 'PAT-SRC-010'],
+    relatedPatternIds: ["PAT-SRC-004", "PAT-SRC-006", "PAT-SRC-010"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -632,26 +639,26 @@ Execute the contract: ensure all schedules (SLA schedule, data processing agreem
   //   Consulting     → PAT-SRC-024 (new)
 
   {
-    id: 'PAT-SRC-013',
-    slug: 'procurement-strategy-and-scoping',
-    title: 'Procurement Strategy and Scoping (Plan Stage)',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-013",
+    slug: "procurement-strategy-and-scoping",
+    title: "Procurement Strategy and Scoping (Plan Stage)",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Strategic sourcing outcomes improve when the Plan stage transforms a business need into an approved mandate with documented make-vs-buy rationale, cross-functional requirements, and a fixed procurement timeline before any supplier engagement.',
+      "Strategic sourcing outcomes improve when the Plan stage transforms a business need into an approved mandate with documented make-vs-buy rationale, cross-functional requirements, and a fixed procurement timeline before any supplier engagement.",
     applicability:
-      'Apply at the outset of any sourcing programme, before RFI issue, to ensure mandate, budget, and requirements have been signed off and the evaluation team is resourced.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply at the outset of any sourcing programme, before RFI issue, to ensure mandate, budget, and requirements have been signed off and the evaluation team is resourced.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.84,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 10,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-003', 'PAT-SRC-014'],
+    relatedPatternIds: ["PAT-SRC-003", "PAT-SRC-014"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -675,26 +682,26 @@ Requirements Document v1.0, Procurement Strategy Brief, stakeholder RACI, indica
   },
 
   {
-    id: 'PAT-SRC-014',
-    slug: 'rfi-market-engagement',
-    title: 'RFI Market Engagement (RFI Stage)',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-014",
+    slug: "rfi-market-engagement",
+    title: "RFI Market Engagement (RFI Stage)",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'A structured RFI stage builds a qualified long list before any competitive tender, reducing the risk of advancing unqualified or financially fragile vendors into the RFP round.',
+      "A structured RFI stage builds a qualified long list before any competitive tender, reducing the risk of advancing unqualified or financially fragile vendors into the RFP round.",
     applicability:
-      'Apply after Plan sign-off when the market is not fully mapped. Skip when the vendor landscape is already known and a direct-to-RFP approach is defensible.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply after Plan sign-off when the market is not fully mapped. Skip when the vendor landscape is already known and a direct-to-RFP approach is defensible.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.82,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 6,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-013', 'PAT-SRC-015'],
+    relatedPatternIds: ["PAT-SRC-013", "PAT-SRC-015"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -718,26 +725,26 @@ Supplier Capability Matrix, long list of 6–10 vendors with scoring summary, sh
   },
 
   {
-    id: 'PAT-SRC-015',
-    slug: 'vendor-qualification-down-selection',
-    title: 'Vendor Qualification and Down-Selection (Shortlist Stage)',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-015",
+    slug: "vendor-qualification-down-selection",
+    title: "Vendor Qualification and Down-Selection (Shortlist Stage)",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Protects the evaluation team\'s bandwidth and signals market seriousness by rigorously narrowing the long list to 3–5 vendors capable of responding meaningfully to a full RFP.',
+      "Protects the evaluation team's bandwidth and signals market seriousness by rigorously narrowing the long list to 3–5 vendors capable of responding meaningfully to a full RFP.",
     applicability:
-      'Apply after RFI scoring to produce a written, approved shortlist with documented inclusion and exclusion rationale before issuing the RFP.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply after RFI scoring to produce a written, approved shortlist with documented inclusion and exclusion rationale before issuing the RFP.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.83,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 5,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-014', 'PAT-SRC-016'],
+    relatedPatternIds: ["PAT-SRC-014", "PAT-SRC-016"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -761,26 +768,26 @@ Scored Capability Matrix with shortlist rationale, vendor shortlist approval mem
   },
 
   {
-    id: 'PAT-SRC-016',
-    slug: 'request-for-proposal-governance',
-    title: 'Request for Proposal Governance (RFP Stage)',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-016",
+    slug: "request-for-proposal-governance",
+    title: "Request for Proposal Governance (RFP Stage)",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Comparable, decision-grade proposals require the evaluation scorecard to be locked before any proposals are received — scoring criteria changed after receipt constitutes manipulation.',
+      "Comparable, decision-grade proposals require the evaluation scorecard to be locked before any proposals are received — scoring criteria changed after receipt constitutes manipulation.",
     applicability:
-      'Apply to any formal competitive tender where shortlisted vendors will submit binding technical and commercial proposals.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply to any formal competitive tender where shortlisted vendors will submit binding technical and commercial proposals.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.85,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 8,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-015', 'PAT-SRC-017', 'PAT-SRC-002'],
+    relatedPatternIds: ["PAT-SRC-015", "PAT-SRC-017", "PAT-SRC-002"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -804,26 +811,26 @@ RFP document (final issued version), evaluation scorecard, no-collusion declarat
   },
 
   {
-    id: 'PAT-SRC-017',
-    slug: 'clarification-period-management',
-    title: 'Clarification Period Management (Q&A Stage)',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-017",
+    slug: "clarification-period-management",
+    title: "Clarification Period Management (Q&A Stage)",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Competitive fairness requires all Q&A responses to be shared simultaneously with all bidders — bilateral verbal clarifications create information asymmetry that invalidates the evaluation.',
+      "Competitive fairness requires all Q&A responses to be shared simultaneously with all bidders — bilateral verbal clarifications create information asymmetry that invalidates the evaluation.",
     applicability:
-      'Apply in the window between RFP issue and proposal deadline to manage vendor questions through a governed, auditable process.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply in the window between RFP issue and proposal deadline to manage vendor questions through a governed, auditable process.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.84,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 7,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-016', 'PAT-SRC-018'],
+    relatedPatternIds: ["PAT-SRC-016", "PAT-SRC-018"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -847,26 +854,30 @@ Numbered Q&A log (all questions and answers), any RFP addenda, final clarificati
   },
 
   {
-    id: 'PAT-SRC-018',
-    slug: 'initial-bid-evaluation-and-triage',
-    title: 'Initial Bid Evaluation and Non-Conformance Triage (Initial-Bid Stage)',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-018",
+    slug: "initial-bid-evaluation-and-triage",
+    title:
+      "Initial Bid Evaluation and Non-Conformance Triage (Initial-Bid Stage)",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'The Initial-Bid stage is diagnostic, not decisional — its purpose is to establish a commercial baseline, surface non-conformances, and validate TCO comparability before any negotiation begins.',
+      "The Initial-Bid stage is diagnostic, not decisional — its purpose is to establish a commercial baseline, surface non-conformances, and validate TCO comparability before any negotiation begins.",
     applicability:
-      'Apply on receipt of first-round proposals to establish compliance, independent scoring, and total cost of ownership baseline before the BAFO round.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply on receipt of first-round proposals to establish compliance, independent scoring, and total cost of ownership baseline before the BAFO round.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.83,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 4,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md', 'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md'],
+    sourceDocuments: [
+      "docs/build/SOURCE_BUILD_SPEC.md",
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+    ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-002', 'PAT-SRC-008', 'PAT-SRC-017'],
+    relatedPatternIds: ["PAT-SRC-002", "PAT-SRC-008", "PAT-SRC-017"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -890,26 +901,26 @@ Compliance check log, scored evaluation matrix (initial), TCO comparison model, 
   },
 
   {
-    id: 'PAT-SRC-019',
-    slug: 'vendor-onboarding-and-hypercare',
-    title: 'Vendor Onboarding and Hypercare (Onboard Stage)',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-019",
+    slug: "vendor-onboarding-and-hypercare",
+    title: "Vendor Onboarding and Hypercare (Onboard Stage)",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Hypercare must be a formally bounded period with an explicit exit sign-off, because undefined hypercare end points create SLA ambiguity and undermine the governance baseline established during award.',
+      "Hypercare must be a formally bounded period with an explicit exit sign-off, because open-ended hypercare periods create SLA ambiguity and undermine the governance baseline established during award.",
     applicability:
-      'Apply after contract execution to validate go-live readiness, manage the elevated-support period, and confirm steady-state transition through a post-implementation review.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply after contract execution to validate go-live readiness, manage the elevated-support period, and confirm steady-state transition through a post-implementation review.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.81,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 3,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-012', 'PAT-SRC-006'],
+    relatedPatternIds: ["PAT-SRC-012", "PAT-SRC-006"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -947,26 +958,29 @@ Go-live checklist sign-off, hypercare exit report, first invoice validation reco
   //   Consulting     → PAT-SRC-024 (new — no prior coverage)
 
   {
-    id: 'PAT-SRC-020',
-    slug: 'ams-procurement-playbook',
-    title: 'AMS Procurement Playbook',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-020",
+    slug: "ams-procurement-playbook",
+    title: "AMS Procurement Playbook",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'AMS procurement decisions are durable when evaluation dimensions, contract terms, and pricing benchmarks are treated as a category-specific framework rather than adapted generically from commodity purchasing.',
+      "AMS procurement decisions are durable when evaluation dimensions, contract terms, and pricing benchmarks are treated as a category-specific framework rather than adapted generically from commodity purchasing.",
     applicability:
-      'Apply to sourcing events for Application Managed Services, including vendor consolidation, re-tender, and operating-model transformation.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply to sourcing events for Application Managed Services, including vendor consolidation, re-tender, and operating-model transformation.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.85,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 4,
-    sourceDocuments: ['docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md', 'docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: [
+      "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md",
+      "docs/build/SOURCE_BUILD_SPEC.md",
+    ],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-005', 'PAT-SRC-006', 'PAT-SRC-012'],
+    relatedPatternIds: ["PAT-SRC-005", "PAT-SRC-006", "PAT-SRC-012"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -986,26 +1000,26 @@ AMS contracts typically 15–40% of application development cost per year. Offsh
   },
 
   {
-    id: 'PAT-SRC-021',
-    slug: 'saas-procurement-playbook',
-    title: 'SaaS Procurement Playbook',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-021",
+    slug: "saas-procurement-playbook",
+    title: "SaaS Procurement Playbook",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'SaaS procurement value is preserved through negotiated renewal caps, explicit data portability rights, and AI/ML training data opt-outs — terms that are far harder to obtain after signature than before.',
+      "SaaS procurement value is preserved through negotiated renewal caps, explicit data portability rights, and AI/ML training data opt-outs — terms that are far harder to obtain after signature than before.",
     applicability:
-      'Apply to sourcing events for SaaS platforms, cloud software, CRM/ERP systems, and subscription-based tooling.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply to sourcing events for SaaS platforms, cloud software, CRM/ERP systems, and subscription-based tooling.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.83,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 5,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
-    regulatoryChips: ['GDPR', 'CCPA'],
-    relatedPatternIds: ['PAT-SRC-010'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
+    regulatoryChips: ["GDPR", "CCPA"],
+    relatedPatternIds: ["PAT-SRC-010"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -1022,26 +1036,26 @@ Data portability in open formats at any time, DPA and GDPR/CCPA schedules, SLA u
   },
 
   {
-    id: 'PAT-SRC-022',
-    slug: 'infrastructure-cloud-procurement-playbook',
-    title: 'Infrastructure and Cloud Procurement Playbook',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-022",
+    slug: "infrastructure-cloud-procurement-playbook",
+    title: "Infrastructure and Cloud Procurement Playbook",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Cloud infrastructure procurement decisions consistently underestimate egress costs by 3–5x; modelling worst-case egress before signature is the single highest-value pre-award action.',
+      "Cloud infrastructure procurement decisions consistently underestimate egress costs by 3–5x; modelling worst-case egress before signature is the single highest-value pre-award action.",
     applicability:
-      'Apply to sourcing events for IaaS, PaaS, cloud platforms, hosting, and data centre services.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply to sourcing events for IaaS, PaaS, cloud platforms, hosting, and data centre services.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.82,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 3,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
-    regulatoryChips: ['FedRAMP', 'ISO-27001'],
-    relatedPatternIds: ['PAT-SRC-008'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
+    regulatoryChips: ["FedRAMP", "ISO-27001"],
+    relatedPatternIds: ["PAT-SRC-008"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -1055,26 +1069,26 @@ Committed use discount with flex-up rights, egress fee caps or waiver for compet
   },
 
   {
-    id: 'PAT-SRC-023',
-    slug: 'implementation-si-procurement-playbook',
-    title: 'Implementation and Systems Integration Procurement Playbook',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-023",
+    slug: "implementation-si-procurement-playbook",
+    title: "Implementation and Systems Integration Procurement Playbook",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Fixed-price engagement models are preferable for well-defined SI scope because they transfer delivery risk to the vendor — T&M should be reserved for genuinely exploratory phases with clear governance checkpoints.',
+      "Fixed-price engagement models are preferable for well-defined SI scope because they transfer delivery risk to the vendor — T&M should be reserved for genuinely exploratory phases with clear governance checkpoints.",
     applicability:
-      'Apply to sourcing events for systems integration, implementation programmes, digital transformation delivery, and bespoke build engagements.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
+      "Apply to sourcing events for systems integration, implementation programmes, digital transformation delivery, and bespoke build engagements.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
     confidence: 0.82,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 4,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-006', 'PAT-SRC-010'],
+    relatedPatternIds: ["PAT-SRC-006", "PAT-SRC-010"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -1088,26 +1102,26 @@ Change control process with quantified impact assessment before approval, liquid
   },
 
   {
-    id: 'PAT-SRC-024',
-    slug: 'consulting-advisory-procurement-playbook',
-    title: 'Consulting and Advisory Procurement Playbook',
-    domain: 'sourcing',
-    tier: 'validated',
-    vertical: 'cross-industry',
+    id: "PAT-SRC-024",
+    slug: "consulting-advisory-procurement-playbook",
+    title: "Consulting and Advisory Procurement Playbook",
+    domain: "sourcing",
+    tier: "validated",
+    vertical: "cross-industry",
     thesis:
-      'Consulting engagements produce measurable value when scoped as output-based deliverables rather than time-based retainers — specifying what documents, frameworks, or decisions will be produced prevents scope drift.',
+      "Consulting engagements produce measurable value when scoped as output-based deliverables rather than time-based retainers — specifying what documents, frameworks, or decisions will be produced prevents scope drift.",
     applicability:
-      'Apply to sourcing events for strategy, advisory, assessment, and consulting engagements where the primary output is intellectual rather than operational.',
-    status: 'AUTHORED-DRAFT',
-    version: '1.0',
-    confidence: 0.80,
-    createdFrom: 'human_authored',
-    createdBy: 'codex',
-    createdAt: '2026-04-28',
+      "Apply to sourcing events for strategy, advisory, assessment, and consulting engagements where the primary output is intellectual rather than operational.",
+    status: "AUTHORED-DRAFT",
+    version: "1.0",
+    confidence: 0.8,
+    createdFrom: "human_authored",
+    createdBy: "codex",
+    createdAt: "2026-04-28",
     instanceCount: 3,
-    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    sourceDocuments: ["docs/build/SOURCE_BUILD_SPEC.md"],
     regulatoryChips: [],
-    relatedPatternIds: ['PAT-SRC-010'],
+    relatedPatternIds: ["PAT-SRC-010"],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     body: `## Summary
@@ -1119,17 +1133,27 @@ Broad T&M engagements without milestone checkpoints, rate cards that allow grade
 ## Contract terms to negotiate hard
 Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable acceptance criteria with revision rounds, IP full assignment for all bespoke work product, conflict of interest disclosure obligations, 12-month non-solicitation on key client staff.`,
   },
+  ...SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS,
+  ...SOURCING_ARTIFACT_TEMPLATE_PATTERNS,
+  ...SOURCING_BAFO_CONTRACT_PATTERNS,
+  ...SOURCING_BENCHMARK_GOVERNANCE_PATTERNS,
   ...SOURCING_CATEGORY_PATTERNS,
+  ...SOURCING_COMMERCIAL_LEVER_PATTERNS,
+  ...SOURCING_CORPUS_GOVERNANCE_PATTERNS,
   ...SOURCING_CONTRACT_AUDIT_PATTERNS,
   ...SOURCING_CONTRACT_PATTERNS,
   ...SOURCING_CONTRACTS_COMMERCIAL_PATTERNS,
   ...SOURCING_PRICING_CLOUD_PATTERNS,
+  ...SOURCING_PRICING_GAMING_PATTERNS,
   ...SOURCING_PRICING_PATTERNS,
   ...SOURCING_PROCESS_ADVANCED_PATTERNS,
   ...SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS,
   ...SOURCING_PROCESS_PATTERNS,
   ...SOURCING_REGULATORY_AI_PATTERNS,
   ...SOURCING_REGULATORY_PATTERNS,
+  ...SOURCING_RETAIL_IT_PATTERNS,
+  ...SOURCING_RFP_EVALUATION_PATTERNS,
+  ...SOURCING_VALUE_PROOF_PATTERNS,
   PAT_SRC_VEN_CLOUDFLARE_001,
   DOCUSIGN_VENDOR_PROFILE_PATTERN,
   ...SOURCING_VENDOR_GITLAB_PATTERNS,
@@ -1138,6 +1162,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SMARTSHEET_VENDOR_PROFILE_PATTERNS,
   ...SOURCING_VENDOR_COUPA_PATTERNS,
   ...SOURCING_VENDOR_SPLUNK_PATTERNS,
+  ...SOURCING_VENDOR_PROFILE_REQUIREMENT_PATTERNS,
   PAT_SRC_VEN_NEWRELIC_001,
   PAT_SRC_VEN_ELASTIC_001,
   ...SOURCING_VENDOR_SAP_PATTERNS,
@@ -1154,6 +1179,8 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
-export const SOURCING_PATTERN_IDS = SOURCING_PATTERNS.map((pattern) => pattern.id);
+export const SOURCING_PATTERN_IDS = SOURCING_PATTERNS.map(
+  (pattern) => pattern.id,
+);
 
 export default SOURCING_PATTERNS;

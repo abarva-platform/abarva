@@ -14,12 +14,13 @@ adds no application code, performs no deployment, and pushes no image.
 
 ## 1 · Why this exists
 
-AbarVa today runs on Vercel. The CLOUD1 strategy contract calls out
-Tier 2+ enterprise tiers where the AbarVa shell must run in a customer
-cloud (Azure Container Apps, Cloud Run, ECS, AKS, etc.) without any
-Vercel-runtime dependency. CLOUD3 proves that **a non-Vercel runtime
-path exists**: a clean `node:24-bookworm-slim` base, multi-stage build,
-non-root user, no baked secrets, and a documented env-var contract.
+AbarVa production now runs through the Azure Container Apps runtime path. The
+CLOUD1 strategy contract also calls out Tier 2+ enterprise tiers where the
+AbarVa shell must run in a customer cloud (Azure Container Apps, Cloud Run, ECS,
+AKS, etc.) without any Vercel-runtime dependency. CLOUD3 proves that **an
+OCI/container runtime path exists**: a clean `node:24-bookworm-slim` base,
+multi-stage build, non-root user, no baked secrets, and a documented env-var
+contract.
 
 This is the smallest credible step toward CLOUD2's Azure VNet lab and
 the future GCP VPC lab — both of which need an OCI image to deploy.
@@ -30,11 +31,11 @@ the future GCP VPC lab — both of which need an OCI image to deploy.
 
 The Dockerfile is multi-stage:
 
-| Stage     | Base                       | Purpose                                              |
-| --------- | -------------------------- | ---------------------------------------------------- |
-| `deps`    | `node:24-bookworm-slim`    | Install npm dependencies (`npm ci`).                 |
-| `build`   | `node:24-bookworm-slim`    | Run `npm run build` → produce `.next` artifacts.     |
-| `runtime` | `node:24-bookworm-slim`    | Copy build artifacts, drop to non-root `node` user, run `npm run start`. |
+| Stage     | Base                    | Purpose                                                                  |
+| --------- | ----------------------- | ------------------------------------------------------------------------ |
+| `deps`    | `node:24-bookworm-slim` | Install npm dependencies (`npm ci`).                                     |
+| `build`   | `node:24-bookworm-slim` | Run `npm run build` → produce `.next` artifacts.                         |
+| `runtime` | `node:24-bookworm-slim` | Copy build artifacts, drop to non-root `node` user, run `npm run start`. |
 
 Key properties:
 
@@ -142,7 +143,7 @@ The script:
 
 ## 5 · What this proves
 
-- A non-Vercel runtime path **exists** for AbarVa.
+- An Azure-compatible container runtime path **exists** for AbarVa.
 - The image runs as a non-root user with documented env contract.
 - The build context excludes secrets and irrelevant tooling.
 - The `node:24-bookworm-slim` base aligns with the current LTS line.

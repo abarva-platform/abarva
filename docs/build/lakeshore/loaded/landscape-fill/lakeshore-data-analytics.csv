@@ -1,0 +1,17 @@
+asset_name,class,engine,vendor,host_ref,owner,data_domains,refresh,maturity,criticality,opco,source
+Snowflake Enterprise Data Cloud,warehouse,Snowflake,Snowflake,azure-lsh-holdco-prod,Holdco Data Platform,finance;supply_chain;marketing,hourly,managed,Tier 1,Holdco,lakeshore-canonical
+Power BI Enterprise,bi,Power BI,Microsoft,azure-lsh-holdco-prod,Holdco Analytics,finance;operations,near_real_time,managed,Tier 2,Holdco,lakeshore-canonical
+Anaplan FP&A,bi,Anaplan,Anaplan,saas,Holdco FP&A,finance,monthly,managed,Tier 1,Holdco,lakeshore-canonical
+Azure Data Factory,etl,ADF,Microsoft,azure-lsh-holdco-prod,Holdco Data Engineering,all,hourly,managed,Tier 2,Holdco,lakeshore-canonical
+Kyriba Treasury Analytics,bi,Kyriba,Kyriba,saas,Group Treasury,treasury;cash;fx,daily,managed,Tier 1,Holdco,lakeshore-canonical
+Northline Snowflake,warehouse,Snowflake,Snowflake,azure-northline-prod,Northline Data,supply_chain;logistics,hourly,managed,Tier 1,Northline,lakeshore-canonical
+Northline Supply Chain Marts,mart,SQL Server,Microsoft,northline-dc-columbus,Northline Analytics,wms;tms;inventory,daily,established,Tier 2,Northline,lakeshore-canonical
+Northline Power BI,bi,Power BI,Microsoft,azure-northline-prod,Northline Analytics,operations,daily,managed,Tier 2,Northline,lakeshore-canonical
+Brightmark Snowflake,warehouse,Snowflake,Snowflake,azure-brightmark-prod,Brightmark Data,marketing;campaigns,hourly,managed,Tier 2,Brightmark,lakeshore-canonical
+Brightmark Marketing Cloud Intelligence,bi,Salesforce,Salesforce,saas,Brightmark MarTech,marketing,daily,managed,Tier 2,Brightmark,lakeshore-canonical
+Brightmark Amplitude,etl,Amplitude,Amplitude,saas,Brightmark Product,product;engagement,near_real_time,emerging,Tier 3,Brightmark,lakeshore-canonical
+Forge & Field Commerce Analytics,bi,Salesforce Commerce Cloud,Salesforce,saas,Forge & Field Digital,ecommerce;dtc,daily,managed,Tier 1,Forge & Field,lakeshore-canonical
+Forge & Field Amplitude,etl,Amplitude,Amplitude,saas,Forge & Field Product,product;funnel,near_real_time,emerging,Tier 3,Forge & Field,lakeshore-canonical
+Forge & Field SQL Server DW,warehouse,SQL Server,Microsoft,forge-field-dc,Forge & Field Data,finance;orders,daily,established,Tier 2,Forge & Field,lakeshore-canonical
+Great Lakes Pantry Power BI,bi,Power BI,Microsoft,glp-dc,Great Lakes Pantry Analytics,operations;finance,daily,emerging,Tier 3,Great Lakes Pantry,lakeshore-canonical
+Great Lakes Pantry SQL Server DW,warehouse,SQL Server,Microsoft,glp-dc,Great Lakes Pantry Data,operations,daily,established,Tier 3,Great Lakes Pantry,lakeshore-canonical

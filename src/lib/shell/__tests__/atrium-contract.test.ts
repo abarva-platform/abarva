@@ -26,6 +26,15 @@ describe('Atrium contract registry', () => {
     expect(moves.agent).toBe('Nexus');
   });
 
+  it('keeps the Steward operator module labeled as Admin while preserving setup as the code id', () => {
+    const admin = getAtriumModule('setup');
+
+    expect(admin.canonicalName).toBe('Admin');
+    expect(admin.productNavLabel).toBe('Admin');
+    expect(admin.route).toBe('/admin');
+    expect(admin.agent).toBe('Steward');
+  });
+
   it('locks the three agent states and dimensions named by canonical V2', () => {
     expect(ATRIUM_AGENT_STATES).toEqual(['ambient', 'engaged', 'focus']);
     expect(ATRIUM_LOCKED_DIMENSIONS).toMatchObject({

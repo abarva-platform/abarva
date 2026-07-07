@@ -58,6 +58,7 @@ export interface CorpusPatternRecord {
 
 export interface CorpusSearchOptions {
   clientId: string;
+  clientKey?: string | null;
   userId?: string;
   category?: string;
   verticalOverlays?: string[];
@@ -77,6 +78,7 @@ export interface CorpusSearchHit extends CorpusPatternRecord {
 export interface CorpusMutationContext {
   userId: string;
   clientId?: string | null;
+  clientKey?: string | null;
 }
 
 export interface CorpusReviewInput {

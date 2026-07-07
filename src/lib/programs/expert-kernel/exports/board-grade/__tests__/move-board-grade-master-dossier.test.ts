@@ -40,6 +40,33 @@ const RETAIL_MOVE: MoveBusinessCaseInput = {
   baseline_metrics: [],
 };
 
+const AI_OPS_RETAIL_MOVE: MoveBusinessCaseInput = {
+  ...RETAIL_MOVE,
+  name: 'Apex Store Labor AI',
+  charter: { [CHARTER_FUNCTION_PACK_KEY]: 'workforce_labor' },
+  aiOperatingCost: {
+    callRamp: {
+      y1: 300_000,
+      y2: 900_000,
+      y3: 1_500_000,
+      y4: 1_900_000,
+      y5: 2_200_000,
+    },
+    tokensPerCall: { input: 1_800, output: 600, cacheHitRate: 0.25 },
+    modelTier: 'cost_optimized',
+    modelTierRamp: [{ year: 3, tier: 'mid', reasonCode: 'schedule_quality' }],
+    pricingTiers: [
+      {
+        thresholdCallsPerMonth: 100_000,
+        discount: 0,
+        notes: 'requires pricing-tier lock before network-wide rollout',
+      },
+    ],
+    decisionUnit: 'scheduled store-week',
+    decisionsPerCall: 1,
+  },
+};
+
 const HEALTHCARE_MOVE: MoveBusinessCaseInput = {
   industry_code: 'HEALTHCARE_IDN',
   name: 'Reduce clinical documentation burden',
@@ -300,6 +327,35 @@ describe('buildMoveMasterDossier — a Move with no resolvable function', () => 
     expect(html).toContain('Kernel');
     expect(html).toContain('Not run');
     expect(html).not.toContain('board-grade-business-case?moveId=');
+  });
+});
+
+describe('renderMoveMasterDossierHtml — AI Ops cost panel', () => {
+  it('surfaces the three-axis split and AI run-cost warnings in the dossier', () => {
+    const dossier = buildMoveMasterDossier(
+      AI_OPS_RETAIL_MOVE,
+      'ai-ops-move-1',
+      GENERATED_ON,
+    ) as MoveMasterDossier;
+    const roadmap = dossier.sections.roadmapTower;
+
+    expect(roadmap.aiOps).not.toBeNull();
+    expect(roadmap.aiOpsCost).toBe(roadmap.aiOps!.threeYearTotal);
+    expect(roadmap.aiOps!.decisionUnit).toBe('scheduled store-week');
+    expect(roadmap.aiOps!.pricingTierShockWarning).toContain('Year');
+    expect(roadmap.aiOps!.modelTierDriftWarning).toContain('schedule_quality');
+
+    const html = renderMoveMasterDossierHtml(
+      AI_OPS_RETAIL_MOVE,
+      'ai-ops-move-1',
+      GENERATED_ON,
+    );
+    expect(html).toContain('Three-axis cost view');
+    expect(html).toContain('AI Ops cost');
+    expect(html).toContain('Unit economic');
+    expect(html).toContain('Pricing-tier alert');
+    expect(html).toContain('Model-tier drift');
+    expect(html).toContain('scheduled store-week');
   });
 });
 

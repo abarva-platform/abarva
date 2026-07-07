@@ -34,6 +34,27 @@ type ParsedPattern = {
   qualityNotes?: string[];
   curationStatus?: string;
   rewritePriority?: string;
+  doctrine?: string;
+  triggers?: string[];
+  appliesWhen?: string;
+  applies_when?: string;
+  doesNotApplyWhen?: string;
+  does_not_apply_when?: string;
+  decisionOwner?: string;
+  decision_owner?: string;
+  supportingEvidence?: Array<Record<string, unknown>>;
+  supporting_evidence?: Array<Record<string, unknown>>;
+  antiPatterns?: string[];
+  anti_patterns?: string[];
+  failureModes?: string[];
+  failure_modes?: string[];
+  decisionArtifacts?: string[];
+  decision_artifacts?: string[];
+  graphRelationships?: Array<Record<string, unknown>>;
+  graph_relationships?: Array<Record<string, unknown>>;
+  personas?: string[];
+  specificity?: string;
+  confidence?: string;
 };
 
 type SeedFileSummary = {
@@ -115,8 +136,27 @@ function objectValue(node: ts.ObjectLiteralExpression): Record<string, unknown> 
   return out;
 }
 
-function extractPatterns(filePath: string): ParsedPattern[] {
+function parseJsonlPatterns(filePath: string, sourceText: string): ParsedPattern[] {
+  const patterns = sourceText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line, index) => {
+      try {
+        return JSON.parse(line) as ParsedPattern;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`${filePath}:${index + 1}: invalid JSONL pattern: ${message}`);
+      }
+    });
+  if (patterns.length === 0) throw new Error(`${filePath}: no JSONL patterns found`);
+  return patterns;
+}
+
+export function extractPatterns(filePath: string): ParsedPattern[] {
   const sourceText = fs.readFileSync(filePath, 'utf8');
+  if (/\.jsonl$/i.test(filePath)) return parseJsonlPatterns(filePath, sourceText);
+
   const source = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
   const arrays: ParsedPattern[][] = [];
 
@@ -136,7 +176,7 @@ function extractPatterns(filePath: string): ParsedPattern[] {
 }
 
 function seedMetadata(filePath: string) {
-  const base = path.basename(filePath, '.ts');
+  const base = path.basename(filePath).replace(/\.(ts|js|mjs|jsonl)$/i, '');
   if (base.startsWith('seed-airline-')) {
     return { vertical: 'airline', sourceKey: 'skyharbor-air', capabilityType: 'airline_capability', seededBy: base };
   }
@@ -191,7 +231,43 @@ async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<stri
   }
 }
 
-async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileSummary> {
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
+function optionalStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const values = value.map(String).map((item) => item.trim()).filter(Boolean);
+  return values.length > 0 ? values : undefined;
+}
+
+function optionalObjectArray(value: unknown): Array<Record<string, unknown>> | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const values = value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
+  return values.length > 0 ? values : undefined;
+}
+
+export function buildDoctrineContext(pattern: ParsedPattern): Record<string, unknown> {
+  const entries: Array<[string, unknown]> = [
+    ['doctrine', optionalString(pattern.doctrine)],
+    ['triggers', optionalStringArray(pattern.triggers)],
+    ['applies_when', optionalString(pattern.applies_when ?? pattern.appliesWhen)],
+    ['does_not_apply_when', optionalString(pattern.does_not_apply_when ?? pattern.doesNotApplyWhen)],
+    ['decision_owner', optionalString(pattern.decision_owner ?? pattern.decisionOwner)],
+    ['supporting_evidence', optionalObjectArray(pattern.supporting_evidence ?? pattern.supportingEvidence)],
+    ['anti_patterns', optionalStringArray(pattern.anti_patterns ?? pattern.antiPatterns)],
+    ['failure_modes', optionalStringArray(pattern.failure_modes ?? pattern.failureModes)],
+    ['decision_artifacts', optionalStringArray(pattern.decision_artifacts ?? pattern.decisionArtifacts)],
+    ['graph_relationships', optionalObjectArray(pattern.graph_relationships ?? pattern.graphRelationships)],
+    ['personas', optionalStringArray(pattern.personas)],
+    ['specificity', optionalString(pattern.specificity)],
+    ['confidence', optionalString(pattern.confidence)],
+  ];
+
+  return Object.fromEntries(entries.filter(([, value]) => value !== undefined));
+}
+
+export async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileSummary> {
   const meta = seedMetadata(filePath);
   const patterns = extractPatterns(filePath);
 
@@ -216,7 +292,8 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
       ? pattern.startupEcosystemSignals.map(String)
       : null;
     const qualityNotes = Array.isArray(pattern.qualityNotes) ? pattern.qualityNotes.map(String) : null;
-    return {
+    const doctrineContext = buildDoctrineContext(pattern);
+    const row: Record<string, unknown> = {
       id: deterministicUuid(`${meta.vertical}-genome-pattern:${code}`),
       pattern_type: 'failure_pattern',
       vertical: meta.vertical,
@@ -256,6 +333,10 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
       office_category: officeCategory,
       keywords,
     };
+    if (Object.keys(doctrineContext).length > 0) {
+      row.doctrine_context = doctrineContext;
+    }
+    return row;
   });
 
   const edgeRows = patterns.flatMap((pattern) => {

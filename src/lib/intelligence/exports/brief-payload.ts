@@ -6,18 +6,15 @@
 //
 // Grounding rules (NO FABRICATION — see PR #2143):
 //
-//   - Apex Retail has a real Intelligence corpus loaded via
-//     `loadApexRetailIntelligenceData` (apex-retail-live.ts). For Apex
-//     the brief carries the corpus Brief content — ranked AI bets,
-//     value-at-stake, triggered patterns — PLUS the ai_initiatives
-//     portfolio derived from `page-data.ts`.
+//   - Tenants with a seeded Intelligence corpus carry the corpus Brief
+//     content — ranked AI bets, value-at-stake, triggered patterns —
+//     PLUS the ai_initiatives portfolio derived from `page-data.ts`.
 //
-//   - Meridian Health and First Capital Financial have NO seeded
-//     Intelligence corpus. Their brief exports ONLY the genuinely-real
-//     `ai_initiatives`-derived portfolio content, and renders an
-//     explicit, honest "Intelligence corpus not yet seeded" section in
-//     place of the corpus brief. It NEVER emits fabricated bets,
-//     value-at-stake figures, or pattern records for those tenants.
+//   - Tenants without a seeded Intelligence corpus export ONLY the
+//     genuinely-real `ai_initiatives`-derived portfolio content, and
+//     render an explicit, honest "Intelligence corpus not yet seeded"
+//     section in place of the corpus brief. The builder NEVER emits
+//     fabricated bets, value-at-stake figures, or pattern records.
 //
 // The builder is pure: (BriefData | null, IntelligenceV3PageData) →
 // IntelligenceBriefPayload. The route does the I/O.
@@ -35,7 +32,7 @@ export interface IntelligenceBriefPayload {
   tenantName: string;
   /** ISO 8601 generated-at timestamp. */
   generatedAt: string;
-  /** True when a real Intelligence corpus is bound (Apex only today). */
+  /** True when a real Intelligence corpus is bound. */
   hasCorpus: boolean;
   /** Stable slug used in the download filename. */
   filenameSlug: string;
@@ -49,7 +46,7 @@ export interface IntelligenceBriefPayload {
 
 interface BuildArgs {
   tenantName: string;
-  /** Apex corpus brief; null for tenants with no seeded corpus. */
+  /** Tenant corpus brief; null for tenants with no seeded corpus. */
   briefData: BriefData | null;
   /** ai_initiatives-derived page data — real for all 3 tenants. */
   pageData: IntelligenceV3PageData;
@@ -68,12 +65,11 @@ function slugify(value: string): string {
 /**
  * Build the Intelligence CXO brief payload for the active tenant.
  *
- * When `briefData` is non-null the tenant has a real corpus (Apex) and
+ * When `briefData` is non-null the tenant has a real corpus and
  * the brief leads with the corpus synthesis, ranked bets, value-at-
- * stake, and triggered patterns. When it is null (Meridian / First
- * Capital) the corpus sections are replaced with the honest
- * "corpus not yet seeded" disclosure and only the ai_initiatives
- * portfolio is exported.
+ * stake, and triggered patterns. When it is null the corpus sections
+ * are replaced with the honest "corpus not yet seeded" disclosure and
+ * only the ai_initiatives portfolio is exported.
  */
 export function buildIntelligenceBriefPayload(
   args: BuildArgs,
@@ -95,7 +91,7 @@ export function buildIntelligenceBriefPayload(
   sections.push('## Executive synthesis');
   sections.push(synthesis);
 
-  // ── Corpus brief (Apex only) ─────────────────────────────────────
+  // ── Corpus brief (seeded tenants only) ───────────────────────────
   if (hasCorpus && briefData) {
     sections.push(...buildCorpusSections(briefData));
   } else {
@@ -129,7 +125,7 @@ export function buildIntelligenceBriefPayload(
   };
 }
 
-/** Corpus-derived markdown sections — Apex only (briefData non-null). */
+/** Corpus-derived markdown sections for seeded tenants. */
 function buildCorpusSections(brief: BriefData): string[] {
   const out: string[] = [];
 

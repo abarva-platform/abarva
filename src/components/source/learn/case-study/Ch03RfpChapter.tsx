@@ -23,12 +23,12 @@ export function Ch03RfpChapter() {
     <ChapterShell slug="rfp">
       <HeroBand color="navy">
         <Eyebrow light>Meridian Case Study · Chapter 03 · Stage 03 RFP</Eyebrow>
-        <SectionTitle light size="xl">Day 12. Sentinel composes d09.</SectionTitle>
+        <SectionTitle light size="xl">Day 12. Ava composes d09.</SectionTitle>
         <Lead light>
           The RFP package is the buyer&rsquo;s contract with the vendors:
           here&rsquo;s what we&rsquo;re asking, here&rsquo;s how
           we&rsquo;ll score, here&rsquo;s the format we want responses in.
-          Sentinel composes d09 from the upstream artifacts; Janet
+          Ava composes d09 from the upstream artifacts; Janet
           shortlists the vendor pool. Day 12 ends with a four-vendor RFP in
           the mail.
         </Lead>
@@ -46,7 +46,7 @@ export function Ch03RfpChapter() {
         <Eyebrow>Days 5 – 10 · Vendor shortlisting</Eyebrow>
         <SectionTitle>From the universe of cloud providers to four names</SectionTitle>
         <Lead>
-          Sentinel runs a market scan against the archetype + value band +
+          Ava runs a market scan against the archetype + value band +
           rigor + healthcare-vertical filter, surfaces 23 candidate vendors,
           and Janet narrows the list with Karen.
         </Lead>
@@ -73,12 +73,12 @@ export function Ch03RfpChapter() {
         <Lead>
           d09 is the longest artifact in the lifecycle — the canonical
           template runs ~14,000 words. Janet doesn&rsquo;t write that
-          herself. She clicks Generate and watches Sentinel bind upstream.
+          herself. She clicks Generate and watches Ava bind upstream.
         </Lead>
 
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Bound four upstream artifacts: d01 (strategy posture +
@@ -178,7 +178,7 @@ export function Ch03RfpChapter() {
           Question 5 (egress + exit) and question 6 (commercial commitment)
           are the two questions that surface every pricing trap in Chapter
           6. They&rsquo;re also the two questions vendors are most likely to
-          answer creatively. Sentinel will read those answers carefully.
+          answer creatively. Ava will read those answers carefully.
         </BodyP>
       </Section>
 
@@ -258,7 +258,7 @@ export function Ch03RfpChapter() {
         >
           The d19a pricing template is a locked xlsx with named columns +
           unit definitions. The d09 cover note explicitly tells vendors not
-          to substitute columns or units. This is what lets Sentinel&rsquo;s
+          to substitute columns or units. This is what lets Ava&rsquo;s
           pricing-trap detector compare across vendors in Chapter 6 — a
           vendor that submits its own pricing schedule (as Vendor C will
           attempt) is mechanically out of compliance.

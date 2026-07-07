@@ -215,7 +215,7 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}>
       <SectionMeta
-        agent="ATLAS"
+        agent="AVA"
         title="Portfolio"
         subtitle="Programme portfolio overview — pressure signals and vendor-aligned programme status. Deterministic seed."
       />
@@ -387,7 +387,7 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
 
       {/* Atlas portfolio brief */}
       <section
-        aria-label="Atlas portfolio brief"
+        aria-label="Ava portfolio brief"
         style={{
           backgroundColor: '#0F1E3F',
           color: '#FFFFFF',
@@ -405,7 +405,7 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
             marginBottom: 6,
           }}
         >
-          ATLAS · PORTFOLIO · DETERMINISTIC SEED
+          AVA · PORTFOLIO · DETERMINISTIC SEED
         </div>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
           {pressureBrief.topPressure}
@@ -453,7 +453,7 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
         <EmptyState message="No programme pressure signals seeded for this tenant." />
       )}
 
-      <Caveat>All portfolio signals are deterministic seed data. No live Atlas monitoring.</Caveat>
+      <Caveat>All portfolio signals are deterministic seed data. No live Ava monitoring.</Caveat>
     </div>
   );
 }
@@ -465,7 +465,7 @@ function ScorecardsPanel({ tenantSlug }: { tenantSlug: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}>
       <SectionMeta
-        agent="ATLAS"
+        agent="AVA"
         title="Scorecards"
         subtitle="Programme health by domain. Deterministic seed — not live telemetry."
       />
@@ -482,9 +482,9 @@ function ExecutiveBriefPanel({ tenantSlug }: { tenantSlug: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}>
       <SectionMeta
-        agent="ATLAS"
+        agent="AVA"
         title="Executive Brief"
-        subtitle="Atlas executive summary — value, risk, and adoption signals. Deterministic seed — not live intelligence."
+        subtitle="Ava executive summary — value, risk, and adoption signals. Deterministic seed — not live intelligence."
       />
       <AtlasExecutiveBriefCanvas view={briefView} />
       <Caveat>{briefView.deterministicSeedCaveat}</Caveat>
@@ -859,7 +859,7 @@ function DependenciesPanel() {
       style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}
     >
       <SectionMeta
-        agent="ATLAS"
+        agent="AVA"
         title="Dependencies"
         subtitle="Source-to-program dependency matrix — all cross-instance links between source events and programs. Deterministic seed."
       />

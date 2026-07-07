@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // AtlasPageStateProvider · Shell Layout Spec v2 §6
 //
@@ -22,15 +22,15 @@ import {
   useRef,
   useState,
   type ReactNode,
-} from 'react';
-import { useRouter } from 'next/navigation';
+} from "react";
+import { useRouter } from "next/navigation";
 import type {
   AtlasPageContextValue,
   AtlasPageStateProviderProps,
   ChatTurn,
-} from '@/lib/shell/atlas-page-state';
-import { ATLAS_SYNTHESIS_TURN_ID } from '@/lib/shell/atlas-page-state';
-import { consumeOriginationHandoff } from '@/lib/shell/origination-handoff';
+} from "@/lib/shell/atlas-page-state";
+import { ATLAS_SYNTHESIS_TURN_ID } from "@/lib/shell/atlas-page-state";
+import { consumeOriginationHandoff } from "@/lib/shell/origination-handoff";
 // PR-L · provider now parses artifacts from streamed chunks. Without
 // this, the structured-artifact channel landed by PR-B/PR-C never
 // fired on /programs/<id> because AtlasPageStateProvider's ask() just
@@ -42,15 +42,18 @@ import {
   sanitizeArtifactDebugText,
   visibleArtifactPendingText,
   type Artifact,
-} from '@/lib/agent/artifacts';
+} from "@/lib/agent/artifacts";
 // CB-6 · type-only — server-only directive on the broker module is
 // preserved because TS strips this at compile time.
-import type { BrokerMode, ContextBundle } from '@/lib/knowledge/context-broker';
+import type { BrokerMode, ContextBundle } from "@/lib/knowledge/context-broker";
 import {
   readStoredContextMode,
   writeStoredContextMode,
-} from '@/lib/shell/context-mode-storage';
-import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
+} from "@/lib/shell/context-mode-storage";
+import {
+  shapeAgentResponseForSurface,
+  shapeStreamingAgentTextForSurface,
+} from "@/lib/agent/response-shape";
 // OV2-FM-TELEMETRY · failure-mode events fire from this dispatch site
 // because the artifact only becomes user-visible AFTER it lands in the
 // reactive panel. Dedupe by failureModeId via firedFlagsRef below
@@ -62,25 +65,30 @@ import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from 
 import {
   trackFailureModeFlagged,
   type FailureModeContext,
-} from '@/lib/programs/failure-mode-telemetry';
+} from "@/lib/programs/failure-mode-telemetry";
 // OV2-4b · attachment refs that ride along with the user turn for
 // chip rendering and pass through surfaceContext for the agent.
-import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
+import type { AttachmentChipRef } from "@/lib/programs/attachments/types";
 // Wave 1 · inline files for non-programs surfaces (no DB required).
-import type { InlineFile } from '@/lib/shell/atlas-page-state';
+import type { InlineFile } from "@/lib/shell/atlas-page-state";
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
 const DEFAULT_AGENT: Record<string, string> = {
-  tower:         'Atlas',
-  programs:      'Nexus',
-  'programs-detail': 'Nexus',
-  source:        'Sentinel',
-  'source-detail': 'Sentinel',
-  intelligence:  'Sentinel',
-  home:          'Atlas',
-  setup:         'Steward',
-  'setup-detail': 'Steward',
+  // Voice-only rebrand (2026-06-21): "Ava" is the single user-facing agent
+  // name across surfaces. The per-surface specialist names (Atlas/Sentinel/
+  // Nexus/Steward) survive only as internal identifiers (component names,
+  // agent ids, telemetry), surfaced to users only as named specialists in
+  // trace/audit — never as the agent the user talks to.
+  tower: "Ava",
+  programs: "Ava",
+  "programs-detail": "Ava",
+  source: "Ava",
+  "source-detail": "Ava",
+  intelligence: "Ava",
+  home: "Ava",
+  setup: "Ava",
+  "setup-detail": "Ava",
 };
 
 const DEFAULT_AGENT_TURN_TIMEOUT_MS = 90_000;
@@ -88,11 +96,15 @@ const PROGRAMS_AGENT_TURN_TIMEOUT_MS = 210_000;
 const SOURCE_AGENT_TURN_TIMEOUT_MS = 210_000;
 
 function getAgentTurnTimeoutMs(surface: string): number {
-  return surface === 'programs' || surface === 'programs-detail' || surface.startsWith('/programs/')
+  return surface === "programs" ||
+    surface === "programs-detail" ||
+    surface.startsWith("/programs/")
     ? PROGRAMS_AGENT_TURN_TIMEOUT_MS
-    : surface === 'source' || surface === 'source-detail' || surface.startsWith('/source')
+    : surface === "source" ||
+        surface === "source-detail" ||
+        surface.startsWith("/source")
       ? SOURCE_AGENT_TURN_TIMEOUT_MS
-    : DEFAULT_AGENT_TURN_TIMEOUT_MS;
+      : DEFAULT_AGENT_TURN_TIMEOUT_MS;
 }
 
 // ── Context ───────────────────────────────────────────────────────────────────
@@ -111,10 +123,10 @@ export function AtlasPageStateProvider({
   onArtifact,
   children,
 }: AtlasPageStateProviderProps & { children: ReactNode }) {
-  const resolvedAgentName = agentName ?? DEFAULT_AGENT[surface] ?? 'Atlas';
+  const resolvedAgentName = agentName ?? DEFAULT_AGENT[surface] ?? "Atlas";
 
   const [conversation, setConversation] = useState<ChatTurn[]>([]);
-  const [currentResponse, setCurrentResponse] = useState('');
+  const [currentResponse, setCurrentResponse] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -157,9 +169,11 @@ export function AtlasPageStateProvider({
   // /programs/<id> doesn't start with a blank Nexus thread — the
   // origination conversation continues as the same canvas.
   useEffect(() => {
-    if (surface !== 'programs-detail') return;
+    if (surface !== "programs-detail") return;
     const programId =
-      typeof surfaceContext.programId === 'string' ? surfaceContext.programId : null;
+      typeof surfaceContext.programId === "string"
+        ? surfaceContext.programId
+        : null;
     if (!programId) return;
     const handoffTurns = consumeOriginationHandoff(programId);
     if (handoffTurns && handoffTurns.length > 0) {
@@ -180,7 +194,9 @@ export function AtlasPageStateProvider({
   // — same pattern as advance_phase's program-phase-changed (PR-L)
   // where we wait for the close-of-turn before mutating routing.
   const router = useRouter();
-  const pendingNavRef = useRef<{ target: string; replace: boolean } | null>(null);
+  const pendingNavRef = useRef<{ target: string; replace: boolean } | null>(
+    null,
+  );
 
   // OV2-FM-TELEMETRY · session-scoped dedupe set for failure-mode-flagged
   // events. Same key (failureModeId) the reactive panel uses so the
@@ -189,7 +205,12 @@ export function AtlasPageStateProvider({
   const firedFlagsRef = useRef<Set<number>>(new Set());
 
   const ask = useCallback(
-    async (text: string, attachments?: AttachmentChipRef[], inlineFiles?: InlineFile[]) => {
+    async (
+      text: string,
+      attachments?: AttachmentChipRef[],
+      inlineFiles?: InlineFile[],
+      surfaceContextPatch?: Record<string, unknown>,
+    ) => {
       if (!text.trim() || isStreaming) return;
 
       // Cancel any previous in-flight request
@@ -204,15 +225,16 @@ export function AtlasPageStateProvider({
 
       const userTurn: ChatTurn = {
         id: `usr-${Date.now()}`,
-        role: 'user',
+        role: "user",
         text: text.trim(),
         agentName: resolvedAgentName,
         timestamp: Date.now(),
-        attachments: attachments && attachments.length > 0 ? attachments : undefined,
+        attachments:
+          attachments && attachments.length > 0 ? attachments : undefined,
       };
 
-      setConversation(prev => [...prev, userTurn]);
-      setCurrentResponse('');
+      setConversation((prev) => [...prev, userTurn]);
+      setCurrentResponse("");
       setError(null);
       setIsStreaming(true);
       // CB-6 · the broker assembles the bundle BEFORE streaming starts,
@@ -226,10 +248,11 @@ export function AtlasPageStateProvider({
         // Exclude the synthesis turn (it's in the system prompt already) and
         // cap at the last 10 turns so the context window stays bounded.
         const conversationHistory = conversation
-          .filter(t => t.id !== ATLAS_SYNTHESIS_TURN_ID)
+          .filter((t) => t.id !== ATLAS_SYNTHESIS_TURN_ID)
           .slice(-10)
-          .map(t => ({
-            role: t.role === 'user' ? ('user' as const) : ('assistant' as const),
+          .map((t) => ({
+            role:
+              t.role === "user" ? ("user" as const) : ("assistant" as const),
             content: t.text,
           }));
 
@@ -239,12 +262,13 @@ export function AtlasPageStateProvider({
         // back to `inferModeForSurface(surface, tenantKey)`.
         const mergedSurfaceContext: Record<string, unknown> = {
           ...surfaceContext,
+          ...(surfaceContextPatch ?? {}),
           ...(attachments && attachments.length > 0 ? { attachments } : {}),
           ...(contextBundleMode ? { contextBundleMode } : {}),
         };
-        const res = await fetch('/api/chat/agent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/chat/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           signal: ctrl.signal,
           body: JSON.stringify({
             message: text.trim(),
@@ -259,22 +283,22 @@ export function AtlasPageStateProvider({
             // Legacy compat — context string is built server-side from the
             // richer fields above, but we keep the field for API consumers
             // that haven't migrated.
-            context: `Tenant: ${tenantName}. Surface: ${surface}. Agent: ${resolvedAgentName}${stage ? `. Stage: ${stage}` : ''}.`,
+            context: `Tenant: ${tenantName}. Surface: ${surface}. Agent: ${resolvedAgentName}${stage ? `. Stage: ${stage}` : ""}.`,
           }),
         });
 
         if (!res.ok) throw new Error(`Agent API ${res.status}`);
 
         const reader = res.body?.getReader();
-        if (!reader) throw new Error('No response body');
+        if (!reader) throw new Error("No response body");
 
         const decoder = new TextDecoder();
         // PR-L streaming loop — parse artifacts incrementally and
         // strip the sentinels from what the user sees. `pendingBuffer`
         // carries any partial sentinel across chunk boundaries (the
         // same pattern StewardChat uses for /programs/new).
-        let pendingBuffer = '';
-        let committedVisible = '';
+        let pendingBuffer = "";
+        let committedVisible = "";
         const seenArtifactKeys = new Set<string>();
 
         const dispatchNew = (artifacts: Artifact[]) => {
@@ -287,7 +311,7 @@ export function AtlasPageStateProvider({
             // Store the bundle, clear the assembling flag, and continue
             // — we deliberately do NOT forward it to onArtifact since
             // it's not reactive-panel content.
-            if (a.type === 'context-bundle') {
+            if (a.type === "context-bundle") {
               setLatestContextBundle(a.bundle);
               setIsAssemblingContextBundle(false);
               continue;
@@ -298,8 +322,11 @@ export function AtlasPageStateProvider({
             // would treat it as panel content. If a future surface
             // wants to observe navigations it can subscribe to
             // router events directly.
-            if (a.type === 'navigate-to') {
-              pendingNavRef.current = { target: a.target, replace: a.replace === true };
+            if (a.type === "navigate-to") {
+              pendingNavRef.current = {
+                target: a.target,
+                replace: a.replace === true,
+              };
               continue;
             }
             // OV2-FM-TELEMETRY · fire posthog event the FIRST time we
@@ -308,11 +335,11 @@ export function AtlasPageStateProvider({
             // to aggregate. Tracking happens BEFORE onArtifact so the
             // event reflects what the platform produced even if the
             // panel render throws downstream.
-            if (a.type === 'failure-mode-flagged') {
+            if (a.type === "failure-mode-flagged") {
               if (!firedFlagsRef.current.has(a.failureModeId)) {
                 firedFlagsRef.current.add(a.failureModeId);
                 const programId =
-                  typeof surfaceContext.programId === 'string'
+                  typeof surfaceContext.programId === "string"
                     ? surfaceContext.programId
                     : null;
                 // Note: tenantName is the display name (e.g. "Apex Retail Group");
@@ -337,7 +364,8 @@ export function AtlasPageStateProvider({
           const { done, value } = await reader.read();
           if (done) break;
           pendingBuffer += decoder.decode(value, { stream: true });
-          const { visibleText, artifacts, remaining } = extractArtifacts(pendingBuffer);
+          const { visibleText, artifacts, remaining } =
+            extractArtifacts(pendingBuffer);
           committedVisible += visibleText;
           pendingBuffer = remaining;
           dispatchNew(artifacts);
@@ -347,7 +375,8 @@ export function AtlasPageStateProvider({
           setCurrentResponse(
             shapeStreamingAgentTextForSurface(
               surface,
-              sanitizeArtifactDebugText(committedVisible) + visibleArtifactPendingText(pendingBuffer),
+              sanitizeArtifactDebugText(committedVisible) +
+                visibleArtifactPendingText(pendingBuffer),
             ),
           );
         }
@@ -359,28 +388,34 @@ export function AtlasPageStateProvider({
         if (pendingBuffer.length > 0) {
           const final = extractArtifacts(pendingBuffer);
           committedVisible += final.visibleText;
-          if (final.remaining.length > 0) committedVisible += visibleArtifactPendingText(final.remaining);
+          if (final.remaining.length > 0)
+            committedVisible += visibleArtifactPendingText(final.remaining);
           dispatchNew(final.artifacts);
-          pendingBuffer = '';
+          pendingBuffer = "";
         }
 
         // Flush streaming text into conversation
         const agentTurn: ChatTurn = {
           id: `agt-${Date.now()}`,
-          role: 'agent',
-          text: shapeAgentResponseForSurface(surface, sanitizeArtifactDebugText(committedVisible)),
+          role: "agent",
+          text: shapeAgentResponseForSurface(
+            surface,
+            sanitizeArtifactDebugText(committedVisible),
+          ),
           agentName: resolvedAgentName,
           timestamp: Date.now(),
         };
-        setConversation(prev => [...prev, agentTurn]);
-        setCurrentResponse('');
+        setConversation((prev) => [...prev, agentTurn]);
+        setCurrentResponse("");
       } catch (e) {
-        if ((e as Error).name === 'AbortError' && !timedOut) return; // intentional cancel
+        if ((e as Error).name === "AbortError" && !timedOut) return; // intentional cancel
         if (timedOut) {
-          setError('Nexus response timed out. The turn was not completed; please retry or shorten the request.');
+          setError(
+            "Nexus response timed out. The turn was not completed; please retry or shorten the request.",
+          );
           return;
         }
-        setError(e instanceof Error ? e.message : 'Connection error');
+        setError(e instanceof Error ? e.message : "Connection error");
       } finally {
         window.clearTimeout(timeoutId);
         setIsStreaming(false);
@@ -415,7 +450,7 @@ export function AtlasPageStateProvider({
   );
 
   const clearResponse = useCallback(() => {
-    setCurrentResponse('');
+    setCurrentResponse("");
     setError(null);
   }, []);
 

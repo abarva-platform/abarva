@@ -9,10 +9,12 @@ BRAND2 establishes the deterministic enforcement contract for canonical AbarVa l
 ## Canonical Logo Path
 
 ```
-public/brand/abarva-logo.svg
+public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg
 ```
 
-This is the single source of truth for the AbarVa logo SVG. It must be placed here before any surface or component references the logo. BRAND1 is responsible for landing this asset.
+This is the single source of truth for the AbarVa Option 2 compact logo SVG on light surfaces.
+The black-toolbar variant lives in the same repo-owned asset folder as
+`public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg`.
 
 ## Canonical Logo Component
 
@@ -35,7 +37,7 @@ The following patterns are banned from any logo-related code:
 
 ## Enforcement Rules
 
-1. **Canonical asset first**: No surface may render the AbarVa logo before `public/brand/abarva-logo.svg` exists and is a real SVG (>1KB).
+1. **Canonical asset first**: No surface may render the AbarVa logo before `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg` exists and is a real SVG (>1KB).
 2. **Canonical component only**: All surfaces must use `<AbarVaLogo />` — not raw `<img>`, not inline SVG, not hardcoded spans.
 3. **No teal in shell**: `AbarVaAppShell` must not contain `#14B8A6`.
 4. **No hardcoded wordmark spans**: App layout files must not split the wordmark into separate `"Abar"` and `"Va"` spans.
@@ -46,9 +48,9 @@ The following patterns are banned from any logo-related code:
 
 | Check ID | Target File | Description |
 |---|---|---|
-| BRAND2-C1 | `public/brand/abarva-logo.svg` | Canonical logo SVG asset exists |
+| BRAND2-C1 | `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg` | Canonical logo SVG asset exists |
 | BRAND2-C2 | `src/components/brand/AbarVaLogo.tsx` | Canonical AbarVaLogo component exists |
-| BRAND2-C3 | `public/brand/abarva-logo.svg` | Logo SVG is a real asset (>1KB) |
+| BRAND2-C3 | `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg` | Logo SVG is a real asset (>1KB) |
 | BRAND2-C4 | `src/components/chrome/TopBar.tsx` | Legacy TopBar identified as dead code |
 | BRAND2-C5 | `src/components/abarva/AbarVaAppShell.tsx` | AbarVaAppShell does not use banned teal |
 | BRAND2-C6-* | `src/components/brand/AbarVaLogo.tsx` | AbarVaLogo does not contain any banned pattern |
@@ -59,7 +61,7 @@ The following patterns are banned from any logo-related code:
 
 | Item | Reason | Resolves When |
 |---|---|---|
-| BRAND2-C1 (logo asset) | `public/brand/abarva-logo.svg` not yet created | BRAND1 lands |
+| BRAND2-C1 (logo asset) | `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg` not yet created | BRAND1 lands |
 | BRAND2-C2 (component) | `src/components/brand/AbarVaLogo.tsx` not yet created | BRAND1 lands |
 | BRAND2-C3 (asset size) | Depends on C1 | BRAND1 lands |
 | BRAND2-C6-* (banned patterns in component) | Depends on C2 | BRAND1 lands |

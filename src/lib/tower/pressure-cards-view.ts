@@ -199,7 +199,7 @@ function composeInitiativePressure(initiative: AIInitiative): PressureCardView |
       magnitudeValue: m.magnitudeValue,
       magnitudeUnit: m.magnitudeUnit,
       magnitudeLabel: `Annual cost gap · ${initiative.confidenceLevel} conf`,
-      nextAction: `Atlas suggests opening a Move on cost-routing policy for ${initiative.displayId} — would deflect a meaningful share of the overrun without touching the rate cards.`,
+      nextAction: `aVa suggests opening a Move on cost-routing policy for ${initiative.name} — would deflect a meaningful share of the overrun without touching the rate cards.`,
     };
   }
 
@@ -214,7 +214,7 @@ function composeInitiativePressure(initiative: AIInitiative): PressureCardView |
       magnitudeValue: m.magnitudeValue,
       magnitudeUnit: m.magnitudeUnit,
       magnitudeLabel: `Annual exposure · attribution loose`,
-      nextAction: `Atlas wants to run a clean attribution study before recommending consolidation. Estimate: 6 weeks.`,
+      nextAction: `aVa wants to run a clean attribution study before recommending consolidation. Estimate: 6 weeks.`,
     };
   }
 
@@ -279,9 +279,9 @@ function composeVendorPressures(
       displayId: v.initiativeDisplayId,
       label: PRESSURE_LABEL.vend,
       headline: `${v.vendorName} renewal closes in ${days} days. CFO posture undefined.`,
-      lede: `${formatUsdCompact(value)} contract value tied to ${v.initiativeName} (${v.initiativeDisplayId}). ${v.financialHealth ? `Vendor financial health: ${v.financialHealth}.` : ''} Negotiation thesis can be drafted in Source.`.trim(),
+      lede: `${formatUsdCompact(value)} contract value tied to ${v.initiativeName}. ${v.financialHealth ? `Vendor financial health: ${v.financialHealth}.` : ''} Negotiation thesis can be drafted in Source.`.trim(),
       meta: [
-        { k: 'Initiative', v: `${v.initiativeDisplayId} · ${v.initiativeName}` },
+        { k: 'Initiative', v: v.initiativeName },
         { k: 'Vendor', v: v.vendorName },
         { k: 'Contract value', v: formatUsdCompact(value) },
       ],
@@ -289,7 +289,7 @@ function composeVendorPressures(
       magnitudeUnit: 'd',
       magnitudeLabel: `Until close · CFO posture due`,
       magnitudeConfidence: 'high',
-      nextAction: `Atlas can draft a negotiation thesis tying the renewal to current portfolio pressures. Read in Source brief.`,
+      nextAction: `aVa can draft a negotiation thesis tying the renewal to current portfolio pressures. Read in Source brief.`,
     };
   });
 }

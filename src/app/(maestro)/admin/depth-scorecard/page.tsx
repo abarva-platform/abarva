@@ -11,7 +11,7 @@ import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens'
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 export const metadata = {
-  title: 'Depth Scorecard | AbarVa Setup',
+  title: 'Depth Scorecard | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';

@@ -147,7 +147,7 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
             marginBottom: 4,
           }}
         >
-          {resolvedView.workspaceLabel} · Setup · seed-only
+          {resolvedView.workspaceLabel} · Admin · seed-only
         </div>
         <div
           style={{
@@ -404,7 +404,7 @@ function StewardBriefPanel({ brief }: { brief: StewardBrief }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 8, borderTop: `1px dashed ${COLORS.border}` }}>
-        <SectionLabel>Ask Steward · suggested follow-ups · {brief.suggestedFollowUps.length}</SectionLabel>
+        <SectionLabel>Ask Ava · suggested follow-ups · {brief.suggestedFollowUps.length}</SectionLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {brief.suggestedFollowUps.map((followUp) => (
             <button

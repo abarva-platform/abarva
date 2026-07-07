@@ -162,7 +162,7 @@ export function PressureDetailPage({ detail }: PressureDetailPageProps) {
       }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Control Tower' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Control Tower' }}
         quote={detail.agentQuote}
         agentContext={detail.agentContext}
         actions={detail.actions}

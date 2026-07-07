@@ -30,9 +30,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: 'Initiative not found for active client' }, { status: 404 });
   }
 
-  const detail = await getInitiativeDetail(client.id, initiative.initiativeId);
+  const detail = await getInitiativeDetail(client.id, initiative.initiativeId).catch((error) => {
+    console.warn('[tower initiative detail] supporting substrate unavailable', {
+      clientId: client.id,
+      displayId: initiative.displayId,
+      message: error instanceof Error ? error.message : 'unknown error',
+    });
+    return null;
+  });
   if (!detail) {
-    return NextResponse.json({ ok: false, error: 'Initiative detail not found' }, { status: 404 });
+    return NextResponse.json({ ok: false, error: 'Initiative detail unavailable' });
   }
 
   return NextResponse.json({

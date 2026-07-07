@@ -1,16 +1,7 @@
 import { Pool, type PoolClient, type QueryResultRow } from 'pg';
+import { runtimePostgresPoolConfig } from '@/lib/data-plane/postgresCompat';
 
 let pool: Pool | null = null;
-
-function shouldDisableSsl(connectionString: string): boolean {
-  try {
-    const url = new URL(connectionString);
-    if (url.searchParams.get('sslmode')?.toLowerCase() === 'disable') return true;
-    return ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
-  } catch {
-    return false;
-  }
-}
 
 export function getTemplatePool(): Pool {
   if (pool) return pool;
@@ -18,11 +9,7 @@ export function getTemplatePool(): Pool {
   if (!connectionString) {
     throw new Error('DATABASE_URL is required for template data-layer access.');
   }
-  pool = new Pool({
-    connectionString,
-    application_name: 'nexus-template-data-layer',
-    ssl: shouldDisableSsl(connectionString) ? false : { rejectUnauthorized: false },
-  });
+  pool = new Pool(runtimePostgresPoolConfig(connectionString, 'nexus-template-data-layer'));
   return pool;
 }
 

@@ -15,6 +15,11 @@ import {
   type ProgramControlTowerSignal,
   type ProgramControlTowerSignalSummary,
 } from '@/lib/programs/programs-control-tower-signals';
+import {
+  AI_DECISION_SUPPORT_WATERMARK,
+  buildAiDecisionEvidencePacket,
+  type AiDecisionRiskDomain,
+} from '@/lib/ai-liability/human-decision-controls';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
 export const TOWER_PROGRAM_PRESSURE_DEFAULT_TOP_N = 5;
@@ -94,6 +99,25 @@ export interface AtlasBriefFollowUp {
   enabled: false;
 }
 
+export interface AtlasBriefAccountability {
+  /** Shared AI decision-support label shown next to the recommendation. */
+  watermark: string;
+  /** Sanitized action text after autonomous-decision language guardrails. */
+  sanitizedRecommendation: string;
+  /** Provenance IDs backing the brief. */
+  evidenceBasis: ReadonlyArray<string>;
+  /** Assumptions the executive should review before acting. */
+  assumptions: ReadonlyArray<string>;
+  /** Shared missing-data / assumption banner. */
+  missingDataBanner: string;
+  /** Risk domains inferred for the recommendation. */
+  riskDomains: ReadonlyArray<AiDecisionRiskDomain>;
+  /** Whether the shared classifier requires escalation. */
+  escalationRequired: boolean;
+  /** Human approval boundary shown in the UI. */
+  humanApprovalRequired: string;
+}
+
 export interface AtlasProgramPressureBrief {
   title: string;
   /**
@@ -126,6 +150,8 @@ export interface AtlasProgramPressureBrief {
   interpretationBasis: string;
   /** Marker so consumers know this is not a live-model output. */
   sourceLabel: AtlasBriefSourceLabel;
+  /** Human accountability controls for the recommendation. */
+  accountability: AtlasBriefAccountability;
 }
 
 /**
@@ -156,6 +182,11 @@ export function buildAtlasProgramPressureBrief(
   const recommendedExecutiveAction = buildAtlasExecutiveAction(signals, summary);
   const suggestedFollowUps = composeFollowUps(signals, summary);
   const { confidenceLabel, interpretationBasis } = composeConfidence(summary);
+  const accountability = buildAtlasBriefAccountability({
+    tenantName,
+    signals,
+    recommendedExecutiveAction,
+  });
 
   return {
     title,
@@ -168,6 +199,7 @@ export function buildAtlasProgramPressureBrief(
     confidenceLabel,
     interpretationBasis,
     sourceLabel: 'program_pressure_signals',
+    accountability,
   };
 }
 
@@ -215,6 +247,14 @@ function composeEmptyBrief(
   tenantName: string,
   title: string,
 ): AtlasProgramPressureBrief {
+  const recommendedExecutiveAction =
+    'No portfolio action required from this signal mix today.';
+  const accountability = buildAtlasBriefAccountability({
+    tenantName,
+    signals: [],
+    recommendedExecutiveAction,
+  });
+
   return {
     title,
     topPressure: 'No Programs pressure signals are present in the seed today.',
@@ -222,14 +262,71 @@ function composeEmptyBrief(
       'A clean signal list does not necessarily mean the portfolio is healthy; the read model is seed-only and has not yet been populated with evidence or value capture.',
     programsAffected: `0 programs in ${tenantName} are emitting Programs pressure signals today.`,
     evidenceValueWarning: '',
-    recommendedExecutiveAction:
-      'No portfolio action required from this signal mix today.',
+    recommendedExecutiveAction,
     suggestedFollowUps: composeEmptyFollowUps(),
     confidenceLabel: 'no_signals',
     interpretationBasis:
       'Signal list is empty; the read model is seed-only and has nothing to interpret.',
     sourceLabel: 'deterministic_seed',
+    accountability,
   };
+}
+
+function buildAtlasBriefAccountability(input: {
+  tenantName: string;
+  signals: ReadonlyArray<ProgramControlTowerSignal>;
+  recommendedExecutiveAction: string;
+}): AtlasBriefAccountability {
+  const evidenceIds =
+    input.signals.length > 0
+      ? input.signals.slice(0, TOWER_PROGRAM_PRESSURE_DEFAULT_TOP_N).map((signal) => signal.id)
+      : ['deterministic_seed:no_program_pressure_signals'];
+
+  const missingInputs = uniqueStrings(
+    input.signals.flatMap((signal) => signal.missingInputs),
+  );
+
+  const assumptions = [
+    'Program pressure brief is composed from deterministic Tower read-model signals, not a live autonomous Atlas action.',
+    'Severity, confidence, and recommended action inherit the seed signal mix until production evidence and value telemetry are loaded.',
+    'Client decision owner must review evidence, missing inputs, assumptions, and alternatives before acting.',
+  ];
+
+  const packet = buildAiDecisionEvidencePacket({
+    recommendationId: `tower-atlas-program-pressure-${input.tenantName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    surface: 'Tower / Atlas program pressure brief',
+    agentName: 'Atlas',
+    tenantName: input.tenantName,
+    recommendationText: input.recommendedExecutiveAction,
+    evidenceIds,
+    missingInputs:
+      missingInputs.length > 0
+        ? missingInputs
+        : ['No additional missing inputs were recorded by this signal mix.'],
+    assumptions,
+    alternativesConsidered: [
+      'Wait for additional evidence and value telemetry before escalating.',
+      'Route the pressure to the accountable program owner for human review.',
+      'Keep the portfolio in monitoring mode if the signal mix has no action threshold.',
+    ],
+    riskDomains: ['general_business', 'financial_commitment'],
+  });
+
+  return {
+    watermark: AI_DECISION_SUPPORT_WATERMARK,
+    sanitizedRecommendation: packet.sanitizedRecommendationText,
+    evidenceBasis: packet.evidenceIds,
+    assumptions: packet.assumptions,
+    missingDataBanner: packet.missingDataBanner,
+    riskDomains: packet.riskDomains,
+    escalationRequired: packet.escalationRequired,
+    humanApprovalRequired:
+      'Human approval required before converting this Atlas brief into a program, budget, vendor, or phase-gate action.',
+  };
+}
+
+function uniqueStrings(values: ReadonlyArray<string>): string[] {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
 function composeWhyItMatters(

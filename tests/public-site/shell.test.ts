@@ -35,23 +35,23 @@ describe('TopNav', () => {
 
   it('renders the AbarVa wordmark', () => {
     render(React.createElement(TopNav));
-    expect(screen.getByText('Abar')).toBeTruthy();
-    expect(screen.getByText('Va')).toBeTruthy();
+    expect(screen.getByAltText('AbarVa')).toBeTruthy();
   });
 
-  it('renders all four nav links', () => {
+  it('renders the lean public navigation', () => {
     render(React.createElement(TopNav));
-    expect(screen.getByText('Patterns')).toBeTruthy();
-    expect(screen.getByText('Contradictions')).toBeTruthy();
-    expect(screen.getByText('Editorial')).toBeTruthy();
-    expect(screen.getByText('Architecture')).toBeTruthy();
+    expect(screen.getByText('Sign in')).toBeTruthy();
+    expect(screen.queryByText('Product')).toBeNull();
+    expect(screen.queryByText('Training')).toBeNull();
+    expect(screen.queryByText('Patterns')).toBeNull();
+    expect(screen.queryByText('Architecture')).toBeNull();
   });
 
-  it('renders the Try Atlas CTA linking to /atlas/', () => {
+  it('renders the Request access CTA linking to sign-in', () => {
     render(React.createElement(TopNav));
-    const cta = screen.getByText('Try Atlas →');
+    const cta = screen.getByText('Request access');
     expect(cta).toBeTruthy();
-    expect((cta as HTMLAnchorElement).getAttribute('href')).toBe('/atlas/');
+    expect((cta as HTMLAnchorElement).getAttribute('href')).toBe('/sign-in');
   });
 
   it('has an accessible navigation landmark', () => {
@@ -72,35 +72,31 @@ describe('Footer', () => {
 
   it('renders the product column', () => {
     render(React.createElement(Footer));
-    expect(screen.getByText('How it works')).toBeTruthy();
-    expect(screen.getByText('Atlas')).toBeTruthy();
+    expect(screen.getAllByText('Request access').length).toBeGreaterThan(0);
+    expect(
+      screen
+        .getAllByText('Request access')
+        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/sign-in')
+    ).toBe(true);
+    expect(screen.queryByText('Product')).toBeNull();
   });
 
-  it('renders the corpus column links', () => {
+  it('renders the access posture', () => {
     render(React.createElement(Footer));
-    expect(screen.getByText('Contradictions')).toBeTruthy();
-    expect(screen.getByText('Editorial')).toBeTruthy();
-    expect(screen.getByText('Digest')).toBeTruthy();
+    expect(screen.getByText(/Training, client primers, corpus detail/)).toBeTruthy();
   });
 
-  it('renders the architecture column', () => {
+  it('renders the private trust posture instead of public trust links', () => {
     render(React.createElement(Footer));
-    expect(screen.getByText('Knowledge fabric')).toBeTruthy();
-    expect(screen.getByText('Data plane')).toBeTruthy();
-    expect(screen.getByText('Governance')).toBeTruthy();
+    expect(screen.getByText('Trust')).toBeTruthy();
+    expect(screen.getByText(/Responsible AI, model-card, subprocessors/)).toBeTruthy();
+    expect(screen.queryByText('Contact')).toBeNull();
+    expect(screen.queryByText('Model card')).toBeNull();
   });
 
-  it('renders a Talk to us contact link', () => {
+  it('renders invite-only workspace copy', () => {
     render(React.createElement(Footer));
-    const link = screen.getByText('Talk to us');
-    expect(link).toBeTruthy();
-    expect((link as HTMLAnchorElement).getAttribute('href')).toBe('/contact/');
-  });
-
-  it('renders privacy and terms legal links', () => {
-    render(React.createElement(Footer));
-    expect(screen.getByText('Privacy')).toBeTruthy();
-    expect(screen.getByText('Terms')).toBeTruthy();
+    expect(screen.getByText('Invite-only enterprise workspaces.')).toBeTruthy();
   });
 
   it('has contentinfo role', () => {

@@ -349,6 +349,9 @@ describe('NexusReactivePanel · brief-progress rendering', () => {
     expect(html).toContain('5/8');
     expect(html).toContain('AI-Assisted Engineering Productivity');
     expect(html).toContain('Rick Stewart');
+    expect(html).toContain('data-ai-suggestion-frame="suggested"');
+    expect(html).toContain('Validate before action');
+    expect(html).toContain('Nexus AI suggestion: Program brief');
   });
 });
 

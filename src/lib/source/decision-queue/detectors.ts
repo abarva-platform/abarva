@@ -354,8 +354,8 @@ export function detectBlockedEvidence(
       headline: `Renewal decisions are weakly grounded — ${weak.join(', ')} need a refresh`,
       whyItMatters: verdict.summary,
       recommendedAction:
-        'Refresh the flagged context segments before acting on renewal cards',
-      deepLink: '/setup/source',
+        'Open a renewal intake and assign the missing evidence refresh before acting',
+      deepLink: '/source/new?intent=renewal',
       evidenceRefs: weak,
       valueAtStakeUsd: null,
       surfacedAt,

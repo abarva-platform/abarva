@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SkyHarbor Move — File Cabinet &amp; Vault Live Proof</title>
+    <style>
+      :root { --bg:#f8f7f4; --ink:#1a1a18; --muted:#5a6472; --line:#e3e6eb; --navy:#1b2b5c; --green:#1e7e34; --amber:#b26a00; }
+      * { box-sizing: border-box; }
+      body { background: var(--bg); color: var(--ink); font-family: "DM Sans", -apple-system, system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 56px 28px 96px; line-height: 1.55; }
+      h1, h2, h3 { font-family: Georgia, serif; font-weight: 400; }
+      h1 { font-size: 32px; margin: 0 0 6px; }
+      h2 { font-size: 21px; margin: 40px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+      .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+      code { font-family: Menlo, monospace; font-size: 12px; background: #eef0f3; padding: 1px 5px; border-radius: 3px; word-break: break-all; }
+      table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+      td, th { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+      th { background: #f1f2f4; font-weight: 600; }
+      ul { margin: 8px 0; padding-left: 22px; } li { margin: 5px 0; }
+      .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+      .ok { background: #e6f4ea; color: var(--green); }
+      .muted { color: var(--muted); }
+      .kv { font-size: 13.5px; }
+      .step { font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>SkyHarbor Move — File Cabinet &amp; Vault Live Proof</h1>
+    <div class="sub">
+      End-to-end verification on a real Strategic Move, on the private Azure
+      Container Apps deployment against the private Postgres data plane.
+      No mocks, no localhost, no placeholder storage.
+    </div>
+
+    <h2>1. Subject under test</h2>
+    <table class="kv">
+      <tr><th>Tenant</th><td>SkyHarbor Air (<code>skyharbor-air</code>)</td></tr>
+      <tr><th>Move</th><td>AI-Powered Product Development Lifecycle — Real-World Test</td></tr>
+      <tr><th>Move id</th><td><code>358233e6-723d-492d-9e6b-6d8541b91207</code></td></tr>
+      <tr><th>Display code</th><td><code>GLOBAL_NETWORK_AIRLINE-AI-2026</code></td></tr>
+      <tr><th>Phase</th><td>P1 (Charter)</td></tr>
+      <tr><th>Deployment</th><td>ACA revision <code>ca-abarva-web-lab-eastus--vault-c9a133153</code> · Healthy · 100% traffic</td></tr>
+      <tr><th>Storage</th><td>Azure Blob (managed identity) · registry <code>move_artifacts</code> on private Postgres</td></tr>
+    </table>
+
+    <h2>2. The chain, proven state by state</h2>
+    <p class="muted">
+      Each state is reported separately — no collapsing distinct steps into one
+      word like “stored”.
+    </p>
+    <table>
+      <tr><th>#</th><th>State</th><th>Evidence</th><th>Result</th></tr>
+      <tr><td>1</td><td class="step">Deliverable generated (multi-pass, governed)</td><td>orchestrate route returned <code>ok:true</code>, model opus-class, quality gate evaluated</td><td><span class="pill ok">quality 84/100</span></td></tr>
+      <tr><td>2</td><td class="step">DOCX rendered</td><td>board-grade render — title page, revision history, TOC, tables</td><td><span class="pill ok">21,607 bytes</span></td></tr>
+      <tr><td>3</td><td class="step">Bytes staged to Azure Blob</td><td>objectStorage.upload → <code>moves/skyharbor-air/358233e6…/generated/p1/program_charter/v1/SkyHarbor_Air_Program_Charter.docx</code></td><td><span class="pill ok">storage: azure_blob</span></td></tr>
+      <tr><td>4</td><td class="step">Registered in Postgres</td><td><code>INSERT move_artifacts</code> — sha256, version 1, status, governance, quality</td><td><span class="pill ok">row committed</span></td></tr>
+      <tr><td>5</td><td class="step">Listed in File Cabinet API</td><td><code>GET /api/v1/programs/358233e6…/artifacts</code></td><td><span class="pill ok">count 1</span></td></tr>
+      <tr><td>6</td><td class="step">Rendered in File Cabinet UI</td><td>?tab=cabinet — Deliverables group, status chip, quality, “Stored in Azure Blob”</td><td><span class="pill ok">visible</span></td></tr>
+      <tr><td>7</td><td class="step">Downloaded — byte-accurate</td><td><code>GET …/artifacts/c7c980d6…/download</code> streamed from Blob</td><td><span class="pill ok">HTTP 200 · DOCX · 21,607 bytes</span></td></tr>
+    </table>
+
+    <h2>3. Registry row (as listed)</h2>
+    <table class="kv">
+      <tr><th>artifact_id</th><td><code>c7c980d6-8ae1-40aa-8fd0-c9d0a29ff246</code></td></tr>
+      <tr><th>artifact_type</th><td><code>program_charter</code> · family <code>generated_deliverable</code></td></tr>
+      <tr><th>version</th><td>1 · lifecycle <code>current</code></td></tr>
+      <tr><th>status</th><td><code>review_required</code> (quality gate passed; awaiting human review)</td></tr>
+      <tr><th>quality_score</th><td>84 / 100</td></tr>
+      <tr><th>file</th><td>docx · 21,607 bytes</td></tr>
+      <tr><th>storage</th><td><code>azure_blob</code></td></tr>
+    </table>
+
+    <h2>4. Download — the integrity check that matters</h2>
+    <p>
+      The download endpoint streamed the artifact from Blob and returned
+      <strong>HTTP 200</strong> with content-type
+      <code>application/vnd.openxmlformats-officedocument.wordprocessingml.document</code>
+      and a body of <strong>exactly 21,607 bytes</strong> — byte-for-byte the
+      size recorded at upload. The earlier signed-URL path (which failed under
+      managed identity) was replaced by a server-side byte stream, so the file
+      is retrievable without depending on user-delegation-key SAS rights, with
+      tenant isolation enforced before any byte is read.
+    </p>
+
+    <h2>5. Hard rules — verified on this Move</h2>
+    <ul>
+      <li>Every artifact saved to Azure Blob — <span class="pill ok">proven (state 3)</span></li>
+      <li>Every artifact has Postgres metadata — <span class="pill ok">proven (state 4)</span></li>
+      <li>Every artifact appears in the File Cabinet — <span class="pill ok">proven (states 5–6)</span></li>
+      <li>Artifact is retrievable, intact — <span class="pill ok">proven (state 7, byte-accurate)</span></li>
+      <li>Quality gate governs status (review_required, not board_ready) — <span class="pill ok">proven</span></li>
+      <li>No browser-only or temp-only artifact — <span class="pill ok">proven (durable Blob + registry)</span></li>
+    </ul>
+
+    <h2>6. What this does NOT yet claim</h2>
+    <p class="muted">
+      Verified above: generated-deliverable family, single tenant, P1. Not yet
+      exercised on live data and therefore not claimed here: uploaded-evidence
+      and session-artifact families end-to-end; a Phase Gate Decision Record
+      produced by a real P1→P2 advance (the code is deployed and the advance is
+      pending sponsor/founder approval — correct governance, not a defect);
+      multi-version supersession on a real regeneration. These are the next
+      verification targets.
+    </p>
+  </body>
+</html>

@@ -154,10 +154,12 @@ const INTENT_RULES: IntentRule[] = [
     intent: 'strategy_refusal',
     routeType: 'scripted',
     terms: [
-      'should we',
       'is this the right move',
       'what should our strategy be',
+      'should we buy',
       'should we consolidate',
+      'should we fund',
+      'should we renew',
       'should we exit',
       'should we double down',
       'cancel the',
@@ -232,6 +234,23 @@ const INTENT_RULES: IntentRule[] = [
     intent: 'roi',
     routeType: 'scripted',
     terms: ['roi', 'value attainment', 'realized value', 'worth it'],
+  },
+
+  // ---- Federated Tower governance
+  {
+    intent: 'federated_visibility_boundary',
+    routeType: 'scripted',
+    terms: [
+      'l0 sponsor',
+      'sibling holdcos',
+      'sibling holdco',
+      'explicit grant',
+      'visibility grant',
+      'what can i see across',
+      'what can we see across',
+      'federated visibility',
+    ],
+    requireAll: ['tower'],
   },
 
   // ---- Peer / industry (Q7-Q10)
@@ -349,6 +368,23 @@ const INTENT_RULES: IntentRule[] = [
     intent: 'idle_seats',
     routeType: 'scripted',
     terms: ['idle seats', 'copilot seats', 'licensed vs active', 'seat utilization'],
+  },
+  {
+    intent: 'copilot_usage_value',
+    routeType: 'scripted',
+    terms: [
+      'copilot usage',
+      'copilot value',
+      'copilot adoption',
+      'copilot utilization',
+      'copilot usage and value',
+      'copilot adoption and value',
+      'talk to me about copilot',
+      'talk to me about copiplot',
+      'copiplot usage',
+      'copiplot value',
+      'copiplot',
+    ],
   },
 
   // ---- Risk / governance (Q15-Q18)

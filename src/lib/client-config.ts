@@ -1,3 +1,5 @@
+import { AGENT_CLIENT_LOGINS } from "@/lib/auth/agent-client-logins";
+
 export interface ClientOption {
   id: string;
   name: string;
@@ -6,41 +8,158 @@ export interface ClientOption {
   vertical: string;
 }
 
+export const DEMO_SAFE_CLIENT_NAMES = {
+  apexretail: "Retail Demo",
+  meridian: "Healthcare Demo",
+  arcturus: "Financial Services Demo",
+  northstar: "Clinical Technology Demo",
+  skyharbor: "Airline Demo",
+  lakeshore: "Lakeshore Holdings",
+} as const satisfies Record<string, string>;
+
+const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\bApex Retail Group(?:\s+Retail Group|\s+Group)+\b/gi, DEMO_SAFE_CLIENT_NAMES.apexretail],
+  [/\bApex Retail Group\b/gi, DEMO_SAFE_CLIENT_NAMES.apexretail],
+  [/\bApex Retail\b/gi, DEMO_SAFE_CLIENT_NAMES.apexretail],
+  [/\bApex\b/gi, DEMO_SAFE_CLIENT_NAMES.apexretail],
+  [/\bMeridian Health System(?:\s+Health System|\s+System)+\b/gi, DEMO_SAFE_CLIENT_NAMES.meridian],
+  [/\bMeridian Health System\b/gi, DEMO_SAFE_CLIENT_NAMES.meridian],
+  [/\bMeridian Health\b/gi, DEMO_SAFE_CLIENT_NAMES.meridian],
+  [/\bMeridian\b/gi, DEMO_SAFE_CLIENT_NAMES.meridian],
+  [/\bFirst Capital Financial(?:\s+Capital Financial|\s+Financial)+\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bFirst Capital Financial\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bFirst Capital\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bArcturus Financial Group(?:\s+Financial Group|\s+Group)+\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bArcturus Financial Group\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bArcturus Financial\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bArcturus\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bNorthstar Clinical Technologies(?:\s+Clinical Technologies|\s+Technologies)+\b/gi, DEMO_SAFE_CLIENT_NAMES.northstar],
+  [/\bNorthstar Clinical Technologies\b/gi, DEMO_SAFE_CLIENT_NAMES.northstar],
+  [/\bNorthstar\b/gi, DEMO_SAFE_CLIENT_NAMES.northstar],
+  [/\bSkyHarbor Air(?:\s+Air)+\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor Air Group\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor Airlines\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor Air\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bLakeshore Holdings(?:\s+Holdings)+\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  [/\bLakeshore Holdings\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  [/\bLakeshore\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
+];
+
+const DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS: ReadonlyArray<
+  readonly [string, string]
+> = [
+  ["Apex Retail Group", DEMO_SAFE_CLIENT_NAMES.apexretail],
+  ["Apex Retail", DEMO_SAFE_CLIENT_NAMES.apexretail],
+  ["Meridian Health System", DEMO_SAFE_CLIENT_NAMES.meridian],
+  ["Meridian Health", DEMO_SAFE_CLIENT_NAMES.meridian],
+  ["First Capital Financial", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["First Capital", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["Arcturus Financial Group", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["Arcturus Financial", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["Northstar Clinical Technologies", DEMO_SAFE_CLIENT_NAMES.northstar],
+  ["SkyHarbor Air Group", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["SkyHarbor Airlines", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["SkyHarbor Air", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["SkyHarbor", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["Lakeshore Holdings", DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  ["Lakeshore", DEMO_SAFE_CLIENT_NAMES.lakeshore],
+];
+
+export function demoSafeClientText(value: string): string {
+  const regexReplaced = DEMO_SAFE_TEXT_REPLACEMENTS.reduce(
+    (text, [pattern, replacement]) => text.replace(pattern, replacement),
+    value,
+  );
+  const replaced = DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS.reduce(
+    (text, [needle, replacement]) => text.split(needle).join(replacement),
+    regexReplaced,
+  );
+  return collapseRepeatedDemoSafeClientNames(replaced);
+}
+
+function collapseRepeatedDemoSafeClientNames(value: string): string {
+  const names = [
+    DEMO_SAFE_CLIENT_NAMES.apexretail,
+    DEMO_SAFE_CLIENT_NAMES.meridian,
+    DEMO_SAFE_CLIENT_NAMES.arcturus,
+    DEMO_SAFE_CLIENT_NAMES.northstar,
+    DEMO_SAFE_CLIENT_NAMES.skyharbor,
+    DEMO_SAFE_CLIENT_NAMES.lakeshore,
+  ];
+  let text = value;
+  for (let pass = 0; pass < 5; pass += 1) {
+    const before = text;
+    text = names.reduce((next, name) => {
+      const words = name.split(/\s+/).filter(Boolean);
+      const suffix = words[words.length - 1];
+      if (!suffix) return next;
+      const tail = words.slice(1).map(escapeRegExp).join("\\s+");
+      const collapsedTail = tail
+        ? next.replace(
+            new RegExp(`\\b${escapeRegExp(name)}(?:\\s+${tail})+\\b`, "g"),
+            name,
+          )
+        : next;
+      return collapsedTail.replace(
+        new RegExp(
+          `\\b${escapeRegExp(name)}(?:\\s+${escapeRegExp(suffix)})+\\b`,
+          "g",
+        ),
+        name,
+      );
+    }, text);
+    if (text === before) break;
+  }
+  return text;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export const ALL_CLIENTS: ClientOption[] = [
   {
-    id: 'apexretail',
-    name: 'Apex Retail Group',
-    shortName: 'Apex Retail',
-    color: '#F59E0B',
-    vertical: 'Retail',
+    id: "apexretail",
+    name: DEMO_SAFE_CLIENT_NAMES.apexretail,
+    shortName: DEMO_SAFE_CLIENT_NAMES.apexretail,
+    color: "#F59E0B",
+    vertical: "Retail",
   },
   {
-    id: 'meridian',
-    name: 'Meridian Health System',
-    shortName: 'Meridian Health',
-    color: '#14B8A6',
-    vertical: 'Healthcare',
+    id: "meridian",
+    name: DEMO_SAFE_CLIENT_NAMES.meridian,
+    shortName: DEMO_SAFE_CLIENT_NAMES.meridian,
+    color: "#14B8A6",
+    vertical: "Healthcare",
   },
   {
-    id: 'arcturus',
-    name: 'First Capital Financial',
-    shortName: 'First Capital',
-    color: '#818CF8',
-    vertical: 'Financial Services',
+    id: "arcturus",
+    name: DEMO_SAFE_CLIENT_NAMES.arcturus,
+    shortName: DEMO_SAFE_CLIENT_NAMES.arcturus,
+    color: "#818CF8",
+    vertical: "Financial Services",
   },
   {
-    id: 'northstar',
-    name: 'Northstar Clinical Technologies',
-    shortName: 'Northstar',
-    color: '#0F766E',
-    vertical: 'Clinical Technology',
+    id: "northstar",
+    name: DEMO_SAFE_CLIENT_NAMES.northstar,
+    shortName: DEMO_SAFE_CLIENT_NAMES.northstar,
+    color: "#0F766E",
+    vertical: "Clinical Technology",
   },
   {
-    id: 'skyharbor',
-    name: 'SkyHarbor Air',
-    shortName: 'SkyHarbor',
-    color: '#075985',
-    vertical: 'Global Airline',
+    id: "skyharbor",
+    name: DEMO_SAFE_CLIENT_NAMES.skyharbor,
+    shortName: DEMO_SAFE_CLIENT_NAMES.skyharbor,
+    color: "#075985",
+    vertical: "Global Airline",
+  },
+  {
+    id: "lakeshore",
+    name: DEMO_SAFE_CLIENT_NAMES.lakeshore,
+    shortName: DEMO_SAFE_CLIENT_NAMES.lakeshore,
+    color: "#2563EB",
+    vertical: "Diversified Holdco",
   },
   {
     id: 'lakeshore',
@@ -51,9 +170,9 @@ export const ALL_CLIENTS: ClientOption[] = [
   },
 ] as const;
 
-export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
+export type ClientKey = (typeof ALL_CLIENTS)[number]["id"];
 
-export const DEFAULT_CLIENT_KEY: ClientKey = 'apexretail';
+export const DEFAULT_CLIENT_KEY: ClientKey = "apexretail";
 
 export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   // 'Heliara Health' / 'Heliara Health Alliance' are legacy demo names for
@@ -77,7 +196,9 @@ export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   lakeshore: 'INDUSTRIAL',
 };
 
-export function industryCodeForClientName(name: string | null | undefined): string | null {
+export function industryCodeForClientName(
+  name: string | null | undefined,
+): string | null {
   const normalized = name?.trim().toLowerCase();
   if (!normalized) return null;
 
@@ -93,7 +214,9 @@ export function industryCodeForClientName(name: string | null | undefined): stri
   return null;
 }
 
-export function isClientKey(value: string | null | undefined): value is ClientKey {
+export function isClientKey(
+  value: string | null | undefined,
+): value is ClientKey {
   return !!value && ALL_CLIENTS.some((client) => client.id === value);
 }
 
@@ -114,52 +237,55 @@ export function canonicalClientDisplayName(args: {
   const normalizedName = name?.toLowerCase();
 
   if (
-    key === 'meridian' ||
-    normalizedName === 'meridian health' ||
-    normalizedName === 'meridian health system' ||
+    key === "meridian" ||
+    normalizedName === "meridian health" ||
+    normalizedName === "meridian health system" ||
+    normalizedName === "healthcare demo" ||
     // D-021 fix (2026-05-13): "Heliara Health" / "Heliara Health Alliance"
     // are retired demo names for Meridian. The 2026-05-13 audit found the
     // Sentinel agent opening "I composed this brief for Heliara Health from
     // the corpus" because a DB row still carried the old name. Map every
-    // "Heliara*" alias to the canonical 'Meridian Health' so no user ever
+    // "Heliara*" alias to the canonical system name so no user ever
     // sees the retired codename, regardless of where the row originated.
-    normalizedName === 'heliara' ||
-    normalizedName === 'heliara health' ||
-    normalizedName === 'heliara health alliance' ||
-    (normalizedName?.startsWith('heliara ') ?? false)
+    normalizedName === "heliara" ||
+    normalizedName === "heliara health" ||
+    normalizedName === "heliara health alliance" ||
+    (normalizedName?.startsWith("heliara ") ?? false)
   ) {
-    return 'Meridian Health';
+    return DEMO_SAFE_CLIENT_NAMES.meridian;
   }
 
   if (
-    key === 'arcturus' ||
-    key === 'firstcapital' ||
-    key === 'first-capital' ||
-    normalizedName === 'arcturus financial group' ||
-    normalizedName === 'arcturus financial' ||
-    normalizedName === 'first capital financial' ||
-    normalizedName === 'first capital'
+    key === "arcturus" ||
+    key === "firstcapital" ||
+    key === "first-capital" ||
+    normalizedName === "arcturus financial group" ||
+    normalizedName === "arcturus financial" ||
+    normalizedName === "first capital financial" ||
+    normalizedName === "first capital" ||
+    normalizedName === "financial services demo"
   ) {
-    return 'First Capital Financial';
+    return DEMO_SAFE_CLIENT_NAMES.arcturus;
   }
 
   if (
-    key === 'northstar' ||
-    key === 'northstar-clinical' ||
-    normalizedName === 'northstar clinical technologies' ||
-    normalizedName === 'northstar'
+    key === "apexretail" ||
+    key === "apex-retail" ||
+    normalizedName === "apex retail" ||
+    normalizedName === "apex retail group" ||
+    normalizedName === "retail demo"
   ) {
-    return 'Northstar Clinical Technologies';
+    return DEMO_SAFE_CLIENT_NAMES.apexretail;
   }
 
   if (
-    key === 'skyharbor' ||
-    key === 'skyharbor-air' ||
-    normalizedName === 'skyharbor air' ||
-    normalizedName === 'skyharbor airlines' ||
-    normalizedName === 'skyharbor'
+    key === "northstar" ||
+    key === "northstar-clinical" ||
+    normalizedName === "northstar clinical technologies" ||
+    normalizedName === "northstar" ||
+    normalizedName === "clinical technology demo"
   ) {
-    return 'SkyHarbor Air';
+    return DEMO_SAFE_CLIENT_NAMES.northstar;
   }
 
   if (
@@ -217,31 +343,89 @@ const EXACT_EMAIL_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
  * sub-addresses. Suffix matching is anchored to the `@abarva.com`
  * domain — never substring search on the full email.
  */
-const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
+const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
+  readonly [string, ClientKey]
+> = [
   // Founder sub-address pattern: anand+apex@abarva.com → apexretail
-  ['+apex', 'apexretail'],
-  ['+meridian', 'meridian'],
-  ['+firstcapital', 'arcturus'],
-  ['+northstar', 'northstar'],
-  ['+skyharbor', 'skyharbor'],
+  ["+apex", "apexretail"],
+  ["+meridian", "meridian"],
+  ["+firstcapital", "arcturus"],
+  ["+northstar", "northstar"],
+  ["+skyharbor", "skyharbor"],
+  ["+lakeshore", "lakeshore"],
   // Demo-prefix pattern: demo-apexretail+clerk_test@abarva.com (retired)
-  ['demo-apexretail+', 'apexretail'],
-  ['demo-meridian+', 'meridian'],
-  ['demo-firstcapital+', 'arcturus'],
-  ['demo-northstar+', 'northstar'],
-  ['demo-skyharbor+', 'skyharbor'],
+  ["demo-apexretail+", "apexretail"],
+  ["demo-meridian+", "meridian"],
+  ["demo-firstcapital+", "arcturus"],
+  ["demo-northstar+", "northstar"],
+  ["demo-skyharbor+", "skyharbor"],
+  ["demo-lakeshore+", "lakeshore"],
   // Legacy short prefixes
-  ['apex+', 'apexretail'],
-  ['mh+', 'meridian'],
-  ['af+', 'arcturus'],
-  ['ns+', 'northstar'],
-  ['sh+', 'skyharbor'],
+  ["apex+", "apexretail"],
+  ["mh+", "meridian"],
+  ["af+", "arcturus"],
+  ["ns+", "northstar"],
+  ["sh+", "skyharbor"],
+  ["lh+", "lakeshore"],
 ];
 
-export function inferClientKeyFromEmail(email: string | null | undefined): ClientKey | null {
-  const normalized = email?.toLowerCase().trim() ?? '';
-  if (!normalized || !normalized.includes('@')) return null;
-  const [localPart, domain] = normalized.split('@', 2);
+const THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
+  readonly [string, ClientKey]
+> = [
+  ["anand.sundaram+apex", "apexretail"],
+  ["anand.sundaram+meridian", "meridian"],
+  ["anand.sundaram+firstcapital", "arcturus"],
+  ["anand.sundaram+northstar", "northstar"],
+  ["anand.sundaram+skyharbor", "skyharbor"],
+  ["anand.sundaram+lakeshore", "lakeshore"],
+];
+
+/**
+ * Real external pilot users, each pinned to exactly one client. These are live
+ * people (pilot sponsors / evaluators), NOT synthetic demo personas — keep the
+ * list tiny, explicit, and reviewed: every entry is an access grant. Ported
+ * from the production pilot so the main line carries the same access.
+ * (fix/pilot-email-access-on-main)
+ */
+const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
+  "kmysore@gmail.com": "meridian", // Kiran Mysore · CDAO / pilot sponsor
+  "surekha.durvasula@gmail.com": "lakeshore", // Surekha Durvasula · VP Innovation / Delivery
+  "anandshp@gmail.com": "lakeshore",
+  "admin@abarva.ai": "arcturus", // First Capital Financial
+  "anand@abarva.ai": "skyharbor",
+};
+
+const AGENT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> =
+  Object.fromEntries(
+    AGENT_CLIENT_LOGINS.map((agent) => [
+      agent.email.trim().toLowerCase(),
+      agent.clientKey,
+    ]),
+  ) as Readonly<Record<string, ClientKey>>;
+
+export function isKnownAgentClientLoginEmail(
+  email: string | null | undefined,
+): boolean {
+  const normalized = email?.toLowerCase().trim() ?? "";
+  return !!normalized && !!AGENT_EXACT_EMAIL_TO_CLIENT_KEY[normalized];
+}
+
+export function inferClientKeyFromEmail(
+  email: string | null | undefined,
+): ClientKey | null {
+  const normalized = email?.toLowerCase().trim() ?? "";
+  if (!normalized || !normalized.includes("@")) return null;
+
+  // Exact pilot-user grants win first — full addresses on shared domains
+  // (gmail.com, abarva.ai) the domain/local-part maps below would otherwise
+  // miss or mis-route.
+  const pilotExact = PILOT_EXACT_EMAIL_TO_CLIENT_KEY[normalized];
+  if (pilotExact) return pilotExact;
+
+  const agentExact = AGENT_EXACT_EMAIL_TO_CLIENT_KEY[normalized];
+  if (agentExact) return agentExact;
+
+  const [localPart, domain] = normalized.split("@", 2);
   if (!localPart || !domain) return null;
 
   for (const [candidate, key] of EXACT_EMAIL_TO_CLIENT_KEY) {
@@ -252,15 +436,24 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
     if (domain === suffix || domain.endsWith(`.${suffix}`)) return key;
   }
 
-  if (domain === 'abarva.com') {
+  if (domain === "abarva.com") {
     for (const [token, key] of LEGACY_LOCALPART_TO_CLIENT_KEY) {
       // Tokens starting with `+` match anywhere in the local part (sub-address);
       // tokens ending with `+` match only at the start (demo-prefix pattern).
-      if (token.startsWith('+')) {
+      if (token.startsWith("+")) {
         if (localPart.includes(token)) return key;
       } else if (localPart.startsWith(token)) {
         return key;
       }
+    }
+  }
+
+  if (domain === "thesundaram.com") {
+    for (const [
+      localPartAlias,
+      key,
+    ] of THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY) {
+      if (localPart === localPartAlias) return key;
     }
   }
 

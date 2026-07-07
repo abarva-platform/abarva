@@ -1,0 +1,15 @@
+interface_name,source_app,target_app,pattern,middleware,direction,frequency,data_volume,criticality,source
+Northline GL to Holdco Consolidation,Dynamics 365 F&O,SAP S/4HANA,file_batch,SFTP,outbound,daily,~5k rows/day,1,illustrative-sample
+Brightmark GL to Holdco Consolidation,Sage Intacct,SAP S/4HANA,file_batch,SFTP,outbound,daily,~2k rows/day,2,illustrative-sample
+Forge & Field GL to Holdco Consolidation,NetSuite,SAP S/4HANA,rest_api,Boomi,outbound,daily,~3k rows/day,1,illustrative-sample
+Bank statements to Kyriba,JPMorgan H2H,Kyriba,file_batch,SFTP,inbound,intraday,~120 files/day,1,illustrative-sample
+Kyriba cash positions to S/4HANA,Kyriba,SAP S/4HANA,rest_api,Boomi,inbound,daily,~1k rows/day,1,illustrative-sample
+WMS shipments to TMS,Manhattan WMS,Oracle TMS,db_link,none,bidirectional,hourly,~8k rows/day,2,illustrative-sample
+TMS freight cost to Northline ERP,Oracle TMS,Dynamics 365 F&O,file_batch,SFTP,outbound,daily,~4k rows/day,2,illustrative-sample
+Workday payroll to S/4HANA,Workday HCM,SAP S/4HANA,rest_api,Boomi,outbound,monthly,~10k rows/run,1,illustrative-sample
+ADP to Workday master sync,ADP Workforce Now,Workday HCM,file_batch,SFTP,outbound,weekly,~6k rows/week,2,illustrative-sample
+Shopify orders to NetSuite,Shopify Plus,NetSuite,rest_api,Boomi,inbound,realtime,~2k orders/day,1,illustrative-sample
+Coupa POs to S/4HANA,Coupa,SAP S/4HANA,rest_api,Boomi,outbound,daily,~1.5k rows/day,2,illustrative-sample
+Concur expenses to NetSuite,Concur,NetSuite,file_batch,SFTP,outbound,daily,~800 rows/day,3,illustrative-sample
+Salesforce opps to Power BI feed,Salesforce Sales Cloud,Power BI,db_link,none,outbound,daily,~3k rows/day,3,illustrative-sample
+S/4HANA extract to SQL Server DW,SAP S/4HANA,SQL Server DW (Holdco),file_batch,SSIS,outbound,nightly,~50k rows/night,2,illustrative-sample

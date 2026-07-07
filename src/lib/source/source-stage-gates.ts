@@ -32,6 +32,10 @@ const REQUIRED_APPROVALS_BY_TRANSITION: Record<string, string[]> = {
   'gate-value-closed': ['Value office closure review'],
 };
 
+export const SOURCE_STAGE_GATE_TRANSITIONS = TRANSITIONS;
+export const SOURCE_STAGE_GATE_REQUIRED_APPROVALS_BY_TRANSITION =
+  REQUIRED_APPROVALS_BY_TRANSITION;
+
 const EVIDENCE_GAP_BY_TRANSITION: Record<string, string> = {
   'gate-strategy-scope': 'Sourcing model assumptions require evidence reconciliation.',
   'gate-scope-rfp': 'Scope baseline must be validated for pricing-safe packaging.',

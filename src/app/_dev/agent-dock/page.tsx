@@ -3,7 +3,7 @@
 // _dev/agent-dock · visual QA playground for the AgentDock foundation.
 //
 // Renders <AgentDock> with a fake agent + sample messages + dummy
-// onMessage handler. Used to flip through all 5 modes manually before
+// onMessage handler. Used to flip through all 6 modes manually before
 // the 7 sibling migration chips wire AgentDock into real surfaces.
 //
 // Note: lives under `/_dev/` to keep it discoverable but obviously
@@ -17,7 +17,7 @@ const SAMPLE_THREAD: ChatMessage[] = [
     id: 'm1',
     role: 'agent',
     body:
-      "Hi — I'm Sentinel. I'll surface evidence and flag gaps before they cost you. Try asking me to summarize the latest pricing submission, or upload a vendor packet and I'll draft a one-pager.",
+      "Hi — I'm Ava. I'll surface evidence and flag gaps before they cost you. Try asking me to summarize the latest pricing submission, or upload a vendor packet and I'll draft a one-pager.",
   },
   {
     id: 'm2',
@@ -94,7 +94,7 @@ export default function AgentDockPlaygroundPage() {
         <span>
           <strong style={{ color: '#0c1a3a' }}>AgentDock playground</strong>
           {' · '}
-          Switch dock modes via the 5-icon row in the top-right of the
+          Switch dock modes via the 6-icon row in the top-right of the
           chat header. Mode persists in localStorage.
         </span>
         <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center' }}>
@@ -147,8 +147,8 @@ export default function AgentDockPlaygroundPage() {
       {chrome === 'tall-top' ? <FakeSecondaryNav /> : null}
       <AgentDock
         agent={{
-          initials: 'S',
-          name: 'Sentinel',
+          initials: 'Av',
+          name: 'Ava',
           role: 'Drafts artifacts, surfaces evidence, flags gaps before they cost you.',
         }}
         surface="dev/agent-dock-playground"

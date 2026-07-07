@@ -4,13 +4,23 @@
 // buildIntelligenceSolutionsIndexView(). Cards now link to solution detail pages.
 
 import { IntelligenceSolutionsIndexPage } from '@/components/intelligence/IntelligenceSolutionsIndexPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import { buildIntelligenceSolutionsIndexView } from '@/lib/intelligence/intelligence-solutions-index-view';
 
 export const metadata = {
   title: 'Solution Archetypes · Intelligence',
 };
 
-export default function SolutionsRoute() {
+export default async function SolutionsRoute() {
   const view = buildIntelligenceSolutionsIndexView();
-  return <IntelligenceSolutionsIndexPage view={view} />;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  return (
+    <IntelligenceSolutionsIndexPage
+      view={view}
+      tenantName={activeClient?.name ?? 'Client workspace'}
+    />
+  );
 }
+
+// Per-request render (tenant-scoped reads / useSearchParams CSR bailout) — no static prerender.
+export const dynamic = 'force-dynamic';

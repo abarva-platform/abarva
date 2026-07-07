@@ -27,10 +27,17 @@ export { renderMoveCostedBusinessCaseHtml } from './move-html-renderer';
 export {
   buildMoveCostedBusinessCasePack,
   type MoveCostedBusinessCasePack,
+  type MoveCostedBusinessCasePackOptions,
   type MoveUnboundResult,
   type MoveCostedBusinessCaseResult,
   type MovePackSections,
 } from './move-pack-model';
+
+// WE-3 — Workforce Economics estimate-twice binding for the board-grade pack.
+export {
+  buildMoveWorkforceEconomics,
+  deriveWorkforceEstimateInput,
+} from './move-workforce-economics-binding';
 
 export { renderApexDiscoverBriefHtml } from './discover-brief-renderer';
 export {
@@ -76,6 +83,10 @@ export {
   type EstimateModel,
   type EstimateSections,
 } from './estimate-model-model';
+export {
+  renderProbabilisticForecastHtml,
+  type ProbabilisticForecastRendererInput,
+} from './probabilistic-forecast-renderer';
 
 // The generic, kernel-derived sibling of the Apex reference Estimate Model —
 // the board-grade Estimate & Financial Model for a REAL, originated Move.

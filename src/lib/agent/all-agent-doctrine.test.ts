@@ -23,17 +23,19 @@ describe('composeAllAgentDoctrineBlock', () => {
     expect(block).toContain('canonical industry/function/use-case patterns');
     expect(block).toContain('where is the most value?');
     expect(block).toContain('Never invent current-state facts');
-    expect(block).toContain('AGENT OUTPUT CONTRACT v2026-05-09');
+    expect(block).toContain('AGENT OUTPUT CONTRACT v2026-06-05');
     expect(block).toContain('three-depth CXO reading model');
-    expect(block).toContain('lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
+    expect(block).toContain('cxo-decision-digest, lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
+    expect(block).toContain('CXO decision digest labels: My read; Why; Decision fork; What I would do next; Evidence gap');
+    expect(block).toContain('Simple factual questions stay simple');
     expect(block).toContain('do not emit raw markdown emphasis markers');
-    expect(block).toContain('do not show raw pattern, use-case, or vendor IDs');
+    expect(block).toContain('do not show raw pattern, use-case, vendor, database field, or artifact IDs');
     expect(block).toContain('AGENT OUTPUT FEW-SHOT EXAMPLES');
     expect(block).toContain('Do not copy the facts unless the current retrieved context supports them');
   });
 
   it('maps setup, intelligence, moves, source, and tower surfaces', () => {
-    expect(composeAllAgentDoctrineBlock({ agentName: 'Steward', surface: '/setup' })).toContain(
+    expect(composeAllAgentDoctrineBlock({ agentName: 'Steward', surface: '/admin/setup' })).toContain(
       'Surface family: setup_governance',
     );
     expect(composeAllAgentDoctrineBlock({ agentName: 'Sentinel', surface: '/intelligence' })).toContain(

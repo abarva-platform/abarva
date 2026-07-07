@@ -7,7 +7,7 @@ import { listInstrumentTemplates } from '@/lib/instruments/authoring';
 import { InstrumentAdminClient } from './InstrumentAdminClient';
 
 export const metadata = {
-  title: 'Instruments | AbarVa Setup',
+  title: 'Instruments | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export default async function AdminInstrumentsPage() {
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
       <EditorialCanvas
-        eyebrow="Setup / Instruments"
+        eyebrow="Admin / Instruments"
         title="Instruments"
         subtitle="Versioned discovery instruments, review workflow, depth status, and downloadable render formats."
       >

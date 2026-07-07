@@ -1,6 +1,6 @@
 # First Capital Financial Synthetic Substrate v1
 
-This pack turns First Capital from a thin demo fixture into a banking-grade context layer:
+This pack provides a banking-grade synthetic enterprise context layer for First Capital:
 
 - 180 application portfolio rows across core banking, payments, lending, wealth, fraud, ERP, data and cyber.
 - 380 integration-topology edges for dependency and kill-blocker reasoning.

@@ -16,6 +16,7 @@ export interface BuildSentinelIntelContextArgs {
   clientKey?: string | null;
   stage: StageKey;
   isApexBound: boolean;
+  hasBoundCorpus?: boolean;
   status: RetailIntelligenceStatus | null;
   patterns: readonly PatternRow[];
   todayItems: readonly AttentionItem[];
@@ -56,6 +57,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
     activeTab: args.stage,
     activeClient: args.activeClient,
     clientKey: args.clientKey ?? (args.isApexBound ? 'apexretail' : null),
+    evidenceContext: buildEvidenceContext(args.enterpriseContext),
     substrate: args.status,
     pageFacts,
     stageFacts,
@@ -82,9 +84,24 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
   };
 }
 
+function buildEvidenceContext(overview: EnterpriseContextOverview | null | undefined): Record<string, unknown> | null {
+  if (!overview || overview.evidenceUsableCount <= 0) return null;
+  return {
+    kind: 'enterprise_context',
+    tenantKey: overview.tenantKey,
+    recordCount: overview.counts.records,
+    factCount: overview.counts.facts,
+    relationshipCount: overview.counts.relationships,
+    evidenceCount: overview.counts.evidence,
+    usableEvidenceCount: overview.evidenceUsableCount,
+    sourceCount: overview.counts.sources,
+    sourceSystems: overview.sourceSystems.slice(0, 12),
+  };
+}
+
 function stageSurfaceFacts(args: BuildSentinelIntelContextArgs): string[] {
   if (args.stage === 'enterprise-context') return enterpriseContextFacts(args.enterpriseContext);
-  if (!args.isApexBound) return [];
+  if (!args.isApexBound && !args.hasBoundCorpus) return [];
   switch (args.stage) {
     case 'brief':
       return briefFacts(args.briefData);

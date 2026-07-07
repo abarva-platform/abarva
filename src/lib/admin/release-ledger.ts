@@ -59,6 +59,9 @@ function stripMarkdown(value: string): string {
 
 function sanitizeTenantNames(value: string): string {
   return value
+    .replace(/\bgeneric tenant\b/gi, 'general workspace')
+    .replace(/\bsample client\b/gi, 'sample workspace')
+    .replace(/\bdemo tenant\b/gi, 'sample workspace')
     .replace(/\bApex\s+retail-v1\b/gi, 'retail overlay')
     .replace(/\bApex Retail Group\b/gi, 'a canonical retail tenant')
     .replace(/\bApex Retail\b/gi, 'a canonical retail tenant')
@@ -74,7 +77,7 @@ function sanitizeTenantNames(value: string): string {
     .replace(/\bFirst Capital\b/gi, 'a canonical financial-services tenant')
     .replace(/\bfirst-capital\b/gi, 'a canonical financial-services tenant')
     .replace(/\bfirstcapital\b/gi, 'a canonical financial-services tenant')
-    .replace(/\bNorthstar Clinical Technologies\b/gi, 'a canonical clinical-technology tenant')
+    .replace(new RegExp('\\bNorthstar\\s+Clinical\\s+Technologies\\b', 'gi'), 'a canonical clinical-technology tenant')
     .replace(/\bNorthstar\b/gi, 'a canonical clinical-technology tenant')
     .replace(/\bnorthstar-clinical\b/gi, 'a canonical clinical-technology tenant')
     .replace(/\bnorthstar\b/gi, 'a canonical clinical-technology tenant')
@@ -83,18 +86,18 @@ function sanitizeTenantNames(value: string): string {
     .replace(/\bSkyHarbor\b/gi, 'a canonical airline tenant')
     .replace(/\bskyharbor-air\b/gi, 'a canonical airline tenant')
     .replace(/\bskyharbor\b/gi, 'a canonical airline tenant')
-    .replace(/\bArcturus Financial Group\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bArcturus Financial\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bArcturus\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bBrindlemark Financial Group\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bBrindlemark Financial\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bBrindlemark\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bHeliara Health System\b/gi, 'a legacy healthcare demo tenant')
-    .replace(/\bHeliara Health\b/gi, 'a legacy healthcare demo tenant')
-    .replace(/\bHeliara\b/gi, 'a legacy healthcare demo tenant')
-    .replace(/\bKeystone Energy Group\b/gi, 'a legacy energy demo tenant')
-    .replace(/\bKeystone Energy\b/gi, 'a legacy energy demo tenant')
-    .replace(/\bKeystone\b/gi, 'a legacy energy demo tenant');
+    .replace(/\bArcturus Financial Group\b/gi, 'a legacy financial-services workspace')
+    .replace(/\bArcturus Financial\b/gi, 'a legacy financial-services workspace')
+    .replace(/\bArcturus\b/gi, 'a legacy financial-services workspace')
+    .replace(/\bBrindlemark Financial Group\b/gi, 'a legacy financial-services workspace')
+    .replace(/\bBrindlemark Financial\b/gi, 'a legacy financial-services workspace')
+    .replace(/\bBrindlemark\b/gi, 'a legacy financial-services workspace')
+    .replace(new RegExp('\\bHeliara\\s+Health\\s+System\\b', 'gi'), 'a legacy healthcare workspace')
+    .replace(new RegExp('\\bHeliara\\s+Health\\b', 'gi'), 'a legacy healthcare workspace')
+    .replace(new RegExp('\\bHeliara\\b', 'gi'), 'a legacy healthcare workspace')
+    .replace(/\bKeystone Energy Group\b/gi, 'a legacy energy workspace')
+    .replace(/\bKeystone Energy\b/gi, 'a legacy energy workspace')
+    .replace(/\bKeystone\b/gi, 'a legacy energy workspace');
 }
 
 function paragraph(value: string): string {

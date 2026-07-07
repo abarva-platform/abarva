@@ -11,7 +11,7 @@
 // [slug] route lookup. Mirrors the shape of src/lib/home/learn-nav.ts
 // so the two surfaces feel native together.
 //
-// Slice S1 ships the four framing pages (welcome / intake / sentinel
+// Slice S1 ships the four framing pages (welcome / intake / Ava
 // / glossary). Slice S2 replaces the abstract per-stage walkthroughs
 // with a single end-to-end case study — Meridian Health's enterprise cloud
 // & Infrastructure event — broken into 11 chapters that map 1:1 to
@@ -36,7 +36,7 @@ export const SOURCE_LEARN_NAV: ReadonlyArray<SourceLearnNavGroup> = [
     items: [
       { slug: 'welcome', label: 'Welcome & overview' },
       { slug: 'intake', label: 'Creating your first event' },
-      { slug: 'sentinel', label: 'Working with Sentinel' },
+      { slug: 'sentinel', label: 'Working with Ava' },
     ],
   },
   {
@@ -57,7 +57,7 @@ export const SOURCE_LEARN_NAV: ReadonlyArray<SourceLearnNavGroup> = [
       },
       {
         slug: 'rfp',
-        label: 'Ch.03 RFP · Sentinel composes d09',
+        label: 'Ch.03 RFP · Ava composes d09',
         stageBadge: '03',
         stageColor: 'navy',
       },

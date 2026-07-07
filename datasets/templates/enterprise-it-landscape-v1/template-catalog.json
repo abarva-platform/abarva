@@ -1,0 +1,47 @@
+{
+  "template_pack": "enterprise-it-landscape-v1",
+  "purpose": "Fillable intake templates for enterprise IT systems, hosting architecture, infrastructure, volumetrics, cost, controls, and data platform facts.",
+  "classification": "template_only_no_seed_rows",
+  "templates": [
+    {
+      "file": "01_application_system_inventory.template.csv",
+      "grain": "one row per application/system",
+      "required_for": ["system inventory", "function ownership", "hosting model", "software budget"]
+    },
+    {
+      "file": "02_hosting_and_platform_topology.template.csv",
+      "grain": "one row per hosting platform/environment/facility",
+      "required_for": ["data center", "private cloud", "public cloud", "SaaS", "mainframe", "x86/Linux/Windows architecture"]
+    },
+    {
+      "file": "03_workload_volumetrics.template.csv",
+      "grain": "one row per system metric/date",
+      "required_for": ["transaction volume", "user volume", "data volume", "SLA", "RTO/RPO"]
+    },
+    {
+      "file": "04_infrastructure_estate.template.csv",
+      "grain": "one row per infrastructure asset group",
+      "required_for": ["server estate", "OS estate", "virtualization", "storage", "network", "technical debt"]
+    },
+    {
+      "file": "05_integration_and_dataflow_topology.template.csv",
+      "grain": "one row per integration/dataflow edge",
+      "required_for": ["API", "batch", "file transfer", "event stream", "security zone crossing"]
+    },
+    {
+      "file": "06_system_cost_and_budget.template.csv",
+      "grain": "one row per system/function/cost category/fiscal year",
+      "required_for": ["budget", "run cost", "license", "cloud", "labor", "vendor allocation"]
+    },
+    {
+      "file": "07_resilience_security_controls.template.csv",
+      "grain": "one row per system/control",
+      "required_for": ["DR", "backup", "encryption", "IAM", "SIEM", "audit evidence"]
+    },
+    {
+      "file": "08_data_platform_and_storage.template.csv",
+      "grain": "one row per data asset/platform",
+      "required_for": ["data volume", "lineage", "storage", "retention", "AI usage boundary"]
+    }
+  ]
+}

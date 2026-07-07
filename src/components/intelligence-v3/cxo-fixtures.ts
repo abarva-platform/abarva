@@ -614,7 +614,7 @@ export const APEX_RETAIL_STRATEGY_BULLETS: ReadonlyArray<StrategyBullet> = [
     number: '02',
     title: 'Sequence demand sensing through item-location data readiness',
     body:
-      'Demand sensing can move margin, inventory turns, and service levels, but only if SKU, location, promo, and substitution history are clean enough to trust. Sentinel should keep this as an evidence-gated move until the data audit is green.',
+      'Demand sensing can move margin, inventory turns, and service levels, but only if SKU, location, promo, and substitution history are clean enough to trust. Ava should keep this as an evidence-gated move until the data audit is green.',
     evidence: 'F215, F217, F231 · 12 Apex use cases tied to portfolio dependencies',
     betLink: {
       patternId: 'P-RT-005',

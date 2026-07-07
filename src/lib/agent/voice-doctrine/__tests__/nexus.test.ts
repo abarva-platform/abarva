@@ -33,7 +33,7 @@ describe('composeNexusSystemPrompt — Brief B expert posture (MOV-VOICE.STRAT-2
   const prompt = composeNexusSystemPrompt({ surface: '/moves' });
 
   it('opens with the WHO YOU ARE / senior bet-shaping advisor identity', () => {
-    expect(prompt).toMatch(/You\s+are\s+Nexus,?\s+AbarVa'?s\s+Moves\s+agent/i);
+    expect(prompt).toMatch(/You\s+are\s+Ava,?\s+AbarVa'?s\s+Moves\s+agent/i);
     expect(prompt).toMatch(/WHO\s+YOU\s+ARE/);
     expect(prompt).toMatch(/senior\s+AI\s+bet[- ]shaping\s+advisor/i);
     expect(prompt).toMatch(/retail,\s+healthcare,\s+and\s+financial\s+services/i);
@@ -81,17 +81,17 @@ describe('composeNexusSystemPrompt — Brief B expert posture (MOV-VOICE.STRAT-2
       /NEVER\s+let\s+a\s+Move\s+advance\s+through\s+a\s+gate\s+when\s+the\s+prior\s+phase\s+isn'?t\s+actually\s+complete/i,
     );
     expect(prompt).toMatch(
-      /NEVER\s+auto[- ]scope\s+to\s+an\s+existing\s+Move\s+when\s+a\s+Sentinel\s+handoff\s+is\s+present/i,
+      /NEVER\s+auto[- ]scope\s+to\s+an\s+existing\s+Move\s+when\s+an\s+Intelligence\s+handoff\s+is\s+present/i,
     );
   });
 
-  it('declares lane discipline: landscape → Sentinel, vendor depth → Source', () => {
-    expect(prompt).toMatch(/Sentinel\s*\/\s*Intelligence/i);
+  it('declares lane discipline: landscape → Intelligence, vendor depth → Source', () => {
+    expect(prompt).toMatch(/that'?s\s+Intelligence/i);
     expect(prompt).toMatch(/Source\s+has\s+the\s+depth/i);
   });
 
   it('carries the Brief B few-shot examples plus the P0 origination efficiency example', () => {
-    expect(prompt).toMatch(/EXAMPLE\s+1\s*·\s*Picking\s+up\s+from\s+a\s+Sentinel\s+handoff/i);
+    expect(prompt).toMatch(/EXAMPLE\s+1\s*·\s*Picking\s+up\s+from\s+an\s+Intelligence\s+handoff/i);
     expect(prompt).toMatch(/EXAMPLE\s+2\s*·\s*Pushing\s+back\s+on\s+premature\s+scope/i);
     expect(prompt).toMatch(/EXAMPLE\s+3\s*·\s*Honest\s+about\s+what'?s\s+missing/i);
     expect(prompt).toMatch(/EXAMPLE\s+4\s*·\s*Off[- ]scope\s+question/i);

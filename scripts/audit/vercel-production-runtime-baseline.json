@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-06-13T11:15:38.930Z",
+  "notes": "Baseline of known Vercel production-runtime residue. In --check mode, the guard fails if total hits increase. Reducing this baseline is the cleanup goal.",
+  "total": 1,
+  "hits": [
+    {
+      "file": "scripts/crawl/auto-rollback.ts",
+      "line": 46,
+      "pattern": "vercel_prod_rollback",
+      "text": "await run('vercel', rollbackArgs);"
+    }
+  ]
+}

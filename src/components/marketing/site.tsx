@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { CSSProperties, ReactNode } from 'react'
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo'
 import { MarketingNav } from './MarketingNav'
 
 export const CREAM = '#F8F7F4'
@@ -433,7 +434,7 @@ export function MarketingStyles() {
 
 export function MarketingHeader({
   ctaHref = '/sign-in',
-  ctaLabel = 'Request demo',
+  ctaLabel = 'Request access',
 }: {
   ctaHref?: string
   ctaLabel?: string
@@ -442,8 +443,12 @@ export function MarketingHeader({
     <header className="marketing-header">
       <div className="marketing-container marketing-header__inner">
         <Link href="/" className="marketing-wordmark" aria-label="AbarVa home">
-          <span className="marketing-wordmark__abar">Abar</span>
-          <span className="marketing-wordmark__va">Va</span>
+          <AbarVaLogo
+            variant="wordmark"
+            size="md"
+            label="AbarVa"
+            style={{ height: 26, width: 'auto' }}
+          />
         </Link>
         <MarketingNav ctaHref={ctaHref} ctaLabel={ctaLabel} />
       </div>

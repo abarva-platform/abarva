@@ -18,7 +18,7 @@ export function SourceGlossarySection() {
         <Eyebrow light>Source · Reference</Eyebrow>
         <SectionTitle light size="xl">Glossary &amp; pitfalls.</SectionTitle>
         <Lead light>
-          Every term Sentinel and the canvas use, defined once. Plus the common
+          Every term Ava and the canvas use, defined once. Plus the common
           pitfalls first-time procurement leads hit on a Source event — and what
           to do instead.
         </Lead>
@@ -31,7 +31,7 @@ export function SourceGlossarySection() {
           <Term name="Archetype">
             The shape of a sourcing event. Five canonical: cloud / infrastructure,
             AMS / managed services, data platform, enterprise software, custom
-            build. Drives every default Sentinel produces — line items, criteria
+            build. Drives every default Ava produces — line items, criteria
             weights, traps, BAFO questions.
           </Term>
           <Term name="Rigor">
@@ -68,17 +68,17 @@ export function SourceGlossarySection() {
           <Term name="Body">
             The per-event authored content of an artifact. Markdown. Wins over the
             scaffold when present. Can be authored inline in the canvas, generated
-            via Sentinel, or uploaded.
+            with Ava, or uploaded.
           </Term>
           <Term name="Substrate">
             The structured state of a Source event in Postgres —{' '}
             <em>source_events</em>, <em>source_event_artifact_states</em>,{' '}
             <em>source_event_gate_criterion_states</em>,{' '}
-            <em>source_event_pricing_submissions</em>, etc. Sentinel reads from
+            <em>source_event_pricing_submissions</em>, etc. Ava reads from
             it, writes to it.
           </Term>
           <Term name="Provenance receipt">
-            Audit metadata persisted alongside every Sentinel-authored body —
+            Audit metadata persisted alongside every Ava-authored body —
             model, prompt template id + version, upstream codes bound, generated-
             at, generated-by, tokens, stop reason.
           </Term>
@@ -92,10 +92,18 @@ export function SourceGlossarySection() {
             stage rail across the top, document tab + gate tab + evidence tab +
             log tab on the right. One canvas per event.
           </Term>
-          <Term name="Sentinel">
-            The named lead agent for Source. Drafts artifacts, surfaces evidence,
-            flags gaps. One front-of-house chat lane; many specialist functions
-            running behind.
+          <Term name="Ava">
+            The single assistant you talk to across every AbarVa surface,
+            including Source. On a Source event Ava drafts artifacts, surfaces
+            evidence, and flags gaps — drawing on sourcing and executive-synthesis
+            expertise as the stage demands. You never switch agents or get handed
+            off; the chat lane is always Ava.
+          </Term>
+          <Term name="Sentinel (specialty)">
+            The Source and Intelligence specialty Ava draws on — RFP drafting,
+            scoring, trap detection, BAFO authoring. Not a separate agent; on a
+            Source event you&rsquo;re talking to Ava, who calls on this expertise
+            behind the scenes.
           </Term>
         </TermGrid>
       </Section>
@@ -111,7 +119,7 @@ export function SourceGlossarySection() {
           </Term>
           <Term name="RFP">
             Request For Proposal. The formal ask issued to a shortlist of
-            vendors. Source authors a complete d09 RFP package via Sentinel,
+            vendors. With Ava, Source authors a complete d09 RFP package,
             covering scope + response checklist (d11) + scoring rubric (d16) +
             pricing template (d19a).
           </Term>
@@ -147,7 +155,7 @@ export function SourceGlossarySection() {
             material maintenance windows.
           </Term>
           <Term name="Trap (P0 / P1 / P2)">
-            A pricing or commitment surprise Sentinel surfaces from a vendor
+            A pricing or commitment surprise Ava surfaces from a vendor
             submission. <em>P0</em>: deal-shaping (≥ 15% TCO impact); <em>P1</em>:
             material (3-15%); <em>P2</em>: noted (transparency only). Tracked in
             d20.
@@ -158,9 +166,9 @@ export function SourceGlossarySection() {
       <Section>
         <Eyebrow>Common pitfalls</Eyebrow>
         <SectionTitle>Things first-time users get wrong</SectionTitle>
-        <SubHead>1 · Treating Sentinel-generated content as final</SubHead>
+        <SubHead>1 · Treating Ava-generated content as final</SubHead>
         <Lead>
-          Sentinel drafts; you decide. Every authored body must be reviewed
+          Ava drafts; you decide. Every authored body must be reviewed
           before promoting the gate. The scaffold-warning banner on exports is
           the canvas reminding you that the content is canonical-default, not
           authored. <strong>Never circulate a body marked &ldquo;template
@@ -168,7 +176,7 @@ export function SourceGlossarySection() {
         </Lead>
         <SubHead>2 · Skipping intake fields</SubHead>
         <Lead>
-          Every default Sentinel produces downstream comes from intake. A vague
+          Every default Ava produces downstream comes from intake. A vague
           archetype + missing trigger paragraph means generic d01 + d05 + d09
           drafts. Spend the extra five minutes on intake.
         </Lead>

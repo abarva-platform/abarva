@@ -29,6 +29,7 @@ export default async function IntelligenceTopicsPage() {
 
   // Tenant detection for telemetry — same pattern as J0 page.
   const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantName = activeClient?.name ?? 'Client workspace';
   const tenantKey = activeClient?.key ?? null;
   const visitorType: 'cold' | 'authenticated' =
     activeClient ? 'authenticated' : 'cold';
@@ -37,7 +38,7 @@ export default async function IntelligenceTopicsPage() {
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: 'Intelligence · Topics',
       }}
@@ -151,3 +152,6 @@ export default async function IntelligenceTopicsPage() {
     </AppShell>
   );
 }
+
+// Per-request render (tenant-scoped reads / useSearchParams CSR bailout) — no static prerender.
+export const dynamic = 'force-dynamic';

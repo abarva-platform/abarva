@@ -1,0 +1,54 @@
+{
+  "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.KeyVault/vaults/kv-abarva-pdev-eus-001",
+  "location": "eastus",
+  "name": "kv-abarva-pdev-eus-001",
+  "properties": {
+    "accessPolicies": [],
+    "createMode": null,
+    "enablePurgeProtection": true,
+    "enableRbacAuthorization": true,
+    "enableSoftDelete": true,
+    "enabledForDeployment": false,
+    "enabledForDiskEncryption": false,
+    "enabledForTemplateDeployment": false,
+    "hsmPoolResourceId": null,
+    "networkAcls": null,
+    "privateEndpointConnections": null,
+    "provisioningState": "Succeeded",
+    "publicNetworkAccess": "Disabled",
+    "sku": {
+      "family": "A",
+      "name": "standard"
+    },
+    "softDeleteRetentionInDays": 90,
+    "tenantId": "f5151b70-963c-4124-a888-20a50e8c2e2c",
+    "vaultUri": "https://kv-abarva-pdev-eus-001.vault.azure.net/"
+  },
+  "resourceGroup": "rg-abarva-controlplane-product-dev-eus-001",
+  "systemData": {
+    "createdAt": "2026-06-15T02:09:17.921000+00:00",
+    "createdBy": "anand.sundaram@thesundaram.com",
+    "createdByType": "User",
+    "lastModifiedAt": "2026-06-15T02:09:17.921000+00:00",
+    "lastModifiedBy": "anand.sundaram@thesundaram.com",
+    "lastModifiedByType": "User"
+  },
+  "tags": {
+    "ClientCode": "abarva",
+    "CostCenter": "product-development",
+    "CreatedAt": "2026-06-15T01:59:22Z",
+    "CreatedBy": "codex",
+    "Criticality": "medium",
+    "DataClassification": "synthetic",
+    "Environment": "Product Dev",
+    "EnvironmentKey": "product-dev",
+    "Expiry": "2026-09-30",
+    "ManagedBy": "manual-approved",
+    "NoPhiPii": "true",
+    "Owner": "AbarVa Platform",
+    "Plane": "control-plane",
+    "ReleaseLane": "global-control-lane",
+    "Repository": "abarva-platform/abarva"
+  },
+  "type": "Microsoft.KeyVault/vaults"
+}

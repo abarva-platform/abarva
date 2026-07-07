@@ -28,7 +28,7 @@ export function MeridianCaseStudyIntro() {
           plan business across the Pacific Northwest, Northern California, and the
           Mountain West. Eleven chapters map 1:1 to the Source lifecycle, but read
           as one story — from the day CTO Marcus Webb says &ldquo;the lease is
-          up&rdquo; to month 18 when Atlas&rsquo;s d32 ledger surfaces a
+          up&rdquo; to month 18 when Ava&rsquo;s d32 ledger surfaces a
           value-realization variance against the projection.
         </Lead>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
@@ -283,27 +283,27 @@ export function MeridianCaseStudyIntro() {
 
 const CHAPTER_SUMMARIES: Record<string, string> = {
   strategy:
-    'Day 1. CTO Marcus Webb names the trigger. Sentinel drafts d01 from intake metadata. Three gate criteria.',
+    'Day 1. CTO Marcus Webb names the trigger. Ava drafts d01 from intake metadata. Three gate criteria.',
   scope:
     'Day 4. Karen Liu and Janet Fischer agree the 920-workload boundary. d05 scope memo. Cloverleaf integrations under-enumerated — a chapter-10 problem in the making.',
   rfp:
-    'Day 12. Sentinel composes d09 from d01 + d05 + d21. Eight scoping questions. Vendor pool of four (A, B, C, D) shortlisted from market scan.',
+    'Day 12. Ava composes d09 from d01 + d05 + d21. Eight scoping questions. Vendor pool of four (A, B, C, D) shortlisted from market scan.',
   responses:
-    'Day 35. Four responses received. Vendor C&rsquo;s bid is incomplete — Sentinel&rsquo;s d11 checklist flags 6 missing fields. C drops; pool to three.',
+    'Day 35. Four responses received. Vendor C&rsquo;s bid is incomplete — Ava&rsquo;s d11 checklist flags 6 missing fields. C drops; pool to three.',
   evaluation:
     'Day 42. Blind scoring against d16 rubric. B at 87, A at 82, D at 78. All three advance to pricing.',
   pricing:
-    'Day 50. Sentinel&rsquo;s pricing-trap detector finds 3 P0 + 2 P1 issues across the three vendors. d20 trap log compiled. The egress trap on Vendor A is the dramatic one.',
+    'Day 50. Ava&rsquo;s pricing-trap detector finds 3 P0 + 2 P1 issues across the three vendors. d20 trap log compiled. The egress trap on Vendor A is the dramatic one.',
   bafo:
     'Day 65. Janet authors d22 with 12 BAFO questions across two finalists. A refuses to remove a 7-year exclusivity clause and drops. B and D respond; B comes back at $21.6M and wins on price + scope correction.',
   decision:
-    'Day 90. Atlas composes d24 from the cumulative event state. CTO Marcus and CFO Sarah sign. Recommends Vendor B at $21.6M committed, value-at-stake $108M over 5 years.',
+    'Day 90. Ava composes d24 from the cumulative event state. CTO Marcus and CFO Sarah sign. Recommends Vendor B at $21.6M committed, value-at-stake $108M over 5 years.',
   selection:
-    'Day 95. Sentinel drafts one winner letter to B and two loser letters to A and D — each with rubric breakdown and the specific concern that closed them out.',
+    'Day 95. Ava drafts one winner letter to B and two loser letters to A and D — each with rubric breakdown and the specific concern that closed them out.',
   transition:
     'Day 100 → Month 9. Cutover plan slips 2 months. Cloverleaf middleware hid 47 custom integrations Chapter 2&rsquo;s scope memo didn&rsquo;t enumerate. Day-1 checkpoint moves from month 7 to month 9.',
   value:
-    'Month 18. Atlas&rsquo;s d32 ledger reads realized value against the straight-line projection. The gap traces to the transition slip and delayed payer-data controls. Owner named, measurement cadence set.',
+    'Month 18. Ava&rsquo;s d32 ledger reads realized value against the straight-line projection, drawing on portfolio-monitoring expertise. The gap traces to the transition slip and delayed payer-data controls. Owner named, measurement cadence set.',
 };
 
 function CastCard({

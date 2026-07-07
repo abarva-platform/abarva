@@ -1,19 +1,21 @@
-import { redirect } from 'next/navigation';
-import { requireProductModule } from '@/lib/auth/server-module-access';
-import { requireTenancy } from '@/app/api/v1/programs/_auth';
-import { getActiveClientRow } from '@/lib/active-client';
-import { StrategicMoveOriginateClient } from '@/components/strategic-moves/StrategicMoveOriginateClient';
+import { redirect } from "next/navigation";
+import { requireProductModule } from "@/lib/auth/server-module-access";
+import { requireTenancy } from "@/app/api/v1/programs/_auth";
+import { getActiveClientRow } from "@/lib/active-client";
+import { StrategicMoveOriginateClient } from "@/components/strategic-moves/StrategicMoveOriginateClient";
 import {
   composeOriginateFirstMessage,
   type FromInitiativeCtx,
   type FromIntelligenceCtx,
-} from '@/components/strategic-moves/composeOriginateFirstMessage';
-import { AppShell } from '@/components/shell/AppShell';
+} from "@/components/strategic-moves/composeOriginateFirstMessage";
+import { AppShell } from "@/components/shell/AppShell";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: 'Originate Strategic Move · AbarVa',
+  title: "Originate Strategic Move · AbarVa",
 };
 
 interface PageProps {
@@ -25,19 +27,19 @@ function parseFromInitiative(
 ): FromInitiativeCtx | null {
   const raw = (key: string) => {
     const v = params[key];
-    return typeof v === 'string' ? v : undefined;
+    return typeof v === "string" ? v : undefined;
   };
-  if (raw('fromInitiative') !== '1') return null;
-  const displayId = raw('fromId');
+  if (raw("fromInitiative") !== "1") return null;
+  const displayId = raw("fromId");
   if (!displayId) return null;
-  const gapRaw = raw('fromGapUsd');
+  const gapRaw = raw("fromGapUsd");
   return {
     displayId,
-    name: raw('fromName') ?? displayId,
-    statusFlag: raw('fromStatus') ?? '',
+    name: raw("fromName") ?? displayId,
+    statusFlag: raw("fromStatus") ?? "",
     gapUsd: gapRaw ? Number(gapRaw) : null,
-    ownerName: raw('fromOwner') ?? '',
-    goalName: raw('fromGoal') ?? '',
+    ownerName: raw("fromOwner") ?? "",
+    goalName: raw("fromGoal") ?? "",
   };
 }
 
@@ -46,35 +48,47 @@ function parseFromIntelligence(
 ): FromIntelligenceCtx | null {
   const raw = (key: string) => {
     const v = params[key];
-    return typeof v === 'string' ? v : undefined;
+    return typeof v === "string" ? v : undefined;
   };
-  if (raw('fromIntelligence') !== '1') return null;
-  const patternId = raw('patternId');
-  const patternName = raw('patternName');
+  if (raw("fromIntelligence") !== "1") return null;
+  const patternId = raw("patternId");
+  const patternName = raw("patternName");
   if (!patternId || !patternName) return null;
-  const failureRateRaw = raw('failureRatePct');
+  const failureRateRaw = raw("failureRatePct");
   return {
     patternId,
     patternName,
-    useCaseName: raw('useCaseName') ?? patternName,
-    sessionId: raw('intelligenceSessionId') ?? raw('sessionId') ?? raw('originatingSessionId') ?? null,
-    sourceTitle: raw('sourceTitle') ?? null,
-    contradictionTitle: raw('contradictionTitle') ?? null,
+    useCaseName: raw("useCaseName") ?? patternName,
+    sessionId:
+      raw("intelligenceSessionId") ??
+      raw("sessionId") ??
+      raw("originatingSessionId") ??
+      null,
+    sourceTitle: raw("sourceTitle") ?? null,
+    contradictionTitle: raw("contradictionTitle") ?? null,
     failureRatePct: failureRateRaw ? Number(failureRateRaw) : null,
   };
 }
 
-export default async function StrategicMoveOriginatePage({ searchParams }: PageProps) {
-  await requireProductModule('programs');
+export default async function StrategicMoveOriginatePage({
+  searchParams,
+}: PageProps) {
+  await requireProductModule("programs");
   const params = await searchParams;
-  const requestedClient = typeof params.client === 'string' ? params.client : undefined;
+  const requestedClient =
+    typeof params.client === "string" ? params.client : undefined;
   const activeClient = await getActiveClientRow(requestedClient);
   if (!activeClient) {
-    redirect('/sign-in');
+    redirect("/sign-in");
   }
 
   const fromInitiative = parseFromInitiative(params);
   const fromIntelligence = parseFromIntelligence(params);
+  const activeTenantName =
+    canonicalClientDisplayName({
+      key: activeClient.key,
+      name: activeClient.name,
+    }) ?? activeClient.name;
 
   // Compose first-message variant server-side:
   //   2A — empty entry (no draft, no initiative context)
@@ -82,9 +96,18 @@ export default async function StrategicMoveOriginatePage({ searchParams }: PageP
   //   2D — from "Shape into a Move →" CTA on an AI Initiative page
   //   Intelligence — from a pattern/use-case/contradiction evidence edge
   let firstMessage = null;
+  // Discovery Intake: gate the capture panel by `discovery_intake_v2` for this
+  // tenant (computed server-side; default off). Re-homed from /programs/new,
+  // which the routing cutover supersedes.
+  let discoveryIntakeEnabled = false;
   try {
     const ctx = await requireTenancy();
-    firstMessage = await composeOriginateFirstMessage(ctx, fromInitiative, fromIntelligence);
+    firstMessage = await composeOriginateFirstMessage(
+      ctx,
+      fromInitiative,
+      fromIntelligence,
+    );
+    discoveryIntakeEnabled = isFeatureEnabled(ctx, "discovery_intake_v2");
   } catch {
     // Tenancy or draft read failure — fall through; client uses its default 2A message.
   }
@@ -92,9 +115,10 @@ export default async function StrategicMoveOriginatePage({ searchParams }: PageP
   return (
     <AppShell surface="programs">
       <StrategicMoveOriginateClient
-        tenantName={activeClient.name}
+        tenantName={activeTenantName}
         initialTurns={firstMessage ? [firstMessage] : undefined}
         originatingIntelligenceSessionId={fromIntelligence?.sessionId ?? null}
+        discoveryIntakeEnabled={discoveryIntakeEnabled}
       />
     </AppShell>
   );

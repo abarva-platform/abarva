@@ -36,6 +36,7 @@ import type { MarketScanPayload } from '../renderers/market-scan';
 import type { TcoIcebergPayload } from '../renderers/tco-iceberg';
 import type { AiClauseGapPayload } from '../renderers/ai-clause-gap';
 import type { RenewalDecisionPayload } from '../renderers/renewal-decision';
+import type { SourceTransitionReadinessModel } from '../../transition/readiness-scoring';
 import {
   escapeHtml,
   renderAppInventoryHtml,
@@ -50,6 +51,7 @@ import {
   renderAiClauseGapHtml,
   renderRenewalDecisionHtml,
 } from './inline-renderers';
+import { renderTransitionSectionHtml } from './sections/transition-section';
 
 // ── Input shapes ──────────────────────────────────────────────────────────
 
@@ -64,7 +66,8 @@ export type DealPackStructuredCarrier =
   | { kind: 'market-scan'; payload: MarketScanPayload }
   | { kind: 'tco-iceberg'; payload: TcoIcebergPayload }
   | { kind: 'ai-clause-gap'; payload: AiClauseGapPayload }
-  | { kind: 'renewal-decision'; payload: RenewalDecisionPayload };
+  | { kind: 'renewal-decision'; payload: RenewalDecisionPayload }
+  | { kind: 'transition-readiness'; payload: SourceTransitionReadinessModel };
 
 export interface DealPackArtifact {
   code: string;
@@ -599,6 +602,8 @@ function renderStructured(c: DealPackStructuredCarrier, judgment: SourceJudgment
       return renderAiClauseGapHtml(c.payload);
     case 'renewal-decision':
       return renderRenewalDecisionHtml(c.payload);
+    case 'transition-readiness':
+      return renderTransitionSectionHtml(c.payload);
   }
 }
 
@@ -699,9 +704,9 @@ function stageNumberFor(stageKey: SourceStageKey): { number: number; label: stri
     case 'selection':
       return { number: 5, label: 'Evaluation, BAFO & Decision' };
     case 'transition':
-      return { number: 7, label: 'SRM & Renewal' };
+      return { number: 10, label: 'Transition' };
     case 'value':
-      return { number: 7, label: 'SRM & Renewal' };
+      return { number: 11, label: 'Value' };
     default:
       return { number: 1, label: 'Sourcing Strategy' };
   }

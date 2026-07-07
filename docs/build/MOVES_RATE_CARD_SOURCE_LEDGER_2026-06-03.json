@@ -1,0 +1,189 @@
+{
+  "ledger_id": "moves-rate-card-source-ledger-2026-06-03",
+  "purpose": "Machine-readable research spine for Phase 1 rate-card seed/workbook population. This is evidence metadata only; it is not a production seed.",
+  "retrieved_at": "2026-06-03",
+  "entries": [
+    {
+      "source_id": "bls-oews-2025-tables",
+      "source_url": "https://www.bls.gov/oes/tables.htm",
+      "source_as_of": "May 2025",
+      "source_class": "official-statistical",
+      "applies_to": ["internal_lcr", "geo_modifier"],
+      "fields_expected": [
+        "soc_code",
+        "occupation_title",
+        "employment",
+        "mean_wage",
+        "percentile_wages",
+        "state",
+        "metro"
+      ],
+      "confidence": "high",
+      "confidence_rationale": "Official BLS OEWS table index exposes national, state, metro, industry, and all-data downloads for May 2025.",
+      "extraction_status": "blocked-by-source-access",
+      "extraction_notes": "Direct ZIP/TXT download returned HTTP 403 from this environment; browser/manual download or alternate approved network path is needed before seed rows are populated."
+    },
+    {
+      "source_id": "bls-ecec-2025-december-private-industry",
+      "source_url": "https://www.bls.gov/news.release/ecec.nr0.htm",
+      "source_as_of": "December 2025",
+      "source_class": "official-statistical",
+      "applies_to": ["internal_lcr"],
+      "fields_expected": [
+        "total_compensation_hourly",
+        "wages_hourly",
+        "benefits_hourly",
+        "benefits_pct_of_total"
+      ],
+      "confidence": "high",
+      "confidence_rationale": "Official BLS ECEC release provides private-industry wages, benefits, and total compensation; use benefits divided by wages for loaded-cost overhead.",
+      "extraction_status": "extracted",
+      "extracted_values": {
+        "total_compensation_hourly": 46.15,
+        "wages_hourly": 32.36,
+        "benefits_hourly": 13.79,
+        "benefits_pct_of_total": 0.299,
+        "benefits_overhead_pct_of_wages": 0.4265
+      }
+    },
+    {
+      "source_id": "bea-rpp-2024-state-metro",
+      "source_url": "https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area",
+      "source_as_of": "2024",
+      "source_class": "official-statistical",
+      "applies_to": ["geo_modifier"],
+      "fields_expected": ["state", "metro", "regional_price_parity_index"],
+      "confidence": "medium",
+      "confidence_rationale": "Official BEA RPPs are strong for local price-level context but should not replace technology labor wage ratios.",
+      "extraction_status": "manual-review-needed",
+      "extraction_notes": "Use as a cap/floor sanity check after OEWS labor-ratio extraction."
+    },
+    {
+      "source_id": "gsa-calc-labor-ceiling-rate-research",
+      "source_url": "https://buy.gsa.gov/pricing/calc",
+      "source_as_of": "2026-06-03",
+      "source_class": "official-contract-research-tool",
+      "applies_to": ["vendor_si_rate"],
+      "fields_expected": [
+        "labor_category",
+        "contractor",
+        "sin",
+        "site",
+        "hourly_ceiling_rate"
+      ],
+      "confidence": "medium",
+      "confidence_rationale": "GSA CALC+ is official pricing research, but not every query is stable or exportable without manual interaction.",
+      "extraction_status": "manual-review-needed"
+    },
+    {
+      "source_id": "taic-tcs-gsa-mas-pricing-2025-y2",
+      "source_url": "https://www.taic.us.com/content/dam/tata-america/pdfs/taic-gsa-mas-tcs-pricing.pdf",
+      "source_as_of": "Year 2: 2025-06-13..2026-06-12",
+      "source_class": "public-contract-ceiling",
+      "applies_to": ["vendor_si_rate"],
+      "fields_expected": [
+        "sin",
+        "labor_category",
+        "level",
+        "facility",
+        "year_2_hourly_rate"
+      ],
+      "confidence": "medium",
+      "confidence_rationale": "Named-vendor public MAS ceiling rates are strong evidence for onshore federal ceilings, but need reconciliation before being generalized to commercial enterprise SI rates.",
+      "extraction_status": "extracted",
+      "extracted_values": [
+        {
+          "labor_category": "IT Project Manager - Level III",
+          "customer_facility_y2_hourly": 252.78,
+          "contractor_facility_y2_hourly": 265.42
+        },
+        {
+          "labor_category": "Security Engineer - Level III",
+          "customer_facility_y2_hourly": 258.15,
+          "contractor_facility_y2_hourly": 271.06
+        },
+        {
+          "labor_category": "Database Administrator - Level III",
+          "customer_facility_y2_hourly": 247.4
+        },
+        {
+          "labor_category": "Platform and Mobile App Developer - Level III",
+          "customer_facility_y2_hourly": 247.4
+        },
+        {
+          "labor_category": "DevOps Engineer - Level III",
+          "contractor_facility_y2_hourly": 213.46
+        },
+        {
+          "labor_category": "Technical Architect - Level III",
+          "customer_facility_y2_hourly": 225.88,
+          "contractor_facility_y2_hourly": 237.18
+        },
+        {
+          "labor_category": "Application Developer - Level III",
+          "customer_facility_y2_hourly": 191.47,
+          "contractor_facility_y2_hourly": 201.04
+        },
+        {
+          "labor_category": "Cloud Architect - Level III",
+          "customer_facility_y2_hourly": 225.88,
+          "contractor_facility_y2_hourly": 237.18
+        }
+      ]
+    },
+    {
+      "source_id": "databricks-lakebridge-overview",
+      "source_url": "https://databrickslabs.github.io/lakebridge/docs/overview/",
+      "source_as_of": "retrieved 2026-06-03",
+      "source_class": "partner-methodology",
+      "applies_to": ["modernization_automation", "analyzer_inventory"],
+      "fields_expected": [
+        "assessment",
+        "translation",
+        "reconciliation",
+        "supported_artifacts"
+      ],
+      "confidence": "high",
+      "confidence_rationale": "Official Databricks Labs documentation describes Lakebridge migration phases and capabilities.",
+      "extraction_status": "extracted"
+    },
+    {
+      "source_id": "databricks-well-architected-seven-pillars",
+      "source_url": "https://docs.databricks.com/aws/en/lakehouse-architecture/well-architected",
+      "source_as_of": "last updated 2026-01-20",
+      "source_class": "partner-methodology",
+      "applies_to": ["modernization_scorecard", "standards_framework"],
+      "fields_expected": ["pillar", "principle", "best_practice"],
+      "confidence": "high",
+      "confidence_rationale": "Official Databricks documentation defines the seven lakehouse pillars used for the standards framework.",
+      "extraction_status": "extracted"
+    },
+    {
+      "source_id": "aws-prescriptive-guidance-seven-rs",
+      "source_url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies.html",
+      "source_as_of": "retrieved 2026-06-03",
+      "source_class": "official-cloud-methodology",
+      "applies_to": ["modernization_disposition_policy"],
+      "fields_expected": ["migration_strategy", "definition", "use_case"],
+      "confidence": "high",
+      "confidence_rationale": "AWS Prescriptive Guidance defines the 7 Rs taxonomy and is appropriate as a neutral migration-disposition source.",
+      "extraction_status": "extracted"
+    },
+    {
+      "source_id": "far-15-101-source-selection-tradeoff",
+      "source_url": "https://origin-www.acquisition.gov/far/subpart-15.1",
+      "source_as_of": "retrieved 2026-06-03",
+      "source_class": "official-procurement-methodology",
+      "applies_to": ["source_rfp_scorecard"],
+      "fields_expected": [
+        "tradeoff_process",
+        "technical_factor",
+        "past_performance",
+        "price_factor"
+      ],
+      "confidence": "high",
+      "confidence_rationale": "FAR Subpart 15.1 anchors best-value tradeoff logic: technical and past performance may dominate when requirements are less definitive or risk is high.",
+      "extraction_status": "extracted"
+    }
+  ]
+}

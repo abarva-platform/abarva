@@ -36,6 +36,8 @@ import {
   dominantVerdictCause,
   type VerdictExplainerChip,
 } from './verdict-explainer';
+import { buildMoveWorkforceEconomics } from './move-workforce-economics-binding';
+import type { WorkforceEstimateTwice } from '@/lib/workforce-economics/workforce-economics';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex pack's `SectionAnatomy` so the generic
@@ -105,6 +107,16 @@ export interface MoveCostedBusinessCasePack {
   verdictExplainerChip: VerdictExplainerChip | null;
   /** The deck sections, page-ordered. */
   sections: MovePackSections;
+  /**
+   * Workforce Economics "estimate-twice" (WE-3) — TRADITIONAL (people-only) vs
+   * AI-NATIVE (people + agents on subscription), with the cost / timeline /
+   * headcount delta and the productivity gain. Present ONLY when the
+   * `moves_workforce_economics` flag is ON for the tenant AND the Move's scope
+   * is rich enough to derive a credible estimate-twice. Absent (`undefined`)
+   * otherwise — and absent by default, so the flag-OFF pack is byte-identical
+   * to before this field existed.
+   */
+  workforceEconomics?: WorkforceEstimateTwice;
   /** Navigation entries for the sticky TOC. */
   toc: Array<{ page: number; id: string; label: string; takeaway: string }>;
 }
@@ -256,6 +268,22 @@ export interface MoveRecommendationSection {
 const ARTIFACT_LABEL = 'Costed Business-Case Pack';
 
 /**
+ * Generation options. Default (omitted) keeps the pack byte-identical to
+ * before any of these knobs existed — the safe, dormant default.
+ */
+export interface MoveCostedBusinessCasePackOptions {
+  /**
+   * WE-3 — when `true`, derive and attach the Workforce Economics
+   * "estimate-twice" (`workforceEconomics`). The CALLER is responsible for
+   * gating this on the `moves_workforce_economics` tenant flag; the model stays
+   * pure. When the Move's scope is too thin to derive a credible estimate, the
+   * field is omitted (skip, never fabricate). Default `false` ⇒ the engine is
+   * not called and no field is attached (byte-identical).
+   */
+  workforceEconomicsEnabled?: boolean;
+}
+
+/**
  * Build the generic Move Costed Business-Case Pack view-model.
  *
  * Runs `buildMoveBusinessCase(move)`. When the Move binds a curated pack and
@@ -263,11 +291,12 @@ const ARTIFACT_LABEL = 'Costed Business-Case Pack';
  * is unbound, returns the honest `MoveUnboundResult` — never a fabricated
  * deck.
  *
- * Deterministic — same Move + `generatedOn` → same result.
+ * Deterministic — same Move + `generatedOn` (+ `opts`) → same result.
  */
 export function buildMoveCostedBusinessCasePack(
   move: MoveBusinessCaseInput,
   generatedOn: string,
+  opts: MoveCostedBusinessCasePackOptions = {},
 ): MoveCostedBusinessCaseResult {
   const result = buildMoveBusinessCase(move);
   const moveLabel = readMoveLabel(move, result.binding);
@@ -332,7 +361,17 @@ export function buildMoveCostedBusinessCasePack(
     move,
     skeleton.tenantKey,
   );
-  return {
+
+  // WE-3 — derive the Workforce Economics estimate-twice ONLY when the caller
+  // opted in (the tenant flag is ON). When omitted, nothing is computed and the
+  // field is never added, so the pack is byte-identical to before this seam
+  // existed. `null` (scope too thin) is also a no-attach — skip, never
+  // fabricate.
+  const workforceEconomics = opts.workforceEconomicsEnabled
+    ? buildMoveWorkforceEconomics(skeleton, moveLabel)
+    : null;
+
+  const pack: MoveCostedBusinessCasePack = {
     bound: true,
     tenantLabel,
     tenantKey,
@@ -352,6 +391,10 @@ export function buildMoveCostedBusinessCasePack(
       takeaway: a.takeaway,
     })),
   };
+  if (workforceEconomics) {
+    pack.workforceEconomics = workforceEconomics;
+  }
+  return pack;
 }
 
 // ---------------------------------------------------------------------------

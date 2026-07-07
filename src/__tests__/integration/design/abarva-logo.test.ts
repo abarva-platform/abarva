@@ -5,7 +5,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 
-const logoPath = resolve(process.cwd(), 'public/brand/abarva-logo.svg');
+const logoPath = resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg');
 const shellPaths = [
   resolve(process.cwd(), 'src/components/abarva/AbarVaAppShell.tsx'),
   resolve(process.cwd(), 'src/components/abarva/AbarVaShellNav.tsx'),
@@ -21,8 +21,10 @@ describe('AbarVaLogo', () => {
     const markup = renderToStaticMarkup(createElement(AbarVaLogo, { 'aria-hidden': false }));
     const logoSource = readFileSync(logoPath, 'utf8');
 
-    expect(markup).toContain('/brand/abarva-logo.svg');
-    expect(logoSource).toContain('viewBox="0 0 1600 520"');
+    expect(markup).toContain('/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg');
+    expect(logoSource).toContain('viewBox="0 0 142.198 32"');
+    expect(logoSource).toContain('M18 80 L50 20 L82 80');
+    expect(logoSource).toContain('M62 55 L82 80 L110 20');
   });
 
   it('has no symbol element in the canonical SVG asset', () => {
@@ -43,7 +45,7 @@ describe('AbarVaLogo', () => {
 // NAV1B · canonical brand component invariants (pure TypeScript)
 // ---------------------------------------------------------------------
 
-describe('NAV1B · AbarVaLogo wordmark-only invariants', () => {
+describe('NAV1B · AbarVaLogo Option 2 invariants', () => {
   const logoComponentSource = readFileSync(
     resolve(process.cwd(), 'src/components/brand/AbarVaLogo.tsx'),
     'utf8',
@@ -53,11 +55,11 @@ describe('NAV1B · AbarVaLogo wordmark-only invariants', () => {
     'utf8',
   );
 
-  it('AbarVaLogo component file points at the canonical /brand/abarva-logo.svg asset', () => {
-    expect(logoComponentSource).toContain('/brand/abarva-logo.svg');
+  it('AbarVaLogo component file points at the canonical /brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg asset', () => {
+    expect(logoComponentSource).toContain('/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg');
   });
 
-  it('AbarVaLogo component file does not inline an SVG symbol or path mark', () => {
+  it('AbarVaLogo component file does not inline SVG markup', () => {
     expect(logoComponentSource).not.toMatch(/<svg/i);
     expect(logoComponentSource).not.toMatch(/<symbol/i);
     expect(logoComponentSource).not.toMatch(/<path/i);
@@ -73,6 +75,7 @@ describe('NAV1B · AbarVaLogo wordmark-only invariants', () => {
   it('AbarVaLogo exposes the canonical sm/md/lg size prop', () => {
     expect(logoComponentSource).toMatch(/AbarVaLogoSize\s*=\s*'sm'\s*\|\s*'md'\s*\|\s*'lg'/);
     expect(logoComponentSource).toMatch(/SIZE_TO_HEIGHT/);
+    expect(logoComponentSource).toMatch(/COMPACT_ASSET_ASPECT_RATIO/);
   });
 
   it('AbarVaLogo accepts an aria-label "label" prop', () => {

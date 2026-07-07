@@ -1,10 +1,10 @@
-// HomeOverviewV2 · the canonical /home Setup page per the wireframe
+// HomeOverviewV2 · legacy Home overview component per the wireframe
 // approved 2026-05-08. Renders the masthead + 5 sections inline:
 //   01 Readiness across modules
 //   02 Steward orientation (loaded vs missing + next-load)
 //   03 Action queue
 //   04 Recent activity
-//   05 Setup panels
+//   05 Admin action surfaces
 //
 // Type triad: Fraunces (display) · Inter (body) · JetBrains Mono
 // (eyebrows / labels). Loaded via next/font in src/app/layout.tsx
@@ -89,7 +89,7 @@ const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
     brandSoft: 'rgba(15,118,110,0.08)',
     brandLine: 'rgba(15,118,110,0.20)',
     industryLabel: 'Industry: Healthcare IDN',
-    tagline: 'Healthcare IDN · 8 hospitals · 142 clinics',
+    tagline: 'Healthcare IDN · 30 hospitals · 280 ambulatory sites',
   },
   apexretail: {
     initials: 'AR',
@@ -819,8 +819,13 @@ export function HomeOverviewV2({
           </>
         )}
 
-        {/* Section 05 — Setup panels */}
-        <Section eyebrowNum="05" eyebrowLabel="WHERE TO GO" title="Setup panels" lead="Eight panels for tenant administration. Status pill is derived from live substrate state.">
+        {/* Section 05 — Admin action surfaces */}
+        <Section
+          eyebrowNum="05"
+          eyebrowLabel="WHERE TO GO"
+          title="Admin action surfaces"
+          lead="Access, readiness, and audit controls for the active client."
+        >
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
             {extras.panels.map((p) => <PanelCard key={p.num} panel={p} />)}
           </div>

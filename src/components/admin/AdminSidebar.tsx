@@ -12,6 +12,7 @@ export function AdminSidebar() {
 
   return (
     <aside
+      data-admin-sidebar="true"
       style={{
         background: COLORS.white,
         borderRight: `1px solid ${COLORS.ink}14`,
@@ -20,6 +21,7 @@ export function AdminSidebar() {
         overflowY: 'auto',
         minHeight: 0,
         width: '280px',
+        maxWidth: '280px',
       }}
     >
       {/* Section header */}
@@ -40,7 +42,7 @@ export function AdminSidebar() {
             marginBottom: 6,
           }}
         >
-          Setup · Admin
+          Admin workspace
         </div>
         <div
           style={{
@@ -62,7 +64,7 @@ export function AdminSidebar() {
             lineHeight: 1.4,
           }}
         >
-          Control plane · tenant setup &amp; readiness
+          Control plane · tenant readiness
         </div>
       </div>
 
@@ -84,7 +86,7 @@ export function AdminSidebar() {
           // Group header: render when this entry declares a `group`
           // distinct from any prior entry. The first entry's
           // `Setup` group is intentionally suppressed because the
-          // shell already shows "Setup · Admin" in the header
+          // shell already shows Admin workspace in the header
           // (avoids visual duplication). Subsequent groups always
           // render so operators can scan by capability.
           const showGroupHeader = section.group !== undefined && index !== 0;
@@ -95,8 +97,8 @@ export function AdminSidebar() {
                 <div
                   style={{
                     fontFamily: TYPOGRAPHY.mono,
-                    fontSize: 9,
-                    letterSpacing: '0.14em',
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
                     textTransform: 'uppercase',
                     color: `${COLORS.ink}66`,
                     fontWeight: 600,
@@ -113,8 +115,8 @@ export function AdminSidebar() {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 1,
-                  padding: '9px 20px 9px 17px',
+                  gap: 3,
+                  padding: '10px 20px 10px 17px',
                   borderLeft: isActive
                     ? `3px solid ${COLORS.navy}`
                     : '3px solid transparent',
@@ -136,11 +138,11 @@ export function AdminSidebar() {
                 </span>
                 <span
                   style={{
-                    fontFamily: TYPOGRAPHY.mono,
-                    fontSize: 10,
-                    letterSpacing: '0.06em',
+                    fontFamily: TYPOGRAPHY.sans,
+                    fontSize: 11.5,
+                    letterSpacing: 0,
                     color: `${COLORS.ink}80`,
-                    lineHeight: 1.3,
+                    lineHeight: 1.35,
                   }}
                 >
                   {section.subtitle}

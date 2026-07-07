@@ -1,20 +1,13 @@
 import {
   getAzureReadFluentClient,
+  runtimePostgresPoolConfig,
   type PostgresCompatClient,
-} from '@/lib/data-plane/postgresCompat';
-import 'server-only';
-import { Pool, type QueryResultRow } from 'pg';
-import {
-  getPineconeClient,
-  privateTenantPineconeIndexConfig,
-  type PineconeClient,
-} from '@/lib/knowledge/context-broker/pinecone-client';
-import {
-  getPrivateDataPlaneResource,
-  isPrivateVectorAvailable,
-} from '@/lib/knowledge/private-data-plane/registry';
-import type { TenantDataAdapter } from './adapter';
-import { GraphTraversal } from './graph-traversal';
+} from "@/lib/data-plane/postgresCompat";
+import "server-only";
+import { Pool, type QueryResultRow } from "pg";
+import { getPrivateDataPlaneResource } from "@/lib/knowledge/private-data-plane/registry";
+import type { TenantDataAdapter } from "./adapter";
+import { GraphTraversal } from "./graph-traversal";
 import type {
   ChunkEmbeddingStatus,
   ContextChunk,
@@ -27,7 +20,7 @@ import type {
   SegmentId,
   SegmentRollup,
   TenantRecord,
-} from './types';
+} from "./types";
 
 type SupabaseClient = PostgresCompatClient & {
   schema?: (schemaName: string) => SupabaseClient;
@@ -110,88 +103,98 @@ interface ContextChunkRow {
   embedded_at: string | null;
   provenance: Record<string, unknown> | null;
   chunk_metadata: Record<string, unknown> | null;
+  vector_score?: number | string | null;
 }
 
 // ── Column lists ───────────────────────────────────────────────────────
 
 const SEGMENT_COLUMNS =
-  'tenant_key, segment_id, segment_name, family_number, expected_baseline, ' +
-  'coverage_score, health_state, record_count, stale_count, missing_count, ' +
-  'last_reviewed_at, last_ingested_at, provenance_summary';
+  "tenant_key, segment_id, segment_name, family_number, expected_baseline, " +
+  "coverage_score, health_state, record_count, stale_count, missing_count, " +
+  "last_reviewed_at, last_ingested_at, provenance_summary";
 
 const RECORD_COLUMNS =
-  'tenant_key, segment_id, record_id, title, record_kind, source_doc, ' +
-  'source_path, source_basis, uploaded_by, data_classification, confidence, ' +
-  'last_reviewed, freshness_state, ingestion_status, indexed_at, ' +
-  'record_text, record_payload';
+  "tenant_key, segment_id, record_id, title, record_kind, source_doc, " +
+  "source_path, source_basis, uploaded_by, data_classification, confidence, " +
+  "last_reviewed, freshness_state, ingestion_status, indexed_at, " +
+  "record_text, record_payload";
 
 const CHUNK_COLUMNS =
-  'tenant_key, chunk_id, source_segment_id, source_record_id, source_doc, ' +
-  'source_path, chunk_index, chunk_text, token_count, embedding_status, ' +
-  'embedding_model, embedded_at, provenance, chunk_metadata';
+  "tenant_key, chunk_id, source_segment_id, source_record_id, source_doc, " +
+  "source_path, chunk_index, chunk_text, token_count, embedding_status, " +
+  "embedding_model, embedded_at, provenance, chunk_metadata";
 
 // ── Mappers ────────────────────────────────────────────────────────────
 
-const HEALTH_STATE_MAP: Record<string, SegmentRollup['health']> = {
-  complete: 'complete',
-  partial: 'partial',
-  sparse: 'thin',
-  not_started: 'shell_only',
+const HEALTH_STATE_MAP: Record<string, SegmentRollup["health"]> = {
+  complete: "complete",
+  partial: "partial",
+  sparse: "thin",
+  not_started: "shell_only",
   // Defensive: the migration's CHECK constraint also allows 'attention'
   // and 'critical'. Map them to the closest contract value so we do not
   // throw on unexpected health states. TD-5 may extend the union if the
   // broker needs to surface attention vs. partial separately.
-  attention: 'partial',
-  critical: 'thin',
+  attention: "partial",
+  critical: "thin",
 };
 
-const CLASSIFICATION_MAP: Record<string, TenantRecord['classification']> = {
-  public: 'public',
-  internal: 'internal',
-  confidential: 'confidential',
-  restricted: 'restricted',
+const CLASSIFICATION_MAP: Record<string, TenantRecord["classification"]> = {
+  public: "public",
+  internal: "internal",
+  confidential: "confidential",
+  restricted: "restricted",
 };
 
-function toNumber(value: number | string | null | undefined, fallback = 0): number {
+function toNumber(
+  value: number | string | null | undefined,
+  fallback = 0,
+): number {
   if (value == null) return fallback;
-  if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
+  if (typeof value === "number")
+    return Number.isFinite(value) ? value : fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function toOptionalNumber(value: number | string | null | undefined): number | undefined {
+function toOptionalNumber(
+  value: number | string | null | undefined,
+): number | undefined {
   if (value == null) return undefined;
-  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value === "number")
+    return Number.isFinite(value) ? value : undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function mapClassification(value: string | null | undefined): TenantRecord['classification'] {
+function mapClassification(
+  value: string | null | undefined,
+): TenantRecord["classification"] {
   if (!value) return undefined;
   return CLASSIFICATION_MAP[value.toLowerCase()];
 }
 
 function mapEmbeddingStatus(value: string): ChunkEmbeddingStatus {
   switch (value) {
-    case 'pending':
-    case 'embedding':
-    case 'embedded':
-    case 'error':
+    case "pending":
+    case "skipped":
+    case "embedded":
+    case "failed":
       return value;
-    case 'failed':
-      return 'error';
-    case 'skipped':
-      // Treat skipped as a terminal pending state for the contract.
-      return 'pending';
+    case "embedding":
+      return "pending";
+    case "error":
+      return "failed";
     default:
-      return 'pending';
+      return "pending";
   }
 }
 
 function mapSegmentRow(row: SegmentRollupRow): SegmentRollup {
   const expected = row.expected_baseline ?? {};
   const expectedRecordCount =
-    typeof (expected as Record<string, unknown>).expected_record_count === 'number'
+    typeof (expected as Record<string, unknown>).expected_record_count ===
+    "number"
       ? ((expected as Record<string, unknown>).expected_record_count as number)
       : undefined;
   return {
@@ -199,7 +202,7 @@ function mapSegmentRow(row: SegmentRollupRow): SegmentRollup {
     segmentId: row.segment_id as SegmentId,
     recordCount: toNumber(row.record_count),
     coveragePct: toNumber(row.coverage_score),
-    health: HEALTH_STATE_MAP[row.health_state] ?? 'shell_only',
+    health: HEALTH_STATE_MAP[row.health_state] ?? "shell_only",
     staleCount: toNumber(row.stale_count),
     missingCount: toNumber(row.missing_count),
     expectedRecordCount,
@@ -210,7 +213,7 @@ function mapSegmentRow(row: SegmentRollupRow): SegmentRollup {
 function mapRecordRow(row: InventoryRecordRow): TenantRecord {
   const payload = (row.record_payload ?? {}) as Record<string, unknown>;
   const caveat =
-    typeof payload.caveat === 'string' && payload.caveat.trim().length > 0
+    typeof payload.caveat === "string" && payload.caveat.trim().length > 0
       ? (payload.caveat as string)
       : undefined;
   return {
@@ -232,9 +235,13 @@ function mapRecordRow(row: InventoryRecordRow): TenantRecord {
 function mapChunkRow(row: ContextChunkRow): ContextChunk {
   const provenance = (row.provenance ?? {}) as Record<string, unknown>;
   const sourceBasis =
-    typeof provenance.source_basis === 'string' ? provenance.source_basis : undefined;
+    typeof provenance.source_basis === "string"
+      ? provenance.source_basis
+      : undefined;
   const classification = mapClassification(
-    typeof provenance.data_classification === 'string' ? provenance.data_classification : null,
+    typeof provenance.data_classification === "string"
+      ? provenance.data_classification
+      : null,
   );
   return {
     tenantKey: row.tenant_key,
@@ -244,25 +251,28 @@ function mapChunkRow(row: ContextChunkRow): ContextChunk {
     recordId: row.source_record_id ?? undefined,
     text: row.chunk_text,
     embeddingStatus: mapEmbeddingStatus(row.embedding_status),
-    embedding: undefined, // Populated when TD-9 wires real vectors.
+    embedding: undefined,
     sourceBasis,
     classification,
+    vectorScore: toOptionalNumber(row.vector_score),
   };
 }
 
 function mapEvidenceRow(row: InventoryRecordRow): EvidenceRecord {
   const payload = (row.record_payload ?? {}) as Record<string, unknown>;
   const claim =
-    typeof payload.claim === 'string' && payload.claim.trim().length > 0
+    typeof payload.claim === "string" && payload.claim.trim().length > 0
       ? (payload.claim as string)
       : row.title;
   const sourceDoc =
-    typeof payload.source_doc === 'string' && payload.source_doc.trim().length > 0
+    typeof payload.source_doc === "string" &&
+    payload.source_doc.trim().length > 0
       ? (payload.source_doc as string)
       : row.source_doc;
-  const classification = mapClassification(row.data_classification) ?? 'internal';
+  const classification =
+    mapClassification(row.data_classification) ?? "internal";
   const caveat =
-    typeof payload.caveat === 'string' && payload.caveat.trim().length > 0
+    typeof payload.caveat === "string" && payload.caveat.trim().length > 0
       ? (payload.caveat as string)
       : undefined;
   return {
@@ -278,8 +288,6 @@ function mapEvidenceRow(row: InventoryRecordRow): EvidenceRecord {
 
 // ── Adapter ────────────────────────────────────────────────────────────
 
-const PINECONE_NOT_CONFIGURED = 'Pinecone not configured. Set PINECONE_API_KEY.';
-
 const DEFAULT_RECORD_LIMIT = 50;
 const MAX_RECORD_LIMIT = 200;
 const DEFAULT_CHUNK_LIMIT = 50;
@@ -288,11 +296,11 @@ const MAX_CHUNK_KEYWORD_LIMIT = 50;
 const DEFAULT_VECTOR_LIMIT = 10;
 const MAX_VECTOR_LIMIT = 50;
 const PUBLIC_PACKET18_SEGMENTS = new Set([
-  'application_portfolio',
-  'initiative_financials',
-  'regulatory_and_dependency_context',
-  'vendor_contract',
-  'sponsor_signal',
+  "application_portfolio",
+  "initiative_financials",
+  "regulatory_and_dependency_context",
+  "vendor_contract",
+  "sponsor_signal",
 ]);
 const PRIVATE_SCHEMA_INVALID_RE =
   /invalid schema|schema .* does not exist|could not find .* schema|relation .* does not exist/i;
@@ -307,12 +315,9 @@ function getPrivatePgPool(): Pool | null {
     cachedPrivatePgPool = null;
     return cachedPrivatePgPool;
   }
-  cachedPrivatePgPool = new Pool({
-    connectionString,
-    max: 2,
-    idleTimeoutMillis: 10_000,
-    connectionTimeoutMillis: 5_000,
-  });
+  cachedPrivatePgPool = new Pool(
+    runtimePostgresPoolConfig(connectionString, "nexus-tenant-data-private"),
+  );
   return cachedPrivatePgPool;
 }
 
@@ -327,8 +332,14 @@ function privateSchemaForTenant(tenantKey: string): string | null {
   return getPrivateDataPlaneResource(tenantKey)?.privateSchema ?? null;
 }
 
-function shouldUsePrivatePgFallback(tenantKey: string, message: string): boolean {
-  return Boolean(privateSchemaForTenant(tenantKey) && PRIVATE_SCHEMA_INVALID_RE.test(message));
+function shouldUsePrivatePgFallback(
+  tenantKey: string,
+  message: string,
+): boolean {
+  return Boolean(
+    privateSchemaForTenant(tenantKey) &&
+    PRIVATE_SCHEMA_INVALID_RE.test(message),
+  );
 }
 
 async function queryPrivateRows<T extends QueryResultRow>(
@@ -343,42 +354,76 @@ async function queryPrivateRows<T extends QueryResultRow>(
   const pool = getPrivatePgPool();
   if (!schema || !pool) return [];
   const tableRef = `${quoteIdent(schema)}.${quoteIdent(tableName)}`;
-  const boundedLimit = typeof limit === 'number' ? ` limit ${Math.trunc(limit)}` : '';
-  const sql = `select ${columns} from ${tableRef} where ${whereSql.join(' and ')}${boundedLimit}`;
+  const boundedLimit =
+    typeof limit === "number" ? ` limit ${Math.trunc(limit)}` : "";
+  const sql = `select ${columns} from ${tableRef} where ${whereSql.join(" and ")}${boundedLimit}`;
   const result = await pool.query<T>(sql, values);
   return result.rows;
+}
+
+function pgVectorLiteral(vector: number[]): string {
+  if (!Array.isArray(vector) || vector.length === 0) {
+    throw new Error(
+      "chunksByVector: queryVector must be a non-empty number[].",
+    );
+  }
+  return `[${vector.map((value) => Number(value).toString()).join(",")}]`;
+}
+
+async function queryPgvectorRows(
+  tenantKey: string,
+  queryVector: number[],
+  limit: number,
+): Promise<ContextChunkRow[]> {
+  const pool = getPrivatePgPool();
+  if (!pool) {
+    throw new Error(
+      "chunksByVector requires DATABASE_URL for Postgres pgvector retrieval.",
+    );
+  }
+  const runQuery = async (schema: string): Promise<ContextChunkRow[]> => {
+    const tableRef = `${quoteIdent(schema)}.${quoteIdent("enterprise_context_chunks")}`;
+    const sql = `
+    select ${CHUNK_COLUMNS},
+           greatest(0, 1 - (embedding_vector <=> $2::vector))::float8 as vector_score
+      from ${tableRef}
+     where tenant_key = $1
+       and embedding_status = 'embedded'
+       and embedding_vector is not null
+     order by embedding_vector <=> $2::vector
+     limit $3
+  `;
+    const result = await pool.query<ContextChunkRow>(sql, [
+      tenantKey,
+      pgVectorLiteral(queryVector),
+      limit,
+    ]);
+    return result.rows;
+  };
+
+  const privateSchema = privateSchemaForTenant(tenantKey);
+  if (!privateSchema) return runQuery("public");
+
+  try {
+    return await runQuery(privateSchema);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (shouldUsePrivatePgFallback(tenantKey, message)) {
+      return runQuery("public");
+    }
+    throw error;
+  }
 }
 
 function ilikePattern(raw: string): string {
   return `%${raw.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
 }
 
-function defaultPineconeClientForTenant(tenantKey?: string): PineconeClient | null {
-  const resource = getPrivateDataPlaneResource(tenantKey);
-  if (!resource) {
-    return getPineconeClient();
-  }
-  if (!isPrivateVectorAvailable(resource) || !resource.privatePineconeIndex) {
-    return null;
-  }
-  return getPineconeClient(privateTenantPineconeIndexConfig(resource.privatePineconeIndex));
-}
-
 export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   private readonly graphTraversal: GraphTraversal;
-  private readonly pineconeClientFactory: (tenantKey?: string) => PineconeClient | null;
   private publicFallbackClient: SupabaseClient | null | undefined;
 
-  constructor(
-    private readonly client: SupabaseClient,
-    /**
-     * Optional Pinecone-client factory for tests. Production callers
-     * pass nothing; the adapter lazy-resolves the singleton via
-     * `getPineconeClient()` so a missing PINECONE_API_KEY surfaces
-     * only when `chunksByVector` is actually invoked.
-     */
-    pineconeClientFactory: ((tenantKey?: string) => PineconeClient | null) = defaultPineconeClientForTenant,
-  ) {
+  constructor(private readonly client: SupabaseClient) {
     // GraphTraversal expects a `() => SupabaseClient` getter so tests can
     // inject mocks per-call. We hand it the same service-role client used
     // for record reads — one client, one tenant boundary, no drift.
@@ -386,16 +431,18 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       () => this.client,
       (tenantKey, tableName) => this.table(tenantKey, tableName),
     );
-    this.pineconeClientFactory = pineconeClientFactory;
   }
 
   private table(tenantKey: string, tableName: string) {
     const resource = getPrivateDataPlaneResource(tenantKey);
     const schemaClient =
-      resource?.privateSchema && typeof (this.client as { schema?: unknown }).schema === 'function'
-        ? (this.client as unknown as { schema(schemaName: string): SupabaseClient }).schema(
-            resource.privateSchema,
-          )
+      resource?.privateSchema &&
+      typeof (this.client as { schema?: unknown }).schema === "function"
+        ? (
+            this.client as unknown as {
+              schema(schemaName: string): SupabaseClient;
+            }
+          ).schema(resource.privateSchema)
         : this.client;
     return schemaClient.from(tableName);
   }
@@ -408,21 +455,26 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   }
 
   async listSegments(tenantKey: string): Promise<SegmentRollup[]> {
-    const { data, error } = await this.table(tenantKey, 'data_inventory_segments')
+    const { data, error } = await this.table(
+      tenantKey,
+      "data_inventory_segments",
+    )
       .select(SEGMENT_COLUMNS)
-      .eq('tenant_key', tenantKey);
+      .eq("tenant_key", tenantKey);
     if (error) {
       if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
         const rows = await queryPrivateRows<SegmentRollupRow>(
           tenantKey,
-          'data_inventory_segments',
+          "data_inventory_segments",
           SEGMENT_COLUMNS,
-          ['tenant_key = $1'],
+          ["tenant_key = $1"],
           [tenantKey],
         );
         return rows.map(mapSegmentRow);
       }
-      throw new Error(`listSegments failed for tenant '${tenantKey}': ${error.message}`);
+      throw new Error(
+        `listSegments failed for tenant '${tenantKey}': ${error.message}`,
+      );
     }
     const rows = (data ?? []) as unknown as SegmentRollupRow[];
     return rows.map(mapSegmentRow);
@@ -433,31 +485,34 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     segmentId: SegmentId,
     opts?: { limit?: number; recordKind?: string },
   ): Promise<TenantRecord[]> {
-    const limit = Math.min(MAX_RECORD_LIMIT, Math.max(1, opts?.limit ?? DEFAULT_RECORD_LIMIT));
+    const limit = Math.min(
+      MAX_RECORD_LIMIT,
+      Math.max(1, opts?.limit ?? DEFAULT_RECORD_LIMIT),
+    );
     const queryPublicRows = async (): Promise<InventoryRecordRow[] | null> => {
       let fallback = this.client
-        .from('data_inventory_records')
+        .from("data_inventory_records")
         .select(RECORD_COLUMNS)
-        .eq('tenant_key', tenantKey)
-        .eq('segment_id', segmentId);
+        .eq("tenant_key", tenantKey)
+        .eq("segment_id", segmentId);
       if (opts?.recordKind) {
-        fallback = fallback.eq('record_kind', opts.recordKind);
+        fallback = fallback.eq("record_kind", opts.recordKind);
       }
       const result = await fallback.limit(limit);
       if (result.error) return null;
       return (result.data ?? []) as unknown as InventoryRecordRow[];
     };
-    let query = this.table(tenantKey, 'data_inventory_records')
+    let query = this.table(tenantKey, "data_inventory_records")
       .select(RECORD_COLUMNS)
-      .eq('tenant_key', tenantKey)
-      .eq('segment_id', segmentId);
+      .eq("tenant_key", tenantKey)
+      .eq("segment_id", segmentId);
     if (opts?.recordKind) {
-      query = query.eq('record_kind', opts.recordKind);
+      query = query.eq("record_kind", opts.recordKind);
     }
     const { data, error } = await query.limit(limit);
     if (error) {
       if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
-        const whereSql = ['tenant_key = $1', 'segment_id = $2'];
+        const whereSql = ["tenant_key = $1", "segment_id = $2"];
         const values: unknown[] = [tenantKey, segmentId];
         if (opts?.recordKind) {
           whereSql.push(`record_kind = $${values.length + 1}`);
@@ -466,7 +521,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
         try {
           const rows = await queryPrivateRows<InventoryRecordRow>(
             tenantKey,
-            'data_inventory_records',
+            "data_inventory_records",
             RECORD_COLUMNS,
             whereSql,
             values,
@@ -486,30 +541,36 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     return rows.map(mapRecordRow);
   }
 
-  async getRecord(tenantKey: string, recordId: string): Promise<TenantRecord | null> {
+  async getRecord(
+    tenantKey: string,
+    recordId: string,
+  ): Promise<TenantRecord | null> {
     const queryPublicRow = async (): Promise<InventoryRecordRow | null> => {
       const fallback = await this.client
-        .from('data_inventory_records')
+        .from("data_inventory_records")
         .select(RECORD_COLUMNS)
-        .eq('tenant_key', tenantKey)
-        .eq('record_id', recordId)
+        .eq("tenant_key", tenantKey)
+        .eq("record_id", recordId)
         .maybeSingle();
       if (fallback.error) return null;
       return (fallback.data as unknown as InventoryRecordRow | null) ?? null;
     };
-    const { data, error } = await this.table(tenantKey, 'data_inventory_records')
+    const { data, error } = await this.table(
+      tenantKey,
+      "data_inventory_records",
+    )
       .select(RECORD_COLUMNS)
-      .eq('tenant_key', tenantKey)
-      .eq('record_id', recordId)
+      .eq("tenant_key", tenantKey)
+      .eq("record_id", recordId)
       .maybeSingle();
     if (error) {
       if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
         try {
           const rows = await queryPrivateRows<InventoryRecordRow>(
             tenantKey,
-            'data_inventory_records',
+            "data_inventory_records",
             RECORD_COLUMNS,
-            ['tenant_key = $1', 'record_id = $2'],
+            ["tenant_key = $1", "record_id = $2"],
             [tenantKey, recordId],
             1,
           );
@@ -519,20 +580,25 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
           return publicRow ? mapRecordRow(publicRow) : null;
         }
       }
-      throw new Error(`getRecord failed for tenant '${tenantKey}', record '${recordId}': ${error.message}`);
+      throw new Error(
+        `getRecord failed for tenant '${tenantKey}', record '${recordId}': ${error.message}`,
+      );
     }
     if (!data) return null;
     return mapRecordRow(data as unknown as InventoryRecordRow);
   }
 
-  listGraphNodes(tenantKey: string, kind?: GraphNodeKind): Promise<GraphNode[]> {
+  listGraphNodes(
+    tenantKey: string,
+    kind?: GraphNodeKind,
+  ): Promise<GraphNode[]> {
     return this.graphTraversal.listNodes(tenantKey, kind);
   }
 
   listGraphEdgesForNode(
     tenantKey: string,
     nodeId: string,
-    direction?: 'outgoing' | 'incoming' | 'both',
+    direction?: "outgoing" | "incoming" | "both",
   ): Promise<GraphEdge[]> {
     return this.graphTraversal.listEdgesForNode(tenantKey, nodeId, direction);
   }
@@ -568,49 +634,60 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       Math.max(1, opts?.limit ?? DEFAULT_CHUNK_LIMIT),
     );
     const queryPublicRows = async (): Promise<ContextChunkRow[] | null> => {
-      let fallbackQuery = this.publicTable('enterprise_context_chunks')
+      let fallbackQuery = this.publicTable("enterprise_context_chunks")
         .select(CHUNK_COLUMNS)
-        .eq('tenant_key', tenantKey);
+        .eq("tenant_key", tenantKey);
       if (opts?.recordIds && opts.recordIds.length > 0) {
-        fallbackQuery = fallbackQuery.in('source_record_id', opts.recordIds);
+        fallbackQuery = fallbackQuery.in("source_record_id", opts.recordIds);
       }
       if (opts?.segmentIds && opts.segmentIds.length > 0) {
-        fallbackQuery = fallbackQuery.in('source_segment_id', opts.segmentIds);
+        fallbackQuery = fallbackQuery.in("source_segment_id", opts.segmentIds);
       }
       if (opts?.embeddingStatus) {
-        fallbackQuery = fallbackQuery.eq('embedding_status', opts.embeddingStatus);
+        fallbackQuery = fallbackQuery.eq(
+          "embedding_status",
+          opts.embeddingStatus,
+        );
       }
       const fallback = await fallbackQuery.limit(limit);
       if (fallback.error) return null;
       return (fallback.data ?? []) as unknown as ContextChunkRow[];
     };
-    if (opts?.segmentIds?.some((segmentId) => PUBLIC_PACKET18_SEGMENTS.has(segmentId))) {
+    if (
+      opts?.segmentIds?.some((segmentId) =>
+        PUBLIC_PACKET18_SEGMENTS.has(segmentId),
+      )
+    ) {
       const publicRows = await queryPublicRows();
       if (publicRows) return publicRows.map(mapChunkRow);
     }
-    let query = this.table(tenantKey, 'enterprise_context_chunks')
+    let query = this.table(tenantKey, "enterprise_context_chunks")
       .select(CHUNK_COLUMNS)
-      .eq('tenant_key', tenantKey);
+      .eq("tenant_key", tenantKey);
     if (opts?.recordIds && opts.recordIds.length > 0) {
-      query = query.in('source_record_id', opts.recordIds);
+      query = query.in("source_record_id", opts.recordIds);
     }
     if (opts?.segmentIds && opts.segmentIds.length > 0) {
-      query = query.in('source_segment_id', opts.segmentIds);
+      query = query.in("source_segment_id", opts.segmentIds);
     }
     if (opts?.embeddingStatus) {
-      query = query.eq('embedding_status', opts.embeddingStatus);
+      query = query.eq("embedding_status", opts.embeddingStatus);
     }
     const { data, error } = await query.limit(limit);
     if (error) {
       if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
-        const whereSql = ['tenant_key = $1'];
+        const whereSql = ["tenant_key = $1"];
         const values: unknown[] = [tenantKey];
         if (opts?.recordIds && opts.recordIds.length > 0) {
-          whereSql.push(`source_record_id = any($${values.length + 1}::text[])`);
+          whereSql.push(
+            `source_record_id = any($${values.length + 1}::text[])`,
+          );
           values.push(opts.recordIds);
         }
         if (opts?.segmentIds && opts.segmentIds.length > 0) {
-          whereSql.push(`source_segment_id = any($${values.length + 1}::text[])`);
+          whereSql.push(
+            `source_segment_id = any($${values.length + 1}::text[])`,
+          );
           values.push(opts.segmentIds);
         }
         if (opts?.embeddingStatus) {
@@ -620,7 +697,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
         try {
           const rows = await queryPrivateRows<ContextChunkRow>(
             tenantKey,
-            'enterprise_context_chunks',
+            "enterprise_context_chunks",
             CHUNK_COLUMNS,
             whereSql,
             values,
@@ -632,7 +709,9 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
           if (publicRows) return publicRows.map(mapChunkRow);
         }
       }
-      throw new Error(`listContextChunks failed for tenant '${tenantKey}': ${error.message}`);
+      throw new Error(
+        `listContextChunks failed for tenant '${tenantKey}': ${error.message}`,
+      );
     }
     let rows = (data ?? []) as unknown as ContextChunkRow[];
     if (rows.length === 0) {
@@ -654,32 +733,38 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .map((keyword) => keyword.trim())
       .filter((keyword) => keyword.length > 0);
     if (cleaned.length === 0) return [];
-    const cap = Math.min(MAX_CHUNK_KEYWORD_LIMIT, Math.max(1, limit ?? DEFAULT_CHUNK_LIMIT));
+    const cap = Math.min(
+      MAX_CHUNK_KEYWORD_LIMIT,
+      Math.max(1, limit ?? DEFAULT_CHUNK_LIMIT),
+    );
     // Build an OR clause with ILIKE per keyword. Escape PostgREST special
     // characters (commas, parentheses) in keywords to keep the OR string
     // safe; the canonical PostgREST workaround is to wrap each ILIKE in
     // its own predicate joined by commas.
     const orClause = cleaned
       .map((keyword) => {
-        const escaped = keyword.replace(/[%,()*]/g, ' ').trim();
+        const escaped = keyword.replace(/[%,()*]/g, " ").trim();
         return `chunk_text.ilike.%${escaped}%`;
       })
-      .filter((clause) => clause.endsWith('%%') === false)
-      .join(',');
+      .filter((clause) => clause.endsWith("%%") === false)
+      .join(",");
     if (orClause.length === 0) return [];
     const queryPublicRows = async (): Promise<ContextChunkRow[] | null> => {
       const fallback = await this.client
-        .from('enterprise_context_chunks')
+        .from("enterprise_context_chunks")
         .select(CHUNK_COLUMNS)
-        .eq('tenant_key', tenantKey)
+        .eq("tenant_key", tenantKey)
         .or(orClause)
         .limit(cap);
       if (fallback.error) return null;
       return (fallback.data ?? []) as unknown as ContextChunkRow[];
     };
-    const { data, error } = await this.table(tenantKey, 'enterprise_context_chunks')
+    const { data, error } = await this.table(
+      tenantKey,
+      "enterprise_context_chunks",
+    )
       .select(CHUNK_COLUMNS)
-      .eq('tenant_key', tenantKey)
+      .eq("tenant_key", tenantKey)
       .or(orClause)
       .limit(cap);
     if (error) {
@@ -692,9 +777,9 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
         try {
           const rows = await queryPrivateRows<ContextChunkRow>(
             tenantKey,
-            'enterprise_context_chunks',
+            "enterprise_context_chunks",
             CHUNK_COLUMNS,
-            ['tenant_key = $1', `(${clauses.join(' or ')})`],
+            ["tenant_key = $1", `(${clauses.join(" or ")})`],
             values,
             cap,
           );
@@ -704,7 +789,9 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
           if (publicRows) return publicRows.map(mapChunkRow);
         }
       }
-      throw new Error(`chunksByKeyword failed for tenant '${tenantKey}': ${error.message}`);
+      throw new Error(
+        `chunksByKeyword failed for tenant '${tenantKey}': ${error.message}`,
+      );
     }
     const rows = (data ?? []) as unknown as ContextChunkRow[];
     return rows.map(mapChunkRow);
@@ -715,85 +802,40 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     queryVector: number[],
     limit?: number,
   ): Promise<ContextChunk[]> {
-    const pinecone = this.pineconeClientFactory(tenantKey);
-    if (!pinecone) {
-      throw new Error(PINECONE_NOT_CONFIGURED);
-    }
     if (!Array.isArray(queryVector) || queryVector.length === 0) {
-      throw new Error('chunksByVector: queryVector must be a non-empty number[].');
+      throw new Error(
+        "chunksByVector: queryVector must be a non-empty number[].",
+      );
     }
-    const topK = Math.min(MAX_VECTOR_LIMIT, Math.max(1, limit ?? DEFAULT_VECTOR_LIMIT));
-
-    const hits = await pinecone.query({
-      vector: queryVector,
-      tenantKey,
-      topK,
-    });
-    if (hits.length === 0) return [];
-
-    const ids = hits.map((h) => h.id);
-    // Bulk-fetch the chunks Postgres-side so the caller gets the
-    // canonical `chunk_text` and provenance — Pinecone metadata is the
-    // smallest possible subset by design (see pinecone-client.ts).
-    const { data, error } = await this.table(tenantKey, 'enterprise_context_chunks')
-      .select(CHUNK_COLUMNS)
-      .eq('tenant_key', tenantKey)
-      .in('chunk_id', ids);
-    if (error) {
-      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
-        const rows = await queryPrivateRows<ContextChunkRow>(
-          tenantKey,
-          'enterprise_context_chunks',
-          CHUNK_COLUMNS,
-          ['tenant_key = $1', 'chunk_id = any($2::text[])'],
-          [tenantKey, ids],
-        );
-        const byId = new Map<string, ContextChunk>();
-        for (const row of rows) {
-          byId.set(row.chunk_id, mapChunkRow(row));
-        }
-        const out: ContextChunk[] = [];
-        for (const hit of hits) {
-          const chunk = byId.get(hit.id);
-          if (!chunk) continue;
-          out.push({ ...chunk, vectorScore: hit.score });
-        }
-        return out;
-      }
-      throw new Error(`chunksByVector failed for tenant '${tenantKey}': ${error.message}`);
-    }
-    const rows = (data ?? []) as unknown as ContextChunkRow[];
-
-    // Map by chunk_id so we can attach the Pinecone score to each
-    // hydrated chunk and preserve Pinecone's relevance ordering.
-    const byId = new Map<string, ContextChunk>();
-    for (const row of rows) {
-      byId.set(row.chunk_id, mapChunkRow(row));
-    }
-    const out: ContextChunk[] = [];
-    for (const hit of hits) {
-      const chunk = byId.get(hit.id);
-      if (!chunk) continue; // Pinecone vector with no Postgres backing — skip silently.
-      out.push({ ...chunk, vectorScore: hit.score });
-    }
-    return out;
+    const topK = Math.min(
+      MAX_VECTOR_LIMIT,
+      Math.max(1, limit ?? DEFAULT_VECTOR_LIMIT),
+    );
+    const rows = await queryPgvectorRows(tenantKey, queryVector, topK);
+    return rows.map(mapChunkRow);
   }
 
-  async getEvidence(tenantKey: string, evidenceId: string): Promise<EvidenceRecord | null> {
-    const { data, error } = await this.table(tenantKey, 'data_inventory_records')
+  async getEvidence(
+    tenantKey: string,
+    evidenceId: string,
+  ): Promise<EvidenceRecord | null> {
+    const { data, error } = await this.table(
+      tenantKey,
+      "data_inventory_records",
+    )
       .select(RECORD_COLUMNS)
-      .eq('tenant_key', tenantKey)
-      .eq('segment_id', 'evidence_ledger')
-      .eq('record_id', evidenceId)
+      .eq("tenant_key", tenantKey)
+      .eq("segment_id", "evidence_ledger")
+      .eq("record_id", evidenceId)
       .maybeSingle();
     if (error) {
       if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
         const rows = await queryPrivateRows<InventoryRecordRow>(
           tenantKey,
-          'data_inventory_records',
+          "data_inventory_records",
           RECORD_COLUMNS,
-          ['tenant_key = $1', 'segment_id = $2', 'record_id = $3'],
-          [tenantKey, 'evidence_ledger', evidenceId],
+          ["tenant_key = $1", "segment_id = $2", "record_id = $3"],
+          [tenantKey, "evidence_ledger", evidenceId],
           1,
         );
         return rows[0] ? mapEvidenceRow(rows[0]) : null;
@@ -807,43 +849,50 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   }
 
   async hasPersistedData(tenantKey: string): Promise<boolean> {
-    const { data, error } = await this.table(tenantKey, 'data_inventory_segments')
-      .select('segment_id')
-      .eq('tenant_key', tenantKey)
+    const { data, error } = await this.table(
+      tenantKey,
+      "data_inventory_segments",
+    )
+      .select("segment_id")
+      .eq("tenant_key", tenantKey)
       .limit(1);
     if (error) {
       if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
         const rows = await queryPrivateRows<{ segment_id: string }>(
           tenantKey,
-          'data_inventory_segments',
-          'segment_id',
-          ['tenant_key = $1'],
+          "data_inventory_segments",
+          "segment_id",
+          ["tenant_key = $1"],
           [tenantKey],
           1,
         );
         return rows.length > 0;
       }
-      throw new Error(`hasPersistedData failed for tenant '${tenantKey}': ${error.message}`);
+      throw new Error(
+        `hasPersistedData failed for tenant '${tenantKey}': ${error.message}`,
+      );
     }
     if ((data?.length ?? 0) > 0) return true;
 
-    const chunks = await this.table(tenantKey, 'enterprise_context_chunks')
-      .select('chunk_id')
-      .eq('tenant_key', tenantKey)
+    const chunks = await this.table(tenantKey, "enterprise_context_chunks")
+      .select("chunk_id")
+      .eq("tenant_key", tenantKey)
       .limit(1);
     if (chunks.error) {
       if (shouldUsePrivatePgFallback(tenantKey, chunks.error.message)) {
         const rows = await queryPrivateRows<{ chunk_id: string }>(
           tenantKey,
-          'enterprise_context_chunks',
-          'chunk_id',
-          ['tenant_key = $1'],
+          "enterprise_context_chunks",
+          "chunk_id",
+          ["tenant_key = $1"],
           [tenantKey],
           1,
         );
         return rows.length > 0;
       }
-      throw new Error(`hasPersistedData chunk check failed for tenant '${tenantKey}': ${chunks.error.message}`);
+      throw new Error(
+        `hasPersistedData chunk check failed for tenant '${tenantKey}': ${chunks.error.message}`,
+      );
     }
     return (chunks.data?.length ?? 0) > 0;
   }

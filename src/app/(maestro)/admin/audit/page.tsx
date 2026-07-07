@@ -32,7 +32,7 @@ import { IsolationLane } from '@/components/admin/IsolationLane';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { getIsolationPosture } from '@/lib/admin/broker/isolation-posture-broker';
 
-export const metadata = { title: 'Setup · Audit log · AbarVa' };
+export const metadata = { title: 'Admin · Audit log · AbarVa' };
 
 export const dynamic = 'force-dynamic';
 

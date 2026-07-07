@@ -90,7 +90,7 @@ export function buildCoverSheet(
   sheet.addRow([]);
 
   const labelRows: Array<[string, string]> = [
-    ['Tenant', cover.tenantName],
+    ['Company', cover.tenantName],
     ['Event', cover.eventName],
     ['Event code', cover.eventCode],
     ['Issued by', cover.issuedBy ?? '—'],

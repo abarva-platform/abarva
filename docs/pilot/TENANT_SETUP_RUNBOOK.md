@@ -69,7 +69,7 @@ INSERT INTO tenants (
 ) VALUES (
   gen_random_uuid(),
   'client-slug',           -- e.g. 'northstar-retail'
-  'Client Full Name',      -- e.g. 'Northstar Retail Group'
+  'Client Full Name',      -- e.g. 'Retail Demo Workspace'
   'Northstar Retail',      -- display name for UI
   'T1',                    -- T1 / T2 / T3
   'L2',                    -- L0 / L1 / L2 / L3 / L4

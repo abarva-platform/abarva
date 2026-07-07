@@ -21,6 +21,7 @@ export const DEMO_ACCOUNTS = {
   arcturus: { email: 'demo-firstcapital+clerk_test@abarva.com', password: 'Demo2026!' },
   apexretail: { email: 'demo-apexretail+clerk_test@abarva.com', password: 'Demo2026!' },
   skyharbor: { email: 'cto@skyharbor-air.example.com', password: 'Demo2026!' },
+  lakeshore: { email: 'cfo@lakeshore-holdings.example.com', password: 'Demo2026!' },
   admin: { email: 'anand.sundaram@thesundaram.com', password: 'Archer2026!' },
   investor: { email: 'investor+clerk_test@abarva.com', password: 'Investor2026!' },
 } as const;
@@ -156,11 +157,13 @@ export async function withClerkAuth(
 
 export async function signInWithDemoAccount(page: Page, account: keyof typeof DEMO_ACCOUNTS): Promise<void> {
   const creds = DEMO_ACCOUNTS[account];
+  const accessCode = process.env.E2E_DEMO_ACCESS_CODE ?? '424242';
 
   await page.goto('/sign-in');
-  await page.getByPlaceholder('Enter your email address').fill(creds.email);
-  await page.getByPlaceholder('Enter your password').fill(creds.password);
-  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByPlaceholder(/name@company.com/i).fill(creds.email);
+  await page.getByPlaceholder(/Password from invite/i).fill(creds.password);
+  await page.getByPlaceholder(/6-digit code/i).fill(accessCode);
+  await page.getByRole('button', { name: /sign in/i }).click();
 
   await page.waitForFunction(() => document.cookie.includes('__session='), null, { timeout: 15000 });
 }

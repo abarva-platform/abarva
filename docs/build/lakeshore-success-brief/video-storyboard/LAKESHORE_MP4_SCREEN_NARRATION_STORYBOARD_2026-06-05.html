@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lakeshore AbarVa MP4 Storyboard - Screen + Narration</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #5d6678;
+      --paper: #f7f5ef;
+      --panel: #ffffff;
+      --line: #d8d2c8;
+      --nav: #000000;
+      --blue: #2457d6;
+      --green: #0f766e;
+      --gold: #9a5b00;
+      --shadow: 0 16px 36px rgba(15, 23, 42, .09);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 15px;
+      line-height: 1.48;
+    }
+    header {
+      background: var(--nav);
+      color: #fff;
+      padding: 18px 28px;
+    }
+    .header-inner {
+      max-width: 1500px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+    }
+    .brand img { width: 124px; height: 28px; display: block; object-fit: contain; }
+    .client {
+      padding-left: 12px;
+      border-left: 1px solid rgba(255,255,255,.22);
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      font-weight: 760;
+    }
+    main {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 30px 28px 64px;
+    }
+    h1, h2, h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(34px, 4vw, 58px);
+      line-height: .98;
+      max-width: 1050px;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 27px;
+      line-height: 1.08;
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 19px;
+      line-height: 1.14;
+    }
+    p { margin: 0 0 12px; color: #293246; }
+    .lead {
+      max-width: 1050px;
+      color: #40506a;
+      font-size: 18px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 22px 0 32px;
+    }
+    .meta {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, .04);
+    }
+    .meta b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--blue);
+    }
+    .story-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr);
+      gap: 20px;
+      align-items: start;
+      margin-top: 22px;
+      padding: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .screen {
+      border: 1px solid #c7c0b6;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #111827;
+    }
+    .screen img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .script {
+      position: sticky;
+      top: 18px;
+    }
+    .kicker {
+      display: inline-flex;
+      margin-bottom: 8px;
+      color: #536179;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 11px 0 14px;
+    }
+    .pill {
+      display: inline-flex;
+      min-height: 26px;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fbfaf7;
+      color: #49546a;
+      font-size: 12px;
+      font-weight: 760;
+    }
+    .voice {
+      border-left: 5px solid var(--blue);
+      background: #f7f9ff;
+      border-radius: var(--radius);
+      padding: 14px 15px;
+    }
+    .voice b, .camera b, .production b { display: block; margin-bottom: 6px; }
+    .voice p { margin: 0; color: #1f2937; }
+    .camera, .production {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+    }
+    .camera p, .production p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .notes {
+      margin-top: 28px;
+      background: #fff8e7;
+      border: 1px solid #efd38c;
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .notes ul {
+      margin: 8px 0 0 18px;
+      padding: 0;
+      color: #384255;
+    }
+    @media (max-width: 1050px) {
+      .story-row { grid-template-columns: 1fr; }
+      .script { position: static; }
+      .meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      main { padding: 22px 16px 44px; }
+      header { padding: 14px 16px; }
+      .header-inner { align-items: flex-start; flex-direction: column; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .story-row { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" />
+        <span class="client">Lakeshore MP4 Storyboard</span>
+      </div>
+      <div>Screen + narration map · June 2026</div>
+    </div>
+  </header>
+
+  <main>
+    <span class="kicker">Production storyboard</span>
+    <h1>Every page plate mapped to narration.</h1>
+    <p class="lead">
+      This is the review layer before generating OpenAI voice audio and assembling the MP4. Each scene is framed as a 16:9 screen, paired with narration, timing, and camera direction. The video should feel like browsing the HTML, but without scrolling.
+    </p>
+
+    <div class="meta-grid">
+      <div class="meta"><b>Target length</b><span>5-7 minutes, depending on voice speed.</span></div>
+      <div class="meta"><b>Visual rule</b><span>No scrolling. One screen per beat, with zoom/pan.</span></div>
+      <div class="meta"><b>Motion rule</b><span>10-15% zoom-out base frame, punch in on proof.</span></div>
+      <div class="meta"><b>Audio rule</b><span>2-3 second visual gap between scene beats.</span></div>
+    </div>
+
+    <section class="story-row" id="scene-01">
+      <div class="screen"><img src="assets/01-opening.png" alt="Scene 1 opening page" /></div>
+      <div class="script">
+        <span class="kicker">Scene 01</span>
+        <h2>Opening thesis</h2>
+        <div class="pill-row"><span class="pill">Duration 22s</span><span class="pill">Base zoom 90%</span><span class="pill">Slow punch to thesis card</span></div>
+        <div class="voice"><b>Narration</b><p>AI success for Lakeshore is not a chatbot. It is a governed execution layer for treasury, vendors, risk, decisions, and measurable value.</p></div>
+        <div class="camera"><b>Camera</b><p>Hold headline, then slow zoom to the "My read" card.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-02">
+      <div class="screen"><img src="assets/02-profile.png" alt="Scene 2 Lakeshore profile" /></div>
+      <div class="script">
+        <span class="kicker">Scene 02</span>
+        <h2>Lakeshore operating profile</h2>
+        <div class="pill-row"><span class="pill">Duration 26s</span><span class="pill">Zoom to metrics</span><span class="pill">Pause on company table</span></div>
+        <div class="voice"><b>Narration</b><p>Abarva starts with Lakeshore's facts: operating platforms, revenue baseline, people, systems, vendors, banks, and board priorities. Context comes before AI.</p></div>
+        <div class="camera"><b>Camera</b><p>Punch in on scale metrics, then the operating-company table.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-03">
+      <div class="screen"><img src="assets/03-operating-map.png" alt="Scene 3 federated operating map" /></div>
+      <div class="script">
+        <span class="kicker">Scene 03</span>
+        <h2>Federated complexity</h2>
+        <div class="pill-row"><span class="pill">Duration 24s</span><span class="pill">Horizontal pan</span><span class="pill">Highlight CXO bundles</span></div>
+        <div class="voice"><b>Narration</b><p>The complexity is the product opportunity: sponsor decisions, HoldCo autonomy, PortCo systems, CXO ownership, contracts, CMDB, and process evidence.</p></div>
+        <div class="camera"><b>Camera</b><p>Pan across L0, L1, L2; pause on CXO bundles.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-04">
+      <div class="screen"><img src="assets/04-intelligence-layer.png" alt="Scene 4 intelligence layer" /></div>
+      <div class="script">
+        <span class="kicker">Scene 04</span>
+        <h2>Lakeshore Intelligence Layer</h2>
+        <div class="pill-row"><span class="pill">Duration 24s</span><span class="pill">Punch to Setup screen</span><span class="pill">Hold on quote</span></div>
+        <div class="voice"><b>Narration</b><p>The intelligence layer is the moat: tenant context, role context, evidence, corpus doctrine, workflow state, and value ledger working together.</p></div>
+        <div class="camera"><b>Camera</b><p>Push to the Setup/Admin screenshot, then back to the quote.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-05">
+      <div class="screen"><img src="assets/05-corpus.png" alt="Scene 5 editable corpus" /></div>
+      <div class="script">
+        <span class="kicker">Scene 05</span>
+        <h2>Editable corpus doctrine</h2>
+        <div class="pill-row"><span class="pill">Duration 24s</span><span class="pill">Zoom to edit cards</span><span class="pill">No scroll</span></div>
+        <div class="voice"><b>Narration</b><p>The corpus stays editable. Lakeshore leaders approve, refine, localize, or retire doctrine as the portfolio learns what actually works.</p></div>
+        <div class="camera"><b>Camera</b><p>Zoom to approve, edit, localize, and retire cards.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-06">
+      <div class="screen"><img src="assets/06-treasury-wedge.png" alt="Scene 6 treasury wedge" /></div>
+      <div class="script">
+        <span class="kicker">Scene 06</span>
+        <h2>Kyriba and treasury wedge</h2>
+        <div class="pill-row"><span class="pill">Duration 30s</span><span class="pill">Full-width proof plate</span><span class="pill">Zoom to readiness gates</span></div>
+        <div class="voice"><b>Narration</b><p>Kyriba is a treasury management platform for cash visibility, bank connectivity, payments, liquidity, and forecasting. It fails when bank, ERP, entity, cash, control, and adoption facts surface too late. Abarva turns those risks into gates.</p></div>
+        <div class="camera"><b>Camera</b><p>Full Kyriba Source screen, then punch to readiness gates.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-07">
+      <div class="screen"><img src="assets/07-ai-success-platform.png" alt="Scene 7 AI Success Platform lanes" /></div>
+      <div class="script">
+        <span class="kicker">Scene 07</span>
+        <h2>Beyond Kyriba</h2>
+        <div class="pill-row"><span class="pill">Duration 24s</span><span class="pill">Table pan</span><span class="pill">Highlight lanes</span></div>
+        <div class="voice"><b>Narration</b><p>Kyriba is the opening wedge. The broader platform finds value across treasury, vendors, IT, cyber, operations, and growth AI.</p></div>
+        <div class="camera"><b>Camera</b><p>Pan the lanes; highlight Treasury, Vendor Cost, and Growth AI.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-08">
+      <div class="screen"><img src="assets/08-value-case.png" alt="Scene 8 value case" /></div>
+      <div class="script">
+        <span class="kicker">Scene 08</span>
+        <h2>$500K value case</h2>
+        <div class="pill-row"><span class="pill">Duration 34s</span><span class="pill">Metric punch-in</span><span class="pill">ROI table sweep</span></div>
+        <div class="voice"><b>Narration</b><p>The $500K case is about 5-10x value potential: avoid rollout failure, rationalize vendors, reduce execution cost, and prove savings.</p></div>
+        <div class="camera"><b>Camera</b><p>Push to metrics, then sweep Kyriba, vendor, and IT rows.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-09">
+      <div class="screen"><img src="assets/09-proof-move.png" alt="Scene 9 Move proof" /></div>
+      <div class="script">
+        <span class="kicker">Scene 09</span>
+        <h2>Move execution proof</h2>
+        <div class="pill-row"><span class="pill">Duration 22s</span><span class="pill">Screenshot proof</span><span class="pill">Artifact emphasis</span></div>
+        <div class="voice"><b>Narration</b><p>A Move converts insight into owned work: phase, evidence, value, gaps, artifacts, and a next action.</p></div>
+        <div class="camera"><b>Camera</b><p>Punch to the Move screenshot and hold on value evidence.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-10">
+      <div class="screen"><img src="assets/10-proof-source-decision.png" alt="Scene 10 Source executive decision" /></div>
+      <div class="script">
+        <span class="kicker">Scene 10</span>
+        <h2>Source decision proof</h2>
+        <div class="pill-row"><span class="pill">Duration 22s</span><span class="pill">Cropped page plate</span><span class="pill">Decision fork</span></div>
+        <div class="voice"><b>Narration</b><p>Source turns finance, procurement, and executive judgment into a decision path with evidence, guardrails, and required artifacts.</p></div>
+        <div class="camera"><b>Camera</b><p>Hold Source screenshot; zoom toward the decision card.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-11">
+      <div class="screen"><img src="assets/11-proof-value-pipeline.png" alt="Scene 11 value pipeline" /></div>
+      <div class="script">
+        <span class="kicker">Scene 11</span>
+        <h2>Value pipeline proof</h2>
+        <div class="pill-row"><span class="pill">Duration 24s</span><span class="pill">Avoid $0 framing</span><span class="pill">Show $60M pipeline</span></div>
+        <div class="voice"><b>Narration</b><p>The value story is controlled: forecast, approval, negotiated outcome, and finance-accepted proof stay separate.</p></div>
+        <div class="camera"><b>Camera</b><p>Push to the Source Portfolio screenshot and $60M pipeline.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-12">
+      <div class="screen"><img src="assets/12-architecture.png" alt="Scene 12 architecture trust layer" /></div>
+      <div class="script">
+        <span class="kicker">Scene 12</span>
+        <h2>Architecture trust layer</h2>
+        <div class="pill-row"><span class="pill">Duration 20s</span><span class="pill">Four-card zoom</span><span class="pill">Provider boundary</span></div>
+        <div class="voice"><b>Narration</b><p>Claude can reason. Abarva governs what it can see, cite, create, and persist for board and audit use.</p></div>
+        <div class="camera"><b>Camera</b><p>Zoom into the architecture cards; hold on model boundary.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-13">
+      <div class="screen"><img src="assets/13-six-month-roadmap.png" alt="Scene 13 six-month roadmap" /></div>
+      <div class="script">
+        <span class="kicker">Scene 13</span>
+        <h2>Six-month roadmap</h2>
+        <div class="pill-row"><span class="pill">Duration 32s</span><span class="pill">Month-by-month sweep</span><span class="pill">No hard sell</span></div>
+        <div class="voice"><b>Narration</b><p>The six-month roadmap builds context, corpus, finance proof, Source events, execution rhythm, and a board-ready value pack.</p></div>
+        <div class="camera"><b>Camera</b><p>Sweep left-to-right across Month 1 through Month 6.</p></div>
+      </div>
+    </section>
+
+    <section class="story-row" id="scene-14">
+      <div class="screen"><img src="assets/14-success-standard.png" alt="Scene 14 success standard" /></div>
+      <div class="script">
+        <span class="kicker">Scene 14</span>
+        <h2>Renewal standard</h2>
+        <div class="pill-row"><span class="pill">Duration 22s</span><span class="pill">Close on proof</span><span class="pill">No CTA sell</span></div>
+        <div class="voice"><b>Narration</b><p>By month six, the renewal case should be earned: coverage, proof, value pipeline, and a finance-defensible ledger.</p></div>
+        <div class="camera"><b>Camera</b><p>Push to the proof cards, then fade out.</p></div>
+      </div>
+    </section>
+
+    <div class="notes">
+      <h3>MP4 Production Notes</h3>
+      <ul>
+        <li>Use these scene screenshots as the default visual plates. Do not screen-record scrolling.</li>
+        <li>Generate one audio file per scene with OpenAI text-to-speech; include AI voice disclosure in the final video description or intro card.</li>
+        <li>Assemble with ffmpeg using crossfades or 2-3 second visual transitions between scene beats.</li>
+        <li>Use a 10-15% zoom-out base frame, then punch in on active proof areas: metrics, screenshots, value table, roadmap cards.</li>
+        <li>Keep narration edits in this storyboard first; audio and MP4 generation should be a separate artifact package.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

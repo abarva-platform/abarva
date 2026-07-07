@@ -50,6 +50,15 @@ function sendCanonicalMessages(): boolean {
   return process.env.INGESTION_SMOKE_SEND_CANONICAL?.trim().toLowerCase() !== 'false';
 }
 
+function includePilotLedgerMetadata(): boolean {
+  return Boolean(process.env.INGESTION_SMOKE_CLIENT_ID?.trim());
+}
+
+function readOptionalEnv(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value || undefined;
+}
+
 function credential(): DefaultAzureCredential {
   const managedIdentityClientId = process.env.AZURE_CLIENT_ID?.trim();
   return new DefaultAzureCredential(
@@ -125,6 +134,22 @@ async function produce(): Promise<void> {
           declaredClassification: testCase.declaredClassification ?? 'confidential_business',
           expectedFinalDecision: testCase.expectedFinalDecision,
           sha256: hash,
+          ...(includePilotLedgerMetadata()
+            ? {
+                clientId: readEnv('INGESTION_SMOKE_CLIENT_ID'),
+                initiatedByUserId: readEnv('INGESTION_SMOKE_UPLOADED_BY', 'azure-ingestion-smoke'),
+                uploadedBy: readEnv('INGESTION_SMOKE_UPLOADED_BY', 'azure-ingestion-smoke'),
+                attestationVersion: readEnv(
+                  'INGESTION_SMOKE_ATTESTATION_VERSION',
+                  'pilot-loader-data-load-attestation-v1',
+                ),
+                sourceSystem: readEnv('INGESTION_SMOKE_SOURCE_SYSTEM', 'azure_ingestion_e2e_smoke'),
+                templateVersion: readEnv('INGESTION_SMOKE_TEMPLATE_VERSION', 'smoke-v1'),
+                mappingProfileKey: readEnv('INGESTION_SMOKE_MAPPING_PROFILE_KEY', testCase.segmentKey),
+                mappingProfileVersion: readEnv('INGESTION_SMOKE_MAPPING_PROFILE_VERSION', 'smoke-v1'),
+                originalFileName: testCase.filename,
+              }
+            : {}),
         },
       });
 
@@ -146,6 +171,22 @@ async function produce(): Promise<void> {
           smokeRunId: runId,
           smokeCase: testCase.name,
           expectedFinalDecision: testCase.expectedFinalDecision,
+          ...(includePilotLedgerMetadata()
+            ? {
+                clientId: readEnv('INGESTION_SMOKE_CLIENT_ID'),
+                initiatedByUserId: readEnv('INGESTION_SMOKE_UPLOADED_BY', 'azure-ingestion-smoke'),
+                uploadedBy: readEnv('INGESTION_SMOKE_UPLOADED_BY', 'azure-ingestion-smoke'),
+                attestationVersion: readEnv(
+                  'INGESTION_SMOKE_ATTESTATION_VERSION',
+                  'pilot-loader-data-load-attestation-v1',
+                ),
+                sourceSystem: readEnv('INGESTION_SMOKE_SOURCE_SYSTEM', 'azure_ingestion_e2e_smoke'),
+                templateVersion: readEnv('INGESTION_SMOKE_TEMPLATE_VERSION', 'smoke-v1'),
+                mappingProfileKey: readEnv('INGESTION_SMOKE_MAPPING_PROFILE_KEY', testCase.segmentKey),
+                mappingProfileVersion: readEnv('INGESTION_SMOKE_MAPPING_PROFILE_VERSION', 'smoke-v1'),
+                originalFileName: testCase.filename,
+              }
+            : {}),
         },
       };
 
@@ -174,13 +215,16 @@ async function produce(): Promise<void> {
     smokeRunId: runId,
     tenantClientKey,
     canonicalMessagesSent: sendCanonicalMessages(),
+    pilotLedgerMetadataIncluded: includePilotLedgerMetadata(),
     cases: smokeCases().map((c) => c.name),
   }));
 }
 
 async function verify(): Promise<void> {
   const runId = smokeRunId();
+  const tenantClientKey = readEnv('INGESTION_SMOKE_TENANT_CLIENT_KEY', 'apex-retail');
   const connectionString = readEnv('DATABASE_URL');
+  const verifyPilotLedger = readOptionalEnv('INGESTION_SMOKE_VERIFY_PILOT_LEDGER')?.toLowerCase() === 'true';
   const db = new Pool({
     connectionString,
     max: 1,
@@ -228,10 +272,57 @@ async function verify(): Promise<void> {
       throw new Error(`ingestion_smoke_verification_failed: ${failures.join('; ')}`);
     }
 
+    let pilotLedger: Record<string, unknown> | null = null;
+    if (verifyPilotLedger) {
+      const ledgerRows = await db.query<{
+        file_count: string;
+        upload_run_count: string;
+        quarantine_count: string;
+      }>(
+        `
+          select
+            count(distinct fm.id)::text as file_count,
+            count(distinct ur.id)::text as upload_run_count,
+            count(distinct qc.id)::text as quarantine_count
+          from pilot_ingestion_file_manifests fm
+          join pilot_ingestion_upload_runs ur
+            on ur.id = fm.upload_run_id
+           and ur.tenant_key = fm.tenant_key
+          left join pilot_ingestion_quarantine_cases qc
+            on qc.file_manifest_id = fm.id
+           and qc.tenant_key = fm.tenant_key
+          where fm.tenant_key = $1
+            and fm.blob_uri like $2
+        `,
+        [tenantClientKey, `%/smoke/${runId}/%`],
+      );
+      const summary = ledgerRows.rows[0] ?? {
+        file_count: '0',
+        upload_run_count: '0',
+        quarantine_count: '0',
+      };
+      const fileCount = Number(summary.file_count);
+      const uploadRunCount = Number(summary.upload_run_count);
+      const quarantineCount = Number(summary.quarantine_count);
+      const ledgerFailures: string[] = [];
+      if (fileCount !== 2) ledgerFailures.push(`file manifests expected 2, got ${fileCount}`);
+      if (uploadRunCount !== 2) ledgerFailures.push(`upload runs expected 2, got ${uploadRunCount}`);
+      if (quarantineCount !== 1) ledgerFailures.push(`quarantine cases expected 1, got ${quarantineCount}`);
+      if (ledgerFailures.length > 0) {
+        throw new Error(`ingestion_smoke_pilot_ledger_failed: ${ledgerFailures.join('; ')}`);
+      }
+      pilotLedger = {
+        fileCount,
+        uploadRunCount,
+        quarantineCount,
+      };
+    }
+
     console.log(JSON.stringify({
       event: 'ingestion_smoke_verified',
       smokeRunId: runId,
       observed: Object.fromEntries(observed),
+      pilotLedger,
     }));
   } finally {
     await db.end();

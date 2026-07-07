@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
   try {
     const hits = await searchCorpus(query, {
       clientId: ctx.clientId,
+      clientKey: ctx.clientKey,
       userId: ctx.userId,
       category: url.searchParams.get('category') ?? undefined,
       verticalOverlays: intersectCorpusIndustryScopes(csv(url.searchParams.get('verticalOverlays')), allowedVerticalOverlays),

@@ -1,14 +1,55 @@
-import { getAuditedAnthropicClient } from '@/lib/agent/stream';
-import type { AskSource, AskIntent } from './types';
-import { applyPartialEvidencePolicy, chunkAskText, sanitizeAskSynthesis } from './response-policy';
+/*
+ * AbarVa Confidential — Trade Secret (TS-01)
+ * Protected under the AbarVa Trade Secret Policy (docs/ip/trade-secret-policy.md) and
+ * Trade Secret Register (docs/ip/trade-secret-register.md). Do not distribute externally
+ * or expose outside the tenant boundary. Access requires NDA + IP assignment (T075).
+ */
+import { getAuditedAnthropicClient } from "@/lib/agent/stream";
+import type { AskSource, AskIntent } from "./types";
+import {
+  applyPartialEvidencePolicy,
+  chunkAskText,
+  CONSULTANT_ANSWER_SHAPE_CONTRACT,
+  enforceDecisionGradeAnswer,
+  sanitizeAskSynthesis,
+} from "./response-policy";
 import {
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
   detectOffTenantMention,
-} from './tenant-identity-pin';
-import { buildAgentContextContractBlock } from '@/lib/agent/module-context-contract';
+} from "./tenant-identity-pin";
+import {
+  createRollingLeakDetector,
+  prescreenSourcesForLeak,
+} from "./tenant-stream-guard";
+import {
+  buildIntelligenceAdvisorComposerBlock,
+  chooseAdvisorTokenBudget,
+  chooseAdvisorWordCap,
+} from "./advisor-composer";
+import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
+import { buildHealthcareAnswerContract } from "@/lib/intelligence/synthesis/healthcareAnswerContract";
+import { formatIntelligenceDossierForPrompt } from "@/lib/intelligence/compose-intelligence-answer";
+import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
+import { cleanIntelligenceModelInputText } from "@/lib/intelligence/model-input-cleaner";
+import {
+  INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
+  parseIntelligenceTabbedResponse,
+} from "@/lib/intelligence/tabbed-response";
+import {
+  extractExecutiveCanvasPayloads,
+  hasExecutiveCanvasPayload,
+} from "@/lib/intelligence/executive-canvas-payload";
+import { buildIndustrialCioBackofficeNativeCanvasBlock } from "./industrial-cio-backoffice-source";
+import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "./skyharbor-cto-readiness-source";
+import {
+  createIntelligenceLatencyTrace,
+  summarizeTextPayload,
+  type IntelligenceLatencyTiming,
+} from "@/lib/intelligence/latency-trace";
+import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
 
-export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
+export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
 // SYSTEM_PROMPT · aVa Ask Intelligence · INT-VOICE.STRAT-2026-07-06
 //
@@ -80,6 +121,18 @@ Tell the user how much to trust each claim, conversationally:
 
 Calibration belongs in how you phrase the claim, not in academic preambles. Never say "at the general AI industry level, not corpus-grounded for [tenant]." That's compliance language. Speak like a person.
 
+LIVE ANSWER QUALITY CONTRACT
+
+Every answer must be decision-grade enough to survive an audit:
+
+- Keep paragraphs short. No paragraph should run past roughly 80 words. Use compact bullets when the answer compares multiple options, drivers, or next steps.
+- If you write a dollar value, percentage, multiplier, bps value, rank, or range, attach a natural basis cue in the same sentence: "from the retrieved budget row," "based on the cited benchmark," "planning range," "evidence ledger," "source," "as of," or "directional estimate." Never leave precise numbers bare.
+- Define acronyms unless they are common executive terms like AI, ROI, KPI, API, CFO, CIO, COO, CISO, CXO, SLA, SOW, or NPS.
+- End with a concrete decision, owner action, or useful follow-up only when it naturally belongs in the answer. Do not append generic routing language about Source, Tower, or Moves.
+- Use visuals only when they materially improve the decision. Good triggers: comparing options, ranking investments, showing spend/cost/budget, explaining a trend, mapping dependencies, sequencing a roadmap, or making a risk/value tradeoff clearer. If the user explicitly asks for a table, chart, graph, visual, comparison grid, ranking, breakdown, or "show me" structure, the visual has earned its place: include one compact Markdown table after the short advisory answer unless the necessary values or relationship rows are genuinely absent. The UI will lift that table into the right-side canvas, not the left chat rail.
+- When the user asks for a chart, graph, trend, or visualization, make the numeric series or relationship rows explicit and sourced in a compact Markdown table. If the retrieved data is not enough for a real chart or graph, say what is missing in plain language without adding a generic route-to-module closer.
+- Do not include source-support, evidence-register, or "material used for the answer" tables in the visible answer. Evidence belongs in internal grounding unless the user specifically asks to inspect sources.
+
 EVIDENCE WHERE IT STRENGTHENS THE ARGUMENT
 When you have specific corpus evidence — peer cases, patterns, vendor signals — name it where it makes your point stronger: "Three peer specialty retailers in the corpus saw this." "The COGS-margin trap is well-documented as a failure mode for assortment AI scaling." Don't list every entity you touched. Name what makes the argument convincing.
 
@@ -130,7 +183,7 @@ You're one of three agents. When the user's question is squarely in another agen
 
 For deep vendor evaluation (which specific vendor to pick, RFP construction, contract terms, vendor financial health) — that's Source. "For vendor evaluation specifically, Source has the depth on that. Want me to hand you off?"
 
-For shaping a candidate bet through the Move discipline (charter, scope, business case, sponsor structure) — that's Nexus / the Moves surface. "If you want to shape this as an actual Move with the failure modes built into the plan, I can hand off to Moves with what we've discussed."
+For shaping a candidate bet through the Move discipline (charter, scope, business case, sponsor structure) — that's the Moves surface. "If you want to shape this as an actual Move with the failure modes built into the plan, I can hand off to Moves with what we've discussed."
 
 You can still surface high-level vendor or shaping context as part of your strategic view. Hand off when the user wants depth in those areas.
 
@@ -240,22 +293,84 @@ For explicit concise requests:
 - Do not invent tenant facts, peer statistics, dates, dollars, vendors, or rankings.
 - Never start with hollow acknowledgements ("Good question", "Great question", "Happy to", "Let me").`;
 
+const SESSION_CONTEXT_LANGUAGE_RE =
+  /\b(as discussed|as mentioned|this session|earlier in this session|earlier in the session|previous conversation|prior conversation|answer has(?:n't| not) changed|same answer|keeps being the right answer)\b/i;
+
 export function isExplicitConciseAsk(query: string): boolean {
-  return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(query.toLowerCase());
+  return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(
+    query.toLowerCase(),
+  );
 }
 
 function chooseModel(intent: AskIntent, query: string): string {
   if (isExplicitConciseAsk(query)) {
-    return 'claude-haiku-4-5-20251001';
+    return "claude-haiku-4-5-20251001";
   }
-  if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
-    return 'claude-opus-4-7';
+  if (
+    intent === "vendor_comparison" ||
+    intent === "topic_synthesis" ||
+    intent === "general_synthesis"
+  ) {
+    return "claude-opus-4-7";
   }
-  return 'claude-sonnet-4-6';
+  return "claude-sonnet-4-6";
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  return isExplicitConciseAsk(query) ? 160 : 600;
+  const defaultBudget = isExplicitConciseAsk(query) ? 160 : 600;
+  return Math.max(chooseAdvisorTokenBudget(query, defaultBudget), 1300);
+}
+
+function isExplicitVisualAsk(query: string): boolean {
+  return /\b(table|tables|chart|charts|graph|graphs|visual|visuals|visually|visuali[sz]e|plot|comparison grid|matrix|ranking|ranked|breakdown|show me)\b/i.test(
+    query,
+  );
+}
+
+function requiresNativeExecutiveCanvas(query: string): boolean {
+  return /\b(abarva\s+right-canvas|structured\s+abarva|executive\s+(?:canvas|exhibit)|canvas\s+exhibit|prioriti[sz]e|priority|priorities|sequence|sequencing|investment|invest|fund|funding|value[ -/]readiness|readiness|gate|roadmap|risk-boundary|proof-boundary|transformation|operating model|portfolio)\b/i.test(
+    query,
+  );
+}
+
+function requiredCanvasTabsForQuery(query: string): string[] {
+  void query;
+  return ["Decision", "Industry Insights", "Chart", "Table", "Evidence"];
+}
+
+function missingRequiredCanvasTabs(text: string, query: string): string[] {
+  const parsed = parseIntelligenceTabbedResponse(text);
+  const present = new Set(parsed.tabs.map((tab) => tab.label));
+  return requiredCanvasTabsForQuery(query).filter(
+    (label) => !present.has(label),
+  );
+}
+
+function hasMarkdownDecisionTable(text: string): boolean {
+  const lines = text.split(/\r?\n/).map((line) => line.trim());
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const header = lines[index] ?? "";
+    const separator = lines[index + 1] ?? "";
+    if (
+      header.includes("|") &&
+      /\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?/.test(separator)
+    ) {
+      return true;
+    }
+  }
+  return /\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|/.test(text);
+}
+
+function extractMessageText(response: unknown): string {
+  const content = (response as { content?: unknown }).content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((block) => {
+      if (!block || typeof block !== "object") return "";
+      const maybeText = (block as { text?: unknown }).text;
+      return typeof maybeText === "string" ? maybeText : "";
+    })
+    .join("");
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -264,11 +379,56 @@ function formatSourcesBlock(sources: AskSource[]): string {
     // "answer from domain expertise + tenant context" instruction, NOT a
     // signal to refuse. The system prompt makes this contract explicit; this
     // block keeps the model from inventing a missing-data narrative.
-    return '[no direct corpus matches for this query — answer as a senior advisor from broad domain expertise plus the tenant context block; do not narrate that the sources are empty]';
+    return "[no direct corpus matches for this query — answer as a senior advisor from broad domain expertise plus the tenant context block; do not narrate that the sources are empty]";
   }
   return sources
     .map((s, i) => `[SOURCE ${i + 1} · ${s.type} · ${s.name}]\n${s.detail}`)
-    .join('\n\n');
+    .join("\n\n");
+}
+
+/**
+ * Reconcile live-streamed bytes against the final (possibly repaired) answer.
+ *
+ * The Intelligence client APPENDS every streamed delta — it cannot replace what
+ * it already rendered. So for a given terminal answer `finalText`, the bytes we
+ * still need to emit are exactly `finalText` minus the prefix we already sent
+ * live (`liveStreamedText`). This function returns those remainder bytes and
+ * guarantees `liveStreamedText + remainder === finalText` in the common case,
+ * with a documented, loss-free fallback when a repair rewrote the streamed
+ * prefix:
+ *
+ *   1. Nothing streamed live (liveStreamedText === "") → the whole finalText is
+ *      the remainder (this is today's behavior; byte-identical).
+ *   2. finalText starts with liveStreamedText (the normal case — the pre-tab
+ *      main answer survived repair unchanged) → emit only the suffix
+ *      finalText.slice(liveStreamedText.length). No duplication, no loss.
+ *   3. A repair diverged the streamed prefix from finalText (rare — the tab /
+ *      native-canvas / standalone repairs reassign the whole `text`). We cannot
+ *      un-send the already-streamed bytes, so append-only byte-equality is
+ *      physically impossible for that streamed region. To lose NO final content
+ *      we emit finalText.slice(commonPrefixLen) — a resync that continues from
+ *      the last byte both strings agree on. The user sees the streamed prefix,
+ *      then the diverged tail of the repaired answer; the complete final answer
+ *      is still delivered (no content lost), only its earliest bytes may differ
+ *      from the repaired version. `diverged` is returned so callers can trace it.
+ */
+export function reconcileStreamRemainder(
+  liveStreamedText: string,
+  finalText: string,
+): { remainder: string; diverged: boolean } {
+  if (liveStreamedText.length === 0) {
+    return { remainder: finalText, diverged: false };
+  }
+  if (finalText.startsWith(liveStreamedText)) {
+    return { remainder: finalText.slice(liveStreamedText.length), diverged: false };
+  }
+  // Diverged: emit from the longest common prefix so no final content is lost.
+  let common = 0;
+  const max = Math.min(liveStreamedText.length, finalText.length);
+  while (common < max && liveStreamedText[common] === finalText[common]) {
+    common += 1;
+  }
+  return { remainder: finalText.slice(common), diverged: true };
 }
 
 export async function* synthesizeStream(args: {
@@ -282,6 +442,7 @@ export async function* synthesizeStream(args: {
   conversationContextBlock?: string;
   factAvailabilityBlock?: string;
   coverageReportBlock?: string;
+  intelligenceDossier?: IntelligenceDossier;
   /**
    * Average source confidence. The synthesizer used to lead with a "Limited
    * indexed data — confidence is moderate" prefix when this dropped below
@@ -291,6 +452,46 @@ export async function* synthesizeStream(args: {
    * end, per the system prompt.
    */
   averageConfidence?: number;
+  /**
+   * Caller surface renders Markdown. When true, the "plain text only" output
+   * convention is overridden to ALLOW light formatting (blank-line paragraphs,
+   * sparing bold, a compact table for benchmark ranges). Default false →
+   * byte-identical plain-text output for every existing caller.
+   */
+  richText?: boolean;
+  /**
+   * ANSWER-ONLY TRUE STREAMING (companion canvas feature · flag-gated upstream).
+   *
+   * When TRUE the synthesizer:
+   *   - builds the SAME system prompt EXCEPT it omits the mandatory
+   *     five-tab / decision-canvas contract (answer-only, crisp executive
+   *     prose), while keeping the tenant identity pin and every safety frame;
+   *   - allows light Markdown (rich-text behavior);
+   *   - yields `event.delta.text` LIVE inside the model stream loop — this is
+   *     real streaming, not the accumulate-then-spray path;
+   *   - skips the blocking repair passes and the final `chunkAskText` spray;
+   *   - runs a rolling leak detector on each delta and aborts with a refusal
+   *     if a cross-tenant leak trips.
+   *
+   * When FALSY the path is 100% unchanged — byte-identical to today.
+   */
+  answerOnlyStreaming?: boolean;
+  /**
+   * Observability hook · invoked with the EXACT system + user content sent to
+   * the model, right before the model call. The agent-trace spine hashes this
+   * to prove Claude is downstream of retrieval. Must not mutate the args.
+   */
+  onModelInput?: (parts: { system: string; user: string }) => void;
+  onModelOutput?: (parts: {
+    rawText: string;
+    text: string;
+    model?: string;
+    auditId?: string;
+    route: string;
+  }) => void;
+  onTiming?: (timing: IntelligenceLatencyTiming) => void;
+  latencyTraceId?: string | null;
+  latencyStartedAt?: number;
 }): AsyncGenerator<string> {
   if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
     yield 'aVa synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.';
@@ -298,9 +499,9 @@ export async function* synthesizeStream(args: {
   }
 
   const confidenceHint =
-    typeof args.averageConfidence === 'number'
+    typeof args.averageConfidence === "number"
       ? `\nRETRIEVAL CONFIDENCE (informational, never to be quoted to the user): average source confidence is ${args.averageConfidence.toFixed(2)} on a 0-1 scale. Treat this as private context for calibrating your prose, the same way a senior consultant calibrates against how solid her own evidence base is. Do not narrate this number. Do not say "average confidence is moderate" or anything like it. Use it to decide how confident your verbal framing should be ("high confidence on this," "less sure on the timing," "this is judgment, not benchmark data") — calibration belongs in how you phrase claims, not in a preamble or a footer.`
-      : '';
+      : "";
 
   // STRESS-P0-001 fix (2026-05-24): authoritative tenant-identity pin built
   // dynamically from args.tenantClientKey. Replaces the prior hardcoded
@@ -308,58 +509,740 @@ export async function* synthesizeStream(args: {
   // Meridian-authenticated CDIO sessions to receive responses asserting
   // "you're Apex Retail." The pin block is prepended FIRST (above any other
   // context block) so the model treats it as highest-priority.
-  const tenantIdentityPin = buildTenantIdentityPin(args.tenantClientKey ?? args.tenantId ?? null);
+  const tenantIdentityPin = buildTenantIdentityPin(
+    args.tenantClientKey ?? args.tenantId ?? null,
+  );
   const contextContractBlock = buildAgentContextContractBlock({
-    agent: 'sentinel',
-    module: 'intelligence',
+    agent: "ava",
+    module: "intelligence",
     sources: args.sources,
   });
+
+  // Healthcare CXO answer contract — gated on the Healthcare vertical
+  // (Meridian / PHS). Returns '' for all other tenants, so the truthiness
+  // filter below drops it and non-healthcare tenants are byte-for-byte
+  // unchanged. Reinforces (never weakens) the no-fabrication posture.
+  const healthcareAnswerContract = buildHealthcareAnswerContract(
+    args.tenantClientKey ?? args.tenantId ?? null,
+  );
 
   const contextBlocks = [
     tenantIdentityPin,
     contextContractBlock,
-    args.factAvailabilityBlock?.trim() ?? '',
-    args.coverageReportBlock?.trim() ?? '',
-    args.userContextBlock?.trim() ?? '',
-    args.conversationContextBlock?.trim() ?? '',
+    healthcareAnswerContract,
+    args.intelligenceDossier
+      ? formatIntelligenceDossierForPrompt(args.intelligenceDossier)
+      : "",
+    args.factAvailabilityBlock?.trim() ?? "",
+    args.coverageReportBlock?.trim() ?? "",
+    args.userContextBlock?.trim() ?? "",
+    args.conversationContextBlock?.trim() ?? "",
   ].filter(Boolean);
-  const rolePrompt = isExplicitConciseAsk(args.query) ? CONCISE_SYSTEM_PROMPT : SYSTEM_PROMPT;
-  const system = contextBlocks.length > 0
-    ? `${contextBlocks.join('\n\n')}\n\n${rolePrompt}${confidenceHint}`
-    : `${rolePrompt}${confidenceHint}`;
-  const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
+  const rolePrompt = isExplicitConciseAsk(args.query)
+    ? CONCISE_SYSTEM_PROMPT
+    : SYSTEM_PROMPT;
+  // Answer-only true-streaming (companion canvas). Light markdown, crisp
+  // executive prose, NO five-tab / decision-canvas contract, NO advisor
+  // artifact obligations — those move to the parallel companion-canvas engine.
+  const answerOnly = args.answerOnlyStreaming === true;
+  // Light-markdown behavior is enabled for rich-text callers AND for the
+  // answer-only stream (which always renders Markdown on the client).
+  const lightMarkdown = args.richText === true || answerOnly;
+  // Rich-text surfaces (e.g. the v2 Lens, which renders Markdown) opt in to
+  // light formatting. Placed AFTER the role prompt so it overrides the earlier
+  // "plain text only" convention. Empty for every plain-text caller.
+  const richTextAddendum = lightMarkdown
+    ? `\n\nRICH-TEXT SURFACE OVERRIDE: This answer is rendered as Markdown — this overrides the "plain text only" convention above. You MAY use: a blank line between paragraphs; **bold** on the single most decision-relevant figure or verb in a paragraph (sparingly — not every line); a compact GitHub-flavored Markdown table when the user asks for a table, chart, visual, comparison, ranked list, spend/cost/budget breakdown, owner/risk/next-move matrix, or three or more comparable rows; and short "- " bullet lists where they genuinely aid scanning. Do NOT use Markdown headings (#). If you emit a table, it MUST be a valid GitHub-flavored Markdown table with the header row, separator row, and every data row on separate lines. Never emit inline pipe-table fragments inside a paragraph. Keep the table to roughly 3-5 columns and 2-6 rows, and include only cited tenant/corpus values or clearly labeled planning ranges.
+
+VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually, plot, trend, dependency map, relationship map, upstream/downstream map, or network, emit a compact GitHub-flavored Markdown data table when the retrieved evidence supports at least two comparable rows or two connected nodes. For charts, include one text label column and one exact numeric value column (for example "Initiative | Value"). For relationship graphs, include explicit edge rows with "From | Relationship | To | Evidence" or "Source | Relationship | Target | Evidence". Do not describe a visual only in prose when the data exists. If the data is not connected enough for a real chart or graph, say the specific missing evidence in one short caveat and do not fabricate a visual. Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
+    : "";
+  const decisionCanvasAddendum = args.richText && !answerOnly
+    ? `\n\n${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}
+
+ACTIVE INTELLIGENCE CANVAS RULES
+- Every rich-text Intelligence answer must use the tab markers above and populate all five right-canvas tabs: Decision, Industry Insights, Chart, Table, and Evidence.
+- The answer is invalid if any one of the five exact tab markers is missing. Do not put a native \`abarva-canvas\` block before the Decision marker or outside the Chart tab.
+- Put only concise advisory prose in the main answer. Target 120-180 words before the first tab marker when tabs are present. Put any Markdown table or chart-ready numeric table inside a Table or Chart tab, not in the main answer.
+- Use the right-canvas tabs as a relevant decision-support layer, not a duplicate transcript. If the exact question lacks direct chart/table data, provide a useful adjacent visual from the same function, category, operating pattern, industry pattern, benchmark, or planning assumption, and label the tab grounding honestly.
+- Evidence is mandatory. Use it to show the most relevant tenant facts, planning assumptions, missing evidence, and executive validation point. Do not spend the Evidence tab budget by expanding the main answer.
+- Industry Insights is mandatory. Use it for the most relevant industry trend, benchmark, peer pattern, or case example and label it as industry context or benchmark context unless tenant evidence proves it directly.
+- Chart is mandatory. It may be directly tied to the answer or adjacent to the function/category/pattern that helps the executive reason about the answer. It must contain either a valid native abarva-canvas payload or a compact chart-ready Markdown table with numeric values. If not tenant evidence, use an honest grounding label and first-line boundary such as "Function context, not direct tenant proof" or "Category view from tenant evidence."
+- Table is mandatory. It may be directly tied to the answer or adjacent to the function/category/pattern that helps the executive reason about the answer. Use a compact Markdown table.
+- Use business names and executive labels. Do not expose data-product IDs, application IDs, row labels, raw field names, file names, debug labels, or implementation terms.
+- Avoid product-mechanics phrases in visible prose such as "loaded sources", "loaded tenant sources", "loaded enterprise context", "retrieved context", or "corpus was retrieved." Say "company evidence", "the enterprise record", "SkyHarbor evidence", "industry context", or "planning assumption" instead.`
+    : "";
+  const advisorComposer = buildIntelligenceAdvisorComposerBlock({
+    query: args.query,
+    tenantClientKey: args.tenantClientKey,
+    sources: args.sources,
+    richText: args.richText,
+  });
+  const advisorComposerAddendum = advisorComposer && !answerOnly
+    ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
+    : "";
+  const answerOnlyDirective = answerOnly
+    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a single, crisp executive answer in light Markdown prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — a separate decision companion handles the structured signals, decision frame, exhibit, industry context, and next moves. Keep to the length discipline above (single-issue ~100-120 words, multi-item up to ~180). Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.`
+    : "";
+  const rawSystem =
+    contextBlocks.length > 0
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
+      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
+  const rawPrompt = answerOnly
+    ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with a single crisp executive answer in light Markdown. Do not emit right-canvas tab markers or a canvas payload.`
+    : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
-    ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present.'
-    : '';
+    ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
+    : "";
+  const prompt = cleanIntelligenceModelInputText(rawPrompt);
+  const systemWithContinuity = cleanIntelligenceModelInputText(
+    `${rawSystem}${continuityInstruction}`,
+  );
+  const latencyTrace = createIntelligenceLatencyTrace({
+    requestId: args.latencyTraceId,
+    startedAt: args.latencyStartedAt,
+  });
+  const emitTiming = (timing: IntelligenceLatencyTiming) => {
+    args.onTiming?.(timing);
+  };
+  emitTiming(
+    latencyTrace.mark("prompt.constructed", {
+      systemChars: systemWithContinuity.length,
+      systemApproxTokens: summarizeTextPayload(systemWithContinuity)
+        .approxTokens,
+      userChars: prompt.length,
+      userApproxTokens: summarizeTextPayload(prompt).approxTokens,
+      sourceCount: args.sources.length,
+      richText: args.richText === true,
+    }),
+  );
 
   try {
     const model = chooseModel(args.intent, args.query);
-    const { client } = await getAuditedAnthropicClient({
+    // Pre-generation source pre-screen (defense-in-depth) — answer-only path
+    // ONLY, so the flag-off path stays byte-identical. If retrieval is
+    // contaminated with another tenant's identity, refuse BEFORE any tokens
+    // reach the client (the answer-only path yields deltas live, so the
+    // once-at-the-end post-response guard cannot un-send them).
+    if (answerOnly) {
+      const sourcePrescreen = prescreenSourcesForLeak(
+        args.sources,
+        args.tenantClientKey ?? args.tenantId ?? null,
+      );
+      if (sourcePrescreen.contaminated) {
+        yield [
+          "I stopped before answering. The retrieved context mixed another organization's data with your session, and I will not surface mixed-tenant content.",
+          "",
+          "Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory and retrieval state for this client.",
+        ].join("\n");
+        return;
+      }
+    }
+    args.onModelInput?.({
+      system: systemWithContinuity,
+      user: prompt,
+    });
+    const clientStartedAt = Date.now();
+    const { client, auditId } = await getAuditedAnthropicClient({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,
-      workflow: 'intelligence-ask-synthesis',
+      workflow: "intelligence-ask-synthesis",
       model,
-      prompt: [system, prompt].join('\n\n'),
-      dataClass: 'confidential',
+      prompt: [systemWithContinuity, prompt].join("\n\n"),
+      dataClass: "confidential",
       metadata: { intent: args.intent },
     });
+    emitTiming(
+      latencyTrace.finish("claude.client.ready", clientStartedAt, {
+        model,
+        auditId,
+      }),
+    );
+    const primaryStartedAt = Date.now();
+    emitTiming(
+      latencyTrace.mark("claude.primary.start", {
+        model,
+        maxTokens: chooseSynthesisTokenBudget(args.query),
+      }),
+    );
     const stream = await client.messages.create({
       model,
       // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
       // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
       // mid-list on the new MANDATORY ANSWER SHAPES.
       max_tokens: chooseSynthesisTokenBudget(args.query),
-      system: `${system}${continuityInstruction}`,
-      messages: [{ role: 'user', content: prompt }],
+      system: systemWithContinuity,
+      messages: [{ role: "user", content: prompt }],
       stream: true,
     });
 
-    let text = '';
+    // ANSWER-ONLY TRUE STREAMING PATH.
+    //
+    // Yield each model delta LIVE as it arrives — real time-to-first-token —
+    // then return. No blocking repair passes, no final chunkAskText spray. A
+    // rolling leak detector runs on every delta; if it trips, we yield a
+    // refusal and stop. onModelOutput is fired with the accumulated text for
+    // the trace spine (best-effort — never blocks the stream).
+    if (answerOnly) {
+      const rollingGuard = createRollingLeakDetector(
+        args.tenantClientKey ?? args.tenantId ?? null,
+      );
+      let streamedText = "";
+      let sawAnswerOnlyFirstToken = false;
+      for await (const event of stream) {
+        if (
+          event.type === "content_block_delta" &&
+          event.delta.type === "text_delta"
+        ) {
+          const chunk = event.delta.text;
+          if (!chunk) continue;
+          if (!sawAnswerOnlyFirstToken) {
+            sawAnswerOnlyFirstToken = true;
+            emitTiming(
+              latencyTrace.finish(
+                "claude.primary.first_token",
+                primaryStartedAt,
+                { model, answerOnlyStreaming: true },
+              ),
+            );
+          }
+          const verdict = rollingGuard.push(chunk);
+          if (verdict.abort) {
+            emitTiming(
+              latencyTrace.mark("answer_only.rolling_leak.aborted", { model }),
+            );
+            if (verdict.refusalText) {
+              yield verdict.refusalText;
+            }
+            args.onModelOutput?.({
+              rawText: streamedText,
+              text: streamedText,
+              model,
+              auditId,
+              route: "intelligence-ask-synthesis-answer-only",
+            });
+            return;
+          }
+          streamedText += chunk;
+          yield chunk;
+        }
+      }
+      emitTiming(
+        latencyTrace.finish("claude.primary.stream.done", primaryStartedAt, {
+          model,
+          sawFirstToken: sawAnswerOnlyFirstToken,
+          answerOnlyStreaming: true,
+          outputChars: streamedText.length,
+          outputApproxTokens: summarizeTextPayload(streamedText).approxTokens,
+        }),
+      );
+      args.onModelOutput?.({
+        rawText: streamedText,
+        text: streamedText,
+        model,
+        auditId,
+        route: "intelligence-ask-synthesis-answer-only",
+      });
+      return;
+    }
+
+    let text = "";
+    let sawFirstToken = false;
+    // ── LIVE MAIN-ANSWER STREAMING (rich-text, non-answerOnly path) ──────────
+    //
+    // The executive main answer is everything BEFORE the first `<<<TAB:`
+    // marker. We stream that prefix token-by-token as it arrives so the left
+    // answer paints in ~1-2s instead of after full generation + repairs.
+    // Once the first `<<<TAB:` marker appears we STOP live-streaming and keep
+    // accumulating silently; the tabs + canvas are finalized (and repaired)
+    // after the stream completes, then the remainder is emitted at the end.
+    //
+    // Invariant we protect: the client APPENDS deltas, so the concatenation of
+    // {liveStreamedText} + {final remainder emit} MUST equal the final repaired
+    // answer, byte-for-byte. We only ever live-stream a byte-exact prefix of
+    // `text`, and never a byte that could belong to the marker (we hold back
+    // any trailing suffix that is itself a proper prefix of `<<<TAB:`). At the
+    // terminal emit points below we reconcile against the final (possibly
+    // repaired) text via `reconcileStreamRemainder`, which guarantees no
+    // duplication and no loss even if a repair rewrote the pre-tab prefix.
+    //
+    // Live streaming is gated on `args.richText === true` ONLY. The plain-text
+    // path stays byte-identical: its final output is sanitized/reworded
+    // (sanitizeAskSynthesis → applyPartialEvidencePolicy → enforceDecisionGrade
+    // → chunkAskText), so the raw stream is NOT a prefix of it and must not be
+    // streamed live. The answerOnly path returned above and is untouched.
+    const liveMainAnswerStreaming = args.richText === true;
+    const TAB_MARKER = "<<<TAB:";
+    let liveStreamedText = "";
+    let liveStreamingStopped = false;
+    // Rolling cross-tenant leak guard for the LIVE-streamed main answer. The
+    // once-at-the-end post-response guards (detectCrossTenantIdentityLeak /
+    // detectOffTenantMention) still run on the full text below and are NOT
+    // removed; this per-chunk detector exists because live streaming means the
+    // main-answer prefix reaches the client before those end guards run, so a
+    // leak in the streamed prefix must be caught mid-stream. Same detectors,
+    // earlier timing — identical policy.
+    const liveRollingGuard = liveMainAnswerStreaming
+      ? createRollingLeakDetector(args.tenantClientKey ?? args.tenantId ?? null)
+      : null;
     for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      if (
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta"
+      ) {
+        if (!sawFirstToken) {
+          sawFirstToken = true;
+          emitTiming(
+            latencyTrace.finish("claude.primary.first_token", primaryStartedAt, {
+              model,
+            }),
+          );
+        }
         text += event.delta.text;
+        if (liveMainAnswerStreaming && !liveStreamingStopped) {
+          const markerIndex = text.indexOf(TAB_MARKER);
+          if (markerIndex >= 0) {
+            // First `<<<TAB:` marker seen. Stream everything up to (but not
+            // including) the marker, then stop live-streaming permanently.
+            if (markerIndex > liveStreamedText.length) {
+              const emit = text.slice(liveStreamedText.length, markerIndex);
+              const verdict = liveRollingGuard?.push(emit);
+              if (verdict?.abort) {
+                emitTiming(
+                  latencyTrace.mark("live_main_answer.rolling_leak.aborted", {
+                    model,
+                  }),
+                );
+                if (verdict.refusalText) {
+                  yield verdict.refusalText;
+                }
+                args.onModelOutput?.({
+                  rawText: text,
+                  text,
+                  model,
+                  auditId,
+                  route: "intelligence-ask-synthesis-live-aborted",
+                });
+                return;
+              }
+              liveStreamedText = text.slice(0, markerIndex);
+              yield emit;
+            }
+            liveStreamingStopped = true;
+            emitTiming(
+              latencyTrace.mark("live_main_answer.tab_marker_seen", {
+                model,
+                mainAnswerChars: liveStreamedText.length,
+              }),
+            );
+          } else {
+            // No marker yet. Hold back the longest trailing suffix of `text`
+            // that is a proper prefix of `<<<TAB:` (e.g. a delta ending in
+            // "<<<T") so we never stream a byte that later turns out to be the
+            // start of the marker. Stream everything before that safe boundary.
+            let holdBack = 0;
+            const maxHold = Math.min(TAB_MARKER.length - 1, text.length);
+            for (let n = maxHold; n > 0; n -= 1) {
+              if (TAB_MARKER.startsWith(text.slice(text.length - n))) {
+                holdBack = n;
+                break;
+              }
+            }
+            const safeEnd = text.length - holdBack;
+            if (safeEnd > liveStreamedText.length) {
+              const emit = text.slice(liveStreamedText.length, safeEnd);
+              const verdict = liveRollingGuard?.push(emit);
+              if (verdict?.abort) {
+                emitTiming(
+                  latencyTrace.mark("live_main_answer.rolling_leak.aborted", {
+                    model,
+                  }),
+                );
+                if (verdict.refusalText) {
+                  yield verdict.refusalText;
+                }
+                args.onModelOutput?.({
+                  rawText: text,
+                  text,
+                  model,
+                  auditId,
+                  route: "intelligence-ask-synthesis-live-aborted",
+                });
+                return;
+              }
+              liveStreamedText = text.slice(0, safeEnd);
+              yield emit;
+            }
+          }
+        }
       }
     }
+    emitTiming(
+      latencyTrace.finish("claude.primary.stream.done", primaryStartedAt, {
+        model,
+        sawFirstToken,
+        outputChars: text.length,
+        outputApproxTokens: summarizeTextPayload(text).approxTokens,
+        liveMainAnswerStreaming,
+        liveStreamedChars: liveStreamedText.length,
+        liveTabMarkerSeen: liveStreamingStopped,
+      }),
+    );
+    const blockingRepairEnabled = isBlockingIntelligenceRepairEnabled();
+    emitTiming(
+      latencyTrace.mark("blocking_repairs.mode", {
+        enabled: blockingRepairEnabled,
+        attemptedCount: 0,
+      }),
+    );
+    if (!blockingRepairEnabled) {
+      emitTiming(
+        latencyTrace.mark("blocking_repairs.skipped", {
+          reason: "live_no_repair_mode",
+          attemptedCount: 0,
+          missingTabs: args.richText
+            ? missingRequiredCanvasTabs(text, args.query).join(",")
+            : "",
+          needsNativeCanvas:
+            args.richText &&
+            requiresNativeExecutiveCanvas(args.query) &&
+            !hasExecutiveCanvasPayload(text),
+        }),
+      );
+    }
+    if (
+      blockingRepairEnabled &&
+      args.richText &&
+      isExplicitVisualAsk(args.query) &&
+      !hasMarkdownDecisionTable(text)
+    ) {
+      const visualRepairStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.visual.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
+      const visualRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 900),
+        system: systemWithContinuity,
+        messages: [
+          {
+            role: "user",
+            content: [
+              prompt,
+              "",
+              "DRAFT TO REPAIR:",
+              text,
+              "",
+              'VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then use the Intelligence decision-canvas tab markers from the system prompt. Put exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows inside a Table or Chart tab. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. If a requested value is not in the sources, write "not shown in loaded sources" in that cell rather than inventing it. Return only the final answer.',
+            ].join("\n"),
+          },
+        ],
+      });
+      const repairedText = extractMessageText(visualRepair);
+      emitTiming(
+        latencyTrace.finish("repair.visual.done", visualRepairStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+          accepted: hasMarkdownDecisionTable(repairedText),
+        }),
+      );
+      if (hasMarkdownDecisionTable(repairedText)) {
+        text = repairedText;
+      }
+    }
+    const missingTabs = args.richText
+      ? missingRequiredCanvasTabs(text, args.query)
+      : [];
+    if (blockingRepairEnabled && missingTabs.length > 0) {
+      const requiredTabs = requiredCanvasTabsForQuery(args.query);
+      const repairPrompt = [
+        prompt,
+        "",
+        "DRAFT TO REPAIR:",
+        text,
+        "",
+        "MANDATORY INTELLIGENCE CANVAS TAB REPAIR:",
+        `The user explicitly asked for these right-canvas tabs: ${requiredTabs.join(", ")}.`,
+        `The draft is missing: ${missingTabs.join(", ")}.`,
+        "Return the final answer only, using the exact Intelligence decision-canvas tab markers from the system prompt.",
+        "Keep the main answer to 120-180 words before the first tab marker.",
+        "Include every required tab listed above. Do not merge required tabs together.",
+        "If Chart is required, include chart-ready Markdown numeric data in the Chart tab.",
+        "If Table is required, include a compact Markdown table in the Table tab.",
+        "If Evidence is required, include a concise Evidence tab that separates tenant facts, industry context, planning assumptions, and missing evidence.",
+        "Do not expose raw IDs, raw field names, file names, row labels, debug labels, or product-mechanics phrases like loaded sources/context.",
+      ].join("\n");
+      args.onModelInput?.({
+        system: systemWithContinuity,
+        user: repairPrompt,
+      });
+      const tabRepairStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.tabs.start", {
+          model,
+          missingTabs: missingTabs.join(","),
+        }),
+      );
+      const tabRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1600),
+        system: systemWithContinuity,
+        messages: [
+          {
+            role: "user",
+            content: repairPrompt,
+          },
+        ],
+      });
+      const repairedText = extractMessageText(tabRepair);
+      emitTiming(
+        latencyTrace.finish("repair.tabs.done", tabRepairStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+        }),
+      );
+      const repairedMissingTabs = missingRequiredCanvasTabs(
+        repairedText,
+        args.query,
+      );
+      if (repairedText.trim() && repairedMissingTabs.length === 0) {
+        text = repairedText;
+      } else if (repairedText.trim()) {
+        const bestDraft =
+          repairedMissingTabs.length < missingTabs.length ? repairedText : text;
+        const stillMissing = missingRequiredCanvasTabs(bestDraft, args.query);
+        if (stillMissing.length > 0) {
+          const missingOnlyPrompt = [
+            prompt,
+            "",
+            "CURRENT FINAL DRAFT:",
+            bestDraft,
+            "",
+            "MISSING-TAB ONLY REPAIR:",
+            `Return only the missing tab blocks for: ${stillMissing.join(", ")}.`,
+            "Use the exact Intelligence decision-canvas tab markers from the system prompt.",
+            "Do not repeat the main answer or existing tabs.",
+            "Each missing tab must be model-authored, concise, and grounded.",
+            "If Table is missing, include a compact Markdown table.",
+            "If Evidence is missing, separate tenant facts, industry context, planning assumptions, and missing evidence.",
+            "Do not expose raw IDs, raw field names, file names, row labels, debug labels, or product-mechanics phrases like loaded sources/context.",
+          ].join("\n");
+          args.onModelInput?.({
+            system: systemWithContinuity,
+            user: missingOnlyPrompt,
+          });
+          const missingOnlyStartedAt = Date.now();
+          emitTiming(
+            latencyTrace.mark("repair.missing_tabs.start", {
+              model,
+              missingTabs: stillMissing.join(","),
+            }),
+          );
+          const missingOnlyRepair = await client.messages.create({
+            model,
+            max_tokens: 900,
+            system: systemWithContinuity,
+            messages: [{ role: "user", content: missingOnlyPrompt }],
+          });
+          const missingOnlyText = extractMessageText(missingOnlyRepair);
+          emitTiming(
+            latencyTrace.finish("repair.missing_tabs.done", missingOnlyStartedAt, {
+              model,
+              repairedChars: missingOnlyText.length,
+            }),
+          );
+          const combinedText = [bestDraft.trim(), missingOnlyText.trim()]
+            .filter(Boolean)
+            .join("\n\n");
+          if (
+            missingOnlyText.trim() &&
+            missingRequiredCanvasTabs(combinedText, args.query).length === 0
+          ) {
+            text = combinedText;
+          }
+        }
+      }
+    }
+    if (
+      blockingRepairEnabled &&
+      args.richText &&
+      requiresNativeExecutiveCanvas(args.query) &&
+      !hasExecutiveCanvasPayload(text)
+    ) {
+      const nativeCanvasRepairPrompt = [
+        prompt,
+        "",
+        "DRAFT TO REPAIR:",
+        text,
+        "",
+        "NATIVE EXECUTIVE CANVAS REPAIR:",
+        "Return the same final answer, but add exactly one governed `abarva-canvas` fenced JSON block inside the most relevant Chart, Table, Decision, or Evidence tab.",
+        "Use one supported canvasType from the system prompt: executive-canvas-sequencing, value-readiness-matrix, gate-to-value-roadmap, or proof-boundary-card.",
+        "Do not write HTML, SVG, CSS, arbitrary JSON, or additional machine payloads.",
+        "Preserve the main answer, existing recommendations, tenant facts, evidence boundaries, and any compact Markdown table unless the native exhibit makes the table redundant.",
+        "The fenced block is the only allowed JSON and must be valid JSON. Return only the final user-facing answer.",
+      ].join("\n");
+      args.onModelInput?.({
+        system: systemWithContinuity,
+        user: nativeCanvasRepairPrompt,
+      });
+      const nativeCanvasStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.native_canvas.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
+      const nativeCanvasRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1800),
+        system: systemWithContinuity,
+        messages: [{ role: "user", content: nativeCanvasRepairPrompt }],
+      });
+      const repairedText = extractMessageText(nativeCanvasRepair).trim();
+      emitTiming(
+        latencyTrace.finish("repair.native_canvas.done", nativeCanvasStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+          accepted: hasExecutiveCanvasPayload(repairedText),
+        }),
+      );
+      if (repairedText && hasExecutiveCanvasPayload(repairedText)) {
+        text = repairedText;
+      }
+    }
+    if (
+      args.richText &&
+      requiresNativeExecutiveCanvas(args.query) &&
+      !hasExecutiveCanvasPayload(text) &&
+      args.sources.some(
+        (source) => source.id === "industrial-cio-backoffice-readiness",
+      )
+    ) {
+      text = appendNativeCanvasToDecisionTab(
+        text,
+        buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
+          args.tenantClientKey,
+          args.tenantId,
+        ]),
+      );
+    }
+    if (
+      args.richText &&
+      requiresNativeExecutiveCanvas(args.query) &&
+      !hasExecutiveCanvasPayload(text) &&
+      args.sources.some((source) => source.id === "skyharbor-cto-readiness")
+    ) {
+      text = appendNativeCanvasToDecisionTab(
+        text,
+        buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
+          args.tenantClientKey,
+          args.tenantId,
+        ]),
+      );
+    }
+    if (SESSION_CONTEXT_LANGUAGE_RE.test(text) && !blockingRepairEnabled) {
+      const sanitizeStartedAt = Date.now();
+      text = stripSessionContextLanguage(text);
+      if (SESSION_CONTEXT_LANGUAGE_RE.test(text)) {
+        text = [
+          "This is not board-ready yet.",
+          "Close four evidence gaps before treating the recommendation as board guidance.",
+          "- Current-state baseline",
+          "- Accountable owner",
+          "- Dependency or readiness gate",
+          "- Value-proof method",
+          "Next step: name the initiative or portfolio question, then verify the baseline metric, owner, readiness gate, and evidence source in one place.",
+        ].join("\n\n");
+      }
+      emitTiming(
+        latencyTrace.finish(
+          "fallback.standalone_sanitized.done",
+          sanitizeStartedAt,
+          {
+            outputChars: text.length,
+          },
+        ),
+      );
+    }
+    if (SESSION_CONTEXT_LANGUAGE_RE.test(text) && blockingRepairEnabled) {
+      const standaloneRepairPrompt = [
+        prompt,
+        "",
+        "DRAFT TO REPAIR:",
+        text,
+        "",
+        "STANDALONE ANSWER REPAIR:",
+        "Return the same final answer as a standalone executive answer for the current question.",
+        "Preserve the same tenant facts, caveats, tabs, Markdown tables, recommendations, and evidence boundaries.",
+        "Remove any wording that depends on prior chat history or conversation continuity.",
+        'Do not use phrases such as "as discussed", "as mentioned", "this session", "earlier in this session", "previous conversation", "prior conversation", "same answer", "answer hasn\'t changed", or "keeps being the right answer".',
+        "Do not summarize, shorten, add new facts, or change the recommendation. Return only the final user-facing answer.",
+      ].join("\n");
+      args.onModelInput?.({
+        system: systemWithContinuity,
+        user: standaloneRepairPrompt,
+      });
+      const standaloneStartedAt = Date.now();
+      emitTiming(
+        latencyTrace.mark("repair.standalone.start", {
+          model,
+          draftChars: text.length,
+        }),
+      );
+      const standaloneRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1600),
+        system: systemWithContinuity,
+        messages: [{ role: "user", content: standaloneRepairPrompt }],
+      });
+      const repairedText = extractMessageText(standaloneRepair).trim();
+      emitTiming(
+        latencyTrace.finish("repair.standalone.done", standaloneStartedAt, {
+          model,
+          repairedChars: repairedText.length,
+          accepted: !SESSION_CONTEXT_LANGUAGE_RE.test(repairedText),
+        }),
+      );
+      if (repairedText && !SESSION_CONTEXT_LANGUAGE_RE.test(repairedText)) {
+        text = repairedText;
+      } else {
+        text = [
+          "This is not board-ready yet.",
+          "Close four evidence gaps before treating the recommendation as board guidance.",
+          "- Current-state baseline",
+          "- Accountable owner",
+          "- Dependency or readiness gate",
+          "- Value-proof method",
+          "Next step: name the initiative or portfolio question, then verify the baseline metric, owner, readiness gate, and evidence source in one place.",
+        ].join("\n\n");
+      }
+    }
+    if (args.richText) {
+      const parserStartedAt = Date.now();
+      text = ensureMandatoryCompanionCanvasFallback(text, {
+        query: args.query,
+        sources: args.sources,
+        tenantClientKey: args.tenantClientKey,
+        tenantId: args.tenantId,
+      });
+      emitTiming(
+        latencyTrace.finish("parser.canvas_fallback.done", parserStartedAt, {
+          outputChars: text.length,
+          hasTabs: parseIntelligenceTabbedResponse(text).tabs.length > 0,
+          hasNativeCanvas: hasExecutiveCanvasPayload(text),
+        }),
+      );
+    }
+    args.onModelOutput?.({
+      rawText: text,
+      text,
+      model,
+      auditId,
+      route: "intelligence-ask-synthesis",
+    });
 
     // STRESS-P0-001 fix (2026-05-24): post-response cross-tenant identity
     // guard. If despite the dynamic tenant pin the model still asserts a
@@ -374,11 +1257,11 @@ export async function* synthesizeStream(args: {
     if (leakCheck.leaked) {
       const safeRefusal = [
         `I almost generated a response that misattributed your organization. The retrieved context and/or session memory referenced "${leakCheck.assertedTenant}" but your authenticated session is for a different organization.`,
-        '',
-        'I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.',
-        '',
-        '[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]',
-      ].join('\n');
+        "",
+        "I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.",
+        "",
+        "[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]",
+      ].join("\n");
       yield safeRefusal;
       return;
     }
@@ -390,10 +1273,38 @@ export async function* synthesizeStream(args: {
     });
     if (offTenantMention.detected) {
       yield [
-        'I detected mixed-tenant language in the draft answer, so I am not going to surface it.',
-        'Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.',
-        '[tenant-isolation guard fired: off-tenant mention blocked]',
-      ].join('\n');
+        "This answer is blocked because the available response path mixed tenant language.",
+        "Treat this as a tenant-safety stop, not as enterprise guidance.",
+        "Re-ask from the active workspace, and I will answer only from evidence whose tenant key and display name match the current tenant.",
+      ].join("\n");
+      return;
+    }
+
+    const tabbedResponse = parseIntelligenceTabbedResponse(text);
+    if (tabbedResponse.tabs.length > 0 && tabbedResponse.mainAnswer.trim()) {
+      // Emit the remainder from where live streaming stopped. `text` is the
+      // final (repaired) answer; `liveStreamedText` is the exact prefix already
+      // sent. reconcileStreamRemainder guarantees
+      // {liveStreamedText} + {remainder} === text with no duplication/loss.
+      // If nothing was streamed live (plain-text path, or no delta reached the
+      // pre-tab region), remainder === text — byte-identical to today's
+      // `yield text`.
+      const { remainder, diverged } = reconcileStreamRemainder(
+        liveStreamedText,
+        text,
+      );
+      if (diverged) {
+        emitTiming(
+          latencyTrace.mark("live_main_answer.repair_diverged", {
+            model,
+            liveStreamedChars: liveStreamedText.length,
+            finalChars: text.length,
+          }),
+        );
+      }
+      if (remainder) {
+        yield remainder;
+      }
       return;
     }
 
@@ -406,12 +1317,241 @@ export async function* synthesizeStream(args: {
     // cap to 240 gives the model headroom to land at 195-220 without clipping
     // and still fences off true runaway responses. The prompt remains the
     // primary length lever; this is a safety net.
-    const sanitized = sanitizeAskSynthesis(text, 240);
-    const evidenceDisciplined = applyPartialEvidencePolicy(sanitized, args.sources);
-    for (const chunk of chunkAskText(evidenceDisciplined)) {
+    const sanitized = sanitizeAskSynthesis(
+      text,
+      chooseAdvisorWordCap(args.query, 240),
+    );
+    const evidenceDisciplined = applyPartialEvidencePolicy(
+      sanitized,
+      args.sources,
+    );
+    const decisionGrade = enforceDecisionGradeAnswer(evidenceDisciplined);
+    // No-tab-marker fallback + reconciliation. This branch is reached when the
+    // final text has no parseable tabs. `decisionGrade` is the final answer.
+    // If nothing was streamed live (plain-text path, or rich-text where no
+    // pre-tab content was emitted), liveStreamedText === "" and the remainder
+    // is the whole `decisionGrade` — chunked exactly as today (byte-identical).
+    // If a rich-text main answer WAS streamed live but the sanitize/evidence/
+    // decision-grade transforms reworded the prefix, reconcileStreamRemainder
+    // emits from the longest common prefix so no final content is lost.
+    const { remainder, diverged } = reconcileStreamRemainder(
+      liveStreamedText,
+      decisionGrade,
+    );
+    if (diverged) {
+      emitTiming(
+        latencyTrace.mark("live_main_answer.no_tab_fallback_diverged", {
+          model,
+          liveStreamedChars: liveStreamedText.length,
+          finalChars: decisionGrade.length,
+        }),
+      );
+    }
+    for (const chunk of chunkAskText(remainder)) {
       yield chunk;
     }
   } catch (err) {
-    yield `\n\n[synthesis error: ${err instanceof Error ? err.message : 'unknown'}]`;
+    yield `\n\n[synthesis error: ${err instanceof Error ? err.message : "unknown"}]`;
   }
+}
+
+function ensureMandatoryCompanionCanvasFallback(
+  text: string,
+  args: {
+    query: string;
+    sources: AskSource[];
+    tenantClientKey?: string | null;
+    tenantId?: string | null;
+  },
+): string {
+  const missingTabs = missingRequiredCanvasTabs(text, args.query);
+  if (missingTabs.length === 0) return text;
+
+  const parsed = parseIntelligenceTabbedResponse(text);
+  const existingTabs = parsed.tabs
+    .map(
+      (tab) =>
+        `<<<TAB: ${tab.label} | grounding: ${tab.grounding}>>>\n${tab.content}`,
+    )
+    .join("\n\n");
+  const mainAnswer = cleanUntabbedCanvasMainAnswer(
+    parsed.mainAnswer || parsed.rawText,
+  );
+  const existingLabels = new Set(parsed.tabs.map((tab) => tab.label));
+  const fallbackBlocks = requiredCanvasTabsForQuery(args.query)
+    .filter((label) => !existingLabels.has(label))
+    .map((label) => buildFallbackTabBlock(label, mainAnswer, args));
+
+  return [mainAnswer, existingTabs, ...fallbackBlocks]
+    .filter((part) => part.trim().length > 0)
+    .join("\n\n");
+}
+
+function cleanUntabbedCanvasMainAnswer(text: string): string {
+  const visibleContent = extractExecutiveCanvasPayloads(text).visibleContent;
+  const withoutOpenCanvasFence = visibleContent
+    .replace(/```(?:abarva-canvas|json\s+abarva-canvas)\s*[\s\S]*$/gi, "")
+    .replace(/\n\s*The right canvas here[\s\S]*$/i, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  if (!withoutOpenCanvasFence) {
+    return "The executive answer is to sequence the decision by value, readiness, and proof: scale what is already evidence-backed, certify the next wave, and hold anything whose operating data is not board-ready.";
+  }
+  return withoutOpenCanvasFence;
+}
+
+function stripSessionContextLanguage(text: string): string {
+  return text
+    .replace(SESSION_CONTEXT_LANGUAGE_RE, "")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function buildFallbackTabBlock(
+  label: string,
+  mainAnswer: string,
+  args: {
+    query: string;
+    sources: AskSource[];
+    tenantClientKey?: string | null;
+    tenantId?: string | null;
+  },
+): string {
+  if (label === "Decision") {
+    const firstSentence =
+      mainAnswer
+        .split(/(?<=[.!?])\s+/)
+        .find(Boolean)
+        ?.trim() ?? "Sequence the work by value, readiness, and proof.";
+    return [
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      `Executive choice: ${firstSentence}`,
+      "Decision required: name the accountable owner and proof gate before releasing scale funding.",
+    ].join("\n");
+  }
+  if (label === "Industry Insights") {
+    return [
+      "<<<TAB: Industry Insights | grounding: industry-context>>>",
+      "Industry context, not tenant proof: enterprise AI programs are moving from tool pilots to governed value offices. The pattern that holds up best is to fund AI where process ownership, data lineage, control evidence, and adoption telemetry are already in place, then use discovery sprints for thinner functions.",
+    ].join("\n");
+  }
+  if (label === "Chart") {
+    const nativeCanvas = buildFallbackNativeCanvasBlock(args);
+    if (nativeCanvas) {
+      return [
+        "<<<TAB: Chart | grounding: tenant-evidence>>>",
+        "Tenant-evidence exhibit: decision sequence generated from the focused enterprise packet.",
+        nativeCanvas,
+      ].join("\n");
+    }
+    const tenantCount = args.sources.filter(
+      (source) => source.type === "TENANT",
+    ).length;
+    const patternCount = args.sources.length - tenantCount;
+    return [
+      "<<<TAB: Chart | grounding: mixed>>>",
+      "Mixed context: available support for this answer.",
+      "| Support type | Count |",
+      "|---|---:|",
+      `| Tenant evidence | ${tenantCount} |`,
+      `| Industry or corpus context | ${patternCount} |`,
+    ].join("\n");
+  }
+  if (label === "Table") {
+    const rows = args.sources.slice(0, 5).map((source) => {
+      const grounding =
+        source.type === "TENANT" ? "Tenant evidence" : "Pattern context";
+      const name = (source.name || source.id || "Evidence").replace(/\|/g, "/");
+      return `| ${name} | ${grounding} |`;
+    });
+    return [
+      "<<<TAB: Table | grounding: tenant-evidence>>>",
+      "| Decision support | Grounding |",
+      "|---|---|",
+      ...(rows.length > 0 ? rows : ["| Evidence packet | Tenant evidence |"]),
+    ].join("\n");
+  }
+  return [
+    "<<<TAB: Evidence | grounding: tenant-evidence>>>",
+    `Tenant facts used: ${
+      args.sources
+        .filter((source) => source.type === "TENANT")
+        .slice(0, 3)
+        .map((source) => source.name || source.id)
+        .filter(Boolean)
+        .join("; ") || "tenant evidence packet"
+    }.`,
+    `Industry or pattern context used: ${
+      args.sources
+        .filter((source) => source.type !== "TENANT")
+        .slice(0, 3)
+        .map((source) => source.name || source.id)
+        .filter(Boolean)
+        .join("; ") || "none used"
+    }.`,
+    "Validation point: confirm the accountable owner, baseline metric, and proof gate before using the answer as board-grade guidance.",
+  ].join("\n");
+}
+
+function buildFallbackNativeCanvasBlock(args: {
+  query: string;
+  sources: AskSource[];
+  tenantClientKey?: string | null;
+  tenantId?: string | null;
+}): string {
+  if (
+    args.sources.some(
+      (source) => source.id === "industrial-cio-backoffice-readiness",
+    )
+  ) {
+    return buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
+      args.tenantClientKey,
+      args.tenantId,
+    ]);
+  }
+  if (args.sources.some((source) => source.id === "skyharbor-cto-readiness")) {
+    return buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
+      args.tenantClientKey,
+      args.tenantId,
+    ]);
+  }
+  return "";
+}
+
+function appendNativeCanvasToDecisionTab(
+  text: string,
+  nativeCanvasBlock: string,
+): string {
+  const block = nativeCanvasBlock.trim();
+  if (!block) return text;
+  const decisionMarkerRe =
+    /<<<TAB:\s*Decision(?:\s*\|\s*grounding:\s*[^>]+?)?\s*>>>\s*/i;
+  const decisionMarker = decisionMarkerRe.exec(text);
+  if (!decisionMarker) {
+    return [
+      text.trim(),
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      block,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
+  const insertStart = decisionMarker.index + decisionMarker[0].length;
+  const afterDecisionMarker = text.slice(insertStart);
+  const nextTab =
+    /\n\s*<<<TAB:\s*(?:Industry Insights|Chart|Table|Evidence)\b/i.exec(
+      afterDecisionMarker,
+    );
+  const insertAt =
+    nextTab?.index === undefined ? text.length : insertStart + nextTab.index;
+  return [
+    text.slice(0, insertAt).trimEnd(),
+    "",
+    block,
+    text.slice(insertAt).trimStart(),
+  ]
+    .filter((part) => part.length > 0)
+    .join("\n");
 }

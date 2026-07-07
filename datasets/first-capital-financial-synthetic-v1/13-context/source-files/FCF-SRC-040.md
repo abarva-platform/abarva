@@ -1,11 +1,32 @@
-# Vendor concentration risk register 40
+# Vendor concentration risk register
 
-Synthetic tenant evidence for First Capital Financial. This source file is part of the banking context layer and should ground Sentinel, Source and Tower answers in First Capital-specific facts.
+Document type: Board technology appendix
+Prepared for: Chief Risk Officer
+Evidence date: 2026-05-01
+Primary system: FCF-APP-CORE-BANKING-121 - First Capital Core Banking Service 121
+Owning team: TEAM-FCF-CORE
+Related dependency: FCF-APP-BRANCH-ATM-094
+Vendor exposure: FIS / $38,000,000 annual run-rate
+Classification: confidential
 
-- Referenced application: FCF-APP-CORE-BANKING-121 (First Capital Core Banking Service 121)
-- Referenced initiative: FCF-INIT-009 (Digital account opening abandonment recovery)
-- Referenced vendor: FIS, annual exposure $38000000
-- Regulatory lens: OCC, FFIEC, GLBA, BSA/AML, SR 11-7 model-risk management and operational resilience.
-- Evidence note: Digital account opening abandonment recovery is tied to Risk, Compliance and Financial Crimes with healthy posture and board/CXO evidence requirements.
+## Situation
 
-Use this source to explain the decision thread, cite the exact ID, and avoid importing retail, healthcare or medtech facts into First Capital.
+First Capital Core Banking Service 121 is carried as a medium core banking platform with $4,127,000 in FY25 run cost and a migrate modernization posture. The application is not a stand-alone decision: it sits in a dependency chain that includes FCF-APP-BRANCH-ATM-094, FIS, and the Open Banking and API Products control owner group.
+
+## Evidence Observed
+
+- Current architecture: mainframe deployment with 15 cataloged upstream/downstream relationships.
+- Program tie: FCF-INIT-009 - Digital account opening abandonment recovery; committed funding $1,991,000, projected value $3,990,000, Sentinel posture Healthy.
+- Vendor condition: 180-day core transition; termination assistance capped at 12 months; AI/data-use clause: requires model-risk approval for generated code.
+- Risk lens: OCC/FFIEC operational resilience, GLBA safeguarding, BSA/AML evidence where customer or transaction data is in scope, and SR 11-7 model-risk expectations for AI-assisted decisions.
+
+## Decision Implication
+
+The program is eligible to continue only while value measurement remains tied to the named control and operating metrics. Any recommendation must cite the application id, initiative id, vendor exposure, and the dependency above. If any of those facts are unavailable in the live context layer, Sentinel should answer that it cannot complete the recommendation yet.
+
+## Open Evidence Requests
+
+- Confirm whether FCF-APP-BRANCH-ATM-094 has a tested rollback or parallel-run pattern.
+- Reconcile FCF-APP-CORE-BANKING-121 run cost to the latest finance allocation workbook.
+- Attach latest ServiceNow change/problem records for the last two high-risk release windows.
+- Confirm whether second-line risk has accepted the evidence basis for FCF-INIT-009.

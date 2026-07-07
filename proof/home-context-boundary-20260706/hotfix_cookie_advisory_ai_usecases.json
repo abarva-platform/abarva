@@ -1,0 +1,408 @@
+{
+  "mode": "KNOW",
+  "tenantKey": "lakeshore-holdings",
+  "question": "Which AI use cases should we fund and scale first?",
+  "intent": "decision_handoff",
+  "answerStatus": "handoff",
+  "artifactStatus": "not_requested",
+  "prose": "Lakeshore Holdings's loaded expert lenses context shows CIO modernization lens, CFO value and rate-card lens, COO operating model lens, CISO risk lens, Data and AI readiness lens, and Source/vendor lens. Home can use this as current-state evidence while keeping source confidence and validation boundaries visible.\n\nThe supporting material is broad enough for orientation and current-state discovery, but Home still keeps validation gaps visible before board-grade use.\n\nIntelligence should take over when the user wants decisions, recommendations, or execution moves; Home should stay focused on loaded facts and evidence boundaries.",
+  "dimensionsUsed": [
+    "expert-lenses",
+    "industry-market-knowledge-patterns"
+  ],
+  "facts": [
+    {
+      "id": "home-v7-fact-1-1",
+      "dimensionId": "expert-lenses",
+      "label": "Lens",
+      "value": "CIO modernization lens",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-1-2",
+      "dimensionId": "expert-lenses",
+      "label": "Expertise",
+      "value": "CIO",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-1-3",
+      "dimensionId": "expert-lenses",
+      "label": "Action",
+      "value": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-1-4",
+      "dimensionId": "expert-lenses",
+      "label": "Boundary",
+      "value": "Lens is advisory only and cannot override tenant facts.",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-2-1",
+      "dimensionId": "expert-lenses",
+      "label": "Lens",
+      "value": "CFO value and rate-card lens",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-2-2",
+      "dimensionId": "expert-lenses",
+      "label": "Expertise",
+      "value": "CFO",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-2-3",
+      "dimensionId": "expert-lenses",
+      "label": "Action",
+      "value": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-2-4",
+      "dimensionId": "expert-lenses",
+      "label": "Boundary",
+      "value": "Lens is advisory only and cannot override tenant facts.",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-3-1",
+      "dimensionId": "expert-lenses",
+      "label": "Lens",
+      "value": "COO operating model lens",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-3-2",
+      "dimensionId": "expert-lenses",
+      "label": "Expertise",
+      "value": "COO",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-3-3",
+      "dimensionId": "expert-lenses",
+      "label": "Action",
+      "value": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-3-4",
+      "dimensionId": "expert-lenses",
+      "label": "Boundary",
+      "value": "Lens is advisory only and cannot override tenant facts.",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-4-1",
+      "dimensionId": "expert-lenses",
+      "label": "Lens",
+      "value": "CISO risk lens",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-4-2",
+      "dimensionId": "expert-lenses",
+      "label": "Expertise",
+      "value": "CISO",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-4-3",
+      "dimensionId": "expert-lenses",
+      "label": "Action",
+      "value": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-4-4",
+      "dimensionId": "expert-lenses",
+      "label": "Boundary",
+      "value": "Lens is advisory only and cannot override tenant facts.",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-5-1",
+      "dimensionId": "expert-lenses",
+      "label": "Lens",
+      "value": "Data and AI readiness lens",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-5-2",
+      "dimensionId": "expert-lenses",
+      "label": "Expertise",
+      "value": "Data/AI",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-5-3",
+      "dimensionId": "expert-lenses",
+      "label": "Action",
+      "value": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-5-4",
+      "dimensionId": "expert-lenses",
+      "label": "Boundary",
+      "value": "Lens is advisory only and cannot override tenant facts.",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-6-1",
+      "dimensionId": "expert-lenses",
+      "label": "Lens",
+      "value": "Source/vendor lens",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-6-2",
+      "dimensionId": "expert-lenses",
+      "label": "Expertise",
+      "value": "Source",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-6-3",
+      "dimensionId": "expert-lenses",
+      "label": "Action",
+      "value": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    },
+    {
+      "id": "home-v7-fact-6-4",
+      "dimensionId": "expert-lenses",
+      "label": "Boundary",
+      "value": "Lens is advisory only and cannot override tenant facts.",
+      "citationIds": [
+        "home-v7-source-1"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "id": "home-v7-v7-16-expert-lenses-table",
+      "title": "Expert Lenses loaded facts",
+      "dimensionId": "expert-lenses",
+      "columns": [
+        {
+          "key": "c0",
+          "label": "Lens",
+          "align": "left",
+          "format": "text"
+        },
+        {
+          "key": "c1",
+          "label": "Expertise",
+          "align": "left",
+          "format": "text"
+        },
+        {
+          "key": "c2",
+          "label": "Action",
+          "align": "left",
+          "format": "text"
+        },
+        {
+          "key": "c3",
+          "label": "Boundary",
+          "align": "left",
+          "format": "text"
+        }
+      ],
+      "rows": [
+        {
+          "c0": "CIO modernization lens",
+          "c1": "CIO",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        },
+        {
+          "c0": "CFO value and rate-card lens",
+          "c1": "CFO",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        },
+        {
+          "c0": "COO operating model lens",
+          "c1": "COO",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        },
+        {
+          "c0": "CISO risk lens",
+          "c1": "CISO",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        },
+        {
+          "c0": "Data and AI readiness lens",
+          "c1": "Data/AI",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        },
+        {
+          "c0": "Source/vendor lens",
+          "c1": "Source",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        },
+        {
+          "c0": "Tower transition lens",
+          "c1": "Tower",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        },
+        {
+          "c0": "CEO portfolio lens",
+          "c1": "CEO",
+          "c2": "business impact; evidence strength; cost/risk; feasibility; human approval boundary",
+          "c3": "Lens is advisory only and cannot override tenant facts."
+        }
+      ],
+      "citationIds": [
+        "home-v7-source-1"
+      ],
+      "note": "Current governed source evidence. Evidence gaps stay visible instead of becoming confidence scores."
+    }
+  ],
+  "charts": [],
+  "graphs": [],
+  "gaps": [],
+  "conflicts": [],
+  "citations": [
+    {
+      "id": "home-v7-source-1",
+      "label": "Expert Lenses source file",
+      "sourceClass": "tenant-source-file",
+      "sourceFile": "V7_16_expert_lenses.csv",
+      "sourceRowNumber": null,
+      "recordId": null,
+      "excerpt": "8 source evidence items selected from expert lenses source file.",
+      "confidence": "high"
+    }
+  ],
+  "handoff": {
+    "target": "intelligence",
+    "label": "Open Intelligence",
+    "reason": "Intelligence owns advisory synthesis and pattern-backed executive recommendations."
+  },
+  "answerability": "requires_intelligence",
+  "safety": {
+    "serverValidated": true,
+    "blockedExperts": true,
+    "blockedDecisionFrames": true,
+    "blockedInternalCodes": true,
+    "unsupportedClaimsRemoved": 0,
+    "frontendTripwireShouldFire": false,
+    "usableEvidence": true,
+    "evidenceStatus": "usable_dossier",
+    "evidenceReason": "V7 Azure schema /Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703; old semantic layers bypassed.",
+    "evidenceChannels": {
+      "facts": 24,
+      "tables": 1,
+      "charts": 0,
+      "graphs": 0,
+      "citations": 1,
+      "sourceCoverage": 1,
+      "sections": 0,
+      "rollups": 0,
+      "relationshipPaths": 0,
+      "metrics": 0,
+      "gaps": 0
+    },
+    "composerTrace": {
+      "route": "/api/home/know/ask",
+      "composer": "home_v7_dataset_contract",
+      "goldenComposerAttempted": false,
+      "goldenComposerUsed": false,
+      "fallbackUsed": false,
+      "dimensionsUsed": [
+        "expert-lenses",
+        "industry-market-knowledge-patterns"
+      ],
+      "factsBound": 24,
+      "tablesBound": 1,
+      "chartsBound": 0,
+      "graphsBound": 0,
+      "citationsBound": 1,
+      "sourceCoverageBound": 1,
+      "sectionsBound": 0,
+      "rollupsBound": 0,
+      "relationshipPathsBound": 0,
+      "metricsBound": 0,
+      "gapsBound": 0,
+      "usableEvidence": true,
+      "evidenceChannels": {
+        "facts": 24,
+        "tables": 1,
+        "charts": 0,
+        "graphs": 0,
+        "citations": 1,
+        "sourceCoverage": 1,
+        "sections": 0,
+        "rollups": 0,
+        "relationshipPaths": 0,
+        "metrics": 0,
+        "gaps": 0
+      },
+      "answerStatus": "handoff",
+      "reason": "answerSource=v7_dataset_contract; source=v7_azure_schema; datasetDir=/Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703; selectedRows=8; selectedFacts=174; qualityGate=passed"
+    },
+    "visibleSanitizer": {
+      "sanitizerApplied": false,
+      "sanitizerReason": "none",
+      "semanticLoss": false,
+      "changedFields": []
+    }
+  }
+}

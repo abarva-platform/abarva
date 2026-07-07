@@ -1,0 +1,9 @@
+[allowlist]
+  description = "Allowlist for synthetic dataset files and test fixtures"
+  paths = [
+    '''datasets/''',
+    '''docs/workforce-economics/''',
+    '''src/__tests__/''',
+    '''tests/''',
+    '''\.(test|spec)\.(ts|tsx|js|mjs)$''',
+  ]

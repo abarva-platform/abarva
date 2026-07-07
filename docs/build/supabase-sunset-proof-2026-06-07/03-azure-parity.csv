@@ -1,0 +1,39 @@
+table_or_family,required_scope,supabase_rows,azure_rows,count_status,checksum_status,overall_status,evidence_source,notes
+clients,clients and tenant roster,9,9,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached to this proof pack.
+users,user/account identity tables,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in this proof pack,Must compare Clerk-linked app user/profile/account tables relevant to runtime authorization before sunset.
+enterprise_context_records,context records,3503,3503,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+enterprise_context_facts,context facts,38640,38640,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+enterprise_context_chunks,chunks,15847,21967,AZURE_AHEAD,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Azure is ahead by 6120 rows; prior release record describes Azure-ahead local/demo rows but checksum and tenant-by-tenant explanation must be attached before sunset.
+enterprise_context_sources,context source registry,13,13,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+enterprise_context_source_files,context source files,57,57,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+enterprise_context_relationships,context relationships,820,820,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+enterprise_context_evidence,context evidence,3503,3503,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+enterprise_context_template_runs,context template runs,2,2,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+enterprise_context_chunk_queue,context chunk queue,3503,3503,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+corpus_patterns,corpus patterns,8987,9026,AZURE_AHEAD,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Azure is ahead by 39 rows; prior release record describes Azure-ahead local/demo rows but checksums must be captured.
+corpus_pattern_versions,corpus pattern versions,8987,9026,AZURE_AHEAD,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Azure is ahead by 39 rows; checksum proof pending.
+corpus_pattern_content,corpus pattern content,8987,9026,AZURE_AHEAD,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Azure is ahead by 39 rows; checksum proof pending.
+corpus_pattern_relationships,corpus graph relationships,27052,27169,AZURE_AHEAD,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Azure is ahead by 117 rows; checksum proof pending.
+corpus_telemetry,corpus telemetry/audit,9027,9066,AZURE_AHEAD,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Azure is ahead by 39 rows; checksum proof pending.
+corpus_review_state,corpus review state,0,0,PASS,PASS,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Zero-row parity; keep in final checksum sweep.
+corpus_overlays,corpus overlays,0,0,PASS,PASS,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Zero-row parity; keep in final checksum sweep.
+client_private_patterns,client private patterns,0,0,PASS,PASS,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Zero-row parity; keep in final checksum sweep.
+genome_patterns,pattern genome,43436,43436,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+canonical_industry_ai_patterns,canonical industry AI patterns,312,312,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+foundational_pattern_packs,foundational pattern packs,1,1,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+foundational_pattern_variants,foundational pattern variants,3,3,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+pattern_packs,pattern packs/templates,21,21,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+pattern_match_logs,pattern match logs/audits,6,6,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+knowledge_sources,knowledge source records,136,136,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+knowledge_chunks,knowledge chunks,0,0,PASS,PASS,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Zero-row parity; keep in final checksum sweep.
+intelligence_graph_edges,graph edges,93743,93743,PASS,PENDING,PARTIAL,docs/runbooks/supabase-to-azure-decommission.md 2026-06-06 reconciliation,Counts match but row checksums are not attached.
+source_events,Source events,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in 2026-06-06 Supabase drain table list,Required table family for sunset; compare counts/checksums across all client keys.
+source_artifacts,Source artifacts,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in 2026-06-06 Supabase drain table list,Required table family for sunset; include parsed/embedding status checks.
+engagements,Moves / Strategic Moves,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in 2026-06-06 Supabase drain table list,Required table family for sunset; compare engagements and program/move related tables.
+move_artifacts,Move artifacts and attachments,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in 2026-06-06 Supabase drain table list,Required table family for sunset; include program artifacts/evidence/attachments.
+move_templates,Move templates and gates,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in 2026-06-06 Supabase drain table list,Required table family for sunset; include template gates/artifacts/version/review state.
+workshop_templates,workshop templates/assets,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in 2026-06-06 Supabase drain table list,Required if workshop tables exist in production runtime.
+instrument_templates,instrument templates/review/audit,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in 2026-06-06 Supabase drain table list,Required if instrument tables exist in production runtime.
+audit_tables,audits and immutable logs,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in this proof pack,Must include audit log/event tables used by Admin/Setup/Source/Tower.
+app_state_tables,application state / notifications / queues,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in this proof pack,Must include app settings/state/notification/job tables required for production runtime.
+storage_objects,Supabase storage/object content,PENDING,PENDING,PENDING,PENDING,FAIL,Not captured in this proof pack,Must export or explicitly prove unused before sunset.

@@ -73,8 +73,9 @@ export function isCanonicalSourceStageKey(value: unknown): value is SourceStageK
 
 export function normalizeSourceStageKey(value: unknown): SourceStageKey | null {
   if (typeof value !== 'string') return null;
-  if (isCanonicalSourceStageKey(value)) return value;
-  return SOURCE_LEGACY_STAGE_ALIASES[value] ?? null;
+  const normalized = value.trim().toLowerCase();
+  if (isCanonicalSourceStageKey(normalized)) return normalized;
+  return SOURCE_LEGACY_STAGE_ALIASES[normalized] ?? null;
 }
 
 export const SOURCE_LIFECYCLE_STATUS_LABELS: Record<SourceLifecycleStatus, string> = {

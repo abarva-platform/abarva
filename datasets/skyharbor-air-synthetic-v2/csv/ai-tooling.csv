@@ -1,0 +1,41 @@
+tool_id,tool_name,owner_role,workflow,risk_classification,model_name,regulated_workflow_flag
+AIT-001,ServiceNow Now Assist,Director Data,code,medium,internal-llm,false
+AIT-002,Claude Code,VP Engineering,revenue accounting,high,gpt-4o,false
+AIT-003,GitHub Copilot,CDAO,service desk,low,claude-opus,false
+AIT-004,GitHub Copilot,Director Data,revenue accounting,low,internal-llm,false
+AIT-005,Amazon Q,Director Data,crew comms,medium,internal-llm,true
+AIT-006,Claude Code,Director Data,forecasting,high,gemini,false
+AIT-007,Salesforce Einstein,Director Data,fraud,high,gpt-4o,false
+AIT-008,GitHub Copilot,CDAO,fraud,low,gpt-4o,false
+AIT-009,Claude Code,Director Data,code,medium,internal-llm,false
+AIT-010,Amazon Q,VP Engineering,forecasting,medium,gemini,true
+AIT-011,GitHub Copilot,CDAO,code,medium,gemini,false
+AIT-012,GitHub Copilot,Director Data,code,low,gpt-4o,false
+AIT-013,Azure OpenAI app,Director Data,revenue accounting,medium,gpt-4o,false
+AIT-014,Claude Code,VP Engineering,revenue accounting,high,gemini,true
+AIT-015,Claude Code,CDAO,forecasting,high,internal-llm,true
+AIT-016,Custom RAG assistant,CDAO,service desk,medium,gemini,false
+AIT-017,GitHub Copilot,Director Data,crew comms,high,gemini,true
+AIT-018,Salesforce Einstein,CDAO,code,low,gemini,false
+AIT-019,Claude Code,Director Data,forecasting,medium,gpt-4o,false
+AIT-020,Azure OpenAI app,CDAO,service desk,high,gemini,false
+AIT-021,ServiceNow Now Assist,Director Data,service desk,medium,gemini,true
+AIT-022,Claude Code,Director Data,crew comms,low,claude-opus,true
+AIT-023,Salesforce Einstein,CDAO,crew comms,medium,claude-opus,true
+AIT-024,Claude Code,CDAO,revenue accounting,low,gemini,false
+AIT-025,Amazon Q,VP Engineering,forecasting,low,claude-opus,false
+AIT-026,GitHub Copilot,Director Data,service desk,low,gemini,false
+AIT-027,Custom RAG assistant,Director Data,crew comms,medium,gemini,false
+AIT-028,GitHub Copilot,VP Engineering,revenue accounting,high,claude-opus,false
+AIT-029,Amazon Q,VP Engineering,forecasting,low,gemini,false
+AIT-030,GitHub Copilot,Director Data,code,low,internal-llm,true
+AIT-031,Salesforce Einstein,Director Data,fraud,low,gpt-4o,false
+AIT-032,Custom RAG assistant,Director Data,revenue accounting,medium,claude-opus,false
+AIT-033,Amazon Q,VP Engineering,forecasting,medium,gpt-4o,true
+AIT-034,ServiceNow Now Assist,VP Engineering,revenue accounting,medium,gpt-4o,false
+AIT-035,Custom RAG assistant,VP Engineering,crew comms,high,gpt-4o,false
+AIT-036,Azure OpenAI app,VP Engineering,code,medium,claude-opus,false
+AIT-037,Azure OpenAI app,VP Engineering,revenue accounting,medium,internal-llm,false
+AIT-038,ServiceNow Now Assist,Director Data,code,low,claude-opus,true
+AIT-039,GitHub Copilot,Director Data,forecasting,medium,gpt-4o,false
+AIT-040,ServiceNow Now Assist,Director Data,code,high,gemini,false

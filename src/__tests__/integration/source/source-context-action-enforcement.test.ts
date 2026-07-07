@@ -105,10 +105,10 @@ describe('Source context-used and action-enforcement slices', () => {
 
     expect(html).toContain('Source value ledger');
     expect(html).toContain('Context used');
-    expect(html).toContain('Atlas value ledger lead');
+    expect(html).toContain('Ava value ledger lead');
     expect(html).toContain('Action layer');
     expect(html).toContain('Show assumptions');
-    expect(html).toContain('Ask Atlas about this value ledger');
+    expect(html).toContain('Ask Ava about this value ledger');
     expect(html).toContain('Submit (disabled until runtime)');
   });
 

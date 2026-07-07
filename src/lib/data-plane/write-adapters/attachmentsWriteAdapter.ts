@@ -27,13 +27,16 @@
 import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
-} from '@/lib/data-plane/postgresCompat';
-import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
-import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
-import type { DataPlane } from './types';
+} from "@/lib/data-plane/postgresCompat";
+import {
+  createTxSession,
+  type TxSessionRunner,
+} from "../read-adapters/azureSession";
+import { resolveDataPlane } from "../read-adapters/resolveDataPlane";
+import type { DataPlane } from "./types";
 
-const PROGRAM_ATTACHMENTS_TABLE = 'program_attachments';
-const AGENT_ATTACHMENT_TABLE = 'agent_attachment';
+const PROGRAM_ATTACHMENTS_TABLE = "program_attachments";
+const AGENT_ATTACHMENT_TABLE = "agent_attachment";
 
 /** Row body for a new `program_attachments` record — snake_case, verbatim. */
 export interface ProgramAttachmentInsert {
@@ -65,6 +68,7 @@ export interface AgentAttachmentInsert {
   storage_path: string;
   extracted_text: string | null;
   linked_move_id: string | null;
+  parse_metadata?: Record<string, unknown> | null;
 }
 
 /**
@@ -98,7 +102,7 @@ export function createSupabaseAttachmentsWriteAdapter(
   getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): AttachmentsWriteAdapter {
   return {
-    plane: 'supabase',
+    plane: "supabase",
 
     async insertProgramAttachment(row, selectColumns) {
       const sb = getClient();
@@ -144,10 +148,10 @@ export function createSupabaseAttachmentsWriteAdapter(
       const { data, error } = await sb
         .from(AGENT_ATTACHMENT_TABLE)
         .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('tenant_id', tenantId)
-        .is('deleted_at', null)
-        .select('id')
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .is("deleted_at", null)
+        .select("id")
         .maybeSingle();
       if (error) throw error;
       return data ? { id: (data as { id: string }).id } : null;
@@ -162,11 +166,11 @@ function buildInsertReturning(
   returning: string,
 ): { sql: string; values: unknown[] } {
   const keys = Object.keys(row);
-  const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+  const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
   return {
     sql:
-      `INSERT INTO ${table} (${keys.join(', ')}) `
-      + `VALUES (${placeholders}) RETURNING ${returning}`,
+      `INSERT INTO ${table} (${keys.join(", ")}) ` +
+      `VALUES (${placeholders}) RETURNING ${returning}`,
     values: keys.map((k) => row[k]),
   };
 }
@@ -177,10 +181,10 @@ function buildInsertReturning(
  * `BEGIN`/`COMMIT` transaction.
  */
 export function createAzureAttachmentsWriteAdapter(
-  session: TxSessionRunner = createTxSession('abarva-attachments-write'),
+  session: TxSessionRunner = createTxSession("abarva-attachments-write"),
 ): AttachmentsWriteAdapter {
   return {
-    plane: 'azure-postgres',
+    plane: "azure-postgres",
 
     async insertProgramAttachment(row, selectColumns) {
       const body: Record<string, unknown> = {
@@ -217,7 +221,7 @@ export function createAzureAttachmentsWriteAdapter(
       const { sql, values } = buildInsertReturning(
         AGENT_ATTACHMENT_TABLE,
         row as unknown as Record<string, unknown>,
-        'id',
+        "id",
       );
       await session((run) => run(sql, values));
     },
@@ -225,9 +229,9 @@ export function createAzureAttachmentsWriteAdapter(
     async softDeleteAgentAttachment(id, tenantId) {
       const rows = await session((run) =>
         run<{ id: string }>(
-          `UPDATE ${AGENT_ATTACHMENT_TABLE} SET deleted_at = $1 `
-            + `WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL `
-            + `RETURNING id`,
+          `UPDATE ${AGENT_ATTACHMENT_TABLE} SET deleted_at = $1 ` +
+            `WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL ` +
+            `RETURNING id`,
           [new Date().toISOString(), id, tenantId],
         ),
       );
@@ -244,7 +248,7 @@ export function selectAttachmentsWriteAdapter(
   plane?: DataPlane,
 ): AttachmentsWriteAdapter {
   const target = plane ?? resolveDataPlane();
-  return target === 'azure-postgres'
+  return target === "azure-postgres"
     ? createAzureAttachmentsWriteAdapter()
     : createSupabaseAttachmentsWriteAdapter();
 }

@@ -1,0 +1,9 @@
+edge_id,source_app_id,target_app_id,endpoint_or_path_masked,credential_reference_masked,integration_type,payload_standard,frequency,sla_window,criticality,business_purpose,owner_role,monitoring_gap
+INT-001,APP-SAP-ECC,APP-KYRIBA,sftp://host-****/masked/path,secret-****-managed,SFTP,BAI2,daily,05:30 CT,High,Cash balance,Integration Lead,central monitoring needed
+INT-002,APP-ORCL-EBS,APP-KYRIBA,sftp://host-****/masked/path,cred-****-treasury,SFTP,Payment XML,twice daily,10:00/16:00 CT,Very high,Payment initiation,Integration Lead,central monitoring needed
+INT-003,APP-NETSUITE,APP-KYRIBA,api://system/***/resource,secret-****-managed,REST API,JSON,daily,06:30 CT,High,Cash forecast,Integration Lead,central monitoring needed
+INT-004,APP-D365,APP-KYRIBA,sftp://host-****/masked/path,cred-****-treasury,CSV portal export,CSV,daily,07:00 CT,Medium,GL cash postings,Integration Lead,manual exception detection
+INT-005,APP-KYRIBA,APP-AZDATA,sftp://host-****/masked/path,secret-****-managed,API,JSON,hourly,intraday,High,Tower value ledger,Integration Lead,central monitoring needed
+INT-006,APP-OKTA,APP-KYRIBA,https://idp.example/***/sso,cred-****-treasury,SAML/OIDC,Auth claims,real time,real time,High,SSO/MFA,Identity Lead,central monitoring needed
+INT-007,APP-CYBERARK,APP-KYRIBA,sftp://host-****/masked/path,secret-****-managed,API,Secrets,on rotation,monthly,Medium,Certificate rotation,Integration Lead,central monitoring needed
+INT-008,APP-BANKPORTAL,APP-KYRIBA,sftp://host-****/masked/path,cred-****-treasury,Host-to-host,MT940/MT942,daily/intraday,varies by bank,High,Bank statements,Integration Lead,central monitoring needed

@@ -8,7 +8,7 @@ export function MovesOverviewSection() {
         <Eyebrow light>Strategic Moves · Apex Retail</Eyebrow>
         <SectionTitle light size="xl">APX-01: From a pressure card to a $8.1M handoff in 14 weeks.</SectionTitle>
         <Lead light>
-          APX-01 &ldquo;Morrison Owned Brand Margin Recovery&rdquo; started as a single number on an Intelligence pressure card: 240bps private label GM gap across 14 segments. Fourteen weeks later it was a handed-off program with a signed business case, a named delivery team, and Atlas monitoring execution. Here&rsquo;s the path a Strategic Move takes.
+          APX-01 &ldquo;Morrison Owned Brand Margin Recovery&rdquo; started as a single number on an Intelligence pressure card: 240bps private label GM gap across 14 segments. Fourteen weeks later it was a handed-off program with a signed business case, a named delivery team, and Ava monitoring execution in Control Tower. Here&rsquo;s the path a Strategic Move takes.
         </Lead>
       </HeroBand>
 
@@ -20,7 +20,7 @@ export function MovesOverviewSection() {
         </Lead>
 
         <Flow>
-          <FlowStep badge="P0" badgeColor="slate" icon="✏️" label="Originate" desc="7-field scaffold via Nexus chat" />
+          <FlowStep badge="P0" badgeColor="slate" icon="✏️" label="Originate" desc="7-field scaffold via Ava chat" />
           <FlowStep badge="P1" badgeColor="navy" icon="📋" label="Charter" desc="Scope, governance, stakeholders" />
           <FlowStep badge="P2" badgeColor="navy" icon="🔍" label="Discover" desc="As-is, root cause, diagnosis" />
           <FlowStep badge="P3" badgeColor="navy" icon="🎯" label="Design" desc="Target state + solution" />
@@ -46,7 +46,7 @@ export function MovesOverviewSection() {
               line: '#E5E7EB',
               week: 'Week 1',
               title: 'Originated from pressure card',
-              story: 'David Kim\'s team saw the Morrison GM gap card in Intelligence. One click: "→ Originate a Move." Nexus pre-filled five of seven scaffold fields from the pressure card evidence. In 20 minutes: bet/outcome confirmed ("Recover Morrison private label GM from 34.2% to 36.0% across 14 underperforming segments"), archetype set (Revenue Growth), sponsor nominated (Lisa Park, CFO). APX-01 promoted to P1 before end of session.',
+              story: 'David Kim\'s team saw the Morrison GM gap card in Intelligence. One click: "→ Originate a Move." Ava pre-filled five of seven scaffold fields from the pressure card evidence. In 20 minutes: bet/outcome confirmed ("Recover Morrison private label GM from 34.2% to 36.0% across 14 underperforming segments"), archetype set (Revenue Growth), sponsor nominated (Lisa Park, CFO). APX-01 promoted to P1 before end of session.',
             },
             {
               phase: 'P1',
@@ -64,7 +64,7 @@ export function MovesOverviewSection() {
               line: T.navyLine,
               week: 'Weeks 4–7',
               title: 'Discovery: three root causes, one critical finding',
-              story: 'Rachel\'s team uploaded the Morrison pricing override log: 47% of AI-suggested prices overridden by GMs last quarter — the highest override rate in the substrate. Nexus decomposed it into three root causes: (1) GMs overriding seasonal SKUs even when the model was correct, (2) no reason codes so good and bad overrides were indistinguishable, (3) Home category GM had 71% override rate — structurally different behavior. Diagnosis: the problem wasn\'t model accuracy — it was trust and transparency. Continue decision confirmed.',
+              story: 'Rachel\'s team uploaded the Morrison pricing override log: 47% of AI-suggested prices overridden by GMs last quarter — the highest override rate in the substrate. Ava decomposed it into three root causes: (1) GMs overriding seasonal SKUs even when the model was correct, (2) no reason codes so good and bad overrides were indistinguishable, (3) Home category GM had 71% override rate — structurally different behavior. Diagnosis: the problem wasn\'t model accuracy — it was trust and transparency. Continue decision confirmed.',
             },
             {
               phase: 'P3',
@@ -91,7 +91,7 @@ export function MovesOverviewSection() {
               line: T.tealLine,
               week: 'Week 14',
               title: 'Handoff: team assembled, Tower live',
-              story: 'Karina Shah (PM) and Dev Patel (tech lead) assigned. Handoff package generated: charter, roadmap, business case, risk register. Two open risks required owner assignment before Tower acceptance: Legacy Oracle POS integration complexity (Dev Patel), and GM change management for reason code adoption (Karina Shah). Both assigned. Tower acceptance confirmed end of week 14. Atlas picked up APX-01 and began tracking: Morrison GM rate, override rate, and SKU rationalization progress.',
+              story: 'Karina Shah (PM) and Dev Patel (tech lead) assigned. Handoff package generated: charter, roadmap, business case, risk register. Two open risks required owner assignment before Tower acceptance: Legacy Oracle POS integration complexity (Dev Patel), and GM change management for reason code adoption (Karina Shah). Both assigned. Tower acceptance confirmed end of week 14. Ava kept watching APX-01 in Control Tower — drawing on her portfolio-monitoring expertise — and began tracking: Morrison GM rate, override rate, and SKU rationalization progress.',
             },
           ].map(({ phase, color, soft, line, week, title, story }) => (
             <div
@@ -175,7 +175,7 @@ export function MovesOverviewSection() {
         </div>
 
         <Callout kind="success" icon="→" label="Use the left nav for each phase">
-          The phase pages (P0–P5 in the left nav) go deep on each step — what Nexus does, what gate criteria look like, what the deliverables contain. APX-01 threads through each one. Use the overview above to orient, then click into the phase you&rsquo;re working on.
+          The phase pages (P0–P5 in the left nav) go deep on each step — what Ava does, what gate criteria look like, what the deliverables contain. APX-01 threads through each one. Use the overview above to orient, then click into the phase you&rsquo;re working on.
         </Callout>
       </Section>
 
@@ -192,7 +192,7 @@ export function MovesOverviewSection() {
 
         <SubHead>Hard gate criteria vs. advisory criteria</SubHead>
         <BodyP>
-          Each phase has hard criteria (gate-blocking — you cannot advance without them) and advisory criteria (surface quality — they improve downstream document quality but don&rsquo;t block). In APX-01, the only advisory criterion that slipped was the Tower Metrics Plan — it was defined late in P4, not in P3 as recommended. Atlas still picked it up, but the first week of monitoring required an extra configuration session.
+          Each phase has hard criteria (gate-blocking — you cannot advance without them) and advisory criteria (surface quality — they improve downstream document quality but don&rsquo;t block). In APX-01, the only advisory criterion that slipped was the Tower Metrics Plan — it was defined late in P4, not in P3 as recommended. Ava still picked it up in Tower, but the first week of monitoring required an extra configuration session.
         </BodyP>
       </Section>
     </>

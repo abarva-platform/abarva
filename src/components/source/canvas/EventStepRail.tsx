@@ -1,11 +1,14 @@
-'use client';
+"use client";
 
-import type { CSSProperties } from 'react';
-import { useState } from 'react';
-import Link from 'next/link';
-import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
-import type { SourceStageKey } from '@/lib/source/types';
-import { CANVAS } from './canvas-tokens';
+import type { CSSProperties } from "react";
+import { useState } from "react";
+import Link from "next/link";
+import {
+  SOURCE_STAGE_LABELS,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
+import type { SourceStageKey } from "@/lib/source/types";
+import { CANVAS } from "./canvas-tokens";
 
 interface EventStepRailProps {
   eventId: string;
@@ -23,9 +26,14 @@ interface EventStepRailProps {
  *   - Selected (viewing) overrides current treatment with the strong ring
  *   - Progress line fills behind done + current
  *   - Hover: subtle scale + label color shift
- *   - Click navigates to /source/events/[id]?stage=<key>
+ *   - Every step navigates to /source/events/[id]?stage=<key> for review.
+ *   - Formal advancement still happens only through the Gate promotion action.
  */
-export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRailProps) {
+export function EventStepRail({
+  eventId,
+  currentStage,
+  viewStage,
+}: EventStepRailProps) {
   const currentIdx = SOURCE_STAGE_ORDER.indexOf(currentStage);
   const selectedKey = viewStage ?? currentStage;
   const selectedIdx = SOURCE_STAGE_ORDER.indexOf(selectedKey);
@@ -48,13 +56,15 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
         {SOURCE_STAGE_ORDER.map((stage, i) => {
           const isDone = i < currentIdx;
           const isCurrent = i === currentIdx;
+          const isFuture = i > currentIdx;
           const isSelected = i === selectedIdx;
           const isHover = i === hoverIdx;
 
           // Halo only on the SELECTED step (which is current by default).
           const showHalo = isSelected;
-          const dotBg = isDone || isCurrent ? CANVAS.INK : '#ffffff';
-          const dotBorder = isDone || isCurrent ? CANVAS.INK : CANVAS.RULE_STRONG;
+          const dotBg = isDone || isCurrent ? CANVAS.INK : "#ffffff";
+          const dotBorder =
+            isDone || isCurrent ? CANVAS.INK : CANVAS.RULE_STRONG;
 
           const labelColor = isSelected
             ? CANVAS.INK
@@ -62,20 +72,13 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
               ? CANVAS.INK_2
               : CANVAS.INK_MUTED;
 
-          return (
-            <Link
-              key={stage}
-              href={`/source/events/${eventId}?stage=${stage}`}
-              style={{
-                ...NODE_STYLE,
-                left: `calc(${(i / (SOURCE_STAGE_ORDER.length - 1)) * 100}% - 16px)`,
-              }}
-              onMouseEnter={() => setHoverIdx(i)}
-              onMouseLeave={() => setHoverIdx(null)}
-              title={`${i + 1}. ${SOURCE_STAGE_LABELS[stage]}`}
-              data-testid={`source-canvas-step-${stage}`}
-              aria-current={isCurrent ? 'step' : undefined}
-            >
+          const nodeStyle = {
+            ...NODE_STYLE,
+            left: `${(i / (SOURCE_STAGE_ORDER.length - 1)) * 100}%`,
+            cursor: "pointer",
+          };
+          const nodeBody = (
+            <>
               <span style={DOT_WRAPPER_STYLE}>
                 {showHalo ? <span aria-hidden style={HALO_STYLE} /> : null}
                 <span
@@ -83,7 +86,9 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
                     ...DOT_STYLE,
                     background: dotBg,
                     borderColor: dotBorder,
-                    transform: isHover && !isSelected ? 'scale(1.12)' : 'scale(1)',
+                    transform:
+                      isHover && !isSelected ? "scale(1.12)" : "scale(1)",
+                    opacity: isFuture ? 0.58 : 1,
                   }}
                 />
               </span>
@@ -101,10 +106,29 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
                     fontWeight: isSelected ? 700 : 600,
                   }}
                 >
-                  {String(i + 1).padStart(2, '0')}
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <span style={NAME_STYLE}>{SOURCE_STAGE_LABELS[stage]}</span>
               </span>
+            </>
+          );
+
+          return (
+            <Link
+              key={stage}
+              href={`/source/events/${eventId}?stage=${stage}`}
+              style={nodeStyle}
+              onMouseEnter={() => setHoverIdx(i)}
+              onMouseLeave={() => setHoverIdx(null)}
+              title={
+                isFuture
+                  ? `${i + 1}. ${SOURCE_STAGE_LABELS[stage]} · preview; advance through Gate`
+                  : `${i + 1}. ${SOURCE_STAGE_LABELS[stage]}`
+              }
+              data-testid={`source-canvas-step-${stage}`}
+              aria-current={isCurrent ? "step" : undefined}
+            >
+              {nodeBody}
             </Link>
           );
         })}
@@ -114,17 +138,17 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
 }
 
 const RAIL_STYLE: CSSProperties = {
-  padding: '24px 16px 28px',
+  padding: "24px 16px 32px",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
 const TRACK_STYLE: CSSProperties = {
-  position: 'relative',
-  height: 52,
+  position: "relative",
+  height: 62,
 };
 
 const LINE_STYLE: CSSProperties = {
-  position: 'absolute',
+  position: "absolute",
   top: 9,
   left: 16,
   right: 16,
@@ -134,7 +158,7 @@ const LINE_STYLE: CSSProperties = {
 };
 
 const LINE_DONE_STYLE: CSSProperties = {
-  position: 'absolute',
+  position: "absolute",
   top: 9,
   left: 16,
   height: 2,
@@ -143,57 +167,63 @@ const LINE_DONE_STYLE: CSSProperties = {
 };
 
 const NODE_STYLE: CSSProperties = {
-  position: 'absolute',
+  position: "absolute",
   top: 0,
-  width: 32,
-  display: 'grid',
+  width: 104,
+  minHeight: 62,
+  display: "grid",
   gap: 8,
-  justifyItems: 'center',
-  textDecoration: 'none',
+  justifyItems: "center",
+  alignContent: "start",
+  textDecoration: "none",
   color: CANVAS.INK,
+  transform: "translateX(-50%)",
+  padding: "0 6px",
+  borderRadius: 10,
 };
 
 const DOT_WRAPPER_STYLE: CSSProperties = {
-  position: 'relative',
+  position: "relative",
   width: 20,
   height: 20,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const HALO_STYLE: CSSProperties = {
-  position: 'absolute',
+  position: "absolute",
   inset: 0,
   borderRadius: 999,
   border: `2px solid ${CANVAS.INK}`,
   opacity: 0.18,
-  pointerEvents: 'none',
+  pointerEvents: "none",
 };
 
 const DOT_STYLE: CSSProperties = {
   width: 12,
   height: 12,
   borderRadius: 999,
-  display: 'inline-block',
-  border: '1.5px solid',
-  transition: 'transform 120ms ease, background 120ms ease, border-color 120ms ease',
+  display: "inline-block",
+  border: "1.5px solid",
+  transition:
+    "transform 120ms ease, background 120ms ease, border-color 120ms ease",
 };
 
 const LABEL_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 2,
-  justifyItems: 'center',
+  justifyItems: "center",
   fontFamily: CANVAS.SANS,
   fontSize: 11,
-  whiteSpace: 'nowrap',
-  transition: 'color 120ms ease',
+  whiteSpace: "nowrap",
+  transition: "color 120ms ease",
 };
 
 const NUMBER_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.08em',
+  letterSpacing: "0.08em",
 };
 
 const NAME_STYLE: CSSProperties = {

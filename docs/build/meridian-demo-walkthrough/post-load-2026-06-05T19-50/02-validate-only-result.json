@@ -1,0 +1,651 @@
+{
+  "status": 202,
+  "ok": true,
+  "json": {
+    "ok": true,
+    "mode": "validate_only",
+    "loadName": "meridian-phs-live-reload-2026-06-05",
+    "filesReceived": 26,
+    "filesProcessed": 26,
+    "rowsParsed": 0,
+    "chunksQueued": 0,
+    "blobBucket": "context-uploads",
+    "results": [
+      {
+        "fileName": "ai-tool-footprint.csv",
+        "templateId": "ai-tool-footprint",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/76f82cf4dfe4/ai-tool-footprint.csv",
+          "sha256": "76f82cf4dfe47a2846bc7b3c3b741ebf541af1b06af04740d804ac83a9710409",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "ambient-documentation-pilot.csv",
+        "templateId": "ambient-documentation-pilot",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/5cd962b4fbed/ambient-documentation-pilot.csv",
+          "sha256": "5cd962b4fbed0ad57ce7ffc3c52f71c21a1534951d3d30221c9a4382fe40830b",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "application-portfolio.csv",
+        "templateId": "application-portfolio",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/bb542e99be26/application-portfolio.csv",
+          "sha256": "bb542e99be26999530e8a5f8124116da885ff009d9a951c246e776b41f5e734c",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "clinical-ai-model-inventory.csv",
+        "templateId": "clinical-ai-model-inventory",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/f9f604369f33/clinical-ai-model-inventory.csv",
+          "sha256": "f9f604369f33cc3afddbaa9e3158797356a48b21eea45b3ab88fa7d93d2e1539",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "cms-interoperability.csv",
+        "templateId": "cms-interoperability",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/f27e6baf3c99/cms-interoperability.csv",
+          "sha256": "f27e6baf3c9994f93648ef144118a0eba20b8986217d4059b869ad04ed7185ea",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "data-platform-lineage.csv",
+        "templateId": "data-platform-lineage",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/04871f7a0cda/data-platform-lineage.csv",
+          "sha256": "04871f7a0cdaec595debafd11969408de2eb3e4e5ae22bff8ae35f13ed783811",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "dora-baseline.csv",
+        "templateId": "dora-baseline",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/601612d213d5/dora-baseline.csv",
+          "sha256": "601612d213d5cda88711d2b4cc5956bcfba05390d62909a403c6342cce6f63ce",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "enterprise-profile.yaml",
+        "templateId": "enterprise-profile",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/74d653fd6a99/enterprise-profile.yaml",
+          "sha256": "74d653fd6a99c153e0480e309211ac7d0415b3eb8997ce03e87cb5eedd308e2f",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "epic-module-inventory.csv",
+        "templateId": "epic-module-inventory",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/ef515549c66a/epic-module-inventory.csv",
+          "sha256": "ef515549c66a0bbffbb15b94830cd48f072ac0ed591c2fa141089c3c299052dc",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "governance-committee-decisions.csv",
+        "templateId": "governance-committee-decisions",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/bf8f05b0c1bd/governance-committee-decisions.csv",
+          "sha256": "bf8f05b0c1bdcc3b42285d864c3788a0e065daae8514cf20cf5cd943ece955a3",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "hipaa-ai-controls.csv",
+        "templateId": "hipaa-ai-controls",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/55e4188c1cdc/hipaa-ai-controls.csv",
+          "sha256": "55e4188c1cdc0fad10e542fa8e34e128ec8e7d1f7cc89f717651c9c59064f9c9",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "hl7-fhir-integration-topology.json",
+        "templateId": "hl7-fhir-integration-topology",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/13ca5ceaa496/hl7-fhir-integration-topology.json",
+          "sha256": "13ca5ceaa496aa5b688604c1d0d02232a62f899cb15aa68b299233c7ac9277b8",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "imaging-ai-worklist.csv",
+        "templateId": "imaging-ai-worklist",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/2c09a42d3258/imaging-ai-worklist.csv",
+          "sha256": "2c09a42d32580f855903699386b0871de5b6f842b8330fa5ccb4493a2fe571cb",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "incident-change-history.csv",
+        "templateId": "incident-change-history",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/abd3b7003ef8/incident-change-history.csv",
+          "sha256": "abd3b7003ef8bbde86b95d3df2a796a17b86ac5b5e228784d6a528a5ae89d1e1",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "nursing-workload-acuity.csv",
+        "templateId": "nursing-workload-acuity",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/6625180ac4c6/nursing-workload-acuity.csv",
+          "sha256": "6625180ac4c6f8931babe2313f3cd6f1cf327ca92eb9cdc6724d3a32affc6dc2",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "access-contact-center.csv",
+        "templateId": "patient-access-contact-center",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/6fb1c1d64bfc/access-contact-center.csv",
+          "sha256": "6fb1c1d64bfc12c12ed1c02c6d4646aeed544c43569f8001f441ba4681b8f21b",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "digital-front-door.csv",
+        "templateId": "patient-digital-front-door",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/6c5f4c6821ef/digital-front-door.csv",
+          "sha256": "6c5f4c6821efe273fad7174980c8e685c975fc371937e3ada7a35a91b8db7000",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "population-health-risk-panels.csv",
+        "templateId": "population-health-risk-panels",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/ab8035f8253b/population-health-risk-panels.csv",
+          "sha256": "ab8035f8253b9fbf212d134c599d82fc5ac364ce40269862cdae1f3f97a49ff1",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "prior-auth-workqueue.csv",
+        "templateId": "prior-auth-workqueue",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/9449d29d5d78/prior-auth-workqueue.csv",
+          "sha256": "9449d29d5d789ce0cba51781ba2751d71f14964119a5fe3a5ac1cb35bcc9228b",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "rcm-denials.csv",
+        "templateId": "rcm-denials",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/080ee4e1396b/rcm-denials.csv",
+          "sha256": "080ee4e1396b1d4c0145345ab721330d456bc536589cc6c792d78bb15553cbc0",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "security-downtime-readiness.csv",
+        "templateId": "security-downtime-readiness",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/477c9b34c533/security-downtime-readiness.csv",
+          "sha256": "477c9b34c5331ba8af2157c55f791d4f8a710507e589d3a6e288943ec980b067",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "service-line-pnl.csv",
+        "templateId": "service-line-pnl",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": true,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [
+            {
+              "ruleId": "pii.phone",
+              "label": "US phone number",
+              "severity": "medium",
+              "count": 2
+            }
+          ],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/202d9d25d205/service-line-pnl.csv",
+          "sha256": "202d9d25d20596c2524fe652489e6d6c8250df3736f7793593daf3cc508bdd57",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "supply-chain-pharmacy.csv",
+        "templateId": "supply-chain-pharmacy",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/b3e8cdde2145/supply-chain-pharmacy.csv",
+          "sha256": "b3e8cdde21454d66d41cfcd105994f1e524231af9155de6561a587b8b0a22bd6",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "value-based-care-panel.csv",
+        "templateId": "value-based-care-panel",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/f40c3baf158a/value-based-care-panel.csv",
+          "sha256": "f40c3baf158ae50a7fd09ccf3b2bc06a035b85150d7e403ce5899ea5ba313c8e",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "vendor-baa-contracts.csv",
+        "templateId": "vendor-baa-contracts",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/c3267a34de3d/vendor-baa-contracts.csv",
+          "sha256": "c3267a34de3d2ccc798e7bcc273673390d567468fc216cda417d58a47b12d2ad",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      },
+      {
+        "fileName": "workforce-scheduling.csv",
+        "templateId": "workforce-scheduling",
+        "dataProtection": {
+          "declaredClassification": "confidential_business",
+          "decision": "allow",
+          "storageAllowed": true,
+          "indexingAllowed": true,
+          "evidenceExtractionAllowed": true,
+          "suspectedPhi": false,
+          "suspectedPii": false,
+          "suspectedFinancialIdentifiers": false,
+          "matchedRules": [],
+          "message": "Upload accepted as non-regulated business context. Store, index, and evidence extraction are allowed for this tenant."
+        },
+        "blob": {
+          "bucket": "context-uploads",
+          "path": "meridian-health/meridian-phs-live-reload-2026-06-05/d2f512c396f5/workforce-scheduling.csv",
+          "sha256": "d2f512c396f596b7e832d3cf30a1203858d1d4ce2b1f6bd05bc4d459a3f1f00c",
+          "staged": false
+        },
+        "queue": null,
+        "loadResult": null
+      }
+    ],
+    "persistence": {
+      "status": "validation_only",
+      "detail": "Manifest, files, template mappings, and sensitive-data gate passed. No Blob or context rows were written."
+    }
+  }
+}

@@ -219,7 +219,29 @@ export interface MoveEstimateWorkstreamSection {
   aiBuildCost: number;
   businessChangeCost: number;
   businessChangeFraction: number;
+  aiOpsCost: number;
+  aiOps: MoveEstimateAiOpsSummary | null;
   buildVsChangeNote: string;
+}
+
+export interface MoveEstimateAiOpsSummary {
+  threeYearTotal: number;
+  fiveYearTotal: number;
+  costPerCallUsd: number;
+  costPerDecisionUsd: number | null;
+  decisionUnit: string | null;
+  rateCardAsOf: string;
+  pricingTierShockWarning: string | null;
+  modelTierDriftWarning: string | null;
+  perYear: Array<{
+    year: number;
+    inferenceUsd: number;
+    embeddingUsd: number;
+    evalUsd: number;
+    fineTuneUsd: number;
+    totalUsd: number;
+    tierBreachWarnings: string[];
+  }>;
 }
 
 // --- §4 Rate card & overrides -----------------------------------------------
@@ -601,6 +623,23 @@ function buildWorkstreamEstimate(
     aiBuildCost: bvc.aiBuildCost,
     businessChangeCost: bvc.businessChangeCost,
     businessChangeFraction: bvc.businessChangeFraction,
+    aiOpsCost: bvc.aiOpsCost,
+    aiOps: skeleton.aiOpsCost
+      ? {
+          threeYearTotal: skeleton.aiOpsCost.threeYearTotal,
+          fiveYearTotal: skeleton.aiOpsCost.fiveYearTotal,
+          costPerCallUsd: skeleton.aiOpsCost.unitEconomic.costPerCallUsd,
+          costPerDecisionUsd:
+            skeleton.aiOpsCost.unitEconomic.costPerDecisionUsd ?? null,
+          decisionUnit:
+            skeleton.aiOpsCost.unitEconomic.decisionUnit ?? null,
+          rateCardAsOf: skeleton.aiOpsCost.rateCard.asOf,
+          pricingTierShockWarning:
+            skeleton.aiOpsCost.pricingTierShockWarning,
+          modelTierDriftWarning: skeleton.aiOpsCost.modelTierDriftWarning,
+          perYear: skeleton.aiOpsCost.perYear,
+        }
+      : null,
     buildVsChangeNote: bvc.note,
   };
 }

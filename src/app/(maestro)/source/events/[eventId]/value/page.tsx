@@ -27,7 +27,13 @@ export default async function SourceEventValueProofPage({ params }: PageProps) {
   if (!event) notFound();
   const chainResult = await getValueChain(event.id).then(
     (chain) => ({ chain }),
-    (error) => ({ error: error instanceof Error ? error.message : 'Unknown value-chain load error' }),
+    (error) => {
+      console.error(
+        '[SourceEventValueProofPage] value-chain load failed',
+        error instanceof Error ? error.message : String(error),
+      );
+      return { error: true };
+    },
   );
 
   const states = 'chain' in chainResult ? chainResult.chain.states : [];
@@ -36,7 +42,17 @@ export default async function SourceEventValueProofPage({ params }: PageProps) {
   return (
     <main style={pageStyle}>
       <div style={shellStyle}>
-        <Link href={`/source/events/${event.id}`} style={backLinkStyle}>Source event</Link>
+        <nav style={crumbStyle} aria-label="Source value proof context">
+          <Link href={`/source/events/${event.code}`} style={backLinkStyle}>Source event</Link>
+          <span style={crumbDividerStyle}>/</span>
+          <span>{event.accountName}</span>
+          <span style={crumbDividerStyle}>/</span>
+          <span>{event.code}</span>
+        </nav>
+        <div style={tenantStripStyle}>
+          <span style={tenantBadgeStyle}>{event.accountName}</span>
+          <span>Decision-support only - Evidence-linked - Client locked</span>
+        </div>
         <div style={eyebrowStyle}>Procurement value proof loop</div>
         <header style={headerStyle}>
           <div>
@@ -55,7 +71,10 @@ export default async function SourceEventValueProofPage({ params }: PageProps) {
 
         {'error' in chainResult && (
           <section style={errorStyle}>
-            <strong>Value chain unavailable:</strong> {chainResult.error}
+            <strong>Value proof not loaded yet.</strong> Baseline, negotiated, and
+            realized-value records are not ready for this event. Do not use this
+            page as savings proof until the evidence ledger and finance
+            attestation are populated.
           </section>
         )}
 
@@ -98,9 +117,9 @@ function StateDetails({ state }: { state: SourceValueStateRow }) {
 
 function MissingState({ layer }: { layer: SourceValueStateLayer }) {
   const copy =
-    layer === 'baseline' ? 'Run computeBaseline() after the Source event is created.'
-      : layer === 'intervention' ? 'Recorded when the Source event is confirmed.'
-        : layer === 'negotiated' ? 'Manual negotiated outcome entry or CLM webhook needed.'
+    layer === 'baseline' ? 'Baseline exposure must be loaded from contract, spend, or approved intake evidence.'
+      : layer === 'intervention' ? 'AbarVa intervention is recorded only after the sourcing action is confirmed.'
+        : layer === 'negotiated' ? 'Negotiated outcome requires vendor pricing, terms, or contract evidence.'
           : 'CFO attestation required; realized value cannot be auto-claimed.';
   return <div style={missingStyle}>{copy}</div>;
 }
@@ -117,6 +136,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 const pageStyle = { minHeight: '100vh', background: '#F8F7F4', color: '#111827', padding: '32px 28px 56px' } as const;
 const shellStyle = { maxWidth: 1120, margin: '0 auto' } as const;
 const backLinkStyle = { color: '#4b5563', fontSize: 13, fontWeight: 720, textDecoration: 'none' } as const;
+const crumbStyle = { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', color: '#667085', fontSize: 13, fontWeight: 720 } as const;
+const crumbDividerStyle = { color: '#98a2b3' } as const;
+const tenantStripStyle = { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginTop: 14, color: '#475467', fontSize: 12, fontWeight: 760 } as const;
+const tenantBadgeStyle = { border: '1px solid #c7d7fe', borderRadius: 999, background: '#eef4ff', color: '#1d4ed8', padding: '5px 10px', fontWeight: 900 } as const;
 const eyebrowStyle = { marginTop: 12, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#667085', fontWeight: 800 } as const;
 const headerStyle = { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: 24, alignItems: 'start', marginBottom: 22 } as const;
 const titleStyle = { margin: '8px 0 8px', fontFamily: 'Georgia, serif', fontSize: 42, lineHeight: 1.06, fontWeight: 400 } as const;

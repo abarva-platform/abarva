@@ -5,6 +5,7 @@
 
 import { redirect } from 'next/navigation';
 import { IntelligenceSolutionDetailPage } from '@/components/intelligence/IntelligenceSolutionDetailPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligenceSolutionDetailView,
   getKnownSolutionIds,
@@ -37,5 +38,14 @@ export default async function SolutionDetailRoute({
     redirect('/intelligence/solutions');
   }
 
-  return <IntelligenceSolutionDetailPage view={view} />;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  return (
+    <IntelligenceSolutionDetailPage
+      view={view}
+      tenantName={activeClient?.name ?? 'Client workspace'}
+    />
+  );
 }
+
+// Per-request render (tenant-scoped reads / useSearchParams CSR bailout) — no static prerender.
+export const dynamic = 'force-dynamic';

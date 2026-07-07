@@ -1,0 +1,14 @@
+asset_name,class,make_model,location,capacity,virtualization,cloud_account,owner,source
+dc-chicago-primary,datacenter,Owned DC (Chicago HQ),"Chicago, IL",~120 racks,—,—,Holdco IT Ops,illustrative-sample
+dc-columbus-colo,datacenter,Colo (Northline DR/secondary),"Columbus, OH",~30 racks,—,—,Northline IT,illustrative-sample
+vsphere-clu-chi-01,virtualization,VMware vSphere 8,dc-chicago-primary,48 vCPU x 6 hosts,VMware vSphere,—,Holdco IT Ops,illustrative-sample
+vsphere-clu-chi-02,virtualization,VMware vSphere 7,dc-chicago-primary,40 vCPU x 4 hosts,VMware vSphere,—,Northline IT,illustrative-sample
+esx-host-chi-pe-r750,compute,Dell PowerEdge R750,dc-chicago-primary,2x Xeon Gold / 768GB RAM,VMware vSphere,—,Holdco IT Ops,illustrative-sample
+esx-host-cmh-pe-r740,compute,Dell PowerEdge R740,dc-columbus-colo,2x Xeon Silver / 384GB RAM,VMware vSphere,—,Northline IT,illustrative-sample
+netapp-san-chi-01,storage,NetApp AFF A400,dc-chicago-primary,~240 TB usable,—,—,Holdco IT Ops,illustrative-sample
+netapp-nas-chi-fileshare,storage,NetApp FAS (EUC fileshare),dc-chicago-primary,~80 TB usable,—,—,Holdco IT Ops,illustrative-sample
+core-switch-chi-cisco,network,Cisco Nexus 9300,dc-chicago-primary,40GbE core,—,—,Holdco IT Ops,illustrative-sample
+azure-sub-lakeshore-prod,cloud_account,Azure Subscription (EA),Azure East US 2,emerging cloud footprint,—,azure-sub-lakeshore-prod,Surekha (VP Innovation/Delivery),illustrative-sample
+entra-id-holdco,identity,Microsoft Entra ID,Azure (global),~10k identities,—,azure-sub-lakeshore-prod,Meera Rao (Global CIO),illustrative-sample
+ad-forest-northline,identity,Windows Server AD DS,dc-columbus-colo,~6k identities,—,—,Northline IT,illustrative-sample
+okta-brightmark,identity,Okta,vendor_hosted,~2.5k identities,—,—,Brightmark IT Lead,illustrative-sample

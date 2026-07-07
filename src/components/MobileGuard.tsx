@@ -1,19 +1,32 @@
 'use client'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function MobileGuard({ children }: { children: React.ReactNode }) {
   const [blocked, setBlocked] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     // Don't block when embedded in an iframe (e.g. demo guided walkthrough)
     if (window.self !== window.top) return
+    // Keep the public marketing and access-status pages available on phones.
+    // The signed-in product surfaces remain desktop/tablet-first.
+    const publicMobileAllowed =
+      pathname === '/' ||
+      pathname === '/signed-out' ||
+      pathname === '/forbidden' ||
+      pathname === '/access-denied'
+    if (publicMobileAllowed) {
+      setBlocked(false)
+      return
+    }
     // Only block actual mobile devices — not desktop browsers with DevTools open
     const isMobileUA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     const check = () => setBlocked(isMobileUA && window.innerWidth < 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
-  }, [])
+  }, [pathname])
 
   if (!blocked) return <>{children}</>
 

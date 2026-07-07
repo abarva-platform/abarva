@@ -11,9 +11,13 @@
 // and applies each artifact incrementally so the right pane materializes
 // the agent's reasoning as it happens.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
+import {
+  INTELLIGENCE_PROMOTION_RATIONALE_MIN_CHARS,
+  requiresIntelligencePromotionGate,
+} from '@/lib/programs/intelligence-promotion-approval';
 import type {
   Artifact,
   BriefProgressArtifact,
@@ -26,6 +30,8 @@ import {
   type ProgramBriefDraft,
   type PatternMatchCard,
 } from './ProgramBriefPanel';
+import { DiscoveryCapturePanel } from '../discovery/DiscoveryCapturePanel';
+import { briefToDiscoveryShape } from '../discovery/brief-to-shape';
 import { StewardChat, type ChatTurn } from './StewardChat';
 import { buildBriefSnapshot } from './types';
 
@@ -183,6 +189,9 @@ export interface ProgramOriginationWorkspaceProps {
   tenantName: string;
   initialTurns: ChatTurn[];
   originatingIntelligenceSessionId?: string | null;
+  /** Discovery Intake (S6): when true, render the discovery capture panel from
+   *  the brief. Computed server-side from `discovery_intake_v2`. Default off. */
+  discoveryIntakeEnabled?: boolean;
 }
 
 const DRAFT_SESSION_STORAGE_PREFIX = 'abarva.program_origination.session';
@@ -364,6 +373,7 @@ export function ProgramOriginationWorkspace({
   tenantName,
   initialTurns,
   originatingIntelligenceSessionId = null,
+  discoveryIntakeEnabled = false,
 }: ProgramOriginationWorkspaceProps) {
   const router = useRouter();
   const [briefState, setBriefState] = useState<OriginationBriefState>(EMPTY_BRIEF_STATE);
@@ -375,6 +385,8 @@ export function ProgramOriginationWorkspace({
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [promotionRationale, setPromotionRationale] = useState('');
+  const [promotionApproved, setPromotionApproved] = useState(false);
 
   useEffect(() => {
     try {
@@ -473,6 +485,23 @@ export function ProgramOriginationWorkspace({
     setTurns(next);
   }, []);
 
+  const promotionEvidenceRefs = useMemo(
+    () =>
+      [
+        originatingIntelligenceSessionId
+          ? `sourceThreadId:${originatingIntelligenceSessionId}`
+          : null,
+        briefState.brief.matchedPatternId
+          ? `selectedPatternKey:${briefState.brief.matchedPatternId}`
+          : null,
+      ].filter((ref): ref is string => Boolean(ref)),
+    [briefState.brief.matchedPatternId, originatingIntelligenceSessionId],
+  );
+  const promotionGateRequired = requiresIntelligencePromotionGate({
+    originatingIntelligenceSessionId,
+    matchedPatternId: briefState.brief.matchedPatternId,
+  });
+
   const submitBriefForApproval = useCallback(async () => {
     const brief = briefState.brief;
     setSubmitting(true);
@@ -492,6 +521,15 @@ export function ProgramOriginationWorkspace({
           sponsor: brief.sponsor,
           lead: brief.lead,
           originatingIntelligenceSessionId,
+          humanPromotionRationale: promotionGateRequired
+            ? promotionRationale.trim()
+            : null,
+          humanPromotionAccepted: promotionGateRequired
+            ? promotionApproved
+            : null,
+          promotionEvidenceRefs: promotionGateRequired
+            ? promotionEvidenceRefs
+            : null,
           decisionThreadTitle: brief.programName || brief.problemStatement || null,
           decisionThreadOwnerRole: brief.sponsor || null,
         }),
@@ -535,7 +573,16 @@ export function ProgramOriginationWorkspace({
     } finally {
       setSubmitting(false);
     }
-  }, [briefState.brief, originatingIntelligenceSessionId, router, surface]);
+  }, [
+    briefState.brief,
+    originatingIntelligenceSessionId,
+    promotionEvidenceRefs,
+    promotionApproved,
+    promotionGateRequired,
+    promotionRationale,
+    router,
+    surface,
+  ]);
 
   const operatorChecklist = buildOperatorChecklist({ tenantName, turns, briefState });
 
@@ -656,6 +703,12 @@ export function ProgramOriginationWorkspace({
           briefSnapshot={buildBriefSnapshot(briefState.brief)}
           originatingIntelligenceSessionId={originatingIntelligenceSessionId}
         />
+        {/* Discovery Intake (S6) · capture panel from the brief, flag-gated. */}
+        {discoveryIntakeEnabled && (
+          <div style={{ marginBottom: 12 }}>
+            <DiscoveryCapturePanel shape={briefToDiscoveryShape(briefState.brief)} />
+          </div>
+        )}
         {/* OV2-1c · No `patternMatch` prop on /programs/new (founder feedback). */}
         {/* OV2-1b · Brief Progress + Overlap Alerts surface as cards above field rows. */}
         <ProgramBriefPanel
@@ -665,6 +718,22 @@ export function ProgramOriginationWorkspace({
           registering={submitting}
           submitError={submitError}
           onSubmitForApproval={submitBriefForApproval}
+          promotionApproval={
+            promotionGateRequired
+              ? {
+                  required: true,
+                  sourceThreadId: originatingIntelligenceSessionId,
+                  selectedPatternKey: briefState.brief.matchedPatternId,
+                  evidenceRefs: promotionEvidenceRefs,
+                  rationale: promotionRationale,
+                  minimumRationaleChars:
+                    INTELLIGENCE_PROMOTION_RATIONALE_MIN_CHARS,
+                  approved: promotionApproved,
+                  onRationaleChange: setPromotionRationale,
+                  onApprovedChange: setPromotionApproved,
+                }
+              : null
+          }
         />
       </div>
     </main>

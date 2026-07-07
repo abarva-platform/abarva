@@ -1,0 +1,130 @@
+name: Corpus Wave A production load
+
+on:
+  workflow_dispatch:
+
+jobs:
+  load-wave-a:
+    name: Load Wave A genome seeds and report counts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Guard database secret
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL repository secret is missing or empty." >&2
+            exit 1
+          fi
+
+      - name: Load Wave A genome seed files
+        run: |
+          npx tsx scripts/corpus/load-authored-genome-seeds.ts \
+            src/scripts/seed/seed-banking-dom16-operational-risk-part1.ts \
+            src/scripts/seed/seed-banking-dom17-liquidity-risk-part1.ts \
+            src/scripts/seed/seed-medtech-dom04-samd-part7.ts \
+            src/scripts/seed/seed-medtech-dom05-cybersecurity-part6.ts \
+            src/scripts/seed/seed-medtech-dom08-supply-chain-part6.ts \
+            src/scripts/seed/seed-medtech-dom11-sales-hcp-part5.ts \
+            src/scripts/seed/seed-healthcare-dom08-pharmacy-services-part1.ts \
+            src/scripts/seed/seed-healthcare-dom09-care-transitions-part1.ts \
+            src/scripts/seed/seed-healthcare-dom10-clinical-quality-part1.ts \
+            src/scripts/seed/seed-healthcare-dom11-infection-control-part1.ts
+
+      - name: Report genome pattern counts by vertical and domain
+        run: |
+          node <<'NODE'
+          const { Pool } = require('pg');
+
+          const pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            max: 1,
+            idleTimeoutMillis: 5000,
+            connectionTimeoutMillis: 5000,
+            ssl: { rejectUnauthorized: false },
+          });
+
+          async function query(sql, params = []) {
+            const result = await pool.query(sql, params);
+            return result.rows;
+          }
+
+          function table(rows, columns) {
+            const widths = columns.map((column) =>
+              Math.max(column.length, ...rows.map((row) => String(row[column] ?? '').length)),
+            );
+            const line = columns.map((column, index) => column.padEnd(widths[index])).join(' | ');
+            const sep = widths.map((width) => '-'.repeat(width)).join('-|-');
+            console.log(line);
+            console.log(sep);
+            for (const row of rows) {
+              console.log(columns.map((column, index) => String(row[column] ?? '').padEnd(widths[index])).join(' | '));
+            }
+          }
+
+          (async () => {
+            const verticalCounts = await query(`
+              SELECT
+                COALESCE(vertical, 'unknown') AS vertical,
+                COUNT(*)::int AS patterns,
+                COUNT(*) FILTER (WHERE is_active)::int AS active_patterns,
+                COUNT(*) FILTER (WHERE COALESCE((data->>'demo_relevant')::boolean, false))::int AS demo_relevant_patterns
+              FROM public.genome_patterns
+              GROUP BY 1
+              ORDER BY patterns DESC, vertical ASC
+            `);
+
+            const domainCounts = await query(`
+              SELECT
+                COALESCE(vertical, 'unknown') AS vertical,
+                COALESCE(office_category, sub_category, 'unknown') AS domain,
+                COUNT(*)::int AS patterns,
+                ROUND(AVG(failure_rate_pct)::numeric, 2)::text AS avg_failure_rate_pct
+              FROM public.genome_patterns
+              GROUP BY 1, 2
+              ORDER BY vertical ASC, patterns DESC, domain ASC
+            `);
+
+            const waveACounts = await query(`
+              SELECT
+                COALESCE(vertical, 'unknown') AS vertical,
+                COALESCE(data->>'seeded_by', 'unknown') AS seed_file,
+                COUNT(*)::int AS patterns
+              FROM public.genome_patterns
+              WHERE code BETWEEN 'B5000' AND 'B5119'
+                 OR code BETWEEN 'M2350' AND 'M2589'
+                 OR code BETWEEN 'H2000' AND 'H2239'
+              GROUP BY 1, 2
+              ORDER BY vertical ASC, seed_file ASC
+            `);
+
+            console.log('## Genome pattern counts by vertical');
+            table(verticalCounts, ['vertical', 'patterns', 'active_patterns', 'demo_relevant_patterns']);
+            console.log('');
+            console.log('## Wave A loaded rows by seed file');
+            table(waveACounts, ['vertical', 'seed_file', 'patterns']);
+            console.log('');
+            console.log('## Genome pattern counts by vertical/domain');
+            table(domainCounts, ['vertical', 'domain', 'patterns', 'avg_failure_rate_pct']);
+
+            await pool.end();
+          })().catch(async (error) => {
+            console.error(error.message);
+            await pool.end().catch(() => undefined);
+            process.exit(1);
+          });
+          NODE

@@ -17,14 +17,14 @@
 // route layer reads data through the existing read-adapter seam and
 // hands plain inputs to `buildCrossModuleTrace`.
 
-import type { StrategicMove } from './types.ui';
-import type { OutcomeLedgerRow } from '@/lib/tower/outcome-ledger/types';
-import type { ControlEvalMatrix } from '@/lib/programs/controls/control-eval-matrix';
+import type { StrategicMove } from "./types.ui";
+import type { OutcomeLedgerRow } from "@/lib/tower/outcome-ledger/types";
+import type { ControlEvalMatrix } from "@/lib/programs/controls/control-eval-matrix";
 import {
   buildSr117ControlDeliverable,
   isSr117RegulatedTenant,
   type Sr117ControlDeliverable,
-} from '@/lib/programs/regulatory/sr-11-7-control-deliverable';
+} from "@/lib/programs/regulatory/sr-11-7-control-deliverable";
 
 /**
  * The minimal Source-event shape the trace ID-joins on. A projection
@@ -45,10 +45,10 @@ export interface TraceSourceEvent {
 
 /** The four surfaces the trace stitches together, in loop order. */
 export const TRACE_MODULES = [
-  'intelligence',
-  'move',
-  'source',
-  'tower',
+  "intelligence",
+  "move",
+  "source",
+  "tower",
 ] as const;
 
 export type TraceModule = (typeof TRACE_MODULES)[number];
@@ -60,7 +60,7 @@ export type TraceModule = (typeof TRACE_MODULES)[number];
  * - `not_yet_linked` — the loop hand-off is not yet wired; the step is
  *                      shown honestly as a gap, not fabricated.
  */
-export type TraceLinkState = 'linked' | 'not_yet_linked';
+export type TraceLinkState = "linked" | "not_yet_linked";
 
 /** One row in the joined evidence trail. */
 export interface TraceStep {
@@ -111,23 +111,23 @@ export interface CrossModuleTrace {
    * `coherent` — every hand-off wired; `partial` — some wired;
    * `unwired` — none of the cross-module hand-offs are wired.
    */
-  readonly coherence: 'coherent' | 'partial' | 'unwired';
+  readonly coherence: "coherent" | "partial" | "unwired";
 }
 
 const MODULE_LABELS: Record<TraceModule, string> = {
-  intelligence: 'Intelligence',
-  move: 'Move',
-  source: 'Source',
-  tower: 'Tower',
+  intelligence: "Intelligence",
+  move: "Move",
+  source: "Source",
+  tower: "Tower",
 };
 
 /** The shaping artifacts a Move carries, surfaced as one trace detail. */
 const SHAPING_TYPE_KEYS = [
-  'suitability',
-  'decomposition',
-  'architecture',
-  'controls',
-  'mobilization',
+  "suitability",
+  "decomposition",
+  "architecture",
+  "controls",
+  "mobilization",
 ] as const;
 
 /** Inputs the route gathers and hands to the pure builder. */
@@ -165,10 +165,10 @@ function intelligenceStep(move: StrategicMove): TraceStep {
   );
   if (betEvidence) {
     return {
-      module: 'intelligence',
+      module: "intelligence",
       moduleLabel: MODULE_LABELS.intelligence,
-      artifactKind: 'Originating bet / pattern',
-      linkState: 'linked',
+      artifactKind: "Originating bet / pattern",
+      linkState: "linked",
       title: betEvidence.anchor,
       detail: betEvidence.summary,
       joinId: betEvidence.id,
@@ -178,16 +178,16 @@ function intelligenceStep(move: StrategicMove): TraceStep {
     };
   }
   return {
-    module: 'intelligence',
+    module: "intelligence",
     moduleLabel: MODULE_LABELS.intelligence,
-    artifactKind: 'Originating bet / pattern',
-    linkState: 'not_yet_linked',
-    title: 'No bet-brief artifact deep-links into this Move',
+    artifactKind: "Originating bet / pattern",
+    linkState: "not_yet_linked",
+    title: "No bet-brief artifact deep-links into this Move",
     detail:
-      'The Intelligence pattern-to-Move funnel renders for the tenant, but no discrete bet-brief artifact carries a deep-link into this Move yet.',
+      "The Intelligence pattern-to-Move funnel renders for the tenant, but no discrete bet-brief artifact carries a deep-link into this Move yet.",
     joinId: null,
     href: null,
-    gapRef: 'GAP-1',
+    gapRef: "GAP-1",
     regulatoryDeliverable: null,
   };
 }
@@ -220,10 +220,10 @@ function moveStep(input: CrossModuleTraceInput): TraceStep {
   );
   const shapingLabel =
     shaping.length > 0
-      ? `${shaping.length} shaping artifact${shaping.length === 1 ? '' : 's'}: ${shaping
+      ? `${shaping.length} shaping artifact${shaping.length === 1 ? "" : "s"}: ${shaping
           .map((d) => d.title)
-          .join(', ')}`
-      : 'No suitability / decomposition / architecture / controls / mobilization artifact is present yet.';
+          .join(", ")}`
+      : "No suitability / decomposition / architecture / controls / mobilization artifact is present yet.";
 
   const regulatoryDeliverable = resolveRegulatoryDeliverable(input);
   // For a regulated tenant, the SR 11-7 control matrix is a first-class
@@ -231,13 +231,13 @@ function moveStep(input: CrossModuleTraceInput): TraceStep {
   // so the model-risk gap is legible without opening the deliverable.
   const regulatoryLabel = regulatoryDeliverable
     ? ` ${regulatoryDeliverable.title}: ${regulatoryDeliverable.satisfiedCount}/${regulatoryDeliverable.lines.length} SR 11-7 expectations satisfied (${regulatoryDeliverable.readiness}).`
-    : '';
+    : "";
 
   return {
-    module: 'move',
+    module: "move",
     moduleLabel: MODULE_LABELS.move,
     artifactKind: "Move & shaping artifacts",
-    linkState: 'linked',
+    linkState: "linked",
     title: `${move.displayCode} · ${move.name}`,
     detail: `${move.phaseLabel} · ${move.status.text}. ${shapingLabel}${regulatoryLabel}`,
     joinId: move.id,
@@ -256,10 +256,10 @@ function sourceStep(input: CrossModuleTraceInput): TraceStep {
   );
   if (linked) {
     return {
-      module: 'source',
+      module: "source",
       moduleLabel: MODULE_LABELS.source,
-      artifactKind: 'Source hand-off / event',
-      linkState: 'linked',
+      artifactKind: "Source hand-off / event",
+      linkState: "linked",
       title: `${linked.code} · ${linked.name}`,
       detail: `${linked.currentStageLabel} · ${linked.statusLabel}. ${linked.nextAction}`,
       joinId: linked.id,
@@ -269,16 +269,16 @@ function sourceStep(input: CrossModuleTraceInput): TraceStep {
     };
   }
   return {
-    module: 'source',
+    module: "source",
     moduleLabel: MODULE_LABELS.source,
-    artifactKind: 'Source hand-off / event',
-    linkState: 'not_yet_linked',
-    title: 'No Source event is linked to this Move',
+    artifactKind: "Source hand-off / event",
+    linkState: "not_yet_linked",
+    title: "No Source event is linked to this Move",
     detail:
-      'The Move names a sourcing-strategy deliverable, but no Source event carries this Move as its linked program. The Move-to-Source trigger is not yet wired.',
+      "Source brief preparation can be tracked in the Move, but sourcing workflow activation is not configured for this demo Move. No Source event carries this Move as its linked program.",
     joinId: null,
     href: null,
-    gapRef: 'GAP-2 / GAP-3',
+    gapRef: "GAP-2 / GAP-3",
     regulatoryDeliverable: null,
   };
 }
@@ -288,16 +288,16 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
   // an outcome-ledger entry for the Move. ID-join: ledger entry whose
   // subjectKind is 'move' and subjectRef is the Move id.
   const ledger = input.outcomeEntries.find(
-    (e) => e.subjectKind === 'move' && e.subjectRef === input.move.id,
+    (e) => e.subjectKind === "move" && e.subjectRef === input.move.id,
   );
   if (ledger) {
     return {
-      module: 'tower',
+      module: "tower",
       moduleLabel: MODULE_LABELS.tower,
-      artifactKind: 'Tower outcome-ledger entry',
-      linkState: 'linked',
-      title: ledger.subjectLabel || 'Outcome ledger entry',
-      detail: `Value rung: ${ledger.valueRung.replace(/_/g, ' ')} · governance: ${ledger.governanceReviewStatus.replace(/_/g, ' ')}.`,
+      artifactKind: "Tower outcome-ledger entry",
+      linkState: "linked",
+      title: ledger.subjectLabel || "Outcome ledger entry",
+      detail: `Value rung: ${ledger.valueRung.replace(/_/g, " ")} · governance: ${ledger.governanceReviewStatus.replace(/_/g, " ")}.`,
       joinId: ledger.id,
       href: '/tower',
       gapRef: null,
@@ -305,16 +305,16 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
     };
   }
   return {
-    module: 'tower',
+    module: "tower",
     moduleLabel: MODULE_LABELS.tower,
-    artifactKind: 'Tower outcome-ledger entry',
-    linkState: 'not_yet_linked',
-    title: 'No outcome-ledger entry records this Move',
+    artifactKind: "Tower outcome-ledger entry",
+    linkState: "not_yet_linked",
+    title: "No outcome-ledger entry records this Move",
     detail:
-      'The Tower outcome ledger has no projected -> tracked -> verified entry for this Move, so the Source-to-Tower and Tower-to-Context hand-offs cannot be traced.',
+      "Tower handoff package preparation can be tracked in the Move, but live Tower tracking activation is not configured for this demo Move. The Tower outcome ledger has no projected -> tracked -> verified entry for this Move.",
     joinId: null,
     href: null,
-    gapRef: 'GAP-4 / GAP-5',
+    gapRef: "GAP-4 / GAP-5",
     regulatoryDeliverable: null,
   };
 }
@@ -334,22 +334,22 @@ export function buildCrossModuleTrace(
     towerStep(input),
   ];
 
-  const linkedCount = steps.filter((s) => s.linkState === 'linked').length;
+  const linkedCount = steps.filter((s) => s.linkState === "linked").length;
   const unlinkedCount = steps.length - linkedCount;
 
   // The Move step is always linked (it is the anchor); coherence is a
   // read on the three cross-module hand-offs around it.
   const crossModuleLinked = steps
-    .filter((s) => s.module !== 'move')
-    .filter((s) => s.linkState === 'linked').length;
+    .filter((s) => s.module !== "move")
+    .filter((s) => s.linkState === "linked").length;
   const crossModuleTotal = steps.length - 1;
-  let coherence: CrossModuleTrace['coherence'];
+  let coherence: CrossModuleTrace["coherence"];
   if (crossModuleLinked === crossModuleTotal) {
-    coherence = 'coherent';
+    coherence = "coherent";
   } else if (crossModuleLinked === 0) {
-    coherence = 'unwired';
+    coherence = "unwired";
   } else {
-    coherence = 'partial';
+    coherence = "partial";
   }
 
   return {

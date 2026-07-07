@@ -1,0 +1,267 @@
+{
+  "version": "2026-06",
+  "statusDate": "2026-06-15",
+  "mutationApprovalFile": "docs/approvals/AZURE_MUTATION_APPROVED.md",
+  "approvalTemplate": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
+  "nextApprovalRequestPacket": "docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md",
+  "models": {
+    "productControlPlane": [
+      "product-dev",
+      "product-preview",
+      "product-prod"
+    ],
+    "clientPrivateDataPlane": [
+      "client-preprod",
+      "client-prod"
+    ]
+  },
+  "progress": {
+    "totalItems": 22,
+    "completeItems": 15,
+    "scaffoldReadyItems": 5,
+    "humanGatedExecutionItems": 2,
+    "strictCompletionPercent": 68.2,
+    "effectiveProgressPercent": 81.6,
+    "productDevAzureExecutionPercent": 75,
+    "productDevSubscriptionId": "58eef48c-3ed6-48e6-9af4-de1848ad3401",
+    "productDevExecutionSummary": "docs/build/azure/2026-06-15-product-dev-finish/summary.md",
+    "costCircuitBreakerEvidence": "docs/build/azure/2026-06-15-product-dev-finish/cost-circuit-breaker/cost-circuit-breaker-report.md",
+    "productPreviewExecutionSummary": "docs/build/azure/2026-06-15-product-preview-execution/summary.md",
+    "productPreviewAzureExecutionPercent": 5
+  },
+  "hardRules": [
+    "no_subscription_creation_without_approval_file",
+    "no_real_azure_deployment_without_approval_file",
+    "no_broad_rbac_without_approval_file",
+    "no_budget_creation_or_increase_without_approval_file",
+    "no_dns_change_without_approval_file",
+    "no_client_prod_data_action_without_approval_file",
+    "no_phi",
+    "no_unapproved_pii"
+  ],
+  "items": [
+    {
+      "id": "ENV-01",
+      "area": "Environment strategy / operating model",
+      "model": "both",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/ABARVA_ENVIRONMENT_FACTORY_2026-06.md",
+      "validationCommand": "npm run azure:environment-factory:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-02",
+      "area": "Product 3-subscription model",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/ENVIRONMENT_FACTORY_MANIFEST_2026-06.json",
+      "validationCommand": "npm run azure:environment-factory:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-03",
+      "area": "Client private-plane model",
+      "model": "client",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/ENVIRONMENT_FACTORY_MANIFEST_2026-06.json",
+      "validationCommand": "npm run azure:environment-factory:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-04",
+      "area": "Naming, tagging, budget rules",
+      "model": "both",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/ENVIRONMENT_NAMING_TAGGING_BUDGETS_2026-06.md",
+      "validationCommand": "npm run azure:environment-cost-controls:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-05",
+      "area": "Identity / RBAC model",
+      "model": "both",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/ENVIRONMENT_IDENTITY_RBAC_MODEL_2026-06.md",
+      "validationCommand": "npm run azure:environment-rbac:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-06",
+      "area": "Subscription vending runbook",
+      "model": "both",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/ENVIRONMENT_SUBSCRIPTION_VENDING_RUNBOOK_2026-06.md",
+      "validationCommand": "npm run azure:environment-vending:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-07",
+      "area": "Baseline environment factory design",
+      "model": "both",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/ENVIRONMENT_FACTORY_MANIFEST_2026-06.json",
+      "validationCommand": "npm run azure:environment-factory:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-08",
+      "area": "Product Dev provisioning packet",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/PRODUCT_DEV_PROVISIONING_PACKET_2026-06.md",
+      "validationCommand": "npm run azure:product-dev-provisioning:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-09",
+      "area": "Product Dev CI/CD packet",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/PRODUCT_DEV_CICD_PACKET_2026-06.md",
+      "validationCommand": "npm run azure:product-dev-cicd:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-10",
+      "area": "Product Dev synthetic data baseline",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/PRODUCT_DEV_SYNTHETIC_DATA_BASELINE_2026-06.md",
+      "validationCommand": "npm run azure:product-dev-synthetic-data:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-11",
+      "area": "Product Preview provisioning packet",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/environments/product-preview/provisioning-packet.md",
+      "validationCommand": "npm run azure:product-preview-provisioning:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-12",
+      "area": "Product Preview release-candidate gates",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/release/product-preview-rc-gates.md",
+      "validationCommand": "npm run azure:product-preview-rc-gates:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-13",
+      "area": "Product Preview E2E rehearsal",
+      "model": "product",
+      "status": "Scaffold-ready",
+      "percentComplete": 50,
+      "artifactPath": "docs/azure/PRODUCT_PREVIEW_E2E_REHEARSAL_2026-06.md",
+      "validationCommand": "npm run azure:product-preview-e2e-rehearsal:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-14",
+      "area": "Product Prod provisioning packet",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/PRODUCT_PROD_PROVISIONING_PACKET_2026-06.md",
+      "validationCommand": "npm run azure:product-prod-provisioning:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-15",
+      "area": "Product Prod cutover packet",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/PRODUCT_PROD_CUTOVER_PACKET_2026-06.md",
+      "validationCommand": "npm run azure:product-prod-cutover:verify",
+      "humanGated": true
+    },
+    {
+      "id": "ENV-16",
+      "area": "Product baseline what-if packet",
+      "model": "product",
+      "status": "Complete",
+      "percentComplete": 100,
+      "artifactPath": "docs/azure/PRODUCT_BASELINE_WHATIF_PACKET_2026-06.md",
+      "validationCommand": "npm run azure:product-baseline-whatif:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-17",
+      "area": "Client private-plane factory",
+      "model": "client",
+      "status": "Scaffold-ready",
+      "percentComplete": 50,
+      "artifactPath": "docs/environments/client-private-plane/factory.md",
+      "validationCommand": "npm run azure:client-private-plane-factory:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-18",
+      "area": "Client data onboarding process",
+      "model": "client",
+      "status": "Scaffold-ready",
+      "percentComplete": 50,
+      "artifactPath": "docs/environments/client-private-plane/data-onboarding.md",
+      "validationCommand": "npm run azure:client-data-onboarding:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-19",
+      "area": "First client preprod rehearsal packet",
+      "model": "client",
+      "status": "Scaffold-ready",
+      "percentComplete": 50,
+      "artifactPath": "docs/environments/client-private-plane/first-client-preprod-rehearsal.md",
+      "validationCommand": "npm run azure:client-preprod-rehearsal:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-20",
+      "area": "Client prod go/no-go packet",
+      "model": "client",
+      "status": "Scaffold-ready",
+      "percentComplete": 50,
+      "artifactPath": "docs/environments/client-private-plane/client-prod-go-no-go.md",
+      "validationCommand": "npm run azure:client-prod-go-no-go:verify",
+      "humanGated": true
+    },
+    {
+      "id": "ENV-21",
+      "area": "Operating cadence packet",
+      "model": "both",
+      "status": "Scaffold-ready",
+      "percentComplete": 50,
+      "artifactPath": "docs/operating-model/azure-environment-cadence.md",
+      "validationCommand": "npm run azure:operating-cadence:verify",
+      "humanGated": false
+    },
+    {
+      "id": "ENV-22",
+      "area": "Actual Azure subscription creation and baseline provisioning",
+      "model": "both",
+      "status": "In progress",
+      "percentComplete": 45,
+      "artifactPath": "docs/build/azure/2026-06-15-product-dev-finish/summary.md",
+      "validationCommand": "approval-file review plus Azure exports",
+      "approvalRequestPacket": "docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md",
+      "approvalTemplate": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
+      "humanGated": true,
+      "blocker": "Product Dev subscription/RG/KV/budget/cost guard/runtime smoke done; Product Preview subscription creation blocked by Azure TooManyRequests; management group, policy baseline, GitHub secrets, real app deploy, and synthetic rehearsal pending"
+    }
+  ]
+}

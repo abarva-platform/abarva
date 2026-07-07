@@ -225,7 +225,7 @@ function renderMarkdown(results, options) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const baseUrl = args.get('base-url') || process.env.BASE_URL || 'https://app.abarva.ai';
-  const personaEmail = args.get('persona-email') || process.env.APEX_PERSONA_EMAIL || 'cio@apex-retail.example.com';
+  const personaEmail = args.get('persona-email') || process.env.APEX_PERSONA_EMAIL || 'apexretail-agent@abarva.example.com';
   const outDir = path.resolve(REPO_ROOT, args.get('out-dir') || 'audit-artifacts/retail-overlay-expert-gauntlet');
   const rawDir = path.join(outDir, 'raw-events');
   const runId = `retail-overlay-expert-gauntlet-${new Date().toISOString().replace(/[:.]/g, '-')}-${crypto.randomUUID()}`;

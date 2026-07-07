@@ -1,0 +1,9 @@
+tower,band_or_model,y1_usd_m,y2_usd_m,y3_usd_m,y4_usd_m,y5_usd_m,notes
+Application Support,Fixed + ticket collar A-03,159.8,155.0,148.6,142.2,137.4,
+Infrastructure Ops,Volume-banded per A-04/A-06/A-07,48.0,46.6,44.6,42.7,41.3,
+Service Desk,Volume-banded per A-04/A-06/A-07,28.6,27.7,26.6,25.4,24.6,
+EUC & Field Services,Volume-banded per A-04/A-06/A-07,22.2,21.6,20.7,19.8,19.1,
+Network Ops,Fixed + ticket collar A-03,10.5,10.2,9.8,9.3,9.0,
+Cross-tower SRE/Automation,Fixed + ticket collar A-03,10.2,9.9,9.5,9.1,8.8,
+Transition,One-time,21.5,0,0,0,0,invoiced as incurred (EXCEPTION to A-11)
+Platform,ExperienceIQ analytics (mandatory),4.2,4.2,4.2,4.2,4.2,Challenges A-10

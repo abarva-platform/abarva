@@ -127,7 +127,7 @@ export function AdminTenantTab({ config }: Props) {
             lineHeight: 1,
           }}
         >
-          Setup · Tenant
+          Admin · Tenant
         </div>
         <h2
           style={{

@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tower Federated Command Center · L0 Sponsor Surface</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --ink-faint: #6b7280;
+    --rule: #e5e1d8;
+    --rule-strong: #d4cdbe;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'SF Mono', Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 64px 96px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 42px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 28px; margin: 56px 0 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 22px; margin: 32px 0 12px; }
+  h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 24px 0 8px; }
+  p, li { font-size: 15px; }
+  code { background: #efeae0; padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: var(--mono); }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-top: 0; }
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 20px; }
+  .card h5 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+  .card .big { font-family: var(--serif); font-size: 32px; line-height: 1.1; letter-spacing: -0.01em; }
+  .card .label { color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-good { background: var(--good-soft); color: var(--good); }
+  .tag-warn { background: var(--warn-soft); color: var(--warn); }
+  .tag-bad { background: var(--bad-soft); color: var(--bad); }
+  .tag-neutral { background: #e5e7eb; color: var(--ink); }
+  .tag-zone { background: #f1ece1; color: var(--ink); font-family: var(--serif); text-transform: none; letter-spacing: 0; font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .wireframe { background: white; border: 1px solid var(--rule-strong); border-radius: 4px; padding: 0; margin: 24px 0; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+  .wf-chrome { background: #1f2937; color: white; padding: 8px 14px; font-size: 12px; display: flex; gap: 16px; align-items: center; }
+  .wf-chrome .crumb { color: #9ca3af; }
+  .wf-chrome .here { color: white; }
+  .wf-tabs { background: #efeae0; border-bottom: 1px solid var(--rule); padding: 0 18px; display: flex; gap: 4px; }
+  .wf-tab { padding: 12px 16px; font-size: 13px; color: var(--ink-soft); border-bottom: 2px solid transparent; }
+  .wf-tab.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  .wf-body { padding: 20px 22px; background: var(--paper); }
+
+  .zone { background: white; border: 1px solid var(--rule); border-radius: 3px; margin: 14px 0; }
+  .zone-hd { padding: 12px 16px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; background: #fbfaf7; }
+  .zone-hd .ztitle { font-family: var(--serif); font-size: 17px; }
+  .zone-hd .zmeta { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .zone-body { padding: 14px 16px; }
+
+  .rollup-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border-top: 1px solid var(--rule); }
+  .rollup-cell { padding: 14px 16px; border-right: 1px solid var(--rule); }
+  .rollup-cell:last-child { border-right: none; }
+  .rollup-cell .holdco { font-family: var(--serif); font-size: 16px; margin-bottom: 6px; }
+  .rollup-cell .moves-row { display: flex; gap: 8px; margin: 6px 0; font-size: 12px; flex-wrap: wrap; }
+  .rollup-cell .pill-mini { background: var(--paper); border: 1px solid var(--rule); padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+  .rollup-cell .vas { font-family: var(--serif); font-size: 22px; margin-top: 4px; }
+  .rollup-cell .vas-label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .rollup-cell .updated { font-size: 11px; color: var(--ink-faint); margin-top: 8px; }
+
+  .opp-row { display: grid; grid-template-columns: 24px 1fr 120px 100px 80px; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); align-items: center; font-size: 13px; }
+  .opp-row:last-child { border-bottom: none; }
+  .opp-row .num { font-family: var(--serif); color: var(--ink-faint); }
+  .opp-row .title { font-weight: 500; }
+  .opp-row .desc { color: var(--ink-soft); font-size: 12px; display: block; margin-top: 2px; }
+  .opp-row .value { font-family: var(--serif); font-size: 15px; text-align: right; }
+  .opp-row .holdcos { font-size: 11px; color: var(--ink-faint); }
+  .opp-row .review { background: var(--ink); color: white; padding: 4px 10px; border-radius: 3px; font-size: 11px; text-align: center; }
+
+  .chart-frame { background: white; border: 1px solid var(--rule); padding: 14px; margin: 8px 0; }
+  .chart-frame svg { display: block; width: 100%; height: auto; }
+  .chart-legend { display: flex; gap: 18px; font-size: 12px; color: var(--ink-soft); margin-top: 8px; flex-wrap: wrap; }
+  .chart-legend .swatch { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; background: var(--accent); }
+  .chart-legend .swatch-dashed { border-top: 1.5px dashed var(--ink-soft); height: 0; background: none; }
+
+  .risk-row { display: grid; grid-template-columns: 1fr 80px 80px 60px; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 13px; align-items: center; }
+  .risk-row:last-child { border-bottom: none; }
+  .risk-row .rname { font-weight: 500; }
+  .risk-row .rdetail { color: var(--ink-soft); font-size: 12px; display: block; margin-top: 2px; }
+
+  .cxo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
+  .cxo-cell { padding: 10px 12px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); font-size: 12px; }
+  .cxo-cell .ckpi { font-family: var(--serif); font-size: 17px; }
+  .cxo-cell .clabel { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+  .cxo-cell .bench { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  .cap-card { background: white; border: 1px solid var(--rule); padding: 14px 16px; margin: 8px 0; }
+  .cap-card .cap-title { font-family: var(--serif); font-size: 16px; }
+  .cap-card .cap-meta { font-size: 12px; color: var(--ink-faint); margin: 4px 0 8px; }
+  .cap-card .cap-impact { font-size: 12px; color: var(--ink-soft); }
+  .cap-card .reuse-row { display: flex; gap: 6px; margin-top: 8px; font-size: 11px; }
+  .cap-card .fork-btn { background: var(--paper); border: 1px solid var(--rule); padding: 3px 10px; border-radius: 3px; }
+
+  .ask-bar { position: relative; background: white; border: 1px solid var(--rule-strong); border-radius: 4px; padding: 12px 16px; margin: 16px 0; display: flex; gap: 12px; align-items: center; }
+  .ask-bar .ask-label { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-soft); flex: 1; }
+  .ask-bar .ask-input { flex: 3; border: 1px solid var(--rule); padding: 8px 12px; border-radius: 3px; background: var(--paper); font-size: 13px; color: var(--ink-faint); }
+  .ask-bar .send { background: var(--ink); color: white; padding: 6px 14px; border-radius: 3px; font-size: 12px; }
+
+  .status-strip { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; background: white; border: 1px solid var(--rule); border-radius: 3px; }
+  .status-cell { padding: 14px 18px; border-right: 1px solid var(--rule); }
+  .status-cell:last-child { border-right: none; }
+  .status-cell .val { font-family: var(--serif); font-size: 26px; line-height: 1.1; letter-spacing: -0.01em; }
+  .status-cell .lbl { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+  .status-cell .delta { font-size: 12px; color: var(--good); margin-top: 4px; }
+  .status-cell .delta.warn { color: var(--warn); }
+  .status-cell .delta.bad { color: var(--bad); }
+
+  .pill { display: inline-block; background: var(--paper); border: 1px solid var(--rule); padding: 3px 10px; border-radius: 999px; font-size: 12px; margin: 2px 4px 2px 0; }
+  .rule { height: 1px; background: var(--rule); margin: 32px 0; }
+  .callout { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 12px 16px; margin: 16px 0; font-size: 14px; }
+  .callout.warn { background: var(--warn-soft); border-left-color: var(--warn); }
+  .callout.empty { background: #efeae0; border-left-color: var(--ink-soft); font-style: italic; color: var(--ink-soft); }
+
+  .legend-bar { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 10px 14px; background: white; border: 1px solid var(--rule); border-radius: 4px; margin: 8px 0; }
+
+  .squint-row { display: grid; grid-template-columns: 90px 1fr 1.4fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 13px; align-items: start; }
+  .squint-row:last-child { border-bottom: none; }
+  .squint-row .zlabel { font-family: var(--serif); font-size: 14px; }
+
+  .build-row { display: grid; grid-template-columns: 80px 1.4fr 1.4fr 1.4fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 13px; align-items: start; }
+  .build-row:last-child { border-bottom: none; }
+  .build-row .zlabel { font-family: var(--serif); font-size: 14px; }
+  .build-row code { font-size: 11px; }
+
+  .approval { font-family: var(--serif); font-style: italic; color: var(--ink-soft); font-size: 13px; }
+
+  details { margin: 8px 0; border: 1px solid var(--rule); border-radius: 4px; background: white; }
+  summary { padding: 10px 14px; cursor: pointer; font-weight: 600; font-size: 14px; }
+  details[open] summary { border-bottom: 1px solid var(--rule); }
+  details > div { padding: 12px 16px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Tower Federated Command Center</h1>
+<p class="sub">The L0 sponsor's daily-use surface · Atlas-fronted · portfolio rollup, cross-HoldCo opportunities, federated savings ledger, risk concentration, CXO performance, capability marketplace</p>
+<p class="meta">Doc 06 in the Lakeshore Federated AI Strategy package · companion to <code>02-demo-spine-architecture.html</code> §9 · implements Wave 1 Spec L04 (scaffold) and Wave 4 Spec L16-L17 (full depth). Match the visual fidelity here; reuse the CSS root from 02.</p>
+
+<div class="legend-bar">
+  <span><span class="tag tag-l0">L0</span> Lakeshore sponsor + Operating Partners</span>
+  <span><span class="tag tag-l1">L1</span> HoldCo CXO (sees own data prominently)</span>
+  <span><span class="tag tag-good">green</span> on or above target</span>
+  <span><span class="tag tag-warn">amber</span> trend deteriorating or watch-listed</span>
+  <span><span class="tag tag-bad">red</span> threshold breach</span>
+  <span><span class="tag tag-zone">Zone A-F</span> page composition zones</span>
+</div>
+
+<h2>1 · Overview</h2>
+
+<h3>What the Federated tab is</h3>
+<p>The Federated tab is a new top-level tab on the existing Tower module, alongside today's per-HoldCo Tower views. It is the only surface where a viewer can see all three Lakeshore L1 HoldCos (Morgan Street, Roosevelt, Lakefront) in one frame. Everything on the page is one click away from a drill-down into the originating Move, Source event, or CXO bundle.</p>
+
+<p>The mental model is a Datadog monitoring tab, but for a multi-HoldCo portfolio of AI and modernization Moves. Density is high in the rollup zones (Zone A, B, E) and focus mode in detail zones (Zone F capability detail). Charts are single-color line charts on white cards; no gradients, no emoji legends, no animation.</p>
+
+<h3>Who sees it</h3>
+<table>
+  <tr><th>Viewer</th><th>Gate</th><th>What renders</th></tr>
+  <tr><td>L0 Lakeshore sponsor (Managing Partner)</td><td><code>holding_group_id</code> membership + L0 sponsor role</td><td>Full Federated tab · all six zones · cross-HoldCo aggregates</td></tr>
+  <tr><td>L0 Operating Partner — Technology (Marcus Rhee)</td><td>Same as above</td><td>Same · capability marketplace + Move 3 deep links emphasized</td></tr>
+  <tr><td>L0 Operating Partner — Finance (Devon Sterling)</td><td>Same</td><td>Same · savings ledger + Move 2 + Move 0 banking emphasized</td></tr>
+  <tr><td>L0 Compliance Officer (Priya Anand)</td><td>Same</td><td>Same · risk concentration (Zone D) emphasized</td></tr>
+  <tr><td>L0 Portfolio Ops Director (Kenji Brooks)</td><td>Same</td><td>Same · rollup + opportunities emphasized</td></tr>
+  <tr><td>L1 HoldCo CXO (Morgan Street CIO Daniel Okonkwo)</td><td>Tenant child membership · NOT L0 sponsor role</td><td>Same page composition; own HoldCo's row in Zone A pinned + highlighted; peer HoldCos shown in aggregate only (no per-HoldCo transaction grain); CXO performance shows own KPIs with peer benchmark anonymized</td></tr>
+  <tr><td>L2 PortCo viewer</td><td>Sub-tenant under L1</td><td>Tab not visible</td></tr>
+</table>
+
+<h3>How it differs from per-HoldCo Tower views</h3>
+<table>
+  <tr><th>Dimension</th><th>Per-HoldCo Tower</th><th>Federated tab</th></tr>
+  <tr><td>Tenant scope</td><td>Single tenant; one HoldCo's data</td><td>Parent <code>holding_group_id</code>; all L1 children aggregated</td></tr>
+  <tr><td>Move visibility</td><td>That HoldCo's Moves only</td><td>All Moves across all HoldCos; Move 2/3/4 (L0-led) get top billing</td></tr>
+  <tr><td>Granularity</td><td>Transaction grain (per-bank, per-vendor, per-contract)</td><td>Aggregate only; transaction grain requires HoldCo CXO explicit grant</td></tr>
+  <tr><td>Agent</td><td>Sentinel (per-HoldCo, full read)</td><td>Atlas (cross-HoldCo, aggregate-read; transaction-grain queries require grant)</td></tr>
+  <tr><td>Refresh cadence</td><td>Real-time on writes</td><td>Mostly nightly aggregates; Zone B (opportunities) is weekly Monday morning</td></tr>
+  <tr><td>Action affordance</td><td>HoldCo-scoped (own Moves, own Source)</td><td>Cross-HoldCo (federated Source spawn, AI capability fork, federated platform rollout, risk threshold approval)</td></tr>
+</table>
+
+<h2>2 · Page composition wireframe</h2>
+
+<p>The page is one scrollable canvas. Top status strip is the squint-test anchor: portfolio health in five seconds. Six zones follow, in priority order for a CFO/Operating Partner morning read. Atlas chat affordance is a sticky bottom bar that follows the scroll and is contextually wired to whichever zone the viewport is centered on.</p>
+
+<div class="wireframe">
+  <div class="wf-chrome">
+    <span class="crumb">Tower</span>
+    <span>›</span>
+    <span class="here">Federated</span>
+    <span style="margin-left: auto; font-size: 11px; color: #9ca3af;">L0 · Anya Korchnoi · holding_group_id=hg_lakeshore_001</span>
+  </div>
+  <div class="wf-tabs">
+    <div class="wf-tab">Morgan Street</div>
+    <div class="wf-tab">Roosevelt</div>
+    <div class="wf-tab">Lakefront</div>
+    <div class="wf-tab active">Federated</div>
+  </div>
+  <div class="wf-body">
+
+    <!-- TOP STATUS STRIP -->
+    <h4 style="margin-top: 0;">Top status strip — squint anchor</h4>
+    <div class="status-strip">
+      <div class="status-cell">
+        <div class="val">5 of 5</div>
+        <div class="lbl">Moves on track</div>
+        <div class="delta">all phases advancing</div>
+      </div>
+      <div class="status-cell">
+        <div class="val">$32.9M</div>
+        <div class="lbl">Addressable spend</div>
+        <div class="delta">$3.3-5.0M projected savings</div>
+      </div>
+      <div class="status-cell">
+        <div class="val">$1.42M</div>
+        <div class="lbl">Savings realized YTD</div>
+        <div class="delta">on $4.1M projected for FY</div>
+      </div>
+      <div class="status-cell">
+        <div class="val">3</div>
+        <div class="lbl">Concentration flags</div>
+        <div class="delta warn">1 new this week · cyber carrier</div>
+      </div>
+    </div>
+
+    <!-- ZONE A -->
+    <div class="zone">
+      <div class="zone-hd">
+        <div><span class="tag tag-zone">Zone A</span> <span class="ztitle">Portfolio rollup strip</span></div>
+        <div class="zmeta">Per-HoldCo · refresh nightly 02:00 UTC · drill into HoldCo Tower</div>
+      </div>
+      <div class="rollup-strip">
+        <div class="rollup-cell">
+          <div class="holdco">Morgan Street Holdings <span class="tag tag-l1">L1</span></div>
+          <div class="moves-row">
+            <span class="pill-mini">Move 0 · Phase 3 Arch</span>
+            <span class="pill-mini">Move 1 · Phase 1 Disc</span>
+          </div>
+          <div class="vas-label">value at stake</div>
+          <div class="vas">$11.2M</div>
+          <div class="updated">last update 2026-06-04 19:14 · CFO bundle refresh</div>
+        </div>
+        <div class="rollup-cell">
+          <div class="holdco">Roosevelt Holdings <span class="tag tag-l1">L1</span></div>
+          <div class="moves-row">
+            <span class="pill-mini">Move 0 · Phase 0 Setup</span>
+            <span class="pill-mini">Move 4 · auto</span>
+          </div>
+          <div class="vas-label">value at stake</div>
+          <div class="vas">$6.4M</div>
+          <div class="updated">last update 2026-06-03 23:02 · CIO bundle initial load</div>
+        </div>
+        <div class="rollup-cell">
+          <div class="holdco">Lakefront Capital <span class="tag tag-l1">L1</span></div>
+          <div class="moves-row">
+            <span class="pill-mini">Move 1 · live</span>
+            <span class="pill-mini">Move 4 · auto</span>
+          </div>
+          <div class="vas-label">value at stake</div>
+          <div class="vas">$2.1M</div>
+          <div class="updated">last update 2026-06-04 06:00 · automated refresh</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONE B -->
+    <div class="zone">
+      <div class="zone-hd">
+        <div><span class="tag tag-zone">Zone B</span> <span class="ztitle">Cross-HoldCo opportunities surfaced this week</span></div>
+        <div class="zmeta">AbarVa-proactive · 5 new · weekly refresh Monday 06:00 UTC</div>
+      </div>
+      <div class="zone-body">
+        <div class="opp-row">
+          <span class="num">01</span>
+          <div>
+            <span class="title">Microsoft EA federation</span>
+            <span class="desc">3 separate EAs detected · $9.1M consolidated spend · enterprise rate threshold at $9M+ · Morgan Street EA expires 2026-12-31</span>
+          </div>
+          <span class="holdcos">All 3 HoldCos</span>
+          <span class="value">$1.0-1.4M</span>
+          <span class="review">review</span>
+        </div>
+        <div class="opp-row">
+          <span class="num">02</span>
+          <div>
+            <span class="title">Federated Big-4 audit RFP</span>
+            <span class="desc">All 3 HoldCos on KPMG · $5.4M consolidated fees · synchronized 2026-10 renewal window opens in 18 weeks</span>
+          </div>
+          <span class="holdcos">All 3 HoldCos</span>
+          <span class="value">$0.5-0.8M</span>
+          <span class="review">review</span>
+        </div>
+        <div class="opp-row">
+          <span class="num">03</span>
+          <div>
+            <span class="title">Cyber carrier split — concentration breach</span>
+            <span class="desc">2 of 3 HoldCos on same cyber carrier · post-2025 CrowdStrike retro flagged · Move 4 recommends two-carrier program</span>
+          </div>
+          <span class="holdcos">2 of 3</span>
+          <span class="value">$0.3-0.5M</span>
+          <span class="review">review</span>
+        </div>
+        <div class="opp-row">
+          <span class="num">04</span>
+          <div>
+            <span class="title">Capability fork — covenant headroom forecasting</span>
+            <span class="desc">Lakefront's Cap 3 in production 14 months · Morgan Street's Aisha Vargas eligible to fork post-G4 green</span>
+          </div>
+          <span class="holdcos">Lakefront → Morgan Street</span>
+          <span class="value">2-3 wk impl</span>
+          <span class="review">review</span>
+        </div>
+        <div class="opp-row">
+          <span class="num">05</span>
+          <div>
+            <span class="title">Federated Workday SI partner selection</span>
+            <span class="desc">Roosevelt in flight · Morgan Street Wave 2 PortCo integrations queued · Lakefront SI reference available</span>
+          </div>
+          <span class="holdcos">Roosevelt + Morgan St</span>
+          <span class="value">20-30% impl</span>
+          <span class="review">review</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONE C -->
+    <div class="zone">
+      <div class="zone-hd">
+        <div><span class="tag tag-zone">Zone C</span> <span class="ztitle">Federated savings ledger</span></div>
+        <div class="zmeta">Projected vs realized · refresh nightly · 12-month rolling</div>
+      </div>
+      <div class="zone-body">
+        <div class="chart-frame">
+          <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <line x1="40" y1="20" x2="40" y2="190" stroke="#e5e1d8" stroke-width="1"/>
+            <line x1="40" y1="190" x2="780" y2="190" stroke="#e5e1d8" stroke-width="1"/>
+            <text x="20" y="25" font-family="Georgia" font-size="11" fill="#6b7280" text-anchor="end">$5M</text>
+            <text x="20" y="78" font-family="Georgia" font-size="11" fill="#6b7280" text-anchor="end">$4M</text>
+            <text x="20" y="131" font-family="Georgia" font-size="11" fill="#6b7280" text-anchor="end">$2M</text>
+            <text x="20" y="190" font-family="Georgia" font-size="11" fill="#6b7280" text-anchor="end">$0</text>
+            <text x="60" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Jul</text>
+            <text x="130" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Aug</text>
+            <text x="200" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Sep</text>
+            <text x="270" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Oct</text>
+            <text x="340" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Nov</text>
+            <text x="410" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Dec</text>
+            <text x="480" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Jan</text>
+            <text x="550" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Feb</text>
+            <text x="620" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Mar</text>
+            <text x="690" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">Apr</text>
+            <text x="750" y="208" font-family="DM Sans" font-size="10" fill="#6b7280">May</text>
+            <path d="M 60,180 L 130,176 L 200,168 L 270,156 L 340,142 L 410,124 L 480,105 L 550,86 L 620,68 L 690,52 L 750,40" fill="none" stroke="#1d4ed8" stroke-width="2"/>
+            <path d="M 60,182 L 130,180 L 200,176 L 270,170 L 340,160 L 410,148 L 480,138 L 550,128 L 620,115 L 690,102 L 750,90" fill="none" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="4 4"/>
+          </svg>
+          <div class="chart-legend">
+            <span><span class="swatch"></span>Projected cumulative ($4.1M FY)</span>
+            <span><span class="swatch swatch-dashed"></span>Realized cumulative ($1.42M YTD)</span>
+          </div>
+        </div>
+
+        <table>
+          <tr><th>Source</th><th>Move</th><th>HoldCos</th><th>Projected</th><th>Realized YTD</th><th>Variance</th></tr>
+          <tr><td>L-S01 Banking consolidation</td><td>Move 0</td><td>Morgan Street</td><td>$2.80M</td><td>$0.62M</td><td><span class="tag tag-good">on plan</span></td></tr>
+          <tr><td>L-S02 Microsoft EA</td><td>Move 2</td><td>All 3</td><td>$1.20M</td><td>—</td><td><span class="tag tag-neutral">renewal pending</span></td></tr>
+          <tr><td>L-S03 Workday consolidation</td><td>Move 2</td><td>All 3</td><td>$0.75M</td><td>—</td><td><span class="tag tag-neutral">in design</span></td></tr>
+          <tr><td>L-S04 Federated audit</td><td>Move 2</td><td>All 3</td><td>$0.65M</td><td>—</td><td><span class="tag tag-neutral">RFP draft</span></td></tr>
+          <tr><td>Move 1 Cap 4 IC auto-recon</td><td>Move 1 (LF)</td><td>Lakefront</td><td>$0.40M</td><td>$0.40M</td><td><span class="tag tag-good">100%</span></td></tr>
+          <tr><td>Move 0 G2 ERP feed cleanup</td><td>Move 0</td><td>Morgan Street</td><td>$0.10M</td><td>$0.10M</td><td><span class="tag tag-good">delivered</span></td></tr>
+          <tr><td>Other realized (Lakefront Cap 1-3)</td><td>Move 1</td><td>Lakefront</td><td>$0.30M</td><td>$0.30M</td><td><span class="tag tag-good">100%</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ZONE D -->
+    <div class="zone">
+      <div class="zone-hd">
+        <div><span class="tag tag-zone">Zone D</span> <span class="ztitle">Risk concentration trend</span></div>
+        <div class="zmeta">Auditor · cyber · banking · single-vendor · refresh nightly · 6-month rolling</div>
+      </div>
+      <div class="zone-body">
+        <div class="chart-frame">
+          <svg viewBox="0 0 800 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <line x1="40" y1="20" x2="40" y2="150" stroke="#e5e1d8" stroke-width="1"/>
+            <line x1="40" y1="150" x2="780" y2="150" stroke="#e5e1d8" stroke-width="1"/>
+            <line x1="40" y1="60" x2="780" y2="60" stroke="#b45309" stroke-width="0.5" stroke-dasharray="2 4"/>
+            <text x="785" y="62" font-family="DM Sans" font-size="10" fill="#b45309">amber threshold</text>
+            <text x="20" y="25" font-family="Georgia" font-size="11" fill="#6b7280" text-anchor="end">100%</text>
+            <text x="20" y="92" font-family="Georgia" font-size="11" fill="#6b7280" text-anchor="end">50%</text>
+            <text x="20" y="150" font-family="Georgia" font-size="11" fill="#6b7280" text-anchor="end">0%</text>
+            <text x="80" y="170" font-family="DM Sans" font-size="10" fill="#6b7280">Dec</text>
+            <text x="200" y="170" font-family="DM Sans" font-size="10" fill="#6b7280">Jan</text>
+            <text x="320" y="170" font-family="DM Sans" font-size="10" fill="#6b7280">Feb</text>
+            <text x="440" y="170" font-family="DM Sans" font-size="10" fill="#6b7280">Mar</text>
+            <text x="560" y="170" font-family="DM Sans" font-size="10" fill="#6b7280">Apr</text>
+            <text x="680" y="170" font-family="DM Sans" font-size="10" fill="#6b7280">May</text>
+            <path d="M 80,30 L 200,30 L 320,30 L 440,30 L 560,30 L 680,30" fill="none" stroke="#b91c1c" stroke-width="2"/>
+            <text x="700" y="33" font-family="DM Sans" font-size="10" fill="#b91c1c">Auditor 100%</text>
+            <path d="M 80,80 L 200,80 L 320,75 L 440,72 L 560,55 L 680,52" fill="none" stroke="#b45309" stroke-width="2"/>
+            <text x="700" y="55" font-family="DM Sans" font-size="10" fill="#b45309">Cyber 67%</text>
+            <path d="M 80,115 L 200,113 L 320,112 L 440,110 L 560,108 L 680,108" fill="none" stroke="#047857" stroke-width="2"/>
+            <text x="700" y="111" font-family="DM Sans" font-size="10" fill="#047857">Banking 32%</text>
+            <path d="M 80,98 L 200,96 L 320,92 L 440,85 L 560,80 L 680,78" fill="none" stroke="#1d4ed8" stroke-width="2"/>
+            <text x="700" y="81" font-family="DM Sans" font-size="10" fill="#1d4ed8">Cyber single-vendor 78%</text>
+          </svg>
+        </div>
+
+        <div class="risk-row">
+          <div>
+            <span class="rname">Single audit firm — KPMG</span>
+            <span class="rdetail">All 3 HoldCos · concentration acceptable · flagged for annual audit cmte review · federated RFP opportunity active (L-S04)</span>
+          </div>
+          <span class="tag tag-warn">100%</span>
+          <span class="tag tag-neutral">flat</span>
+          <span class="tag tag-warn">watch</span>
+        </div>
+        <div class="risk-row">
+          <div>
+            <span class="rname">Single cyber insurance carrier</span>
+            <span class="rdetail">2 of 3 HoldCos on same carrier · concentration crossed 67% threshold 2026-04-22 · Move 4 ad-hoc event spawned · two-carrier program recommended</span>
+          </div>
+          <span class="tag tag-warn">67%</span>
+          <span class="tag tag-bad">+12pp</span>
+          <span class="tag tag-bad">breach</span>
+        </div>
+        <div class="risk-row">
+          <div>
+            <span class="rname">Banking partner concentration</span>
+            <span class="rdetail">Morgan Street 14 banks (fragmented) · Roosevelt 9 · Lakefront 5 (rationalized) · L-S01 in flight to consolidate Morgan Street to 6</span>
+          </div>
+          <span class="tag tag-good">32%</span>
+          <span class="tag tag-good">−2pp</span>
+          <span class="tag tag-good">ok</span>
+        </div>
+        <div class="risk-row">
+          <div>
+            <span class="rname">Single-vendor cyber (CrowdStrike)</span>
+            <span class="rdetail">All 3 HoldCos · single-point-of-failure flagged · 2025 incident retroactive impact reviewed · federated EDR-2 evaluation queued</span>
+          </div>
+          <span class="tag tag-warn">78%</span>
+          <span class="tag tag-warn">+6pp</span>
+          <span class="tag tag-warn">watch</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONE E -->
+    <div class="zone">
+      <div class="zone-hd">
+        <div><span class="tag tag-zone">Zone E</span> <span class="ztitle">CXO performance dashboards</span></div>
+        <div class="zmeta">IT spend % · AI maturity · modernization debt · talent comp benchmark · refresh nightly · benchmark refresh quarterly</div>
+      </div>
+      <div class="zone-body">
+        <div class="cxo-grid">
+          <div class="cxo-cell" style="background: #fbfaf7;"><strong>Morgan Street</strong><div class="clabel">L1 HoldCo</div></div>
+          <div class="cxo-cell">
+            <div class="ckpi">2.5%</div>
+            <div class="clabel">IT spend / revenue</div>
+            <div class="bench">P50 2.4% · in range</div>
+          </div>
+          <div class="cxo-cell">
+            <div class="ckpi">Early</div>
+            <div class="clabel">AI maturity</div>
+            <div class="bench">2 POCs · 0 prod</div>
+          </div>
+          <div class="cxo-cell">
+            <div class="ckpi">$385K</div>
+            <div class="clabel">CIO cash comp</div>
+            <div class="bench">P50 $360K · +7%</div>
+          </div>
+          <div class="cxo-cell" style="background: #fbfaf7;"><strong>Roosevelt</strong><div class="clabel">L1 HoldCo</div></div>
+          <div class="cxo-cell">
+            <div class="ckpi">2.8%</div>
+            <div class="clabel">IT spend / revenue</div>
+            <div class="bench">P50 2.4% · slight elev</div>
+          </div>
+          <div class="cxo-cell">
+            <div class="ckpi">Early</div>
+            <div class="clabel">AI maturity</div>
+            <div class="bench">0 POCs · 0 prod</div>
+          </div>
+          <div class="cxo-cell">
+            <div class="ckpi">$340K</div>
+            <div class="clabel">CIO cash comp</div>
+            <div class="bench">P50 $360K · −6%</div>
+          </div>
+          <div class="cxo-cell" style="background: #fbfaf7;"><strong>Lakefront</strong><div class="clabel">L1 HoldCo</div></div>
+          <div class="cxo-cell">
+            <div class="ckpi">5.5%</div>
+            <div class="clabel">IT spend / revenue</div>
+            <div class="bench">P50 5.2% tech · in range</div>
+          </div>
+          <div class="cxo-cell">
+            <div class="ckpi">Mature</div>
+            <div class="clabel">AI maturity</div>
+            <div class="bench">3 prod · 12 ML eng</div>
+          </div>
+          <div class="cxo-cell">
+            <div class="ckpi">$410K</div>
+            <div class="clabel">CIO cash comp</div>
+            <div class="bench">P50 $360K · +14%</div>
+          </div>
+        </div>
+
+        <h4>Modernization debt index · IT FTE ratio</h4>
+        <table>
+          <tr><th>HoldCo</th><th>Modernization debt</th><th>IT FTE ratio</th><th>P50 benchmark</th><th>Read</th></tr>
+          <tr><td>Morgan Street</td><td>62 (medium-high)</td><td>1 IT per 87 emp</td><td>1 per 75</td><td>Below density; legacy specialty mfg PortCo drags</td></tr>
+          <tr><td>Roosevelt</td><td>78 (high)</td><td>1 IT per 142 emp</td><td>1 per 75</td><td>Concerning · clinical PHI constraints + lean IT · L0 watch-list</td></tr>
+          <tr><td>Lakefront</td><td>24 (low)</td><td>1 IT per 33 emp</td><td>1 per 75 (1 per 35 tech)</td><td>Tech PortCos · in range for sector</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ZONE F -->
+    <div class="zone">
+      <div class="zone-hd">
+        <div><span class="tag tag-zone">Zone F</span> <span class="ztitle">Capability marketplace</span></div>
+        <div class="zmeta">Production AI workloads · cataloged by HoldCo · refresh on-demand when CIO bundle changes · focus-mode layout</div>
+      </div>
+      <div class="zone-body">
+        <div class="cap-card">
+          <div class="cap-title">12-week forward cash forecast</div>
+          <div class="cap-meta">Lakefront · production 18 months · Move 1 Cap 1 · model: Prophet ensemble · refresh daily</div>
+          <div class="cap-impact">Realized impact: forecast variance reduced from 8% to 2.4%; working capital unlock $1.2M annual. Reusability rating: <strong>high</strong> — minimal Lakefront-specific tuning.</div>
+          <div class="reuse-row">
+            <span class="pill">Treasury</span>
+            <span class="pill">Bronze: bank txns + Kyriba</span>
+            <span class="pill">Prereq: G1-G4 green</span>
+            <span style="margin-left: auto;"><span class="fork-btn">request fork</span></span>
+          </div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-title">Payment anomaly + BEC fraud detection</div>
+          <div class="cap-meta">Lakefront · production 14 months · Move 1 Cap 2 · gradient-boosted scorer + LLM context · realtime</div>
+          <div class="cap-impact">Realized impact: false-positive rate &lt;2% after 6mo tuning; 2 BEC attempts intercepted YTD. Reusability rating: <strong>high</strong> — payment policy doc + threshold tuning required.</div>
+          <div class="reuse-row">
+            <span class="pill">Treasury + CISO</span>
+            <span class="pill">Bronze: wire feeds</span>
+            <span class="pill">Prereq: payment policy</span>
+            <span style="margin-left: auto;"><span class="fork-btn">request fork</span></span>
+          </div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-title">Covenant headroom forecasting</div>
+          <div class="cap-meta">Lakefront · production 14 months · Move 1 Cap 3 · scenario-tree · refresh weekly</div>
+          <div class="cap-impact">Realized impact: 2 advance warnings on covenant headroom drift; mitigated before quarterly cert. Reusability rating: <strong>medium</strong> — covenant text parsing per-HoldCo.</div>
+          <div class="reuse-row">
+            <span class="pill">CFO + Audit Cmte</span>
+            <span class="pill">Bronze: covenant agreements</span>
+            <span class="pill">Prereq: legal contract load</span>
+            <span style="margin-left: auto;"><span class="fork-btn">request fork</span></span>
+          </div>
+        </div>
+        <div class="callout">
+          Morgan Street CIO (Daniel Okonkwo) has expressed interest in capabilities 1 and 3. Eligibility check: G1-G4 green required for Cap 1; covenant agreement load required for Cap 3. Atlas can route a fork request when prerequisites are met.
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky Atlas ask bar -->
+    <div class="ask-bar">
+      <span class="ask-label">Ask Atlas</span>
+      <input class="ask-input" type="text" placeholder="e.g., which HoldCo is most exposed if KPMG raises rates 10%?" readonly>
+      <span class="send">send</span>
+    </div>
+
+  </div>
+</div>
+
+<h2>3 · Zone-by-zone full-fidelity spec</h2>
+
+<h3>Zone A · Portfolio rollup strip</h3>
+
+<h4>Purpose</h4>
+<p>The "Datadog top row" for the portfolio. Three cells, one per HoldCo. Each cell answers four questions in under two seconds of scan: which Moves are active, what phase each is in, how much value is at stake, when was the last data update.</p>
+
+<h4>Visual mockup data</h4>
+<table>
+  <tr><th>Cell</th><th>HoldCo</th><th>Moves shown</th><th>Value at stake</th><th>Last update note</th></tr>
+  <tr><td>1</td><td>Morgan Street Holdings</td><td>Move 0 Phase 3 (Architecture) · Move 1 Phase 1 (Discovery)</td><td>$11.2M (L-S01 banking $2.8M + Move 0 close accel $1.4M + Move 1 Cap 1+4 $3.6M + share of Move 2 $3.4M)</td><td>2026-06-04 19:14 · CFO bundle refresh by Sarah Lindqvist's data steward</td></tr>
+  <tr><td>2</td><td>Roosevelt Holdings</td><td>Move 0 Phase 0 (Setup load) · Move 4 (auto-running)</td><td>$6.4M (share of Move 2 $2.4M + Move 0 projected close accel $1.0M + Move 3 federated platform savings est $3.0M)</td><td>2026-06-03 23:02 · CIO bundle initial load by Edward Park</td></tr>
+  <tr><td>3</td><td>Lakefront Capital</td><td>Move 1 (live, all 4 caps) · Move 4 (auto)</td><td>$2.1M (Move 1 incremental Cap optimizations $0.5M + share of Move 2 $1.6M)</td><td>2026-06-04 06:00 · automated refresh (no human action)</td></tr>
+</table>
+
+<h4>Data sources</h4>
+<ul>
+  <li><code>moves</code> table filtered on <code>tenant_id IN (SELECT child_tenant_id FROM tenant_holding_group WHERE holding_group_id = current_holding_group())</code></li>
+  <li><code>move_phases</code> for current phase per Move</li>
+  <li><code>move_value_at_stake</code> view — aggregates business case projected savings + open Source event estimated value attributed to that HoldCo's share</li>
+  <li><code>cxo_bundle_loads</code> for last-update timestamp (most recent bundle load per HoldCo)</li>
+</ul>
+
+<h4>Refresh</h4>
+<p>Nightly aggregate refresh at 02:00 UTC. Manual "refresh now" affordance in cell overflow menu when a CXO bundle is reloaded mid-day and the L0 viewer wants the latest read before a meeting.</p>
+
+<h4>Drill-down</h4>
+<p>Click any Move pill → navigates to that Move's page (Move 0 canvas, Move 2 cross-HoldCo view, etc.) scoped to that HoldCo. Click the HoldCo name → navigates to that HoldCo's per-HoldCo Tower view (the existing non-federated Tower). Click the value at stake → opens a breakdown popover with the components from the data sources table above; each component links to its originating artifact (Source event, business case, Move).</p>
+
+<h4>Empty state</h4>
+<p>When a HoldCo cell has no loaded bundles: cell renders the HoldCo name + the literal text <em>"CXO bundles not loaded — start with CIO + CFO via Setup loader"</em> with a direct link to <code>/setup/cxo-loader?tenant=&lt;holdco_id&gt;</code>. Value-at-stake shows an em-dash, not <code>$0</code> — see locked rule "do NOT show zeros as if 0 is real". Moves row shows no pills; renders as faint italic <em>"awaiting bundle load"</em>.</p>
+
+<h4>Atlas chat affordance</h4>
+<p>When the sticky bar viewport is over Zone A, the Atlas placeholder rewrites to: <em>"e.g., which HoldCo's Move 0 is furthest along?"</em> or <em>"why is Roosevelt's value at stake lower than Morgan Street's?"</em>. Send routes to Atlas with the Zone A data already in the context window.</p>
+
+<h3>Zone B · Cross-HoldCo opportunities surfaced this week</h3>
+
+<h4>Purpose</h4>
+<p>The "one new thing to consider this morning" surface. AbarVa proactively names opportunities the L0 sponsor would not have surfaced themselves: vendor overlaps detected once enough bundles are loaded, contract renewal calendars that synchronize across HoldCos, capability fork eligibility from one HoldCo to another, risk threshold crossings that recommend an action.</p>
+
+<h4>Visual mockup data (5 opportunities, week of 2026-06-02)</h4>
+<ol>
+  <li><strong>Microsoft EA federation</strong> · all 3 HoldCos · $9.1M consolidated spend · enterprise rate threshold at $9M+ · Morgan Street EA expires 2026-12-31 · projected savings $1.0-1.4M</li>
+  <li><strong>Federated Big-4 audit RFP</strong> · all 3 HoldCos on KPMG · $5.4M consolidated fees · synchronized 2026-10 renewal window in 18 weeks · projected $0.5-0.8M</li>
+  <li><strong>Cyber carrier split</strong> · 2 of 3 on same carrier · concentration threshold breach 2026-04-22 · two-carrier program recommended · projected $0.3-0.5M plus risk reduction</li>
+  <li><strong>Capability fork — covenant headroom forecasting</strong> · Lakefront Cap 3 production 14 months · Morgan Street eligible to fork post-G4 green</li>
+  <li><strong>Federated Workday SI partner selection</strong> · Roosevelt in flight, Morgan Street Wave 2 queued · 20-30% implementation cost compression</li>
+</ol>
+
+<h4>Data sources</h4>
+<ul>
+  <li><code>cross_holdco_opportunities</code> table — populated by the Move 2/3/4 opportunity ranker (Wave 2 Spec L07)</li>
+  <li>Ranker inputs: vendor overlap matrix (CIO + GC bundles) · contract renewal calendar (CFO + GC) · capability marketplace eligibility (CIO + Move 1 production state) · risk threshold breaches (Move 4 monitor)</li>
+  <li>Surface filter: only opportunities <em>new this week</em> or <em>changed this week</em> (e.g., a renewal window just opened, a threshold just breached)</li>
+</ul>
+
+<h4>Refresh</h4>
+<p>Weekly Monday 06:00 UTC ranker run; opportunities marked "new this week" persist through Friday EOD, then archive into the opportunities ledger (accessible via drill-down). Ad-hoc surfacing on threshold breach (Move 4 monitors push directly to this zone within 15 minutes of detection).</p>
+
+<h4>Drill-down</h4>
+<p>"Review" button on each opportunity routes to a structured opportunity page with: the underlying evidence (which bundles + which records sourced the claim), the recommended action (e.g., "spawn Source event L-S02"), the affected HoldCos, the stakeholders that need to consult, the historical pattern reference (corpus pattern ID or similar prior Lakeshore opportunity). From the opportunity page, L0 can directly spawn the Source event (one click — Source module redesign handles the rest) or route to the Move that should pick it up.</p>
+
+<h4>Empty state</h4>
+<p>When fewer than 2 HoldCo CIO+CFO bundles are loaded: zone renders the literal text <em>"Cross-HoldCo opportunities surface when 2 or more HoldCos have completed Wave 1 CXO bundle load. 1 of 3 HoldCos complete."</em> with progress dots. Do not render "0 opportunities" — that implies the ranker ran and found none, which is misleading. When 2+ HoldCos loaded and ranker ran but found no new opportunities this week: zone renders <em>"No new opportunities this week. Last refresh Mon 06:00 UTC. View opportunities ledger →"</em>.</p>
+
+<h4>Atlas chat affordance</h4>
+<p>Placeholder rewrites to: <em>"e.g., why is the Microsoft EA opportunity ranked first?"</em> or <em>"what's the latest cyber carrier breach detail?"</em>. Atlas can explain the ranker's scoring inputs but will not spawn the Source event — that requires explicit L0 click for audit trail.</p>
+
+<h3>Zone C · Federated savings ledger</h3>
+
+<h4>Purpose</h4>
+<p>The "savings trending up" credibility surface. Two views: a single-color cumulative line chart (projected vs realized over 12 months rolling) and a per-source table breaking out each savings stream with its current status. The rule: realized = money the corpus or evidence chain can defend as actually saved or unlocked. If we cannot defend it, it is not in realized.</p>
+
+<h4>Visual mockup chart</h4>
+<p>Two lines on a single chart frame. Projected (solid accent blue) ramps from $0.18M in July to $4.10M by May. Realized (dashed ink-soft) ramps from $0.18M in July (Lakefront baseline) to $1.42M in May. The realized line lags by 6-10 percentage points across the year — visually communicating "in flight, on track, not pre-counted".</p>
+
+<h4>Visual mockup table data</h4>
+<table>
+  <tr><th>Source</th><th>Move</th><th>HoldCos</th><th>Projected</th><th>Realized YTD</th><th>Variance flag</th></tr>
+  <tr><td>L-S01 Banking consolidation</td><td>Move 0</td><td>Morgan Street</td><td>$2.80M</td><td>$0.62M</td><td>on plan (Phase 3 architecture)</td></tr>
+  <tr><td>L-S02 Microsoft EA</td><td>Move 2</td><td>All 3</td><td>$1.20M</td><td>—</td><td>renewal pending Dec 2026</td></tr>
+  <tr><td>L-S03 Workday consolidation</td><td>Move 2</td><td>All 3</td><td>$0.75M</td><td>—</td><td>in design</td></tr>
+  <tr><td>L-S04 Federated audit</td><td>Move 2</td><td>All 3</td><td>$0.65M</td><td>—</td><td>RFP draft</td></tr>
+  <tr><td>Move 1 Cap 4 IC auto-recon</td><td>Move 1</td><td>Lakefront</td><td>$0.40M</td><td>$0.40M</td><td>delivered, close accel 4d</td></tr>
+  <tr><td>Move 0 G2 ERP feed cleanup</td><td>Move 0</td><td>Morgan Street</td><td>$0.10M</td><td>$0.10M</td><td>delivered, variance 0.04%</td></tr>
+  <tr><td>Lakefront Move 1 Cap 1+2+3 ongoing</td><td>Move 1</td><td>Lakefront</td><td>$0.30M</td><td>$0.30M</td><td>incremental optimization</td></tr>
+</table>
+
+<h4>Data sources</h4>
+<ul>
+  <li><code>savings_ledger_entries</code> — one row per source × month, with projected + realized columns</li>
+  <li><code>business_cases</code> — provides projected curve for each Source event and Move</li>
+  <li><code>evidence_chains</code> — provides realized claim provenance (every dollar realized has a chain back to a controllable artifact: closed contract, measured KPI delta, etc.)</li>
+  <li><code>source_events</code> + <code>moves</code> for cross-reference</li>
+</ul>
+
+<h4>Refresh</h4>
+<p>Nightly. Realized claims gated by evidence chain freshness — if the evidence chain has not been validated in 90+ days, the realized claim is automatically marked "stale" and excluded from the YTD total until re-validated.</p>
+
+<h4>Drill-down</h4>
+<p>Click any row in the table → opens that source's full ledger view: month-by-month projected and realized, the underlying business case, the evidence chain for every dollar claimed realized. Click the chart → opens a stacked-by-source variant of the same chart. Hover over a chart point → tooltip with projected vs realized for that month.</p>
+
+<h4>Empty state</h4>
+<p>When no business cases exist and no realized claims chained: zone renders <em>"Savings ledger populates as Move business cases are approved and realized milestones are evidenced. 0 business cases approved across the portfolio."</em> Do not show a $0 line on the chart — render the chart placeholder with a faint dashed axis only. When projected exists but no realized yet: render projected line only, with the literal note <em>"No realized claims yet — ledger reflects projected only."</em></p>
+
+<h4>Atlas chat affordance</h4>
+<p>Placeholder rewrites to: <em>"e.g., why did the realized line dip in Feb?"</em> or <em>"what's the evidence for L-S01's $0.62M realized?"</em>. Atlas can name the evidence chain in detail (the chain itself is L0-readable; the underlying transaction grain may require a HoldCo grant for full read).</p>
+
+<h3>Zone D · Risk concentration trend</h3>
+
+<h4>Purpose</h4>
+<p>The "one risk to monitor" surface. Four concentration measures plotted as time series over 6 months: auditor concentration, cyber carrier concentration, banking concentration, single-vendor concentration. Each measure has an amber threshold (dashed horizontal) and a red threshold. Trend deltas (+/- pp week over week) tell the L0 viewer not just where things are, but where they are going.</p>
+
+<h4>Visual mockup chart</h4>
+<p>Four lines on a single chart frame, single-color per line (red, amber, green, blue — matching status semantics). Dashed amber threshold line at 60%. Auditor trend flat at 100% (red). Cyber carrier trend climbed from 50% to 67% Apr-May (amber breach). Banking trend slowly improving from 35% to 32% (green). Single-vendor cyber trend climbing from 65% to 78% (amber, watch).</p>
+
+<h4>Visual mockup table data</h4>
+<table>
+  <tr><th>Risk</th><th>Current</th><th>Δ wow</th><th>State</th><th>Detail</th></tr>
+  <tr><td>Single audit firm — KPMG</td><td>100%</td><td>0pp</td><td>watch</td><td>All 3 HoldCos · acceptable per audit cmte · federated RFP active (L-S04)</td></tr>
+  <tr><td>Single cyber carrier</td><td>67%</td><td>+12pp</td><td>breach</td><td>2 of 3 on same carrier · threshold breach 2026-04-22 · Move 4 ad-hoc event spawned</td></tr>
+  <tr><td>Banking concentration</td><td>32%</td><td>−2pp</td><td>ok</td><td>Morgan Street 14 banks · Roosevelt 9 · Lakefront 5 · L-S01 active</td></tr>
+  <tr><td>Single-vendor cyber — CrowdStrike</td><td>78%</td><td>+6pp</td><td>watch</td><td>All 3 HoldCos · 2025 incident retroactive review complete · federated EDR-2 evaluation queued</td></tr>
+</table>
+
+<h4>Data sources</h4>
+<ul>
+  <li><code>risk_concentration_snapshots</code> — daily snapshot per HoldCo per concentration measure</li>
+  <li>Auditor concentration: <code>cfo_bundle.audit_firms</code> + <code>gc_bundle.advisor_engagements</code></li>
+  <li>Cyber carrier concentration: <code>cfo_bundle.insurance_carriers</code> filtered category = cyber</li>
+  <li>Banking concentration: <code>cfo_bundle.banking_relationships</code> · normalized count + concentration index (HHI-style)</li>
+  <li>Single-vendor cyber: <code>cio_bundle.vendor_contracts</code> filtered category = cyber/EDR · concentration index</li>
+  <li>Thresholds: <code>risk_concentration_thresholds</code> — sponsor-configurable; defaults from finserv knowledge files</li>
+</ul>
+
+<h4>Refresh</h4>
+<p>Nightly snapshot. Threshold breach detection runs at end of snapshot job; if breached, Move 4 ad-hoc event spawns within 15 minutes and Zone B opportunity surfaces same day.</p>
+
+<h4>Drill-down</h4>
+<p>Click a risk row → opens that risk's full Move 4 page: which HoldCos contribute, what the concentration index is per HoldCo, what mitigation options exist (with corpus references), what historic concentration looked like (12-month rolling), and the recommended action with stakeholders. Click the chart → opens a per-measure detail with HoldCo-level decomposition.</p>
+
+<h4>Empty state</h4>
+<p>When fewer than 2 HoldCo bundles are loaded for a category (e.g., GC bundles not yet loaded for auditor risk): that row renders <em>"Insufficient bundle coverage — auditor risk needs GC bundle from at least 2 HoldCos. 1 of 3 loaded."</em> Do not render a 0% or flat line if the data is insufficient — render the chart line as dashed with the literal annotation "data incomplete."</p>
+
+<h4>Atlas chat affordance</h4>
+<p>Placeholder rewrites to: <em>"e.g., what's the impact if KPMG raises rates 10%?"</em> or <em>"how concentrated is Roosevelt's vendor base vs Lakefront's?"</em>. Atlas can run cross-HoldCo concentration counterfactuals at the aggregate level (e.g., "if we split cyber carrier, concentration drops to 33%"); concentration-of-grain transaction-level questions require HoldCo grant.</p>
+
+<h3>Zone E · CXO performance dashboards</h3>
+
+<h4>Purpose</h4>
+<p>The "who's running each HoldCo and how does their function compare" surface. Per-HoldCo rows × per-CXO-function columns. Each cell shows one KPI with a benchmark reference (industry P50 from finserv knowledge files 03/13/17). Below the grid, a focused modernization-debt + IT FTE ratio table.</p>
+
+<h4>Visual mockup data</h4>
+<table>
+  <tr><th>HoldCo</th><th>IT spend / rev</th><th>AI maturity</th><th>CIO cash comp</th></tr>
+  <tr><td>Morgan Street</td><td>2.5% (P50 2.4%)</td><td>Early · 2 POCs · 0 prod</td><td>$385K (P50 $360K · +7%)</td></tr>
+  <tr><td>Roosevelt</td><td>2.8% (P50 2.4%)</td><td>Early · 0 POCs · 0 prod</td><td>$340K (P50 $360K · −6%)</td></tr>
+  <tr><td>Lakefront</td><td>5.5% (P50 5.2% tech)</td><td>Mature · 3 prod · 12 ML eng</td><td>$410K (P50 $360K · +14%)</td></tr>
+</table>
+
+<table>
+  <tr><th>HoldCo</th><th>Modernization debt</th><th>IT FTE ratio</th><th>P50</th><th>Read</th></tr>
+  <tr><td>Morgan Street</td><td>62 (med-hi)</td><td>1 per 87</td><td>1 per 75</td><td>Legacy specialty mfg PortCo drags</td></tr>
+  <tr><td>Roosevelt</td><td>78 (high)</td><td>1 per 142</td><td>1 per 75</td><td>L0 watch-list · PHI constraints + lean IT</td></tr>
+  <tr><td>Lakefront</td><td>24 (low)</td><td>1 per 33</td><td>1 per 35 (tech)</td><td>In range for sector</td></tr>
+</table>
+
+<h4>Data sources</h4>
+<ul>
+  <li>IT spend / revenue: <code>cio_bundle.it_spend_summary</code> + <code>cfo_bundle.revenue</code></li>
+  <li>AI maturity: <code>cio_bundle.ai_roadmap</code> — derived label from POC count + production workload count + governance state</li>
+  <li>CIO cash comp: <code>chro_bundle.exec_comp_index</code></li>
+  <li>Modernization debt index: derived from <code>cio_bundle.application_inventory</code> — count of apps with legacy classification, weighted by criticality</li>
+  <li>IT FTE ratio: <code>cio_bundle.it_org_chart.fte_count</code> ÷ <code>chro_bundle.workforce_total</code></li>
+  <li>Benchmarks: <code>corpus_benchmarks</code> table populated from finserv files 03/13/17 quarterly</li>
+</ul>
+
+<h4>Refresh</h4>
+<p>Nightly. Benchmark refresh quarterly when corpus is updated. Each KPI display includes a "benchmark last refreshed 2026-Q1" annotation in the cell overflow.</p>
+
+<h4>Drill-down</h4>
+<p>Click any cell → opens that CXO's bundle detail page scoped to the relevant section (IT spend → CIO bundle spend-by-category; AI maturity → CIO bundle AI roadmap; CIO cash comp → CHRO bundle exec comp index). Click a HoldCo name → routes to that HoldCo's per-HoldCo Tower view. Click the modernization debt index → opens the app inventory with legacy-flagged apps sorted by criticality.</p>
+
+<h4>Empty state</h4>
+<p>Per cell: if the required bundle is not loaded, cell renders <em>"CFO bundle needed"</em> (or whichever bundle) with link to loader. Do not show "0%" or "N/A" — show the specific missing input. If the benchmark corpus is missing for a sector (Lakefront tech P50 not yet loaded), cell shows the KPI but the benchmark text reads <em>"benchmark not yet loaded for this sector"</em>.</p>
+
+<h4>Atlas chat affordance</h4>
+<p>Placeholder rewrites to: <em>"e.g., why is Roosevelt's IT FTE ratio so low?"</em> or <em>"how would Morgan Street look if their AI maturity matched Lakefront's?"</em>. Atlas can reason over benchmark deltas and identify which CXO bundles would need to change.</p>
+
+<h3>Zone F · Capability marketplace</h3>
+
+<h4>Purpose</h4>
+<p>Focus-mode zone. Production AI workloads cataloged by HoldCo with reuse metadata. Cards (not table) because each capability deserves a moment of attention — this is where the L0 OP-Tech (Marcus Rhee) spends most reading time once steady state is reached. The L0 viewer's job here is to identify capabilities ready to fork and to nominate eligible HoldCos.</p>
+
+<h4>Visual mockup data (3 cards, all Lakefront-originated)</h4>
+<ol>
+  <li><strong>12-week forward cash forecast</strong> · Lakefront · 18 months in production · Prophet ensemble · daily refresh. Realized: variance 8% → 2.4%; $1.2M working capital unlock. Reusability: high.</li>
+  <li><strong>Payment anomaly + BEC fraud detection</strong> · Lakefront · 14 months · gradient-boosted + LLM context · realtime. Realized: FP rate &lt;2%; 2 BEC attempts intercepted YTD. Reusability: high.</li>
+  <li><strong>Covenant headroom forecasting</strong> · Lakefront · 14 months · scenario-tree · weekly refresh. Realized: 2 advance warnings before quarterly cert. Reusability: medium.</li>
+</ol>
+
+<p>Eligibility callout at bottom: <em>"Morgan Street CIO (Daniel Okonkwo) has expressed interest in capabilities 1 and 3. Eligibility check: G1-G4 green required for Cap 1; covenant agreement load required for Cap 3."</em></p>
+
+<h4>Data sources</h4>
+<ul>
+  <li><code>capability_marketplace</code> table — one row per production AI workload; populated by Move 1 / Move 3 production-state tracking</li>
+  <li>Required workload metadata: business problem · model type · data dependencies · realized impact (with evidence chain) · reusability rating (auto-derived from data dependency complexity + tuning requirements)</li>
+  <li>Eligibility check: <code>capability_eligibility_view</code> — joins capability prerequisites against each HoldCo's current Move state</li>
+  <li>Interest signals: <code>capability_fork_requests</code> — populated when HoldCo CIO clicks "express interest" in their own Tower view</li>
+</ul>
+
+<h4>Refresh</h4>
+<p>On-demand when CIO bundle changes or Move 1 production state changes. Manual "refresh" affordance in zone overflow for L0 viewer. Eligibility check runs nightly with the rest of the Tower aggregates.</p>
+
+<h4>Drill-down</h4>
+<p>Click a capability card → opens that capability's full marketplace detail: model architecture summary, prerequisites in plain language, fork process (estimated effort, blockers, stakeholders), evidence chain for the realized impact claim, the originating HoldCo's contact for technical handoff. "Request fork" button → routes to the originating HoldCo's CIO for grant + spawns a Move 1 instance at the requesting HoldCo pre-filled with the source capability.</p>
+
+<h4>Empty state</h4>
+<p>When no production AI workloads exist across the portfolio: zone renders <em>"Capability marketplace populates as Move 1 capabilities reach production. 0 production capabilities across the portfolio."</em> Below that, a faint "Lakefront's Move 1 is the demo seed; capabilities surface here once Move 1 ships Phase 5 mobilization at Lakefront." Do not render fake placeholder cards.</p>
+
+<h4>Atlas chat affordance</h4>
+<p>Placeholder rewrites to: <em>"e.g., what would it take for Morgan Street to deploy Cap 1?"</em> or <em>"which capabilities have Roosevelt eligibility?"</em>. Atlas can describe eligibility logic and surface prerequisite gaps; it cannot grant the fork (requires explicit originator CIO click for audit trail).</p>
+
+<h2>4 · Information density discipline</h2>
+
+<p>Density varies by mental task. The rollup zones (A, B, E) are scan-mode and high density — the viewer is checking for "anything new, anything wrong, anything to dive into". The detail zones (Zone F capability detail) are read-mode and focus mode — the viewer is committing attention to one capability, one fork decision.</p>
+
+<table>
+  <tr><th>Zone</th><th>Mode</th><th>Density target</th><th>Pattern</th></tr>
+  <tr><td>Top status strip</td><td>squint</td><td>4 numbers, max</td><td>Wide column, large serif numerals, single delta caption</td></tr>
+  <tr><td>Zone A rollup</td><td>scan</td><td>3 cells × 4 facts each = 12 facts in 200px height</td><td>Compact pill rows, value-at-stake as serif headline per cell, faint updated timestamp</td></tr>
+  <tr><td>Zone B opportunities</td><td>scan</td><td>5 rows × 5 fields each visible without scrolling</td><td>Row grid, single-line title with two-line description, right-aligned value in serif</td></tr>
+  <tr><td>Zone C savings ledger</td><td>scan + read</td><td>Chart + 7-row table</td><td>Single-color line chart on white card, table beneath, no nested tables</td></tr>
+  <tr><td>Zone D risk concentration</td><td>scan</td><td>Chart + 4-row table</td><td>4-line single-chart, threshold dashed reference line, table with delta column</td></tr>
+  <tr><td>Zone E CXO performance</td><td>scan</td><td>3 × 3 KPI grid + 5-column secondary table</td><td>Grid cells with KPI in serif and benchmark below; secondary table for less-frequent KPIs</td></tr>
+  <tr><td>Zone F capability marketplace</td><td>read / focus</td><td>3 cards stacked, full-width each</td><td>Card layout; title in serif; impact paragraph; reusability pills; single CTA per card</td></tr>
+</table>
+
+<p>Per the "one dark moment" rule note in the brief: this page is portfolio monitoring, not decision-rendering, so the dark moment rule does not apply. Every zone is allowed to be its own micro-moment of attention.</p>
+
+<h2>5 · Atlas chat layer</h2>
+
+<h3>Atlas vs Sentinel — the cleanest mental difference</h3>
+<table>
+  <tr><th></th><th>Sentinel (per-HoldCo)</th><th>Atlas (federated)</th></tr>
+  <tr><td>Tenant scope</td><td>Single L1 HoldCo</td><td>Parent <code>holding_group_id</code></td></tr>
+  <tr><td>Read access</td><td>Full transaction grain of that HoldCo</td><td>Aggregate-only across HoldCos; transaction grain requires explicit HoldCo CXO grant</td></tr>
+  <tr><td>Action authority</td><td>Spawn HoldCo-scoped Source events; advance HoldCo Moves; approve HoldCo artifacts</td><td>Surface cross-HoldCo opportunities; route federated Source spawns to L0 OP for approval; cannot independently spawn</td></tr>
+  <tr><td>Voice</td><td>Operator inside one HoldCo</td><td>Portfolio observer; explicitly says "I can see X in aggregate but not the underlying grain"</td></tr>
+  <tr><td>Honesty discipline</td><td>"I need X to answer this" when bundle missing</td><td>Same · plus "this HoldCo has not granted transaction-grain read; I can show aggregate only"</td></tr>
+</table>
+
+<h3>How the sticky ask bar works</h3>
+<p>The Atlas ask bar is sticky to the bottom of the viewport when the user scrolls past Zone A. It auto-grows on text input (1 line → up to 6 lines). Enter submits; Shift-Enter is line break. Spellcheck enabled. The placeholder text rewrites contextually based on which zone is centered in the viewport (zones B-F each have a dedicated example query).</p>
+
+<h3>What Atlas can answer</h3>
+<ul>
+  <li>"Why is the Microsoft EA opportunity ranked first?" → ranker scoring inputs + corpus reference for the enterprise-rate threshold</li>
+  <li>"What's the evidence for L-S01's $0.62M realized?" → evidence chain summary (banking contracts closed, fee reduction baseline, attribution method)</li>
+  <li>"Which HoldCo is most exposed if KPMG raises rates 10%?" → cross-HoldCo aggregate counterfactual on auditor concentration</li>
+  <li>"What would it take for Morgan Street to deploy Cap 1?" → prerequisite chain + estimated effort + Lakefront contact for handoff</li>
+</ul>
+
+<h3>What Atlas refuses (and how it refuses)</h3>
+<ul>
+  <li>"Show me Roosevelt's underlying bank-by-bank fee detail" → <em>"Roosevelt has not granted transaction-grain banking detail to the federated view. I can show their aggregate banking concentration (32% HHI) but not per-bank. To get per-bank detail, request grant from Edward Park (Roosevelt CIO) or Priya Naidu (Roosevelt CFO). I can draft the grant request if you'd like."</em></li>
+  <li>"Spawn the federated audit Source event right now" → <em>"Source spawns from this surface require explicit L0 click for audit trail. I've prepared the spawn payload (3 incumbent contracts, scope standardization, fee-compression target). The 'review' button on opportunity 02 in Zone B will open the spawn dialog."</em></li>
+  <li>"What's the EBITDA per PortCo at Roosevelt?" → <em>"Aggregate read does not include per-PortCo EBITDA. Roosevelt's CFO bundle aggregates at the HoldCo level. Request grant from Priya Naidu for the per-PortCo view, or ask Atlas about the consolidated $182M EBITDA figure."</em></li>
+</ul>
+
+<h3>Atlas memory + context window</h3>
+<p>Atlas sessions are scoped to the federated tab visit. Long-term memory of L0 preferences (e.g., "Anya prefers concentration trends weekly") is held in a small per-L0-viewer preference store; conversation transcripts are persisted as audit artifacts and visible in Setup / Admin under the L0 audit trail.</p>
+
+<h2>6 · Tenancy + visibility</h2>
+
+<h3>What L0 sees</h3>
+<ul>
+  <li>All six zones at full fidelity</li>
+  <li>Per-HoldCo aggregates in Zone A (active Moves, phases, value at stake, last update)</li>
+  <li>All cross-HoldCo opportunities in Zone B regardless of which HoldCos are affected</li>
+  <li>Federated savings ledger (Zone C) summing across all HoldCos and Source events</li>
+  <li>Risk concentration trend (Zone D) with all four measures across all HoldCos</li>
+  <li>CXO performance KPIs (Zone E) with HoldCo names visible</li>
+  <li>Capability marketplace (Zone F) with full reusability and originator information</li>
+</ul>
+
+<h3>What an L1 HoldCo CXO sees on the same page</h3>
+<ul>
+  <li>Zone A: own HoldCo cell is pinned to the left with a "you" badge; sibling HoldCo cells are present but show aggregate-only summaries (no value-at-stake per sibling, only "Moves in flight: N" and "concentration risk delta: +/− X")</li>
+  <li>Zone B: opportunities affecting own HoldCo are surfaced fully; opportunities that do not affect own HoldCo are visible as compact rows ("Federated audit RFP — does not affect your HoldCo")</li>
+  <li>Zone C: own HoldCo's realized + projected pulled out as a separate line; portfolio total shown for context but not broken out per sibling</li>
+  <li>Zone D: concentration measures show portfolio aggregate; own HoldCo's contribution is highlighted; sibling contributions are anonymized ("HoldCo B: 4 banks", not "Roosevelt: 4 banks")</li>
+  <li>Zone E: own HoldCo's row at full fidelity; sibling rows show anonymized peer benchmarks ("Peer 1: 2.8% IT spend / rev")</li>
+  <li>Zone F: marketplace shows all capabilities; fork eligibility shows for own HoldCo only</li>
+</ul>
+
+<h3>Substrate enforcement</h3>
+<p>The visibility rules above are enforced at the data layer via the holding-group tenancy substrate (Wave 1 Spec L01). Server components query through tenant-aware view layers that resolve own-vs-sibling based on the viewer's tenant membership and role. No client-side filtering is trusted — the API only returns what the viewer is allowed to see.</p>
+
+<h2>7 · Squint test</h2>
+
+<p>The "if a CFO blurs the page 50%, what survives" check, per zone.</p>
+
+<div class="squint-row">
+  <div class="zlabel">Top strip</div>
+  <div><strong>5 of 5 · $32.9M · $1.42M · 3</strong> — four serif numerals in a row</div>
+  <div>The viewer sees portfolio health in five seconds: all Moves on track, addressable spend large, realized trending up, three concentration flags to watch. If any number is wrong, the morning has a different shape.</div>
+</div>
+<div class="squint-row">
+  <div class="zlabel">Zone A</div>
+  <div>Three columns, three large serif <strong>$11.2M / $6.4M / $2.1M</strong> values stacked vertically per cell</div>
+  <div>The viewer sees relative HoldCo weight in three seconds. Morgan Street is the heavyweight, Lakefront is the established baseline, Roosevelt is the newer addition.</div>
+</div>
+<div class="squint-row">
+  <div class="zlabel">Zone B</div>
+  <div>Five horizontal rows · right-aligned serif values · "review" buttons in a column</div>
+  <div>The viewer sees five new opportunities and their respective dollar magnitudes. One should be the most interesting. The "review" column is the call-to-action lane.</div>
+</div>
+<div class="squint-row">
+  <div class="zlabel">Zone C</div>
+  <div>One chart · two lines · the solid (projected) above the dashed (realized) but both trending up</div>
+  <div>The viewer sees savings credibility: realized is real but lags projected, and the gap is consistent. No suspicious surge, no flat dashed line.</div>
+</div>
+<div class="squint-row">
+  <div class="zlabel">Zone D</div>
+  <div>One chart · four lines · one (auditor) flat at red, one (cyber) climbing into amber, others stable</div>
+  <div>The viewer sees one risk trend escalating (cyber carrier) and the rest stable. That escalation is the conversation to have today.</div>
+</div>
+<div class="squint-row">
+  <div class="zlabel">Zone E</div>
+  <div>Three-row grid · the third row (Lakefront) clearly outscoring the others on AI maturity</div>
+  <div>The viewer sees that the portfolio has one mature HoldCo and two earlier-stage HoldCos. That's the federation arbitrage opportunity.</div>
+</div>
+<div class="squint-row">
+  <div class="zlabel">Zone F</div>
+  <div>Three vertical cards · each with one serif title · "request fork" buttons aligned right</div>
+  <div>The viewer sees three forkable capabilities and a clear action affordance per card. Focus mode — no scan, just commit.</div>
+</div>
+
+<h2>8 · Action affordances</h2>
+
+<p>What does L0 click to do the four common actions?</p>
+
+<table>
+  <tr><th>Action</th><th>Where to click</th><th>What happens</th></tr>
+  <tr><td>(a) Drill into a HoldCo</td><td>HoldCo name in Zone A cell · or HoldCo tab in the Tower top tab row</td><td>Navigates to that HoldCo's per-HoldCo Tower view (existing non-federated Tower). L0 retains full read of own portfolio at that level.</td></tr>
+  <tr><td>(b) Launch a Move 2/3/4 event</td><td>"Review" on Zone B opportunity · or "Spawn Move event" from a Zone D risk row</td><td>Opens the spawn dialog with pre-filled facts (the opportunity ranker's outputs become the spawn payload). One additional click to confirm. The Move shows up in Zone A within minutes of confirmation.</td></tr>
+  <tr><td>(c) Approve a Source spawn</td><td>"Review" on a Zone B opportunity tagged "Source spawn ready" · or directly from the originating Move page when a Source event has been pre-staged</td><td>Opens the Source spawn dialog (Source module redesign). The spawn is gated on L0 sponsor signature for federated events (Move 2/3/4); HoldCo-scoped Source events (Move 0/1) are gated on the HoldCo CXO instead and surface to L0 only as informational.</td></tr>
+  <tr><td>(d) Ask Atlas a question</td><td>Sticky Atlas ask bar at the bottom of the viewport</td><td>Atlas responds in a side panel that does not collapse the underlying zone. Responses are persisted as audit artifacts for L0 reference.</td></tr>
+  <tr><td>Bonus · request capability fork</td><td>"Request fork" on a Zone F capability card</td><td>Routes to originator HoldCo CIO (Yuki Ono at Lakefront, in most cases) for grant. On grant, spawns a Move 1 instance at the requesting HoldCo with pre-filled capability metadata.</td></tr>
+  <tr><td>Bonus · navigate to Atlas-only log</td><td>Account menu · "L0 audit trail"</td><td>Setup / Admin audit view filtered to L0 viewer's session history + Atlas conversation transcripts.</td></tr>
+</table>
+
+<h2>9 · Build mapping</h2>
+
+<p>For each zone, the React component path, the data hook, the API route. Codex builds against these. Component paths are conventional next-app-router under <code>src/app/(tower)/federated/</code>; data hooks live in <code>src/lib/tower/federated/hooks/</code>; API routes live in <code>src/app/api/tower/federated/</code>.</p>
+
+<div class="build-row">
+  <div class="zlabel">Top strip</div>
+  <div>
+    <strong>Component:</strong><br>
+    <code>src/app/(tower)/federated/page.tsx</code> (renders TopStatusStrip)<br>
+    <code>src/app/(tower)/federated/_components/TopStatusStrip.tsx</code>
+  </div>
+  <div>
+    <strong>Hook:</strong><br>
+    <code>useFederatedStatusStrip(holdingGroupId)</code> — fetches the four headline numbers
+  </div>
+  <div>
+    <strong>API:</strong><br>
+    <code>GET /api/tower/federated/status-strip</code> — returns <code>{ movesOnTrack, addressableSpend, savingsRealizedYtd, concentrationFlags, deltas }</code>
+  </div>
+</div>
+<div class="build-row">
+  <div class="zlabel">Zone A</div>
+  <div>
+    <code>src/app/(tower)/federated/_components/PortfolioRollupStrip.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/HoldCoRollupCell.tsx</code>
+  </div>
+  <div>
+    <code>useHoldCoRollup(holdingGroupId)</code> — list of HoldCos with Moves, phases, VAS, last update
+  </div>
+  <div>
+    <code>GET /api/tower/federated/rollup</code> — returns <code>{ holdCos: [{ id, name, moves: [{moveId, phase}], valueAtStake, lastUpdate }] }</code>
+  </div>
+</div>
+<div class="build-row">
+  <div class="zlabel">Zone B</div>
+  <div>
+    <code>src/app/(tower)/federated/_components/OpportunitiesThisWeek.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/OpportunityRow.tsx</code>
+  </div>
+  <div>
+    <code>useCrossHoldCoOpportunities(holdingGroupId, week)</code> — ranked list with surfaced-this-week filter
+  </div>
+  <div>
+    <code>GET /api/tower/federated/opportunities?window=week</code><br>
+    <code>POST /api/tower/federated/opportunities/{id}/review</code> (logs review intent)<br>
+    <code>POST /api/tower/federated/opportunities/{id}/spawn-source</code>
+  </div>
+</div>
+<div class="build-row">
+  <div class="zlabel">Zone C</div>
+  <div>
+    <code>src/app/(tower)/federated/_components/SavingsLedger.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/SavingsLedgerChart.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/SavingsLedgerTable.tsx</code>
+  </div>
+  <div>
+    <code>useFederatedSavingsLedger(holdingGroupId, range='12m')</code>
+  </div>
+  <div>
+    <code>GET /api/tower/federated/savings-ledger?range=12m</code> — returns <code>{ projected: [{month, $}], realized: [{month, $}], sources: [{source, move, holdCos, projected, realizedYtd, variance}] }</code>
+  </div>
+</div>
+<div class="build-row">
+  <div class="zlabel">Zone D</div>
+  <div>
+    <code>src/app/(tower)/federated/_components/RiskConcentration.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/RiskConcentrationChart.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/RiskRow.tsx</code>
+  </div>
+  <div>
+    <code>useRiskConcentration(holdingGroupId, range='6m')</code>
+  </div>
+  <div>
+    <code>GET /api/tower/federated/risk-concentration?range=6m</code> — returns <code>{ measures: [{name, series: [{date, pct}], current, deltaWow, state, detail}], thresholds }</code>
+  </div>
+</div>
+<div class="build-row">
+  <div class="zlabel">Zone E</div>
+  <div>
+    <code>src/app/(tower)/federated/_components/CxoPerformanceGrid.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/ModernizationDebtTable.tsx</code>
+  </div>
+  <div>
+    <code>useCxoPerformance(holdingGroupId)</code>
+  </div>
+  <div>
+    <code>GET /api/tower/federated/cxo-performance</code> — returns <code>{ holdCos: [{ id, name, kpis: { itSpendPct, aiMaturity, cioCashComp, modernizationDebt, itFteRatio } }], benchmarks }</code>
+  </div>
+</div>
+<div class="build-row">
+  <div class="zlabel">Zone F</div>
+  <div>
+    <code>src/app/(tower)/federated/_components/CapabilityMarketplace.tsx</code><br>
+    <code>src/app/(tower)/federated/_components/CapabilityCard.tsx</code>
+  </div>
+  <div>
+    <code>useCapabilityMarketplace(holdingGroupId)</code><br>
+    <code>useCapabilityEligibility(capabilityId, holdCoId)</code>
+  </div>
+  <div>
+    <code>GET /api/tower/federated/capabilities</code><br>
+    <code>POST /api/tower/federated/capabilities/{id}/request-fork</code> — routes to originator CIO
+  </div>
+</div>
+<div class="build-row">
+  <div class="zlabel">Atlas bar</div>
+  <div>
+    <code>src/app/(tower)/federated/_components/AtlasAskBar.tsx</code> (sticky bottom · zone-context aware)<br>
+    <code>src/app/(tower)/federated/_components/AtlasResponsePanel.tsx</code>
+  </div>
+  <div>
+    <code>useAtlasSession(holdingGroupId)</code> — session, zone context, history
+  </div>
+  <div>
+    <code>POST /api/tower/federated/atlas/ask</code><br>
+    <code>GET /api/tower/federated/atlas/session/{id}</code><br>
+    Atlas backend goes through the AgentContextBroker; no direct broker / vector / graph imports from the app tier
+  </div>
+</div>
+
+<h3>Substrate + RLS</h3>
+<p>The page is gated on <code>holding_group_id</code> membership + the L0 sponsor role check. Page-level gate in <code>src/app/(tower)/federated/layout.tsx</code> calls <code>getHoldingGroupMembership(currentUser)</code>; redirects to <code>/tower</code> with a "federated view requires L0 access" banner if absent. API routes additionally validate the gate at server entry — see <code>src/lib/auth/holding-group-access-policy.ts</code> (extends <code>src/lib/auth/source-access-policy.ts</code> per Spec L01).</p>
+
+<h3>Data layer view contracts (selected)</h3>
+<table>
+  <tr><th>View</th><th>Inputs</th><th>Output shape</th></tr>
+  <tr><td><code>federated_move_status_view</code></td><td><code>moves</code>, <code>move_phases</code>, <code>tenant_holding_group</code></td><td><code>{ holdingGroupId, holdCoId, moveId, phase, lastTransitionAt }</code></td></tr>
+  <tr><td><code>federated_value_at_stake_view</code></td><td><code>business_cases</code>, <code>source_events</code>, attribution table</td><td><code>{ holdingGroupId, holdCoId, valueAtStake, components: [...] }</code></td></tr>
+  <tr><td><code>cross_holdco_opportunities_view</code></td><td><code>opportunity_ranker_runs</code>, ranker outputs</td><td><code>{ holdingGroupId, opportunities: [{ id, title, desc, affectedHoldCos[], projectedValue, surfacedAt, status }] }</code></td></tr>
+  <tr><td><code>federated_savings_ledger_view</code></td><td><code>savings_ledger_entries</code>, <code>evidence_chains</code></td><td><code>{ holdingGroupId, projected: TimeSeries, realized: TimeSeries, sources: [...] }</code></td></tr>
+  <tr><td><code>risk_concentration_view</code></td><td><code>risk_concentration_snapshots</code>, thresholds</td><td><code>{ holdingGroupId, measures: [{ name, series, current, threshold, state }] }</code></td></tr>
+  <tr><td><code>cxo_performance_view</code></td><td><code>cxo_bundles.*</code>, <code>corpus_benchmarks</code></td><td><code>{ holdingGroupId, holdCos: [{ id, name, kpis, benchmarks }] }</code></td></tr>
+  <tr><td><code>capability_marketplace_view</code></td><td><code>capability_marketplace</code>, eligibility joins</td><td><code>{ holdingGroupId, capabilities: [...], eligibility: { capabilityId, holdCoId, status }[] }</code></td></tr>
+</table>
+
+<h2>10 · Acceptance criteria</h2>
+
+<p>The build is acceptance-ready when the following are true:</p>
+
+<ol>
+  <li>An L0 sponsor logs in and lands on <code>/tower/federated</code> within one click of the home shell.</li>
+  <li>The top status strip renders four numerals in serif, all derived from real (or seeded for demo) data with delta annotations.</li>
+  <li>Zone A shows three HoldCo cells with the correct active Moves, current phases, value-at-stake numerals in serif, and last-update timestamps.</li>
+  <li>Zone B renders the five opportunities surfaced this week from the ranker; each "review" routes to a structured opportunity page; spawning a Source event from an opportunity creates a valid pre-filled spawn payload that the Source module redesign accepts unchanged.</li>
+  <li>Zone C renders the projected and realized cumulative lines with consistent y-axis; the realized line never exceeds the projected line; the source table accurately reflects evidence chain freshness (stale items excluded from YTD totals).</li>
+  <li>Zone D renders four concentration time series with the correct thresholds visible; threshold breach detection populates Zone B opportunities and Move 4 ad-hoc events within 15 minutes of breach.</li>
+  <li>Zone E renders the 3 × 3 grid plus the modernization-debt secondary table; each KPI cell links to its underlying CXO bundle detail.</li>
+  <li>Zone F renders the three Lakefront capabilities with reusability and eligibility metadata; "request fork" routes to the originator CIO.</li>
+  <li>The Atlas ask bar is sticky, auto-grows, context-aware per zone, and routes through the AgentContextBroker (no direct broker imports).</li>
+  <li>HoldCo CXOs visiting the same page see the own-HoldCo-prominent / peer-anonymized variant per the tenancy + visibility section.</li>
+  <li>Empty states render specific missing-input messaging — never "0" or "—" implying real-zero — per the locked rule.</li>
+  <li>All API routes are gated on <code>holding_group_id</code> membership + L0 sponsor role at server entry; no client-side filter is relied upon for tenancy.</li>
+  <li>The page passes the squint test: a CFO blurs the page 50%, the dominant elements per zone match the table in section 7.</li>
+</ol>
+
+<h2>11 · Open design questions parked for future waves</h2>
+
+<ul>
+  <li><strong>Configurable zone order.</strong> Different L0 viewers (Op-Tech vs Op-Finance) may want a different default zone order. Parked for Wave 4 — for now, the canonical order in this spec is what ships.</li>
+  <li><strong>Annotations layer on charts.</strong> "Threshold breach on 2026-04-22" as a chart annotation is desirable but parked until the charting library decision is made. Wave 4.</li>
+  <li><strong>Exportable views.</strong> "Export this page as a board memo PDF" is a likely IC ask. Parked for Wave 4; coordinate with the deliverables library pattern in Setup.</li>
+  <li><strong>Push notification on threshold breach.</strong> L0 sponsors may want a daily digest or breach-only push. Parked for Wave 4; depends on the notification substrate.</li>
+  <li><strong>Per-PortCo drill-through.</strong> Currently the page goes HoldCo → Tower; a future iteration may surface PortCo-level callouts when a single PortCo materially drives a HoldCo metric (e.g., the legacy specialty mfg PortCo dragging Morgan Street's modernization debt). Parked for Wave 4+.</li>
+</ul>
+
+<div class="rule"></div>
+
+<p class="meta">End of doc 06 · Tower Federated Command Center spec. Next in the package: <code>07-kyriba-derisk-pattern-setter.html</code> (Move 0 full-fidelity, the 6 gates), <code>08-cross-holdco-vendor-rationalization.html</code> (Move 2 full-fidelity), <code>09-business-case-pattern-setter.html</code>, <code>10-mobilization-pattern-setter.html</code>. Codex implements this against Wave 1 Spec L04 (scaffold) and Wave 4 Spec L16-L17 (depth) per README.</p>
+
+</div>
+</body>
+</html>

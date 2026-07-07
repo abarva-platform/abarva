@@ -13,7 +13,7 @@ export function ApexCh05EvaluationChapter() {
         <SectionTitle light size="xl">Week 6. The committee scores. Two advance.</SectionTitle>
         <Lead light>
           The selection committee meets for two half-days to score all four vendors
-          against the sealed evaluation rubric. Sentinel&rsquo;s PAT-AMS-VND-001 flag
+          against the sealed evaluation rubric. Ava&rsquo;s PAT-AMS-VND-001 flag
           shapes the session before it starts: the SLA criterion is applied as written,
           not as BlueMaster presented it. Two vendors advance to BAFO. Two are eliminated
           with documented rationale.
@@ -23,7 +23,7 @@ export function ApexCh05EvaluationChapter() {
       <StoryRecap>
         Vendor responses are in. Pricing normalisation is complete (first pass). The
         evaluation rubric is sealed at five weighted dimensions. The selection committee
-        convenes Monday morning with all four proposals, the Sentinel flag record, and
+        convenes Monday morning with all four proposals, the Ava flag record, and
         the normalised pricing data. No new evaluation criteria may be added at this stage.
       </StoryRecap>
 
@@ -35,7 +35,7 @@ export function ApexCh05EvaluationChapter() {
           (technical lead), Marcus Reid (operations, Tower 1 owner), Sofia Park
           (data platform, Tower 3 owner), and James Oduya (finance, representing
           Priya Mehta). Each member scores independently before the committee session.
-          Individual scores are submitted to Source before the meeting. Sentinel
+          Individual scores are submitted to Source before the meeting. Ava
           calculates weighted composite scores and displays individual dispersion —
           any dimension where the committee is more than 15 points apart gets a
           structured discussion before the composite is finalised.
@@ -44,7 +44,7 @@ export function ApexCh05EvaluationChapter() {
           One dimension triggers a dispersion discussion: the SLA criterion. Marcus
           has scored BlueMaster&rsquo;s SLA at 18/20 based on the 99.95% uptime
           commitment. Sofia and Rachel have scored it at 7/20 after reading the
-          Sentinel flag. The dispersion is 11 points. Rachel reads the flag into the
+          Ava flag. The dispersion is 11 points. Rachel reads the flag into the
           record. Marcus reconsiders. The final committee score for BlueMaster&rsquo;s
           SLA criterion lands at 8/20 — the penalty backstop is contractually empty,
           and the rubric requires both commitment <em>and</em> backstop.
@@ -78,7 +78,7 @@ export function ApexCh05EvaluationChapter() {
             vendor="BlueMaster IT"
             score="61 / 100"
             rank={3}
-            notes="SLA overstatement flagged by Sentinel (PAT-AMS-VND-001); penalty backstop absent; excluded from BAFO"
+            notes="SLA overstatement flagged by Ava (PAT-AMS-VND-001); penalty backstop absent; excluded from BAFO"
           />
           <VendorScoreRow
             vendor="DataPeak Systems"
@@ -144,7 +144,7 @@ export function ApexCh05EvaluationChapter() {
 
       <Section>
         <Eyebrow>The lesson from Chapter 5</Eyebrow>
-        <SectionTitle>Sentinel&rsquo;s SLA flag was the difference between a clean evaluation and a contested one</SectionTitle>
+        <SectionTitle>Ava&rsquo;s SLA flag was the difference between a clean evaluation and a contested one</SectionTitle>
         <BodyP>
           If BlueMaster&rsquo;s 99.95% uptime commitment had been scored at face value —
           as Marcus initially did — it would have earned 18 or 19 out of 20 on the SLA
@@ -160,7 +160,7 @@ export function ApexCh05EvaluationChapter() {
           committee applied the full criterion and reached a defensible score.
         </BodyP>
         <Callout kind="warn" icon="⚠️" label="Pattern forward: P0 contract risks now visible in pricing">
-          The evaluation is complete and the shortlist is clean. But Sentinel has
+          The evaluation is complete and the shortlist is clean. But Ava has
           continued running analysis against the two finalist proposals. In Chapter 6
           (Pricing), two P0 contract risks surface — one in Northstar&rsquo;s proposal,
           one in ArcVault&rsquo;s. Both must be resolved in BAFO before either vendor

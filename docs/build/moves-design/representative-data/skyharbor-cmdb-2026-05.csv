@@ -1,0 +1,15 @@
+ci_sys_id,ci_name,ci_type,ci_class,lifecycle_state,owner_team,business_service,criticality,environment
+CI0001,booking-web,application,cmdb_ci_appl,production,Digital Web Squad,Booking,1,production
+CI0002,checkin-api,application,cmdb_ci_appl,production,Check-in Platform,Check-in,1,production
+CI0003,loyalty-svc,application,cmdb_ci_appl,production,Loyalty Engineering,Loyalty,2,production
+CI0004,irops-reaccom,application,cmdb_ci_appl,production,IROPS Platform,Operations,1,production
+CI0005,baggage-tracking,application,cmdb_ci_appl,production,Ops Engineering,Baggage,2,production
+CI0006,crew-scheduling,application,cmdb_ci_appl,production,Crew Systems,Crew,1,production
+CI0007,fare-pricing,application,cmdb_ci_appl,production,Revenue Systems,Revenue,2,production
+CI0008,fds-mainframe-pnr,mainframe,cmdb_ci_mainframe,production,Reservations Core,Reservations,1,production
+CI0009,etl-datastage-dw,etl_job,cmdb_ci_etl,production,Data Engineering,Analytics,3,production
+CI0010,customer-cdp,application,cmdb_ci_appl,pre_production,Data Engineering,Customer Data,2,staging
+CI0011,api-gateway,middleware,cmdb_ci_gateway,production,Platform Engineering,Shared Platform,1,production
+CI0012,auth-identity,application,cmdb_ci_appl,production,Platform Engineering,Identity,1,production
+CI0013,notifications-svc,application,cmdb_ci_appl,production,Digital Web Squad,Notifications,3,production
+CI0014,disruption-analytics,application,cmdb_ci_appl,dev,Data Engineering,Analytics,3,dev

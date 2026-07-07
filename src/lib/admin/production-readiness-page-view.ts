@@ -180,7 +180,7 @@ const TABS: ReadonlyArray<ProductionReadinessTabMeta> = [
   {
     key: 'history',
     label: 'History',
-    description: 'Recent readiness state transitions (deterministic seed).',
+    description: 'Recent readiness state transitions for the active client.',
   },
 ];
 
@@ -199,24 +199,24 @@ function buildGateCriteria(
       criteria: [
         {
           id: 'demo-seed',
-          label: 'Deterministic seed available',
+          label: 'Demo evidence available',
           status: 'pass',
           evidenceBasis:
-            `${tenantName} rich seed manifest present (Wave 2 deterministic).`,
+            `${tenantName} has enough prepared evidence for a guided demo walkthrough.`,
         },
         {
           id: 'demo-route-shell',
-          label: 'Route shell verified',
+          label: 'Admin experience verified',
           status: 'pass',
           evidenceBasis:
-            'AdminCanonShellV2 + EditorialCanvas wired across admin tree.',
+            'Core setup pages open in the Maestro admin experience without exposing internal build surfaces.',
         },
         {
           id: 'demo-guided-flow',
-          label: 'Guided demo flow rehearsed',
+          label: 'Guided flow rehearsed',
           status: 'pass',
           evidenceBasis:
-            'Steward editorial primary action surfaces blocker drawer entry.',
+            'Readiness guidance points Maestros to the next blocker that needs attention.',
         },
       ],
     },
@@ -230,7 +230,7 @@ function buildGateCriteria(
           label: 'Connectors configured',
           status: 'partial',
           evidenceBasis:
-            'Connector readiness view — most connectors stub or not_configured.',
+            'Connector readiness is visible, but most connectors are still not live.',
         },
         {
           id: 'pilot-evidence',
@@ -244,7 +244,7 @@ function buildGateCriteria(
           label: 'Users granted',
           status: 'pass',
           evidenceBasis:
-            'Identity connector domain-verified (Wave 2 seed).',
+            'Identity connector domain is verified for the prepared setup path.',
         },
       ],
     },
@@ -291,13 +291,13 @@ function buildActionStrip(): ReadonlyArray<ProductionReadinessActionRow> {
       id: 'run_readiness_check',
       label: 'Run readiness check',
       status: 'hard_gated',
-      reason: 'Live readiness scan in Wave 27',
+      reason: 'Live readiness scan requires production data access',
     },
     {
       id: 'approve_gate',
       label: 'Approve gate',
       status: 'hard_gated',
-      reason: 'Approval write available in Wave 27',
+      reason: 'Approval writes require audit logging',
     },
     {
       id: 'export_readiness_report',
@@ -481,7 +481,7 @@ export async function buildProductionReadinessPageView(
       'The canvas tells whether AbarVa can be demoed, piloted, or productionized — and what blocks each step.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',

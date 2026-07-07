@@ -1,0 +1,11 @@
+* @anandsundaram-hash
+
+/src/lib/auth/        @anandsundaram-hash
+/src/lib/broker/      @anandsundaram-hash
+/src/lib/ingestion/   @anandsundaram-hash
+/migrations/          @anandsundaram-hash
+/.github/             @anandsundaram-hash
+/docs/architecture/   @anandsundaram-hash
+/docs/releases/       @anandsundaram-hash
+/AGENTS.md            @anandsundaram-hash
+/CLAUDE.md            @anandsundaram-hash

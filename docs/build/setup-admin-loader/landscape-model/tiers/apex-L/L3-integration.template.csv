@@ -1,0 +1,19 @@
+interface_name,source_app,target_app,pattern,middleware,direction,frequency,data_volume,criticality,source
+Supplier PO/ASN EDI,SAP S/4HANA Supply Chain,Supplier Trading Partners,edi_x12,SPS Commerce / TrueCommerce,outbound,batch_hourly,illustrative (1000s partners),Tier 0,illustrative (EDI X12 850/856/810 supplier mesh)
+Supplier Invoice EDI,Supplier Trading Partners,Coupa Procurement,edi_x12,SPS Commerce,inbound,batch_daily,illustrative,Tier 1,illustrative
+Store sales upload,NCR POS,SAP S/4HANA Finance,file_batch,SFTP / store controller,inbound,batch_nightly,illustrative (~800-2500 stores),Tier 0,canonical anchors: NCR POS + SAP (technology_inventory.ts)
+Real-time inventory events,Manhattan Active WM,Apex Commerce Platform,event_stream,Apache Kafka,bidirectional,realtime,illustrative (high),Tier 0,illustrative (Kafka event mesh per 00-MODEL.md Apex row)
+Order orchestration,Apex Commerce Platform,IBM Sterling OMS,rest_api,Apigee API Gateway,bidirectional,realtime,illustrative,Tier 1,illustrative
+Order to fulfillment,IBM Sterling OMS,Manhattan Active WM,rest_api,MuleSoft Anypoint,outbound,near_realtime,illustrative,Tier 1,illustrative
+Demand signal feed,SAP S/4HANA Supply Chain,o9 Demand Planning,rest_api,MuleSoft Anypoint,outbound,batch_daily,illustrative,Tier 1,canonical gap: o9 not connected to SAP (technology_inventory.ts)
+Plan publish,o9 Demand Planning,Blue Yonder Merchandising,file_batch,SFTP,outbound,batch_weekly,illustrative,Tier 2,illustrative
+Customer events to CDP,Apex Commerce Platform,Twilio Segment CDP,event_stream,Apache Kafka,outbound,realtime,illustrative,Tier 1,canonical gap: CDP not connected to commerce (technology_inventory.ts)
+Loyalty sync,Punchh Loyalty,Twilio Segment CDP,rest_api,MuleSoft Anypoint,bidirectional,near_realtime,illustrative,Tier 2,canonical gap: Punchh not synced to Segment (technology_inventory.ts)
+Marketing audience export,Twilio Segment CDP,Adobe Experience Cloud,rest_api,Segment native,outbound,batch_hourly,illustrative,Tier 2,illustrative
+HR worker feed,Workday HCM,Store Labor Scheduling,rest_api,MuleSoft Anypoint,outbound,batch_daily,illustrative,Tier 2,illustrative
+GL postings,SAP S/4HANA Finance,Kyriba Treasury,file_batch,SFTP,outbound,batch_daily,illustrative,Tier 1,illustrative
+Warehouse to EDW,Manhattan Active WM,Snowflake,db_link,Fivetran / ADF,outbound,batch_hourly,illustrative,Tier 2,illustrative
+ERP to lakehouse,SAP S/4HANA Finance,Databricks Lakehouse,event_stream,Apache Kafka + Debezium CDC,outbound,near_realtime,illustrative,Tier 2,illustrative
+CMDB discovery sync,ServiceNow ITSM,Snowflake,rest_api,ServiceNow native,outbound,batch_daily,illustrative,Tier 3,illustrative
+Payment authorization,NCR POS,Payment Gateway (PCI),rest_api,Payment middleware (PCI zone),outbound,realtime,illustrative,Tier 0,illustrative (PCI-scoped payment auth)
+Legacy pricing extract,Legacy Pricing Mainframe,Oracle Retail RMS,file_batch,MQ / SFTP,outbound,batch_nightly,illustrative,Tier 2,canonical anchors: Oracle RMS legacy (technology.ts)

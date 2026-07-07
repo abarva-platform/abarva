@@ -15,10 +15,10 @@
 import {
   getAzureReadFluentClient,
   type PostgresCompatClient as SupabaseClient,
-} from '@/lib/data-plane/postgresCompat';
-import { createDefaultSession, type SessionRunner } from './azureSession';
-import { resolveDataPlane } from './resolveDataPlane';
-import type { DataPlane } from './types';
+} from "@/lib/data-plane/postgresCompat";
+import { createDefaultSession, type SessionRunner } from "./azureSession";
+import { resolveDataPlane } from "./resolveDataPlane";
+import type { DataPlane } from "./types";
 
 /**
  * Raw engagement row as stored — snake_case, untransformed. Mirrors the
@@ -36,7 +36,7 @@ export interface EngagementPortfolioRow {
   value_projected_low_usd: number | null;
   value_projected_high_usd: number | null;
   value_verified_usd: number | null;
-  value_verified_status: 'pending' | 'tracked' | 'final' | null;
+  value_verified_status: "pending" | "tracked" | "final" | null;
   value_currency: string | null;
   value_assumptions_jsonb: Record<string, unknown> | null;
   baseline_metrics: Record<string, unknown> | null;
@@ -54,6 +54,10 @@ export interface EngagementPortfolioRow {
   data_residency_region: string | null;
   retention_policy_years: number | null;
   archived_at: string | null;
+  archived_by: string | null;
+  archive_reason: string | null;
+  archive_explanation: string | null;
+  archived_from_state: string | null;
   deleted_at: string | null;
   created_at: string;
   updated_at: string | null;
@@ -76,6 +80,15 @@ export interface PortfolioQuery {
   allowedProgramIds: string[] | null;
   /** Max rows to return. */
   limit: number;
+  /**
+   * Archive-state filter for the read (Manage Moves):
+   *   - 'active' (default) — exclude archived rows (`lifecycle_state <>
+   *     'archived'` AND `archived_at IS NULL`). This is the pre-seam behavior.
+   *   - 'all' — include archived rows alongside active ones.
+   *   - 'archived' — return ONLY archived rows (`lifecycle_state = 'archived'`).
+   * Soft-deleted rows (`deleted_at IS NOT NULL`) are always excluded.
+   */
+  archiveFilter?: "active" | "all" | "archived";
 }
 
 /** A programs portfolio read adapter for one physical data plane. */
@@ -87,7 +100,9 @@ export interface ProgramsReadAdapter {
    * already wraps this in a 500 handler) — same failure semantics as the
    * pre-seam `getProgramPortfolio`.
    */
-  getProgramPortfolioRows(query: PortfolioQuery): Promise<EngagementPortfolioRow[]>;
+  getProgramPortfolioRows(
+    query: PortfolioQuery,
+  ): Promise<EngagementPortfolioRow[]>;
   /**
    * Return the single engagement row for `programId` scoped to `clientId`,
    * or `null` when no such row exists. The pre-seam `getProgramById` used
@@ -96,20 +111,24 @@ export interface ProgramsReadAdapter {
    * only. RBAC (`canReadProgram`) stays caller-side. Throws on a genuine
    * query error — same failure semantics as the pre-seam helper.
    */
-  getProgramByIdRow(programId: string, clientId: string): Promise<EngagementPortfolioRow | null>;
+  getProgramByIdRow(
+    programId: string,
+    clientId: string,
+  ): Promise<EngagementPortfolioRow | null>;
 }
 
 /** The engagements column projection — identical to the pre-seam select. */
 const ENGAGEMENT_COLUMNS =
-  'id, client_id, name, sponsor_person_id, problem_statement, target_outcome, '
-  + 'timeline_horizon, value_projected_low_usd, value_projected_high_usd, '
-  + 'value_verified_usd, value_verified_status, value_currency, '
-  + 'value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, '
-  + 'origin_source_ref, status, lifecycle_state, current_phase, '
-  + 'current_module_key, maestro_oversight_level, founder_approval_required, '
-  + 'phase_locked_at, phase_locked_by_user_id, data_residency_region, '
-  + 'retention_policy_years, archived_at, deleted_at, created_at, updated_at, '
-  + 'charter, function_pack_key, function_pack_confidence, gates_passed';
+  "id, client_id, name, sponsor_person_id, problem_statement, target_outcome, " +
+  "timeline_horizon, value_projected_low_usd, value_projected_high_usd, " +
+  "value_verified_usd, value_verified_status, value_currency, " +
+  "value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, " +
+  "origin_source_ref, status, lifecycle_state, current_phase, " +
+  "current_module_key, maestro_oversight_level, founder_approval_required, " +
+  "phase_locked_at, phase_locked_by_user_id, data_residency_region, " +
+  "retention_policy_years, archived_at, archived_by, archive_reason, " +
+  "archive_explanation, archived_from_state, deleted_at, created_at, updated_at, " +
+  "charter, function_pack_key, function_pack_confidence, gates_passed";
 
 // --- Supabase adapter (DEFAULT) --------------------------------------------
 
@@ -124,19 +143,34 @@ export function createSupabaseProgramsReadAdapter(
   getClient: SupabaseFactory = getAzureReadFluentClient,
 ): ProgramsReadAdapter {
   return {
-    name: 'supabase',
-    async getProgramPortfolioRows({ clientId, allowedProgramIds, limit }) {
+    name: "supabase",
+    async getProgramPortfolioRows({
+      clientId,
+      allowedProgramIds,
+      limit,
+      archiveFilter = "active",
+    }) {
       if (allowedProgramIds && allowedProgramIds.length === 0) return [];
       const sb = getClient();
       let query = sb
-        .from('engagements')
+        .from("engagements")
         .select(ENGAGEMENT_COLUMNS)
-        .eq('client_id', clientId)
-        .is('archived_at', null)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
+        .eq("client_id", clientId)
+        .is("deleted_at", null);
+      if (archiveFilter === "active") {
+        // Pre-seam behavior: exclude archived rows via `archived_at IS NULL`.
+        // The archive route always stamps `archived_at` when it sets
+        // lifecycle_state='archived', so this single predicate is sufficient
+        // and (unlike a `lifecycle_state <> 'archived'` guard) does not drop
+        // legacy rows whose lifecycle_state is NULL.
+        query = query.is("archived_at", null);
+      } else if (archiveFilter === "archived") {
+        query = query.eq("lifecycle_state", "archived");
+      }
+      // 'all' applies no archive predicate.
+      query = query.order("created_at", { ascending: false });
       if (allowedProgramIds) {
-        query = query.in('id', allowedProgramIds);
+        query = query.in("id", allowedProgramIds);
       }
       const { data, error } = await query.limit(limit);
       if (error) throw error;
@@ -145,10 +179,10 @@ export function createSupabaseProgramsReadAdapter(
     async getProgramByIdRow(programId, clientId) {
       const sb = getClient();
       const { data, error } = await sb
-        .from('engagements')
+        .from("engagements")
         .select(ENGAGEMENT_COLUMNS)
-        .eq('id', programId)
-        .eq('client_id', clientId)
+        .eq("id", programId)
+        .eq("client_id", clientId)
         .maybeSingle();
       if (error) throw error;
       return (data as unknown as EngagementPortfolioRow | null) ?? null;
@@ -164,17 +198,27 @@ export function createSupabaseProgramsReadAdapter(
  * with an in-memory fake.
  */
 export function createAzureProgramsReadAdapter(
-  session: SessionRunner = createDefaultSession('abarva-data-plane-programs'),
+  session: SessionRunner = createDefaultSession("abarva-data-plane-programs"),
 ): ProgramsReadAdapter {
   return {
-    name: 'azure-postgres',
-    async getProgramPortfolioRows({ clientId, allowedProgramIds, limit }) {
+    name: "azure-postgres",
+    async getProgramPortfolioRows({
+      clientId,
+      allowedProgramIds,
+      limit,
+      archiveFilter = "active",
+    }) {
       if (allowedProgramIds && allowedProgramIds.length === 0) return [];
       return session(async (run) => {
         const params: unknown[] = [clientId];
         let sql =
-          `SELECT ${ENGAGEMENT_COLUMNS} FROM engagements `
-          + 'WHERE client_id = $1 AND archived_at IS NULL AND deleted_at IS NULL';
+          `SELECT ${ENGAGEMENT_COLUMNS} FROM engagements ` +
+          "WHERE client_id = $1 AND deleted_at IS NULL";
+        if (archiveFilter === "active") {
+          sql += " AND archived_at IS NULL";
+        } else if (archiveFilter === "archived") {
+          sql += " AND lifecycle_state = 'archived'";
+        }
         if (allowedProgramIds) {
           params.push(allowedProgramIds);
           sql += ` AND id = ANY($${params.length}::text[])`;
@@ -187,8 +231,8 @@ export function createAzureProgramsReadAdapter(
     async getProgramByIdRow(programId, clientId) {
       return session(async (run) => {
         const rows = await run<EngagementPortfolioRow>(
-          `SELECT ${ENGAGEMENT_COLUMNS} FROM engagements `
-          + 'WHERE id = $1 AND client_id = $2 LIMIT 1',
+          `SELECT ${ENGAGEMENT_COLUMNS} FROM engagements ` +
+            "WHERE id = $1 AND client_id = $2 LIMIT 1",
           [programId, clientId],
         );
         return rows[0] ?? null;
@@ -206,9 +250,11 @@ export const azureProgramsReadAdapter: ProgramsReadAdapter =
   createAzureProgramsReadAdapter();
 
 /** Select the programs read adapter for the configured data plane. */
-export function selectProgramsReadAdapter(plane?: DataPlane): ProgramsReadAdapter {
+export function selectProgramsReadAdapter(
+  plane?: DataPlane,
+): ProgramsReadAdapter {
   const target = plane ?? resolveDataPlane();
-  return target === 'azure-postgres'
+  return target === "azure-postgres"
     ? azureProgramsReadAdapter
     : supabaseProgramsReadAdapter;
 }

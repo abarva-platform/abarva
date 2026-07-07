@@ -1,8 +1,9 @@
 /**
  * W4-PR-5 · Enterprise Comms Spine · Notifications dispatch cron
  *
- * Vercel cron handler. Fires every 1 minute (configured in vercel.json
- * at repo root). On each tick:
+ * Authenticated notifications dispatch endpoint. Azure scheduler or an
+ * approved operator job can invoke this route on the configured cadence. On
+ * each tick:
  *
  *   1. Validate the `Authorization: Bearer $CRON_SECRET` header.
  *   2. Delegate to `dispatchTick()` in
@@ -16,21 +17,17 @@
  * to Wave 5 (W5-PR-3 / W5-PR-4). This handler processes immediate-
  * frequency queued rows only.
  *
- * Vercel free-plan note: the 1-minute schedule requires a Pro (or
- * higher) plan. Free plan caps at 2 invocations / day. Deployment
- * prerequisite documented in the release record.
- *
  * Source: docs/build/ENTERPRISE_COMMS_SPINE_2026-05-30.md §6, §8, §11.
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from "next/server";
 
-import { dispatchTick } from '@/lib/admin/broker/notification-dispatch-broker';
+import { dispatchTick } from "@/lib/admin/broker/notification-dispatch-broker";
 
 // This route holds open DB connections + Resend calls — do NOT run on
 // the edge runtime. Default Node.js runtime is correct.
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function expectedCronSecret(): string | null {
   const value = process.env.CRON_SECRET?.trim();
@@ -38,7 +35,7 @@ function expectedCronSecret(): string | null {
 }
 
 function bearerToken(req: NextRequest): string | null {
-  const header = req.headers.get('authorization');
+  const header = req.headers.get("authorization");
   if (!header) return null;
   const match = /^Bearer\s+(.+)$/i.exec(header.trim());
   return match?.[1]?.trim() ?? null;
@@ -51,14 +48,13 @@ function authorized(req: NextRequest): boolean {
 }
 
 /**
- * GET — Vercel cron handler entry point.
- * Vercel attaches `Authorization: Bearer $CRON_SECRET` automatically
- * to scheduled invocations. Manual probes from the dashboard or
- * external tooling must supply the same header.
+ * GET — authenticated scheduler entry point.
+ * Scheduled invocations and manual probes must supply
+ * `Authorization: Bearer $CRON_SECRET`.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!authorized(req)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const result = await dispatchTick();

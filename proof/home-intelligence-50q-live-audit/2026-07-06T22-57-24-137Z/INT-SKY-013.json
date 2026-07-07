@@ -1,0 +1,58 @@
+{
+  "id": "INT-SKY-013",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "How should the CTO explain risk in autonomous operational decisioning?",
+  "expectedTerms": [
+    "CTO",
+    "risk"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:12:01.571Z",
+  "completedAt": "2026-07-06T23:12:30.894Z",
+  "latencyMs": 29323,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-013-prompt-reconstruction.txt",
+  "promptReconstructionHash": "028461ff1f71f965d944b321d3bc228cfee994c199484529a6b6e7784189fd1d",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-013.ndjson",
+  "claudeResponse": "\" That reframes the board conversation from AI capability to operational accountability, which is the register a CTO can actually defend.\nThe specific risks I would name, grounded in the loaded IROPS context: model-decision risk on crew legality, PNR reaccommodation, and turn sequencing where a bad autonomous action creates DOT exposure or crew-contract breach; data-freshness risk across the crew legality feed, flight status, PNR events, and operational event store, where stale inputs drive confidently wrong decisions; control-evidence risk, meaning no signed model-risk tier, no override log, no accountable control owner tied to each AI initiative; and vendor/platform risk on the OCC platform, Crew Recovery Optimizer, and PSS mainframe gateway, where SLA and integration dependencies aren't yet contractually linked to the autonomous decision path.\nThe honest posture: fund readiness before autonomous scale, and keep customer- or crew-impacting actions human-in-loop until model risk and data certification sign off.\nRisk table for the board conversation: | Risk | Control / mitigation | Owner | Severity | Evidence / gap |\n|---|---|---|---|---|\n| Autonomous action violates crew legality or DOT customer-care obligation | Model-risk tiering + HITL gate for crew and passenger-facing actions | AI Governance Lead + VP Crew Operations | High | Model-risk tier approval and HITL workflow not yet signed |\n| Stale or ungoverned data drives confidently wrong recovery decision | Owner-signed freshness SLA and lineage on crew legality, PNR, flight status, operational event store | VP Data Platforms | High | Certified freshness SLA and actual freshness not yet loaded |\n| No override log or accountable control owner per AI initiative | Override capture, decision audit trail, named control owner per initiative | AI Governance Lead | High | Control owner + override log absent across 8 loaded AI initiatives |\n| Board-grade value claims outrun Finance baseline | Finance-approved disruption-cost baseline by event category before value claims | CFO Office | Medium | No finance-approved realized-value row; benefits realization rows still Projected/Observed |\n| Vendor/platform failure on OCC, Crew Recovery Optimizer, PSS gateway breaks autonomous path | Contract-to-system linkage, support SLA, resilience testing on IROPS-critical platforms | EVP Operations + CTO | Medium | Contract-system linkage and support SLA not yet tied to IROPS operating path |\n| Adoption and realized-value evidence missing | Measured usage, decision latency, override rate, realized ops value per initiative | VP Digital Products | Medium | Adoption telemetry not yet instrumented across the 8 AI initiatives | The next useful move: pick two IROPS AI initiatives — I'd suggest the IROPS Decision Assistant and the Crew Recovery Copilot — and stand up the full control envelope (model-risk tier, HITL workflow, data-freshness signoff, override log, named control owner) on those two before extending autonomy anywhere else.\nThat gives the board a concrete, evidenced proof point rather than a portfolio-wide assertion. Want me to sequence the readiness gates into a roadmap, or pressure-test which two initiatives should carry the first control envelope?",
+  "renderedText": "\" That reframes the board conversation from AI capability to operational accountability, which is the register a CTO can actually defend.\nThe specific risks I would name, grounded in the loaded IROPS context: model-decision risk on crew legality, PNR reaccommodation, and turn sequencing where a bad autonomous action creates DOT exposure or crew-contract breach; data-freshness risk across the crew legality feed, flight status, PNR events, and operational event store, where stale inputs drive confidently wrong decisions; control-evidence risk, meaning no signed model-risk tier, no override log, no accountable control owner tied to each AI initiative; and vendor/platform risk on the OCC platform, Crew Recovery Optimizer, and PSS mainframe gateway, where SLA and integration dependencies aren't yet contractually linked to the autonomous decision path.\nThe honest posture: fund readiness before autonomous scale, and keep customer- or crew-impacting actions human-in-loop until model risk and data certification sign off.\nRisk table for the board conversation: | Risk | Control / mitigation | Owner | Severity | Evidence / gap |\n|---|---|---|---|---|\n| Autonomous action violates crew legality or DOT customer-care obligation | Model-risk tiering + HITL gate for crew and passenger-facing actions | AI Governance Lead + VP Crew Operations | High | Model-risk tier approval and HITL workflow not yet signed |\n| Stale or ungoverned data drives confidently wrong recovery decision | Owner-signed freshness SLA and lineage on crew legality, PNR, flight status, operational event store | VP Data Platforms | High | Certified freshness SLA and actual freshness not yet loaded |\n| No override log or accountable control owner per AI initiative | Override capture, decision audit trail, named control owner per initiative | AI Governance Lead | High | Control owner + override log absent across 8 loaded AI initiatives |\n| Board-grade value claims outrun Finance baseline | Finance-approved disruption-cost baseline by event category before value claims | CFO Office | Medium | No finance-approved realized-value row; benefits realization rows still Projected/Observed |\n| Vendor/platform failure on OCC, Crew Recovery Optimizer, PSS gateway breaks autonomous path | Contract-to-system linkage, support SLA, resilience testing on IROPS-critical platforms | EVP Operations + CTO | Medium | Contract-system linkage and support SLA not yet tied to IROPS operating path |\n| Adoption and realized-value evidence missing | Measured usage, decision latency, override rate, realized ops value per initiative | VP Digital Products | Medium | Adoption telemetry not yet instrumented across the 8 AI initiatives | The next useful move: pick two IROPS AI initiatives — I'd suggest the IROPS Decision Assistant and the Crew Recovery Copilot — and stand up the full control envelope (model-risk tier, HITL workflow, data-freshness signoff, override log, named control owner) on those two before extending autonomy anywhere else.\nThat gives the board a concrete, evidenced proof point rather than a portfolio-wide assertion. Want me to sequence the readiness gates into a roadmap, or pressure-test which two initiatives should carry the first control envelope?",
+  "sourcesCount": 9,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "Org structure and leadership (skyharbor-air)",
+    "Enterprise AI risk and control pattern"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": null,
+  "score": {
+    "verdict": "watch",
+    "score": 4.5,
+    "flags": [
+      "answer_too_long"
+    ]
+  }
+}

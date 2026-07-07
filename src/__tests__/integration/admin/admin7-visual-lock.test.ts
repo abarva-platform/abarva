@@ -178,7 +178,6 @@ const ADMIN_TREE_DIRS = [
 ];
 
 const ADMIN_PAGE_PATHS = [
-  'src/app/(maestro)/admin/page.tsx',
   'src/app/(maestro)/admin/data-trust/page.tsx',
   'src/app/(maestro)/admin/connectors/page.tsx',
   'src/app/(maestro)/admin/users-access/page.tsx',
@@ -302,7 +301,7 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
   // Canonical admin page presence
   // -------------------------------------------------------------------------
 
-  describe('Canonical admin pages exist and import the shell', () => {
+  describe('Canonical admin sub-pages exist and import the shell', () => {
     // Note: Setup Redesign Package (PRs A/B/C) migrated admin/page.tsx,
     // data-trust/page.tsx, and agent-readiness/page.tsx to a new pattern
     // using SetupChatRail instead of the older AgentRail + EditorialCanvas
@@ -317,6 +316,16 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
           expect(src).toContain('AdminCanonShellV2');
         });
       });
+    });
+
+    it('/admin home renders a native Maestro canvas instead of the legacy setup dashboard', () => {
+      const src = readFileSync(resolve(root, 'src/app/(maestro)/admin/page.tsx'), 'utf8');
+      expect(src).toContain('data-admin-home-native');
+      expect(src).toContain('AdminCanonShellV2');
+      expect(src).toContain('resolveAdminTenant');
+      expect(src).toContain('Loaded data by dimension');
+      expect(src).not.toContain('iframe');
+      expect(src).not.toContain('HomeOverviewV2');
     });
   });
 
@@ -461,8 +470,8 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
   // -------------------------------------------------------------------------
 
   describe('AbarVaLogo is the only canonical logo path', () => {
-    it('public/brand/abarva-logo-lockup-v2.svg exists', () => {
-      expect(existsSync(resolve(root, 'public/brand/abarva-logo-lockup-v2.svg'))).toBe(true);
+    it('public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg exists', () => {
+      expect(existsSync(resolve(root, 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg'))).toBe(true);
     });
 
     it('AbarVaLogo component exists', () => {
@@ -600,10 +609,11 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
       expect(files.length).toBeGreaterThanOrEqual(50);
     });
 
-    it('all 6 admin sub-routes are covered by ADMIN_PAGE_PATHS', () => {
+    it('all 5 shell-backed admin sub-routes are covered by ADMIN_PAGE_PATHS', () => {
       // ai-initiatives route removed in admin-completion wave (PR #ADMIN7-cleanup).
-      // build-progress, architecture, reasoning also retired. 6 canonical routes remain.
-      expect(ADMIN_PAGE_PATHS).toHaveLength(6);
+      // build-progress, architecture, reasoning also retired. /admin home now
+      // hosts the native Maestro canvas and is asserted separately above.
+      expect(ADMIN_PAGE_PATHS).toHaveLength(5);
     });
 
     it('walkDir returns only .ts/.tsx/.js/.jsx files', () => {

@@ -55,7 +55,7 @@ export function TowerMissionQueue({ limit = 8 }: TowerMissionQueueProps = {}) {
         title="Portfolio missions · pending high-priority gates"
         maxRows={limit}
         showInstancePrefix
-        emptyState="All portfolio gates satisfied · Atlas is monitoring"
+        emptyState="All portfolio gates satisfied · Ava is monitoring"
       />
       <p style={SUBTITLE}>
         Auto-derived from gate criteria across all {programCount} program

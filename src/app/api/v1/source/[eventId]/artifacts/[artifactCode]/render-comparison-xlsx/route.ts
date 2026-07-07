@@ -39,7 +39,7 @@ function isCanonicalClientAdminEmail(email: string | null | undefined): boolean 
   );
 }
 
-export async function GET(_req: NextRequest, { params }: RouteCtx) {
+export async function GET(req: NextRequest, { params }: RouteCtx) {
   let tenancy;
   let tenancyError: unknown = null;
   try {
@@ -49,6 +49,7 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   }
 
   const { eventId, artifactCode } = await params;
+  const requestedClientId = req.nextUrl.searchParams.get('client');
 
   if (!hasXlsxComparison(artifactCode)) {
     return Response.json(
@@ -60,7 +61,9 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
     );
   }
 
-  const ctx = await buildSourceGenerationContext(eventId);
+  const ctx = await buildSourceGenerationContext(eventId, {
+    requestedClientId,
+  });
   if (!ctx) {
     return Response.json(
       { error: 'not_found', detail: `No source event with slug ${eventId}` },
@@ -69,7 +72,7 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   }
 
   const [activeClient, currentUser] = await Promise.all([
-    getActiveClientRow().catch(() => null),
+    getActiveClientRow(requestedClientId).catch(() => null),
     getCurrentUser().catch(() => null),
   ]);
   const accessPolicy =

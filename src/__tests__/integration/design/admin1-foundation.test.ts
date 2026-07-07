@@ -62,8 +62,8 @@ describe('ADMIN1 — Foundation: Logo + Tokens', () => {
   });
 
   describe('logo asset', () => {
-    it('lockup-v2 SVG exists at canonical path', () => {
-      const path = resolve(process.cwd(), 'public/brand/abarva-logo-lockup-v2.svg');
+    it('Option 2 standard SVG exists at canonical path', () => {
+      const path = resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg');
       expect(existsSync(path)).toBe(true);
     });
 

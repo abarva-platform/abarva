@@ -12,6 +12,10 @@
 
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
+import {
+  SOURCE_EXTERNAL_ACTION_RATIONALE_MIN_CHARS,
+  validateSourceExternalActionGate,
+} from '@/lib/source/external-action-gate';
 import { createWorkItem } from '@/lib/source/work-items/service';
 import {
   WORK_ITEM_KINDS,
@@ -34,10 +38,15 @@ interface CreateWorkItemBody {
   legalStatus?: string;
   procurementStatus?: string;
   note?: string;
+  humanConfirmed?: unknown;
+  humanJustification?: unknown;
+  evidenceRefs?: unknown;
 }
 
 const LEGAL_STATUSES = ['not_started', 'drafting', 'in_review', 'served', 'not_applicable'];
 const PROC_STATUSES = ['not_started', 'in_progress', 'completed', 'not_applicable'];
+const SOURCE_EXTERNAL_ACTION_GATE_ERROR =
+  'human_external_action_gate_required';
 
 function parseString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0
@@ -114,6 +123,47 @@ export async function POST(request: Request) {
     procurementStatusRaw && PROC_STATUSES.includes(procurementStatusRaw)
       ? (procurementStatusRaw as WorkItemProcurementStatus)
       : null;
+  const externalActionGate = validateSourceExternalActionGate({
+    kind: kind as WorkItemKind,
+    humanConfirmed: body.humanConfirmed,
+    humanJustification: body.humanJustification,
+    evidenceRefs: body.evidenceRefs,
+  });
+
+  if (!externalActionGate.ok) {
+    return Response.json(
+      {
+        error: SOURCE_EXTERNAL_ACTION_GATE_ERROR,
+        detail: externalActionGate.detail,
+        minimumRationaleChars: SOURCE_EXTERNAL_ACTION_RATIONALE_MIN_CHARS,
+        requiredFields: [
+          'humanConfirmed',
+          'humanJustification',
+          'evidenceRefs',
+        ],
+      },
+      { status: 400 },
+    );
+  }
+
+  const baseNote = parseString(body.note) ?? null;
+  const metadata: NewSourcingWorkItem['metadata'] = {};
+  let note = baseNote;
+  if (externalActionGate.required) {
+    metadata.externalActionGate = 'human_confirmed';
+    metadata.externalActionControl = 'ai_draft_human_review_human_sends';
+    metadata.externalActionJustification =
+      externalActionGate.normalizedJustification ?? '';
+    metadata.externalActionEvidenceRefs =
+      externalActionGate.normalizedEvidenceRefs.join(', ');
+
+    const approvalNote = [
+      `Human external-action approval: ${metadata.externalActionJustification}`,
+      `Evidence refs: ${metadata.externalActionEvidenceRefs}`,
+      'AbarVa records the work item only; a human remains responsible for any off-platform transmission.',
+    ].join(' ');
+    note = [baseNote, approvalNote].filter(Boolean).join('\n');
+  }
 
   const input: NewSourcingWorkItem = {
     tenantClientKey: activeClient.key,
@@ -127,7 +177,8 @@ export async function POST(request: Request) {
     status: 'open',
     legalStatus,
     procurementStatus,
-    note: parseString(body.note) ?? null,
+    note,
+    metadata,
     createdBy: tenancy.userId,
   };
 

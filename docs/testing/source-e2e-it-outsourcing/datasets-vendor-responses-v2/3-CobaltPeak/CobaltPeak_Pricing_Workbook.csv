@@ -1,0 +1,8 @@
+tower,band_or_model,y1_usd_m,y2_usd_m,y3_usd_m,y4_usd_m,y5_usd_m,notes
+Application Support,Fixed + ticket collar A-03,142.9,135.6,126.8,119.5,113.7,
+Infrastructure Ops,Volume-banded per A-04/A-06/A-07,42.9,40.7,38.1,35.9,34.1,
+Service Desk,Volume-banded per A-04/A-06/A-07,25.5,24.2,22.6,21.3,20.3,
+EUC & Field Services,Volume-banded per A-04/A-06/A-07,20.7,19.6,18.3,17.3,16.4,
+Network Ops,Fixed + ticket collar A-03,9.0,8.5,8.0,7.5,7.2,
+Cross-tower SRE/Automation,Fixed + ticket collar A-03,9.5,9.0,8.4,8.0,7.6,
+Transition,One-time,12.5,0,0,0,0,35% at risk (exceeds)

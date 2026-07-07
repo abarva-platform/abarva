@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Setup Data Load Center Home Wireframe</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #111827;
+        --muted: #4b5563;
+        --line: #d7dde6;
+        --canvas: #f7f8fa;
+        --panel: #ffffff;
+        --nav: #030712;
+        --accent: #2563eb;
+        --ok: #0f766e;
+        --warn: #b45309;
+        --risk: #b91c1c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      .topbar {
+        height: 64px;
+        background: var(--nav);
+        color: #f9fafb;
+        display: grid;
+        grid-template-columns: 184px minmax(180px, 1fr) auto;
+        align-items: center;
+        gap: 24px;
+        padding: 0 28px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .brand img {
+        display: block;
+        width: 124px;
+        height: auto;
+      }
+
+      .client-lock {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        color: #e5e7eb;
+        font-size: 14px;
+      }
+
+      .client-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        background: #f9fafb;
+        color: #111827;
+        font-weight: 800;
+      }
+
+      .client-copy {
+        min-width: 0;
+      }
+
+      .client-copy strong,
+      .client-copy span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .client-copy span {
+        color: #9ca3af;
+        font-size: 12px;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .nav a {
+        color: #d1d5db;
+        text-decoration: none;
+      }
+
+      .nav a.active {
+        color: #ffffff;
+        border-bottom: 3px solid var(--accent);
+        padding: 22px 0 19px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+        min-height: calc(100vh - 64px);
+      }
+
+      .side {
+        background: #ffffff;
+        border-right: 1px solid var(--line);
+        padding: 22px 18px;
+      }
+
+      .side h2 {
+        margin: 0 0 14px;
+        font-size: 12px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .side a {
+        display: block;
+        padding: 10px 12px;
+        border-radius: 6px;
+        color: #1f2937;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 620;
+      }
+
+      .side a.active {
+        background: #eaf1ff;
+        color: #1d4ed8;
+      }
+
+      .canvas {
+        padding: 24px 28px 40px;
+      }
+
+      .hero {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 22px 24px;
+      }
+
+      .hero-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: start;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: #6b7280;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      .summary {
+        margin: 8px 0 0;
+        max-width: 880px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      .action-panel {
+        width: 280px;
+        border: 1px solid #f2d399;
+        background: #fff8eb;
+        border-radius: 8px;
+        padding: 14px;
+      }
+
+      .action-panel p {
+        margin: 4px 0 10px;
+        color: #5f370e;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .button-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .button {
+        border: 1px solid #1d4ed8;
+        background: #2563eb;
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 13px;
+        font-weight: 760;
+      }
+
+      .button.secondary {
+        background: #ffffff;
+        color: #1d4ed8;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fbfcfe;
+        min-height: 94px;
+      }
+
+      .metric span {
+        display: block;
+        color: #6b7280;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 25px;
+        line-height: 1;
+      }
+
+      .metric p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .step {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        background: #ffffff;
+        min-height: 112px;
+      }
+
+      .step b {
+        display: block;
+        font-size: 13px;
+        line-height: 1.3;
+      }
+
+      .step small {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .status {
+        display: inline-flex;
+        margin-bottom: 8px;
+        padding: 3px 7px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 760;
+      }
+
+      .status.ok {
+        color: #0f513f;
+        background: #d9f5ec;
+      }
+
+      .status.warn {
+        color: #7c3f00;
+        background: #fff0cf;
+      }
+
+      .status.risk {
+        color: #8f1d1d;
+        background: #fee2e2;
+      }
+
+      .below {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        letter-spacing: 0;
+      }
+
+      .panel p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th {
+        text-align: left;
+        color: #6b7280;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--line);
+        padding: 9px 8px;
+      }
+
+      td {
+        border-bottom: 1px solid #eef1f5;
+        padding: 10px 8px;
+        vertical-align: top;
+      }
+
+      .bar {
+        height: 8px;
+        width: 100%;
+        border-radius: 999px;
+        background: #e5e7eb;
+        overflow: hidden;
+      }
+
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+      }
+
+      .queue {
+        display: grid;
+        gap: 10px;
+      }
+
+      .queue-item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        background: #fbfcfe;
+      }
+
+      .queue-item strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .queue-item span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .drawer-note {
+        margin-top: 18px;
+        color: #6b7280;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 1080px) {
+        .layout,
+        .below,
+        .hero-head {
+          grid-template-columns: 1fr;
+        }
+
+        .side {
+          display: none;
+        }
+
+        .action-panel {
+          width: auto;
+        }
+
+        .metrics,
+        .workflow {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><img src="../../../../public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg" alt="AbarVa" /></div>
+      <div class="client-lock" aria-label="Active client">
+        <div class="client-mark">AR</div>
+        <div class="client-copy">
+          <strong>Apex Retail Group</strong>
+          <span>Active client only. No other tenant data appears on this page.</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a class="active" href="#">Home</a>
+        <a href="#">Intelligence</a>
+        <a href="#">Moves</a>
+        <a href="#">Source</a>
+        <a href="#">Tower</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <aside class="side" aria-label="Setup menu">
+        <h2>Setup</h2>
+        <a class="active" href="#">Data Load Center</a>
+        <a href="#">Templates</a>
+        <a href="#">Connectors</a>
+        <a href="#">Users and Access</a>
+        <a href="#">Notifications</a>
+        <a href="#">Audit History</a>
+      </aside>
+
+      <section class="canvas">
+        <section class="hero">
+          <div class="hero-head">
+            <div>
+              <p class="eyebrow">Setup home</p>
+              <h1>Data Load Center</h1>
+              <p class="summary">
+                One operator screen for pilot data onboarding: confirm access, upload files, clear
+                scan and quarantine gates, review template fit, approve the preview, and see what
+                each load unlocks for Intelligence, Moves, Source, and Tower.
+              </p>
+            </div>
+            <aside class="action-panel">
+              <p class="eyebrow">Next decision</p>
+              <p>
+                Application portfolio is 72% complete. Two required owner fields need review before
+                commit.
+              </p>
+              <div class="button-row">
+                <button class="button">Review load</button>
+                <button class="button secondary">Export audit</button>
+              </div>
+            </aside>
+          </div>
+
+          <div class="metrics" aria-label="Above the fold data load summary">
+            <div class="metric">
+              <span>Overall readiness</span>
+              <strong>68%</strong>
+              <p>Weighted by required dimensions, open blockers, and approved rows.</p>
+            </div>
+            <div class="metric">
+              <span>Loaded dimensions</span>
+              <strong>11 / 18</strong>
+              <p>Only active Apex dimensions are counted.</p>
+            </div>
+            <div class="metric">
+              <span>Open blockers</span>
+              <strong>4</strong>
+              <p>2 clarifications, 1 scan retry, 1 approval waiting.</p>
+            </div>
+            <div class="metric">
+              <span>Last good load</span>
+              <strong>2h</strong>
+              <p>Vendor contracts committed with audit evidence.</p>
+            </div>
+          </div>
+
+          <div class="workflow" aria-label="Pilot data load workflow">
+            <div class="step">
+              <span class="status ok">Ready</span>
+              <b>1. Access</b>
+              <small>SSO, role, and active-client resolution are verified.</small>
+            </div>
+            <div class="step">
+              <span class="status ok">Ready</span>
+              <b>2. Consent</b>
+              <small>Uploader accepts data-use policy before files enter the lane.</small>
+            </div>
+            <div class="step">
+              <span class="status warn">Needs scan</span>
+              <b>3. Upload</b>
+              <small>Files land in private storage and wait for malware clearance.</small>
+            </div>
+            <div class="step">
+              <span class="status warn">Review</span>
+              <b>4. Validate</b>
+              <small>Template fit, missing fields, and anomalies are visible.</small>
+            </div>
+            <div class="step">
+              <span class="status risk">Blocked</span>
+              <b>5. Approve</b>
+              <small>Preview cannot commit until clarifications close.</small>
+            </div>
+            <div class="step">
+              <span class="status ok">Audited</span>
+              <b>6. Commit</b>
+              <small>Load ledger records commit, rollback path, and audit export.</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="below">
+          <article class="panel">
+            <h2>Data loaded by dimension</h2>
+            <p>
+              This table is the primary setup home visual. It answers what is loaded, what is
+              complete, what is blocked, and what product surfaces are ready to use it.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Complete</th>
+                  <th>Current gate</th>
+                  <th>Needed next</th>
+                  <th>Unlocks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Application portfolio</strong></td>
+                  <td><div class="bar"><i style="width: 72%"></i></div></td>
+                  <td>Template validation</td>
+                  <td>Resolve 2 owner fields</td>
+                  <td>Intelligence, Moves, Tower</td>
+                </tr>
+                <tr>
+                  <td><strong>Vendor contracts</strong></td>
+                  <td><div class="bar"><i style="width: 100%"></i></div></td>
+                  <td>Committed</td>
+                  <td>None</td>
+                  <td>Source, Tower</td>
+                </tr>
+                <tr>
+                  <td><strong>ERP landscape</strong></td>
+                  <td><div class="bar"><i style="width: 48%"></i></div></td>
+                  <td>Upload scan</td>
+                  <td>Retry malware scan</td>
+                  <td>Moves, Tower</td>
+                </tr>
+                <tr>
+                  <td><strong>Org roles and teams</strong></td>
+                  <td><div class="bar"><i style="width: 81%"></i></div></td>
+                  <td>Approval</td>
+                  <td>Approver signoff</td>
+                  <td>All assistants</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
+          <aside class="panel">
+            <h2>Work queue</h2>
+            <p>Short, meaningful actions. No implementation tags, no internal jargon.</p>
+            <div class="queue">
+              <div class="queue-item">
+                <strong>Approve org roles preview</strong>
+                <span>81% complete. No quarantine cases. Approver action required.</span>
+              </div>
+              <div class="queue-item">
+                <strong>Answer application owner gaps</strong>
+                <span>2 required fields missing before the load can commit.</span>
+              </div>
+              <div class="queue-item">
+                <strong>Retry ERP malware scan</strong>
+                <span>Scan failed. Parsing is blocked until clean.</span>
+              </div>
+            </div>
+            <p class="drawer-note">
+              Design rule: detailed ledgers, template inventories, raw audit rows, and system
+              diagnostics live in drill-in drawers or secondary pages. The home page stays a
+              decision screen.
+            </p>
+          </aside>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

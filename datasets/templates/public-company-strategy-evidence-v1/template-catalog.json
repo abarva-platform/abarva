@@ -1,0 +1,40 @@
+{
+  "template_pack": "public-company-strategy-evidence-v1",
+  "purpose": "Templates for aligning public-company disclosures and investor communications to internal IT, finance, risk, and strategy evidence.",
+  "classification": "template_only_no_seed_rows",
+  "templates": [
+    {
+      "file": "01_public_source_catalog.template.csv",
+      "grain": "one row per public source document or event",
+      "source_examples": ["annual report", "quarterly earnings release", "earnings transcript", "investor day", "investor conference", "proxy", "ESG report", "cyber disclosure"]
+    },
+    {
+      "file": "02_corporate_strategy_and_growth_agenda.template.csv",
+      "grain": "one row per disclosed strategic commitment"
+    },
+    {
+      "file": "03_financial_kpi_time_series.template.csv",
+      "grain": "one row per KPI/period"
+    },
+    {
+      "file": "04_segment_business_kpis.template.csv",
+      "grain": "one row per segment/business KPI"
+    },
+    {
+      "file": "05_management_commentary_claims.template.csv",
+      "grain": "one row per cited management claim"
+    },
+    {
+      "file": "06_risk_factor_and_control_disclosures.template.csv",
+      "grain": "one row per public risk/control disclosure"
+    },
+    {
+      "file": "07_capital_allocation_and_investment_priorities.template.csv",
+      "grain": "one row per public investment priority"
+    },
+    {
+      "file": "08_public_to_internal_it_alignment.template.csv",
+      "grain": "one row per link between public claim/KPI and internal system, initiative, vendor, or risk"
+    }
+  ]
+}

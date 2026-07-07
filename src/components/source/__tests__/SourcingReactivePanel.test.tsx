@@ -110,8 +110,8 @@ describe('SourcingReactivePanel', () => {
   it('renders Sentinel Source empty-state prompts', () => {
     const html = renderToStaticMarkup(createElement(SourcingReactivePanel, { artifacts: [] }));
 
-    expect(html).toContain('Sentinel sourcing reasoning - live');
-    expect(html).toContain('Ask Sentinel Source to compare vendors');
+    expect(html).toContain('Ava sourcing reasoning - live');
+    expect(html).toContain('Ask Ava to compare vendors');
     expect(html).toContain('Compare vendors');
     expect(html).toContain('Run BAFO check');
     expect(html).toContain('walkaway');
@@ -147,6 +147,9 @@ describe('SourcingReactivePanel', () => {
     expect(html).toContain('BAFO scoreboard');
     expect(html).toContain('Vendor A');
     expect(html).toContain('Walkaway credibility');
+    expect(html).toContain('data-ai-suggestion-frame="suggested"');
+    expect(html).toContain('Validate before action');
+    expect(html).toContain('Ava AI suggestion: BAFO scoreboard');
     expect(html).not.toContain('href=');
   });
 });

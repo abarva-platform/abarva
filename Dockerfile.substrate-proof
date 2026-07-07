@@ -1,0 +1,9 @@
+# Minimal substrate-proof image — does NOT build the Next.js app.
+# Runs the read-only Semantic2 golden substrate-proof (pg only).
+# Build context only needs scripts/. Command BAKED (only --image override works
+# in this lab; --args/--yaml/--command silently no-op).
+FROM node:24-bookworm-slim
+WORKDIR /app
+RUN npm init -y >/dev/null 2>&1 && npm install pg --no-audit --no-fund --omit=dev
+COPY scripts ./scripts
+CMD ["node", "scripts/context-packs/verify-semantic2-golden-substrate.cjs"]

@@ -1,0 +1,218 @@
+{
+  "version": "2026-06",
+  "generatedAt": "2026-06-15T02:35:15.616Z",
+  "mode": "read-only",
+  "thresholds": {
+    "watch": 50,
+    "warn": 80,
+    "breach": 100
+  },
+  "overall": {
+    "status": "BREACH",
+    "totalSubscriptions": 2,
+    "counts": {
+      "BREACH": 1,
+      "OK": 1
+    },
+    "triggeredActions": [
+      "Notify admin@abarva.ai and alerts@abarva.ai.",
+      "Review cost analysis by service and resource group.",
+      "Pause nonessential jobs only after explicit human approval.",
+      "Do not delete resources or rotate secrets as an automated cost action."
+    ]
+  },
+  "subscriptions": [
+    {
+      "label": "lab",
+      "subscriptionId": "701a8554-a166-46e9-bf13-743bc50e3b20",
+      "subscriptionName": "abarva-lab-sub",
+      "tenantId": "f5151b70-963c-4124-a888-20a50e8c2e2c",
+      "state": "Enabled",
+      "status": "BREACH",
+      "budgets": [
+        {
+          "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Consumption/budgets/abarva_budget",
+          "name": "abarva_budget",
+          "category": "Cost",
+          "amount": 500,
+          "timeGrain": "Monthly",
+          "timePeriod": {
+            "endDate": "2028-03-31T00:00:00Z",
+            "startDate": "2026-04-01T00:00:00Z"
+          },
+          "currentSpend": 646.267770521557,
+          "forecastSpend": 1139.9088840950253,
+          "currentPercent": 129.3,
+          "forecastPercent": 228,
+          "status": "BREACH",
+          "notifications": [
+            {
+              "name": "actual_GreaterThan_100_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "actual_GreaterThan_50_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 50,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "actual_GreaterThan_80_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 80,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "forecasted_GreaterThan_100_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "thresholdType": "Forecasted",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Consumption/budgets/budget-abarva-lab-monthly",
+          "name": "budget-abarva-lab-monthly",
+          "category": "Cost",
+          "amount": 500,
+          "timeGrain": "Monthly",
+          "timePeriod": {
+            "endDate": "2027-05-01T00:00:00Z",
+            "startDate": "2026-05-01T00:00:00Z"
+          },
+          "currentSpend": 646.267770521557,
+          "forecastSpend": 1139.9088840950253,
+          "currentPercent": 129.3,
+          "forecastPercent": 228,
+          "status": "BREACH",
+          "notifications": [
+            {
+              "name": "actual_GreaterThan_100_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "actual_GreaterThan_50_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 50,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "actual_GreaterThan_80_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 80,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "forecasted_GreaterThan_100_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "thresholdType": "Forecasted",
+              "contactEmails": [
+                "alerts@abarva.ai",
+                "admin@abarva.ai"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "product-dev",
+      "subscriptionId": "58eef48c-3ed6-48e6-9af4-de1848ad3401",
+      "subscriptionName": "sub-abarva-product-dev-eus-001",
+      "tenantId": "f5151b70-963c-4124-a888-20a50e8c2e2c",
+      "state": "Enabled",
+      "status": "OK",
+      "budgets": [
+        {
+          "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/providers/Microsoft.Consumption/budgets/budget-abarva-product-dev-monthly",
+          "name": "budget-abarva-product-dev-monthly",
+          "category": "Cost",
+          "amount": 500,
+          "timeGrain": "Monthly",
+          "timePeriod": {
+            "endDate": "2026-12-31T00:00:00Z",
+            "startDate": "2026-06-01T00:00:00Z"
+          },
+          "currentSpend": 0,
+          "forecastSpend": null,
+          "currentPercent": 0,
+          "forecastPercent": null,
+          "status": "OK",
+          "notifications": [
+            {
+              "name": "actual_GreaterThan_100_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "actual_GreaterThan_50_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 50,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "admin@abarva.ai"
+              ]
+            },
+            {
+              "name": "actual_GreaterThan_80_Percent",
+              "enabled": true,
+              "operator": "GreaterThan",
+              "threshold": 80,
+              "thresholdType": "Actual",
+              "contactEmails": [
+                "admin@abarva.ai"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

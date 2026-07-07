@@ -1,0 +1,113 @@
+# 2026-06-25-intelligence-dossier-framework — Intelligence Dossier Framework
+
+## Release ID
+
+`2026-06-25-intelligence-dossier-framework`
+
+## Status
+
+`candidate`
+
+## Plain-English Summary
+
+Adds a first-class Intelligence Dossier layer so Ava Intelligence receives a bounded advisory briefing packet instead of a loose source dump. The packet separates tenant facts, corpus patterns, expert interpretation, benchmark caveats, options/tradeoffs, and missing evidence before Claude synthesizes the answer.
+
+## Layer Impact
+
+- `global-control-lane`: Changes shared Intelligence ask behavior for all clients using `/api/intelligence/ask`.
+- `client-data-lane`: No schema, tenant data, migration, or ingestion changes. The dossier uses already retrieved sources and does not mutate client data.
+
+## Client Applicability
+
+- All clients: Yes, through the shared Intelligence ask path.
+- Specific clients: None.
+- Internal only: No.
+- Public/demo only: No.
+- Feature flag: No new feature flag in this slice; existing retrieval/expert flags remain respected.
+
+## Changes Included
+
+- `src/lib/intelligence/dossiers/*`
+- `src/lib/intelligence/compose-intelligence-answer.ts`
+- `src/lib/intelligence/ask/index.ts`
+- `src/lib/intelligence/ask/synthesizer.ts`
+- `src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts`
+- `docs/intelligence/*`
+
+## QA / Validation
+
+- `npx jest src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts --runInBand` passed.
+- `npx eslint src/lib/intelligence/dossiers src/lib/intelligence/compose-intelligence-answer.ts src/lib/intelligence/ask/index.ts src/lib/intelligence/ask/synthesizer.ts` passed.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+- Initial `npx tsc --noEmit --pretty false` without heap override failed by Node heap OOM, not by TypeScript diagnostics.
+
+Follow-up validation after deployed matrix exposed compatibility gaps:
+
+- Live matrix against `ca-abarva-web-lab-eastus--m43157a58` passed render, Intelligence V2, dims19, grounding, raw-ID, and tenant-fence checks, but failed the legacy `prose` / `tables` / `charts` / `contributingExperts` shape columns for all five tenants.
+- Added derived compatibility mirrors (`prose`, `tables`, `charts`, `graphs`, `contributingExperts`) from canonical `directAnswer` / `artifacts` / `expertsUsed`; renderer still uses canonical `artifacts`.
+- Final Intelligence answers now use the dossier-selected expert council as metadata fallback when no advisor-specific override is active.
+- `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts --runInBand` passed.
+- `npx eslint src/lib/ava-answer/contract.ts src/lib/ava-answer/composeAvaAnswer.ts src/app/api/intelligence/ask/route.ts` passed.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+
+Second follow-up validation after the deployed matrix exposed readable/visual gate gaps:
+
+- Live matrix against `ca-abarva-web-lab-eastus--m5403aca4` passed render, Intelligence V2, dims19, synthesis, grounding, raw-ID, expert, and tenant-fence checks for all five tenants, but failed `readable` and `visual` because the compatibility `prose` mirror was one dense paragraph.
+- Added deterministic paragraph shaping for the non-Home compatibility `prose` mirror and for the Home KNOW bridge packet used by the cross-surface matrix, while leaving canonical `directAnswer` untouched.
+- Confirmed live visual probe already returned typed artifacts before this change (`tables=1`, `charts=1` for Apex Retail); the remaining visual failure was the readable-prose half of the gate.
+- `npx jest src/lib/ava-answer/__tests__/composeAvaAnswer.test.ts --runInBand` passed.
+- `npx eslint src/lib/ava-answer/composeAvaAnswer.ts src/lib/ava-answer/homeComposer.ts src/lib/ava-answer/__tests__/composeAvaAnswer.test.ts` passed.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+
+Third follow-up after the deep reality crawl exposed Home-bridged Intelligence defects:
+
+- Live crawl against `ca-abarva-web-lab-eastus--mf09887dd` passed the signed-in tenant matrix but only scored `206/290` on the deeper question bank.
+- Root cause: Home KNOW bridge requests could let a request-body `client` influence tenant resolution in fence probes, and exact/graph prompts could be answered by the broad dimension-dossier composer before the specialized safety/artifact packet builder ran.
+- Changed Home KNOW bridge resolution to prefer the signed-in/session tenant and block request-body tenant mismatches before retrieval.
+- Changed Home KNOW exact/graph questions to use the deterministic packet builder before broad dossier synthesis, preserving exact-value refusals and graph artifact/gap responses.
+- Validation pending on this follow-up PR.
+
+Fourth follow-up after prompt/response audit:
+
+- Root cause: the Intelligence route had a dossier object, but the model call still blended the dossier into the legacy advisor prompt as supporting context instead of making it the primary briefing book.
+- Added `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`, a text-first Claude synthesis path that sends a bounded Intelligence advisory packet and asks for user-facing executive prose, not brittle JSON.
+- The packet separates tenant evidence, corpus patterns, selected expert lenses, benchmarks, options/tradeoffs, risks/caveats, missing evidence, and the evidence boundary.
+- The new path is production-default enabled and env-controllable through `INTELLIGENCE_CLAUDE_SYNTHESIS_ENABLED`; it falls back to the existing synthesizer if disabled, missing Anthropic config, or validation fails.
+- Increased `/api/intelligence/ask` max duration to support larger Intelligence synthesis calls.
+- Added validation to reject old `Read:` / `Evidence:` / `Implication:` / `Next move:` transcript labels, raw IDs, internal language, unsupported overconfidence, and missing tradeoff/gap handling.
+- `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts --runInBand` passed.
+- `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/ask/index.ts src/app/api/intelligence/ask/route.ts` passed.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+- `npm run release:check` passed.
+- Deployed proof and side-by-side live packet/Claude/final report are pending on this follow-up PR.
+
+## Rollout Plan
+
+Merge to main through PR, let the repo-owned Azure Container Apps main deployment build and deploy the approved image, then run signed-in Intelligence dossier crawl for SkyHarbor and Lakeshore before claiming live product completion.
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: Required for live rollout.
+- Shared runtime mutators: No manual ACA mutation from this PR.
+- Approved image digest: Not applicable until merge/deploy.
+- ACA runtime invariant: Must be verified after deployment.
+- Worker image invariant: Not affected.
+- Feature/env flag update path: None in this slice.
+- Live signed-in proof required: Yes, before marking released.
+
+## Rollback Plan
+
+Revert the PR or redeploy the previous approved main image through the repo-owned Azure Container Apps deploy lane. No database rollback required.
+
+## Audit Evidence
+
+- PR URL: pending.
+- CI run: pending.
+- Signed-in crawl: pending.
+- Local validation commands listed above.
+
+## Known Gaps
+
+- Signed-in deployed browser proof is not included in this candidate.
+- Full 30-question SkyHarbor/Lakeshore crawl is not included in this candidate.
+- Renderer panelization of dossier sections is not included in this backend/framework slice.

@@ -3,7 +3,7 @@
 // Source event side-by-side comparison page.
 // Route: /source/compare?a=<eventId>&b=<eventId>
 //
-// Server component — deterministic, no IO beyond fixture resolution.
+// Server component — deterministic, tenant-scoped event resolution.
 // URL params drive which two source events to compare. When either param is
 // missing or unresolvable, a picker UI is rendered so the user can choose.
 //
@@ -21,13 +21,9 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SourceSubNav } from '@/components/source/SourceSubNav';
-import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
-import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
-import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
-import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
-import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
+import { getSourcingEvent, listSourcingEvents } from '@/lib/source/queries';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import type { SourceEventInstance } from '@/lib/source/source-event-instance';
+import type { SourcingEventDetail, SourcingEventSummary } from '@/lib/source/types';
 
 export const metadata = {
   title: 'Compare Source Events · AbarVa',
@@ -38,7 +34,7 @@ export const dynamic = 'force-dynamic';
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface CompareSide {
-  instance: SourceEventInstance;
+  event: SourcingEventDetail | SourcingEventSummary;
   healthScore: number;
   healthGrade: 'green' | 'amber' | 'red';
   /** X/Y met out of total gate criteria */
@@ -51,6 +47,7 @@ interface CompareSide {
   displayName: string;
   displayId: string;
   currentStage: string;
+  hrefId: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -60,51 +57,72 @@ function firstParam(v: string | string[] | undefined): string | undefined {
   return v;
 }
 
-/**
- * Resolve a source event instance by id. Matches case-insensitively against
- * both the instance id and displayId.
- */
-function resolveInstance(id: string): SourceEventInstance | null {
+function resolveEventSummary(
+  events: SourcingEventSummary[],
+  id: string,
+): SourcingEventSummary | null {
   if (!id) return null;
   const lower = id.toLowerCase();
   return (
-    SOURCE_EVENT_INSTANCES.find(
-      (i) => i.id.toLowerCase() === lower || i.displayId.toLowerCase() === lower,
+    events.find(
+      (event) =>
+        event.id.toLowerCase() === lower ||
+        event.code.toLowerCase() === lower,
     ) ?? null
   );
 }
 
-/** Build the full CompareSide from a SourceEventInstance. */
-function buildSide(instance: SourceEventInstance): CompareSide {
-  // Resolve the pattern; fall back to the canonical AMS pattern (same fallback
-  // used by the Source detail page) so synthesis always produces a context.
-  const pattern = findLifecyclePattern(instance.patternId) ?? PAT_SRC_AMS_001;
-  const context = buildSourceSynthesisContext(instance, pattern);
-  const health = computeInstanceHealth(context);
+async function resolveComparableEvent(
+  events: SourcingEventSummary[],
+  id: string | undefined,
+): Promise<SourcingEventDetail | SourcingEventSummary | null> {
+  if (!id) return null;
+  const summary = resolveEventSummary(events, id);
+  if (!summary) return null;
+  return (await getSourcingEvent(summary.id).catch(() => null)) ?? summary;
+}
 
-  const gateMet = context.gatesSummary.met;
-  const gateTotal = context.gatesSummary.total;
-  const contradictionCount = context.activeContradictions.length;
-  const evidenceCount = instance.evidence.length;
-  const cascadeCount = context.cascadeContext.length;
+function buildSide(event: SourcingEventDetail | SourcingEventSummary): CompareSide {
+  const stages = 'stages' in event ? event.stages : [];
+  const gateTotal = stages.length;
+  const gateMet = stages.filter((stage) => stage.gate.status === 'approved').length;
+  const evidenceCount =
+    'artifacts' in event
+      ? event.artifacts.reduce((sum, artifact) => sum + artifact.sourceCount, 0)
+      : 0;
+  const contradictionCount = event.openAlerts;
+  const cascadeCount = 'alerts' in event ? event.alerts.length : event.openAlerts;
+  const healthScore = event.isAtRisk
+    ? 42
+    : event.openAlerts > 0
+      ? 68
+      : event.status === 'active'
+        ? 84
+        : 74;
+  const healthGrade =
+    healthScore >= 80 ? 'green' : healthScore >= 60 ? 'amber' : 'red';
 
-  // Stage guidance → synthesis excerpt (first 150 chars)
-  const raw = context.stageGuidance ?? '';
+  const raw =
+    'stages' in event
+      ? (event.stages.find((stage) => stage.key === event.currentStageKey)?.summary ??
+        event.nextAction)
+      : event.nextAction;
   const synthesisExcerpt = raw.length > 150 ? raw.slice(0, 150).trimEnd() + '…' : raw || '—';
 
   return {
-    instance,
-    healthScore: health.score,
-    healthGrade: health.grade,
+    event,
+    healthScore,
+    healthGrade,
     gateMet,
     gateTotal,
     contradictionCount,
     evidenceCount,
     cascadeCount,
     synthesisExcerpt,
-    displayName: instance.name,
-    displayId: instance.displayId,
-    currentStage: instance.currentStage,
+    displayName: event.name,
+    displayId: event.code,
+    currentStage: event.currentStageLabel,
+    hrefId: event.id,
   };
 }
 
@@ -150,14 +168,15 @@ export default async function SourceCompareEventsPage({
   const params = await searchParams;
   const aId = firstParam(params.a);
   const bId = firstParam(params.b);
+  const events = await listSourcingEvents();
 
-  const aInstance = aId ? resolveInstance(aId) : null;
-  const bInstance = bId ? resolveInstance(bId) : null;
+  const aEvent = await resolveComparableEvent(events, aId);
+  const bEvent = await resolveComparableEvent(events, bId);
 
-  const showPicker = aInstance === null || bInstance === null;
+  const showPicker = aEvent === null || bEvent === null;
 
-  const aErr = aId !== undefined && aInstance === null;
-  const bErr = bId !== undefined && bInstance === null;
+  const aErr = aId !== undefined && aEvent === null;
+  const bErr = bId !== undefined && bEvent === null;
 
   return (
     <AppShell
@@ -225,11 +244,17 @@ export default async function SourceCompareEventsPage({
       </header>
 
       {showPicker ? (
-        <ComparePicker aId={aId} bId={bId} aErr={aErr} bErr={bErr} />
+        <ComparePicker
+          aId={aId}
+          bId={bId}
+          aErr={aErr}
+          bErr={bErr}
+          events={events}
+        />
       ) : (
         <ComparisonView
-          left={buildSide(aInstance)}
-          right={buildSide(bInstance)}
+          left={buildSide(aEvent)}
+          right={buildSide(bEvent)}
         />
       )}
       </main>
@@ -244,17 +269,14 @@ function ComparePicker({
   bId,
   aErr,
   bErr,
+  events,
 }: {
   aId: string | undefined;
   bId: string | undefined;
   aErr: boolean;
   bErr: boolean;
+  events: SourcingEventSummary[];
 }) {
-  // Use only the first 7 named instances (not the CAT pattern coverage fixtures)
-  const allEvents = SOURCE_EVENT_INSTANCES.filter(
-    (i) => !i.id.includes('cat-pattern') && !i.displayId.startsWith('CAT-'),
-  );
-
   return (
     <form
       method="GET"
@@ -299,7 +321,7 @@ function ComparePicker({
         name="a"
         label="Event A"
         defaultValue={aId ?? ''}
-        events={allEvents}
+        events={events}
         invalid={aErr}
         invalidValue={aId}
       />
@@ -308,7 +330,7 @@ function ComparePicker({
         name="b"
         label="Event B"
         defaultValue={bId ?? ''}
-        events={allEvents}
+        events={events}
         invalid={bErr}
         invalidValue={bId}
       />
@@ -339,7 +361,7 @@ function ComparePicker({
             letterSpacing: '0.08em',
           }}
         >
-          {allEvents.length} events available
+          {events.length} events available for this client
         </span>
       </div>
     </form>
@@ -357,7 +379,7 @@ function EventPickerSelect({
   name: string;
   label: string;
   defaultValue: string;
-  events: SourceEventInstance[];
+  events: SourcingEventSummary[];
   invalid: boolean;
   invalidValue: string | undefined;
 }) {
@@ -392,7 +414,7 @@ function EventPickerSelect({
         <option value="">— select a source event —</option>
         {events.map((e) => (
           <option key={e.id} value={e.id}>
-            {e.displayId} · {e.name} · {e.currentStage}
+            {e.code} · {e.name} · {e.currentStageLabel}
           </option>
         ))}
       </select>
@@ -532,8 +554,8 @@ function ComparisonView({
               }}
             >
               <th style={{ ...headerCellStyle, paddingTop: 18 }} />
-              <EventHeader side={left} href={`/source/events/${left.instance.id}`} />
-              <EventHeader side={right} href={`/source/events/${right.instance.id}`} />
+              <EventHeader side={left} href={`/source/events/${left.hrefId}`} />
+              <EventHeader side={right} href={`/source/events/${right.hrefId}`} />
             </tr>
           </thead>
 
@@ -618,12 +640,12 @@ function ComparisonView({
         <EventFooterLink
           displayId={left.displayId}
           name={left.displayName}
-          href={`/source/events/${left.instance.id}`}
+          href={`/source/events/${left.hrefId}`}
         />
         <EventFooterLink
           displayId={right.displayId}
           name={right.displayName}
-          href={`/source/events/${right.instance.id}`}
+          href={`/source/events/${right.hrefId}`}
         />
       </div>
     </div>

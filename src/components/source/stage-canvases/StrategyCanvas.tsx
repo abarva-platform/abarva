@@ -36,7 +36,7 @@ export function StrategyCanvas({ stageKey, event, nextGateEvaluations = [] }: St
       {/* Stage frame */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div>
-          <div style={EYEBROW}>Step 1 · Nexus</div>
+          <div style={EYEBROW}>Step 1 · Ava</div>
           <h2 style={HEADING}>{stageLabel}</h2>
         </div>
         {isCurrentStage && <span style={ACTIVE_BADGE}>Active</span>}

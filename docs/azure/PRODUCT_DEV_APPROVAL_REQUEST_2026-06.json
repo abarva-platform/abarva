@@ -1,0 +1,63 @@
+{
+  "version": "2026-06",
+  "status": "human_review_ready_non_mutating",
+  "approvalFileRequired": "docs/approvals/AZURE_MUTATION_APPROVED.md",
+  "templateOnlyFile": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
+  "requestedScope": {
+    "model": "product-control-plane",
+    "environment": "product-dev",
+    "subscriptionAuthority": "create-or-use-one-product-dev-subscription",
+    "managementGroupTarget": "abarva-product",
+    "explicitlyExcluded": [
+      "product-preview",
+      "product-prod",
+      "client-preprod",
+      "client-prod",
+      "dns-changes",
+      "traffic-shifts",
+      "client-production-data-actions",
+      "phi-pii-exceptions",
+      "secret-values"
+    ]
+  },
+  "preflightValidation": [
+    "npm run azure:environment-vending:verify",
+    "npm run azure:environment-rbac:verify",
+    "npm run azure:environment-cost-controls:verify",
+    "npm run azure:product-dev-provisioning:verify",
+    "npm run azure:product-baseline-whatif:verify"
+  ],
+  "approvalFileRequiredFields": [
+    "tenant_id",
+    "subscription_ids_or_creation_authority",
+    "approved_environments",
+    "approved_commands",
+    "approved_time_window",
+    "approver_name",
+    "rollback_owner"
+  ],
+  "stopConditions": [
+    "unapproved_environment_needed",
+    "unapproved_command_needed",
+    "broader_rbac_than_packet",
+    "budget_ceiling_exceeded",
+    "secret_value_required",
+    "client_private_plane_required",
+    "dns_or_traffic_change_required"
+  ],
+  "evidenceRequired": [
+    "approval_file_snapshot",
+    "execution_ledger",
+    "what_if_output",
+    "subscription_export",
+    "tag_export",
+    "policy_export",
+    "rbac_export",
+    "budget_export",
+    "validation_summary"
+  ],
+  "verification": {
+    "script": "scripts/azure/verify-product-dev-approval-request.mjs",
+    "npmScript": "npm run azure:product-dev-approval:verify"
+  }
+}

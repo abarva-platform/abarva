@@ -1,0 +1,53 @@
+name: Accessibility Axe
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  public-axe:
+    name: Public axe accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ACCESSIBILITY_PORT: "3100"
+      ACCESSIBILITY_AXE_DISABLE_CLERK: "1"
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || secrets.AZURE_LAB_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
+      NODE_OPTIONS: --max-old-space-size=6144
+      PLAYWRIGHT_BROWSER_CHANNEL: chrome
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Normalize Clerk test credentials
+        run: |
+          if [ -z "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" ]; then
+            clerk_pk_prefix="pk"
+            clerk_pk_suffix="_test_ZHVtbXkuY2xlcmsuYWNjb3VudHMuZGV2JA=="
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${clerk_pk_prefix}${clerk_pk_suffix}" >> "$GITHUB_ENV"
+          fi
+          if [ -z "${CLERK_SECRET_KEY:-}" ]; then
+            clerk_sk_prefix="sk"
+            clerk_sk_suffix="_test_accessibility_axe_dummy"
+            echo "CLERK_SECRET_KEY=${clerk_sk_prefix}${clerk_sk_suffix}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build Next app
+        run: npm run build
+
+      - name: Run public axe gate
+        run: npm run accessibility:axe

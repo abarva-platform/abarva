@@ -29,7 +29,7 @@ import {
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const metadata = {
-  title: 'Production Readiness | AbarVa Setup',
+  title: 'Production Readiness | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';

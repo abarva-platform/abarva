@@ -22,6 +22,8 @@ describe('Top-nav · Home and Admin remain separate', () => {
     expect(home?.match('/admin/data-trust')).toBe(false);
     expect(home?.match('/home')).toBe(true);
     expect(home?.match('/home/queue')).toBe(true);
+    expect(home?.match('/admin')).toBe(false);
+    expect(home?.match('/admin/data-trust')).toBe(false);
     expect(home?.match('/intelligence')).toBe(false);
     expect(home?.match('/tower')).toBe(false);
   });

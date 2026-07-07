@@ -225,7 +225,7 @@ export function SourceActiveStageWorkspace({
           Finalize the sourcing scope, baseline inputs, and gate evidence before strategy work expands.
         </WorkspaceBlock>
         <WorkspaceBlock title="Next decision">{event.nextDecision}</WorkspaceBlock>
-        <WorkspaceBlock title="Sentinel recommendation">{missionReport.recommendedNextAction}</WorkspaceBlock>
+        <WorkspaceBlock title="Ava recommendation">{missionReport.recommendedNextAction}</WorkspaceBlock>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: 12 }}>
@@ -365,10 +365,10 @@ function getMissingInputsForStage(event: SourcingEventDetail): string[] {
 }
 
 function agentLabel(agentName: SourceAgentMission['agentName']): string {
-  if (agentName === 'nexus') return 'Sentinel';
-  if (agentName === 'sentinel') return 'Sentinel';
-  if (agentName === 'atlas') return 'Atlas';
-  return 'Steward';
+  if (agentName === 'nexus') return 'Ava';
+  if (agentName === 'sentinel') return 'Ava';
+  if (agentName === 'atlas') return 'Ava';
+  return 'Ava';
 }
 
 function priorityColor(priority: SourceAgentMission['priority']): string {

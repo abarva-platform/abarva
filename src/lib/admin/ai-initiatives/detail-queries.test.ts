@@ -65,17 +65,50 @@ describe('AI initiative detail queries', () => {
           loaded_via_template: 'seed',
         },
       ])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          note_id: 'NOTE-1',
+          stakeholder_name: 'Dr. Singh',
+          stakeholder_title: 'Chief Medical Officer',
+          interview_date: new Date('2026-05-28T00:00:00.000Z'),
+          quote: 'The clinical workflow is stable.',
+          themes: ['workflow'],
+          attribution_consent: true,
+          loaded_via_template: 'seed',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          decision_id: 'DEC-1',
+          decision_name: 'Scale intake',
+          decision_date: new Date('2026-05-29T00:00:00.000Z'),
+          sponsor_name: 'Dr. Rivera',
+          decision_status: 'decided',
+          dissent_recorded: false,
+          dissent_summary: null,
+          outcome_status: 'approved',
+          loaded_via_template: 'seed',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          vendor_id: 'VEND-1',
+          vendor_name: 'Abridge',
+          contract_value_usd: '1200000',
+          renewal_date: new Date('2026-11-30T00:00:00.000Z'),
+          financial_health: 'strong',
+          notes: null,
+          loaded_via_template: 'seed',
+        },
+      ])
       .mockResolvedValueOnce([]);
 
     await expect(getInitiativeDetail('client-1', 'INIT-1')).resolves.toMatchObject({
       initiative: { initiativeId: 'INIT-1' },
       kpis: [{ kpiName: 'Visit cycle time', kpiValue: 42, targetValue: 35 }],
-      stakeholderNotes: [],
-      decisions: [],
-      vendors: [],
+      stakeholderNotes: [{ noteId: 'NOTE-1', interviewDate: '2026-05-28' }],
+      decisions: [{ decisionId: 'DEC-1', decisionDate: '2026-05-29' }],
+      vendors: [{ vendorId: 'VEND-1', renewalDate: '2026-11-30' }],
       scenarios: [],
     });
     expect(selectMock).toHaveBeenCalledWith(expect.objectContaining({

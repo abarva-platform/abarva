@@ -1,0 +1,16 @@
+{
+  "environmentName": "AzureCloud",
+  "homeTenantId": "f5151b70-963c-4124-a888-20a50e8c2e2c",
+  "id": "701a8554-a166-46e9-bf13-743bc50e3b20",
+  "isDefault": true,
+  "managedByTenants": [],
+  "name": "abarva-lab-sub",
+  "state": "Enabled",
+  "tenantDefaultDomain": "anandsundaramthesundaram.onmicrosoft.com",
+  "tenantDisplayName": "Default Directory",
+  "tenantId": "f5151b70-963c-4124-a888-20a50e8c2e2c",
+  "user": {
+    "name": "anand.sundaram@thesundaram.com",
+    "type": "user"
+  }
+}

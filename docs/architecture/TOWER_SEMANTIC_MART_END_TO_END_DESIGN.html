@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tower Semantic Mart End-to-End Design</title>
+  <style>
+    :root {
+      --ink: #101828;
+      --muted: #5f6b7a;
+      --line: #ded8ce;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --green: #0f7a4d;
+      --gold: #ad7a00;
+      --navy: #0d1930;
+    }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 44px 28px 80px;
+    }
+    h1, h2, h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.05;
+      color: #171717;
+    }
+    h1 {
+      font-size: 48px;
+      margin: 0 0 12px;
+    }
+    h2 {
+      font-size: 30px;
+      margin: 44px 0 14px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-size: 22px;
+      margin: 28px 0 10px;
+    }
+    .eyebrow {
+      color: var(--green);
+      font-size: 12px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .summary {
+      background: var(--navy);
+      color: white;
+      border-radius: 10px;
+      padding: 24px;
+      margin: 28px 0;
+    }
+    .summary code {
+      color: #d7ffe8;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 14px 0 28px;
+    }
+    th, td {
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      color: #667085;
+      font-size: 12px;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      background: #f6f3ee;
+    }
+    tr:last-child td {
+      border-bottom: 0;
+    }
+    code, pre {
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+    pre {
+      background: #111827;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 8px;
+      overflow: auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .card strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .muted {
+      color: var(--muted);
+    }
+    .phase {
+      border-left: 4px solid var(--gold);
+      padding-left: 14px;
+      margin: 18px 0;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Review draft · 2026-06-26</div>
+    <h1>Tower Semantic Mart End-to-End Design</h1>
+    <p class="muted">Source files to facts, graph, semantic mart, dashboard, chat, dossiers, and the rebuild plan.</p>
+
+    <section class="summary">
+      <h2 style="border:0;margin-top:0;color:white">Executive Summary</h2>
+      <p>Tower must become the CIO command center. It should explain where IT money is going, what it is producing, which vendors, programs, risks, renewals, and AI bets need attention, and what evidence is missing before leadership acts.</p>
+      <pre>Source files
+  -> source registry and parsed rows
+  -> canonical entities
+  -> atomic facts and graph
+  -> Tower semantic mart
+  -> Tower read models
+  -> dashboard and factual chat
+  -> advisory dossier
+  -> Claude/aVa synthesis
+  -> verified Tower response</pre>
+    </section>
+
+    <h2>Non-Negotiable Product Contract</h2>
+    <table>
+      <thead><tr><th>Rule</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Dashboard and chat use the same metric definitions</td><td>A number visible on the dashboard must match the number spoken by chat.</td></tr>
+        <tr><td>Factual Tower questions do not call Claude</td><td>Top initiatives, budget rollups, vendor spend, renewals, splits, and gaps are deterministic.</td></tr>
+        <tr><td>Claude receives dossiers, not raw substrate</td><td>Advisory questions get a curated, bounded packet with facts, gaps, options, caveats, and citations.</td></tr>
+        <tr><td>Dossiers are not alternate truth</td><td>Dossiers are generated from the semantic mart/read models, not hand-maintained truth.</td></tr>
+        <tr><td>Every numeric claim is traceable</td><td>Each number maps to metric definition, source file, row, field, period, and tenant.</td></tr>
+        <tr><td>Latency is gated</td><td>Factual answers target 2-3 seconds. Advisory answers target 10-15 seconds.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Layered Data Design</h2>
+    <div class="grid">
+      <div class="card"><strong>1. Source files</strong>Portfolio companies, programs, initiatives, budget lines, vendors, value, risks, operating metrics.</div>
+      <div class="card"><strong>2. Source registry</strong>File hash, upload run, row count, parser version, freshness, trust level.</div>
+      <div class="card"><strong>3. Canonical entities</strong>Tenant, portfolio company, function, program, initiative, vendor, contract, risk, metric.</div>
+      <div class="card"><strong>4. Atomic facts</strong>Entity-field-value facts with period, units, confidence, and source row lineage.</div>
+      <div class="card"><strong>5. Enterprise graph</strong>Funds, owns, supports, blocks, renews, measures, impacts, depends_on relationships.</div>
+      <div class="card"><strong>6. Semantic mart</strong>Dim/fact model plus canonical metric formulas.</div>
+      <div class="card"><strong>7. Read models</strong>Precomputed dashboard and factual chat views.</div>
+      <div class="card"><strong>8. Dossiers</strong>Advisory packets generated from read models for Claude/aVa synthesis.</div>
+    </div>
+
+    <h2>Source Files</h2>
+    <table>
+      <thead><tr><th>File</th><th>Purpose</th><th>Key Required Fields</th></tr></thead>
+      <tbody>
+        <tr><td>tower_portfolio_companies</td><td>Holding-company and portfolio-company IT budget rollups</td><td>tenant, company, fiscal period, revenue, total IT budget</td></tr>
+        <tr><td>tower_it_programs</td><td>Major IT programs and portfolios</td><td>program, function, owner role, budget, status</td></tr>
+        <tr><td>tower_initiatives</td><td>AI and non-AI initiatives</td><td>initiative, program, function, owner, budget, value status</td></tr>
+        <tr><td>tower_budget_lines</td><td>Budget decomposition</td><td>company, program, run/change, CapEx/OpEx, labor/vendor/platform</td></tr>
+        <tr><td>tower_vendors_contracts</td><td>Vendor spend and renewals</td><td>vendor, contract, spend, renewal date, supported program</td></tr>
+        <tr><td>tower_value_realization</td><td>Benefits and ROI evidence</td><td>initiative, benefit metric, realized value, period, confidence</td></tr>
+        <tr><td>tower_risks_controls</td><td>RAID, controls, blockers</td><td>program, risk, severity, owner, mitigation, status</td></tr>
+        <tr><td>tower_operating_metrics</td><td>Adoption, delivery, service, and business metrics</td><td>metric, entity, value, period, source</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Semantic Mart</h2>
+    <table>
+      <thead><tr><th>Object</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>dim_tenant, dim_period, dim_portfolio_company</td><td>Canonical identity, fiscal scope, and portfolio-company hierarchy.</td></tr>
+        <tr><td>dim_function, dim_program, dim_initiative</td><td>Business/IT taxonomy, program hierarchy, initiative metadata.</td></tr>
+        <tr><td>dim_vendor, dim_contract, dim_risk, dim_source</td><td>Vendor/contract/risk identity and lineage.</td></tr>
+        <tr><td>fact_it_budget, fact_it_spend, fact_budget_split</td><td>Budget, actuals, forecast, run/change, CapEx/OpEx, labor/vendor/platform.</td></tr>
+        <tr><td>fact_vendor_exposure, fact_contract_renewal</td><td>Vendor spend and renewal exposure.</td></tr>
+        <tr><td>fact_ai_investment, fact_value_realization</td><td>AI spend, maturity, expected value, realized value, ROI evidence.</td></tr>
+        <tr><td>fact_risk_control, fact_operational_metric</td><td>Risks, blockers, controls, adoption, service, productivity, operating metrics.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Dashboard Vs Chat</h2>
+    <table>
+      <thead><tr><th>Experience</th><th>Reads From</th><th>Claude?</th><th>What It Can Say</th></tr></thead>
+      <tbody>
+        <tr><td>Dashboard</td><td>Tower read models</td><td>No</td><td>Visual truth: KPIs, rankings, slices, gaps, provenance.</td></tr>
+        <tr><td>Factual chat</td><td>Same Tower read models</td><td>No</td><td>Short answers, tables, comparisons, explanations, exact gaps.</td></tr>
+        <tr><td>Advisory chat</td><td>Generated Tower dossier</td><td>Yes</td><td>CIO interpretation, options, tradeoffs, board read.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Dossiers</h2>
+    <p>Dossiers stay, but only as generated advisory packets. They must be built from the semantic mart and read models. They cannot serve as an alternate source of truth.</p>
+    <table>
+      <thead><tr><th>Dossier</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Budget/spend</td><td>Spend concentration, splits, missing budget fields.</td></tr>
+        <tr><td>Portfolio company</td><td>Company rollups, shared-services allocation, outliers.</td></tr>
+        <tr><td>Program/initiative</td><td>Top programs, owners, value proof, blockers.</td></tr>
+        <tr><td>Vendor/renewal</td><td>Vendor concentration, renewals, contract risk.</td></tr>
+        <tr><td>AI ROI</td><td>AI spend, measured value, maturity, proof gaps.</td></tr>
+        <tr><td>Risk/control</td><td>RAID, blockers, governance, controls.</td></tr>
+        <tr><td>CIO board-read</td><td>Executive narrative built from governed metrics.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Question Bank And Evaluation Harness</h2>
+    <p>The first execution artifact generates <strong>6,330 Tower questions</strong>, including <strong>3,840 metric-specific prompts</strong>. This is intentionally larger than a demo bank so it can catch dashboard/chat metric drift, missing read models, latency regressions, and dossier misuse.</p>
+    <table>
+      <thead><tr><th>Category</th><th>Count</th><th>Pass Criteria</th></tr></thead>
+      <tbody>
+        <tr><td>Metric questions</td><td>3,840</td><td>Metric values match read models and dashboard formulas.</td></tr>
+        <tr><td>Dataset questions</td><td>900</td><td>Rows, tables, charts, and gaps bind to the right dataset.</td></tr>
+        <tr><td>Cross-dimension questions</td><td>800</td><td>Joins are correct and cited.</td></tr>
+        <tr><td>Gap questions</td><td>180</td><td>Missing data is precise and field-specific.</td></tr>
+        <tr><td>Advisory questions</td><td>600</td><td>Dossier grounded, no fabricated numbers.</td></tr>
+        <tr><td>Fence/safety questions</td><td>10 starter adversarial prompts</td><td>Tenant isolation, no raw IDs, no internal jargon.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Rebuild At Speed</h2>
+    <div class="phase"><strong>Phase 0: Freeze and audit, 0.5 day.</strong> Inventory source files, metrics, chat paths, and legacy paths.</div>
+    <div class="phase"><strong>Phase 1: Tower data contract, 1 day.</strong> Lock source templates, canonical entity schema, fact schema, graph edges, metric formulas.</div>
+    <div class="phase"><strong>Phase 2: Load and validate, 1-2 days.</strong> Commit registry, rows, entities, facts, graph, and validation receipts.</div>
+    <div class="phase"><strong>Phase 3: Semantic mart and read models, 1-2 days.</strong> Build dimensions, facts, gap register, metric provenance, and read models.</div>
+    <div class="phase"><strong>Phase 4: Dashboard rewire, 1 day.</strong> Render all Tower views from read models only.</div>
+    <div class="phase"><strong>Phase 5: Chat rewire, 1-2 days.</strong> Deterministic factual path plus dossier-backed advisory path.</div>
+    <div class="phase"><strong>Phase 6: Evaluation bank, 1-2 days for first deterministic scoring pass.</strong> Score facts, latency, citations, and consistency across the generated 6,330-question bank.</div>
+    <div class="phase"><strong>Phase 7: Production proof, 0.5-1 day.</strong> ACA deploy, signed-in browser proof, HTML report, release record.</div>
+
+    <h2>Definition Of Done</h2>
+    <ul>
+      <li>Source files and rows have lineage.</li>
+      <li>Facts and graph are committed.</li>
+      <li>Semantic mart metrics are populated.</li>
+      <li>Dashboard uses read models only.</li>
+      <li>Factual chat uses read models only.</li>
+      <li>Advisory chat uses generated dossiers only.</li>
+      <li>Claude never performs source-of-truth math.</li>
+      <li>Question-bank proof shows no dashboard/chat contradictions.</li>
+    </ul>
+  </main>
+</body>
+</html>

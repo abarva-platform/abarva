@@ -17,11 +17,14 @@
 import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
-} from '@/lib/data-plane/postgresCompat';
-import { canonicalTenantKey } from '@/lib/tenant-keys';
-import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
-import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
-import type { DataPlane } from './types';
+} from "@/lib/data-plane/postgresCompat";
+import { canonicalTenantKey } from "@/lib/tenant-keys";
+import {
+  createTxSession,
+  type TxSessionRunner,
+} from "../read-adapters/azureSession";
+import { resolveDataPlane } from "../read-adapters/resolveDataPlane";
+import type { DataPlane } from "./types";
 
 // --- write input ------------------------------------------------------------
 
@@ -55,6 +58,47 @@ export interface SourceArtifactInsertColumns {
   readonly disclosure_classification: Record<string, unknown> | null;
   readonly created_by: string;
   readonly supersedes_artifact_version_id: string | null;
+  // Optional File Cabinet columns. Existing upload/registry callers omit these;
+  // generated deliverables can populate them so one `source_artifacts` row is
+  // both registry-readable (`blob_uri`) and File-Cabinet-readable
+  // (`blob_container` / `blob_path`).
+  readonly client_id?: string;
+  readonly sourcing_stage?: string | null;
+  readonly artifact_group?: string;
+  readonly artifact_type?: string;
+  readonly title?: string;
+  readonly description?: string | null;
+  readonly file_name?: string;
+  readonly file_format?: string;
+  readonly blob_container?: string;
+  readonly blob_path?: string;
+  readonly file_size?: number | null;
+  readonly version?: number;
+  readonly status?: string;
+  readonly generated_by?: string | null;
+  readonly source_basis?: string | null;
+  readonly confidence?: string | null;
+  readonly citation_ready?: boolean;
+  readonly evidence_families_used?: string[];
+  readonly source_register_id?: string | null;
+  readonly context_bundle_trace_id?: string | null;
+  readonly missing_inputs?: string[];
+  readonly client_complete_items?: string[];
+  readonly assumptions?: string[];
+  readonly supersedes_artifact_id?: string | null;
+  readonly lifecycle_state?: string;
+  readonly blob_sha256?: string | null;
+  readonly is_client_final?: boolean;
+  readonly is_current_authoritative?: boolean;
+  readonly source_generated_artifact_id?: string | null;
+  readonly client_final_uploaded_by?: string | null;
+  readonly client_final_uploaded_at?: string | null;
+  readonly client_final_accepted_by?: string | null;
+  readonly client_final_accepted_at?: string | null;
+  readonly client_final_note?: string | null;
+  readonly client_final_review_meeting_date?: string | null;
+  readonly client_final_stakeholder_group?: string | null;
+  readonly client_final_change_summary?: Record<string, unknown> | string;
 }
 
 /** A write outcome — `ok:false` carries an error the helper turns into a throw. */
@@ -62,6 +106,29 @@ export interface SourceArtifactWriteOutcome<T> {
   readonly ok: boolean;
   readonly data?: T;
   readonly error?: string;
+}
+
+const SOURCE_ARTIFACT_JSONB_COLUMNS = new Set([
+  "disclosure_classification",
+  "evidence_families_used",
+  "missing_inputs",
+  "client_complete_items",
+  "assumptions",
+  "client_final_change_summary",
+]);
+
+function sourceArtifactPlaceholder(column: string, index: number): string {
+  const placeholder = `$${index}`;
+  return SOURCE_ARTIFACT_JSONB_COLUMNS.has(column)
+    ? `${placeholder}::jsonb`
+    : placeholder;
+}
+
+function sourceArtifactValue(column: string, value: unknown): unknown {
+  if (!SOURCE_ARTIFACT_JSONB_COLUMNS.has(column)) return value;
+  if (value === null) return null;
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
 }
 
 // --- adapter contract -------------------------------------------------------
@@ -94,14 +161,14 @@ export function createSupabaseSourceArtifactsWriteAdapter(
   getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): SourceArtifactsWriteAdapter {
   return {
-    name: 'supabase',
+    name: "supabase",
 
     async insertArtifact(columns, selectColumns) {
       void canonicalTenantKey(columns.tenant_key);
       const { id, ...rest } = columns;
       const row = id ? { id, ...rest } : { ...rest };
       const { data, error } = await getClient()
-        .from('source_artifacts')
+        .from("source_artifacts")
         .insert(row)
         .select(selectColumns)
         .single();
@@ -119,31 +186,46 @@ export function createSupabaseSourceArtifactsWriteAdapter(
  * `BEGIN`/`COMMIT` transaction. The session is injectable for tests.
  */
 export function createAzureSourceArtifactsWriteAdapter(
-  session: TxSessionRunner = createTxSession('abarva-data-plane-source-artifacts-write'),
+  session: TxSessionRunner = createTxSession(
+    "abarva-data-plane-source-artifacts-write",
+  ),
 ): SourceArtifactsWriteAdapter {
   return {
-    name: 'azure-postgres',
+    name: "azure-postgres",
 
     async insertArtifact(columns, selectColumns) {
       void canonicalTenantKey(columns.tenant_key);
       try {
         // Build the column list dynamically so an optional `id` is honored.
-        const entries = Object.entries(columns).filter(([, v]) => v !== undefined);
+        const entries = Object.entries(columns).filter(
+          ([, v]) => v !== undefined,
+        );
         const colNames = entries.map(([k]) => k);
-        const placeholders = entries.map((_, i) => `$${i + 1}`);
-        const values = entries.map(([, v]) => v);
+        const placeholders = entries.map(([column], i) =>
+          sourceArtifactPlaceholder(column, i + 1),
+        );
+        const values = entries.map(([column, v]) =>
+          sourceArtifactValue(column, v),
+        );
         const returning = selectColumns;
         const rows = await session((run) =>
           run<Record<string, unknown>>(
-            `INSERT INTO source_artifacts (${colNames.join(', ')}) `
-              + `VALUES (${placeholders.join(', ')}) RETURNING ${returning}`,
+            `INSERT INTO source_artifacts (${colNames.join(", ")}) ` +
+              `VALUES (${placeholders.join(", ")}) RETURNING ${returning}`,
             values,
           ),
         );
-        if (!rows[0]) return { ok: false, error: 'source_artifacts insert returned no row' };
+        if (!rows[0])
+          return {
+            ok: false,
+            error: "source_artifacts insert returned no row",
+          };
         return { ok: true, data: rows[0] };
       } catch (err) {
-        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
       }
     },
   };
@@ -159,7 +241,7 @@ export function selectSourceArtifactsWriteAdapter(
   plane?: DataPlane,
 ): SourceArtifactsWriteAdapter {
   const target = plane ?? resolveDataPlane();
-  return target === 'azure-postgres'
+  return target === "azure-postgres"
     ? createAzureSourceArtifactsWriteAdapter()
     : createSupabaseSourceArtifactsWriteAdapter();
 }

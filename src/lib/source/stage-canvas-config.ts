@@ -9,7 +9,7 @@ export interface StageChoice {
 export interface StageCanvasConfig {
   stageKey: SourceStageKey;
   stepNumber: number;
-  leadAgent: 'Nexus' | 'Sentinel' | 'Steward' | 'Atlas';
+  leadAgent: 'Nexus' | 'Sentinel' | 'Governance' | 'Atlas' | 'aVa';
   intent: string;
   exitCriteria: string[];
   choices: [StageChoice, StageChoice, StageChoice];
@@ -90,22 +90,22 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
   rfp: {
     stageKey: 'rfp',
     stepNumber: 3,
-    leadAgent: 'Nexus',
+    leadAgent: 'aVa',
     intent:
-      'Draft and finalize the RFP package based on confirmed scope. All evaluation criteria, weighting, and response format requirements must be locked before the document ships to vendors.',
+      'Draft and finalize the RFP package based on confirmed scope. aVa is shaping the vendor response so proposals are comparable, evidence-backed, and negotiation-ready. All evaluation criteria, weighting, response templates, pricing workbook, claim register, assumptions/exclusions, and commercial exceptions must be locked before the document ships to vendors.',
     exitCriteria: [
       'RFP structure drafted with all required sections',
-      'Evaluation criteria defined and weights approved by Steward',
-      'Response format and submission deadline confirmed',
+      'Evaluation criteria defined and weights approved by governance owner',
+      'Vendor Response Control Pack and submission deadline confirmed',
       'Legal and compliance requirements reviewed',
       'RFP issued to qualified vendors',
     ],
     choices: [
       {
         label: 'Draft RFP structure',
-        description: 'Scaffold sections, requirements, and evaluation criteria for this event.',
+        description: 'Scaffold sections, requirements, evaluation criteria, and structured response controls for this event.',
         prompt:
-          'Draft the RFP structure for this sourcing event. What sections are required, what requirements must vendors respond to, and what evaluation criteria should be included?',
+          'Draft the RFP structure for this sourcing event. What sections are required, what requirements must vendors respond to, what structured response tables must be completed, and what evaluation criteria should be included?',
       },
       {
         label: 'Set evaluation weights',
@@ -114,18 +114,18 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
           'Help me define the scorecard evaluation criteria and weights for this RFP. What dimensions matter most for this category, and how should they be weighted?',
       },
       {
-        label: 'Review scope gaps',
-        description: 'Check for missing requirements before the RFP goes to vendors.',
+        label: 'Review response-control gaps',
+        description: 'Check for missing requirements or response templates before the RFP goes to vendors.',
         prompt:
-          'Review the current RFP draft for gaps. Are there missing requirements, ambiguous scope statements, or criteria that vendors will dispute? Flag anything that needs to be resolved before the RFP ships.',
+          'Review the current RFP draft for gaps. Are there missing requirements, ambiguous scope statements, incomplete response tables, weak pricing instructions, or criteria that vendors will dispute? Flag anything that needs to be resolved before the RFP ships.',
       },
     ],
-    artifactIds: ['rfp_package', 'evaluation_criteria_doc', 'vendor_shortlist'],
+    artifactIds: ['rfp_package', 'vendor_response_control_pack', 'evaluation_criteria_doc', 'vendor_shortlist'],
   },
   responses: {
     stageKey: 'responses',
     stepNumber: 4,
-    leadAgent: 'Nexus',
+    leadAgent: 'aVa',
     intent:
       'Track vendor submission status, flag incomplete or non-compliant responses, and confirm all required responses are received before evaluation scoring begins.',
     exitCriteria: [
@@ -160,9 +160,9 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
   evaluation: {
     stageKey: 'evaluation',
     stepNumber: 5,
-    leadAgent: 'Steward',
+    leadAgent: 'Governance',
     intent:
-      'Score vendor responses against weighted criteria. Steward governs the scorecard to ensure weights are locked, rationale is documented, and the evaluation is defensible before pricing begins.',
+      'Score vendor responses against weighted criteria. Governance owns the scorecard to ensure weights are locked, rationale is documented, and the evaluation is defensible before pricing begins.',
     exitCriteria: [
       'All criteria scored for all vendors with documented rationale',
       'Scorecard weights locked and approved',
@@ -181,13 +181,13 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
         label: 'Resolve weight dispute',
         description: 'Handle contested scorecard weights before locking the evaluation.',
         prompt:
-          'Are there any scorecard weight disputes or contested criteria scores? Help me understand what the disagreement is, what evidence applies, and how Steward recommends resolving it.',
+          'Are there any scorecard weight disputes or contested criteria scores? Help me understand what the disagreement is, what evidence applies, and how the governance owner recommends resolving it.',
       },
       {
         label: 'Generate comparison matrix',
         description: 'Produce a vendor comparison summary artifact for review.',
         prompt:
-          "Generate a vendor comparison matrix based on current scores. Show each vendor's performance by criterion, weighted total, and highlight the top 2 vendors for Steward review.",
+          "Generate a vendor comparison matrix based on current scores. Show each vendor's performance by criterion, weighted total, and highlight the top 2 vendors for governance review.",
       },
     ],
     artifactIds: ['scorecard_matrix', 'vendor_comparison', 'evaluation_rationale_log'],
@@ -267,7 +267,7 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
     stepNumber: 8,
     leadAgent: 'Atlas',
     intent:
-      'Present the executive decision brief to the CIO and sponsor. Atlas generates the recommendation with evidence-backed rationale. Steward confirms gate approval before contract negotiation begins.',
+      'Present the executive decision brief to the CIO and sponsor. aVa generates the recommendation with evidence-backed rationale. Governance confirms gate approval before contract negotiation begins.',
     exitCriteria: [
       'Executive decision brief prepared with vendor recommendation',
       'Value case and risk summary included in the brief',
@@ -432,9 +432,9 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
   rfp_rfi_package: {
     stageKey: 'rfp',
     stepNumber: 3,
-    leadAgent: 'Nexus',
-    intent: 'Draft and finalize the RFP package.',
-    exitCriteria: ['RFP drafted', 'Criteria weighted', 'RFP issued'],
+    leadAgent: 'aVa',
+    intent: 'Draft and finalize the RFP package and structured Vendor Response Control Pack.',
+    exitCriteria: ['RFP drafted', 'Criteria weighted', 'Response-control pack ready', 'RFP issued'],
     choices: [
       { label: 'Draft RFP structure', description: 'Scaffold the RFP.', prompt: 'Draft the RFP structure for this event.' },
       { label: 'Set evaluation weights', description: 'Define criteria weights.', prompt: 'Define the evaluation criteria and weights.' },
@@ -445,7 +445,7 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
   vendor_responses: {
     stageKey: 'responses',
     stepNumber: 4,
-    leadAgent: 'Nexus',
+    leadAgent: 'aVa',
     intent: 'Track vendor submission status.',
     exitCriteria: ['All responses received', 'Completeness checked'],
     choices: [

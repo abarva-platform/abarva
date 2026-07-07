@@ -27,10 +27,24 @@ import {
   type UploadProtectionResult,
 } from '@/lib/security/sensitive-upload-guard';
 import {
+  buildPilotIngestionAuditOnlyWritePlan,
+  type PilotIngestionAuditOnlyWritePlan,
+} from '@/lib/admin/pilot-ingestion-ledger';
+import {
   parseIngestionMessage,
   type AzureLandingZoneMessage,
   type IngestionOutcome,
 } from '@/lib/ingestion/azure-landing-zone-types';
+import {
+  buildDefenderStorageProtectionResult,
+  evaluateDefenderStorageScanTags,
+  hasDefenderScanMetadata,
+  type DefenderStorageScanGateResult,
+} from '@/lib/ingestion/defender-storage-scan-gate';
+import {
+  parseIngestionDocument,
+  type ParsedIngestionDocument,
+} from '@/lib/ingestion/document-upload-parser';
 
 /**
  * Downloads the bytes for an inbound message. The caller passes in a
@@ -52,6 +66,17 @@ export type AuditWriter = (args: {
   protectionResult?: UploadProtectionResult;
 }) => Promise<string>; // returns the audit-row id
 
+export interface PilotLedgerWriterInput {
+  readonly plan: PilotIngestionAuditOnlyWritePlan;
+  readonly message: AzureLandingZoneMessage;
+}
+
+export type PilotLedgerWriter = (input: PilotLedgerWriterInput) => Promise<void>;
+
+export type DefenderStorageScanGate = (
+  message: AzureLandingZoneMessage,
+) => Promise<DefenderStorageScanGateResult> | DefenderStorageScanGateResult;
+
 /**
  * Optional downstream-pipeline hook. After the guard passes, the
  * caller decides what to do with the bytes — write to the broker
@@ -62,12 +87,68 @@ export type IngestionPipeline = (args: {
   message: AzureLandingZoneMessage;
   bytes: Uint8Array;
   filename: string;
+  document: ParsedIngestionDocument | null;
 }) => Promise<{ chunksWritten: number }>;
+
+export type IngestionDocumentParser = (args: {
+  message: AzureLandingZoneMessage;
+  bytes: Uint8Array;
+  filename: string;
+}) => Promise<ParsedIngestionDocument | null>;
 
 export interface ConsumeContext {
   readonly download: BlobDownloader;
   readonly writeAudit: AuditWriter;
   readonly runPipeline: IngestionPipeline;
+  readonly writePilotLedger?: PilotLedgerWriter;
+  readonly checkDefenderScan?: DefenderStorageScanGate;
+  readonly parseDocument?: IngestionDocumentParser;
+}
+
+function metadataString(
+  metadata: AzureLandingZoneMessage['metadata'] | undefined,
+  key: string,
+): string | undefined {
+  const value = metadata?.[key];
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+async function writePilotLedgerOrTransient(args: {
+  ctx: ConsumeContext;
+  message: AzureLandingZoneMessage;
+  outcome: Extract<IngestionOutcome, { status: 'accepted' | 'quarantined' }>;
+  protectionResult: UploadProtectionResult;
+}): Promise<IngestionOutcome | null> {
+  if (!args.ctx.writePilotLedger) return null;
+
+  try {
+    const plan = buildPilotIngestionAuditOnlyWritePlan({
+      tenantKey: args.message.tenantClientKey,
+      segmentKey: args.message.segmentKey,
+      storage: args.message.storage,
+      producedAt: args.message.producedAt,
+      sourceSystem: metadataString(args.message.metadata, 'sourceSystem'),
+      templateVersion: metadataString(args.message.metadata, 'templateVersion'),
+      mappingProfileKey: metadataString(args.message.metadata, 'mappingProfileKey'),
+      mappingProfileVersion: metadataString(args.message.metadata, 'mappingProfileVersion'),
+      auditRowId: args.outcome.auditRowId,
+      outcome:
+        args.outcome.status === 'accepted'
+          ? { status: 'accepted', chunksWritten: args.outcome.chunksWritten }
+          : { status: 'quarantined', reasonCodes: args.outcome.reasonCodes },
+      protectionDecision: args.protectionResult.decision,
+    });
+    await args.ctx.writePilotLedger({ plan, message: args.message });
+    return null;
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'pilot_ledger_write_failed';
+    return {
+      status: 'transient_failure',
+      auditRowId: null,
+      reason: `pilot_ledger_write_failed:${reason}`,
+      durationMs: args.outcome.durationMs,
+    };
+  }
 }
 
 /**
@@ -97,6 +178,50 @@ export async function consumeOneMessage(
       reason,
       durationMs: Date.now() - t0,
     };
+  }
+
+  // ── 2. Defender malware scan gate ───────────────────────────────
+  const defenderScan = ctx.checkDefenderScan
+    ? await ctx.checkDefenderScan(msg)
+    : hasDefenderScanMetadata(msg.metadata)
+      ? evaluateDefenderStorageScanTags(msg.metadata)
+      : null;
+
+  if (defenderScan?.decision === 'retry') {
+    const outcome: IngestionOutcome = {
+      status: 'transient_failure',
+      auditRowId: null,
+      reason: defenderScan.reason,
+      durationMs: Date.now() - t0,
+    };
+    try {
+      await ctx.writeAudit({ message: msg, outcome });
+    } catch {
+      // Let Service Bus retry; no parsing may occur before Defender scan proof.
+    }
+    return outcome;
+  }
+
+  if (defenderScan?.decision === 'quarantine') {
+    const protection = buildDefenderStorageProtectionResult(defenderScan);
+    const outcome: IngestionOutcome = {
+      status: 'quarantined',
+      auditRowId: '',
+      reasonCodes: [defenderScan.reasonCode],
+      durationMs: Date.now() - t0,
+    };
+    const auditRowId = await ctx.writeAudit({
+      message: msg,
+      outcome,
+      protectionResult: protection,
+    });
+    const outcomeWithAudit = { ...outcome, auditRowId };
+    return (await writePilotLedgerOrTransient({
+      ctx,
+      message: msg,
+      outcome: outcomeWithAudit,
+      protectionResult: protection,
+    })) ?? outcomeWithAudit;
   }
 
   // ── 2. Download ──────────────────────────────────────────────────
@@ -147,13 +272,48 @@ export async function consumeOneMessage(
       outcome,
       protectionResult: protection,
     });
-    return { ...outcome, auditRowId };
+    const outcomeWithAudit = { ...outcome, auditRowId };
+    return (await writePilotLedgerOrTransient({
+      ctx,
+      message: msg,
+      outcome: outcomeWithAudit,
+      protectionResult: protection,
+    })) ?? outcomeWithAudit;
   }
 
-  // ── 4. Run the downstream pipeline ───────────────────────────────
+  // ── 4. Parse document payloads before the downstream pipeline ─────
+  const parseDocument =
+    ctx.parseDocument ??
+    ((args) =>
+      parseIngestionDocument({
+        filename: args.filename,
+        mimeType: msg.storage.contentType,
+        bytes: args.bytes,
+        cacheScope: `${msg.tenantClientKey}:${msg.storage.sha256}`,
+      }));
+  let document: ParsedIngestionDocument | null;
+  try {
+    document = await parseDocument({ message: msg, bytes, filename });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'document_parse_failed';
+    const outcome: IngestionOutcome = {
+      status: 'transient_failure',
+      auditRowId: null,
+      reason: `document_parse_failed:${reason}`,
+      durationMs: Date.now() - t0,
+    };
+    try {
+      await ctx.writeAudit({ message: msg, outcome, protectionResult: protection });
+    } catch {
+      // see comment above
+    }
+    return outcome;
+  }
+
+  // ── 5. Run the downstream pipeline ───────────────────────────────
   let chunksWritten: number;
   try {
-    const result = await ctx.runPipeline({ message: msg, bytes, filename });
+    const result = await ctx.runPipeline({ message: msg, bytes, filename, document });
     chunksWritten = result.chunksWritten;
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'pipeline_failed';
@@ -182,5 +342,11 @@ export async function consumeOneMessage(
     outcome,
     protectionResult: protection,
   });
-  return { ...outcome, auditRowId };
+  const outcomeWithAudit = { ...outcome, auditRowId };
+  return (await writePilotLedgerOrTransient({
+    ctx,
+    message: msg,
+    outcome: outcomeWithAudit,
+    protectionResult: protection,
+  })) ?? outcomeWithAudit;
 }

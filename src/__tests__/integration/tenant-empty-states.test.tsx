@@ -27,7 +27,10 @@
 import { render, screen } from '@testing-library/react';
 import { IntelligenceEmptyState } from '@/components/intelligence/decision/IntelligenceEmptyState';
 import { SourceEmptyState } from '@/components/source/SourceEmptyState';
-import { MovePortfolioCardPanel } from '@/components/tower/MovePortfolioCardPanel';
+import {
+  MovePortfolioCardPanel,
+  TOWER_PROJECTED_VALUE_DISCLOSURE,
+} from '@/components/tower/MovePortfolioCardPanel';
 
 describe('IntelligenceEmptyState (P1-1)', () => {
   it('names the active tenant in the headline', () => {
@@ -118,5 +121,50 @@ describe('MovePortfolioCardPanel empty state (P1-2)', () => {
     render(<MovePortfolioCardPanel cards={cards} tenantName="Apex Retail" />);
     expect(screen.queryByText(/Tower portfolio for Apex Retail is empty/)).toBeNull();
     expect(screen.queryByTestId('tower-empty-runbook-link')).toBeNull();
+  });
+
+  it('shows a projection assumption disclosure when projected value is present', () => {
+    const cards = [
+      {
+        moveId: 'apex-move-1',
+        moveName: 'Contact Center AI Routing',
+        phaseLabel: 'Value',
+        ledgerStatus: 'projected' as const,
+        projectedValueUsd: 1_200_000,
+        sourceRiskLevel: null,
+        sourceCostExposureUsd: 0,
+        sourceRiskReadout: null,
+        earningSummary: 'Projected benefit pending measurement.',
+        links: [
+          { id: 'open', label: 'Open Move', href: '/programs/apex-move-1' },
+        ],
+      },
+    ];
+    render(<MovePortfolioCardPanel cards={cards} tenantName="Apex Retail" />);
+    expect(screen.getByTestId('tower-projected-value-disclosure').textContent).toContain(
+      TOWER_PROJECTED_VALUE_DISCLOSURE,
+    );
+    expect(screen.getByText(/Projection assumptions .* confidence projected/i)).toBeTruthy();
+  });
+
+  it('does not show the projection disclosure when no projected value exists', () => {
+    const cards = [
+      {
+        moveId: 'apex-move-2',
+        moveName: 'Knowledge Base Cleanup',
+        phaseLabel: 'Value',
+        ledgerStatus: 'none' as const,
+        projectedValueUsd: 0,
+        sourceRiskLevel: null,
+        sourceCostExposureUsd: 0,
+        sourceRiskReadout: null,
+        earningSummary: 'No value claim yet.',
+        links: [
+          { id: 'open', label: 'Open Move', href: '/programs/apex-move-2' },
+        ],
+      },
+    ];
+    render(<MovePortfolioCardPanel cards={cards} tenantName="Apex Retail" />);
+    expect(screen.queryByTestId('tower-projected-value-disclosure')).toBeNull();
   });
 });

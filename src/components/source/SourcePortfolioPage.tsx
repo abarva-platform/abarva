@@ -31,13 +31,12 @@ import {
 import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import {
   computePortfolioKpis,
-  dedupeByEventCode,
   determinePortfolioState,
-  filterOutTestArtifacts,
   groupEventsByStageBand,
   STAGE_BANDS,
   attentionEvents,
 } from '@/lib/source/portfolio-filtering';
+import { selectVisibleSourceEvents } from '@/lib/source/portfolio-metrics';
 import type { SourcingEventSummary } from '@/lib/source/types';
 
 interface SourcePortfolioPageProps {
@@ -58,10 +57,11 @@ export function SourcePortfolioPage({
   searchParams,
   canViewFinancialValues = true,
 }: SourcePortfolioPageProps) {
-  // Strip test artifacts AND dedupe by event_code so the seed-loader's
-  // duplicate inserts don't pollute the list.
+  // Canonical visible set — the SAME selection the Events surface and Decision
+  // Queue use (audit 2026-06-03, Tier 0), so portfolio counts/value can never
+  // drift from the other surfaces. Strips test artifacts + dedupes by code.
   const visibleEvents = useMemo(
-    () => dedupeByEventCode(filterOutTestArtifacts(events)),
+    () => selectVisibleSourceEvents(events),
     [events],
   );
   const portfolioState = determinePortfolioState(visibleEvents.length);
@@ -71,7 +71,7 @@ export function SourcePortfolioPage({
   return (
     <AppShell
       surface="source"
-      agentName="Sentinel"
+      agentName="Ava"
       surfaceContext={{
         sourcePortfolioMode: true,
         sourceEventCount: visibleEvents.length,

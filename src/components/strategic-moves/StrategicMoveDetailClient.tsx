@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // StrategicMoveDetailClient · Move detail page chat shell.
 //
@@ -20,24 +20,34 @@
 //     workspace does — surface 'programs-detail' + surfaceContext with
 //     programId, so `canonicalizeFromBody` reshapes it to URL-shaped
 //     '/programs/<id>' for tool registry + artifact-channel matching.
-//   - Suggested chips mirror the live mock: gate-blocking questions.
+//   - Suggested chips mirror the live mock: phase-readiness questions.
 
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import {
   AgentDock,
   type AttachmentRef,
   type ChatMessage,
   type SuggestedAction,
-} from '@/components/agent/AgentDock';
-import { extractArtifacts, visibleArtifactPendingText } from '@/lib/agent/artifacts';
-import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
-import type { StrategicMove } from '@/lib/programs/types.ui';
+} from "@/components/agent/AgentDock";
+import {
+  extractArtifacts,
+  visibleArtifactPendingText,
+} from "@/lib/agent/artifacts";
+import {
+  shapeAgentResponseForSurface,
+  shapeStreamingAgentTextForSurface,
+} from "@/lib/agent/response-shape";
+import type { StrategicMove } from "@/lib/programs/types.ui";
 
 interface Props {
   move: StrategicMove;
   workspace: ReactNode;
   decisionThreadId?: string | null;
   originatingIntelligenceSessionId?: string | null;
+  presentationMode?: boolean;
+  presentationMoveTitle?: string;
+  presentationMoveCode?: string;
+  presentationTenantName?: string;
 }
 
 function generateTurnId(): string {
@@ -46,14 +56,14 @@ function generateTurnId(): string {
 
 const SUGGESTED_ACTIONS: SuggestedAction[] = [
   {
-    id: 'gate-missing',
-    label: 'Show me what is still missing for this gate.',
-    body: 'Show me what is still missing for this gate.',
+    id: "gate-missing",
+    label: "Show me what is still missing.",
+    body: "Show me what is still missing for this phase.",
   },
   {
-    id: 'gate-blocking',
-    label: "What's blocking the gate?",
-    body: "What's blocking the gate?",
+    id: "gate-blocking",
+    label: "What's blocking progress?",
+    body: "What's blocking progress for this phase?",
   },
 ];
 
@@ -62,24 +72,39 @@ export function StrategicMoveDetailClient({
   workspace,
   decisionThreadId = null,
   originatingIntelligenceSessionId = null,
+  presentationMode = false,
+  presentationMoveTitle,
+  presentationMoveCode,
+  presentationTenantName,
 }: Props) {
-  const initialThread: ChatMessage[] = [
-    {
-      id: 'nexus-open-detail',
-      role: 'agent',
-      body: `I'm scoped to ${move.displayCode} — ${move.name}. Currently in ${move.phaseLabel}. Status: ${move.status.text.toLowerCase()}.`,
-    },
-    {
-      id: 'nexus-open-detail-2',
-      role: 'agent',
-      body: `${move.status.description}. ${decisionThreadId ? `This Move is bound to Decision Dossier ${decisionThreadId}; pronouns like "this Move" refer to ${move.displayCode}. ` : ''}Want me to walk through what's needed to advance?`,
-    },
-  ];
+  const moveTitle = presentationMoveTitle ?? move.name;
+  const moveCode = presentationMoveCode ?? move.displayCode;
+  const tenantName = presentationTenantName ?? move.tenant.name;
+  const initialThread: ChatMessage[] = presentationMode
+    ? [
+        {
+          id: "nexus-open-detail",
+          role: "agent",
+          body: `${moveTitle} is open. I can summarize the story, explain the phase journey, or find the right artifact for review.`,
+        },
+      ]
+    : [
+        {
+          id: "nexus-open-detail",
+          role: "agent",
+          body: `I'm scoped to ${moveCode} — ${moveTitle}. Currently in ${move.phaseLabel}. Status: ${move.status.text.toLowerCase()}.`,
+        },
+        {
+          id: "nexus-open-detail-2",
+          role: "agent",
+          body: `${move.status.description}. ${decisionThreadId ? `This Move is bound to Decision Dossier ${decisionThreadId}; pronouns like "this Move" refer to ${moveCode}. ` : ""}Want me to walk through what's needed to advance?`,
+        },
+      ];
   if (originatingIntelligenceSessionId) {
     initialThread.push({
-      id: 'nexus-open-detail-intelligence-origin',
-      role: 'agent',
-      body: 'I also have the originating Intelligence Ask session attached, so pre-mortem and pronoun questions inherit the rationale that shaped this Move.',
+      id: "nexus-open-detail-intelligence-origin",
+      role: "agent",
+      body: "I also have the originating Intelligence Ask session attached, so pre-mortem and pronoun questions inherit the rationale that shaped this Move.",
     });
   }
 
@@ -89,7 +114,8 @@ export function StrategicMoveDetailClient({
 
   const updateThread = useCallback(
     (updater: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
-      const next = typeof updater === 'function' ? updater(threadRef.current) : updater;
+      const next =
+        typeof updater === "function" ? updater(threadRef.current) : updater;
       threadRef.current = next;
       setThread(next);
     },
@@ -103,43 +129,43 @@ export function StrategicMoveDetailClient({
 
       const attachmentSuffix =
         attachments.length > 0
-          ? `\n\n[Attached: ${attachments.map((a) => a.file_name).join(', ')}]`
-          : '';
+          ? `\n\n[Attached: ${attachments.map((a) => a.file_name).join(", ")}]`
+          : "";
       const fullMessage = trimmed + attachmentSuffix;
 
       const assistantTurnId = generateTurnId();
       updateThread((prev) => [
         ...prev,
-        { id: generateTurnId(), role: 'user', body: fullMessage },
-        { id: assistantTurnId, role: 'agent', body: '' },
+        { id: generateTurnId(), role: "user", body: fullMessage },
+        { id: assistantTurnId, role: "agent", body: "" },
       ]);
 
       try {
         const conversationHistory = threadRef.current
           .filter((t) => t.body.trim().length > 0)
           .map((t) => ({
-            role: t.role === 'agent' ? 'assistant' : 'user',
+            role: t.role === "agent" ? "assistant" : "user",
             content: t.body,
           }));
 
-        const res = await fetch('/api/chat/agent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/chat/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: fullMessage,
-            tenantName: move.tenant.name,
-            agentName: 'Nexus',
+            tenantName,
+            agentName: "Nexus",
             // 'programs-detail' is the existing semantic surface key for
             // /strategic-moves/[id] — canonicalizeFromBody reshapes it to
             // '/programs/<id>' when programId is present. Tool registry
             // and the artifact-channel gate both expect the URL form.
-            surface: 'programs-detail',
+            surface: "programs-detail",
             conversationHistory,
             surfaceContext: {
               programId: move.id,
               moveId: move.id,
-              moveCode: move.displayCode,
-              moveTitle: move.name,
+              moveCode,
+              moveTitle,
               decisionThreadId,
               originatingIntelligenceSessionId,
               currentPhase: move.currentPhase,
@@ -163,8 +189,8 @@ export function StrategicMoveDetailClient({
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let pendingBuffer = '';
-        let committedVisible = '';
+        let pendingBuffer = "";
+        let committedVisible = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -175,11 +201,13 @@ export function StrategicMoveDetailClient({
           pendingBuffer = remaining;
 
           const display = shapeStreamingAgentTextForSurface(
-            'programs-detail',
+            "programs-detail",
             committedVisible + visibleArtifactPendingText(pendingBuffer),
           ).trimEnd();
           updateThread((prev) =>
-            prev.map((t) => (t.id === assistantTurnId ? { ...t, body: display } : t)),
+            prev.map((t) =>
+              t.id === assistantTurnId ? { ...t, body: display } : t,
+            ),
           );
         }
 
@@ -187,45 +215,70 @@ export function StrategicMoveDetailClient({
           const final = extractArtifacts(pendingBuffer);
           committedVisible +=
             final.visibleText +
-            (final.remaining.length > 0 ? visibleArtifactPendingText(final.remaining) : '');
+            (final.remaining.length > 0
+              ? visibleArtifactPendingText(final.remaining)
+              : "");
         }
 
         updateThread((prev) =>
           prev.map((t) =>
             t.id === assistantTurnId
-              ? { ...t, body: shapeAgentResponseForSurface('programs-detail', committedVisible) }
+              ? {
+                  ...t,
+                  body: shapeAgentResponseForSurface(
+                    "programs-detail",
+                    committedVisible,
+                  ),
+                }
               : t,
           ),
         );
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Agent error';
+        const msg = err instanceof Error ? err.message : "Agent error";
         updateThread((prev) =>
           prev.map((t) =>
             t.id === assistantTurnId
-              ? { ...t, body: `I encountered an issue: ${msg}. Please try again.` }
+              ? {
+                  ...t,
+                  body: `I encountered an issue: ${msg}. Please try again.`,
+                }
               : t,
           ),
         );
       }
     },
-    [decisionThreadId, move, originatingIntelligenceSessionId, updateThread],
+    [
+      decisionThreadId,
+      move,
+      moveCode,
+      moveTitle,
+      originatingIntelligenceSessionId,
+      tenantName,
+      updateThread,
+    ],
   );
 
   return (
     <AgentDock
       agent={{
-        initials: 'N',
-        name: 'Nexus',
-        role: 'Strategic Moves Conductor',
+        initials: "A",
+        name: presentationMode ? "aVa" : "Ava",
+        role: presentationMode ? "Move advisor" : "Strategic Moves Conductor",
       }}
-      surface="moves/detail"
-      defaultMode="side-rail"
+      surface={presentationMode ? "moves/detail/presentation" : "moves/detail"}
+      quietReviewChrome
+      defaultMode={presentationMode ? "collapsed" : "side-rail"}
       defaultLeftPercent={35}
       minLeftPx={320}
+      collapsedSummary={
+        presentationMode
+          ? { label: "Ask aVa", detail: "Open the Move advisor" }
+          : undefined
+      }
       surfaceContext={{
         moveId: move.id,
-        moveCode: move.displayCode,
-        moveTitle: move.name,
+        moveCode,
+        moveTitle,
         decisionThreadId,
         originatingIntelligenceSessionId,
         currentPhase: move.currentPhase,

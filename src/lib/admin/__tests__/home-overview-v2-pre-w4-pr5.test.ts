@@ -5,8 +5,9 @@
  * pre-comms wave:
  *
  *   - Fix #2 (audit verdict §5.5): panel #02 "AI Initiatives" is
- *     retired entirely. The old card pointed at /home/ai-initiatives
- *     which now hard-redirects to /home — ejecting tenant admins.
+ *     retired entirely from the Admin setup overview. The Home insight
+ *     surface is separate from Admin setup, access, readiness, and
+ *     audit actions.
  *
  *   - Fix #7: the four Module readiness percentages would all
  *     evaluate to ≤30% for an empty tenant, painting Section 01 all
@@ -65,7 +66,7 @@ describe('composeHomeV2Extras · PRE-W4-PR-5 fix #2 · AI Initiatives panel reti
     expect(extras.panels.some((p) => p.num === '02')).toBe(false);
   });
 
-  it('still emits the remaining setup panels (data-trust, connectors, users-access, agent-readiness, etc.)', () => {
+  it('still emits the remaining admin action panels (data-trust, connectors, users-access, agent-readiness, etc.)', () => {
     const extras = composeHomeV2Extras(NON_EMPTY_INPUT);
     const nums = new Set(extras.panels.map((p) => p.num));
     expect(nums.has('01')).toBe(true);
@@ -75,6 +76,12 @@ describe('composeHomeV2Extras · PRE-W4-PR-5 fix #2 · AI Initiatives panel reti
     expect(nums.has('06')).toBe(true);
     expect(nums.has('07')).toBe(true);
     expect(nums.has('08')).toBe(true);
+    expect(nums.has('09')).toBe(true);
+  });
+
+  it('keeps all admin action panel hrefs out of /home/* aliases', () => {
+    const extras = composeHomeV2Extras(NON_EMPTY_INPUT);
+    expect(extras.panels.map((p) => p.href).every((href) => href.startsWith('/admin'))).toBe(true);
   });
 });
 

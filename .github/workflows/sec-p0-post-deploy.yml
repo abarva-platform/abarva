@@ -6,13 +6,20 @@ name: SEC-P0 cross-tenant probes (post-deploy)
 #
 # Triggers:
 #   - workflow_dispatch (manual; pick the environment)
-#   - On schedule (nightly; against staging by default)
+#   - On schedule (nightly; against production by default)
 #   - Optionally: post-deployment_status from Vercel (commented; enable
 #     when the deployment-status webhook is wired)
 #
-# Required repository secrets:
+# Required repository secrets for scheduled production probes:
+#   PRODUCTION_BASE_URL           e.g. https://app.abarva.ai
+#   PRODUCTION_APEX_SESSION       __session cookie value for an Apex CIO
+#   PRODUCTION_APEX_COOKIE_HEADER full browser Cookie header for Apex (alternative to session)
+#   PRODUCTION_MERIDIAN_CLIENT_ID Meridian's client UUID (the "other" tenant)
+#
+# Optional staging secrets for manual workflow_dispatch:
 #   STAGING_BASE_URL           e.g. https://staging.abarva.ai
 #   STAGING_APEX_SESSION       __session cookie value for an Apex CIO
+#   STAGING_APEX_COOKIE_HEADER full browser Cookie header for Apex (alternative to session)
 #   STAGING_MERIDIAN_CLIENT_ID Meridian's client UUID (the "other" tenant)
 #
 # Optional Azure lab secrets:
@@ -42,7 +49,8 @@ on:
           - azure-lab
           - production
   schedule:
-    # 03:00 UTC nightly against staging
+    # 03:00 UTC nightly against production. Staging remains available via
+    # workflow_dispatch when staging probe secrets are configured.
     - cron: "0 3 * * *"
 
 jobs:
@@ -53,12 +61,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Resolve environment URLs
         id: env
         run: |
-          target="${{ inputs.environment || 'staging' }}"
+          target="${{ inputs.environment || 'production' }}"
           case "$target" in
             production)
               base_url="${{ secrets.PRODUCTION_BASE_URL }}"

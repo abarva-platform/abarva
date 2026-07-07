@@ -1,0 +1,251 @@
+{
+  "created": "2026-06-06T01:27:52.724Z",
+  "fps": 30,
+  "frameSize": {
+    "width": 1600,
+    "height": 900
+  },
+  "maxGapAfterVoiceSeconds": 1.15,
+  "output": "render/LAKESHORE_AI_SUCCESS_PLATFORM_PREVIEW_V1.mp4",
+  "scenes": [
+    {
+      "scene": "01",
+      "title": "Opening Thesis",
+      "image": "assets/01-opening.png",
+      "voiceText": "AI success for Lakeshore is not a chatbot. It is a governed execution layer for treasury, vendors, risk, decisions, and measurable value.",
+      "cameraTarget": "product pillars and proof metrics",
+      "zoomTarget": {
+        "x": 900,
+        "y": 470,
+        "zoom": 1.15
+      },
+      "audioDuration": 9.72,
+      "clipDuration": 10.87,
+      "timelineStart": 0,
+      "timelineEnd": 10.87,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "02",
+      "title": "Lakeshore Operating Profile",
+      "image": "assets/02-profile.png",
+      "voiceText": "AbarVa starts with Lakeshore's facts: companies, revenue baseline, people, systems, vendors, banks, and board priorities. Context comes before AI.",
+      "cameraTarget": "planning profile metrics and company cards",
+      "zoomTarget": {
+        "x": 800,
+        "y": 505,
+        "zoom": 1.1
+      },
+      "audioDuration": 11.4,
+      "clipDuration": 12.55,
+      "timelineStart": 10.87,
+      "timelineEnd": 23.42,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "03",
+      "title": "Federated Complexity",
+      "image": "assets/03-operating-map.png",
+      "voiceText": "The complexity is the product opportunity: sponsor decisions, HoldCo autonomy, PortCo systems, CXO ownership, contracts, CMDB, and process evidence.",
+      "cameraTarget": "federated operating map",
+      "zoomTarget": {
+        "x": 750,
+        "y": 470,
+        "zoom": 1.15
+      },
+      "audioDuration": 11.808,
+      "clipDuration": 12.958,
+      "timelineStart": 23.42,
+      "timelineEnd": 36.378,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "04",
+      "title": "Lakeshore Intelligence Layer",
+      "image": "assets/04-intelligence-layer.png",
+      "voiceText": "The intelligence layer is the moat: tenant context, role context, evidence, corpus doctrine, workflow state, and value ledger working together.",
+      "cameraTarget": "context to value bridge",
+      "zoomTarget": {
+        "x": 850,
+        "y": 485,
+        "zoom": 1.12
+      },
+      "audioDuration": 10.512,
+      "clipDuration": 11.662,
+      "timelineStart": 36.378,
+      "timelineEnd": 48.04,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "05",
+      "title": "Editable Corpus Doctrine",
+      "image": "assets/05-corpus.png",
+      "voiceText": "The corpus stays editable. Lakeshore leaders approve, refine, localize, or retire doctrine as the portfolio learns what actually works.",
+      "cameraTarget": "editable corpus actions",
+      "zoomTarget": {
+        "x": 800,
+        "y": 545,
+        "zoom": 1.12
+      },
+      "audioDuration": 9.36,
+      "clipDuration": 10.51,
+      "timelineStart": 48.04,
+      "timelineEnd": 58.55,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "06",
+      "title": "Kyriba And Treasury Wedge",
+      "image": "assets/06-treasury-wedge.png",
+      "voiceText": "Kyriba fails when bank, ERP, entity, cash, control, and adoption facts surface too late. AbarVa turns them into gates.",
+      "cameraTarget": "six treasury readiness gates",
+      "zoomTarget": {
+        "x": 900,
+        "y": 515,
+        "zoom": 1.18
+      },
+      "audioDuration": 10.92,
+      "clipDuration": 12.07,
+      "timelineStart": 58.55,
+      "timelineEnd": 70.62,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "07",
+      "title": "Beyond Kyriba",
+      "image": "assets/07-ai-success-platform.png",
+      "voiceText": "Kyriba is the opening wedge. The broader platform finds value across treasury, vendors, IT, cyber, operations, and growth AI.",
+      "cameraTarget": "five value lanes",
+      "zoomTarget": {
+        "x": 780,
+        "y": 460,
+        "zoom": 1.1
+      },
+      "audioDuration": 10.848,
+      "clipDuration": 11.998,
+      "timelineStart": 70.62,
+      "timelineEnd": 82.618,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "08",
+      "title": "$500K Value Case",
+      "image": "assets/08-value-case.png",
+      "voiceText": "The five hundred thousand dollar case is about five to ten times value potential: avoid rollout failure, rationalize vendors, reduce execution cost, and prove savings.",
+      "cameraTarget": "value metrics and value bridge",
+      "zoomTarget": {
+        "x": 800,
+        "y": 450,
+        "zoom": 1.12
+      },
+      "audioDuration": 11.568,
+      "clipDuration": 12.718,
+      "timelineStart": 82.618,
+      "timelineEnd": 95.336,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "09",
+      "title": "Move Execution Proof",
+      "image": "assets/09-proof-move.png",
+      "voiceText": "A Move converts insight into owned work: phase, evidence, value, gaps, artifacts, and a next action.",
+      "cameraTarget": "Move product screen and ownership cards",
+      "zoomTarget": {
+        "x": 850,
+        "y": 500,
+        "zoom": 1.16
+      },
+      "audioDuration": 9.456,
+      "clipDuration": 10.606,
+      "timelineStart": 95.336,
+      "timelineEnd": 105.942,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "10",
+      "title": "Source Decision Proof",
+      "image": "assets/10-proof-source-decision.png",
+      "voiceText": "Source turns finance, procurement, and executive judgment into a decision path with evidence, guardrails, and required artifacts.",
+      "cameraTarget": "executive decision fork",
+      "zoomTarget": {
+        "x": 850,
+        "y": 500,
+        "zoom": 1.15
+      },
+      "audioDuration": 9.36,
+      "clipDuration": 10.51,
+      "timelineStart": 105.942,
+      "timelineEnd": 116.452,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "11",
+      "title": "Value Pipeline Proof",
+      "image": "assets/11-proof-value-pipeline.png",
+      "voiceText": "The value story is controlled: forecast, approval, negotiated outcome, and finance-accepted proof stay separate.",
+      "cameraTarget": "forecast to proof controls",
+      "zoomTarget": {
+        "x": 750,
+        "y": 485,
+        "zoom": 1.18
+      },
+      "audioDuration": 8.664,
+      "clipDuration": 9.814,
+      "timelineStart": 116.452,
+      "timelineEnd": 126.266,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "12",
+      "title": "Architecture Trust Layer",
+      "image": "assets/12-architecture.png",
+      "voiceText": "Claude can reason. AbarVa governs what it can see, cite, create, and persist for board and audit use.",
+      "cameraTarget": "trust controls around Claude",
+      "zoomTarget": {
+        "x": 800,
+        "y": 535,
+        "zoom": 1.1
+      },
+      "audioDuration": 6.72,
+      "clipDuration": 7.87,
+      "timelineStart": 126.266,
+      "timelineEnd": 134.136,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "13",
+      "title": "Six-Month Roadmap",
+      "image": "assets/13-six-month-roadmap.png",
+      "voiceText": "The six-month roadmap builds context, corpus, finance proof, Source events, execution rhythm, and a board-ready value pack.",
+      "cameraTarget": "six-month roadmap cards",
+      "zoomTarget": {
+        "x": 800,
+        "y": 515,
+        "zoom": 1.1
+      },
+      "audioDuration": 8.52,
+      "clipDuration": 9.67,
+      "timelineStart": 134.136,
+      "timelineEnd": 143.806,
+      "gapAfterVoice": 1.15
+    },
+    {
+      "scene": "14",
+      "title": "Renewal Standard",
+      "image": "assets/14-success-standard.png",
+      "voiceText": "By month six, the renewal case should be earned: coverage, proof, value pipeline, and a finance-defensible ledger.",
+      "cameraTarget": "coverage proof ROI cards",
+      "zoomTarget": {
+        "x": 850,
+        "y": 460,
+        "zoom": 1.13
+      },
+      "audioDuration": 7.92,
+      "clipDuration": 9.07,
+      "timelineStart": 143.806,
+      "timelineEnd": 152.876,
+      "gapAfterVoice": 1.15
+    }
+  ],
+  "note": "Intermediate OpenAI audio and per-scene clip files are intentionally not checked in. Re-run the corresponding renderer to recreate them."
+}

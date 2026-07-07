@@ -4,14 +4,20 @@ import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { IntelligenceAuthorPageView } from '@/lib/intelligence/intelligence-i6-view';
 
-export function IntelligenceAuthorPage({ view }: { view: IntelligenceAuthorPageView }) {
+export function IntelligenceAuthorPage({
+  view,
+  tenantName,
+}: {
+  view: IntelligenceAuthorPageView;
+  tenantName: string;
+}) {
   return (
     <AppShell
       surface="intelligence"
-      topBarProps={{ tenantName: 'Apex Retail Group', showLocked: true, context: 'Intelligence · Pattern authoring' }}
+      topBarProps={{ tenantName, showLocked: true, context: 'Intelligence · Pattern authoring' }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Authoring' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Authoring' }}
         quote="Authoring intake is staged. Atlas can draft framing; Sentinel still validates promotion readiness before the pattern enters the library."
         agentContext="Atlas · deterministic authoring intake · I6"
         actions={[

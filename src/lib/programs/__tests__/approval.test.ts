@@ -109,9 +109,14 @@ function makeQueryBuilder(table: string) {
 }
 
 const fromMock = jest.fn((table: string) => makeQueryBuilder(table));
+const mockCloseP0OnApproval = jest.fn();
 
-jest.mock('@/lib/data-plane/postgresCompat', () => ({
+jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => ({ from: fromMock }),
+}));
+
+jest.mock("../origination-close", () => ({
+  closeP0OnApproval: mockCloseP0OnApproval,
 }));
 
 import {
@@ -121,25 +126,27 @@ import {
   getApprovalQueueForTenant,
   getApprovalRequestById,
   type ApprovalRequest,
-} from '../approval';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
+} from "../approval";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 // Helper: shape of the row the DB returns (snake_case)
-function makeDbRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function makeDbRow(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   return {
-    id: 'req_1',
-    tenant_key: 'apex-retail',
-    program_id: 'eng_1',
-    requested_by_user_id: 'user_1',
-    requested_at: '2026-04-29T10:00:00.000Z',
-    request_status: 'pending',
+    id: "req_1",
+    tenant_key: "apex-retail",
+    program_id: "eng_1",
+    requested_by_user_id: "user_1",
+    requested_at: "2026-04-29T10:00:00.000Z",
+    request_status: "pending",
     decided_by_user_id: null,
     decided_at: null,
     decision_rationale: null,
-    brief_snapshot: { name: 'Test program', archetype: 'workflow_automation' },
-    created_at: '2026-04-29T10:00:00.000Z',
-    updated_at: '2026-04-29T10:00:00.000Z',
+    brief_snapshot: { name: "Test program", archetype: "workflow_automation" },
+    created_at: "2026-04-29T10:00:00.000Z",
+    updated_at: "2026-04-29T10:00:00.000Z",
     ...overrides,
   };
 }
@@ -153,6 +160,14 @@ beforeEach(() => {
   singleMock.mockClear();
   maybeSingleMock.mockClear();
   fromMock.mockClear();
+  mockCloseP0OnApproval.mockReset();
+  mockCloseP0OnApproval.mockResolvedValue({
+    briefEnsured: true,
+    briefSigned: true,
+    advanced: true,
+    newPhase: 1,
+    blockedBy: [],
+  });
   lastQuery = null;
 });
 
@@ -174,386 +189,404 @@ beforeEach(() => {
   pendingResults = [];
 });
 
-describe('submitForApproval', () => {
-  it('inserts a pending row, flips engagements.lifecycle_state, and returns camelCase', async () => {
+describe("submitForApproval", () => {
+  it("inserts a pending row, flips engagements.lifecycle_state, and returns camelCase", async () => {
     const inserted = makeDbRow();
     pendingResults.push({ singleResult: { data: inserted, error: null } });
     pendingResults.push({ arrayResult: { data: null, error: null } });
 
     const out = await submitForApproval({
-      tenantKey: 'apex-retail',
-      programId: 'eng_1',
-      requestedByUserId: 'user_1',
-      briefSnapshot: { name: 'Test program' },
+      tenantKey: "apex-retail",
+      programId: "eng_1",
+      requestedByUserId: "user_1",
+      briefSnapshot: { name: "Test program" },
     });
 
-    expect(out.id).toBe('req_1');
-    expect(out.tenantKey).toBe('apex-retail');
-    expect(out.programId).toBe('eng_1');
-    expect(out.requestedByUserId).toBe('user_1');
-    expect(out.requestStatus).toBe('pending');
+    expect(out.id).toBe("req_1");
+    expect(out.tenantKey).toBe("apex-retail");
+    expect(out.programId).toBe("eng_1");
+    expect(out.requestedByUserId).toBe("user_1");
+    expect(out.requestStatus).toBe("pending");
     expect(out.briefSnapshot).toEqual({
-      name: 'Test program',
-      archetype: 'workflow_automation',
+      name: "Test program",
+      archetype: "workflow_automation",
     });
 
     // Insert payload uses snake_case columns
     const insertCall = insertMock.mock.calls.find(
-      ([t]) => t === 'program_approval_requests',
+      ([t]) => t === "program_approval_requests",
     );
     expect(insertCall?.[1]).toMatchObject({
-      tenant_key: 'apex-retail',
-      program_id: 'eng_1',
-      requested_by_user_id: 'user_1',
+      tenant_key: "apex-retail",
+      program_id: "eng_1",
+      requested_by_user_id: "user_1",
     });
 
     // Engagement flip happened
     const engagementUpdate = updateMock.mock.calls.find(
-      ([t]) => t === 'engagements',
+      ([t]) => t === "engagements",
     );
     expect(engagementUpdate?.[1]).toEqual({
-      lifecycle_state: 'submitted_for_approval',
+      lifecycle_state: "submitted_for_approval",
     });
   });
 
-  it('throws if tenantKey is missing', async () => {
+  it("throws if tenantKey is missing", async () => {
     await expect(
       submitForApproval({
-        tenantKey: '',
-        programId: 'eng_1',
-        requestedByUserId: 'user_1',
+        tenantKey: "",
+        programId: "eng_1",
+        requestedByUserId: "user_1",
         briefSnapshot: {},
       }),
     ).rejects.toThrow(/tenantKey is required/);
   });
 
-  it('throws if programId is missing', async () => {
+  it("throws if programId is missing", async () => {
     await expect(
       submitForApproval({
-        tenantKey: 'apex-retail',
-        programId: '',
-        requestedByUserId: 'user_1',
+        tenantKey: "apex-retail",
+        programId: "",
+        requestedByUserId: "user_1",
         briefSnapshot: {},
       }),
     ).rejects.toThrow(/programId is required/);
   });
 
-  it('throws if requestedByUserId is missing', async () => {
+  it("throws if requestedByUserId is missing", async () => {
     await expect(
       submitForApproval({
-        tenantKey: 'apex-retail',
-        programId: 'eng_1',
-        requestedByUserId: '',
+        tenantKey: "apex-retail",
+        programId: "eng_1",
+        requestedByUserId: "",
         briefSnapshot: {},
       }),
     ).rejects.toThrow(/requestedByUserId is required/);
   });
 
-  it('wraps DB insert errors with input context', async () => {
+  it("wraps DB insert errors with input context", async () => {
     pendingResults.push({
-      singleResult: { data: null, error: { message: 'duplicate key' } },
+      singleResult: { data: null, error: { message: "duplicate key" } },
     });
 
     await expect(
       submitForApproval({
-        tenantKey: 'apex-retail',
-        programId: 'eng_1',
-        requestedByUserId: 'user_1',
+        tenantKey: "apex-retail",
+        programId: "eng_1",
+        requestedByUserId: "user_1",
         briefSnapshot: {},
       }),
     ).rejects.toThrow(/insert into program_approval_requests failed/);
   });
 });
 
-describe('decideApprovalRequest', () => {
-  it('approves a pending request and returns the decided row', async () => {
+describe("decideApprovalRequest", () => {
+  it("approves a pending request and returns the decided row", async () => {
     const updated = makeDbRow({
-      request_status: 'approved',
-      decided_by_user_id: 'admin_1',
-      decided_at: '2026-04-29T11:00:00.000Z',
+      request_status: "approved",
+      decided_by_user_id: "admin_1",
+      decided_at: "2026-04-29T11:00:00.000Z",
       brief_snapshot: {
-        sponsor_person_id: 'sponsor_1',
-        lead_person_id: 'lead_1',
+        sponsor_person_id: "sponsor_1",
+        lead_person_id: "lead_1",
       },
     });
     pendingResults.push({ singleResult: { data: updated, error: null } });
 
     const out = await decideApprovalRequest({
-      requestId: 'req_1',
-      decidedByUserId: 'admin_1',
-      decision: 'approved',
+      requestId: "req_1",
+      decidedByUserId: "admin_1",
+      decision: "approved",
+      actorTenancy: {
+        clientId: "client-1",
+        clientKey: "meridian",
+        userId: "admin_1",
+        role: "client_admin",
+        email: "agent-meridian@abarva.ai",
+      },
     });
 
-    expect(out.requestStatus).toBe('approved');
-    expect(out.decidedByUserId).toBe('admin_1');
-    expect(out.decidedAt).toBe('2026-04-29T11:00:00.000Z');
+    expect(out.requestStatus).toBe("approved");
+    expect(out.decidedByUserId).toBe("admin_1");
+    expect(out.decidedAt).toBe("2026-04-29T11:00:00.000Z");
 
     // Update was scoped to pending rows only
     const filtered = eqMock.mock.calls.filter(
-      ([t]) => t === 'program_approval_requests',
+      ([t]) => t === "program_approval_requests",
     );
     expect(filtered).toEqual(
       expect.arrayContaining([
-        ['program_approval_requests', 'id', 'req_1'],
-        ['program_approval_requests', 'request_status', 'pending'],
+        ["program_approval_requests", "id", "req_1"],
+        ["program_approval_requests", "request_status", "pending"],
       ]),
     );
     expect(updateMock.mock.calls).toEqual(
       expect.arrayContaining([
         [
-          'engagements',
+          "engagements",
           {
-            lifecycle_state: 'approved',
-            status: 'active',
-            current_phase: 0,
-            sponsor_person_id: 'sponsor_1',
-            maestro_person_id: 'lead_1',
+            lifecycle_state: "approved",
+            status: "active",
+            sponsor_person_id: "sponsor_1",
+            maestro_person_id: "lead_1",
           },
         ],
       ]),
     );
+    const engagementUpdate = updateMock.mock.calls.find(
+      ([t]) => t === "engagements",
+    )?.[1] as Record<string, unknown> | undefined;
+    expect(engagementUpdate).not.toHaveProperty("current_phase");
+    expect(mockCloseP0OnApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        programId: "eng_1",
+        tenantKey: "apex-retail",
+        deciderUserId: "admin_1",
+        actorTenancy: expect.objectContaining({
+          clientKey: "meridian",
+          email: "agent-meridian@abarva.ai",
+        }),
+      }),
+    );
   });
 
-  it('rejects with rationale and persists the rationale', async () => {
+  it("rejects with rationale and persists the rationale", async () => {
     const updated = makeDbRow({
-      request_status: 'rejected',
-      decided_by_user_id: 'admin_1',
-      decided_at: '2026-04-29T11:00:00.000Z',
-      decision_rationale: 'Out of scope for this quarter',
+      request_status: "rejected",
+      decided_by_user_id: "admin_1",
+      decided_at: "2026-04-29T11:00:00.000Z",
+      decision_rationale: "Out of scope for this quarter",
     });
     pendingResults.push({ singleResult: { data: updated, error: null } });
 
     const out = await decideApprovalRequest({
-      requestId: 'req_1',
-      decidedByUserId: 'admin_1',
-      decision: 'rejected',
-      rationale: 'Out of scope for this quarter',
+      requestId: "req_1",
+      decidedByUserId: "admin_1",
+      decision: "rejected",
+      rationale: "Out of scope for this quarter",
     });
 
-    expect(out.requestStatus).toBe('rejected');
-    expect(out.decisionRationale).toBe('Out of scope for this quarter');
+    expect(out.requestStatus).toBe("rejected");
+    expect(out.decisionRationale).toBe("Out of scope for this quarter");
 
     const updateCall = updateMock.mock.calls.find(
-      ([t]) => t === 'program_approval_requests',
+      ([t]) => t === "program_approval_requests",
     );
     expect(updateCall?.[1]).toMatchObject({
-      request_status: 'rejected',
-      decision_rationale: 'Out of scope for this quarter',
+      request_status: "rejected",
+      decision_rationale: "Out of scope for this quarter",
     });
     expect(updateMock.mock.calls).toEqual(
       expect.arrayContaining([
-        [
-          'engagements',
-          { lifecycle_state: 'rejected', status: 'draft' },
-        ],
+        ["engagements", { lifecycle_state: "rejected", status: "draft" }],
       ]),
     );
   });
 
-  it('throws when rejecting without rationale', async () => {
+  it("throws when rejecting without rationale", async () => {
     await expect(
       decideApprovalRequest({
-        requestId: 'req_1',
-        decidedByUserId: 'admin_1',
-        decision: 'rejected',
+        requestId: "req_1",
+        decidedByUserId: "admin_1",
+        decision: "rejected",
       }),
     ).rejects.toThrow(/rationale is required when decision is rejected/);
     expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it('throws when rejecting with whitespace-only rationale', async () => {
+  it("throws when rejecting with whitespace-only rationale", async () => {
     await expect(
       decideApprovalRequest({
-        requestId: 'req_1',
-        decidedByUserId: 'admin_1',
-        decision: 'rejected',
-        rationale: '   ',
+        requestId: "req_1",
+        decidedByUserId: "admin_1",
+        decision: "rejected",
+        rationale: "   ",
       }),
     ).rejects.toThrow(/rationale is required when decision is rejected/);
   });
 
-  it('rejects unknown decision values', async () => {
+  it("rejects unknown decision values", async () => {
     await expect(
       decideApprovalRequest({
-        requestId: 'req_1',
-        decidedByUserId: 'admin_1',
-        decision: 'maybe' as unknown as 'approved',
+        requestId: "req_1",
+        decidedByUserId: "admin_1",
+        decision: "maybe" as unknown as "approved",
       }),
     ).rejects.toThrow(/decision must be/);
   });
 
-  it('throws if requestId is missing', async () => {
+  it("throws if requestId is missing", async () => {
     await expect(
       decideApprovalRequest({
-        requestId: '',
-        decidedByUserId: 'admin_1',
-        decision: 'approved',
+        requestId: "",
+        decidedByUserId: "admin_1",
+        decision: "approved",
       }),
     ).rejects.toThrow(/requestId is required/);
   });
 
-  it('throws if decidedByUserId is missing', async () => {
+  it("throws if decidedByUserId is missing", async () => {
     await expect(
       decideApprovalRequest({
-        requestId: 'req_1',
-        decidedByUserId: '',
-        decision: 'approved',
+        requestId: "req_1",
+        decidedByUserId: "",
+        decision: "approved",
       }),
     ).rejects.toThrow(/decidedByUserId is required/);
   });
 
-  it('wraps DB errors as already-decided / not-pending failures', async () => {
+  it("wraps DB errors as already-decided / not-pending failures", async () => {
     pendingResults.push({
-      singleResult: { data: null, error: { message: 'no rows' } },
+      singleResult: { data: null, error: { message: "no rows" } },
     });
 
     await expect(
       decideApprovalRequest({
-        requestId: 'req_1',
-        decidedByUserId: 'admin_1',
-        decision: 'approved',
+        requestId: "req_1",
+        decidedByUserId: "admin_1",
+        decision: "approved",
       }),
     ).rejects.toThrow(/already decided/);
   });
 });
 
-describe('withdrawApprovalRequest', () => {
-  it('only succeeds when the requesting user matches AND status is pending', async () => {
+describe("withdrawApprovalRequest", () => {
+  it("only succeeds when the requesting user matches AND status is pending", async () => {
     const updated = makeDbRow({
-      request_status: 'withdrawn',
-      decided_at: '2026-04-29T12:00:00.000Z',
+      request_status: "withdrawn",
+      decided_at: "2026-04-29T12:00:00.000Z",
     });
     pendingResults.push({ singleResult: { data: updated, error: null } });
 
-    const out = await withdrawApprovalRequest('req_1', 'user_1');
+    const out = await withdrawApprovalRequest("req_1", "user_1");
 
-    expect(out.requestStatus).toBe('withdrawn');
+    expect(out.requestStatus).toBe("withdrawn");
 
     const filtered = eqMock.mock.calls.filter(
-      ([t]) => t === 'program_approval_requests',
+      ([t]) => t === "program_approval_requests",
     );
     expect(filtered).toEqual(
       expect.arrayContaining([
-        ['program_approval_requests', 'id', 'req_1'],
-        ['program_approval_requests', 'requested_by_user_id', 'user_1'],
-        ['program_approval_requests', 'request_status', 'pending'],
+        ["program_approval_requests", "id", "req_1"],
+        ["program_approval_requests", "requested_by_user_id", "user_1"],
+        ["program_approval_requests", "request_status", "pending"],
       ]),
     );
   });
 
-  it('throws if a different user tries to withdraw', async () => {
+  it("throws if a different user tries to withdraw", async () => {
     pendingResults.push({
-      singleResult: { data: null, error: { message: 'no rows match' } },
+      singleResult: { data: null, error: { message: "no rows match" } },
     });
 
     await expect(
-      withdrawApprovalRequest('req_1', 'other_user'),
+      withdrawApprovalRequest("req_1", "other_user"),
     ).rejects.toThrow(/not the requester, or not pending/);
   });
 
-  it('throws if requestId is missing', async () => {
-    await expect(withdrawApprovalRequest('', 'user_1')).rejects.toThrow(
+  it("throws if requestId is missing", async () => {
+    await expect(withdrawApprovalRequest("", "user_1")).rejects.toThrow(
       /requestId is required/,
     );
   });
 
-  it('throws if requestedByUserId is missing', async () => {
-    await expect(withdrawApprovalRequest('req_1', '')).rejects.toThrow(
+  it("throws if requestedByUserId is missing", async () => {
+    await expect(withdrawApprovalRequest("req_1", "")).rejects.toThrow(
       /requestedByUserId is required/,
     );
   });
 });
 
-describe('getApprovalQueueForTenant', () => {
-  it('returns only pending rows for the tenant, longest-pending first', async () => {
+describe("getApprovalQueueForTenant", () => {
+  it("returns only pending rows for the tenant, longest-pending first", async () => {
     // PRE-W4-PR-4 · queue now sorts ASC so SLA-stuck requests bubble
     // to the top. The previous descending order is gone.
     const older = makeDbRow({
-      id: 'req_1',
-      requested_at: '2026-04-29T10:00:00.000Z',
+      id: "req_1",
+      requested_at: "2026-04-29T10:00:00.000Z",
     });
     const newer = makeDbRow({
-      id: 'req_2',
-      requested_at: '2026-04-29T15:00:00.000Z',
+      id: "req_2",
+      requested_at: "2026-04-29T15:00:00.000Z",
     });
     pendingResults.push({
       arrayResult: { data: [older, newer], error: null },
     });
 
-    const out = await getApprovalQueueForTenant('apex-retail');
+    const out = await getApprovalQueueForTenant("apex-retail");
     expect(out).toHaveLength(2);
-    expect(out[0].id).toBe('req_1');
-    expect(out[1].id).toBe('req_2');
+    expect(out[0].id).toBe("req_1");
+    expect(out[1].id).toBe("req_2");
 
     // Ordering call landed (ascending = longest-pending first)
     expect(orderMock).toHaveBeenCalledWith(
-      'program_approval_requests',
-      'requested_at',
+      "program_approval_requests",
+      "requested_at",
       { ascending: true },
     );
 
     // Tenant + status filters were applied
     const filters = eqMock.mock.calls.filter(
-      ([t]) => t === 'program_approval_requests',
+      ([t]) => t === "program_approval_requests",
     );
     expect(filters).toEqual(
       expect.arrayContaining([
-        ['program_approval_requests', 'tenant_key', 'apex-retail'],
-        ['program_approval_requests', 'request_status', 'pending'],
+        ["program_approval_requests", "tenant_key", "apex-retail"],
+        ["program_approval_requests", "request_status", "pending"],
       ]),
     );
   });
 
-  it('returns [] for a tenant with no pending requests', async () => {
+  it("returns [] for a tenant with no pending requests", async () => {
     pendingResults.push({ arrayResult: { data: [], error: null } });
-    const out = await getApprovalQueueForTenant('meridian');
+    const out = await getApprovalQueueForTenant("meridian");
     expect(out).toEqual([]);
   });
 
-  it('throws if tenantKey is missing', async () => {
-    await expect(getApprovalQueueForTenant('')).rejects.toThrow(
+  it("throws if tenantKey is missing", async () => {
+    await expect(getApprovalQueueForTenant("")).rejects.toThrow(
       /tenantKey is required/,
     );
   });
 
-  it('wraps DB errors', async () => {
+  it("wraps DB errors", async () => {
     pendingResults.push({
-      arrayResult: { data: null, error: { message: 'connection refused' } },
+      arrayResult: { data: null, error: { message: "connection refused" } },
     });
-    await expect(getApprovalQueueForTenant('apex-retail')).rejects.toThrow(
+    await expect(getApprovalQueueForTenant("apex-retail")).rejects.toThrow(
       /query failed/,
     );
   });
 });
 
-describe('getApprovalRequestById', () => {
-  it('returns the row when found', async () => {
+describe("getApprovalRequestById", () => {
+  it("returns the row when found", async () => {
     pendingResults.push({
       maybeSingleResult: { data: makeDbRow(), error: null },
     });
-    const out: ApprovalRequest | null = await getApprovalRequestById('req_1');
+    const out: ApprovalRequest | null = await getApprovalRequestById("req_1");
     expect(out).not.toBeNull();
-    expect(out!.id).toBe('req_1');
-    expect(out!.tenantKey).toBe('apex-retail');
+    expect(out!.id).toBe("req_1");
+    expect(out!.tenantKey).toBe("apex-retail");
   });
 
-  it('returns null when not found', async () => {
+  it("returns null when not found", async () => {
     pendingResults.push({ maybeSingleResult: { data: null, error: null } });
-    const out = await getApprovalRequestById('req_missing');
+    const out = await getApprovalRequestById("req_missing");
     expect(out).toBeNull();
   });
 
-  it('throws if requestId is missing', async () => {
-    await expect(getApprovalRequestById('')).rejects.toThrow(
+  it("throws if requestId is missing", async () => {
+    await expect(getApprovalRequestById("")).rejects.toThrow(
       /requestId is required/,
     );
   });
 
-  it('wraps DB errors', async () => {
+  it("wraps DB errors", async () => {
     pendingResults.push({
-      maybeSingleResult: { data: null, error: { message: 'boom' } },
+      maybeSingleResult: { data: null, error: { message: "boom" } },
     });
-    await expect(getApprovalRequestById('req_1')).rejects.toThrow(
+    await expect(getApprovalRequestById("req_1")).rejects.toThrow(
       /query failed/,
     );
   });
@@ -563,22 +596,22 @@ describe('getApprovalRequestById', () => {
 // The migration is the source of truth for RLS. We assert the policies
 // exist by static-scanning the SQL — this catches accidental deletion
 // or rename without spinning up a Postgres instance.
-describe('migration: program_approval_requests RLS policies', () => {
+describe("migration: program_approval_requests RLS policies", () => {
   const sql = readFileSync(
     path.resolve(
       process.cwd(),
-      'supabase/migrations/20260430120100_program_approval_workflow.sql',
+      "supabase/migrations/20260430120100_program_approval_workflow.sql",
     ),
-    'utf-8',
+    "utf-8",
   );
 
-  it('enables row-level security on program_approval_requests', () => {
+  it("enables row-level security on program_approval_requests", () => {
     expect(sql).toMatch(
       /ALTER TABLE program_approval_requests ENABLE ROW LEVEL SECURITY/,
     );
   });
 
-  it('declares the four required policies', () => {
+  it("declares the four required policies", () => {
     expect(sql).toMatch(/service_role_all_program_approval_requests/);
     expect(sql).toMatch(/authenticated_read_program_approval_requests/);
     expect(sql).toMatch(/authenticated_insert_program_approval_requests/);
@@ -586,22 +619,22 @@ describe('migration: program_approval_requests RLS policies', () => {
     expect(sql).toMatch(/block_delete_program_approval_requests/);
   });
 
-  it('blocks DELETE for authenticated role (USING (false))', () => {
+  it("blocks DELETE for authenticated role (USING (false))", () => {
     // The block-delete policy must use a literal false predicate.
     expect(sql).toMatch(
       /CREATE POLICY "block_delete_program_approval_requests"[\s\S]*?FOR DELETE TO authenticated[\s\S]*?USING \(false\)/,
     );
   });
 
-  it('scopes SELECT and INSERT to the JWT tenant_key', () => {
+  it("scopes SELECT and INSERT to the JWT tenant_key", () => {
     expect(sql).toMatch(/tenant_key = \(auth\.jwt\(\) ->> 'tenant_key'\)/);
   });
 
-  it('scopes UPDATE to the tenant_admin role claim', () => {
+  it("scopes UPDATE to the tenant_admin role claim", () => {
     expect(sql).toMatch(/\(auth\.jwt\(\) ->> 'role'\) = 'tenant_admin'/);
   });
 
-  it('declares the lifecycle-state sync trigger and updated_at trigger', () => {
+  it("declares the lifecycle-state sync trigger and updated_at trigger", () => {
     expect(sql).toMatch(/sync_engagement_lifecycle_on_decision/);
     expect(sql).toMatch(/update_program_approval_requests_updated_at/);
   });

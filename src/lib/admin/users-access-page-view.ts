@@ -194,7 +194,7 @@ const TABS: ReadonlyArray<UsersAccessTabMeta> = [
   {
     key: 'all',
     label: 'All Users',
-    description: 'Active users across all roles · deterministic seed',
+    description: 'Active users across all roles · prepared setup data',
   },
   {
     key: 'roles',
@@ -209,7 +209,7 @@ const TABS: ReadonlyArray<UsersAccessTabMeta> = [
   {
     key: 'invites',
     label: 'Invites',
-    description: 'Pending invitations · live writes deferred to Wave 27',
+    description: 'Pending invitations · live sends require SSO',
   },
 ];
 
@@ -317,13 +317,13 @@ const PERMISSION_MATRIX: ReadonlyArray<UsersAccessPermissionMatrixRow> = [
   {
     id: 'platform.read',
     label: 'Platform read',
-    description: 'Read all tenants, audit, deployment posture',
+    description: 'Read the active client workspace, audit, and deployment posture',
     rolesAllowed: ['platform_admin'],
   },
   {
     id: 'platform.write',
     label: 'Platform write',
-    description: 'Mutate platform-level settings (deferred to Wave 27)',
+    description: 'Manage platform-level settings after audit logging is enabled',
     rolesAllowed: ['platform_admin'],
   },
   {
@@ -359,7 +359,7 @@ const PERMISSION_MATRIX: ReadonlyArray<UsersAccessPermissionMatrixRow> = [
   {
     id: 'portfolio.read',
     label: 'Portfolio read',
-    description: 'Read aggregate portfolio brief across tenants',
+    description: 'Read the active client portfolio brief',
     rolesAllowed: ['investor'],
   },
 ];
@@ -371,13 +371,13 @@ const ACTION_STRIP: ReadonlyArray<UsersAccessActionRow> = [
     status: 'hard_gated',
     // Reason rendered as inline explanation, not as a tooltip on a disabled
     // button — see UsersAccessActionStrip per Setup Fix Package PR 5 §2.3.
-    reason: 'Live invite pipeline lights up after SSO is configured and the audit event store ships in Wave 27.',
+    reason: 'Live invite sends require SSO and audit logging.',
   },
   {
     id: 'configure_sso',
     label: 'Configure SSO',
-    status: 'hard_gated',
-    reason: 'SSO configuration and identity provider wiring ships in Wave 27 with the Clerk org-level integration.',
+    status: 'safe',
+    href: '/admin/users-access/sso-configuration',
   },
   {
     id: 'export_users',
@@ -434,7 +434,7 @@ export async function buildUsersAccessPageView(
       'Role inventory and access posture. No live invite API, no permission editor, no SSO yet — read-only for now.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',

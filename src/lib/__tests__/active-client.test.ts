@@ -1,8 +1,12 @@
-import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import {
+  getActiveClientKey,
+  getActiveClientRow,
+  TenantLookupUnavailableError,
+} from '@/lib/active-client';
 
 const currentUserMock = jest.fn();
 const cookiesMock = jest.fn();
-const getServerSupabaseMock = jest.fn();
+const mockAzureMaybeSingle = jest.fn();
 
 jest.mock('@clerk/nextjs/server', () => ({
   currentUser: () => currentUserMock(),
@@ -12,15 +16,17 @@ jest.mock('next/headers', () => ({
   cookies: () => cookiesMock(),
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => getServerSupabaseMock(),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    maybeSingle: (...args: unknown[]) => mockAzureMaybeSingle(...args),
+  },
 }));
 
 describe('getActiveClientKey', () => {
   beforeEach(() => {
     currentUserMock.mockReset();
     cookiesMock.mockReset();
-    getServerSupabaseMock.mockReset();
+    mockAzureMaybeSingle.mockReset();
   });
 
   it('pins explicit client-domain personas before stale active-client cookies', async () => {
@@ -72,31 +78,26 @@ describe('getActiveClientKey', () => {
       get: () => null,
     });
 
-    const maybeSingle = jest.fn(async () => ({
-      data: {
-        id: 'client-apex-uuid',
-        name: 'Apex Retail Group LLC',
-        industry_code: 'RETAIL',
-      },
-    }));
-    const limit = jest.fn(() => ({ maybeSingle }));
-    const eq = jest.fn(() => ({ limit }));
-    const ilike = jest.fn(() => ({ maybeSingle: jest.fn(async () => ({ data: null })) }));
-    const select = jest.fn(() => ({ eq, ilike }));
-    const from = jest.fn(() => ({ select }));
-    getServerSupabaseMock.mockReturnValue({ from });
-
-    await expect(getActiveClientRow()).resolves.toEqual({
+    mockAzureMaybeSingle.mockResolvedValueOnce({
       id: 'client-apex-uuid',
       name: 'Apex Retail Group LLC',
       industry_code: 'RETAIL',
+    });
+
+    await expect(getActiveClientRow()).resolves.toEqual({
+      id: 'client-apex-uuid',
+      name: 'Apex Retail Group',
+      industry_code: 'RETAIL',
       key: 'apexretail',
     });
-    expect(from).toHaveBeenCalledWith('clients');
-    expect(eq).toHaveBeenCalledWith('tenant_key', 'apexretail');
+    expect(mockAzureMaybeSingle).toHaveBeenCalledWith({
+      table: 'clients',
+      columns: ['id', 'name', 'industry_code'],
+      where: { tenant_key: 'apexretail' },
+    });
   });
 
-  it('canonicalizes Meridian database rows to Meridian Health', async () => {
+  it('canonicalizes Meridian database rows to Meridian Health System', async () => {
     currentUserMock.mockResolvedValue({
       publicMetadata: { role: 'client' },
       primaryEmailAddress: { emailAddress: 'anita.krishnamurthy@meridian-health.example.com' },
@@ -106,25 +107,65 @@ describe('getActiveClientKey', () => {
       get: () => null,
     });
 
-    const maybeSingle = jest.fn(async () => ({
-      data: {
-        id: 'client-meridian-uuid',
-        name: 'Meridian Health',
-        industry_code: 'HEALTHCARE_IDN',
-      },
-    }));
-    const limit = jest.fn(() => ({ maybeSingle }));
-    const eq = jest.fn(() => ({ limit }));
-    const ilike = jest.fn(() => ({ maybeSingle: jest.fn(async () => ({ data: null })) }));
-    const select = jest.fn(() => ({ eq, ilike }));
-    const from = jest.fn(() => ({ select }));
-    getServerSupabaseMock.mockReturnValue({ from });
-
-    await expect(getActiveClientRow()).resolves.toEqual({
+    mockAzureMaybeSingle.mockResolvedValueOnce({
       id: 'client-meridian-uuid',
       name: 'Meridian Health',
       industry_code: 'HEALTHCARE_IDN',
+    });
+
+    await expect(getActiveClientRow()).resolves.toEqual({
+      id: 'client-meridian-uuid',
+      name: 'Meridian Health System',
+      industry_code: 'HEALTHCARE_IDN',
       key: 'meridian',
     });
+  });
+});
+
+// Regression for the artifact-download HTTP 503 (Moves File Cabinet). The download
+// route returns 503 only when requireTenancy() → getActiveClientRow() throws
+// TenantLookupUnavailableError. A single transient DB/VNet blip on a freshly routed
+// request must NOT dead-end the download; getActiveClientRow retries the lookup a couple
+// of times before giving up so a one-off blip recovers, and only a sustained outage 503s.
+describe('getActiveClientRow tenant-lookup resilience (download 503 fix)', () => {
+  beforeEach(() => {
+    currentUserMock.mockReset();
+    cookiesMock.mockReset();
+    mockAzureMaybeSingle.mockReset();
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: 'client' },
+      primaryEmailAddress: { emailAddress: 'carlos.rivera@apexretail.com' },
+      emailAddresses: [],
+    });
+    cookiesMock.mockResolvedValue({ get: () => null });
+  });
+
+  it('recovers from a transient tenant-lookup blip instead of 503-ing on the first failure', async () => {
+    mockAzureMaybeSingle
+      .mockRejectedValueOnce(new Error('ECONNRESET'))
+      .mockResolvedValueOnce({
+        id: 'client-apex-uuid',
+        name: 'Apex Retail Group LLC',
+        industry_code: 'RETAIL',
+      });
+
+    await expect(getActiveClientRow()).resolves.toEqual({
+      id: 'client-apex-uuid',
+      name: 'Apex Retail Group',
+      industry_code: 'RETAIL',
+      key: 'apexretail',
+    });
+    // Proves the retry fired (first attempt threw, a later attempt succeeded).
+    expect(mockAzureMaybeSingle.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('still throws TenantLookupUnavailableError (→ retryable 503) after a sustained outage', async () => {
+    mockAzureMaybeSingle.mockRejectedValue(new Error('db down'));
+
+    await expect(getActiveClientRow()).rejects.toBeInstanceOf(
+      TenantLookupUnavailableError,
+    );
+    // Initial attempt + 2 retries = 3 lookups before giving up.
+    expect(mockAzureMaybeSingle.mock.calls.length).toBeGreaterThanOrEqual(3);
   });
 });

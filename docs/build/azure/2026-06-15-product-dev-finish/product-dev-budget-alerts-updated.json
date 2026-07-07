@@ -1,0 +1,66 @@
+{
+  "eTag": "\"1dcfc7231aedc35\"",
+  "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/providers/Microsoft.Consumption/budgets/budget-abarva-product-dev-monthly",
+  "name": "budget-abarva-product-dev-monthly",
+  "properties": {
+    "amount": 500.0,
+    "category": "Cost",
+    "filter": {},
+    "notifications": {
+      "actual_GreaterThan_100_Percent": {
+        "contactEmails": [
+          "admin@abarva.ai",
+          "alerts@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 100.0,
+        "thresholdType": "Actual"
+      },
+      "actual_GreaterThan_50_Percent": {
+        "contactEmails": [
+          "admin@abarva.ai",
+          "alerts@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 50.0,
+        "thresholdType": "Actual"
+      },
+      "actual_GreaterThan_80_Percent": {
+        "contactEmails": [
+          "admin@abarva.ai",
+          "alerts@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 80.0,
+        "thresholdType": "Actual"
+      },
+      "forecasted_GreaterThan_100_Percent": {
+        "contactEmails": [
+          "admin@abarva.ai",
+          "alerts@abarva.ai"
+        ],
+        "contactGroups": [],
+        "contactRoles": [],
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 100.0,
+        "thresholdType": "Forecasted"
+      }
+    },
+    "timeGrain": "Monthly",
+    "timePeriod": {
+      "endDate": "2026-12-31T00:00:00Z",
+      "startDate": "2026-06-01T00:00:00Z"
+    }
+  },
+  "type": "Microsoft.Consumption/budgets"
+}

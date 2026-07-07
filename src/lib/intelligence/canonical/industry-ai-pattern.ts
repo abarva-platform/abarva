@@ -17,6 +17,10 @@ export const CANONICAL_INDUSTRIES = [
   'cross_industry',
   'energy',
   'public_sector',
+  'logistics_transportation',
+  'automotive',
+  'hospitality',
+  'higher_education',
   'other',
 ] as const;
 

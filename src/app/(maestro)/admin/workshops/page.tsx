@@ -7,7 +7,7 @@ import { listWorkshopTemplates } from '@/lib/workshops/authoring';
 import { WorkshopAdminClient } from './WorkshopAdminClient';
 
 export const metadata = {
-  title: 'Workshops | AbarVa Setup',
+  title: 'Workshops | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export default async function AdminWorkshopsPage() {
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
       <EditorialCanvas
-        eyebrow="Setup / Workshops"
+        eyebrow="Admin / Workshops"
         title="Workshops"
         subtitle="Versioned workshop templates, review workflow, timed agenda slots, and facilitator-pack rendering."
       >

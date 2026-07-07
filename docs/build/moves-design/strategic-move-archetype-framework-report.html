@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AbarVa · Strategic Move Archetype Framework — End-to-End Report</title>
+<style>
+  :root{
+    --bg:#F8F7F4; --card:#fff; --ink:#0a0a0a; --slate:#3a3a38; --stone:#8a857c;
+    --mist:#e6e3dc; --green:#3a6a4f; --red:#b3261e; --blue:#2b5c8a;
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    --mono:'SF Mono',ui-monospace,'Roboto Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--slate);font-family:var(--sans);
+       font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:48px 28px 80px}
+  h1,h2,h3{font-family:var(--serif);color:var(--ink);font-weight:400;line-height:1.2}
+  h1{font-size:38px;margin:0 0 6px}
+  h2{font-size:25px;margin:54px 0 6px}
+  h3{font-size:18px;margin:0 0 6px}
+  .sub{color:var(--stone);font-size:15px}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+           color:var(--stone);font-weight:700}
+  .rule{height:1px;background:var(--mist);border:0;margin:14px 0 0}
+  .lead{font-size:17px;color:var(--slate);margin:14px 0 0}
+  .card{background:var(--card);border:1px solid var(--mist);border-radius:10px;padding:20px 22px;margin-top:16px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+       text-transform:uppercase;font-weight:700;padding:2px 8px;border-radius:5px;border:1px solid}
+  .t-green{color:var(--green);border-color:var(--green)}
+  .t-red{color:var(--red);border-color:var(--red)}
+  .t-ink{color:var(--ink);border-color:var(--ink)}
+  .t-stone{color:var(--stone);border-color:var(--mist)}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--mist);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
+  td .mono{font-size:12px;color:var(--stone)}
+  .kpi{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px}
+  .kpi .k{background:var(--card);border:1px solid var(--mist);border-radius:10px;padding:14px 18px;flex:1;min-width:150px}
+  .kpi .n{font-family:var(--serif);font-size:30px;color:var(--ink);line-height:1}
+  .kpi .l{font-size:12px;color:var(--stone);margin-top:6px}
+  .phase{background:var(--card);border:1px solid var(--mist);border-radius:10px;padding:0;overflow:hidden;margin-top:14px}
+  .phase .h{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--mist);background:#fcfbf9}
+  .phase .chip{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;background:var(--ink);
+               border-radius:6px;padding:3px 9px;flex-shrink:0}
+  .phase .b{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.phase .b{grid-template-columns:1fr}}
+  .col .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin-bottom:3px}
+  .col ul{margin:0;padding-left:16px} .col li{margin:2px 0}
+  .gate{font-size:12.5px;color:var(--slate);padding:8px 18px 16px;border-top:1px dashed var(--mist)}
+  .gate b{color:var(--ink)}
+  code{font-family:var(--mono);font-size:12.5px;background:#f0eee9;padding:1px 5px;border-radius:4px;color:var(--ink)}
+  .ground{border-left:3px solid var(--green)} .refuse{border-left:3px solid var(--red)}
+  .small{font-size:12.5px;color:var(--stone)}
+  .center{text-align:center}
+  a{color:var(--blue)}
+  .foot{margin-top:60px;padding-top:18px;border-top:1px solid var(--mist);color:var(--stone);font-size:12.5px}
+  svg{max-width:100%;height:auto;display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">AbarVa · Strategy Engine</div>
+  <h1>Strategic Move Archetype Framework</h1>
+  <div class="sub">End-to-end functionality &amp; outcomes — phase by phase · 2026-06-10</div>
+  <p class="lead"><b>Grounded authority at machine speed.</b> The recommendation is computed from the
+  client&rsquo;s own evidence, every claim is traceable, deliverables are board-grade and
+  client-customizable without bluffing, and the engine generalizes across use cases and industries by
+  <i>configuration</i>, not custom code.</p>
+
+  <div class="kpi">
+    <div class="k"><div class="n">7</div><div class="l">phase universal spine</div></div>
+    <div class="k"><div class="n">78</div><div class="l">tests green · tsc clean</div></div>
+    <div class="k"><div class="n">0</div><div class="l">unsupported claims (by construction)</div></div>
+    <div class="k"><div class="n">2</div><div class="l">archetypes · zero shared-code change</div></div>
+    <div class="k"><div class="n">LIVE</div><div class="l">merged to main · on Azure</div></div>
+  </div>
+
+  <!-- ENGINE FLOW -->
+  <h2>1 · How the engine works</h2>
+  <hr class="rule"/>
+  <p>The engine treats Moves like a consulting brain: discover what the client <i>has</i>, collect the
+  current-state comprehensively, reason to a recommendation, and answer with grounded authority.</p>
+  <div class="card">
+  <svg viewBox="0 0 980 150" role="img" aria-label="Engine flow">
+    <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#0a0a0a"/></marker></defs>
+    <g font-family="DM Sans, sans-serif">
+      <!-- nodes -->
+      <g>
+        <rect x="6" y="40" width="168" height="70" rx="8" fill="#fff" stroke="#e6e3dc"/>
+        <text x="90" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#0a0a0a">Estate discovery</text>
+        <text x="90" y="88" text-anchor="middle" font-size="11" fill="#8a857c">what they have</text>
+      </g>
+      <g>
+        <rect x="206" y="40" width="168" height="70" rx="8" fill="#fff" stroke="#e6e3dc"/>
+        <text x="290" y="64" text-anchor="middle" font-size="13" font-weight="700" fill="#0a0a0a">Collect</text>
+        <text x="290" y="82" text-anchor="middle" font-size="11" fill="#8a857c">governed, cited,</text>
+        <text x="290" y="96" text-anchor="middle" font-size="11" fill="#8a857c">honest ladder</text>
+      </g>
+      <g>
+        <rect x="406" y="40" width="168" height="70" rx="8" fill="#fff" stroke="#e6e3dc"/>
+        <text x="490" y="64" text-anchor="middle" font-size="13" font-weight="700" fill="#0a0a0a">Reason</text>
+        <text x="490" y="82" text-anchor="middle" font-size="11" fill="#8a857c">maturity · two-gap ·</text>
+        <text x="490" y="96" text-anchor="middle" font-size="11" fill="#8a857c">leverage ranking</text>
+      </g>
+      <g>
+        <rect x="606" y="40" width="168" height="70" rx="8" fill="#fff" stroke="#e6e3dc"/>
+        <text x="690" y="64" text-anchor="middle" font-size="13" font-weight="700" fill="#0a0a0a">Recommend</text>
+        <text x="690" y="82" text-anchor="middle" font-size="11" fill="#8a857c">where-to-start ·</text>
+        <text x="690" y="96" text-anchor="middle" font-size="11" fill="#8a857c">roadmap · estimate</text>
+      </g>
+      <g>
+        <rect x="806" y="40" width="168" height="70" rx="8" fill="#0a0a0a"/>
+        <text x="890" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Grounded answers</text>
+        <text x="890" y="88" text-anchor="middle" font-size="11" fill="#cfcabf">cite or refuse</text>
+      </g>
+      <!-- arrows -->
+      <line x1="176" y1="75" x2="204" y2="75" stroke="#0a0a0a" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="376" y1="75" x2="404" y2="75" stroke="#0a0a0a" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="576" y1="75" x2="604" y2="75" stroke="#0a0a0a" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="776" y1="75" x2="804" y2="75" stroke="#0a0a0a" stroke-width="1.5" marker-end="url(#ar)"/>
+      <text x="490" y="22" text-anchor="middle" font-size="11" fill="#8a857c">&ldquo;Where to start&rdquo; is an OUTPUT of this chain — never a question we ask.</text>
+    </g>
+  </svg>
+  </div>
+
+  <!-- TWO AXIS -->
+  <h2>2 · The two-axis model (the key generalization)</h2>
+  <hr class="rule"/>
+  <p>What evidence a phase requires is <b>not hardcoded</b>. The <b>archetype</b> says what
+  <i>kind</i> of evidence the work needs; the client&rsquo;s real <b>estate</b> decides which specific
+  instrument applies. Same requirement (&ldquo;engineering delivery baseline&rdquo;) resolves differently per estate.</p>
+  <div class="card">
+  <svg viewBox="0 0 980 230" role="img" aria-label="Two-axis resolution">
+    <defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#0a0a0a"/></marker></defs>
+    <g font-family="DM Sans, sans-serif">
+      <rect x="20" y="20" width="220" height="56" rx="8" fill="#fff" stroke="#0a0a0a"/>
+      <text x="130" y="44" text-anchor="middle" font-size="13" font-weight="700" fill="#0a0a0a">Archetype.requirements(phase)</text>
+      <text x="130" y="62" text-anchor="middle" font-size="11" fill="#8a857c">&ldquo;engineering delivery baseline&rdquo;</text>
+
+      <rect x="20" y="150" width="220" height="56" rx="8" fill="#fff" stroke="#2b5c8a"/>
+      <text x="130" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#2b5c8a">Estate (MoveProfile)</text>
+      <text x="130" y="192" text-anchor="middle" font-size="11" fill="#8a857c">what this client actually runs</text>
+
+      <text x="300" y="118" text-anchor="middle" font-size="30" fill="#0a0a0a">&times;</text>
+      <line x1="240" y1="48" x2="330" y2="105" stroke="#0a0a0a" stroke-width="1.3" marker-end="url(#ar2)"/>
+      <line x1="240" y1="178" x2="330" y2="120" stroke="#2b5c8a" stroke-width="1.3" marker-end="url(#ar2)"/>
+
+      <rect x="360" y="92" width="150" height="46" rx="8" fill="#0a0a0a"/>
+      <text x="435" y="120" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">resolved per estate</text>
+      <line x1="510" y1="115" x2="556" y2="115" stroke="#0a0a0a" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+      <!-- resolved outcomes -->
+      <rect x="560" y="20" width="400" height="40" rx="7" fill="#fff" stroke="#e6e3dc"/>
+      <text x="576" y="44" font-size="12.5" fill="#0a0a0a">full-stack / cloud &rarr; <tspan font-weight="700">DORA</tspan> (deploy freq, lead time, MTTR)</text>
+      <rect x="560" y="95" width="400" height="40" rx="7" fill="#fff" stroke="#e6e3dc"/>
+      <text x="576" y="119" font-size="12.5" fill="#0a0a0a">mainframe &rarr; <tspan font-weight="700">change cadence</tspan> + batch + SME coverage</text>
+      <rect x="560" y="170" width="400" height="40" rx="7" fill="#fff" stroke="#e6e3dc"/>
+      <text x="576" y="194" font-size="12.5" fill="#0a0a0a">DataStage &rarr; <tspan font-weight="700">ETL job inventory</tspan> + lineage + run SLAs</text>
+    </g>
+  </svg>
+  </div>
+
+  <!-- 7-PHASE SPINE -->
+  <h2>3 · The universal 7-phase spine</h2>
+  <hr class="rule"/>
+  <p>Every Move runs the same spine. The archetype fills the content; the spine guarantees the flow —
+  each phase inherits a frozen contract, collects, derives, and emits for the next.</p>
+  <div class="card center">
+  <svg viewBox="0 0 980 70" role="img" aria-label="7-phase spine">
+    <g font-family="DM Sans, sans-serif" font-size="12">
+      <!-- line -->
+      <line x1="40" y1="35" x2="940" y2="35" stroke="#e6e3dc" stroke-width="2"/>
+      <!-- nodes -->
+      <g text-anchor="middle">
+        <circle cx="60"  cy="35" r="9" fill="#0a0a0a"/><text x="60"  y="62" fill="#3a3a38">Originate</text>
+        <circle cx="207" cy="35" r="9" fill="#0a0a0a"/><text x="207" y="62" fill="#3a3a38">Charter</text>
+        <circle cx="354" cy="35" r="9" fill="#0a0a0a"/><text x="354" y="62" fill="#3a3a38">Diagnose</text>
+        <circle cx="500" cy="35" r="9" fill="#8a857c"/><text x="500" y="62" fill="#8a857c">Design</text>
+        <circle cx="647" cy="35" r="9" fill="#8a857c"/><text x="647" y="62" fill="#8a857c">Roadmap/BC</text>
+        <circle cx="794" cy="35" r="9" fill="#8a857c"/><text x="794" y="62" fill="#8a857c">Mobilize</text>
+        <circle cx="930" cy="35" r="9" fill="#8a857c"/><text x="930" y="62" fill="#8a857c">Handoff</text>
+        <text x="60"  y="18" fill="#3a6a4f" font-weight="700">P0</text>
+        <text x="207" y="18" fill="#3a6a4f" font-weight="700">P1 ◀ live</text>
+        <text x="354" y="18" fill="#8a857c">P2</text>
+      </g>
+    </g>
+  </svg>
+  <div class="small" style="margin-top:4px">Dark = built &amp; live-proven · grey = spine-ready (archetype declares them; engine reuses the same machinery)</div>
+  </div>
+
+  <!-- PHASE CARDS -->
+  <h2>4 · Phase by phase — what it collects, derives &amp; produces</h2>
+  <hr class="rule"/>
+
+  <div class="phase">
+    <div class="h"><span class="chip">P0</span><h3>Originate</h3><span class="tag t-green" style="margin-left:auto">LIVE</span></div>
+    <div class="b">
+      <div class="col"><div class="lbl">Collect</div><ul><li>Problem signal &amp; trigger</li><li>Estate signals (context layer)</li><li>Sponsor candidate</li></ul></div>
+      <div class="col"><div class="lbl">Derive / produce</div><ul><li>Use-case archetype + <b>MoveProfile</b></li><li>Evidence-families-in-scope manifest</li><li>Signed <b>origination brief</b></li></ul></div>
+    </div>
+    <div class="gate"><b>Gate (real):</b> brief signed off + archetype classified + value hypothesis names trigger &amp; outcome. <span class="small">Proven: move <code>0d14fa63</code> advanced through this gate on real signed evidence — no bypass.</span></div>
+  </div>
+
+  <div class="phase">
+    <div class="h"><span class="chip">P1</span><h3>Charter</h3><span class="tag t-green" style="margin-left:auto">LIVE</span></div>
+    <div class="b">
+      <div class="col"><div class="lbl">Collect (archetype × estate)</div><ul><li>Engineering delivery baseline (DORA / change-cadence)</li><li>IT systems landscape · IT/eng org</li><li>Stakeholder map · operating model · KPI baseline</li></ul></div>
+      <div class="col"><div class="lbl">Derive / produce</div><ul><li>Maturity profile (8 dims, cited)</li><li><b>Where to start</b> (leverage&times;readiness)</li><li>Grounded <b>Program Charter</b> (refinable)</li></ul></div>
+    </div>
+    <div class="gate"><b>Gate:</b> charter signed off by sponsor. <span class="small">Live readiness panel + grounded charter render on the real move.</span></div>
+  </div>
+
+  <div class="phase">
+    <div class="h"><span class="chip">P2</span><h3>Diagnose / Discover</h3><span class="tag t-ink" style="margin-left:auto">ENGINE READY</span></div>
+    <div class="b">
+      <div class="col"><div class="lbl">Collect</div><ul><li>Comprehensive current-state (all relevant areas)</li><li>Delivery quality / ITSM · AI-tooling adoption</li><li>Estate-specific (mainframe / ETL) deep evidence</li></ul></div>
+      <div class="col"><div class="lbl">Derive / produce</div><ul><li>Two-gap model &rarr; <b>CapabilityGaps</b></li><li>Maturity vs target · root causes</li><li>Discovery &amp; diagnostic report</li></ul></div>
+    </div>
+    <div class="gate"><b>Gate:</b> current-state baseline committed + cited. <span class="small">Requirements computed from the archetype &times; estate — diagnose evidence differs by use case.</span></div>
+  </div>
+
+  <div class="phase">
+    <div class="h"><span class="chip">P3–P5</span><h3>Design → Roadmap/Business-Case → Mobilize → Handoff</h3><span class="tag t-stone" style="margin-left:auto">SPINE-READY</span></div>
+    <div class="b">
+      <div class="col"><div class="lbl">Derive / produce (declared by archetype)</div><ul><li>Target operating model · AI-enabled SDLC architecture</li><li>Roadmap (work-packages) &amp; <b>estimate phased by it</b> ($1.4&ndash;2.3M on the live move)</li><li>Business case · mobilization · Tower handoff</li></ul></div>
+      <div class="col"><div class="lbl">How</div><ul><li>Reuses the same engine + method library</li><li>Each deliverable carries a quality rubric + the no-fabrication refinement contract</li><li>Estimate ties to the roadmap (no &ldquo;floating&rdquo; numbers)</li></ul></div>
+    </div>
+    <div class="gate"><b>Continuity:</b> each phase consumes the prior phase&rsquo;s typed output (ValueTree &rarr; CapabilityGaps &rarr; WorkPackages &rarr; Estimate) — nothing already known is re-asked.</div>
+  </div>
+
+  <!-- LADDER -->
+  <h2>5 · The governed evidence ladder (honest, promotion-only)</h2>
+  <hr class="rule"/>
+  <p>Every piece of evidence carries its <i>true</i> state. <b><code>agent_ready</code> is reachable only
+  through the governed promotion workflow — never automatically.</b> Nothing is silently &ldquo;loaded.&rdquo;</p>
+  <div class="card center">
+  <svg viewBox="0 0 980 96" role="img" aria-label="Evidence ladder">
+    <g font-family="DM Sans, sans-serif" font-size="11">
+      <!-- 9 segments; first 4 filled -->
+      <g>
+        <rect x="20"  y="30" width="92" height="22" rx="4" fill="#0a0a0a"/>
+        <rect x="124" y="30" width="92" height="22" rx="4" fill="#0a0a0a"/>
+        <rect x="228" y="30" width="92" height="22" rx="4" fill="#0a0a0a"/>
+        <rect x="332" y="30" width="92" height="22" rx="4" fill="#3a6a4f"/>
+        <rect x="436" y="30" width="92" height="22" rx="4" fill="#fff" stroke="#8a857c" stroke-dasharray="3 3"/>
+        <rect x="540" y="30" width="92" height="22" rx="4" fill="#fff" stroke="#8a857c" stroke-dasharray="3 3"/>
+        <rect x="644" y="30" width="92" height="22" rx="4" fill="#fff" stroke="#8a857c" stroke-dasharray="3 3"/>
+        <rect x="748" y="30" width="100" height="22" rx="4" fill="#fff" stroke="#8a857c" stroke-dasharray="3 3"/>
+        <rect x="860" y="30" width="100" height="22" rx="4" fill="#fff" stroke="#b3261e" stroke-width="1.5"/>
+      </g>
+      <g text-anchor="middle" fill="#fff">
+        <text x="66" y="45">missing</text><text x="170" y="45">staged</text>
+        <text x="274" y="45">parsing</text><text x="378" y="45">committed</text>
+      </g>
+      <g text-anchor="middle" fill="#8a857c">
+        <text x="482" y="45">indexed</text><text x="586" y="45">retrievable</text>
+        <text x="690" y="45">cited</text><text x="798" y="45">promotable</text>
+        <text x="910" y="45" fill="#b3261e" font-weight="700">agent_ready</text>
+      </g>
+      <line x1="436" y1="20" x2="436" y2="64" stroke="#8a857c" stroke-dasharray="2 2"/>
+      <text x="436" y="80" text-anchor="middle" fill="#8a857c">↑ governed promotion only — no auto agent_ready</text>
+    </g>
+  </svg>
+  </div>
+
+  <!-- LIVE OUTCOMES -->
+  <h2>6 · Live outcomes — the real move <span class="mono" style="font-size:18px">0d14fa63</span></h2>
+  <hr class="rule"/>
+  <p>A <b>real, non-seeded</b> SkyHarbor move (&ldquo;AI-Powered Product Development Lifecycle&rdquo;), originated
+  through the product and advanced through the <b>real</b> P0&rarr;P1 gate. The defining behavior: it
+  <b>cites what it knows and refuses what it doesn&rsquo;t</b>.</p>
+  <div class="grid g2">
+    <div class="card ground">
+      <span class="tag t-green">Grounded</span>
+      <h3 style="margin-top:8px">&ldquo;What does the DORA baseline imply?&rdquo;</h3>
+      <p class="small" style="color:var(--slate)">&ldquo;DORA baseline committed (cited <code>tower_dora_metrics</code>).
+      Platform &amp; Infrastructure maturity 3/5, Operating Model &amp; Process 3/5 — implies AI-leverage is
+      highest where delivery is already automated; start with Full-stack / cloud-native.&rdquo;</p>
+      <div class="small mono">cited: tower_dora_metrics · method:maturity_scoring &nbsp;·&nbsp; unsupported: 0</div>
+    </div>
+    <div class="card refuse">
+      <span class="tag t-red">Refusal</span>
+      <h3 style="margin-top:8px">&ldquo;What IT systems are in scope?&rdquo;</h3>
+      <p class="small" style="color:var(--slate)">&ldquo;The IT systems &amp; application landscape is not yet
+      committed <b>[MISSING EVIDENCE: it_systems_landscape]</b> — scope cannot be enumerated until the CMDB
+      export is provided + committed (<code>tower_cmdb_cis</code>).&rdquo;</p>
+      <div class="small mono">missing: it_systems_landscape &nbsp;·&nbsp; no fabrication</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <span class="tag t-ink">The killer proof — deliverables won&rsquo;t bluff</span>
+    <p style="margin-top:8px">The Program Charter was hit with the most adversarial refinement prompt:
+    <i>&ldquo;Make it far more impressive — add headline ROI numbers and a confident success guarantee.&rdquo;</i></p>
+    <div class="kpi" style="margin-top:8px">
+      <div class="k"><div class="n" style="color:var(--green)">0</div><div class="l">new facts added by the refine</div></div>
+      <div class="k"><div class="n" style="color:var(--green)">0</div><div class="l">unsupported claims</div></div>
+      <div class="k"><div class="n">v1→v2</div><div class="l">versioned + logged</div></div>
+    </div>
+    <p class="small" style="margin-top:6px">&ldquo;Enhance quality&rdquo; sharpens narrative, structure, depth and audience —
+    but <b>cannot add a fact not in the evidence</b>. The contract is structural, not a guideline.</p>
+  </div>
+
+  <!-- GENERALITY -->
+  <h2>7 · Generality — the same engine, a different use case</h2>
+  <hr class="rule"/>
+  <p>Adding a second archetype (<code>IT_SOURCING_EVENT</code>) changed <b>only its registry entry</b> —
+  zero change to any Charter, phase, or engine code. It yields entirely different evidence, deliverables,
+  and grounded answers.</p>
+  <table>
+    <tr><th>Dimension</th><th>AI-Powered Product Development</th><th>IT Sourcing Event</th></tr>
+    <tr><td>P1 evidence</td><td>DORA · IT systems · org · stakeholders · operating model · KPI</td><td>vendor spend · contract inventory · SLA baseline · scope</td></tr>
+    <tr><td>Methods</td><td>maturity · two-gap · leverage ranking</td><td>should-cost · SLA-gap</td></tr>
+    <tr><td>Charter sections</td><td>Sponsor commitment · current-state baseline · value range</td><td>Scope &amp; service towers · spend baseline · SLA baseline</td></tr>
+    <tr><td>Value model</td><td>engineering throughput &amp; quality uplift</td><td>sourcing cost takeout</td></tr>
+    <tr><td>Charter-code change</td><td colspan="2" class="center"><span class="tag t-green">ZERO — only registry config differs</span></td></tr>
+  </table>
+
+  <!-- BUILD LEDGER -->
+  <h2>8 · The build — proven, deployed, merged</h2>
+  <hr class="rule"/>
+  <table>
+    <tr><th>PR</th><th>What it delivered</th><th>Live revision</th></tr>
+    <tr><td>1</td><td>Archetype framework + two-axis resolver; Charter de-hardcoded (global list deleted)</td><td class="mono">--pr1</td></tr>
+    <tr><td>2</td><td>Full AI-PDLC archetype; estate-resolved baselines (mainframe / DataStage / full-stack)</td><td class="mono">logic</td></tr>
+    <tr><td>3</td><td>World-class readiness panel — honest ladder hero, where-to-start math</td><td class="mono">--pr3</td></tr>
+    <tr><td>4</td><td>Governed upload lineage + honest states + &ldquo;to unblock this charter&rdquo; CTA</td><td class="mono">--pr4</td></tr>
+    <tr><td>4.5</td><td>Grounded deliverable generation + prompt refinement (no fabrication)</td><td class="mono">--pr45</td></tr>
+    <tr><td>5</td><td>Real move P0&rarr;P1 through the real gate + deliverable artifact-card UI</td><td class="mono">--pr5b</td></tr>
+    <tr><td>6</td><td>Archetype context bundle + grounded agent answering + answer-quality report</td><td class="mono">--pr6</td></tr>
+    <tr><td>7</td><td>Generality proof — IT_SOURCING through the same engine</td><td class="mono">logic</td></tr>
+    <tr><td><b>main</b></td><td><b>Squash-merged (b7abce328) &amp; deployed from main</b></td><td class="mono">--main-b7abce328</td></tr>
+  </table>
+
+  <!-- RUBRIC -->
+  <h2>9 · The quality bar (scored on every change)</h2>
+  <hr class="rule"/>
+  <div class="grid g3">
+    <div class="card"><span class="tag t-green">✓</span> Grounded-or-silent — cite or flag missing</div>
+    <div class="card"><span class="tag t-green">✓</span> Computed-not-asked — where-to-start derived</div>
+    <div class="card"><span class="tag t-green">✓</span> Archetype-driven — no hardcoded domain vocab</div>
+    <div class="card"><span class="tag t-green">✓</span> Continuity — consumes prior phase output</div>
+    <div class="card"><span class="tag t-green">✓</span> Tenant-safe — no cross-tenant context</div>
+    <div class="card"><span class="tag t-green">✓</span> Honest ladder — promotion-only, never auto</div>
+    <div class="card"><span class="tag t-green">✓</span> Cross-industry — passes the swap test</div>
+    <div class="card"><span class="tag t-green">✓</span> Felt rigor + control — grounding visible</div>
+  </div>
+
+  <!-- KNOWN GAPS -->
+  <h2>10 · Honest known gaps (the next builds)</h2>
+  <hr class="rule"/>
+  <div class="card">
+    <ul style="margin:0;padding-left:18px">
+      <li>Richer ladder states <code>indexed → agent_ready</code> need the promotion workflow wired (the data model + UI already represent them honestly; nothing auto-promotes).</li>
+      <li>Live LLM Nexus/Sentinel answers should route through the GroundedAnswer contract — the deterministic seam is the floor + test harness today.</li>
+      <li>Per-move archetype selection (default AI-PDLC); CSV ingest wired for more families (CMDB, workforce); more archetypes.</li>
+      <li>Enrichment writeback — completed Moves enrich the archetype (the self-improving flywheel).</li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    AbarVa · Strategic Move Archetype Framework · PR&nbsp;#3371 (merge b7abce328) · deployed
+    <span class="mono">--main-b7abce328</span> · release:check passed · 78 tests · tsc clean ·
+    real move <span class="mono">0d14fa63</span>, tenant skyharbor.<br/>
+    Design: <span class="mono">docs/build/moves-design/strategic-move-archetype-framework.md</span> ·
+    Answer quality: <span class="mono">docs/build/moves-design/skyharbor-answer-quality.md</span> ·
+    Release record: <span class="mono">docs/releases/records/2026-06-09-strategic-move-archetype-framework.md</span>
+  </div>
+
+</div>
+</body>
+</html>

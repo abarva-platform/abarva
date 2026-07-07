@@ -1,0 +1,32 @@
+{
+  "client_key": "",
+  "client_display_name": "",
+  "load_batch_id": "",
+  "prepared_by": "",
+  "prepared_at": "",
+  "classification": "internal",
+  "source_files": [
+    {
+      "source_id": "",
+      "relative_path": "",
+      "source_type": "annual_report | quarterly_report | investor_deck | transcript | board_pack | cmdb_export | architecture_diagram | org_chart | budget_workbook | contract | incident_export | ad_hoc",
+      "format": "pdf | pptx | docx | xlsx | csv | json | jsonl | md | html | png | zip | other",
+      "business_dimension": "",
+      "technical_dimension": "",
+      "period": "",
+      "owner_role": "",
+      "sensitivity": "public | internal | confidential | restricted",
+      "contains_pii_phi_or_secrets": false,
+      "expected_parser": "",
+      "expected_citation_grain": "page | slide | sheet_cell | row | section | timestamp | file",
+      "load_intent": "source_only | parse_to_records | parse_to_facts | parse_to_chunks | review_required",
+      "notes": ""
+    }
+  ],
+  "load_gates": {
+    "preflight_required": true,
+    "human_review_required_for_unstructured_docs": true,
+    "retrieval_proof_required": true,
+    "insight_evaluation_required": true
+  }
+}

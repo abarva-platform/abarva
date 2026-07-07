@@ -1,0 +1,533 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>AI-Enabled Population Health &amp; Clinical Performance Command Center — Solution Architecture Pack — Meridian Health System</title><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: #e7e3da;
+  color: #070707;
+  font-family: "DM Sans","Inter",system-ui,-apple-system,sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-family: "Newsreader","Cormorant Garamond","Georgia",serif;
+  font-weight: 500; letter-spacing: -0.01em; margin: 0;
+}
+
+/* === Deck shell — fixed left menu, scrolling right stage. === */
+.deck {
+  display: grid;
+  grid-template-columns: 264px minmax(0,1fr);
+  height: 100vh;
+}
+
+/* --- Left menu rail --- */
+.menu {
+  background: #11100e; color: #e7e3da;
+  height: 100vh; position: sticky; top: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid #2a2824;
+}
+.menu-head {
+  padding: 22px 22px 16px; border-bottom: 1px solid #2a2824;
+}
+.menu-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #6ea2dd;
+}
+.menu-title {
+  font-family: "Newsreader","Georgia",serif; font-size: 19px;
+  color: #f8f7f4; margin-top: 8px; line-height: 1.2;
+}
+.menu-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10.5px; font-weight: 600; color: #a39d8e; margin-top: 5px;
+}
+.menu-list {
+  flex: 1; overflow-y: auto; padding: 8px 0;
+}
+.menu-item {
+  display: flex; gap: 11px; align-items: flex-start; width: 100%;
+  background: transparent; border: 0; cursor: pointer;
+  padding: 9px 18px 9px 16px; text-align: left;
+  border-left: 3px solid transparent; color: #cdc8bc;
+  font-family: inherit;
+}
+.menu-item:hover { background: #1b1a17; color: #f8f7f4; }
+.menu-item[aria-current="true"] {
+  background: #1f1e1a; border-left-color: #6ea2dd; color: #f8f7f4;
+}
+.menu-num {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; color: #75706320; color: #888273;
+  padding-top: 2px; min-width: 18px;
+}
+.menu-item[aria-current="true"] .menu-num { color: #6ea2dd; }
+.menu-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.menu-label {
+  font-size: 12.5px; font-weight: 800; letter-spacing: -0.005em;
+}
+.menu-sub {
+  font-size: 10.5px; line-height: 1.4; color: #8b8678;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.menu-item[aria-current="true"] .menu-sub { color: #b4ae9f; }
+.menu-foot {
+  padding: 14px 18px; border-top: 1px solid #2a2824;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.menu-foot-verdict {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #d8b65a;
+}
+.menu-foot-sub { font-size: 10px; color: #8b8678; }
+
+/* --- Right stage --- */
+.stage {
+  height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+  padding: 30px 38px 96px;
+}
+
+/* --- Slide — one composed screen. --- */
+.slide { display: none; }
+.slide.is-active { display: block; }
+.slide-inner {
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 8px;
+  max-width: 1080px; margin: 0 auto; width: 100%;
+  min-height: calc(100vh - 130px);
+  padding: 38px 52px 34px;
+  display: flex; flex-direction: column;
+}
+
+/* Slide chrome — slim header rule. */
+.slide-rule {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #8b8678;
+  padding-bottom: 11px; border-bottom: 1px solid #e6e1d5;
+}
+.slide-rule-l { display: flex; gap: 7px; }
+.slide-brand { color: #0b4a91; font-weight: 800; }
+.slide-sep { color: #c9c3b3; }
+.slide-rule-r { color: #8b8678; }
+
+.slide-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #0b4a91; margin: 22px 0 9px;
+}
+.slide-headline {
+  font-size: 30px; line-height: 1.18; max-width: 880px;
+  margin-bottom: 6px; color: #070707;
+}
+
+.slide-stage {
+  flex: 1; padding: 16px 0 6px;
+}
+.slide-lede {
+  font-size: 14.5px; line-height: 1.6; color: #2c2a26;
+  max-width: 720px; margin: 4px 0 20px;
+}
+
+/* --- Hero exhibit — one dominant exhibit per slide. --- */
+.hero { margin: 0 0 6px; }
+.hero-caption {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #070707; margin-bottom: 9px;
+}
+.hero-frame {
+  background: #ffffff; border: 1px solid #e0dbcd; border-radius: 5px;
+  padding: 20px 22px;
+}
+.hero-note {
+  font-size: 11.5px; color: #5b5852; line-height: 1.5;
+  margin: 9px 2px 0; max-width: 760px;
+}
+
+/* --- Quiet footer strip — facts compressed to one thin row. --- */
+.slide-foot {
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 0;
+  border-top: 1px solid #e6e1d5; margin-top: 18px; padding-top: 14px;
+}
+.foot-cell {
+  padding: 0 16px 6px 0; border-right: 1px solid #ece7da;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.foot-cell:last-child { border-right: 0; }
+.foot-implication { grid-row: span 1; }
+.foot-key {
+  font-size: 8.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; color: #8b8678;
+}
+.foot-val { font-size: 10.5px; line-height: 1.45; color: #2c2a26; }
+.foot-implication .foot-val { color: #1c1a17; font-weight: 600; }
+
+/* --- Collapsible detail strip — dense tables one click away. --- */
+.slide-detail {
+  margin-top: 16px; border: 1px solid #e0dbcd; border-radius: 5px;
+  background: #f3f0e9;
+}
+.slide-detail-summary {
+  cursor: pointer; list-style: none;
+  display: flex; gap: 9px; align-items: center;
+  padding: 11px 15px; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.03em; text-transform: uppercase; color: #5b5852;
+}
+.slide-detail-summary::-webkit-details-marker { display: none; }
+.detail-chevron {
+  width: 0; height: 0; border-left: 5px solid #8b8678;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform 0.12s ease;
+}
+.slide-detail[open] .detail-chevron { transform: rotate(90deg); }
+.slide-detail-summary:hover { color: #0b4a91; }
+.slide-detail-body { padding: 4px 16px 16px; }
+
+/* --- Cover slide --- */
+.slide-cover .slide-inner { justify-content: center; }
+.cover-inner { padding: 56px 60px; }
+.cover-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.22em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.cover-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5b5852; margin-top: 16px;
+}
+.cover-title {
+  font-size: 54px; line-height: 1.04; margin: 10px 0 14px; max-width: 760px;
+}
+.cover-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 12px; font-weight: 700; color: #070707;
+}
+.cover-lede {
+  max-width: 620px; margin: 22px 0 30px; font-size: 15px;
+  color: #2c2a26; line-height: 1.62;
+}
+.cover-meta {
+  display: flex; gap: 44px; border-top: 1px solid #d8d3c6;
+  padding-top: 20px;
+}
+.cover-meta-label {
+  display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #8b8678;
+}
+.cover-meta-val {
+  display: block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 16px; font-weight: 800; margin-top: 4px;
+}
+.cover-hint {
+  margin-top: 26px; font-size: 11px; color: #8b8678;
+  font-style: italic;
+}
+
+/* --- Chips --- */
+.chip {
+  display: inline-block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid;
+}
+.chip-good { background: #e2efe2; color: #1B5E20; border-color: #1B5E20; }
+.chip-warn { background: #f7ecd6; color: #7A4F01; border-color: #7A4F01; }
+.chip-bad { background: #f4ddd6; color: #8B1F0F; border-color: #8B1F0F; }
+
+/* --- Board card --- */
+.board-card {
+  border-radius: 6px; padding: 20px 24px; margin: 0 0 20px;
+  border: 1px solid;
+}
+.verdict-shape { background: #f7ecd6; border-color: #7A4F01; }
+.verdict-fund { background: #e2efe2; border-color: #1B5E20; }
+.verdict-kill { background: #f4ddd6; border-color: #8B1F0F; }
+.board-card-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #7A4F01; margin-bottom: 7px;
+}
+.verdict-fund .board-card-tag { color: #1B5E20; }
+.verdict-kill .board-card-tag { color: #8B1F0F; }
+.board-verdict {
+  font-family: "Newsreader","Georgia",serif; font-size: 23px;
+  line-height: 1.26; color: #070707;
+}
+.board-detail { margin: 9px 0 0; font-size: 12.5px; color: #2c2a26; }
+
+/* --- Board-answer split --- */
+.answer-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 16px 0 16px;
+}
+.answer-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff;
+}
+.answer-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.answer-col ul { margin: 0; padding-left: 17px; }
+.answer-col li { font-size: 11.5px; line-height: 1.5; margin-bottom: 5px; }
+.answer-fund { border-left: 3px solid #1B5E20; }
+.answer-fund .answer-head { color: #1B5E20; }
+.answer-hold { border-left: 3px solid #8B1F0F; }
+.answer-hold .answer-head { color: #8B1F0F; }
+
+/* --- Ask + payback lines --- */
+.ask-line, .payback-line {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 16px; border-radius: 5px; font-size: 12.5px;
+  line-height: 1.5; margin: 0 0 16px;
+}
+.ask-line { background: #e8f0fa; color: #2c2a26; }
+.payback-line { background: #f7ecd6; color: #2c2a26; }
+.ask-line-tag, .payback-line-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; white-space: nowrap; padding-top: 2px;
+}
+.ask-line-tag { color: #0b4a91; }
+.payback-line-tag { color: #7A4F01; }
+
+/* --- Context diagram --- */
+.context-diagram { display: flex; flex-direction: column; gap: 9px; }
+.context-band {
+  display: grid; grid-template-columns: 128px 1fr; gap: 12px;
+  align-items: center;
+}
+.context-band-label {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #8b8678; text-align: right;
+}
+.context-nodes { display: flex; gap: 8px; flex-wrap: wrap; }
+.context-node {
+  flex: 1; min-width: 160px; background: #fff;
+  border: 1px solid #cfc9b9; border-radius: 4px; padding: 9px 11px;
+}
+.context-node-gap { background: #f7ecd6; border-color: #7A4F01; }
+.context-node-title { font-size: 12px; font-weight: 800; }
+.context-node-detail {
+  font-size: 10.5px; color: #5b5852; margin-top: 3px; line-height: 1.42;
+}
+.gap-flag {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 8px; font-weight: 800; color: #7A4F01;
+  background: #fff; border: 1px solid #7A4F01; border-radius: 999px;
+  padding: 1px 5px; text-transform: uppercase;
+}
+
+/* --- Scope triplet --- */
+.scope-triplet {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 14px;
+  margin: 16px 0 4px;
+}
+.scope-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 13px 15px;
+  background: #fff;
+}
+.scope-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.scope-col ul { margin: 0; padding-left: 16px; }
+.scope-col li { font-size: 11px; line-height: 1.5; margin-bottom: 6px; }
+.scope-in { border-left: 3px solid #1B5E20; }
+.scope-in .scope-head { color: #1B5E20; }
+.scope-out { border-left: 3px solid #8B1F0F; }
+.scope-out .scope-head { color: #8B1F0F; }
+.scope-retain { border-left: 3px solid #0b4a91; }
+.scope-retain .scope-head { color: #0b4a91; }
+
+/* --- Tables --- */
+.data-table {
+  width: 100%; border-collapse: collapse; margin: 10px 0 14px;
+  background: #fff; border: 1px solid #e0dbcd; font-size: 11.5px;
+}
+.data-table th {
+  text-align: left; background: #070707; color: #fbfaf7;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 9px 11px;
+}
+.data-table td {
+  padding: 8px 11px; border-top: 1px solid #ece7da;
+  vertical-align: top; line-height: 1.45;
+}
+.data-table tbody tr:nth-child(even) { background: #f7f5ef; }
+.data-table .num {
+  text-align: right; white-space: nowrap;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+}
+.data-table th.num { text-align: right; }
+.data-table tfoot td {
+  background: #ece7da; font-weight: 800; border-top: 2px solid #070707;
+}
+.data-table-ledger td:nth-child(2) { width: 36%; }
+.row-proxy { background: #fdf6e8 !important; }
+.blocked-cell { color: #8B1F0F; font-weight: 800; }
+
+/* --- Assumption cards --- */
+.assume-cards { display: flex; flex-direction: column; gap: 10px; }
+.assume-card {
+  display: grid; grid-template-columns: 52px 1fr; gap: 14px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff; border-left: 3px solid #0b4a91;
+}
+.assume-proxy { border-left-color: #7A4F01; background: #fdf6e8; }
+.assume-rank {
+  font-family: "Newsreader","Georgia",serif; font-size: 26px;
+  color: #0b4a91; font-weight: 500;
+}
+.assume-proxy .assume-rank { color: #7A4F01; }
+.assume-statement { font-size: 13px; font-weight: 600; color: #1c1a17;
+  line-height: 1.45; }
+.assume-meta {
+  display: flex; gap: 7px; align-items: center; flex-wrap: wrap;
+  margin-top: 7px; font-size: 11px; color: #5b5852;
+}
+.assume-dot { color: #c9c3b3; }
+
+/* --- Coverage tiles --- */
+.coverage-tiles {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+}
+.coverage-tile {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 22px 20px;
+  background: #fff; border-top: 3px solid #5b5852;
+}
+.coverage-good { border-top-color: #1B5E20; }
+.coverage-gap { border-top-color: #8B1F0F; }
+.coverage-neutral { border-top-color: #0b4a91; }
+.coverage-num {
+  font-family: "Newsreader","Georgia",serif; font-size: 44px;
+  line-height: 1; color: #070707;
+}
+.coverage-good .coverage-num { color: #1B5E20; }
+.coverage-gap .coverage-num { color: #8B1F0F; }
+.coverage-neutral .coverage-num { color: #0b4a91; }
+.coverage-label {
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; margin-top: 10px;
+}
+.coverage-sub { font-size: 10.5px; color: #5b5852; margin-top: 3px; }
+
+/* --- Checklist --- */
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.check-row {
+  display: grid; grid-template-columns: 120px 1fr; gap: 16px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 12px 15px;
+  background: #fff; align-items: start;
+}
+.check-approve { border-left: 3px solid #1B5E20; }
+.check-hold { border-left: 3px solid #8B1F0F; }
+.check-condition { border-left: 3px solid #7A4F01; }
+.check-label { font-weight: 800; font-size: 12.5px; }
+.check-detail {
+  font-size: 11px; color: #5b5852; margin-top: 3px; line-height: 1.5;
+}
+
+/* --- Mini split (detail strip prose) --- */
+.mini-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 12px 0 4px;
+}
+.mini-key {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.mini-key-block { display: block; margin: 14px 0 2px; }
+.mini-key-block:first-child { margin-top: 4px; }
+.mini-key-gap { color: #8B1F0F; }
+.mini-split p { margin: 5px 0 0; font-size: 11.5px; color: #2c2a26;
+  line-height: 1.55; }
+.mini-list { margin: 6px 0 0; padding-left: 16px; }
+.mini-list li { font-size: 11px; line-height: 1.5; margin-bottom: 4px; }
+
+/* --- Deck controls --- */
+.deck-controls {
+  position: fixed; bottom: 22px; right: 30px; z-index: 20;
+  display: flex; gap: 8px; align-items: center;
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 999px;
+  padding: 6px 8px; box-shadow: 0 6px 22px rgba(7,7,7,0.16);
+}
+.deck-btn {
+  background: #11100e; color: #f8f7f4; border: 0; cursor: pointer;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  padding: 7px 13px; border-radius: 999px;
+}
+.deck-btn:hover { background: #2a2824; }
+.deck-counter {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; color: #5b5852; padding: 0 4px;
+}
+
+/* --- Narrow screens — menu collapses to the top. --- */
+@media (max-width: 880px) {
+  .deck { grid-template-columns: 1fr; height: auto; }
+  .menu { height: auto; position: static; }
+  .menu-list { max-height: 220px; }
+  .stage { height: auto; padding: 20px; }
+  .slide-inner { min-height: 0; padding: 26px 22px; }
+  .slide-foot, .answer-split, .scope-triplet, .coverage-tiles,
+  .mini-split, .context-band, .check-row, .assume-card {
+    grid-template-columns: 1fr;
+  }
+  .slide-headline { font-size: 24px; }
+  .cover-title { font-size: 38px; }
+}
+
+/* === Print / PDF — expand EVERY slide, stacked, one page each. === */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body { background: #fff; }
+  .deck { display: block; height: auto; }
+  .menu, .deck-controls { display: none !important; }
+  .stage { display: block; height: auto; overflow: visible; padding: 0; }
+  .slide {
+    display: block !important; page-break-after: always;
+    break-after: page;
+  }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .slide[hidden] { display: block !important; }
+  .slide-inner {
+    min-height: 0; border-radius: 0; border: 0;
+    box-shadow: none; padding: 8mm 4mm; max-width: 100%;
+  }
+  /* Print shows the full document — detail strips expanded. */
+  .slide-detail { background: #fff; border-color: #d8d3c6; }
+  .slide-detail-body { display: block !important; }
+  .slide-detail summary { color: #070707; }
+  .detail-chevron { display: none; }
+  .hero-frame, .data-table, .board-card, .answer-col, .scope-col,
+  .context-node, .assume-card, .coverage-tile, .check-row {
+    page-break-inside: avoid;
+  }
+}
+
+/* --- Move Solution Architecture — target-state pattern cards. --- */
+.pattern-cards { display: flex; flex-direction: column; gap: 10px; }
+.pattern-card {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 13px 16px;
+  background: #fff;
+}
+.pattern-rejected { border-left: 3px solid #8B1F0F; background: #fdf6e8; }
+.pattern-selected { border-left: 3px solid #2f6b3f; background: #f3f7f1; }
+.pattern-foundation { border-left: 3px solid #2c4a6e; background: #f1f4f8; }
+.chip-found {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px;
+  border-radius: 999px; border: 1px solid #2c4a6e; background: #e3eaf3;
+  color: #2c4a6e;
+}
+.pattern-name {
+  font-size: 12.5px; font-weight: 800; color: #1c1a17; line-height: 1.35;
+  display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap;
+}
+.pattern-detail {
+  font-size: 11px; color: #5b5852; margin-top: 6px; line-height: 1.5;
+}
+</style></head><body><div class="deck"><nav class="menu" aria-label="Deck navigation"><div class="menu-head"><div class="menu-brand">AbarVa · Moves</div><div class="menu-title">Solution Architecture Pack</div><div class="menu-tenant">Meridian Health System</div></div><div class="menu-list"><button class="menu-item" type="button" data-goto="1" aria-current="true"><span class="menu-num">00</span><span class="menu-text"><span class="menu-label">Cover</span><span class="menu-sub">Solution Architecture Pack</span></span></button><button class="menu-item" type="button" data-goto="2"><span class="menu-num">01</span><span class="menu-text"><span class="menu-label">Architecture decision</span><span class="menu-sub">Shape the Move around the curated &quot;Point-of-care coding-gap capture&quot; pattern — the most human-accountable of the function-calibrated reference patterns, not the highest-autonomy one.</span></span></button><button class="menu-item" type="button" data-goto="3"><span class="menu-num">02</span><span class="menu-text"><span class="menu-label">Inherited outline</span><span class="menu-sub">This deck inherits the curated Population health &amp; value-based care solution-architecture outline — 9 sections, structure not improvised.</span></span></button><button class="menu-item" type="button" data-goto="4"><span class="menu-num">03</span><span class="menu-text"><span class="menu-label">Target architecture</span><span class="menu-sub">The target state is built from 5 curated reference solution options on an adopted platform foundation of 5 components (landing zone, ingestion, governance) — every pattern names its boundary and a human accountability point.</span></span></button><button class="menu-item" type="button" data-goto="5"><span class="menu-num">04</span><span class="menu-text"><span class="menu-label">AI archetypes</span><span class="menu-sub">The architecture must support 5 curated AI use-case archetypes — each with a named value mechanism and control posture.</span></span></button><button class="menu-item" type="button" data-goto="6"><span class="menu-num">05</span><span class="menu-text"><span class="menu-label">Control posture</span><span class="menu-sub">A named human holds the decision right at the checkpoint — the curated patterns keep the agent assisting, never deciding alone.</span></span></button><button class="menu-item" type="button" data-goto="7"><span class="menu-num">06</span><span class="menu-text"><span class="menu-label">Evidence and gaps</span><span class="menu-sub">Baseline coverage is 33% — 4 metrics recorded, 8 declared seed gaps. None are invented.</span></span></button><button class="menu-item" type="button" data-goto="8"><span class="menu-num">07</span><span class="menu-text"><span class="menu-label">Open decisions</span><span class="menu-sub">5 architecture decisions are still open — 3 block the production gate and must close before any go-live.</span></span></button></div><div class="menu-foot"><span class="menu-foot-verdict">Verdict · HOLD</span><span class="menu-foot-sub">Hold — the kernel does not support funding this architecture yet</span></div></nav><main class="stage" id="stage"><section class="slide slide-cover" id="cover" data-slide="1" aria-label="Cover"><div class="slide-inner cover-inner"><div class="cover-brand">AbarVa · Moves</div><div class="cover-eyebrow">Solution Architecture Pack · Kernel-derived for a real Move</div><h1 class="cover-title">AI-Enabled Population Health &amp; Clinical Performance Command Center</h1><div class="cover-tenant">Meridian Health System · Population health &amp; value-based care</div><p class="cover-lede">A target-state architecture produced by the Moves Expert Kernel for this Move. The section structure is <strong>inherited</strong> from the curated Domain Function Pack; the target-state architecture, the reference patterns and the AI archetypes are the pack’s curated material — the recommended pattern is the most human-accountable, never full autonomy. Declared seed gaps stay declared.</p><div class="cover-meta"><div><span class="cover-meta-label">Architecture verdict</span><span class="cover-meta-val">HOLD</span></div><div><span class="cover-meta-label">Target pattern</span><span class="cover-meta-val">Curated reference pattern</span></div><div><span class="cover-meta-label">Slides</span><span class="cover-meta-val">8</span></div><div><span class="cover-meta-label">Generated</span><span class="cover-meta-val">2026-06-06</span></div></div><div class="cover-hint">Use the menu, the arrows, or ← → keys to move through the deck.</div></div></section><section class="slide" id="architecture-decision" data-slide="2" aria-label="Architecture decision"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Architecture decision</span></div><div class="slide-rule-r">Slide 2 / 8</div></div><div class="slide-eyebrow">Section 1 · Architecture decision</div><h2 class="slide-headline">Shape the Move around the curated &quot;Point-of-care coding-gap capture&quot; pattern — the most human-accountable of the function-calibrated reference patterns, not the highest-autonomy one.</h2><div class="slide-stage"><div class="board-card verdict-shape"><div class="board-card-tag">Target-state architecture pattern</div><div class="board-verdict">Point-of-care coding-gap capture</div><p class="board-detail">A pattern that surfaces clinically evident, uncoded conditions to the clinician inside the encounter workflow — especially the annual wellness visit — for confirmation, so RAF capture is grounded in documented care rath… Boundary: It surfaces evidence-backed suggestions; the clinician confirms the diagnosis. It never submits a code on inference and never targets capture beyond documented…</p><div class="verdict-explainer-chip" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:4px;background:#fdf3dc;color:#7a4f0d;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;line-height:1.45;border:1px solid #ecd49a;"><span style="font-weight:700;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;">Why hold?</span><span style="font-family:'DM Sans','Inter',system-ui,sans-serif;font-size:12px;line-height:1.45;">Seed gap blocks monetisation — value rests on a planning-range proxy until the missing unit economics are supplied.</span></div></div><figure class="hero"><figcaption class="hero-caption">Exhibit 1 — Curated reference-pattern scorecard: selected against alternatives</figcaption><div class="hero-frame"><svg viewBox="0 0 860 520" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Architecture option scorecard" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Architecture option scorecard</title><defs><marker id="ah-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0b4a91"/></marker><marker id="ah-control" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A4F01"/></marker><marker id="ah-integration" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5b5852"/></marker><marker id="ah-decision" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1B5E20"/></marker><pattern id="arch-gap" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="7" stroke="#7A4F01" stroke-width="2.2"/></pattern></defs><rect x="0" y="0" width="860" height="520" fill="#ffffff"/><text x="24" y="22" font-size="9" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.5">ARCHITECTURE OPTION</text><text x="250" y="22" font-size="9" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.5">§4 REFERENCE COVERAGE</text><text x="836" y="22" font-size="9" font-weight="800" fill="#5b5852" text-anchor="end" letter-spacing="0.5">DECISION</text><rect x="24" y="50" width="812" height="80" rx="5" fill="#dbe6f3" stroke="#0b4a91" stroke-width="1.75"/><rect x="24" y="50" width="4" height="80" fill="#0b4a91"/><text x="40" y="82" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">Point-of-care coding-gap</text><text x="40" y="96" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">capture</text><text x="40" y="114" font-size="8.6" font-weight="700" fill="#0b4a91" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace' letter-spacing="0.4">HUMAN-APPROVAL-REQUIRED</text><rect x="250" y="84" width="188" height="12" rx="6" fill="#ffffff" stroke="#e0dbcd" stroke-width="1"/><rect x="250" y="84" width="154.16" height="12" rx="6" fill="#1B5E20"/><text x="250" y="76" font-size="10" font-weight="800" fill="#070707" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>82 / 100</text><text x="438" y="76" font-size="8.4" font-weight="800" fill="#1B5E20" text-anchor="end" letter-spacing="0.3">PRODUCT-SHAPED</text><text x="250" y="110" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">Selected — the responsible target-state pattern: a</text><text x="250" y="121" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">curated reference pattern with a named human accountable…</text><rect x="762" y="79" width="74" height="22" rx="11" fill="#e2efe2" stroke="#1B5E20" stroke-width="1.25"/><text x="799" y="94" font-size="9.5" font-weight="800" fill="#1B5E20" text-anchor="middle" letter-spacing="0.6">SELECTED</text><rect x="24" y="142" width="812" height="80" rx="5" fill="#f3f0e9" stroke="#e0dbcd" stroke-width="1"/><text x="40" y="174" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">Reconciled population data</text><text x="40" y="188" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">layer</text><text x="40" y="206" font-size="8.6" font-weight="700" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace' letter-spacing="0.4">HUMAN-ON-THE-LOOP</text><rect x="250" y="176" width="188" height="12" rx="6" fill="#ffffff" stroke="#e0dbcd" stroke-width="1"/><rect x="250" y="176" width="120.32000000000001" height="12" rx="6" fill="#7A4F01"/><text x="250" y="168" font-size="10" font-weight="800" fill="#070707" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>64 / 100</text><text x="438" y="168" font-size="8.4" font-weight="800" fill="#7A4F01" text-anchor="end" letter-spacing="0.3">POC-SHAPED</text><text x="250" y="202" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">Considered — a higher-autonomy alternative</text><text x="250" y="213" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">(Human-on-the-loop); not the target until the curated…</text><rect x="758" y="171" width="78" height="22" rx="11" fill="#f4ddd6" stroke="#8B1F0F" stroke-width="1.25"/><text x="797" y="186" font-size="9.5" font-weight="800" fill="#8B1F0F" text-anchor="middle" letter-spacing="0.6">REJECTED</text><rect x="24" y="234" width="812" height="80" rx="5" fill="#f3f0e9" stroke="#e0dbcd" stroke-width="1"/><text x="40" y="266" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">Risk model with a periodic</text><text x="40" y="280" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">validation loop</text><text x="40" y="298" font-size="8.6" font-weight="700" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace' letter-spacing="0.4">HUMAN-ON-THE-LOOP</text><rect x="250" y="268" width="188" height="12" rx="6" fill="#ffffff" stroke="#e0dbcd" stroke-width="1"/><rect x="250" y="268" width="120.32000000000001" height="12" rx="6" fill="#7A4F01"/><text x="250" y="260" font-size="10" font-weight="800" fill="#070707" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>64 / 100</text><text x="438" y="260" font-size="8.4" font-weight="800" fill="#7A4F01" text-anchor="end" letter-spacing="0.3">POC-SHAPED</text><text x="250" y="294" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">Considered — a higher-autonomy alternative</text><text x="250" y="305" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">(Human-on-the-loop); not the target until the curated…</text><rect x="758" y="263" width="78" height="22" rx="11" fill="#f4ddd6" stroke="#8B1F0F" stroke-width="1.25"/><text x="797" y="278" font-size="9.5" font-weight="800" fill="#8B1F0F" text-anchor="middle" letter-spacing="0.6">REJECTED</text><rect x="24" y="326" width="812" height="80" rx="5" fill="#f3f0e9" stroke="#e0dbcd" stroke-width="1"/><text x="40" y="358" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">Contract-decision</text><text x="40" y="372" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">simulation harness</text><text x="40" y="390" font-size="8.6" font-weight="700" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace' letter-spacing="0.4">HUMAN-ON-THE-LOOP</text><rect x="250" y="360" width="188" height="12" rx="6" fill="#ffffff" stroke="#e0dbcd" stroke-width="1"/><rect x="250" y="360" width="120.32000000000001" height="12" rx="6" fill="#7A4F01"/><text x="250" y="352" font-size="10" font-weight="800" fill="#070707" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>64 / 100</text><text x="438" y="352" font-size="8.4" font-weight="800" fill="#7A4F01" text-anchor="end" letter-spacing="0.3">POC-SHAPED</text><text x="250" y="386" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">Considered — a higher-autonomy alternative</text><text x="250" y="397" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">(Human-on-the-loop); not the target until the curated…</text><rect x="758" y="355" width="78" height="22" rx="11" fill="#f4ddd6" stroke="#8B1F0F" stroke-width="1.25"/><text x="797" y="370" font-size="9.5" font-weight="800" fill="#8B1F0F" text-anchor="middle" letter-spacing="0.6">REJECTED</text><rect x="24" y="418" width="812" height="80" rx="5" fill="#f3f0e9" stroke="#e0dbcd" stroke-width="1"/><text x="40" y="450" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">Quality-revenue protection</text><text x="40" y="464" font-size="12.5" font-weight="800" fill="#070707" text-anchor="start">loop</text><text x="40" y="482" font-size="8.6" font-weight="700" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace' letter-spacing="0.4">HUMAN-ON-THE-LOOP</text><rect x="250" y="452" width="188" height="12" rx="6" fill="#ffffff" stroke="#e0dbcd" stroke-width="1"/><rect x="250" y="452" width="120.32000000000001" height="12" rx="6" fill="#7A4F01"/><text x="250" y="444" font-size="10" font-weight="800" fill="#070707" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>64 / 100</text><text x="438" y="444" font-size="8.4" font-weight="800" fill="#7A4F01" text-anchor="end" letter-spacing="0.3">POC-SHAPED</text><text x="250" y="478" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">Considered — a higher-autonomy alternative</text><text x="250" y="489" font-size="8.8" font-weight="600" fill="#5b5852" text-anchor="start">(Human-on-the-loop); not the target until the curated…</text><rect x="758" y="447" width="78" height="22" rx="11" fill="#f4ddd6" stroke="#8B1F0F" stroke-width="1.25"/><text x="797" y="462" font-size="9.5" font-weight="800" fill="#8B1F0F" text-anchor="middle" letter-spacing="0.6">REJECTED</text></svg></div><p class="hero-note">Every candidate is a curated reference solution pattern from the bound Domain Function Pack; the selected pattern is the most human-accountable, not the highest-autonomy option.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Higher-autonomy alternatives, and the decision rationale</span></summary><div class="slide-detail-body"><div class="pattern-cards"><div class="pattern-card pattern-rejected"><div class="pattern-name">Reconciled population data layer <span class="chip chip-bad">Higher autonomy</span></div><div class="pattern-detail">Higher autonomy (Human-on-the-loop) — not the target for an originated Move whose curated evidence still favours a more human-accountable pattern. It reconciles and computes population metrics; it does not make contracting or clinical decisions. It is the population system of record, not the EHR. Owning t…</div></div><div class="pattern-card pattern-rejected"><div class="pattern-name">Risk model with a periodic validation loop <span class="chip chip-bad">Higher autonomy</span></div><div class="pattern-detail">Higher autonomy (Human-on-the-loop) — not the target for an originated Move whose curated evidence still favours a more human-accountable pattern. It stratifies and forecasts; it does not set strategy. Population-health leadership owns the decisions the model informs.</div></div><div class="pattern-card pattern-rejected"><div class="pattern-name">Contract-decision simulation harness <span class="chip chip-bad">Higher autonomy</span></div><div class="pattern-detail">Higher autonomy (Human-on-the-loop) — not the target for an originated Move whose curated evidence still favours a more human-accountable pattern. It produces decision-support scenarios; the VBC contracting and actuary leads own the contract decision. It does not negotiate or commit.</div></div></div><div class="mini-key mini-key-block">Decision rationale</div><ul class="mini-list"><li>The pattern is inherited from the curated Population health &amp; value-based care Domain Function Pack — the section structure and the pattern set are not improvised.</li><li>The lowest-autonomy curated option is selected: an originated Move keeps a named human accountable before autonomy expands.</li><li>The pack carries 5 competing reference options plus 5 adopted platform-foundation components and 5 AI use-case archetypes — the architecture is calibrated to this function.</li></ul></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The architecture is selected from the curated pack; the agent boundary, the human accountability point and the control posture are the design every later section builds on.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Decide which curated target-state architecture pattern to fund and shape the delivery around.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Enterprise Architecture (with the Move sponsor)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence High · 3 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Production-readiness gate — conditional on the open seed gaps</span></div></div></div></section><section class="slide" id="inherited-outline" data-slide="3" aria-label="Inherited outline"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Inherited outline</span></div><div class="slide-rule-r">Slide 3 / 8</div></div><div class="slide-eyebrow">Section 2 · Inherited outline</div><h2 class="slide-headline">This deck inherits the curated Population health &amp; value-based care solution-architecture outline — 9 sections, structure not improvised.</h2><div class="slide-stage"><p class="slide-lede">This Solution Architecture Pack inherits the curated Population health &amp;amp; value-based care solution-architecture outline from the bound Domain Function Pack. The agent does not improvise the structure — every section below is a curated, function-calibrated heading.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 2 — The inherited Population health &amp;amp; value-based care architecture outline</figcaption><div class="hero-frame"><div class="context-diagram"><div class="context-band"><div class="context-band-label">Inherited curated outline</div><div class="context-nodes"><div class="context-node"><div class="context-node-title">01 · Target-state architecture</div><div class="context-node-detail">Lay out the architecture against the function reference patterns — reconciled population data layer, risk model with a validation loop, point-of-care coding capture, contract-decision simulation, quality-revenue protection loop — and state which apply and how they connect.</div></div><div class="context-node"><div class="context-node-title">02 · Platform landing zone &amp; private data plane</div><div class="context-node-detail">Specify the cloud landing zone and private data plane the capability runs on — multi-account governance, private networking with no public-IP compute and an egress allowlist, PrivateLink to the lakehouse, a regional Unity Catalog metastore, and identity federation. State the platform-readiness gate that must be green before PHI lands. Do not present an architecture with no landing zone (cross-cutting pattern cc_cloud_landing_zone_private_data_plane).</div></div><div class="context-node"><div class="context-node-title">03 · Ingestion &amp; data-integration framework (own-it)</div><div class="context-node-detail">Specify the metadata-driven ingestion framework that onboards Epic Clarity/Caboodle, claims, ERP, and SaaS sources by configuration rather than per-pipeline code — name the own-it choice (e.g. DLT-META / the Databricks four-config framework, Lakeflow Connect landing in the client’s own Unity Catalog) and reject reinventing a bespoke framework or renting an outsourced destination platform that holds the data on the vendor side (cross-cutting pattern cc_metadata_driven_ingestion_framework).</div></div><div class="context-node"><div class="context-node-title">04 · Population data architecture</div><div class="context-node-detail">Specify the claims, EHR, attribution, quality, and risk feeds, their latency and reconciliation, and how the single authoritative population view is built and governed — as an own-it, lakehouse-native reconciled layer, not a rented population-health SaaS that holds the data and models.</div></div><div class="context-node"><div class="context-node-title">05 · AI use-case design and control posture</div><div class="context-node-detail">For each archetype in scope, specify the value mechanism, the control posture, the human accountability point, and the escalation path — with special care on the coding-compliance and equity controls.</div></div><div class="context-node"><div class="context-node-title">06 · Risk-model validation design</div><div class="context-node-detail">Define the back-test cadence, the drift monitoring, and the recalibration trigger for any risk or forecasting model — the validation loop is part of the architecture.</div></div><div class="context-node"><div class="context-node-title">07 · Operating-model change</div><div class="context-node-detail">Define how VBC contracting, coding, quality, and analytics workflows change, and who owns each change.</div></div><div class="context-node"><div class="context-node-title">08 · Responsible-AI and regulatory controls</div><div class="context-node-detail">State the model-monitoring, equity-check, coding-compliance, and audit controls, and the regulatory frames (MSSP, REACH, MA/HCC, RADV, HEI) that bound the design. Make the governance spine explicit: Unity Catalog access/lineage controls, a HITRUST CSF control mapping over the cloud + lakehouse services, and HIPAA via the compliance security profile + BAA with both the cloud provider and the lakehouse vendor, with PHI processed in the client’s own account (cross-cutting pattern cc_unity_catalog_hitrust_governance).</div></div><div class="context-node"><div class="context-node-title">09 · Integration and build approach</div><div class="context-node-detail">Describe the build sequence, integration to the population-health platform and EHR, and the phased rollout.</div></div></div></div></div></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>The curated outline — every section heading and its guidance</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th class="num">#</th><th>Section heading</th><th>Curated guidance</th></tr></thead><tbody><tr><td class="num">1</td><td><strong>Target-state architecture</strong></td><td>Lay out the architecture against the function reference patterns — reconciled population data layer, risk model with a validation loop, point-of-care coding capture, contract-decision simulation, quality-revenue protection loop — and state which apply and how they connect.</td></tr><tr><td class="num">2</td><td><strong>Platform landing zone &amp; private data plane</strong></td><td>Specify the cloud landing zone and private data plane the capability runs on — multi-account governance, private networking with no public-IP compute and an egress allowlist, PrivateLink to the lakehouse, a regional Unity Catalog metastore, and identity federation. State the platform-readiness gate that must be green before PHI lands. Do not present an architecture with no landing zone (cross-cutting pattern cc_cloud_landing_zone_private_data_plane).</td></tr><tr><td class="num">3</td><td><strong>Ingestion &amp; data-integration framework (own-it)</strong></td><td>Specify the metadata-driven ingestion framework that onboards Epic Clarity/Caboodle, claims, ERP, and SaaS sources by configuration rather than per-pipeline code — name the own-it choice (e.g. DLT-META / the Databricks four-config framework, Lakeflow Connect landing in the client’s own Unity Catalog) and reject reinventing a bespoke framework or renting an outsourced destination platform that holds the data on the vendor side (cross-cutting pattern cc_metadata_driven_ingestion_framework).</td></tr><tr><td class="num">4</td><td><strong>Population data architecture</strong></td><td>Specify the claims, EHR, attribution, quality, and risk feeds, their latency and reconciliation, and how the single authoritative population view is built and governed — as an own-it, lakehouse-native reconciled layer, not a rented population-health SaaS that holds the data and models.</td></tr><tr><td class="num">5</td><td><strong>AI use-case design and control posture</strong></td><td>For each archetype in scope, specify the value mechanism, the control posture, the human accountability point, and the escalation path — with special care on the coding-compliance and equity controls.</td></tr><tr><td class="num">6</td><td><strong>Risk-model validation design</strong></td><td>Define the back-test cadence, the drift monitoring, and the recalibration trigger for any risk or forecasting model — the validation loop is part of the architecture.</td></tr><tr><td class="num">7</td><td><strong>Operating-model change</strong></td><td>Define how VBC contracting, coding, quality, and analytics workflows change, and who owns each change.</td></tr><tr><td class="num">8</td><td><strong>Responsible-AI and regulatory controls</strong></td><td>State the model-monitoring, equity-check, coding-compliance, and audit controls, and the regulatory frames (MSSP, REACH, MA/HCC, RADV, HEI) that bound the design. Make the governance spine explicit: Unity Catalog access/lineage controls, a HITRUST CSF control mapping over the cloud + lakehouse services, and HIPAA via the compliance security profile + BAA with both the cloud provider and the lakehouse vendor, with PHI processed in the client’s own account (cross-cutting pattern cc_unity_catalog_hitrust_governance).</td></tr><tr><td class="num">9</td><td><strong>Integration and build approach</strong></td><td>Describe the build sequence, integration to the population-health platform and EHR, and the phased rollout.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The artifact’s table of contents is inherited from the curated Function Pack — the agent does not improvise the structure.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the deck follows the curated, function-calibrated structure.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Domain Function Pack (curated)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-06-06 · confidence High · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Each curated section is answered against the Move’s data</span></div></div></div></section><section class="slide" id="target-architecture" data-slide="4" aria-label="Target architecture"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Target architecture</span></div><div class="slide-rule-r">Slide 4 / 8</div></div><div class="slide-eyebrow">Section 3 · Target architecture</div><h2 class="slide-headline">The target state is built from 5 curated reference solution options on an adopted platform foundation of 5 components (landing zone, ingestion, governance) — every pattern names its boundary and a human accountability point.</h2><div class="slide-stage"><p class="slide-lede">The target-state architecture is built from 5 curated reference solution options. Every option names its boundary — what it owns and what it explicitly does not — and a named human accountability point. It rests on an adopted platform foundation of 5 components — landing zone, ingestion, medallion data products, governed serving and the governance spine — shown below as adopted, never ranked or rejected.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 3 — The curated reference solution options</figcaption><div class="hero-frame"><div class="pattern-cards"><div class="pattern-card pattern-selected"><div class="pattern-name">Point-of-care coding-gap capture <span class="chip chip-good">Selected target</span></div><div class="pattern-detail">A pattern that surfaces clinically evident, uncoded conditions to the clinician inside the encounter workflow — especially the annual wellness visit — for confirmation, so RAF capture is grounded in documented care rather than retrospective chart mining.</div><div class="pattern-detail"><strong>Boundary —</strong> It surfaces evidence-backed suggestions; the clinician confirms the diagnosis. It never submits a code on inference and never targets capture beyond documented truth.</div><div class="pattern-detail"><strong>Human accountability —</strong> The clinician who confirms the diagnosis, with a coding-compliance owner accountable for the control.</div></div><div class="pattern-card"><div class="pattern-name">Reconciled population data layer <span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail">A single, governed data layer that reconciles claims, EHR, attribution, quality, and risk data into one authoritative view of the attributed population. Cost, RAF, and quality are computed once, from one place; every downstream population-health use case consumes it. For an own-it mandate this layer is built lakehouse-native — on the organisation’s own governed cloud platform (e.g. Databricks under Unity Catalog in the organisation’s own account) — so the reconciled data, the risk models, and the quality logic are owned, auditable, and extensible assets. A vendor population-health SaaS platform can deliver the same view faster but holds the data and models on the vendor side: a rent posture, acceptable only where the organisation has explicitly decided not to own this layer.</div><div class="pattern-detail"><strong>Boundary —</strong> It reconciles and computes population metrics; it does not make contracting or clinical decisions. It is the population system of record, not the EHR. Owning the layer means owning the data, the models, and the logic — not merely licensing a dashboard over them.</div><div class="pattern-detail"><strong>Human accountability —</strong> The Chief Data Officer or population-health analytics owner accountable for the reconciled population layer.</div></div><div class="pattern-card"><div class="pattern-name">Risk model with a periodic validation loop <span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail">A population risk-stratification and forecasting model wired to a fixed validation cadence: each period the prior predictions are back-tested against realised cost, drift is measured, and the model is recalibrated. The validation loop is part of the pattern, not an afterthought.</div><div class="pattern-detail"><strong>Boundary —</strong> It stratifies and forecasts; it does not set strategy. Population-health leadership owns the decisions the model informs.</div><div class="pattern-detail"><strong>Human accountability —</strong> The model owner accountable for the risk model and its validation cadence.</div></div><div class="pattern-card"><div class="pattern-name">Contract-decision simulation harness <span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail">A simulation pattern that encodes a specific contract’s benchmark, risk track, and quality gates and runs population and intervention scenarios before a contracting decision, producing a quantified downside view with explicit, labelled assumptions.</div><div class="pattern-detail"><strong>Boundary —</strong> It produces decision-support scenarios; the VBC contracting and actuary leads own the contract decision. It does not negotiate or commit.</div><div class="pattern-detail"><strong>Human accountability —</strong> The VBC contracting lead and actuary who own the contract decision.</div></div><div class="pattern-card"><div class="pattern-name">Quality-revenue protection loop <span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail">A pattern that continuously projects performance on every revenue-gating quality measure, flags measures at risk of falling below threshold, and feeds prioritised gap closure back to the care-management operation — closing the loop between quality risk and outreach.</div><div class="pattern-detail"><strong>Boundary —</strong> It projects and prioritises; care management executes the outreach and a documented clinical event closes a measure. It does not close measures itself.</div><div class="pattern-detail"><strong>Human accountability —</strong> The quality officer accountable for the program quality score.</div></div></div></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Reference-option table — option, control posture, accountability</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Reference option</th><th>Control posture</th><th>Human accountability point</th></tr></thead><tbody><tr class=""><td><strong>Point-of-care coding-gap capture</strong> <span class="chip chip-good">Target</span></td><td>Human-Approval-Required</td><td>The clinician who confirms the diagnosis, with a coding-compliance owner accountable for the control.</td></tr><tr class="row-proxy"><td><strong>Reconciled population data layer</strong></td><td>Human-On-The-Loop</td><td>The Chief Data Officer or population-health analytics owner accountable for the reconciled population layer.</td></tr><tr class="row-proxy"><td><strong>Risk model with a periodic validation loop</strong></td><td>Human-On-The-Loop</td><td>The model owner accountable for the risk model and its validation cadence.</td></tr><tr class="row-proxy"><td><strong>Contract-decision simulation harness</strong></td><td>Human-On-The-Loop</td><td>The VBC contracting lead and actuary who own the contract decision.</td></tr><tr class="row-proxy"><td><strong>Quality-revenue protection loop</strong></td><td>Human-On-The-Loop</td><td>The quality officer accountable for the program quality score.</td></tr></tbody></table></div></details><figure class="hero"><figcaption class="hero-caption">Exhibit 3b — Adopted platform foundation (cross-cutting, not an option)</figcaption><div class="hero-frame"><div class="pattern-cards"><div class="pattern-card pattern-foundation"><div class="pattern-name">Cloud landing zone &amp; private data plane <span class="chip-found">Adopted foundation</span><span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail"><strong>Boundary —</strong> It stands up and governs the platform; it runs no business logic and makes no decisions. OWN-IT: the landing zone, network, and metastore live in the client’s own cloud account — the client owns them. A managed control plane is acceptable where the data plane and catalog stay in the client’s account.</div><div class="pattern-detail"><strong>Human accountability —</strong> The cloud platform / enterprise-architecture owner accountable for the landing zone and the platform-readiness gate.</div></div><div class="pattern-card pattern-foundation"><div class="pattern-name">Metadata-driven (own-it) ingestion framework <span class="chip-found">Adopted foundation</span><span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail"><strong>Boundary —</strong> It lands and conforms data Bronze→Silver from configuration; it does not model the domain or make decisions. OWN-IT: the framework and the pipelines it generates are deployed into the client’s estate and the IP transfers to the client. An outsourced SaaS that holds the data and pipelines on the vendor side is RENT — disqualified for an own-it mandate without surfaced rationale.</div><div class="pattern-detail"><strong>Human accountability —</strong> The data-engineering owner accountable for the ingestion framework and the source-onboarding configuration.</div></div><div class="pattern-card pattern-foundation"><div class="pattern-name">Medallion data products on the lakehouse <span class="chip-found">Adopted foundation</span><span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail"><strong>Boundary —</strong> It produces certified data products; it is not the EHR and it does not make clinical or contracting decisions. OWN-IT: the models, the CDM, and the identity logic are open standards built in the client’s lakehouse — owned, auditable, extensible — not a vendor’s proprietary closed schema.</div><div class="pattern-detail"><strong>Human accountability —</strong> The data-product / analytics owner accountable for the Gold marts and the common data model.</div></div><div class="pattern-card pattern-foundation"><div class="pattern-name">Governed model serving &amp; monitoring <span class="chip-found">Adopted foundation</span><span class="chip chip-warn">Human-In-The-Loop</span></div><div class="pattern-detail"><strong>Boundary —</strong> It serves and monitors models; a human owns every consequential decision. OWN-IT: models, training data, and the serving stack stay in the client’s estate. Sending PHI to an external LLM without a BAA / zero-retention is a RENT/compliance trap, not an own-it path.</div><div class="pattern-detail"><strong>Human accountability —</strong> The model owner and the named human decision-maker at the in-the-loop gate.</div></div><div class="pattern-card pattern-foundation"><div class="pattern-name">Unity Catalog governance &amp; HITRUST/HIPAA control spine <span class="chip-found">Adopted foundation</span><span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail"><strong>Boundary —</strong> It governs access, lineage, and compliance evidence; it does not produce analytics. OWN-IT: PHI and the audit trail stay in the client’s own VPC/account under client-managed keys — a structurally different (and stronger) posture than a SaaS vendor taking PHI onto its own infrastructure.</div><div class="pattern-detail"><strong>Human accountability —</strong> The CISO / data-governance owner accountable for the control mapping and the compliance-readiness gate.</div></div></div></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Adopted-foundation table — component, control posture, accountability</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Foundation component</th><th>Control posture</th><th>Human accountability point</th></tr></thead><tbody><tr><td><strong>Cloud landing zone &amp; private data plane</strong> <span class="chip-found">Adopted</span></td><td>Human-On-The-Loop</td><td>The cloud platform / enterprise-architecture owner accountable for the landing zone and the platform-readiness gate.</td></tr><tr><td><strong>Metadata-driven (own-it) ingestion framework</strong> <span class="chip-found">Adopted</span></td><td>Human-On-The-Loop</td><td>The data-engineering owner accountable for the ingestion framework and the source-onboarding configuration.</td></tr><tr><td><strong>Medallion data products on the lakehouse</strong> <span class="chip-found">Adopted</span></td><td>Human-On-The-Loop</td><td>The data-product / analytics owner accountable for the Gold marts and the common data model.</td></tr><tr><td><strong>Governed model serving &amp; monitoring</strong> <span class="chip-found">Adopted</span></td><td>Human-In-The-Loop</td><td>The model owner and the named human decision-maker at the in-the-loop gate.</td></tr><tr><td><strong>Unity Catalog governance &amp; HITRUST/HIPAA control spine</strong> <span class="chip-found">Adopted</span></td><td>Human-On-The-Loop</td><td>The CISO / data-governance owner accountable for the control mapping and the compliance-readiness gate.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The architecture is grounded in the curated reference patterns; each pattern is a real design with an explicit boundary, not a box.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the target-state architecture the Move funds and shapes the delivery boundary around.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Enterprise Architecture</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-06-06 · confidence High · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">The AI use-case archetypes the architecture must support</span></div></div></div></section><section class="slide" id="archetypes" data-slide="5" aria-label="AI archetypes"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>AI archetypes</span></div><div class="slide-rule-r">Slide 5 / 8</div></div><div class="slide-eyebrow">Section 4 · AI archetypes</div><h2 class="slide-headline">The architecture must support 5 curated AI use-case archetypes — each with a named value mechanism and control posture.</h2><div class="slide-stage"><p class="slide-lede">The architecture must support 5 curated AI use-case archetypes — the recurring AI bets in this function. The agent recognises the bet instead of reasoning from zero; each archetype carries a named value mechanism and a control posture.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 4 — The curated AI use-case archetypes</figcaption><div class="hero-frame"><div class="pattern-cards"><div class="pattern-card"><div class="pattern-name">Population risk stratification and forecasting <span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail"><strong>Value mechanism —</strong> A model risk-stratifies the whole attributed population and forecasts next-period cost and rising risk, so population-health strategy and care-management capacity are pointed at the cost that is coming. Value comes from converting reactive, claims-lagged targeting into a forward-looking population strategy.</div><div class="pattern-detail"><strong>Adoption —</strong> mainstream</div></div><div class="pattern-card"><div class="pattern-name">HCC / RAF coding-gap intelligence <span class="chip chip-warn">Human-Approval-Required</span></div><div class="pattern-detail"><strong>Value mechanism —</strong> A model surfaces conditions that are clinically evident in the record but not yet coded for the current year, and routes them to a clinician for confirmation at the point of care. Value comes from closing the gap between documented clinical truth and captured RAF — lifting risk-adjusted revenue without overreach.</div><div class="pattern-detail"><strong>Adoption —</strong> mainstream</div></div><div class="pattern-card"><div class="pattern-name">VBC contract performance simulation <span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail"><strong>Value mechanism —</strong> A model simulates performance against a contract’s benchmark, risk track, and quality gates under different population and intervention scenarios, so contracting decisions are made with a quantified view of the downside. Value comes from avoiding mismatched-risk contracts before they are signed.</div><div class="pattern-detail"><strong>Adoption —</strong> experimenting</div></div><div class="pattern-card"><div class="pattern-name">Quality-measure performance intelligence <span class="chip chip-warn">Human-On-The-Loop</span></div><div class="pattern-detail"><strong>Value mechanism —</strong> A model tracks projected performance on every revenue-gating quality measure, identifies which measures are at risk of falling below threshold, and ranks the closeable gaps by revenue impact. Value comes from protecting the quality score that gates the savings the cost result earns.</div><div class="pattern-detail"><strong>Adoption —</strong> mainstream</div></div><div class="pattern-card"><div class="pattern-name">Network leakage and referral-steering intelligence <span class="chip chip-warn">Human-In-The-Loop</span></div><div class="pattern-detail"><strong>Value mechanism —</strong> A model identifies where attributed-population care leaks out of network and surfaces in-network, high-value alternatives at the point of referral. Value comes from retaining margin and restoring the care-management team’s line of sight into the patient’s care.</div><div class="pattern-detail"><strong>Adoption —</strong> emerging</div></div></div></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Archetype table — control posture, data dependencies, control/risk notes</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>AI use-case archetype</th><th>Control posture</th><th>Data dependencies</th><th>Control / risk notes</th></tr></thead><tbody><tr><td><strong>Population risk stratification and forecasting</strong></td><td>Human-On-The-Loop</td><td>Longitudinal claims and pharmacy history; EHR clinical data — problem list, vitals, labs; Attribution and enrolment files; Social-need data where available</td><td>The model informs strategy and targeting; population-health leadership owns the decisions.; Revalidate predictive accuracy against realised cost every period — population drift is the norm, not the exception.; Test for equity: confirm the model does not under-rank members with sparse data, who are often the highest-need. A cost-as-proxy target is a known bias trap — a widely-used commercial risk algorithm under-referred Black patients because it predicted cost rather than illness (Obermeyer et al., Science 2019); validate the target variable, not just the model.</td></tr><tr><td><strong>HCC / RAF coding-gap intelligence</strong></td><td>Human-Approval-Required</td><td>EHR clinical documentation and problem list; Prior-year HCC coding and claims; The current-year risk-adjustment submission</td><td>A suggested code is never submitted on inference; a clinician must confirm the diagnosis is documented and clinically true.; The control objective is accuracy, not maximisation — coding overreach is a hard compliance risk.; Every suggestion must cite the clinical evidence it is based on.</td></tr><tr><td><strong>VBC contract performance simulation</strong></td><td>Human-On-The-Loop</td><td>Historical claims, benchmark, and settlement data; Contract terms — risk track, benchmark methodology, quality gates; Care-management capacity and intervention assumptions</td><td>The simulation informs the contracting decision; the VBC contracting and actuary leads own it.; Scenario assumptions must be explicit and labelled — a simulation is only as honest as its stated assumptions.; Benchmark methodology is contract-specific; the model must encode the actual contract, not a generic one.</td></tr><tr><td><strong>Quality-measure performance intelligence</strong></td><td>Human-On-The-Loop</td><td>Claims-based and EHR-based quality-measure data; Program quality-measure specifications and thresholds; Care-gap and outreach data</td><td>A measure is closed by a documented clinical event, never by inference.; Prioritising by revenue impact must not abandon measures that matter clinically but carry less revenue weight.</td></tr><tr><td><strong>Network leakage and referral-steering intelligence</strong></td><td>Human-In-The-Loop</td><td>Claims classified by network status; EHR referral orders; A specialist and facility cost-and-quality profile</td><td>Referral steering must respect patient choice and clinical appropriateness — it informs, it does not override.; High-value classification must be transparent and defensible, not a black-box steer toward owned facilities.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The architecture is shaped to the function’s recurring AI bets — the agent recognises the bet rather than reasoning from zero.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm which AI bets the target architecture is shaped to support.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Enterprise Architecture (with AI Platform)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-06-06 · confidence High · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Control posture — where the human stays in the loop</span></div></div></div></section><section class="slide" id="control-posture" data-slide="6" aria-label="Control posture"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Control posture</span></div><div class="slide-rule-r">Slide 6 / 8</div></div><div class="slide-eyebrow">Section 5 · Control posture</div><h2 class="slide-headline">A named human holds the decision right at the checkpoint — the curated patterns keep the agent assisting, never deciding alone.</h2><div class="slide-stage"><p class="slide-lede">The agent retrieves, drafts and prepares — but the decision to act belongs to a named human. The accountability checkpoint is a real step in the workflow, drawn from the curated patterns’ control posture, not a footnote.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 5 — Human / agent accountability map: where the human decides</figcaption><div class="hero-frame"><svg viewBox="0 0 860 316" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Human / agent accountability map" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Human / agent accountability map</title><defs><marker id="ah-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0b4a91"/></marker><marker id="ah-control" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A4F01"/></marker><marker id="ah-integration" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5b5852"/></marker><marker id="ah-decision" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1B5E20"/></marker><pattern id="arch-gap" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="7" stroke="#7A4F01" stroke-width="2.2"/></pattern></defs><rect x="0" y="0" width="860" height="316" fill="#ffffff"/><rect x="116" y="36" width="720" height="116" rx="5" fill="#dbe6f3" stroke="#0b4a91" stroke-width="1.25"/><rect x="24" y="36" width="84" height="116" rx="4" fill="#0b4a91"/><text x="66" y="98" font-size="9.5" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">AGENT DOES</text><rect x="116" y="170" width="720" height="116" rx="5" fill="#f7ecd6" stroke="#7A4F01" stroke-width="1.25"/><rect x="24" y="170" width="84" height="116" rx="4" fill="#7A4F01"/><text x="66" y="232" font-size="9.5" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">HUMAN OWNS</text><path d="M 256.8 94 L 272.8 94" fill="none" stroke="#0b4a91" stroke-width="1.6" marker-end="url(#ah-data)"/><path d="M 397.6 94 L 405.6 94 L 405.6 228 L 413.6 228" fill="none" stroke="#1B5E20" stroke-width="1.6" marker-end="url(#ah-decision)"/><rect x="344.5" y="153" width="122.19999999999999" height="15" rx="3" fill="#ffffff" stroke="#e0dbcd" stroke-width="0.75"/><text x="405.6" y="164" font-size="8.2" font-weight="600" fill="#1B5E20" text-anchor="middle">decision-right handoff</text><path d="M 538.4 228 L 546.4000000000001 228 L 546.4000000000001 94 L 554.4000000000001 94" fill="none" stroke="#1B5E20" stroke-width="1.6" marker-end="url(#ah-decision)"/><rect x="485.30000000000007" y="153" width="122.19999999999999" height="15" rx="3" fill="#ffffff" stroke="#e0dbcd" stroke-width="0.75"/><text x="546.4000000000001" y="164" font-size="8.2" font-weight="600" fill="#1B5E20" text-anchor="middle">decision-right handoff</text><path d="M 679.2 94 L 687.2 94 L 687.2 228 L 695.2 228" fill="none" stroke="#1B5E20" stroke-width="1.6" marker-end="url(#ah-decision)"/><rect x="626.1" y="153" width="122.19999999999999" height="15" rx="3" fill="#ffffff" stroke="#e0dbcd" stroke-width="0.75"/><text x="687.2" y="164" font-size="8.2" font-weight="600" fill="#1B5E20" text-anchor="middle">decision-right handoff</text><rect x="132" y="55" width="124.8" height="78" rx="4" fill="#0b4a91" stroke="#0b4a91" stroke-width="1.25"/><rect x="132" y="55" width="3" height="78" fill="#0b4a91"/><text x="194.4" y="90.5" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">Retrieve + ground</text><text x="194.4" y="105.5" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">Agent reads</text><text x="194.4" y="116.5" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">broker-scoped curated…</text><rect x="272.8" y="55" width="124.8" height="78" rx="4" fill="#0b4a91" stroke="#0b4a91" stroke-width="1.25"/><rect x="272.8" y="55" width="3" height="78" fill="#0b4a91"/><text x="335.2" y="90.5" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">Draft the action</text><text x="335.2" y="105.5" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">Agent prepares the</text><text x="335.2" y="116.5" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">proposed function…</text><rect x="413.6" y="189" width="124.8" height="78" rx="4" fill="#f7ecd6" stroke="#7A4F01" stroke-width="1.25"/><rect x="413.6" y="189" width="3" height="78" fill="#7A4F01"/><text x="476" y="224.5" font-size="11" font-weight="800" fill="#070707" text-anchor="middle">Review + approve</text><text x="476" y="239.5" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">A named human holds the</text><text x="476" y="250.5" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">decision right to…</text><rect x="420" y="171" width="112" height="15" rx="7.5" fill="#7A4F01"/><text x="476" y="182" font-size="7.2" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">ACCOUNTABILITY CHECKPOINT</text><rect x="554.4000000000001" y="55" width="124.8" height="78" rx="4" fill="#0b4a91" stroke="#0b4a91" stroke-width="1.25"/><rect x="554.4000000000001" y="55" width="3" height="78" fill="#0b4a91"/><text x="616.8000000000001" y="84" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">Execute approved</text><text x="616.8000000000001" y="97" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">action</text><text x="616.8000000000001" y="112" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">Agent executes only the</text><text x="616.8000000000001" y="123" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">human-approved action.</text><rect x="695.2" y="189" width="124.8" height="78" rx="4" fill="#e2efe2" stroke="#1B5E20" stroke-width="1.25"/><rect x="695.2" y="189" width="3" height="78" fill="#1B5E20"/><text x="757.6" y="218" font-size="11" font-weight="800" fill="#070707" text-anchor="middle">Own exceptions +</text><text x="757.6" y="231" font-size="11" font-weight="800" fill="#070707" text-anchor="middle">trace</text><text x="757.6" y="246" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">Human owns escalations;</text><text x="757.6" y="257" font-size="8.6" font-weight="600" fill="#5b5852" text-anchor="middle">every decision is…</text><line x1="116" y1="308" x2="138" y2="308" stroke="#0b4a91" stroke-width="2" marker-end="url(#ah-data)"/><text x="144" y="311.5" font-size="8.4" font-weight="700" fill="#5b5852" text-anchor="start">Data / evidence flow</text><line x1="266" y1="308" x2="288" y2="308" stroke="#1B5E20" stroke-width="2" marker-end="url(#ah-decision)"/><text x="294" y="311.5" font-size="8.4" font-weight="700" fill="#5b5852" text-anchor="start">Decision / approval path</text></svg></div><p class="hero-note">The agent lane and the human lane are explicit; the accountability checkpoint is drawn emphasised — the diagram shows, not asserts, where a named human stays in the loop.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Accountability points — the named owner per curated pattern</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Reference pattern</th><th>Control posture</th><th>Human accountability point</th></tr></thead><tbody><tr><td><strong>Reconciled population data layer</strong></td><td>Human-On-The-Loop</td><td>The Chief Data Officer or population-health analytics owner accountable for the reconciled population layer.</td></tr><tr><td><strong>Risk model with a periodic validation loop</strong></td><td>Human-On-The-Loop</td><td>The model owner accountable for the risk model and its validation cadence.</td></tr><tr><td><strong>Point-of-care coding-gap capture</strong></td><td>Human-Approval-Required</td><td>The clinician who confirms the diagnosis, with a coding-compliance owner accountable for the control.</td></tr><tr><td><strong>Contract-decision simulation harness</strong></td><td>Human-On-The-Loop</td><td>The VBC contracting lead and actuary who own the contract decision.</td></tr><tr><td><strong>Quality-revenue protection loop</strong></td><td>Human-On-The-Loop</td><td>The quality officer accountable for the program quality score.</td></tr><tr><td><strong>Cloud landing zone &amp; private data plane</strong></td><td>Human-On-The-Loop</td><td>The cloud platform / enterprise-architecture owner accountable for the landing zone and the platform-readiness gate.</td></tr><tr><td><strong>Metadata-driven (own-it) ingestion framework</strong></td><td>Human-On-The-Loop</td><td>The data-engineering owner accountable for the ingestion framework and the source-onboarding configuration.</td></tr><tr><td><strong>Medallion data products on the lakehouse</strong></td><td>Human-On-The-Loop</td><td>The data-product / analytics owner accountable for the Gold marts and the common data model.</td></tr><tr><td><strong>Governed model serving &amp; monitoring</strong></td><td>Human-In-The-Loop</td><td>The model owner and the named human decision-maker at the in-the-loop gate.</td></tr><tr><td><strong>Unity Catalog governance &amp; HITRUST/HIPAA control spine</strong></td><td>Human-On-The-Loop</td><td>The CISO / data-governance owner accountable for the control mapping and the compliance-readiness gate.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">Accountability is designed in, not asserted: every curated pattern names the human accountable for its decision.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the control posture and who owns each accountability point.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">AI Governance (with the Move sponsor)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-06-06 · confidence High · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Evidence and gaps — what must be true before production</span></div></div></div></section><section class="slide" id="evidence-gaps" data-slide="7" aria-label="Evidence and gaps"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Evidence and gaps</span></div><div class="slide-rule-r">Slide 7 / 8</div></div><div class="slide-eyebrow">Section 6 · Evidence and gaps</div><h2 class="slide-headline">Baseline coverage is 33% — 4 metrics recorded, 8 declared seed gaps. None are invented.</h2><div class="slide-stage"><p class="slide-lede">Baseline coverage is 33% — 4 metrics are recorded by the Move, 8 are declared seed gaps inherited from the Function Pack. None are invented.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 6 — Baseline coverage: recorded against seed-gapped</figcaption><div class="hero-frame"><div class="coverage-tiles"><div class="coverage-tile coverage-neutral"><div class="coverage-num">4</div><div class="coverage-label">Recorded metrics</div><div class="coverage-sub">Measured by the Move</div></div><div class="coverage-tile coverage-gap"><div class="coverage-num">8</div><div class="coverage-label">Declared seed gaps</div><div class="coverage-sub">Named, never blank</div></div><div class="coverage-tile coverage-neutral"><div class="coverage-num">33%</div><div class="coverage-label">Baseline coverage</div><div class="coverage-sub">Recorded ÷ expected</div></div></div><table class="data-table"><thead><tr><th>Operating metric</th><th>Source or declared gap</th></tr></thead><tbody><tr class=""><td>Medical loss ratio (MLR) <span class="chip chip-good">Recorded</span></td><td>Plan settlement (individual block, 2024)</td></tr><tr class=""><td>RAF score capture / accuracy <span class="chip chip-good">Recorded</span></td><td>Risk-adjustment submission reconciliation</td></tr><tr class=""><td>Quality composite / Star rating <span class="chip chip-good">Recorded</span></td><td>CMS 2026 Star ratings</td></tr><tr class=""><td>Preventable hospitalisation rate <span class="chip chip-good">Recorded</span></td><td>Payer claims, preventable-condition set</td></tr><tr class="row-proxy"><td>Shared-savings achievement rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;Shared-savings achievement rate&quot; is not recorded — this function expects it; it is sourced from CMS or payer benchmark-and-settlement report for the contract.; its absence blocks the baseline and the value forecast.</td></tr><tr class="row-proxy"><td>Attribution stability / retention <span class="chip chip-bad">Seed gap</span></td><td>&quot;Attribution stability / retention&quot; is not recorded — this function expects it; it is sourced from Period-over-period payer attribution files.; its absence blocks the baseline and the value forecast.</td></tr><tr class="row-proxy"><td>Per-member-per-month cost trend <span class="chip chip-bad">Seed gap</span></td><td>&quot;Per-member-per-month cost trend&quot; is not recorded — this function expects it; it is sourced from Payer claims feed, risk-normalised, compared period over period.; its absence blocks the baseline and the value forecast.</td></tr><tr class="row-proxy"><td>In-network (leakage) utilisation rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;In-network (leakage) utilisation rate&quot; is not recorded — this function expects it; it is sourced from Claims feed classified against the network and preferred-provider directory.; its absence blocks the baseline and the value forecast.</td></tr><tr class="row-proxy"><td>Annual wellness visit completion rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;Annual wellness visit completion rate&quot; is not recorded — this function expects it; it is sourced from EHR scheduling and encounter data reconciled against claims.; its absence blocks the baseline and the value forecast.</td></tr><tr class="row-proxy"><td>Cost concentration in the top risk tier <span class="chip chip-bad">Seed gap</span></td><td>&quot;Cost concentration in the top risk tier&quot; is not recorded — this function expects it; it is sourced from Claims feed analysed by the risk-stratification model output.; its absence blocks the baseline and the value forecast.</td></tr><tr class="row-proxy"><td>High-value specialist referral rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;High-value specialist referral rate&quot; is not recorded — this function expects it; it is sourced from EHR referral orders and claims, classified against a specialist cost-and-quality profile.; its absence blocks the baseline and the value forecast.</td></tr><tr class="row-proxy"><td>Revenue under value-based / risk contracts <span class="chip chip-bad">Seed gap</span></td><td>&quot;Revenue under value-based / risk contracts&quot; is not recorded — this function expects it; it is sourced from Finance contract-mix reporting reconciled against payer contracts.; its absence blocks the baseline and the value forecast.</td></tr></tbody></table></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Seed gaps — declared, never blank, named with their source</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Metric</th><th>Why it is a gap</th><th>Expected data source</th></tr></thead><tbody><tr class="row-proxy"><td>Shared-savings achievement rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;Shared-savings achievement rate&quot; is not recorded — this function expects it; it is sourced from CMS or payer benchmark-and-settlement report for the contract.; its absence blocks the baseline and the value forecast.</td><td>CMS or payer benchmark-and-settlement report for the contract.</td></tr><tr class="row-proxy"><td>Attribution stability / retention <span class="chip chip-bad">Seed gap</span></td><td>&quot;Attribution stability / retention&quot; is not recorded — this function expects it; it is sourced from Period-over-period payer attribution files.; its absence blocks the baseline and the value forecast.</td><td>Period-over-period payer attribution files.</td></tr><tr class="row-proxy"><td>Per-member-per-month cost trend <span class="chip chip-bad">Seed gap</span></td><td>&quot;Per-member-per-month cost trend&quot; is not recorded — this function expects it; it is sourced from Payer claims feed, risk-normalised, compared period over period.; its absence blocks the baseline and the value forecast.</td><td>Payer claims feed, risk-normalised, compared period over period.</td></tr><tr class="row-proxy"><td>In-network (leakage) utilisation rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;In-network (leakage) utilisation rate&quot; is not recorded — this function expects it; it is sourced from Claims feed classified against the network and preferred-provider directory.; its absence blocks the baseline and the value forecast.</td><td>Claims feed classified against the network and preferred-provider directory.</td></tr><tr class="row-proxy"><td>Annual wellness visit completion rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;Annual wellness visit completion rate&quot; is not recorded — this function expects it; it is sourced from EHR scheduling and encounter data reconciled against claims.; its absence blocks the baseline and the value forecast.</td><td>EHR scheduling and encounter data reconciled against claims.</td></tr><tr class="row-proxy"><td>Cost concentration in the top risk tier <span class="chip chip-bad">Seed gap</span></td><td>&quot;Cost concentration in the top risk tier&quot; is not recorded — this function expects it; it is sourced from Claims feed analysed by the risk-stratification model output.; its absence blocks the baseline and the value forecast.</td><td>Claims feed analysed by the risk-stratification model output.</td></tr><tr class="row-proxy"><td>High-value specialist referral rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;High-value specialist referral rate&quot; is not recorded — this function expects it; it is sourced from EHR referral orders and claims, classified against a specialist cost-and-quality profile.; its absence blocks the baseline and the value forecast.</td><td>EHR referral orders and claims, classified against a specialist cost-and-quality profile.</td></tr><tr class="row-proxy"><td>Revenue under value-based / risk contracts <span class="chip chip-bad">Seed gap</span></td><td>&quot;Revenue under value-based / risk contracts&quot; is not recorded — this function expects it; it is sourced from Finance contract-mix reporting reconciled against payer contracts.; its absence blocks the baseline and the value forecast.</td><td>Finance contract-mix reporting reconciled against payer contracts.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The architecture is auditable; the seed gaps are the declared limits of what the design can claim today.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Audit every architecture claim back to a source or a declared gap.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Low · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Close the seed gaps before the production-readiness gate</span></div></div></div></section><section class="slide" id="open-decisions" data-slide="8" aria-label="Open decisions"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Open decisions</span></div><div class="slide-rule-r">Slide 8 / 8</div></div><div class="slide-eyebrow">Section 7 · Open decisions</div><h2 class="slide-headline">5 architecture decisions are still open — 3 block the production gate and must close before any go-live.</h2><div class="slide-stage"><p class="slide-lede">5 architecture decisions are still open. 3 of them block the production gate — closing those is the work that stands between this architecture and a go-live.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 7 — Open architecture-decision queue, by gate impact</figcaption><div class="hero-frame"><svg viewBox="0 0 860 376" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Open architecture-decision queue" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Open architecture-decision queue</title><defs><marker id="ah-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0b4a91"/></marker><marker id="ah-control" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A4F01"/></marker><marker id="ah-integration" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5b5852"/></marker><marker id="ah-decision" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1B5E20"/></marker><pattern id="arch-gap" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="7" stroke="#7A4F01" stroke-width="2.2"/></pattern></defs><rect x="0" y="0" width="860" height="376" fill="#ffffff"/><text x="268" y="22" font-size="9" font-weight="800" fill="#5b5852" text-anchor="end" letter-spacing="0.4">OPEN ARCHITECTURE DECISION</text><text x="282" y="22" font-size="9" font-weight="600" fill="#5b5852" text-anchor="start">Gate impact — widest is the next decision</text><line x1="282" y1="30" x2="282" y2="360" stroke="#070707" stroke-width="1.5"/><circle cx="26" cy="72" r="13" fill="#070707"/><text x="26" y="76" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">1</text><text x="268" y="61" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">Value cannot be monetised to a hard</text><text x="268" y="72" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">dollar figure — the gross value</text><text x="268" y="83" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">range rests on a seed-gap proxy. The…</text><rect x="282" y="59" width="348" height="26" rx="2" fill="#f4ddd6"/><rect x="282" y="59" width="348" height="26" rx="2" fill="none" stroke="#8B1F0F" stroke-width="1.25"/><text x="638" y="70" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS GATE</text><text x="638" y="83" font-size="8.4" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Enterprise Architecture (with the Move sponsor) · Production-readiness gate</text><circle cx="26" cy="136" r="13" fill="#070707"/><text x="26" y="140" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">2</text><text x="268" y="125" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">8 baseline metric(s) are seed gaps</text><text x="268" y="136" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">(coverage 33%): Shared-savings</text><text x="268" y="147" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">achievement rate, Attribution…</text><rect x="282" y="123" width="348" height="26" rx="2" fill="#f4ddd6"/><rect x="282" y="123" width="348" height="26" rx="2" fill="none" stroke="#8B1F0F" stroke-width="1.25"/><text x="638" y="134" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS GATE</text><text x="638" y="147" font-size="8.4" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Enterprise Architecture (with the Move sponsor) · Production-readiness gate</text><circle cx="26" cy="200" r="13" fill="#070707"/><text x="26" y="204" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">3</text><text x="268" y="189" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">Close the 8 seed-gapped operating</text><text x="268" y="200" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">metric(s) the architecture is</text><text x="268" y="211" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">reasoned against — when and from…</text><rect x="282" y="187" width="302.6086956521739" height="26" rx="2" fill="#f4ddd6"/><rect x="282" y="187" width="302.6086956521739" height="26" rx="2" fill="none" stroke="#8B1F0F" stroke-width="1.25"/><text x="592.6086956521739" y="198" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS GATE</text><text x="592.6086956521739" y="211" font-size="8.4" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>CDO / Data Sponsor · Production-readiness gate</text><circle cx="26" cy="264" r="13" fill="#070707"/><text x="26" y="268" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">4</text><text x="268" y="253" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">Confirm the curated reference</text><text x="268" y="264" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">pattern against the tenant’s own</text><text x="268" y="275" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">systems of record and control…</text><rect x="282" y="251" width="226.95652173913044" height="26" rx="2" fill="#f7ecd6"/><rect x="282" y="251" width="226.95652173913044" height="26" rx="2" fill="none" stroke="#7A4F01" stroke-width="1.25"/><text x="516.9565217391305" y="262" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.3">INFORMS GATE</text><text x="516.9565217391305" y="275" font-size="8.4" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Enterprise Architecture · Production-readiness gate</text><circle cx="26" cy="328" r="13" fill="#070707"/><text x="26" y="332" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">5</text><text x="268" y="317" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">When can the architecture expand</text><text x="268" y="328" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">toward the &quot;Reconciled population</text><text x="268" y="339" font-size="9.6" font-weight="700" fill="#070707" text-anchor="end">data layer&quot; pattern…</text><rect x="282" y="315" width="196.69565217391303" height="26" rx="2" fill="#f7ecd6"/><rect x="282" y="315" width="196.69565217391303" height="26" rx="2" fill="none" stroke="#7A4F01" stroke-width="1.25"/><text x="486.695652173913" y="326" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.3">INFORMS GATE</text><text x="486.695652173913" y="339" font-size="8.4" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>AI Governance · Autonomy-expansion gate</text></svg></div><p class="hero-note">The queue is ordered by gate impact — the widest bar is the next decision. A gate-blocking decision is drawn red.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Open-decision table — owner and gate</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Open architecture decision</th><th>Owner</th><th>Gate</th></tr></thead><tbody><tr class="row-proxy"><td>Value cannot be monetised to a hard dollar figure — the gross value range rests on a seed-gap proxy. The CFO will not approve a fabricated return; the case must close the baseline gap first. <span class="chip chip-bad">Blocks gate</span></td><td>Enterprise Architecture (with the Move sponsor)</td><td>Production-readiness gate</td></tr><tr class="row-proxy"><td>8 baseline metric(s) are seed gaps (coverage 33%): Shared-savings achievement rate, Attribution stability / retention, Per-member-per-month cost trend, In-network (leakage) utilisation rate, Annual wellness visit completion rate, Cost concentration in the top risk tier, High-value specialist referral rate, Revenue under value-based / risk contracts. The case is grounded only on what is recorded. <span class="chip chip-bad">Blocks gate</span></td><td>Enterprise Architecture (with the Move sponsor)</td><td>Production-readiness gate</td></tr><tr class="row-proxy"><td>Close the 8 seed-gapped operating metric(s) the architecture is reasoned against — when and from which named source. <span class="chip chip-bad">Blocks gate</span></td><td>CDO / Data Sponsor</td><td>Production-readiness gate</td></tr><tr class=""><td>Confirm the curated reference pattern against the tenant’s own systems of record and control environment before the production gate. <span class="chip chip-warn">Informs gate</span></td><td>Enterprise Architecture</td><td>Production-readiness gate</td></tr><tr class=""><td>When can the architecture expand toward the &quot;Reconciled population data layer&quot; pattern (Human-on-the-loop) — what evidence is required before autonomy widens? <span class="chip chip-warn">Informs gate</span></td><td>AI Governance</td><td>Autonomy-expansion gate</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">No open decision is unowned; the gate-blocking decisions are the conditions on the production-readiness gate.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm every open architecture decision has an owner and a gate.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Enterprise Architecture (decision-queue owner)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Blocked · 3 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Close the gate-blocking decisions before go-live</span></div></div></div></section></main></div><div class="deck-controls" aria-hidden="false"><button class="deck-btn" type="button" id="deck-prev" aria-label="Previous slide">‹ Prev</button><span class="deck-counter" id="deck-counter">1 / 8</span><button class="deck-btn" type="button" id="deck-next" aria-label="Next slide">Next ›</button></div><script>(function(){var total=8;var stage=document.getElementById('stage');var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));var items=Array.prototype.slice.call(document.querySelectorAll('.menu-item'));var cur=1;function show(n){if(n<1)n=1;if(n>total)n=total;cur=n;slides.forEach(function(s){var sn=parseInt(s.getAttribute('data-slide'),10);var on=sn===n;s.classList.toggle('is-active',on);if(on){s.removeAttribute('hidden');}else{s.setAttribute('hidden','');}});items.forEach(function(it){var gn=parseInt(it.getAttribute('data-goto'),10);if(gn===n){it.setAttribute('aria-current','true');}else{it.removeAttribute('aria-current');}});var active=items[n-1];if(active&&active.scrollIntoView){active.scrollIntoView({block:'nearest'});}if(stage){stage.scrollTop=0;}window.scrollTo(0,0);var c=document.getElementById('deck-counter');if(c){c.textContent=n+' / '+total;}}items.forEach(function(it){it.addEventListener('click',function(){show(parseInt(it.getAttribute('data-goto'),10));});});var prev=document.getElementById('deck-prev');var next=document.getElementById('deck-next');if(prev){prev.addEventListener('click',function(){show(cur-1);});}if(next){next.addEventListener('click',function(){show(cur+1);});}document.addEventListener('keydown',function(e){var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;if(e.key==='ArrowRight'||e.key==='PageDown'){show(cur+1);e.preventDefault();}else if(e.key==='ArrowLeft'||e.key==='PageUp'){show(cur-1);e.preventDefault();}else if(e.key==='Home'){show(1);e.preventDefault();}else if(e.key==='End'){show(total);e.preventDefault();}});show(1);})();</script></body></html>

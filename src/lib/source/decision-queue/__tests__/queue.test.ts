@@ -229,6 +229,8 @@ describe('detectBlockedEvidence', () => {
     const items = detectBlockedEvidence(input({ segmentFreshness: fresh }));
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe('blocked_missing_evidence');
+    expect(items[0].deepLink).toBe('/source/new?intent=renewal');
+    expect(items[0].deepLink).not.toBe('/setup/source');
   });
 
   it('emits no card when grounding is healthy (no fabrication)', () => {

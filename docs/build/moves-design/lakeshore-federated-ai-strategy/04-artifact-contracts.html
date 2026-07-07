@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lakeshore Federated · Artifact Contracts (Master Spec)</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --ink-faint: #6b7280;
+    --rule: #e5e1d8;
+    --rule-strong: #cdc7ba;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --violet: #6d28d9;
+    --violet-soft: #ede9fe;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 64px 96px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1320px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 42px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 28px; margin: 64px 0 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 21px; margin: 32px 0 12px; }
+  h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 24px 0 8px; }
+  h5 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); margin: 0 0 6px; }
+  p, li { font-size: 14.5px; }
+  code { background: #efeae0; padding: 1px 6px; border-radius: 3px; font-size: 12.5px; font-family: 'SF Mono', Menlo, Consolas, monospace; }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14.5px; margin-top: 0; }
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; }
+  .card.tight { padding: 12px 14px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-move { background: var(--good-soft); color: var(--good); }
+  .tag-source { background: var(--warn-soft); color: var(--warn); }
+  .tag-loader { background: var(--violet-soft); color: var(--violet); }
+  .tag-p0 { background: var(--bad-soft); color: var(--bad); }
+  .tag-p1 { background: var(--warn-soft); color: var(--warn); }
+  .tag-good { background: var(--good-soft); color: var(--good); }
+  .tag-docx { background: #fef3c7; color: #92400e; }
+  .tag-pdf { background: #fee2e2; color: #991b1b; }
+  .tag-xlsx { background: #d1fae5; color: #065f46; }
+  .tag-html { background: #dbeafe; color: #1e40af; }
+  .tag-json { background: #ede9fe; color: #5b21b6; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; background: white; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: #efeae0; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafaf6; }
+  .artifact-table th:nth-child(1) { width: 14%; }
+  .artifact-table th:nth-child(2) { width: 16%; }
+  .artifact-table th:nth-child(3) { width: 19%; }
+  .artifact-table th:nth-child(4) { width: 13%; }
+  .artifact-table th:nth-child(5) { width: 8%; }
+  .artifact-table th:nth-child(6) { width: 16%; }
+  .artifact-table th:nth-child(7) { width: 14%; }
+  .artifact-table code { font-size: 11.5px; padding: 1px 4px; }
+  .artifact-table td { font-size: 12.5px; }
+  .phase-band { display: flex; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; align-items: center; }
+  .phase-band .phase-pill { background: white; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+  .phase-band .phase-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .gate-banner { background: white; border-left: 4px solid var(--accent); border-top: 1px solid var(--rule); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 12px 16px; margin: 24px 0 8px; border-radius: 0 4px 4px 0; }
+  .gate-banner.gate-bad { border-left-color: var(--bad); }
+  .gate-banner.gate-warn { border-left-color: var(--warn); }
+  .gate-banner h3 { margin: 0; font-size: 18px; }
+  .gate-banner .gate-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .anchor { display: inline-block; background: var(--ink); color: white; padding: 4px 10px; border-radius: 3px; font-size: 11px; font-family: 'SF Mono', Menlo, monospace; letter-spacing: 0.04em; }
+  .annot { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 10px 14px; margin: 12px 0; border-radius: 0 3px 3px 0; font-size: 13px; color: #1e3a8a; }
+  .annot strong { color: var(--accent); }
+  .rule-block { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 20px; margin: 12px 0; }
+  .rule-block h5 { color: var(--accent); }
+  .rule-block .rule-num { font-family: var(--serif); font-size: 26px; color: var(--accent); float: left; margin-right: 14px; line-height: 1; margin-top: 2px; }
+  .rule-block p { margin: 0; font-size: 14px; }
+  .horizontal-rule { height: 1px; background: var(--rule); margin: 40px 0; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 12px 14px; background: white; border: 1px solid var(--rule); border-radius: 4px; margin: 16px 0; }
+  .schema-row { display: grid; grid-template-columns: 160px 1fr; gap: 0; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; margin: 8px 0; background: white; }
+  .schema-row .sch-label { background: #efeae0; padding: 12px 14px; font-weight: 600; font-size: 12.5px; border-right: 1px solid var(--rule); }
+  .schema-row .sch-content { padding: 12px 16px; font-size: 13px; color: var(--ink-soft); }
+  .schema-row .sch-content code { color: var(--ink); }
+  .provenance-example { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; margin: 12px 0; }
+  .provenance-example .claim { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--ink); margin: 0 0 12px; padding: 0 0 8px; border-bottom: 1px solid var(--rule); }
+  .provenance-example .chain { font-size: 12.5px; color: var(--ink-soft); }
+  .provenance-example .chain .chain-step { padding: 4px 0; }
+  .provenance-example .chain .chain-step::before { content: "↳"; color: var(--accent); margin-right: 8px; font-weight: 600; }
+  .toc { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 22px; margin: 20px 0 40px; }
+  .toc h4 { margin: 0 0 10px; }
+  .toc ol { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--ink-soft); }
+  .toc ol li { padding: 2px 0; }
+  .move-header { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 20px; margin: 24px 0 12px; display: flex; justify-content: space-between; align-items: center; }
+  .move-header h3 { margin: 0; font-size: 20px; font-family: var(--serif); }
+  .move-header .move-meta { font-size: 12px; color: var(--ink-soft); }
+  .approval-line { font-style: italic; color: var(--ink-soft); font-size: 12.5px; }
+  .src-evt { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; margin: 12px 0; }
+  .src-evt h5 { color: var(--warn); margin-bottom: 8px; }
+  .src-evt .src-meta { font-size: 12px; color: var(--ink-soft); margin-bottom: 10px; }
+  .stage-grid { display: grid; grid-template-columns: repeat(11, 1fr); gap: 3px; margin: 12px 0; }
+  .stage-grid .stage { background: var(--paper); border: 1px solid var(--rule); padding: 8px 6px; font-size: 10.5px; text-align: center; border-radius: 2px; }
+  .stage-grid .stage.prefilled { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .footnote { font-size: 12px; color: var(--ink-faint); margin: 8px 0; }
+  .row-anchor { font-family: 'SF Mono', Menlo, monospace; font-size: 11px; color: var(--ink-faint); }
+  .corpus-cite { color: var(--violet); font-weight: 600; font-size: 12px; }
+  .pattern-id { background: var(--violet-soft); color: var(--violet); padding: 1px 6px; border-radius: 3px; font-family: 'SF Mono', Menlo, monospace; font-size: 11px; }
+  .file-id { background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 3px; font-family: 'SF Mono', Menlo, monospace; font-size: 11px; }
+  .human-step { background: var(--warn-soft); color: var(--warn); padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+  .sentinel-agent { background: #1f2937; color: white; padding: 1px 7px; border-radius: 3px; font-family: 'SF Mono', Menlo, monospace; font-size: 11px; }
+  .quality-bar { color: var(--good); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Lakeshore Federated · Artifact Contracts</h1>
+<p class="sub">The master per-Move per-phase per-artifact specification · input source · generation rule · approval owner · export format · evidence chain · quality bar</p>
+<p class="meta">Companion to <code>01-lakeshore-federated-structure-brief.md</code>, <code>02-demo-spine-architecture.html</code>, and <code>03-cxo-intel-loader-spec.html</code>. This is the document Codex picks up to ship each Wave. Every row is a Codex-actionable specification.</p>
+
+<div class="legend">
+  <span><span class="sentinel-agent">SentinelAgent</span> Generation engine</span>
+  <span><span class="pattern-id">CORPUS-ID</span> Corpus pattern</span>
+  <span><span class="file-id">finserv-XX</span> Loaded knowledge file</span>
+  <span><span class="human-step">HIL</span> Human-in-the-loop confirmation</span>
+  <span><span class="tag tag-docx">DOCX</span><span class="tag tag-pdf">PDF</span><span class="tag tag-html">HTML</span><span class="tag tag-xlsx">XLSX</span><span class="tag tag-json">JSON</span> Export formats</span>
+</div>
+
+<div class="toc">
+  <h4>Sections</h4>
+  <ol>
+    <li>Overview — what an artifact contract is, the five locked rules, how Codex uses this doc</li>
+    <li>The contract schema — the seven columns, with an annotated example row</li>
+    <li>Move 0 — Kyriba De-Risk (per HoldCo) · ~20 artifacts across 6 gates × 6 phases</li>
+    <li>Move 1 — AI on top of Kyriba (per HoldCo) · ~24 artifacts across 4 capabilities × 6 phases</li>
+    <li>Move 2 — Cross-HoldCo Cost Reduction (L0) · ~20 artifacts</li>
+    <li>Move 3 — Federated IT Strategy (L0) · ~15 artifacts</li>
+    <li>Move 4 — Federated Risk + Governance (L0) · ~12 artifacts</li>
+    <li>Cross-Move shared artifacts — canonical Phase 4 / Phase 5 / Phase 2 templates</li>
+    <li>Source event spawn contracts — L-S01 through L-S06 with 11-stage pre-fill</li>
+    <li>Provenance + evidence chain rules — three worked examples</li>
+  </ol>
+</div>
+
+<h2>Section 1 · Overview</h2>
+
+<p>An <strong>artifact contract</strong> is a complete, Codex-actionable specification of one deliverable produced by the AbarVa platform during a Move. It tells Codex:</p>
+
+<ul>
+  <li>What it's called (specific name — never "the strategy doc" — always "Morgan Street Kyriba 6-Gate Remediation Roadmap")</li>
+  <li>Where the input data comes from (named loaded record IDs, named corpus patterns, named human inputs)</li>
+  <li>Which Sentinel agent generates it, in which role, using which corpus patterns, with which human-in-the-loop step</li>
+  <li>Who approves it (named CXO per the structure brief, or generic role for cross-tenant)</li>
+  <li>What format it's exported as (DOCX for memos, PDF for board packs, HTML for live dashboards, XLSX for analytical workbooks, JSON for API contracts)</li>
+  <li>Its evidence chain — the load-bearing chain of loaded record IDs → corpus pattern IDs → generation step IDs that lets a reader walk every claim back to its source</li>
+  <li>Its quality bar — the single-line acceptance criterion that distinguishes a "real" artifact from a demo-only artifact</li>
+</ul>
+
+<h3>The five locked rules (from README · operationalized here)</h3>
+
+<div class="rule-block">
+  <div class="rule-num">1</div>
+  <h5>No claim without provenance</h5>
+  <p>Every artifact's body text — every sentence, every number, every recommendation — must trace to one of: a loaded record (cited by table + row), a corpus pattern (cited by pattern ID), or a confirmed human input (cited by HIL prompt ID). Artifacts containing claims without provenance fail their quality bar.</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">2</div>
+  <h5>Foundation-before-AI sequencing</h5>
+  <p>Move 1 artifacts (AI capabilities) cannot be generated until Move 0 gates G1–G4 are at minimum green. Phase 5 Mobilization plans for Move 1 capabilities embed a <code>blocked_until</code> reference to the relevant foundation milestone. Sentinel refuses to generate downstream artifacts whose foundation is unmet.</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">3</div>
+  <h5>No fake completion</h5>
+  <p>An artifact is not "produced" until (a) its body exists, (b) its evidence chain resolves end-to-end, (c) the human-in-the-loop approval is recorded, and (d) the next-phase entry conditions are met. The Tower L0 view shows true completion state, not aspirational state. A half-approved Phase 4 business case shows as "draft", never as "done".</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">4</div>
+  <h5>HoldCo data sovereignty</h5>
+  <p>Artifacts produced from a single HoldCo's bundles are scoped to that HoldCo's tenant; L0 sees the artifact's <strong>title + status + headline metric</strong> only unless the HoldCo CXO grants drill-down. Cross-HoldCo artifacts (Move 2, 3, 4) include aggregated views by default; transaction-grain drill-down requires per-HoldCo grant.</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">5</div>
+  <h5>No demo-only data</h5>
+  <p>Every input source named in this contract maps to either a fictionalized record from the structure brief (marked as such), a corpus pattern from the loaded knowledge library, or a human input collected via the loader UI. No artifact references "data we'd have in production" — if it's not in the loader spec, it doesn't exist for Sentinel.</p>
+</div>
+
+<h3>How Codex uses this document</h3>
+
+<ol>
+  <li>Pick up a Wave spec (e.g., Wave 1 spec L03 — Move 0 page)</li>
+  <li>Find the relevant artifact contracts in this document (Section 3 for Move 0)</li>
+  <li>For each artifact: implement input loader (Section: "Input source"), wire to the named Sentinel agent (Section: "Generation rule"), implement approval routing (Section: "Approval owner"), implement export endpoint (Section: "Export format"), build evidence chain renderer (Section: "Evidence chain"), and write the acceptance test (Section: "Quality bar")</li>
+  <li>Cross-reference the pattern-setter HTML for the same Move/phase to match visual fidelity</li>
+  <li>Ship as one PR per spec, per the Wave map in <code>02-demo-spine-architecture.html §13</code></li>
+</ol>
+
+<h2>Section 2 · The contract schema</h2>
+
+<p>Every artifact row in Sections 3–7 contains these seven columns. Below: the schema definitions, then one annotated worked example.</p>
+
+<div class="schema-row">
+  <div class="sch-label">1 · Artifact name</div>
+  <div class="sch-content">Specific, never generic. Names follow the pattern <code>&lt;Tenant&gt; &lt;Subject&gt; &lt;Type&gt;</code>. Examples: "Morgan Street Banking H2H Connectivity Matrix" (good); "banking doc" (bad). The name is the user-facing title and the file-system stem of any exported artifact.</div>
+</div>
+
+<div class="schema-row">
+  <div class="sch-label">2 · Input source</div>
+  <div class="sch-content">A bullet list of named inputs in one of three forms:
+    <ul style="margin: 6px 0 0 0; padding-left: 18px;">
+      <li><code>loader.&lt;bundle&gt;.&lt;table&gt;[filter]</code> — references a specific table loaded by a specific CXO bundle (see <code>03-cxo-intel-loader-spec.html</code>)</li>
+      <li><span class="pattern-id">CORPUS-PATTERN-ID</span> — references a specific pattern from the loaded knowledge library</li>
+      <li><span class="human-step">HIL.&lt;prompt-id&gt;</span> — references a specific human-in-the-loop input prompt</li>
+    </ul>
+  </div>
+</div>
+
+<div class="schema-row">
+  <div class="sch-label">3 · Generation rule</div>
+  <div class="sch-content">Specifies (a) the Sentinel agent role responsible — <span class="sentinel-agent">SentinelTreasury</span>, <span class="sentinel-agent">SentinelArchitect</span>, <span class="sentinel-agent">SentinelFinance</span>, <span class="sentinel-agent">SentinelProcurement</span>, <span class="sentinel-agent">SentinelRisk</span>, <span class="sentinel-agent">SentinelPortfolio</span>; (b) the model role within that agent (diagnose, draft, score, summarize); (c) the corpus patterns it draws on; (d) the human-in-the-loop step that confirms before finalization.</div>
+</div>
+
+<div class="schema-row">
+  <div class="sch-label">4 · Approval owner</div>
+  <div class="sch-content">A specific named role from the structure brief for HoldCo-scoped artifacts (e.g., "Aisha Vargas — Morgan Street Group Treasurer"). A generic role for cross-tenant artifacts (e.g., "L0 Operating Partner — Technology"). Artifacts requiring multi-party sign-off list all approvers and the order.</div>
+</div>
+
+<div class="schema-row">
+  <div class="sch-label">5 · Export format</div>
+  <div class="sch-content">DOCX (long-form memos, strategy docs, mobilization plans) · PDF (board packs, IC papers, regulatory artifacts) · HTML (live dashboards, scorecards, evidence views) · XLSX (analytical workbooks, business cases, vendor matrices) · JSON (API contracts, Source event payloads). Format matches actual consumption pattern, not platform default.</div>
+</div>
+
+<div class="schema-row">
+  <div class="sch-label">6 · Evidence chain</div>
+  <div class="sch-content">The artifact's provenance: loaded record IDs (table + key) + corpus pattern IDs + generation step IDs from prior artifacts. Renders in the UI as a "show provenance" panel; each cited element is clickable and resolves to the source. Required for compliance with rule 1.</div>
+</div>
+
+<div class="schema-row">
+  <div class="sch-label">7 · Quality bar</div>
+  <div class="sch-content">One sentence describing what makes this artifact "real" — the acceptance test. Used in CI: a tagged eval harness produces the artifact against the demo seed; if the output fails the quality bar test, the build fails.</div>
+</div>
+
+<h3>Annotated example</h3>
+
+<p>This is one row from Section 3 (Move 0 G1 Phase 1 Discovery), broken out and explained inline. Every subsequent row follows the same shape, presented in compact table form.</p>
+
+<div class="card" style="border-left: 4px solid var(--accent);">
+  <h5>Artifact (1 · name)</h5>
+  <p style="margin: 0 0 12px;"><strong>Morgan Street Banking H2H Connectivity Matrix</strong> — a per-bank scorecard showing H2H readiness, current connectivity method, daily file integrity, and remediation priority for all 14 banks in the Morgan Street relationship inventory.</p>
+
+  <h5>Input source (2)</h5>
+  <ul style="margin: 0 0 12px; padding-left: 20px; font-size: 13px;">
+    <li><code>loader.cfo.banking_relationships[tenant=morgan-street]</code> — 14 rows, one per bank, with services, fee structure, H2H readiness flag, annual fee</li>
+    <li><code>loader.cio.application_inventory[category=treasury]</code> — Kyriba record with current connector mode</li>
+    <li><span class="pattern-id">CORPUS-FINSERV-08-BANKING-COST-TO-INCOME</span> — benchmark anchor for "what good looks like" on bank rationalization</li>
+    <li><span class="pattern-id">CORPUS-FINSERV-13-IT-SPEND-MIDMARKET</span> — IT spend benchmarks anchoring "is this in range"</li>
+    <li><span class="human-step">HIL.kyriba-rollout-status</span> — Aisha Vargas confirms current per-bank go-live status</li>
+  </ul>
+
+  <h5>Generation rule (3)</h5>
+  <p style="margin: 0 0 12px; font-size: 13px;"><span class="sentinel-agent">SentinelTreasury</span> in <code>diagnose</code> role. Prompts: "Given the 14 banking relationships and Kyriba's current H2H mode, produce a per-bank readiness scorecard. For each bank, classify connectivity as H2H-live / H2H-ready-not-live / portal-scrape / manual. Cite each classification to a specific loaded record. Cite the rationalization benchmark to FINSERV-08." Corpus patterns: FINSERV-08, FINSERV-13. HIL gate: <span class="human-step">HIL.kyriba-rollout-status</span> — Aisha Vargas confirms or corrects the inferred status before Sentinel finalizes.</p>
+
+  <h5>Approval owner (4)</h5>
+  <p style="margin: 0 0 12px; font-size: 13px;"><strong>Aisha Vargas — Morgan Street Group Treasurer</strong> (primary). Sarah Lindqvist — CFO (secondary, view-only for awareness). Approval route: <code>/moves/move-0/morgan-street/g1/banking-matrix/approve</code>.</p>
+
+  <h5>Export format (5)</h5>
+  <p style="margin: 0 0 12px; font-size: 13px;"><span class="tag tag-html">HTML</span> live dashboard (primary, refreshes when bank records change) + <span class="tag tag-xlsx">XLSX</span> exportable scorecard (for Treasurer's offline review, weekly cadence). No PDF — this is operational, not board-pack.</p>
+
+  <h5>Evidence chain (6)</h5>
+  <p style="margin: 0 0 12px; font-size: 13px;">Per-bank-row provenance: <code>loader.cfo.banking_relationships[id=&lt;bank_id&gt;]</code> → readiness classification rule → FINSERV-08 benchmark cite. Aggregate-row provenance: weighted-sum across 14 rows + FINSERV-13 rationalization range. Every cell exposes a "show provenance" affordance that resolves to the underlying record.</p>
+
+  <h5>Quality bar (7)</h5>
+  <p style="margin: 0; font-size: 13px;" class="quality-bar">A treasury professional reading this matrix can identify, without further questions, which banks block H2H rollout, what the remediation step is per bank, and what the projected fee compression is when rationalized to the target 6 — with every number sourced.</p>
+</div>
+
+<p class="meta" style="margin-top: 16px;">Every artifact in Sections 3–7 is specified to this level of detail, presented in compact-table form for density. When implementing, Codex expands the table row back to this card form.</p>
+
+<h2>Section 3 · Move 0 — Kyriba De-Risk (per HoldCo)</h2>
+
+<p class="sub">Scope: per HoldCo where a platform rollout is in flight. Six gates (G1–G6) × six phases (P0–P5). Primary demo tenant: Morgan Street. Artifact owner across the Move: Group Treasurer (Aisha Vargas for Morgan Street). ~20 artifacts total.</p>
+
+<div class="annot"><strong>Move 0 anchoring.</strong> Every Move 0 artifact references the 6-gate table from the structure brief. The gates are the canonical structure; the phases (P0 Setup through P5 Mobilization) are the lifecycle each gate moves through. Most gates produce 2–4 artifacts across phases.</div>
+
+<h3>Move 0 · Phase 0 — Setup load</h3>
+
+<table class="artifact-table">
+  <thead>
+    <tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Kyriba Rollout Status Snapshot</strong><br><span class="row-anchor">M0-P0-A01</span></td>
+      <td><code>loader.cfo.kyriba_rollout</code> · <code>loader.cfo.banking_relationships</code> · <code>loader.cio.application_inventory[name=Kyriba]</code> · <span class="human-step">HIL.gate-status-confirm</span></td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>summarize</code>. Renders the 6-gate table with current status, P0/P1 risk per gate. HIL: Treasurer confirms gate status pre-publish.</td>
+      <td>Aisha Vargas (Treasurer)</td>
+      <td><span class="tag tag-html">HTML</span><span class="tag tag-pdf">PDF</span></td>
+      <td>6 gate rows × loaded record citations + Aisha's HIL confirmation timestamp</td>
+      <td class="quality-bar">Treasurer affirms the status snapshot matches her own week-of view without correction.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Treasury Workflow Inventory</strong><br><span class="row-anchor">M0-P0-A02</span></td>
+      <td><code>loader.cfo.treasury_workflows</code> (workflow list with system, frequency, owner) · <code>loader.cio.application_inventory[category=treasury]</code></td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>summarize</code>. Lists workflows currently in Kyriba vs Excel-bound vs not-yet-migrated. Cites FINSERV-14 (treasury operating model patterns).</td>
+      <td>Aisha Vargas</td>
+      <td><span class="tag tag-xlsx">XLSX</span></td>
+      <td>Per-workflow row: source loader cell + FINSERV-14 pattern cite</td>
+      <td class="quality-bar">Every active treasury workflow appears once with a definitive system-of-record; no "?" cells.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Loader Completeness Report — Move 0 readiness</strong><br><span class="row-anchor">M0-P0-A03</span></td>
+      <td>Loader metadata (which bundles loaded, which missing fields, validation errors)</td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>check</code>. Verifies Move 0 entry conditions per §12 of the spine. Refuses to advance phases until preconditions met.</td>
+      <td>Data steward (per HoldCo)</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Bundle-load timestamps + validation rule cites</td>
+      <td class="quality-bar">If any required field is missing, the report names it and links to the loader UI; no false greens.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 0 · Phase 1 — Discovery (per gate)</h3>
+
+<div class="gate-banner gate-bad">
+  <h3>G1 · Bank connectivity gap</h3>
+  <div class="gate-meta">14 banks · 4 H2H-ready · target 6 strategic banks all H2H · owner Group Treasurer · finserv-08 benchmark anchor</div>
+</div>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Banking H2H Connectivity Matrix</strong><br><span class="row-anchor">M0-P1-G1-A01</span></td>
+      <td><code>loader.cfo.banking_relationships[tenant=morgan-street]</code> (14 rows) · <code>loader.cio.application_inventory[name=Kyriba]</code> · <span class="pattern-id">CORPUS-FINSERV-08</span> · <span class="human-step">HIL.kyriba-rollout-status</span></td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>diagnose</code>. Per-bank readiness classification (H2H-live / ready-not-live / portal-scrape / manual). HIL: Aisha confirms.</td>
+      <td>Aisha Vargas</td>
+      <td><span class="tag tag-html">HTML</span><span class="tag tag-xlsx">XLSX</span></td>
+      <td>Per-bank row → loader record + FINSERV-08 benchmark</td>
+      <td class="quality-bar">Treasury professional can identify which banks block H2H rollout and the projected fee compression at target-6.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Bank Rationalization Opportunity Brief</strong><br><span class="row-anchor">M0-P1-G1-A02</span></td>
+      <td>M0-P1-G1-A01 (Banking Matrix) · <span class="pattern-id">CORPUS-FINSERV-08</span> · <span class="pattern-id">CORPUS-FINSERV-13</span> · <span class="pattern-id">CORPUS-FINSERV-20</span> (vendor landscape)</td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>draft</code>. 1-page brief: current 14 · target 6 · rationalization criteria · projected $2.8M fee compression range. HIL: Treasurer + CFO joint review.</td>
+      <td>Aisha Vargas + Sarah Lindqvist</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>M0-P1-G1-A01 cell-level cites + 3 corpus pattern cites</td>
+      <td class="quality-bar">CFO accepts the brief into her IC pack without rework; fee compression range cites benchmarks honestly (range, not point estimate).</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="gate-banner gate-bad">
+  <h3>G2 · ERP feed quality</h3>
+  <div class="gate-meta">NetSuite → Kyriba feed · 0.4% daily variance · target &lt;0.05% sustained 30 days · owner Controller</div>
+</div>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street ERP→Kyriba Feed Audit Report</strong><br><span class="row-anchor">M0-P1-G2-A01</span></td>
+      <td><code>loader.cfo.gl_reconciliation_variances[days=90]</code> · <code>loader.cio.application_inventory[name=NetSuite OneWorld]</code> · <span class="human-step">HIL.feed-architecture-walkthrough</span> (Controller walks Sentinel through mapping)</td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>diagnose</code>. Per-account variance trend, root-cause classification (mapping gap / timing / FX / accrual). Patterns: FINSERV-07 (close-cycle benchmarks).</td>
+      <td>Morgan Street Controller (under Sarah Lindqvist)</td>
+      <td><span class="tag tag-html">HTML</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Per-day variance rows + per-account classification + FINSERV-07 cite</td>
+      <td class="quality-bar">Controller can act on the report without further forensics — every variance has a named root cause and a remediation owner.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street ERP Feed Remediation Plan</strong><br><span class="row-anchor">M0-P1-G2-A02</span></td>
+      <td>M0-P1-G2-A01 (Feed Audit) · <span class="pattern-id">CORPUS-PATTERN-PACK-FINANCE-CLOSE-ACCEL</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>draft</code>. Per-root-cause remediation: mapping fix, scheduler fix, FX-rate-source fix, accrual policy fix. HIL: Controller + IT lead joint sign-off.</td>
+      <td>Controller + IT Lead (Daniel Okonkwo's delegate)</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>M0-P1-G2-A01 root-cause rows + pattern cite</td>
+      <td class="quality-bar">Each remediation has owner, target date, acceptance threshold; total plan brings variance &lt;0.05% within 30 days.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="gate-banner gate-warn">
+  <h3>G3 · Entity hierarchy + IC mapping</h3>
+  <div class="gate-meta">IC mapping for 2 PortCos under reconciliation · owner Controller + Tax</div>
+</div>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Canonical Entity Registry</strong><br><span class="row-anchor">M0-P1-G3-A01</span></td>
+      <td><code>loader.gc.entity_registry</code> (corporate sec data) · <code>loader.cfo.tax_jurisdictions</code> · <span class="human-step">HIL.entity-tree-confirm</span> (Controller + Tax confirm hierarchy)</td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>synthesize</code>. Merges corporate sec + tax sources into one canonical entity tree with parent/child + jurisdictional metadata. HIL: dual confirm before publish.</td>
+      <td>Controller + Tax Director</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-json">JSON</span></td>
+      <td>Entity-by-entity source-system cite + HIL confirmation log</td>
+      <td class="quality-bar">Every entity in Morgan Street's books appears exactly once with parent, jurisdiction, ownership %; auditable.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Intercompany Mapping Workbook</strong><br><span class="row-anchor">M0-P1-G3-A02</span></td>
+      <td>M0-P1-G3-A01 (Entity Registry) · <code>loader.cfo.ic_relationships</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-IC-RECON</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>map</code>. Generates IC matrix (payer × payee × category × frequency). Identifies the 2 PortCos with unreconciled mappings; surfaces specific unresolved edges.</td>
+      <td>Controller (under Sarah Lindqvist)</td>
+      <td><span class="tag tag-xlsx">XLSX</span></td>
+      <td>Per-edge cite to entity registry + IC pattern</td>
+      <td class="quality-bar">Each IC relationship has named owner, category, current reconciliation method; unresolved edges flagged with reason.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="gate-banner gate-bad">
+  <h3>G4 · Historical position reconstruction</h3>
+  <div class="gate-meta">&lt;90 days clean data · predictive forecasting blocked · target 18+ months continuous · owner Treasury Analytics</div>
+</div>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street 24-Month Position Reconstruction Plan</strong><br><span class="row-anchor">M0-P1-G4-A01</span></td>
+      <td>M0-P1-G1-A01 (Banking Matrix) · <code>loader.cfo.banking_relationships</code> (statement availability per bank) · <span class="pattern-id">CORPUS-PATTERN-PACK-DATA-LAKE-BRONZE-SILVER-GOLD</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>plan</code>. Per-bank: which statement formats available, which months extractable, which bridge to canonical Silver schema. HIL: Treasury Analytics lead confirms feasibility.</td>
+      <td>Treasury Analytics lead (under Aisha Vargas)</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-xlsx">XLSX</span></td>
+      <td>Per-bank availability cite + bronze/silver/gold pattern</td>
+      <td class="quality-bar">Plan results in 18+ months continuous clean data; reconstruction effort estimated honestly with confidence bands.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="gate-banner gate-warn">
+  <h3>G5 · User adoption</h3>
+  <div class="gate-meta">32 of 48 expected users weekly active · target 90% sustained 60 days · owner Treasury PM + Change Lead</div>
+</div>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Kyriba User Adoption Scorecard</strong><br><span class="row-anchor">M0-P1-G5-A01</span></td>
+      <td><code>loader.cfo.kyriba_user_roster</code> · <code>loader.cfo.kyriba_login_telemetry[days=30]</code> · <span class="human-step">HIL.persona-mapping</span> (Treasurer maps each user to persona)</td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>diagnose</code>. Per-persona adoption rate (Treasurer, Cash Mgr, AP/AR, Controller). Identifies persona × workflow gaps. Patterns: FINSERV-16 (change management benchmarks).</td>
+      <td>Aisha Vargas + Change Lead</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Per-user telemetry rows + persona mapping HIL log + FINSERV-16</td>
+      <td class="quality-bar">Each non-adopting user has named blocker (training, workflow gap, Excel preference, role mismatch); not just an aggregate %.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="gate-banner gate-warn">
+  <h3>G6 · IC auto-reconciliation</h3>
+  <div class="gate-meta">Month-end manual IC posting · 4-day cycle · target same-day · owner Controller</div>
+</div>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street IC Auto-Recon Readiness Assessment</strong><br><span class="row-anchor">M0-P1-G6-A01</span></td>
+      <td>M0-P1-G3-A02 (IC Mapping) · <code>loader.cfo.close_cycle_metrics</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-IC-RECON</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>diagnose</code>. Per-IC-edge: matchability score (how confident a transformer-based matcher will resolve it). Cites Lakefront's deployed model performance as benchmark.</td>
+      <td>Controller</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Per-edge match-score + Lakefront benchmark reference (cross-HoldCo grant required)</td>
+      <td class="quality-bar">Assessment names exact IC edges that require human review at month-end even with auto-recon; honest about coverage gaps.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 0 · Phase 2 — Strategy</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Kyriba 6-Gate Remediation Roadmap</strong><br><span class="row-anchor">M0-P2-A01</span></td>
+      <td>All Phase-1 discovery artifacts (M0-P1-G1..G6) · <span class="pattern-id">CORPUS-PATTERN-PACK-PLATFORM-ROLLOUT-DERISK</span> · <span class="pattern-id">CORPUS-FINSERV-14</span></td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>synthesize</code>. Sequenced gate-by-gate remediation. Each gate has owner, target acceptance, dependency graph, expected duration. References cross-Move-1 capability dependencies (Cap 4 IC auto-recon supports G6). HIL: Treasurer + CFO joint review.</td>
+      <td>Aisha Vargas + Sarah Lindqvist + Daniel Okonkwo (CIO awareness)</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>6 gate discovery artifacts + 2 pattern cites + 1 benchmark cite</td>
+      <td class="quality-bar">Treasurer can use this as her L0 operating-partner report; gates are sequenced honestly with dependencies named.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Kyriba Strategy Memo</strong><br><span class="row-anchor">M0-P2-A02</span></td>
+      <td>M0-P2-A01 (Roadmap) · M0-P0-A01 (Status snapshot) · <span class="pattern-id">CORPUS-PATTERN-PACK-STRATEGY-MEMO-CANONICAL</span></td>
+      <td><span class="sentinel-treasury">SentinelTreasury</span> · <code>memo</code>. Canonical strategy memo per pattern (problem · current state · target state · path · investment ask · timeline · risks). 6-8 pages. HIL: CFO sign-off.</td>
+      <td>Sarah Lindqvist (CFO primary) + Aisha Vargas (Treasurer)</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Inherits all M0-P1 + M0-P2-A01 chains; adds canonical-memo template cite</td>
+      <td class="quality-bar">CFO can route this directly to the L0 Operating Partner — Finance without rewriting; passes Sarah's tone bar.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 0 · Phase 3 — Architecture</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Treasury Data Plane Architecture</strong><br><span class="row-anchor">M0-P3-A01</span></td>
+      <td>M0-P1-G2-A01 (Feed Audit) · M0-P1-G4-A01 (Position Reconstruction) · <code>loader.cio.data_plane_inventory</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-DATA-LAKE-BRONZE-SILVER-GOLD</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Target architecture: Bronze (raw bank + ERP), Silver (normalized by entity-currency-day), Gold (Kyriba-consumed views). Specific to Morgan Street's Snowflake footprint. HIL: CIO + Treasury Analytics joint review.</td>
+      <td>Daniel Okonkwo (CIO) + Aisha Vargas (Treasurer)</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-html">HTML</span></td>
+      <td>Feed audit + position recon + Snowflake inventory + lakehouse pattern</td>
+      <td class="quality-bar">CIO accepts the architecture without redesign; cites Snowflake-specific patterns Morgan Street already uses.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Source Event Spawn — L-S01 Banking Consolidation</strong><br><span class="row-anchor">M0-P3-A02</span></td>
+      <td>M0-P1-G1-A02 (Rationalization Brief) · M0-P2-A01 (Roadmap) · <code>loader.cfo.banking_relationships</code> · Source 11-stage lifecycle pre-fill schema (see Section 9)</td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>spawn</code>. Generates JSON payload to Source module conforming to the 11-stage lifecycle. Pre-fills stages 1-4 (Intake, Sourcing Strategy, Market Scan, Rubric). HIL: Treasurer + Procurement joint trigger.</td>
+      <td>Aisha Vargas + Procurement Lead</td>
+      <td><span class="tag tag-json">JSON</span></td>
+      <td>Banking matrix + rationalization brief → Source intake schema</td>
+      <td class="quality-bar">When Source module receives the spawn, it lands the event in Stage 5 (Long List) with stages 1-4 verifiably pre-filled; zero re-keying.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 0 · Phase 4 — Business case</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Kyriba De-Risk Business Case</strong><br><span class="row-anchor">M0-P4-A01</span></td>
+      <td>M0-P2-A01 (Roadmap) · M0-P3-A01 (Architecture) · <code>loader.cfo.it_spend_breakdown</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span> (see §8) · <span class="pattern-id">CORPUS-FINSERV-08</span> (fee compression) · <span class="pattern-id">CORPUS-FINSERV-07</span> (close acceleration)</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. 3-yr NPV + payback. Investment from rate-card-driven estimation engine. Benefits: $2.8M fee compression (G1), close acceleration value (G6), fraud-avoidance baseline (foundation for Move 1 Cap 2). HIL: CFO + Audit Cmte chair if &gt; $5M.</td>
+      <td>Sarah Lindqvist + Audit Committee Chair (if &gt;$5M)</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Roadmap + architecture + canonical pattern + 2 finserv cites + rate-card model</td>
+      <td class="quality-bar">CFO presents as-is to IC; NPV bands honest (not single-point); foundation-vs-AI benefits separated cleanly.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 0 · Phase 5 — Mobilization</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Kyriba De-Risk 30/60/90 Mobilization Plan</strong><br><span class="row-anchor">M0-P5-A01</span></td>
+      <td>M0-P2-A01 (Roadmap) · M0-P4-A01 (Business Case) · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span> (see §8) · <span class="pattern-id">CORPUS-FINSERV-16</span> (change mgmt)</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. 30/60/90 milestones per gate, RACI per workstream, adoption sprint detail (G5 lift), reporting cadence, exception escalation. Foundation-before-AI sequencing made explicit. HIL: Treasurer + Change Lead + L0 OP-Finance.</td>
+      <td>Aisha Vargas + Change Lead + Devon Sterling (L0 OP-Finance) awareness</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-xlsx">XLSX</span></td>
+      <td>Roadmap + business case + 2 pattern cites + 1 finserv cite</td>
+      <td class="quality-bar">PMO can execute against the plan without further design; every milestone has owner + date + acceptance threshold.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Move 0 Closeout Report (per-gate)</strong><br><span class="row-anchor">M0-P5-A02</span></td>
+      <td>All Phase 1-3 artifacts · gate-status telemetry from Tower · realized vs projected from business case</td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>report</code>. Per-gate: did acceptance threshold hit? Variance from plan. Lessons. Published at gate-close. HIL: Treasurer attests.</td>
+      <td>Aisha Vargas</td>
+      <td><span class="tag tag-pdf">PDF</span></td>
+      <td>Inherits all M0 chains + telemetry + business case projection</td>
+      <td class="quality-bar">Each gate close is honestly reported — if a gate is "green except X", the X is named, not buried.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="footnote">Move 0 artifact count: 3 (P0) + 6 (P1, one per gate · others are sub-rolled into G1 Matrix · totaling 6 gate-discovery artifacts) + 1 brief + 6 additional gate discovery = ~13 unique artifacts in P1; total Move 0 = 3 + ~10 + 2 (P2) + 2 (P3) + 1 (P4) + 2 (P5) = <strong>~20 artifacts</strong>.</p>
+
+<h2>Section 4 · Move 1 — AI on top of Kyriba (per HoldCo)</h2>
+
+<p class="sub">Scope: per HoldCo, post-Move 0 G1–G4 minimum green. Four AI capabilities × six phases. Lakefront's deployed models are case-study evidence. Primary demo tenant: Morgan Street (rollout target).</p>
+
+<div class="annot"><strong>Foundation gate.</strong> Every Move 1 artifact carries a <code>blocked_until</code> reference to the Move 0 milestone its data plane depends on. Sentinel refuses to draft a Phase 5 mobilization for any capability whose foundation isn't met.</div>
+
+<h3>Move 1 · Phase 0 — Setup load</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Move 1 Foundation Readiness Gate</strong><br><span class="row-anchor">M1-P0-A01</span></td>
+      <td>Move 0 gate status (M0-P0-A01) · <code>loader.cfo.kyriba_rollout</code> · <code>loader.cfo.payment_policy</code> (Cap 2 prereq) · <code>loader.gc.covenant_agreements</code> (Cap 3 prereq)</td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>check</code>. Per-capability foundation check: which Move 0 gates must be green. Reports per-capability readiness as Go/Hold/Blocked.</td>
+      <td>Aisha Vargas</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Move 0 status + per-capability foundation rule</td>
+      <td class="quality-bar">No capability shows "Go" unless its foundation is verifiably met; "Hold" cases name what's missing.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakefront AI Reference Capability Catalog</strong><br><span class="row-anchor">M1-P0-A02</span></td>
+      <td><code>loader.cio.ai_production_workloads[tenant=lakefront]</code> (3 deployed) · <span class="human-step">HIL.lakefront-grant</span> (Lakefront CIO grants read on case-study data)</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>catalog</code>. Renders Lakefront's 3 production AI workloads as reference cards: business problem, model, data deps, realized impact, reusability rating. Cross-HoldCo grant gated.</td>
+      <td>Yuki Ono (Lakefront CIO) authorizes cross-HoldCo read</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Lakefront loaded records + grant log</td>
+      <td class="quality-bar">Morgan Street CIO can browse Lakefront capabilities with all data attributable; sovereignty respected.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 1 · Phase 1 — Discovery (per capability)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Cap 1 (Cash Forecast) Readiness Scorecard</strong><br><span class="row-anchor">M1-P1-C1-A01</span></td>
+      <td>M0-P1-G4-A01 (Position Reconstruction) · <code>loader.cfo.kyriba_positions[days=270]</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-CASH-FORECAST-12W</span></td>
+      <td><span class="sentinel-agent">SentinelTreasury</span> · <code>assess</code>. Data depth, granularity, currency coverage, seasonality presence. Cites Lakefront's realized accuracy as benchmark.</td>
+      <td>Aisha Vargas + Treasury Analytics</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Position recon + Kyriba positions + cash-forecast pattern</td>
+      <td class="quality-bar">Scorecard names which entity-currency pairs have enough data to train; which need backfill before training starts.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 2 (Payment Anomaly / BEC) Readiness Scorecard</strong><br><span class="row-anchor">M1-P1-C2-A01</span></td>
+      <td><code>loader.cfo.outgoing_wires[days=365]</code> · <code>loader.cfo.payment_policy</code> · <code>loader.gc.fraud_incidents[years=3]</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-PAYMENT-ANOMALY</span></td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>assess</code>. Volume/value distribution, current control coverage, false-positive baseline if any. Cites Lakefront 2% FPR benchmark.</td>
+      <td>Aisha Vargas + Lena Hoffman (CISO)</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Wire history + policy + fraud history + pattern + Lakefront cite</td>
+      <td class="quality-bar">Scorecard differentiates "ready" wires from "needs context" wires; names the human-in-loop policy bar.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 3 (Covenant Headroom) Readiness Scorecard</strong><br><span class="row-anchor">M1-P1-C3-A01</span></td>
+      <td><code>loader.gc.covenant_agreements</code> · <code>loader.cfo.debt_facilities</code> · <code>loader.cfo.financial_forecasts</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-COVENANT-FORECASTING</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>assess</code>. Per-facility: covenant terms, headroom history, forecast model availability. Identifies covenants that have computable forward-looking metrics.</td>
+      <td>Sarah Lindqvist + Audit Cmte Chair</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Covenant text + debt facilities + forecasts + pattern</td>
+      <td class="quality-bar">Each covenant has clause-level computable definition; ambiguous covenants flagged for legal interpretation.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 4 (IC Auto-Recon) Readiness Scorecard</strong><br><span class="row-anchor">M1-P1-C4-A01</span></td>
+      <td>M0-P1-G3-A02 (IC Mapping) · M0-P1-G6-A01 (IC Auto-Recon Assessment) · <code>loader.cfo.ic_postings[months=24]</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-IC-RECON</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>assess</code>. Per-IC-edge matchability with proposed transformer model. Identifies edges that need human review.</td>
+      <td>Morgan Street Controller</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>IC mapping + posting history + pattern</td>
+      <td class="quality-bar">Scorecard distinguishes auto-resolvable edges from review-required edges; coverage % is honest.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 1 · Phase 2 — Strategy</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street AI-on-Kyriba Capability Portfolio + Strategy Memo</strong><br><span class="row-anchor">M1-P2-A01</span></td>
+      <td>All M1-P1 readiness scorecards (4 caps) · M1-P0-A02 (Lakefront catalog) · <span class="pattern-id">CORPUS-PATTERN-PACK-STRATEGY-MEMO-CANONICAL</span> · <span class="pattern-id">CORPUS-PATTERN-PACK-AI-PORTFOLIO-RANKING</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>rank+memo</code>. 4-capability portfolio ranked by value × feasibility × risk. Wave assignment (Cap 1+4 first, Cap 2+3 follow). Lakefront-realized benefits cited. HIL: CFO + Treasurer + Audit Cmte joint review.</td>
+      <td>Sarah Lindqvist + Aisha Vargas + Audit Cmte Chair</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>4 scorecards + Lakefront catalog + 2 patterns</td>
+      <td class="quality-bar">CFO routes to IC without rework; capabilities are ranked honestly with foundation dependencies named.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 1 · Phase 3 — Architecture (per capability)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Cap 1 (Cash Forecast) Architecture</strong><br><span class="row-anchor">M1-P3-C1-A01</span></td>
+      <td>M0-P3-A01 (Treasury Data Plane) · M1-P1-C1-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-CASH-FORECAST-12W</span> · <span class="pattern-id">CORPUS-PATTERN-PACK-MLOPS-MODEL-REGISTRY</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Bronze→Silver→Gold flow specific to forecast use case; model registry pattern; refresh cadence; confidence-band specification; HIL gate config.</td>
+      <td>Daniel Okonkwo + Aisha Vargas</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-html">HTML</span></td>
+      <td>Treasury data plane + scorecard + 2 patterns</td>
+      <td class="quality-bar">CIO accepts as buildable in Morgan Street's Azure+Snowflake stack without redesign.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 2 (Payment Anomaly) Architecture</strong><br><span class="row-anchor">M1-P3-C2-A01</span></td>
+      <td>M0-P3-A01 · M1-P1-C2-A01 · <code>loader.cio.security_stack</code> (Sentinel SIEM, CrowdStrike) · <span class="pattern-id">CORPUS-PATTERN-PACK-PAYMENT-ANOMALY</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Real-time scoring path, SIEM integration, HIL escalation matrix, payment-policy enforcement. Cap 2 has highest risk so this is the most regulated artifact.</td>
+      <td>Daniel Okonkwo + Aisha Vargas + Lena Hoffman</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Treasury data plane + scorecard + security stack + pattern</td>
+      <td class="quality-bar">CISO accepts the integration without security redesign; HIL flow matches payment policy.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 3 (Covenant) Architecture</strong><br><span class="row-anchor">M1-P3-C3-A01</span></td>
+      <td>M1-P1-C3-A01 · <code>loader.cfo.financial_forecast_model</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-COVENANT-FORECASTING</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Forecast model integration, alerting cadence, breach-probability methodology, Audit Cmte reporting hook.</td>
+      <td>Sarah Lindqvist + Audit Cmte Chair</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Scorecard + forecast model + pattern</td>
+      <td class="quality-bar">Audit Cmte chair accepts the alerting methodology without further definition.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 4 (IC Recon) Architecture</strong><br><span class="row-anchor">M1-P3-C4-A01</span></td>
+      <td>M0-P3-A01 · M1-P1-C4-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-IC-RECON</span> · <span class="pattern-id">CORPUS-PATTERN-PACK-TRANSFORMER-MATCH</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Transformer match pipeline, posting orchestration, Kyriba integration, month-end close integration.</td>
+      <td>Daniel Okonkwo + Morgan Street Controller</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Treasury data plane + scorecard + 2 patterns</td>
+      <td class="quality-bar">Controller accepts the architecture as close-cycle compatible without additional review.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Source Event Spawn — L-S07 Databricks Lakehouse</strong> (conditional)<br><span class="row-anchor">M1-P3-A05</span></td>
+      <td>M0-P3-A01 · M1-P3-C1..C4-A01 · <span class="human-step">HIL.confirm-lakehouse-spawn</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>spawn</code>. If Move 1 collectively requires a Databricks lakehouse (and Morgan Street's Snowflake footprint isn't sufficient), spawns L-S07 Source event. Pre-fills capability requirements as RFP scope.</td>
+      <td>Daniel Okonkwo + Procurement Lead</td>
+      <td><span class="tag tag-json">JSON</span></td>
+      <td>4 capability architectures + data plane gap analysis</td>
+      <td class="quality-bar">If spawned, the Source event lands in Stage 5 with technical scope verifiably derived from the 4 capability architectures.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 1 · Phase 4 — Business case (per capability + portfolio)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Cap 1 Business Case</strong><br><span class="row-anchor">M1-P4-C1-A01</span></td>
+      <td>M1-P3-C1-A01 · M1-P2-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span> · Lakefront realized accuracy benchmark (M1-P0-A02)</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. 3-yr NPV from working-capital unlock based on forecast accuracy delta. Investment from rate-card model. Lakefront-cited realized benefit serves as honest upper-bound; Morgan Street modeled at 60% of Lakefront benefit (conservative).</td>
+      <td>Sarah Lindqvist + Aisha Vargas</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Architecture + portfolio memo + canonical biz case pattern + Lakefront cite</td>
+      <td class="quality-bar">CFO accepts the conservatism factor (60% Lakefront); NPV bands are honest.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 2 Business Case</strong><br><span class="row-anchor">M1-P4-C2-A01</span></td>
+      <td>M1-P3-C2-A01 · <code>loader.gc.fraud_incidents</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span> · <span class="pattern-id">CORPUS-FINSERV-17</span> (BEC loss benchmarks)</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Benefits: fraud-avoidance (probabilistic, anchored to historical attempt rate + benchmark loss-given-event). Honest: this is downside-risk reduction not P&amp;L lift; biz case framed accordingly.</td>
+      <td>Sarah Lindqvist + Lena Hoffman + Audit Cmte</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Architecture + fraud history + canonical pattern + FINSERV-17</td>
+      <td class="quality-bar">Biz case correctly frames as risk-mitigation (not revenue); CISO + Audit Cmte both align on methodology.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 3 Business Case</strong><br><span class="row-anchor">M1-P4-C3-A01</span></td>
+      <td>M1-P3-C3-A01 · <code>loader.gc.covenant_agreements</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Benefits: early-warning value (covenant-breach cost avoidance × probability). Modeled per-facility.</td>
+      <td>Sarah Lindqvist + Audit Cmte Chair</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Architecture + covenants + canonical pattern</td>
+      <td class="quality-bar">Audit Cmte accepts the methodology; per-covenant probabilities are documented, not hand-waved.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 4 Business Case</strong><br><span class="row-anchor">M1-P4-C4-A01</span></td>
+      <td>M1-P3-C4-A01 · M0-P1-G6-A01 (current 4-day cycle) · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span> · <span class="pattern-id">CORPUS-FINSERV-07</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Benefits: close-cycle compression $/day × 4 days · earnings-quality improvement · audit-prep cost reduction.</td>
+      <td>Sarah Lindqvist + Controller</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Architecture + IC assessment + canonical pattern + FINSERV-07</td>
+      <td class="quality-bar">CFO and Controller both accept the close-day value rate (in range with FINSERV-07).</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Move 1 Portfolio Business Case (rollup)</strong><br><span class="row-anchor">M1-P4-A05</span></td>
+      <td>All 4 capability business cases · M1-P2-A01 (portfolio memo)</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>rollup</code>. Aggregated investment, benefit, NPV, payback. Sequenced view (Cap 1+4 first, Cap 2+3 follow). Foundation-before-AI sequencing baked into timeline.</td>
+      <td>Sarah Lindqvist + Aisha Vargas + Audit Cmte</td>
+      <td><span class="tag tag-pdf">PDF</span></td>
+      <td>4 cap biz cases + portfolio memo</td>
+      <td class="quality-bar">IC-ready; sequencing matches Phase 5 mobilization plan; no contradictions across capability cases.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 1 · Phase 5 — Mobilization (per capability + portfolio)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Morgan Street Cap 1 30/60/90 Mobilization Plan</strong><br><span class="row-anchor">M1-P5-C1-A01</span></td>
+      <td>M1-P4-C1-A01 · M1-P3-C1-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span> · Move 0 G1+G2+G4 foundation status</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. Foundation milestones (G1/G2/G4) explicit; Cap 1 model training/deploy/HIL milestones; <code>blocked_until</code> for each.</td>
+      <td>Aisha Vargas + Treasury Analytics</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Biz case + architecture + canonical pattern + Move 0 foundation</td>
+      <td class="quality-bar">Plan explicitly blocks Cap 1 training until G4 ≥ 18 months data; sequencing made visible.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 2 30/60/90 Mobilization Plan</strong><br><span class="row-anchor">M1-P5-C2-A01</span></td>
+      <td>M1-P4-C2-A01 · M1-P3-C2-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. Payment policy integration, HIL gate training, SOC integration, false-positive tuning sprint.</td>
+      <td>Aisha Vargas + Lena Hoffman</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Biz case + architecture + pattern</td>
+      <td class="quality-bar">SOC team accepts the HIL gate workflow without redefining; policy alignment confirmed.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 3 30/60/90 Mobilization Plan</strong><br><span class="row-anchor">M1-P5-C3-A01</span></td>
+      <td>M1-P4-C3-A01 · M1-P3-C3-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. Covenant-clause computation onboarding, Audit Cmte reporting cadence, breach-probability calibration.</td>
+      <td>Sarah Lindqvist + Audit Cmte</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Biz case + architecture + pattern</td>
+      <td class="quality-bar">Audit Cmte accepts reporting cadence; covenant clauses are testable not ambiguous.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Cap 4 30/60/90 Mobilization Plan</strong><br><span class="row-anchor">M1-P5-C4-A01</span></td>
+      <td>M1-P4-C4-A01 · M1-P3-C4-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. IC mapping freeze, transformer training, posting orchestration, close-cycle ride-along sprint.</td>
+      <td>Sarah Lindqvist + Controller</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Biz case + architecture + pattern</td>
+      <td class="quality-bar">Controller accepts the close-cycle ride-along as runnable in the next month-end.</td>
+    </tr>
+    <tr>
+      <td><strong>Morgan Street Move 1 Portfolio Mobilization Rollup</strong><br><span class="row-anchor">M1-P5-A05</span></td>
+      <td>4 capability mobilization plans · M1-P4-A05 portfolio biz case</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>rollup</code>. Sequenced wave plan; foundation milestones gating each capability; RACI rollup; reporting cadence rollup.</td>
+      <td>Sarah Lindqvist + Aisha Vargas + Devon Sterling (L0 OP-Finance) awareness</td>
+      <td><span class="tag tag-pdf">PDF</span></td>
+      <td>4 mobilization plans + portfolio biz case</td>
+      <td class="quality-bar">L0 OP-Finance can use this as her quarterly Move 1 report; no internal contradictions.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="footnote">Move 1 artifact count: 2 (P0) + 4 (P1, one per cap) + 1 (P2) + 5 (P3, 4 caps + spawn) + 5 (P4, 4 caps + portfolio) + 5 (P5, 4 caps + portfolio) + closeout artifacts = ~24 artifacts.</p>
+
+<h2>Section 5 · Move 2 — Cross-HoldCo Cost Reduction (L0)</h2>
+
+<p class="sub">Scope: L0 cross-HoldCo. Triggered when ≥ 2 HoldCos have CIO + CFO bundles loaded. Vendor consolidation + per-category Source spawns. Owned by Devon Sterling (L0 OP-Finance). ~20 artifacts.</p>
+
+<h3>Move 2 · Phase 0 — Setup load</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated Bundle Completeness Report</strong><br><span class="row-anchor">M2-P0-A01</span></td>
+      <td>Loader metadata across 3 HoldCos · <code>holding_group_id=lakeshore</code> aggregate</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>check</code>. Per-HoldCo per-bundle completeness; per-vendor field coverage (vendor name normalized? contract terms present? renewal date?).</td>
+      <td>Devon Sterling + L0 data steward</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Bundle metadata + per-field validation</td>
+      <td class="quality-bar">Report flags every missing field by HoldCo + bundle; doesn't let Move 2 proceed with insufficient data.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Vendor Master Normalization Output</strong><br><span class="row-anchor">M2-P0-A02</span></td>
+      <td>3-HoldCo <code>loader.cio.major_vendor_contracts</code> · <code>loader.cfo.banking_relationships</code> · <code>loader.gc.contract_index</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-VENDOR-NORMALIZATION-LLM</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>normalize</code>. LLM-driven vendor-name + category normalization. Outputs canonical vendor master with per-source-row mapping. HIL: L0 data steward acks edge cases.</td>
+      <td>L0 Data Steward (Procurement)</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-json">JSON</span></td>
+      <td>Per-source-row → canonical-vendor mapping log + normalization pattern</td>
+      <td class="quality-bar">No vendor appears under 2 canonical names; ambiguity cases flagged for human ack, not auto-resolved.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 2 · Phase 1 — Discovery</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Cross-HoldCo Spend Baseline</strong><br><span class="row-anchor">M2-P1-A01</span></td>
+      <td>M2-P0-A02 (Vendor Master) · 3-HoldCo contract data</td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>aggregate</code>. Per-canonical-vendor: 3-HoldCo spend rollup, renewal calendar, contract-term variance. Cites finserv-13/-20.</td>
+      <td>Devon Sterling</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-html">HTML</span></td>
+      <td>Vendor master + per-HoldCo spend rows + 2 finserv cites</td>
+      <td class="quality-bar">Devon can see the $32.9M+ consolidated spend pool by vendor with HoldCo-attribution; no double-counting.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Top-20 Vendor Category Opportunity Scorecard</strong><br><span class="row-anchor">M2-P1-A02</span></td>
+      <td>M2-P1-A01 (Spend Baseline) · <span class="pattern-id">CORPUS-FINSERV-13</span> · <span class="pattern-id">CORPUS-FINSERV-20</span> · <span class="pattern-id">CORPUS-PATTERN-PACK-VENDOR-RATIONALIZATION-SCORING</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>score</code>. Per category: consolidated spend, fragmentation index, renewal-window leverage, savings-range estimate. Top-20 ranked by addressable value.</td>
+      <td>Devon Sterling + L0 OP-Tech (Marcus Rhee, awareness)</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Spend baseline + 3 corpus cites</td>
+      <td class="quality-bar">Each category's savings range cites a specific benchmark (not generic %); ranking is reproducible.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Data Quality Scorecard (per HoldCo)</strong><br><span class="row-anchor">M2-P1-A03</span></td>
+      <td>M2-P0-A01 (Bundle Completeness) · vendor-master normalization log</td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>diagnose</code>. Per-HoldCo: data freshness, normalization confidence, missing fields. Sets expectations on which categories can be acted on vs need data improvement first.</td>
+      <td>Devon Sterling + per-HoldCo CFOs</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Bundle metadata + normalization log</td>
+      <td class="quality-bar">If a category is acted on, this scorecard certifies the underlying data was high-confidence.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 2 · Phase 2 — Strategy</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore 5-Year Cross-HoldCo Rationalization Strategy Memo</strong><br><span class="row-anchor">M2-P2-A01</span></td>
+      <td>M2-P1-A01..A03 · <span class="pattern-id">CORPUS-PATTERN-PACK-STRATEGY-MEMO-CANONICAL</span> · <span class="pattern-id">CORPUS-PATTERN-PACK-PROCUREMENT-WAVES</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>memo</code>. Wave 1 (Microsoft, Workday, KPMG, CrowdStrike), Wave 2 (smaller categories), addressable spend timeline, governance model. HIL: Devon + Marcus joint review.</td>
+      <td>Devon Sterling + Marcus Rhee (L0 OP-Tech)</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>3 P1 artifacts + 2 patterns</td>
+      <td class="quality-bar">L0 IC presents this as 5-year program; waves are sequenced honestly per renewal calendar.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Quarterly Rationalization Slate (Q-cycle artifact)</strong><br><span class="row-anchor">M2-P2-A02</span></td>
+      <td>M2-P2-A01 + telemetry on completed waves</td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>slate</code>. Each quarter: next-wave categories with upcoming renewals, pre-spawned Source events, decision asks. HIL: Devon authorizes Source spawns.</td>
+      <td>Devon Sterling</td>
+      <td><span class="tag tag-pdf">PDF</span></td>
+      <td>Strategy memo + execution telemetry</td>
+      <td class="quality-bar">L0 sponsor IC reviews quarterly; slate has no decision-blocking gaps.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 2 · Phase 3 — Architecture</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Spend Analytics Lakehouse Architecture</strong><br><span class="row-anchor">M2-P3-A01</span></td>
+      <td>3-HoldCo CIO bundles · <span class="pattern-id">CORPUS-PATTERN-PACK-DATA-LAKE-BRONZE-SILVER-GOLD</span> · <span class="pattern-id">CORPUS-PATTERN-PACK-VENDOR-NORMALIZATION-LLM</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Bronze (PortCo APs + contracts), Silver (normalized vendor master), Gold (rationalization opportunity ranker). Federated read pattern.</td>
+      <td>Marcus Rhee + 3 HoldCo CIOs (consulted)</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>3-HoldCo CIO bundles + 2 patterns</td>
+      <td class="quality-bar">3 HoldCo CIOs all accept the architecture as buildable in their stacks; sovereignty enforced at Silver.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Source Event Spawn — L-S02 Microsoft EA Federated Renegotiation</strong><br><span class="row-anchor">M2-P3-A02</span></td>
+      <td>M2-P1-A02 (Top-20 Scorecard) · 3 incumbent contracts · <span class="pattern-id">CORPUS-PATTERN-PACK-ENTERPRISE-LICENSE-NEGOTIATION</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>spawn</code>. Pre-fills 11-stage Source lifecycle stages 1-4 with: 3 incumbent contracts, enterprise-rate target, current renewal dates, technical scope inventory.</td>
+      <td>Devon Sterling + 3 HoldCo CIOs (CIOs are consulted, Devon authorizes)</td>
+      <td><span class="tag tag-json">JSON</span></td>
+      <td>Scorecard + 3 contract records + enterprise-license pattern</td>
+      <td class="quality-bar">Source event lands in Stage 5 with technical scope verifiably aggregated from 3 CIO bundles.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Source Event Spawn — L-S03 Workday Federation</strong><br><span class="row-anchor">M2-P3-A03</span></td>
+      <td>M2-P1-A02 · 3 incumbent contracts · Roosevelt rollout status · <span class="pattern-id">CORPUS-PATTERN-PACK-HCM-CONSOLIDATION</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>spawn</code>. Pre-fills with: 3 incumbent contracts, Roosevelt in-flight rollout context, single-MSA target.</td>
+      <td>Devon Sterling + 3 HoldCo CHROs (consulted)</td>
+      <td><span class="tag tag-json">JSON</span></td>
+      <td>Scorecard + 3 contracts + Roosevelt status + pattern</td>
+      <td class="quality-bar">CHROs accept the pre-fill as accurate; Roosevelt's in-flight rollout is correctly represented.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Source Event Spawn — L-S04 Big-4 Audit Federation</strong><br><span class="row-anchor">M2-P3-A04</span></td>
+      <td>3-HoldCo audit engagements · <span class="pattern-id">CORPUS-PATTERN-PACK-AUDIT-RFP-FEDERATED</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>spawn</code>. Pre-fills with: 3 KPMG engagements, scope standardization plan, 10-15% fee target.</td>
+      <td>Devon Sterling + 3 HoldCo CFOs + 3 Audit Cmtes</td>
+      <td><span class="tag tag-json">JSON</span></td>
+      <td>Audit engagements + pattern</td>
+      <td class="quality-bar">3 Audit Cmte chairs accept the federated scope without re-negotiation; engagement letters align.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Source Event Spawn — L-S05 Federated Cyber Insurance</strong><br><span class="row-anchor">M2-P3-A05</span></td>
+      <td>3-HoldCo insurance bundles · <span class="pattern-id">CORPUS-PATTERN-PACK-CYBER-INSURANCE-PROGRAM</span> · concentration risk artifact from Move 4</td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>spawn</code>. Two-carrier program design; pre-fills with: 3 incumbent policies, concentration risk thesis, target two-carrier program. Cross-Move (Move 2 + Move 4) origination.</td>
+      <td>L0 CCO (Priya Anand) + 3 HoldCo CISOs</td>
+      <td><span class="tag tag-json">JSON</span></td>
+      <td>Insurance bundles + concentration artifact + pattern</td>
+      <td class="quality-bar">CCO + CISOs accept the two-carrier program design; concentration thesis is documented honestly.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 2 · Phase 4 — Business case (per category)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Microsoft EA Consolidation Business Case</strong><br><span class="row-anchor">M2-P4-A01</span></td>
+      <td>L-S02 spawn payload · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Investment (legal, advisory, internal). Benefits: $1.0-1.4M annual range (per finserv-13). 3-yr NPV.</td>
+      <td>Devon Sterling + 3 HoldCo CIOs</td>
+      <td><span class="tag tag-xlsx">XLSX</span></td>
+      <td>L-S02 + canonical pattern</td>
+      <td class="quality-bar">Range is honest (not point estimate); investment includes legal/advisory honestly.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Workday Consolidation Business Case</strong><br><span class="row-anchor">M2-P4-A02</span></td>
+      <td>L-S03 spawn · canonical pattern</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Run-rate savings + Roosevelt implementation savings vs solo rollout.</td>
+      <td>Devon Sterling + 3 CHROs</td>
+      <td><span class="tag tag-xlsx">XLSX</span></td>
+      <td>L-S03 + canonical pattern</td>
+      <td class="quality-bar">Separates run-rate from one-time implementation savings; Roosevelt timing aligned.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Audit Firm Federation Business Case</strong><br><span class="row-anchor">M2-P4-A03</span></td>
+      <td>L-S04 spawn · canonical pattern</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Fee compression + scope-standardization efficiency. Independence/quality risk explicitly addressed.</td>
+      <td>Devon Sterling + 3 CFOs + Audit Cmtes</td>
+      <td><span class="tag tag-xlsx">XLSX</span></td>
+      <td>L-S04 + canonical pattern</td>
+      <td class="quality-bar">Audit Cmtes accept the independence framing; biz case isn't a fee-only argument.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Cyber Insurance Two-Carrier Business Case</strong><br><span class="row-anchor">M2-P4-A04</span></td>
+      <td>L-S05 spawn · canonical pattern · Move 4 concentration artifact</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Cost change + risk-concentration value of split. Honest about cost-increase risk if rates harden.</td>
+      <td>Priya Anand (L0 CCO) + CISOs</td>
+      <td><span class="tag tag-xlsx">XLSX</span></td>
+      <td>L-S05 + canonical pattern + concentration</td>
+      <td class="quality-bar">Carries both upside (risk reduction) and risk (rate hardening) honestly; CCO accepts framing.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 2 · Phase 5 — Mobilization</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Cross-HoldCo Rationalization 5-Year Mobilization Plan</strong><br><span class="row-anchor">M2-P5-A01</span></td>
+      <td>M2-P2-A01 (Strategy) · M2-P4-* (Biz Cases) · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. Quarterly slate cadence, per-category Source spawn timing tied to renewal calendar, per-HoldCo socialization, governance model.</td>
+      <td>Devon Sterling + 3 HoldCo CFOs awareness</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Strategy + 4 biz cases + canonical pattern</td>
+      <td class="quality-bar">L0 IC accepts the 5-year cadence; renewal-timing dependencies are explicit.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Per-Category Source Event Mobilization Briefs (×4)</strong><br><span class="row-anchor">M2-P5-A02..A05</span></td>
+      <td>L-S02..L-S05 spawns · per-category biz cases · Source 11-stage lifecycle</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>brief</code>. Per Source event: 90-day stage-by-stage plan; HoldCo CXO touchpoints; decision points.</td>
+      <td>Per-event: Devon Sterling + relevant HoldCo CXOs</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Spawn + biz case + Source lifecycle</td>
+      <td class="quality-bar">Procurement Lead can run the Source event from this brief; no missing decision points.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="footnote">Move 2 artifact count: 2 (P0) + 3 (P1) + 2 (P2) + 5 (P3 = arch + 4 spawns) + 4 (P4) + 5 (P5) = ~<strong>21 artifacts</strong>.</p>
+
+<h2>Section 6 · Move 3 — Federated IT Strategy (L0)</h2>
+
+<p class="sub">Scope: L0 cross-HoldCo. AI capability marketplace + modernization wave coordinator + federated AI governance. Owned by Marcus Rhee (L0 OP-Tech). ~15 artifacts.</p>
+
+<h3>Move 3 · Phase 0 — Setup load</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated IT Bundle Completeness</strong><br><span class="row-anchor">M3-P0-A01</span></td>
+      <td>3-HoldCo CIO bundles · cross-HoldCo grant log</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>check</code>. Per-HoldCo CIO bundle field coverage; AI roadmap field completeness; cloud footprint detail.</td>
+      <td>Marcus Rhee</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Bundle metadata</td>
+      <td class="quality-bar">Move 3 doesn't generate downstream artifacts until 3 CIO bundles are complete on AI roadmap fields.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 3 · Phase 1 — Discovery</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore AI Capability Marketplace Catalog</strong><br><span class="row-anchor">M3-P1-A01</span></td>
+      <td>3-HoldCo <code>loader.cio.ai_production_workloads</code> · 3-HoldCo <code>loader.cio.ai_pocs</code> · cross-HoldCo grants</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>catalog</code>. Per-workload card: business problem, model, data deps, realized impact, reusability rating. Grouped by reuse potential.</td>
+      <td>Marcus Rhee + 3 HoldCo CIOs</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>3-HoldCo loaded workloads + grants</td>
+      <td class="quality-bar">Browse-able by CIOs; reusability ratings cite Lakefront's deployment notes honestly (not inferred).</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Modernization Wave Map</strong><br><span class="row-anchor">M3-P1-A02</span></td>
+      <td>3-HoldCo CIO bundles (platforms in flight: Workday, Snowflake, Azure landing zone) · <span class="pattern-id">CORPUS-PATTERN-PACK-MODERNIZATION-WAVES</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>map</code>. Per-platform: which HoldCos in-flight, who's furthest along, federation opportunity score.</td>
+      <td>Marcus Rhee</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>3-HoldCo platform inventory + pattern</td>
+      <td class="quality-bar">Federation opportunities are sequenced by realistic timing (renewal/rollout windows), not aspirational.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Cloud Architecture Posture Comparison</strong><br><span class="row-anchor">M3-P1-A03</span></td>
+      <td>3-HoldCo <code>loader.cio.cloud_footprint</code> · 3-HoldCo <code>loader.cio.security_stack</code></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>compare</code>. Per-HoldCo: cloud share, landing-zone maturity, AI-readiness. Lakefront cited as reference.</td>
+      <td>Marcus Rhee + 3 CIOs</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>3-HoldCo cloud + security</td>
+      <td class="quality-bar">Each HoldCo CIO sees own posture vs Lakefront's mature posture without comparison being judgmental.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 3 · Phase 2 — Strategy</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated IT Strategy Memo</strong><br><span class="row-anchor">M3-P2-A01</span></td>
+      <td>M3-P1-A01..A03 · <span class="pattern-id">CORPUS-PATTERN-PACK-STRATEGY-MEMO-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>memo</code>. Three pillars: AI marketplace, modernization waves, federated cloud + AI governance. Lakefront cited as proof-point.</td>
+      <td>Marcus Rhee + L0 IC</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>3 P1 artifacts + canonical pattern</td>
+      <td class="quality-bar">L0 IC accepts; each pillar has named owner + 12-month milestones.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Federated AI Governance Framework</strong><br><span class="row-anchor">M3-P2-A02</span></td>
+      <td><code>loader.cio.ai_governance_state</code> (3 HoldCos) · <span class="pattern-id">CORPUS-PATTERN-PACK-AI-GOVERNANCE-FEDERATED</span> · <span class="pattern-id">CORPUS-FINSERV-16</span></td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>frame</code>. Risk tiers, HIL gate matrix, model registry standards, federated approval body. HIL: 3 CIOs + L0 CCO joint sign-off.</td>
+      <td>Marcus Rhee + Priya Anand + 3 HoldCo CIOs</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>3-HoldCo AI governance state + 2 patterns</td>
+      <td class="quality-bar">3 CIOs adopt this as their AI governance framework; CCO accepts compliance posture.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 3 · Phase 3 — Architecture</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated Landing Zone Reference Architecture</strong><br><span class="row-anchor">M3-P3-A01</span></td>
+      <td>Lakefront landing zone (M3-P1-A03 reference) · <span class="pattern-id">CORPUS-PATTERN-PACK-CLOUD-LANDING-ZONE</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Reference landing zone Morgan Street + Roosevelt can fork. Per-HoldCo customization points named.</td>
+      <td>Marcus Rhee + 3 CIOs</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Lakefront landing zone (with grant) + pattern</td>
+      <td class="quality-bar">Morgan Street and Roosevelt CIOs accept as fork-able; Lakefront IP attribution clean.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Source Event Spawn — L-S06 Federated Workday SI</strong><br><span class="row-anchor">M3-P3-A02</span></td>
+      <td>M3-P1-A02 (Wave Map) · Roosevelt rollout · Morgan Street Wave 2 · <span class="pattern-id">CORPUS-PATTERN-PACK-SI-RFP-PATTERN</span></td>
+      <td><span class="sentinel-agent">SentinelProcurement</span> · <code>spawn</code>. Pre-fills 11-stage Source with: 2-HoldCo demand, Lakefront SI reference, shared methodology requirements.</td>
+      <td>Marcus Rhee + Roosevelt CHRO + Morgan Street CIO</td>
+      <td><span class="tag tag-json">JSON</span></td>
+      <td>Wave Map + rollout statuses + pattern</td>
+      <td class="quality-bar">Source event lands in Stage 5 with 2-HoldCo demand verifiably aggregated; Lakefront reference is included as case study.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 3 · Phase 4 — Business case</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated IT Program Business Case</strong><br><span class="row-anchor">M3-P4-A01</span></td>
+      <td>M3-P2-A01..A02 · M3-P3-A01..A02 · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Three pillars cost + benefit. Honest separation of run-rate vs one-time, of measurable vs aspirational benefits.</td>
+      <td>Marcus Rhee + Devon Sterling + L0 IC</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Strategy + governance + arch + canonical pattern</td>
+      <td class="quality-bar">L0 IC accepts; aspirational benefits (capability sharing) are framed honestly with no false precision.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Federated Workday SI Business Case</strong><br><span class="row-anchor">M3-P4-A02</span></td>
+      <td>L-S06 spawn · canonical pattern</td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. 20-30% implementation savings vs solo (per pattern); Roosevelt + Morgan Street Wave 2 timing.</td>
+      <td>Marcus Rhee + Roosevelt CHRO + Morgan Street CIO</td>
+      <td><span class="tag tag-xlsx">XLSX</span></td>
+      <td>L-S06 + canonical pattern</td>
+      <td class="quality-bar">Range is honest; timing dependencies on Roosevelt's rollout cadence are explicit.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 3 · Phase 5 — Mobilization</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated IT 12-Month Mobilization Plan</strong><br><span class="row-anchor">M3-P5-A01</span></td>
+      <td>M3-P2-A01 · M3-P4-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. 12-month plan: marketplace launch, governance adoption, landing zone fork, quarterly operating review. RACI rollup.</td>
+      <td>Marcus Rhee + 3 CIOs + Priya Anand</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Strategy + biz case + canonical pattern</td>
+      <td class="quality-bar">PMO can execute against; 3 CIOs accept their R + A in RACI.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Quarterly Federated IT Operating Review (recurring)</strong><br><span class="row-anchor">M3-P5-A02</span></td>
+      <td>M3-P5-A01 cadence · Tower telemetry</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>review</code>. Quarterly pack: marketplace adoption, modernization wave progress, AI governance maturity, federated savings rollup.</td>
+      <td>Marcus Rhee + 3 CIOs</td>
+      <td><span class="tag tag-pdf">PDF</span></td>
+      <td>Plan + telemetry</td>
+      <td class="quality-bar">Operating review is no-surprise for 3 CIOs; status is true, not aspirational.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Federated Workday SI Mobilization Brief</strong><br><span class="row-anchor">M3-P5-A03</span></td>
+      <td>L-S06 spawn · M3-P4-A02 biz case · Source 11-stage lifecycle</td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>brief</code>. 90-day Source event execution plan; Roosevelt + Morgan Street + Lakefront touchpoints.</td>
+      <td>Marcus Rhee + Procurement Lead</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>L-S06 + biz case + Source lifecycle</td>
+      <td class="quality-bar">Procurement Lead runs from brief; HoldCo CHROs/CIOs know their touchpoints.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="footnote">Move 3 artifact count: 1 (P0) + 3 (P1) + 2 (P2) + 2 (P3) + 2 (P4) + 3 (P5) = <strong>~13 artifacts</strong> (slightly under the ~15 estimate; covers the surface fully).</p>
+
+<h2>Section 7 · Move 4 — Federated Risk + Governance (L0)</h2>
+
+<p class="sub">Scope: L0 cross-HoldCo. Concentration risk · cyber posture · CXO benchmarks · regulatory rollup. Owned by Priya Anand (L0 CCO). Auto-runs as bundles land; refreshed quarterly. ~12 artifacts.</p>
+
+<h3>Move 4 · Phase 0 — Setup load</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Risk Bundle Completeness Report</strong><br><span class="row-anchor">M4-P0-A01</span></td>
+      <td>3-HoldCo GC + CIO + CHRO bundles · regulatory inventory rows</td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>check</code>. Per-HoldCo: risk-relevant field coverage, regulatory framework coverage, contract index coverage.</td>
+      <td>Priya Anand</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>Bundle metadata</td>
+      <td class="quality-bar">Move 4 dashboards don't render concentration claims unless underlying data covers all 3 HoldCos.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 4 · Phase 1 — Discovery</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Concentration Risk Dashboard</strong><br><span class="row-anchor">M4-P1-A01</span></td>
+      <td>3-HoldCo <code>loader.cfo.audit_engagements</code> · <code>loader.gc.insurance_program</code> · <code>loader.cfo.banking_relationships</code> · <code>loader.cio.major_vendor_contracts</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-CONCENTRATION-RISK-MATRIX</span></td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>diagnose</code>. Per concentration type: HoldCo overlap, threshold check, trend. Auto-triggers Move 4 events when thresholds breached.</td>
+      <td>Priya Anand + L0 IC awareness</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>4 bundle sources + pattern</td>
+      <td class="quality-bar">Thresholds are documented (not arbitrary); trend is data-derived, not assumed.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Cyber Posture Federated Rollup</strong><br><span class="row-anchor">M4-P1-A02</span></td>
+      <td>3-HoldCo <code>loader.cio.security_stack</code> · <code>loader.gc.cyber_incidents</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-CYBER-POSTURE-FEDERATED</span></td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>rollup</code>. Per-HoldCo EDR/SIEM/IAM coverage; concentration callout (CrowdStrike all 3).</td>
+      <td>Priya Anand + 3 CISOs (Lena Hoffman, etc.)</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>3 security stack rows + cyber incidents + pattern</td>
+      <td class="quality-bar">CISOs accept the federated view; single-vendor concentrations are named explicitly.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore CXO Performance Benchmark Dashboard</strong><br><span class="row-anchor">M4-P1-A03</span></td>
+      <td>3-HoldCo CIO/CFO/CHRO bundles (comp + spend + FTE) · <span class="pattern-id">CORPUS-FINSERV-13</span> · <span class="pattern-id">CORPUS-PATTERN-PACK-CXO-BENCHMARK-P50-P90</span></td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>benchmark</code>. Per-CXO: cash comp vs P50/P90, IT spend % vs benchmark, AI maturity score, modernization debt index.</td>
+      <td>Priya Anand + Kenji Brooks (L0 Portfolio Ops Director)</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>3-HoldCo CXO + 1 finserv + 1 pattern</td>
+      <td class="quality-bar">L0 sees aggregate; HoldCo CXOs see own with peer benchmark; sovereignty preserved.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Federated Regulatory Inventory</strong><br><span class="row-anchor">M4-P1-A04</span></td>
+      <td>3-HoldCo <code>loader.gc.regulatory_inventory</code> · <span class="pattern-id">CORPUS-PATTERN-PACK-REGULATORY-ROLLUP</span></td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>rollup</code>. Per-jurisdiction + per-framework coverage across 3 HoldCos; gap detection for L0 IC reporting.</td>
+      <td>Priya Anand + 3 GCs</td>
+      <td><span class="tag tag-html">HTML</span></td>
+      <td>3-HoldCo regulatory + pattern</td>
+      <td class="quality-bar">3 GCs ack the federated view; gaps are flagged for L0 IC visibility honestly.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 4 · Phase 2 — Strategy</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated Risk + Governance Strategy Memo</strong><br><span class="row-anchor">M4-P2-A01</span></td>
+      <td>M4-P1-A01..A04 · <span class="pattern-id">CORPUS-PATTERN-PACK-STRATEGY-MEMO-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>memo</code>. Concentration action plan (split where indicated, accept where indicated), cyber program forward plan, CXO performance management, regulatory rollup cadence.</td>
+      <td>Priya Anand + L0 IC + 3 GCs</td>
+      <td><span class="tag tag-docx">DOCX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>4 P1 artifacts + canonical pattern</td>
+      <td class="quality-bar">L0 IC accepts; each risk has explicit accept-or-mitigate decision with rationale.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 4 · Phase 3 — Architecture</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Risk Telemetry Architecture</strong><br><span class="row-anchor">M4-P3-A01</span></td>
+      <td>M4-P1-A01..A04 · <span class="pattern-id">CORPUS-PATTERN-PACK-RISK-TELEMETRY-PIPELINE</span></td>
+      <td><span class="sentinel-agent">SentinelArchitect</span> · <code>design</code>. Bronze (per-HoldCo risk events), Silver (normalized risk taxonomy), Gold (concentration + trend), alerting layer.</td>
+      <td>Priya Anand + Marcus Rhee + 3 CIOs</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>4 P1 + pattern</td>
+      <td class="quality-bar">3 CIOs accept the data flow; alerts are tunable without redesign.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 4 · Phase 4 — Business case</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated Risk Program Business Case</strong><br><span class="row-anchor">M4-P4-A01</span></td>
+      <td>M4-P2-A01 · M4-P3-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelFinance</span> · <code>build</code>. Investment (telemetry, governance, GRC tooling). Benefits: probabilistic loss reduction (per concentration type) + compliance cost reduction.</td>
+      <td>Priya Anand + L0 IC</td>
+      <td><span class="tag tag-xlsx">XLSX</span><span class="tag tag-pdf">PDF</span></td>
+      <td>Strategy + arch + canonical pattern</td>
+      <td class="quality-bar">L0 IC accepts; loss-reduction is probabilistic and honest; not framed as guaranteed.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Move 4 · Phase 5 — Mobilization</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Artifact</th><th>Input source</th><th>Generation rule</th><th>Approval</th><th>Export</th><th>Evidence chain</th><th>Quality bar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Lakeshore Federated Risk 12-Month Mobilization Plan</strong><br><span class="row-anchor">M4-P5-A01</span></td>
+      <td>M4-P2-A01 · M4-P4-A01 · <span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td>
+      <td><span class="sentinel-agent">SentinelPortfolio</span> · <code>mobilize</code>. Telemetry build, governance adoption, quarterly risk operating review with 3 GCs.</td>
+      <td>Priya Anand + 3 GCs</td>
+      <td><span class="tag tag-docx">DOCX</span></td>
+      <td>Strategy + biz case + canonical pattern</td>
+      <td class="quality-bar">3 GCs accept R + A; CCO can run quarterly operating review from plan.</td>
+    </tr>
+    <tr>
+      <td><strong>Lakeshore Quarterly Federated Risk Report (recurring)</strong><br><span class="row-anchor">M4-P5-A02</span></td>
+      <td>M4-P1-A01..A04 telemetry refresh</td>
+      <td><span class="sentinel-agent">SentinelRisk</span> · <code>report</code>. Quarterly delta on concentration, cyber posture, CXO performance, regulatory inventory.</td>
+      <td>Priya Anand + L0 IC + 3 GCs</td>
+      <td><span class="tag tag-pdf">PDF</span></td>
+      <td>P1 artifacts + telemetry</td>
+      <td class="quality-bar">L0 IC accepts; trend is true; no aspirational improvements claimed without evidence.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="footnote">Move 4 artifact count: 1 (P0) + 4 (P1) + 1 (P2) + 1 (P3) + 1 (P4) + 2 (P5) = <strong>10 artifacts</strong> (close to the ~12 estimate; covers the surface).</p>
+
+<h2>Section 8 · Cross-Move shared artifacts (canonical templates)</h2>
+
+<p class="sub">Three pattern-setting artifacts referenced by every Move. The pattern-setter HTML files (07–10) are the visual realization; this section is the contract.</p>
+
+<h3>The canonical Strategy Memo (used in Phase 2 across all Moves)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Field</th><th>Spec</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Pattern ID</strong></td><td><span class="pattern-id">CORPUS-PATTERN-PACK-STRATEGY-MEMO-CANONICAL</span></td></tr>
+    <tr><td><strong>Sections</strong></td><td>1 · Problem statement (where pain is true today, cited) · 2 · Current state (loaded data summary, cited) · 3 · Target state (what good looks like, benchmark-cited) · 4 · The path (sequenced moves, dependencies named) · 5 · Investment ask (range, cited to rate-card model) · 6 · Timeline (foundation-before-AI, milestones named) · 7 · Risks + mitigations · 8 · Decisions requested</td></tr>
+    <tr><td><strong>Length</strong></td><td>6-8 pages, single-spaced. Not 30. Memo, not report.</td></tr>
+    <tr><td><strong>Visual fidelity reference</strong></td><td>Realized in Phase 2 sections of <code>07-kyriba-derisk-pattern-setter.html</code>, <code>08-cross-holdco-vendor-rationalization.html</code></td></tr>
+    <tr><td><strong>Quality bar</strong></td><td>The named CXO approver routes it directly to next-level governance without rewriting. No section reads as filler.</td></tr>
+    <tr><td><strong>Export</strong></td><td><span class="tag tag-docx">DOCX</span> primary · <span class="tag tag-pdf">PDF</span> for board-pack inclusion</td></tr>
+  </tbody>
+</table>
+
+<h3>The canonical Business Case (used in Phase 4 across all Moves)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Field</th><th>Spec</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Pattern ID</strong></td><td><span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span></td></tr>
+    <tr><td><strong>Sections</strong></td><td>1 · Investment summary (3-yr by category) · 2 · Benefits realization (3-yr · ramp curve · type: run-rate / one-time / risk-mitigation) · 3 · NPV + payback (bands, not points) · 4 · Sensitivity (which assumption drives most uncertainty) · 5 · Foundation-before-AI dependency (if applicable: blocked_until milestones) · 6 · Approval ask</td></tr>
+    <tr><td><strong>Engine</strong></td><td>Rate-card-driven estimation engine (named partner rates, internal FTE rates, vendor SOWs). Engine is shared across all Moves.</td></tr>
+    <tr><td><strong>Visual fidelity reference</strong></td><td><code>09-business-case-pattern-setter.html</code></td></tr>
+    <tr><td><strong>Quality bar</strong></td><td>CFO presents to IC without rebuilding. NPV bands are honest. Benefit-type classification is correct (no risk-mitigation framed as revenue).</td></tr>
+    <tr><td><strong>Export</strong></td><td><span class="tag tag-xlsx">XLSX</span> (model) + <span class="tag tag-pdf">PDF</span> (board pack)</td></tr>
+  </tbody>
+</table>
+
+<h3>The canonical Mobilization Plan (used in Phase 5 across all Moves)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Field</th><th>Spec</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Pattern ID</strong></td><td><span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td></tr>
+    <tr><td><strong>Sections</strong></td><td>1 · 30/60/90 milestones (per workstream) · 2 · RACI (per workstream × org row) · 3 · Foundation-before-AI sequencing (explicit blocked_until references) · 4 · Reporting cadence + ceremonies · 5 · Risk + escalation path · 6 · Decision points</td></tr>
+    <tr><td><strong>Engine</strong></td><td>Pulls foundation status from Move 0 telemetry for any AI-dependent capability. Refuses to mobilize blocked workstreams.</td></tr>
+    <tr><td><strong>Visual fidelity reference</strong></td><td><code>10-mobilization-pattern-setter.html</code></td></tr>
+    <tr><td><strong>Quality bar</strong></td><td>PMO can execute against the plan without further design. Every milestone has owner + date + acceptance threshold. blocked_until references resolve to real foundation artifacts.</td></tr>
+    <tr><td><strong>Export</strong></td><td><span class="tag tag-docx">DOCX</span> + <span class="tag tag-xlsx">XLSX</span> (workbook variant for ops PMO)</td></tr>
+  </tbody>
+</table>
+
+<h2>Section 9 · Source event spawn contracts</h2>
+
+<p class="sub">When a Move's Phase 3 Architecture concludes procurement is in scope, it spawns a Source event. The Source module redesign (<code>docs/build/source-design/</code>) owns the 11-stage lifecycle; this section defines exactly what the Move passes at spawn time, and which stages of that lifecycle land verifiably pre-filled.</p>
+
+<h3>The 11-stage Source lifecycle (canonical, from source-design)</h3>
+
+<p>For each spawn below, the legend shows which stages land pre-filled (blue) vs which start empty for the Source PMO to drive.</p>
+
+<div class="stage-grid">
+  <div class="stage prefilled">1 · Intake</div>
+  <div class="stage prefilled">2 · Sourcing Strategy</div>
+  <div class="stage prefilled">3 · Market Scan</div>
+  <div class="stage prefilled">4 · Rubric Build</div>
+  <div class="stage">5 · Long List</div>
+  <div class="stage">6 · RFP / Engagement</div>
+  <div class="stage">7 · Short List</div>
+  <div class="stage">8 · Diligence</div>
+  <div class="stage">9 · Negotiation</div>
+  <div class="stage">10 · Decision</div>
+  <div class="stage">11 · Award + Close</div>
+</div>
+
+<p class="footnote">Standard pre-fill: stages 1–4. Some spawns may pre-fill into Stage 5 (Long List) if the Move has named candidates; this is documented per-event below.</p>
+
+<h3>L-S01 · Morgan Street Banking Consolidation</h3>
+
+<div class="src-evt">
+  <h5>Spawn source: Move 0 · Phase 3 · Architecture (M0-P3-A02)</h5>
+  <div class="src-meta">HoldCo-scope · Morgan Street · Treasurer + Procurement own</div>
+  <table>
+    <tbody>
+      <tr><th>Stage 1 · Intake</th><td>Banking consolidation RFP. Owner: Aisha Vargas. Scope: 14 current banks → target 6 strategic. Driver: Move 0 G1 remediation + $2.8M fee compression. Pre-filled from M0-P1-G1-A02 Brief.</td></tr>
+      <tr><th>Stage 2 · Sourcing Strategy</th><td>Consolidate to 6: 4 incumbents H2H-ready + 2 new H2H-mandatory. Pre-filled from M0-P1-G1-A01 Matrix + M0-P1-G1-A02 Brief.</td></tr>
+      <tr><th>Stage 3 · Market Scan</th><td>Eligible H2H-capable banks meeting Morgan Street's geography + treasury depth needs. Pre-filled from corpus pattern FINSERV-08 + ABA H2H-capable bank list.</td></tr>
+      <tr><th>Stage 4 · Rubric Build</th><td>Criteria + weights: H2H technical (25%) + fee structure (25%) + treasury depth (20%) + FX (15%) + geography coverage (15%). Pre-filled from M0-P2-A01 Strategy memo.</td></tr>
+      <tr><th>Stages 5–11</th><td>Empty. Source PMO drives.</td></tr>
+    </tbody>
+  </table>
+  <p class="approval-line">Approver at spawn time: Aisha Vargas + Procurement Lead. Lands in Stage 5 (Long List).</p>
+</div>
+
+<h3>L-S02 · Microsoft EA Federated Renegotiation</h3>
+
+<div class="src-evt">
+  <h5>Spawn source: Move 2 · Phase 3 · Architecture (M2-P3-A02)</h5>
+  <div class="src-meta">L0-scope · 3 HoldCos · Devon Sterling owns · 3 CIOs consulted</div>
+  <table>
+    <tbody>
+      <tr><th>Stage 1 · Intake</th><td>Federated Microsoft EA renegotiation. Driver: $9.1M consolidated spend across 3 separate EAs. Pre-filled from M2-P1-A02 Scorecard.</td></tr>
+      <tr><th>Stage 2 · Sourcing Strategy</th><td>Consolidate to single federated EA at enterprise-rate tier. Pre-filled.</td></tr>
+      <tr><th>Stage 3 · Market Scan</th><td>Single-incumbent renegotiation (no replacement market scan beyond MS competitor benchmark for leverage).</td></tr>
+      <tr><th>Stage 4 · Rubric Build</th><td>Criteria: rate compression, term flexibility, M&amp;A clause, exit clause, audit rights. Pre-filled.</td></tr>
+      <tr><th>Stages 5–11</th><td>Empty. Source PMO + 3 CIOs co-drive.</td></tr>
+    </tbody>
+  </table>
+  <p class="approval-line">Approver at spawn time: Devon Sterling + 3 HoldCo CIOs awareness. Lands in Stage 5.</p>
+</div>
+
+<h3>L-S03 · Federated Workday Contract</h3>
+
+<div class="src-evt">
+  <h5>Spawn source: Move 2 · Phase 3 · Architecture (M2-P3-A03)</h5>
+  <div class="src-meta">L0-scope · 3 HoldCos · Devon Sterling owns · 3 CHROs consulted</div>
+  <table>
+    <tbody>
+      <tr><th>Stage 1 · Intake</th><td>Federated Workday MSA. Driver: $6.1M consolidated spend + Roosevelt in-flight rollout. Pre-filled.</td></tr>
+      <tr><th>Stage 2 · Sourcing Strategy</th><td>Single MSA + per-HoldCo SOWs. Pre-filled.</td></tr>
+      <tr><th>Stage 3 · Market Scan</th><td>Incumbent renegotiation; competitor benchmark (UKG, SAP SuccessFactors) for leverage.</td></tr>
+      <tr><th>Stage 4 · Rubric Build</th><td>Criteria: rate compression, modules coverage, SLA, implementation support discount, audit rights. Pre-filled.</td></tr>
+      <tr><th>Stages 5–11</th><td>Empty.</td></tr>
+    </tbody>
+  </table>
+  <p class="approval-line">Approver at spawn time: Devon Sterling + 3 CHROs. Lands in Stage 5.</p>
+</div>
+
+<h3>L-S04 · Big-4 Audit Federation</h3>
+
+<div class="src-evt">
+  <h5>Spawn source: Move 2 · Phase 3 · Architecture (M2-P3-A04)</h5>
+  <div class="src-meta">L0-scope · 3 HoldCos · Devon Sterling owns · 3 CFOs + Audit Cmtes consulted</div>
+  <table>
+    <tbody>
+      <tr><th>Stage 1 · Intake</th><td>Federated Big-4 audit RFP. Driver: KPMG across all 3, $5.4M, 10-15% fee compression target. Independence concerns noted.</td></tr>
+      <tr><th>Stage 2 · Sourcing Strategy</th><td>Federated RFP across 3 HoldCos; KPMG incumbent + competitive bids from other Big-4. Scope standardization. Pre-filled.</td></tr>
+      <tr><th>Stage 3 · Market Scan</th><td>4 Big-4 firms eligible; mid-market focused. Pre-filled.</td></tr>
+      <tr><th>Stage 4 · Rubric Build</th><td>Criteria: fee, team continuity, mid-market depth, technology platform, independence governance. Pre-filled.</td></tr>
+      <tr><th>Stages 5–11</th><td>Empty.</td></tr>
+    </tbody>
+  </table>
+  <p class="approval-line">Approver at spawn time: Devon Sterling + 3 Audit Cmte chairs. Lands in Stage 5.</p>
+</div>
+
+<h3>L-S05 · Cyber Insurance Two-Carrier Program</h3>
+
+<div class="src-evt">
+  <h5>Spawn source: Move 2 + Move 4 cross-Move spawn (M2-P3-A05)</h5>
+  <div class="src-meta">L0-scope · 3 HoldCos · Priya Anand (CCO) owns · 3 CISOs consulted</div>
+  <table>
+    <tbody>
+      <tr><th>Stage 1 · Intake</th><td>Federated cyber insurance program with two-carrier split. Driver: concentration risk (2 of 3 HoldCos same carrier) + premium leverage. Pre-filled from Move 4 M4-P1-A01.</td></tr>
+      <tr><th>Stage 2 · Sourcing Strategy</th><td>Two-carrier program with primary + excess layer split. Federated negotiation. Pre-filled.</td></tr>
+      <tr><th>Stage 3 · Market Scan</th><td>5-6 eligible cyber carriers. Pre-filled with broker-supplied carrier list.</td></tr>
+      <tr><th>Stage 4 · Rubric Build</th><td>Criteria: premium, limits, retention, sublimit structure, claims handling track record, panel counsel network. Pre-filled.</td></tr>
+      <tr><th>Stages 5–11</th><td>Empty. Broker engagement at Stage 6.</td></tr>
+    </tbody>
+  </table>
+  <p class="approval-line">Approver at spawn time: Priya Anand + 3 CISOs. Lands in Stage 5.</p>
+</div>
+
+<h3>L-S06 · Federated Workday SI</h3>
+
+<div class="src-evt">
+  <h5>Spawn source: Move 3 · Phase 3 · Architecture (M3-P3-A02)</h5>
+  <div class="src-meta">L0-scope · 2 active HoldCos (Roosevelt + Morgan Street) · Marcus Rhee owns · Lakefront as reference</div>
+  <table>
+    <tbody>
+      <tr><th>Stage 1 · Intake</th><td>Federated Workday SI for Roosevelt rollout + Morgan Street Wave 2 PortCo integrations. Driver: shared methodology + 20-30% implementation savings. Pre-filled.</td></tr>
+      <tr><th>Stage 2 · Sourcing Strategy</th><td>Single SI + shared methodology; Lakefront's SI as reference benchmark (not necessarily incumbent). Pre-filled.</td></tr>
+      <tr><th>Stage 3 · Market Scan</th><td>4-6 Workday-certified SIs at mid-market scale. Pre-filled from corpus + Workday partner directory.</td></tr>
+      <tr><th>Stage 4 · Rubric Build</th><td>Criteria: certification depth, mid-market track record, change methodology, rate, joint client references at Lakefront tier. Pre-filled.</td></tr>
+      <tr><th>Stages 5–11</th><td>Empty.</td></tr>
+    </tbody>
+  </table>
+  <p class="approval-line">Approver at spawn time: Marcus Rhee + Roosevelt CHRO + Morgan Street CIO. Lands in Stage 5.</p>
+</div>
+
+<h3>Source spawn contract — schema (the JSON payload Sentinel emits)</h3>
+
+<p>Every spawn produces a JSON payload conforming to the Source module's intake contract. Codex implementing a spawn must produce JSON of this shape; Source module redesign owns validation.</p>
+
+<table class="artifact-table">
+  <thead><tr><th>Field</th><th>Source</th><th>Required?</th></tr></thead>
+  <tbody>
+    <tr><td><code>event_id</code></td><td>Generated · format <code>L-S&lt;NN&gt;</code></td><td>Yes</td></tr>
+    <tr><td><code>holding_group_id</code></td><td>From tenant context</td><td>Yes</td></tr>
+    <tr><td><code>tenant_scope</code></td><td><code>holdco</code> for L-S01 · <code>federated</code> for L-S02..L-S06</td><td>Yes</td></tr>
+    <tr><td><code>spawning_move</code> + <code>spawning_phase</code> + <code>spawning_artifact_id</code></td><td>From context</td><td>Yes — required for evidence chain</td></tr>
+    <tr><td><code>stage_1.intake</code></td><td>Composed from Phase 3 Architecture artifact</td><td>Yes</td></tr>
+    <tr><td><code>stage_2.sourcing_strategy</code></td><td>Composed from Strategy memo (Phase 2)</td><td>Yes</td></tr>
+    <tr><td><code>stage_3.market_scan</code></td><td>Composed from corpus + spawning brief</td><td>Yes</td></tr>
+    <tr><td><code>stage_4.rubric</code></td><td>Composed from Strategy memo criteria</td><td>Yes</td></tr>
+    <tr><td><code>approvers[]</code></td><td>Per matrix in spine §11</td><td>Yes</td></tr>
+    <tr><td><code>evidence_chain[]</code></td><td>Inherits all spawning-Move chains</td><td>Yes</td></tr>
+    <tr><td><code>quality_bar</code></td><td>From spawning artifact</td><td>Yes</td></tr>
+    <tr><td><code>lands_in_stage</code></td><td>Default <code>5</code> (Long List)</td><td>Yes</td></tr>
+  </tbody>
+</table>
+
+<h2>Section 10 · Provenance + evidence chain rules</h2>
+
+<p class="sub">This section operationalizes locked rule 1: <strong>no claim without provenance</strong>. Every artifact's body text must thread back. Here are the rules, the failure modes, and three concrete worked examples.</p>
+
+<h3>Rules</h3>
+
+<div class="rule-block">
+  <div class="rule-num">A</div>
+  <h5>Every numeric claim cites a source</h5>
+  <p>Any number in artifact body (count, amount, percentage, ratio) must trace to: a loaded record (table.column.row), a corpus pattern's stated benchmark range, or a HIL-confirmed human input. No "approximately", no unsourced rounded numbers.</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">B</div>
+  <h5>Every recommendation cites a rationale chain</h5>
+  <p>"We recommend X" must be followed (in the evidence panel, not necessarily inline) by: the discovery finding that drove X + the pattern or benchmark that validates X as the right move + the foundation X depends on (if any).</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">C</div>
+  <h5>Cross-tenant cites carry grant logs</h5>
+  <p>Any claim in an L0 or cross-HoldCo artifact that uses a specific HoldCo's transaction-grain data carries the grant log entry that authorized the read. Without it, the claim is redacted to aggregate.</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">D</div>
+  <h5>"I don't know" is a valid Sentinel output</h5>
+  <p>If a claim would have no provenance, Sentinel emits "I need &lt;named input&gt; to answer this — please load it via &lt;named loader UI route&gt;". This is not a failure; it's the system honoring rule 1.</p>
+</div>
+
+<div class="rule-block">
+  <div class="rule-num">E</div>
+  <h5>Evidence panel is co-rendered, never optional</h5>
+  <p>Every artifact's UI renders an "evidence" panel showing the full chain. The panel is collapsible but never absent. Exported DOCX/PDF includes an appendix with the same chain in printed form.</p>
+</div>
+
+<h3>Failure modes (what gets caught in eval)</h3>
+
+<ul>
+  <li><strong>Unsourced number</strong> — fails CI eval (every artifact in seed produced and chain-walked)</li>
+  <li><strong>Pattern cited but inapplicable</strong> — eval checks pattern.applies_to matches artifact tenant + Move + phase</li>
+  <li><strong>Cross-tenant claim without grant</strong> — RLS prevents data access; chain validator confirms grant log timestamp pre-dates artifact</li>
+  <li><strong>Broken chain</strong> — referenced artifact ID doesn't resolve; eval fails</li>
+  <li><strong>Stale loader data</strong> — chain step shows loader record age &gt; configured freshness threshold; artifact downgraded to draft</li>
+</ul>
+
+<h3>Three worked examples</h3>
+
+<div class="provenance-example">
+  <p class="claim">Claim: "Morgan Street's bank rationalization to 6 strategic banks would unlock $2.8M annual fee compression."</p>
+  <div class="chain">
+    <div class="chain-step"><strong>Discovery finding:</strong> <code>loader.cfo.banking_relationships[tenant=morgan-street]</code> = 14 rows with per-bank annual fee totaling current spend</div>
+    <div class="chain-step"><strong>Benchmark:</strong> <span class="pattern-id">CORPUS-FINSERV-08</span> banking cost-to-income, mid-market rationalization range 18–22% on consolidated spend</div>
+    <div class="chain-step"><strong>Computation:</strong> $14.3M current consolidated banking fees × 20% midpoint = $2.86M (rounded to $2.8M, in-range claim)</div>
+    <div class="chain-step"><strong>HIL confirmation:</strong> <span class="human-step">HIL.kyriba-rollout-status</span> · Aisha Vargas confirmed 4 H2H-ready banks at 2026-06-04T14:22Z</div>
+    <div class="chain-step"><strong>Used in artifact:</strong> M0-P1-G1-A02 Bank Rationalization Brief (Move 0 · Phase 1 · G1)</div>
+    <div class="chain-step"><strong>Verdict:</strong> Chain resolves. Range cited honestly (point estimate within range; not the top of range).</div>
+  </div>
+</div>
+
+<div class="provenance-example">
+  <p class="claim">Claim: "Lakefront's deployed payment anomaly model achieves &lt;2% false-positive rate after 6 months of tuning."</p>
+  <div class="chain">
+    <div class="chain-step"><strong>Source:</strong> <code>loader.cio.ai_production_workloads[tenant=lakefront, workload=payment-anomaly]</code> · realized FPR field</div>
+    <div class="chain-step"><strong>Cross-tenant grant log:</strong> Yuki Ono (Lakefront CIO) granted Move 1 read on AI workload records at 2026-06-01T10:00Z (logged in <code>cross_tenant_grants</code>)</div>
+    <div class="chain-step"><strong>HIL confirmation:</strong> <span class="human-step">HIL.lakefront-grant</span> · Yuki Ono confirmed claim attribution before publication</div>
+    <div class="chain-step"><strong>Used in artifact:</strong> M1-P2-A01 AI Portfolio Memo · cited as case-study evidence</div>
+    <div class="chain-step"><strong>Verdict:</strong> Chain resolves. Cross-tenant grant present. Claim is attributed not generalized ("Lakefront's deployed model" not "models in general").</div>
+  </div>
+</div>
+
+<div class="provenance-example">
+  <p class="claim">Claim: "Microsoft EA federation across 3 HoldCos would yield $1.0–1.4M annual cost compression."</p>
+  <div class="chain">
+    <div class="chain-step"><strong>Discovery finding:</strong> <code>loader.cio.major_vendor_contracts[vendor=Microsoft EA]</code> across 3 HoldCos · $4.2M + $2.1M + $2.8M = $9.1M consolidated</div>
+    <div class="chain-step"><strong>Benchmark range:</strong> <span class="pattern-id">CORPUS-FINSERV-13</span> + <span class="pattern-id">CORPUS-FINSERV-20</span> + Gartner enterprise-rate-tier compression 11–15% on $9M+ consolidated EA spend</div>
+    <div class="chain-step"><strong>Computation:</strong> $9.1M × [11%, 15%] = [$1.0M, $1.4M] · output is a range (not a point) per rule A</div>
+    <div class="chain-step"><strong>Cross-tenant grant log:</strong> 3 HoldCo CIOs granted Move 2 read on major-vendor-contract data at separate timestamps (logged)</div>
+    <div class="chain-step"><strong>Used in artifact:</strong> M2-P1-A02 Top-20 Scorecard · M2-P4-A01 Biz Case · L-S02 Source spawn</div>
+    <div class="chain-step"><strong>Verdict:</strong> Chain resolves end-to-end. Range honest. Cross-tenant grants present. No double-counting (single Microsoft EA per HoldCo).</div>
+  </div>
+</div>
+
+<div class="horizontal-rule"></div>
+
+<h2>Appendix A · Tenant-to-CXO mapping reference</h2>
+
+<p class="sub">Every "Approval owner" cell in this document resolves through this mapping. When the loader UI ingests real customer data, the named CXOs change; this is the demo seed snapshot.</p>
+
+<h3>Lakeshore (L0)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Role</th><th>Named</th><th>Routes the approval queue for</th></tr></thead>
+  <tbody>
+    <tr><td>Managing Partner</td><td>Anya Korchnoi</td><td>L0 IC papers · all Move-level escalations · final go/no-go on cross-HoldCo program</td></tr>
+    <tr><td>Operating Partner — Technology</td><td>Marcus Rhee</td><td>Move 3 (Federated IT) · L-S02 · L-S06 · cross-HoldCo IT architecture · federated AI governance</td></tr>
+    <tr><td>Operating Partner — Finance</td><td>Devon Sterling</td><td>Move 2 (Cross-HoldCo cost reduction) · L-S02 · L-S03 · L-S04 · federated treasury</td></tr>
+    <tr><td>Chief Compliance Officer</td><td>Priya Anand</td><td>Move 4 (Federated risk) · L-S05 (with Move 2) · regulatory rollup</td></tr>
+    <tr><td>Portfolio Ops Director</td><td>Kenji Brooks</td><td>HoldCo operating reviews · CXO performance dashboards consumption · cross-HoldCo socialization</td></tr>
+  </tbody>
+</table>
+
+<h3>Morgan Street Holdings Chicago (L1)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Role</th><th>Named</th><th>Tenure / primary stack</th><th>Approves</th></tr></thead>
+  <tbody>
+    <tr><td>CEO</td><td>William Tanaka</td><td>6 yrs</td><td>HoldCo-level escalations · final on &gt;$10M HoldCo programs</td></tr>
+    <tr><td>CFO</td><td>Sarah Lindqvist</td><td>3 yrs · NetSuite OneWorld · Adaptive · Kyriba (rollout) · Concur</td><td>M0-P2-A02 (Strategy memo) · M0-P4-A01 (Business case) · M1-P2-A01 (AI portfolio) · M1-P4-* (per-cap biz cases) · all cross-Move biz cases at HoldCo</td></tr>
+    <tr><td>CIO</td><td>Daniel Okonkwo</td><td>2 yrs · MS 365 · Azure primary · Snowflake · Workday · ServiceNow</td><td>M0-P3-A01 (Treasury data plane) · M1-P3-* (per-cap architecture) · L-S07 (Lakehouse spawn) · landing zone fork</td></tr>
+    <tr><td>COO</td><td>Maya Patel</td><td>4 yrs · per-PortCo ERPs (NetSuite, Sage Intacct)</td><td>PortCo-touching operating decisions · consulted on Move 2 vendor consolidation</td></tr>
+    <tr><td>CHRO</td><td>Jonathan Reese</td><td>5 yrs · Workday · ADP (legacy) · 15Five · Lever</td><td>L-S03 (Workday federation) consult · CHRO bundle owner</td></tr>
+    <tr><td>Group Treasurer</td><td>Aisha Vargas</td><td>1 yr · hired for Kyriba rollout</td><td>All Move 0 gate artifacts · M0-P0-A01 (Status) · M0-P1-G1-A01 (Banking Matrix) · M0-P5-A01 (Mobilization) · L-S01 (Banking consolidation) · M1 capability foundations</td></tr>
+    <tr><td>General Counsel</td><td>Robert Mei</td><td>8 yrs · Ironclad · Diligent · LogicGate</td><td>GC bundle owner · M4-P1-A04 (Regulatory rollup) consult</td></tr>
+    <tr><td>CISO</td><td>Lena Hoffman</td><td>2 yrs · CrowdStrike · Okta · Sentinel · Rapid7</td><td>M1-P3-C2-A01 (Payment anomaly arch) · L-S05 (Cyber insurance) consult · M4-P1-A02 (Cyber posture) consult</td></tr>
+  </tbody>
+</table>
+
+<h3>Roosevelt Holdings Atlanta (L1)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Role</th><th>Named</th><th>Stack notes</th><th>Approves</th></tr></thead>
+  <tbody>
+    <tr><td>CFO</td><td>Priya Naidu</td><td>Sage Intacct · per-PortCo PMS</td><td>Roosevelt-scoped Move 0 + Move 1 (if Kyriba evaluation completes) · cross-HoldCo biz cases consult</td></tr>
+    <tr><td>CIO</td><td>Edward Park</td><td>Mixed Azure / AWS · no central data plane (PHI/HIPAA)</td><td>Roosevelt-scoped IT architecture · Move 3 marketplace consult · L-S02 / L-S06 consult</td></tr>
+    <tr><td>Group Treasurer</td><td>(open role)</td><td>—</td><td>Roosevelt Move 0 entry blocked until role filled (rule 5: no demo-only data)</td></tr>
+    <tr><td>CHRO</td><td>Rachel Donovan</td><td>Workday (rollout in flight) · BambooHR (legacy)</td><td>L-S03 (Workday federation) primary · L-S06 (Workday SI) consult</td></tr>
+  </tbody>
+</table>
+
+<h3>Lakefront Capital Boston (L1)</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Role</th><th>Named</th><th>Stack notes</th><th>Approves</th></tr></thead>
+  <tbody>
+    <tr><td>CFO</td><td>Marcus Andersen</td><td>NetSuite OneWorld · Kyriba (mature) · Adaptive</td><td>Lakefront-scoped artifacts · cross-HoldCo reference case attribution</td></tr>
+    <tr><td>CIO</td><td>Yuki Ono</td><td>AWS · Snowflake · Production AI workloads (3)</td><td>Cross-HoldCo grant authority on AI workload reads · M1-P0-A02 (Lakefront catalog) grant approver · M3-P3-A01 (Landing zone fork) attribution</td></tr>
+    <tr><td>Group Treasurer</td><td>Anil Kapoor</td><td>Kyriba power user · post-rollout AI extensions in flight</td><td>Lakefront treasury · case-study attribution for Cap 1 + Cap 2 + Cap 4 references</td></tr>
+    <tr><td>CHRO</td><td>Sophia Mendel</td><td>Workday (HoldCo + all PortCos)</td><td>L-S03 + L-S06 reference attribution</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix B · Sentinel agent roster (canonical)</h2>
+
+<p class="sub">Move 1 Capability 2 (Payment Anomaly) and all other AI-generated artifacts in this package run through one of these Sentinel agents. The agent named in any "Generation rule" cell resolves through this roster. The Sentinel orchestrator (see <code>project_sentinel_orchestrator.md</code> memory) routes work to the right agent.</p>
+
+<table class="artifact-table">
+  <thead><tr><th>Agent</th><th>Role mandate</th><th>Used in</th><th>Model roles</th></tr></thead>
+  <tbody>
+    <tr><td><span class="sentinel-agent">SentinelTreasury</span></td><td>Treasury workflows · cash forecasting · banking · Kyriba domain expertise</td><td>Move 0 (primary) · Move 1 Cap 1</td><td>diagnose · summarize · draft · memo · check</td></tr>
+    <tr><td><span class="sentinel-agent">SentinelFinance</span></td><td>Finance close · IC reconciliation · covenant analysis · business case modeling</td><td>Move 0 G6 · Move 1 Cap 3 + Cap 4 · all Phase 4 business cases</td><td>diagnose · assess · build · rollup</td></tr>
+    <tr><td><span class="sentinel-agent">SentinelArchitect</span></td><td>Data plane design · landing zone · MLOps · system integration</td><td>Move 0 G2 + G3 + Phase 3 · Move 1 Phase 3 (all capabilities) · Move 2 Phase 3 · Move 3 Phase 3 · Move 4 Phase 3</td><td>diagnose · design · plan · compare</td></tr>
+    <tr><td><span class="sentinel-agent">SentinelProcurement</span></td><td>Vendor normalization · category strategy · Source event spawn · RFP rubric construction</td><td>Move 2 (primary) · Move 0 Phase 3 spawn · Move 3 Phase 3 spawn · all L-S* Source events</td><td>normalize · aggregate · score · memo · slate · spawn</td></tr>
+    <tr><td><span class="sentinel-agent">SentinelRisk</span></td><td>Concentration analysis · cyber posture · governance frameworks · benchmarking</td><td>Move 1 Cap 2 (BEC) · Move 3 governance · Move 4 (primary)</td><td>diagnose · rollup · benchmark · frame · report</td></tr>
+    <tr><td><span class="sentinel-agent">SentinelPortfolio</span></td><td>Cross-Move orchestration · capability cataloging · mobilization · operating reviews</td><td>Move 1 Phase 5 · Move 3 (primary) · all Phase 5 mobilization · all Move-level rollups</td><td>catalog · map · rank · mobilize · brief · review · rollup</td></tr>
+  </tbody>
+</table>
+
+<p class="footnote">Specialist function-named agents behind these front agents (per <code>project_workflow_first_agents_hidden.md</code>): Sentinel-A1 (arithmetic checker · validates business case math), Sentinel-A2 (provenance walker · validates evidence chains), Sentinel-A3 (HIL gate enforcer · refuses to publish without HIL log), Sentinel-A4 (cross-tenant grant verifier), Sentinel-A5 (corpus pattern matcher · maps claim to applicable pattern), Sentinel-A6 (foundation-gate enforcer · blocks Move 1 artifacts until Move 0 G1–G4 green). These run as adjudicators in the pipeline; named agent owns user-facing output.</p>
+
+<h2>Appendix C · Loader table reference (the Input source vocabulary)</h2>
+
+<p class="sub">Every <code>loader.&lt;bundle&gt;.&lt;table&gt;</code> reference in this document resolves through this index. Each table maps to a specific section of <code>03-cxo-intel-loader-spec.html</code> (when that doc ships in Wave 1). Until then, this appendix is the authoritative table list.</p>
+
+<h3>CFO bundle</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Table</th><th>Key fields</th><th>Used by</th></tr></thead>
+  <tbody>
+    <tr><td><code>loader.cfo.banking_relationships</code></td><td>bank_name · services · fee_structure · h2h_ready · annual_fee · primary_currency · geography</td><td>M0 G1 · M2 spend baseline · M4 concentration</td></tr>
+    <tr><td><code>loader.cfo.kyriba_rollout</code></td><td>gate_id · gate_status · risk · target · acceptance_threshold</td><td>M0 P0 · M1 P0 foundation check</td></tr>
+    <tr><td><code>loader.cfo.treasury_workflows</code></td><td>workflow · system · frequency · owner</td><td>M0 P0</td></tr>
+    <tr><td><code>loader.cfo.gl_reconciliation_variances</code></td><td>day · account · gl_balance · kyriba_balance · variance</td><td>M0 G2</td></tr>
+    <tr><td><code>loader.cfo.ic_relationships</code></td><td>payer_entity · payee_entity · category · frequency · recon_method</td><td>M0 G3 + G6 · M1 C4</td></tr>
+    <tr><td><code>loader.cfo.ic_postings</code></td><td>month · payer · payee · amount · resolved_at · review_required</td><td>M0 G6 · M1 C4</td></tr>
+    <tr><td><code>loader.cfo.close_cycle_metrics</code></td><td>month · day_close · variance · breakdown_by_step</td><td>M0 G6 · M1 C4</td></tr>
+    <tr><td><code>loader.cfo.kyriba_user_roster</code></td><td>user · role · entity · persona</td><td>M0 G5</td></tr>
+    <tr><td><code>loader.cfo.kyriba_login_telemetry</code></td><td>user · day · login · workflow_used</td><td>M0 G5</td></tr>
+    <tr><td><code>loader.cfo.kyriba_positions</code></td><td>day · entity · currency · position · source_account</td><td>M1 C1</td></tr>
+    <tr><td><code>loader.cfo.outgoing_wires</code></td><td>wire_id · day · amount · payee · approver_chain · policy_class</td><td>M1 C2</td></tr>
+    <tr><td><code>loader.cfo.payment_policy</code></td><td>threshold · required_approver · hil_required · escalation</td><td>M1 C2</td></tr>
+    <tr><td><code>loader.cfo.debt_facilities</code></td><td>facility · principal · covenant_refs · maturity</td><td>M1 C3</td></tr>
+    <tr><td><code>loader.cfo.financial_forecasts</code></td><td>month · entity · metric · forecast_value · actual</td><td>M1 C3</td></tr>
+    <tr><td><code>loader.cfo.financial_forecast_model</code></td><td>model · driver · forecast_horizon · refresh_cadence</td><td>M1 C3 arch</td></tr>
+    <tr><td><code>loader.cfo.tax_jurisdictions</code></td><td>entity · jurisdiction · filing_obligation · tax_advisor</td><td>M0 G3</td></tr>
+    <tr><td><code>loader.cfo.audit_engagements</code></td><td>year · firm · scope · fee · partner_in_charge · renewal</td><td>M2 spend baseline · L-S04 · M4 concentration</td></tr>
+    <tr><td><code>loader.cfo.it_spend_breakdown</code></td><td>category · annual · run_grow_transform_pct</td><td>M0 P4 · M2 P1 · M4 benchmark</td></tr>
+  </tbody>
+</table>
+
+<h3>CIO bundle</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Table</th><th>Key fields</th><th>Used by</th></tr></thead>
+  <tbody>
+    <tr><td><code>loader.cio.application_inventory</code></td><td>name · vendor · category · criticality · owner · annual_cost · renewal_date</td><td>M0 P1 (treasury app) · M2 spend baseline · M3 marketplace</td></tr>
+    <tr><td><code>loader.cio.cloud_footprint</code></td><td>provider · workloads · annual_run_cost · landing_zone_state</td><td>M3 P1 architecture · M1 P3 architecture</td></tr>
+    <tr><td><code>loader.cio.major_vendor_contracts</code></td><td>vendor · category · annual · term · renewal · exit_clause</td><td>M2 (primary) · L-S02 · L-S06</td></tr>
+    <tr><td><code>loader.cio.ai_roadmap</code></td><td>use_case · status · owner · planned_quarter</td><td>M3 marketplace</td></tr>
+    <tr><td><code>loader.cio.ai_production_workloads</code></td><td>workload · business_problem · model · data_deps · realized_impact · reusability_rating</td><td>M1 P0 (Lakefront ref) · M3 P1 catalog</td></tr>
+    <tr><td><code>loader.cio.ai_pocs</code></td><td>poc · business_problem · status · model · owner</td><td>M3 P1 catalog</td></tr>
+    <tr><td><code>loader.cio.ai_governance_state</code></td><td>policy_present · ethics_committee · model_registry · risk_tier_taxonomy</td><td>M3 P2 governance</td></tr>
+    <tr><td><code>loader.cio.security_stack</code></td><td>edr · siem · iam · vendor · annual</td><td>M1 C2 · M4 P1 cyber rollup · L-S05</td></tr>
+    <tr><td><code>loader.cio.data_plane_inventory</code></td><td>system · purpose · source_systems · users</td><td>M0 P3 · M1 P3</td></tr>
+    <tr><td><code>loader.cio.it_org_chart</code></td><td>function · fte · contractor · offshore · location</td><td>M4 P1 CXO benchmark</td></tr>
+  </tbody>
+</table>
+
+<h3>COO bundle</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Table</th><th>Key fields</th><th>Used by</th></tr></thead>
+  <tbody>
+    <tr><td><code>loader.coo.operations_stack</code></td><td>portco · erp · mes · supply_chain · crm</td><td>M2 vendor consolidation · M3 marketplace</td></tr>
+    <tr><td><code>loader.coo.operating_kpis</code></td><td>portco · metric · period · value · benchmark</td><td>M4 P1 benchmark</td></tr>
+    <tr><td><code>loader.coo.outsourced_relationships</code></td><td>function · vendor · annual · scope</td><td>M2 spend baseline</td></tr>
+  </tbody>
+</table>
+
+<h3>CHRO bundle</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Table</th><th>Key fields</th><th>Used by</th></tr></thead>
+  <tbody>
+    <tr><td><code>loader.chro.hcm_stack</code></td><td>system · scope · annual · contract_term</td><td>L-S03 · L-S06 · M2 baseline</td></tr>
+    <tr><td><code>loader.chro.workforce_demographics</code></td><td>function · fte · contractor · geography · cash_comp_range</td><td>M4 P1 CXO benchmark</td></tr>
+    <tr><td><code>loader.chro.benefits_stack</code></td><td>line · broker · carrier · annual_premium</td><td>M2 spend baseline</td></tr>
+  </tbody>
+</table>
+
+<h3>GC / CCO bundle</h3>
+
+<table class="artifact-table">
+  <thead><tr><th>Table</th><th>Key fields</th><th>Used by</th></tr></thead>
+  <tbody>
+    <tr><td><code>loader.gc.contract_index</code></td><td>vendor · type · annual · term · renewal · exit · auto_renew</td><td>M2 spend baseline · L-S02..L-S05</td></tr>
+    <tr><td><code>loader.gc.regulatory_inventory</code></td><td>jurisdiction · framework · obligation · audit_cadence</td><td>M4 P1 regulatory rollup</td></tr>
+    <tr><td><code>loader.gc.litigation_pipeline</code></td><td>matter · status · exposure · accrual</td><td>M4 P1</td></tr>
+    <tr><td><code>loader.gc.entity_registry</code></td><td>entity · parent · jurisdiction · ownership_pct · ein</td><td>M0 G3 · IC mapping</td></tr>
+    <tr><td><code>loader.gc.insurance_program</code></td><td>line · carrier · broker · limit · premium · renewal</td><td>L-S05 · M4 concentration</td></tr>
+    <tr><td><code>loader.gc.covenant_agreements</code></td><td>facility · clause · metric · threshold · test_frequency</td><td>M1 C3</td></tr>
+    <tr><td><code>loader.gc.fraud_incidents</code></td><td>year · type · loss · payor · resolution</td><td>M1 C2</td></tr>
+    <tr><td><code>loader.gc.cyber_incidents</code></td><td>date · scope · severity · resolution · regulatory_notification</td><td>M4 P1 cyber rollup</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix D · Corpus pattern reference</h2>
+
+<p class="sub">Every <span class="pattern-id">CORPUS-*</span> reference resolves through this index. Patterns live in the loaded knowledge library; corpus IDs map to specific files under <code>scripts/knowledge-data/</code> or to entries in <code>docs/build/MODERNIZATION_PATTERN_PACK_INDUSTRY_PROFILES_2026-06-03.md</code>.</p>
+
+<table class="artifact-table">
+  <thead><tr><th>Pattern ID</th><th>Source</th><th>Used in</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pattern-id">CORPUS-FINSERV-07</span></td><td><code>scripts/knowledge-data/finserv/07-*.txt</code> — close-cycle benchmarks</td><td>M0 G2 · M0 P4 · M1 C4</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-FINSERV-08</span></td><td><code>scripts/knowledge-data/finserv/08-*.txt</code> — banking cost-to-income</td><td>M0 G1 · M0 P4 · M2 baseline</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-FINSERV-13</span></td><td><code>scripts/knowledge-data/finserv/13-*.txt</code> — IT spend mid-market</td><td>M0 G1 · M2 baseline · M4 CXO benchmark · provenance example 3</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-FINSERV-14</span></td><td><code>scripts/knowledge-data/finserv/14-*.txt</code> — treasury operating model</td><td>M0 P0 · M0 P2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-FINSERV-16</span></td><td><code>scripts/knowledge-data/finserv/16-*.txt</code> — change management</td><td>M0 G5 · M0 P5 · M3 P2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-FINSERV-17</span></td><td><code>scripts/knowledge-data/finserv/17-*.txt</code> — BEC loss benchmarks</td><td>M1 C2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-FINSERV-20</span></td><td><code>scripts/knowledge-data/finserv/20-*.txt</code> — vendor landscape</td><td>M0 G1 · M2 baseline · provenance example 3</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-PLATFORM-ROLLOUT-DERISK</span></td><td>Modernization Pattern Pack · platform rollout canonical</td><td>M0 P2 (sets the whole 6-gate canonical)</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-FINANCE-CLOSE-ACCEL</span></td><td>Modernization Pattern Pack · finance close acceleration</td><td>M0 G2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-IC-RECON</span></td><td>Modernization Pattern Pack · IC reconciliation</td><td>M0 G3 · M0 G6 · M1 C4</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-DATA-LAKE-BRONZE-SILVER-GOLD</span></td><td>Modernization Pattern Pack · lakehouse architecture</td><td>M0 G4 · M0 P3 · M2 P3 · M1 P3</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-CASH-FORECAST-12W</span></td><td>Modernization Pattern Pack · 12-week cash forecast</td><td>M1 C1</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-PAYMENT-ANOMALY</span></td><td>Modernization Pattern Pack · payment anomaly</td><td>M1 C2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-COVENANT-FORECASTING</span></td><td>Modernization Pattern Pack · covenant headroom forecast</td><td>M1 C3</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-TRANSFORMER-MATCH</span></td><td>Modernization Pattern Pack · transformer-based matching</td><td>M1 C4</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-MLOPS-MODEL-REGISTRY</span></td><td>Modernization Pattern Pack · MLOps model registry</td><td>M1 P3 (all caps)</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-STRATEGY-MEMO-CANONICAL</span></td><td>This package · Section 8 spec</td><td>All Move Phase 2 strategy memos</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-BIZ-CASE-CANONICAL</span></td><td>This package · Section 8 spec · realized in 09-business-case-pattern-setter.html</td><td>All Move Phase 4 business cases</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-MOBILIZATION-CANONICAL</span></td><td>This package · Section 8 spec · realized in 10-mobilization-pattern-setter.html</td><td>All Move Phase 5 mobilization plans</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-VENDOR-NORMALIZATION-LLM</span></td><td>Modernization Pattern Pack · LLM-driven vendor master</td><td>M2 P0</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-VENDOR-RATIONALIZATION-SCORING</span></td><td>Modernization Pattern Pack · category scoring</td><td>M2 P1</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-PROCUREMENT-WAVES</span></td><td>Modernization Pattern Pack · procurement wave sequencing</td><td>M2 P2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-ENTERPRISE-LICENSE-NEGOTIATION</span></td><td>Modernization Pattern Pack · enterprise SW negotiation</td><td>L-S02</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-HCM-CONSOLIDATION</span></td><td>Modernization Pattern Pack · HCM consolidation</td><td>L-S03</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-AUDIT-RFP-FEDERATED</span></td><td>Modernization Pattern Pack · federated audit RFP</td><td>L-S04</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-CYBER-INSURANCE-PROGRAM</span></td><td>Modernization Pattern Pack · cyber insurance program design</td><td>L-S05</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-SI-RFP-PATTERN</span></td><td>Modernization Pattern Pack · SI selection RFP</td><td>L-S06</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-MODERNIZATION-WAVES</span></td><td>Modernization Pattern Pack · platform modernization waves</td><td>M3 P1</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-CLOUD-LANDING-ZONE</span></td><td>Modernization Pattern Pack · cloud landing zone reference</td><td>M3 P3</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-AI-GOVERNANCE-FEDERATED</span></td><td>Modernization Pattern Pack · federated AI governance</td><td>M3 P2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-AI-PORTFOLIO-RANKING</span></td><td>Modernization Pattern Pack · AI use case ranking</td><td>M1 P2</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-CONCENTRATION-RISK-MATRIX</span></td><td>Modernization Pattern Pack · concentration risk taxonomy</td><td>M4 P1</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-CYBER-POSTURE-FEDERATED</span></td><td>Modernization Pattern Pack · federated cyber rollup</td><td>M4 P1</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-CXO-BENCHMARK-P50-P90</span></td><td>Modernization Pattern Pack · CXO benchmark methodology</td><td>M4 P1</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-REGULATORY-ROLLUP</span></td><td>Modernization Pattern Pack · regulatory inventory rollup</td><td>M4 P1</td></tr>
+    <tr><td><span class="pattern-id">CORPUS-PATTERN-PACK-RISK-TELEMETRY-PIPELINE</span></td><td>Modernization Pattern Pack · risk telemetry architecture</td><td>M4 P3</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix E · Human-in-the-loop (HIL) prompt registry</h2>
+
+<p class="sub">Every <span class="human-step">HIL.*</span> reference in this document resolves through this registry. Each HIL prompt has a named owner who must confirm before Sentinel finalizes the artifact. Confirmations are logged with timestamp and feed the evidence chain.</p>
+
+<table class="artifact-table">
+  <thead><tr><th>HIL prompt</th><th>Confirmation owner</th><th>What's confirmed</th><th>Used in</th></tr></thead>
+  <tbody>
+    <tr><td><span class="human-step">HIL.kyriba-rollout-status</span></td><td>Aisha Vargas (Morgan Street Treasurer)</td><td>Current 6-gate status; per-bank H2H state; per-PortCo IC mapping state</td><td>M0 P0 + G1 + G3 (Morgan Street)</td></tr>
+    <tr><td><span class="human-step">HIL.gate-status-confirm</span></td><td>Per-gate owner (Treasurer · Controller · Treasury Analytics)</td><td>Sentinel-inferred gate status pre-publish</td><td>M0 P0 status snapshot</td></tr>
+    <tr><td><span class="human-step">HIL.feed-architecture-walkthrough</span></td><td>Morgan Street Controller</td><td>NetSuite → Kyriba mapping; per-account variance root cause</td><td>M0 G2</td></tr>
+    <tr><td><span class="human-step">HIL.entity-tree-confirm</span></td><td>Morgan Street Controller + Tax Director (dual)</td><td>Canonical entity tree before publish</td><td>M0 G3</td></tr>
+    <tr><td><span class="human-step">HIL.persona-mapping</span></td><td>Aisha Vargas</td><td>Kyriba user roster persona mapping</td><td>M0 G5</td></tr>
+    <tr><td><span class="human-step">HIL.lakefront-grant</span></td><td>Yuki Ono (Lakefront CIO)</td><td>Cross-tenant grant on AI workload records · case-study attribution</td><td>M1 P0 + M1 P2</td></tr>
+    <tr><td><span class="human-step">HIL.confirm-lakehouse-spawn</span></td><td>Daniel Okonkwo (Morgan Street CIO)</td><td>Whether M1 collectively requires Databricks lakehouse → L-S07 Source spawn</td><td>M1 P3</td></tr>
+  </tbody>
+</table>
+
+<p class="footnote">HIL prompts are not the only human touchpoints; every approval owner cell in the artifact tables is also a human gate. HIL prompts specifically capture the pre-finalization confirmation that lets Sentinel proceed; approvals are post-finalization sign-off on the produced artifact.</p>
+
+<h2>Appendix F · Tower L0 surface mapping</h2>
+
+<p class="sub">The L0 Tower Federated tab (specified in <code>06-tower-federated-command-center.html</code>) consumes artifacts from this spec. This appendix maps each Tower widget to the artifacts feeding it. Codex implementing Tower (Wave 1 spec L04, Wave 2 spec L07, Wave 4 spec L16) reads this appendix.</p>
+
+<table class="artifact-table">
+  <thead><tr><th>Tower widget</th><th>Source artifacts</th><th>Refresh cadence</th></tr></thead>
+  <tbody>
+    <tr><td>Portfolio rollup strip · per-HoldCo active Moves + phase + value at stake</td><td>M0..M4 phase telemetry across 3 HoldCos · M0-P5-A02 closeout · M1-P5-A05 portfolio mobilization · M2-P2-A02 quarterly slate · M3-P5-A02 quarterly operating review · M4-P5-A02 quarterly risk report</td><td>Real-time</td></tr>
+    <tr><td>Cross-HoldCo opportunities surfaced this week</td><td>M2-P1-A02 (Top-20 scorecard) refresh diff · M3-P1-A02 (modernization wave map) refresh diff · M4-P1-A01 (concentration dashboard) threshold crossings</td><td>Daily</td></tr>
+    <tr><td>Federated savings ledger · projected vs realized</td><td>M2-P4-A01..A04 (per-category biz cases · projected) + M2 Source event award outcomes (realized) · M0-P4-A01 + M0 telemetry (Move 0 projected vs realized) · M1-P4-* (per-cap biz cases)</td><td>Real-time on award · weekly aggregate</td></tr>
+    <tr><td>CXO performance dashboards · per HoldCo CXO</td><td>M4-P1-A03 (CXO benchmark dashboard) · L0 sees aggregate, HoldCo CXOs see own with peer benchmark</td><td>Quarterly</td></tr>
+    <tr><td>Risk concentration trend · time series</td><td>M4-P1-A01 (concentration risk) · M4-P1-A02 (cyber posture) snapshots over time</td><td>Daily</td></tr>
+    <tr><td>Capability marketplace · production AI workloads cataloged</td><td>M3-P1-A01 (AI Capability Marketplace Catalog) · cross-tenant grants required for full data</td><td>Real-time on new workload load · daily browse</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix G · Acceptance test catalog (CI integration)</h2>
+
+<p class="sub">Each quality bar in the artifact tables becomes a tagged CI eval. When the demo seed is loaded, the harness generates each artifact and tests its quality bar. Build fails if any artifact fails. This is how rule 3 (no fake completion) is enforced at CI.</p>
+
+<table class="artifact-table">
+  <thead><tr><th>Test class</th><th>What it checks</th><th>Applied to</th></tr></thead>
+  <tbody>
+    <tr><td><code>eval.artifact.provenance_walk</code></td><td>Every numeric claim in artifact body resolves to a loaded record or corpus pattern</td><td>Every artifact</td></tr>
+    <tr><td><code>eval.artifact.range_honest</code></td><td>Where a benchmark range is cited, output is a range not point estimate</td><td>All Phase 4 business cases · all rationalization claims</td></tr>
+    <tr><td><code>eval.artifact.foundation_gate</code></td><td>Move 1 artifacts honor foundation block; refuse to render if Move 0 G1-G4 not green</td><td>All Move 1 artifacts</td></tr>
+    <tr><td><code>eval.artifact.cross_tenant_grant</code></td><td>Cross-tenant claims carry timestamped grant log entries</td><td>All L0 artifacts · all cross-HoldCo references</td></tr>
+    <tr><td><code>eval.artifact.hil_log</code></td><td>HIL prompts have logged confirmations before artifact moves from draft to final</td><td>All artifacts referencing HIL.*</td></tr>
+    <tr><td><code>eval.artifact.named_specific</code></td><td>Artifact name follows tenant-subject-type pattern; no "the strategy doc" outputs</td><td>Every artifact</td></tr>
+    <tr><td><code>eval.artifact.export_format</code></td><td>Export endpoint produces a valid file of the specified format</td><td>Every artifact</td></tr>
+    <tr><td><code>eval.artifact.refuse_no_data</code></td><td>Sentinel emits "I need X" when no provenance is available, not a plausible guess</td><td>All Phase 1 discovery artifacts</td></tr>
+    <tr><td><code>eval.spawn.source_lifecycle_prefill</code></td><td>Spawned Source event lands in Stage 5 with Stages 1-4 verifiably pre-filled</td><td>L-S01..L-S06</td></tr>
+    <tr><td><code>eval.tower.aggregate_only</code></td><td>L0 Tower widgets render aggregate; transaction-grain requires explicit grant</td><td>All Tower widgets</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix H · Wave-by-Wave artifact-to-spec mapping</h2>
+
+<p class="sub">The Codex Wave plan in <code>02-demo-spine-architecture.html §13</code> identifies Wave 1 specs L01..L04, Wave 2 specs L05..L08, Wave 3 specs L09..L13, Wave 4 specs L14..L17. This appendix names which artifacts each spec must implement.</p>
+
+<table class="artifact-table">
+  <thead><tr><th>Wave</th><th>Spec</th><th>Artifacts implemented</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>L01 · Holding-group tenancy substrate</td><td>No artifacts directly · enables RLS for cross-HoldCo artifacts in later waves</td></tr>
+    <tr><td>1</td><td>L02 · CXO loader UI (CIO + CFO bundles)</td><td>All CFO + CIO loader tables (Appendix C); enables M0 P0, M2 P0, M3 P0</td></tr>
+    <tr><td>1</td><td>L03 · Move 0 page (6-gate canvas)</td><td>M0-P0-A01..A03 · M0-P1-G1-A01..G6-A01 · the gate canvas itself</td></tr>
+    <tr><td>1</td><td>L04 · Tower Federated tab scaffold</td><td>Empty shell; Appendix F widget mounts</td></tr>
+    <tr><td>2</td><td>L05 · Move 0 per-gate artifacts</td><td>M0-P1-G1-A02 (Brief) · M0-P1-G2-A02 (Feed remediation plan) · M0-P1-G3-A02 (IC mapping) · M0-P1-G4-A01 (Position reconstruction) · M0-P1-G5-A01 (Adoption scorecard) · M0-P1-G6-A01 (IC auto-recon assessment)</td></tr>
+    <tr><td>2</td><td>L06 · Move 2 cross-HoldCo vendor page</td><td>M2-P0-A02 (Vendor master) · M2-P1-A01..A03 · M2-P3-A01 (Spend analytics arch)</td></tr>
+    <tr><td>2</td><td>L07 · Cross-HoldCo opportunity ranker</td><td>M2-P1-A02 (Top-20 scorecard) consumption · Tower "opportunities this week" widget</td></tr>
+    <tr><td>2</td><td>L08 · CXO loader (COO + CHRO + GC)</td><td>COO + CHRO + GC loader tables (Appendix C)</td></tr>
+    <tr><td>3</td><td>L09 · Move 1 page + 4 capabilities</td><td>M1-P0-A01..A02 · M1-P1-C1..C4-A01 · M1-P2-A01 · M1-P3-C1..C4-A01 · M1-P4-C1..C4-A01 + M1-P4-A05 · M1-P5-C1..C4-A01 + M1-P5-A05</td></tr>
+    <tr><td>3</td><td>L10 · Move 3 federated IT strategy</td><td>M3-P0-A01 · M3-P1-A01..A03 · M3-P2-A01..A02 · M3-P3-A01 · M3-P5-A01..A02</td></tr>
+    <tr><td>3</td><td>L11 · Move 4 federated risk</td><td>M4-P0-A01 · M4-P1-A01..A04 · M4-P2-A01 · M4-P3-A01 · M4-P5-A01..A02</td></tr>
+    <tr><td>3</td><td>L12 · Business case pattern setter</td><td>Section 8 canonical biz case · all Phase 4 outputs adopt this</td></tr>
+    <tr><td>3</td><td>L13 · Mobilization pattern setter</td><td>Section 8 canonical mobilization · all Phase 5 outputs adopt this</td></tr>
+    <tr><td>4</td><td>L14 · Source spawn from Move 1 Phase 3</td><td>M1-P3-A05 (L-S07 Databricks lakehouse · conditional)</td></tr>
+    <tr><td>4</td><td>L15 · Source spawns from Move 2</td><td>M2-P3-A02..A05 (L-S02..L-S05) · L-S06 from M3-P3-A02 · L-S01 from M0-P3-A02</td></tr>
+    <tr><td>4</td><td>L16 · Federated savings ledger</td><td>Tower widget consuming biz case + telemetry across Moves</td></tr>
+    <tr><td>4</td><td>L17 · CXO performance dashboards</td><td>M4-P1-A03 consumption in Tower</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix I · Codex implementation checklist (per artifact)</h2>
+
+<p class="sub">When picking up any artifact contract, Codex confirms the following checklist before claiming the artifact "ready". This list is the operationalization of every artifact row in Sections 3-7.</p>
+
+<ol>
+  <li><strong>Surface route exists.</strong> The artifact has a named app route (e.g., <code>/moves/move-0/morgan-street/g1/banking-matrix</code>) and a named approval route (e.g., the same path + <code>/approve</code>).</li>
+  <li><strong>Input loader wired.</strong> Every <code>loader.&lt;bundle&gt;.&lt;table&gt;</code> referenced resolves to a real query against the data plane; missing tables raise a typed error, not silent empty results.</li>
+  <li><strong>Sentinel agent invoked.</strong> The named <span class="sentinel-agent">SentinelAgent</span> is invoked with the specified model role; the agent's prompt template references the specified corpus patterns.</li>
+  <li><strong>HIL prompt rendered (where applicable).</strong> Each HIL prompt has a UI surface; HIL confirmation is logged to the evidence chain table; the artifact cannot move from draft to final without HIL completion.</li>
+  <li><strong>Approval route wired.</strong> Approval routes to the named CXO; CXO identity comes from the tenant context (not hardcoded); approval is logged with timestamp.</li>
+  <li><strong>Export endpoint produces correct format.</strong> Endpoint produces the specified format (DOCX/PDF/HTML/XLSX/JSON); a CI test asserts file produces and validates.</li>
+  <li><strong>Evidence chain panel renders.</strong> Every artifact UI exposes the evidence chain panel; each cited loader record + corpus pattern + HIL prompt is clickable and resolves.</li>
+  <li><strong>Quality bar test passes.</strong> A tagged CI eval (see Appendix G) runs the artifact against the demo seed and validates the quality bar; failure breaks the build.</li>
+  <li><strong>Foundation gate honored.</strong> If the artifact depends on a Move 0 foundation (Move 1 artifacts), Sentinel refuses to generate the artifact when the foundation gate is not green.</li>
+  <li><strong>Cross-tenant sovereignty enforced.</strong> If the artifact references HoldCo-other-than-self data, the cross-tenant grant log is checked before render; absent grants downgrade the artifact to aggregate-only.</li>
+  <li><strong>Refresh + freshness semantics implemented.</strong> Each artifact has a defined refresh cadence (real-time / daily / weekly / quarterly); stale loader records (older than configured threshold) downgrade artifact to draft.</li>
+  <li><strong>Source spawn JSON conforms (where applicable).</strong> Spawn artifacts produce JSON validating against the Source module's intake schema (see §9 spawn schema). The Source module accepts the payload and lands the event in Stage 5.</li>
+</ol>
+
+<h2>Appendix J · Per-Move Sentinel agent ownership summary</h2>
+
+<table class="artifact-table">
+  <thead><tr><th>Move</th><th>Primary front agent</th><th>Specialist support</th></tr></thead>
+  <tbody>
+    <tr><td>Move 0 — Kyriba De-Risk</td><td><span class="sentinel-agent">SentinelTreasury</span></td><td>SentinelArchitect (G2/G3/G4/P3) · SentinelProcurement (P3 L-S01 spawn) · SentinelFinance (G6 + P4 biz case) · SentinelPortfolio (P5 mobilization)</td></tr>
+    <tr><td>Move 1 — AI on top of Kyriba</td><td><span class="sentinel-agent">SentinelPortfolio</span></td><td>SentinelTreasury (P0/P1 cap 1) · SentinelRisk (Cap 2) · SentinelFinance (Cap 3, Cap 4, all biz cases) · SentinelArchitect (P3 architecture)</td></tr>
+    <tr><td>Move 2 — Cross-HoldCo Cost Reduction</td><td><span class="sentinel-agent">SentinelProcurement</span></td><td>SentinelArchitect (P3 lakehouse) · SentinelFinance (P4 biz cases) · SentinelPortfolio (P5 mobilization)</td></tr>
+    <tr><td>Move 3 — Federated IT Strategy</td><td><span class="sentinel-agent">SentinelPortfolio</span></td><td>SentinelArchitect (P3 landing zone) · SentinelRisk (governance) · SentinelProcurement (L-S06 spawn) · SentinelFinance (P4)</td></tr>
+    <tr><td>Move 4 — Federated Risk + Governance</td><td><span class="sentinel-agent">SentinelRisk</span></td><td>SentinelArchitect (P3 telemetry) · SentinelFinance (P4) · SentinelPortfolio (P5)</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix K · Glossary</h2>
+
+<dl style="background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 22px; font-size: 13px;">
+  <dt style="font-weight: 600; margin-top: 8px;">L0 / L1 / L2</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">L0 = sponsor (Lakeshore) · L1 = HoldCo (Morgan Street, Roosevelt, Lakefront) · L2 = PortCo (24 underlying companies)</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">HoldCo</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Holding company; L1 tenant in this demo</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">PortCo</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Portfolio company owned by an L1 HoldCo</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Move</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Workflow-anchored AI strategy track. Five canonical Moves in this demo: M0 Kyriba De-Risk, M1 AI on top of Kyriba, M2 Cross-HoldCo Cost Reduction, M3 Federated IT Strategy, M4 Federated Risk + Governance</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Phase (P0..P5)</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Each Move runs through phases: P0 Setup load, P1 Discovery, P2 Strategy, P3 Architecture, P4 Business case, P5 Mobilization</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Gate (G1..G6)</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Move 0 specific: the six platform-rollout de-risk gates (Banking connectivity, ERP feed quality, Entity hierarchy, Position reconstruction, User adoption, IC auto-reconciliation)</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Capability (Cap 1..Cap 4)</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Move 1 specific: the four AI capabilities (Cash forecast, Payment anomaly/BEC, Covenant headroom, IC auto-reconciliation)</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">L-S01..L-S07</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Lakeshore Source event identifiers; spawned from Move Phase 3 Architecture phases when procurement is in scope</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">CXO Intel Loader</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">The five per-CXO upload bundles (CIO, CFO, COO, CHRO, GC) that onboard a HoldCo onto AbarVa. Specified in <code>03-cxo-intel-loader-spec.html</code></dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Sentinel</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">The orchestrator agent fronting Source and Intelligence surfaces (per memory note on workflow-first agents). In this package: SentinelTreasury, SentinelFinance, SentinelArchitect, SentinelProcurement, SentinelRisk, SentinelPortfolio are the named front agents</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Atlas</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">The orchestrator agent fronting Tower surfaces. L0 Federated Command Center is Atlas-fronted</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">HIL (Human-in-the-loop)</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Pre-finalization confirmation by a named human before Sentinel emits an artifact. Registry in Appendix E</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Evidence chain</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">The provenance trail tied to every artifact: loaded record IDs + corpus pattern IDs + HIL confirmation logs. Operationalized in Section 10</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Foundation-before-AI</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Locked rule 2: Move 1 (AI) artifacts cannot ship until their Move 0 (foundation) gates are green. Phase 5 mobilization plans embed <code>blocked_until</code> milestones referencing the foundation gate</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Sovereignty</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">Locked rule 4: HoldCo data is scoped to its tenant; L0 sees aggregates; sibling HoldCos cannot read each other's transaction-grain without explicit grant. Enforced via <code>holding_group_id</code> RLS and grant log</dd>
+
+  <dt style="font-weight: 600; margin-top: 8px;">Pattern setter</dt>
+  <dd style="margin-left: 16px; color: var(--ink-soft);">The full-fidelity reference HTMLs in this package: 07 (Move 0 Kyriba), 08 (Move 2 vendor), 09 (business case canonical), 10 (mobilization canonical). They define visual + content fidelity bar</dd>
+</dl>
+
+<h2>Closing notes</h2>
+
+<p>This document is the master spec Codex picks up to ship each Wave. Section references in the Wave map in <code>02-demo-spine-architecture.html §13</code> resolve into this document's row anchors (M0-P1-G1-A01, etc.). When implementing a Wave 1 spec like L03 (Move 0 page), Codex builds the surfaces for the artifacts listed in Section 3 above and links each to the corresponding evidence chain, approval route, and export endpoint.</p>
+
+<p>Subsequent docs in this package — <code>05-design-module-review.md</code>, <code>06-tower-federated-command-center.html</code>, <code>07-kyriba-derisk-pattern-setter.html</code>, <code>08-cross-holdco-vendor-rationalization.html</code>, <code>09-business-case-pattern-setter.html</code>, <code>10-mobilization-pattern-setter.html</code> — are the visual fidelity references and per-artifact verdicts. They never contradict this document; if a discrepancy is found, this document is canon and pattern-setter is updated.</p>
+
+<p class="meta">End of artifact contracts master spec. Total specified artifacts: Move 0 ~20 · Move 1 ~24 · Move 2 ~21 · Move 3 ~13 · Move 4 ~10 · cross-Move templates ~3 · Source spawn contracts ~6. Aggregate ~97 artifact contracts, every one Codex-actionable.</p>
+
+</div>
+</body>
+</html>

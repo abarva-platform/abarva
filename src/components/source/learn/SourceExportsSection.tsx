@@ -176,8 +176,8 @@ export function SourceExportsSection() {
         </BodyP>
         <SubHead>Provenance footnote</SubHead>
         <BodyP>
-          If the body was Sentinel-generated, a footnote appears on the last
-          page: &ldquo;Authored by Sentinel&rdquo; with the provenance receipt
+          If the body was Ava-generated, a footnote appears on the last
+          page: &ldquo;Authored by Ava&rdquo; with the provenance receipt
           summary — model, prompt template id + version, upstream bound codes,
           generated-at timestamp, and generated-by user. This footnote is the
           audit trail for the docx consumer.
@@ -241,7 +241,7 @@ export function SourceExportsSection() {
         </Lead>
         <BodyP>
           If you have authored the artifact body (either by hand or via
-          Sentinel), all four formats render your authored content. If the body
+          Ava), all four formats render your authored content. If the body
           is still at scaffold-only (no real content authored yet), all four
           formats render the canonical template text — which is clearly labeled
           as a scaffold in the header and is generally not suitable for sharing
@@ -250,11 +250,11 @@ export function SourceExportsSection() {
         <BodyP>
           The tooltip reads either &ldquo;Will export authored body&rdquo; or
           &ldquo;Will export scaffold only — author first.&rdquo; If you see
-          the second message, generate with Sentinel or author the body before
+          the second message, generate with Ava or author the body before
           exporting.
         </BodyP>
         <Callout kind="info" icon="💡" label="Generate first, then export">
-          The export does not trigger a new Sentinel generation. It renders
+          The export does not trigger a new Ava generation. It renders
           whatever is in the substrate at the moment you click export. Always
           generate and review the artifact body first, then export. If you
           export a scaffold by accident, just author the body and re-export —

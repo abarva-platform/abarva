@@ -227,6 +227,8 @@ export const SOURCE_ARTIFACT_STANDARDS: Record<SourceArtifactKind, SourceArtifac
       evidence('usage_telemetry', 'Usage / adoption / license telemetry'),
       evidence('benchmark', 'Should-cost, price benchmark or market scan support'),
       evidence('owner', 'Accountable sourcing or supplier owner'),
+      evidence('human_decision_owner', 'Named client decision owner or approval role'),
+      evidence('ai_decision_attestation', 'Human decision attestation and AI-assisted decision-support watermark'),
     ],
     hardFailRules: [
       {
@@ -249,6 +251,11 @@ export const SOURCE_ARTIFACT_STANDARDS: Record<SourceArtifactKind, SourceArtifac
         id: 'missing_negotiation_posture',
         description: 'A renewal artifact must tell the sourcing team how to negotiate, not just describe the contract.',
         failWhenMissingSectionIds: ['negotiation_posture'],
+      },
+      {
+        id: 'missing_human_decision_accountability',
+        description: 'A renewal artifact must name the client decision owner and carry human attestation.',
+        failWhenMissingEvidenceIds: ['human_decision_owner', 'ai_decision_attestation'],
       },
       {
         id: 'blank_or_lorem',
@@ -338,8 +345,10 @@ function createStandard(input: {
       visual('risk_or_tradeoff_view', 'Risk / tradeoff view', 'Decision risks in a scannable format.'),
     ],
     requiredEvidence: [
-      evidence('tenant_substrate', 'Tenant substrate grounding'),
+      evidence('tenant_substrate', 'Company substrate grounding'),
       evidence('source_methodology', 'Source methodology logic'),
+      evidence('human_decision_owner', 'Named client decision owner or approval role'),
+      evidence('ai_decision_attestation', 'Human decision attestation and AI-assisted decision-support watermark'),
     ],
     hardFailRules: [
       {
@@ -352,6 +361,11 @@ function createStandard(input: {
         description: 'Every artifact needs evidence grounding.',
         failWhenMissingSectionIds: ['evidence'],
         failWhenMissingEvidenceIds: ['tenant_substrate'],
+      },
+      {
+        id: 'missing_human_decision_accountability',
+        description: 'Decision-bearing artifacts must name the client decision owner and carry human attestation.',
+        failWhenMissingEvidenceIds: ['human_decision_owner', 'ai_decision_attestation'],
       },
       {
         id: 'blank_or_lorem',

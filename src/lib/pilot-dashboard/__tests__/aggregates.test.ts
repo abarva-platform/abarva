@@ -115,6 +115,7 @@ describe('C5 · pilot-dashboard aggregates', () => {
           },
         ],
         sentinelFacts: [],
+        vendorSpendRows: [],
       };
 
       const s = toSubstrateSnapshot(overview);

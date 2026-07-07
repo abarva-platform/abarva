@@ -1,0 +1,25 @@
+{
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/providers/Microsoft.Resources/tags/default",
+  "name": "default",
+  "properties": {
+    "tags": {
+      "ClientCode": "abarva",
+      "CostCenter": "product-development",
+      "CreatedAt": "2026-06-15T02:20:00Z",
+      "CreatedBy": "codex",
+      "Criticality": "high",
+      "DataClassification": "synthetic",
+      "Environment": "Lab",
+      "EnvironmentKey": "lab",
+      "Expiry": "legacy-review",
+      "ManagedBy": "manual-approved",
+      "NoPhiPii": "true",
+      "Owner": "AbarVa Platform",
+      "OwnershipHygiene": "corporate-alignment-in-progress",
+      "Plane": "control-plane",
+      "ReleaseLane": "global-control-lane",
+      "Repository": "abarva-platform/abarva"
+    }
+  },
+  "type": "Microsoft.Resources/tags"
+}

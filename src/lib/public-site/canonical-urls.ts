@@ -20,7 +20,12 @@ export const CANONICAL_URLS = {
   atomFeed: 'https://abarva.ai/digest/feed.atom',
   jsonFeed: 'https://abarva.ai/digest/feed.json',
   contact: 'https://abarva.ai/contact/',
+  status: 'https://abarva.ai/status/',
   howItWorks: 'https://abarva.ai/how-it-works/',
+  responsibleAi: 'https://abarva.ai/responsible-ai/',
+  modelCard: 'https://abarva.ai/model-card/',
+  knownLimitations: 'https://abarva.ai/known-limitations/',
+  subprocessors: 'https://abarva.ai/subprocessors/',
   sitemap: 'https://abarva.ai/sitemap.xml',
   robots: 'https://abarva.ai/robots.txt',
 } as const;

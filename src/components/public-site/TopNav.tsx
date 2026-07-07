@@ -3,12 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
-const NAV_LINKS = [
-  { label: 'Patterns', href: '/patterns/' },
-  { label: 'Contradictions', href: '/contradictions/' },
-  { label: 'Editorial', href: '/editorial/' },
-  { label: 'Architecture', href: '/architecture/' },
-] as const;
+const NAV_LINKS: readonly { label: string; href: string }[] = [];
 
 export function TopNav() {
   const [scrolled, setScrolled] = useState(false);
@@ -36,10 +31,12 @@ export function TopNav() {
       aria-label="Main navigation"
     >
       <Link href="/" className="pub-topnav__wordmark" aria-label="AbarVa home">
-        <span className="pub-topnav__wordmark-text">
-          <span className="pub-topnav__wordmark-abar">Abar</span>
-          <span className="pub-topnav__wordmark-va">Va</span>
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg"
+          alt="AbarVa"
+          className="pub-topnav__wordmark-logo"
+        />
       </Link>
 
       <ul className="pub-topnav__nav" role="list">
@@ -51,8 +48,13 @@ export function TopNav() {
           </li>
         ))}
         <li className="pub-topnav__nav-item">
-          <Link href="/atlas/" className="pub-topnav__cta">
-            Try Atlas →
+          <Link href="/sign-in" className="pub-topnav__signin">
+            Sign in
+          </Link>
+        </li>
+        <li className="pub-topnav__nav-item">
+          <Link href="/sign-in" className="pub-topnav__cta">
+            Request access
           </Link>
         </li>
       </ul>

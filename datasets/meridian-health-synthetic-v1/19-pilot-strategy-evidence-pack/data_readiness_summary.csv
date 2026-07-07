@@ -1,0 +1,8 @@
+use_case,data_domain,available_summary_level,quality,refresh_cadence,gap,needed_for_phase,sensitive_detail_needed
+Payment integrity and leakage reduction,denials and recoverable value,aggregated category/payer/service-line summary,medium,weekly,No FWA anomaly taxonomy or provider-pattern corpus yet,P2,no
+Prior auth and denials automation,prior authorization workqueue,aggregated payer/service-line summary,medium,weekly,Need first-cohort decision and criteria governance,P2,no
+Cost transparency by product provider population,service-line cost and avoidable cost,aggregated service-line summary,medium,monthly,No GL reconciliation or product/provider margin bridge yet,P2,no
+Call center and member experience optimization,queue and intent summary,aggregated queue summary,medium,weekly,No approved intent taxonomy or redacted transcript sample,P2,no
+Provider quality and performance,quality gaps and VBC panels,aggregated contract/panel summary,low,monthly,Need HEDIS/STAR measure catalog and provider attribution summary,P2,no
+Unified clinical and claims data foundation,data products and lineage,metadata and quality summary,medium,monthly,Need semantic layer ownership and data product roadmap,P3,no
+Automated close and reporting,finance close and reconciliation,placeholder only,low,monthly,Need close calendar control matrix and reporting inventory,P2,no

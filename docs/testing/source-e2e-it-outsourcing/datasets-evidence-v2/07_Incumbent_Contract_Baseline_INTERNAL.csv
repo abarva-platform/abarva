@@ -1,0 +1,7 @@
+contract_id,vendor,scope,commercial_model,annual_value_usd,expiry,notice_days,auto_renew,notes
+CT-2022-014,Meridian Systems,T1 app support (8 domains) + T3 desk,T&M + per-ticket,128400000,2027-03-31,120,No,94.1% SLA attainment; KT 60d + parallel
+CT-2022-015,Meridian Systems,T4 hub field services,FTE capacity,24800000,2027-03-31,120,No,KT 30d
+CT-2023-031,Northwind IT,T2 infra ops + T5 NOC,Managed + T&M mix,61200000,2026-12-31,90,Yes,Auto-renew risk; KT 30d only
+CT-2023-044,Northwind IT,T4 EUC engineering + lifecycle,Per-device + T&M,18900000,2026-12-31,90,Yes,Asset data quality issues
+CT-2024-008,Apex Digital,T1 app support (6 domains incl MRO/FIN),Capacity + outcome pilots,54100000,2027-06-30,90,No,Outcome pilot on 2 domains only
+CT-2024-019,Apex Digital,T6 automation factory,Fixed + gainshare,12600000,2027-06-30,90,No,Gainshare disputed FY25

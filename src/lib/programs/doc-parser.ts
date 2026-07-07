@@ -23,13 +23,13 @@
 // Spec: docs/build/PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
 // Section B.4 (file uploads), slice OV2-4b/d.
 
-import 'server-only';
+import "server-only";
 
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   extractProgramEvidenceFromUploadBuffer,
   type ExtractedProgramEvidence,
-} from './evidence-ingestion';
+} from "./evidence-ingestion";
 
 export const CHUNK_SIZE = 800;
 export const CHUNK_OVERLAP = 100;
@@ -74,7 +74,7 @@ export function splitIntoChunks(
   chunkSize = CHUNK_SIZE,
   overlap = CHUNK_OVERLAP,
 ): string[] {
-  const normalized = text.replace(/\r\n/g, '\n').trim();
+  const normalized = text.replace(/\r\n/g, "\n").trim();
   if (!normalized) return [];
 
   const chunks: string[] = [];
@@ -114,8 +114,11 @@ export function splitIntoChunks(
  *
  * Never throws into the caller (all errors surfaced via console.error).
  */
-export async function extractAndChunk(input: ExtractAndChunkInput): Promise<void> {
-  const { attachmentId, moveId, tenantKey, filename, mimeType, buffer, phase } = input;
+export async function extractAndChunk(
+  input: ExtractAndChunkInput,
+): Promise<void> {
+  const { attachmentId, moveId, tenantKey, filename, mimeType, buffer, phase } =
+    input;
 
   let evidence: ExtractedProgramEvidence;
   try {
@@ -123,19 +126,23 @@ export async function extractAndChunk(input: ExtractAndChunkInput): Promise<void
       filename,
       mimeType,
       buffer,
+      cacheScope: tenantKey,
     });
   } catch (err) {
-    console.error('[doc-parser] extractProgramEvidenceFromUploadBuffer failed', {
-      attachmentId,
-      filename,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    console.error(
+      "[doc-parser] extractProgramEvidenceFromUploadBuffer failed",
+      {
+        attachmentId,
+        filename,
+        error: err instanceof Error ? err.message : String(err),
+      },
+    );
     return;
   }
 
   const rawText = evidence.extractedText;
   if (!rawText || !rawText.trim()) {
-    console.warn('[doc-parser] no text extracted — skipping chunk insert', {
+    console.warn("[doc-parser] no text extracted — skipping chunk insert", {
       attachmentId,
       filename,
       parseMethod: evidence.extractedStructured.parse_method,
@@ -171,9 +178,9 @@ export async function extractAndChunk(input: ExtractAndChunkInput): Promise<void
     source_path: `program_attachment/${attachmentId}`,
     chunk_index: index,
     chunk_text: chunkText,
-    embedding_status: 'pending',
+    embedding_status: "pending",
     provenance: {
-      source_type: 'program_attachment',
+      source_type: "program_attachment",
       parse_method: parseMethod,
       uploaded_at: new Date().toISOString(),
     },
@@ -187,10 +194,10 @@ export async function extractAndChunk(input: ExtractAndChunkInput): Promise<void
   }));
 
   const sb = getAzureWriteFluentClient();
-  const { error } = await sb.from('enterprise_context_chunks').insert(rows);
+  const { error } = await sb.from("enterprise_context_chunks").insert(rows);
   if (error) {
     // Log but do not crash the upload response — chunking is best-effort.
-    console.error('[doc-parser] chunk insert failed', {
+    console.error("[doc-parser] chunk insert failed", {
       attachmentId,
       moveId,
       tenantKey,
@@ -200,7 +207,7 @@ export async function extractAndChunk(input: ExtractAndChunkInput): Promise<void
     return;
   }
 
-  console.info('[doc-parser] chunks inserted', {
+  console.info("[doc-parser] chunks inserted", {
     attachmentId,
     moveId,
     tenantKey,

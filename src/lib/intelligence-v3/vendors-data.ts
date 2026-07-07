@@ -15,6 +15,7 @@ import 'server-only';
 
 import { selectIntelligenceVendorsReadAdapter } from '@/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter';
 import type { Stage, StatusFlag } from '@/lib/admin/ai-initiatives/labels';
+import { getInferenceEconomicsForClientVendor } from '@/lib/source/vendor-inference-economics';
 import type {
   VendorFinancialHealth,
   VendorInitiativeLink,
@@ -106,6 +107,9 @@ export async function getVendorsForClient(clientId: string): Promise<VendorsData
       renewalDate: r.renewal_date,
       financialHealth: r.financial_health as VendorFinancialHealth | null,
       notes: r.notes,
+      inferenceEconomics:
+        getInferenceEconomicsForClientVendor(clientId, r.vendor_id)
+        ?? getInferenceEconomicsForClientVendor(clientId, r.vendor_name),
     });
     byVendor.set(key, bucket);
   }
@@ -128,6 +132,8 @@ export async function getVendorsForClient(clientId: string): Promise<VendorsData
         CONCERNING_STATUSES.includes(l.initiativeStatusFlag),
       ).length,
       totalInitiatives: links.length,
+      inferenceEconomics:
+        links.find((l) => l.inferenceEconomics !== null)?.inferenceEconomics ?? null,
     });
   }
 

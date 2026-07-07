@@ -212,7 +212,7 @@ function WorkspaceAccessStrip({
             lineHeight: 1.4,
           }}
         >
-          You are signed in, but no workspace has been assigned yet. A client admin can grant Programs, Source, Intelligence, or Tower access from Setup.
+          You are signed in, but no workspace has been assigned yet. A client admin can grant Programs, Source, Intelligence, or Tower access from Admin.
         </div>
       ) : (
         <div
@@ -956,7 +956,7 @@ export function HomeIndexPage({
         <div style={{ padding: '20px 28px 0' }}>
           <AgentCanvas
             surface="/home"
-            agent={{ initials: 'At', name: 'Atlas', role: 'Portfolio CIO of staff' }}
+            agent={{ initials: 'Av', name: 'Ava', role: 'Portfolio CIO of staff' }}
             quote={homeAgentQuote}
             artifacts={atlasArtifacts}
             onArtifact={handleAtlasArtifact}

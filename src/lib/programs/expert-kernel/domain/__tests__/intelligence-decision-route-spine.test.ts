@@ -11,24 +11,26 @@
 // This test asserts both halves of that contract — the spine map and the
 // binding registry agree by construction.
 
-import '../tenant-bindings-bootstrap';
+import "../tenant-bindings-bootstrap";
 
-import { resolveFunctionPack } from '../function-pack-registry';
+import { resolveFunctionPack } from "../function-pack-registry";
 import {
   resolveBetSelectionBinding,
   resolveDecisionHomeBinding,
-} from '../tenant-binding-registry';
-import type { FunctionPackIndustryKey } from '../function-pack-types';
+} from "../tenant-binding-registry";
+import type { FunctionPackIndustryKey } from "../function-pack-types";
 
 // The exact spine-function map the route ships. Kept duplicated here so a
 // drift between the test and the route is caught — change one, change both.
-const ROUTE_INDUSTRY_SPINE_FUNCTION_KEY: Record<
-  FunctionPackIndustryKey,
-  string
+// Partial: only the grounded production spine (seeded decision-home bindings).
+// A catalogued industry without a seeded decision home (e.g. airline) is
+// intentionally absent — the route renders its honest empty state instead.
+const ROUTE_INDUSTRY_SPINE_FUNCTION_KEY: Partial<
+  Record<FunctionPackIndustryKey, string>
 > = {
-  'healthcare-provider': 'population_health_value_based_care',
-  retail: 'customer_care',
-  'financial-services': 'fraud_financial_crime',
+  "healthcare-provider": "population_health_value_based_care",
+  retail: "customer_care",
+  "financial-services": "fraud_financial_crime",
 };
 
 // P1-1 (synthetic pilot rehearsal, 2026-05-22): each spine binding belongs to
@@ -36,27 +38,26 @@ const ROUTE_INDUSTRY_SPINE_FUNCTION_KEY: Record<
 // a tenant-mismatch (e.g. Northwind landing on Apex's `(retail,
 // customer_care)` binding) and render the empty state instead of the leaked
 // binding. This map pins the expected-client-key for each spine binding.
-const EXPECTED_CLIENT_KEY_FOR_SPINE: Record<
-  FunctionPackIndustryKey,
-  string
+const EXPECTED_CLIENT_KEY_FOR_SPINE: Partial<
+  Record<FunctionPackIndustryKey, string>
 > = {
-  'healthcare-provider': 'meridian',
-  retail: 'apexretail',
-  'financial-services': 'arcturus',
+  "healthcare-provider": "meridian",
+  retail: "apexretail",
+  "financial-services": "arcturus",
 };
 
-describe('Intelligence /decision route — spine-function coverage', () => {
+describe("Intelligence /decision route — spine-function coverage", () => {
   for (const [industryKey, functionKey] of Object.entries(
     ROUTE_INDUSTRY_SPINE_FUNCTION_KEY,
   ) as [FunctionPackIndustryKey, string][]) {
     describe(`${industryKey} → ${functionKey}`, () => {
-      it('resolves to a catalogued Function Pack', () => {
+      it("resolves to a catalogued Function Pack", () => {
         const pack = resolveFunctionPack(industryKey, functionKey);
         expect(pack).not.toBeNull();
         expect(pack!.functionKey).toBe(functionKey);
       });
 
-      it('has a registered decision-home tenant binding', () => {
+      it("has a registered decision-home tenant binding", () => {
         const binding = resolveDecisionHomeBinding(industryKey, functionKey);
         expect(binding).not.toBeNull();
         expect(binding!.industryKey).toBe(industryKey);
@@ -68,7 +69,7 @@ describe('Intelligence /decision route — spine-function coverage', () => {
         expect(binding!.substrate.length).toBeGreaterThan(0);
       });
 
-      it('has a registered bet-selection tenant binding', () => {
+      it("has a registered bet-selection tenant binding", () => {
         const binding = resolveBetSelectionBinding(industryKey, functionKey);
         expect(binding).not.toBeNull();
         expect(binding!.industryKey).toBe(industryKey);
@@ -76,12 +77,18 @@ describe('Intelligence /decision route — spine-function coverage', () => {
         expect(binding!.substrate.length).toBeGreaterThan(0);
       });
 
-      it('carries an expectedClientKey on both bindings (P1-1)', () => {
+      it("carries an expectedClientKey on both bindings (P1-1)", () => {
         // The route uses `binding.expectedClientKey` to detect a
         // tenant-mismatch and render the empty state instead of leaking the
         // bound tenant's substrate to a different tenant in the same industry.
-        const decisionHome = resolveDecisionHomeBinding(industryKey, functionKey);
-        const betSelection = resolveBetSelectionBinding(industryKey, functionKey);
+        const decisionHome = resolveDecisionHomeBinding(
+          industryKey,
+          functionKey,
+        );
+        const betSelection = resolveBetSelectionBinding(
+          industryKey,
+          functionKey,
+        );
         expect(decisionHome?.expectedClientKey).toBe(
           EXPECTED_CLIENT_KEY_FOR_SPINE[industryKey],
         );
@@ -92,17 +99,17 @@ describe('Intelligence /decision route — spine-function coverage', () => {
     });
   }
 
-  it('binds Apex Retail to customer_care, not pricing_promotions', () => {
+  it("binds Apex Retail to customer_care, not pricing_promotions", () => {
     // Audit fix — the spine map previously routed retail to
     // `pricing_promotions`. The intelligence substrate now lives at
     // `customer_care` (Apex's audited contact-centre data), so the spine
     // must follow the substrate.
-    expect(ROUTE_INDUSTRY_SPINE_FUNCTION_KEY.retail).toBe('customer_care');
+    expect(ROUTE_INDUSTRY_SPINE_FUNCTION_KEY.retail).toBe("customer_care");
   });
 
-  it('binds First Capital to fraud_financial_crime, not lending_credit_underwriting', () => {
-    expect(ROUTE_INDUSTRY_SPINE_FUNCTION_KEY['financial-services']).toBe(
-      'fraud_financial_crime',
+  it("binds First Capital to fraud_financial_crime, not lending_credit_underwriting", () => {
+    expect(ROUTE_INDUSTRY_SPINE_FUNCTION_KEY["financial-services"]).toBe(
+      "fraud_financial_crime",
     );
   });
 });

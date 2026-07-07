@@ -1,0 +1,16 @@
+asset_name,class,make_model,location,capacity,virtualization,cloud_account,owner,source
+Core virtualization cluster A,virtualization,VMware vSphere 8,dc-charlotte-primary,~640 vCPU / 8 TB RAM,VMware vSphere,,VP Infrastructure,illustrative
+Hyperconverged cluster - clinical,compute,Dell VxRail P-series,dc-charlotte-primary,12 nodes,VMware vSphere,,VP Infrastructure,illustrative
+Hyperconverged cluster - imaging,compute,Nutanix NX,dc-charlotte-secondary,16 nodes,Nutanix AHV,,VP Infrastructure,illustrative
+Imaging primary storage,storage,Dell PowerScale (Isilon),dc-charlotte-primary,~2.4 PB,,,VP Infrastructure,illustrative
+Imaging archive / VNA storage,storage,Pure FlashArray //C,dc-charlotte-secondary,~1.8 PB,,,VP Infrastructure,illustrative
+General SAN,storage,Dell PowerStore,dc-charlotte-primary,~900 TB,,,VP Infrastructure,illustrative
+Backup & DR storage,storage,Dell PowerProtect (Data Domain),dc-asheville,~3 PB,,,VP Infrastructure,illustrative
+Core network fabric,network,Cisco Nexus 9000,dc-charlotte-primary,10/40/100 GbE,,,VP Infrastructure,illustrative
+Edge / campus network,network,Cisco Catalyst 9000,Enterprise (23 hospitals),1/10 GbE,,,VP Infrastructure,illustrative
+Load balancing / ADC,network,F5 BIG-IP,dc-charlotte-primary,N/A,,,VP Infrastructure,illustrative
+Datacenter - Charlotte primary,datacenter,Owned,Charlotte NC,~1.2 MW,,,VP Infrastructure,illustrative
+Datacenter - Charlotte secondary,datacenter,Colo,Charlotte NC,~600 kW,,,VP Infrastructure,illustrative
+Datacenter - Asheville DR,datacenter,Owned,Asheville NC,~400 kW,,,VP Infrastructure,illustrative
+Azure production subscription,cloud_account,Microsoft Azure,East US 2,hybrid (~60/40 cloud-on-prem),,sub-meridian-prod-eus2,VP Infrastructure,illustrative
+Identity directory,identity,Microsoft Entra ID + on-prem AD,Enterprise,~46k identities,,tenant-meridianhealth,VP Security,illustrative

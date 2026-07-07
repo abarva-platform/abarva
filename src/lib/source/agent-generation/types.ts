@@ -10,7 +10,7 @@
 //      tenant/event metadata).
 //   4. Prompt registry returns the per-artifact prompt template
 //      (versioned). Builder fills the template with bound context.
-//   5. Anthropic SDK call (Claude Sonnet) returns the markdown body.
+//   5. Anthropic Claude returns the markdown body.
 //   6. Server writes the body to source_event_artifact_states.body
 //      AND a generation receipt to body_generation_metadata.
 //
@@ -21,11 +21,11 @@ import type {
   SourceEventArtifactState,
   SourceEventEvidence,
   SourceEventGateCriterion,
-} from '@/lib/source/canvas-substrate/types';
-import type { SourceStageKey } from '@/lib/source/types';
+} from "@/lib/source/canvas-substrate/types";
+import type { SourceStageKey } from "@/lib/source/types";
 
 /**
- * Audit receipt persisted to body_generation_metadata after a Claude
+ * Audit receipt persisted to body_generation_metadata after an Anthropic
  * generation. Survives the body itself; if the body is later
  * hand-edited the metadata still describes the original generation.
  */
@@ -52,8 +52,33 @@ export interface SourceArtifactBodyGenerationMetadata {
   tokensIn: number | null;
   /** From Anthropic usage: output tokens (best-effort). */
   tokensOut: number | null;
-  /** Anthropic stop reason (`end_turn`, `max_tokens`, …). */
+  /** Provider stop reason (`completed`, `max_output_tokens`, etc.). */
   stopReason: string | null;
+  /** Optional consulting-grade quality gate for flagship artifacts. */
+  qualityGate?: Record<string, unknown>;
+  /** Deterministic required-section check for generated drafts. */
+  sectionVerification?: {
+    status: "verified" | "incomplete";
+    checkedAt: string;
+    requiredSections: string[];
+    missingSections: string[];
+  };
+  /** ISO timestamp set when a human edits/saves the AI draft. */
+  humanEditedAt?: string;
+  /** Clerk user id of the human who edited/saved the AI draft. */
+  humanEditedByUserId?: string | null;
+  /**
+   * Reasoning-spine capture (Slices 1.6–1.7, flag `source_reasoning_spine`). Present
+   * iff the flag was on.
+   * - "ok": claims grounded on usable evidence; envelope.claims is populated.
+   * - "refusal": spine ran but no gate-defining claim rests on usable evidence;
+   *   envelope.refusal carries the reason + missingEvidence list (Slice 1.7).
+   * - "gate_failed"/"error": spine failed internally; envelope is null.
+   * - "disabled": flag off; envelope is null.
+   * The generated body is unchanged across all statuses.
+   */
+  reasoningStatus?: "disabled" | "ok" | "refusal" | "gate_failed" | "error";
+  reasoningEnvelope?: unknown;
 }
 
 /**
@@ -68,7 +93,10 @@ export interface SourceGenerationContext {
     id: string;
     code: string;
     name: string;
+    /** Coarse label derived from event_type (legacy fallback). Prefer classifiedCategory when present. */
     archetype: string | null;
+    /** Deterministic categoryId stored at intake (Slice 1.1). Preferred over archetype for reasoning. */
+    classifiedCategory?: string | null;
     rigor: string | null;
     currentStageKey: SourceStageKey;
     statusLabel: string;
@@ -113,7 +141,7 @@ export interface SourceArtifactPromptTemplate {
   artifactCode: string;
   /** Bump on any prompt change. */
   version: number;
-  /** Anthropic model id. Defaults to the latest Sonnet. */
+  /** OpenAI model id. Defaults to the Source OpenAI model. */
   model: string;
   /** Max output tokens — keep generous; cap at 8000 for v1. */
   maxTokens: number;

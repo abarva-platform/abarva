@@ -6,7 +6,7 @@
 // approver + timestamp · local state only (page refresh pulls from ledger
 // via the deliverable page's server fetch — next iteration).
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ApproveActionsProps {
   programCode: string;
@@ -36,8 +36,18 @@ type Status =
   | { kind: 'approved'; approverName: string | null; timestamp: string }
   | { kind: 'error'; message: string };
 
+export function normalizeEditableDecision(value: string): string {
+  return value.trim().replace(/\s+/g, ' ');
+}
+
 export function ApproveActions({ programCode, deliverableCode, phase, decision, canApprove = true, gateReason }: ApproveActionsProps) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
+  const [editableDecision, setEditableDecision] = useState(decision);
+  const reviewedDecision = normalizeEditableDecision(editableDecision);
+
+  useEffect(() => {
+    setEditableDecision(decision);
+  }, [decision]);
 
   // §4.11 · render a muted read-only state when the viewer can't approve.
   // Server still enforces tenant access on POST (C2-07); this is the UI
@@ -105,13 +115,13 @@ export function ApproveActions({ programCode, deliverableCode, phase, decision, 
   }
 
   async function handleApprove() {
-    if (status.kind === 'submitting' || status.kind === 'approved') return;
+    if (status.kind === 'submitting' || status.kind === 'approved' || !reviewedDecision) return;
     setStatus({ kind: 'submitting' });
     try {
       const res = await fetch('/api/programs/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ programCode, deliverableCode, phase, decision }),
+        body: JSON.stringify({ programCode, deliverableCode, phase, decision: reviewedDecision }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -143,11 +153,29 @@ export function ApproveActions({ programCode, deliverableCode, phase, decision, 
           </div>
         ) : (
           <>
+            <div className="apv-edit" data-edit-before-commit="true">
+              <label className="apv-edit-label" htmlFor={`apv-decision-${programCode}-${deliverableCode}`}>
+                Review or edit before commit
+              </label>
+              <textarea
+                id={`apv-decision-${programCode}-${deliverableCode}`}
+                className="apv-edit-field"
+                data-testid="approve-actions-editable-decision"
+                value={editableDecision}
+                onChange={(event) => setEditableDecision(event.target.value)}
+                disabled={status.kind === 'submitting'}
+                rows={2}
+                aria-describedby={`apv-decision-help-${programCode}-${deliverableCode}`}
+              />
+              <div id={`apv-decision-help-${programCode}-${deliverableCode}`} className="apv-edit-help">
+                This reviewed text is what the approval ledger records. Edit it before committing if the AI-drafted title or decision needs correction.
+              </div>
+            </div>
             <button
               type="button"
               className="apv-btn"
               onClick={handleApprove}
-              disabled={status.kind === 'submitting'}
+              disabled={status.kind === 'submitting' || !reviewedDecision}
               aria-label="Approve this decision"
             >
               {status.kind === 'submitting' ? 'Approving…' : 'Approve decision →'}
@@ -171,6 +199,29 @@ const approveCss = `
   border: 1px solid rgba(245,197,74,0.32);
   font-family: 'Inter', -apple-system, system-ui, sans-serif;
   flex-wrap: wrap;
+}
+.apv-edit {
+  display: flex; flex-direction: column; gap: 6px;
+  flex: 1 1 100%; min-width: 220px;
+}
+.apv-edit-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  font-weight: 700; color: #6d625a;
+}
+.apv-edit-field {
+  width: 100%; box-sizing: border-box;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  font-size: 13px; line-height: 1.45; color: #1a1612;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(138,126,114,0.28);
+  border-radius: 8px;
+  padding: 9px 10px;
+  resize: vertical;
+}
+.apv-edit-field:disabled { opacity: 0.68; cursor: not-allowed; }
+.apv-edit-help {
+  font-size: 11px; color: #6d625a; line-height: 1.4;
 }
 .apv-btn {
   font-family: 'JetBrains Mono', monospace;

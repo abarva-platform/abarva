@@ -1,6 +1,8 @@
 name: Depth Lint
 
+# Required branch-protection context; keep pull_request paths aligned.
 on:
+  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -29,10 +31,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
@@ -45,8 +47,12 @@ jobs:
         shell: bash
         run: |
           set +e
-          npm run --silent lint:depth -- --all > depth-lint-results.json
+          npm run --silent lint:depth -- --all > depth-lint-results.json 2> depth-lint-error.log
           rc=$?
+          if ! node -e "JSON.parse(require('fs').readFileSync('depth-lint-results.json', 'utf8'))" 2>/dev/null; then
+            node scripts/ci/write-depth-lint-failure.cjs > depth-lint-results.json
+            rc=1
+          fi
           cat depth-lint-results.json
           {
             echo "## Depth lint"
@@ -64,19 +70,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          node <<'NODE' > depth-comment.md
-          const fs = require('fs');
-          const report = JSON.parse(fs.readFileSync('depth-lint-results.json', 'utf8'));
-          const results = report.results || [report];
-          const rows = results.map((r) => `| ${r.artifact_id} | ${r.rubric_type} | ${r.total_score}/10 | ${r.pass ? 'PASS' : 'BLOCK'} |`);
-          console.log('## Depth lint scores');
-          console.log('');
-          console.log('| Artifact | Rubric | Score | Result |');
-          console.log('|---|---:|---:|---|');
-          console.log(rows.join('\n'));
-          console.log('');
-          console.log(`Estimated run cost: $${Number(report.estimated_cost_usd || 0).toFixed(4)}`);
-          NODE
+          node scripts/ci/render-depth-lint-comment.cjs > depth-comment.md
           gh pr comment "$PR_NUMBER" --body-file depth-comment.md
 
       - name: Enforce threshold

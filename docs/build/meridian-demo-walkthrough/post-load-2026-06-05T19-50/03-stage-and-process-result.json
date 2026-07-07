@@ -1,0 +1,9 @@
+{
+  "status": 500,
+  "ok": false,
+  "json": {
+    "ok": false,
+    "error": "bulk_upload_failed",
+    "detail": "object_upload_failed:code=AuthorizationFailure;status=403;name=RestError;message=This request is not authorized to perform this operation.\nRequestId:5039de31-c01e-0049-364e-f5a0db000000\nTime:2026-06-06T00:50:14.2284264Z"
+  }
+}

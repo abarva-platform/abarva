@@ -27,7 +27,7 @@ export function Ch06PricingChapter() {
         <Eyebrow light>Meridian Case Study · Chapter 06 · Stage 06 Pricing</Eyebrow>
         <SectionTitle light size="xl">Day 50. Three P0 traps surface.</SectionTitle>
         <Lead light>
-          Sentinel&rsquo;s pricing-trap detector reads each vendor&rsquo;s
+          Ava&rsquo;s pricing-trap detector reads each vendor&rsquo;s
           d19 submission cell-by-cell against the d09 assumption set, the
           d05 scope memo, and the d21 assumption-locked workbook. The
           result: 3 P0 traps and 2 P1 deviations across three vendors.
@@ -41,7 +41,7 @@ export function Ch06PricingChapter() {
         at 82, D at 78. All three advance with criterion 2 (commercial
         commitment) deferred. This is the chapter where commercial
         commitment gets scored, and where the vendor pricing structures
-        meet Sentinel&rsquo;s trap detector. The 3 P0 traps surfaced here
+        meet Ava&rsquo;s trap detector. The 3 P0 traps surfaced here
         become the spine of Chapter 7&rsquo;s BAFO question pack.
       </StoryRecap>
 
@@ -49,7 +49,7 @@ export function Ch06PricingChapter() {
         <Eyebrow>What the trap detector reads</Eyebrow>
         <SectionTitle>Pricing-trap severity model</SectionTitle>
         <Lead>
-          Sentinel&rsquo;s pricing-trap detector is a deterministic
+          Ava&rsquo;s pricing-trap detector is a deterministic
           analyzer that compares vendor d19 submissions against three
           authority sources: the d05 scope memo (what we said is in
           scope), the d21 assumption set (what we said vendors should
@@ -82,7 +82,7 @@ export function Ch06PricingChapter() {
           icon="🪤"
           label="Severity is rule-based, not vibe-based"
         >
-          Sentinel does not &ldquo;feel&rdquo; that a trap is severe. The
+          Ava does not &ldquo;feel&rdquo; that a trap is severe. The
           severity is computed from a deterministic rule applied to the
           cell value. This is what makes the trap log defensible to the
           procurement panel — every flag has a rule citation.
@@ -95,9 +95,9 @@ export function Ch06PricingChapter() {
 
         <SubHead>P0 #1 · Vendor A · Egress structure (the dramatic one)</SubHead>
         <BodyP>
-          Sentinel reads cell <code>d19a-egress-tier-3</code> on Vendor
+          Ava reads cell <code>d19a-egress-tier-3</code> on Vendor
           A&rsquo;s submission. The cell contains the value{' '}
-          <em>&ldquo;standard rate, see Appendix C&rdquo;</em>. Sentinel
+          <em>&ldquo;standard rate, see Appendix C&rdquo;</em>. Ava
           opens Appendix C and parses the egress schedule.
         </BodyP>
 
@@ -115,7 +115,7 @@ export function Ch06PricingChapter() {
             Appendix C for egress pricing. Appendix C contains a tiered
             schedule that prices outbound data at $0.082 / GB across all
             tiers, with no volume discount and no exit-time concession.
-            Sentinel modeled the d05 expected egress profile (68 Tier-1
+            Ava modeled the d05 expected egress profile (68 Tier-1
             DR replication + cross-tenant analytics flows + monthly Epic
             data-room exports) at ~840 TB / yr.
           </p>
@@ -141,7 +141,7 @@ export function Ch06PricingChapter() {
 
         <SubHead>P0 #2 · Vendor D · Escalator clause</SubHead>
         <BodyP>
-          Sentinel reads cell{' '}
+          Ava reads cell{' '}
           <code>d19a-commercial-escalator-yoy</code> on Vendor D&rsquo;s
           submission. The cell contains <em>&ldquo;8.0%&rdquo;</em>. The
           d21 assumption set (issued in d09) says protected at 4%.
@@ -177,7 +177,7 @@ export function Ch06PricingChapter() {
 
         <SubHead>P0 #3 · Vendor A · Exclusivity clause</SubHead>
         <BodyP>
-          Sentinel reads vendor A&rsquo;s commercial section, paragraph
+          Ava reads vendor A&rsquo;s commercial section, paragraph
           7.4: <em>&ldquo;During the initial term and any renewal, Buyer
           shall not procure equivalent infrastructure services from any
           third party.&rdquo;</em> Term length is 5 years initial + 2
@@ -217,9 +217,9 @@ export function Ch06PricingChapter() {
 
         <SubHead>P1 · Vendor B · 760 workloads, not 920</SubHead>
         <BodyP>
-          Sentinel reads B&rsquo;s d19a workload-by-tier rollup; the
+          Ava reads B&rsquo;s d19a workload-by-tier rollup; the
           unit-count summed across the rollup is 760, not 920. The
-          d09/d05 in-scope count is 280. Sentinel flags as P1 — this is
+          d09/d05 in-scope count is 280. Ava flags as P1 — this is
           either a scope misread or a deliberate underbid. B&rsquo;s
           rollup priced unit cost is competitive enough that the
           corrected total stays below D&rsquo;s.
@@ -227,7 +227,7 @@ export function Ch06PricingChapter() {
 
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Computed the unit-count delta (760 vs 920 = 160 missing).
@@ -242,7 +242,7 @@ export function Ch06PricingChapter() {
             who: 'Janet',
             did: (
               <>
-                Read Sentinel&rsquo;s analysis and concluded this is a
+                Read Ava&rsquo;s analysis and concluded this is a
                 scope-read deviation, not a sneaky underbid (B&rsquo;s
                 unit pricing is detailed enough that hiding 77 workloads
                 wouldn&rsquo;t scale gracefully). Decided the BAFO
@@ -257,7 +257,7 @@ export function Ch06PricingChapter() {
         <BodyP>
           Vendor A&rsquo;s d19a submission omits the BAA-required
           encryption-at-rest line item ($120k / yr in their published
-          public-sector schedule). Sentinel flags as P1 — mechanically
+          public-sector schedule). Ava flags as P1 — mechanically
           fixable, but adds $600k over 5-yr if A added it back. Janet
           adds it to A&rsquo;s BAFO question pack (alongside the two
           P0s).
@@ -268,7 +268,7 @@ export function Ch06PricingChapter() {
         <Eyebrow>Day 50 · The trap log</Eyebrow>
         <SectionTitle>d20 ready for BAFO authoring</SectionTitle>
         <Lead>
-          With the cell-by-cell pass complete, Sentinel composes the
+          With the cell-by-cell pass complete, Ava composes the
           consolidated d20 trap log. This is the artifact that
           Chapter 7 binds against to author the d22 BAFO question pack.
         </Lead>

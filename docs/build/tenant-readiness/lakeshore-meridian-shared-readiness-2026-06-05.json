@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "tenant-shared-readiness-2026-06-05-lakeshore-meridian",
+  "status": "shared_environment_rehearsal",
+  "createdDate": "2026-06-05",
+  "summary": "Lakeshore and Meridian are usable now for shared-environment loader, context, AI liability, and audit rehearsals. They are not yet proof of true private data-plane or SSO completion.",
+  "tenants": [
+    {
+      "clientKey": "lakeshore",
+      "displayName": "Lakeshore Holdings",
+      "currentEvidenceLevel": "level_2_shared_tenant_rehearsal",
+      "privateDataPlaneStatus": "deferred_private_plane",
+      "ssoStatus": "deferred_private_plane"
+    },
+    {
+      "clientKey": "meridian",
+      "displayName": "Meridian Health",
+      "currentEvidenceLevel": "level_2_shared_tenant_rehearsal",
+      "privateDataPlaneStatus": "deferred_private_plane",
+      "ssoStatus": "deferred_private_plane"
+    }
+  ],
+  "truthBoundaries": [
+    "shared-environment rehearsal",
+    "not private data-plane proof",
+    "not SSO proof",
+    "not customer-subscription proof",
+    "not HIPAA production proof"
+  ],
+  "evidenceLevels": [
+    {
+      "level": 1,
+      "name": "Product control proof",
+      "claimAllowed": "Control-plane and product controls exist and can be exercised.",
+      "claimBlocked": "Tenant isolation, private infrastructure, customer subscription ownership, SSO, or production HIPAA readiness."
+    },
+    {
+      "level": 2,
+      "name": "Shared tenant rehearsal",
+      "claimAllowed": "Loader-backed setup/admin flow, tenant-scoped evidence, context/corpus rehearsal, and cross-tenant leakage checks in the shared environment.",
+      "claimBlocked": "Dedicated private data plane, customer-owned Azure resources, SSO, or live customer PHI processing."
+    },
+    {
+      "level": 3,
+      "name": "Private subscription proof",
+      "claimAllowed": "Dedicated customer resources, SSO, audit export, rollback, and teardown proof after the dry run.",
+      "claimBlocked": "Level 3 cannot be claimed before private subscription dry-run evidence exists."
+    }
+  ],
+  "controls": [
+    {
+      "id": "admin-loader-ingestion-evidence",
+      "domain": "architecture",
+      "evidenceLevel": 2,
+      "status": "can_verify_now",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "source manifest",
+        "scan result",
+        "schema validation",
+        "mapping preview",
+        "approval user and reason",
+        "commit or dry-run result",
+        "rollback note"
+      ],
+      "cannotClaim": ["private data-plane complete", "SSO complete"]
+    },
+    {
+      "id": "client-id-lineage",
+      "domain": "architecture",
+      "evidenceLevel": 2,
+      "status": "can_verify_now",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "client key",
+        "client id",
+        "loader evidence references",
+        "cross-tenant leakage result"
+      ],
+      "cannotClaim": ["private data-plane complete", "SSO complete"]
+    },
+    {
+      "id": "context-corpus-setup",
+      "domain": "architecture",
+      "evidenceLevel": 2,
+      "status": "partial_shared_rehearsal",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "context layer manifest",
+        "corpus coverage map",
+        "gap assessment",
+        "retrieval or showcase validation"
+      ],
+      "cannotClaim": ["customer-owned corpus complete", "live PHI processing approved"]
+    },
+    {
+      "id": "responsible-ai-acknowledgement",
+      "domain": "ai-liability",
+      "evidenceLevel": 1,
+      "status": "can_verify_now",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "sign-in acknowledgement copy",
+        "acknowledgement storage evidence",
+        "annual re-acknowledgement behavior"
+      ],
+      "cannotClaim": ["customer legal acceptance complete"]
+    },
+    {
+      "id": "ai-human-approval-boundary",
+      "domain": "ai-liability",
+      "evidenceLevel": 1,
+      "status": "can_verify_now",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "no silent apply proof",
+        "approval user id",
+        "approval reason",
+        "action evidence ids"
+      ],
+      "cannotClaim": ["automated decisioning approved"]
+    },
+    {
+      "id": "ai-output-defense",
+      "domain": "ai-liability",
+      "evidenceLevel": 1,
+      "status": "can_verify_now",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "citation evidence",
+        "confidence or estimate label",
+        "advisory framing",
+        "edit-before-commit evidence"
+      ],
+      "cannotClaim": ["AbarVa is decision maker", "outcome guarantee"]
+    },
+    {
+      "id": "usage-cost-cap",
+      "domain": "architecture",
+      "evidenceLevel": 1,
+      "status": "can_verify_now",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "tenant usage meter",
+        "cap threshold",
+        "approval requirement for overage"
+      ],
+      "cannotClaim": ["unlimited included consumption"]
+    },
+    {
+      "id": "private-subscription-dry-run",
+      "domain": "architecture",
+      "evidenceLevel": 3,
+      "status": "deferred_private_plane",
+      "tenantApplicability": ["lakeshore", "meridian"],
+      "requiredEvidence": [
+        "customer or pilot subscription id",
+        "resource group deployment outputs",
+        "private database storage search key vault proof",
+        "SSO organization mapping",
+        "audit export",
+        "teardown or rollback evidence"
+      ],
+      "cannotClaim": ["complete before private dry run"]
+    }
+  ],
+  "recommendedQaCommands": [
+    "npm run tenant:shared-readiness:verify",
+    "npm run release:check -- --base origin/main --head HEAD"
+  ]
+}

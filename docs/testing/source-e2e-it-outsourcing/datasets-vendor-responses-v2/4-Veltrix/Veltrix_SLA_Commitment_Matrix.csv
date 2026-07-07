@@ -1,0 +1,73 @@
+sla_id,commitment,ramp_months,exception_rationale
+SLA-001,commit_with_ramp,6,Stabilization period requested
+SLA-002,commit_with_ramp,6,Stabilization period requested
+SLA-003,commit,,
+SLA-004,commit_with_ramp,6,Stabilization period requested
+SLA-005,commit,,
+SLA-006,commit,,
+SLA-007,commit,,
+SLA-008,commit,,
+SLA-009,commit,,
+SLA-010,commit,,
+SLA-011,commit,,
+SLA-012,commit_with_ramp,6,Stabilization period requested
+SLA-013,commit,,
+SLA-014,commit,,
+SLA-015,commit,,
+SLA-016,commit,,
+SLA-017,commit,,
+SLA-018,commit,,
+SLA-019,commit,,
+SLA-020,commit,,
+SLA-021,commit,,
+SLA-022,commit,,
+SLA-023,commit,,
+SLA-024,commit,,
+SLA-025,exception,,Target above market practice; propose alternative
+SLA-026,commit,,
+SLA-027,commit_with_ramp,6,Stabilization period requested
+SLA-028,exception,,Target above market practice; propose alternative
+SLA-029,commit,,
+SLA-030,commit,,
+SLA-031,commit,,
+SLA-032,exception,,Target above market practice; propose alternative
+SLA-033,commit,,
+SLA-034,exception,,Target above market practice; propose alternative
+SLA-035,commit_with_ramp,6,Stabilization period requested
+SLA-036,commit_with_ramp,6,Stabilization period requested
+SLA-037,commit_with_ramp,6,Stabilization period requested
+SLA-038,commit_with_ramp,6,Stabilization period requested
+SLA-039,commit,,
+SLA-040,commit,,
+SLA-041,commit,,
+SLA-042,commit_with_ramp,6,Stabilization period requested
+SLA-043,commit,,
+SLA-044,commit_with_ramp,6,Stabilization period requested
+SLA-045,commit_with_ramp,6,Stabilization period requested
+SLA-046,commit,,
+SLA-047,commit,,
+SLA-048,commit,,
+SLA-049,commit,,
+SLA-050,commit,,
+SLA-051,commit,,
+SLA-052,commit_with_ramp,6,Stabilization period requested
+SLA-053,commit_with_ramp,6,Tooling/KT dependency
+SLA-054,commit,,
+SLA-055,commit,,
+SLA-056,commit_with_ramp,6,Stabilization period requested
+SLA-057,commit,,
+SLA-058,commit,,
+SLA-059,commit_with_ramp,6,Stabilization period requested
+SLA-060,commit,,
+SLA-061,commit,,
+SLA-062,commit,,
+SLA-063,commit,,
+SLA-064,commit,,
+SLA-065,commit,,
+SLA-066,commit,,
+SLA-067,exception,,Target above market practice; propose alternative
+SLA-068,commit_with_ramp,6,Tooling/KT dependency
+SLA-069,commit_with_ramp,6,Stabilization period requested
+SLA-070,commit,,
+SLA-071,commit_with_ramp,6,Stabilization period requested
+SLA-072,commit,,

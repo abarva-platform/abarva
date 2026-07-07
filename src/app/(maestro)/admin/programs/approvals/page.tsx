@@ -18,7 +18,7 @@ import { azureRead } from '@/lib/data-plane/azureRead';
 import { ApprovalQueueTable } from '@/components/admin/programs/ApprovalQueueTable';
 import { loadApprovalPersonDisplayMap } from '@/lib/programs/approval-person-resolver';
 
-export const metadata = { title: 'Program Approvals · AbarVa Setup' };
+export const metadata = { title: 'Program Approvals · AbarVa Admin' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 

@@ -434,16 +434,18 @@ function GapAnalysisSection({ gaps }: { gaps: readonly GapRow[] }) {
 
 interface IntelligenceQualityLensPageProps {
   view: IntelligenceQualityLensView;
+  tenantName: string;
 }
 
 export function IntelligenceQualityLensPage({
   view,
+  tenantName,
 }: IntelligenceQualityLensPageProps) {
   return (
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: 'Intelligence · Knowledge Quality Lens',
       }}

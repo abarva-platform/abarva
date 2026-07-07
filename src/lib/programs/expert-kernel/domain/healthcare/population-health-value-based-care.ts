@@ -13,6 +13,7 @@
 // Pure, deterministic, typed module — no I/O, no fabrication. Every benchmark
 // is a labelled planning range, never an asserted fact (spec §6 hard fail).
 
+import { CROSS_CUTTING_ARCHITECTURE_PATTERNS } from '../cross-cutting-architecture-patterns';
 import type { FunctionPack } from '../function-pack-types';
 
 export const populationHealthValueBasedCarePack: FunctionPack = {
@@ -30,8 +31,8 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
     'program can be excellent and still lose money if this function entered ' +
     'the wrong contract, mis-modelled the risk, or under-captured the ' +
     'population’s acuity.',
-  version: '1.0.0',
-  lastReviewed: '2026-05-21',
+  version: '1.3.0',
+  lastReviewed: '2026-06-06',
 
   // ── Layer 1 — Operating metrics ───────────────────────────────────────────
   operatingMetrics: [
@@ -449,6 +450,29 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'Is RAF capture grounded in documented clinical truth, and what ' +
         'compliance control prevents coding overreach?',
     },
+    {
+      key: 'rented_population_intelligence',
+      name: 'Rented population intelligence',
+      description:
+        'The population data layer, risk models, and quality logic live ' +
+        'inside an outsourced analytics platform that holds the data and the ' +
+        'models on the vendor side. The organisation rents access to insight ' +
+        'derived from its own data: it cannot audit the risk logic, extend it ' +
+        'to local measures or contracts, recalibrate it on its own ' +
+        'population, or move it without rebuilding from scratch — and it pays ' +
+        'in perpetuity for the privilege. For an organisation whose mandate ' +
+        'is to OWN its AI platform, this is the default trap, not a niche one.',
+      detectionSignal:
+        'The population system of record is a vendor platform that cannot be ' +
+        'queried at the model level; risk scores and quality logic cannot be ' +
+        'inspected, recalibrated, or exported; exit would mean rebuilding the ' +
+        'population intelligence layer from zero.',
+      diagnosticQuestion:
+        'Does the organisation own its population data layer, risk models, ' +
+        'and quality logic — able to audit, extend, and run them on its own ' +
+        'governed platform — or does that intelligence live inside a vendor ' +
+        'system it rents and cannot inspect?',
+    },
   ],
 
   // ── Layer 3 — AI use-case archetypes ──────────────────────────────────────
@@ -476,7 +500,11 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'Revalidate predictive accuracy against realised cost every period — ' +
           'population drift is the norm, not the exception.',
         'Test for equity: confirm the model does not under-rank members with ' +
-          'sparse data, who are often the highest-need.',
+          'sparse data, who are often the highest-need. A cost-as-proxy ' +
+          'target is a known bias trap — a widely-used commercial risk ' +
+          'algorithm under-referred Black patients because it predicted cost ' +
+          'rather than illness (Obermeyer et al., Science 2019); validate the ' +
+          'target variable, not just the model.',
       ],
       metricsMoved: [
         'risk_tier_concentration',
@@ -613,11 +641,19 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'attribution, quality, and risk data into one authoritative view of ' +
         'the attributed population. Cost, RAF, and quality are computed once, ' +
         'from one place; every downstream population-health use case consumes ' +
-        'it.',
+        'it. For an own-it mandate this layer is built lakehouse-native — on ' +
+        'the organisation’s own governed cloud platform (e.g. Databricks ' +
+        'under Unity Catalog in the organisation’s own account) — so the ' +
+        'reconciled data, the risk models, and the quality logic are owned, ' +
+        'auditable, and extensible assets. A vendor population-health SaaS ' +
+        'platform can deliver the same view faster but holds the data and ' +
+        'models on the vendor side: a rent posture, acceptable only where the ' +
+        'organisation has explicitly decided not to own this layer.',
       boundary:
         'It reconciles and computes population metrics; it does not make ' +
         'contracting or clinical decisions. It is the population system of ' +
-        'record, not the EHR.',
+        'record, not the EHR. Owning the layer means owning the data, the ' +
+        'models, and the logic — not merely licensing a dashboard over them.',
       humanAccountabilityPoint:
         'The Chief Data Officer or population-health analytics owner ' +
         'accountable for the reconciled population layer.',
@@ -692,6 +728,15 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'The quality officer accountable for the program quality score.',
       controlPosture: 'human-on-the-loop',
     },
+    // The cross-cutting architecture foundation (landing zone, own-it
+    // ingestion, medallion, governed serving, HITRUST governance) is now
+    // included here. Each is tagged `dispositionKind: 'foundation'`, so the
+    // foundation-aware solution-architecture renderer presents them in the
+    // "Adopted platform foundation" exhibit — adopted, never ranked or
+    // rejected — while the option scorecard runs only over the competing
+    // options above. The typed patterns are the single source of truth in
+    // cross-cutting-architecture-patterns.ts, sourced from the Pattern Pack Bible.
+    ...CROSS_CUTTING_ARCHITECTURE_PATTERNS,
   ],
 
   // ── Layer 5 — Value model ─────────────────────────────────────────────────
@@ -831,11 +876,24 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
   vocabulary: {
     systemsOfRecord: [
       {
-        name: 'Population-health analytics platform',
+        name: 'Population-health analytics / reconciled population layer',
         role:
           'The system of record for the attributed population — cost, risk, ' +
-          'quality, and stratification computed from reconciled data.',
-        examples: ['Arcadia', 'Innovaccer', 'Health Catalyst', 'Epic Healthy Planet'],
+          'quality, and stratification computed from reconciled data. Own-vs-' +
+          'rent is the defining architecture choice here: a lakehouse-native ' +
+          'layer on the organisation’s own platform keeps the data, models, ' +
+          'and logic owned, auditable, and extensible; a vendor SaaS platform ' +
+          'delivers the view faster but holds the intelligence on the vendor ' +
+          'side (a rent posture — see the rented-population-intelligence pain ' +
+          'theme).',
+        examples: [
+          'Lakehouse-native reconciled population layer (own-it — e.g. ' +
+            'Databricks + Unity Catalog in the organisation’s own cloud account)',
+          'Arcadia',
+          'Innovaccer',
+          'Health Catalyst',
+          'Epic Healthy Planet',
+        ],
       },
       {
         name: 'Payer settlement and benchmark system',
@@ -933,6 +991,17 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
           'coding accuracy, not maximisation, the objective.',
       },
       {
+        name: 'CMS Health Equity Index (HEI) reward',
+        relevance:
+          'From the 2027 Star year (2024–2025 performance), the HEI reward ' +
+          'replaces the reward factor and rewards plans for strong Star ' +
+          'performance among members with social risk factors (dual / LIS / ' +
+          'disabled). It turns equity-stratified quality performance — ' +
+          'especially in D-SNP populations — into a direct Star-revenue ' +
+          'lever, making SDOH capture an economics question, not only a ' +
+          'clinical one.',
+      },
+      {
         name: 'Commercial and Medicaid value-based contracts',
         relevance:
           'Payer-specific VBC arrangements — shared savings, bundles, ' +
@@ -941,6 +1010,15 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
       },
     ],
     canonicalTerms: [
+      {
+        term: 'Lakehouse-native (own-it) population layer',
+        definition:
+          'A reconciled population data layer, with its risk models and ' +
+          'quality logic, built and run on the organisation’s own governed ' +
+          'platform so the data, models, and IP are owned, auditable, and ' +
+          'extensible — as opposed to a vendor SaaS platform that holds the ' +
+          'intelligence on the vendor side (a rent posture).',
+      },
       {
         term: 'Benchmark',
         definition:
@@ -1138,11 +1216,37 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
             'apply and how they connect.',
         },
         {
+          heading: 'Platform landing zone & private data plane',
+          guidance:
+            'Specify the cloud landing zone and private data plane the ' +
+            'capability runs on — multi-account governance, private ' +
+            'networking with no public-IP compute and an egress allowlist, ' +
+            'PrivateLink to the lakehouse, a regional Unity Catalog metastore, ' +
+            'and identity federation. State the platform-readiness gate that ' +
+            'must be green before PHI lands. Do not present an architecture ' +
+            'with no landing zone (cross-cutting pattern ' +
+            'cc_cloud_landing_zone_private_data_plane).',
+        },
+        {
+          heading: 'Ingestion & data-integration framework (own-it)',
+          guidance:
+            'Specify the metadata-driven ingestion framework that onboards ' +
+            'Epic Clarity/Caboodle, claims, ERP, and SaaS sources by ' +
+            'configuration rather than per-pipeline code — name the own-it ' +
+            'choice (e.g. DLT-META / the Databricks four-config framework, ' +
+            'Lakeflow Connect landing in the client’s own Unity Catalog) and ' +
+            'reject reinventing a bespoke framework or renting an outsourced ' +
+            'destination platform that holds the data on the vendor side ' +
+            '(cross-cutting pattern cc_metadata_driven_ingestion_framework).',
+        },
+        {
           heading: 'Population data architecture',
           guidance:
             'Specify the claims, EHR, attribution, quality, and risk feeds, ' +
             'their latency and reconciliation, and how the single ' +
-            'authoritative population view is built and governed.',
+            'authoritative population view is built and governed — as an ' +
+            'own-it, lakehouse-native reconciled layer, not a rented ' +
+            'population-health SaaS that holds the data and models.',
         },
         {
           heading: 'AI use-case design and control posture',
@@ -1170,7 +1274,13 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
           guidance:
             'State the model-monitoring, equity-check, coding-compliance, ' +
             'and audit controls, and the regulatory frames (MSSP, REACH, ' +
-            'MA/HCC, RADV) that bound the design.',
+            'MA/HCC, RADV, HEI) that bound the design. Make the governance ' +
+            'spine explicit: Unity Catalog access/lineage controls, a HITRUST ' +
+            'CSF control mapping over the cloud + lakehouse services, and ' +
+            'HIPAA via the compliance security profile + BAA with both the ' +
+            'cloud provider and the lakehouse vendor, with PHI processed in ' +
+            'the client’s own account (cross-cutting pattern ' +
+            'cc_unity_catalog_hitrust_governance).',
         },
         {
           heading: 'Integration and build approach',
@@ -1303,6 +1413,27 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'A single-point savings number, a vendor ROI claim taken at face ' +
         'value, or a forecast that ignores the contract structure or the ' +
         'settlement lag.',
+    },
+    {
+      claim:
+        'That the population intelligence layer is OWNED by the organisation, ' +
+        'not rented from a vendor platform',
+      authoritativeSource:
+        'The architecture decision record and the data-platform contract ' +
+        'terms — where the reconciled data, the risk models, and the quality ' +
+        'logic physically reside, and who can audit, extend, and move them.',
+      whatGoodEvidenceLooksLike:
+        'The reconciled population layer, risk models, and quality logic run ' +
+        'in the organisation’s own governed lakehouse (its own cloud account, ' +
+        'under Unity Catalog), are auditable and extensible, and the IP is ' +
+        'owned by the organisation. Managed connectors are acceptable where ' +
+        'the destination catalog is the organisation’s own.',
+      weakEvidenceToReject:
+        'A claim of having a population-health platform where the data, ' +
+        'models, and logic are held by the vendor and cannot be audited, ' +
+        'recalibrated, or moved — that is rented intelligence, not an owned ' +
+        'asset, and must not be presented as the organisation owning its ' +
+        'population strategy.',
     },
   ],
 };

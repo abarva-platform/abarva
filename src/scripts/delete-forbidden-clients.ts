@@ -10,7 +10,6 @@ const FORBIDDEN = [
   'First Capital Financial',
   'HP Inc',
   'MD Anderson',
-  'Meridian Health System',
 ];
 
 async function main() {

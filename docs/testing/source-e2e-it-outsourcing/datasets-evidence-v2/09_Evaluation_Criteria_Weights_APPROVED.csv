@@ -1,0 +1,12 @@
+criteria_id,category,description,weight_pct,scoring_scale,guidance_red_flags
+E-01,Technical solution,Service model fit to tower scope; aviation 24x7 ops depth; Tier-0 handling,12,1-5 anchored,Evidence: comparable airline/transport refs >= $50M/yr scope
+E-02,Transition & risk,"Plan realism vs 24-wk cap, blackout compliance, KT approach, parallel-run for crew-critical",10,1-5 anchored,Red flag: <12 weeks or no IRROPS plan = max 2
+E-03,Service desk & XLA,"Omnichannel model, IRROPS surge design, crew-line continuity, FCR/CSAT commitments",8,1-5 anchored,Must commit IRROPS surge SLA (A-05)
+E-04,Mainframe & legacy depth,"zOS/TPF/COBOL bench reality: named FTEs, tenure, pyramid",8,1-5 anchored,Red flag: bench claims without named profiles
+E-05,Automation & productivity,Contractually committed glidepath vs A-12 floor; mechanism that reduces invoice,10,1-5 anchored,'Up to X%' marketing language scores <=2
+E-06,Delivery capability & people,"Pyramid quality, attrition mgmt, location strategy, named leadership",8,1-5 anchored,
+E-07,Security & compliance,"SOC2/ISO scope coverage incl all delivery centers, TSA badging, PAM/MFA, patch SLA credibility",8,1-5 anchored,Missing center-level certs = max 2
+E-08,Governance & partnership,"Outcome governance, transparency, joint-venture behaviors, exec access",6,1-5 anchored,
+E-09,Price — 5yr TCO (normalized),Normalized per Exhibit 08 bands; risk-adjusted,20,Formula: lowest TCO = 5; others pro-rata,Non-comparable pricing = held until clarified
+E-10,Commercial quality,"Credits >=7%, earn-back terms, COLA cap acceptance, pass-through transparency, redline burden",6,1-5 anchored,Each mandatory-floor rejection: -1
+E-11,References & proof,3 live refs at comparable scale incl 1 airline/transport; site-visit rights,4,1-5 anchored,

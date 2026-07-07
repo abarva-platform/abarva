@@ -59,7 +59,7 @@ export function CIMiniStrip({ runs }: CIMiniStripProps) {
             fontStyle: 'italic',
           }}
         >
-          Deterministic snapshot — real CI integration in Wave 27.
+          Snapshot view. Live CI integration is not enabled yet.
         </span>
       </header>
       <ul

@@ -4,20 +4,20 @@ import type { NextRequest } from 'next/server'
 import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
 import { isLaunchApprovedEmail } from '@/lib/auth/launch-access-server'
 
-const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
-const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
+const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+const ACTIVE_CLIENT_COOKIE = "abarva_active_client";
 // ADMIN8 — canonical path is /admin/production-readiness; the /platform/admin/*
 // variant is preserved for the legacy redirect's pre-redirect response.
 const PRODUCTION_READINESS_NO_STORE_PATHS = new Set([
-  '/admin/production-readiness',
-  '/platform/admin/production-readiness',
-  '/api/admin/production-readiness',
-])
+  "/admin/production-readiness",
+  "/platform/admin/production-readiness",
+  "/api/admin/production-readiness",
+]);
 const PRODUCTION_READINESS_NO_STORE_HEADERS = {
-  'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
-  Pragma: 'no-cache',
-  Expires: '0',
-} as const
+  "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+} as const;
 
 export const PUBLIC_ROUTE_PATTERNS = [
   '/access(.*)',
@@ -40,25 +40,25 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // Health is intentionally public so platform probes can validate runtime
   // readiness before a browser session exists. The route masks raw backing
   // service errors when NODE_ENV=production.
-  '/api/health',
+  "/api/health",
   // Connectivity health is also public at the middleware layer, but the
   // route self-guards with `x-abarva-health-token` and returns JSON 404
   // without it. Keeping it out of Clerk avoids HTML sign-in redirects in
   // machine probes.
-  '/api/health/azure-connectivity',
+  "/api/health/azure-connectivity",
   // L9 Postgres disruption smoke is an operator-only probe, not a user
   // surface. It self-guards with the shared health token; keeping it
   // public at the middleware layer avoids Clerk HTML redirects in the
   // cutover harness.
-  '/api/health/postgres-disruption',
+  "/api/health/postgres-disruption",
   // Parallel-run invariants are machine-only and self-guarded by a bearer
   // token inside the route. It must stay outside Clerk so prod-vs-Azure
   // harnesses receive JSON pass/fail, not an HTML sign-in redirect.
-  '/api/admin/parallel-run-invariants',
+  "/api/admin/parallel-run-invariants",
   // Notification APIs must return JSON auth/token responses rather than
   // Clerk HTML rewrites. Feed routes self-gate with Clerk/tenancy, and
   // dispatch self-guards with NOTIFICATION_DISPATCH_TOKEN/CRON_SECRET.
-  '/api/notifications(.*)',
+  "/api/notifications(.*)",
   // W4-PR-7 (2026-05-30) · Resend webhook receives bounce / complaint
   // / delivery events. The route MUST be reachable without a Clerk
   // session — Resend is an external sender. The route self-guards
@@ -78,28 +78,15 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // initiative counts publicly to anyone who knew the URL. The route is
   // now an authenticated diagnostic (any signed-in user, count-only is
   // still acceptable across the workspace). Removed from the public list.
-  // INT-V3 (2026-05-07) · /intelligence is the public Explore Layer
-  // surface — corpus doctrine, no tenant data leakage. Auth-required
-  // sub-paths (author / quality / synthesize / ask / validate) are
-  // still gated by AUTH_REQUIRED_ROUTE_PATTERNS, which is checked
-  // before the public-route fall-through.
-  '/intelligence(.*)',
-  // `/product` is the public Product overview — the marketing nav's
-  // "Platform → Product" link. It explains the four surfaces
-  // (Intelligence / Moves / Source / Tower) for logged-out visitors
-  // who need to see what the product is before signing in.
-  '/product(.*)',
-] as const
+] as const;
 
-const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS])
+const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 const isTokenGuardedPublicOpsRoute = createRouteMatcher([
-  '/api/admin/parallel-run-invariants',
-])
+  "/api/admin/parallel-run-invariants",
+]);
 
 // Maestro workspace — requires any authenticated Maestro/Admin/Investor session
-const maestroRoutes = createRouteMatcher([
-  '/maestro(.*)',
-])
+const maestroRoutes = createRouteMatcher(["/maestro(.*)"]);
 
 // Routes that require any authenticated session. /admin(.*) still listed
 // because redirects run in edge routing but leaving the auth matcher is
@@ -115,58 +102,81 @@ const maestroRoutes = createRouteMatcher([
 // from the request body are listed explicitly so the auth gate is obvious
 // in this file rather than implicit through the public-route fall-through.
 export const AUTH_REQUIRED_ROUTE_PATTERNS = [
-  '/admin(.*)',
-  '/api/admin(.*)',
-  '/api/data(.*)',
-  '/api/setup/(.*)',
-  '/api/tower/(.*)',
-  '/api/turn/(.*)',
-  '/api/intelligence/query',
+  "/admin(.*)",
+  "/api/admin(.*)",
+  "/api/data(.*)",
+  "/api/setup/(.*)",
+  "/api/tower/(.*)",
+  "/api/turn/(.*)",
+  "/api/intelligence/query",
   // SEC-P1-10 (audit 2026-05-13): 27 `/api/reasoning/*` routes are
   // currently in-memory demo stubs. Per-handler `requireTenancy()` calls
   // are TODO when those routes get backed by Supabase persistence. For
   // now, the explicit pattern entry ensures the middleware auth gate is
   // recorded in this file rather than implicit through public-fallthrough.
-  '/api/reasoning(.*)',
+  "/api/reasoning(.*)",
   // SEC-P1 belt-and-suspenders: `/api/v1/*` routes are mixed
   // signed-in/typed accessors. Listed explicitly so anyone adding a new
   // v1 endpoint knows the auth contract.
-  '/api/v1/(.*)',
-  '/maestro(.*)',
+  "/api/v1/(.*)",
+  "/maestro(.*)",
   // /home(.*) covers the canonical Home tree (PR-H2 route migration);
   // /admin(.*) stays in the list because it 301-redirects to /home
   // (the redirect happens early in the middleware so the auth check
   // never fires on /admin/* in practice, but we keep the guard for
   // belt-and-suspenders).
-  '/home(.*)',
-  '/dashboard(.*)',
+  "/home(.*)",
+  "/dashboard(.*)",
   // PR-2 (2026-05-30) · `/engineering/*` is the new home for raw
   // diagnostic inspectors that used to live under /admin (Atlas
   // traces, etc.). Per docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md
   // §5.5 — Setup is the Trust Plane, not the Engineering surface.
-  '/engineering(.*)',
-  '/engagements(.*)',
-  '/programs(.*)',
-  '/engage/(.*)',
-  '/users/(.*)',
-  '/data(.*)',
-  '/tower(.*)',
-  '/sponsor(.*)',
-  '/platform(.*)',
+  "/engineering(.*)",
+  "/engagements(.*)",
+  "/programs(.*)",
+  "/engage/(.*)",
+  "/users/(.*)",
+  "/data(.*)",
+  "/tower(.*)",
+  "/sponsor(.*)",
+  "/platform(.*)",
   // INT-1.3 · /intelligence is the J0 cold landing — corpus doctrine,
   // not tenant data — and is public. Sub-paths that touch tenant data
   // (Sentinel chat, validate_synthesis) self-gate. Legacy authoring /
   // quality / synthesize / author paths stay auth-gated until they are
   // either reshaped (INT-2+) or explicitly public.
-  '/intelligence/author(.*)',
-  '/intelligence/quality(.*)',
-  '/intelligence/synthesize(.*)',
-  '/intelligence/ask(.*)',
-  '/intelligence/validate(.*)',
-  '/source(.*)',
-] as const
+  "/intelligence/author(.*)",
+  "/intelligence/quality(.*)",
+  "/intelligence/synthesize(.*)",
+  "/intelligence/ask(.*)",
+  "/intelligence/validate(.*)",
+  "/source(.*)",
+  "/architecture(.*)",
+  "/atlas(.*)",
+  "/contradictions(.*)",
+  "/demo/programs(.*)",
+  "/demo/explore(.*)",
+  "/demo/agent-markdown-fixture(.*)",
+  "/digest(.*)",
+  "/editorial(.*)",
+  "/intelligence(.*)",
+  "/investor(.*)",
+  "/investors(.*)",
+  "/patterns(.*)",
+  "/solutions(.*)",
+  "/training(.*)",
+] as const;
 
-const authRequiredRoutes = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS])
+const authRequiredRoutes = createRouteMatcher([
+  ...AUTH_REQUIRED_ROUTE_PATTERNS,
+]);
+
+function shouldBypassClerkForAxe(request: NextRequest) {
+  return (
+    process.env.ACCESSIBILITY_AXE_DISABLE_CLERK === "1" &&
+    isPublicRoute(request)
+  );
+}
 
 function resolveSessionEmail(sessionClaims: unknown): string | null {
   const claims = sessionClaims as
@@ -192,20 +202,19 @@ function createSignInRedirect(request: NextRequest) {
   if (requestedPath && requestedPath !== '/' && !request.nextUrl.pathname.startsWith('/access')) {
     url.searchParams.set('redirect', requestedPath)
   }
-  return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url))
+  return withProductionReadinessNoStoreHeaders(
+    request,
+    NextResponse.redirect(url),
+  );
 }
 
 function isProductionReadinessNoStoreRequest(request: NextRequest) {
-  return PRODUCTION_READINESS_NO_STORE_PATHS.has(request.nextUrl.pathname)
+  return PRODUCTION_READINESS_NO_STORE_PATHS.has(request.nextUrl.pathname);
 }
 
-function withProductionReadinessNoStoreHeaders<T extends NextResponse>(request: NextRequest, response: T): T {
-  if (!isProductionReadinessNoStoreRequest(request)) return response
-
-  for (const [key, value] of Object.entries(PRODUCTION_READINESS_NO_STORE_HEADERS)) {
-    response.headers.set(key, value)
-  }
-  return response
+function sourceEventSlugFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/source\/events\/([^/]+)(?:\/.*)?$/);
+  return match?.[1] ?? null;
 }
 
 export default clerkMiddleware(async (auth, request: NextRequest) => {
@@ -236,81 +245,168 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     '/home/connectors': '/admin/connectors',
     '/home/tenant-profile': '/admin?tab=tenant',
   }
-  const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname]
-  if (exactHomeMatch) {
-    // Wave 1 PR-3 (2026-05-30) · Targets may carry their own canonical
-    // query params (e.g. `/admin?tab=tenant`). Merge any incoming search
-    // string instead of naively concatenating with `+ request.nextUrl.search`.
-    const url = new URL(exactHomeMatch, request.url)
-    if (!exactHomeMatch.includes('?')) {
-      url.search = request.nextUrl.search
-    } else if (request.nextUrl.search) {
-      const incoming = new URLSearchParams(request.nextUrl.search)
-      incoming.forEach((value, key) => {
-        if (!url.searchParams.has(key)) url.searchParams.set(key, value)
-      })
+  return response;
+}
+
+const clerkProtectedProxy = clerkMiddleware(
+  async (auth, request: NextRequest) => {
+    const { userId, sessionClaims } = await auth();
+    const metadata =
+      (sessionClaims?.publicMetadata as
+        | { role?: string; clientId?: string; defaultClientId?: string }
+        | undefined) ?? {};
+    const metadataRole = metadata.role ?? null;
+    const email =
+      (sessionClaims as { emailAddress?: string } | undefined)?.emailAddress ??
+      null;
+    const role = resolveSessionRole(metadataRole, email);
+    const requestedClientId = request.nextUrl.searchParams.get("client");
+    const activeClientId =
+      request.cookies.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
+
+    // Wave 1 PR-1 (2026-05-30) · Setup/Admin Trust Plane consolidation.
+    // /admin/* is the single canonical route tree for the Setup/Admin
+    // surface. The parallel /home/* re-export tree is retired. The
+    // panel pages that previously re-exported /admin/* counterparts now
+    // 301-redirect /home/<panel> → /admin/<panel> so any persisted links
+    // continue to resolve.
+    //
+    // /home, /home/queue, and /home/learn stay as real /home pages and
+    // are NOT remapped here. Setup/admin surfaces such as configuration, connectors,
+    // data trust, agent readiness, and tenant profile stay canonical
+    // under /admin.
+    //
+    // Wave 1 PR-3 (2026-05-30) · `/home/tenant-profile` now lands on the
+    // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
+    // was demoted to a tab inside /admin Overview — see AdminTenantTab).
+    const homeToAdminMap: Record<string, string> = {
+      "/home/admin": "/admin",
+      "/home/data-loads": "/admin",
+      "/home/data-trust": "/admin",
+      "/home/agent-readiness": "/admin",
+      "/home/connectors": "/admin",
+      "/home/configuration": "/admin",
+      "/home/tenant-profile": "/admin",
+      "/home/decision": "/intelligence",
+      "/home/source": "/source",
+      "/home/training": "/home/learn",
+      "/home/ai-initiatives": "/home",
+    };
+    const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname];
+    if (exactHomeMatch) {
+      // Wave 1 PR-3 (2026-05-30) · Targets may carry their own canonical
+      // query params (e.g. `/admin?tab=tenant`). Merge any incoming search
+      // string instead of naively concatenating with `+ request.nextUrl.search`.
+      const url = new URL(exactHomeMatch, request.url);
+      if (!exactHomeMatch.includes("?")) {
+        url.search = request.nextUrl.search;
+      } else if (request.nextUrl.search) {
+        const incoming = new URLSearchParams(request.nextUrl.search);
+        incoming.forEach((value, key) => {
+          if (!url.searchParams.has(key)) url.searchParams.set(key, value);
+        });
+      }
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
     }
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
-  }
-  // /home/connectors/<id> → /admin/connectors/<id> (preserve detail-page links).
-  if (request.nextUrl.pathname.startsWith('/home/connectors/')) {
-    const sub = request.nextUrl.pathname.slice('/home/connectors/'.length)
-    const url = new URL('/admin/connectors/' + sub + request.nextUrl.search, request.url)
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
-  }
-
-  // PR-2 (2026-05-30) · Setup/Admin route consolidation — see
-  // docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §5.5. Redundant
-  // `/admin/users` route deleted in favor of the richer
-  // `/admin/users-access`. Invite flow demoted from top-level
-  // route to modal launched from Users & Access. Atlas-named
-  // routes either deprecated or relocated.
-  const adminRouteConsolidationMap: Record<string, string> = {
-    '/admin/users': '/admin/users-access',
-    '/admin/invite': '/admin/users-access?invite=open',
-    '/admin/agents/atlas': '/admin/cross-program-signals',
-    '/admin/atlas/traces': '/engineering/traces',
-    // Wave 1 PR-3 (2026-05-30) · Tenant configuration is demoted from a
-    // standalone route to a tab inside /admin Overview. See
-    // SETUP_AUDIT_2026-05-30_VERDICT §5.5 and AdminOverviewTabs.
-    '/admin/tenant': '/admin?tab=tenant',
-  }
-  const consolidationMatch = adminRouteConsolidationMap[request.nextUrl.pathname]
-  if (consolidationMatch) {
-    const url = new URL(consolidationMatch, request.url)
-    if (!consolidationMatch.includes('?')) {
-      url.search = request.nextUrl.search
-    } else if (request.nextUrl.search) {
-      // Preserve any incoming query params alongside the canned ones.
-      const incoming = new URLSearchParams(request.nextUrl.search)
-      incoming.forEach((value, key) => {
-        if (!url.searchParams.has(key)) url.searchParams.set(key, value)
-      })
+    // /home/admin/<path> → /admin/<path> (preserve stale admin bookmarks).
+    if (request.nextUrl.pathname.startsWith("/home/admin/")) {
+      const url = new URL("/admin" + request.nextUrl.search, request.url);
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
     }
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
-  }
-  // /admin/ai-initiatives/<id> → /home/ai-initiatives/<id>
-  if (request.nextUrl.pathname.startsWith('/admin/ai-initiatives/')) {
-    const sub = request.nextUrl.pathname.slice('/admin/ai-initiatives/'.length)
-    const url = new URL('/home/ai-initiatives/' + sub + request.nextUrl.search, request.url)
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
-  }
+    // /home/connectors/<id> → /admin/connectors/<id> (preserve detail-page links).
+    if (request.nextUrl.pathname.startsWith("/home/connectors/")) {
+      const url = new URL("/admin" + request.nextUrl.search, request.url);
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
+    if (request.nextUrl.pathname.startsWith("/home/ai-initiatives/")) {
+      const url = new URL("/home" + request.nextUrl.search, request.url);
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
 
-  // /setup compatibility bridge — /setup/* maps to /home/* (which then
-  // hits the home→admin redirects above when applicable). CL-1
-  // (2026-05-30) · /setup itself now hops straight to /admin to avoid
-  // a double-redirect through /home → /admin.
-  if (request.nextUrl.pathname === '/setup') {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/admin', request.url), 301))
-  }
-  if (request.nextUrl.pathname.startsWith('/setup/')) {
-    const sub = request.nextUrl.pathname.slice('/setup/'.length)
-    const homeCandidate = '/home/' + sub
-    const target = homeToAdminMap[homeCandidate] ?? homeCandidate
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL(target + request.nextUrl.search, request.url), 301))
-  }
+    // 2026-06-14 · Admin/Setup sunset.
+    // The canonical Setup experience is now one Stripe-like surface at
+    // /admin. Legacy /admin/* UI pages remain in the repo only as retired
+    // implementation detail while the route tree is drained. Keep APIs
+    // under /api/admin/* untouched; this branch handles browser pages only.
+    const adminRouteConsolidationMap: Record<string, string> = {
+      "/admin/data-load": "/admin",
+      "/admin/data-loads": "/admin",
+      "/admin/users": "/admin",
+      "/admin/invite": "/admin",
+      "/admin/agents/atlas": "/admin",
+      "/admin/atlas/traces": "/admin",
+      "/admin/tenant": "/admin",
+    };
+    const consolidationMatch =
+      adminRouteConsolidationMap[request.nextUrl.pathname];
+    if (consolidationMatch) {
+      const url = new URL(consolidationMatch, request.url);
+      if (!consolidationMatch.includes("?")) {
+        url.search = request.nextUrl.search;
+      } else if (request.nextUrl.search) {
+        // Preserve any incoming query params alongside the canned ones.
+        const incoming = new URLSearchParams(request.nextUrl.search);
+        incoming.forEach((value, key) => {
+          if (!url.searchParams.has(key)) url.searchParams.set(key, value);
+        });
+      }
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
+    if (request.nextUrl.pathname.startsWith("/admin/")) {
+      const url = new URL("/admin", request.url);
+      if (request.nextUrl.pathname !== "/admin/setup") {
+        url.searchParams.set("from", request.nextUrl.pathname);
+      }
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
+    // /admin/ai-initiatives/<id> → /home/ai-initiatives/<id>
+    if (request.nextUrl.pathname.startsWith("/admin/ai-initiatives/")) {
+      const sub = request.nextUrl.pathname.slice(
+        "/admin/ai-initiatives/".length,
+      );
+      const url = new URL(
+        "/home/ai-initiatives/" + sub + request.nextUrl.search,
+        request.url,
+      );
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
 
-  const requiresAuth = authRequiredRoutes(request) && !isTokenGuardedPublicOpsRoute(request)
+    // /setup compatibility bridge. /setup itself goes directly to /admin.
+    // Setup-ish descendants resolve through the canonical admin map above;
+    // only retained non-setup Home descendants are allowed to remain /home/*.
+    if (request.nextUrl.pathname === "/setup") {
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(new URL("/admin", request.url), 301),
+      );
+    }
+    if (request.nextUrl.pathname.startsWith("/setup/")) {
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(new URL("/admin", request.url), 301),
+      );
+    }
 
   if (request.nextUrl.pathname === '/signed-out') {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url), 307))
@@ -328,13 +424,46 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
         clientId: metadata.clientId,
         defaultClientId: metadata.defaultClientId,
         email,
+      });
+      if (explicitlyPinnedClient) {
+        getResponse().cookies.set(
+          ACTIVE_CLIENT_COOKIE,
+          explicitlyPinnedClient,
+          {
+            path: "/",
+            maxAge: 60 * 60 * 24 * 365,
+            sameSite: "lax",
+          },
+        );
+      }
+    }
+
+    // Tag mobile UA requests — consumed by server components via x-is-mobile header
+    const ua = request.headers.get("user-agent") ?? "";
+    if (MOBILE_UA.test(ua)) {
+      getResponse().headers.set("x-is-mobile", "1");
+    }
+
+    if (isProductionReadinessNoStoreRequest(request)) {
+      withProductionReadinessNoStoreHeaders(request, getResponse());
+    }
+
+    if (response) return response;
+  },
+);
+
+export default function proxy(request: NextRequest, event: NextFetchEvent) {
+  if (shouldBypassClerkForAxe(request)) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-abarva-accessibility-axe", "1");
+
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
       },
-      requestedClientId,
-    )
-  ) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.searchParams.delete('client')
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(redirectUrl))
+    });
+    response.cookies.delete(ACTIVE_CLIENT_COOKIE);
+    return response;
   }
 
   if (userId && !isLaunchApprovedSession && !request.nextUrl.pathname.startsWith('/access-denied')) {
@@ -418,5 +547,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 })
 
 export const config = {
-  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
-}
+  matcher: [
+    "/((?!.*\\..*|_next).*)",
+    "/",
+    "/(api|trpc)(.*)",
+    "/training/:path*",
+  ],
+};

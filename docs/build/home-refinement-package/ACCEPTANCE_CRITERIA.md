@@ -26,7 +26,7 @@ Binary pass/fail per change. Browser-Chrome verification required for visual / i
 
 ```
 ✓ /setup → 301 → /
-✓ /setup/* → 301 → /home/* per ROUTE_MIGRATION.md mapping
+✓ /setup/* → 301 → /admin/* per ROUTE_MIGRATION.md mapping
 ✓ Direct browser navigation: typing /setup in address bar lands on /
 ✓ Bookmarks to /setup/* URLs redirect correctly
 ✓ Internal links throughout codebase use /home/* not /setup/*
@@ -104,7 +104,7 @@ Binary pass/fail per change. Browser-Chrome verification required for visual / i
 ✓ Setup Redesign Package files moved to home-redesign-package/ directory
 ✓ AI Initiatives Substrate Package SETUP_UI_SPEC.md renamed to HOME_UI_SPEC.md
 ✓ Journey Kit WAYPOINTS, PERSONA_SCENARIO, BASELINE_DIAGNOSTIC, PREREQUISITES, claude-code-runbook updated
-✓ All URL references updated from /setup/* to /home/*
+✓ Setup/admin URL references updated from /setup/* to /admin/*
 ✓ All "Setup" references in user-facing copy updated to "Home" (historical references in completion reports OK)
 ✓ Grep audit per DOWNSTREAM_PACKAGE_UPDATES.md verification step
 ✓ Cross-references between packages still resolve

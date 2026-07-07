@@ -223,16 +223,20 @@ function SignalRow({ signal }: { signal: SignalRowView }) {
 
 interface IntelligenceSignalsIndexPageProps {
   view: IntelligenceSignalsIndexView;
+  tenantName: string;
 }
 
-export function IntelligenceSignalsIndexPage({ view }: IntelligenceSignalsIndexPageProps) {
+export function IntelligenceSignalsIndexPage({
+  view,
+  tenantName,
+}: IntelligenceSignalsIndexPageProps) {
   const firstSignalId = view.signals[0]?.id;
 
   return (
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: 'Intelligence · Signal Stream',
       }}

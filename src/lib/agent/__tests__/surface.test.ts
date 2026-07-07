@@ -40,13 +40,13 @@ describe('canonicalizeSurface', () => {
     expect(canonicalizeSurface('/programs/new', {})).toBe('/programs/new');
   });
 
-  it('PR-I · single-segment semantic surfaces canonicalize to /<name>', () => {
+  it('PR-I · single-segment semantic surfaces canonicalize to canonical routes', () => {
     expect(canonicalizeSurface('home', {})).toBe('/home');
     expect(canonicalizeSurface('tower', {})).toBe('/tower');
     expect(canonicalizeSurface('programs', {})).toBe('/programs');
     expect(canonicalizeSurface('source', {})).toBe('/source');
     expect(canonicalizeSurface('intelligence', {})).toBe('/intelligence');
-    expect(canonicalizeSurface('setup', {})).toBe('/setup');
+    expect(canonicalizeSurface('setup', {})).toBe('/admin/setup');
   });
 
   it('still-unknown semantic surfaces pass through unchanged', () => {

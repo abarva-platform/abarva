@@ -1,0 +1,57 @@
+{
+  "id": "INT-SKY-010",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "What should we do first if customer disruption recovery has high value but poor readiness?",
+  "expectedTerms": [
+    "customer",
+    "readiness"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:10:29.961Z",
+  "completedAt": "2026-07-06T23:11:05.952Z",
+  "latencyMs": 35991,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-010-prompt-reconstruction.txt",
+  "promptReconstructionHash": "e066a021cd1fc29447d87e1127f3d11f479d9dfb7b2ae9b6009907f450f97adc",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-010.ndjson",
+  "claudeResponse": "Airline Demo's answer is clear: fund readiness before you scale the AI. 6 hours with demand-sensing ML, network optimization solvers, and self-service rebooking. That value is real. But Airline Demo's current state has open data certification gaps on crew legality, PNR/reservation events, and the operational event store.\nLaunching autonomous recovery AI on uncertified feeds is how you create a compliance or operational incident, not a board win. The sequencing logic is: certify the data foundation first, then gate to copilot-assist (human-in-loop), then prove value with measured adoption and decision latency, then open the door to agentic scale.\nSkipping step one to chase step three is the most common failure mode in IROPS AI. Your 6,200 contact center agents handling disruption recovery, refunds, and vouchers are the near-term leverage point.\nA Customer Disruption Communication Agent with a human-in-loop approval workflow gives you measurable outcome proof — override rate, handle time, reaccommodation speed — without requiring full data certification across all feeds. That's your bounded win.\nThree things to move in parallel while the data foundation is being certified: (1) get VP Data Platforms to sign freshness SLAs for crew legality and PNR feeds, (2) get AI Governance Lead to tier the IROPS Decision Assistant and Passenger Reaccommodation Agent for model-risk approval, and (3) get Finance to approve a disruption-cost baseline by event category — without that, any value claim stays planning-grade and can't support a board ask.\nThe open risk is adoption and value proof. None of the AI initiatives in the loaded packet yet have measured usage or realized-value evidence. That has to be built into the deployment design from day one, not retrofitted after go-live.\n--- Decision Gate customer disruption AI on three certifications before scaling: data freshness (crew legality, PNR, flight status), model-risk tier approval, and a Finance-approved disruption-cost baseline. Until those three are signed, operate in copilot-assist mode only. Start with the Customer Disruption Communication Agent targeting the contact center population — highest near-term leverage, lowest dependency count.\n6 hour reductions in customer disruption recovery time using network optimization solvers, demand-sensing ML, and self-service rebooking platforms. 3 hours with generative customer assistants and fuel-burn optimization. 5 hours using predictive analytics patterns. The common thread: all started with a certified data foundation and human-in-loop controls before enabling autonomous recovery actions.\n2 (peer delta) | Benchmark |\n| Top-quartile carrier improvement (Corporate) | — | — | −1.",
+  "renderedText": "Airline Demo's answer is clear: fund readiness before you scale the AI. 6 hours with demand-sensing ML, network optimization solvers, and self-service rebooking. That value is real. But Airline Demo's current state has open data certification gaps on crew legality, PNR/reservation events, and the operational event store.\nLaunching autonomous recovery AI on uncertified feeds is how you create a compliance or operational incident, not a board win. The sequencing logic is: certify the data foundation first, then gate to copilot-assist (human-in-loop), then prove value with measured adoption and decision latency, then open the door to agentic scale.\nSkipping step one to chase step three is the most common failure mode in IROPS AI. Your 6,200 contact center agents handling disruption recovery, refunds, and vouchers are the near-term leverage point.\nA Customer Disruption Communication Agent with a human-in-loop approval workflow gives you measurable outcome proof — override rate, handle time, reaccommodation speed — without requiring full data certification across all feeds. That's your bounded win.\nThree things to move in parallel while the data foundation is being certified: (1) get VP Data Platforms to sign freshness SLAs for crew legality and PNR feeds, (2) get AI Governance Lead to tier the IROPS Decision Assistant and Passenger Reaccommodation Agent for model-risk approval, and (3) get Finance to approve a disruption-cost baseline by event category — without that, any value claim stays planning-grade and can't support a board ask.\nThe open risk is adoption and value proof. None of the AI initiatives in the loaded packet yet have measured usage or realized-value evidence. That has to be built into the deployment design from day one, not retrofitted after go-live.\n--- Decision Gate customer disruption AI on three certifications before scaling: data freshness (crew legality, PNR, flight status), model-risk tier approval, and a Finance-approved disruption-cost baseline. Until those three are signed, operate in copilot-assist mode only. Start with the Customer Disruption Communication Agent targeting the contact center population — highest near-term leverage, lowest dependency count.\n6 hour reductions in customer disruption recovery time using network optimization solvers, demand-sensing ML, and self-service rebooking platforms. 3 hours with generative customer assistants and fuel-burn optimization. 5 hours using predictive analytics patterns. The common thread: all started with a certified data foundation and human-in-loop controls before enabling autonomous recovery actions.\n2 (peer delta) | Benchmark |\n| Top-quartile carrier improvement (Corporate) | — | — | −1.",
+  "sourcesCount": 8,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "Enterprise customer operations and front-office AI pattern"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": null,
+  "score": {
+    "verdict": "watch",
+    "score": 4.5,
+    "flags": [
+      "answer_too_long"
+    ]
+  }
+}

@@ -36,12 +36,46 @@ describe('programs requireTenancy', () => {
       personId: null,
       clerkUserId: 'user_demo_meridian',
       primaryRole: 'client_viewer',
+      tenantRoles: { meridian: 'tenant_admin' },
     });
 
     await expect(requireTenancy()).resolves.toMatchObject({
       clientId: 'client-meridian-uuid',
       userId: 'clerk:user_demo_meridian',
+      clerkUserId: 'user_demo_meridian',
+      tenantRole: 'tenant_admin',
       role: 'client_viewer',
+    });
+  });
+
+  it('does not trust legacy display-name person ids as UUID actor ids', async () => {
+    getCurrentPersonMock.mockResolvedValue({
+      id: 'Anand Sundaram',
+      role: 'client_viewer',
+      email: 'anand.sundaram+lakeshore@thesundaram.com',
+    });
+    getCurrentUserMock.mockResolvedValue({
+      personId: 'Anand Sundaram',
+      clerkUserId: 'user_demo_lakeshore',
+      primaryRole: 'client_viewer',
+      tenantRoles: { lakeshore: 'tenant_admin' },
+      email: 'anand.sundaram+lakeshore@thesundaram.com',
+      name: 'Anand Sundaram',
+    });
+    getActiveClientRowMock.mockResolvedValue({
+      id: 'client-lakeshore-uuid',
+      name: 'Industrial Demo',
+      industry_code: 'INDUSTRIAL',
+      key: 'lakeshore',
+    });
+
+    await expect(requireTenancy()).resolves.toMatchObject({
+      clientId: 'client-lakeshore-uuid',
+      userId: 'clerk:user_demo_lakeshore',
+      clerkUserId: 'user_demo_lakeshore',
+      tenantRole: 'tenant_admin',
+      role: 'client_viewer',
+      email: 'anand.sundaram+lakeshore@thesundaram.com',
     });
   });
 

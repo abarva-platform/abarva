@@ -49,7 +49,7 @@ const db = new pg.Client({
 
 const TENANTS = {
   apex:       { id: 'bb8ed961-a049-4d0c-a38f-f8912138fceb', name: 'Apex Retail',          spec: { applications: 120, ai_initiatives: 30, vendor_contracts: 45, enterprise_context_source_files: 42, enterprise_context_chunks: 280, teams: 14 } },
-  meridian:   { id: 'a20ecef5-f0ea-4890-b9d5-7375fab223ff', name: 'Meridian Health',      spec: { applications: 140, ai_initiatives: 28, vendor_contracts: 50, enterprise_context_source_files: 48, enterprise_context_chunks: 320, teams: 16 } },
+  meridian:   { id: 'a20ecef5-f0ea-4890-b9d5-7375fab223ff', name: 'Meridian Health System', spec: { applications: 140, ai_initiatives: 42, vendor_contracts: 50, enterprise_context_source_files: 48, enterprise_context_chunks: 320, teams: 16 } },
   arcturus:   { id: 'a75687bf-71b9-4524-ab4e-68ae3f28d200', name: 'First Capital', spec: { applications: 180, ai_initiatives: 32, vendor_contracts: 70, enterprise_context_source_files: 60, enterprise_context_chunks: 400, teams: 22 } },
   northstar:  { id: '2702b525-4c6a-4fbe-973d-99a8480d8318', name: 'Northstar Clinical Technologies',    spec: { applications: 240, ai_initiatives: 80, vendor_contracts: 90, enterprise_context_source_files: 96, enterprise_context_chunks: 720, teams: 22 } },
   skyharbor:  { id: '6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301', name: 'SkyHarbor Air',        spec: { applications: 92, ai_initiatives: 38, vendor_contracts: 52, enterprise_context_source_files: 1, enterprise_context_chunks: 3240, teams: 0 } },

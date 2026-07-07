@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
   buildMeridianEnterpriseContextIngestionPlan,
   parseMeridianEnterpriseContextDataset,
+  retargetEnterpriseContextIngestionPlan,
 } from '../ingestion/meridian-loader';
 
 const root = path.join(process.cwd(), 'docs/enterprise-context/synthetic/meridian');
@@ -61,5 +62,24 @@ describe('Meridian enterprise context ingestion plan', () => {
       expect(task.title).toContain(task.issueType);
       expect(task.sourceSheet).toBe('Data');
     }
+  });
+
+  it('can retarget alias packages to the canonical production tenant key', () => {
+    const retargeted = retargetEnterpriseContextIngestionPlan(plan, 'meridian-health');
+
+    expect(retargeted.tenantKey).toBe('meridian-health');
+    expect(retargeted.summary).toEqual(plan.summary);
+    expect(retargeted.records).toHaveLength(plan.records.length);
+    expect(retargeted.facts).toHaveLength(plan.facts.length);
+    expect(retargeted.evidence).toHaveLength(plan.evidence.length);
+    expect(retargeted.chunkQueue).toHaveLength(plan.chunkQueue.length);
+    expect(retargeted.records.every((record) => record.tenantKey === 'meridian-health')).toBe(true);
+    expect(retargeted.facts.every((fact) => fact.tenantKey === 'meridian-health')).toBe(true);
+    expect(retargeted.evidence.every((evidence) => evidence.tenantKey === 'meridian-health')).toBe(true);
+    expect(retargeted.relationships.every((relationship) => relationship.tenantKey === 'meridian-health')).toBe(true);
+    expect(retargeted.records[0]?.canonicalRecordId.startsWith('meridian-health:')).toBe(true);
+    expect(retargeted.facts[0]?.factKey.startsWith('meridian-health:')).toBe(true);
+    expect(retargeted.evidence[0]?.evidenceKey.startsWith('meridian-health:')).toBe(true);
+    expect(retargeted.chunkQueue[0]?.queueKey.startsWith('meridian-health:')).toBe(true);
   });
 });

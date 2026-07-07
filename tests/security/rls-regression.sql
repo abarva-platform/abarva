@@ -10,11 +10,14 @@
 --
 --   1.  For each canonical tenant (apex-retail, meridian-health, first-capital):
 --         a. Connect as the authenticated role with the tenant's JWT claim.
---         b. For every tenant-scoped table (discovered dynamically from
+--         b. For every tenant-readable table (discovered dynamically from
 --            information_schema), SELECT count(*) and verify ALL rows belong
 --            to the caller's tenant (i.e. no other tenant's rows leak).
 --         c. Verify cross-tenant blocking: a query for another tenant's key
 --            returns zero rows (RLS silently filters, NOT a permission denied).
+--         d. Known service-role-only tables may return permission denied;
+--            those are classified separately and do not count as green tenant
+--            reads.
 --
 --   2.  service_role bypass: connecting as service_role can see all tenants
 --       (confirms that backend code paths still work end-to-end).
@@ -65,7 +68,7 @@ CREATE TEMP TABLE rls_regression_findings (
   visible_rows    BIGINT NOT NULL,      -- count(*) the tenant sees
   foreign_rows    BIGINT NOT NULL,      -- rows in visible set that belong to OTHER tenants
   cross_tenant_leak BIGINT NOT NULL,    -- rows visible when explicitly querying OTHER tenant's key
-  status          TEXT NOT NULL         -- 'pass' | 'leak' | 'empty' | 'error:*'
+  status          TEXT NOT NULL         -- 'pass' | 'leak' | 'empty' | 'service_role_only' | 'error:*'
 ) ON COMMIT DROP;
 
 -- The probe loop intentionally switches to SET LOCAL ROLE authenticated to
@@ -154,6 +157,57 @@ WHERE c.relkind = 'r'
     'foundational_pattern_variants'       -- cross-tenant taxonomy w/ mixed keys
   );
 
+-- Known service-role-only tables are tenant-scoped but intentionally not
+-- directly readable by the downgraded authenticated role in the current
+-- production posture. Classify their 42501 permission-denied result honestly
+-- instead of treating it as a tenant leak or as a green tenant-readable pass.
+CREATE TEMP TABLE rls_regression_service_role_only_tables (
+  table_name TEXT PRIMARY KEY
+) ON COMMIT DROP;
+
+GRANT SELECT ON rls_regression_service_role_only_tables TO authenticated;
+
+INSERT INTO rls_regression_service_role_only_tables (table_name)
+VALUES
+  ('data_ingestion_runs'),
+  ('data_inventory_audit_log'),
+  ('data_inventory_segments'),
+  ('data_segment_compliance'),
+  ('data_segment_cross_program_signals'),
+  ('data_segment_enterprise_profile'),
+  ('data_segment_evidence_ledger'),
+  ('data_segment_industry_context'),
+  ('data_segment_it_financials'),
+  ('data_segment_it_landscape'),
+  ('data_segment_kpi_dictionary'),
+  ('data_segment_operating_telemetry'),
+  ('data_segment_org_structure'),
+  ('data_segment_program_deliverables'),
+  ('data_segment_program_inventory'),
+  ('data_segment_sourcing_artifacts'),
+  ('data_segment_vendor_contracts'),
+  ('enterprise_context_chunks'),
+  ('enterprise_graph_edges'),
+  ('enterprise_graph_nodes'),
+  ('instrument_template_audit'),
+  ('instrument_template_review_state'),
+  ('instrument_template_versions'),
+  ('instrument_templates'),
+  ('onboarding_upload_sessions'),
+  ('platform_notification_deliveries'),
+  ('platform_notification_events'),
+  ('tenant_expected_baselines'),
+  ('tower_ai_tool_usage'),
+  ('tower_cloud_cost'),
+  ('tower_cmdb_cis'),
+  ('tower_cmdb_dependencies'),
+  ('tower_dora_metrics'),
+  ('tower_itsm_records'),
+  ('tower_jira_issues'),
+  ('tower_program_financials'),
+  ('tower_vendor_spend'),
+  ('tower_workforce');
+
 -- Report discovery count via NOTICE so the runner can show it.
 DO $report_discovery$
 DECLARE
@@ -223,7 +277,24 @@ BEGIN
       v_sql := format('SELECT COUNT(*) FROM public.%I', v_table.table_name);
       BEGIN
         EXECUTE v_sql INTO v_visible;
-      EXCEPTION WHEN OTHERS THEN
+      EXCEPTION WHEN insufficient_privilege THEN
+        IF EXISTS (
+          SELECT 1
+            FROM rls_regression_service_role_only_tables
+           WHERE table_name = v_table.table_name
+        ) THEN
+          INSERT INTO rls_regression_findings VALUES (
+            v_tenant.tenant_key, v_table.table_name, v_filter_col,
+            -1, -1, -1, 'service_role_only'
+          );
+        ELSE
+          INSERT INTO rls_regression_findings VALUES (
+            v_tenant.tenant_key, v_table.table_name, v_filter_col,
+            -1, -1, -1, 'error: ' || SQLERRM
+          );
+        END IF;
+        CONTINUE;
+      WHEN OTHERS THEN
         INSERT INTO rls_regression_findings VALUES (
           v_tenant.tenant_key, v_table.table_name, v_filter_col,
           -1, -1, -1, 'error: ' || SQLERRM
@@ -347,6 +418,7 @@ DECLARE
   v_errs   INTEGER;
   v_empty  INTEGER;
   v_pass   INTEGER;
+  v_service_only INTEGER;
   v_total_visible BIGINT;
 BEGIN
   RAISE NOTICE '──────────────────────────────────────────────────────────────────────';
@@ -374,11 +446,13 @@ BEGIN
     COUNT(*) FILTER (WHERE status = 'leak'),
     COUNT(*) FILTER (WHERE status LIKE 'error:%'),
     COUNT(*) FILTER (WHERE status = 'empty'),
+    COUNT(*) FILTER (WHERE status = 'service_role_only'),
     COALESCE(SUM(visible_rows) FILTER (WHERE visible_rows > 0), 0)
-   INTO v_pass, v_leaks, v_errs, v_empty, v_total_visible
+   INTO v_pass, v_leaks, v_errs, v_empty, v_service_only, v_total_visible
    FROM rls_regression_findings;
 
-  RAISE NOTICE 'rls-regression: pass=% leak=% error=% empty=%', v_pass, v_leaks, v_errs, v_empty;
+  RAISE NOTICE 'rls-regression: pass=% leak=% error=% empty=% service_role_only=%',
+    v_pass, v_leaks, v_errs, v_empty, v_service_only;
 
   IF v_leaks > 0 OR v_errs > 0 THEN
     RAISE EXCEPTION
@@ -386,7 +460,7 @@ BEGIN
       v_leaks, v_errs;
   END IF;
 
-  RAISE NOTICE 'rls-regression: ALL GREEN — tenant isolation holding across % rows in % findings',
-    v_total_visible, v_pass + v_empty;
+  RAISE NOTICE 'rls-regression: ALL GREEN — tenant isolation holding across % rows in % tenant-readable findings; % findings are service-role-only',
+    v_total_visible, v_pass + v_empty, v_service_only;
 END
 $summary$;

@@ -29,7 +29,7 @@ const EVENT: SourcingEventSummary = {
 };
 
 describe('SourcePortfolioReactivePanel', () => {
-  it('uses Nexus labels for portfolio reasoning cards', () => {
+  it('uses Sentinel labels and AI suggestion frames for portfolio reasoning cards', () => {
     const html = renderToStaticMarkup(
       createElement(SourcePortfolioReactivePanel, {
         events: [EVENT],
@@ -39,9 +39,10 @@ describe('SourcePortfolioReactivePanel', () => {
       }),
     );
 
-    expect(html).toContain('Nexus - Operating model');
-    expect(html).toContain('Nexus - Portfolio posture');
-    expect(html).toContain('Nexus - Top mission signal');
-    expect(html).not.toContain('Sentinel -');
+    expect(html).toContain('Ava - Operating model');
+    expect(html).toContain('Ava - Portfolio posture');
+    expect(html).toContain('Ava - Top mission signal');
+    expect(html).toContain('data-ai-suggestion-frame="suggested"');
+    expect(html).toContain('Ava portfolio AI suggestion: Operating model');
   });
 });

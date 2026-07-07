@@ -5,18 +5,9 @@
  */
 
 import { Pool, type PoolClient } from 'pg';
+import { runtimePostgresPoolConfig } from '@/lib/data-plane/postgresCompat';
 
 let pool: Pool | null = null;
-
-function shouldDisableSsl(connectionString: string): boolean {
-  try {
-    const url = new URL(connectionString);
-    if (url.searchParams.get('sslmode')?.toLowerCase() === 'disable') return true;
-    return ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
-  } catch {
-    return false;
-  }
-}
 
 export function getAzureCostPool(): Pool {
   if (pool) return pool;
@@ -24,11 +15,7 @@ export function getAzureCostPool(): Pool {
   if (!connectionString) {
     throw new Error('DATABASE_URL is required for tower_cloud_cost ingest.');
   }
-  pool = new Pool({
-    connectionString,
-    application_name: 'nexus-tower-ingest-azure-cost',
-    ssl: shouldDisableSsl(connectionString) ? false : { rejectUnauthorized: false },
-  });
+  pool = new Pool(runtimePostgresPoolConfig(connectionString, 'nexus-tower-ingest-azure-cost'));
   return pool;
 }
 

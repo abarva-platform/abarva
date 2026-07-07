@@ -147,7 +147,7 @@ describe('POST /api/admin/switch-tenant', () => {
     });
   });
 
-  it('honors all 5 canonical tenants and ONLY those 5', async () => {
+  it('honors all canonical tenants and rejects non-canonical keys', async () => {
     mockAuth.mockResolvedValue({ userId: 'user_admin' });
     mockCanSwitch.mockResolvedValue(true);
     const { POST } = await import('../route');
@@ -157,6 +157,7 @@ describe('POST /api/admin/switch-tenant', () => {
       'first-capital',
       'northstar-clinical',
       'skyharbor-air',
+      'lakeshore-holdings',
     ];
     for (const key of canonical) {
       const res = await POST(postRequest({ tenantKey: key }));

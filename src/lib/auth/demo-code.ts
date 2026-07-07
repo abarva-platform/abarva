@@ -3,7 +3,10 @@ import { isLaunchApprovedEmail } from '@/lib/auth/launch-access-server';
 
 export const DEMO_CODE_VALUE = '424242';
 
-export const DEMO_CODE_ALLOWED_EMAILS = CANONICAL_AUTH_EMAILS;
+export const DEMO_CODE_ALLOWED_EMAILS = [
+  ...CANONICAL_AUTH_EMAILS,
+  ...ANAND_OPERATOR_AUTH_EMAILS,
+] as const;
 
 const DEMO_CODE_ALLOWED_EMAIL_SET = new Set<string>(DEMO_CODE_ALLOWED_EMAILS);
 

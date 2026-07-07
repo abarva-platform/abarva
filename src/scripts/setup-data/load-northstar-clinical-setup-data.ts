@@ -4,12 +4,9 @@ import { config as loadEnv } from 'dotenv';
 import { existsSync, readFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
-loadEnv({ path: '/Users/anand/Projects/nexus/.env.local' });
-loadEnv();
-
-type SegmentConfig = {
+export type SegmentConfig = {
   familyNumber: number;
   segmentId: string;
   segmentName: string;
@@ -59,11 +56,11 @@ type GraphEdge = {
   properties?: Record<string, unknown>;
 };
 
-const TENANT_KEY = 'northstar-clinical';
-const SOURCE_BASIS = 'tenant_admin_upload';
-const UPLOADED_BY = 'Northstar Clinical Technologies synthetic dataset import · 2026-05-21';
+export const TENANT_KEY = 'northstar-clinical';
+export const SOURCE_BASIS = 'tenant_admin_upload';
+export const UPLOADED_BY = 'Northstar Clinical Technologies synthetic dataset import · 2026-05-21';
 
-const SEGMENTS: SegmentConfig[] = [
+export const SEGMENTS: SegmentConfig[] = [
   { familyNumber: 1, segmentId: 'enterprise_profile', segmentName: 'Enterprise profile', dir: '01_enterprise_profile', expectedRecordCount: 1, expectedFreshnessDays: 90, reasoningModes: ['tenant_grounded', 'cross_corpus'] },
   { familyNumber: 2, segmentId: 'org_structure', segmentName: 'Org structure', dir: '02_org_structure', expectedRecordCount: 3, expectedFreshnessDays: 60, reasoningModes: ['tenant_grounded', 'cross_corpus'] },
   { familyNumber: 3, segmentId: 'it_landscape', segmentName: 'IT system landscape', dir: '03_it_landscape', expectedRecordCount: 6, expectedFreshnessDays: 90, reasoningModes: ['tenant_grounded', 'cross_corpus'] },
@@ -198,7 +195,7 @@ async function collectFiles(dir: string): Promise<string[]> {
   return out.sort();
 }
 
-async function parseDataset(sourceRoot: string): Promise<RecordSeed[]> {
+export async function parseDataset(sourceRoot: string): Promise<RecordSeed[]> {
   const records: RecordSeed[] = [];
   for (const segment of SEGMENTS) {
     const segmentDir = path.join(sourceRoot, segment.dir);
@@ -275,7 +272,7 @@ async function parseDataset(sourceRoot: string): Promise<RecordSeed[]> {
   return records;
 }
 
-function chunkRecord(record: RecordSeed) {
+export function chunkRecord(record: RecordSeed) {
   const words = record.recordText.split(/\s+/).filter(Boolean);
   const maxWords = 850;
   const chunks: Array<{ chunkId: string; chunkIndex: number; text: string; tokenCount: number }> = [];
@@ -292,7 +289,7 @@ function chunkRecord(record: RecordSeed) {
   return chunks;
 }
 
-function buildGraph(records: RecordSeed[]): { nodes: GraphNode[]; edges: GraphEdge[] } {
+export function buildGraph(records: RecordSeed[]): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const nodes = new Map<string, GraphNode>();
   const edges = new Map<string, GraphEdge>();
   const addNode = (node: GraphNode) => nodes.set(node.node_id, node);
@@ -354,7 +351,7 @@ function buildGraph(records: RecordSeed[]): { nodes: GraphNode[]; edges: GraphEd
   return { nodes: [...nodes.values()], edges: [...edges.values()] };
 }
 
-function freshState(lastReviewed: string | null, segment: SegmentConfig): 'fresh' | 'attention' | 'stale' | 'unknown' {
+export function freshState(lastReviewed: string | null, segment: SegmentConfig): 'fresh' | 'attention' | 'stale' | 'unknown' {
   if (!lastReviewed) return 'unknown';
   const reviewed = new Date(`${lastReviewed}T00:00:00Z`).getTime();
   if (!Number.isFinite(reviewed)) return 'unknown';
@@ -412,6 +409,10 @@ async function ensureClient(client: SupabaseClient) {
 }
 
 async function main() {
+  loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
+  loadEnv({ path: '/Users/anand/Projects/nexus/.env.local' });
+  loadEnv();
+
   const { sourceRoot, dryRun } = parseArgs();
   const records = await parseDataset(sourceRoot);
   const graph = buildGraph(records);
@@ -589,7 +590,13 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+const isMain = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false;
+
+if (isMain) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  });
+}

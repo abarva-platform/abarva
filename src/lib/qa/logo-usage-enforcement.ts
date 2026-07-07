@@ -33,8 +33,24 @@ export const BANNED_LOGO_PATTERNS = [
   'network-icon', // old network icon class
 ];
 
-export const CANONICAL_LOGO_ASSET = 'public/brand/abarva-logo.svg';
+export const CANONICAL_LOGO_ASSET = 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg';
 export const CANONICAL_LOGO_COMPONENT = 'src/components/abarva/AbarVaLogo.tsx';
+
+const RETIRED_ROOT_LOGO_ASSETS = [
+  'public/brand/abarva-logo-inverse.svg',
+  'public/brand/abarva-logo-lockup-v2.svg',
+  'public/brand/abarva-logo.svg',
+  'public/brand/abarva-monogram-v-blue.svg',
+  'public/brand/abarva-monogram-v-white.svg',
+  'public/brand/abarva-wordmark-color.svg',
+  'public/brand/abarva-wordmark-monoblack.svg',
+  'public/brand/abarva-wordmark-monoblue.svg',
+];
+
+const RETIRED_TOPBAR_VARIANTS = [
+  'src/components/shell/AppTopBarEditorial.tsx',
+  'src/components/shell/AppTopBarTwoBar.tsx',
+];
 
 const ROOT = process.cwd();
 
@@ -56,9 +72,9 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
   checks.push({
     checkId: 'BRAND2-C1',
     targetFile: CANONICAL_LOGO_ASSET,
-    description: 'Canonical logo SVG asset exists at public/brand/abarva-logo.svg',
+    description: 'Canonical logo SVG asset exists at public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg',
     status: logoExists ? 'pass' : 'deferred',
-    detail: logoExists ? 'Logo asset found' : 'Deferred — public/brand/abarva-logo.svg not yet present; BRAND1 must land first',
+    detail: logoExists ? 'Logo asset found' : 'Deferred — public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg not yet present; BRAND1 must land first',
     deterministicSeed: true,
   });
 
@@ -159,6 +175,34 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
     deterministicSeed: true,
   });
 
+  for (const retiredAsset of RETIRED_ROOT_LOGO_ASSETS) {
+    const exists = checkFileExists(retiredAsset);
+    checks.push({
+      checkId: `BRAND2-C9-${path.basename(retiredAsset).replace(/[^a-z0-9]/gi, '')}`,
+      targetFile: retiredAsset,
+      description: 'Retired root-level brand asset is absent so stale paths cannot resolve',
+      status: exists ? 'fail' : 'pass',
+      detail: exists
+        ? `${retiredAsset} still exists — remove it so runtime paths cannot pick up the old brand.`
+        : `${retiredAsset} correctly absent`,
+      deterministicSeed: true,
+    });
+  }
+
+  for (const retiredVariant of RETIRED_TOPBAR_VARIANTS) {
+    const exists = checkFileExists(retiredVariant);
+    checks.push({
+      checkId: `BRAND2-C10-${path.basename(retiredVariant).replace(/[^a-z0-9]/gi, '')}`,
+      targetFile: retiredVariant,
+      description: 'Retired experimental AppTopBar variant is absent',
+      status: exists ? 'fail' : 'pass',
+      detail: exists
+        ? `${retiredVariant} still exists — remove the ghost top-bar variant.`
+        : `${retiredVariant} correctly absent`,
+      deterministicSeed: true,
+    });
+  }
+
   const passCount = checks.filter(c => c.status === 'pass').length;
   const failCount = checks.filter(c => c.status === 'fail').length;
   const deferredCount = checks.filter(c => c.status === 'deferred').length;
@@ -188,6 +232,8 @@ export function listLogoEnforcementTargetFiles(): string[] {
     CANONICAL_LOGO_ASSET,
     CANONICAL_LOGO_COMPONENT,
     'src/components/abarva/AbarVaAppShell.tsx',
+    ...RETIRED_ROOT_LOGO_ASSETS,
+    ...RETIRED_TOPBAR_VARIANTS,
     'src/app/(maestro)/layout.tsx',
     'src/app/layout.tsx',
   ];

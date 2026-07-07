@@ -1,0 +1,56 @@
+{
+  "id": "INT-SKY-015",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "What is the strongest case study pattern for airline IROPS AI?",
+  "expectedTerms": [
+    "airline",
+    "IROPS"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:12:48.270Z",
+  "completedAt": "2026-07-06T23:13:09.929Z",
+  "latencyMs": 21659,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-015-prompt-reconstruction.txt",
+  "promptReconstructionHash": "9c4419fbe29ab3df326136cf00dd7bbc8043c4044ec99b16f1e66c7574eebc28",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-015.ndjson",
+  "claudeResponse": "Airline Demo's strongest case study pattern for IROPS AI is what the industry consistently validates as the \"bounded recovery assistant\" model — where AI surfaces ranked recovery options with constraint explanations, humans approve, and the system logs every override.\nThat pattern works because it respects the three hard constraints of IROPS: crew legality, DOT passenger obligations, and operational auditability. The pattern has five stages that track well against Airline Demo's own loaded capability map. First, a certified operational event store ingests flight status, crew availability, aircraft tail assignment, and weather feeds in near-real time.\nSecond, an IROPS Decision Assistant ranks recovery scenarios across aircraft, crew, and passenger reaccommodation simultaneously — not sequentially. Third, every recommended action goes through a human-in-loop approval gate with an override log. Fourth, a Crew Recovery Copilot and Passenger Reaccommodation Agent execute the approved plan with legality guardrails active throughout.\nFifth, a root-cause and delay prediction layer feeds back into the next disruption cycle. Airline Demo's loaded context shows IROPS recovery decisioning is rated early-stage AI maturity and business-critical. That gap — critical capability, early maturity — is exactly where the bounded assistant pattern creates the most leverage.\nThe airline operations systems budget shows $214M annually (from the loaded budget row, ), with $81M in change budget available, which is the right pool to fund the readiness layer before autonomous scale.",
+  "renderedText": "Airline Demo's strongest case study pattern for IROPS AI is what the industry consistently validates as the \"bounded recovery assistant\" model — where AI surfaces ranked recovery options with constraint explanations, humans approve, and the system logs every override.\nThat pattern works because it respects the three hard constraints of IROPS: crew legality, DOT passenger obligations, and operational auditability. The pattern has five stages that track well against Airline Demo's own loaded capability map. First, a certified operational event store ingests flight status, crew availability, aircraft tail assignment, and weather feeds in near-real time.\nSecond, an IROPS Decision Assistant ranks recovery scenarios across aircraft, crew, and passenger reaccommodation simultaneously — not sequentially. Third, every recommended action goes through a human-in-loop approval gate with an override log. Fourth, a Crew Recovery Copilot and Passenger Reaccommodation Agent execute the approved plan with legality guardrails active throughout.\nFifth, a root-cause and delay prediction layer feeds back into the next disruption cycle. Airline Demo's loaded context shows IROPS recovery decisioning is rated early-stage AI maturity and business-critical. That gap — critical capability, early maturity — is exactly where the bounded assistant pattern creates the most leverage.\nThe airline operations systems budget shows $214M annually (from the loaded budget row, ), with $81M in change budget available, which is the right pool to fund the readiness layer before autonomous scale.",
+  "sourcesCount": 9,
+  "sourceNames": [
+    "Airline Demo CTO IROPS readiness context",
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "Enterprise profile (skyharbor-air)",
+    "IT landscape (skyharbor-air)"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": null,
+  "score": {
+    "verdict": "pass",
+    "score": 5,
+    "flags": []
+  }
+}

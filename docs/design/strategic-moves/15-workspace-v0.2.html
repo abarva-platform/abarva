@@ -35,7 +35,8 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--page-bg); 
 button { font-family: inherit; cursor: pointer; }
 [hidden] { display: none !important; }
 
-.nav-placeholder { padding: 10px 36px; border-bottom: 1px dashed var(--border-strong); display: flex; align-items: center; justify-content: space-between; }
+.nav-placeholder { padding: 10px 36px; border-bottom: 1px dashed var(--border-strong); display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.nav-placeholder .brand { width: 124px; height: auto; display: block; flex-shrink: 0; }
 .nav-placeholder .label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: var(--gray); }
 .nav-placeholder .label strong { color: var(--ink); font-weight: 700; }
 .nav-placeholder .meta { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.4px; color: var(--gray-dk); }
@@ -291,7 +292,8 @@ button { font-family: inherit; cursor: pointer; }
 <body data-screen-label="Move Workspace v0.2">
 
 <div class="nav-placeholder">
-  <span class="label">↳ Global AbarVa nav assumed above · <strong>not redrawn</strong></span>
+  <img class="brand" src="../../../public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg" alt="AbarVa" />
+  <span class="label">Global nav shell reference · <strong>Option 2 brand</strong></span>
   <span class="meta">MERIDIAN HEALTH · ELENA RIVERA · LEAD</span>
 </div>
 

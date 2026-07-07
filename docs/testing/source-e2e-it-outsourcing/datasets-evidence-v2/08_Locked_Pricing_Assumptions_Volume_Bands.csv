@@ -1,0 +1,19 @@
+id,topic,locked_assumption,compliance
+A-01,Pricing basis,All vendors price the SAME locked volumetrics below; deviations priced as explicit deltas only,Mandatory
+A-02,Contract term,"5 years + 2x1yr extensions; pricing fixed Y1, then per indexation rule A-14",Mandatory
+A-03,App support volume,412 apps; 264k L2/L3 tickets/yr ±10% collar; changes 38k/yr <=40h each,Band re-price outside collar
+A-04,Service desk volume,Band 1: <1.0M · Band 2: 1.0-1.3M (RFP base) · Band 3: >1.3M contacts/yr; quote all 3 bands,Mandatory
+A-05,IRROPS surge,"Up to 6 events/yr at 2.7x daily contacts for <=72h each — included in base, not T&M",Mandatory
+A-06,Endpoints,"96,200 ±8% collar; per-device bands at 85k/95k/105k",Mandatory
+A-07,Mainframe,"38,450 MIPS installed; pricing MUST be consumption-banded (per-MIPS), not flat",Mandatory
+A-08,Interfaces/API,"9,840 interfaces; 412M calls/day avg — included in app-support base",Mandatory
+A-09,Service hours,Tier-0/1: 24x7; Tier-2: 16x5+on-call; Tier-3: 8x5,Mandatory
+A-10,Tooling,"SkyHarbor retains ServiceNow, telephony/CCaaS, Intune/Jamf, observability licenses; vendor brings ONLY delivery tooling, itemized at cost",No bundled platform fees
+A-11,Transition,Max 24 weeks; >=25% of transition fees at risk on milestone acceptance; blackouts per ops calendar,Mandatory
+A-12,Productivity,"Committed YoY run-charge reduction REQUIRED: minimum -4% Y2, -5% Y3, -5% Y4, -4% Y5 cumulative; state higher if claimed",Mandatory floor
+A-13,Service credits,Minimum 7% monthly at-risk pool; earn-back only after 2 consecutive quarters at target,Mandatory floor
+A-14,Indexation,"COLA capped at min(CPI, 2.0%) from Y3 only; offshore wage inflation NOT separately recoverable",Mandatory cap
+A-15,Pass-throughs,"All pass-throughs at documented cost, zero markup, pre-approved >$25k",Mandatory
+A-16,Rate card,Quote all 28 roles in Exhibit 10 format across 4 location types; rates fixed Y1-Y2,Mandatory
+A-17,Exchange rate,USD; vendor carries FX risk on offshore delivery,Mandatory
+A-18,Termination assistance,"12-month assistance at then-current rates -15%, capped effort schedule in contract",Mandatory

@@ -1,0 +1,55 @@
+{
+  "id": "INT-SKY-014",
+  "tenant": "skyharbor",
+  "type": "intelligence",
+  "text": "Where can industry trend context help SkyHarbor without pretending it is tenant evidence?",
+  "expectedTerms": [
+    "industry",
+    "evidence"
+  ],
+  "module": "intelligence",
+  "startedAt": "2026-07-06T23:12:30.895Z",
+  "completedAt": "2026-07-06T23:12:48.269Z",
+  "latencyMs": 17374,
+  "httpStatus": 200,
+  "promptReconstructionPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-014-prompt-reconstruction.txt",
+  "promptReconstructionHash": "406eea12b9e699c9d2b0b6f3f8543771b1b34541a4e504b2fd3ec21c72c0431c",
+  "claudePromptBoundary": "Full production prompt is reconstructed from current source template and captured source packet. ai_egress_audit stores prompt hash/snapshot refs, not raw prompt text by default.",
+  "claudeAudit": {
+    "ok": false,
+    "error": "Supabase service env not configured",
+    "rows": []
+  },
+  "rawStreamPath": "/Users/anand/Projects/nexus/proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/streams/INT-SKY-014.ndjson",
+  "claudeResponse": "SkyHarbor Air has strong tenant-grounded evidence on its own capabilities and KPIs — but there are specific decision zones where industry trend context adds real value without needing to be mistaken for internal proof. Here's where the distinction matters most, and where trends legitimately sharpen the\n(1) AI maturity benchmarking. The loaded corpus shows IROPS recovery decisioning and MRO predictive maintenance both tagged as early-stage. Industry trend context — what peers at Delta scale are spending, how long maturation takes, what failure modes look like — gives SkyHarbor a calibration lens it can't build from its own data alone.\nThat's legitimate pattern use. (2) Digital self-service gap sizing. 8% target (from loaded KPI rows). Industry patterns on what drives airline self-service to the 80%+ range — conversational AI, proactive disruption notifications, rebooking automation — help explain the path, even though the gap itself is firmly tenant-sourced. (3) Vendor landscape and AWS modernization sequencing.\nThe five-year IBM-to-AWS modernization program is tenant fact. Industry trend context on which aviation workloads migrate cleanly versus which stall on latency or regulatory grounds helps SkyHarbor sequence without repeating documented peer mistakes — none of which should be presented as SkyHarbor's own experience. (4) AI governance norms. 4M AI/data budget (from enterprise profile).",
+  "renderedText": "SkyHarbor Air has strong tenant-grounded evidence on its own capabilities and KPIs — but there are specific decision zones where industry trend context adds real value without needing to be mistaken for internal proof. Here's where the distinction matters most, and where trends legitimately sharpen the\n(1) AI maturity benchmarking. The loaded corpus shows IROPS recovery decisioning and MRO predictive maintenance both tagged as early-stage. Industry trend context — what peers at Delta scale are spending, how long maturation takes, what failure modes look like — gives SkyHarbor a calibration lens it can't build from its own data alone.\nThat's legitimate pattern use. (2) Digital self-service gap sizing. 8% target (from loaded KPI rows). Industry patterns on what drives airline self-service to the 80%+ range — conversational AI, proactive disruption notifications, rebooking automation — help explain the path, even though the gap itself is firmly tenant-sourced. (3) Vendor landscape and AWS modernization sequencing.\nThe five-year IBM-to-AWS modernization program is tenant fact. Industry trend context on which aviation workloads migrate cleanly versus which stall on latency or regulatory grounds helps SkyHarbor sequence without repeating documented peer mistakes — none of which should be presented as SkyHarbor's own experience. (4) AI governance norms. 4M AI/data budget (from enterprise profile).",
+  "sourcesCount": 8,
+  "sourceNames": [
+    "SkyHarbor Air live Intelligence surface",
+    "SkyHarbor Air 360 Intelligence substrate",
+    "SkyHarbor Air Group V7 executive dossier",
+    "V7 Enterprise profile",
+    "V7 Business functions",
+    "Structured client profile (skyharbor-air)",
+    "Loaded context chunks matching the question (skyharbor-air)",
+    "Enterprise profile (skyharbor-air)"
+  ],
+  "eventTypes": [
+    "session",
+    "classified",
+    "sources",
+    "intelligence-dossier",
+    "advisory-packet",
+    "delta",
+    "followups",
+    "agent-answer",
+    "done"
+  ],
+  "traceSummary": null,
+  "screenshotPath": null,
+  "score": {
+    "verdict": "pass",
+    "score": 5,
+    "flags": []
+  }
+}

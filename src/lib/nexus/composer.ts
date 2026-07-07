@@ -26,6 +26,13 @@ export interface ComposerInput {
     userId?: string | null;
   };
   onTextDelta?: (delta: string) => void;
+  /**
+   * Observability hook · invoked with the EXACT system + user content sent to
+   * the model, immediately before the model call. The agent-trace spine uses
+   * it to hash the model input (proving Claude is downstream of assembly).
+   * Must not mutate the arguments.
+   */
+  onModelInput?: (parts: { system: string; user: string }) => void;
 }
 
 export interface ComposerOutput {
@@ -91,6 +98,7 @@ function extractJson(raw: string): Record<string, unknown> | null {
 export async function compose(input: ComposerInput): Promise<ComposerOutput> {
   const system = buildSystemPrompt(input);
   const context = bundleToContext(input.bundle);
+  input.onModelInput?.({ system, user: context });
   let rawText = '';
   const gen = streamAgentTurn({
     system,

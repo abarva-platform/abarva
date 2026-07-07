@@ -1,0 +1,13 @@
+app_id,name,cmdb_ci_masked,hostname_masked,ip_address_masked,criticality,owner_role,system_of_record,category,lifecycle_state,ams_vendor,time_classification,notes
+APP-KYRIBA,Kyriba TMS,ci-****-riba,host-****-app,10.xxx.xxx.xxx,Tier 1,Treasury,target system of record,Treasury,Planned,,business critical,Payment controls; cash visibility
+APP-SAP-ECC,SAP ECC NLS,ci-****--ecc,host-****-app,10.xxx.xxx.xxx,Tier 1,CIO ERP,system of record,ERP,Active,Incumbent AMS provider,business critical,Feeds GL/AP/AR
+APP-ORCL-EBS,Oracle EBS BMS,ci-****--ebs,host-****-app,10.xxx.xxx.xxx,Tier 1,BMS Controller,system of record,ERP,Active,Incumbent AMS provider,business critical,Payment batch owner
+APP-NETSUITE,NetSuite FFF,ci-****-uite,host-****-app,10.xxx.xxx.xxx,Tier 2,FFF Finance,system of record,ERP,Active,Incumbent AMS provider,standard,Seasonal cash operations
+APP-D365,Dynamics GLP,ci-****-d365,host-****-app,10.xxx.xxx.xxx,Tier 2,GLP Controller,system of record,ERP,Active,Incumbent AMS provider,standard,Manufacturing payment flows
+APP-BOOMI,Boomi Integration,ci-****-oomi,host-****-app,10.xxx.xxx.xxx,Tier 1,Integration Lead,integration hub,Middleware,Active,,business critical,Bank file orchestration candidate
+APP-AZDATA,Azure Data Lake,ci-****-data,host-****-app,10.xxx.xxx.xxx,Tier 1,Data Engineering,analytics store,Data,Active,,business critical,Board/Tower reporting
+APP-SNOW,ServiceNow CMDB,ci-****-snow,host-****-app,10.xxx.xxx.xxx,Tier 2,Enterprise Architecture,inventory,ITSM,Active,,standard,CMDB authoritative source
+APP-POWERBI,Power BI Finance,ci-****-erbi,host-****-app,10.xxx.xxx.xxx,Tier 2,FP&A,reporting,BI,Active,,standard,CFO dashboard consumer
+APP-BANKPORTAL,Bank Portals,ci-****-rtal,host-****-app,10.xxx.xxx.xxx,Tier 1,Treasury Ops,external portals,Banking,Fragmented,,business critical,Current anti-pattern
+APP-OKTA,Okta,ci-****-okta,host-****-sec,10.xxx.xxx.xxx,Tier 1,Identity,identity provider,Security,Active,,business critical,SSO and MFA
+APP-CYBERARK,CyberArk,ci-****-rark,host-****-sec,10.xxx.xxx.xxx,Tier 1,Security,secrets vault,Security,Active,,business critical,Privileged access

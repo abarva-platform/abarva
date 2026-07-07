@@ -12,9 +12,9 @@
 # Required runtime env vars (NOT baked, supplied at `docker run`):
 #   - DATABASE_URL                     (Postgres connection string)
 #   - DIRECT_URL                       (optional; migration / pooler bypass)
-#   - NEXT_PUBLIC_SUPABASE_URL         (public Supabase project URL)
-#   - NEXT_PUBLIC_SUPABASE_ANON_KEY    (public anon key)
-#   - SUPABASE_SERVICE_ROLE_KEY        (server-only; never inline)
+#   - Do not project NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+#     or SUPABASE_SERVICE_ROLE_KEY into Azure production runtime. Azure Postgres
+#     cutover uses DATABASE_URL from Key Vault instead.
 #   - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 #   - CLERK_SECRET_KEY                 (server-only)
 #   - ANTHROPIC_API_KEY                (server-only; or routed via Model Gateway)
@@ -32,7 +32,9 @@
 # -----------------------------------------------------------------------------
 # Stage 1 · deps: install production + build dependencies on a stable base.
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS deps
+ARG BASE_NODE_IMAGE=acrabarvalab001.azurecr.io/base/node:24-bookworm-slim
+
+FROM ${BASE_NODE_IMAGE} AS deps
 WORKDIR /app
 
 # OS deps for native module builds (sharp, bcrypt, etc.). Kept minimal.
@@ -52,12 +54,17 @@ RUN npm ci --no-audit --no-fund --prefer-offline
 # Uses Next.js standalone output if next.config sets output: 'standalone';
 # otherwise falls back to a full .next + node_modules copy in stage 3.
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS build
+FROM ${BASE_NODE_IMAGE} AS build
 WORKDIR /app
+
+ARG NEXT_PUBLIC_POSTHOG_KEY=""
+ARG NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS=--max-old-space-size=4096
+ENV NODE_OPTIONS=--max-old-space-size=6144
+ENV NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY
+ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -72,7 +79,7 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 # Stage 3 · runtime: minimal image, non-root user, only build artifacts.
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS runtime
+FROM ${BASE_NODE_IMAGE} AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -101,9 +108,15 @@ COPY --from=build --chown=node:node /app/next.config.ts ./next.config.ts
 # need these on the request path, but the Azure migration job reuses this image
 # so schema/bootstrap scripts and SQL migrations must be present.
 COPY --from=build --chown=node:node /app/tsconfig.json ./tsconfig.json
+COPY --from=build --chown=node:node /app/src/config ./src/config
+COPY --from=build --chown=node:node /app/src/content ./src/content
+COPY --from=build --chown=node:node /app/src/data ./src/data
 COPY --from=build --chown=node:node /app/src/lib ./src/lib
 COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
+COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/datasets ./datasets
+COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardized-v1
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
 
 USER node

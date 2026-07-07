@@ -4,23 +4,24 @@
 // to the `source-artifacts` bucket, then persist a registry row here. Parser,
 // chunking, vector, graph, and generation jobs consume these rows later.
 
-import 'server-only';
+import "server-only";
 
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { selectSourceArtifactsWriteAdapter } from '@/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter';
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { selectSourceArtifactsWriteAdapter } from "@/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter";
+import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
 import {
   parseDisclosureFlag,
   serializeDisclosureFlag,
   type ArtifactDisclosureFlag,
-} from '../disclosure-flag';
-import { isSourceStageKey } from '../constants';
-import type { SourceStageKey } from '../types';
+} from "../disclosure-flag";
+import { isSourceStageKey } from "../constants";
+import type { SourceStageKey } from "../types";
 import {
   isAllowedSourceArtifactMimeType,
   isWithinSourceArtifactSizeLimit,
   MAX_SOURCE_ARTIFACT_SIZE_BYTES,
   SOURCE_ARTIFACT_MIME_ALLOWLIST,
-} from './mime';
+} from "./mime";
 import type {
   SourceArtifactApprovalState,
   SourceArtifactEvidenceState,
@@ -33,7 +34,12 @@ import type {
   SourceEmbeddingStatus,
   SourceGraphStatus,
   SourceParseStatus,
-} from './types';
+} from "./types";
+import type {
+  ArtifactFileFormat,
+  ArtifactGroup,
+  ArtifactStatus,
+} from "../file-cabinet/types";
 
 export type {
   SourceArtifactApprovalState,
@@ -48,14 +54,14 @@ export type {
   SourceEmbeddingStatus,
   SourceGraphStatus,
   SourceParseStatus,
-} from './types';
-export { toSourceArtifactRegistryChipRef } from './types';
+} from "./types";
+export { toSourceArtifactRegistryChipRef } from "./types";
 export {
   isAllowedSourceArtifactMimeType,
   isWithinSourceArtifactSizeLimit,
   MAX_SOURCE_ARTIFACT_SIZE_BYTES,
   SOURCE_ARTIFACT_MIME_ALLOWLIST,
-} from './mime';
+} from "./mime";
 
 export interface RegisterSourceArtifactInput {
   artifactId?: string;
@@ -82,6 +88,45 @@ export interface RegisterSourceArtifactInput {
   disclosureFlag?: ArtifactDisclosureFlag;
   createdBy?: string;
   supersedesArtifactVersionId?: string;
+  fileCabinet?: {
+    clientId: string;
+    sourcingStage?: string | null;
+    artifactGroup: ArtifactGroup;
+    artifactType: string;
+    artifactFamily?: string | null;
+    title: string;
+    description?: string | null;
+    fileName: string;
+    fileFormat: ArtifactFileFormat;
+    blobContainer: string;
+    blobPath: string;
+    fileSize: number;
+    version: number;
+    status: ArtifactStatus;
+    generatedBy?: string | null;
+    sourceBasis?: string | null;
+    confidence?: string | null;
+    citationReady?: boolean;
+    evidenceFamiliesUsed?: string[];
+    sourceRegisterId?: string | null;
+    contextBundleTraceId?: string | null;
+    missingInputs?: string[];
+    clientCompleteItems?: string[];
+    assumptions?: string[];
+    supersedesArtifactId?: string | null;
+    blobSha256?: string | null;
+    isClientFinal?: boolean;
+    isCurrentAuthoritative?: boolean;
+    sourceGeneratedArtifactId?: string | null;
+    clientFinalUploadedBy?: string | null;
+    clientFinalUploadedAt?: string | null;
+    clientFinalAcceptedBy?: string | null;
+    clientFinalAcceptedAt?: string | null;
+    clientFinalNote?: string | null;
+    clientFinalReviewMeetingDate?: string | null;
+    clientFinalStakeholderGroup?: string | null;
+    clientFinalChangeSummary?: Record<string, unknown>;
+  };
 }
 
 export interface UpdateSourceArtifactProcessingStateInput {
@@ -125,6 +170,18 @@ interface SourceArtifactRow {
   disclosure_classification: unknown;
   evidence_state: SourceArtifactEvidenceState;
   approval_state: SourceArtifactApprovalState;
+  is_client_final?: boolean | null;
+  is_current_authoritative?: boolean | null;
+  source_generated_artifact_id?: string | null;
+  client_final_uploaded_by?: string | null;
+  client_final_uploaded_at?: string | null;
+  client_final_accepted_by?: string | null;
+  client_final_accepted_at?: string | null;
+  client_final_note?: string | null;
+  client_final_review_meeting_date?: string | null;
+  client_final_stakeholder_group?: string | null;
+  client_final_change_summary?: Record<string, unknown> | string | null;
+  cited_source_artifact_ids?: string[] | null;
   version: number | string;
   supersedes_artifact_version_id: string | null;
   created_by: string;
@@ -135,39 +192,68 @@ interface SourceArtifactRow {
 }
 
 const SELECT_COLUMNS = [
-  'id',
-  'tenant_key',
-  'source_event_id',
-  'source_event_row_id',
-  'stage_key',
-  'artifact_family',
-  'artifact_kind',
-  'source_origin',
-  'source_format',
-  'original_name',
-  'blob_uri',
-  'uploader_user_id',
-  'mime_type',
-  'size_bytes',
-  'sha256',
-  'parse_status',
-  'embedding_status',
-  'graph_status',
-  'classification_status',
-  'data_classification',
-  'disclosure_classification',
-  'evidence_state',
-  'approval_state',
-  'version',
-  'supersedes_artifact_version_id',
-  'created_by',
-  'validated_by',
-  'created_at',
-  'updated_at',
-  'deleted_at',
-].join(', ');
+  "id",
+  "tenant_key",
+  "source_event_id",
+  "source_event_row_id",
+  "stage_key",
+  "artifact_family",
+  "artifact_kind",
+  "source_origin",
+  "source_format",
+  "original_name",
+  "blob_uri",
+  "uploader_user_id",
+  "mime_type",
+  "size_bytes",
+  "sha256",
+  "parse_status",
+  "embedding_status",
+  "graph_status",
+  "classification_status",
+  "data_classification",
+  "disclosure_classification",
+  "evidence_state",
+  "approval_state",
+  "is_client_final",
+  "is_current_authoritative",
+  "source_generated_artifact_id",
+  "client_final_uploaded_by",
+  "client_final_uploaded_at",
+  "client_final_accepted_by",
+  "client_final_accepted_at",
+  "client_final_note",
+  "client_final_review_meeting_date",
+  "client_final_stakeholder_group",
+  "client_final_change_summary",
+  "cited_source_artifact_ids",
+  "version",
+  "supersedes_artifact_version_id",
+  "created_by",
+  "validated_by",
+  "created_at",
+  "updated_at",
+  "deleted_at",
+].join(", ");
 
 function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
+  const changeSummary = (() => {
+    const raw = row.client_final_change_summary;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      return raw;
+    }
+    if (typeof raw === "string" && raw.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  })();
   return {
     id: row.id,
     tenantKey: row.tenant_key,
@@ -182,7 +268,10 @@ function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
     blobUri: row.blob_uri,
     uploaderUserId: row.uploader_user_id,
     mimeType: row.mime_type,
-    sizeBytes: typeof row.size_bytes === 'string' ? Number(row.size_bytes) : row.size_bytes,
+    sizeBytes:
+      typeof row.size_bytes === "string"
+        ? Number(row.size_bytes)
+        : row.size_bytes,
     sha256: row.sha256,
     parseStatus: row.parse_status,
     embeddingStatus: row.embedding_status,
@@ -194,7 +283,22 @@ function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
       : {}),
     evidenceState: row.evidence_state,
     approvalState: row.approval_state,
-    version: typeof row.version === 'string' ? Number(row.version) : row.version,
+    isClientFinal: row.is_client_final === true,
+    isCurrentAuthoritative: row.is_current_authoritative === true,
+    sourceGeneratedArtifactId: row.source_generated_artifact_id ?? null,
+    clientFinalUploadedBy: row.client_final_uploaded_by ?? null,
+    clientFinalUploadedAt: row.client_final_uploaded_at ?? null,
+    clientFinalAcceptedBy: row.client_final_accepted_by ?? null,
+    clientFinalAcceptedAt: row.client_final_accepted_at ?? null,
+    clientFinalNote: row.client_final_note ?? null,
+    clientFinalReviewMeetingDate: row.client_final_review_meeting_date ?? null,
+    clientFinalStakeholderGroup: row.client_final_stakeholder_group ?? null,
+    clientFinalChangeSummary: changeSummary,
+    citedSourceArtifactIds: Array.isArray(row.cited_source_artifact_ids)
+      ? row.cited_source_artifact_ids.map(String)
+      : [],
+    version:
+      typeof row.version === "string" ? Number(row.version) : row.version,
     supersedesArtifactVersionId: row.supersedes_artifact_version_id,
     createdBy: row.created_by,
     validatedBy: row.validated_by,
@@ -206,18 +310,25 @@ function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
 
 function assertSourceStageKey(stageKey: SourceStageKey): void {
   if (!isSourceStageKey(stageKey)) {
-    throw new Error(`[source-artifacts] stageKey "${stageKey}" is not supported`);
+    throw new Error(
+      `[source-artifacts] stageKey "${stageKey}" is not supported`,
+    );
   }
 }
 
 function validateRegisterInput(input: RegisterSourceArtifactInput): void {
-  if (!input.tenantKey) throw new Error('[source-artifacts] tenantKey is required');
-  if (!input.sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
-  if (!input.artifactKind) throw new Error('[source-artifacts] artifactKind is required');
-  if (!input.originalName) throw new Error('[source-artifacts] originalName is required');
-  if (!input.blobUri) throw new Error('[source-artifacts] blobUri is required');
-  if (!input.uploaderUserId) throw new Error('[source-artifacts] uploaderUserId is required');
-  if (!input.sha256) throw new Error('[source-artifacts] sha256 is required');
+  if (!input.tenantKey)
+    throw new Error("[source-artifacts] tenantKey is required");
+  if (!input.sourceEventId)
+    throw new Error("[source-artifacts] sourceEventId is required");
+  if (!input.artifactKind)
+    throw new Error("[source-artifacts] artifactKind is required");
+  if (!input.originalName)
+    throw new Error("[source-artifacts] originalName is required");
+  if (!input.blobUri) throw new Error("[source-artifacts] blobUri is required");
+  if (!input.uploaderUserId)
+    throw new Error("[source-artifacts] uploaderUserId is required");
+  if (!input.sha256) throw new Error("[source-artifacts] sha256 is required");
   assertSourceStageKey(input.stageKey);
   if (!isAllowedSourceArtifactMimeType(input.mimeType)) {
     throw new Error(
@@ -256,52 +367,156 @@ export async function registerSourceArtifactUpload(
       mime_type: input.mimeType,
       size_bytes: input.sizeBytes,
       sha256: input.sha256,
-      data_classification: input.dataClassification ?? 'Confidential',
+      data_classification: input.dataClassification ?? "Confidential",
       disclosure_classification: serializeDisclosureFlag(input.disclosureFlag),
       created_by: input.createdBy ?? input.uploaderUserId,
       supersedes_artifact_version_id: input.supersedesArtifactVersionId ?? null,
+      ...(input.fileCabinet
+        ? {
+            client_id: input.fileCabinet.clientId,
+            sourcing_stage: input.fileCabinet.sourcingStage ?? null,
+            artifact_group: input.fileCabinet.artifactGroup,
+            artifact_type: input.fileCabinet.artifactType,
+            artifact_family:
+              input.fileCabinet.artifactFamily ?? input.artifactFamily,
+            title: input.fileCabinet.title,
+            description: input.fileCabinet.description ?? null,
+            file_name: input.fileCabinet.fileName,
+            file_format: input.fileCabinet.fileFormat,
+            blob_container: input.fileCabinet.blobContainer,
+            blob_path: input.fileCabinet.blobPath,
+            file_size: input.fileCabinet.fileSize,
+            version: input.fileCabinet.version,
+            status: input.fileCabinet.status,
+            generated_by: input.fileCabinet.generatedBy ?? null,
+            source_basis: input.fileCabinet.sourceBasis ?? null,
+            confidence: input.fileCabinet.confidence ?? null,
+            citation_ready: input.fileCabinet.citationReady ?? false,
+            evidence_families_used:
+              input.fileCabinet.evidenceFamiliesUsed ?? [],
+            source_register_id: input.fileCabinet.sourceRegisterId ?? null,
+            context_bundle_trace_id:
+              input.fileCabinet.contextBundleTraceId ?? null,
+            missing_inputs: input.fileCabinet.missingInputs ?? [],
+            client_complete_items: input.fileCabinet.clientCompleteItems ?? [],
+            assumptions: input.fileCabinet.assumptions ?? [],
+            supersedes_artifact_id:
+              input.fileCabinet.supersedesArtifactId ?? null,
+            lifecycle_state: "current",
+            blob_sha256: input.fileCabinet.blobSha256 ?? input.sha256,
+            is_client_final: input.fileCabinet.isClientFinal ?? false,
+            is_current_authoritative:
+              input.fileCabinet.isCurrentAuthoritative ?? false,
+            source_generated_artifact_id:
+              input.fileCabinet.sourceGeneratedArtifactId ?? null,
+            client_final_uploaded_by:
+              input.fileCabinet.clientFinalUploadedBy ?? null,
+            client_final_uploaded_at:
+              input.fileCabinet.clientFinalUploadedAt ?? null,
+            client_final_accepted_by:
+              input.fileCabinet.clientFinalAcceptedBy ?? null,
+            client_final_accepted_at:
+              input.fileCabinet.clientFinalAcceptedAt ?? null,
+            client_final_note: input.fileCabinet.clientFinalNote ?? null,
+            client_final_review_meeting_date:
+              input.fileCabinet.clientFinalReviewMeetingDate ?? null,
+            client_final_stakeholder_group:
+              input.fileCabinet.clientFinalStakeholderGroup ?? null,
+            client_final_change_summary: JSON.stringify(
+              input.fileCabinet.clientFinalChangeSummary ?? {},
+            ),
+          }
+        : {}),
     },
     SELECT_COLUMNS,
   );
   if (!written.ok || !written.data) {
-    throw new Error(written.error ?? '[source-artifacts] registry insert failed');
+    throw new Error(
+      written.error ?? "[source-artifacts] registry insert failed",
+    );
   }
-  return rowToRecord(written.data as unknown as SourceArtifactRow);
+  const record = rowToRecord(written.data as unknown as SourceArtifactRow);
+  await recordContextRefreshEvent({
+    clientId: input.fileCabinet?.clientId ?? input.tenantKey,
+    tenantKey: input.tenantKey,
+    triggeredBy: "source_artifact",
+    sourceLabel: input.originalName,
+    rowsSeen: 1,
+    rowsAccepted: 0,
+    approvalRequired: true,
+    affectedSurfaces: ["source", "change-log"],
+    receiptUrl: input.blobUri,
+  }).catch((error) => {
+    console.warn("[source-artifacts] refresh event failed", {
+      tenantKey: input.tenantKey,
+      artifactKind: input.artifactKind,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
+  return record;
 }
 
 export async function listSourceArtifactsForEvent(
   tenantKey: string,
   sourceEventId: string,
 ): Promise<SourceArtifactRegistryRecord[]> {
-  if (!tenantKey) throw new Error('[source-artifacts] tenantKey is required');
-  if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
+  if (!tenantKey) throw new Error("[source-artifacts] tenantKey is required");
+  if (!sourceEventId)
+    throw new Error("[source-artifacts] sourceEventId is required");
   const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
-    .from('source_artifacts')
+    .from("source_artifacts")
     .select(SELECT_COLUMNS)
-    .eq('tenant_key', tenantKey)
-    .eq('source_event_id', sourceEventId)
-    .is('deleted_at', null)
-    .order('updated_at', { ascending: false });
+    .eq("tenant_key", tenantKey)
+    .eq("source_event_id", sourceEventId)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(rowToRecord);
+  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(
+    rowToRecord,
+  );
+}
+
+export async function listSourceArtifactsForTenant(
+  tenantKey: string,
+  limit = 300,
+): Promise<SourceArtifactRegistryRecord[]> {
+  if (!tenantKey) throw new Error("[source-artifacts] tenantKey is required");
+  const supabase = getAzureWriteFluentClient();
+  const { data, error } = await supabase
+    .from("source_artifacts")
+    .select(SELECT_COLUMNS)
+    .eq("tenant_key", tenantKey)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(
+    rowToRecord,
+  );
 }
 
 export async function listSourceArtifactsForSourceEventId(
   sourceEventId: string,
 ): Promise<SourceArtifactRegistryRecord[]> {
-  if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
+  if (!sourceEventId)
+    throw new Error("[source-artifacts] sourceEventId is required");
   const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
-    .from('source_artifacts')
+    .from("source_artifacts")
     .select(SELECT_COLUMNS)
-    .or(`source_event_id.eq.${sourceEventId},source_event_row_id.eq.${sourceEventId}`)
-    .is('deleted_at', null)
-    .order('updated_at', { ascending: false });
+    .or(
+      `source_event_id.eq.${sourceEventId},source_event_row_id.eq.${sourceEventId}`,
+    )
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(rowToRecord);
+  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(
+    rowToRecord,
+  );
 }
 
 export async function listSourceArtifactsForStage(
@@ -310,31 +525,34 @@ export async function listSourceArtifactsForStage(
   stageKey: SourceStageKey,
 ): Promise<SourceArtifactRegistryRecord[]> {
   assertSourceStageKey(stageKey);
-  if (!tenantKey) throw new Error('[source-artifacts] tenantKey is required');
-  if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
+  if (!tenantKey) throw new Error("[source-artifacts] tenantKey is required");
+  if (!sourceEventId)
+    throw new Error("[source-artifacts] sourceEventId is required");
   const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
-    .from('source_artifacts')
+    .from("source_artifacts")
     .select(SELECT_COLUMNS)
-    .eq('tenant_key', tenantKey)
-    .eq('source_event_id', sourceEventId)
-    .eq('stage_key', stageKey)
-    .is('deleted_at', null)
-    .order('updated_at', { ascending: false });
+    .eq("tenant_key", tenantKey)
+    .eq("source_event_id", sourceEventId)
+    .eq("stage_key", stageKey)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(rowToRecord);
+  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(
+    rowToRecord,
+  );
 }
 
 export async function getSourceArtifactRegistryRecord(
   artifactId: string,
 ): Promise<SourceArtifactRegistryRecord | null> {
-  if (!artifactId) throw new Error('[source-artifacts] artifactId is required');
+  if (!artifactId) throw new Error("[source-artifacts] artifactId is required");
   const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
-    .from('source_artifacts')
+    .from("source_artifacts")
     .select(SELECT_COLUMNS)
-    .eq('id', artifactId)
+    .eq("id", artifactId)
     .maybeSingle();
 
   if (error) throw error;
@@ -344,32 +562,36 @@ export async function getSourceArtifactRegistryRecord(
 export async function updateSourceArtifactProcessingState(
   input: UpdateSourceArtifactProcessingStateInput,
 ): Promise<SourceArtifactRegistryRecord> {
-  if (!input.artifactId) throw new Error('[source-artifacts] artifactId is required');
+  if (!input.artifactId)
+    throw new Error("[source-artifacts] artifactId is required");
   const patch: Record<string, unknown> = {};
   if (input.parseStatus) patch.parse_status = input.parseStatus;
   if (input.embeddingStatus) patch.embedding_status = input.embeddingStatus;
   if (input.graphStatus) patch.graph_status = input.graphStatus;
-  if (input.classificationStatus) patch.classification_status = input.classificationStatus;
+  if (input.classificationStatus)
+    patch.classification_status = input.classificationStatus;
   if (input.evidenceState) patch.evidence_state = input.evidenceState;
   if (input.approvalState) patch.approval_state = input.approvalState;
-  if ('validatedBy' in input) patch.validated_by = input.validatedBy ?? null;
+  if ("validatedBy" in input) patch.validated_by = input.validatedBy ?? null;
   // GAP-9 · disclosure flag round-trip. `null` clears the column; a flag is
   // serialized (a default flag also serializes to NULL — see serde.ts).
-  if ('disclosureFlag' in input) {
+  if ("disclosureFlag" in input) {
     patch.disclosure_classification = serializeDisclosureFlag(
       input.disclosureFlag ?? undefined,
     );
   }
   if (Object.keys(patch).length === 0) {
-    throw new Error('[source-artifacts] at least one processing state must be provided');
+    throw new Error(
+      "[source-artifacts] at least one processing state must be provided",
+    );
   }
 
   const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
-    .from('source_artifacts')
+    .from("source_artifacts")
     .update(patch)
-    .eq('id', input.artifactId)
-    .is('deleted_at', null)
+    .eq("id", input.artifactId)
+    .is("deleted_at", null)
     .select(SELECT_COLUMNS)
     .single();
 
@@ -381,14 +603,18 @@ export async function softDeleteSourceArtifact(
   artifactId: string,
   actingUserId: string,
 ): Promise<SourceArtifactRegistryRecord> {
-  if (!artifactId) throw new Error('[source-artifacts] artifactId is required');
-  if (!actingUserId) throw new Error('[source-artifacts] actingUserId is required');
+  if (!artifactId) throw new Error("[source-artifacts] artifactId is required");
+  if (!actingUserId)
+    throw new Error("[source-artifacts] actingUserId is required");
   const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
-    .from('source_artifacts')
-    .update({ deleted_at: new Date().toISOString(), validated_by: actingUserId })
-    .eq('id', artifactId)
-    .is('deleted_at', null)
+    .from("source_artifacts")
+    .update({
+      deleted_at: new Date().toISOString(),
+      validated_by: actingUserId,
+    })
+    .eq("id", artifactId)
+    .is("deleted_at", null)
     .select(SELECT_COLUMNS)
     .single();
 
@@ -399,7 +625,7 @@ export async function softDeleteSourceArtifact(
 const MAX_SOURCE_ARTIFACT_BLOB_PATH_LENGTH = 240;
 const CONTROL_CHAR_RE = new RegExp(
   `[${String.fromCharCode(0)}-${String.fromCharCode(0x1f)}${String.fromCharCode(0x7f)}]`,
-  'g',
+  "g",
 );
 
 export function buildSourceArtifactBlobPath(args: {
@@ -409,22 +635,27 @@ export function buildSourceArtifactBlobPath(args: {
   filename: string;
 }): string {
   const { tenantKey, sourceEventId, artifactId, filename } = args;
-  if (!tenantKey) throw new Error('[source-artifacts] tenantKey is required');
-  if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
-  if (!artifactId) throw new Error('[source-artifacts] artifactId is required');
+  if (!tenantKey) throw new Error("[source-artifacts] tenantKey is required");
+  if (!sourceEventId)
+    throw new Error("[source-artifacts] sourceEventId is required");
+  if (!artifactId) throw new Error("[source-artifacts] artifactId is required");
   if (!filename || !filename.trim()) {
-    throw new Error('[source-artifacts] filename is required and cannot be empty');
+    throw new Error(
+      "[source-artifacts] filename is required and cannot be empty",
+    );
   }
 
-  let safe = filename.replace(CONTROL_CHAR_RE, '');
-  safe = safe.replace(/[/\\]/g, '_');
-  safe = safe.replace(/\s+/g, '_');
-  safe = safe.replace(/^[._]+/, '').replace(/[._]+$/, '');
+  let safe = filename.replace(CONTROL_CHAR_RE, "");
+  safe = safe.replace(/[/\\]/g, "_");
+  safe = safe.replace(/\s+/g, "_");
+  safe = safe.replace(/^[._]+/, "").replace(/[._]+$/, "");
   if (!safe) {
-    throw new Error('[source-artifacts] filename produced an empty sanitized name');
+    throw new Error(
+      "[source-artifacts] filename produced an empty sanitized name",
+    );
   }
 
-  const dotIndex = safe.lastIndexOf('.');
+  const dotIndex = safe.lastIndexOf(".");
   if (dotIndex > 0 && dotIndex < safe.length - 1) {
     safe = `${safe.slice(0, dotIndex)}.${safe.slice(dotIndex + 1).toLowerCase()}`;
   }
@@ -441,7 +672,7 @@ export function buildSourceArtifactBlobPath(args: {
     );
   }
 
-  const extIndex = safe.lastIndexOf('.');
+  const extIndex = safe.lastIndexOf(".");
   if (extIndex > 0 && extIndex < safe.length - 1) {
     const ext = safe.slice(extIndex);
     if (ext.length < room) {

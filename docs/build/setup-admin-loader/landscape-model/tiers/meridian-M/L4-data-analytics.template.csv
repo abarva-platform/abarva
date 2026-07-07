@@ -1,0 +1,16 @@
+asset_name,class,engine,host_ref,owner,refresh,data_domains,criticality,source
+Epic Chronicles ODB,oltp,Caché/IRIS,epic-hosted-odb,Epic / VP Clinical Apps,real_time,clinical;orders;results;scheduling,Tier 0,canonical
+Epic Clarity,warehouse,Microsoft SQL Server,dc-charlotte-primary,VP Data & Analytics,nightly,clinical;financial;operational,Tier 1,canonical
+Epic Caboodle,warehouse,Microsoft SQL Server,dc-charlotte-primary,VP Data & Analytics,nightly,enterprise reporting (EDW),Tier 1,canonical
+Legacy enterprise DW,warehouse,Oracle Exadata,dc-charlotte-primary,VP Data & Analytics,nightly,finance;supply chain (pre-Caboodle),Tier 2,illustrative
+Legacy clinical DW,warehouse,Teradata,dc-asheville,VP Data & Analytics,nightly,legacy quality;population health,Tier 2,illustrative
+Azure Synapse platform,lake,Azure Synapse,azure-eastus2,VP Data & Analytics,batch_hourly,enterprise analytics (40% landed),Tier 2,illustrative
+Epic Cogito ETL,etl,Epic Cogito,dc-charlotte-primary,VP Data & Analytics,nightly,Clarity/Caboodle load,Tier 1,canonical
+Epic SlicerDicer,bi,Epic SlicerDicer,epic-hosted-odb,VP Data & Analytics,real_time,clinical self-service,Tier 2,illustrative
+Tableau,bi,Tableau Server,dc-charlotte-primary,VP Data & Analytics,nightly,executive;operational dashboards,Tier 2,illustrative
+Power BI,bi,Power BI Service,azure-eastus2,VP Data & Analytics,nightly,finance;HR analytics,Tier 2,illustrative
+Revenue cycle mart,mart,Microsoft SQL Server,dc-charlotte-primary,VP Revenue Cycle,nightly,denials;AR;claims,Tier 1,illustrative
+Quality & regulatory mart,mart,Microsoft SQL Server,dc-charlotte-primary,Chief Quality Officer,nightly,readmissions;HCAHPS;core measures,Tier 2,illustrative
+Population health mart,mart,Microsoft SQL Server,dc-charlotte-primary,VP Population Health,nightly,risk;gaps in care;MA stars,Tier 2,illustrative
+Financial OLAP cube,cube,SSAS,dc-charlotte-primary,Controller,nightly,GL;cost accounting,Tier 2,illustrative
+Azure ML workspace,lake,Azure Machine Learning,azure-eastus2,VP Data & Analytics,on_demand,sepsis;readmission models,Tier 2,illustrative
