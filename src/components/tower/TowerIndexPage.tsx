@@ -2968,7 +2968,14 @@ function CxoGovernedCommandCenter({
       </section>
 
       {activeSection === "value" ? (
-        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
           {flagshipProgram ? (
             <CioPanel
               eyebrow="Flagship Program"
@@ -3008,7 +3015,14 @@ function CxoGovernedCommandCenter({
       ) : null}
 
       {activeSection === "budget" ? (
-        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
           {budgetRollups.length > 0 ? (
             <CioPanel
               eyebrow="Budget by Entity"
@@ -3032,7 +3046,14 @@ function CxoGovernedCommandCenter({
       ) : null}
 
       {activeSection === "portfolio" ? (
-        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
           {model.portfolioValueRows.length > 0 ? (
             <CioPanel
               eyebrow="Value Proven"
@@ -3052,7 +3073,14 @@ function CxoGovernedCommandCenter({
       ) : null}
 
       {activeSection === "benchmark" ? (
-        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
           {model.benchmarkRows.length > 0 ? (
             <>
               <CioPanel
@@ -3084,7 +3112,14 @@ function CxoGovernedCommandCenter({
       ) : null}
 
       {activeSection === "evidence" ? (
-        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
           <CioPanel
             eyebrow="Evidence and Trust"
             title="Where leadership can inspect the numbers."
