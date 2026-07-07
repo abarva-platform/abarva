@@ -97,10 +97,13 @@ export function formatSkyHarborCtoReadinessSourceDetail(
   ].join("\n");
 }
 
-export const buildSkyHarborCtoReadinessNativeCanvasBlock = (
+export function buildSkyHarborCtoReadinessNativeCanvasBlock(
   query: string,
   tenantKeys: Array<string | null | undefined>,
-) => buildSkyHarborCtoReadinessSource(query, tenantKeys);
+): string {
+  const source = buildSkyHarborCtoReadinessSource(query, tenantKeys);
+  return source?.detail ?? "";
+}
 
 export function buildSkyHarborCtoReadinessSource(
   query: string,

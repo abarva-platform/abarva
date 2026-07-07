@@ -41,6 +41,10 @@ import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
 } from "@/lib/security/sensitive-upload-guard";
+import {
+  syncUploadToCanvasSubstrate,
+  type UploadSubstrateSyncResult,
+} from "@/lib/source/canvas-substrate/upload-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

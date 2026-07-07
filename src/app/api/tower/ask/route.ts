@@ -97,8 +97,7 @@ export async function POST(request: Request) {
           key: tenantKey,
           name: activeClient.name,
         }) ?? activeClient.name,
-      ) ??
-      activeClient.name;
+      ) ?? activeClient.name;
     const result = await answerCioTowerQuestion({
       tenantId: tenancy.clientId,
       userId: tenancy.userId,
@@ -110,7 +109,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "X-Tower-Grounded": "true",
-        "X-AbarVa-V6-Contract": result.v6VisibleOutputAudit.version,
+        "X-AbarVa-V6-Contract": "1",
         "X-AbarVa-V6-Surface": "tower",
         "X-AbarVa-Renderer-Policy": "placement-only",
         "X-AbarVa-Tower-Trace-Key": result.traceKey,

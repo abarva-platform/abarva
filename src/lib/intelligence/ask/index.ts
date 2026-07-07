@@ -27,14 +27,12 @@ import {
   type CoverageReport,
 } from "@/lib/knowledge/coverage";
 import { formatCoverageReportForPrompt } from "@/lib/knowledge/coverageReport";
-import {
-  isBroadCurrentStateQuestion,
-} from './response-policy';
-import type { AnswerTraceEnvelope } from '@/lib/debug/answer-trace';
+import { isBroadCurrentStateQuestion } from "./response-policy";
+import type { AnswerTraceEnvelope } from "@/lib/debug/answer-trace";
 import {
   buildSkyHarborCtoReadinessPromptAddendum,
   buildSkyHarborCtoReadinessSource,
-} from './skyharbor-cto-readiness-source';
+} from "./skyharbor-cto-readiness-source";
 
 export type {
   AskIntent,
@@ -44,7 +42,14 @@ export type {
 } from "./types";
 
 export interface AskEvent {
-  type: 'classified' | 'sources' | 'trace' | 'delta' | 'followups' | 'done' | 'error';
+  type:
+    | "classified"
+    | "sources"
+    | "trace"
+    | "delta"
+    | "followups"
+    | "done"
+    | "error";
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
@@ -74,10 +79,12 @@ export interface AskOptions {
   activePersonDisplayName?: string | null;
   traceEnabled?: boolean;
   traceSession?: {
-    user?: AnswerTraceEnvelope['session']['user'];
+    user?: AnswerTraceEnvelope["session"]["user"];
     tenant?: unknown;
     question?: string | null;
   };
+  /** Companion canvas panel is visible — stream structured tab blocks alongside prose. Default false. */
+  companionCanvasEnabled?: boolean;
   /** Called with the raw system + user prompt just before the model is invoked. Used by QA probes to hash/log the model input. */
   onModelInput?: (parts: { system: string; user: string }) => void;
 }
@@ -205,9 +212,13 @@ export async function* askIntelligence(
       },
     );
     emitTiming(
-      trace.finish("retrieval.tenant_enterprise.done", tenantEnterpriseStartedAt, {
-        sourceCount: tenantEnterprise.length,
-      }),
+      trace.finish(
+        "retrieval.tenant_enterprise.done",
+        tenantEnterpriseStartedAt,
+        {
+          sourceCount: tenantEnterprise.length,
+        },
+      ),
     );
     const tenantStructuredStartedAt = Date.now();
     const tenantStructuredFacts = await retrieveTenantStructuredFacts(
@@ -215,9 +226,13 @@ export async function* askIntelligence(
       trimmed,
     );
     emitTiming(
-      trace.finish("retrieval.tenant_structured_facts.done", tenantStructuredStartedAt, {
-        sourceCount: tenantStructuredFacts.length,
-      }),
+      trace.finish(
+        "retrieval.tenant_structured_facts.done",
+        tenantStructuredStartedAt,
+        {
+          sourceCount: tenantStructuredFacts.length,
+        },
+      ),
     );
     const tenantTechnologyStartedAt = Date.now();
     const tenantTechnology = await retrieveTenantTechnologySources(
@@ -225,9 +240,13 @@ export async function* askIntelligence(
       trimmed,
     );
     emitTiming(
-      trace.finish("retrieval.tenant_technology.done", tenantTechnologyStartedAt, {
-        sourceCount: tenantTechnology.length,
-      }),
+      trace.finish(
+        "retrieval.tenant_technology.done",
+        tenantTechnologyStartedAt,
+        {
+          sourceCount: tenantTechnology.length,
+        },
+      ),
     );
     const retailStartedAt = Date.now();
     const retailOverlay = await retrieveRetailOverlaySources(
@@ -266,7 +285,8 @@ export async function* askIntelligence(
       tenantId: opts.tenantId,
       tenantInventoryKey: opts.tenantInventoryKey,
     });
-    const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
+    const factAvailabilityBlock =
+      formatTenantFactAvailabilityBlock(factFingerprint);
     const skyHarborCtoSource = buildSkyHarborCtoReadinessSource(trimmed, [
       opts.tenantClientKey,
       opts.tenantInventoryKey,
@@ -276,15 +296,18 @@ export async function* askIntelligence(
       opts.surfaceContext?.clientKey,
       opts.surfaceContext?.activeClient,
     ]);
-    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(trimmed, [
-      opts.tenantClientKey,
-      opts.tenantInventoryKey,
-      opts.tenant?.appClientKey,
-      opts.tenant?.canonicalKey,
-      opts.tenant?.displayName,
-      opts.surfaceContext?.clientKey,
-      opts.surfaceContext?.activeClient,
-    ]);
+    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(
+      trimmed,
+      [
+        opts.tenantClientKey,
+        opts.tenantInventoryKey,
+        opts.tenant?.appClientKey,
+        opts.tenant?.canonicalKey,
+        opts.tenant?.displayName,
+        opts.surfaceContext?.clientKey,
+        opts.surfaceContext?.activeClient,
+      ],
+    );
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
     const rawSources: AskSource[] = [
@@ -391,16 +414,19 @@ export async function* askIntelligence(
       userContextBlock: opts.userContextBlock,
       factAvailabilityBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
-      conversationContextBlock: [
-        skyHarborCtoPromptAddendum,
-        opts.conversationContextBlock,
-        handoff
-          ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
-          : '',
-        currentStateAsk
-          ? 'CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose.'
-          : '',
-      ].filter(Boolean).join('\n\n') || undefined,
+      conversationContextBlock:
+        [
+          skyHarborCtoPromptAddendum,
+          opts.conversationContextBlock,
+          handoff
+            ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
+            : "",
+          currentStateAsk
+            ? "CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose."
+            : "",
+        ]
+          .filter(Boolean)
+          .join("\n\n") || undefined,
       averageConfidence,
       onModelInput: opts.onModelInput,
       onModelOutput: opts.onModelOutput,
@@ -448,40 +474,65 @@ export async function* askIntelligence(
     }
     if (opts.traceEnabled) {
       yield {
-        type: 'trace',
+        type: "trace",
         trace: {
-          traceVersion: 'answer-quality-v1',
-          route: '/api/intelligence/ask',
-          surface: 'intelligence',
+          traceVersion: "answer-quality-v1",
+          route: "/api/intelligence/ask",
+          surface: "intelligence",
           timestamp: new Date().toISOString(),
           session: opts.traceSession ?? {
-            tenant: opts.tenant ?? opts.tenantClientKey ?? opts.tenantInventoryKey ?? null,
+            tenant:
+              opts.tenant ??
+              opts.tenantClientKey ??
+              opts.tenantInventoryKey ??
+              null,
             question: trimmed,
           },
           router: {
-            selectedEndpoint: '/api/intelligence/ask',
-            surface: 'intelligence',
+            selectedEndpoint: "/api/intelligence/ask",
+            surface: "intelligence",
             intent: classification.intent,
             primaryDimension: questionCategory,
             secondaryDimensions: classification.entities ?? [],
-            answerMode: 'advisory_decision',
+            answerMode: "advisory_decision",
             fallbackEligibility: true,
           },
           evidenceSelection: {
-            selectedDossierIds: sources.filter((source) => source.type === 'TENANT' || source.type === 'GRAPH').map((source) => source.id),
+            selectedDossierIds: sources
+              .filter(
+                (source) => source.type === "TENANT" || source.type === "GRAPH",
+              )
+              .map((source) => source.id),
             dossierEligibilityState: { coverageReport },
-            selectedReadModels: sources.map((source) => `${source.type}:${source.name}`),
+            selectedReadModels: sources.map(
+              (source) => `${source.type}:${source.name}`,
+            ),
             selectedMetricSnapshots: sources
-              .filter((source) => /\$|\d+%|\b\d+(?:\.\d+)?\b/.test(source.detail))
+              .filter((source) =>
+                /\$|\d+%|\b\d+(?:\.\d+)?\b/.test(source.detail),
+              )
               .slice(0, 12)
-              .map((source) => ({ id: source.id, name: source.name, detail: source.detail.slice(0, 500) })),
+              .map((source) => ({
+                id: source.id,
+                name: source.name,
+                detail: source.detail.slice(0, 500),
+              })),
             selectedGaps: coverageReport.missingSegments,
-            selectedCitations: sources.map((source) => ({ id: source.id, name: source.name, type: source.type, confidence: source.confidence })),
-            artifactPlan: /\b(table|rank|compare|scorecard|chart)\b/i.test(trimmed) ? ['table'] : ['prose'],
+            selectedCitations: sources.map((source) => ({
+              id: source.id,
+              name: source.name,
+              type: source.type,
+              confidence: source.confidence,
+            })),
+            artifactPlan: /\b(table|rank|compare|scorecard|chart)\b/i.test(
+              trimmed,
+            )
+              ? ["table"]
+              : ["prose"],
           },
           modelCall: {
             fallbackUsed: true,
-            fallbackReason: 'synthesis_trace_missing',
+            fallbackReason: "synthesis_trace_missing",
           },
           apiPayload: {
             answer,

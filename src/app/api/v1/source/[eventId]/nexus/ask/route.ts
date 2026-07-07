@@ -13,13 +13,30 @@ import {
   buildApexRetailSourceContextAssemblyInput,
   toApexRetailLiveTenantContextSnapshot,
   type ApexRetailAdapterResult,
-} from '@/lib/source/adapters/apex-retail-adapter';
-import type { SourceLiveTenantContextSnapshot } from '@/lib/source/agent-context';
-import type { SourcingEventDetail } from '@/lib/source/types';
-import { getSourcingEvent, sourceEventRowToDetail } from '@/lib/source/queries';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
-import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
-import { composeSentinelSystemPrompt } from '@/lib/agent/voice-doctrine/sentinel';
+} from "@/lib/source/adapters/apex-retail-adapter";
+import type { SourceLiveTenantContextSnapshot } from "@/lib/source/agent-context";
+import type { SourcingEventDetail } from "@/lib/source/types";
+import {
+  getSourcingEvent,
+  getSourcingEventForResolvedClient,
+  sourceEventRowToDetail,
+} from "@/lib/source/queries";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { composeSentinelSystemPrompt } from "@/lib/agent/voice-doctrine/sentinel";
+import { isSkyHarborContractOptimizationEvent } from "@/lib/source/contract-optimization/eligibility";
+import { loadContractEvidenceRuntimeSummary } from "@/lib/source/contract-evidence/read-model";
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  buildVendorResponseMveProfiles,
+  buildVendorChallengeIntelligence,
+  buildVendorBafoInstructionPack,
+  buildVendorEvaluationDecisionView,
+} from "@/lib/source/proposal-intelligence/mve-profile";
+import {
+  buildContractOptimizationMveProfile,
+  buildSkyHarborAmsExistingContractInput,
+} from "@/lib/source/contract-optimization/mve-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,13 +65,14 @@ export async function POST(
     }
 
     const normalizedBody = normalizeSourceNexusApiRequestBody(bodyResult.body);
-    const activeClient =
-      (await getActiveClientRow(tenancy.clientKey).catch(() => null)) ?? {
-        id: tenancy.clientId,
-        name: tenancy.clientKey,
-        industry_code: null,
-        key: tenancy.clientKey,
-      };
+    const activeClient = (await getActiveClientRow(tenancy.clientKey).catch(
+      () => null,
+    )) ?? {
+      id: tenancy.clientId,
+      name: tenancy.clientKey,
+      industry_code: null,
+      key: tenancy.clientKey,
+    };
     const activeClientKey = (
       activeClient.key ??
       tenancy.clientKey ??
@@ -164,8 +182,8 @@ export async function POST(
 
     // Attempt a real Claude call. Falls back to stub summary on any failure.
     const claudeSummary = await callSentinelWithClaude({
-      prompt: normalizedBody.prompt ?? '',
-      briefingContext: stubResponse.summary ?? '',
+      prompt: normalizedBody.prompt ?? "",
+      briefingContext: stubResponse.summary ?? "",
       tenantKey: activeClient?.key ?? null,
       tenantId: tenancy.clientId,
     }).catch(() => null);
@@ -249,10 +267,7 @@ async function getSourcingEventForAskWithRetry(
     .trim()
     .toLowerCase()}`;
   const cached = sourceAskEventCache.get(cacheKey);
-  if (
-    cached &&
-    Date.now() - cached.cachedAt < SOURCE_ASK_EVENT_CACHE_TTL_MS
-  ) {
+  if (cached && Date.now() - cached.cachedAt < SOURCE_ASK_EVENT_CACHE_TTL_MS) {
     return cached.event;
   }
 
@@ -655,14 +670,16 @@ function structuredEvidenceSegmentForFamily(family: string): string {
 }
 
 function sourceEventEvidenceSegment(item: unknown): string {
-  const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+  const record =
+    item && typeof item === "object" ? (item as Record<string, unknown>) : {};
   return typeof record.segmentId === "string"
     ? record.segmentId
     : "sourcing_artifacts";
 }
 
 function sourceEventEvidenceDoc(item: unknown): string {
-  const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+  const record =
+    item && typeof item === "object" ? (item as Record<string, unknown>) : {};
   return typeof record.sourceDoc === "string"
     ? record.sourceDoc
     : "Source intake record";
@@ -1108,22 +1125,22 @@ async function callSentinelWithClaude(args: {
   tenantKey: string | null;
   tenantId: string;
 }): Promise<string> {
-  if (!args.prompt.trim()) throw new Error('empty prompt');
+  if (!args.prompt.trim()) throw new Error("empty prompt");
 
   const preflight = await preflightAnthropicDirectClient({
     tenantId: args.tenantId,
-    workflow: 'source-canvas-chat',
-    model: 'claude-sonnet-4-6',
+    workflow: "source-canvas-chat",
+    model: "claude-sonnet-4-6",
     prompt: args.prompt,
-    dataClass: 'confidential',
-    metadata: { surface: 'source', tenantKey: args.tenantKey ?? 'unknown' },
+    dataClass: "confidential",
+    metadata: { surface: "source", tenantKey: args.tenantKey ?? "unknown" },
   });
   if (!preflight.ok) throw new Error(`egress blocked: ${preflight.reason}`);
 
   const systemPrompt = composeSentinelSystemPrompt({
-    mode: 'tenant',
+    mode: "tenant",
     tenantKey: args.tenantKey,
-    surface: '/source',
+    surface: "/source",
     vectorIndexPending: false,
     worldviewPending: false,
     worldviewHitsPresent: false,
@@ -1134,24 +1151,22 @@ async function callSentinelWithClaude(args: {
     : args.prompt;
 
   const msg = await preflight.client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: "claude-sonnet-4-6",
     max_tokens: 512,
     system: systemPrompt,
-    messages: [{ role: 'user', content: userMessage }],
+    messages: [{ role: "user", content: userMessage }],
   });
 
   const text = msg.content
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as { type: 'text'; text: string }).text)
-    .join('');
+    .filter((b) => b.type === "text")
+    .map((b) => (b as { type: "text"; text: string }).text)
+    .join("");
 
-  if (!text.trim()) throw new Error('empty Claude response');
+  if (!text.trim()) throw new Error("empty Claude response");
   return text;
 }
 
-async function parseSourceNexusRequestBody(
-  request: NextRequest,
-): Promise<
+async function parseSourceNexusRequestBody(request: NextRequest): Promise<
   | { ok: true; body: unknown }
   | {
       ok: false;
