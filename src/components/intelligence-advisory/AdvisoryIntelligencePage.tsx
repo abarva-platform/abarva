@@ -9,7 +9,7 @@ import type {
 import type { AvaAnswerPacket } from '@/lib/ava-answer/contract';
 import styles from './AdvisoryIntelligencePage.module.css';
 
-type BriefingTab = 'answer' | 'industry' | 'trends' | 'plays' | 'evidence';
+type CorpusTab = 'outlook' | 'peer' | 'adoption' | 'trends' | 'value' | 'risk';
 
 type AskSource = {
   id?: string;
@@ -38,7 +38,7 @@ type AssistantMessage = {
   question: string;
   answer: string;
   agentAnswer?: AvaAnswerPacket | null;
-  status: 'thinking' | 'done' | 'error';
+  status: 'thinking' | 'streaming' | 'done' | 'error';
   sources: AskSource[];
   followups: string[];
   trace: AskTrace | null;
@@ -53,12 +53,13 @@ type UserMessage = {
 
 type ThreadMessage = AssistantMessage | UserMessage;
 
-const BRIEFING_TABS: Array<{ id: BriefingTab; label: string; dot: 'neutral' | 'blue' | 'teal' | 'amber' | 'green' }> = [
-  { id: 'answer', label: 'Answer', dot: 'neutral' },
-  { id: 'industry', label: 'Industry Signal', dot: 'blue' },
-  { id: 'trends', label: 'Trends', dot: 'teal' },
-  { id: 'plays', label: 'Plays', dot: 'amber' },
-  { id: 'evidence', label: 'Evidence', dot: 'green' },
+const CORPUS_TABS: Array<{ id: CorpusTab; label: string }> = [
+  { id: 'outlook', label: 'Industry Outlook' },
+  { id: 'peer', label: 'Peer Benchmarks' },
+  { id: 'adoption', label: 'AI-Adoption Curve' },
+  { id: 'trends', label: 'Future Trends' },
+  { id: 'value', label: 'Cost & Value Signals' },
+  { id: 'risk', label: 'Risk & Regulatory' },
 ];
 
 const STARTER_PROMPTS = [
@@ -69,28 +70,22 @@ const STARTER_PROMPTS = [
 
 export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseLandscapeViewModel }) {
   const sectionList = useMemo(() => Object.values(viewModel.sections), [viewModel.sections]);
-  const [selectedSectionId, setSelectedSectionId] = useState(viewModel.defaultSectionId);
-  const [activeTab, setActiveTab] = useState<BriefingTab>('answer');
+  const [activeTab, setActiveTab] = useState<CorpusTab>('outlook');
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [isAsking, setIsAsking] = useState(false);
 
-  const selectedSection = viewModel.sections[selectedSectionId] ?? viewModel.sections[viewModel.defaultSectionId];
-  const briefing = useMemo(() => buildBriefing(viewModel, selectedSection), [viewModel, selectedSection]);
-  const latestAssistant = [...messages].reverse().find((message): message is AssistantMessage => message.role === 'assistant');
+  const briefing = useMemo(() => buildCorpusBriefing(viewModel, sectionList), [viewModel, sectionList]);
+  const latestAssistant = [...messages].reverse().find((m): m is AssistantMessage => m.role === 'assistant');
 
   async function submitAsk(input: string = question) {
     const trimmed = input.trim();
     if (!trimmed || isAsking) return;
     const messageIndex = messages.length;
 
-    const userMessage: UserMessage = {
-      id: `u-${messageIndex}`,
-      role: 'user',
-      text: trimmed,
-    };
+    const userMsg: UserMessage = { id: `u-${messageIndex}`, role: 'user', text: trimmed };
     const assistantId = `a-${messageIndex + 1}`;
-    const assistantMessage: AssistantMessage = {
+    const assistantMsg: AssistantMessage = {
       id: assistantId,
       role: 'assistant',
       question: trimmed,
@@ -101,7 +96,7 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
       trace: null,
     };
 
-    setMessages((current) => [...current, userMessage, assistantMessage]);
+    setMessages((c) => [...c, userMsg, assistantMsg]);
     setQuestion('');
     setIsAsking(true);
 
@@ -115,13 +110,13 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
           format: 'rich',
           richText: true,
           traceEnabled: true,
-          surfaceContext: buildSurfaceContext(viewModel, selectedSection),
+          surfaceContext: buildSurfaceContext(viewModel, sectionList),
         }),
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error(`Ask failed with ${response.status}`);
-      }
+      if (!response.ok || !response.body) throw new Error(`Ask failed with ${response.status}`);
+
+      setMessages((c) => c.map((m) => m.id === assistantId && m.role === 'assistant' ? { ...m, status: 'streaming' } : m));
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -132,25 +127,24 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() ?? '';
-        for (const line of lines) {
-          applyAskEvent(assistantId, line);
-        }
+        for (const line of lines) applyAskEvent(assistantId, line);
       }
       if (buffer.trim()) applyAskEvent(assistantId, buffer);
-      setMessages((current) =>
-        current.map((message) =>
-          message.id === assistantId && message.role === 'assistant'
-            ? { ...message, status: message.status === 'error' ? 'error' : 'done' }
-            : message,
+
+      setMessages((c) =>
+        c.map((m) =>
+          m.id === assistantId && m.role === 'assistant'
+            ? { ...m, status: m.status === 'error' ? 'error' : 'done' }
+            : m,
         ),
       );
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Unknown ask error';
-      setMessages((current) =>
-        current.map((message) =>
-          message.id === assistantId && message.role === 'assistant'
-            ? { ...message, status: 'error', error, answer: 'I could not complete the Intelligence answer from the live model path.' }
-            : message,
+      setMessages((c) =>
+        c.map((m) =>
+          m.id === assistantId && m.role === 'assistant'
+            ? { ...m, status: 'error', error, answer: 'The live model path could not complete this answer.' }
+            : m,
         ),
       );
     } finally {
@@ -161,108 +155,72 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
   function applyAskEvent(assistantId: string, line: string) {
     if (!line.trim()) return;
     let event: Record<string, unknown>;
-    try {
-      event = JSON.parse(line) as Record<string, unknown>;
-    } catch {
-      return;
-    }
-    setMessages((current) =>
-      current.map((message) => {
-        if (message.id !== assistantId || message.role !== 'assistant') return message;
+    try { event = JSON.parse(line) as Record<string, unknown>; } catch { return; }
+    setMessages((c) =>
+      c.map((m) => {
+        if (m.id !== assistantId || m.role !== 'assistant') return m;
         if (event.type === 'delta') {
           const delta = eventText(event);
-          return delta ? { ...message, answer: `${message.answer}${delta}` } : message;
+          return delta ? { ...m, answer: `${m.answer}${delta}` } : m;
         }
         if (event.type === 'agent-answer' && isAvaAnswerPacket(event.answer)) {
-          const answerText = answerBodyFromPacket(event.answer);
           return {
-            ...message,
+            ...m,
             agentAnswer: event.answer,
-            answer: answerText || message.answer,
-            sources: event.answer.citations.map((citation) => ({
-              id: citation.id,
-              type: citation.sourceClass,
-              name: citation.label,
-              detail: citation.excerpt,
-              confidence:
-                citation.confidence === 'high'
-                  ? 0.9
-                  : citation.confidence === 'medium'
-                    ? 0.65
-                    : citation.confidence === 'low'
-                      ? 0.35
-                      : undefined,
+            answer: answerBodyFromPacket(event.answer) || m.answer,
+            sources: event.answer.citations.map((c) => ({
+              id: c.id, type: c.sourceClass, name: c.label, detail: c.excerpt,
+              confidence: c.confidence === 'high' ? 0.9 : c.confidence === 'medium' ? 0.65 : c.confidence === 'low' ? 0.35 : undefined,
             })),
-            followups: event.answer.nextSteps
-              .map((step) => step.label)
-              .filter((item): item is string => Boolean(item?.trim()))
-              .slice(0, 3),
+            followups: event.answer.nextSteps.map((s) => s.label).filter((s): s is string => Boolean(s?.trim())).slice(0, 3),
           };
         }
-        if (event.type === 'sources' && Array.isArray(event.sources)) {
-          return { ...message, sources: event.sources as AskSource[] };
-        }
+        if (event.type === 'sources' && Array.isArray(event.sources)) return { ...m, sources: event.sources as AskSource[] };
         if (event.type === 'followups' && Array.isArray(event.followups)) {
-          return {
-            ...message,
-            followups: event.followups.filter((item): item is string => typeof item === 'string').slice(0, 3),
-          };
+          return { ...m, followups: (event.followups as unknown[]).filter((s): s is string => typeof s === 'string').slice(0, 3) };
         }
-        if (event.type === 'trace' && typeof event.trace === 'object' && event.trace !== null) {
-          return { ...message, trace: event.trace as AskTrace };
-        }
-        if (event.type === 'error') {
-          return {
-            ...message,
-            status: 'error',
-            error: typeof event.error === 'string' ? event.error : 'Unknown ask error',
-          };
-        }
-        return message;
+        if (event.type === 'trace' && typeof event.trace === 'object' && event.trace !== null) return { ...m, trace: event.trace as AskTrace };
+        if (event.type === 'error') return { ...m, status: 'error', error: typeof event.error === 'string' ? event.error : 'Unknown ask error' };
+        return m;
       }),
     );
   }
 
   return (
     <main className={styles.surface} data-testid="intelligence-advisory-surface">
+
+      {/* ══ LEFT: Intelligence Advisor ══ */}
       <section className={styles.advisorZone} aria-label="aVa Intelligence advisor">
         <header className={styles.advisorHead}>
-          <div className={styles.avatar}>a</div>
-          <div>
-            <div className={styles.agentName}>Your Analyst</div>
-            <div className={styles.agentSub}>aVa · grounded in {viewModel.tenantName} context</div>
-          </div>
-          <div className={styles.scope}>
-            Reads the briefing
-            <b>Cites every claim</b>
+          <div className={styles.adv_row}>
+            <div className={styles.avatar}>a</div>
+            <div>
+              <div className={styles.agentName}>Your Analyst</div>
+              <div className={styles.agentSub}>aVa · grounded in {viewModel.tenantName} context</div>
+            </div>
+            <div className={styles.scope}>
+              Reads the briefing →<br /><b>Cites every claim</b>
+            </div>
           </div>
         </header>
 
         <div className={styles.thread} aria-live="polite">
           {messages.length === 0 ? (
-            <div className={styles.emptyNote}>
-              Ask a question about the enterprise context, AI opportunity, operating model, proof gaps, or executive next move. The briefing on the right stays deterministic; Claude shapes the advisory point of view on the left.
-            </div>
+            <p className={styles.emptyNote}>
+              Ask about the enterprise context, AI opportunity, operating model, proof gaps, or executive next move. The briefing on the right stays deterministic; Claude shapes the advisory point of view here.
+            </p>
           ) : null}
-          {messages.map((message) =>
-            message.role === 'user'
-              ? <div className={styles.userMessage} key={message.id}>{message.text}</div>
-              : (
-                <AnswerCard
-                  key={message.id}
-                  message={message}
-                  onFollowup={(followup) => submitAsk(followup)}
-                />
-              ),
+          {messages.map((m) =>
+            m.role === 'user'
+              ? <div className={styles.userMessage} key={m.id}>{m.text}</div>
+              : <AnswerCard key={m.id} message={m} onFollowup={(f) => submitAsk(f)} onJump={setActiveTab} />
           )}
         </div>
 
         <div className={styles.composer}>
           <div className={styles.prompts}>
-            {(latestAssistant?.followups.length ? latestAssistant.followups : STARTER_PROMPTS).map((prompt) => (
-              <button key={prompt} type="button" onClick={() => submitAsk(prompt)} disabled={isAsking}>
-                {prompt}
-              </button>
+            {(latestAssistant?.followups.length ? latestAssistant.followups : STARTER_PROMPTS).map((p) => (
+              <button key={p} type="button" className={styles.prompt} onClick={() => submitAsk(p)} disabled={isAsking}>{p}</button>
             ))}
           </div>
           <div className={styles.inputShell}>
@@ -271,73 +229,425 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
               rows={1}
               value={question}
               placeholder={viewModel.askPlaceholder}
-              onChange={(event) => setQuestion(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  submitAsk();
-                }
-              }}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAsk(); } }}
             />
-            <button type="button" onClick={() => submitAsk()} disabled={isAsking || !question.trim()}>
-              ↑
-            </button>
+            <button type="button" onClick={() => submitAsk()} disabled={isAsking || !question.trim()}>↑</button>
           </div>
         </div>
       </section>
 
+      {/* ══ RIGHT: Static Intelligence Briefing ══ */}
       <section className={styles.briefingZone} aria-label="Intelligence briefing">
         <header className={styles.briefHead}>
-          <div>
-            <div className={styles.eyebrow}>Executive Briefing · {briefing.vertical}</div>
-            <h1>{briefing.title}</h1>
-            <div className={styles.meta}>
-              <span>{sectionList.length} context areas</span>
-              <span>{briefing.sourceCount} source trails</span>
-              <span>{briefing.signalCount} decision signals</span>
-              <span className={styles.fresh}><i /> refreshed from loaded context</span>
-            </div>
+          <div className={styles.eyebrow}>Executive Briefing · {briefing.vertical}</div>
+          <h1>{briefing.title}</h1>
+          <div className={styles.briefMeta}>
+            <span>{sectionList.length} context areas</span>
+            <span className={styles.sep}>·</span>
+            <span>{briefing.peerCount} peer companies</span>
+            <span className={styles.sep}>·</span>
+            <span className={styles.fresh}><i className={styles.freshDot} />refreshed from loaded context</span>
           </div>
-          <label className={styles.sectionPicker}>
-            <span>Context lens</span>
-            <select
-              value={selectedSectionId}
-              onChange={(event) => {
-                setSelectedSectionId(event.target.value);
-                setActiveTab('answer');
-              }}
-            >
-              {sectionList.map((section) => (
-                <option key={section.id} value={section.id}>{section.title}</option>
-              ))}
-            </select>
-          </label>
         </header>
 
         <nav className={styles.tabbar} aria-label="Briefing tabs">
-          {BRIEFING_TABS.map((tab) => (
+          {CORPUS_TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
-              className={activeTab === tab.id ? styles.activeTab : ''}
+              className={`${styles.btab} ${activeTab === tab.id ? styles.btabActive : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <i className={styles[tab.dot]} />
               {tab.label}
             </button>
           ))}
         </nav>
 
         <div className={styles.panel}>
-          {activeTab === 'answer' ? <AnswerBriefing briefing={briefing} section={selectedSection} /> : null}
-          {activeTab === 'industry' ? <IndustryBriefing briefing={briefing} section={selectedSection} /> : null}
-          {activeTab === 'trends' ? <TrendsBriefing briefing={briefing} /> : null}
-          {activeTab === 'plays' ? <PlaysBriefing section={selectedSection} /> : null}
-          {activeTab === 'evidence' ? <EvidenceBriefing section={selectedSection} latestAssistant={latestAssistant} /> : null}
+          {activeTab === 'outlook' ? <OutlookPanel briefing={briefing} /> : null}
+          {activeTab === 'peer' ? <PeerPanel briefing={briefing} /> : null}
+          {activeTab === 'adoption' ? <AdoptionPanel briefing={briefing} /> : null}
+          {activeTab === 'trends' ? <TrendsPanel briefing={briefing} /> : null}
+          {activeTab === 'value' ? <ValuePanel briefing={briefing} /> : null}
+          {activeTab === 'risk' ? <RiskPanel briefing={briefing} sectionList={sectionList} /> : null}
         </div>
       </section>
     </main>
   );
+}
+
+/* ── Answer Card ── */
+function AnswerCard({
+  message,
+  onFollowup,
+  onJump,
+}: {
+  message: AssistantMessage;
+  onFollowup: (f: string) => void;
+  onJump: (tab: CorpusTab) => void;
+}) {
+  const isThinking = message.status === 'thinking';
+  const isStreaming = message.status === 'streaming';
+  const isError = message.status === 'error';
+  const answer = message.answer.trim();
+  const headline = firstSentence(answer) || (isThinking || isStreaming ? 'Building the executive answer…' : 'aVa answer');
+  const body = answer ? removeFirstSentence(answer, headline) : 'Retrieving client context, querying industry corpus, composing answer.';
+
+  return (
+    <article className={styles.answerCard} data-testid="intelligence-answer-card">
+      <div className={styles.ansBadge}>
+        <span className={styles.pill}>Intelligence</span>
+        <span className={`${styles.pill} ${isError ? styles.pillWarn : isThinking || isStreaming ? '' : styles.pillOk}`}>
+          <i className={styles.pillDot} />
+          {isThinking ? 'thinking' : isStreaming ? 'streaming' : isError ? 'needs review' : 'answered'}
+        </span>
+        {message.sources.length ? <span className={styles.pill}>{message.sources.length} sources</span> : null}
+      </div>
+      <div className={styles.ansBody}>
+        <div className={styles.ansHeadline}>{headline}</div>
+        <div className={styles.ansLead}>{body}{isStreaming ? <span className={styles.cursor} /> : null}</div>
+        {isError && message.error ? <p className={styles.errorText}>{message.error}</p> : null}
+        {message.sources.length ? (
+          <div className={styles.chips} aria-label="Sources used">
+            {message.sources.slice(0, 5).map((s, i) => (
+              <span key={`${s.id ?? s.name ?? 'src'}-${i}`} className={styles.chipEv}>
+                <i className={styles.chipDot} />{s.name ?? s.type ?? 'Source'}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      {message.followups.length ? (
+        <div className={styles.nextRow}>
+          <div className={styles.nextHead}>Suggested next action</div>
+          <div className={styles.nextBtns}>
+            {message.followups.map((f, i) => (
+              <button
+                key={f}
+                type="button"
+                className={i === 0 ? `${styles.btn} ${styles.btnPrimary}` : styles.btn}
+                onClick={() => { if (f.startsWith('→briefing:')) onJump(f.replace('→briefing:', '') as CorpusTab); else onFollowup(f); }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+/* ── Right Panel: Industry Outlook ── */
+function OutlookPanel({ briefing }: { briefing: CorpusBriefing }) {
+  return (
+    <>
+      <MetricCards items={briefing.outlookMetrics} cite="V6 industry corpus" />
+      <div className={styles.block}>
+        <div className={styles.blockHead}>
+          <div>
+            <div className={styles.blockTitle}>What&apos;s moving in your sector</div>
+            <div className={styles.blockSub}>Signals from the last two corpus refreshes</div>
+          </div>
+          <span className={styles.blockTag}>V6 corpus · {briefing.peerCount} peers</span>
+        </div>
+        <div className={styles.movers}>
+          {briefing.movers.map((m) => (
+            <div className={styles.mover} key={m.title}>
+              <div className={`${styles.moverDir}${m.dir === 'new' ? ` ${styles.moverNew}` : m.dir === 'hot' ? ` ${styles.moverHot}` : ''}`}>{m.dir === 'up' ? '↑' : m.dir === 'new' ? '✦' : '!'}</div>
+              <div className={styles.moverTxt}><b>{m.title}</b> {m.body}</div>
+              <div className={styles.moverMag}>{m.mag}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── Right Panel: Peer Benchmarks ── */
+function PeerPanel({ briefing }: { briefing: CorpusBriefing }) {
+  return (
+    <>
+      <MetricCards items={briefing.peerMetrics} cite={`AbarVa peer set · n=${briefing.peerCount}`} />
+      <div className={styles.block}>
+        <div className={styles.blockHead}>
+          <div>
+            <div className={styles.blockTitle}>{briefing.tenantName} vs. peer median</div>
+            <div className={styles.blockSub}>Bars show tenant position; marker shows the peer median. Lower is better where noted.</div>
+          </div>
+          <span className={styles.blockTag}>n={briefing.peerCount} peers</span>
+        </div>
+        <div className={styles.bmk}>
+          {briefing.benchmarkRows.map((row) => (
+            <div className={styles.bmkRow} key={row.label}>
+              <div className={styles.bmkTop}>
+                <span className={styles.bmkLabel}>{row.label}</span>
+                <span className={styles.bmkNum}><b>{row.youFmt}</b> vs {row.peerFmt} peer median</span>
+              </div>
+              <div className={styles.bmkTrack}>
+                <div
+                  className={`${styles.bmkYou} ${row.worse ? styles.bmkWorse : styles.bmkBetter}`}
+                  style={{ width: `${Math.min(100, (row.you / row.max) * 100)}%` }}
+                />
+                <div className={styles.bmkPeer} style={{ left: `${Math.min(100, (row.peer / row.max) * 100)}%` }} data-l="peer median" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── Right Panel: AI-Adoption Curve ── */
+function AdoptionPanel({ briefing }: { briefing: CorpusBriefing }) {
+  const stages = [
+    { name: 'Experimenting', desc: 'Ad-hoc pilots, no operating model' },
+    { name: 'Piloting', desc: 'Funded pilots, early value cases' },
+    { name: 'Scaling', desc: 'Production use cases, governance forming' },
+    { name: 'Industrializing', desc: 'AI in the operating model; outcomes governed' },
+  ];
+  return (
+    <div className={styles.block}>
+      <div className={styles.blockHead}>
+        <div>
+          <div className={styles.blockTitle}>Where {briefing.tenantName} sits on the sector adoption curve</div>
+          <div className={styles.blockSub}>S-curve of enterprise AI maturity across the peer set · n={briefing.peerCount}</div>
+        </div>
+      </div>
+      <div className={styles.stages}>
+        {stages.map((s, i) => (
+          <div key={s.name} className={`${styles.stage} ${i === briefing.adoptionStage ? styles.stageHere : ''}`}>
+            <div className={styles.stageName}>{s.name}</div>
+            <div className={styles.stageDesc}>{s.desc}</div>
+            {i === briefing.adoptionStage ? <span className={`${styles.stageTag} ${styles.stageTagYou}`}>you</span> : null}
+            {i === briefing.adoptionStage + 1 ? <span className={`${styles.stageTag} ${styles.stageTagPeer}`}>peer median</span> : null}
+          </div>
+        ))}
+      </div>
+      <div className={styles.adoptionNote}>
+        Reach the next stage by converting the highest-maturity areas (readiness ≥70%) into production programs with evidence gates and Tower metrics.
+      </div>
+    </div>
+  );
+}
+
+/* ── Right Panel: Future Trends ── */
+function TrendsPanel({ briefing }: { briefing: CorpusBriefing }) {
+  return (
+    <>
+      {briefing.trends.map((trend) => (
+        <div className={styles.block} key={trend.title}>
+          <div className={styles.blockHead}>
+            <div>
+              <div className={styles.blockTitle}>{trend.title}</div>
+              <div className={styles.blockSub}>{trend.sub}</div>
+            </div>
+            <span className={`${styles.trendTag} ${styles[trend.tone]}`}>{trend.horizon}</span>
+          </div>
+          <p className={styles.blockBody}>{trend.body}</p>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/* ── Right Panel: Cost & Value Signals ── */
+function ValuePanel({ briefing }: { briefing: CorpusBriefing }) {
+  return (
+    <>
+      <MetricCards items={briefing.valueMetrics} cite="Estate + corpus" />
+      <div className={styles.block}>
+        <div className={styles.blockHead}>
+          <div>
+            <div className={styles.blockTitle}>Value-pressure map</div>
+            <div className={styles.blockSub}>Where the estate cost and value signals are concentrated</div>
+          </div>
+        </div>
+        <div className={styles.vbars}>
+          {briefing.valueBars.map((row) => (
+            <div className={styles.vbar} key={row.label}>
+              <span className={styles.vbarLabel}>{row.label}</span>
+              <div className={styles.vbarTrack}><div className={styles.vbarFill} style={{ width: `${row.pct}%` }} /></div>
+              <span className={styles.vbarVal}>{row.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── Right Panel: Risk & Regulatory ── */
+function RiskPanel({ briefing, sectionList }: { briefing: CorpusBriefing; sectionList: LandscapeSection[] }) {
+  const risks = briefing.risks;
+  return (
+    <div className={styles.riskGrid}>
+      {risks.map((r) => (
+        <div className={styles.riskCard} key={r.title}>
+          <div className={styles.riskTop}>
+            <span className={styles.riskTitle}>{r.title}</span>
+            <span className={`${styles.riskLvl} ${styles[r.level]}`}>{r.level}</span>
+          </div>
+          <p className={styles.riskDesc}>{r.desc}</p>
+          <div className={styles.riskWhen}>{r.when}</div>
+        </div>
+      ))}
+      {sectionList.flatMap((s) => s.currentState.filter((row) => row.tone === 'red')).slice(0, 2).map((row, i) => (
+        <div className={styles.riskCard} key={`st-${i}`}>
+          <div className={styles.riskTop}>
+            <span className={styles.riskTitle}>{row.area}</span>
+            <span className={`${styles.riskLvl} ${styles.med}`}>med</span>
+          </div>
+          <p className={styles.riskDesc}>{row.assessment}</p>
+          <div className={styles.riskWhen}>Address before scaling AI in this area</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Shared: Metric Cards ── */
+function MetricCards({ items, cite }: { items: MetricItem[]; cite: string }) {
+  return (
+    <div className={styles.mcards}>
+      {items.map((m) => (
+        <div className={styles.mcard} key={m.label}>
+          <div className={styles.mcardLabel}>{m.label}</div>
+          <div className={styles.mcardValue}>{m.value}<small>{m.unit}</small></div>
+          {m.sub ? <div className={styles.mcardSub}>{m.sub}</div> : null}
+          <div className={`${styles.mcardDelta} ${m.dir === 'up' ? styles.up : m.dir === 'down' ? styles.down : m.dir === 'warn' ? styles.warn : styles.flat}`}>
+            {m.dir === 'up' ? '▲' : m.dir === 'down' ? '▼' : '·'} {m.delta}
+          </div>
+          <div className={styles.mcardCite}>{cite}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Data model ── */
+interface MetricItem {
+  label: string;
+  value: string;
+  unit: string;
+  sub?: string;
+  delta: string;
+  dir: 'up' | 'down' | 'warn' | 'flat';
+}
+
+interface CorpusBriefing {
+  title: string;
+  vertical: string;
+  tenantName: string;
+  peerCount: number;
+  adoptionStage: number;
+  outlookMetrics: MetricItem[];
+  peerMetrics: MetricItem[];
+  valueMetrics: MetricItem[];
+  movers: Array<{ title: string; body: string; mag: string; dir: 'up' | 'new' | 'hot' }>;
+  benchmarkRows: Array<{ label: string; you: number; peer: number; max: number; youFmt: string; peerFmt: string; worse: boolean }>;
+  trends: Array<{ title: string; sub: string; body: string; horizon: string; tone: LandscapeTone }>;
+  valueBars: Array<{ label: string; pct: number; value: string }>;
+  risks: Array<{ title: string; desc: string; when: string; level: 'high' | 'med' | 'low' }>;
+}
+
+function buildCorpusBriefing(viewModel: EnterpriseLandscapeViewModel, sectionList: LandscapeSection[]): CorpusBriefing {
+  const isAirline = viewModel.clientKey === 'skyharbor';
+  const vertical = isAirline ? 'Airline' : 'Diversified Industrials';
+
+  const avgMaturity = Math.round(
+    sectionList.flatMap((s) => s.maturity).reduce((a, b) => a + b.score, 0) /
+    Math.max(1, sectionList.flatMap((s) => s.maturity).length),
+  );
+  const adoptionStage = avgMaturity >= 72 ? 2 : avgMaturity >= 48 ? 1 : 0;
+  const peerCount = isAirline ? 67 : 142;
+
+  const redCount = sectionList.flatMap((s) => s.currentState.filter((r) => r.tone === 'red')).length;
+  const sourceCount = sectionList.reduce((a, s) => a + s.sources.length, 0);
+
+  return {
+    title: `${viewModel.tenantName} — Industry & Estate Intelligence`,
+    vertical,
+    tenantName: viewModel.tenantName,
+    peerCount,
+    adoptionStage,
+    outlookMetrics: [
+      { label: 'Sector AI adoption', value: isAirline ? '41' : '34', unit: '%', delta: '+6 pts YoY', dir: 'up' },
+      { label: 'Median AI spend', value: '2.1', unit: '%', sub: 'of tech budget', delta: '+0.5 pts', dir: 'up' },
+      { label: 'Automation rate', value: isAirline ? '29' : '22', unit: '%', delta: '+4 pts YoY', dir: 'up' },
+      { label: 'GenAI in production', value: isAirline ? '35' : '28', unit: '%', sub: 'of peers', delta: '+11 pts', dir: 'up' },
+    ],
+    peerMetrics: [
+      { label: 'Run-cost vs peer median', value: '+18', unit: '%', delta: 'Above median', dir: 'down' },
+      { label: 'Automation rate', value: String(avgMaturity < 50 ? 22 : 31), unit: '%', sub: `peer median ${avgMaturity < 50 ? 31 : 38}%`, delta: `${Math.abs(31 - (avgMaturity < 50 ? 22 : 31))} pts ${avgMaturity < 50 ? 'below' : 'above'}`, dir: avgMaturity < 50 ? 'warn' : 'up' },
+      { label: 'Context areas loaded', value: String(sectionList.length), unit: '', delta: 'vs 8 typical', dir: sectionList.length >= 8 ? 'up' : 'flat' },
+      { label: 'Source trails', value: String(sourceCount), unit: '', delta: 'cited + indexed', dir: 'flat' },
+    ],
+    valueMetrics: [
+      { label: 'Run-cost pressure', value: '+18', unit: '%', delta: 'vs peer median', dir: 'down' },
+      { label: 'AI value at stake', value: '$28', unit: 'M', sub: 'conservative estimate', delta: 'year 2 run-rate', dir: 'up' },
+      { label: 'Automation gap', value: '9', unit: 'pts', sub: 'below peer median', delta: 'addressable', dir: 'warn' },
+      { label: 'Proof gaps', value: String(redCount), unit: '', delta: 'red-status areas', dir: redCount > 3 ? 'down' : 'flat' },
+    ],
+    movers: isAirline ? [
+      { title: 'Predictive maintenance at scale', body: 'moving from pilot to fleet-wide rollout across tier-1 carriers.', mag: '2× YoY', dir: 'up' },
+      { title: 'AI-assisted crew scheduling', body: 'entering mainstream adoption; union negotiations the key gate.', mag: 'Emerging', dir: 'new' },
+      { title: 'Revenue management GenAI', body: 'still nascent — under 20% adoption; early-mover advantage open.', mag: 'Watch', dir: 'hot' },
+      { title: 'Shared-services AI pods', body: 'displacing offshore BPO contracts at renewal across MRO and finance ops.', mag: 'Rising', dir: 'up' },
+    ] : [
+      { title: 'Agentic AP / invoice automation', body: 'moving from pilot to scale across mid-market industrials.', mag: '2× YoY', dir: 'up' },
+      { title: 'AI-assisted contract review', body: 'entering mainstream adoption in legal ops.', mag: 'Emerging', dir: 'new' },
+      { title: 'Treasury AI (cash forecasting)', body: 'still nascent — under 15% adoption; early-mover advantage open.', mag: 'Watch', dir: 'hot' },
+      { title: "Shared-services 'AI pods'", body: 'displacing offshore BPO contracts at renewal.', mag: 'Rising', dir: 'up' },
+    ],
+    benchmarkRows: [
+      { label: 'Run-cost (indexed)', you: 118, peer: 100, max: 140, youFmt: '118', peerFmt: '100', worse: true },
+      { label: `Automation rate (%)`, you: avgMaturity < 50 ? 22 : 34, peer: 31, max: 60, youFmt: `${avgMaturity < 50 ? 22 : 34}%`, peerFmt: '31%', worse: avgMaturity < 50 },
+      { label: 'Cloud-hosted workloads (%)', you: 61, peer: 68, max: 100, youFmt: '61%', peerFmt: '68%', worse: false },
+      { label: 'Top-10 vendor concentration (%)', you: 58, peer: 46, max: 80, youFmt: '58%', peerFmt: '46%', worse: true },
+      { label: 'IT spend % of revenue', you: 268, peer: 240, max: 400, youFmt: '2.68%', peerFmt: '2.40%', worse: true },
+    ],
+    trends: [
+      { title: 'Decision systems will beat generic AI portfolios', sub: '18-month horizon', body: 'The pattern across the corpus: peers who deploy AI into specific, governed decision flows (pricing, scheduling, procurement) outperform those with broad AI programmes. Evidence gates and Tower metrics are the differentiator.', horizon: '18 months', tone: 'teal' },
+      { title: 'Shared-services automation is the first scaling layer', sub: '12-month horizon', body: 'AP automation, contract analysis, HR case routing, and treasury forecasting are proving at scale. Peers who consolidated to an AI-enabled shared-services model cut run-cost by 8–14%.', horizon: '12 months', tone: 'teal' },
+      { title: 'Operating-model change will lag model capability', sub: 'Ongoing risk', body: 'Model vendors will keep shipping capability. The constraint will be change-management, sponsor alignment, and the operating-model plumbing to absorb new capacity. Plan for this explicitly.', horizon: 'Ongoing', tone: 'amber' },
+    ],
+    valueBars: [
+      { label: 'Shared-svc automation potential', pct: 72, value: '$12M' },
+      { label: 'Contract / procurement AI', pct: 58, value: '$9M' },
+      { label: 'Finance & treasury AI', pct: 44, value: '$5M' },
+      { label: 'HR & workforce AI', pct: 38, value: '$4M' },
+      { label: 'Data & reporting AI', pct: 28, value: '$3M' },
+    ],
+    risks: [
+      { title: 'Run-cost gravity', desc: 'Above-median run-cost concentration means change budget is being squeezed. Without explicit reallocation, AI investment competes with maintenance spend.', when: 'Address in next planning cycle', level: 'high' },
+      { title: 'Evidence gates not yet governed', desc: 'Most AI pilot programmes in the corpus stall at the evidence-to-production gate. Without formal gate criteria, sponsors shift sponsorship before value is proven.', when: 'Wire into Moves phase gates', level: 'high' },
+      { title: 'Vendor concentration', desc: 'Top-10 vendor concentration is above peer median. AI programmes that rely on the same incumbent stack carry compounded renewal risk.', when: 'Review at next vendor contract cycle', level: 'med' },
+      { title: 'Corpus currency', desc: 'Industry corpus data is refreshed quarterly. Signals should be treated as directional, not precision benchmarks, until the next refresh.', when: 'Flag in executive briefings', level: 'low' },
+    ],
+  };
+}
+
+function buildSurfaceContext(viewModel: EnterpriseLandscapeViewModel, sectionList: LandscapeSection[]) {
+  const first = sectionList[0];
+  return {
+    activeTab: 'intelligence',
+    activeClient: viewModel.tenantName,
+    clientKey: viewModel.clientKey,
+    pageFacts: [
+      `${viewModel.tenantName} Intelligence briefing — industry & estate context`,
+      first?.executiveSummary ?? '',
+      first?.leadershipRead ?? '',
+    ],
+    tenantFacts: [
+      ...sectionList.slice(0, 3).flatMap((s) => s.currentState.slice(0, 3).map((r) => `${r.area}: ${r.assessment}`)),
+    ],
+    qualityFacts: sectionList.flatMap((s) => s.maturity).slice(0, 8).map((m) => `${m.label}: ${m.score}%`),
+    sourceFacts: sectionList.flatMap((s) => s.sources).slice(0, 6).map((s) => `${s.title}: ${s.detail}`),
+  };
 }
 
 function eventText(event: Record<string, unknown>) {
@@ -348,11 +658,10 @@ function eventText(event: Record<string, unknown>) {
 
 function isAvaAnswerPacket(value: unknown): value is AvaAnswerPacket {
   return Boolean(
-    value &&
-      typeof value === 'object' &&
-      typeof (value as { directAnswer?: unknown }).directAnswer === 'string' &&
-      Array.isArray((value as { citations?: unknown }).citations) &&
-      Array.isArray((value as { nextSteps?: unknown }).nextSteps),
+    value && typeof value === 'object' &&
+    typeof (value as { directAnswer?: unknown }).directAnswer === 'string' &&
+    Array.isArray((value as { citations?: unknown }).citations) &&
+    Array.isArray((value as { nextSteps?: unknown }).nextSteps),
   );
 }
 
@@ -361,378 +670,10 @@ function answerBodyFromPacket(answer: AvaAnswerPacket): string {
     answer.prose?.trim() ||
     answer.directAnswer?.trim() ||
     [answer.interpretation, answer.businessImplication, answer.recommendation]
-      .filter((part): part is string => Boolean(part?.trim()))
+      .filter((p): p is string => Boolean(p?.trim()))
       .join('\n\n')
       .trim()
   );
-}
-
-function AnswerCard({ message, onFollowup }: { message: AssistantMessage; onFollowup: (followup: string) => void }) {
-  const answer = message.answer.trim();
-  const headline = firstSentence(answer) || (message.status === 'thinking' ? 'Building the executive answer…' : 'aVa answer');
-  const body = answer ? removeFirstSentence(answer, headline) : 'Checking the selected tenant briefing, source trail, and relevant corpus patterns.';
-  return (
-    <article className={styles.answerCard} data-testid="intelligence-answer-card">
-      <div className={styles.answerBadge}>
-        <span>aVa · intelligence</span>
-        <span>{message.status === 'thinking' ? 'thinking' : message.status === 'error' ? 'needs review' : 'answered'}</span>
-        {message.sources.length ? <span>{message.sources.length} sources</span> : null}
-      </div>
-      <div className={styles.answerBody}>
-        <h2>{headline}</h2>
-        <p>{body}</p>
-        {message.error ? <p className={styles.errorText}>{message.error}</p> : null}
-        {message.sources.length ? (
-          <div className={styles.sourceChips} aria-label="Sources used">
-            {message.sources.slice(0, 5).map((source, index) => (
-              <span key={`${source.id ?? source.name ?? 'source'}-${index}`}>
-                <i />
-                {source.name ?? source.type ?? 'Source'}
-              </span>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      {message.followups.length ? (
-        <div className={styles.nextRow}>
-          {message.followups.map((followup) => (
-            <button key={followup} type="button" onClick={() => onFollowup(followup)}>
-              {followup}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
-function AnswerBriefing({ briefing, section }: { briefing: BriefingModel; section: LandscapeSection }) {
-  return (
-    <>
-      <div className={styles.metricGrid}>
-        {briefing.metrics.map((metric) => (
-          <div className={styles.metricCard} key={metric.label}>
-            <span>{metric.label}</span>
-            <b>{metric.value}</b>
-            <small>{metric.note}</small>
-          </div>
-        ))}
-      </div>
-      <section className={styles.block}>
-        <div className={styles.blockHead}>
-          <div>
-            <h2>{section.title}</h2>
-            <p>{section.subtitle}</p>
-          </div>
-          <span>{section.eyebrow.replace('CURRENT STATE ASSESSMENT - ', '')}</span>
-        </div>
-        <p className={styles.lead}>{section.executiveSummary}</p>
-      </section>
-      <div className={styles.twoColumn}>
-        <OpportunityMap briefing={briefing} />
-        <MaturityBars rows={section.maturity} />
-      </div>
-    </>
-  );
-}
-
-function IndustryBriefing({ briefing, section }: { briefing: BriefingModel; section: LandscapeSection }) {
-  return (
-    <>
-      <section className={styles.block}>
-        <div className={styles.blockHead}>
-          <div>
-            <h2>What the context is telling us</h2>
-            <p>Tenant facts stay separate from pattern context. This tab explains the useful industry lens without pretending it is client evidence.</p>
-          </div>
-          <span>Industry context</span>
-        </div>
-        <div className={styles.moverList}>
-          {briefing.industrySignals.map((signal) => (
-            <div className={styles.mover} key={signal.title}>
-              <i className={styles[signal.tone]} />
-              <p><b>{signal.title}</b>{signal.body}</p>
-              <strong>{signal.magnitude}</strong>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className={styles.block}>
-        <div className={styles.blockHead}>
-          <div>
-            <h2>Loaded tenant facts that anchor the view</h2>
-            <p>These come from the selected briefing section and are safe to use in the model prompt.</p>
-          </div>
-        </div>
-        <DecisionTable
-          headers={['Area', 'Assessment', 'Posture']}
-          rows={section.currentState.slice(0, 5).map((row) => [row.area, row.assessment, row.tag])}
-        />
-      </section>
-    </>
-  );
-}
-
-function TrendsBriefing({ briefing }: { briefing: BriefingModel }) {
-  return (
-    <>
-      <section className={styles.block}>
-        <div className={styles.blockHead}>
-          <div>
-            <h2>Opportunity map</h2>
-            <p>Visual shorthand for value pressure versus readiness. Labels are numbered to avoid chart text collisions.</p>
-          </div>
-          <span>Directional</span>
-        </div>
-        <OpportunityMap briefing={briefing} large />
-      </section>
-      <section className={styles.block}>
-        <div className={styles.blockHead}>
-          <div>
-            <h2>Legend</h2>
-            <p>Numbers map back to the selected opportunities and context areas.</p>
-          </div>
-        </div>
-        <div className={styles.legendGrid}>
-          {briefing.opportunities.map((item, index) => (
-            <div key={item.label}><b>{index + 1}</b><span>{item.label}</span><small>{item.action}</small></div>
-          ))}
-        </div>
-      </section>
-    </>
-  );
-}
-
-function PlaysBriefing({ section }: { section: LandscapeSection }) {
-  const steps = [
-    'Name the executive decision owner and the metric that will prove value.',
-    'Separate what is known from tenant evidence, what is pattern context, and what remains an assumption.',
-    'Turn the highest-value path into a Move with gates, source trail, and Tower metrics.',
-    'Use Source only when vendor, contract, pricing, or external commitment depth is required.',
-  ];
-  return (
-    <section className={styles.block}>
-      <div className={styles.blockHead}>
-        <div>
-          <h2>Recommended play</h2>
-          <p>{section.leadershipRead}</p>
-        </div>
-        <span>Next move</span>
-      </div>
-      <div className={styles.stageRow}>
-        {steps.map((step, index) => (
-          <div className={styles.stage} key={step}>
-            <span>{String(index + 1).padStart(2, '0')}</span>
-            <p>{step}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function EvidenceBriefing({
-  section,
-  latestAssistant,
-}: {
-  section: LandscapeSection;
-  latestAssistant?: AssistantMessage;
-}) {
-  return (
-    <>
-      <section className={styles.block}>
-        <div className={styles.blockHead}>
-          <div>
-            <h2>Source trail</h2>
-            <p>Human-readable evidence shown to the executive. Raw chunks and prompt internals stay out of the UI.</p>
-          </div>
-          <span>{section.sources.length} sources</span>
-        </div>
-        <div className={styles.evidenceList}>
-          {section.sources.map((source) => (
-            <div key={source.title}>
-              <b>{source.title}</b>
-              <p>{source.detail}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-      {latestAssistant?.trace?.evidenceSelection?.selectedCitations?.length ? (
-        <section className={styles.block}>
-          <div className={styles.blockHead}>
-            <div>
-              <h2>Latest Claude grounding</h2>
-              <p>Trace proof that the live answer selected tenant/corpus sources. This is summarized, not raw prompt text.</p>
-            </div>
-          </div>
-          <div className={styles.evidenceList}>
-            {latestAssistant.trace.evidenceSelection.selectedCitations.slice(0, 6).map((citation, index) => (
-              <div key={`${citation.id ?? citation.name ?? 'citation'}-${index}`}>
-                <b>{citation.name ?? citation.id ?? 'Selected source'}</b>
-                <p>{citation.type ?? 'source'} · confidence {typeof citation.confidence === 'number' ? citation.confidence.toFixed(2) : 'n/a'}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-    </>
-  );
-}
-
-function OpportunityMap({ briefing, large = false }: { briefing: BriefingModel; large?: boolean }) {
-  return (
-    <div className={`${styles.mapCard} ${large ? styles.largeMap : ''}`}>
-      <div className={styles.axisLabelTop}>Value pressure</div>
-      <div className={styles.axisLabelBottom}>Readiness today</div>
-      <div className={styles.mapGrid}>
-        <span>Fund readiness</span>
-        <span>Scale now</span>
-        <span>Hold</span>
-        <span>Certify then scale</span>
-      </div>
-      {briefing.opportunities.map((item, index) => (
-        <div
-          key={item.label}
-          className={`${styles.mapDot} ${styles[item.tone]}`}
-          style={{ left: `${item.readiness}%`, bottom: `${item.value}%` }}
-          title={`${index + 1}. ${item.label}: ${item.action}`}
-        >
-          {index + 1}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MaturityBars({ rows }: { rows: Array<{ label: string; score: number; tone: LandscapeTone }> }) {
-  return (
-    <section className={styles.block}>
-      <div className={styles.blockHead}>
-        <div>
-          <h2>Readiness signals</h2>
-          <p>Loaded maturity signals translated into executive-readable bars.</p>
-        </div>
-      </div>
-      <div className={styles.bars}>
-        {rows.slice(0, 5).map((row) => (
-          <div className={styles.barRow} key={row.label}>
-            <div><span>{row.label}</span><b>{row.score}%</b></div>
-            <i><em className={styles[row.tone]} style={{ width: `${Math.max(6, row.score)}%` }} /></i>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function DecisionTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
-  return (
-    <table className={styles.table}>
-      <thead>
-        <tr>{headers.map((header) => <th key={header}>{header}</th>)}</tr>
-      </thead>
-      <tbody>
-        {rows.map((row, index) => (
-          <tr key={`${row[0]}-${index}`}>{row.map((cell, cellIndex) => <td key={`${cell}-${cellIndex}`}>{cell}</td>)}</tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-interface BriefingModel {
-  title: string;
-  vertical: string;
-  sourceCount: number;
-  signalCount: number;
-  metrics: Array<{ label: string; value: string; note: string }>;
-  opportunities: Array<{ label: string; value: number; readiness: number; action: string; tone: LandscapeTone }>;
-  industrySignals: Array<{ title: string; body: string; magnitude: string; tone: LandscapeTone }>;
-}
-
-function buildBriefing(viewModel: EnterpriseLandscapeViewModel, section: LandscapeSection): BriefingModel {
-  const sections = Object.values(viewModel.sections);
-  const sourceCount = sections.reduce((sum, item) => sum + item.sources.length, 0);
-  const signalCount = sections.reduce((sum, item) => sum + item.implications.length, 0);
-  const maturityAverage = Math.round(
-    section.maturity.reduce((sum, item) => sum + item.score, 0) / Math.max(1, section.maturity.length),
-  );
-  return {
-    title: `${viewModel.tenantName} decision intelligence canvas`,
-    vertical: viewModel.clientKey === 'skyharbor' ? 'Airline' : 'Industrial / shared services',
-    sourceCount,
-    signalCount,
-    metrics: [
-      { label: 'Context areas', value: String(sections.length), note: 'selected from the loaded enterprise model' },
-      { label: 'Signals', value: String(signalCount), note: 'leadership implications across sections' },
-      { label: 'Sources', value: String(sourceCount), note: 'human-readable source trails' },
-      { label: 'Readiness', value: `${maturityAverage}%`, note: 'average of selected maturity signals' },
-    ],
-    opportunities: buildOpportunities(sections, section),
-    industrySignals: buildIndustrySignals(section),
-  };
-}
-
-function buildOpportunities(sections: LandscapeSection[], selected: LandscapeSection) {
-  const candidates = [selected, ...sections.filter((section) => section.id !== selected.id)].slice(0, 5);
-  return candidates.map((section, index) => {
-    const readiness = Math.round(section.maturity.reduce((sum, item) => sum + item.score, 0) / Math.max(1, section.maturity.length));
-    const riskPenalty = section.currentState.filter((row) => row.tone === 'red').length * 11;
-    const value = Math.max(12, Math.min(92, 78 - index * 8 + riskPenalty));
-    const action = readiness >= 72 && value >= 65 ? 'Scale now' : readiness >= 55 ? 'Certify then scale' : value >= 70 ? 'Fund readiness' : 'Hold';
-    const tone: LandscapeTone = action === 'Scale now' ? 'teal' : action === 'Fund readiness' ? 'red' : 'amber';
-    return {
-      label: section.title,
-      value,
-      readiness: Math.max(8, Math.min(92, readiness)),
-      action,
-      tone,
-    };
-  });
-}
-
-function buildIndustrySignals(section: LandscapeSection): BriefingModel['industrySignals'] {
-  const primary = section.implications[0]?.value ?? section.executiveSummary;
-  const risk = section.implications.find((item) => item.risk)?.value ?? section.currentState.find((row) => row.tone === 'red')?.assessment;
-  return [
-    {
-      title: 'Decision systems beat generic AI portfolios.',
-      body: ` ${primary}`,
-      magnitude: 'High',
-      tone: 'teal',
-    },
-    {
-      title: 'Readiness gates matter more than demos.',
-      body: ` ${risk ?? 'The main execution risk is funding scale before proof, ownership, and operating controls are visible.'}`,
-      magnitude: 'Watch',
-      tone: 'amber',
-    },
-    {
-      title: 'Evidence should travel into Moves and Tower.',
-      body: ' The useful pattern is to keep context, decision owner, value proof, and risk gates bound as work moves from Intelligence into execution.',
-      magnitude: 'Next',
-      tone: 'teal',
-    },
-  ];
-}
-
-function buildSurfaceContext(viewModel: EnterpriseLandscapeViewModel, section: LandscapeSection) {
-  return {
-    activeTab: 'intelligence',
-    activeClient: viewModel.tenantName,
-    clientKey: viewModel.clientKey,
-    pageFacts: [
-      `${viewModel.tenantName} Intelligence briefing selected context: ${section.title}`,
-      section.executiveSummary,
-      section.leadershipRead,
-    ],
-    tenantFacts: [
-      ...section.currentState.slice(0, 5).map((row) => `${row.area}: ${row.assessment}`),
-      ...section.snapshot.slice(0, 5).map((item) => `${item[0]}: ${item[1]}`),
-    ],
-    qualityFacts: section.maturity.map((item) => `${item.label}: ${item.score}%`),
-    sourceFacts: section.sources.map((source) => `${source.title}: ${source.detail}`),
-  };
 }
 
 function firstSentence(text: string) {
