@@ -7,7 +7,6 @@ import { AppShell } from "@/components/shell/AppShell";
 import { getTenantSourceFiles } from "@/lib/context-ingestion/tenant-context-read-model";
 import { buildLoadStudioView } from "@/lib/admin/setup-load-studio-view";
 import { getClientOption, isClientKey } from "@/lib/client-config";
-import { composeOverviewBlocks } from "@/lib/admin/overview-composer";
 
 export const metadata = { title: "Setup · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -34,50 +33,10 @@ export default async function AdminSetupPage() {
     vertical,
     snapshot,
   });
+  const sourceFiles = await getTenantSourceFiles(activeClient?.id ?? "").catch(
+    () => [],
+  );
 
-  // For the section-01 (Readiness across modules) and section-05
-  // (Setup panels) blocks the eager static composer still owns the
-  // data path. They are part of the same `extras` payload. The
-  // `blocks` static prop is left empty-shaped so the Suspense-driven
-  // zones own the live content path.
-  const emptyBlocks = composeOverviewBlocks({
-    tenantName: activeClientDisplayName,
-    industryCode: activeClient?.industry_code,
-    clientKey,
-    segments,
-    content,
-    programApprovalPendingCount: 0,
-    atlasSignalCount: 0,
-    atlasHighSeverityCount: 0,
-    ssoConfigured: false,
-    recentSnapshotActivity: [],
-  });
-
-  const ctx: ZoneContext = {
-    brokerTenantKey,
-    clientKey,
-    clientId,
-    activeClientDisplayName,
-    industryCode: activeClient?.industry_code ?? null,
-    baseContentClientKey: clientKey,
-  };
-  const clientOption = getClientOption(clientKey);
-  const tenantTabConfig: TenantConfig = {
-    name: activeClientDisplayName,
-    slug: tenant.tenantSlug,
-    industry: clientOption.vertical,
-    region: activeClient?.industry_code ?? "Tenant configured",
-    tier: "Enterprise",
-    status: "locked",
-    contractStart: "Tenant record",
-    contractEnd: "Tenant record",
-    renewalOwner: "Tenant success",
-    programCount: programsCount,
-    activePrograms: programsCount,
-    dataResidency: "Tenant configured",
-    ssoProvider: "Tenant configured",
-    createdDate: "Tenant record",
-  };
   return (
     <AppShell
       surface="setup"
