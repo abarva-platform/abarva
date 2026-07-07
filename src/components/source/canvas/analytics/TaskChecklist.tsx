@@ -1,7 +1,14 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties, type DragEvent } from 'react';
 import { ANALYTICS, taskVerb } from './analytics-tokens';
+import {
+  CANVAS_UPLOAD_ACCEPT,
+  formatUploadSize,
+  isAcceptedCanvasUpload,
+  uploadSourceCanvasArtifact,
+  type UploadedArtifactResult,
+} from './upload-artifact';
 import type {
   StageTaskView,
   TaskFileView,
@@ -13,6 +20,15 @@ import type {
 
 interface TaskChecklistProps {
   tasks: readonly StageTaskView[];
+  /**
+   * The Source event id this checklist belongs to. When present, `provide`
+   * dropzones become real (a file uploads to the governed artifacts route and
+   * persists to Azure Blob + the artifact registry). Absent → the dropzone is
+   * presentational (sample/preview mode), never a fake "uploaded" state.
+   */
+  eventId?: string;
+  /** Canonical stage key, forwarded to the upload route so the artifact scopes right. */
+  stageKey?: string;
 }
 
 const TYPE_LABEL: Record<TaskType, string> = {
@@ -28,7 +44,7 @@ const TYPE_LABEL: Record<TaskType, string> = {
  * per task; the form reveals on click (density contract: "every click is a
  * decision").
  */
-export function TaskChecklist({ tasks }: TaskChecklistProps) {
+export function TaskChecklist({ tasks, eventId, stageKey }: TaskChecklistProps) {
   // Track local "just completed" so the demo feels responsive without a backend.
   const [openId, setOpenId] = useState<string | null>(() => {
     const firstOpen = tasks.find((t) => t.state === 'todo');
@@ -77,6 +93,8 @@ export function TaskChecklist({ tasks }: TaskChecklistProps) {
               task={task}
               isDone={isDone}
               isOpen={isOpen}
+              eventId={eventId}
+              stageKey={stageKey}
               onToggle={() => setOpenId(isOpen ? null : task.id)}
               onComplete={() =>
                 setLocallyDone((prev) => new Set(prev).add(task.id))
@@ -93,11 +111,21 @@ interface TaskRowProps {
   task: StageTaskView;
   isDone: boolean;
   isOpen: boolean;
+  eventId?: string;
+  stageKey?: string;
   onToggle: () => void;
   onComplete: () => void;
 }
 
-function TaskRow({ task, isDone, isOpen, onToggle, onComplete }: TaskRowProps) {
+function TaskRow({
+  task,
+  isDone,
+  isOpen,
+  eventId,
+  stageKey,
+  onToggle,
+  onComplete,
+}: TaskRowProps) {
   const effectiveState: TaskState = isDone ? 'done' : 'todo';
   const rowStyle: CSSProperties = {
     border: `1px solid ${isOpen ? ANALYTICS.LINE_STRONG : ANALYTICS.LINE}`,
@@ -175,7 +203,12 @@ function TaskRow({ task, isDone, isOpen, onToggle, onComplete }: TaskRowProps) {
           {task.file ? (
             <FileChip file={task.file} />
           ) : task.type === 'provide' && !task.template ? (
-            <DropZone signed={/letter|commit/i.test(task.title)} />
+            <DropZone
+              signed={/letter|commit/i.test(task.title)}
+              eventId={eventId}
+              stageKey={stageKey}
+              onUploaded={onComplete}
+            />
           ) : null}
 
           {task.provenance ? (
@@ -341,7 +374,13 @@ function ReviewRows({ rows }: { rows: readonly TaskReviewRowView[] }) {
   );
 }
 
-function FileChip({ file }: { file: TaskFileView }) {
+function FileChip({
+  file,
+  onRemove,
+}: {
+  file: TaskFileView;
+  onRemove?: () => void;
+}) {
   return (
     <div
       style={{
@@ -368,7 +407,7 @@ function FileChip({ file }: { file: TaskFileView }) {
       >
         {file.format}
       </span>
-      <span style={{ minWidth: 0 }}>
+      <span style={{ minWidth: 0, flex: 1 }}>
         <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: ANALYTICS.INK }}>
           {file.name}
         </span>
@@ -376,6 +415,25 @@ function FileChip({ file }: { file: TaskFileView }) {
           {file.meta}
         </span>
       </span>
+      {onRemove ? (
+        <button
+          type="button"
+          aria-label={`Remove ${file.name}`}
+          onClick={onRemove}
+          style={{
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            color: ANALYTICS.MUTED,
+            fontSize: 16,
+            lineHeight: 1,
+            padding: 4,
+            flexShrink: 0,
+          }}
+        >
+          ✕
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -422,43 +480,190 @@ function TemplateChip({ template }: { template: TaskTemplateView }) {
   );
 }
 
-function DropZone({ signed }: { signed: boolean }) {
+type DropZoneStatus =
+  | { phase: 'idle' }
+  | { phase: 'uploading'; name: string }
+  | { phase: 'uploaded'; result: UploadedArtifactResult }
+  | { phase: 'error'; message: string };
+
+interface DropZoneProps {
+  signed: boolean;
+  eventId?: string;
+  stageKey?: string;
+  onUploaded?: () => void;
+}
+
+/**
+ * The redesigned canvas dropzone — now a REAL uploader. When `eventId` is
+ * present, selecting or dropping a file POSTs it (multipart) to the governed
+ * Source artifacts route, which persists it to Azure Blob + the artifact
+ * registry and returns the persisted metadata. The uploaded-file card reflects
+ * a real persisted file; upload failure shows an error, never a fake success.
+ *
+ * Without `eventId` the zone stays presentational (sample/preview mode).
+ */
+function DropZone({ signed, eventId, stageKey, onUploaded }: DropZoneProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [status, setStatus] = useState<DropZoneStatus>({ phase: 'idle' });
+  const [dragActive, setDragActive] = useState(false);
+
+  const canUpload = Boolean(eventId);
+
+  const handleFile = async (file: File) => {
+    if (!eventId) return;
+    const guard = isAcceptedCanvasUpload(file);
+    if (!guard.ok) {
+      setStatus({ phase: 'error', message: guard.reason ?? 'File rejected.' });
+      return;
+    }
+    setStatus({ phase: 'uploading', name: file.name });
+    try {
+      const result = await uploadSourceCanvasArtifact({
+        eventId,
+        stageKey,
+        file,
+      });
+      setStatus({ phase: 'uploaded', result });
+      onUploaded?.();
+    } catch (error) {
+      setStatus({
+        phase: 'error',
+        message:
+          error instanceof Error ? error.message : 'Upload failed.',
+      });
+    }
+  };
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset so re-selecting the same file re-fires change.
+    e.target.value = '';
+    if (file) void handleFile(file);
+  };
+
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragActive(false);
+    if (!canUpload) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) void handleFile(file);
+  };
+
+  // Signed/PDF tasks keep their document hint and are not wired to the CSV/XLSX
+  // uploader (out of scope: this wires the volumetrics-style CSV/XLSX dropzone).
+  if (status.phase === 'uploaded') {
+    return (
+      <FileChip
+        file={{
+          format: status.result.format,
+          name: status.result.originalName,
+          meta: `${formatUploadSize(status.result.sizeBytes)} · uploaded`,
+        }}
+        onRemove={() => setStatus({ phase: 'idle' })}
+      />
+    );
+  }
+
+  const isUploading = status.phase === 'uploading';
+  const hint = signed
+    ? 'PDF · signed document'
+    : 'CSV or XLSX · up to 100 MB';
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 13,
-        padding: '15px 16px',
-        border: `1.5px dashed ${ANALYTICS.LINE_STRONG}`,
-        borderRadius: ANALYTICS.RADIUS,
-        background: ANALYTICS.SOFT,
-      }}
-    >
-      <span
+    <div>
+      <div
+        role={canUpload ? 'button' : undefined}
+        tabIndex={canUpload ? 0 : undefined}
+        aria-label={canUpload ? 'Drop a file here, or browse' : undefined}
+        data-testid="task-dropzone"
+        onClick={() => {
+          if (canUpload && !isUploading) inputRef.current?.click();
+        }}
+        onKeyDown={(e) => {
+          if (canUpload && !isUploading && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onDragOver={(e) => {
+          if (!canUpload) return;
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={onDrop}
         style={{
-          width: 30,
-          height: 30,
-          borderRadius: 8,
-          background: ANALYTICS.CARD,
-          border: `1px solid ${ANALYTICS.LINE}`,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          color: ANALYTICS.MUTED,
-          flexShrink: 0,
+          gap: 13,
+          padding: '15px 16px',
+          border: `1.5px dashed ${
+            dragActive ? ANALYTICS.INK : ANALYTICS.LINE_STRONG
+          }`,
+          borderRadius: ANALYTICS.RADIUS,
+          background: dragActive ? ANALYTICS.CARD : ANALYTICS.SOFT,
+          cursor: canUpload && !isUploading ? 'pointer' : 'default',
+          opacity: isUploading ? 0.7 : 1,
         }}
       >
-        ↑
-      </span>
-      <span style={{ minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: ANALYTICS.INK }}>
-          Drop a file here, or browse
+        <span
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 8,
+            background: ANALYTICS.CARD,
+            border: `1px solid ${ANALYTICS.LINE}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: ANALYTICS.MUTED,
+            flexShrink: 0,
+          }}
+        >
+          {isUploading ? '⟳' : '↑'}
         </span>
-        <span style={{ display: 'block', fontSize: 11.5, color: ANALYTICS.MUTED }}>
-          {signed ? 'PDF · signed document' : 'CSV or XLSX · up to 200 MB'}
+        <span style={{ minWidth: 0 }}>
+          <span
+            style={{
+              display: 'block',
+              fontSize: 13.5,
+              fontWeight: 600,
+              color: ANALYTICS.INK,
+            }}
+          >
+            {isUploading
+              ? `Uploading ${status.phase === 'uploading' ? status.name : ''}…`
+              : 'Drop a file here, or browse'}
+          </span>
+          <span
+            style={{ display: 'block', fontSize: 11.5, color: ANALYTICS.MUTED }}
+          >
+            {hint}
+          </span>
         </span>
-      </span>
+        {canUpload ? (
+          <input
+            ref={inputRef}
+            type="file"
+            accept={CANVAS_UPLOAD_ACCEPT}
+            onChange={onInputChange}
+            style={{ display: 'none' }}
+            data-testid="task-file-input"
+          />
+        ) : null}
+      </div>
+      {status.phase === 'error' ? (
+        <div
+          role="alert"
+          style={{
+            fontSize: 12,
+            color: ANALYTICS.AMBER_TEXT,
+            marginTop: 8,
+          }}
+        >
+          {status.message}
+        </div>
+      ) : null}
     </div>
   );
 }
