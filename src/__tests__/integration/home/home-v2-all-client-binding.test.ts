@@ -7,6 +7,8 @@ const HOME_V2_DATA = "src/lib/home-v2/data.ts";
 const HOME_V2_PUBLIC_DIR = "public/home-v2";
 const FEATURE_REGISTRY = "src/lib/features/registry.ts";
 const HOME_SURFACE = "src/components/home/HomeSurface.tsx";
+const RETIRED_ENTERPRISE_HOME = "src/components/home/EnterpriseLandscapeHome.tsx";
+const RETIRED_ENTERPRISE_HOME_CSS = "src/components/home/EnterpriseLandscapeHome.module.css";
 const HOME_ASK = "src/components/home/know/HomeKnowAsk.tsx";
 const HOME_ENGINE = "src/lib/home/know/home-know-engine.ts";
 
@@ -32,6 +34,8 @@ describe("Home KNOW runtime has no legacy Home v2 fallback", () => {
     expect(existsSync(HOME_DATA_ROUTE)).toBe(false);
     expect(existsSync(HOME_V2_DATA)).toBe(false);
     expect(existsSync(HOME_V2_PUBLIC_DIR)).toBe(false);
+    expect(existsSync(RETIRED_ENTERPRISE_HOME)).toBe(false);
+    expect(existsSync(RETIRED_ENTERPRISE_HOME_CSS)).toBe(false);
   });
 
   it("removes the rollout flag that could switch Home back to the old surface", () => {
@@ -41,10 +45,14 @@ describe("Home KNOW runtime has no legacy Home v2 fallback", () => {
   });
 
   it("keeps Home ask on the Home KNOW endpoint and not the old browser answer code", () => {
+    expect(surfaceSource).toContain("/api/home/know/ask");
+    expect(surfaceSource).toContain('data-testid="home-context-explorer"');
+    expect(surfaceSource).toContain('data-testid="home-context-detail"');
+    expect(surfaceSource).toContain('data-testid="home-context-rail"');
     expect(askSource).toContain("/api/home/know/ask");
     expect(askSource).toContain("AvaAskMark");
-    expect(surfaceSource).toContain("Ava Home KNOW chat");
-    expect(surfaceSource).toContain("Context Explorer tabs");
+    expect(pageSource).not.toContain("EnterpriseLandscapeHome");
+    expect(pageSource).not.toContain("getEnterpriseLandscapeViewModel");
     expect(`${pageSource}\n${surfaceSource}\n${askSource}`).not.toContain("answerForAsk");
     expect(`${pageSource}\n${surfaceSource}\n${askSource}`).not.toContain("bestAskFacts");
   });
