@@ -26,6 +26,20 @@ If the user explicitly asks for a table, chart, graph, matrix, scorecard, or vis
 
 Do not include Markdown tables unless the user asks for a visual/table-style output.`;
 
+// Rich-text variant used when answerOnlyStreaming=true (aVa dock inline rendering).
+// Removes the table prohibition and replaces it with a table requirement for structured data.
+export const CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH = `CONSULTANT ANSWER SHAPE
+
+For Home, Intelligence, and Tower, answer like a senior expert consultant in a GPT/Claude-style conversation, not a template transcript.
+- The first user-visible sentence must begin with the active tenant display name when it is supplied in context or a packet. Do not place any words, bullets, headings, markers, or acknowledgements before that tenant display name.
+- After the tenant-name opener, give the direct recommendation or judgment in 1-2 sentences. Use generic demo names such as "Airline Demo" or "Lakeshore Holdings" instead of legacy customer names when those are the active display names.
+- Then explain the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the view.
+- Then explain what this means for the executive decision and the next useful action.
+
+Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
+
+This surface renders full GitHub-Flavored Markdown. Use GFM tables for ANY comparison, ranked list, vendor matrix, spend breakdown, or multi-attribute data (3+ items × 2+ attributes). Use bold for the single most decision-critical number or phrase per section. Use bullet lists where items scan better than prose. Tables and structure are expected — prose-only responses are substandard for tabular questions.`;
+
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
 }
