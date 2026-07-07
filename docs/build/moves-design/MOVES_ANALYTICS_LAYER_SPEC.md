@@ -23,14 +23,17 @@ src/lib/programs/analytics/
     p3-solution.ts         // option matrix, decision scoring
     p4-business-case.ts    // value bridge, cost scenarios, sensitivity, ROI
     p5-operate.ts          // KPI targets, realized-vs-projected
-  archetypes/
-    corpus.ts              // transformation-archetype registry (levers/benchmarks/traps/cost-shape/KPIs)
-    resolver.ts            // resolveMoveArchetype(move) => ArchetypeProfile
+  archetype/
+    resolve.ts             // thin adapter over the EXISTING classifier — does NOT define archetypes
+    compose-benchmark.ts   // shape(taxonomy) + industry(corpus) + function(kpis) + case-corpus => ArchetypeBenchmark
+    case-corpus.ts         // completed-move case library; nearest-neighbor empirical benchmarks
   view-models/
     recharts.ts            // MoveFinding.chart => Recharts component props
   fixtures.ts              // deterministic sample (Lakeshore legal contract intake)
   __tests__/
 ```
+
+> **Do NOT build a registry that enumerates use-case archetypes.** Use cases are unbounded (industry × function × problem); the archetype *shapes* are bounded and already governed (see §5). This layer **resolves → composes → learns**; it never re-enumerates.
 
 ## 3. Core types (`types.ts`)
 
@@ -42,7 +45,18 @@ export type FindingStatus = 'surfaced'|'reviewed'|'challenged'|'accepted';
 
 export interface EvidenceRef { id: string; label: string; source: string; asOf?: string; }
 
-export interface ArchetypeBenchmark { archetype: string; typical: string; thisMove?: string; }
+// Archetype = a governed solution SHAPE (1 of 8), NOT a use-case label. See §5.
+export type ArchetypeShapeKey =
+  | 'automation' | 'assistant' | 'retrieval_copilot' | 'human_in_loop_agent'
+  | 'full_agentic_workflow' | 'data_remediation' | 'vendor_led_implementation' | 'process_redesign';
+
+export interface ArchetypeBenchmark {
+  shape: ArchetypeShapeKey;                 // resolved by the classifier, not enumerated
+  typical: string;                          // the composed expectation for this shape × industry × function
+  thisMove?: string;                        // this move's actual
+  source: 'taxonomy_antipattern' | 'industry_baseline' | 'function_kpi' | 'case_corpus_empirical';
+  n?: number;                               // # of comparable completed moves (when source = case_corpus_empirical)
+}
 
 export type RechartsKind = 'waterfall'|'pareto'|'tornado'|'scatter'|'grouped_bar'|'distribution'|'line'|'radar';
 export interface RechartsViewModel {
@@ -93,23 +107,32 @@ Each extractor reads the move's **canonical phase-capture keys** (the same contr
 | **P4** | cost model, value assumptions, scenarios | **value bridge**, cost scenarios, sensitivity, ROI band | **waterfall** (value bridge), grouped_bar (Big4/boutique/offshore), **tornado** (sensitivity) |
 | **P5** | KPI defs, measurement plan | KPI targets vs baseline, realized-vs-projected | grouped_bar (target vs baseline), line (realized vs projected), adoption curve |
 
-## 5. Archetype corpus (`archetypes/corpus.ts`)
+## 5. Archetype — dynamic resolution, NOT an enumerated corpus
 
-The Moves analog of Source's AMS/IMS. Revive from `docs/build/moves-design/strategic-move-archetype-framework.md`, `docs/strategy/MOVES-SOLUTION-ARCHETYPE-TAXONOMY.md`, `src/lib/solutions/solution-archetype-registry.ts`, `docs/build/MODERNIZATION_ARCHETYPE_COEFFICIENTS_2026-06-03.md`.
+**Design principle (this is the important one).** Moves *use cases* are effectively infinite — industry × function × problem × how-work-changes. You must never enumerate them. What IS bounded and governed is the **solution *shape*** a move takes. The specificity of a real move comes from **composition + a learning case library**, not a bigger list.
 
-```ts
-export interface ArchetypeProfile {
-  key: string;                       // 'ai_assisted_intake_triage'
-  name: string;                      // 'AI-assisted intake & triage'
-  valueLevers: string[];             // cycle-time, rework reduction, obligation completeness…
-  benchmarkBaselines: Record<string, { typical: string; range: [number, number]; unit: string }>;
-  classicTraps: string[];            // "attorney-capacity framing hides the real intake defect"
-  costShape: { boutiqueHybrid: [number, number]; big4: [number, number]; offshore: [number, number] };
-  kpis: string[];
-}
-```
+### 5.1 The archetype is a bounded shape — already built, reuse it
+The 8 shapes, their readiness gates, and their anti-patterns already exist:
+- `src/lib/programs/taxonomy/solution-archetype-taxonomy.ts` — `SOLUTION_ARCHETYPES` (`automation`, `assistant`, `retrieval_copilot`, `human_in_loop_agent`, `full_agentic_workflow`, `data_remediation`, `vendor_led_implementation`, `process_redesign`), each with `readinessGates` on 3 dimensions (`data` / `control` / `eval`) and `antiPatterns` with reason codes.
+- **Do not redefine these in the analytics layer. Import them.**
 
-Seed archetypes (extend later): `ai_assisted_intake_triage`, `knowledge_deflection`, `obligation_control`, `shared_services_consolidation`, `workforce_economics`. `resolveMoveArchetype(move)` maps a move's P0 archetype classification → an `ArchetypeProfile`; every finding can then carry an `archetypeBenchmark` (typical vs thisMove).
+### 5.2 Resolution is dynamic — reuse the existing classifier
+`archetype/resolve.ts` is a thin adapter over the **already-shipped** classifier:
+- `src/lib/programs/suitability/agentic-suitability.ts` → `SuitabilityAssessment { recommendedArchetype, recommendedName, intendedArchetype, readinessScore (0–100), gaps: SuitabilityGap[] }`.
+- It classifies *any* move (from P0 capture: business_trigger, problem_statement, affected_function_process, initial_value_hypothesis) into one of the 8 shapes, scores readiness on data/control/eval, detects **over-reach** (intended more ambitious than readiness supports → recommends a less ambitious shape + names the gaps to close). This is how infinite use cases map to bounded shapes.
+
+### 5.3 Specificity comes from COMPOSITION, not enumeration
+`archetype/compose-benchmark.ts` builds each finding's `archetypeBenchmark` by composing three governed sources for the resolved `(shape × industry × function)` — never a per-use-case lookup:
+- **Shape** → value-mechanism, classic anti-patterns/traps, cost shape, human-gate posture (from the taxonomy).
+- **Industry corpus** → baselines/benchmarks (`V6_15_industry_corpus_patterns` / `intelligence_v7` industry-market dimension).
+- **Function** → the KPIs that matter for that operating area.
+A never-before-seen use case still gets archetype-grade intelligence because all three inputs are bounded and governed.
+
+### 5.4 The learning layer — the case corpus (`archetype/case-corpus.ts`)
+This is what makes benchmarks *empirical* over time instead of hand-guessed. Every **completed** move is indexed by its signature `(shape × industry × function × readiness)` with its actual baselines, realized value, and traps hit. `nearestNeighbors(signature)` returns comparable prior moves; when ≥ N comparables exist, the benchmark source becomes `case_corpus_empirical` (carry `n`). So the system *learns* archetypes from experience — no one hand-authors a new use-case profile.
+
+### 5.5 Governance
+Shapes, industries, functions, and readiness rungs are **canonical governed vocabularies** (no free-text archetype labels — same discipline as tenants / relationship-types). A genuinely new *shape* is rare and added deliberately to `solution-archetype-taxonomy.ts`; new use cases require **zero** new definitions — they just classify + compose + accrue to the case corpus. Enforce the taxonomy's core rule: **agentic ambition must not exceed readiness** (surface `SuitabilityGap[]` on the P0/P1 findings).
 
 ## 6. Recharts view-model mapping (`view-models/recharts.ts`)
 
@@ -132,8 +155,9 @@ Refactor `deliverables/board-deliverable.ts` / `deliverable-narrative.ts` to **r
 ## 10. Build sequence
 
 1. `types.ts` + `fixtures.ts` (Lakeshore legal intake) → unblocks the design mockup with real shapes.
-2. `archetypes/corpus.ts` + `resolver.ts` (seed 5 archetypes).
-3. Extractors P2 + P4 first (richest intelligence), then P0/P1/P3/P5.
+2. `archetype/resolve.ts` (adapter over the existing `agentic-suitability` classifier) + `compose-benchmark.ts` (shape × industry × function). **No new archetype registry.**
+3. Extractors P2 + P4 first (richest intelligence), then P0/P1/P3/P5. P0 attaches the resolved shape + readiness gaps.
 4. `view-models/recharts.ts` + wire into the redesigned page.
 5. Refactor deliverable generators to consume findings.
 6. `phase-analytics` API + `finding.status` collaboration lifecycle.
+7. `archetype/case-corpus.ts` — start recording completed moves; benchmarks upgrade from composed → empirical as comparables accrue.

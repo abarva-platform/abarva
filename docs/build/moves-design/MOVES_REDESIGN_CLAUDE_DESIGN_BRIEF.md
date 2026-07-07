@@ -38,8 +38,13 @@ Use Recharts (or, in the standalone mockup, faithful SVG that matches Recharts o
 - **Cost-scenario grouped bars** — Big 4 (1.8–2.8M) vs boutique-hybrid (0.95–1.45M) vs offshore-heavy (0.62–0.98M).
 - **Sensitivity tornado**; first-year value range.
 
-### 4. Archetype-benchmarked, not generic
-Each phase compares **this move** against its **transformation archetype** (e.g., "AI-assisted intake/triage"): show the archetype's typical value lever / benchmark baseline / classic trap next to this move's actuals. (Analogous to Source's AMS vs IMS.)
+### 4. Archetype-benchmarked, not generic — and the archetype is a *classified shape*, not a use-case label
+Do **not** invent a use-case archetype (like "AI-assisted intake/triage"). Use cases are unbounded; the archetype is the bounded **solution *shape*** a move is *classified into* — one of 8 governed shapes that already exist in code (`automation`, `assistant`, `retrieval_copilot`, `human_in_loop_agent`, `full_agentic_workflow`, `data_remediation`, `vendor_led_implementation`, `process_redesign`). The design should show, per phase:
+- **The resolved shape** (e.g., "Classified as: Human-in-the-Loop Agent") — output of the existing classifier, not a hand-picked label.
+- **Readiness on 3 dimensions** (data / control / eval) with a small "ambition vs readiness" indicator — the governing rule is *ambition must not exceed readiness*; surface the gaps to close.
+- **Composed benchmarks** next to this move's actuals — the typical value lever / baseline / classic trap for `(shape × industry × function)`, tagged by source (taxonomy trap · industry baseline · or **"empirical — N comparable moves"** once the case corpus has data).
+
+For the mockup, the benchmark panel reads as *"for this shape, in this industry, similar moves see X; you're at Y"* — composed and learned, never a static per-use-case card. (See `MOVES_ANALYTICS_LAYER_SPEC.md` §5.)
 
 ## Codebase map (so the mockup maps to real wiring)
 
@@ -53,8 +58,10 @@ Each phase compares **this move** against its **transformation archetype** (e.g.
 - `src/lib/source/archetypes/*` (event-archetype-resolver, differentiation) + `src/lib/source/agent-generation/archetype-advisory.ts` + `src/lib/source/ams-intelligence-signals-view.ts`.
 - Canvas view-models feeding the page: `src/components/source/canvas/analytics/view-model.ts`, `sample-view-model.ts`, `analytics-tokens.ts`.
 
-**Moves archetype corpus (dormant — revive as the corpus):**
-- `docs/build/moves-design/strategic-move-archetype-framework.md`, `docs/strategy/MOVES-SOLUTION-ARCHETYPE-TAXONOMY.md`, `src/lib/solutions/solution-archetype-registry.ts`, `docs/build/MODERNIZATION_ARCHETYPE_COEFFICIENTS_2026-06-03.md`.
+**Moves archetype — the bounded shapes + the classifier already exist (REUSE, don't re-enumerate):**
+- `src/lib/programs/taxonomy/solution-archetype-taxonomy.ts` — the 8 governed solution shapes, `readinessGates` (data/control/eval), `antiPatterns`.
+- `src/lib/programs/suitability/agentic-suitability.ts` — the runtime classifier: `SuitabilityAssessment { recommendedArchetype, readinessScore, gaps }` (maps any use case → a shape; flags over-reach).
+- Background: `docs/strategy/MOVES-SOLUTION-ARCHETYPE-TAXONOMY.md`, `docs/build/moves-design/strategic-move-archetype-framework.md`.
 
 ## The data contract the mockup should imply
 
@@ -67,7 +74,12 @@ MoveFinding {
   statement: string
   evidence: EvidenceRef[]
   confidence: 'high'|'medium'|'low'
-  archetypeBenchmark?: { archetype: string, typical: string }   // AMS/IMS analog
+  archetypeBenchmark?: {                                          // composed, not enumerated
+    shape: SolutionArchetypeKey                                   // 1 of 8, from the classifier
+    typical: string; thisMove?: string
+    source: 'taxonomy_antipattern'|'industry_baseline'|'function_kpi'|'case_corpus_empirical'
+    n?: number                                                    // comparable moves, when empirical
+  }
   chart?: RechartsViewModel                                       // recharts-ready
   owner?: string
   status: 'surfaced'|'reviewed'|'challenged'|'accepted'          // collaboration
