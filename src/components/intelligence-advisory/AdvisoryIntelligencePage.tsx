@@ -62,11 +62,7 @@ const CORPUS_TABS: Array<{ id: CorpusTab; label: string }> = [
   { id: 'risk', label: 'Risk & Regulatory' },
 ];
 
-const STARTER_PROMPTS = [
-  'Where should we fund AI first?',
-  'What has to be true before we scale?',
-  'Which proof gaps should the CIO and CFO inspect?',
-];
+// STARTER_PROMPTS are now tenant-specific — built inside buildCorpusBriefing()
 
 export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseLandscapeViewModel }) {
   const sectionList = useMemo(() => Object.values(viewModel.sections), [viewModel.sections]);
@@ -219,7 +215,7 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
 
         <div className={styles.composer}>
           <div className={styles.prompts}>
-            {(latestAssistant?.followups.length ? latestAssistant.followups : STARTER_PROMPTS).map((p) => (
+            {(latestAssistant?.followups.length ? latestAssistant.followups : briefing.starterPrompts).map((p) => (
               <button key={p} type="button" className={styles.prompt} onClick={() => submitAsk(p)} disabled={isAsking}>{p}</button>
             ))}
           </div>
@@ -343,14 +339,14 @@ function AnswerCard({
 function OutlookPanel({ briefing }: { briefing: CorpusBriefing }) {
   return (
     <>
-      <MetricCards items={briefing.outlookMetrics} cite="V6 industry corpus" />
+      <MetricCards items={briefing.outlookMetrics} cite="V6 industry corpus · quarterly refresh" />
       <div className={styles.block}>
         <div className={styles.blockHead}>
           <div>
             <div className={styles.blockTitle}>What&apos;s moving in your sector</div>
-            <div className={styles.blockSub}>Signals from the last two corpus refreshes</div>
+            <div className={styles.blockSub}>Signals from the last two corpus refreshes · {briefing.peerCount} comparable companies</div>
           </div>
-          <span className={styles.blockTag}>V6 corpus · {briefing.peerCount} peers</span>
+          <span className={styles.blockTag}>V6 corpus</span>
         </div>
         <div className={styles.movers}>
           {briefing.movers.map((m) => (
@@ -361,6 +357,10 @@ function OutlookPanel({ briefing }: { briefing: CorpusBriefing }) {
             </div>
           ))}
         </div>
+      </div>
+      <div className={styles.narrativePunch}>
+        <div className={styles.narrativePunchLabel}>What this means for {briefing.tenantName}</div>
+        <p className={styles.narrativePunchBody}>{briefing.outlookPunch}</p>
       </div>
     </>
   );
@@ -375,7 +375,10 @@ function PeerPanel({ briefing }: { briefing: CorpusBriefing }) {
         <div className={styles.blockHead}>
           <div>
             <div className={styles.blockTitle}>{briefing.tenantName} vs. peer median</div>
-            <div className={styles.blockSub}>Bars show tenant position; marker shows the peer median. Lower is better where noted.</div>
+            <div className={styles.blockSub}>
+              Industry corpus benchmarks — illustrative patterns, not calculated from {briefing.tenantName} financials.
+              Bars show industry position; marker shows peer median. Red = above median where lower is better.
+            </div>
           </div>
           <span className={styles.blockTag}>n={briefing.peerCount} peers</span>
         </div>
@@ -396,6 +399,10 @@ function PeerPanel({ briefing }: { briefing: CorpusBriefing }) {
             </div>
           ))}
         </div>
+      </div>
+      <div className={styles.narrativePunch}>
+        <div className={styles.narrativePunchLabel}>Executive read</div>
+        <p className={styles.narrativePunchBody}>{briefing.peerPunch}</p>
       </div>
     </>
   );
@@ -428,7 +435,9 @@ function AdoptionPanel({ briefing }: { briefing: CorpusBriefing }) {
         ))}
       </div>
       <div className={styles.adoptionNote}>
-        Reach the next stage by converting the highest-maturity areas (readiness ≥70%) into production programs with evidence gates and Tower metrics.
+        {briefing.tenantHighlightScore >= 60
+          ? `${briefing.tenantHighlightArea} (${briefing.tenantHighlightScore}% readiness) is your best conversion candidate — move it from pilot to a governed production program with Tower metrics and it pulls the whole estate one stage forward.`
+          : `Reach the next stage by converting the highest-maturity areas (readiness ≥60%) into production programs with evidence gates and Tower metrics. ${briefing.tenantHighlightArea} at ${briefing.tenantHighlightScore}% is closest to the threshold.`}
       </div>
     </div>
   );
@@ -448,6 +457,10 @@ function TrendsPanel({ briefing }: { briefing: CorpusBriefing }) {
             <span className={`${styles.trendTag} ${styles[trend.tone]}`}>{trend.horizon}</span>
           </div>
           <p className={styles.blockBody}>{trend.body}</p>
+          <div className={styles.implication}>
+            <span className={styles.implicationLabel}>For {briefing.tenantName}</span>
+            {trend.implication}
+          </div>
         </div>
       ))}
     </>
@@ -458,12 +471,15 @@ function TrendsPanel({ briefing }: { briefing: CorpusBriefing }) {
 function ValuePanel({ briefing }: { briefing: CorpusBriefing }) {
   return (
     <>
-      <MetricCards items={briefing.valueMetrics} cite="Estate + corpus" />
+      <MetricCards items={briefing.valueMetrics} cite="Estate + corpus · illustrative" />
       <div className={styles.block}>
         <div className={styles.blockHead}>
           <div>
             <div className={styles.blockTitle}>Value-pressure map</div>
-            <div className={styles.blockSub}>Where the estate cost and value signals are concentrated</div>
+            <div className={styles.blockSub}>
+              Industry run-rate estimates for comparable holding companies —{' '}
+              <b>illustrative</b>. Actual {briefing.tenantName} numbers require Tower financial integration.
+            </div>
           </div>
         </div>
         <div className={styles.vbars}>
@@ -475,6 +491,17 @@ function ValuePanel({ briefing }: { briefing: CorpusBriefing }) {
             </div>
           ))}
         </div>
+      </div>
+      <div className={styles.moveCta}>
+        <div className={styles.moveCtaLeft}>
+          <div className={styles.moveCtaHead}>You have the context. Time to act.</div>
+          <div className={styles.moveCtaSub}>
+            Start a Move to convert the highest-confidence value signal into a governed, evidence-gated programme.
+          </div>
+        </div>
+        <a href="/strategic-moves/new" className={styles.moveCtaBtn}>
+          Begin a Move →
+        </a>
       </div>
     </>
   );
@@ -505,6 +532,18 @@ function RiskPanel({ briefing, sectionList }: { briefing: CorpusBriefing; sectio
           <div className={styles.riskWhen}>Address before scaling AI in this area</div>
         </div>
       ))}
+      <div className={`${styles.riskCard} ${styles.riskActionCard}`}>
+        <div className={styles.riskTop}>
+          <span className={styles.riskTitle}>What to do about the two high risks</span>
+        </div>
+        <p className={styles.riskDesc}>
+          <b>Run-cost gravity</b> requires an explicit reallocation decision in the next planning cycle — not a programme, a CFO conversation.
+          {' '}<b>Evidence gates</b> are solvable in 90 days: they are a Moves configuration, not a technology build. Wire the gate criteria into the first Move and the pattern propagates.
+        </p>
+        <div className={styles.riskWhen}>
+          <a href="/strategic-moves/new" className={styles.riskCta}>Configure evidence gates in a Move →</a>
+        </div>
+      </div>
     </div>
   );
 }
@@ -549,24 +588,52 @@ interface CorpusBriefing {
   valueMetrics: MetricItem[];
   movers: Array<{ title: string; body: string; mag: string; dir: 'up' | 'new' | 'hot' }>;
   benchmarkRows: Array<{ label: string; you: number; peer: number; max: number; youFmt: string; peerFmt: string; worse: boolean }>;
-  trends: Array<{ title: string; sub: string; body: string; horizon: string; tone: LandscapeTone }>;
+  trends: Array<{ title: string; sub: string; body: string; horizon: string; tone: LandscapeTone; implication: string }>;
   valueBars: Array<{ label: string; pct: number; value: string }>;
   risks: Array<{ title: string; desc: string; when: string; level: 'high' | 'med' | 'low' }>;
+  starterPrompts: string[];
+  tenantHighlightArea: string;
+  tenantHighlightScore: number;
+  outlookPunch: string;
+  peerPunch: string;
 }
 
 function buildCorpusBriefing(viewModel: EnterpriseLandscapeViewModel, sectionList: LandscapeSection[]): CorpusBriefing {
   const isAirline = viewModel.clientKey === 'skyharbor';
   const vertical = isAirline ? 'Airline' : 'Diversified Industrials';
 
+  const allMaturity = sectionList.flatMap((s) => s.maturity);
   const avgMaturity = Math.round(
-    sectionList.flatMap((s) => s.maturity).reduce((a, b) => a + b.score, 0) /
-    Math.max(1, sectionList.flatMap((s) => s.maturity).length),
+    allMaturity.reduce((a, b) => a + b.score, 0) / Math.max(1, allMaturity.length),
   );
   const adoptionStage = avgMaturity >= 72 ? 2 : avgMaturity >= 48 ? 1 : 0;
   const peerCount = isAirline ? 67 : 142;
 
   const redCount = sectionList.flatMap((s) => s.currentState.filter((r) => r.tone === 'red')).length;
   const sourceCount = sectionList.reduce((a, s) => a + s.sources.length, 0);
+
+  const sortedMaturity = [...allMaturity].sort((a, b) => b.score - a.score);
+  const topMaturity = sortedMaturity[0];
+  const tenantHighlightArea = topMaturity?.label ?? 'Finance & Treasury';
+  const tenantHighlightScore = topMaturity?.score ?? 70;
+
+  const starterPrompts = isAirline ? [
+    'Which AI use case has the fastest path to $10M in run-cost reduction?',
+    'What has to be true before predictive maintenance scales fleet-wide?',
+    'How do we set evidence gates so board sponsors stay committed through scale?',
+  ] : [
+    `Should ${viewModel.tenantName} centralize or federate AI across portfolio companies?`,
+    'What is the fastest path to proving $10M in AI savings — shared services or procurement?',
+    'Which shared-services contract is most exposed to AI disruption at the next renewal?',
+  ];
+
+  const outlookPunch = isAirline
+    ? 'The early-mover window in revenue management GenAI is open now — under 20% adoption. Crew scheduling AI is entering mainstream; union negotiations are the gate, not technology. The carriers that move in the next 18 months will own the benchmark.'
+    : `The early-mover window in treasury AI and shared-services AI pods is open now — both under 15% adoption. The AP automation consolidation wave moves fast: 12–18 months before the field is set. ${viewModel.tenantName} has budget above peer median; the question is sequencing, not capacity.`;
+
+  const peerPunch = isAirline
+    ? 'Your run-cost exposure is the primary constraint. Fix the run-cost position first — every AI programme that competes with maintenance spend loses. Your automation gap vs. peers is addressable once the budget is freed.'
+    : `Three metrics expose ${viewModel.tenantName}: run-cost above median, automation rate below peer, vendor concentration risk. One advantage: IT spend above peer median means budget exists to redirect — this is a sequencing problem, not a funding problem.`;
 
   return {
     title: `${viewModel.tenantName} — Industry & Estate Intelligence`,
@@ -611,9 +678,34 @@ function buildCorpusBriefing(viewModel: EnterpriseLandscapeViewModel, sectionLis
       { label: 'IT spend % of revenue', you: 268, peer: 240, max: 400, youFmt: '2.68%', peerFmt: '2.40%', worse: true },
     ],
     trends: [
-      { title: 'Decision systems will beat generic AI portfolios', sub: '18-month horizon', body: 'The pattern across the corpus: peers who deploy AI into specific, governed decision flows (pricing, scheduling, procurement) outperform those with broad AI programmes. Evidence gates and Tower metrics are the differentiator.', horizon: '18 months', tone: 'teal' },
-      { title: 'Shared-services automation is the first scaling layer', sub: '12-month horizon', body: 'AP automation, contract analysis, HR case routing, and treasury forecasting are proving at scale. Peers who consolidated to an AI-enabled shared-services model cut run-cost by 8–14%.', horizon: '12 months', tone: 'teal' },
-      { title: 'Operating-model change will lag model capability', sub: 'Ongoing risk', body: 'Model vendors will keep shipping capability. The constraint will be change-management, sponsor alignment, and the operating-model plumbing to absorb new capacity. Plan for this explicitly.', horizon: 'Ongoing', tone: 'amber' },
+      {
+        title: 'Decision systems will beat generic AI portfolios',
+        sub: '18-month horizon',
+        body: 'The pattern across the corpus: peers who deploy AI into specific, governed decision flows (pricing, scheduling, procurement) outperform those with broad AI programmes. Evidence gates and Tower metrics are the differentiator.',
+        horizon: '18 months',
+        tone: 'teal' as LandscapeTone,
+        implication: isAirline
+          ? 'Route optimization and yield management are your highest-leverage decision flows. The holding structure means you can govern them centrally while each airline unit runs the playbook.'
+          : `${viewModel.tenantName}'s advantage: a portfolio holding structure lets you govern AI investment centrally while individual businesses run the plays. Shared-services AI is a natural first governed decision flow — it spans all portfolio companies and has clear Tower metrics.`,
+      },
+      {
+        title: 'Shared-services automation is the first scaling layer',
+        sub: '12-month horizon',
+        body: 'AP automation, contract analysis, HR case routing, and treasury forecasting are proving at scale. Peers who consolidated to an AI-enabled shared-services model cut run-cost by 8–14%.',
+        horizon: '12 months',
+        tone: 'teal' as LandscapeTone,
+        implication: isAirline
+          ? 'MRO administration, crew ops scheduling support, and finance ops are the three shared-service layers with the highest AI-proof rate in the corpus. Start with the one where your data is cleanest.'
+          : 'Start with AP automation — it has the highest proof rate across the corpus for holding companies, the shortest time-to-value, and the clearest CFO narrative. The Kyriba platform integration is a natural launch point.',
+      },
+      {
+        title: 'Operating-model change will lag model capability',
+        sub: 'Ongoing risk',
+        body: 'Model vendors will keep shipping capability. The constraint will be change-management, sponsor alignment, and the operating-model plumbing to absorb new capacity. Plan for this explicitly.',
+        horizon: 'Ongoing',
+        tone: 'amber' as LandscapeTone,
+        implication: 'This is the risk most boards miss. Plan the operating-model transition as its own workstream — not an afterthought. Moves phase gates are the mechanism: they force evidence before the next funding tranche and keep sponsors committed.',
+      },
     ],
     valueBars: [
       { label: 'Shared-svc automation potential', pct: 72, value: '$12M' },
@@ -628,6 +720,11 @@ function buildCorpusBriefing(viewModel: EnterpriseLandscapeViewModel, sectionLis
       { title: 'Vendor concentration', desc: 'Top-10 vendor concentration is above peer median. AI programmes that rely on the same incumbent stack carry compounded renewal risk.', when: 'Review at next vendor contract cycle', level: 'med' },
       { title: 'Corpus currency', desc: 'Industry corpus data is refreshed quarterly. Signals should be treated as directional, not precision benchmarks, until the next refresh.', when: 'Flag in executive briefings', level: 'low' },
     ],
+    starterPrompts,
+    tenantHighlightArea,
+    tenantHighlightScore,
+    outlookPunch,
+    peerPunch,
   };
 }
 

@@ -119,6 +119,39 @@ export interface SourceGenerationContext {
    * falls back to a blank framework rather than inventing applications.
    */
   enterpriseAppInventory?: SourceAppInventoryEntry[];
+  /**
+   * Uploaded evidence artifacts for the event, parsed by the Source ingestion
+   * pipeline. Prompts cite these by original filename so Claude can ground
+   * claims in the actual uploaded documents rather than fabricating.
+   * Empty array when no evidence has been uploaded or parsed.
+   */
+  uploadedEvidence?: SourceGenerationUploadedArtifact[];
+  /**
+   * Archetype-specific commercial intelligence block (traps, levers, failure
+   * modes) resolved from the event's classified category. Pre-formatted for
+   * direct injection into artifact prompts. Absent when the category is
+   * unmapped or the archetype framework has no playbook for it.
+   */
+  archetypeAdvisory?: string | null;
+}
+
+/**
+ * A single uploaded evidence artifact (document, spreadsheet, contract, etc.)
+ * that has been parsed and chunked by the Source ingestion pipeline. Bound
+ * into the generation context so prompts can cite evidence by filename.
+ */
+export interface SourceGenerationUploadedArtifact {
+  id: string;
+  originalName: string;
+  artifactFamily: string;
+  sourceFormat: string;
+  parseStatus: string;
+  evidenceState: string;
+  stageKey: SourceStageKey;
+  /** Representative text excerpts from parsed chunks (up to 5). */
+  chunkExcerpts: string[];
+  /** Structured fact summaries extracted from the artifact (up to 5). */
+  factSummaries: string[];
 }
 
 /** One application/system, shaped for the d04 inventory table. */
