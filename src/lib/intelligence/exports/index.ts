@@ -8,27 +8,26 @@
 // Grounding: see brief-payload.ts. Corpus sections render only when a
 // tenant-specific corpus payload is bound. No fabrication.
 
-import 'server-only';
+import "server-only";
 
-import type { Document as DocxDocument } from 'docx';
+import type { Document as DocxDocument } from "docx";
 
-import { getActiveClientRow } from '@/lib/active-client';
-import { buildIntelligenceV3PageData } from '@/lib/intelligence-v3/page-data';
-import { loadTenantIntelligenceCorpusData } from '@/lib/intelligence-v3/tenant-corpus-loader';
+import { getActiveClientRow } from "@/lib/active-client";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   buildIntelligenceBriefPayload,
   type IntelligenceBriefPayload,
-} from './brief-payload';
-import { buildIntelligenceBriefDocx } from './renderers/brief-docx';
-import { buildIntelligenceBriefPdf } from './renderers/brief-pdf';
+} from "./brief-payload";
+import { buildIntelligenceBriefDocx } from "./renderers/brief-docx";
+import { buildIntelligenceBriefPdf } from "./renderers/brief-pdf";
 
-export { DOCX_CONTENT_TYPE } from '@/lib/exports-shared/docx-base';
-export { PDF_CONTENT_TYPE } from '@/lib/exports-shared/pdf-base';
-export { CORPUS_NOT_SEEDED_MARKER } from './brief-payload';
-export type { IntelligenceBriefPayload } from './brief-payload';
-export { buildIntelligenceBriefPayload } from './brief-payload';
-export { buildIntelligenceBriefDocx } from './renderers/brief-docx';
-export { buildIntelligenceBriefPdf } from './renderers/brief-pdf';
+export { DOCX_CONTENT_TYPE } from "@/lib/exports-shared/docx-base";
+export { PDF_CONTENT_TYPE } from "@/lib/exports-shared/pdf-base";
+export { CORPUS_NOT_SEEDED_MARKER } from "./brief-payload";
+export type { IntelligenceBriefPayload } from "./brief-payload";
+export { buildIntelligenceBriefPayload } from "./brief-payload";
+export { buildIntelligenceBriefDocx } from "./renderers/brief-docx";
+export { buildIntelligenceBriefPdf } from "./renderers/brief-pdf";
 
 /**
  * Load real per-tenant data and assemble the Intelligence brief payload
@@ -43,16 +42,30 @@ export async function buildIntelligenceBriefPayloadForActiveTenant(
 ): Promise<IntelligenceBriefPayload> {
   const client = await getActiveClientRow(requestedClientKey).catch(() => null);
   const resolvedClientKey = client?.key ?? requestedClientKey;
+  const tenantName =
+    (resolvedClientKey
+      ? canonicalClientDisplayName({ key: resolvedClientKey })
+      : null) ??
+    client?.name ??
+    resolvedClientKey ??
+    "Unknown Tenant";
 
-  const [{ data: pageData }, intelligenceCorpusData] = await Promise.all([
-    buildIntelligenceV3PageData(resolvedClientKey),
-    loadTenantIntelligenceCorpusData(client, resolvedClientKey).catch(() => null),
-  ]);
-
+  // The v3 ai_initiatives page-data builder was removed with the legacy
+  // Intelligence surface. The brief export now produces a "corpus not seeded"
+  // payload using only the canonical tenant name. A full replacement wired
+  // to the advisory data model can be added when needed.
   return buildIntelligenceBriefPayload({
-    tenantName: pageData.tenantName,
-    briefData: intelligenceCorpusData?.briefData ?? null,
-    pageData,
+    tenantName,
+    briefData: null,
+    pageData: {
+      tenantName,
+      industry: "Cross-industry",
+      stats: { patterns: 0, contradictions: 0, syntheses: 0 },
+      aiTrajectory: { headline: "", body: "" },
+      pressureCards: [],
+      artOfThePossible: [],
+      whatWeCantSee: [],
+    },
     generatedAt,
   });
 }

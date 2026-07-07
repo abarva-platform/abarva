@@ -14,7 +14,10 @@
 // pattern (or none), never an off-namespace one. Generic global existence is NOT
 // sufficient — grounding namespace must match.
 
-export type PatternGroundingNamespace = 'treasury' | 'lakeshore-corpus' | 'unknown';
+export type PatternGroundingNamespace =
+  | "treasury"
+  | "lakeshore-corpus"
+  | "unknown";
 
 /** Treasury registry ids: `LSH-TMS-002` (genome_patterns.code / lakeshore-patterns-v1). */
 const TREASURY_ID = /^lsh-tms-\d+$/i;
@@ -25,18 +28,30 @@ const LAKESHORE_CORPUS_ID = /^pat-lsh-[a-z0-9][a-z0-9-]*$/i;
 export function classifyPatternNamespace(
   idOrSlug: string | null | undefined,
 ): PatternGroundingNamespace {
-  const v = (idOrSlug ?? '').trim();
-  if (!v) return 'unknown';
-  if (TREASURY_ID.test(v)) return 'treasury';
-  if (LAKESHORE_CORPUS_ID.test(v)) return 'lakeshore-corpus';
-  return 'unknown';
+  const v = (idOrSlug ?? "").trim();
+  if (!v) return "unknown";
+  if (TREASURY_ID.test(v)) return "treasury";
+  if (LAKESHORE_CORPUS_ID.test(v)) return "lakeshore-corpus";
+  return "unknown";
 }
 
 /** Terms that mark a card/use-case as requiring TREASURY grounding. */
 const TREASURY_GROUNDING_TERMS = [
-  'kyriba', 'treasury', 'cash', 'liquidity', 'payment', 'bank connectivity',
-  'bank', 'intercompany', 'covenant', 'reconciliation', 'fx', 'hedge', 'tms',
-  'payments factory', 'forecasting',
+  "kyriba",
+  "treasury",
+  "cash",
+  "liquidity",
+  "payment",
+  "bank connectivity",
+  "bank",
+  "intercompany",
+  "covenant",
+  "reconciliation",
+  "fx",
+  "hedge",
+  "tms",
+  "payments factory",
+  "forecasting",
 ];
 
 /**
@@ -46,10 +61,10 @@ const TREASURY_GROUNDING_TERMS = [
 export function requiredGroundingForText(
   text: string | null | undefined,
 ): PatternGroundingNamespace {
-  const t = (text ?? '').toLowerCase();
+  const t = (text ?? "").toLowerCase();
   return TREASURY_GROUNDING_TERMS.some((term) => t.includes(term))
-    ? 'treasury'
-    : 'lakeshore-corpus';
+    ? "treasury"
+    : "lakeshore-corpus";
 }
 
 /**
@@ -61,9 +76,9 @@ export function isPatternBindable(
   idOrSlug: string | null | undefined,
   required: PatternGroundingNamespace,
 ): boolean {
-  if (required === 'unknown') return false;
+  if (required === "unknown") return false;
   const ns = classifyPatternNamespace(idOrSlug);
-  if (ns === 'unknown') return false;
+  if (ns === "unknown") return false;
   return ns === required;
 }
 
@@ -94,16 +109,29 @@ export function selectGroundedPattern<T>(opts: {
   for (const row of opts.candidates) {
     const id = opts.idOf(row);
     const ns = classifyPatternNamespace(id);
-    if (ns === opts.required && opts.required !== 'unknown') {
-      return { bound: row, boundNamespace: ns, required: opts.required, dropped };
+    if (ns === opts.required && opts.required !== "unknown") {
+      return {
+        bound: row,
+        boundNamespace: ns,
+        required: opts.required,
+        dropped,
+      };
     }
     dropped.push({
       id,
       namespace: ns,
-      reason: ns === 'unknown' ? 'unknown-namespace' : `cross-namespace:${ns}!=${opts.required}`,
+      reason:
+        ns === "unknown"
+          ? "unknown-namespace"
+          : `cross-namespace:${ns}!=${opts.required}`,
     });
   }
-  return { bound: null, boundNamespace: 'unknown', required: opts.required, dropped };
+  return {
+    bound: null,
+    boundNamespace: "unknown",
+    required: opts.required,
+    dropped,
+  };
 }
 
 /** Keep only citations grounded in the required namespace (fail closed on the rest). */
@@ -116,10 +144,13 @@ export function filterCitationsToGrounding<T>(
 }
 
 /** Emit a single diagnostic line when off-namespace pattern ids are dropped. */
-export function warnDroppedPatterns(context: string, dropped: readonly DroppedPattern[]): void {
+export function warnDroppedPatterns(
+  context: string,
+  dropped: readonly DroppedPattern[],
+): void {
   if (dropped.length === 0) return;
   console.warn(
     `[pattern-grounding] ${context}: dropped ${dropped.length} off-namespace pattern id(s): ` +
-      dropped.map((d) => `${d.id}(${d.namespace})`).join(', '),
+      dropped.map((d) => `${d.id}(${d.namespace})`).join(", "),
   );
 }

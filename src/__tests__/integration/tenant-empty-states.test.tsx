@@ -24,147 +24,138 @@
  *    empty state and includes the runbook link.
  */
 
-import { render, screen } from '@testing-library/react';
-import { IntelligenceEmptyState } from '@/components/intelligence/decision/IntelligenceEmptyState';
-import { SourceEmptyState } from '@/components/source/SourceEmptyState';
+import { render, screen } from "@testing-library/react";
+import { SourceEmptyState } from "@/components/source/SourceEmptyState";
 import {
   MovePortfolioCardPanel,
   TOWER_PROJECTED_VALUE_DISCLOSURE,
-} from '@/components/tower/MovePortfolioCardPanel';
+} from "@/components/tower/MovePortfolioCardPanel";
 
-describe('IntelligenceEmptyState (P1-1)', () => {
-  it('names the active tenant in the headline', () => {
-    render(<IntelligenceEmptyState tenantName="Northwind Retail" industryLabel="retail" />);
-    expect(screen.getByText(/Intelligence for Northwind Retail is not yet populated\./)).toBeTruthy();
-  });
-
-  it('links the new-tenant onboarding runbook', () => {
-    render(<IntelligenceEmptyState tenantName="Northwind Retail" />);
-    const link = screen.getByTestId('intelligence-empty-runbook-link') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toBe('/docs/pilot/ONBOARDING-NEW-TENANT.md');
-  });
-
-  it('does NOT render another tenant\'s name (no Apex/Meridian/First Capital leak)', () => {
-    render(<IntelligenceEmptyState tenantName="Northwind Retail" industryLabel="retail" />);
-    expect(screen.queryByText(/Apex Retail/)).toBeNull();
-    expect(screen.queryByText(/Meridian Health/)).toBeNull();
-    expect(screen.queryByText(/First Capital/)).toBeNull();
-  });
-
-  it('falls back to a generic label when tenantName is blank', () => {
-    render(<IntelligenceEmptyState tenantName="" />);
-    // Either the placeholder text appears, or the test-id exists with non-empty text.
-    expect(screen.getByTestId('intelligence-decision-empty-state')).toBeTruthy();
-  });
-});
-
-describe('SourceEmptyState (P1-2)', () => {
-  it('names the active tenant in the headline', () => {
+describe("SourceEmptyState (P1-2)", () => {
+  it("names the active tenant in the headline", () => {
     render(<SourceEmptyState tenantName="Northwind Retail" />);
-    expect(screen.getByText(/No source events for Northwind Retail yet/)).toBeTruthy();
+    expect(
+      screen.getByText(/No source events for Northwind Retail yet/),
+    ).toBeTruthy();
   });
 
-  it('links the new-tenant onboarding runbook', () => {
+  it("links the new-tenant onboarding runbook", () => {
     render(<SourceEmptyState tenantName="Northwind Retail" />);
-    const runbookLink = Array.from(document.querySelectorAll('a')).find(
-      (a) => a.getAttribute('href') === '/docs/pilot/ONBOARDING-NEW-TENANT.md',
+    const runbookLink = Array.from(document.querySelectorAll("a")).find(
+      (a) => a.getAttribute("href") === "/docs/pilot/ONBOARDING-NEW-TENANT.md",
     );
     expect(runbookLink).toBeTruthy();
   });
 
-  it('renders the Start IT sourcing event CTA', () => {
+  it("renders the Start IT sourcing event CTA", () => {
     render(<SourceEmptyState tenantName="Northwind Retail" />);
-    const cta = screen.getByTestId('source-empty-start-event') as HTMLAnchorElement;
-    expect(cta.getAttribute('href')).toBe('/source/new');
+    const cta = screen.getByTestId(
+      "source-empty-start-event",
+    ) as HTMLAnchorElement;
+    expect(cta.getAttribute("href")).toBe("/source/new");
   });
 
-  it('falls back to a generic label when tenantName is omitted', () => {
+  it("falls back to a generic label when tenantName is omitted", () => {
     render(<SourceEmptyState />);
-    expect(screen.getByText(/No source events for this tenant yet/)).toBeTruthy();
+    expect(
+      screen.getByText(/No source events for this tenant yet/),
+    ).toBeTruthy();
   });
 });
 
-describe('MovePortfolioCardPanel empty state (P1-2)', () => {
-  it('names the active tenant when there are no cards', () => {
+describe("MovePortfolioCardPanel empty state (P1-2)", () => {
+  it("names the active tenant when there are no cards", () => {
     render(<MovePortfolioCardPanel cards={[]} tenantName="Northwind Retail" />);
-    expect(screen.getByText(/Tower portfolio for Northwind Retail is empty\./)).toBeTruthy();
+    expect(
+      screen.getByText(/Tower portfolio for Northwind Retail is empty\./),
+    ).toBeTruthy();
   });
 
-  it('links the new-tenant onboarding runbook in the empty state', () => {
+  it("links the new-tenant onboarding runbook in the empty state", () => {
     render(<MovePortfolioCardPanel cards={[]} tenantName="Northwind Retail" />);
-    const link = screen.getByTestId('tower-empty-runbook-link') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toBe('/docs/pilot/ONBOARDING-NEW-TENANT.md');
+    const link = screen.getByTestId(
+      "tower-empty-runbook-link",
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe(
+      "/docs/pilot/ONBOARDING-NEW-TENANT.md",
+    );
   });
 
-  it('falls back to a generic label when tenantName is omitted', () => {
+  it("falls back to a generic label when tenantName is omitted", () => {
     render(<MovePortfolioCardPanel cards={[]} />);
-    expect(screen.getByText(/Tower portfolio for this tenant is empty\./)).toBeTruthy();
+    expect(
+      screen.getByText(/Tower portfolio for this tenant is empty\./),
+    ).toBeTruthy();
   });
 
-  it('does NOT show the empty state when cards exist', () => {
+  it("does NOT show the empty state when cards exist", () => {
     const cards = [
       {
-        moveId: 'apex-move-1',
-        moveName: 'Contact Center AI Routing',
-        phaseLabel: 'Value',
-        ledgerStatus: 'tracked' as const,
+        moveId: "apex-move-1",
+        moveName: "Contact Center AI Routing",
+        phaseLabel: "Value",
+        ledgerStatus: "tracked" as const,
         projectedValueUsd: 1_200_000,
-        sourceRiskLevel: 'watch' as const,
+        sourceRiskLevel: "watch" as const,
         sourceCostExposureUsd: 0,
         sourceRiskReadout: null,
-        earningSummary: 'Cumulative deflection earned.',
+        earningSummary: "Cumulative deflection earned.",
         links: [
-          { id: 'open', label: 'Open Move', href: '/programs/apex-move-1' },
+          { id: "open", label: "Open Move", href: "/programs/apex-move-1" },
         ],
       },
     ];
     render(<MovePortfolioCardPanel cards={cards} tenantName="Apex Retail" />);
-    expect(screen.queryByText(/Tower portfolio for Apex Retail is empty/)).toBeNull();
-    expect(screen.queryByTestId('tower-empty-runbook-link')).toBeNull();
+    expect(
+      screen.queryByText(/Tower portfolio for Apex Retail is empty/),
+    ).toBeNull();
+    expect(screen.queryByTestId("tower-empty-runbook-link")).toBeNull();
   });
 
-  it('shows a projection assumption disclosure when projected value is present', () => {
+  it("shows a projection assumption disclosure when projected value is present", () => {
     const cards = [
       {
-        moveId: 'apex-move-1',
-        moveName: 'Contact Center AI Routing',
-        phaseLabel: 'Value',
-        ledgerStatus: 'projected' as const,
+        moveId: "apex-move-1",
+        moveName: "Contact Center AI Routing",
+        phaseLabel: "Value",
+        ledgerStatus: "projected" as const,
         projectedValueUsd: 1_200_000,
         sourceRiskLevel: null,
         sourceCostExposureUsd: 0,
         sourceRiskReadout: null,
-        earningSummary: 'Projected benefit pending measurement.',
+        earningSummary: "Projected benefit pending measurement.",
         links: [
-          { id: 'open', label: 'Open Move', href: '/programs/apex-move-1' },
+          { id: "open", label: "Open Move", href: "/programs/apex-move-1" },
         ],
       },
     ];
     render(<MovePortfolioCardPanel cards={cards} tenantName="Apex Retail" />);
-    expect(screen.getByTestId('tower-projected-value-disclosure').textContent).toContain(
-      TOWER_PROJECTED_VALUE_DISCLOSURE,
-    );
-    expect(screen.getByText(/Projection assumptions .* confidence projected/i)).toBeTruthy();
+    expect(
+      screen.getByTestId("tower-projected-value-disclosure").textContent,
+    ).toContain(TOWER_PROJECTED_VALUE_DISCLOSURE);
+    expect(
+      screen.getByText(/Projection assumptions .* confidence projected/i),
+    ).toBeTruthy();
   });
 
-  it('does not show the projection disclosure when no projected value exists', () => {
+  it("does not show the projection disclosure when no projected value exists", () => {
     const cards = [
       {
-        moveId: 'apex-move-2',
-        moveName: 'Knowledge Base Cleanup',
-        phaseLabel: 'Value',
-        ledgerStatus: 'none' as const,
+        moveId: "apex-move-2",
+        moveName: "Knowledge Base Cleanup",
+        phaseLabel: "Value",
+        ledgerStatus: "none" as const,
         projectedValueUsd: 0,
         sourceRiskLevel: null,
         sourceCostExposureUsd: 0,
         sourceRiskReadout: null,
-        earningSummary: 'No value claim yet.',
+        earningSummary: "No value claim yet.",
         links: [
-          { id: 'open', label: 'Open Move', href: '/programs/apex-move-2' },
+          { id: "open", label: "Open Move", href: "/programs/apex-move-2" },
         ],
       },
     ];
     render(<MovePortfolioCardPanel cards={cards} tenantName="Apex Retail" />);
-    expect(screen.queryByTestId('tower-projected-value-disclosure')).toBeNull();
+    expect(screen.queryByTestId("tower-projected-value-disclosure")).toBeNull();
   });
 });

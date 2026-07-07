@@ -14,7 +14,7 @@ import { getOpenDraft } from "@/lib/programs/origination-drafts";
 import {
   isPatternBindable,
   requiredGroundingForText,
-} from "@/lib/intelligence-v3/pattern-grounding";
+} from "@/lib/intelligence/pattern-grounding";
 
 export interface OriginateFirstMessage {
   role: "assistant";
