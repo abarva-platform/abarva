@@ -710,8 +710,9 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   // below — otherwise a program name that happens to contain "contract" (e.g.
   // "Legal Contract Intake") is captured by the vendor/contract rule and the
   // answer never describes the company. Home is the context browser: it orients
-  // on the loaded picture. Advisory judgment ("why is X a good problem", "what
-  // should we do") is Intelligence's job and is handed off below.
+  // on the loaded picture. Profile-orientation questions can use executive
+  // phrasing like "what should a CFO know"; those still belong to Home when the
+  // object is the loaded company profile.
   if (
     /\bwho\s+(is|are)\b/.test(q) &&
     !/\b(cio|cto|ciso|cfo|cdo|cdao|caio|coo|ceo|gc|general counsel|owner|leader|head of|vp|director|sponsor|accountable|responsible|reports?\s+to)\b/.test(
@@ -725,12 +726,18 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
     )
   )
     return "loaded_context";
+  if (
+    /company profile|enterprise profile|revenue|employees?|portfolio compan|company size|business profile/.test(
+      q,
+    )
+  )
+    return "loaded_context";
   // Advisory / judgment phrasing ("why is X a good problem / candidate / demo",
   // "what should we do", "recommend / prioritize / worth it") belongs on
   // Intelligence, not Home. Route to the Intelligence handoff so Home answers
   // with the "Open Intelligence" boundary instead of trying to give advice.
   if (
-    /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend)\b/.test(
+    /\b(should we|should i|what should|worth (doing|pursuing|it)|make the case|business case for|roi of|prioriti[sz]e|recommend|which .* should|where should .* (fund|invest)|leadership invest|invest next quarter|kill|scale|hold|stop)\b/.test(
       q,
     ) ||
     (/\b(good|right|best|compelling|ideal|strong)\b/.test(q) &&
