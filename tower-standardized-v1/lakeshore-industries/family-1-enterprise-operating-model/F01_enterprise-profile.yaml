@@ -1,14 +1,26 @@
-company_name: Lakeshore Industries
-synthetic_peer_anchor: large private global industrial manufacturer
-revenue_fy25_usd: 54200000000
-employees_fte: 72000
-manufacturing_plants: 89
-countries: 34
-annual_technology_budget_usd: 1160000000
-annual_ai_and_data_budget_usd: 96000000
-primary_erp: SAP ECC with S/4 pilot
-treasury_target_platform: Kyriba
-data_platform_state: fragmented SQL/BI with semantic layer target
-tenant_key: lakeshore
+tenant_key: lakeshore-industries
 client_id: 3b83d8ad-2db1-4c0a-a3b3-0a19c2e5a667
-generated_at: 2026-06-18T00:00:00Z
+company_name: Lakeshore Holdings
+legal_entity_type: holding_company
+industry: Diversified private holding company
+headquarters: Chicago, IL
+revenue_fy25_usd: 0
+revenue_basis: holding_company_has_no_standalone_operating_revenue
+consolidated_group_revenue_fy25_usd: 7120000000
+consolidated_group_revenue_basis: non_additive_rollup_of_portfolio_companies_and_allocation_bucket
+employees_fte: 11800
+employee_count_basis: group_rollup_not_additive
+portfolio_companies_count: 4
+portfolio_companies: Northline Supply Chain; Brightmark Marketing Services; Forge & Field Consumer Products; Great Lakes Pantry Services
+unallocated_portfolio_revenue_bucket_usd: 3560000000
+corporate_shared_services_it_budget_usd: 36500000
+opco_local_it_budget_usd: 154100000
+annual_technology_budget_usd: 190600000
+annual_ai_and_data_budget_usd: 11800000
+primary_operating_model: corporate_shared_services_plus_opco_owned_operations_and_it
+data_platform_state: portfolio-specific systems with corporate semantic layer target
+primary_cloud: Hybrid Azure/AWS plus opco local platforms
+generated_at: 2026-07-07T00:00:00Z
+source_basis: pilot_reconciled_synthetic_holdco_contract
+source_file: datasets/lakeshore-holdings-synthetic-v6/holdco_tower/H01_entity_hierarchy.csv
+known_gaps: Client must confirm final allocation bucket, named leaders, and opco-level local budgets before production migration.

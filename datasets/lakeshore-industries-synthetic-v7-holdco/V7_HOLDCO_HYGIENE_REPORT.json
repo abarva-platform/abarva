@@ -1,260 +1,180 @@
 {
   "pass": true,
+  "generatedAt": "2026-07-07T17:11:14.362Z",
+  "contractVersion": "v7.1.2-holdco-pilot-contract-20260707",
   "summary": {
     "pass": true,
     "files": 25,
-    "rows": 3094,
-    "entities": 8,
-    "opcos": 7,
+    "rows": 2013,
+    "entities": 7,
+    "opcos": 4,
     "namedOpCos": [
       "Northline Supply Chain",
       "Brightmark Marketing Services",
       "Forge & Field Consumer Products",
-      "Great Lakes Pantry Services",
-      "HarborPoint Packaging Group",
-      "Riverton Components & Field Services",
-      "Keystone Industrial Services"
+      "Great Lakes Pantry Services"
     ],
-    "businessFunctions": 96,
-    "orgRoles": 116,
-    "workforcePersonas": 82,
-    "systems": 152,
-    "relationships": 529,
-    "bridgeRows": 510,
-    "allDimensionHealth": [
-      {
-        "file": "V7_00_portfolio_entity_registry.csv",
-        "rows": 8,
-        "min": 8,
-        "pass": true
-      },
-      {
-        "file": "V7_01_enterprise_profile.csv",
-        "rows": 8,
-        "min": 8,
-        "pass": true
-      },
-      {
-        "file": "V7_02_business_functions.csv",
-        "rows": 96,
-        "min": 90,
-        "pass": true
-      },
-      {
-        "file": "V7_03_org_ownership.csv",
-        "rows": 116,
-        "min": 110,
-        "pass": true
-      },
-      {
-        "file": "V7_04_workforce_personas.csv",
-        "rows": 82,
-        "min": 75,
-        "pass": true
-      },
-      {
-        "file": "V7_05_applications_systems.csv",
-        "rows": 152,
-        "min": 140,
-        "pass": true
-      },
-      {
-        "file": "V7_06_data_assets_integrations.csv",
-        "rows": 82,
-        "min": 80,
-        "pass": true
-      },
-      {
-        "file": "V7_07_vendors_contracts.csv",
-        "rows": 96,
-        "min": 90,
-        "pass": true
-      },
-      {
-        "file": "V7_08_spend_value.csv",
-        "rows": 57,
-        "min": 55,
-        "pass": true
-      },
-      {
-        "file": "V7_09_programs_initiatives_business_priorities.csv",
-        "rows": 36,
-        "min": 35,
-        "pass": true
-      },
-      {
-        "file": "V7_10_ai_initiatives.csv",
-        "rows": 36,
-        "min": 35,
-        "pass": true
-      },
-      {
-        "file": "V7_11_operations_risk_controls.csv",
-        "rows": 48,
-        "min": 48,
-        "pass": true
-      },
-      {
-        "file": "V7_12_relationships_graph_edges.csv",
-        "rows": 529,
-        "min": 450,
-        "pass": true
-      },
-      {
-        "file": "V7_13_source_evidence_registry.csv",
-        "rows": 48,
-        "min": 48,
-        "pass": true
-      },
-      {
-        "file": "V7_14_metric_definitions.csv",
-        "rows": 384,
-        "min": 350,
-        "pass": true
-      },
-      {
-        "file": "V7_15_industry_market_knowledge_patterns.csv",
-        "rows": 24,
-        "min": 20,
-        "pass": true
-      },
-      {
-        "file": "V7_16_expert_lenses.csv",
-        "rows": 18,
-        "min": 15,
-        "pass": true
-      },
-      {
-        "file": "V7_17_client_rate_card_cost_basis.csv",
-        "rows": 54,
-        "min": 45,
-        "pass": true
-      },
-      {
-        "file": "V7_18_function_system_data_vendor_bridge.csv",
-        "rows": 510,
-        "min": 430,
-        "pass": true
-      },
-      {
-        "file": "V7_19_service_tower_managed_services_scope.csv",
-        "rows": 64,
-        "min": 60,
-        "pass": true
-      },
-      {
-        "file": "V7_20_chunk_retrieval_registry.csv",
-        "rows": 376,
-        "min": 350,
-        "pass": true
-      },
-      {
-        "file": "V7_21_graph_registry_relationship_dictionary.csv",
-        "rows": 6,
-        "min": 6,
-        "pass": true
-      },
-      {
-        "file": "V7_22_operational_evidence_process_intelligence.csv",
-        "rows": 112,
-        "min": 100,
-        "pass": true
-      },
-      {
-        "file": "V7_23_external_benchmark_market_corpus.csv",
-        "rows": 24,
-        "min": 20,
-        "pass": true
-      },
-      {
-        "file": "V7_24_infrastructure_cloud_estate.csv",
-        "rows": 128,
-        "min": 120,
-        "pass": true
-      }
-    ],
-    "errors": 0,
-    "warnings": 0
+    "allocationBucket": "Operating-company revenue allocation bucket",
+    "systems": 98,
+    "relationships": 331,
+    "bridgeRows": 308,
+    "holdcoRevenueRule": "holding company row revenue_usd=0; consolidated_group_revenue_usd is non-additive rollup",
+    "towerScopeRule": "Tower source rows must carry entity_id/entity_scope or governed mapping"
   },
   "errors": [],
-  "warnings": [],
-  "entityCoverage": [
+  "warnings": [
+    "Synthetic pilot data remains pending client confirmation; allocation bucket must be resolved during client intake."
+  ],
+  "allDimensionHealth": [
     {
-      "entity_id": "LSH-OPCO-NLS",
-      "entity_name": "Northline Supply Chain",
-      "business_functions": 12,
-      "org_ownership": 14,
-      "workforce_personas": 10,
-      "applications_systems": 20,
-      "data_assets_integrations": 10,
-      "vendors_contracts": 12,
-      "relationships_graph_edges": 65
+      "file": "V7_00_portfolio_entity_registry.csv",
+      "rows": 7,
+      "min": "pilot_reconciled_shape",
+      "pass": true
     },
     {
-      "entity_id": "LSH-OPCO-BMS",
-      "entity_name": "Brightmark Marketing Services",
-      "business_functions": 12,
-      "org_ownership": 14,
-      "workforce_personas": 10,
-      "applications_systems": 18,
-      "data_assets_integrations": 10,
-      "vendors_contracts": 12,
-      "relationships_graph_edges": 61
+      "file": "V7_01_enterprise_profile.csv",
+      "rows": 7,
+      "min": "pilot_reconciled_shape",
+      "pass": true
     },
     {
-      "entity_id": "LSH-OPCO-FFF",
-      "entity_name": "Forge & Field Consumer Products",
-      "business_functions": 12,
-      "org_ownership": 14,
-      "workforce_personas": 10,
-      "applications_systems": 18,
-      "data_assets_integrations": 10,
-      "vendors_contracts": 12,
-      "relationships_graph_edges": 64
+      "file": "V7_02_business_functions.csv",
+      "rows": 60,
+      "min": "pilot_reconciled_shape",
+      "pass": true
     },
     {
-      "entity_id": "LSH-OPCO-GLP",
-      "entity_name": "Great Lakes Pantry Services",
-      "business_functions": 12,
-      "org_ownership": 14,
-      "workforce_personas": 10,
-      "applications_systems": 18,
-      "data_assets_integrations": 10,
-      "vendors_contracts": 12,
-      "relationships_graph_edges": 62
+      "file": "V7_03_org_ownership.csv",
+      "rows": 74,
+      "min": "pilot_reconciled_shape",
+      "pass": true
     },
     {
-      "entity_id": "LSH-OPCO-HPG",
-      "entity_name": "HarborPoint Packaging Group",
-      "business_functions": 12,
-      "org_ownership": 14,
-      "workforce_personas": 10,
-      "applications_systems": 18,
-      "data_assets_integrations": 10,
-      "vendors_contracts": 12,
-      "relationships_graph_edges": 67
+      "file": "V7_04_workforce_personas.csv",
+      "rows": 52,
+      "min": "pilot_reconciled_shape",
+      "pass": true
     },
     {
-      "entity_id": "LSH-OPCO-RCF",
-      "entity_name": "Riverton Components & Field Services",
-      "business_functions": 12,
-      "org_ownership": 14,
-      "workforce_personas": 10,
-      "applications_systems": 18,
-      "data_assets_integrations": 10,
-      "vendors_contracts": 12,
-      "relationships_graph_edges": 63
+      "file": "V7_05_applications_systems.csv",
+      "rows": 98,
+      "min": "pilot_reconciled_shape",
+      "pass": true
     },
     {
-      "entity_id": "LSH-OPCO-KIS",
-      "entity_name": "Keystone Industrial Services",
-      "business_functions": 12,
-      "org_ownership": 14,
-      "workforce_personas": 10,
-      "applications_systems": 18,
-      "data_assets_integrations": 10,
-      "vendors_contracts": 12,
-      "relationships_graph_edges": 65
+      "file": "V7_06_data_assets_integrations.csv",
+      "rows": 52,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_07_vendors_contracts.csv",
+      "rows": 60,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_08_spend_value.csv",
+      "rows": 36,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_09_programs_initiatives_business_priorities.csv",
+      "rows": 24,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_10_ai_initiatives.csv",
+      "rows": 24,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_11_operations_risk_controls.csv",
+      "rows": 30,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_12_relationships_graph_edges.csv",
+      "rows": 331,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_13_source_evidence_registry.csv",
+      "rows": 30,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_14_metric_definitions.csv",
+      "rows": 240,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_15_industry_market_knowledge_patterns.csv",
+      "rows": 18,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_16_expert_lenses.csv",
+      "rows": 18,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_17_client_rate_card_cost_basis.csv",
+      "rows": 54,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_18_function_system_data_vendor_bridge.csv",
+      "rows": 308,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_19_service_tower_managed_services_scope.csv",
+      "rows": 40,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_20_chunk_retrieval_registry.csv",
+      "rows": 270,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_21_graph_registry_relationship_dictionary.csv",
+      "rows": 6,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_22_operational_evidence_process_intelligence.csv",
+      "rows": 70,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_23_external_benchmark_market_corpus.csv",
+      "rows": 24,
+      "min": "pilot_reconciled_shape",
+      "pass": true
+    },
+    {
+      "file": "V7_24_infrastructure_cloud_estate.csv",
+      "rows": 80,
+      "min": "pilot_reconciled_shape",
+      "pass": true
     }
   ]
 }
