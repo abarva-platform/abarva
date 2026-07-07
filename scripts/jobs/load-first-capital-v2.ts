@@ -16,6 +16,7 @@ import {
   DIMENSION_FAMILY_MAP,
   type ContextDimension,
   type ContextDimensionFamily,
+  type ContextDimensionUniversal,
 } from "@/lib/context-ingestion/types";
 import { loadYamlToContext } from "@/lib/context-ingestion/yaml-loader";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -451,7 +452,7 @@ async function loadFile(
   const dimension = entry.dimension as ContextDimension | undefined;
   const dimensionFamily = (
     entry.family ??
-    (dimension ? DIMENSION_FAMILY_MAP[dimension] : null)
+    (dimension ? DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal] : null)
   ) as ContextDimensionFamily | null;
 
   if (type === "jsonl" || entry.type === "relationship_graph") {
@@ -608,7 +609,7 @@ async function main() {
       const dimension = entry.dimension as ContextDimension | undefined;
       const dimensionFamily = (
         entry.family ??
-        (dimension ? DIMENSION_FAMILY_MAP[dimension] : null)
+        (dimension ? DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal] : null)
       ) as ContextDimensionFamily | null;
       if (!dimensionFamily) continue;
       const filePath = path.join(datasetRoot, cleanManifestFile(entry.file));
