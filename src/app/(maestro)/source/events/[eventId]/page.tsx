@@ -34,6 +34,8 @@ import {
   isSkyHarborContractOptimizationEvent,
 } from "@/lib/source/contract-optimization";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { readEventFacts } from "@/lib/source/facts/event-facts-reader";
+import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 
 export const dynamic = "force-dynamic";
 
@@ -87,11 +89,41 @@ export default async function SourceEventDetailPage({
         key: activeClient?.key,
         name: activeClient?.name,
       }) ?? event.accountName;
+
+    // Build a LIVE StageAnalyticsView from the event's committed facts. When the
+    // facts are too thin to compute a single lever (or the read fails), pass
+    // nothing so the canvas renders the honestly-marked SAMPLE view. Never break
+    // the flag-off path — this whole branch is gated by source_analytics.
+    let liveStageView = undefined;
+    if (activeClient?.key) {
+      try {
+        const { inputs, citations } = await readEventFacts({
+          eventId: event.id,
+          clientKey: activeClient.key,
+        });
+        liveStageView =
+          buildLiveStageView({
+            inputs,
+            citations,
+            baselineLabel: "Value at stake (event estimate)",
+            baselineAmount: event.valueAtStakeUsd ?? 0,
+            stageKey: viewStage,
+          }) ?? undefined;
+      } catch (error) {
+        console.error(
+          "[SourceEventDetailPage] live analytics build failed; falling back to sample",
+          error instanceof Error ? error.message : String(error),
+        );
+        liveStageView = undefined;
+      }
+    }
+
     return (
       <SourceAnalyticsCanvas
         event={event}
         viewStage={viewStage}
         tenantName={analyticsTenantName}
+        stageView={liveStageView}
       />
     );
   }
