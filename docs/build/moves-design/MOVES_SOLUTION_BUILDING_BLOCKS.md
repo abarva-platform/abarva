@@ -76,6 +76,8 @@ The solution is the **bundle**, not one archetype.
 
 ## 6. What the blocks DO in Moves (per-phase guidance)
 
+> **Full phase-flow build spec: `MOVES_BUILDING_BLOCK_SPINE.md`** — each block is a *lane* that runs P2→P3→P4→P5→Tower, shaping the current phase and pre-populating the next (a phase never starts blank).
+
 - **P2 Discover** — the selected blocks tell aVa **what evidence to ask for** (e.g., Data Readiness → data quality, source-of-truth, missing fields, ownership; Process Redesign → workflow, handoffs, queue aging, approvals).
 - **P3 Solution Design** — the blocks tell aVa **what options to compare** (A: process redesign only · B: CLM-embedded AI-assisted decision support · C: new workflow orchestration platform).
 - **P4 Plan / Business Case** — the blocks become **workstreams** (intake redesign · metadata remediation · CLM workflow config · AI-assisted triage · governance & controls · Tower metrics).
