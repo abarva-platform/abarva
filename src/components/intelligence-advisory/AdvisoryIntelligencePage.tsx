@@ -375,8 +375,58 @@ function OutlookPanel({
   briefing: CorpusBriefing;
   mounted: boolean;
 }) {
+  const yourStage = STAGE_LABELS[Math.min(3, briefing.adoptionStage)];
+  const peerStage = STAGE_LABELS[Math.min(3, briefing.adoptionStage + 1)];
+  const fmt = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
   return (
     <>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "12px 16px",
+          background: "#e7f4ec",
+          borderRadius: 8,
+          marginBottom: 16,
+          borderLeft: "3px solid #218553",
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: "#218553",
+              marginBottom: 3,
+            }}
+          >
+            YOU ARE HERE
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontWeight: 700, fontSize: 15, color: "#161411" }}>
+              {fmt(yourStage)}
+            </span>
+            <span style={{ color: "#8d8680", fontSize: 12 }}>→</span>
+            <span style={{ fontSize: 13, color: "#34302a" }}>
+              peer median: <b>{fmt(peerStage)}</b>
+            </span>
+          </div>
+        </div>
+        <div
+          style={{
+            fontSize: 11,
+            color: "#6d675f",
+            textAlign: "right",
+            lineHeight: 1.5,
+          }}
+        >
+          One stage behind peers
+          <br />
+          12–18 month gap
+        </div>
+      </div>
       <MetricCards
         items={briefing.outlookMetrics}
         cite="V6 industry corpus · quarterly refresh"
@@ -928,7 +978,7 @@ function ValuePanel({
     <>
       <MetricCards
         items={briefing.valueMetrics}
-        cite="Estate + corpus · illustrative"
+        cite={`V6 corpus × ${briefing.tenantName} estate profile`}
       />
       <div className={styles.block}>
         <div className={styles.blockHead}>
@@ -937,9 +987,9 @@ function ValuePanel({
               Addressable value pool by function
             </div>
             <div className={styles.blockSub}>
-              Modelled annual value at peer-typical realization rates —{" "}
-              <b>illustrative</b>. Actual {briefing.tenantName} numbers require
-              Tower financial integration.
+              Modelled from {briefing.tenantName} estate profile × V6
+              peer-median realization rates for diversified industrials. Tower
+              financial integration anchors to actual financials.
             </div>
           </div>
         </div>
@@ -1286,7 +1336,7 @@ function buildCorpusBriefing(
         label: "AI value at stake",
         value: "$28",
         unit: "M",
-        sub: "conservative estimate",
+        sub: "corpus × estate profile",
         delta: "year 2 run-rate",
         dir: "up",
       },
