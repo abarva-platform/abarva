@@ -6,6 +6,7 @@ import type {
   LandscapeSection,
   LandscapeTone,
 } from '@/lib/home/enterprise-landscape-view-model';
+import type { AvaAnswerPacket } from '@/lib/ava-answer/contract';
 import styles from './AdvisoryIntelligencePage.module.css';
 
 type BriefingTab = 'answer' | 'industry' | 'trends' | 'plays' | 'evidence';
@@ -36,6 +37,7 @@ type AssistantMessage = {
   role: 'assistant';
   question: string;
   answer: string;
+  agentAnswer?: AvaAnswerPacket | null;
   status: 'thinking' | 'done' | 'error';
   sources: AskSource[];
   followups: string[];
@@ -80,13 +82,14 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
   async function submitAsk(input: string = question) {
     const trimmed = input.trim();
     if (!trimmed || isAsking) return;
+    const messageIndex = messages.length;
 
     const userMessage: UserMessage = {
-      id: `u-${Date.now()}`,
+      id: `u-${messageIndex}`,
       role: 'user',
       text: trimmed,
     };
-    const assistantId = `a-${Date.now()}`;
+    const assistantId = `a-${messageIndex + 1}`;
     const assistantMessage: AssistantMessage = {
       id: assistantId,
       role: 'assistant',
@@ -109,6 +112,8 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
         body: JSON.stringify({
           query: trimmed,
           client: viewModel.clientKey,
+          format: 'rich',
+          richText: true,
           traceEnabled: true,
           surfaceContext: buildSurfaceContext(viewModel, selectedSection),
         }),
@@ -164,8 +169,35 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
     setMessages((current) =>
       current.map((message) => {
         if (message.id !== assistantId || message.role !== 'assistant') return message;
-        if (event.type === 'delta' && typeof event.text === 'string') {
-          return { ...message, answer: `${message.answer}${event.text}` };
+        if (event.type === 'delta') {
+          const delta = eventText(event);
+          return delta ? { ...message, answer: `${message.answer}${delta}` } : message;
+        }
+        if (event.type === 'agent-answer' && isAvaAnswerPacket(event.answer)) {
+          const answerText = answerBodyFromPacket(event.answer);
+          return {
+            ...message,
+            agentAnswer: event.answer,
+            answer: answerText || message.answer,
+            sources: event.answer.citations.map((citation) => ({
+              id: citation.id,
+              type: citation.sourceClass,
+              name: citation.label,
+              detail: citation.excerpt,
+              confidence:
+                citation.confidence === 'high'
+                  ? 0.9
+                  : citation.confidence === 'medium'
+                    ? 0.65
+                    : citation.confidence === 'low'
+                      ? 0.35
+                      : undefined,
+            })),
+            followups: event.answer.nextSteps
+              .map((step) => step.label)
+              .filter((item): item is string => Boolean(item?.trim()))
+              .slice(0, 3),
+          };
         }
         if (event.type === 'sources' && Array.isArray(event.sources)) {
           return { ...message, sources: event.sources as AskSource[] };
@@ -305,6 +337,33 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
         </div>
       </section>
     </main>
+  );
+}
+
+function eventText(event: Record<string, unknown>) {
+  if (typeof event.text === 'string') return event.text;
+  if (typeof event.delta === 'string') return event.delta;
+  return '';
+}
+
+function isAvaAnswerPacket(value: unknown): value is AvaAnswerPacket {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      typeof (value as { directAnswer?: unknown }).directAnswer === 'string' &&
+      Array.isArray((value as { citations?: unknown }).citations) &&
+      Array.isArray((value as { nextSteps?: unknown }).nextSteps),
+  );
+}
+
+function answerBodyFromPacket(answer: AvaAnswerPacket): string {
+  return (
+    answer.prose?.trim() ||
+    answer.directAnswer?.trim() ||
+    [answer.interpretation, answer.businessImplication, answer.recommendation]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join('\n\n')
+      .trim()
   );
 }
 

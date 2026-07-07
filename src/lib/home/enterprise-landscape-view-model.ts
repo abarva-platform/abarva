@@ -392,7 +392,7 @@ const skyharborSections: Record<string, LandscapeSection> = {
     ],
     sources: sources('F11_vendors-contracts-licenses.csv', 'F12_it-budget-financials.csv', 'T08_spend-contracts.csv'),
   }),
-  budget: basicSection('budget', 'CURRENT STATE ASSESSMENT - IT BUDGET & RUN COST', 'A $2B+ technology budget gives SkyHarbor room to modernize, but run-cost gravity can starve change capacity.', 'The spend story should identify whether dollars are funding business outcomes or preserving complexity.', 'Move from spend reporting to value governance: what should scale, stop, renegotiate, or be funded first.', 'The CFO/CIO readout should show which spend protects the airline, which spend changes the airline, and which spend is trapped in avoidable complexity.'),
+  budget: basicSection('budget', 'CURRENT STATE ASSESSMENT - IT BUDGET & RUN COST', 'A $2.6B technology portfolio gives SkyHarbor scale to modernize, but run-cost gravity can starve change capacity.', 'The spend story should identify whether dollars are funding business outcomes or preserving complexity.', 'Move from spend reporting to value governance: what should scale, stop, renegotiate, or be funded first.', 'The CFO/CIO readout should show which spend protects the airline, which spend changes the airline, and which spend is trapped in avoidable complexity.'),
   ai: section({
     id: 'ai',
     eyebrow: 'CURRENT STATE ASSESSMENT - AI FOOTPRINT & ADOPTION',
