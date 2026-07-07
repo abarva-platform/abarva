@@ -702,10 +702,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
     );
     const stream = await client.messages.create({
       model,
-      // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
-      // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
-      // mid-list on the new MANDATORY ANSWER SHAPES.
-      max_tokens: chooseSynthesisTokenBudget(args.query),
+      max_tokens: answerOnly ? 5000 : chooseSynthesisTokenBudget(args.query),
       system: systemWithContinuity,
       messages: [{ role: "user", content: prompt }],
       stream: true,
