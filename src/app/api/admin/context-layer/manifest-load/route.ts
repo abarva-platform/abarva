@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
       const type = entryType(entry.file);
       const dimension = entry.dimension as ContextDimension | undefined;
       const dimensionFamily = (entry.family ??
-        (dimension
+        (dimension && dimension in DIMENSION_FAMILY_MAP
           ? DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal]
           : null)) as ContextDimensionFamily | null;
 

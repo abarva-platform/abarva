@@ -72,7 +72,6 @@ import {
   supabaseViolationsBackend,
 } from "@/lib/intelligence/synthesis/violationsSupabaseBackend";
 import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
-import { VISIBLE_ANSWER_CONTRACT_PROMPT } from "@/lib/agent/visible-answer-contract";
 import {
   composeSentinelSystemPrompt,
   checkSentinelVoice,
@@ -89,9 +88,9 @@ import {
 import {
   composeStewardSystemPrompt,
   isStewardVoiceDoctrineEnabled,
-} from '@/lib/agent/voice-doctrine/steward';
-import { VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT } from '@/lib/agent/visible-answer-contract';
-import { isDirectClaudeSurface } from '@/lib/agent/display-text';
+} from "@/lib/agent/voice-doctrine/steward";
+import { VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT } from "@/lib/agent/visible-answer-contract";
+import { isDirectClaudeSurface } from "@/lib/agent/display-text";
 // Wave 3 PR-3 · TrustSpine grounding for the Steward chat dock.
 // Pulls live tenant posture (substrate, connectors, isolation,
 // governance) and threads it into the system prompt so Steward can
@@ -1393,7 +1392,7 @@ export async function POST(request: Request) {
           // emitting brief-progress artifacts so the right-panel boxes update.
           ...(surfaceContext.sourceIntakeMode === true
             ? [
-                "- INTAKE MODE ACTIVE: The practitioner is building a new sourcing event on this canvas. After every turn that captures intake information, emit a `brief-progress` artifact with fields mapped to EXACTLY these 5 camelCase ids (the right panel ONLY updates on an exact match): \"trigger\" (why now — contract expiry, renewal date, cost pressure, service issue, merger, or other trigger), \"decisionOwner\" (name or role of the person who approves the final sourcing decision), \"scopeBoundary\" (which IT services, platforms, software, cloud, or delivery towers are in or out of scope), \"valueTarget\" (estimated contract value, savings target, or value basis), \"baselineOwner\" (who owns vendor spend data, commercial benchmarks, or baseline evidence). Set status to \"filled\" with the extracted value when you have it; set status to \"empty\" otherwise. Emit the artifact on every reply that adds or refines at least one field.",
+                '- INTAKE MODE ACTIVE: The practitioner is building a new sourcing event on this canvas. After every turn that captures intake information, emit a `brief-progress` artifact with fields mapped to EXACTLY these 5 camelCase ids (the right panel ONLY updates on an exact match): "trigger" (why now — contract expiry, renewal date, cost pressure, service issue, merger, or other trigger), "decisionOwner" (name or role of the person who approves the final sourcing decision), "scopeBoundary" (which IT services, platforms, software, cloud, or delivery towers are in or out of scope), "valueTarget" (estimated contract value, savings target, or value basis), "baselineOwner" (who owns vendor spend data, commercial benchmarks, or baseline evidence). Set status to "filled" with the extracted value when you have it; set status to "empty" otherwise. Emit the artifact on every reply that adds or refines at least one field.',
               ]
             : []),
         ]

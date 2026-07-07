@@ -21,6 +21,19 @@ import {
 import { loadYamlToContext } from "@/lib/context-ingestion/yaml-loader";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 
+// DIMENSION_FAMILY_MAP only covers the universal dimension set; First Capital's
+// manifest can reference legacy/vertical dimensions (e.g. vendor_contracts) that
+// have no family mapping, so look up defensively rather than assume every
+// ContextDimension value is a valid map key.
+function dimensionFamilyMapLookup(
+  dimension: ContextDimension | undefined,
+): ContextDimensionFamily | null {
+  if (!dimension) return null;
+  return (dimension in DIMENSION_FAMILY_MAP
+    ? DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal]
+    : null);
+}
+
 const TENANT_KEY = process.env.TENANT_KEY ?? "first-capital";
 const CLIENT_ID =
   process.env.CLIENT_ID ?? "a75687bf-71b9-4524-ab4e-68ae3f28d200";
@@ -451,8 +464,7 @@ async function loadFile(
   const type = entryType(entry.file);
   const dimension = entry.dimension as ContextDimension | undefined;
   const dimensionFamily = (
-    entry.family ??
-    (dimension ? DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal] : null)
+    entry.family ?? dimensionFamilyMapLookup(dimension)
   ) as ContextDimensionFamily | null;
 
   if (type === "jsonl" || entry.type === "relationship_graph") {
@@ -608,8 +620,7 @@ async function main() {
       if (!entry.template_id || entryType(entry.file) !== "csv") continue;
       const dimension = entry.dimension as ContextDimension | undefined;
       const dimensionFamily = (
-        entry.family ??
-        (dimension ? DIMENSION_FAMILY_MAP[dimension as ContextDimensionUniversal] : null)
+        entry.family ?? dimensionFamilyMapLookup(dimension)
       ) as ContextDimensionFamily | null;
       if (!dimensionFamily) continue;
       const filePath = path.join(datasetRoot, cleanManifestFile(entry.file));

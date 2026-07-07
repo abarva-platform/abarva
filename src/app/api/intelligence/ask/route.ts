@@ -73,7 +73,7 @@ interface AskPayload {
   surfaceContext: AskSurfaceContext | null;
   tabId: string | null;
   traceEnabled: boolean;
-  richText?: boolean;
+  richText: boolean;
 }
 
 async function handleAsk(payload: AskPayload, req: NextRequest) {
@@ -1365,6 +1365,9 @@ async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
     traceEnabled:
       url.searchParams.get("trace") === "1" ||
       url.searchParams.get("traceEnabled") === "true",
+    richText:
+      url.searchParams.get("richText") === "1" ||
+      url.searchParams.get("richText") === "true",
   };
 }
 
@@ -1388,6 +1391,7 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
       null,
     traceEnabled:
       readBoolean(payload.traceEnabled) || readString(payload.trace) === "1",
+    richText: readBoolean(payload.richText),
   };
 }
 
