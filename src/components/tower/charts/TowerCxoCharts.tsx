@@ -92,6 +92,64 @@ function ChartEyebrow({ children }: { children: ReactNode }) {
   );
 }
 
+function BridgeValueLabel(props: LabelProps) {
+  const { x, y, width, value } = props;
+  const numeric = Number(value ?? 0);
+  if (!numeric || typeof x !== "number" || typeof y !== "number") return null;
+  const labelWidth = typeof width === "number" ? width : 0;
+  const cx = x + labelWidth / 2;
+  return (
+    <text
+      x={cx}
+      y={y - 11}
+      textAnchor="middle"
+      fill={CT.INK}
+      fontFamily={CT.SERIF}
+      fontSize={22}
+      fontWeight={600}
+      letterSpacing="-0.5px"
+    >
+      {formatMoneyShort(numeric)}
+    </text>
+  );
+}
+
+function BridgeToProveLabel(props: LabelProps) {
+  const { x, y, width, height, value } = props;
+  const numeric = Number(value ?? 0);
+  if (
+    !numeric ||
+    typeof x !== "number" ||
+    typeof y !== "number" ||
+    typeof width !== "number" ||
+    typeof height !== "number" ||
+    height < 20
+  ) {
+    return null;
+  }
+
+  const cx = x + width / 2;
+  const cy = y + height / 2;
+  return (
+    <text
+      x={cx}
+      y={cy}
+      textAnchor="middle"
+      fill={CT.GREEN_DEEP}
+      fontFamily={CT.MONO}
+      fontSize={10.5}
+      fontWeight={600}
+    >
+      <tspan x={cx} dy="-0.2em">
+        {formatMoneyShort(numeric)}
+      </tspan>
+      <tspan x={cx} dy="1.3em">
+        to prove
+      </tspan>
+    </text>
+  );
+}
+
 // ─── Value: the flagship program's committed → promised → measured bridge ─
 //
 // The single highest-promised-value program, as a 3-bar bridge: what's
@@ -126,12 +184,12 @@ export function ValueBridgeChart({
       <div
         style={{
           fontFamily: CT.MONO,
-          fontSize: 9.5,
-          letterSpacing: "1.5px",
+          fontSize: 11,
+          letterSpacing: "0.12em",
           textTransform: "uppercase",
           color: CT.GOLD,
-          fontWeight: 900,
-          marginBottom: 10,
+          fontWeight: 600,
+          marginBottom: 16,
         }}
       >
         Committed → Promised → Measured
@@ -142,11 +200,21 @@ export function ValueBridgeChart({
           justifyContent: "space-between",
           alignItems: "baseline",
           flexWrap: "wrap",
-          gap: 8,
-          marginBottom: 4,
+          gap: 20,
+          marginBottom: 22,
+          maxWidth: 680,
         }}
       >
-        <div style={{ fontFamily: CT.SERIF, fontSize: 26, color: CT.INK }}>
+        <div
+          style={{
+            fontFamily: CT.SERIF,
+            fontSize: 26,
+            color: CT.INK,
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
+            lineHeight: 1.08,
+          }}
+        >
           {program.program}
         </div>
         {sourceLine ? (
@@ -154,9 +222,10 @@ export function ValueBridgeChart({
             style={{
               fontFamily: CT.MONO,
               fontSize: 10,
-              letterSpacing: "1px",
+              letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: CT.GRAY_DK,
+              fontWeight: 500,
             }}
           >
             {sourceLine}
@@ -164,115 +233,108 @@ export function ValueBridgeChart({
         ) : null}
       </div>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <BarChart
-          data={data}
-          margin={{ top: 36, right: 24, left: 4, bottom: 4 }}
-          barCategoryGap="30%"
-        >
-          <XAxis
-            dataKey="label"
-            tick={{ fontFamily: CT.SANS, fontSize: 12, fill: CT.INK_2 }}
-            axisLine={{ stroke: CT.RULE }}
-            tickLine={false}
-          />
-          <YAxis hide domain={[0, Math.max(promised, committed) * 1.15]} />
-          <Bar
-            isAnimationActive={false}
-            dataKey="committed"
-            fill={CT.INK}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={110}
+      <div style={{ height: 300, maxWidth: 600 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            margin={{ top: 34, right: 6, left: 6, bottom: 8 }}
+            barCategoryGap="22%"
           >
-            <LabelList
+            <XAxis
+              dataKey="label"
+              tick={{
+                fontFamily: CT.MONO,
+                fontSize: 10,
+                fill: CT.GRAY_DK,
+                fontWeight: 500,
+              }}
+              axisLine={{ stroke: "rgba(10,10,11,0.24)" }}
+              tickLine={false}
+              dy={9}
+            />
+            <YAxis hide domain={[0, Math.max(promised, committed) * 1.14]} />
+            <Bar
               dataKey="committed"
-              position="top"
-              formatter={(v) =>
-                Number(v) > 0 ? formatMoneyShort(Number(v)) : ""
-              }
-              style={{
-                fontFamily: CT.SERIF,
-                fontSize: 20,
-                fontWeight: 700,
-                fill: CT.INK,
-              }}
-            />
-          </Bar>
-          <Bar
-            isAnimationActive={false}
-            dataKey="promised"
-            fill={CT.GREEN_DEEP}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={110}
-          >
-            <LabelList
+              fill={CT.INK}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={104}
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="committed"
+                position="top"
+                content={<BridgeValueLabel />}
+              />
+            </Bar>
+            <Bar
               dataKey="promised"
-              position="top"
-              formatter={(v) =>
-                Number(v) > 0 ? formatMoneyShort(Number(v)) : ""
-              }
-              style={{
-                fontFamily: CT.SERIF,
-                fontSize: 20,
-                fontWeight: 700,
-                fill: CT.INK,
-              }}
-            />
-          </Bar>
-          <Bar
-            isAnimationActive={false}
-            dataKey="measured"
-            stackId="measured"
-            fill={CT.GREEN}
-            radius={[0, 0, 0, 0]}
-            maxBarSize={110}
-          >
-            <LabelList
+              fill={CT.GREEN_DEEP}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={104}
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="promised"
+                position="top"
+                content={<BridgeValueLabel />}
+              />
+            </Bar>
+            <Bar
               dataKey="measured"
-              position="center"
-              formatter={(v) =>
-                Number(v) > 0 ? formatMoneyShort(Number(v)) : ""
-              }
-              style={{
-                fontFamily: CT.SANS,
-                fontSize: 13,
-                fontWeight: 700,
-                fill: "#fff",
-              }}
-            />
-          </Bar>
-          <Bar
-            isAnimationActive={false}
-            dataKey="toProve"
-            stackId="measured"
-            fill={CT.GREEN_SOFT}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={110}
-          >
-            <LabelList
+              stackId="measured"
+              fill={CT.GREEN}
+              radius={[0, 0, 0, 0]}
+              maxBarSize={104}
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="measured"
+                position="top"
+                content={<BridgeValueLabel />}
+              />
+            </Bar>
+            <Bar
               dataKey="toProve"
-              position="center"
-              formatter={(v) =>
-                Number(v) > 0 ? `${formatMoneyShort(Number(v))} to prove` : ""
-              }
-              style={{ fontFamily: CT.SANS, fontSize: 11, fill: CT.INK_2 }}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+              stackId="measured"
+              fill="rgba(29,158,117,0.08)"
+              stroke={CT.GREEN_DEEP}
+              strokeDasharray="4 3"
+              strokeWidth={1.4}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={104}
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="toProve"
+                position="center"
+                content={<BridgeToProveLabel />}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
 
-      <div style={{ marginTop: 8 }}>
+      <div style={{ marginTop: 26 }}>
         <span
           style={{
             fontFamily: CT.SERIF,
-            fontSize: 24,
+            fontSize: 28,
             color: CT.GREEN_DEEP,
-            fontWeight: 700,
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
           }}
         >
           {pctProven}% proven
         </span>
-        <span style={{ fontFamily: CT.SERIF, fontSize: 24, color: CT.INK }}>
+        <span
+          style={{
+            fontFamily: CT.SERIF,
+            fontSize: 28,
+            color: CT.INK,
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
+          }}
+        >
           {" "}
           of the promise.
         </span>

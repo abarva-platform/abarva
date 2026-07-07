@@ -1956,19 +1956,21 @@ function CioPanel({
   title,
   eyebrow,
   children,
+  plain = false,
 }: {
   title: string;
   eyebrow?: string;
   children: ReactNode;
+  plain?: boolean;
 }) {
   return (
     <section
       style={{
-        border: `1px solid ${T.RULE_STRONG}`,
-        borderRadius: 10,
-        background: "#fff",
-        padding: 18,
-        boxShadow: "0 12px 26px rgba(15, 23, 42, 0.04)",
+        border: plain ? "none" : `1px solid ${T.RULE_STRONG}`,
+        borderRadius: plain ? 0 : 10,
+        background: plain ? "transparent" : "#fff",
+        padding: plain ? 0 : 18,
+        boxShadow: plain ? "none" : "0 12px 26px rgba(15, 23, 42, 0.04)",
         // CSS grid items default to min-width:auto, so a Recharts
         // ResponsiveContainer's intrinsic sizing can grow this panel past
         // its grid track (invisibly clipped by an ancestor's overflow, not
@@ -1981,12 +1983,12 @@ function CioPanel({
         <div
           style={{
             fontFamily: T.MONO,
-            fontSize: 9,
-            letterSpacing: "1.5px",
+            fontSize: plain ? 11 : 9,
+            letterSpacing: plain ? "0.12em" : "1.5px",
             textTransform: "uppercase",
             color: T.GOLD,
-            fontWeight: 850,
-            marginBottom: 8,
+            fontWeight: plain ? 600 : 850,
+            marginBottom: plain ? 16 : 8,
           }}
         >
           {eyebrow}
@@ -1996,14 +1998,17 @@ function CioPanel({
         style={{
           margin: 0,
           fontFamily: T.SERIF,
-          fontSize: 23,
-          lineHeight: 1.1,
+          fontSize: plain ? 26 : 23,
+          fontWeight: plain ? 500 : undefined,
+          letterSpacing: plain ? "-0.02em" : undefined,
+          lineHeight: plain ? 1.22 : 1.1,
           color: T.INK,
+          maxWidth: plain ? "38ch" : undefined,
         }}
       >
         {title}
       </h3>
-      <div style={{ marginTop: 15 }}>{children}</div>
+      <div style={{ marginTop: plain ? 32 : 15 }}>{children}</div>
     </section>
   );
 }
@@ -2818,8 +2823,7 @@ type CxoCommandSection =
   | "budget"
   | "portfolio"
   | "benchmark"
-  | "evidence"
-  | "ask";
+  | "evidence";
 
 const CXO_COMMAND_SECTIONS: Array<{
   key: CxoCommandSection;
@@ -2844,10 +2848,6 @@ const CXO_COMMAND_SECTIONS: Array<{
   {
     key: "evidence",
     label: "Evidence",
-  },
-  {
-    key: "ask",
-    label: "Ask aVa",
   },
 ];
 
@@ -2878,66 +2878,45 @@ function CxoGovernedCommandCenter({
   ]
     .map((measureKey) => findCxoCard(model.cards, measureKey))
     .filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
-  const parityCard = model.cards.find(
-    (card) => card.measureKey === model.parityMeasureKey,
-  );
-
   return (
-    <div style={{ padding: "18px 32px 34px" }}>
-      <section
+    <div
+      style={{
+        padding: "32px 40px 90px",
+        maxWidth: 1160,
+        margin: "0 auto",
+      }}
+    >
+      <div
         style={{
-          border: `1px solid ${T.RULE_STRONG}`,
-          borderRadius: 14,
-          background: "#fff",
-          padding: "14px 18px",
-          marginBottom: 14,
-          boxShadow: "0 14px 30px rgba(15, 23, 42, 0.07)",
+          fontFamily: T.SERIF,
+          fontSize: 26,
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          lineHeight: 1.22,
+          maxWidth: "38ch",
+          marginBottom: 32,
+          color: T.INK,
         }}
       >
-        <div
-          style={{
-            fontFamily: T.MONO,
-            fontSize: 10,
-            letterSpacing: "1.8px",
-            textTransform: "uppercase",
-            color: T.GOLD,
-            fontWeight: 900,
-          }}
-        >
-          Executive operating view
-        </div>
-        <h2
-          style={{
-            margin: "6px 0 0",
-            fontFamily: T.SERIF,
-            fontSize: 22,
-            lineHeight: 1.12,
-            letterSpacing: 0,
-            color: T.INK,
-            maxWidth: 860,
-          }}
-        >
-          {model.headline}
-        </h2>
-      </section>
+        {model.headline}
+      </div>
 
       <section
         aria-label="Tower command center sections"
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 14,
-          borderBottom: `1px solid ${T.RULE_STRONG}`,
-          paddingBottom: 12,
+          justifyContent: "flex-start",
+          marginBottom: 32,
+          borderBottom: `1px solid ${T.RULE}`,
         }}
       >
         <div
           style={{
             display: "flex",
-            gap: 7,
+            gap: 2,
             flexWrap: "wrap",
-            justifyContent: "center",
+            justifyContent: "flex-start",
           }}
         >
           {CXO_COMMAND_SECTIONS.map((section) => {
@@ -2949,17 +2928,22 @@ function CxoGovernedCommandCenter({
                 onClick={() => setActiveSection(section.key)}
                 aria-pressed={selected}
                 style={{
-                  border: `1px solid ${selected ? T.INK : T.RULE_STRONG}`,
-                  borderRadius: 999,
-                  background: selected ? T.INK : "#fff",
-                  color: selected ? "#fff" : T.INK_2,
-                  padding: "5px 11px",
-                  fontSize: 11.5,
-                  fontWeight: 760,
-                  fontFamily: T.SANS,
+                  position: "relative",
+                  top: 1,
+                  border: "none",
+                  borderRadius: 0,
+                  borderBottom: selected
+                    ? `2px solid ${T.GREEN}`
+                    : "2px solid transparent",
+                  background: "transparent",
+                  color: selected ? T.INK : T.INK_2,
+                  padding: "12px 2px",
+                  marginRight: 28,
+                  fontSize: 16,
+                  fontWeight: 500,
+                  letterSpacing: "-0.01em",
+                  fontFamily: T.SERIF,
                   cursor: "pointer",
-                  minWidth: 72,
-                  textAlign: "center",
                 }}
               >
                 {section.label}
@@ -2982,6 +2966,7 @@ function CxoGovernedCommandCenter({
             <CioPanel
               eyebrow="Flagship Program"
               title="The single largest value promise in the portfolio."
+              plain
             >
               <ValueBridgeChart program={flagshipProgram} />
             </CioPanel>
@@ -3135,62 +3120,6 @@ function CxoGovernedCommandCenter({
         </section>
       ) : null}
 
-      {activeSection === "ask" ? (
-        <section
-          data-cio-tower-parity-measure-key={model.parityMeasureKey}
-          data-cio-tower-parity-dashboard-value={
-            parityCard?.displayValue ?? "gap"
-          }
-          style={{
-            border: `1px solid ${T.PURPLE}`,
-            borderRadius: 14,
-            background: T.PURPLE_BG,
-            padding: "16px 20px",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: T.MONO,
-              fontSize: 10,
-              letterSpacing: "1.8px",
-              textTransform: "uppercase",
-              color: T.PURPLE,
-              fontWeight: 900,
-            }}
-          >
-            Ask aVa
-          </div>
-          <h3
-            style={{
-              margin: "7px 0 0",
-              fontFamily: T.SERIF,
-              fontSize: 21,
-              lineHeight: 1.12,
-            }}
-          >
-            Ask “what is my IT spend?” and aVa should explain the same board
-            number in plain language.
-          </h3>
-          <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13.5 }}>
-            Tower is anchored on{" "}
-            <strong>{parityCard?.displayValue ?? "gap"}</strong> for the
-            executive budget envelope. Use aVa to explain what the number means,
-            where value is lagging, and what to inspect next.
-          </p>
-          {model.gaps.length > 0 ? (
-            <div
-              style={{
-                marginTop: 12,
-                color: T.AMBER,
-                fontSize: 13.5,
-                fontWeight: 750,
-              }}
-            >
-              Business gaps: {model.gaps.join(" ")}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
     </div>
   );
 }
@@ -6453,6 +6382,12 @@ export function TowerIndexPage({
     [sendToAtlas],
   );
 
+  const towerMastheadName = cxoView?.tenantName ?? tenantName;
+  const towerBudgetEnvelope = cxoView
+    ? findCxoCard(cxoView.cards, "total_it_budget_fy26")
+    : null;
+  const towerEntityCount = budgetRollups?.length ?? 0;
+
   const handleAtlasSuggestion = useCallback(
     (suggestion: AtlasSuggestion) => {
       if (suggestion.kind === "link" && suggestion.href) {
@@ -6518,8 +6453,9 @@ export function TowerIndexPage({
         {/* Masthead */}
         <div
           style={{
-            padding: "14px 32px 12px",
-            borderBottom: `1px solid ${T.RULE_STRONG}`,
+            padding: "28px 40px 0",
+            maxWidth: 1160,
+            margin: "0 auto",
           }}
         >
           <div
@@ -6527,7 +6463,7 @@ export function TowerIndexPage({
               display: "flex",
               alignItems: "flex-start",
               justifyContent: "space-between",
-              gap: 20,
+              gap: 24,
             }}
           >
             <div style={{ minWidth: 0 }}>
@@ -6535,11 +6471,11 @@ export function TowerIndexPage({
                 style={{
                   fontFamily: T.MONO,
                   fontSize: 11,
-                  letterSpacing: "1.32px",
+                  letterSpacing: "0.12em",
                   fontWeight: 600,
-                  color: T.TEAL,
+                  color: T.GOLD,
                   textTransform: "uppercase",
-                  marginBottom: 5,
+                  marginBottom: 11,
                 }}
               >
                 Portfolio
@@ -6547,28 +6483,46 @@ export function TowerIndexPage({
               <h1
                 style={{
                   fontFamily: T.SERIF,
-                  fontSize: 31,
+                  fontSize: 38,
                   fontWeight: 500,
-                  letterSpacing: "-0.8px",
-                  lineHeight: 1.04,
+                  letterSpacing: "-0.025em",
+                  lineHeight: 1.03,
                   margin: 0,
                   color: T.INK,
+                  whiteSpace: "nowrap",
                 }}
               >
-                {tenantName}
+                {towerMastheadName}
               </h1>
               <div
                 style={{
-                  marginTop: 6,
-                  fontFamily: T.SANS,
+                  marginTop: 9,
                   color: T.INK_2,
-                  fontSize: 14.5,
-                  fontStyle: "italic",
+                  fontSize: 16,
                   fontWeight: 400,
-                  lineHeight: 1.3,
+                  lineHeight: 1.5,
                 }}
               >
-                Every number citable.
+                <em>Every number citable.</em>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 11,
+                  marginTop: 13,
+                  flexWrap: "wrap",
+                  fontSize: 12.5,
+                  color: T.INK_2,
+                }}
+              >
+                <span>{towerEntityCount} entities</span>
+                {towerBudgetEnvelope ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>{towerBudgetEnvelope.displayValue} FY26 in view</span>
+                  </>
+                ) : null}
               </div>
             </div>
             {reportDownloadSlot ? (
