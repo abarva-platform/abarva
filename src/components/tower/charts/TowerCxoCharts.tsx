@@ -973,7 +973,7 @@ export function BenchmarkRadarChart({
             }}
           />
           <Tooltip
-            formatter={(value: number) => `${value}%`}
+            formatter={(value) => `${Number(value)}%`}
             contentStyle={{
               fontFamily: CT.SANS,
               fontSize: 12,
@@ -1033,8 +1033,8 @@ export function BenchmarkComparisonChart({
             tickLine={false}
           />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              `${value}%`,
+            formatter={(value, name) => [
+              `${Number(value)}%`,
               name === "runPct"
                 ? "Run share"
                 : name === "changePct"
