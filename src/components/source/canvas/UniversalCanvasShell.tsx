@@ -116,6 +116,30 @@ import { DocumentTab } from './workspace-tabs/DocumentTab';
 import { EvidenceTab } from './workspace-tabs/EvidenceTab';
 import { LogTab, type ActivityEntry } from './workspace-tabs/LogTab';
 import { threeChoicesForStage } from './canvas-three-choices';
+import { StrategyStageView } from './strategy/StrategyStageView';
+import { ScopeStageView } from './scope/ScopeStageView';
+import { RfpStageView } from './rfp/RfpStageView';
+import { ResponsesStageView } from './responses/ResponsesStageView';
+import { EvaluationStageView } from './evaluation/EvaluationStageView';
+import { PricingStageView } from './pricing/PricingStageView';
+import { BafoStageView } from './bafo/BafoStageView';
+import { ExecutiveDecisionStageView } from './executive-decision/ExecutiveDecisionStageView';
+import { TransitionStageView } from './transition/TransitionStageView';
+import { CommunicationDraftsPanel } from './workspace-tabs/CommunicationDraftsPanel';
+import { StageDecisionLensPanel } from './workspace-tabs/StageDecisionLensPanel';
+import { GateTab } from './workspace-tabs/GateTab';
+import { SimpleFrontErrorBoundary } from './SimpleFrontErrorBoundary';
+import { SimpleStageFront } from './SimpleStageFront';
+import { ContractOptimizationProfilePanel } from './contract-optimization/ContractOptimizationProfilePanel';
+import { VendorResponseProfilesPanel } from './responses/VendorResponseProfilesPanel';
+import { VendorChallengeLeveragePanel } from './responses/VendorChallengeLeveragePanel';
+import { VendorBafoInstructionPackPanel } from './responses/VendorBafoInstructionPackPanel';
+import { VendorEvaluationScorecardPanel } from './responses/VendorEvaluationScorecardPanel';
+import { StageNextMoveCard } from './StageNextMoveCard';
+import type { SourceVendorResponseCompleteness } from '@/lib/source/vendor-response-types';
+import type { VendorChallengeIntelligence, VendorBafoInstructionPack, VendorEvaluationDecisionView } from '@/lib/source/proposal-intelligence/types';
+import type { VendorResponseProfileSet } from '@/lib/source/proposal-intelligence/mve-profile';
+import type { ContractOptimizationMveProfile } from '@/lib/source/contract-optimization/types';
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -1687,22 +1711,7 @@ const DOSSIER_LINK_STYLE: CSSProperties = {
 const CANVAS_BODY_STYLE: CSSProperties = {
   flex: 1,
   display: "flex",
-  minHeight: 0,
-  overflow: "hidden",
-};
-
-const CANVAS_BODY_STYLE: CSSProperties = {
-  flex: 1,
-  display: "flex",
   flexDirection: "row",
-  minHeight: 0,
-  overflow: "hidden",
-};
-
-const WORKSPACE_COLUMN_STYLE: CSSProperties = {
-  flex: 1,
-  display: "flex",
-  flexDirection: "column",
   minHeight: 0,
   overflow: "hidden",
 };
@@ -1712,6 +1721,7 @@ const WORKSPACE_COLUMN_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   minWidth: 0,
+  minHeight: 0,
   overflow: 'hidden',
 };
 

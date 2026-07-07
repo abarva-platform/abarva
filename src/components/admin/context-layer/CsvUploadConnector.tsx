@@ -9,8 +9,8 @@ import {
 } from "react";
 
 import {
-  MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES,
-  PHS_CONTEXT_TEMPLATES,
+  MERIDIAN_CONTEXT_TEMPLATES,
+  NORTHSTAR_CONTEXT_TEMPLATES,
   getTemplatesForTenant,
 } from "@/lib/context-ingestion/template-registry";
 import { proposeCsvColumnMapping } from "@/lib/context-ingestion/csv-column-mapping";
@@ -303,11 +303,11 @@ export function CsvUploadConnector({
     [tenantKey],
   );
   const healthcareTemplateIds = useMemo(
-    () => new Set(MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES.map((item) => item.id)),
+    () => new Set(MERIDIAN_CONTEXT_TEMPLATES.map((item) => item.id)),
     [],
   );
   const phsTemplateIds = useMemo(
-    () => new Set(PHS_CONTEXT_TEMPLATES.map((item) => item.id)),
+    () => new Set(NORTHSTAR_CONTEXT_TEMPLATES.map((item) => item.id)),
     [],
   );
   const generalTemplates = useMemo(

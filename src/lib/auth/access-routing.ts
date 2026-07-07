@@ -1,4 +1,4 @@
-import { DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
+import { DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey, isKnownAgentClientLoginEmail, type ClientKey } from '@/lib/client-config';
 import { getStaticLaunchAccessProfile } from '@/lib/auth/launch-access';
 
 export type AppSessionRole =
@@ -31,26 +31,6 @@ function normalizeEmail(email: string | null | undefined): string {
   return email?.trim().toLowerCase() ?? "";
 }
 
-export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
-  const normalized = normalizeEmail(email);
-  if (!normalized) return false;
-  const launchProfile = getStaticLaunchAccessProfile(normalized);
-  if (launchProfile?.clientKey) return true;
-  return (
-    normalized.endsWith('@meridian-health.example.com') ||
-    normalized.endsWith('@apex-retail.example.com') ||
-    normalized.endsWith('@firstcapital.example.com') ||
-    normalized.endsWith('@northstar-clinical.example.com') ||
-    normalized.endsWith('@skyharbor-air.example.com') ||
-    normalized.endsWith('@lakeshore-industries.example.com') ||
-    normalized.includes('+apex@abarva.com') ||
-    normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com') ||
-    normalized.includes('+northstar@abarva.com') ||
-    normalized.includes('+skyharbor@abarva.com')
-  );
-}
-
 // Real external pilot users (tenant mapping lives in
 // PILOT_EXACT_EMAIL_TO_CLIENT_KEY, client-config.ts). Listing them here pins
 // their session to their client and gives them the locked `client` role — the
@@ -69,26 +49,26 @@ function isPilotAccessEmail(normalizedEmail: string): boolean {
   return PILOT_ACCESS_EMAILS.has(normalizedEmail);
 }
 
-export function hasExplicitTenantAlias(
-  email: string | null | undefined,
-): boolean {
+export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
+  const launchProfile = getStaticLaunchAccessProfile(normalized);
+  if (launchProfile?.clientKey) return true;
   return (
-    normalized.endsWith("@meridian-health.example.com") ||
-    normalized.endsWith("@apex-retail.example.com") ||
-    normalized.endsWith("@firstcapital.example.com") ||
-    normalized.endsWith("@northstar-clinical.example.com") ||
-    normalized.endsWith("@skyharbor-air.example.com") ||
-    normalized.endsWith("@lakeshore-holdings.example.com") ||
-    normalized.includes("+apex@abarva.com") ||
-    normalized.includes("+meridian@abarva.com") ||
-    normalized.includes("+firstcapital@abarva.com") ||
-    normalized.includes("+northstar@abarva.com") ||
-    normalized.includes("+skyharbor@abarva.com") ||
-    normalized.includes("+lakeshore@abarva.com") ||
+    normalized.endsWith('@meridian-health.example.com') ||
+    normalized.endsWith('@apex-retail.example.com') ||
+    normalized.endsWith('@firstcapital.example.com') ||
+    normalized.endsWith('@northstar-clinical.example.com') ||
+    normalized.endsWith('@skyharbor-air.example.com') ||
+    normalized.endsWith('@lakeshore-industries.example.com') ||
+    normalized.endsWith('@lakeshore-holdings.example.com') ||
+    normalized.includes('+apex@abarva.com') ||
+    normalized.includes('+meridian@abarva.com') ||
+    normalized.includes('+firstcapital@abarva.com') ||
+    normalized.includes('+northstar@abarva.com') ||
+    normalized.includes('+skyharbor@abarva.com') ||
+    normalized.includes('+lakeshore@abarva.com') ||
     isKnownAgentClientLoginEmail(normalized) ||
-    isAnandOperatorAlias(normalized) ||
     isPilotAccessEmail(normalized)
   );
 }
