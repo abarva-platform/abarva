@@ -78,6 +78,8 @@ export interface AskOptions {
   activePersonGraphNodeId?: string | null;
   activePersonDisplayName?: string | null;
   traceEnabled?: boolean;
+  /** Caller surface renders the companion canvas — stream the main answer only, let the canvas fill in separately. Default false. */
+  companionCanvasEnabled?: boolean;
   traceSession?: {
     user?: AnswerTraceEnvelope["session"]["user"];
     tenant?: unknown;

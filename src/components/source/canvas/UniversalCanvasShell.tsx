@@ -1323,7 +1323,12 @@ export function UniversalCanvasShell({
   );
 }
 
+// Unified voice: the user always talks to "aVa", regardless of which internal
+// specialist (Sentinel on stages 1–9, Atlas on the executive stages) leads the
+// stage. The stage-appropriate role copy still differs (see AGENT_DOCK_ROLE_COPY);
+// only the displayed agent NAME is always aVa.
 function displayAgentName(_agent?: "Sentinel" | "Atlas"): string {
+  void _agent;
   return "aVa";
 }
 

@@ -97,14 +97,6 @@ export function formatSkyHarborCtoReadinessSourceDetail(
   ].join("\n");
 }
 
-export function buildSkyHarborCtoReadinessNativeCanvasBlock(
-  query: string,
-  tenantKeys: Array<string | null | undefined>,
-): string {
-  const source = buildSkyHarborCtoReadinessSource(query, tenantKeys);
-  return source?.detail ?? "";
-}
-
 export function buildSkyHarborCtoReadinessSource(
   query: string,
   tenantKeys: Array<string | null | undefined>,
@@ -121,6 +113,40 @@ export function buildSkyHarborCtoReadinessSource(
   };
 }
 
+function wrapSkyHarborCanvasPayload(payload: object): string {
+  return ["```abarva-canvas", JSON.stringify(payload), "```"].join("\n");
+}
+
+// Native right-canvas exhibit for SkyHarbor CTO readiness questions, using the
+// abarva-canvas fenced JSON contract (mirrors buildIndustrialCioBackofficeNativeCanvasBlock).
+// Proof-boundary framing fits this packet best: it's built to separate loaded evidence
+// from planning assumptions from what's still missing before a claim is board-grade.
+export function buildSkyHarborCtoReadinessNativeCanvasBlock(
+  query: string,
+  tenantKeys: Array<string | null | undefined>,
+): string {
+  if (
+    !tenantKeys.some(isSkyHarborTenantKey) ||
+    !isSkyHarborCtoReadinessQuestion(query)
+  ) {
+    return "";
+  }
+  const packet = buildSkyHarborCtoReadinessPacket();
+  const knownClaims = packet.claimMaturity
+    .filter((claim) => !claim.signoffRequired)
+    .slice(0, 4)
+    .map((claim) => claim.statement);
+  return wrapSkyHarborCanvasPayload({
+    canvasType: "proof-boundary-card",
+    title: "SkyHarbor CTO IROPS Readiness Proof Boundary",
+    proofBoundary: {
+      known: knownClaims.length > 0 ? knownClaims : [packet.valueMechanism],
+      assumed: packet.planningAssumptions.slice(0, 3),
+      missing: packet.missingEvidenceChecklist.slice(0, 5),
+      decisionRequired: `Recommended decision posture: ${packet.decision.replace(/_/g, " ")}. CTO to confirm which claims need Finance/Ops signoff before board use.`,
+    },
+  });
+}
 export function buildSkyHarborCtoReadinessPromptAddendum(
   query: string,
   tenantKeys: Array<string | null | undefined>,

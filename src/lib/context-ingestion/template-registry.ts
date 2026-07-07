@@ -4,18 +4,6 @@ import type {
   UploadedFileFormat,
 } from "./types";
 
-export interface TemplateFormatSupportProfile {
-  format: Exclude<UploadedFileFormat, "unknown">;
-  nativeSupport: boolean;
-  requiresConversion: boolean;
-}
-
-export interface TemplateExceptionMetadataRequirement {
-  label: string;
-  field: string;
-  required: boolean;
-}
-
 export interface ContextTemplateDefinition {
   id: string;
   dimension: ContextDimension;
@@ -520,10 +508,12 @@ export const UNIVERSAL_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
   },
 ];
 
-export const SUPPORTED_CONTEXT_UPLOAD_FORMATS: Exclude<
-  UploadedFileFormat,
-  "unknown"
->[] = [
+// Every non-"unknown" UploadedFileFormat the context-upload pipeline can take in.
+// Canonical acceptance is per-template (see acceptedFormats); anything outside that
+// list is still intake-eligible through the controlled metadata-exception path below.
+export const SUPPORTED_CONTEXT_UPLOAD_FORMATS: ReadonlyArray<
+  Exclude<UploadedFileFormat, "unknown">
+> = [
   "csv",
   "xlsx",
   "json",
@@ -536,38 +526,155 @@ export const SUPPORTED_CONTEXT_UPLOAD_FORMATS: Exclude<
   "zip",
 ];
 
-const FORMAT_SUPPORT_PROFILES: Record<
+const STRUCTURED_UPLOAD_FORMATS: ReadonlySet<
+  Exclude<UploadedFileFormat, "unknown">
+> = new Set(["csv", "xlsx", "json", "jsonl", "yaml"]);
+
+export interface TemplateFormatSupportProfile {
+  format: Exclude<UploadedFileFormat, "unknown">;
+  parserLabel: string;
+  requiresMetadataForException: boolean;
+}
+
+function formatParserLabel(
+  format: Exclude<UploadedFileFormat, "unknown">,
+): string {
+  if (STRUCTURED_UPLOAD_FORMATS.has(format)) return "Structured rows parser";
+  if (format === "zip") return "Manifest bundle parser";
+  return "Document facts parser";
+}
+
+export const FORMAT_SUPPORT_PROFILES: Record<
   Exclude<UploadedFileFormat, "unknown">,
   TemplateFormatSupportProfile
-> = {
-  csv: { format: "csv", nativeSupport: true, requiresConversion: false },
-  xlsx: { format: "xlsx", nativeSupport: true, requiresConversion: false },
-  json: { format: "json", nativeSupport: true, requiresConversion: false },
-  jsonl: { format: "jsonl", nativeSupport: true, requiresConversion: false },
-  pdf: { format: "pdf", nativeSupport: false, requiresConversion: true },
-  docx: { format: "docx", nativeSupport: false, requiresConversion: true },
-  pptx: { format: "pptx", nativeSupport: false, requiresConversion: true },
-  markdown: {
-    format: "markdown",
-    nativeSupport: true,
-    requiresConversion: false,
+> = Object.fromEntries(
+  SUPPORTED_CONTEXT_UPLOAD_FORMATS.map((format) => [
+    format,
+    {
+      format,
+      parserLabel: formatParserLabel(format),
+      requiresMetadataForException: !STRUCTURED_UPLOAD_FORMATS.has(format),
+    },
+  ]),
+) as Record<
+  Exclude<UploadedFileFormat, "unknown">,
+  TemplateFormatSupportProfile
+>;
+
+export function getFormatSupportProfile(
+  format: UploadedFileFormat,
+): TemplateFormatSupportProfile | undefined {
+  if (format === "unknown") return undefined;
+  return FORMAT_SUPPORT_PROFILES[format];
+}
+
+export interface TemplateExceptionMetadataRequirement {
+  key: string;
+  label: string;
+  purpose: string;
+  requiredForFormats: Exclude<UploadedFileFormat, "unknown">[];
+}
+
+// Universal fields the exception-intake path always asks for, regardless of which
+// non-canonical format was uploaded (matches the "Exception intake rule" copy on the
+// admin template explorer page: source ownership, sensitivity, mapping, parse steps).
+const UNIVERSAL_EXCEPTION_METADATA: ReadonlyArray<
+  Omit<TemplateExceptionMetadataRequirement, "requiredForFormats">
+> = [
+  {
+    key: "source_system",
+    label: "Source system",
+    purpose: "Identify the system of record this file was exported from.",
   },
-  yaml: { format: "yaml", nativeSupport: true, requiresConversion: false },
-  zip: { format: "zip", nativeSupport: false, requiresConversion: true },
+  {
+    key: "data_owner",
+    label: "Data owner",
+    purpose: "Name the accountable owner who can confirm the data is accurate.",
+  },
+  {
+    key: "sensitivity_declaration",
+    label: "Sensitivity declaration",
+    purpose: "Declare the sensitivity classification of the file's contents.",
+  },
+  {
+    key: "field_mapping",
+    label: "Field mapping",
+    purpose:
+      "Map the source columns or fields to this template's required fields.",
+  },
+  {
+    key: "parse_instructions",
+    label: "Parse instructions",
+    purpose: "Explain how to locate the relevant data inside the file.",
+  },
+];
+
+// Format-specific anchor requirement: where inside the file the relevant data lives.
+const FORMAT_ANCHOR_METADATA: Partial<
+  Record<
+    Exclude<UploadedFileFormat, "unknown">,
+    Omit<TemplateExceptionMetadataRequirement, "requiredForFormats">
+  >
+> = {
+  xlsx: {
+    key: "workbook_sheet_anchor",
+    label: "Workbook sheet anchor",
+    purpose: "Name the workbook sheet(s) holding the relevant rows.",
+  },
+  json: {
+    key: "json_path_anchor",
+    label: "JSON path anchor",
+    purpose: "Give the JSON path to the relevant records.",
+  },
+  jsonl: {
+    key: "json_path_anchor",
+    label: "JSON path anchor",
+    purpose: "Give the JSON path to the relevant records.",
+  },
+  pdf: {
+    key: "pdf_page_anchor",
+    label: "PDF page anchor",
+    purpose: "Cite the page range holding the relevant data.",
+  },
+  docx: {
+    key: "document_heading_anchor",
+    label: "Document heading anchor",
+    purpose: "Cite the heading or section holding the relevant data.",
+  },
+  pptx: {
+    key: "slide_number_anchor",
+    label: "Slide number anchor",
+    purpose: "Cite the slide numbers holding the relevant data.",
+  },
+  zip: {
+    key: "archive_manifest_anchor",
+    label: "Archive manifest anchor",
+    purpose: "Provide a manifest describing the archive's contents and layout.",
+  },
 };
 
-function buildExceptionMetadataRequirements(
-  acceptedFormats: UploadedFileFormat[],
+// Metadata an upload must supply before it can move past intake without a canonical
+// format match — the universal fields above, plus a format-specific anchor per format
+// that's outside this template's canonical acceptedFormats.
+export function buildExceptionMetadataRequirements(
+  acceptedFormats: Exclude<UploadedFileFormat, "unknown">[],
 ): TemplateExceptionMetadataRequirement[] {
-  return SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
-    (f) => !(acceptedFormats as string[]).includes(f),
-  ).map((f) => ({
-    label: FORMAT_SUPPORT_PROFILES[f].requiresConversion
-      ? `${f.toUpperCase()} — conversion required`
-      : `${f.toUpperCase()} — accepted with field mapping`,
-    field: "format",
-    required: false,
-  }));
+  const exceptionFormats = SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
+    (format) => !acceptedFormats.includes(format),
+  );
+  if (exceptionFormats.length === 0) return [];
+  const requirements: TemplateExceptionMetadataRequirement[] =
+    UNIVERSAL_EXCEPTION_METADATA.map((item) => ({
+      ...item,
+      requiredForFormats: exceptionFormats,
+    }));
+  for (const format of exceptionFormats) {
+    const anchor = FORMAT_ANCHOR_METADATA[format];
+    if (anchor) {
+      requirements.push({ ...anchor, requiredForFormats: [format] });
+    }
+  }
+  return requirements;
 }
 
 export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
@@ -1276,15 +1383,21 @@ export const RUNTIME_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
   ...MERIDIAN_CONTEXT_TEMPLATES,
 ];
 
-export function getTemplateFormatCoverage(): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const format of SUPPORTED_CONTEXT_UPLOAD_FORMATS) counts[format] = 0;
-  for (const template of RUNTIME_CONTEXT_TEMPLATES) {
-    for (const format of template.acceptedFormats) {
-      if (format !== "unknown") counts[format] = (counts[format] ?? 0) + 1;
-    }
+// Per format, how many templates across the full runtime registry accept it
+// canonically (out of the box, no exception metadata needed). Every format is
+// still uploadable for every template via the exception path — this reports the
+// canonical count so an admin can see which formats need exception intake most.
+export function getTemplateFormatCoverage(): Record<
+  Exclude<UploadedFileFormat, "unknown">,
+  number
+> {
+  const coverage = {} as Record<Exclude<UploadedFileFormat, "unknown">, number>;
+  for (const format of SUPPORTED_CONTEXT_UPLOAD_FORMATS) {
+    coverage[format] = RUNTIME_CONTEXT_TEMPLATES.filter((template) =>
+      template.acceptedFormats.includes(format),
+    ).length;
   }
-  return counts;
+  return coverage;
 }
 
 function isMeridianTenant(tenantKey?: string | null): boolean {
