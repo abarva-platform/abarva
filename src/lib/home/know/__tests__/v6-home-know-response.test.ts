@@ -174,6 +174,42 @@ describe("Home V6 KNOW response contract", () => {
     expect(response.prose).toContain("Intelligence owns");
   });
 
+  it("keeps CFO company-profile orientation in Enterprise Profile instead of advisory handoff", () => {
+    const result = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question:
+        "What should a CFO know about Lakeshore Holdings from the loaded company profile?",
+      includeTrace: true,
+    });
+    const response = toHomeKnowResponseFromV6(result, {
+      question:
+        "What should a CFO know about Lakeshore Holdings from the loaded company profile?",
+    });
+
+    expect(result.proof.questionIntent).toBe("loaded_context");
+    expect(result.answer.primaryDimension).toBe("enterprise_profile");
+    expect(response.answerStatus).not.toBe("handoff");
+    expect(response.handoff).toBeNull();
+    expect(response.prose).toContain("portfolio company revenue rollup");
+    expect(response.prose).toContain("direct holdco revenue: $0");
+  });
+
+  it("hands leadership investment sequencing questions to Intelligence", () => {
+    const result = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question: "Where should leadership invest next quarter based on this context?",
+      includeTrace: true,
+    });
+    const response = toHomeKnowResponseFromV6(result, {
+      question: "Where should leadership invest next quarter based on this context?",
+    });
+
+    expect(result.proof.questionIntent).toBe("handoff_intelligence");
+    expect(response.answerability).toBe("requires_intelligence");
+    expect(response.handoff?.target).toBe("intelligence");
+    expect(response.prose).toContain("Intelligence owns");
+  });
+
   it("resolves Financial Services demo aliases to the canonical V6 dataset", () => {
     for (const tenantKey of ["arcturus", "firstcapital", "first-capital"]) {
       const result = answerHomeKnowFromV6({
