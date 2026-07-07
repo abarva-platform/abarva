@@ -2,7 +2,11 @@ import { demoSafeClientText } from "@/lib/client-config";
 
 export interface HomeKnowVisibleSanitizerAudit {
   sanitizerApplied: boolean;
-  sanitizerReason: "none" | "duplicate_tenant_opening" | "markdown_markup";
+  sanitizerReason:
+    | "none"
+    | "duplicate_tenant_opening"
+    | "markdown_markup"
+    | "executive_wording";
   semanticLoss: false;
   changedFields: string[];
   beforePrefix?: string;
@@ -55,7 +59,11 @@ function sanitizeValue<T>(
     }
     const demoSafeValue = demoSafeClientText(value);
     return collapseRepeatedTenantOpening(
-      stripVisibleMarkdownMarkup(demoSafeValue, audit, path),
+      improveExecutiveWording(
+        stripVisibleMarkdownMarkup(demoSafeValue, audit, path),
+        audit,
+        path,
+      ),
       audit,
       path,
     ) as T;
@@ -97,12 +105,40 @@ function stripVisibleMarkdownMarkup(
   return normalized;
 }
 
+function improveExecutiveWording(
+  value: string,
+  audit: HomeKnowVisibleSanitizerAudit,
+  path: string,
+): string {
+  const normalized = value.replace(
+    /\bimplementation detail\b/gi,
+    "source trail and evidence ownership",
+  );
+  if (normalized === value) return value;
+  recordSanitizerChange(audit, "executive_wording", path, value, normalized);
+  return normalized;
+}
+
 function collapseRepeatedTenantOpening(
   value: string,
   audit: HomeKnowVisibleSanitizerAudit,
   path: string,
 ): string {
-  return value.replace(
+  const openingCollapsed = value.replace(
+    /^\s*For\s+([^,\n]+),\s+For\s+([^,\n]+),\s*/i,
+    (match, firstName: string) => {
+      const replacement = `For ${firstName.trim()}, `;
+      recordSanitizerChange(
+        audit,
+        "duplicate_tenant_opening",
+        path,
+        value,
+        value.replace(match, replacement),
+      );
+      return replacement;
+    },
+  );
+  return openingCollapsed.replace(
     /\bFor\s+([^,\n]+),\s+For\s+\1,\s*/gi,
     (match, repeatedName: string) => {
       const replacement = `For ${repeatedName.trim()}, `;
@@ -110,8 +146,8 @@ function collapseRepeatedTenantOpening(
         audit,
         "duplicate_tenant_opening",
         path,
-        value,
-        value.replace(match, replacement),
+        openingCollapsed,
+        openingCollapsed.replace(match, replacement),
       );
       return replacement;
     },

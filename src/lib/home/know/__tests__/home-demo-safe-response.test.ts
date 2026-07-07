@@ -123,6 +123,33 @@ describe("home demo-safe response sanitizer", () => {
     expect(audit.changedFields).toContain("$.prose");
   });
 
+  it("collapses variant tenant openings at the start of visible prose", () => {
+    const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
+      prose:
+        "For Lakeshore Holdings Industries, For Lakeshore Holdings, the IT organization reflects the structural logic of a holding company.",
+    });
+
+    expect(safe.prose).toBe(
+      "For Lakeshore Holdings Industries, the IT organization reflects the structural logic of a holding company.",
+    );
+    expect(audit.sanitizerApplied).toBe(true);
+    expect(audit.sanitizerReason).toBe("duplicate_tenant_opening");
+    expect(audit.changedFields).toContain("$.prose");
+  });
+
+  it("rephrases implementation-detail language into executive source wording", () => {
+    const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
+      prose:
+        "For Lakeshore Holdings Industries, the question touches implementation detail, so Home should explain the boundary.",
+    });
+
+    expect(safe.prose).toContain("source trail and evidence ownership");
+    expect(safe.prose).not.toMatch(/implementation detail/i);
+    expect(audit.sanitizerApplied).toBe(true);
+    expect(audit.sanitizerReason).toBe("executive_wording");
+    expect(audit.changedFields).toContain("$.prose");
+  });
+
   it("reports no visible sanitizer change when duplicate openings are absent", () => {
     const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
       prose:
