@@ -60,6 +60,11 @@ export function ValueBridgeInsight({ insight }: ValueBridgeInsightProps) {
       headline={insight.headline}
       provenance={insight.provenance}
       note={insight.note}
+      advisor={{
+        bestPractice: insight.bestPractice,
+        benchmark: insight.benchmark,
+        downstreamImpact: insight.downstreamImpact,
+      }}
     >
       <div style={{ margin: '0 0 12px' }}>
         <ValueTypeLegend />

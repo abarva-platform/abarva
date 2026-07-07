@@ -36,6 +36,10 @@ import type {
   ValueLeverResult,
 } from '@/lib/source/facts/evaluators/types';
 import type {
+  RfpClauseInsightView,
+  RfpClauseRowView,
+  ScopeCoverageInsightView,
+  ScopeCoverageRowView,
   ShouldCostInsightView,
   ShouldCostVendorView,
   StepInsightView,
@@ -82,6 +86,10 @@ export function stepInsightKindForStage(
   switch (normalizeStage(stageKey)) {
     case 'strategy':
       return 'value_pool';
+    case 'scope':
+      return 'scope_coverage';
+    case 'rfp':
+      return 'rfp_clause_coverage';
     case 'pricing':
       return 'value_bridge';
     case 'evaluation':
@@ -129,6 +137,10 @@ export function buildStepInsight(
   switch (kind) {
     case 'value_pool':
       return buildValuePoolInsight(resolved, input.inputs);
+    case 'scope_coverage':
+      return buildScopeCoverageInsight(resolved, input.inputs);
+    case 'rfp_clause_coverage':
+      return buildRfpClauseInsight(resolved, input.inputs);
     case 'value_bridge':
       return buildValueBridgeInsight(resolved, input);
     case 'should_cost_normalization':
@@ -272,6 +284,309 @@ function valuePoolHeadline(
       ` ${needsEvidenceCount} more ${needsEvidenceCount === 1 ? 'lever needs' : 'levers need'} evidence to size.`;
   }
   return line.charAt(0).toUpperCase() + line.slice(1);
+}
+
+// ── shared advisor helpers (Scope + RFP) ─────────────────────────────────────
+
+/**
+ * The illustrative per-value-type $ scale used to size a lever whose real facts
+ * are absent (MODEL / stranded rows). Ranges only, never a point; plausible AMS
+ * magnitudes, never a tenant-real claim. Kept in sync with `sampleBarsFromRules`.
+ */
+const ILLUSTRATIVE_SCALE: Record<ValueType, { low: number; high: number }> = {
+  protected: { low: 1_800_000, high: 2_600_000 },
+  incremental_negotiated: { low: 1_200_000, high: 1_900_000 },
+  solution_tightening: { low: 700_000, high: 1_300_000 },
+  risk_adjusted: { low: 400_000, high: 900_000 },
+  expected_concession: { low: 300_000, high: 700_000 },
+};
+
+/**
+ * Human-readable label for an evidence family key (the tokens a rule lists in
+ * `requiredEvidence`). Falls back to a title-cased version of the key so a new
+ * family is legible even before it is named here.
+ */
+function evidenceFamilyLabel(key: string): string {
+  const LABELS: Record<string, string> = {
+    ticket_volumes: 'ticket volumes',
+    contract_baseline: 'contract baseline',
+    service_tower_scope: 'service-tower scope',
+    run_cost_baseline: 'run-cost baseline',
+    tooling_landscape: 'tooling landscape',
+    retained_org_model: 'retained-org model',
+    staffing_baseline: 'staffing baseline',
+    sla_baseline: 'SLA baseline',
+    incident_problem_change: 'incident / problem / change data',
+    transition_constraints: 'transition constraints',
+  };
+  return LABELS[key] ?? key.replace(/_/g, ' ');
+}
+
+/**
+ * A lever is REACHABLE when every fact its computation REQUIRES (the
+ * citationRequired inputs) is present in the event's facts. When facts are absent
+ * the lever is stranded (its value cannot be captured downstream). Returns the
+ * fact keys that are still missing so the UI can say WHY it is stranded.
+ */
+function leverReachability(
+  rule: ValueLeverRule,
+  facts: EventFactMap,
+): { reachable: boolean; missingInputKeys: string[] } {
+  const required = rule.computation.inputs.filter((i) => i.citationRequired);
+  const missing = required
+    .filter((i) => {
+      const v = facts[i.key];
+      return !(typeof v === 'number' && Number.isFinite(v));
+    })
+    .map((i) => i.key);
+  return { reachable: missing.length === 0, missingInputKeys: missing };
+}
+
+/** The $ band for a lever — real when it computes, else the illustrative scale. */
+function leverBand(
+  rule: ValueLeverRule,
+  results: readonly ValueLeverResult[],
+): { low: number; high: number } {
+  const computed = results.find((r) => r.key === rule.key);
+  if (computed && !computed.insufficientEvidence) {
+    return { low: computed.low, high: computed.high };
+  }
+  return ILLUSTRATIVE_SCALE[rule.valueType];
+}
+
+// ── Scope · SCOPE-TO-VALUE COVERAGE (reachable vs stranded) ───────────────────
+
+/**
+ * Scope coverage: one row per value lever, judged reachable (all required evidence
+ * present) vs stranded (missing / out of scope). $ at stake is real where the lever
+ * computes, else the illustrative scale. When the event has NO facts at all the
+ * whole determination is a MODEL — every lever is shown as what a complete scope
+ * would unlock, clearly badged. Advisor layer surfaces the playbook best-practice,
+ * a labeled market benchmark, and the downstream cost of scoping this wrong.
+ */
+export function buildScopeCoverageInsight(
+  archetype: SourceEventArchetype,
+  facts: EventFactMap,
+): ScopeCoverageInsightView {
+  const rules = archetype.valueLeverRules ?? [];
+  const advisor = scopeAdvisor(rules);
+
+  if (rules.length === 0) {
+    return {
+      kind: 'scope_coverage',
+      provenance: 'sample',
+      headline: 'No value levers are wired for this archetype yet.',
+      rows: [],
+      isModel: true,
+      note: 'No value levers are wired for this archetype yet.',
+      ...advisor,
+    };
+  }
+
+  const results = evaluateValueLevers(archetype, facts);
+  const hasAnyFacts = Object.values(facts).some(
+    (v) => typeof v === 'number' && Number.isFinite(v),
+  );
+
+  const rows: ScopeCoverageRowView[] = rules.map((rule) => {
+    const band = leverBand(rule, results);
+    const { reachable } = leverReachability(rule, facts);
+    // Map the still-missing computation inputs back to the human evidence families
+    // this lever declares — that's the plain-English "what to scope for".
+    const missingEvidence = reachable
+      ? []
+      : rule.requiredEvidence.map(evidenceFamilyLabel);
+    return {
+      leverKey: rule.key,
+      label: rule.name,
+      valueType: rule.valueType,
+      low: band.low,
+      high: band.high,
+      // In MODEL mode (no facts) we show every lever as reachable — "what a
+      // complete scope unlocks" — and badge the whole thing MODEL. With real
+      // facts the reachability is genuine.
+      reachable: hasAnyFacts ? reachable : true,
+      requiredEvidence: rule.requiredEvidence.map(evidenceFamilyLabel),
+      missingEvidence: hasAnyFacts ? missingEvidence : [],
+    };
+  });
+
+  // Order: reachable first, then stranded; biggest-$ within each group.
+  const ordered = [...rows].sort((a, b) => {
+    if (a.reachable !== b.reachable) return a.reachable ? -1 : 1;
+    return b.high - a.high;
+  });
+
+  const isModel = !hasAnyFacts;
+  return {
+    kind: 'scope_coverage',
+    provenance: isModel ? 'sample' : 'live',
+    headline: scopeCoverageHeadline(ordered, isModel),
+    rows: ordered,
+    isModel,
+    note: isModel
+      ? 'Model — with no scope evidence landed, every lever is shown as what a complete scope would unlock. It resolves reachable-vs-stranded for real once your ticket, run-cost, SLA, and contract evidence lands. Not a tenant savings claim.'
+      : undefined,
+    ...advisor,
+  };
+}
+
+function scopeCoverageHeadline(
+  rows: readonly ScopeCoverageRowView[],
+  isModel: boolean,
+): string {
+  if (rows.length === 0) return 'No value levers are wired for this archetype yet.';
+  const reachable = rows.filter((r) => r.reachable);
+  const stranded = rows.filter((r) => !r.reachable);
+  const reachableLow = reachable.reduce((s, r) => s + r.low, 0);
+  const reachableHigh = reachable.reduce((s, r) => s + r.high, 0);
+  const totalLow = rows.reduce((s, r) => s + r.low, 0);
+  const totalHigh = rows.reduce((s, r) => s + r.high, 0);
+
+  if (isModel) {
+    return (
+      `A complete scope unlocks ${fmtUsdRange(totalLow, totalHigh)} across ${rows.length} ` +
+      `levers — every lever left out of scope is a lever you can't recover in RFP or BAFO.`
+    );
+  }
+  if (stranded.length === 0) {
+    return `${fmtUsdRange(reachableLow, reachableHigh)} across all ${rows.length} levers is reachable under current scope — nothing stranded.`;
+  }
+  const strandedLow = stranded.reduce((s, r) => s + r.low, 0);
+  const strandedHigh = stranded.reduce((s, r) => s + r.high, 0);
+  const worst = [...stranded].sort((a, b) => b.high - a.high)[0];
+  const why =
+    worst.missingEvidence.length > 0 ? worst.missingEvidence[0] : 'missing evidence';
+  return (
+    `${fmtUsdRange(reachableLow, reachableHigh)} of ${fmtUsdRange(totalLow, totalHigh)} reachable under current scope; ` +
+    `${fmtUsdRange(strandedLow, strandedHigh)} stranded — biggest is ${worst.label}, blocked on ${why}.`
+  );
+}
+
+/**
+ * The Scope advisor layer, sourced from the levers' playbook. Best-practice from
+ * each lever's `whatToWatch` (verbatim, deduped); benchmark = a clearly-labeled
+ * market range; downstream = the "scope sets your ceiling" doctrine.
+ */
+function scopeAdvisor(rules: readonly ValueLeverRule[]): {
+  bestPractice: string[];
+  benchmark: string;
+  downstreamImpact: string;
+} {
+  const bestPractice = rules.slice(0, 4).map((r) => {
+    const ev = r.requiredEvidence.map(evidenceFamilyLabel).join(' + ');
+    return `${r.name}: watch for ${lowerFirst(r.whatToWatch)} Needs ${ev} in scope.`;
+  });
+  return {
+    bestPractice,
+    benchmark:
+      'Market range — comparable AMS events scope ~6–9 service towers and ~3,500–4,800 L2/L3 tickets/month; scoping without ticket volumetrics lets vendors pad an Outline-tier RFP against ambiguity.',
+    downstreamImpact:
+      'Scope sets your ceiling. A lever left out of scope here cannot be recovered in RFP, Evaluation, or BAFO — the stranded $ is gone for the term.',
+  };
+}
+
+// ── RFP · LEVER-TO-CLAUSE COVERAGE (protected vs exposed) ─────────────────────
+
+/**
+ * RFP clause coverage: one row per value lever, protected (the RFP requires its
+ * clause) vs exposed. There is no structured RFP-draft in the fact model yet, so
+ * this defaults to a MODEL — every lever is EXPOSED ("to require") — until an
+ * RFP-draft signal exists. $ at stake is real where the lever computes, else the
+ * illustrative scale. Each exposed row carries the exact rfpClause + bafoAsk text
+ * (the clause library). Advisor layer surfaces best-practice, a labeled market
+ * benchmark, and the downstream cost of leaving a lever unprotected.
+ */
+export function buildRfpClauseInsight(
+  archetype: SourceEventArchetype,
+  facts: EventFactMap,
+): RfpClauseInsightView {
+  const rules = archetype.valueLeverRules ?? [];
+  const advisor = rfpAdvisor();
+
+  if (rules.length === 0) {
+    return {
+      kind: 'rfp_clause_coverage',
+      provenance: 'sample',
+      headline: 'No value levers are wired for this archetype yet.',
+      rows: [],
+      isModel: true,
+      note: 'No value levers are wired for this archetype yet.',
+      ...advisor,
+    };
+  }
+
+  const results = evaluateValueLevers(archetype, facts);
+  // MODEL: no RFP-draft signal in the fact model — every lever is "to require".
+  const rows: RfpClauseRowView[] = rules.map((rule) => {
+    const band = leverBand(rule, results);
+    return {
+      leverKey: rule.key,
+      label: rule.name,
+      valueType: rule.valueType,
+      low: band.low,
+      high: band.high,
+      protected: false, // no RFP-draft signal yet → exposed until required
+      rfpClause: rule.rfpClause,
+      bafoAsk: rule.bafoAsk,
+    };
+  });
+
+  // Order: exposed first (the ask), biggest-$ within.
+  const ordered = [...rows].sort((a, b) => {
+    if (a.protected !== b.protected) return a.protected ? 1 : -1;
+    return b.high - a.high;
+  });
+
+  return {
+    kind: 'rfp_clause_coverage',
+    provenance: 'sample',
+    headline: rfpClauseHeadline(ordered),
+    rows: ordered,
+    isModel: true,
+    note: 'Model — no structured RFP draft is in the fact model yet, so every lever is shown as a clause to require. It resolves protected-vs-exposed for real once an RFP-draft signal exists (an uploaded/authored RFP whose required clauses are extracted). The clause text below is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
+    ...advisor,
+  };
+}
+
+function rfpClauseHeadline(rows: readonly RfpClauseRowView[]): string {
+  if (rows.length === 0) return 'No value levers are wired for this archetype yet.';
+  const exposed = rows.filter((r) => !r.protected);
+  const totalLow = rows.reduce((s, r) => s + r.low, 0);
+  const totalHigh = rows.reduce((s, r) => s + r.high, 0);
+  const exposedLow = exposed.reduce((s, r) => s + r.low, 0);
+  const exposedHigh = exposed.reduce((s, r) => s + r.high, 0);
+  return (
+    `Your ${fmtUsdRange(totalLow, totalHigh)} pool depends on ${rows.length} levers; ` +
+    `best-in-class AMS RFPs protect each with a clause — ${exposed.length} still exposed (${fmtUsdRange(exposedLow, exposedHigh)}).`
+  );
+}
+
+/**
+ * The RFP advisor layer. Best-practice = the doctrine of clause protection;
+ * benchmark = a clearly-labeled market range on the omission that costs most;
+ * downstream = "the RFP is the last lock point".
+ */
+function rfpAdvisor(): {
+  bestPractice: string[];
+  benchmark: string;
+  downstreamImpact: string;
+} {
+  return {
+    bestPractice: [
+      'Every priced lever needs a matching RFP clause — the clause is what makes the value a requirement vendors must answer, not a hope.',
+      'Pair each clause with its BAFO fallback so an exposed lever still has a negotiation ask if it slips the RFP.',
+      'Require classification and unit-rate catalogs up front — vague enhancement / change-order language is where post-award leakage starts.',
+    ],
+    benchmark:
+      'Market range — an estimated ~70% of AMS RFPs omit the volume-band step-down clause, so the buyer keeps paying peak-volume rates as tickets fall; ~60% under-specify SLA chronic-miss remedies.',
+    downstreamImpact:
+      'The RFP is the last point to lock a lever into a requirement. An unprotected lever cannot be recovered in Evaluation or BAFO — vendors answer only what the RFP required.',
+  };
+}
+
+function lowerFirst(s: string): string {
+  return s.length > 0 ? s.charAt(0).toLowerCase() + s.slice(1) : s;
 }
 
 // ── Pricing · the VALUE BRIDGE (the value-type waterfall as an insight) ───────

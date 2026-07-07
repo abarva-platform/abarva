@@ -6,6 +6,8 @@
 // the tab falls back to the IntelPanel read (+ optional waterfall) upstream.
 
 import { ValuePoolInsight } from './ValuePoolInsight';
+import { ScopeCoverageInsight } from './ScopeCoverageInsight';
+import { RfpClauseInsight } from './RfpClauseInsight';
 import { ValueBridgeInsight } from './ValueBridgeInsight';
 import { ShouldCostInsight } from './ShouldCostInsight';
 import type { StepInsightView } from '../view-model';
@@ -18,6 +20,10 @@ export function StepInsightPanel({ insight }: StepInsightPanelProps) {
   switch (insight.kind) {
     case 'value_pool':
       return <ValuePoolInsight insight={insight} />;
+    case 'scope_coverage':
+      return <ScopeCoverageInsight insight={insight} />;
+    case 'rfp_clause_coverage':
+      return <RfpClauseInsight insight={insight} />;
     case 'value_bridge':
       return <ValueBridgeInsight insight={insight} />;
     case 'should_cost_normalization':

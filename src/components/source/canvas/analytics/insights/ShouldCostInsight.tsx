@@ -74,6 +74,11 @@ export function ShouldCostInsight({ insight }: ShouldCostInsightProps) {
       provenance={insight.provenance}
       note={insight.note}
       isModel
+      advisor={{
+        bestPractice: insight.bestPractice,
+        benchmark: insight.benchmark,
+        downstreamImpact: insight.downstreamImpact,
+      }}
     >
       <ResponsiveContainer width="100%" height={height}>
         <BarChart

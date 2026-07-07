@@ -8,6 +8,8 @@
 
 export { StepInsightPanel } from './StepInsightPanel';
 export { ValuePoolInsight } from './ValuePoolInsight';
+export { ScopeCoverageInsight } from './ScopeCoverageInsight';
+export { RfpClauseInsight } from './RfpClauseInsight';
 export { ValueBridgeInsight } from './ValueBridgeInsight';
 export { ShouldCostInsight } from './ShouldCostInsight';
 export { InsightShell } from './InsightShell';
