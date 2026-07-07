@@ -38,11 +38,11 @@ The ask route itself is not replaced by the older branch implementation. The adv
 
 ## QA / Validation
 
-- Pass: `npx jest src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx --runInBand` (Jest emitted pre-existing duplicate manual mock warnings for mdast/micromark mocks, but the targeted suite passed: 2 tests / 2 passed).
+- Pass: `NODE_OPTIONS='--max-old-space-size=6144' npx tsc --noEmit --pretty false --incremental false`
 - Pass: `npx eslint src/app/(maestro)/intelligence/page.tsx src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx src/lib/home/enterprise-landscape-view-model.ts`
 - Pass: `npm run release:check`
+- Blocked: `npx jest src/components/intelligence-advisory/__tests__/AdvisoryIntelligencePage.test.tsx --runInBand` in the temporary worktree after dependency localization. The test runner resolves multiple React module instances in that temp checkout and raises an invalid-hook-call error before component assertions run. The earlier targeted suite passed before the dependency-localization workaround; CI remains the authority for the normalized install.
 - Blocked: `npm run build` in the temporary worktree. The first run failed because Turbopack rejects a `node_modules` symlink outside the project root. After localizing dependencies, the build failed on missing local dependency packages also missing from the root install (`@vercel/turbopack/postcss`, `@azure-rest/ai-document-intelligence`) and unrelated Azure optional-package resolution. This requires the normal ACR/Docker build path for final proof.
-- Blocked: `npx tsc --noEmit --pretty false --incremental false` exhausted the local Node heap on the full repo.
 - Not run: signed-in browser proof on `https://app.abarva.ai/intelligence`
 
 ## Rollout Plan

@@ -193,7 +193,7 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
                       : undefined,
             })),
             followups: event.answer.nextSteps
-              .map((step) => step.action)
+              .map((step) => step.label)
               .filter((item): item is string => Boolean(item?.trim()))
               .slice(0, 3),
           };
