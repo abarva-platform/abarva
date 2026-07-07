@@ -499,12 +499,22 @@ function BudgetYAxisTick(
   );
 }
 
-function BudgetSegmentLabel(props: LabelProps) {
+function BudgetSegmentLabel(
+  props: LabelProps & {
+    rows: BudgetChartRow[];
+    field: "run" | "change";
+  },
+) {
   const x = Number(props.x ?? 0);
   const y = Number(props.y ?? 0);
   const width = Number(props.width ?? 0);
   const height = Number(props.height ?? 0);
-  const value = Number(props.value ?? 0);
+  const index = Number(props.index ?? 0);
+  const row = props.rows[index];
+  // Recharts passes the stacked cumulative top as `value` for the second+
+  // segment of a stacked bar, not the segment's own magnitude — read the
+  // real per-field amount off the row instead of trusting `props.value`.
+  const value = row ? row[props.field] : 0;
   if (!value || width < 34) return null;
   return (
     <text
@@ -690,7 +700,11 @@ export function BudgetRunChangeChart({
             fill={CT.INK}
             radius={[4, 0, 0, 4]}
           >
-            <LabelList content={BudgetSegmentLabel} />
+            <LabelList
+              content={(props) => (
+                <BudgetSegmentLabel {...props} rows={chartRows} field="run" />
+              )}
+            />
           </Bar>
           <Bar
             dataKey="change"
@@ -698,7 +712,15 @@ export function BudgetRunChangeChart({
             fill={CT.GREEN}
             radius={[0, 4, 4, 0]}
           >
-            <LabelList content={BudgetSegmentLabel} />
+            <LabelList
+              content={(props) => (
+                <BudgetSegmentLabel
+                  {...props}
+                  rows={chartRows}
+                  field="change"
+                />
+              )}
+            />
             <LabelList
               content={(props) => (
                 <BudgetTotalLabel {...props} rows={chartRows} />
