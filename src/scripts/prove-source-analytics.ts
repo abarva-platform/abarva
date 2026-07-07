@@ -202,12 +202,21 @@ async function main(): Promise<void> {
     const wB = buildValueWaterfall(resultsB);
     printWaterfall(wB);
 
-    // Clean up the proof rows.
-    const del = await client.query(
-      "DELETE FROM source_event_facts WHERE source_event_id = $1 AND client_key = $2 AND source_citation->>'proof_tag' = $3",
-      [eventId, CLIENT_KEY, PROOF_TAG],
-    );
-    console.log(`   ✓ cleaned up ${del.rowCount} proof rows`);
+    // Clean up the proof rows — UNLESS SOURCE_SEED_PERSIST is set, in which case
+    // we LEAVE the facts so the live per-step insights (value pool / scope /
+    // value bridge) compute from real persisted evidence for a live walkthrough.
+    if (process.env.SOURCE_SEED_PERSIST) {
+      console.log(
+        `\n   PERSISTED ${back.rows.length} Lakeshore AMS facts (no cleanup) — ` +
+          `the per-step insights now compute LIVE from these.`,
+      );
+    } else {
+      const del = await client.query(
+        "DELETE FROM source_event_facts WHERE source_event_id = $1 AND client_key = $2 AND source_citation->>'proof_tag' = $3",
+        [eventId, CLIENT_KEY, PROOF_TAG],
+      );
+      console.log(`   ✓ cleaned up ${del.rowCount} proof rows`);
+    }
     console.log('\n   RESULT: value-type waterfall computed from PERSISTED, cited Lakeshore facts.');
   } finally {
     await client.end();
