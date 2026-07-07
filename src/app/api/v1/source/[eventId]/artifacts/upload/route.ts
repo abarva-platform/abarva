@@ -33,11 +33,10 @@ import {
 import {
   isSynchronouslyParseableSourceFormat,
   parseSourceTextArtifact,
-} from '@/lib/source/artifact-registry/text-parser';
-import { criteriaByArtifactCode } from '@/lib/source/canonical-specs/gate-criteria';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
-import { getCurrentUser } from '@/lib/auth/current-user';
-import { extractSourceUploadText } from '@/lib/source/artifact-registry/upload-text-extraction';
+} from "@/lib/source/artifact-registry/text-parser";
+import { criteriaByArtifactCode } from "@/lib/source/canonical-specs/gate-criteria";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { extractSourceUploadText } from "@/lib/source/artifact-registry/upload-text-extraction";
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -194,10 +193,10 @@ async function landUploadOnArtifact(args: {
   // 1. Land extracted text on the canvas artifact body.
   let bodyLanded = false;
   const { data: artifactRow } = await supabase
-    .from('source_event_artifact_states')
-    .select('id, tier, status')
-    .eq('source_event_id', args.eventId)
-    .eq('artifact_code', args.artifactCode)
+    .from("source_event_artifact_states")
+    .select("id, tier, status")
+    .eq("source_event_id", args.eventId)
+    .eq("artifact_code", args.artifactCode)
     .maybeSingle<{ id: string; tier: string; status: string }>();
 
   if (!artifactRow) {
@@ -207,22 +206,30 @@ async function landUploadOnArtifact(args: {
     return { bodyLanded: false, satisfiedCriteria: [], warnings };
   }
 
-  if (artifactRow.status === 'locked' || artifactRow.status === 'superseded') {
-    warnings.push(`Artifact ${args.artifactCode} is ${artifactRow.status}; its body was not replaced.`);
+  if (artifactRow.status === "locked" || artifactRow.status === "superseded") {
+    warnings.push(
+      `Artifact ${args.artifactCode} is ${artifactRow.status}; its body was not replaced.`,
+    );
   } else {
-    const extracted = await extractSourceUploadText({ buffer: args.buffer, mimeType: args.mimeType });
+    const extracted = await extractSourceUploadText({
+      buffer: args.buffer,
+      mimeType: args.mimeType,
+    });
     warnings.push(...extracted.warnings);
     if (extracted.text) {
       const nowIso = new Date().toISOString();
       const columns: Record<string, unknown> = {
         body: extracted.text,
-        body_format: 'markdown',
+        body_format: "markdown",
         body_authored_by: args.authorId,
         body_updated_at: nowIso,
         updated_at: nowIso,
       };
-      if (artifactRow.tier === 'stub') columns.tier = 'outline';
-      const write = await writer.updateArtifactBody({ artifactRowId: artifactRow.id, columns });
+      if (artifactRow.tier === "stub") columns.tier = "outline";
+      const write = await writer.updateArtifactBody({
+        artifactRowId: artifactRow.id,
+        columns,
+      });
       bodyLanded = write.ok;
       if (!write.ok) warnings.push(`Body update failed: ${write.error}`);
     }
@@ -232,32 +239,38 @@ async function landUploadOnArtifact(args: {
   const satisfiedCriteria: string[] = [];
   for (const criterion of criteriaByArtifactCode(args.artifactCode)) {
     const { data: criterionRow } = await supabase
-      .from('source_event_gate_criterion_states')
-      .select('id, state')
-      .eq('source_event_id', args.eventId)
-      .eq('criterion_id', criterion.criterionId)
+      .from("source_event_gate_criterion_states")
+      .select("id, state")
+      .eq("source_event_id", args.eventId)
+      .eq("criterion_id", criterion.criterionId)
       .maybeSingle<{ id: string; state: string }>();
     if (!criterionRow) continue;
-    if (criterionRow.state === 'met' || criterionRow.state === 'waived') {
+    if (criterionRow.state === "met" || criterionRow.state === "waived") {
       satisfiedCriteria.push(criterion.criterionId);
       continue;
     }
     const nowIso = new Date().toISOString();
     const write = await writer.updateGateCriterion({
       criterionRowId: criterionRow.id,
-      state: 'met',
+      state: "met",
       reviewerUserId: args.reviewerPersonId,
       reviewedAtIso: nowIso,
       updatedAtIso: nowIso,
     });
     if (write.ok) satisfiedCriteria.push(criterion.criterionId);
-    else warnings.push(`Gate ${criterion.criterionId} flip failed: ${write.error}`);
+    else
+      warnings.push(
+        `Gate ${criterion.criterionId} flip failed: ${write.error}`,
+      );
   }
 
   return { bodyLanded, satisfiedCriteria, warnings };
 }
 
-export async function POST(request: Request, { params }: SourceUploadRouteContext) {
+export async function POST(
+  request: Request,
+  { params }: SourceUploadRouteContext,
+) {
   let tenancy: Awaited<ReturnType<typeof requireTenancy>>;
   try {
     tenancy = await requireTenancy();
@@ -421,7 +434,7 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
     // extracted text on that artifact's body and mark the gate criteria it is
     // linked to as met. Falls through harmlessly to registry-only when no
     // artifactCode is supplied or the format can't be extracted.
-    const artifactCode = parseOptionalString(formData.get('artifactCode'));
+    const artifactCode = parseOptionalString(formData.get("artifactCode"));
     const landing = artifactCode
       ? await landUploadOnArtifact({
           eventId: scope.eventId,

@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
-import { SourceSubNav } from '@/components/source/SourceSubNav';
-import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
-import { listSupportedGenerationCodes } from '@/lib/source/agent-generation';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { AppShell } from "@/components/shell/AppShell";
+import { SourceSubNav } from "@/components/source/SourceSubNav";
+import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
+import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -100,46 +107,54 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
-} from '@/lib/source/canvas-substrate';
-import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registry/types';
-import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
-import { canvasDockAgentForStage } from '@/lib/source/portfolio-derivations';
-import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
-import type { AttachmentRef, ChatMessage, SuggestedAction } from '@/components/agent/AgentDock';
-import { EventIdStrip } from './EventIdStrip';
-import { EventStepRail } from './EventStepRail';
-import { EventWorkspace, type WorkspaceTabKey } from './EventWorkspace';
-import { CANVAS } from './canvas-tokens';
-import { CanvasGateSidebar } from './CanvasGateSidebar';
-import { AvaBottomBar } from './AvaBottomBar';
-import { DocumentTab } from './workspace-tabs/DocumentTab';
-import { EvidenceTab } from './workspace-tabs/EvidenceTab';
-import { LogTab, type ActivityEntry } from './workspace-tabs/LogTab';
-import { threeChoicesForStage } from './canvas-three-choices';
-import { StrategyStageView } from './strategy/StrategyStageView';
-import { ScopeStageView } from './scope/ScopeStageView';
-import { RfpStageView } from './rfp/RfpStageView';
-import { ResponsesStageView } from './responses/ResponsesStageView';
-import { EvaluationStageView } from './evaluation/EvaluationStageView';
-import { PricingStageView } from './pricing/PricingStageView';
-import { BafoStageView } from './bafo/BafoStageView';
-import { ExecutiveDecisionStageView } from './executive-decision/ExecutiveDecisionStageView';
-import { TransitionStageView } from './transition/TransitionStageView';
-import { CommunicationDraftsPanel } from './workspace-tabs/CommunicationDraftsPanel';
-import { StageDecisionLensPanel } from './workspace-tabs/StageDecisionLensPanel';
-import { GateTab } from './workspace-tabs/GateTab';
-import { SimpleFrontErrorBoundary } from './SimpleFrontErrorBoundary';
-import { SimpleStageFront } from './SimpleStageFront';
-import { ContractOptimizationProfilePanel } from './contract-optimization/ContractOptimizationProfilePanel';
-import { VendorResponseProfilesPanel } from './responses/VendorResponseProfilesPanel';
-import { VendorChallengeLeveragePanel } from './responses/VendorChallengeLeveragePanel';
-import { VendorBafoInstructionPackPanel } from './responses/VendorBafoInstructionPackPanel';
-import { VendorEvaluationScorecardPanel } from './responses/VendorEvaluationScorecardPanel';
-import { StageNextMoveCard } from './StageNextMoveCard';
-import type { SourceVendorResponseCompleteness } from '@/lib/source/vendor-response-types';
-import type { VendorChallengeIntelligence, VendorBafoInstructionPack, VendorEvaluationDecisionView } from '@/lib/source/proposal-intelligence/types';
-import type { VendorResponseProfileSet } from '@/lib/source/proposal-intelligence/mve-profile';
-import type { ContractOptimizationMveProfile } from '@/lib/source/contract-optimization/types';
+} from "@/lib/source/canvas-substrate";
+import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
+import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
+import type {
+  AttachmentRef,
+  ChatMessage,
+  SuggestedAction,
+} from "@/components/agent/AgentDock";
+import { EventIdStrip } from "./EventIdStrip";
+import { EventStepRail } from "./EventStepRail";
+import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
+import { CANVAS } from "./canvas-tokens";
+import { CanvasGateSidebar } from "./CanvasGateSidebar";
+import { AvaBottomBar } from "./AvaBottomBar";
+import { DocumentTab } from "./workspace-tabs/DocumentTab";
+import { EvidenceTab } from "./workspace-tabs/EvidenceTab";
+import { LogTab, type ActivityEntry } from "./workspace-tabs/LogTab";
+import { threeChoicesForStage } from "./canvas-three-choices";
+import { StrategyStageView } from "./strategy/StrategyStageView";
+import { ScopeStageView } from "./scope/ScopeStageView";
+import { RfpStageView } from "./rfp/RfpStageView";
+import { ResponsesStageView } from "./responses/ResponsesStageView";
+import { EvaluationStageView } from "./evaluation/EvaluationStageView";
+import { PricingStageView } from "./pricing/PricingStageView";
+import { BafoStageView } from "./bafo/BafoStageView";
+import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisionStageView";
+import { TransitionStageView } from "./transition/TransitionStageView";
+import { CommunicationDraftsPanel } from "./workspace-tabs/CommunicationDraftsPanel";
+import { StageDecisionLensPanel } from "./workspace-tabs/StageDecisionLensPanel";
+import { GateTab } from "./workspace-tabs/GateTab";
+import { SimpleFrontErrorBoundary } from "./SimpleFrontErrorBoundary";
+import { SimpleStageFront } from "./SimpleStageFront";
+import { ContractOptimizationProfilePanel } from "./contract-optimization/ContractOptimizationProfilePanel";
+import { VendorResponseProfilesPanel } from "./responses/VendorResponseProfilesPanel";
+import { VendorChallengeLeveragePanel } from "./responses/VendorChallengeLeveragePanel";
+import { VendorBafoInstructionPackPanel } from "./responses/VendorBafoInstructionPackPanel";
+import { VendorEvaluationScorecardPanel } from "./responses/VendorEvaluationScorecardPanel";
+import { StageNextMoveCard } from "./StageNextMoveCard";
+import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
+import type {
+  VendorChallengeIntelligence,
+  VendorBafoInstructionPack,
+  VendorEvaluationDecisionView,
+} from "@/lib/source/proposal-intelligence/types";
+import type { VendorResponseProfileSet } from "@/lib/source/proposal-intelligence/mve-profile";
+import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization/types";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -385,7 +400,6 @@ export function UniversalCanvasShell({
     } catch {
       // sessionStorage unavailable or corrupt — start fresh
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatStorageKey]);
   useEffect(() => {
     if (thread.length === 0) return;
@@ -515,27 +529,24 @@ export function UniversalCanvasShell({
       }),
     [stageArtifacts, stageCriteria, viewStage],
   );
-  const simpleStageScreen = useMemo(
-    () => {
-      try {
-        return resolveSimpleStageScreen(
-          {
-            artifactStates: liveArtifactStates,
-            gateCriterionStates: liveGateCriterionStates,
-            evidenceStates,
-          },
-          viewStage,
-        );
-      } catch (error) {
-        console.error(
-          "[Source simple front] failed to resolve view model",
-          error,
-        );
-        return null;
-      }
-    },
-    [evidenceStates, liveArtifactStates, liveGateCriterionStates, viewStage],
-  );
+  const simpleStageScreen = useMemo(() => {
+    try {
+      return resolveSimpleStageScreen(
+        {
+          artifactStates: liveArtifactStates,
+          gateCriterionStates: liveGateCriterionStates,
+          evidenceStates,
+        },
+        viewStage,
+      );
+    } catch (error) {
+      console.error(
+        "[Source simple front] failed to resolve view model",
+        error,
+      );
+      return null;
+    }
+  }, [evidenceStates, liveArtifactStates, liveGateCriterionStates, viewStage]);
 
   // Context-bundle counts for the chat header.
   const contextBundle = useMemo(() => {
@@ -766,19 +777,24 @@ export function UniversalCanvasShell({
   // background task.) Once a body exists it never re-fires.
   const autoDraftFiredRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (viewStage !== 'strategy') return;
+    if (viewStage !== "strategy") return;
     for (const artifact of liveArtifactStates) {
       const code = artifact.artifactCode;
-      if (artifact.stage !== 'strategy') continue;
+      if (artifact.stage !== "strategy") continue;
       if (!generatableCodes.has(code)) continue;
-      if ((artifact.body ?? '').trim().length > 0) continue;
+      if ((artifact.body ?? "").trim().length > 0) continue;
       if (pendingGenerationByCode[code]) continue;
       if (autoDraftFiredRef.current.has(code)) continue;
       autoDraftFiredRef.current.add(code);
       void handleArtifactGenerate(code);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewStage, liveArtifactStates, generatableCodes, pendingGenerationByCode]);
+  }, [
+    viewStage,
+    liveArtifactStates,
+    generatableCodes,
+    pendingGenerationByCode,
+  ]);
 
   const handleArtifactBodySave = async (
     code: string,
@@ -1028,8 +1044,8 @@ export function UniversalCanvasShell({
       }),
     },
     {
-      key: 'evidence' as WorkspaceTabKey,
-      label: 'Evidence',
+      key: "evidence" as WorkspaceTabKey,
+      label: "Evidence",
       badge: contextBundle.readiness,
       content: (
         <EvidenceTab
@@ -1054,7 +1070,8 @@ export function UniversalCanvasShell({
     hasDecisionBriefDraft ||
     isStageAtOrAfter(event.currentStageKey, "executive_decision");
   const hasValueExportReadiness =
-    isLakeshoreDemoCaseStudy || isStageAtOrAfter(event.currentStageKey, "value");
+    isLakeshoreDemoCaseStudy ||
+    isStageAtOrAfter(event.currentStageKey, "value");
 
   const exportItems = [
     ...(hasAdvisoryExportReadiness
@@ -1122,7 +1139,7 @@ export function UniversalCanvasShell({
       nextMove={nextMove}
       draftPending={Boolean(
         nextMove.draftArtifactCode &&
-          pendingGenerationByCode[nextMove.draftArtifactCode],
+        pendingGenerationByCode[nextMove.draftArtifactCode],
       )}
       onNextMoveAdvance={handleNextMoveAdvance}
       onDraftWithSentinel={handleDraftWithSentinel}
@@ -1191,7 +1208,9 @@ export function UniversalCanvasShell({
           !contractOptimizationProfile &&
           vendorResponseProfiles?.profiles?.length ? (
             <div style={{ marginTop: 12 }}>
-              <VendorResponseProfilesPanel profileSet={vendorResponseProfiles} />
+              <VendorResponseProfilesPanel
+                profileSet={vendorResponseProfiles}
+              />
             </div>
           ) : null}
           {(viewStage === "responses" || viewStage === "vendor_responses") &&
@@ -1207,7 +1226,9 @@ export function UniversalCanvasShell({
           !contractOptimizationProfile &&
           vendorBafoInstructionPack ? (
             <div style={{ marginTop: 12 }}>
-              <VendorBafoInstructionPackPanel pack={vendorBafoInstructionPack} />
+              <VendorBafoInstructionPackPanel
+                pack={vendorBafoInstructionPack}
+              />
             </div>
           ) : null}
           {(viewStage === "responses" ||
@@ -1282,7 +1303,10 @@ export function UniversalCanvasShell({
             promotePending={promotePending}
           />
           <div style={WORKSPACE_COLUMN_STYLE}>
-            <CanvasContextStrip stageKey={viewStage} contextBundle={contextBundle}>
+            <CanvasContextStrip
+              stageKey={viewStage}
+              contextBundle={contextBundle}
+            >
               <EventWorkspace tabs={tabs} defaultTab={initialTab} />
             </CanvasContextStrip>
             <AvaBottomBar
@@ -1299,8 +1323,8 @@ export function UniversalCanvasShell({
   );
 }
 
-function displayAgentName(): string {
-  return 'aVa';
+function displayAgentName(_agent?: "Sentinel" | "Atlas"): string {
+  return "aVa";
 }
 
 function isStageAtOrAfter(current: SourceStageKey, target: SourceStageKey) {
@@ -1310,7 +1334,11 @@ function isStageAtOrAfter(current: SourceStageKey, target: SourceStageKey) {
 }
 
 // Stage label + readiness/artifact counts shown above the EventWorkspace tabs.
-function CanvasContextStrip({ stageKey, contextBundle, children }: CanvasContextStripProps) {
+function CanvasContextStrip({
+  stageKey,
+  contextBundle,
+  children,
+}: CanvasContextStripProps) {
   const stageLabel = SOURCE_STAGE_LABELS[stageKey];
   return (
     <section
@@ -1321,11 +1349,10 @@ function CanvasContextStrip({ stageKey, contextBundle, children }: CanvasContext
       <div>
         <strong>Case-study review view</strong>
         <p style={CASE_STUDY_BANNER_TEXT_STYLE}>
-          You are reviewing the prepared Lakeshore RFP, vendor evaluation,
-          BAFO, and decision artifacts for the {viewLabel} walkthrough. The
-          governance rail still records the formal event stage as {" "}
-          {currentLabel}{" "}
-          until a named human clears the gate.
+          You are reviewing the prepared Lakeshore RFP, vendor evaluation, BAFO,
+          and decision artifacts for the {viewLabel} walkthrough. The governance
+          rail still records the formal event stage as {currentLabel} until a
+          named human clears the gate.
         </p>
       </div>
       <Link href="#stage-gate-checklist" style={CASE_STUDY_BANNER_LINK_STYLE}>
@@ -1506,7 +1533,9 @@ function SourceDeclutteredWorkspace({
           onClick={() => setGateOpen((open) => !open)}
           style={GATE_TOGGLE_STYLE}
         >
-          <span>{gateOpen ? "Hide the gate checklist" : "Review & approve the gate"}</span>
+          <span>
+            {gateOpen ? "Hide the gate checklist" : "Review & approve the gate"}
+          </span>
           <span style={GATE_TOGGLE_META_STYLE}>
             {metCount} / {criteria.length} cleared {gateOpen ? "▾" : "▸"}
           </span>
@@ -1585,15 +1614,6 @@ const AGENT_DOCK_ROLE_COPY: Record<"Sentinel" | "Atlas", string> = {
     "Drafts artifacts, surfaces evidence, flags gaps before they cost you.",
   Atlas: "Frames the executive brief, ranks finalists, locks the decision.",
 };
-
-// Unified voice: the user always talks to "aVa", regardless of which internal
-// specialist (Sentinel on stages 1–9, Atlas on the executive stages) leads the
-// stage. The stage-appropriate role copy still differs (see AGENT_DOCK_ROLE_COPY);
-// only the displayed agent NAME is always aVa.
-function displayAgentName(_agent: "Sentinel" | "Atlas"): string {
-  void _agent;
-  return "aVa";
-}
 
 function displayAgentInitials(_agent: "Sentinel" | "Atlas"): string {
   void _agent;
@@ -1689,23 +1709,23 @@ const CONTAINER_STYLE: CSSProperties = {
 };
 
 const DOSSIER_LINK_WRAP_STYLE: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'flex-end',
+  display: "flex",
+  justifyContent: "flex-end",
   paddingTop: 10,
 };
 
 const DOSSIER_LINK_STYLE: CSSProperties = {
   border: `1px solid ${CANVAS.HAIRLINE}`,
   borderRadius: 6,
-  background: '#fff',
+  background: "#fff",
   color: CANVAS.INK,
   fontFamily: CANVAS.MONO,
   fontSize: 10,
   fontWeight: 800,
-  letterSpacing: '0.08em',
-  padding: '7px 10px',
-  textDecoration: 'none',
-  textTransform: 'uppercase',
+  letterSpacing: "0.08em",
+  padding: "7px 10px",
+  textDecoration: "none",
+  textTransform: "uppercase",
 };
 
 const CANVAS_BODY_STYLE: CSSProperties = {
@@ -1718,11 +1738,11 @@ const CANVAS_BODY_STYLE: CSSProperties = {
 
 const WORKSPACE_COLUMN_STYLE: CSSProperties = {
   flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
+  display: "flex",
+  flexDirection: "column",
   minWidth: 0,
   minHeight: 0,
-  overflow: 'hidden',
+  overflow: "hidden",
 };
 
 const WORKSPACE_WRAPPER_STYLE: CSSProperties = {
