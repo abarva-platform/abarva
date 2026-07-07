@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { IntelligenceProvenanceRibbon } from '@/components/intelligence/IntelligenceProvenanceRibbon';
 import { IntelligenceQualityLensSentinel } from '@/components/intelligence/IntelligenceQualityLensSentinel';
+import { QualityCoverageCharts } from '@/components/intelligence/charts/QualityCoverageCharts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type {
   IntelligenceQualityLensView,
@@ -435,11 +436,18 @@ function GapAnalysisSection({ gaps }: { gaps: readonly GapRow[] }) {
 interface IntelligenceQualityLensPageProps {
   view: IntelligenceQualityLensView;
   tenantName: string;
+  /**
+   * Gate for the `intelligence_quality_charts` feature flag. When false
+   * (the default for every tenant), the Recharts visualizations section is
+   * not rendered and the lens is unchanged.
+   */
+  showCharts?: boolean;
 }
 
 export function IntelligenceQualityLensPage({
   view,
   tenantName,
+  showCharts = false,
 }: IntelligenceQualityLensPageProps) {
   return (
     <AppShell
@@ -559,6 +567,16 @@ export function IntelligenceQualityLensPage({
             sub="active contradictions"
           />
         </div>
+
+        {/* ── intelligence_quality_charts · Recharts visualizations ──
+            Flag-gated. Flag-off, this section is not rendered and the lens
+            below is unchanged. Consumes the SAME view — no refetch. */}
+        {showCharts && (
+          <QualityCoverageCharts
+            domainCoverage={view.domainCoverage}
+            contradictionStatus={view.contradictionStatus}
+          />
+        )}
 
         {/* Domain coverage map */}
         <DomainCoverageTable rows={view.domainCoverage} />
