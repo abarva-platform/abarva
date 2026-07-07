@@ -92,6 +92,37 @@ describe("home demo-safe response sanitizer", () => {
     });
   });
 
+  it("removes markdown emphasis from user-visible Home answer prose", () => {
+    const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
+      prose: [
+        "For Lakeshore Holdings Industries, three facts frame the CFO view.",
+        "- **What this means:** portfolio revenue rolls up to $7.12B.",
+        "- **Why it matters:** the holding company has no direct revenue.",
+        "### Where next",
+        "Use Intelligence for advisory options.",
+      ].join("\n"),
+      safety: {
+        composerTrace: {
+          route: "/api/home/know/ask",
+          promptSnapshot: {
+            full: "Keep **raw trace emphasis** available to operators.",
+          },
+        },
+      },
+    });
+
+    expect(safe.prose).toContain("- What this means:");
+    expect(safe.prose).toContain("- Why it matters:");
+    expect(safe.prose).toContain("Where next");
+    expect(safe.prose).not.toMatch(/\*\*|^#{1,6}\s/m);
+    expect(
+      safe.safety.composerTrace.promptSnapshot.full,
+    ).not.toContain("**");
+    expect(audit.sanitizerApplied).toBe(true);
+    expect(audit.sanitizerReason).toBe("markdown_markup");
+    expect(audit.changedFields).toContain("$.prose");
+  });
+
   it("reports no visible sanitizer change when duplicate openings are absent", () => {
     const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
       prose:
