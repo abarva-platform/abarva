@@ -106,6 +106,8 @@ const T = {
   PURPLE_BG: "rgba(27,43,92,0.07)",
   GREEN: "#1d9e75",
   GREEN_BG: "#e1f5ee",
+  TEAL: "#0F766E",
+  TEAL_TINT: "#5FD0C2",
   AMBER: "#ba7517",
   AMBER_BG: "#faeeda",
   RED: "#a32d2d",
@@ -6532,40 +6534,41 @@ export function TowerIndexPage({
               <div
                 style={{
                   fontFamily: T.MONO,
-                  fontSize: 10,
-                  letterSpacing: "1.6px",
-                  fontWeight: 700,
-                  color: T.GOLD,
+                  fontSize: 11,
+                  letterSpacing: "1.32px",
+                  fontWeight: 600,
+                  color: T.TEAL,
                   textTransform: "uppercase",
                   marginBottom: 5,
                 }}
               >
-                Tower
+                Portfolio
               </div>
               <h1
                 style={{
                   fontFamily: T.SERIF,
                   fontSize: 31,
-                  fontWeight: 900,
-                  letterSpacing: 0,
+                  fontWeight: 500,
+                  letterSpacing: "-0.8px",
                   lineHeight: 1.04,
                   margin: 0,
                   color: T.INK,
                 }}
               >
-                CIO portfolio command center
+                {tenantName}
               </h1>
               <div
                 style={{
                   marginTop: 6,
-                  color: "#2f3848",
+                  fontFamily: T.SANS,
+                  color: T.INK_2,
                   fontSize: 14.5,
-                  fontWeight: 760,
+                  fontStyle: "italic",
+                  fontWeight: 400,
                   lineHeight: 1.3,
                 }}
               >
-                Budget, top programs, value proof, vendor exposure, and risks
-                the CIO should inspect this week.
+                Every number citable.
               </div>
             </div>
             {reportDownloadSlot ? (
