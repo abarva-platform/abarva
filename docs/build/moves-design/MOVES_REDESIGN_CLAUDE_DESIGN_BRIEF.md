@@ -1,5 +1,12 @@
 # Claude Design brief — Moves phase workspace, in the Source look, with a data-intelligence layer + Recharts
 
+## Required reading (companion docs, same folder)
+Read these first — they define the model this design must render:
+- `MOVES_SOLUTION_BUILDING_BLOCKS.md` — the 10 blocks + playbooks (a Move = a *bundle*, not a label).
+- `MOVES_BUILDING_BLOCK_SPINE.md` — **blocks are phase *lanes*** that run P2→P3→P4→P5→Tower; a phase never starts blank.
+- `MOVES_DYNAMIC_PATTERN_ASSEMBLY.md` — AbarVa builds the packet + validates; Claude assembles the pattern (governs the "what we found / recommended / not-yet" tone).
+- `MOVES_ANALYTICS_LAYER_SPEC.md` — the engine + the `MoveFinding` contract.
+
 ## Context (read first)
 
 You redesigned **Source** into a stage-gated event workspace (standalone HTML we have): stage-head + lede, **Input templates / Generated deliverables** split, per-stage **findings surfaced inline** ("✦ What Source read," anomalies→"Clarifications to vendors," "The scorecard — live," "Recommendation"), **gate-as-human-attestations** ("Findings reviewed," "Scorecard agreed"), an honesty model ("the gate can't arm until two inputs land… no recommendation until they're in"), progress bars, and a contextual Ava. That is the target pattern.
@@ -8,11 +15,12 @@ You redesigned **Source** into a stage-gated event workspace (standalone HTML we
 
 ## Deliverable
 
-Standalone HTML mockup(s) in the **same self-contained format and visual language as the Source redesign** (match that palette/type — Fraunces + Inter + JetBrains Mono, cream surfaces, muted lines, the same button/gate/progress vocabulary). Produce **two phase pages** because they carry the richest intelligence:
-1. **P2 Discover & Diagnose**
-2. **P4 Plan / Business Case**
+Standalone HTML mockup(s) in the **same self-contained format and visual language as the Source redesign** (match that palette/type — Fraunces + Inter + JetBrains Mono, cream surfaces, muted lines, the same button/gate/progress vocabulary). Produce **three phase pages** (one shared shell, three phase configs) — these carry the richest intelligence and are the top demo-priority screens:
+1. **P2 Discover & Diagnose** — current-state findings + evidence contract.
+2. **P3 Solution Design** — the **Building-Blocks Canvas** (the solution-lanes screen; see §5).
+3. **P4 Plan / Business Case** — value bridge + workstreams.
 
-(One shared shell, two phase configs.)
+The three should visibly **carry the same blocks forward as lanes** (a block that appears in P2 as a finding reappears in P3 as a design lane and in P4 as a workstream) — that continuity is the product story.
 
 ## Requirements
 
@@ -47,6 +55,15 @@ The design must show, per phase:
 - **Benchmarks are composed** for `(block × industry × function)`, tagged by source (block-playbook trap · industry baseline · or *"empirical — N comparable moves"*). Never a static per-use-case card.
 
 For the mockup, the insight/benchmark panel reads as *"for this block, in this industry, similar moves see X; you're at Y."* (See `MOVES_SOLUTION_BUILDING_BLOCKS.md` and `MOVES_ANALYTICS_LAYER_SPEC.md` §5.)
+
+### 5. The P3 Building-Blocks Canvas (the solution-lanes screen)
+P3 must NOT be a blank solution-design page. It renders the selected bundle as **design lanes** — one lane per block — each pre-populated from what P2 found. Per lane, show:
+- **What P2 found** (the finding carried forward),
+- **What must be designed** (this lane's design task),
+- **Options** (where the block has choices),
+- **Phase one** vs. **Later**, and **Not recommended yet** (with the readiness reason — the `ambition ≤ readiness` guardrail).
+
+Above the lanes: the **solution-approach header** (recommended phase-one approach in plain English) and, per `MOVES_DYNAMIC_PATTERN_ASSEMBLY.md`, an honesty tone — *this was assembled from your evidence + readiness; here's what's supported vs. assumed vs. needs review.* Worked example (Legal Contract Intake) for the lanes: Process → intake→triage→route→approval flow · Data → required-field contract + obligation owner · Workflow → CLM routing/SLA · Human-in-loop → attorney confirms extracted obligations · Controls → privilege fence + approval matrix · Value → Tower metric set. Full per-lane P2→P3→P4 content is in `MOVES_BUILDING_BLOCK_SPINE.md`.
 
 ## Codebase map (so the mockup maps to real wiring)
 
