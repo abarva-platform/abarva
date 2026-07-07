@@ -82,13 +82,14 @@ export function AdvisoryIntelligencePage({ viewModel }: { viewModel: EnterpriseL
   async function submitAsk(input: string = question) {
     const trimmed = input.trim();
     if (!trimmed || isAsking) return;
+    const messageIndex = messages.length;
 
     const userMessage: UserMessage = {
-      id: `u-${Date.now()}`,
+      id: `u-${messageIndex}`,
       role: 'user',
       text: trimmed,
     };
-    const assistantId = `a-${Date.now()}`;
+    const assistantId = `a-${messageIndex + 1}`;
     const assistantMessage: AssistantMessage = {
       id: assistantId,
       role: 'assistant',
