@@ -212,10 +212,10 @@ describe("cio tower answer contract", () => {
     expect(canonicalCioTowerTenantKey("skyharbor")).toBe("skyharbor-air");
     expect(canonicalCioTowerTenantKey("SkyHarbor Air")).toBe("skyharbor-air");
     expect(canonicalCioTowerTenantKey("lakeshore")).toBe(
-      "lakeshore-holdings",
+      "lakeshore-industries",
     );
     expect(canonicalCioTowerTenantKey("Lakeshore Holdings")).toBe(
-      "lakeshore-holdings",
+      "lakeshore-industries",
     );
     expect(canonicalCioTowerTenantKey("firstcapital")).toBe(
       "first-capital-financial",

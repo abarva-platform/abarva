@@ -282,6 +282,14 @@ function entityTypeFromNodeType(nodeType) {
   return 'system';
 }
 
+function parentKeyForDictionaryRow(tenantKey, row) {
+  if (!row.node_id) return null;
+  if (row.node_id === row.entity_id) {
+    return row.parent_entity_id ? key(tenantKey, row.parent_entity_id) : null;
+  }
+  return row.entity_id ? key(tenantKey, row.entity_id) : null;
+}
+
 function collectPackage() {
   const tenants = fs.readdirSync(PACKAGE_ROOT, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -355,6 +363,7 @@ function addEntity(out, entity) {
       ...existing,
       source_key: existing.source_key || entity.source_key || null,
       source_row: existing.source_row || entity.source_row || null,
+      parent_entity_key: existing.parent_entity_key || entity.parent_entity_key || null,
       attributes: {
         ...(existing.attributes ?? {}),
         aliases: [...new Set([...(existing.attributes?.aliases ?? []), entity.entity_key])],
@@ -452,9 +461,16 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: entityTypeFromNodeType(row.node_type),
         display_name: row.business_label || row.node_id,
+        parent_entity_key: parentKeyForDictionaryRow(tenantKey, row),
         source_key: key(tenantKey, row.source_file || 'family-8-semantic-enrichment/F25_context-node-dictionary.csv'),
         source_row: row.source_row || null,
-        attributes: { node_id: row.node_id, node_type: row.node_type, confidence: row.confidence, caveat: row.caveat },
+        attributes: {
+          ...row,
+          node_id: row.node_id,
+          node_type: row.node_type,
+          confidence: row.confidence,
+          caveat: row.caveat,
+        },
       });
     }
   }
@@ -467,6 +483,7 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: 'initiative',
         display_name: row.initiative_name || row.initiative_id,
+        parent_entity_key: row.entity_id ? key(tenantKey, row.entity_id) : null,
         source_key: key(tenantKey, 'ai-control-tower/T01_initiative-registry.csv'),
         source_row: row.source_row || null,
         attributes: row,
@@ -482,6 +499,7 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: 'org_unit',
         display_name: row.budget_area || row.function_or_platform || row.line_id,
+        parent_entity_key: row.entity_id ? key(tenantKey, row.entity_id) : null,
         source_key: key(tenantKey, 'family-4-financial-commercial/F12_it-budget-financials.csv'),
         source_row: row.source_row || null,
         attributes: row,
@@ -498,9 +516,10 @@ function loadEntities(out, tenantKey, tenantDir) {
         tenant_key: tenantKey,
         entity_type: 'vendor',
         display_name: row.vendor_or_tool,
+        parent_entity_key: row.entity_id ? key(tenantKey, row.entity_id) : null,
         source_key: key(tenantKey, 'ai-control-tower/T08_spend-contracts.csv'),
         source_row: row.source_row || null,
-        attributes: { vendor_or_tool: row.vendor_or_tool },
+        attributes: { ...row, vendor_or_tool: row.vendor_or_tool },
       });
     }
   }
@@ -552,6 +571,32 @@ function scopeForView(view) {
 }
 
 function loadRelationships(out, tenantKey, tenantDir) {
+  const dictionary = path.join(tenantDir, 'family-8-semantic-enrichment', 'F25_context-node-dictionary.csv');
+  if (fs.existsSync(dictionary)) {
+    for (const row of readCsv(dictionary)) {
+      if (!row.parent_entity_id || !row.node_id) continue;
+      if (row.node_id !== row.entity_id) continue;
+      const parentKey = resolveEntityKey(out, key(tenantKey, row.parent_entity_id));
+      const childKey = resolveEntityKey(out, key(tenantKey, row.node_id));
+      if (out.entities.has(parentKey) && out.entities.has(childKey)) {
+        addRelationship(out, {
+          relationship_key: key(tenantKey, row.parent_entity_id, row.node_id, 'owns'),
+          tenant_key: tenantKey,
+          from_entity_key: parentKey,
+          to_entity_key: childKey,
+          relationship_type: 'owns',
+          confidence: 'high',
+          source_key: key(tenantKey, 'family-8-semantic-enrichment/F25_context-node-dictionary.csv'),
+          source_row: row.source_row || null,
+          attributes: {
+            ...row,
+            semantic_relationship_type: row.entity_scope === 'portfolio_company' ? 'owns_portfolio_company' : 'parent_of',
+          },
+        });
+      }
+    }
+  }
+
   const spend = path.join(tenantDir, 'ai-control-tower', 'T08_spend-contracts.csv');
   if (fs.existsSync(spend)) {
     for (const row of readCsv(spend)) {
@@ -672,6 +717,7 @@ async function writeToDb(payload) {
   await client.connect();
   try {
     await client.query('BEGIN');
+    await replaceTenantRows(client, Object.keys(payload.tenants));
     await upsertSources(client, payload.sources);
     await upsertEntities(client, [...payload.entities.values()]);
     await upsertFacts(client, payload.facts);
@@ -685,6 +731,16 @@ async function writeToDb(payload) {
     throw error;
   } finally {
     await client.end();
+  }
+}
+
+async function replaceTenantRows(client, tenantKeys) {
+  for (const tenantKey of tenantKeys) {
+    await client.query(`DELETE FROM cio_tower.measure_results WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.relationships WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.facts WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.entities WHERE tenant_key = $1`, [tenantKey]);
+    await client.query(`DELETE FROM cio_tower.source_registry WHERE tenant_key = $1`, [tenantKey]);
   }
 }
 

@@ -1,14 +1,19 @@
-company_name: Lakeshore Industries
-synthetic_peer_anchor: large private global industrial manufacturer
-revenue_fy25_usd: 54200000000
-employees_fte: 72000
-manufacturing_plants: 89
-countries: 34
-annual_technology_budget_usd: 1160000000
-annual_ai_and_data_budget_usd: 96000000
-primary_erp: SAP ECC with S/4 pilot
-treasury_target_platform: Kyriba
-data_platform_state: fragmented SQL/BI with semantic layer target
-tenant_key: lakeshore
-client_id: 3b83d8ad-2db1-4c0a-a3b3-0a19c2e5a667
-generated_at: 2026-06-18T00:00:00Z
+company_name: Lakeshore Holdings
+tenant_key: lakeshore-industries
+entity_id: LSH-HOLDCO
+entity_scope: holdco
+portfolio_company_count: 7
+portfolio_companies: Northline Supply Chain; Brightmark Marketing Services; Forge & Field Consumer Products; Great Lakes Pantry Services; HarborPoint Packaging Group; Riverton Components & Field Services; Keystone Industrial Services
+synthetic_peer_anchor: diversified private industrial holding company
+revenue_fy25_usd: 7120000000
+employees_fte: 11800
+corporate_it_budget_usd: 36500000
+opco_local_technology_budget_usd: 154100000
+annual_technology_budget_usd: 190600000
+annual_ai_and_data_budget_usd: 11800000
+business_model: Portfolio company rollup with corporate shared services and OpCo-led operations
+cxo_sponsor: Corporate CIO
+finance_sponsor: CFO
+innovation_sponsor: VP Innovation
+generated_at: 2026-07-06T00:00:00Z
+source_contract: lakeshore_v7_1_1_holdco_depth_20260706
