@@ -88,6 +88,9 @@ export type ContextDimensionLegacy =
   | 'org_roles_teams'
   | 'delivery_dora_devex'
   | 'regulatory_qms_risk'
+  | 'service_levels'
+  | 'business_capability'
+  | 'infrastructure_estate'
   | 'ai_tooling_model_inventory'
   | 'incidents_ops_telemetry';
 

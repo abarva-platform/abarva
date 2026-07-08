@@ -920,9 +920,10 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
     id: id as string,
     dimension: dimension as ContextDimension,
     label: label as string,
-    acceptedFormats: acceptedFormats as UploadedFileFormat[],
+    acceptedFormats: acceptedFormats as Exclude<UploadedFileFormat, "unknown">[],
     exceptionFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
-      (format) => !(acceptedFormats as UploadedFileFormat[]).includes(format),
+      (format) =>
+        !(acceptedFormats as Exclude<UploadedFileFormat, "unknown">[]).includes(format),
     ),
     formatProfiles: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map(
       (format) => FORMAT_SUPPORT_PROFILES[format],
@@ -932,7 +933,7 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
     ownerRole: ownerRole as string,
     refreshCadence: refreshCadence as string,
     exceptionMetadataRequirements: buildExceptionMetadataRequirements(
-      acceptedFormats as UploadedFileFormat[],
+      acceptedFormats as Exclude<UploadedFileFormat, "unknown">[],
     ),
     unlocks: [
       "Evidence chips cite uploaded source locators",
@@ -1382,6 +1383,10 @@ export const RUNTIME_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
   ...NORTHSTAR_CONTEXT_TEMPLATES,
   ...MERIDIAN_CONTEXT_TEMPLATES,
 ];
+
+export const CONTEXT_TEMPLATE_REGISTRY = RUNTIME_CONTEXT_TEMPLATES;
+export const MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES = MERIDIAN_CONTEXT_TEMPLATES;
+export const PHS_CONTEXT_TEMPLATES = NORTHSTAR_CONTEXT_TEMPLATES;
 
 // Per format, how many templates across the full runtime registry accept it
 // canonically (out of the box, no exception metadata needed). Every format is

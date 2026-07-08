@@ -178,7 +178,11 @@ export interface HomeKnowSafety {
   evidenceReason?: string;
   visibleSanitizer?: {
     sanitizerApplied: boolean;
-    sanitizerReason: "none" | "duplicate_tenant_opening";
+    sanitizerReason:
+      | "none"
+      | "duplicate_tenant_opening"
+      | "markdown_markup"
+      | "executive_wording";
     semanticLoss: false;
     changedFields: string[];
     beforePrefix?: string;

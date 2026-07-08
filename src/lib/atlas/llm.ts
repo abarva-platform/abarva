@@ -16,10 +16,24 @@ import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
+import { buildTowerFactualSpineAnswer } from '@/lib/atlas/tower-factual-spine';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  sanitizeAutonomousDecisionLanguage,
+} from "@/lib/ai-liability/human-decision-controls";
 import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
-import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
-import type { CuratedDossierLoadResult } from '@/lib/semantic-dossiers';
+import type {
+  AtlasDebugTrace,
+  AtlasExecutionMode,
+  AtlasSuggestion,
+  AtlasTenancyCtx,
+  AtlasToolResultMap,
+} from '@/lib/atlas/types';
+import {
+  loadCuratedSemanticDossier,
+  type CuratedDossierLoadResult,
+} from '@/lib/semantic-dossiers';
 
 /**
  * Atlas live-prod composition wiring (ATLAS-RUNLLM-COMPOSITION 2026-05-31).
@@ -175,6 +189,16 @@ function stripInternalReferences(value: string): string {
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi,
       "the referenced item",
     );
+}
+
+function sanitizeForTenantPrompt(value: unknown): unknown {
+  return JSON.parse(
+    JSON.stringify(value, (key, item) => {
+      if (/apiKey|secret|token|password|cookie/i.test(key)) return "[redacted]";
+      if (typeof item === "string") return stripInternalReferences(item);
+      return item;
+    }),
+  ) as unknown;
 }
 
 function formatCleanTowerContext(towerState: AtlasTowerCurrentState): string {
@@ -576,6 +600,7 @@ export async function runAtlasLlm(
   const system = buildAtlasSystemPrompt(towerState.client.clientName);
   const towerContext = formatCleanTowerContext(towerState);
   const dossierContext = formatCleanDossierContext(dossierLoad.result);
+  const retrievedContext = formatRetrievedContext(retrievalContext);
   const valueGroundingContext = renderAtlasValueGrounding(valueGrounding);
   const enterpriseReadContext = derivedEnterpriseRead
     ? [

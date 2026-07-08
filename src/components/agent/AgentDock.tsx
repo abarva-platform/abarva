@@ -53,6 +53,7 @@ import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the

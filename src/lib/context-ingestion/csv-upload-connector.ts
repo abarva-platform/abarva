@@ -201,12 +201,15 @@ const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
   nursing_workload_acuity: 'org_structure',
   ai_tooling_model_inventory: 'it_landscape',
   incidents_ops_telemetry: 'it_landscape',
+  service_levels: 'program_inventory',
+  business_capability: 'program_inventory',
+  infrastructure_estate: 'it_landscape',
 };
 
 export function segmentKeyForContextDimension(
   dimension: ContextDimension,
 ): SegmentKey {
-  return SEGMENT_BY_DIMENSION[dimension];
+  return (SEGMENT_BY_DIMENSION[dimension] ?? "program_inventory") as SegmentKey;
 }
 
 function normalizeHeader(value: string): string {
@@ -537,6 +540,17 @@ function buildChunkText(args: {
   return lines.join("\n");
 }
 
+function assertRequiredFieldsMapped(
+  template: ContextTemplateDefinition,
+  mapping: CsvMappingSuggestion,
+): void {
+  const mappedFields = new Set(Object.keys(mapping.fieldMappings));
+  const missing = template.requiredFields.filter((field) => !mappedFields.has(field));
+  if (missing.length > 0) {
+    throw new Error(`Missing required field mappings: ${missing.join(", ")}`);
+  }
+}
+
 export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUploadPreparedBatch {
   const parsed = parseCsvUpload(input.csvText);
   const template = resolveTemplate(input.fileName, input.mapping?.templateId, input.tenantKey);
@@ -561,6 +575,13 @@ export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUplo
     compactTimestamp(uploadedAt),
   ].join(':');
   const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension] ?? 'program_inventory';
+  const sourceSystem = template.id;
+  const sourceBase = input.sourceBlob
+    ? `blob://${input.sourceBlob.bucket}/${input.sourceBlob.path}`
+    : `csv-upload://${input.tenantKey}/${safeSlug(input.fileName)}`;
+  const sourceBasis = "client_provided_upload";
+  const dataClassification =
+    input.mapping?.dataClassification?.trim() || "confidential";
 
   const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
     const rowNumber = index + 2;

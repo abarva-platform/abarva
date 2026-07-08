@@ -70,6 +70,8 @@ export const PRIMARY_CRAWL_SURFACES: CrawlSurface[] = [
   { id: 'admin-releases', path: '/admin/releases' },
 ];
 
+export const EXPLICIT_CRAWL_SURFACES: CrawlSurface[] = [];
+
 export const POST_DEPLOY_HARD_QUESTIONS = [
   "What decision should I make next, and what evidence supports it?",
   "What are the top three reasons this recommendation could be wrong?",

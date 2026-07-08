@@ -109,7 +109,7 @@ import type {
   SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
-import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from "@/lib/source/constants";
 import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type {
@@ -152,8 +152,15 @@ import { criterionById } from "@/lib/source/canonical-specs";
 import {
   assessStageGate,
   buildStageRecommendation,
+  isAssessmentMet,
 } from "@/lib/source/gate-auto-assessment";
-import { resolveStageNextMove } from "@/lib/source/stage-next-move";
+import {
+  resolveStageNextMove,
+  type StageNextMoveActionTarget,
+} from "@/lib/source/stage-next-move";
+import { resolveSimpleStageScreen } from "@/lib/source/simple-front";
+import { nextStepNeeds } from "@/lib/source/next-step-needs";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import type {
   VendorChallengeIntelligence,
@@ -774,6 +781,9 @@ export function UniversalCanvasShell({
       });
     }
   };
+  const handleDraftWithSentinel = (code: string) => {
+    void handleArtifactGenerate(code);
+  };
 
   // Auto-draft the strategy-stage artifacts. The strategy memo, value target,
   // and archetype record are produced at event creation, not via a manual
@@ -1304,9 +1314,17 @@ export function UniversalCanvasShell({
             fromStage={viewStage}
             states={stageCriteria}
             allCriteria={liveGateCriterionStates}
-            onChangeCriterionState={handleCriterionStateChange}
+            onChangeCriterionState={(criterionId, next) =>
+              handleCriterionStateChange(
+                criterionId,
+                next,
+                "Changed from canvas gate sidebar",
+              )
+            }
             pendingByCriterionId={pendingCriterionByCriterionId}
-            onPromoteStage={handlePromoteStage}
+            onPromoteStage={(toStage) =>
+              handlePromoteStage(toStage, "Promoted from canvas gate sidebar")
+            }
             promotePending={promotePending}
           />
           <div style={WORKSPACE_COLUMN_STYLE}>
@@ -1350,26 +1368,36 @@ function CanvasContextStrip({
   stageKey,
   contextBundle,
   children,
-}: CanvasContextStripProps) {
+}: {
+  stageKey: SourceStageKey;
+  contextBundle: {
+    readiness: string;
+    artifacts: string;
+    evidence: string;
+    vendors?: string;
+    metCriteria: number;
+    totalCriteria: number;
+  };
+  children: ReactNode;
+}) {
   const stageLabel = SOURCE_STAGE_LABELS[stageKey];
   return (
     <section
-      data-testid="source-lakeshore-case-study-banner"
-      aria-label="Case-study review context"
-      style={CASE_STUDY_BANNER_STYLE}
+      data-testid="source-canvas-context-strip"
+      aria-label="Source canvas context"
+      style={CONTEXT_STRIP_STYLE}
     >
-      <div>
-        <strong>Case-study review view</strong>
-        <p style={CASE_STUDY_BANNER_TEXT_STYLE}>
-          You are reviewing the prepared Lakeshore RFP, vendor evaluation, BAFO,
-          and decision artifacts for the {viewLabel} walkthrough. The governance
-          rail still records the formal event stage as {currentLabel} until a
-          named human clears the gate.
-        </p>
+      <div style={CONTEXT_STRIP_META_STYLE}>
+        <span style={CONTEXT_STRIP_STAGE_STYLE}>{stageLabel}</span>
+        <span>Readiness {contextBundle.readiness}</span>
+        <span>Artifacts {contextBundle.artifacts}</span>
+        <span>Evidence {contextBundle.evidence}</span>
+        <span>
+          Gates {contextBundle.metCriteria} / {contextBundle.totalCriteria}
+        </span>
+        {contextBundle.vendors ? <span>{contextBundle.vendors}</span> : null}
       </div>
-      <Link href="#stage-gate-checklist" style={CASE_STUDY_BANNER_LINK_STYLE}>
-        Review governance gate
-      </Link>
+      {children}
     </section>
   );
 }
@@ -1627,9 +1655,23 @@ const AGENT_DOCK_ROLE_COPY: Record<"Sentinel" | "Atlas", string> = {
   Atlas: "Frames the executive brief, ranks finalists, locks the decision.",
 };
 
-function displayAgentInitials(_agent: "Sentinel" | "Atlas"): string {
-  void _agent;
-  return "aV";
+const LAKESHORE_CASE_STUDY_CHOICES = [
+  "Show the governance gates still open for this sourcing decision.",
+  "Summarize the RFP, evaluation, BAFO, and decision evidence for the executive review.",
+  "What would you validate before approving the Lakeshore shared-services case study?",
+];
+
+function isLakeshoreSharedServicesDemoEvent(
+  event: Pick<SourcingEventSummary, "code" | "name" | "accountName">,
+): boolean {
+  return /lakeshore/i.test(`${event.accountName} ${event.name} ${event.code}`);
+}
+
+function isArtifactDraftVisible(
+  artifact: SourceEventArtifactState | undefined,
+): boolean {
+  if (!artifact) return false;
+  return Boolean(artifact.body?.trim() || artifact.linkedArtifactId);
 }
 
 function normalizeSourceEventDisplay(
@@ -1771,6 +1813,29 @@ const WORKSPACE_INNER_STYLE: CSSProperties = {
   flexDirection: "column",
   minHeight: 0,
   overflow: "hidden",
+};
+
+const CONTEXT_STRIP_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  minHeight: 0,
+};
+
+const CONTEXT_STRIP_META_STYLE: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: 8,
+  padding: "8px 10px",
+  borderBottom: `1px solid ${CANVAS.RULE}`,
+  color: CANVAS.TAB_INACTIVE_INK,
+  fontSize: 12,
+};
+
+const CONTEXT_STRIP_STAGE_STYLE: CSSProperties = {
+  color: CANVAS.INK,
+  fontWeight: 700,
 };
 
 const CASE_STUDY_BANNER_STYLE: CSSProperties = {

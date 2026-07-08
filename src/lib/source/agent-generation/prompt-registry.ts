@@ -406,7 +406,7 @@ Requirements:
     },
   },
 
-  d02_value_target: {
+  d02_value_target_legacy: {
     artifactCode: 'd02_value_target',
     version: 1,
     model: DEFAULT_MODEL,
@@ -448,7 +448,7 @@ Tone: tight, quantitative, 500-900 words. Model a low/high range around the inta
     },
   },
 
-  d03_archetype_decision: {
+  d03_archetype_decision_legacy: {
     artifactCode: 'd03_archetype_decision',
     version: 1,
     model: DEFAULT_MODEL,
@@ -493,7 +493,7 @@ Tone: decisive, 400-800 words. Name the selected archetype — use the intake ar
     },
   },
 
-  d04_app_inv: {
+  d04_app_inv_legacy: {
     artifactCode: 'd04_app_inv',
     version: 1,
     model: DEFAULT_MODEL,
@@ -1081,7 +1081,7 @@ If the evaluation scorecard (d16) or pricing workbook (d19) has not been authore
     },
   },
 
-  d24_decision_brief: {
+  d24_decision_brief_legacy: {
     artifactCode: 'd24_decision_brief',
     version: 1,
     model: DEFAULT_MODEL,
