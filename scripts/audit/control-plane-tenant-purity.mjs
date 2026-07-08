@@ -67,6 +67,7 @@ const FILE_ALLOWLIST = new Set([
   'src/lib/auth/cxo-personas.ts',       // demo persona registry (tenant-scoped by design)
   'src/lib/auth/agent-client-logins.ts', // non-human proof/crawl agent registry (tenant-scoped by design)
   'src/lib/demo/demo-dataset-registry.ts', // demo-fixture registry (tenant-tagged)
+  'src/lib/intelligence/ask/tenant-safety-policy.ts', // runtime deny-list policy; tenant names are safety gates, not answer content
   'src/lib/admin/release-ledger.ts',     // internal audit sanitizer replaces tenant names before display
   'src/lib/knowledge/synthetic-datasets.ts', // tenant-tagged corpus fixture data
   'src/app/(maestro)/platform/admin/approvals/page.tsx', // internal cross-tenant admin queue

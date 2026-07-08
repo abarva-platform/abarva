@@ -73,6 +73,10 @@ when it does not reach the final answer or is blocked by the runtime gate.
 - `src/lib/intelligence/ask/__tests__/retired-fact-gate.test.ts`
   - Adds First Capital regression coverage proving `First Capital Financial`
     is blocked in source packets and model output.
+- `scripts/audit/control-plane-tenant-purity.mjs`
+  - Allowlists the runtime safety policy file with an explicit justification:
+    tenant names in that file are deny-list safety gates, not answer content or
+    control-plane tenant selection logic.
 
 ## QA / Validation
 
@@ -85,6 +89,7 @@ when it does not reach the final answer or is blocked by the runtime gate.
 | Runtime/safety lint | `node --check scripts/qa/intelligence-extensive-api-audit.mjs && node --check scripts/qa/intelligence-safety-tenant-registry.mjs && npx eslint src/lib/intelligence/ask/retired-fact-gate.ts src/lib/intelligence/ask/tenant-safety-policy.ts src/lib/intelligence/ask/__tests__/retired-fact-gate.test.ts scripts/qa/intelligence-extensive-api-audit.mjs scripts/qa/intelligence-safety-tenant-registry.mjs` | Local clean worktree | Runtime policy, gate, tests, and audit scripts parse and lint. | Passed. | `PASS` | Console output |
 | Diff whitespace | `git diff --check` | Local clean worktree | No whitespace errors. | Passed. | `PASS` | Console output |
 | Release control | `npm run release:check` | Local clean worktree | Release-control gates pass. | Passed. | `PASS` | Console output |
+| Control-plane purity | `npm run audit:control-plane-purity:check` | Local clean worktree | Tenant-specific runtime safety policy is explicitly allowlisted; no unapproved tenant strings are added elsewhere. | Passed: total `985` versus baseline `1063`; `Heliara` and `Arcturus Financial` returned to baseline. | `PASS` | Console output |
 | Single-tenant live smoke | `node scripts/qa/intelligence-extensive-api-audit.mjs --tenant lakeshore --sample-size 1 --base-url https://app.abarva.ai` | Deployed ACA runtime | Runner signs in, calls live API, writes per-turn safety diagnostics. | Passed: `1 pass / 0 watch / 0 fail`, retired-fact gate `1 passed / 0 blocked / 0 failedUnblocked`, safety findings `0`. | `PASS` | `/Users/anand/Downloads/AbarVa_lakeshore-holdings_Intelligence_Extensive_API_Audit_2026-07-08T05-45-48-458Z.html` |
 | All-tenant live smoke | `node scripts/qa/intelligence-extensive-api-audit.mjs --all-tenants --sample-size 1 --base-url https://app.abarva.ai` | Deployed ACA runtime | One safety question runs for all active tenants and writes rollup. | Completed with expected nonzero findings: First Capital final answer emitted `First Capital Financial`; Apex, Meridian, First Capital, and SkyHarbor have model-visible source alias cleanup findings. | `FAIL_EXPECTED_FINDING` | `/Users/anand/Downloads/AbarVa_All_Tenant_Intelligence_Safety_Audit_2026-07-08T05-47-13-649Z.html` |
 | All-tenant full live baseline | `node scripts/qa/intelligence-extensive-api-audit.mjs --all-tenants --sample-size 8 --base-url https://app.abarva.ai` | Deployed ACA runtime before this runtime-policy patch is deployed | Generate the full report and expose every unsafe emission/source cleanup item. | Completed `48` questions. Rollup failed as expected: `0` failedUnblocked, `0` final cross-tenant emissions, `5` final retired-alias emissions, `0` final synthetic-only emissions. First Capital was the only unsafe final emitter: `0 pass / 3 watch / 5 fail`, average `4.9/10`; `23` retired-alias findings, including `5` final-answer emissions of `First Capital Financial` and `18` model-visible packet findings. | `FAIL_EXPECTED_FINDING` | `/Users/anand/Downloads/AbarVa_All_Tenant_Intelligence_Safety_Audit_2026-07-08T12-05-50-147Z.html` |
