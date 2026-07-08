@@ -132,6 +132,22 @@ import {
   buildAvaSourceGrounding,
   AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD,
 } from "@/lib/source/facts/view/ava-grounding-context";
+// Source aVa answer-mode hardening (Phase A) — classify the question into one
+// of 16 modes, build mode-specific grounding for the 6 Phase A modes (event
+// status / workflow how-to / evidence readiness / artifact lineage & finality /
+// stage gate), and run the answer through a deterministic quality gate before
+// it ships. Additive + flag-gated exactly like the value grounding above: when
+// `source_analytics` is off or no event id is present, none of this runs and
+// the chat is byte-for-byte unchanged.
+import {
+  classifySourceAnswerMode,
+  isPhaseAImplementedMode,
+} from "@/lib/source/ava/answer-mode";
+import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
+import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
+import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
+import { readEventFacts } from "@/lib/source/facts/event-facts-reader";
+import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { getSourcingEvent } from "@/lib/source/queries";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
@@ -1122,6 +1138,13 @@ export async function POST(request: Request) {
   // event id is present, nothing here runs and the chat behaves exactly as before.
   let sourceAvaGroundingBlock = "";
   let sourceAvaQuoteNotComputeGuard = "";
+  // Phase A answer-mode hardening state — populated only when grounding is
+  // active. Threaded into the post-stream quality gate so generation and gate
+  // check read the SAME facts (checklist item #9: read-once, not a stale
+  // re-read). Left null/empty on every other surface/turn (byte-identical).
+  let sourceAvaAnswerMode: ReturnType<typeof classifySourceAnswerMode>["mode"] | null = null;
+  let sourceAvaModeGroundingFacts: Record<string, string> = {};
+  let sourceAvaModeEvidenceIncomplete = false;
   const sourceEventIdFromContext =
     typeof surfaceContext.sourceEventId === "string" &&
     surfaceContext.sourceEventId.trim()
@@ -1163,11 +1186,72 @@ export async function POST(request: Request) {
         // is active so the "not computed yet" honesty path is governed too.
         sourceAvaQuoteNotComputeGuard = AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD;
       }
+
+      // ── Phase A · answer-mode classification + mode-specific grounding ──────
+      // Classify the question so aVa answers workflow questions (status,
+      // how-to, evidence, artifacts, gates) from the SAME deterministic reads
+      // the canvas uses, not from the LLM's own guess. Only the 6 Phase A
+      // modes build a mode-specific block; the other 10 classify (telemetry +
+      // future extension point) and fall through to existing behavior.
+      const modeClassification = classifySourceAnswerMode({
+        question: message,
+        viewedStage: viewStageFromContext,
+      });
+      sourceAvaAnswerMode = modeClassification.mode;
+      if (isPhaseAImplementedMode(modeClassification.mode) && groundingEvent) {
+        const [{ inputs: modeFactInputs }, modeArtifacts] = await Promise.all([
+          readEventFacts({
+            eventId: sourceEventIdFromContext,
+            clientKey: activeClientKey,
+          }).catch(() => ({ inputs: {}, citations: {} })),
+          listSourceArtifactsForSourceEventId(sourceEventIdFromContext).catch(
+            () => [],
+          ),
+        ]);
+        const modeStageKey = viewStageFromContext ?? groundingEvent.currentStageKey;
+        const modeStageView = buildLiveStageView({
+          inputs: modeFactInputs,
+          citations: {},
+          baselineLabel: "Value at stake (event estimate)",
+          baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
+          stageKey: modeStageKey,
+        });
+        const modeGrounding = buildModeGrounding({
+          mode: modeClassification.mode,
+          event: {
+            code: groundingEvent.code,
+            name: groundingEvent.name,
+            currentStageKey: groundingEvent.currentStageKey,
+            blocker: groundingEvent.blocker,
+            nextAction: groundingEvent.nextAction,
+          },
+          viewStageKey: modeStageKey,
+          stageView: modeStageView,
+          factInputs: modeFactInputs,
+          artifacts: modeArtifacts,
+          question: message,
+        });
+        if (modeGrounding.block) {
+          sourceAvaGroundingBlock = sourceAvaGroundingBlock
+            ? `${sourceAvaGroundingBlock}\n\n${modeGrounding.block}`
+            : modeGrounding.block;
+          if (!sourceAvaQuoteNotComputeGuard) {
+            sourceAvaQuoteNotComputeGuard = AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD;
+          }
+        }
+        sourceAvaModeGroundingFacts = modeGrounding.quotableFacts;
+        sourceAvaModeEvidenceIncomplete =
+          modeGrounding.quotableFacts.evidenceMissingCount !== undefined &&
+          modeGrounding.quotableFacts.evidenceMissingCount !== "0";
+      }
     } catch {
       // Grounding is best-effort: a failure here must never break the chat turn.
       // aVa falls back to its existing (ungrounded) behavior for this event.
       sourceAvaGroundingBlock = "";
       sourceAvaQuoteNotComputeGuard = "";
+      sourceAvaAnswerMode = null;
+      sourceAvaModeGroundingFacts = {};
+      sourceAvaModeEvidenceIncomplete = false;
     }
   }
 
@@ -1580,13 +1664,29 @@ export async function POST(request: Request) {
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
   let pendingAgentOutput = "";
+  // Phase A quality gate: when a Phase A mode was classified AND grounding is
+  // active, hold the agent's text back from the client until the full turn is
+  // in hand, run it through `runSourceAnswerQualityGate`, and emit the
+  // (possibly repaired) text in one shot instead of token-by-token. This is the
+  // ONLY behavior change vs. the existing token-streaming path, and it is
+  // strictly additive: any other surface/turn (including Source turns where no
+  // Phase A mode matched, or grounding is off) streams exactly as before.
+  const sourceAvaQualityGateActive =
+    sourceAvaAnswerMode !== null &&
+    isPhaseAImplementedMode(sourceAvaAnswerMode) &&
+    sourceAvaGroundingBlock !== "";
+  let heldAgentText = "";
   const readable = new ReadableStream({
     async start(controller) {
       const flushAgentOutput = () => {
         if (!pendingAgentOutput) return;
         const demoSafeText = demoSafeClientText(pendingAgentOutput);
         bufferedOutput += demoSafeText;
-        controller.enqueue(encoder.encode(demoSafeText));
+        if (sourceAvaQualityGateActive) {
+          heldAgentText += demoSafeText;
+        } else {
+          controller.enqueue(encoder.encode(demoSafeText));
+        }
         pendingAgentOutput = "";
       };
       // Tools (commit_program) and the loop both write through this sink.
@@ -1599,7 +1699,11 @@ export async function POST(request: Request) {
             ? text
             : sanitizeRestrictedFinancialText(text, userAccessPolicy);
           bufferedOutput += safeText;
-          controller.enqueue(encoder.encode(safeText));
+          if (sourceAvaQualityGateActive) {
+            heldAgentText += safeText;
+          } else {
+            controller.enqueue(encoder.encode(safeText));
+          }
         },
       };
       try {
@@ -1681,6 +1785,45 @@ export async function POST(request: Request) {
         writer.write(`\n\n[stream error: ${errMessage}]`);
       } finally {
         flushAgentOutput();
+        // Phase A quality gate — the held-back text is checked (and, if
+        // needed, repaired once) here, BEFORE close, so the gated/repaired
+        // text is what the client actually receives. Best-effort: a gate
+        // failure never blocks the turn — the held text still ships.
+        if (sourceAvaQualityGateActive) {
+          try {
+            const gateResult = runSourceAnswerQualityGate({
+              answerText: heldAgentText,
+              mode: sourceAvaAnswerMode,
+              hasGroundingContext: sourceAvaGroundingBlock !== "",
+              groundingFacts: sourceAvaModeGroundingFacts,
+              evidenceIsIncomplete: sourceAvaModeEvidenceIncomplete,
+            });
+            const finalText = gateResult.finalText;
+            bufferedOutput += finalText;
+            controller.enqueue(encoder.encode(finalText));
+            if (!gateResult.passed) {
+              // Telemetry-only: the Phase A gate's check ids are not part of
+              // the shared Intelligence `ViolationType` union (that file is
+              // frozen for this change), so we log directly rather than widen
+              // a shared type. The repaired text still ships — this never
+              // blocks the turn, it only records what still fails.
+              console.warn(
+                "[source-ava-quality-gate] unresolved checks after repair",
+                {
+                  surface,
+                  tenantId: activeClientKey ?? undefined,
+                  mode: sourceAvaAnswerMode,
+                  unresolvedChecks: gateResult.unresolvedChecks,
+                },
+              );
+            }
+          } catch {
+            // Gate failure is best-effort — ship the held text unmodified
+            // rather than silently dropping the turn.
+            bufferedOutput += heldAgentText;
+            controller.enqueue(encoder.encode(heldAgentText));
+          }
+        }
         controller.close();
         // F0.3 post-hoc validation — non-blocking, telemetry-only.
         // The structural mechanism for action-claim integrity is F0.4
