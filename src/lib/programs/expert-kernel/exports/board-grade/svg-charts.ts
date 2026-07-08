@@ -1611,6 +1611,140 @@ export function valueVsEffortSummary(input: ValueEffortInput): string {
   return svg;
 }
 
+export interface QuadrantMatrixPoint {
+  label: string;
+  /** X-axis placement, normalized 0-100. Higher means more complex. */
+  x: number;
+  /** Y-axis placement, normalized 0-100. Higher means higher business value. */
+  y: number;
+  quadrant?: string;
+  note?: string;
+}
+
+export interface QuadrantMatrixInput {
+  title?: string;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+  points: QuadrantMatrixPoint[];
+}
+
+/**
+ * 2x2 value/complexity matrix for advisory prioritization questions.
+ * Claude can choose the points; the renderer owns axes, labels, and placement.
+ */
+export function quadrantMatrix(input: QuadrantMatrixInput): string {
+  const W = 720;
+  const H = 460;
+  const padL = 92;
+  const padR = 52;
+  const padT = 50;
+  const padB = 72;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const midX = padL + plotW / 2;
+  const midY = padT + plotH / 2;
+  const x = (value: number): number =>
+    padL + (Math.max(0, Math.min(100, value)) / 100) * plotW;
+  const y = (value: number): number =>
+    padT + plotH - (Math.max(0, Math.min(100, value)) / 100) * plotH;
+
+  let svg = open({
+    width: W,
+    height: H,
+    title: input.title ?? 'Value / complexity 2x2 matrix',
+  });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  svg += `<rect x="${padL}" y="${padT}" width="${plotW / 2}" height="${plotH / 2}" fill="${CHART.goodSoft}" opacity="0.72"/>`;
+  svg += `<rect x="${midX}" y="${padT}" width="${plotW / 2}" height="${plotH / 2}" fill="${CHART.warnSoft}" opacity="0.76"/>`;
+  svg += `<rect x="${padL}" y="${midY}" width="${plotW / 2}" height="${plotH / 2}" fill="${CHART.cream}" opacity="0.86"/>`;
+  svg += `<rect x="${midX}" y="${midY}" width="${plotW / 2}" height="${plotH / 2}" fill="${CHART.badSoft}" opacity="0.62"/>`;
+  svg += `<rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="none" stroke="${CHART.ink}" stroke-width="1.5"/>`;
+  svg += `<line x1="${midX}" y1="${padT}" x2="${midX}" y2="${padT + plotH}" stroke="${CHART.ink}" stroke-width="1.1"/>`;
+  svg += `<line x1="${padL}" y1="${midY}" x2="${padL + plotW}" y2="${midY}" stroke="${CHART.ink}" stroke-width="1.1"/>`;
+
+  svg += txt(padL + 14, padT + 24, 'Quick wins', {
+    size: 12,
+    weight: 800,
+    fill: CHART.good,
+  });
+  svg += txt(midX + 14, padT + 24, 'Strategic bets', {
+    size: 12,
+    weight: 800,
+    fill: CHART.warn,
+  });
+  svg += txt(padL + 14, midY + 24, 'Monitor', {
+    size: 12,
+    weight: 800,
+    fill: CHART.inkSoft,
+  });
+  svg += txt(midX + 14, midY + 24, 'Defer', {
+    size: 12,
+    weight: 800,
+    fill: CHART.bad,
+  });
+
+  svg += txt(padL, H - 30, 'Lower complexity', {
+    size: 10,
+    fill: CHART.inkSoft,
+  });
+  svg += txt(padL + plotW, H - 30, 'Higher complexity', {
+    size: 10,
+    anchor: 'end',
+    fill: CHART.inkSoft,
+  });
+  svg += txt(
+    padL + plotW / 2,
+    H - 14,
+    input.xAxisLabel ?? 'Implementation complexity',
+    {
+      size: 11,
+      anchor: 'middle',
+      weight: 800,
+    },
+  );
+  svg += `<g transform="translate(24 ${padT + plotH / 2}) rotate(-90)">`;
+  svg += txt(0, 0, input.yAxisLabel ?? 'Business value', {
+    size: 11,
+    anchor: 'middle',
+    weight: 800,
+  });
+  svg += `</g>`;
+  svg += txt(54, padT + plotH, 'Lower value', {
+    size: 10,
+    anchor: 'end',
+    fill: CHART.inkSoft,
+  });
+  svg += txt(54, padT + 4, 'Higher value', {
+    size: 10,
+    anchor: 'end',
+    fill: CHART.inkSoft,
+  });
+
+  input.points.slice(0, 12).forEach((point, index) => {
+    const px = x(point.x);
+    const py = y(point.y);
+    const labelY = py + (index % 2 === 0 ? -12 : 22);
+    const anchor = px > midX ? 'end' : 'start';
+    const labelX = px + (px > midX ? -12 : 12);
+    svg += `<circle cx="${px}" cy="${py}" r="6.5" fill="${CHART.accent}" stroke="${CHART.paper}" stroke-width="2"/>`;
+    svg += txt(
+      labelX,
+      labelY,
+      point.label.length > 34 ? `${point.label.slice(0, 31)}...` : point.label,
+      {
+        size: 10,
+        weight: 750,
+        anchor,
+        fill: CHART.ink,
+      },
+    );
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
 // ===========================================================================
 // 15. Evidence / gap matrix (Charter §6 detail, CFO §7) — recorded facts and
 //     declared seed gaps in one grid so a reviewer can audit the case. Seed

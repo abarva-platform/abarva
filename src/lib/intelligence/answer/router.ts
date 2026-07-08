@@ -75,6 +75,13 @@ function packKeywords(p: ExpertPack): Set<string> {
 function inferOutputShape(query: string): OutputShape {
   const q = query.toLowerCase();
   if (
+    /\b(?:2\s*x\s*2|2x2|quadrant)\b/.test(q) ||
+    /\bvalue\b[\s\S]{0,80}\bcomplexity\b/.test(q) ||
+    /\bcomplexity\b[\s\S]{0,80}\bvalue\b/.test(q)
+  ) {
+    return "chart";
+  }
+  if (
     /\b(relate|related|connect|connected|depend|dependenc|map of|network|upstream|downstream|impact of .* on)\b/.test(
       q,
     )

@@ -62,6 +62,41 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 
+  it("renders a typed quadrant matrix chart", () => {
+    const chart: AnswerChart = {
+      id: "chart-quadrant",
+      kind: "quadrant-matrix",
+      title: "Supply chain AI use-case matrix",
+      data: {
+        points: [
+          { label: "Demand sensing", x: 52, y: 78 },
+          { label: "Supplier risk sensing", x: 24, y: 52 },
+          {
+            label: "Autonomous planning exception triage",
+            x: 78,
+            y: 92,
+          },
+        ],
+      },
+      citationIds: ["c1"],
+    };
+
+    const rendered = renderAnswerChartSvg(chart);
+    expect(rendered.builderName).toBe("quadrantMatrix");
+    expect(rendered.svg).toContain("Quick wins");
+    expect(rendered.svg).toContain("Demand sensing");
+
+    const { container } = render(
+      <AnswerChartRenderer chart={chart} citations={citations} />,
+    );
+    expect(
+      screen.getByText("Supply chain AI use-case matrix"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector("[data-chart-builder='quadrantMatrix'] svg"),
+    ).not.toBeNull();
+  });
+
   it("renders a typed AnswerTable with formatting and citations", () => {
     const table: AnswerTable = {
       id: "table-1",

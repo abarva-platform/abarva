@@ -434,6 +434,97 @@ function exactCurrencyOrNumber(value: string | number | null): number | null {
   return base;
 }
 
+function ordinalScore(value: string | number | null | undefined): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    if (value >= 0 && value <= 5) return (value / 5) * 100;
+    if (value >= 0 && value <= 10) return (value / 10) * 100;
+    if (value >= 0 && value <= 100) return value;
+    return null;
+  }
+  const text = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (!text) return null;
+  const numeric = text.match(/\b([0-9]+(?:\.[0-9]+)?)\b/);
+  if (numeric) {
+    const parsed = Number(numeric[1]);
+    if (Number.isFinite(parsed)) {
+      if (parsed >= 0 && parsed <= 5) return (parsed / 5) * 100;
+      if (parsed >= 0 && parsed <= 10) return (parsed / 10) * 100;
+      if (parsed >= 0 && parsed <= 100) return parsed;
+    }
+  }
+  if (/\b(very\s+high|highest|critical|transformational)\b/.test(text)) {
+    return 92;
+  }
+  if (/\b(high|large|major|strong|significant)\b/.test(text)) return 78;
+  if (/\b(medium|moderate|mid|balanced)\b/.test(text)) return 52;
+  if (/\b(low|small|minor|limited|easy|simple)\b/.test(text)) return 24;
+  return null;
+}
+
+function isQuadrantMatrixRequest(query: string): boolean {
+  const q = query.toLowerCase();
+  return (
+    /\b(?:2\s*x\s*2|2x2|quadrant)\b/.test(q) ||
+    /\bvalue\b[\s\S]{0,80}\bcomplexity\b/.test(q) ||
+    /\bcomplexity\b[\s\S]{0,80}\bvalue\b/.test(q)
+  );
+}
+
+function quadrantFromExtractedTable(
+  table: AnswerTable,
+  citationIds: string[],
+): AnswerChart | null {
+  const labelColumn =
+    findColumnByLabel(
+      table,
+      /\b(use\s*case|initiative|opportunity|option|bet|investment|case)\b/i,
+    ) ?? table.columns.find((column) => column.format === "text");
+  const valueColumn = findColumnByLabel(
+    table,
+    /\b(value|impact|benefit|roi|upside|importance)\b/i,
+  );
+  const complexityColumn = findColumnByLabel(
+    table,
+    /\b(complexity|effort|difficulty|delivery|implementation|feasibility)\b/i,
+  );
+  if (!labelColumn || !valueColumn || !complexityColumn) return null;
+
+  const points = table.rows
+    .map((row) => {
+      const label = textForCell(row[labelColumn.key]);
+      const y = ordinalScore(row[valueColumn.key]);
+      const x = ordinalScore(row[complexityColumn.key]);
+      if (!label || y === null || x === null) return null;
+      return {
+        label: label.length > 42 ? `${label.slice(0, 39)}...` : label,
+        x,
+        y,
+      };
+    })
+    .filter(
+      (point): point is { label: string; x: number; y: number } =>
+        Boolean(point),
+    )
+    .slice(0, 12);
+
+  if (points.length < 2) return null;
+  return {
+    id: `${table.id}-quadrant-matrix`,
+    kind: "quadrant-matrix",
+    title: "Value / Complexity 2x2 Matrix",
+    data: {
+      title: "Value / Complexity 2x2 Matrix",
+      xAxisLabel: "Implementation complexity",
+      yAxisLabel: "Business value",
+      points,
+    },
+    builder: "quadrantMatrix",
+    citationIds,
+  };
+}
+
 const COST_STACK_COLORS: string[] = [
   CHART.accent,
   CHART.good,
@@ -446,7 +537,12 @@ const COST_STACK_COLORS: string[] = [
 function chartFromExtractedTable(
   table: AnswerTable,
   citationIds: string[],
+  query: string,
 ): AnswerChart | null {
+  if (isQuadrantMatrixRequest(query)) {
+    const quadrant = quadrantFromExtractedTable(table, citationIds);
+    if (quadrant) return quadrant;
+  }
   const scoredColumns = table.columns
     .map((column, index) => {
       const values = table.rows.map((row) =>
@@ -721,9 +817,9 @@ function hasExplicitStructuredArtifactRequest(
     );
   }
   if (routing.outputShape === "chart") {
-    return /\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically|trend|trends|over time|by month|by quarter|year over year|trajectory)\b/.test(
+    return /\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically|trend|trends|over time|by month|by quarter|year over year|trajectory|2\s*x\s*2|2x2|quadrant)\b/.test(
       q,
-    );
+    ) || /\bvalue\b[\s\S]{0,80}\bcomplexity\b/.test(q) || /\bcomplexity\b[\s\S]{0,80}\bvalue\b/.test(q);
   }
   if (routing.outputShape === "table") {
     return /\b(table|tables|tabular|matrix|scorecard|workbook)\b/.test(q);
@@ -767,6 +863,7 @@ export function buildStructuredExhibits(
     const chart = chartFromExtractedTable(
       tables[0],
       citations.map((citation) => citation.id),
+      input.routing.query,
     );
     if (chart) charts.push(chart);
   }

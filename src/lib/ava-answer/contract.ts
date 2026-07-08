@@ -92,7 +92,8 @@ export type AnswerChartKind =
   | "range-bar"
   | "heatmap"
   | "swimlane"
-  | "cost-stack";
+  | "cost-stack"
+  | "quadrant-matrix";
 
 export interface AnswerChart {
   id: string;

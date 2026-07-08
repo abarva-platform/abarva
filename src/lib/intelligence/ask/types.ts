@@ -54,7 +54,7 @@ export interface AskStructuredColumn {
 }
 
 export interface AskStructuredChartHint {
-  kind?: 'cost-stack' | 'bar';
+  kind?: 'cost-stack' | 'bar' | 'quadrant-matrix';
   labelKey: string;
   valueKey: string;
   title?: string;
