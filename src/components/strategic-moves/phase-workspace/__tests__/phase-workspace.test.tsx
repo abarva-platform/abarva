@@ -19,6 +19,7 @@ import { PhaseTaskChecklist } from '../PhaseTaskChecklist';
 import { NextPhaseFeedForwardCard } from '../NextPhaseFeedForwardCard';
 import { buildPhaseWorkflow } from '../../../../lib/programs/phase-templates/phase-workflow';
 import { buildFeedForwardPack } from '../../../../lib/programs/phase-templates/feed-forward';
+import { classifyUpload } from '../../../../lib/programs/phase-templates/classification';
 
 const F = LAKESHORE_LEGAL_DEMO_FIXTURE;
 const render = (el: React.ReactElement) => renderToStaticMarkup(el);
@@ -227,6 +228,43 @@ describe('feed-forward card (increment 6) — real current-state carried forward
       />,
     );
     expect(withFF).toContain('Prepared for P3 Choose the Approach');
+  });
+});
+
+describe('completed-template upload → mapping (increment 8)', () => {
+  const decision = templatesForPhase('P3').find((x) => x.label.toLowerCase().includes('decision'))!;
+  const classification = classifyUpload({
+    uploadId: 'decision.md',
+    moveId: 'm1',
+    phase: 'P3',
+    uploadCategory: 'review_summary',
+    inferredTemplateId: decision.templateId,
+    confidence: 'high',
+  });
+
+  it('panel shows an upload control when the host provides the handler', () => {
+    const html = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={3}
+        phaseLabel="P3 · Design"
+        onUploadCompletedTemplate={() => {}}
+      />,
+    );
+    expect(html).toContain('Upload a completed template');
+  });
+
+  it('panel renders the mapping summary once a classification exists — Move-scoped, no promotion', () => {
+    const html = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={3}
+        phaseLabel="P3 · Design"
+        onUploadCompletedTemplate={() => {}}
+        uploadClassification={classification}
+      />,
+    );
+    expect(html).toContain('What AbarVa found');
+    expect(html).toContain('Move-scoped only');
+    expect(html.toLowerCase()).toContain('not added to enterprise context');
   });
 });
 

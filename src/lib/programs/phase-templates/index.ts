@@ -13,6 +13,10 @@ export { buildTemplateOutline, templateOutlineFilename } from './template-outlin
 export { classifyUpload } from './classification';
 export type { ClassifyUploadInput } from './classification';
 export {
+  inferTemplateFromFilename,
+  uploadCategoryForTemplate,
+} from './upload-inference';
+export {
   buildPatternAssemblyPacket,
   validateAssembledResponse,
 } from './pattern-assembly';

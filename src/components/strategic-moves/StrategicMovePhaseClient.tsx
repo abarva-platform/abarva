@@ -32,6 +32,13 @@ import {
 import { DeliverableArtifactCard } from "@/components/strategic-moves/DeliverableArtifactCard";
 import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace";
 import { useFeature } from "@/lib/features/use-feature";
+import {
+  classifyUpload,
+  inferTemplateFromFilename,
+  uploadCategoryForTemplate,
+  type MovePhaseCode,
+  type MoveTemplateUploadClassification,
+} from "@/lib/programs/phase-templates";
 import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
@@ -2018,6 +2025,42 @@ export function StrategicMovePhaseClient({
     });
   }, []);
 
+  // Phase-workspace v2 — completed-template upload → deterministic classifyUpload.
+  // Move-scoped, no enterprise promotion, no Claude: the template is inferred
+  // from the filename and mapped through the governed catalog. The file is not
+  // persisted here (persistence is a later increment) — this shows the mapping.
+  const templateUploadRef = useRef<HTMLInputElement>(null);
+  const [templateUpload, setTemplateUpload] =
+    useState<MoveTemplateUploadClassification | null>(null);
+  const pickCompletedTemplate = useCallback(
+    () => templateUploadRef.current?.click(),
+    [],
+  );
+  const onCompletedTemplateSelected = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      const code = ({ 2: "P2", 3: "P3", 4: "P4", 5: "P5" } as Record<
+        number,
+        MovePhaseCode
+      >)[phaseNum];
+      if (!code) return;
+      const tmpl = inferTemplateFromFilename(file.name, code);
+      setTemplateUpload(
+        classifyUpload({
+          uploadId: file.name,
+          moveId: move.id,
+          phase: code,
+          uploadCategory: uploadCategoryForTemplate(tmpl),
+          inferredTemplateId: tmpl?.templateId ?? null,
+          confidence: tmpl ? "high" : "low",
+        }),
+      );
+    },
+    [move.id, phaseNum],
+  );
+
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
       id: "nexus-open-p" + phaseNum,
@@ -2383,6 +2426,15 @@ export function StrategicMovePhaseClient({
         workspace={
           <>
           {showPhaseWorkspaceV2 && (
+            <input
+              ref={templateUploadRef}
+              type="file"
+              accept=".md,.docx,.xlsx,.pdf,.txt,.html,.csv"
+              style={{ display: "none" }}
+              onChange={onCompletedTemplateSelected}
+            />
+          )}
+          {showPhaseWorkspaceV2 && (
             <MovePhaseWorkspacePanel
               phaseNum={phaseNum}
               phaseLabel={config.label}
@@ -2434,6 +2486,8 @@ export function StrategicMovePhaseClient({
                   : undefined
               }
               onTaskAction={focusWorkspaceControls}
+              uploadClassification={templateUpload}
+              onUploadCompletedTemplate={pickCompletedTemplate}
             />
           )}
           {useWorkbench ? (
