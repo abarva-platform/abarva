@@ -563,6 +563,86 @@ export const SAMPLE_EVALUATION_STAGE: StageAnalyticsView = {
   },
 };
 
+/**
+ * The Value stage scaffold. Mirrors the Scope three-beat structure but foregrounds
+ * the one upload that flips value realization LIVE: the realized-value actuals (one
+ * row per value lever, a Realized Value To Date USD column) parsed into
+ * `realized_value_usd` value_lever facts via `VALUE_REALIZATION_V1`. The live stage
+ * builder swaps in the fact-derived waterfall + intel lead over this structure.
+ *
+ * The Value stage is Atlas-owned in the rail (transition & value, steps 10–11); this
+ * scaffold keeps the dropzone + insight consistent with how the other stages render
+ * so realization goes live the same way committed value / BAFO progress do. The
+ * realized read is a realized-to-date SNAPSHOT, not a per-period series — the full
+ * per-period time-series is a deferred enhancement.
+ */
+export const SAMPLE_VALUE_STAGE: StageAnalyticsView = {
+  stageKey: 'value',
+  stageName: 'Value',
+  purpose:
+    'Prove the committed value is actually being realized — an un-tracked committed value reverts to incumbent run-rate within a year or two, so book realized value per lever against what the award committed.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's what has been realized to date per lever vs what the award committed — confirm the realized actuals so the committed value is a result, not a promise.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'Book realized value per lever against the committed line it maps to — value not measured against a committed lever is value that quietly leaks back.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'An estimated 40–60% of negotiated sourcing value is never measured post-award; without a realization track the committed value is a promise, not a result.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'Realization is where the whole event pays off or leaks — an un-tracked committed value reverts to incumbent run-rate within a year or two.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'value.realized-actuals',
+      title: 'Confirm realized value to date',
+      subtitle: 'One row per value lever · realized-to-date USD',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload the realized-value actuals (CSV or XLSX): one row per value lever (the Lever Key column) with Realized Value To Date (USD) set to the value realized so far for that lever over the contract term (a cumulative realized-to-date snapshot, not annualized or per-period). A lever with no row stays "not yet realized". This flips value realization from a model to a live realized-vs-committed read.',
+      provenance: {
+        owner: 'Value realization lead',
+        source: 'Run-cost / SLA-credit / productivity actuals record',
+      },
+      cta: 'Upload the realized-value actuals',
+      // Parsed into VALUE_REALIZATION_V1 → realized_value_usd value_lever facts —
+      // flips the ✦ Intelligence value realization insight LIVE (realized-to-date
+      // vs committed per lever).
+      factTemplateCode: 'VALUE_REALIZATION_V1',
+    },
+  ],
+  gate: {
+    approver: 'K. Oshima, CIO',
+    confirms: [
+      {
+        label: 'Realized value booked per lever',
+        detail: 'Each committed lever has a realized-to-date figure or a documented reason it has not yet realized.',
+      },
+      {
+        label: 'Realization measured against committed',
+        detail: 'Realized value is compared to what the award committed, so leakage is visible before it compounds.',
+      },
+      {
+        label: 'Value tracked',
+        detail: 'The realization track is live — the event value is being measured, not assumed.',
+      },
+    ],
+    generates: [{ label: 'Value realization summary', code: 'd12' }],
+    nextStageName: 'Closed',
+  },
+};
+
 /** aVa's docked-launcher scope for the Scope stage. */
 export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
   role: 'Analyst · Scope',

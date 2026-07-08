@@ -59,6 +59,7 @@ import type {
   ValueBridgeInsightView,
   ValuePoolBarView,
   ValuePoolInsightView,
+  ValueRealizationBarView,
   ValueRealizationInsightView,
   ValueRealizationPointView,
 } from '@/components/source/canvas/analytics/view-model';
@@ -180,6 +181,16 @@ export interface BuildStepInsightInput {
    */
   bafoConcessionByLeverKey?: ReadonlyMap<string, number>;
   /**
+   * Per-lever realized value TO DATE (canonical lever key → realized USD over term)
+   * from the realized-value-facts read. Drives value realization: when PROVIDED
+   * (even empty) a realized signal exists and the insight goes LIVE (each lever's
+   * `realized` set where a fact exists, not-yet-realized otherwise); when `undefined`
+   * no realized fact exists and the insight stays a MODEL. Empty-map is a valid live
+   * "assessed, nothing realized yet" read — distinct from `undefined`. This is a
+   * realized-to-date SNAPSHOT, not a per-period series (see the design doc's Shape 3).
+   */
+  realizedValueByLeverKey?: ReadonlyMap<string, number>;
+  /**
    * The per-vendor / per-lever response signal (from the vendor-response facts
    * read) that drives Responses coverage. When PROVIDED (even with an empty vendor
    * set) a response signal exists and the insight goes LIVE; when `undefined` no
@@ -235,7 +246,11 @@ export function buildStepInsight(
     case 'exec_decision':
       return buildExecDecisionInsight(resolved, input);
     case 'value_realization':
-      return buildValueRealizationInsight(resolved, input.inputs);
+      return buildValueRealizationInsight(
+        resolved,
+        input.inputs,
+        input.realizedValueByLeverKey,
+      );
     case 'response_coverage':
       return buildResponseCoverageInsight(
         resolved,
@@ -1568,31 +1583,109 @@ function execDecisionAdvisor(archetype: SourceEventArchetype): {
   };
 }
 
-// ── Value · COMMITTED vs REALIZED over time (MODEL) ──────────────────────────
+// ── Value · COMMITTED vs REALIZED over time (MODEL / LIVE snapshot) ───────────
 
 /**
- * Value realization: committed value (from the awarded levers) vs realized (0 /
- * placeholder) over the term. MODEL — realized-value actuals are not in the fact
- * model yet. Goes live when periodic realized-value actuals per lever are ingested.
+ * Value realization: committed value (from the awarded levers) vs realized over the
+ * term.
+ *
+ * LIVE (snapshot) when realized facts exist for the event (`realizedByLeverKey` is
+ * provided): per lever, the value REALIZED TO DATE (its `realized_value_usd` fact)
+ * is shown against the lever's committed reference (its target-band midpoint). This
+ * is a realized-to-date SNAPSHOT, NOT a per-period ramp — source_event_facts has no
+ * period dimension, so the realized-to-date TOTAL is marked as the CURRENT period's
+ * realized point on the committed track and earlier periods stay pending (never a
+ * fabricated ramp). A lever with no realized fact stays "not yet realized" — never
+ * fabricated. The full per-period time-series is a deferred enhancement (see the
+ * design doc's Shape 3).
+ *
+ * MODEL when no realized fact exists (`realizedByLeverKey` is undefined): the
+ * realized track is pending (null) against committed — the honest default preserved
+ * from before the fact existed.
+ *
  * Committed uses real lever bands where they compute, else the illustrative scale.
+ * No value-lever economic math changes; this reads a new realized signal.
  */
 export function buildValueRealizationInsight(
   archetype: SourceEventArchetype,
   facts: EventFactMap,
+  realizedByLeverKey?: ReadonlyMap<string, number>,
 ): ValueRealizationInsightView {
+  const rules = archetype.valueLeverRules ?? [];
   const results = evaluateValueLevers(archetype, facts);
-  const computed = results.filter((r) => !r.insufficientEvidence);
-  // Committed total = midpoint of the computed bands where present, else sample.
-  const committedTotal =
-    computed.length > 0
-      ? computed.reduce((s, r) => s + (r.low + r.high) / 2, 0)
-      : sampleBarsFromRules(archetype.valueLeverRules ?? []).reduce(
-          (s, b) => s + (b.low + b.high) / 2,
-          0,
-        );
+  const advisor = valueRealizationAdvisor(archetype);
+
+  // A signal exists when the map was provided (even empty — realization assessed
+  // and nothing realized yet). Undefined → no realized fact → honest MODEL.
+  const isLive = realizedByLeverKey !== undefined;
+
+  // Per-lever committed reference = the lever's target-band midpoint (real band
+  // where it computes, else the illustrative scale) — the same committed roll-up the
+  // model has always shown, decomposed per lever.
+  const perLever = rules.map((rule) => {
+    const band = leverBand(rule, results);
+    const committed = Math.round((band.low + band.high) / 2);
+    const realized = isLive ? realizedByLeverKey!.get(rule.key) : undefined;
+    return { rule, committed, realized };
+  });
+  const committedTotal = perLever.reduce((s, l) => s + l.committed, 0);
 
   const termYears = 3;
-  // Committed ramps linearly to full by end of term; realized is null (not ingested).
+
+  if (isLive) {
+    // LIVE snapshot: realized-to-date bars per lever + the realized-to-date total
+    // marked on the CURRENT (final) period only. Never a per-period ramp.
+    const bars: ValueRealizationBarView[] = perLever
+      .map((l) => ({
+        leverKey: l.rule.key,
+        label: l.rule.name,
+        valueType: l.rule.valueType,
+        committed: l.committed,
+        ...(l.realized !== undefined ? { realized: l.realized } : {}),
+      }))
+      // Realized-first (biggest realized $), then by committed reference.
+      .sort(
+        (a, b) =>
+          (b.realized ?? -1) - (a.realized ?? -1) || b.committed - a.committed,
+      );
+
+    const realizedBars = bars.filter((b) => b.realized !== undefined);
+    const realizedTotal = realizedBars.reduce(
+      (s, b) => s + (b.realized ?? 0),
+      0,
+    );
+
+    // Committed ramps linearly to full over the term; realized-to-date is a SNAPSHOT
+    // attached to the current (final) period only — earlier periods stay pending.
+    const points: ValueRealizationPointView[] = Array.from(
+      { length: termYears },
+      (_, i) => ({
+        period: `Y${i + 1}`,
+        committed: Math.round((committedTotal * (i + 1)) / termYears),
+        realized: i === termYears - 1 ? realizedTotal : null,
+      }),
+    );
+
+    return {
+      kind: 'value_realization',
+      provenance: 'live',
+      headline: valueRealizationLiveHeadline(
+        bars.length,
+        realizedBars.length,
+        realizedTotal,
+        committedTotal,
+      ),
+      points,
+      bars,
+      isModel: false,
+      flipFact:
+        'Realized-value actuals per lever (run-cost actuals, SLA-credit actuals, productivity-credit actuals booked to date).',
+      note: 'Live (snapshot) — realized value is read from the realized-to-date actuals you provided (one realized_value_usd fact per lever). Each lever shows what has been realized TO DATE against its committed reference, and the realized-to-date total is marked as the current point on the committed track; a lever with no realized fact stays "not yet realized", never fabricated. This is a realized-to-date snapshot, not a per-period ramp — the full per-period time-series is a deferred enhancement. The committed reference and advisor guidance are the same cited/advisor values as the model.',
+      ...advisor,
+    };
+  }
+
+  // MODEL: committed ramps linearly to full by end of term; realized is null.
   const points: ValueRealizationPointView[] = Array.from(
     { length: termYears },
     (_, i) => ({
@@ -1602,7 +1695,6 @@ export function buildValueRealizationInsight(
     }),
   );
 
-  const advisor = valueRealizationAdvisor(archetype);
   return {
     kind: 'value_realization',
     provenance: 'sample',
@@ -1610,11 +1702,46 @@ export function buildValueRealizationInsight(
       `${fmtUsd(committedTotal)} of value committed across the term; realization is tracked here ` +
       `once run-cost and SLA-credit actuals are ingested — realized shows as pending, never as a claimed number.`,
     points,
+    isModel: true,
     flipFact:
-      'Periodic realized-value actuals per lever (run-cost actuals, SLA-credit actuals, productivity-credit actuals booked per period).',
-    note: 'Model — realized-value actuals are not in the fact model yet, so the realized track is shown pending against committed value. It goes live once periodic realized-value actuals per lever are ingested. Committed value is the awarded-lever roll-up; realization is never fabricated. Not a tenant savings claim.',
+      'Realized-value actuals per lever (run-cost actuals, SLA-credit actuals, productivity-credit actuals booked to date).',
+    note: 'Model — realized-value actuals are not in the fact model yet, so the realized track is shown pending against committed value. It goes live once realized-to-date actuals per lever are ingested (upload the realized-value actuals so each lever gets a realized_value_usd fact). Committed value is the awarded-lever roll-up; realization is never fabricated. Not a tenant savings claim.',
     ...advisor,
   };
+}
+
+/**
+ * The live value-realization headline: realized-to-date total vs committed + how
+ * many of the levers have booked any realized value. Honest when NOTHING is realized
+ * yet.
+ */
+function valueRealizationLiveHeadline(
+  leverCount: number,
+  realizedCount: number,
+  realizedTotal: number,
+  committedTotal: number,
+): string {
+  if (realizedCount === 0) {
+    return (
+      `No realized value has been booked yet across ${leverCount} committed levers — ` +
+      `the ${fmtUsd(committedTotal)} committed pool is all still awaiting realization.`
+    );
+  }
+  const pct =
+    committedTotal > 0
+      ? Math.round((realizedTotal / committedTotal) * 100)
+      : 0;
+  if (realizedCount === leverCount) {
+    return (
+      `${fmtUsd(realizedTotal)} realized to date across all ${leverCount} levers ` +
+      `(${pct}% of the ${fmtUsd(committedTotal)} committed pool) — hold the run-rate that keeps it booked.`
+    );
+  }
+  return (
+    `${fmtUsd(realizedTotal)} realized to date across ${realizedCount} of ${leverCount} ` +
+    `levers (${pct}% of the ${fmtUsd(committedTotal)} committed pool); the rest are still ` +
+    `awaiting realization — book each against the committed lever it maps to.`
+  );
 }
 
 function valueRealizationAdvisor(archetype: SourceEventArchetype): {

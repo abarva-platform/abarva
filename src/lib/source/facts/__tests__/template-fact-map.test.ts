@@ -65,8 +65,27 @@ describe('template → fact map — worked examples present', () => {
     expect(templateFactMapByCode('RFP_CLAUSES_V1')).toBeDefined();
     expect(templateFactMapByCode('COMMITTED_VALUE_V1')).toBeDefined();
     expect(templateFactMapByCode('BAFO_CONCESSIONS_V1')).toBeDefined();
+    expect(templateFactMapByCode('VALUE_REALIZATION_V1')).toBeDefined();
     expect(templateFactMapByCode('RESPONSE_COVERAGE_V1')).toBeDefined();
     expect(templateFactMapByCode('VENDOR_BIDS_V1')).toBeDefined();
+  });
+
+  it('VALUE_REALIZATION_V1 binds one row per value lever to the realized_value_usd signal', () => {
+    const tpl = templateFactMapByCode('VALUE_REALIZATION_V1')!;
+    expect(tpl.rowEntity).toBe('value_lever');
+    expect(tpl.entityRefColumn).toBe('Lever Key');
+    expect(tpl.columns).toHaveLength(1);
+    const col = tpl.columns[0];
+    expect(col.header).toBe('Realized Value To Date (USD)');
+    expect(col.factKey).toBe('realized_value_usd');
+    // The column's entityKind + unit must match the catalog (no drift): a
+    // total-over-term $ on the usd unit, attached to a value_lever entity.
+    const spec = factSpecByKey(col.factKey);
+    expect(spec).toBeDefined();
+    expect(col.entityKind).toBe('value_lever');
+    expect(col.entityKind).toBe(spec!.entityKind);
+    expect(col.unit).toBe('usd');
+    expect(col.unit).toBe(spec!.unit);
   });
 
   it('BAFO_CONCESSIONS_V1 binds one row per value lever to the bafo_concession_captured_usd signal', () => {

@@ -168,6 +168,19 @@ describe('Source fact catalog — shape + lookups', () => {
     expect(spec!.source).toBe('extracted_vendor');
   });
 
+  it('resolves the realized_value_usd signal fact under entity_kind value_lever', () => {
+    expect(isCatalogFactKey('realized_value_usd')).toBe(true);
+    expect(isSignalFactKey('realized_value_usd')).toBe(true);
+    const spec = factSpecByKey('realized_value_usd');
+    expect(spec).toBeDefined();
+    expect(spec!.entityKind).toBe('value_lever');
+    // A total-over-term $ figure on the usd unit — same basis as committed_value_usd
+    // and the lever band, so realized-to-date can be compared directly against them.
+    expect(spec!.unit).toBe('usd');
+    // Sourced from the enterprise run/SLA/productivity actuals record.
+    expect(spec!.source).toBe('enterprise_inventory');
+  });
+
   it('resolves the response_addressed signal fact under entity_kind vendor_lever', () => {
     expect(isCatalogFactKey('response_addressed')).toBe(true);
     expect(isSignalFactKey('response_addressed')).toBe(true);

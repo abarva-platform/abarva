@@ -42,6 +42,7 @@ import {
   readRfpClausePresentLeverKeys,
   readCommittedValueLevers,
   readBafoConcessionLevers,
+  readRealizedValueLevers,
   readVendorLeverResponses,
   readVendorBids,
 } from "@/lib/source/facts/event-facts-reader";
@@ -189,6 +190,24 @@ export default async function SourceEventDetailPage({
             ? capturedByLeverKey
             : undefined;
         }
+        // Value realization reads a per-lever realized-to-date signal (one
+        // realized_value_usd fact per lever, keyed by lever key in entity_ref) the
+        // collapsed event-facts read cannot express. Only fetch it on the Value
+        // stage. `undefined` (no signal) keeps the insight an honest MODEL; a map
+        // (even empty) flips it LIVE. This is a realized-to-date snapshot, not a
+        // per-period series (see the downstream-insight fact-model design doc).
+        let realizedValueByLeverKey: ReadonlyMap<string, number> | undefined =
+          undefined;
+        if (viewStage === "value") {
+          const { signalPresent, realizedByLeverKey } =
+            await readRealizedValueLevers({
+              eventId: event.id,
+              clientKey: activeClient.key,
+            });
+          realizedValueByLeverKey = signalPresent
+            ? realizedByLeverKey
+            : undefined;
+        }
         // Responses coverage reads a per-vendor / per-lever response signal (one
         // response_addressed fact per vendor×lever, keyed by the composite
         // <vendorId>::<leverKey> in entity_ref) the collapsed event-facts read
@@ -253,6 +272,7 @@ export default async function SourceEventDetailPage({
             rfpClausePresentLeverKeys,
             committedValueByLeverKey,
             bafoConcessionByLeverKey,
+            realizedValueByLeverKey,
             vendorResponses,
             vendorBids,
           }) ?? undefined;

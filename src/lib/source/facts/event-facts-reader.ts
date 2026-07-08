@@ -258,6 +258,68 @@ export async function readBafoConcessionLevers(input: {
   return { signalPresent, capturedByLeverKey };
 }
 
+/**
+ * The realized-value read for the value-realization insight (Value stage).
+ *
+ * Like `readCommittedValueLevers`, this needs the per-lever value of the
+ * `realized_value_usd` signal fact — a `value_lever`-kind fact whose `entity_ref`
+ * is a canonical lever key and whose value is the USD-over-term realized TO DATE for
+ * that lever (a snapshot of cumulative realized value so far, NOT a per-period
+ * ramp — source_event_facts has no period dimension). It returns:
+ *   • `signalPresent` — whether ANY non-stale realized_value_usd fact exists for
+ *     the event (drives live vs model in the insight); and
+ *   • `realizedByLeverKey` — the newest non-stale realized-to-date value per lever key.
+ *
+ * Newest-non-stale-per-lever wins (a lever re-measured to a new realized-to-date
+ * number supersedes the older capture). Only FINITE, non-negative numbers are
+ * admitted — a bad cell never fabricates a realized number. Tenant-scoped by
+ * client_key (RLS). Returns `signalPresent: false` + an empty map when the table has
+ * no realized_value_usd rows for the event — the insight then honestly stays a MODEL.
+ */
+export async function readRealizedValueLevers(input: {
+  eventId: string;
+  clientKey: string;
+}): Promise<{ signalPresent: boolean; realizedByLeverKey: Map<string, number> }> {
+  const { eventId, clientKey } = input;
+  const supabase = getAzureWriteFluentClient();
+
+  const { data, error } = await supabase
+    .from('source_event_facts')
+    .select('entity_ref, value_numeric, captured_at')
+    .eq('source_event_id', eventId)
+    .eq('client_key', clientKey)
+    .eq('fact_key', 'realized_value_usd')
+    .eq('entity_kind', 'value_lever')
+    .eq('is_stale', false)
+    .order('captured_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as Array<
+    Pick<SourceEventFactRow, 'entity_ref' | 'value_numeric'>
+  >;
+
+  const realizedByLeverKey = new Map<string, number>();
+  // Rows are ordered newest-first; keep the FIRST value seen per lever key so a
+  // re-measurement supersedes older captures.
+  const seen = new Set<string>();
+  let signalPresent = false;
+  for (const row of rows) {
+    const leverKey = row.entity_ref?.trim();
+    if (!leverKey) continue;
+    signalPresent = true;
+    if (seen.has(leverKey)) continue;
+    seen.add(leverKey);
+    const value = Number(row.value_numeric);
+    // Never fabricate a magnitude: only admit a finite, non-negative realized $.
+    if (Number.isFinite(value) && value >= 0) {
+      realizedByLeverKey.set(leverKey, value);
+    }
+  }
+
+  return { signalPresent, realizedByLeverKey };
+}
+
 /** Whether a vendor addressed a lever: on the `ratio` scale (0=dodged … 1=addressed). */
 export type ResponseStatus = 'addressed' | 'partial' | 'dodged';
 

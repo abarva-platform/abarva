@@ -37,9 +37,50 @@ const MODEL: ValueRealizationInsightView = {
     { period: 'Y2', committed: 4_000_000, realized: null },
     { period: 'Y3', committed: 6_000_000, realized: null },
   ],
+  isModel: true,
   flipFact: 'Periodic realized-value actuals per lever (run-cost actuals, SLA-credit actuals).',
   note: 'Model — realized-value actuals are not in the fact model yet.',
   bestPractice: ['Book realized value per period against the committed lever.'],
+  benchmark: 'Market range — 40–60% of negotiated value is never measured post-award.',
+  downstreamImpact: 'Realization is where the whole event pays off or leaks.',
+};
+
+const LIVE: ValueRealizationInsightView = {
+  kind: 'value_realization',
+  provenance: 'live',
+  headline: '$3M realized to date across 2 of 3 levers (50% of the $6M committed pool); the rest are still awaiting realization.',
+  points: [
+    { period: 'Y1', committed: 2_000_000, realized: null },
+    { period: 'Y2', committed: 4_000_000, realized: null },
+    { period: 'Y3', committed: 6_000_000, realized: 3_000_000 },
+  ],
+  bars: [
+    {
+      leverKey: 'AMS.VOLUME_BAND_PRICING',
+      label: 'Volume-band price flex-down',
+      valueType: 'incremental_negotiated',
+      committed: 2_500_000,
+      realized: 2_000_000,
+    },
+    {
+      leverKey: 'AMS.SLA_ECONOMICS',
+      label: 'SLA credit economics',
+      valueType: 'protected',
+      committed: 2_000_000,
+      realized: 1_000_000,
+    },
+    {
+      leverKey: 'AMS.RETAINED_COST',
+      label: 'Retained client / SME cost',
+      valueType: 'risk_adjusted',
+      committed: 1_500_000,
+      // no realized fact → not yet realized (undefined, never fabricated)
+    },
+  ],
+  isModel: false,
+  flipFact: 'Realized-value actuals per lever booked to date.',
+  note: 'Live (snapshot) — realized value is read from the realized-to-date actuals you provided.',
+  bestPractice: ['Book realized value per lever against the committed line it maps to.'],
   benchmark: 'Market range — 40–60% of negotiated value is never measured post-award.',
   downstreamImpact: 'Realization is where the whole event pays off or leaks.',
 };
@@ -51,6 +92,8 @@ describe('ValueRealizationInsight', () => {
     expect(screen.getByTestId('insight-provenance')).not.toHaveTextContent(/live/i);
     // Line chart mounted.
     expect(container.querySelectorAll('.recharts-line').length).toBeGreaterThanOrEqual(1);
+    // No per-lever snapshot list in MODEL mode.
+    expect(screen.queryByTestId('value-realization-bars')).not.toBeInTheDocument();
   });
 
   it('names the fact that flips it live + carries the advisor layer', () => {
@@ -59,5 +102,17 @@ describe('ValueRealizationInsight', () => {
     expect(flip).toHaveTextContent(/goes live when/i);
     expect(flip).toHaveTextContent(/realized-value actuals/i);
     expect(screen.getByTestId('advisor-best-practice')).toBeInTheDocument();
+  });
+
+  it('LIVE: badge reads Live and the per-lever realized-to-date snapshot renders (not-yet-realized honest)', () => {
+    render(<ValueRealizationInsight insight={LIVE} />);
+    expect(screen.getByTestId('insight-provenance')).toHaveTextContent(/live/i);
+    expect(screen.getByTestId('insight-provenance')).not.toHaveTextContent(/model/i);
+    // Per-lever snapshot list present, one row per lever.
+    const bars = screen.getByTestId('value-realization-bars');
+    expect(bars).toBeInTheDocument();
+    // A realized lever shows its realized $; the un-realized lever is honest.
+    expect(bars).toHaveTextContent(/realized/i);
+    expect(bars).toHaveTextContent(/not yet realized/i);
   });
 });
