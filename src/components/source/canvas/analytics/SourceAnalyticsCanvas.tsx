@@ -3,6 +3,8 @@
 import type { CSSProperties } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
+import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
+import type { AgentAction } from '@/components/shell/AgentColumn';
 import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { ANALYTICS } from './analytics-tokens';
 import { AnalyticsStageRail } from './AnalyticsStageRail';
@@ -90,6 +92,37 @@ function honestAvaContext(view: StageAnalyticsView): string {
   return `${remaining} of ${total} step${total === 1 ? '' : 's'} left on ${view.stageName}. Ask me what's outstanding or for help with any of them.`;
 }
 
+/**
+ * Honest, non-fabricated suggested actions for the agent column. Built ONLY
+ * from the SAME task evidence `taskCompletion`/`honestAvaContext` already
+ * derive from — never an invented capability or a stage-specific claim that
+ * isn't backed by the real `view.tasks` on screen. Outstanding tasks (in
+ * order) become the first entries so each maps to a real, clickable-in-canvas
+ * item; a generic gate question closes the list so there is always at least
+ * one honest suggestion even when every task is done.
+ */
+function honestAgentActions(view: StageAnalyticsView): AgentAction[] {
+  const outstanding = view.tasks.filter(
+    (task) => task.state !== 'done' && task.evidenceComplete !== true,
+  );
+  const letters: AgentAction['letter'][] = ['A', 'B', 'C'];
+  const actions: AgentAction[] = outstanding.slice(0, 2).map((task, index) => ({
+    letter: letters[index],
+    text: `What's needed for "${task.title}"?`,
+    detail: task.subtitle,
+  }));
+  const gateLetter = letters[actions.length] ?? 'C';
+  actions.push({
+    letter: gateLetter,
+    text: `What's left before the ${view.stageName} gate?`,
+    detail:
+      outstanding.length === 0
+        ? `All steps on ${view.stageName} are complete.`
+        : `${outstanding.length} of ${view.tasks.length} step${view.tasks.length === 1 ? '' : 's'} still open.`,
+  });
+  return actions;
+}
+
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
   viewStage: SourceStageKey;
@@ -112,11 +145,26 @@ interface SourceAnalyticsCanvasProps {
   avaLauncher?: AvaLauncherView;
 }
 
+// Outer <main>: a flex row — SentinelAgentColumn (fixed width, own scroll +
+// composer) on the left, the scrollable work pane on the right. Mirrors the
+// established Source layout (scorecard/value pages: `SentinelAgentColumn` +
+// `SourceWorkingPane` as flex siblings inside a `flex:1, display:'flex'`
+// `<main>`), so this canvas's chat column behaves exactly like every other
+// Source surface's.
 const MAIN_STYLE: CSSProperties = {
-  background: ANALYTICS.PAGE_BG,
-  minHeight: '100%',
+  flex: 1,
+  minHeight: 0,
+  display: 'flex',
+  overflow: 'hidden',
   fontFamily: ANALYTICS.SANS,
   color: ANALYTICS.INK,
+};
+
+const WORK_PANE_STYLE: CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'auto',
+  background: ANALYTICS.PAGE_BG,
 };
 
 const GRID_STYLE: CSSProperties = {
@@ -193,33 +241,53 @@ export function SourceAnalyticsCanvas({
       subNav={<SourceSubNav />}
     >
       <main data-testid="source-analytics-canvas" style={MAIN_STYLE}>
-        <div style={GRID_STYLE}>
-          <AnalyticsStageRail
-            eventId={event.id}
-            eventName={event.name}
-            eventMeta={eventMeta}
-            viewStage={viewStage}
-            currentStage={event.currentStageKey}
-          />
-          <ScopeAnalyticsStage
-            view={resolvedStageView}
-            eventId={event.id}
-            stageKey={viewStage}
-          />
+        {/* The live conversation THREAD for this canvas — same shared
+         * AtlasPageState that AskAnythingBar's composer (below) writes into,
+         * so a question sent from either surface renders here. Follows the
+         * established Source layout (scorecard/value pages): a fixed-width
+         * SentinelAgentColumn as the first flex child, the scrollable work
+         * pane as the second. `quote`/`agentContext`/`actions` are all
+         * derived from the SAME task-completion evidence the page's own
+         * progress bar renders (`taskCompletion`/`honestAvaContext`) — no
+         * stage-specific claim is fabricated here. */}
+        <SentinelAgentColumn
+          quote={honestAvaContext(resolvedStageView)}
+          agentContext={`${event.code} · ${stageLabel}`}
+          actions={honestAgentActions(resolvedStageView)}
+          surface="source-detail"
+        />
+        <div style={WORK_PANE_STYLE}>
+          <div style={GRID_STYLE}>
+            <AnalyticsStageRail
+              eventId={event.id}
+              eventName={event.name}
+              eventMeta={eventMeta}
+              viewStage={viewStage}
+              currentStage={event.currentStageKey}
+            />
+            <ScopeAnalyticsStage
+              view={resolvedStageView}
+              eventId={event.id}
+              stageKey={viewStage}
+            />
+          </div>
+          {/* Raised so the fixed AskAnythingBar (mounted below, outside
+           * <main>) does not sit on top of / collide with this FAB. */}
+          <AvaLauncher launcher={resolvedAva} bottomOffset={112} />
         </div>
-        {/* Raised so the fixed AskAnythingBar (mounted below, outside <main>)
-         * does not sit on top of / collide with this FAB. */}
-        <AvaLauncher launcher={resolvedAva} bottomOffset={112} />
       </main>
-      {/* The real, typed chat input for this canvas. AvaLauncher above is a
-       * presentational, proactive-nudge FAB with sample suggestion chips —
-       * it has no text input and its chips do nothing when clicked. This is
-       * the reachable path into the grounded Source aVa answer pipeline:
-       * AskAnythingBar reads `surfaceContext` from the SAME AtlasPageState
-       * this AppShell already populates above (`surfaceContext.sourceEventId`
-       * flows straight through — see AppShell's `surfaceContext` prop passed
-       * a few lines up), so no new context plumbing is needed. `surface`
-       * matches the surface AppShell was given so the two stay in lockstep. */}
+      {/* The real, typed chat COMPOSER for this canvas (attachments +
+       * paperclip support that SentinelAgentColumn's own input does not
+       * have). AvaLauncher above is a presentational, proactive-nudge FAB
+       * with sample suggestion chips — it has no text input and its chips do
+       * nothing when clicked. AskAnythingBar and SentinelAgentColumn both
+       * read/write the SAME AtlasPageState (`surfaceContext.sourceEventId`
+       * flows straight through from AppShell's `surfaceContext` prop passed
+       * a few lines up), so a question sent from this bar appears in the
+       * SentinelAgentColumn thread above — no new context plumbing is
+       * needed. `surface` matches the surface AppShell was given so all
+       * three (AppShell, SentinelAgentColumn, AskAnythingBar) stay in
+       * lockstep. */}
       <AskAnythingBar
         agent="sentinel"
         scopeLabel={`${event.code} · ${stageLabel}`}
