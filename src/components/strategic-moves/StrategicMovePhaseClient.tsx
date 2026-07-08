@@ -112,7 +112,10 @@ interface PhaseConfig {
   suggestedPrompts: string[];
 }
 
-const PHASE_CONFIGS: Record<number, PhaseConfig> = {
+// Exported (in addition to the internal use below) so the suggested-question
+// safety audit (src/lib/agent/product-truth/suggested-question-audit.ts) can
+// regression-test the real static list rather than a hand-copied duplicate.
+export const PHASE_CONFIGS: Record<number, PhaseConfig> = {
   0: {
     label: "P0 Originate",
     shortLabel: "P0 ORIGINATE",
