@@ -9,3 +9,4 @@ export * from "./suggested-question-audit";
 export * from "./surface-scope";
 export * from "./product-truth-gate";
 export * from "./system-prompt-block";
+export * from "./runtime-guard";

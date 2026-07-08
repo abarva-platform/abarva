@@ -15,7 +15,6 @@ import {
   CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE,
   enforceDecisionGradeAnswer,
-  isTrendAsk,
   sanitizeAskSynthesis,
   stripInternalRecordIds,
 } from "./response-policy";
@@ -59,6 +58,7 @@ import {
   type IntelligenceLatencyTiming,
 } from "@/lib/intelligence/latency-trace";
 import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
+import { buildProductTruthSystemPromptBlock } from "@/lib/agent/product-truth";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -543,6 +543,7 @@ export async function* synthesizeStream(args: {
   const contextBlocks = [
     tenantIdentityPin,
     contextContractBlock,
+    buildProductTruthSystemPromptBlock(),
     healthcareAnswerContract,
     args.intelligenceDossier
       ? formatIntelligenceDossierForPrompt(args.intelligenceDossier)

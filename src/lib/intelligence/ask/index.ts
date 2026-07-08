@@ -52,10 +52,15 @@ import { buildIntelligenceDossier } from "@/lib/intelligence/dossiers";
 import { buildCompanionCanvasPayload } from "@/lib/intelligence/ask/companion-canvas-engine";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
-  buildRetiredFactError,
+  buildClientSafeRetiredFactMessage,
   scanRetiredFacts,
   type RetiredFactFinding,
 } from "./retired-fact-gate";
+import {
+  applyProductTruthRuntimeGuard,
+  productTruthGroundingText,
+  sanitizeSuggestedQuestions,
+} from "@/lib/agent/product-truth";
 
 export type {
   AskIntent,
@@ -229,6 +234,12 @@ export async function* askIntelligence(
       opts.surfaceContext?.clientKey ??
       opts.surfaceContext?.activeClient ??
       null;
+    const productTruthContext = {
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      surface: opts.surfaceContext?.activeTab ?? "intelligence",
+      query: trimmed,
+    };
 
     const surfaceStartedAt = Date.now();
     const surfaceContext = retrieveSurfaceContextSources(
@@ -249,7 +260,7 @@ export async function* askIntelligence(
     if (surfaceRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildRetiredFactError(surfaceRetiredFacts),
+        error: buildClientSafeRetiredFactMessage(),
         retiredFactFindings: surfaceRetiredFacts,
       };
       return;
@@ -418,7 +429,7 @@ export async function* askIntelligence(
     if (preModelRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildRetiredFactError(preModelRetiredFacts),
+        error: buildClientSafeRetiredFactMessage(),
         retiredFactFindings: preModelRetiredFacts,
       };
       return;
@@ -481,7 +492,7 @@ export async function* askIntelligence(
     if (packetRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildRetiredFactError(packetRetiredFacts),
+        error: buildClientSafeRetiredFactMessage(),
         retiredFactFindings: packetRetiredFacts,
       };
       return;
@@ -553,14 +564,25 @@ export async function* askIntelligence(
     if (modelOutputRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildRetiredFactError(modelOutputRetiredFacts),
+        error: buildClientSafeRetiredFactMessage(),
         retiredFactFindings: modelOutputRetiredFacts,
       };
       return;
     }
-    for (const delta of pendingDeltas.length > 0
-      ? pendingDeltas
-      : chunkAskText(answer)) {
+    const productTruthGrounding = productTruthGroundingText([
+      opts.surfaceContext,
+      sources,
+      factAvailabilityBlock,
+      coverageReportBlock,
+      intelligenceDossier,
+      advisoryPacketForEvent,
+    ]);
+    const guardedAnswer = applyProductTruthRuntimeGuard(answer, {
+      ...productTruthContext,
+      groundingText: productTruthGrounding,
+    });
+    answer = guardedAnswer.text;
+    for (const delta of chunkAskText(answer)) {
       yield { type: "delta", text: delta };
     }
 
@@ -592,7 +614,7 @@ export async function* askIntelligence(
         if (canvasRetiredFacts.length > 0) {
           yield {
             type: "error",
-            error: buildRetiredFactError(canvasRetiredFacts),
+            error: buildClientSafeRetiredFactMessage(),
             retiredFactFindings: canvasRetiredFacts,
           };
           return;
@@ -702,12 +724,21 @@ export async function* askIntelligence(
     if (followupRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildRetiredFactError(followupRetiredFacts),
+        error: buildClientSafeRetiredFactMessage(),
         retiredFactFindings: followupRetiredFacts,
       };
       return;
     }
-    yield { type: "followups", followups };
+    const guardedFollowups = sanitizeSuggestedQuestions(followups, {
+      ...productTruthContext,
+      groundingText: productTruthGroundingText([
+        opts.surfaceContext,
+        sources,
+        factAvailabilityBlock,
+        coverageReportBlock,
+      ]),
+    });
+    yield { type: "followups", followups: guardedFollowups.questions };
     yield { type: "done" };
   } catch (err) {
     yield {

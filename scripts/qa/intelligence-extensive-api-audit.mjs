@@ -750,8 +750,9 @@ function analyzeRetiredFactGate({ events, answer, sources }) {
   const violationEvents = events.filter(
     (event) =>
       event?.type === "error" &&
-      typeof event.error === "string" &&
-      event.error.includes("retired_fact_violation"),
+      (Array.isArray(event.retiredFactFindings) ||
+        (typeof event.error === "string" &&
+          event.error.includes("retired_fact_violation"))),
   );
   const reportedFindings = violationEvents.flatMap((event) =>
     Array.isArray(event.retiredFactFindings)
