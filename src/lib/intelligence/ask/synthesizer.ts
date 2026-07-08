@@ -1316,6 +1316,9 @@ ${args.query}${strategyToAbarvaSolutionPromptDirective}`
         }),
       );
     }
+    if (strategyToMovesExecution) {
+      text = ensureMovesExecutionPhaseTable(text);
+    }
     args.onModelOutput?.({
       rawText: text,
       text,
@@ -1459,6 +1462,51 @@ function ensureMandatoryCompanionCanvasFallback(
 
   return [mainAnswer, existingTabs, ...fallbackBlocks]
     .filter((part) => part.trim().length > 0)
+    .join("\n\n");
+}
+
+const MOVES_EXECUTION_PHASE_LABELS = [
+  "P0 Originate",
+  "P1 Charter",
+  "P2 Understand Current State",
+  "P3 Choose the Approach",
+  "P4 Build the Plan",
+  "P5 Prepare to Execute",
+  "Tower Track Outcomes",
+] as const;
+
+function ensureMovesExecutionPhaseTable(text: string): string {
+  const hasEveryPhase = MOVES_EXECUTION_PHASE_LABELS.every((label) =>
+    text.includes(label),
+  );
+  const hasPhaseTable =
+    /\|\s*Phase\s*\|/i.test(text) || /\|\s*P0 Originate\s*\|/.test(text);
+  if (hasEveryPhase && hasPhaseTable) return text;
+
+  const fallbackTable = [
+    "**Moves phase plan**",
+    "",
+    "| Phase | What AbarVa does | Proposed output |",
+    "|---|---|---|",
+    "| P0 Originate | Intelligence frames the candidate bets, decision owner, and why-now logic. | Bet slate and executive question. |",
+    "| P1 Charter | Moves defines scope, sponsor, success metric, and decision cadence. | Sprint charter and governance path. |",
+    "| P2 Understand Current State | Home grounds systems, data, owners, contracts, gaps, and evidence boundaries. | Current-state evidence pack. |",
+    "| P3 Choose the Approach | Moves compares options by value, readiness, risk, and dependency. | Recommended approach and stop/go gate. |",
+    "| P4 Build the Plan | Moves turns the chosen approach into workstreams, milestones, risks, and funding asks. | Roadmap and business case. |",
+    "| P5 Prepare to Execute | Moves confirms owners, controls, vendors, adoption plan, and launch readiness. | Execution-ready plan. |",
+    "| Tower Track Outcomes | Tower tracks adoption, KPI movement, benefits, risks, and funding gates. | Value-realization scorecard. |",
+  ].join("\n");
+
+  const firstTabIndex = text.search(/\n\s*<<<TAB:/);
+  if (firstTabIndex === -1) {
+    return [text.trim(), fallbackTable].filter(Boolean).join("\n\n");
+  }
+  return [
+    text.slice(0, firstTabIndex).trim(),
+    fallbackTable,
+    text.slice(firstTabIndex).trimStart(),
+  ]
+    .filter(Boolean)
     .join("\n\n");
 }
 
