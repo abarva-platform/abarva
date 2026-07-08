@@ -683,10 +683,50 @@ export interface ResponseCoverageRowView {
 }
 
 /**
+ * One vendor's coverage across the archetype's levers (multi-vendor Shape 2).
+ * LIVE only — derived from the vendor's `response_addressed` facts. A lever the
+ * vendor has no fact for is "not yet answered" (counted in `notYetAnswered`),
+ * never fabricated as addressed or dodged.
+ */
+export interface VendorCoverageView {
+  /** The vendor id (the derived bidding-vendor identifier). */
+  vendorId: string;
+  /** Levers this vendor ADDRESSED (response_addressed >= 1). */
+  addressed: number;
+  /** Levers this vendor PARTIALLY addressed (0 < value < 1). */
+  partial: number;
+  /** Levers this vendor DODGED (response_addressed = 0). */
+  dodged: number;
+  /** Levers this vendor has no response fact for yet (not fabricated). */
+  notYetAnswered: number;
+  /** Total levers in the archetype (the denominator). */
+  totalLevers: number;
+  /** $ at stake (over term) this vendor ADDRESSED (sum of addressed levers' high). */
+  addressedHighUsd: number;
+  /** $ at stake (over term) this vendor left DODGED/unanswered (high). */
+  exposedHighUsd: number;
+  /**
+   * Per-lever status for this vendor: leverKey → 'addressed' | 'partial' |
+   * 'dodged' | 'not_answered'. One entry per archetype lever.
+   */
+  byLever: readonly {
+    leverKey: string;
+    label: string;
+    valueType: ValueType;
+    high: number;
+    status: 'addressed' | 'partial' | 'dodged' | 'not_answered';
+  }[];
+}
+
+/**
  * Responses — VENDOR DODGE-MAP. MODEL: vendor-response facts are not in the fact
  * model yet, so every dimension is shown as "dodged" (the exposure) until proven
- * answered. Goes live when vendor responses are ingested per lever/clause. The $
- * at stake is real where the lever computes, else the illustrative scale.
+ * answered. LIVE (multi-vendor Shape 2 — see
+ * docs/build/source-multivendor-fact-model.md): once `response_addressed` facts
+ * are ingested per vendor×lever, `rows` reports each lever's answered-vs-dodged
+ * (answered iff ANY vendor addressed it) and `vendors` reports per-vendor coverage
+ * across the levers. The $ at stake is real where the lever computes, else the
+ * illustrative scale.
  */
 export interface ResponseCoverageInsightView extends AdvisorLayer {
   kind: 'response_coverage';
@@ -695,6 +735,18 @@ export interface ResponseCoverageInsightView extends AdvisorLayer {
   headline: string;
   /** One row per value dimension (dodged-first, biggest-$ within). */
   rows: readonly ResponseCoverageRowView[];
+  /**
+   * Per-vendor coverage across the levers — LIVE only. Undefined/empty in MODEL
+   * mode. Additive to the existing per-lever `rows`; the renderer reads it when
+   * present without changing its existing per-lever chart.
+   */
+  vendors?: readonly VendorCoverageView[];
+  /**
+   * True when this is the honest MODEL (no response_addressed fact yet); false
+   * when LIVE (≥1 vendor-response fact exists). The renderer keys its badge off
+   * this — never off `provenance` alone.
+   */
+  isModel: boolean;
   /** The fact that flips this MODEL → LIVE, named for the operator. */
   flipFact: string;
   /** Always present — states this is a model and what makes it live. */

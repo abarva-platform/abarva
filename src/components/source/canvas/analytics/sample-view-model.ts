@@ -412,6 +412,80 @@ export const SAMPLE_BAFO_STAGE: StageAnalyticsView = {
   },
 };
 
+/**
+ * The Responses stage scaffold. Mirrors the Scope three-beat structure but
+ * foregrounds the one upload that flips Responses coverage LIVE: the vendor
+ * response coverage matrix (one row per vendor × value lever, an Addressed 1/0/0.5
+ * column) parsed into `response_addressed` vendor_lever facts via
+ * `RESPONSE_COVERAGE_V1`. The live stage builder swaps in the fact-derived
+ * waterfall + intel lead over this structure.
+ */
+export const SAMPLE_RESPONSES_STAGE: StageAnalyticsView = {
+  stageKey: 'responses',
+  stageName: 'Responses',
+  purpose:
+    'Map every vendor’s answer to every priced lever — a lever no vendor addressed is exposure to press in evaluation, not a settled price.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's which levers your vendors answered vs dodged — confirm the response coverage so nothing worth negotiating is quietly conceded.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'A vendor answers only what the RFP required and it chose to address — a dodged lever is a negotiation opening, not a closed line.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'Vendors most often dodge the volume-band step-down and SLA chronic-miss remedy — the two levers that cost the buyer most when left un-pressed.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'A lever no vendor addressed cannot be scored in evaluation — it slips to BAFO exposed, or to award unpriced.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'responses.coverage',
+      title: 'Confirm vendor response coverage',
+      subtitle: 'One row per vendor × value lever · 1/0/0.5',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload the vendor response coverage matrix (CSV or XLSX): one row per vendor × value lever, with Vendor set to the bidding vendor, Lever Key set to the canonical value-lever key, and Addressed set to 1 (addressed), 0 (dodged), or 0.5 (partial). This flips Responses coverage from a model to a live per-vendor answered-vs-dodged read.',
+      provenance: {
+        owner: 'Sourcing lead',
+        source: 'Vendor proposals / response matrix',
+      },
+      cta: 'Confirm response coverage',
+      // Parsed into RESPONSE_COVERAGE_V1 → response_addressed vendor_lever facts —
+      // flips the ✦ Intelligence Responses coverage insight LIVE.
+      factTemplateCode: 'RESPONSE_COVERAGE_V1',
+    },
+  ],
+  gate: {
+    approver: 'K. Oshima, CIO',
+    confirms: [
+      {
+        label: 'Every lever mapped to each vendor’s answer',
+        detail: 'Each value lever has a per-vendor addressed/dodged status.',
+      },
+      {
+        label: 'Dodged levers flagged for evaluation',
+        detail: 'Each dodged lever carries its evaluation-impact ask into scoring.',
+      },
+      {
+        label: 'Responses complete',
+        detail: 'All vendor responses are in — advance to Evaluation.',
+      },
+    ],
+    generates: [{ label: 'Response coverage summary', code: 'd10' }],
+    nextStageName: 'Evaluation',
+  },
+};
+
 /** aVa's docked-launcher scope for the Scope stage. */
 export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
   role: 'Analyst · Scope',

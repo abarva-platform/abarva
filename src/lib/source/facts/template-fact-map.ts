@@ -44,11 +44,26 @@ export interface TemplateFactMap {
   /**
    * The column that identifies the row's entity (its entity_ref), e.g. the tower
    * name or app id. Not itself a fact — it becomes `entity_ref` on each fact row.
+   *
+   * Exactly one of `entityRefColumn` / `entityRefColumns` is set per template (a
+   * template-fact-map test asserts this). Single-column templates set this.
    */
-  entityRefColumn: string;
+  entityRefColumn?: string;
+  /**
+   * The columns whose canonical join (with `::`) forms a COMPOSITE entity_ref, for
+   * a `vendor_lever`-style row where one entity spans two axes (e.g.
+   * `['Vendor', 'Lever Key']` → `<Vendor>::<Lever Key>`). Additive Phase-2 option
+   * (see docs/build/source-multivendor-fact-model.md); when set, `entityRefColumn`
+   * is unset and the structured map joins these columns per row. Every column must
+   * be present + non-empty on a row or the cell is rejected loudly.
+   */
+  entityRefColumns?: string[];
   /** The fact-bearing column bindings. */
   columns: TemplateColumnMapping[];
 }
+
+/** The `::` separator that joins a composite entity_ref's canonical parts. */
+export const COMPOSITE_ENTITY_REF_SEP = '::' as const;
 
 // ── App / system inventory template ──────────────────────────────────────────
 // One row per application. Feeds the run-cost / retained-cost economics per app,
@@ -296,6 +311,36 @@ const BAFO_CONCESSIONS_TEMPLATE: TemplateFactMap = {
   ],
 };
 
+// ── Response coverage template (multi-vendor Shape 2) ────────────────────────
+// One row per VENDOR × VALUE LEVER. Carries the per-vendor / per-lever
+// response-coverage signal that flips Responses coverage from a model to a live
+// answered-vs-dodged read (see docs/build/source-multivendor-fact-model.md). The
+// row entity is `vendor_lever`: its entity_ref is the CANONICAL COMPOSITE of the
+// `Vendor` and `Lever Key` columns (`<Vendor>::<Lever Key>`). The `Lever Key`
+// column MUST be a canonical archetype lever key (e.g. 'AMS.VOLUME_BAND_PRICING');
+// the `Vendor` column is a governed (present, non-empty) tenant vendor id — the
+// event's bidding-vendor set is DERIVED from the distinct Vendor values across the
+// rows (no separate registry — see the doc's vendor-registry decision).
+//
+// The single fact column is 0/1/0.5 on the `ratio` unit (1 = addressed,
+// 0.5 = partial, 0 = dodged) — the lower-churn representation vs a new unit. Do
+// NOT pre-scale.
+const RESPONSE_COVERAGE_TEMPLATE: TemplateFactMap = {
+  templateCode: 'RESPONSE_COVERAGE_V1',
+  label: 'Vendor response coverage matrix',
+  rowEntity: 'vendor_lever',
+  entityRefColumns: ['Vendor', 'Lever Key'],
+  columns: [
+    {
+      header: 'Addressed (1/0/0.5)',
+      factKey: 'response_addressed',
+      entityKind: 'vendor_lever',
+      unit: 'ratio',
+      note: "Whether this vendor addressed this lever in its response (1 = addressed, 0.5 = partial, 0 = dodged). One row per vendor×lever; the Lever Key must be a canonical archetype lever key.",
+    },
+  ],
+};
+
 /** All shipped structured intake templates, keyed by templateCode. */
 export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
@@ -304,6 +349,7 @@ export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [RFP_CLAUSES_TEMPLATE.templateCode]: RFP_CLAUSES_TEMPLATE,
   [COMMITTED_VALUE_TEMPLATE.templateCode]: COMMITTED_VALUE_TEMPLATE,
   [BAFO_CONCESSIONS_TEMPLATE.templateCode]: BAFO_CONCESSIONS_TEMPLATE,
+  [RESPONSE_COVERAGE_TEMPLATE.templateCode]: RESPONSE_COVERAGE_TEMPLATE,
   // Add new intake templates here — no engine change required.
 };
 

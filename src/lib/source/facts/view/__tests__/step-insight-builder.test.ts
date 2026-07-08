@@ -564,10 +564,96 @@ describe('MODEL step insights — value / responses / bafo / selection', () => {
     );
     expect(insight.kind).toBe('response_coverage');
     expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
+    // No vendor-response signal → no per-vendor block, every dimension dodged.
+    expect(insight.vendors ?? []).toHaveLength(0);
     expect(insight.rows.length).toBeGreaterThan(0);
     expect(insight.rows.every((r) => r.status === 'dodged')).toBe(true);
     expect(insight.rows.every((r) => r.evaluationImpact.length > 0)).toBe(true);
     expect(insight.flipFact).toMatch(/vendor responses ingested/i);
+  });
+
+  it('response_coverage goes LIVE when a vendor-response signal is supplied: per-vendor + per-lever coverage', () => {
+    // Two vendors: Vega addresses volume-band (dodges enhancement leakage);
+    // Orion addresses enhancement leakage (partial on SLA). Others unanswered.
+    const statusByVendorLever = new Map<
+      string,
+      ReadonlyMap<string, 'addressed' | 'partial' | 'dodged'>
+    >([
+      [
+        'Vega Systems',
+        new Map<string, 'addressed' | 'partial' | 'dodged'>([
+          ['AMS.VOLUME_BAND_PRICING', 'addressed'],
+          ['AMS.ENHANCEMENT_LEAKAGE', 'dodged'],
+        ]),
+      ],
+      [
+        'Orion Managed',
+        new Map<string, 'addressed' | 'partial' | 'dodged'>([
+          ['AMS.ENHANCEMENT_LEAKAGE', 'addressed'],
+          ['AMS.SLA_ECONOMICS', 'partial'],
+        ]),
+      ],
+    ]);
+    const insight = buildResponseCoverageInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      { statusByVendorLever, vendors: ['Vega Systems', 'Orion Managed'] },
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    // A lever is answered iff ANY vendor addressed (or partially addressed) it.
+    const answered = insight.rows.filter((r) => r.status === 'answered');
+    const answeredKeys = answered.map((r) => r.leverKey).sort();
+    // volume-band (Vega), enhancement-leakage (Orion), sla-economics (Orion partial)
+    expect(answeredKeys).toEqual(
+      [
+        'AMS.ENHANCEMENT_LEAKAGE',
+        'AMS.SLA_ECONOMICS',
+        'AMS.VOLUME_BAND_PRICING',
+      ].sort(),
+    );
+    // Per-vendor coverage present, in the supplied order.
+    expect(insight.vendors?.map((v) => v.vendorId)).toEqual([
+      'Vega Systems',
+      'Orion Managed',
+    ]);
+    const vega = insight.vendors!.find((v) => v.vendorId === 'Vega Systems')!;
+    expect(vega.addressed).toBe(1); // volume-band
+    expect(vega.dodged).toBe(1); // enhancement-leakage
+    // The rest of the levers Vega has no fact for → not yet answered.
+    expect(vega.notYetAnswered).toBe(vega.totalLevers - 2);
+    const orion = insight.vendors!.find((v) => v.vendorId === 'Orion Managed')!;
+    expect(orion.addressed).toBe(1); // enhancement-leakage
+    expect(orion.partial).toBe(1); // sla-economics
+    // Live headline reports coverage across vendors.
+    expect(insight.headline).toMatch(/answered/i);
+    expect(insight.note).toMatch(/live/i);
+    // Advisor layer survives.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('response_coverage LIVE with an empty signal → every dimension dodged, still live (assessed-nothing read)', () => {
+    const insight = buildResponseCoverageInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      { statusByVendorLever: new Map(), vendors: [] },
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    expect(insight.rows.every((r) => r.status === 'dodged')).toBe(true);
+    expect(insight.vendors ?? []).toHaveLength(0);
+  });
+
+  it('response_coverage MODEL when no signal is supplied (undefined) — the honest default', () => {
+    const insight = buildResponseCoverageInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      undefined,
+    );
+    expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
+    expect(insight.rows.every((r) => r.status === 'dodged')).toBe(true);
   });
 
   it('bafo_progress: captured 0 vs target, carries the bafoAsk, names the flip', () => {

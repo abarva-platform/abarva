@@ -33,14 +33,28 @@ export const FACT_CATALOG_VERSION = '1.0.0' as const;
  * fact row (a tower id, vendor id, or app id — or null for event-level facts) and
  * the template→fact intake mapping.
  *
- * `value_lever` is the downstream-insight extension (see
+ * `value_lever` is the Phase-1 downstream-insight extension (see
  * docs/build/source-downstream-insight-fact-model.md): a fact of this kind hangs
  * off a canonical archetype lever key via `entity_ref` (e.g.
  * `AMS.VOLUME_BAND_PRICING`) — one fact key, one row per lever — so the downstream
  * insights (RFP clause, BAFO, committed value) can carry a per-lever signal
  * WITHOUT faking composite fact keys.
+ *
+ * `vendor_lever` is the Phase-2 multi-vendor extension (see
+ * docs/build/source-multivendor-fact-model.md): a fact of this kind captures a
+ * VENDOR's answer to a LEVER via a canonical composite `entity_ref`
+ * `'<vendorId>::<leverKey>'` — one fact key, one row per vendor×lever cell — so
+ * Responses coverage can carry a per-vendor / per-lever signal WITHOUT faking
+ * composite fact keys. The lever half is a canonical archetype lever key; the
+ * vendor half is a governed (present, non-empty) tenant vendor id.
  */
-export type FactEntityKind = 'event' | 'tower' | 'app' | 'vendor' | 'value_lever';
+export type FactEntityKind =
+  | 'event'
+  | 'tower'
+  | 'app'
+  | 'vendor'
+  | 'value_lever'
+  | 'vendor_lever';
 
 export const FACT_ENTITY_KINDS: readonly FactEntityKind[] = [
   'event',
@@ -48,6 +62,7 @@ export const FACT_ENTITY_KINDS: readonly FactEntityKind[] = [
   'app',
   'vendor',
   'value_lever',
+  'vendor_lever',
 ] as const;
 
 /**
@@ -256,6 +271,23 @@ const DOWNSTREAM_SIGNAL_FACT_SPECS: Record<string, FactSpec> = {
     entityKind: 'value_lever',
     description:
       'The concession the BAFO round CAPTURED for this value lever, in USD over the contract term. One row per lever, keyed by the lever key in entity_ref. Flips BAFO progress from a model to a live captured-vs-target read (how much of each lever’s target band the BAFO round actually pulled in); a lever with no concession fact stays at 0-captured / still-open, never fabricated.',
+  },
+  // ── Shape 2 · per-vendor / vendor×lever status ─────────────────────────────
+  // Response coverage: did a VENDOR address a LEVER? A `vendor_lever`-kind fact
+  // whose `entity_ref` is the canonical composite `<vendorId>::<leverKey>` (see
+  // docs/build/source-multivendor-fact-model.md). Value on the `ratio` unit:
+  // 1 = addressed, 0 = dodged, 0.5 = partial (the same ratio scale rfp_clause_present
+  // reuses — no new `flag`/`enum` unit, no type/DB churn). One row per vendor×lever
+  // cell. The lever half is validated canonical (against the archetype's lever
+  // keys); the vendor half is governed by presence.
+  response_addressed: {
+    key: 'response_addressed',
+    label: 'Vendor addressed value lever in response',
+    unit: 'ratio',
+    source: 'extracted_vendor',
+    entityKind: 'vendor_lever',
+    description:
+      'Whether a vendor ADDRESSED the value lever in its response (1 = addressed, 0.5 = partial, 0 = dodged). One row per vendor×lever, keyed by the composite <vendorId>::<leverKey> in entity_ref. Flips Responses coverage from a model to a live per-vendor / per-lever answered-vs-dodged read; a vendor×lever with no fact stays "not yet answered", never fabricated.',
   },
 };
 

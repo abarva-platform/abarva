@@ -23,6 +23,7 @@ import {
   mapTemplateUploadToFacts,
   type ParsedTemplateUpload,
 } from "@/lib/source/facts/extraction/structured-map";
+import { resolveValueArchetype } from "@/lib/source/facts/view/stage-analytics-builder";
 import {
   selectSourceFactWriteAdapter,
   type SourceFactWriteAdapter,
@@ -138,10 +139,24 @@ export async function ingestTemplateUpload(
     };
   }
 
+  // For a COMPOSITE template whose entity_ref carries a canonical lever key (e.g.
+  // RESPONSE_COVERAGE_V1's Vendor::Lever Key), resolve the archetype's lever-key
+  // set so the structured map can reject a non-canonical lever loudly. Resolved
+  // the same way the insight builder does (first archetype with value-lever rules
+  // today — AMS); a phantom lever never enters the model. Non-composite templates
+  // pass no set and are unaffected.
+  let validLeverKeys: ReadonlySet<string> | undefined;
+  if ((template.entityRefColumns?.length ?? 0) > 0) {
+    const archetype = resolveValueArchetype(undefined);
+    const keys = (archetype?.valueLeverRules ?? []).map((r) => r.key);
+    validLeverKeys = new Set<string>(keys);
+  }
+
   // Deterministic map → typed facts.
   const mapped = mapTemplateUploadToFacts(template, args.upload, {
     sourceEventId: persistedEvent.id,
     clientKey: args.scope.clientKey,
+    validLeverKeys,
   });
 
   // Persist through the data-plane write seam (RLS-scoped by client_key).

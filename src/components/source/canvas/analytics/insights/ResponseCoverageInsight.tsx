@@ -61,7 +61,7 @@ export function ResponseCoverageInsight({
         headline={insight.headline}
         provenance={insight.provenance}
         note={insight.note}
-        isModel
+        isModel={insight.isModel}
         advisor={advisor}
       >
         <div
@@ -211,6 +211,86 @@ export function ResponseCoverageInsight({
                 </span>
               </div>
             ))}
+        </div>
+      ) : null}
+
+      {/* Per-vendor coverage — LIVE only. One row per vendor: its answered vs
+          dodged split across the levers + the $ it left exposed. Additive to the
+          per-lever chart above; absent in MODEL mode. */}
+      {insight.vendors && insight.vendors.length > 0 ? (
+        <div
+          data-testid="response-coverage-vendors"
+          style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}
+        >
+          <div
+            style={{
+              fontFamily: ANALYTICS.SANS,
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: ANALYTICS.MUTED,
+              textTransform: 'uppercase',
+              letterSpacing: 0.4,
+            }}
+          >
+            Coverage by vendor
+          </div>
+          {insight.vendors.map((v) => {
+            const answered = v.addressed + v.partial;
+            return (
+              <div
+                key={v.vendorId}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '9px 12px',
+                  border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+                  borderRadius: ANALYTICS.RADIUS,
+                  background: ANALYTICS.SOFT,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: ANALYTICS.INK,
+                    flex: '0 0 30%',
+                  }}
+                >
+                  {v.vendorId}
+                </span>
+                <span style={{ fontSize: 11.5, color: ANALYTICS.INK_2 }}>
+                  <span style={{ color: ANSWERED_FILL, fontWeight: 600 }}>
+                    {answered} answered
+                  </span>
+                  {' · '}
+                  <span style={{ color: DODGED_FILL, fontWeight: 600 }}>
+                    {v.dodged} dodged
+                  </span>
+                  {v.notYetAnswered > 0 ? (
+                    <>
+                      {' · '}
+                      <span style={{ color: ANALYTICS.MUTED }}>
+                        {v.notYetAnswered} not yet answered
+                      </span>
+                    </>
+                  ) : null}
+                  {' of '}
+                  {v.totalLevers}
+                </span>
+                <span
+                  style={{
+                    fontSize: 11.5,
+                    color: ANALYTICS.INK_2,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmtUsd(v.exposedHighUsd)} exposed
+                </span>
+              </div>
+            );
+          })}
         </div>
       ) : null}
 

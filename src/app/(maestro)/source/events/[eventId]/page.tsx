@@ -42,6 +42,7 @@ import {
   readRfpClausePresentLeverKeys,
   readCommittedValueLevers,
   readBafoConcessionLevers,
+  readVendorLeverResponses,
 } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
@@ -187,6 +188,31 @@ export default async function SourceEventDetailPage({
             ? capturedByLeverKey
             : undefined;
         }
+        // Responses coverage reads a per-vendor / per-lever response signal (one
+        // response_addressed fact per vendor×lever, keyed by the composite
+        // <vendorId>::<leverKey> in entity_ref) the collapsed event-facts read
+        // cannot express. Only fetch it on the Responses stage. `undefined` (no
+        // signal) keeps the insight an honest MODEL; a signal (even empty) flips
+        // it LIVE.
+        let vendorResponses:
+          | {
+              statusByVendorLever: ReadonlyMap<
+                string,
+                ReadonlyMap<string, "addressed" | "partial" | "dodged">
+              >;
+              vendors: readonly string[];
+            }
+          | undefined = undefined;
+        if (viewStage === "responses") {
+          const { signalPresent, statusByVendorLever, vendors } =
+            await readVendorLeverResponses({
+              eventId: event.id,
+              clientKey: activeClient.key,
+            });
+          vendorResponses = signalPresent
+            ? { statusByVendorLever, vendors }
+            : undefined;
+        }
         // eventType is not on the summary; leave it unset so the builder
         // resolves the value archetype the same way buildLiveStageView does
         // (the first archetype carrying value-lever rules — today AMS).
@@ -200,6 +226,7 @@ export default async function SourceEventDetailPage({
             rfpClausePresentLeverKeys,
             committedValueByLeverKey,
             bafoConcessionByLeverKey,
+            vendorResponses,
           }) ?? undefined;
 
         if (viewStage !== "strategy") {
