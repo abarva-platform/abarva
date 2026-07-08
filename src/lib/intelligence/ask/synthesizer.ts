@@ -10,18 +10,20 @@ import {
   applyPartialEvidencePolicy,
   chunkAskText,
   CHART_OUTPUT_CONTRACT,
+  classifyAbarvaAnswerMode,
   CONSULTANT_ANSWER_SHAPE_CONTRACT,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE,
   enforceDecisionGradeAnswer,
-  isStrategyToMovesExecutionAsk,
   isTrendAsk,
-  needsAbarvaSolutionGuidance,
   sanitizeAskSynthesis,
-  STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
-  STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
   stripInternalRecordIds,
 } from "./response-policy";
+import {
+  applyCxoAnswerModeFallbacks,
+  buildCxoAnswerModePromptDirective,
+  buildCxoAnswerModeSystemAddendum,
+} from "./answer-mode-registry";
 import {
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
@@ -602,28 +604,13 @@ ACTIVE INTELLIGENCE CANVAS RULES
     advisorComposer && !answerOnly
       ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
       : "";
-  const strategyToAbarvaSolution = needsAbarvaSolutionGuidance(args.query);
-  const strategyToMovesExecution = isStrategyToMovesExecutionAsk(args.query);
+  const answerMode = classifyAbarvaAnswerMode(args.query);
+  const strategyToAbarvaSolution = answerMode !== "general";
   const strategyToAbarvaSolutionAddendum = strategyToAbarvaSolution
-    ? `\n\n${STRATEGY_TO_ABARVA_SOLUTION_CONTRACT}${
-        strategyToMovesExecution ? `\n\n${STRATEGY_TO_MOVES_EXECUTION_CONTRACT}` : ""
-      }
-
-FORMAT OVERRIDE FOR THIS MODE
-- The earlier generic handoff guidance is superseded for this answer. Do not merely say "hand off to Moves." Explain how AbarVa would actually run the work through Moves.
-- If rich-text canvas tabs are active, put the phase plan and executive council artifacts in the Decision or Table tabs, put vendor/commercial implications in the Evidence or Table tabs when relevant, and put Tower value metrics in the Chart or Table tabs.
-- If answer-only streaming is active, use compact bold section headers and a phase table.`
+    ? buildCxoAnswerModeSystemAddendum(answerMode)
     : "";
   const strategyToAbarvaSolutionPromptDirective = strategyToAbarvaSolution
-    ? `\n\nACTIVE ANSWER MODE: ${
-        strategyToMovesExecution
-          ? "strategy_to_moves_execution"
-          : "strategy_to_abarva_solution"
-      }. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking.${
-        strategyToMovesExecution
-          ? " Include a compact Moves phase table with one literal row for each label: P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes."
-          : ""
-      }`
+    ? buildCxoAnswerModePromptDirective(answerMode)
     : "";
   const answerOnlyDirective = answerOnly
     ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. GFM tables, bold section headers, and bullet lists are REQUIRED for comparisons, ranked lists, and multi-attribute data — do not flatten these to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~120-180 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.`
@@ -1316,9 +1303,7 @@ ${args.query}${strategyToAbarvaSolutionPromptDirective}`
         }),
       );
     }
-    if (strategyToMovesExecution) {
-      text = ensureMovesExecutionPhaseTable(text);
-    }
+    text = applyCxoAnswerModeFallbacks(text, answerMode);
     args.onModelOutput?.({
       rawText: text,
       text,
@@ -1462,51 +1447,6 @@ function ensureMandatoryCompanionCanvasFallback(
 
   return [mainAnswer, existingTabs, ...fallbackBlocks]
     .filter((part) => part.trim().length > 0)
-    .join("\n\n");
-}
-
-const MOVES_EXECUTION_PHASE_LABELS = [
-  "P0 Originate",
-  "P1 Charter",
-  "P2 Understand Current State",
-  "P3 Choose the Approach",
-  "P4 Build the Plan",
-  "P5 Prepare to Execute",
-  "Tower Track Outcomes",
-] as const;
-
-function ensureMovesExecutionPhaseTable(text: string): string {
-  const hasEveryPhase = MOVES_EXECUTION_PHASE_LABELS.every((label) =>
-    text.includes(label),
-  );
-  const hasPhaseTable =
-    /\|\s*Phase\s*\|/i.test(text) || /\|\s*P0 Originate\s*\|/.test(text);
-  if (hasEveryPhase && hasPhaseTable) return text;
-
-  const fallbackTable = [
-    "**Moves phase plan**",
-    "",
-    "| Phase | What AbarVa does | Proposed output |",
-    "|---|---|---|",
-    "| P0 Originate | Intelligence frames the candidate bets, decision owner, and why-now logic. | Bet slate and executive question. |",
-    "| P1 Charter | Moves defines scope, sponsor, success metric, and decision cadence. | Sprint charter and governance path. |",
-    "| P2 Understand Current State | Home grounds systems, data, owners, contracts, gaps, and evidence boundaries. | Current-state evidence pack. |",
-    "| P3 Choose the Approach | Moves compares options by value, readiness, risk, and dependency. | Recommended approach and stop/go gate. |",
-    "| P4 Build the Plan | Moves turns the chosen approach into workstreams, milestones, risks, and funding asks. | Roadmap and business case. |",
-    "| P5 Prepare to Execute | Moves confirms owners, controls, vendors, adoption plan, and launch readiness. | Execution-ready plan. |",
-    "| Tower Track Outcomes | Tower tracks adoption, KPI movement, benefits, risks, and funding gates. | Value-realization scorecard. |",
-  ].join("\n");
-
-  const firstTabIndex = text.search(/\n\s*<<<TAB:/);
-  if (firstTabIndex === -1) {
-    return [text.trim(), fallbackTable].filter(Boolean).join("\n\n");
-  }
-  return [
-    text.slice(0, firstTabIndex).trim(),
-    fallbackTable,
-    text.slice(firstTabIndex).trimStart(),
-  ]
-    .filter(Boolean)
     .join("\n\n");
 }
 
