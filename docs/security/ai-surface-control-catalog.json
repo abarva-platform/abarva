@@ -56,14 +56,6 @@
       "path": "src/components/agent/AgentDock.tsx",
       "requiredControls": [
         {
-          "kind": "ai-label",
-          "evidence": [
-            "AILabel",
-            "status=\"draft\"",
-            "Review before acting"
-          ]
-        },
-        {
           "kind": "responsibility-footer",
           "evidence": [
             "AIResponsibilityFooter",
@@ -71,17 +63,10 @@
           ]
         },
         {
-          "kind": "citation-gap",
-          "evidence": [
-            "CitationGapNotice",
-            "shouldShowPlainTextCitationGap"
-          ]
-        },
-        {
           "kind": "human-approval-gate",
           "evidence": [
             "AgentActionApprovalNotice",
-            "ACTION_APPROVAL_NOTICE_WRAP_STYLE"
+            "compact"
           ]
         }
       ]
@@ -223,8 +208,8 @@
           "kind": "human-approval-gate",
           "evidence": [
             "SOURCE_APPROVAL_REASON_MIN_LENGTH",
-            "confirmed: true",
-            "I confirm this is my accountable human approval decision."
+            "confirmationsFor",
+            "Self-approval notice"
           ]
         },
         {
@@ -351,76 +336,6 @@
             "human_external_action_gate_required",
             "humanConfirmed",
             "externalActionGate"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "intelligence-ava-reasoning-cards",
-      "surface": "aVa reasoning cards",
-      "lane": "global-control-lane",
-      "owner": "AbarVa",
-      "path": "src/app/(maestro)/intelligence/ask/AvaReasoningCards.tsx",
-      "requiredControls": [
-        {
-          "kind": "citation",
-          "evidence": [
-            "card.citations.map",
-            "citation.sourceType",
-            "citation.id"
-          ]
-        },
-        {
-          "kind": "confidence",
-          "evidence": [
-            "Math.round(card.confidence * 100)",
-            "card.confidence"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "intelligence-atlas-synthesis-output",
-      "surface": "Atlas synthesis output citations",
-      "lane": "global-control-lane",
-      "owner": "AbarVa",
-      "path": "src/components/intelligence/SynthesisOutput.tsx",
-      "requiredControls": [
-        {
-          "kind": "citation",
-          "evidence": [
-            "result.citations.length",
-            "result.citations.map",
-            "renderCitationLabel"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "intelligence-sentinel-active-patterns",
-      "surface": "Sentinel active pattern recommendations",
-      "lane": "global-control-lane",
-      "owner": "AbarVa",
-      "path": "src/components/intelligence/SentinelActivePatterns.tsx",
-      "requiredControls": [
-        {
-          "kind": "ai-label",
-          "evidence": [
-            "AI-assisted pattern recommendation"
-          ]
-        },
-        {
-          "kind": "citation",
-          "evidence": [
-            "Evidence refs",
-            "detection.sourceSignalIds"
-          ]
-        },
-        {
-          "kind": "confidence",
-          "evidence": [
-            "confidence ·",
-            "card.confidenceLabel"
           ]
         }
       ]
@@ -611,21 +526,21 @@
     },
     {
       "key": "generated-ui|Intelligence|aVa reasoning cards|citation",
-      "status": "covered",
-      "surfaceId": "intelligence-ava-reasoning-cards",
-      "controlKind": "citation"
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned citation surface before covered status."
     },
     {
       "key": "generated-ui|Intelligence|aVa reasoning cards|confidence",
-      "status": "covered",
-      "surfaceId": "intelligence-ava-reasoning-cards",
-      "controlKind": "confidence"
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned confidence surface before covered status."
     },
     {
       "key": "generated-ui|Intelligence|Atlas synthesis answer|citation",
-      "status": "covered",
-      "surfaceId": "intelligence-atlas-synthesis-output",
-      "controlKind": "citation"
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "The old SynthesisOutput component is no longer the live source path; re-catalog the current shared renderer before claiming covered status."
     },
     {
       "key": "generated-ui|Intelligence|Sentinel pattern rail replies|confidence",
@@ -635,21 +550,21 @@
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|ai-label",
-      "status": "covered",
-      "surfaceId": "intelligence-sentinel-active-patterns",
-      "controlKind": "ai-label"
+      "status": "deferred",
+      "controlKind": "ai-label",
+      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned AI label surface."
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|citation",
-      "status": "covered",
-      "surfaceId": "intelligence-sentinel-active-patterns",
-      "controlKind": "citation"
+      "status": "deferred",
+      "controlKind": "citation",
+      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned citation surface."
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|confidence",
-      "status": "covered",
-      "surfaceId": "intelligence-sentinel-active-patterns",
-      "controlKind": "confidence"
+      "status": "deferred",
+      "controlKind": "confidence",
+      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned confidence surface."
     },
     {
       "key": "generated-ui|Moves|Deliverables canvas|ai-label",

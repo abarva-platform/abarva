@@ -35,6 +35,7 @@ Prove that retired Lakeshore facts cannot enter model-visible context or be emit
 - Stale-source inventory
 - Lakeshore display-name canonicalization
 - `agent_ready` fact governance enforcement
+- CI gate drift repair for launch auth roster, AI-surface catalog paths, and Source approval queue confirmation state
 
 ## Release ID
 
@@ -76,6 +77,10 @@ This is not a prompt-polish fix. It is a governed enterprise-context safety cont
 - `src/lib/governance/__tests__/agent-context-bundle.test.ts`: Proves retired candidates are blocked and advisory bundles can require `agent_ready`.
 - `scripts/qa/intelligence-extensive-api-audit.mjs`: Tenant-scoped API-first audit runner for extensive Intelligence response recording and scoring, now with retired-fact gate diagnostics and a controlled stale-fact injection mode.
 - `scripts/qa/lakeshore-stale-source-inventory.mjs`: Repeatable local stale-source inventory with remediation classification.
+- `docs/security/ai-surface-control-catalog.json`: Aligns the machine-checked AI surface catalog with the current shared agent renderer and defers stale deleted Intelligence component paths instead of claiming coverage that no longer exists.
+- `src/__tests__/behaviors/tenant-onboarding.test.ts`: Updates tenant-onboarding behavior coverage to the current launch auth roster.
+- `src/components/source/AdminSourceEventApprovalQueue.tsx`: Restores the missing error state and makes the approval reason plus three explicit Source gate confirmations the UI unlock condition.
+- `src/components/source/__tests__/AdminSourceEventApprovalQueue.test.tsx`: Aligns Source queue coverage with the current three-confirmation approval payload.
 - `docs/releases/records/2026-07-08-intelligence-retired-lakeshore-fact-gate.md`: Release evidence, validation status, live acceptance checklist, and known gaps.
 
 ## QA / Validation
@@ -85,6 +90,10 @@ This is not a prompt-polish fix. It is a governed enterprise-context safety cont
 | Release gate | `npm run release:check` | Local repo | Release, deploy-authority, and pilot-loader gates pass. | Passed. | `PASS` | Console output from local run. |
 | Focused ESLint | `npx eslint src/app/api/intelligence/ask/route.ts src/lib/intelligence/ask/index.ts src/lib/intelligence/ask/retired-fact-gate.ts src/lib/intelligence/ask/__tests__/retired-fact-gate.test.ts src/lib/client-config.ts src/lib/__tests__/client-config-canonical.test.ts src/lib/governance/agent-context-bundle.ts src/lib/governance/__tests__/agent-context-bundle.test.ts scripts/qa/intelligence-extensive-api-audit.mjs scripts/qa/lakeshore-stale-source-inventory.mjs` | Local repo | No lint errors. | Passed. | `PASS` | Console output from local run. |
 | Focused Jest | `npx jest src/lib/intelligence/ask/__tests__/retired-fact-gate.test.ts src/lib/governance/__tests__/agent-context-bundle.test.ts src/lib/__tests__/client-config-canonical.test.ts --runInBand` | Local repo | Retired-fact, governance, and canonical-name tests pass. | Passed, `22/22` tests. Jest emitted pre-existing duplicate manual mock warnings for mdast/micromark mocks. | `PASS` | Console output from local run. |
+| CI AI surface catalog | `npm run audit:ai-surface-controls` | Local repo | Machine catalog matches current code paths and evidence tokens. | Passed, `19` surfaces. | `PASS` | Console output from local run. |
+| CI behavior coverage gate | `npm run coverage:behavior-gate` | Local repo | Behavior coverage floor passes. | Passed, `195/195` tests; observed lines/statements `95.27`, functions `69.88`, branches `64`. Jest emitted pre-existing duplicate manual mock warnings. | `PASS` | Console output from local run. |
+| Source approval queue + tenant behavior tests | `npx jest src/components/source/__tests__/AdminSourceEventApprovalQueue.test.tsx src/__tests__/behaviors/tenant-onboarding.test.ts --runInBand` | Local repo | Source queue and tenant-onboarding behavior tests pass. | Passed, `30/30` tests. Jest emitted pre-existing duplicate manual mock warnings. | `PASS` | Console output from local run. |
+| Focused PR sweep | `npx jest src/lib/intelligence/ask/__tests__/retired-fact-gate.test.ts src/lib/governance/__tests__/agent-context-bundle.test.ts src/lib/__tests__/client-config-canonical.test.ts src/components/source/__tests__/AdminSourceEventApprovalQueue.test.tsx src/__tests__/behaviors/tenant-onboarding.test.ts --runInBand` | Local repo | Retired-fact and CI-gate repair tests pass together. | Passed, `52/52` tests. Jest emitted pre-existing duplicate manual mock warnings. | `PASS` | Console output from local run. |
 | QA script syntax | `node --check scripts/qa/intelligence-extensive-api-audit.mjs && node --check scripts/qa/lakeshore-stale-source-inventory.mjs` | Local repo | Both QA scripts parse. | Passed. | `PASS` | Console output from local run. |
 | Diff whitespace | `git diff --check -- <changed files>` | Local repo | No whitespace/check issues. | Passed. | `PASS` | Console output from local run. |
 | Controlled retired-fact injection | `INTEL_AUDIT_BASE_URL=http://localhost:3000 INTEL_AUDIT_TENANT=lakeshore INTEL_AUDIT_LIMIT=1 INTEL_AUDIT_INJECT_RETIRED_FACT=1 node scripts/qa/intelligence-extensive-api-audit.mjs` | Local dev server | Injected retired fact is blocked before DB/model. | `retiredFactGate.blocked=1`; `failedUnblocked=0`; `preModelGateStatus=fail_blocked`; `postModelGateStatus=pass`; violation location `surfaceContext`. | `PASS` | `/Users/anand/Downloads/AbarVa_lakeshore-holdings_Intelligence_Extensive_API_Audit_2026-07-08T02-43-51-133Z.html` |

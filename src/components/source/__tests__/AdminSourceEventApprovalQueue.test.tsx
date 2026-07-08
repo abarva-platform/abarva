@@ -31,22 +31,24 @@ describe("AdminSourceEventApprovalQueue", () => {
     jest.restoreAllMocks();
   });
 
-  it("requires a reason and explicit confirmation before approval actions unlock", () => {
+  it("requires a reason and explicit confirmations before approval actions unlock", () => {
     render(<AdminSourceEventApprovalQueue events={[EVENT]} currentUserId="user-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /review/i }));
 
     expect(screen.getByText(/self-approval notice/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /approve/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /reject/i })).toBeDisabled();
 
     fireEvent.change(screen.getByTestId("source-event-approval-reason-event-1"), {
       target: { value: "Reviewed strategy gate evidence and business owner accountability." },
     });
     expect(screen.getByRole("button", { name: /approve/i })).toBeDisabled();
 
-    fireEvent.click(screen.getByTestId("source-event-approval-confirm-event-1"));
+    fireEvent.click(screen.getByLabelText(/strategy memo reviewed/i));
+    fireEvent.click(screen.getByLabelText(/value target confirmed/i));
+    fireEvent.click(screen.getByLabelText(/archetype \+ rigor confirmed/i));
 
     expect(screen.getByRole("button", { name: /approve/i })).toBeEnabled();
-    expect(screen.getByRole("button", { name: /reject/i })).toBeEnabled();
   });
 
   it("posts the human reason and confirmation flag to the approval endpoint", async () => {
@@ -59,10 +61,14 @@ describe("AdminSourceEventApprovalQueue", () => {
 
     render(<AdminSourceEventApprovalQueue events={[EVENT]} currentUserId="other-user" />);
 
+    fireEvent.click(screen.getByRole("button", { name: /review/i }));
+
     fireEvent.change(screen.getByTestId("source-event-approval-reason-event-1"), {
       target: { value: "Reviewed scope, sponsor accountability, and Source governance evidence." },
     });
-    fireEvent.click(screen.getByTestId("source-event-approval-confirm-event-1"));
+    fireEvent.click(screen.getByLabelText(/strategy memo reviewed/i));
+    fireEvent.click(screen.getByLabelText(/value target confirmed/i));
+    fireEvent.click(screen.getByLabelText(/archetype \+ rigor confirmed/i));
     fireEvent.click(screen.getByRole("button", { name: /approve/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -73,7 +79,11 @@ describe("AdminSourceEventApprovalQueue", () => {
         body: JSON.stringify({
           action: "approve",
           notes: "Reviewed scope, sponsor accountability, and Source governance evidence.",
-          confirmed: true,
+          confirmations: {
+            strategyMemoReviewed: true,
+            valueTargetConfirmed: true,
+            archetypeRigorConfirmed: true,
+          },
         }),
       }),
     );

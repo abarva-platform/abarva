@@ -392,15 +392,16 @@ describe("add-tenant — executeAddTenant (end-to-end on temp repo)", () => {
     expect(clientConfig).toMatch(/id: ['"]meridian['"]/);
     expect(clientConfig).toMatch(/id: ['"]arcturus['"]/);
 
-    // canonical-auth-roster: existing demo emails still present.
+    // canonical-auth-roster: launch identities for each existing tenant still present.
     const roster = readFileSync(
       path.join(sandbox, REGISTRY_FILES.canonicalAuthRoster),
       "utf8",
     );
-    expect(roster).toContain("cio@apex-retail.example.com");
-    expect(roster).toContain("cdo@apex-retail.example.com");
-    expect(roster).toContain("cdio@meridian-health.example.com");
-    expect(roster).toContain("cio@firstcapital.example.com");
+    expect(roster).toContain("anand.sundaram+apex@thesundaram.com");
+    expect(roster).toContain("anand.sundaram+firstcapital@thesundaram.com");
+    expect(roster).toContain("anand.sundaram+meridian@thesundaram.com");
+    expect(roster).toContain("anand.sundaram+skyharbor@thesundaram.com");
+    expect(roster).toContain("anand.sundaram+lakeshore@thesundaram.com");
   });
 
   it("--dry-run does not modify any files", () => {
