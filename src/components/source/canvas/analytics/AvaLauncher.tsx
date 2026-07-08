@@ -6,6 +6,13 @@ import type { AvaLauncherView } from './view-model';
 
 interface AvaLauncherProps {
   launcher: AvaLauncherView;
+  /**
+   * Distance (px) from the viewport bottom. Defaults to 24 (original,
+   * standalone placement). The canvas now also mounts `AskAnythingBar` — a
+   * viewport-fixed bottom bar — so it raises this offset to clear the bar
+   * instead of the FAB sitting on top of it.
+   */
+  bottomOffset?: number;
 }
 
 /**
@@ -14,13 +21,13 @@ interface AvaLauncherProps {
  * explain evidence, draft-on-demand. It complements the on-canvas intelligence;
  * it does not replace it.
  */
-export function AvaLauncher({ launcher }: AvaLauncherProps) {
+export function AvaLauncher({ launcher, bottomOffset = 24 }: AvaLauncherProps) {
   const [open, setOpen] = useState(false);
 
   const fabStyle: CSSProperties = {
     position: 'fixed',
     right: 24,
-    bottom: 24,
+    bottom: bottomOffset,
     zIndex: 70,
     display: 'flex',
     alignItems: 'center',
@@ -69,7 +76,7 @@ export function AvaLauncher({ launcher }: AvaLauncherProps) {
           style={{
             position: 'fixed',
             right: 24,
-            bottom: 78,
+            bottom: bottomOffset + 54,
             zIndex: 71,
             width: 340,
             maxWidth: 'calc(100vw - 48px)',
