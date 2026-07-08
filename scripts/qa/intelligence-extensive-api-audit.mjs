@@ -143,7 +143,7 @@ function hydrateTenant(registryTenant) {
     ...registryTenant,
     name: registryTenant.displayName,
     email: safetyTenantEmail(registryTenant),
-    bannedTerms: registryTenant.bannedAliases ?? [],
+    bannedTerms: registryTenant.retiredAliases ?? registryTenant.bannedAliases ?? [],
   };
 }
 
@@ -859,9 +859,9 @@ function analyzeTenantSafety({ events, answer, sources }) {
       const match = matchTerm(text, term);
       if (match) findings.push(safetyFinding(kind, "cross_tenant", term, match, location, source));
     }
-    for (const term of tenant.bannedAliases ?? tenant.bannedTerms ?? []) {
+    for (const term of tenant.retiredAliases ?? tenant.bannedAliases ?? tenant.bannedTerms ?? []) {
       const match = matchTerm(text, term);
-      if (match) findings.push(safetyFinding(kind, "source_alias", term, match, location, source));
+      if (match) findings.push(safetyFinding(kind, "retired_alias", term, match, location, source));
     }
     for (const term of tenant.syntheticOnlyTerms ?? []) {
       const match = matchTerm(text, term);
@@ -881,6 +881,10 @@ function analyzeTenantSafety({ events, answer, sources }) {
           ),
         );
       }
+    }
+    for (const term of tenant.sourceOnlyCleanupTerms ?? []) {
+      const match = matchTerm(text, term);
+      if (match) findings.push(safetyFinding(kind, "source_cleanup", term, match, location, source));
     }
   };
 
@@ -903,6 +907,13 @@ function analyzeTenantSafety({ events, answer, sources }) {
   const uniqueFindings = dedupeGateFindings(findings);
   const finalAnswerFindings = uniqueFindings.filter((finding) => finding.kind === "final_answer");
   const modelVisibleFindings = uniqueFindings.filter((finding) => finding.kind !== "final_answer");
+  const hardCategories = new Set(["cross_tenant", "retired_alias", "synthetic_only", "retired_fact"]);
+  const finalAnswerSafetyFindings = finalAnswerFindings.filter((finding) =>
+    hardCategories.has(finding.category),
+  );
+  const modelVisibleSafetyFindings = modelVisibleFindings.filter((finding) =>
+    hardCategories.has(finding.category),
+  );
   const byCategory = (category, rows = uniqueFindings) =>
     rows.filter((finding) => finding.category === category);
   const sourceIds = uniqueFindings
@@ -911,24 +922,33 @@ function analyzeTenantSafety({ events, answer, sources }) {
 
   return {
     status:
-      finalAnswerFindings.length > 0
+      finalAnswerSafetyFindings.length > 0
         ? "failed_final_answer"
-        : modelVisibleFindings.length > 0
+        : modelVisibleSafetyFindings.length > 0
+          ? "unsafe_model_visible"
+          : modelVisibleFindings.length > 0
           ? "source_cleanup_required"
           : "passed",
     findings: uniqueFindings,
     finalAnswerFindings,
+    finalAnswerSafetyFindings,
     modelVisibleFindings,
+    modelVisibleSafetyFindings,
     crossTenantViolations: byCategory("cross_tenant").length,
     finalCrossTenantViolations: byCategory("cross_tenant", finalAnswerFindings).length,
     modelVisibleCrossTenantViolations: byCategory("cross_tenant", modelVisibleFindings).length,
-    sourceAliasViolations: byCategory("source_alias").length,
-    finalSourceAliasViolations: byCategory("source_alias", finalAnswerFindings).length,
-    modelVisibleSourceAliasViolations: byCategory("source_alias", modelVisibleFindings).length,
+    sourceAliasViolations: byCategory("retired_alias").length,
+    finalSourceAliasViolations: byCategory("retired_alias", finalAnswerFindings).length,
+    modelVisibleSourceAliasViolations: byCategory("retired_alias", modelVisibleFindings).length,
     syntheticOnlyViolations: byCategory("synthetic_only").length,
     finalSyntheticOnlyViolations: byCategory("synthetic_only", finalAnswerFindings).length,
     modelVisibleSyntheticOnlyViolations: byCategory("synthetic_only", modelVisibleFindings).length,
     retiredFactViolations: byCategory("retired_fact").length,
+    finalRetiredFactViolations: byCategory("retired_fact", finalAnswerFindings).length,
+    modelVisibleRetiredFactViolations: byCategory("retired_fact", modelVisibleFindings).length,
+    sourceCleanupFindings: byCategory("source_cleanup").length,
+    finalSourceCleanupFindings: byCategory("source_cleanup", finalAnswerFindings).length,
+    modelVisibleSourceCleanupFindings: byCategory("source_cleanup", modelVisibleFindings).length,
     topOffendingSourceIds: topCounts(sourceIds, 10),
   };
 }
@@ -992,10 +1012,16 @@ function scoreTurn(item, status, answer, sources, events, agentAnswer, retiredFa
   ) {
     flags.push("stream_error");
   }
-  for (const term of tenant.bannedAliases ?? tenant.bannedTerms ?? []) {
+  for (const term of tenant.retiredAliases ?? tenant.bannedAliases ?? tenant.bannedTerms ?? []) {
     if (new RegExp(`\\b${escapeRegExp(term)}\\b`, "i").test(answer)) {
       flags.push(`banned_or_old_alias:${term}`);
     }
+  }
+  if (tenantSafety?.finalAnswerSafetyFindings?.length > 0) {
+    flags.push(`final_answer_safety_findings:${tenantSafety.finalAnswerSafetyFindings.length}`);
+  }
+  if (tenantSafety?.modelVisibleSafetyFindings?.length > 0) {
+    flags.push(`model_visible_safety_findings:${tenantSafety.modelVisibleSafetyFindings.length}`);
   }
   if (tenantSafety?.finalCrossTenantViolations > 0) {
     flags.push(`cross_tenant_final:${tenantSafety.finalCrossTenantViolations}`);
@@ -1007,13 +1033,25 @@ function scoreTurn(item, status, answer, sources, events, agentAnswer, retiredFa
     flags.push(`source_alias_final:${tenantSafety.finalSourceAliasViolations}`);
   }
   if (tenantSafety?.modelVisibleSourceAliasViolations > 0) {
-    flags.push(`source_alias_model_visible:${tenantSafety.modelVisibleSourceAliasViolations}`);
+    flags.push(`retired_alias_model_visible:${tenantSafety.modelVisibleSourceAliasViolations}`);
+  }
+  if (tenantSafety?.finalRetiredFactViolations > 0) {
+    flags.push(`retired_fact_final:${tenantSafety.finalRetiredFactViolations}`);
+  }
+  if (tenantSafety?.modelVisibleRetiredFactViolations > 0) {
+    flags.push(`retired_fact_model_visible:${tenantSafety.modelVisibleRetiredFactViolations}`);
   }
   if (tenantSafety?.finalSyntheticOnlyViolations > 0) {
     flags.push(`synthetic_only_final:${tenantSafety.finalSyntheticOnlyViolations}`);
   }
   if (tenantSafety?.modelVisibleSyntheticOnlyViolations > 0) {
     flags.push(`synthetic_only_model_visible:${tenantSafety.modelVisibleSyntheticOnlyViolations}`);
+  }
+  if (tenantSafety?.finalSourceCleanupFindings > 0) {
+    flags.push(`source_cleanup_final:${tenantSafety.finalSourceCleanupFindings}`);
+  }
+  if (tenantSafety?.modelVisibleSourceCleanupFindings > 0) {
+    flags.push(`source_cleanup_model_visible:${tenantSafety.modelVisibleSourceCleanupFindings}`);
   }
   if (retiredFactGate?.status === "failed_unblocked") {
     for (const term of retiredFactGate.violationTerms ?? []) {
@@ -1056,7 +1094,7 @@ function scoreTurn(item, status, answer, sources, events, agentAnswer, retiredFa
     flags.push("agent_answer_without_citations");
   }
   const hard = flags.filter((flag) =>
-    /http_|stream_error|answer_too_short|banned_or_old_alias|stale_retired_fact|cross_tenant_final|source_alias_final|synthetic_only_final|protocol_or_debug_leak|possible_fabricated_clause|date_math_wrong|past_date_not_reframed|value_state_overclaim|missing_evidence_not_caveated/.test(
+    /http_|stream_error|answer_too_short|banned_or_old_alias|stale_retired_fact|final_answer_safety_findings|model_visible_safety_findings|cross_tenant_final|cross_tenant_model_visible|source_alias_final|retired_alias_model_visible|retired_fact_final|retired_fact_model_visible|synthetic_only_final|synthetic_only_model_visible|protocol_or_debug_leak|possible_fabricated_clause|date_math_wrong|past_date_not_reframed|value_state_overclaim|missing_evidence_not_caveated/.test(
       flag,
     ),
   );
@@ -1194,6 +1232,26 @@ function summarize(turns) {
       (sum, turn) => sum + Number(turn.tenantSafety?.modelVisibleFindings?.length ?? 0),
       0,
     ),
+    finalAnswerSafetyFindings: turns.reduce(
+      (sum, turn) => sum + Number(turn.tenantSafety?.finalAnswerSafetyFindings?.length ?? 0),
+      0,
+    ),
+    modelVisibleSafetyFindings: turns.reduce(
+      (sum, turn) => sum + Number(turn.tenantSafety?.modelVisibleSafetyFindings?.length ?? 0),
+      0,
+    ),
+    sourceCleanupFindings: turns.reduce(
+      (sum, turn) => sum + Number(turn.tenantSafety?.sourceCleanupFindings ?? 0),
+      0,
+    ),
+    finalSourceCleanupFindings: turns.reduce(
+      (sum, turn) => sum + Number(turn.tenantSafety?.finalSourceCleanupFindings ?? 0),
+      0,
+    ),
+    modelVisibleSourceCleanupFindings: turns.reduce(
+      (sum, turn) => sum + Number(turn.tenantSafety?.modelVisibleSourceCleanupFindings ?? 0),
+      0,
+    ),
     unsupportedClaimFlags: turns.reduce(
       (sum, turn) =>
         sum +
@@ -1246,6 +1304,8 @@ function summarize(turns) {
       noFinalCrossTenantFacts: safety.finalCrossTenantViolations === 0,
       noFinalRetiredAliases: safety.finalSourceAliasViolations === 0,
       noFinalSyntheticOnlyFacts: safety.finalSyntheticOnlyViolations === 0,
+      noFinalAnswerSafetyFindings: safety.finalAnswerSafetyFindings === 0,
+      noModelVisibleSafetyFindings: safety.modelVisibleSafetyFindings === 0,
       sourceCleanupRequired: safety.modelVisibleViolations > 0,
     },
     byChain: Object.fromEntries(
@@ -1562,6 +1622,8 @@ async function main() {
     return (
       summary.fail > 0 ||
       summary.retiredFactGate.failedUnblocked > 0 ||
+      summary.safety.finalAnswerSafetyFindings > 0 ||
+      summary.safety.crossTenantViolations > 0 ||
       summary.safety.finalCrossTenantViolations > 0 ||
       summary.safety.finalSourceAliasViolations > 0 ||
       summary.safety.finalSyntheticOnlyViolations > 0
@@ -1620,12 +1682,35 @@ function buildRollupSummary(runs) {
       finalSourceAliasViolations: s.safety.finalSourceAliasViolations,
       syntheticOnlyViolations: s.safety.syntheticOnlyViolations,
       finalSyntheticOnlyViolations: s.safety.finalSyntheticOnlyViolations,
+      finalAnswerSafetyFindings: s.safety.finalAnswerSafetyFindings,
+      modelVisibleSafetyFindings: s.safety.modelVisibleSafetyFindings,
+      sourceCleanupFindings: s.safety.sourceCleanupFindings,
+      finalSourceCleanupFindings: s.safety.finalSourceCleanupFindings,
+      modelVisibleSourceCleanupFindings: s.safety.modelVisibleSourceCleanupFindings,
+      finalAnswerEmissions:
+        s.safety.finalCrossTenantViolations +
+        s.safety.finalSourceAliasViolations +
+        s.safety.finalSyntheticOnlyViolations,
+      modelVisiblePacketFindings:
+        s.safety.modelVisibleSafetyFindings +
+        s.safety.modelVisibleSourceCleanupFindings,
       unsupportedClaimFlags: s.safety.unsupportedClaimFlags,
       weakGroundingFlags: s.safety.weakGroundingFlags,
       topOffendingSourceIds: s.safety.topOffendingSourceIds,
       reportPath: run.reportPath,
       sourceCleanupRequired,
       unblockedViolations,
+      status: classifyTenantStatus({
+        fail: s.fail,
+        averageScore: s.averageScore,
+        sourceCleanupRequired,
+        failedUnblocked: s.retiredFactGate.failedUnblocked,
+        finalAnswerSafetyFindings: s.safety.finalAnswerSafetyFindings,
+        modelVisibleSafetyFindings: s.safety.modelVisibleSafetyFindings,
+        weakGroundingFlags: s.safety.weakGroundingFlags,
+        unsupportedClaimFlags: s.safety.unsupportedClaimFlags,
+        blocked: s.retiredFactGate.blocked,
+      }),
       clean:
         unblockedViolations === 0 &&
         s.fail === 0 &&
@@ -1684,6 +1769,14 @@ function buildRollupSummary(runs) {
       (sum, row) => sum + row.finalSyntheticOnlyViolations,
       0,
     ),
+    totalFinalAnswerSafetyFindings: rows.reduce(
+      (sum, row) => sum + row.finalAnswerSafetyFindings,
+      0,
+    ),
+    totalCrossTenantViolations: rows.reduce(
+      (sum, row) => sum + row.crossTenantViolations,
+      0,
+    ),
     topStaleSourceIds,
     recommendedPurgeOrder: rows
       .filter((row) => row.sourceCleanupRequired || row.unblockedViolations > 0)
@@ -1705,13 +1798,36 @@ function buildRollupSummary(runs) {
     rows,
     acceptance: {
       zeroFailedUnblocked: rows.every((row) => row.failedUnblocked === 0),
+      zeroCrossTenantViolations: rows.every((row) => row.crossTenantViolations === 0),
       zeroFinalCrossTenantFacts: rows.every((row) => row.finalCrossTenantViolations === 0),
       zeroFinalRetiredAliases: rows.every((row) => row.finalSourceAliasViolations === 0),
       zeroFinalSyntheticOnlyFacts: rows.every((row) => row.finalSyntheticOnlyViolations === 0),
+      zeroFinalAnswerSafetyFindings: rows.every((row) => row.finalAnswerSafetyFindings === 0),
+      zeroModelVisibleSafetyFindings: rows.every((row) => row.modelVisibleSafetyFindings === 0),
     },
     safetyInterpretation:
       "Runtime safety success means failedUnblocked/final-answer violations are zero. Data hygiene cleanup remains required when model-visible source packets contain stale, synthetic-only, alias, or cross-tenant findings that are blocked or do not reach final prose.",
   };
+}
+
+function classifyTenantStatus({
+  fail,
+  averageScore,
+  sourceCleanupRequired,
+  failedUnblocked,
+  finalAnswerSafetyFindings,
+  modelVisibleSafetyFindings,
+  weakGroundingFlags,
+  unsupportedClaimFlags,
+  blocked,
+}) {
+  if (failedUnblocked > 0 || finalAnswerSafetyFindings > 0) return "Unsafe Emit";
+  if (blocked > 0 || modelVisibleSafetyFindings > 0) return "Safe-Fail";
+  if (sourceCleanupRequired) return "Source Cleanup Required";
+  if (weakGroundingFlags > 0 || unsupportedClaimFlags > 0 || averageScore < 7 || fail > 0) {
+    return "Weak Evidence";
+  }
+  return "Clean Pass";
 }
 
 function renderRollupCsv(summary) {
@@ -1733,6 +1849,11 @@ function renderRollupCsv(summary) {
     "final_source_alias_violations",
     "synthetic_only_violations",
     "final_synthetic_only_violations",
+    "final_answer_emissions",
+    "model_visible_packet_findings",
+    "source_cleanup_findings",
+    "blocked_count",
+    "status",
     "unsupported_claim_flags",
     "weak_grounding_flags",
     "top_offending_source_ids",
@@ -1757,6 +1878,11 @@ function renderRollupCsv(summary) {
       row.finalSourceAliasViolations,
       row.syntheticOnlyViolations,
       row.finalSyntheticOnlyViolations,
+      row.finalAnswerEmissions,
+      row.modelVisiblePacketFindings,
+      row.sourceCleanupFindings,
+      row.retiredFactGateBlocked,
+      row.status,
       row.unsupportedClaimFlags,
       row.weakGroundingFlags,
       row.topOffendingSourceIds.map((entry) => `${entry.value}:${entry.count}`).join("; "),
@@ -1771,16 +1897,20 @@ function renderRollupCsv(summary) {
 function renderRollupHtml(summary) {
   const rows = summary.rows
     .map(
-      (row) => `<tr class="${row.fail || row.unblockedViolations ? "fail" : row.sourceCleanupRequired ? "watch" : "pass"}">
+      (row) => `<tr class="${row.status === "Unsafe Emit" ? "fail" : row.status === "Clean Pass" ? "pass" : "watch"}">
         <td>${escapeHtml(row.tenantKey)}</td>
         <td>${escapeHtml(row.displayName)}</td>
         <td>${escapeHtml(`${row.pass}/${row.watch}/${row.fail}`)}</td>
         <td>${escapeHtml(row.averageScore.toFixed(1))}</td>
+        <td>${escapeHtml(row.status)}</td>
         <td>${escapeHtml(row.retiredFactGatePassed)}</td>
         <td>${escapeHtml(row.retiredFactGateBlocked)}</td>
         <td>${escapeHtml(row.failedUnblocked)}</td>
         <td>${escapeHtml(row.crossTenantViolations)}</td>
         <td>${escapeHtml(row.sourceAliasViolations)}</td>
+        <td>${escapeHtml(row.finalAnswerEmissions)}</td>
+        <td>${escapeHtml(row.modelVisiblePacketFindings)}</td>
+        <td>${escapeHtml(row.sourceCleanupFindings)}</td>
         <td>${escapeHtml(row.unsupportedClaimFlags)}</td>
         <td>${escapeHtml(row.weakGroundingFlags)}</td>
         <td>${escapeHtml(row.topOffendingSourceIds.map((entry) => `${entry.value} (${entry.count})`).join(", ") || "none")}</td>
@@ -1833,7 +1963,7 @@ function renderRollupHtml(summary) {
   </header>
   <main>
     <h2>Tenant Results</h2>
-    <table><thead><tr><th>Tenant</th><th>Name</th><th>Pass/Watch/Fail</th><th>Avg</th><th>Gate Passed</th><th>Gate Blocked</th><th>Failed Unblocked</th><th>Cross</th><th>Aliases</th><th>Unsupported</th><th>Weak Grounding</th><th>Top Sources</th><th>Cleanup</th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr><th>Tenant</th><th>Name</th><th>Pass/Watch/Fail</th><th>Avg</th><th>Status</th><th>Gate Passed</th><th>Gate Blocked</th><th>Failed Unblocked</th><th>Cross</th><th>Retired/Stale</th><th>Final Emissions</th><th>Model Packet Findings</th><th>Source Cleanup</th><th>Unsupported</th><th>Weak Grounding</th><th>Top Sources</th><th>Cleanup</th></tr></thead><tbody>${rows}</tbody></table>
     <h2>Discovered Registry</h2>
     <pre>${escapeHtml(JSON.stringify(summary.tenantsDiscovered, null, 2))}</pre>
   </main>

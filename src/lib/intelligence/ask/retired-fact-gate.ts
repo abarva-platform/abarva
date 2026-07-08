@@ -1,4 +1,8 @@
 import type { AskSource, AskSurfaceContext } from "./types";
+import {
+  resolveTenantSafetyPolicy,
+  tenantSafetyBlockingPatterns,
+} from "./tenant-safety-policy";
 
 export interface RetiredFactFinding {
   tenantKey: string;
@@ -10,68 +14,6 @@ export interface RetiredFactFinding {
   sourceName?: string;
 }
 
-interface RetiredFactPattern {
-  factId: string;
-  label: string;
-  re: RegExp;
-}
-
-const LAKESHORE_KEYS = new Set([
-  "lakeshore",
-  "lakeshoreholdings",
-  "lakeshore-holdings",
-  "lakeshoreindustries",
-  "lakeshore-industries",
-]);
-
-const LAKESHORE_RETIRED_FACTS: RetiredFactPattern[] = [
-  {
-    factId: "old_revenue_54_2b",
-    label: "Retired Lakeshore revenue $54.2B",
-    re: /\$?\s*54\.2\s*(?:B|billion)\b/i,
-  },
-  {
-    factId: "old_employee_count_72000",
-    label: "Retired Lakeshore employee count 72,000",
-    re: /\b72,?000\s+(?:FTEs?|employees|people|headcount)\b/i,
-  },
-  {
-    factId: "old_plant_count_89",
-    label: "Retired Lakeshore plant count 89 manufacturing plants",
-    re: /\b89\s+manufacturing\s+plants\b/i,
-  },
-  {
-    factId: "old_tech_budget_1_8b",
-    label: "Retired Lakeshore technology budget $1.8B",
-    re: /\$?\s*1\.8\s*(?:B|billion)\s+(?:annual\s+)?technology\s+budget\b/i,
-  },
-  {
-    factId: "old_ai_budget_54m",
-    label: "Retired Lakeshore AI/data budget $54M",
-    re: /\$?\s*54\s*(?:M|million)\s+(?:AI|AI\/data|data)\s+budget\b/i,
-  },
-  {
-    factId: "old_alias_lakeshore_industries",
-    label: "Retired Lakeshore Industries alias",
-    re: /\bLakeshore\s+(?:Holdings\s+)?Industries\b/i,
-  },
-  {
-    factId: "old_opco_harborpoint",
-    label: "Retired Lakeshore HarborPoint portfolio company",
-    re: /\bHarborPoint(?:\s+Packaging\s+Group)?\b/i,
-  },
-  {
-    factId: "old_opco_riverton",
-    label: "Retired Lakeshore Riverton portfolio company",
-    re: /\bRiverton(?:\s+Components\s+&\s+Field\s+Services)?\b/i,
-  },
-  {
-    factId: "old_opco_keystone",
-    label: "Retired Lakeshore Keystone portfolio company",
-    re: /\bKeystone\s+Industrial\s+Services\b/i,
-  },
-];
-
 export function scanRetiredFacts(input: {
   tenantKey?: string | null;
   tenantName?: string | null;
@@ -79,21 +21,22 @@ export function scanRetiredFacts(input: {
   sources?: AskSource[];
   textBlocks?: Array<{ location: string; text: string | null | undefined }>;
 }): RetiredFactFinding[] {
-  const tenantKey = normalizeTenantKey(input.tenantKey ?? input.tenantName);
-  if (!isLakeshore(tenantKey)) return [];
+  const policy = resolveTenantSafetyPolicy(input.tenantKey, input.tenantName);
+  if (!policy) return [];
 
   const findings: RetiredFactFinding[] = [];
+  const patterns = tenantSafetyBlockingPatterns(policy);
   const scan = (
     location: string,
     text: string | null | undefined,
     source?: AskSource,
   ) => {
     if (!text) return;
-    for (const pattern of LAKESHORE_RETIRED_FACTS) {
+    for (const pattern of patterns) {
       const match = pattern.re.exec(text);
       if (!match) continue;
       findings.push({
-        tenantKey: "lakeshore-holdings",
+        tenantKey: policy.tenantKey,
         factId: pattern.factId,
         label: pattern.label,
         match: match[0],
@@ -139,18 +82,6 @@ export function buildRetiredFactError(findings: RetiredFactFinding[]): string {
     )
     .join("; ");
   return `retired_fact_violation: ${sample}`;
-}
-
-function normalizeTenantKey(value: string | null | undefined): string {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[_\s]+/g, "-");
-}
-
-function isLakeshore(key: string): boolean {
-  const compact = key.replace(/-/g, "");
-  return LAKESHORE_KEYS.has(key) || LAKESHORE_KEYS.has(compact);
 }
 
 function dedupeFindings(findings: RetiredFactFinding[]): RetiredFactFinding[] {

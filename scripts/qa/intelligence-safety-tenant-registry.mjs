@@ -8,7 +8,9 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     testPersonaEmail: "apexretail-agent@abarva.example.com",
     industry: "retail / stores / ecommerce / supply chain",
     active: true,
-    bannedAliases: ["Apex Retail Group"],
+    retiredAliases: [],
+    bannedAliases: [],
+    sourceOnlyCleanupTerms: ["Apex Retail Group"],
     staleFactPatterns: [],
     syntheticOnlyTerms: [
       "apexretail-enterprise-context-v1",
@@ -37,7 +39,9 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     testPersonaEmail: "meridian-agent@abarva.example.com",
     industry: "healthcare provider / payer operations / clinical transformation",
     active: true,
-    bannedAliases: ["Heliara", "Heliara Health", "Heliara Health Alliance"],
+    retiredAliases: [],
+    bannedAliases: [],
+    sourceOnlyCleanupTerms: ["Heliara", "Heliara Health", "Heliara Health Alliance"],
     staleFactPatterns: [],
     syntheticOnlyTerms: ["meridian-enterprise-context-v1"],
     crossTenantForbiddenTerms: [
@@ -63,7 +67,9 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     testPersonaEmail: "arcturus-agent@abarva.example.com",
     industry: "financial services / banking / risk and compliance",
     active: true,
+    retiredAliases: ["Arcturus Financial", "Arcturus Financial Group", "First Capital Financial"],
     bannedAliases: ["Arcturus Financial", "Arcturus Financial Group", "First Capital Financial"],
+    sourceOnlyCleanupTerms: [],
     staleFactPatterns: [],
     syntheticOnlyTerms: [],
     crossTenantForbiddenTerms: [
@@ -89,7 +95,9 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     testPersonaEmail: "northstar-agent@abarva.example.com",
     industry: "healthcare medtech / devices / product operations",
     active: true,
+    retiredAliases: ["Northstar MedTech"],
     bannedAliases: ["Northstar MedTech"],
+    sourceOnlyCleanupTerms: [],
     staleFactPatterns: [],
     syntheticOnlyTerms: [],
     crossTenantForbiddenTerms: [
@@ -115,7 +123,9 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     testPersonaEmail: "skyharbor-agent@abarva.example.com",
     industry: "airline / aviation operations / crew and IROPS",
     active: true,
-    bannedAliases: ["SkyHarbor Air Group", "SkyHarbor Airlines"],
+    retiredAliases: [],
+    bannedAliases: [],
+    sourceOnlyCleanupTerms: ["SkyHarbor Air Group", "SkyHarbor Airlines"],
     staleFactPatterns: [],
     syntheticOnlyTerms: ["skyharbor-enterprise-context-v1"],
     crossTenantForbiddenTerms: [
@@ -142,6 +152,18 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     testPersonaEmail: "lakeshore-agent@abarva.example.com",
     industry: "diversified holding company / shared services / industrial portfolio",
     active: true,
+    retiredAliases: [
+      "Lakeshore Industries",
+      "Lakeshore Holdings Industries",
+      "Industrial Demo",
+      "Manufacturing Demo",
+      "Mona Street",
+      "HarborPoint",
+      "HarborPoint Packaging Group",
+      "Riverton",
+      "Riverton Components & Field Services",
+      "Keystone Industrial Services",
+    ],
     bannedAliases: [
       "Lakeshore Industries",
       "Lakeshore Holdings Industries",
@@ -149,6 +171,7 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
       "Manufacturing Demo",
       "Mona Street",
     ],
+    sourceOnlyCleanupTerms: [],
     staleFactPatterns: [
       { label: "old_revenue_54_2b", re: /\$?54\.2B\b|\b54\.2\s*billion\b/i },
       { label: "old_employee_count_72000", re: /\b72,?000\s+(?:FTEs?|employees|people)\b/i },
@@ -196,7 +219,9 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     aliasOf: "lakeshore",
     discoveryNote:
       "Morgan Street is not a separate reachable Intelligence client in this runtime; Lakeshore Holdings is the Morgan Street-shape equivalent.",
+    retiredAliases: ["Morgan Street", "Mona Street", "Lakeshore Industries"],
     bannedAliases: ["Morgan Street", "Mona Street", "Lakeshore Industries"],
+    sourceOnlyCleanupTerms: [],
     staleFactPatterns: [
       { label: "old_revenue_54_2b", re: /\$?54\.2B\b|\b54\.2\s*billion\b/i },
       { label: "old_employee_count_72000", re: /\b72,?000\s+(?:FTEs?|employees|people)\b/i },
