@@ -254,12 +254,15 @@ export function summarizeEnterpriseContextRows(input: {
   }
 
   const applications = recordsByType.get('cmdb_applications_services') ?? [];
+  const orgRows = recordsByType.get('org_decision_rights') ?? [];
+  const businessUnitRows = recordsByType.get('facilities_business_units') ?? [];
   const incidents = recordsByType.get('incidents') ?? [];
   const problems = recordsByType.get('problems') ?? [];
   const changes = recordsByType.get('changes') ?? [];
   const renewals = recordsByType.get('renewal_calendar') ?? [];
   const contracts = recordsByType.get('vendors_contract_inventory') ?? [];
   const spendRows = recordsByType.get('spend_baseline') ?? [];
+  const kpis = recordsByType.get('kpi_metric') ?? recordsByType.get('financial_kpis') ?? [];
   const policies = recordsByType.get('policies_procedures') ?? [];
   const initiatives = recordsByType.get('initiative_portfolio') ?? [];
   const dataDomains = recordsByType.get('data_domains_stewardship') ?? [];
@@ -733,6 +736,7 @@ export function summarizeEnterpriseContextChunks(input: {
       "embedding:failed": failed,
     },
     cards,
+    contextInsights: [],
     sentinelFacts,
     vendorSpendRows: [],
   };

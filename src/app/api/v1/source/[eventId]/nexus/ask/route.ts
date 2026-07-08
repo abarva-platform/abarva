@@ -26,6 +26,7 @@ import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { composeSentinelSystemPrompt } from "@/lib/agent/voice-doctrine/sentinel";
 import { isSkyHarborContractOptimizationEvent } from "@/lib/source/contract-optimization/eligibility";
 import { loadContractEvidenceRuntimeSummary } from "@/lib/source/contract-evidence/read-model";
+import type { ContractEvidenceMetricSummary } from "@/lib/source/contract-evidence/read-model";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   buildVendorResponseMveProfiles,
@@ -40,6 +41,15 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function formatContractEvidenceMetricValue(
+  metric: ContractEvidenceMetricSummary,
+): string {
+  const value = new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 2,
+  }).format(metric.value);
+  return metric.unit ? `${value} ${metric.unit}` : value;
+}
 
 type SourceNexusRouteContext = {
   params: Promise<{ eventId?: string }>;

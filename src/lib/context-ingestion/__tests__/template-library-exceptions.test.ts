@@ -23,7 +23,7 @@ describe("context template library exception coverage", () => {
 
     expect(template?.acceptedFormats).toContain("pdf");
     expect(
-      template?.exceptionMetadataRequirements.map((item) => item.key),
+      template?.exceptionMetadataRequirements?.map((item) => item.key),
     ).toEqual(
       expect.arrayContaining([
         "source_system",

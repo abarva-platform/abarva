@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { currentUser } from '@clerk/nextjs/server'
+import { headers } from 'next/headers'
 
 export const dynamic = "force-dynamic";
 

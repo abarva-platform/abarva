@@ -74,7 +74,7 @@ export function assessTemplateUploadAlignment(args: {
   const canonicalFormat = template.acceptedFormats.includes(args.format);
   const requiresExceptionApproval = !canonicalFormat || profile.requiresMetadataForException;
   const suppliedMetadata = new Set((args.suppliedMetadataKeys ?? []).map((key) => key.trim()).filter(Boolean));
-  const metadataRequirements = template.exceptionMetadataRequirements.filter((requirement) =>
+  const metadataRequirements = (template.exceptionMetadataRequirements ?? []).filter((requirement) =>
     metadataAppliesToFormat(requirement, args.format),
   );
   const missingMetadataKeys = requiresExceptionApproval

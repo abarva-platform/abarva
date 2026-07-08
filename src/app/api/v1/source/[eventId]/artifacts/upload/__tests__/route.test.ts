@@ -89,10 +89,13 @@ jest.mock('@/lib/data-plane/postgresCompat', () => ({
   }),
 }));
 
-const insertActivityLogMock = jest.fn(async () => ({ ok: true }));
+const insertActivityLogMock = jest.fn(async (_args: unknown[]) => ({
+  ok: true,
+}));
 jest.mock('@/lib/data-plane/write-adapters/sourceWriteAdapter', () => ({
   selectSourceWriteAdapter: () => ({
-    insertActivityLog: (...args: unknown[]) => insertActivityLogMock(...args),
+    insertActivityLog: (...args: unknown[]) =>
+      insertActivityLogMock(args),
     updateArtifactBody: async () => ({ ok: true }),
     updateGateCriterion: async () => ({ ok: true }),
   }),
@@ -153,10 +156,12 @@ jest.mock('@/lib/security/sensitive-upload-guard', () => ({
     Response.json({ ok: false, error: 'quarantine' }, { status: 422 }),
 }));
 
-const syncUploadToCanvasSubstrateMock = jest.fn(async () => ({ ok: true }));
+const syncUploadToCanvasSubstrateMock = jest.fn(async (_args: unknown[]) => ({
+  ok: true,
+}));
 jest.mock('@/lib/source/canvas-substrate/upload-sync', () => ({
   syncUploadToCanvasSubstrate: (...args: unknown[]) =>
-    syncUploadToCanvasSubstrateMock(...args),
+    syncUploadToCanvasSubstrateMock(args),
 }));
 
 // Import AFTER all mocks are registered.

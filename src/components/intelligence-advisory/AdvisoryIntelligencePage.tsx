@@ -62,6 +62,28 @@ const AVA_INTELLIGENCE_AGENT = {
   role: "Intelligence advisor",
 };
 
+function askSourceTypeFromCitation(
+  sourceClass: AvaAnswerPacket["citations"][number]["sourceClass"],
+): AskSource["type"] {
+  if (sourceClass === "tenant-fact" || sourceClass === "tenant-chunk") {
+    return "TENANT";
+  }
+  if (sourceClass === "graph") return "GRAPH";
+  if (sourceClass === "worldview") return "WORLDVIEW";
+  return "PATTERN";
+}
+
+function payloadValue(
+  payload: unknown,
+  key: string,
+): string | number | undefined {
+  if (!payload || typeof payload !== "object" || !(key in payload)) return;
+  const value = (payload as Record<string, unknown>)[key];
+  return typeof value === "string" || typeof value === "number"
+    ? value
+    : undefined;
+}
+
 export function AdvisoryIntelligencePage({
   viewModel,
 }: {
@@ -196,9 +218,9 @@ export function AdvisoryIntelligencePage({
             answer: answerBodyFromPacket(event.answer) || m.answer,
             sources: event.answer.citations.map((c) => ({
               id: c.id,
-              type: c.sourceClass,
+              type: askSourceTypeFromCitation(c.sourceClass),
               name: c.label,
-              detail: c.excerpt,
+              detail: c.excerpt ?? "",
               confidence:
                 c.confidence === "high"
                   ? 0.9
@@ -486,7 +508,7 @@ function OutlookPanel({
                     borderRadius: 6,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                   }}
-                  formatter={(v: number, name: string) => [
+                  formatter={(v, name) => [
                     v,
                     name === "top" ? "Top quartile" : "Sector median",
                   ]}
@@ -643,14 +665,14 @@ function PeerPanel({
                     borderRadius: 6,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                   }}
-                  formatter={(
-                    v: number,
-                    _n: string,
-                    props: { payload?: { youFmt?: string; peerFmt?: string } },
-                  ) => [
-                    `You ${props?.payload?.youFmt ?? v} · Peer ${props?.payload?.peerFmt ?? "—"}`,
-                    "",
-                  ]}
+                  formatter={(v, _n, props) => {
+                    const youFmt = payloadValue(props?.payload, "youFmt");
+                    const peerFmt = payloadValue(props?.payload, "peerFmt");
+                    return [
+                      `You ${youFmt ?? v} · Peer ${peerFmt ?? "-"}`,
+                      "",
+                    ];
+                  }}
                 />
                 <Bar
                   dataKey="you"
@@ -659,10 +681,7 @@ function PeerPanel({
                     position: "right",
                     fontSize: 11,
                     fill: "#404040",
-                    formatter: (
-                      _: number,
-                      entry: { payload?: { youFmt?: string } },
-                    ) => entry?.payload?.youFmt ?? "",
+                    formatter: (value: unknown) => String(value ?? ""),
                   }}
                 >
                   {chartData.map((row, i) => (
@@ -1024,11 +1043,10 @@ function ValuePanel({
                     borderRadius: 6,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                   }}
-                  formatter={(
-                    _: number,
-                    __: string,
-                    props: { payload?: { display?: string } },
-                  ) => [props?.payload?.display ?? "", "Est. value / yr"]}
+                  formatter={(_value, _name, props) => [
+                    payloadValue(props?.payload, "display") ?? "",
+                    "Est. value / yr",
+                  ]}
                 />
                 <Bar
                   dataKey="value"
@@ -1039,10 +1057,7 @@ function ValuePanel({
                     fontSize: 12,
                     fill: "#11613A",
                     fontWeight: 700,
-                    formatter: (
-                      _: number,
-                      entry: { payload?: { display?: string } },
-                    ) => entry?.payload?.display ?? "",
+                    formatter: (value: unknown) => String(value ?? ""),
                   }}
                 />
               </BarChart>

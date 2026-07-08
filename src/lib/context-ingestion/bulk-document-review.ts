@@ -90,6 +90,10 @@ function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4));
 }
 
+function optionalNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function chunkText(text: string): string[] {
   const normalized = text.replace(/\r\n/g, "\n").trim();
   if (!normalized) return [];
@@ -165,9 +169,9 @@ export function buildBulkDocumentReviewArtifact(args: {
         locator: {
           document: args.fileName,
           chunk: index + 1,
-          pageCount: args.document.metadata.pageCount,
-          slideCount: args.document.metadata.slideCount,
-          worksheetCount: args.document.metadata.worksheetCount,
+          pageCount: optionalNumber(args.document.metadata.pageCount) ?? null,
+          slideCount: optionalNumber(args.document.metadata.slideCount),
+          worksheetCount: optionalNumber(args.document.metadata.worksheetCount),
         },
         reviewStatus: "needs_operator_review",
       };
