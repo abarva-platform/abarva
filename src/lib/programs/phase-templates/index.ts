@@ -30,6 +30,16 @@ export type {
   BuildApprovedInputsPackInput,
 } from './approved-inputs-pack';
 export {
+  enterprisePromotionStatus,
+  isAutoPromotableToEnterprise,
+  buildPromotionReviewRequest,
+} from './enterprise-promotion';
+export type {
+  EnterprisePromotionStatus,
+  EnterprisePromotionState,
+  PromotionReviewRequest,
+} from './enterprise-promotion';
+export {
   buildPatternAssemblyPacket,
   validateAssembledResponse,
 } from './pattern-assembly';
