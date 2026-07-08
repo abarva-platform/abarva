@@ -267,6 +267,35 @@ const COMMITTED_VALUE_TEMPLATE: TemplateFactMap = {
   ],
 };
 
+// ── BAFO concessions template (downstream-insight Shape 1) ───────────────────
+// One row per VALUE LEVER. Carries the per-lever concession the BAFO round
+// CAPTURED, which flips BAFO progress from a model to a live captured-vs-target
+// read (see docs/build/source-downstream-insight-fact-model.md). The row entity is
+// `value_lever`: the `Lever Key` column MUST be a canonical archetype lever key
+// (e.g. 'AMS.VOLUME_BAND_PRICING') — it becomes the fact's entity_ref, and the
+// insight only marks a lever captured when a row's key matches a lever the
+// archetype actually declares (a phantom key can never inject a lever).
+//
+// The single fact column is a total-over-term $ figure on the `usd` unit — the same
+// basis the lever's computed target band is expressed in — so captured can be
+// compared directly against target. Enter the concession the BAFO round BOOKED for
+// the lever, not an annual figure; a lever with no row stays 0-captured / still-open.
+const BAFO_CONCESSIONS_TEMPLATE: TemplateFactMap = {
+  templateCode: 'BAFO_CONCESSIONS_V1',
+  label: 'BAFO concession actuals',
+  rowEntity: 'value_lever',
+  entityRefColumn: 'Lever Key',
+  columns: [
+    {
+      header: 'Concession Captured (USD)',
+      factKey: 'bafo_concession_captured_usd',
+      entityKind: 'value_lever',
+      unit: 'usd',
+      note: 'The concession the BAFO round captured for this lever, in USD over the contract term (not annualized). One row per canonical lever key; a lever with no row stays 0-captured / still-open.',
+    },
+  ],
+};
+
 /** All shipped structured intake templates, keyed by templateCode. */
 export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
@@ -274,6 +303,7 @@ export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [CONTRACT_TERMS_TEMPLATE.templateCode]: CONTRACT_TERMS_TEMPLATE,
   [RFP_CLAUSES_TEMPLATE.templateCode]: RFP_CLAUSES_TEMPLATE,
   [COMMITTED_VALUE_TEMPLATE.templateCode]: COMMITTED_VALUE_TEMPLATE,
+  [BAFO_CONCESSIONS_TEMPLATE.templateCode]: BAFO_CONCESSIONS_TEMPLATE,
   // Add new intake templates here — no engine change required.
 };
 

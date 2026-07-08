@@ -8,9 +8,11 @@
 // still to close reads at a glance. Beneath, a read-out surfaces each lever's BAFO
 // ask (the concession to press).
 //
-// MODEL — negotiation / concession actuals are not in the fact model yet, so
-// captured is a placeholder (0) against each lever's target. The badge reads
-// "Model" and the note names the fact that flips it live.
+// MODEL — BAFO concession actuals are not in the fact model yet, so captured is a
+// placeholder (0) against each lever's target. LIVE — once concession actuals are
+// ingested (one bafo_concession_captured_usd fact per lever) each bar carries the
+// captured value the BAFO round booked against its target. The badge and note key
+// off insight.isModel, never provenance alone.
 
 import {
   Bar,
@@ -45,7 +47,7 @@ interface BafoProgressInsightProps {
 }
 
 export function BafoProgressInsight({ insight }: BafoProgressInsightProps) {
-  const { rows } = insight;
+  const { rows, isModel } = insight;
   const advisor = {
     bestPractice: insight.bestPractice,
     benchmark: insight.benchmark,
@@ -59,7 +61,7 @@ export function BafoProgressInsight({ insight }: BafoProgressInsightProps) {
         headline={insight.headline}
         provenance={insight.provenance}
         note={insight.note}
-        isModel
+        isModel={isModel}
         advisor={advisor}
       >
         <div
@@ -97,7 +99,7 @@ export function BafoProgressInsight({ insight }: BafoProgressInsightProps) {
       headline={insight.headline}
       provenance={insight.provenance}
       note={insight.note}
-      isModel
+      isModel={isModel}
       advisor={advisor}
     >
       <ResponsiveContainer width="100%" height={height}>

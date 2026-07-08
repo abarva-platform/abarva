@@ -34,6 +34,7 @@ import {
 import {
   SAMPLE_SCOPE_STAGE,
   SAMPLE_RFP_STAGE,
+  SAMPLE_BAFO_STAGE,
   SAMPLE_SELECTION_STAGE,
 } from '@/components/source/canvas/analytics/sample-view-model';
 import {
@@ -138,19 +139,23 @@ export function buildLiveStageView(
   }
 
   // Pick the intake scaffold (intel points / tasks / gate structure) for the stage
-  // being built. Today Scope, RFP, and Selection have a stage-specific scaffold —
-  // RFP so its dropzone offers the RFP_CLAUSES_V1 clause-checklist upload (flips RFP
-  // clause coverage live), Selection so its dropzone offers the COMMITTED_VALUE_V1
-  // award-commitments upload (flips committed value live) — instead of the Scope
-  // intake tasks; every other stage still reuses the Scope exemplar structure while
-  // the live value proof rides the fact-derived waterfall.
+  // being built. Today Scope, RFP, BAFO, and Selection have a stage-specific
+  // scaffold — RFP so its dropzone offers the RFP_CLAUSES_V1 clause-checklist upload
+  // (flips RFP clause coverage live), BAFO so its dropzone offers the
+  // BAFO_CONCESSIONS_V1 concession-actuals upload (flips BAFO progress live),
+  // Selection so its dropzone offers the COMMITTED_VALUE_V1 award-commitments upload
+  // (flips committed value live) — instead of the Scope intake tasks; every other
+  // stage still reuses the Scope exemplar structure while the live value proof rides
+  // the fact-derived waterfall.
   const requestedStageKey = input.stageKey ?? SAMPLE_SCOPE_STAGE.stageKey;
   const scaffold =
     requestedStageKey === 'rfp'
       ? SAMPLE_RFP_STAGE
-      : requestedStageKey === 'selection'
-        ? SAMPLE_SELECTION_STAGE
-        : SAMPLE_SCOPE_STAGE;
+      : requestedStageKey === 'bafo'
+        ? SAMPLE_BAFO_STAGE
+        : requestedStageKey === 'selection'
+          ? SAMPLE_SELECTION_STAGE
+          : SAMPLE_SCOPE_STAGE;
 
   // The next stage this gate advances to, resolved through the canonical order so
   // the gate CTA ("Approve & advance to …") and the presentational nextStageName

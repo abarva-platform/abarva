@@ -169,6 +169,15 @@ export interface BuildStepInsightInput {
    * committed yet" read — distinct from `undefined`.
    */
   committedValueByLeverKey?: ReadonlyMap<string, number>;
+  /**
+   * Per-lever BAFO concession captured (canonical lever key → captured USD over
+   * term) from the BAFO-concession-facts read. Drives BAFO progress: when PROVIDED
+   * (even empty) a concession signal exists and the insight goes LIVE (each lever's
+   * `captured` set where a fact exists, 0/still-open otherwise); when `undefined` no
+   * concession fact exists and the insight stays a MODEL. Empty-map is a valid live
+   * "assessed, nothing captured yet" read — distinct from `undefined`.
+   */
+  bafoConcessionByLeverKey?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -212,7 +221,11 @@ export function buildStepInsight(
     case 'response_coverage':
       return buildResponseCoverageInsight(resolved, input.inputs);
     case 'bafo_progress':
-      return buildBafoProgressInsight(resolved, input.inputs);
+      return buildBafoProgressInsight(
+        resolved,
+        input.inputs,
+        input.bafoConcessionByLeverKey,
+      );
     case 'committed_value':
       return buildCommittedValueInsight(
         resolved,
@@ -1476,9 +1489,27 @@ function responseAdvisor(): {
  * live when BAFO concession actuals per lever are ingested. Target uses real lever
  * bands where they compute, else the illustrative scale.
  */
+/**
+ * BAFO progress: value CAPTURED vs TARGET, by lever, with the remaining ask.
+ *
+ * LIVE when concession facts exist for the event (`capturedByLeverKey` is provided):
+ * each row's `captured` is the value the BAFO round booked for the lever (its
+ * `bafo_concession_captured_usd` fact) compared against the lever's TARGET band (its
+ * computed economic band where it computes, else the illustrative scale). A lever
+ * with no concession fact stays at 0-captured / still-open — never fabricated. The
+ * headline reports captured total vs target and how many levers BAFO actually pulled.
+ *
+ * MODEL when no concession fact exists (`capturedByLeverKey` is undefined): every
+ * lever's captured is 0 against its target (the honest default preserved from before
+ * the fact existed).
+ *
+ * The advisor layer (best-practice / benchmark / downstream impact) survives BOTH
+ * modes. No value-lever economic math changes — target bands are read, not altered.
+ */
 export function buildBafoProgressInsight(
   archetype: SourceEventArchetype,
   facts: EventFactMap,
+  capturedByLeverKey?: ReadonlyMap<string, number>,
 ): BafoProgressInsightView {
   const rules = archetype.valueLeverRules ?? [];
   const advisor = bafoAdvisor();
@@ -1490,29 +1521,67 @@ export function buildBafoProgressInsight(
       headline: 'No value levers are wired for this archetype yet.',
       rows: [],
       flipFact: 'BAFO concession actuals per lever.',
+      isModel: true,
       note: 'No value levers are wired for this archetype yet.',
       ...advisor,
     };
   }
 
+  // A signal exists when the map was provided (even empty — a BAFO round was
+  // assessed and no concession booked). Undefined → no concession fact → honest MODEL.
+  const isLive = capturedByLeverKey !== undefined;
+
   const results = evaluateValueLevers(archetype, facts);
   const rows: BafoProgressRowView[] = rules
     .map((rule) => {
       const band = leverBand(rule, results);
+      // LIVE: attach the captured $ where this lever has a concession fact; leave it
+      // at 0 (still-open) otherwise — never fabricate captured value. MODEL: 0.
+      const captured = isLive ? capturedByLeverKey!.get(rule.key) ?? 0 : 0;
       return {
         leverKey: rule.key,
         label: rule.name,
         valueType: rule.valueType,
         targetLow: band.low,
         targetHigh: band.high,
-        captured: 0, // no BAFO concession actuals yet → 0 captured, never fabricated
+        captured,
         bafoAsk: rule.bafoAsk,
       };
     })
-    .sort((a, b) => b.targetHigh - a.targetHigh);
+    // LIVE sorts by captured $ (biggest pull first, still-open levers last);
+    // MODEL sorts by target high.
+    .sort((a, b) => {
+      if (isLive) {
+        return b.captured - a.captured || b.targetHigh - a.targetHigh;
+      }
+      return b.targetHigh - a.targetHigh;
+    });
 
   const totalLow = rows.reduce((s, r) => s + r.targetLow, 0);
   const totalHigh = rows.reduce((s, r) => s + r.targetHigh, 0);
+
+  if (isLive) {
+    const capturedRows = rows.filter((r) => r.captured > 0);
+    const capturedTotal = capturedRows.reduce((s, r) => s + r.captured, 0);
+    return {
+      kind: 'bafo_progress',
+      provenance: 'live',
+      headline: bafoProgressHeadline(
+        rows.length,
+        capturedRows.length,
+        capturedTotal,
+        totalLow,
+        totalHigh,
+      ),
+      rows,
+      flipFact:
+        'BAFO concession actuals per lever (each negotiated concession booked against the lever it moves — a captured $ per lever per BAFO round).',
+      isModel: false,
+      note: 'Live — captured value is read from the BAFO concession actuals you provided (one bafo_concession_captured_usd fact per lever). Each lever shows what the BAFO round booked against its target band; a lever with no concession fact is shown as still-open (0 captured), never fabricated. The target band, BAFO ask, and advisor guidance are the same cited/advisor values as the model.',
+      ...advisor,
+    };
+  }
+
   return {
     kind: 'bafo_progress',
     provenance: 'sample',
@@ -1522,9 +1591,41 @@ export function buildBafoProgressInsight(
     rows,
     flipFact:
       'BAFO concession actuals per lever (each negotiated concession booked against the lever it moves — a captured $ per lever per BAFO round).',
-    note: 'Model — negotiation / concession actuals are not in the fact model yet, so captured is shown as pending (0) against each lever’s target. It goes live once BAFO concession actuals per lever are ingested. The BAFO-ask text is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
+    isModel: true,
+    note: 'Model — BAFO concession actuals are not in the fact model yet, so captured is shown as pending (0) against each lever’s target. It goes live once BAFO concession actuals per lever are ingested (upload the BAFO concession actuals so each lever gets a bafo_concession_captured_usd fact). The BAFO-ask text is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
     ...advisor,
   };
+}
+
+/**
+ * The live BAFO-progress headline: captured total vs the target pool + how many of
+ * the levers the BAFO round actually pulled in. Honest when NOTHING is captured yet.
+ */
+function bafoProgressHeadline(
+  leverCount: number,
+  capturedCount: number,
+  capturedTotal: number,
+  targetLow: number,
+  targetHigh: number,
+): string {
+  if (capturedCount === 0) {
+    return (
+      `No BAFO concession is captured yet across ${leverCount} levers — the ` +
+      `${fmtUsdRange(targetLow, targetHigh)} target pool is all still open to pull.`
+    );
+  }
+  if (capturedCount === leverCount) {
+    return (
+      `BAFO captured ${fmtUsd(capturedTotal)} across all ${leverCount} levers ` +
+      `against a ${fmtUsdRange(targetLow, targetHigh)} target — book each concession ` +
+      `into the award before it evaporates.`
+    );
+  }
+  return (
+    `BAFO captured ${fmtUsd(capturedTotal)} across ${capturedCount} of ${leverCount} ` +
+    `levers (target pool ${fmtUsdRange(targetLow, targetHigh)}); the rest are still ` +
+    `open to pull in this round.`
+  );
 }
 
 function bafoAdvisor(): {

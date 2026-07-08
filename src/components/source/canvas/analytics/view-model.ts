@@ -702,17 +702,24 @@ export interface BafoProgressRowView {
   /** The target value to capture on this lever (USD over term). */
   targetLow: number;
   targetHigh: number;
-  /** Value captured so far (USD). 0 until BAFO concession actuals ingest. */
+  /**
+   * Value captured so far (USD over term) — from this lever's
+   * `bafo_concession_captured_usd` fact in LIVE mode, or 0 in MODEL mode / when a
+   * lever has no concession fact (shown honestly as still-open, never fabricated).
+   */
   captured: number;
   /** The BAFO ask (the lever left to pull) — from the playbook. */
   bafoAsk: string;
 }
 
 /**
- * BAFO — VALUE CAPTURED vs TARGET. MODEL: negotiation / concession actuals are not
- * in the fact model yet, so captured is a placeholder (0) against the target (from
- * the awarded levers). Each row carries its remaining BAFO ask (the lever left to
- * pull). Goes live when BAFO concession actuals per lever are ingested.
+ * BAFO — VALUE CAPTURED vs TARGET. MODEL: BAFO concession actuals are not in the
+ * fact model yet, so captured is a placeholder (0) against the target (from the
+ * awarded levers). LIVE: each lever's captured is read from its
+ * `bafo_concession_captured_usd` fact and compared against its target band; a lever
+ * with no concession fact stays 0-captured / still-open, never fabricated. Each row
+ * carries its remaining BAFO ask (the lever left to pull). Goes live when BAFO
+ * concession actuals per lever are ingested.
  */
 export interface BafoProgressInsightView extends AdvisorLayer {
   kind: 'bafo_progress';
@@ -723,7 +730,13 @@ export interface BafoProgressInsightView extends AdvisorLayer {
   rows: readonly BafoProgressRowView[];
   /** The fact that flips this MODEL → LIVE, named for the operator. */
   flipFact: string;
-  /** Always present — states this is a model and what makes it live. */
+  /**
+   * True when this is the honest MODEL (no bafo_concession_captured_usd fact yet);
+   * false when LIVE (≥1 concession fact exists and rows carry a captured value). The
+   * renderer keys its badge and note off this — never off `provenance` alone.
+   */
+  isModel: boolean;
+  /** Always present — states model-vs-live and what makes it live. */
   note?: string;
 }
 

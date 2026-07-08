@@ -11,6 +11,7 @@ import {
   SAMPLE_SCOPE_AVA,
   SAMPLE_SCOPE_STAGE,
   SAMPLE_RFP_STAGE,
+  SAMPLE_BAFO_STAGE,
   SAMPLE_SELECTION_STAGE,
 } from './sample-view-model';
 import {
@@ -26,9 +27,10 @@ import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 
 /**
  * The honest SAMPLE stage view for a given viewing stage. Strategy is the
- * mandate/intake exemplar; RFP and Selection each have their own scaffold so their
- * dropzone offers the stage-specific upload — RFP the clause checklist
- * (RFP_CLAUSES_V1, flips RFP clause coverage live), Selection the award commitments
+ * mandate/intake exemplar; RFP, BAFO, and Selection each have their own scaffold so
+ * their dropzone offers the stage-specific upload — RFP the clause checklist
+ * (RFP_CLAUSES_V1, flips RFP clause coverage live), BAFO the concession actuals
+ * (BAFO_CONCESSIONS_V1, flips BAFO progress live), Selection the award commitments
  * (COMMITTED_VALUE_V1, flips committed value live); every other stage shares the
  * Scope exemplar until its own live view wires in. This is what makes clicking a
  * stage render that stage (not the Scope placeholder) when no live view is supplied.
@@ -36,6 +38,7 @@ import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 function sampleStageViewFor(stageKey: SourceStageKey): StageAnalyticsView {
   if (stageKey === 'strategy') return SAMPLE_STRATEGY_STAGE;
   if (stageKey === 'rfp') return SAMPLE_RFP_STAGE;
+  if (stageKey === 'bafo') return SAMPLE_BAFO_STAGE;
   if (stageKey === 'selection') return SAMPLE_SELECTION_STAGE;
   return SAMPLE_SCOPE_STAGE;
 }

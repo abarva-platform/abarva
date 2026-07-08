@@ -37,10 +37,23 @@ const MODEL: BafoProgressInsightView = {
     { leverKey: 'AMS.VOLUME_BAND_PRICING', label: 'Volume-band price flex-down', valueType: 'incremental_negotiated', targetLow: 1_200_000, targetHigh: 1_900_000, captured: 0, bafoAsk: 'Add volume-band step-down pricing.' },
   ],
   flipFact: 'BAFO concession actuals per lever (each negotiated concession booked against the lever it moves).',
+  isModel: true,
   note: 'Model — negotiation actuals are not in the fact model yet.',
   bestPractice: ['Enter BAFO with a per-lever concession ask.'],
   benchmark: 'Market range — structured lever-level BAFO asks recover more.',
   downstreamImpact: 'BAFO is the last negotiation round.',
+};
+
+const LIVE: BafoProgressInsightView = {
+  ...MODEL,
+  provenance: 'live',
+  headline: 'BAFO captured $4M across 1 of 2 levers (target pool $3M–$4.5M); the rest are still open to pull in this round.',
+  rows: [
+    { ...MODEL.rows[1], captured: 4_000_000 },
+    { ...MODEL.rows[0], captured: 0 },
+  ],
+  isModel: false,
+  note: 'Live — captured value is read from the BAFO concession actuals you provided.',
 };
 
 function countBars(container: HTMLElement): number {
@@ -61,5 +74,13 @@ describe('BafoProgressInsight', () => {
     expect(asks).toHaveTextContent(/volume-band step-down/i);
     const flip = screen.getByTestId('bafo-progress-flip');
     expect(flip).toHaveTextContent(/BAFO concession actuals/i);
+  });
+
+  it('renders LIVE (not model) when concession actuals are present', () => {
+    const { container } = render(<BafoProgressInsight insight={LIVE} />);
+    expect(screen.getByTestId('insight-provenance')).not.toHaveTextContent(
+      /model/i,
+    );
+    expect(countBars(container)).toBeGreaterThanOrEqual(2);
   });
 });
