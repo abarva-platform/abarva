@@ -18,3 +18,4 @@ export { MovePhaseWorkspacePanel } from './MovePhaseWorkspacePanel';
 export { PhaseTaskChecklist } from './PhaseTaskChecklist';
 export { NextPhaseFeedForwardCard } from './NextPhaseFeedForwardCard';
 export { WhatChangedCard } from './WhatChangedCard';
+export { ApprovedInputsPackCard } from './ApprovedInputsPackCard';

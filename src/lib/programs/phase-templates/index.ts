@@ -18,6 +18,17 @@ export {
 } from './upload-inference';
 export { computeWhatChanged } from './what-changed';
 export type { WhatChangedResult } from './what-changed';
+export { buildFeedForwardPack } from './feed-forward';
+export type { FeedForwardSignals, FeedForwardPack } from './feed-forward';
+export {
+  APPROVED_INPUTS_PACK_TYPE,
+  buildApprovedInputsPack,
+  isApprovedInputsPack,
+} from './approved-inputs-pack';
+export type {
+  ApprovedInputsPack,
+  BuildApprovedInputsPackInput,
+} from './approved-inputs-pack';
 export {
   buildPatternAssemblyPacket,
   validateAssembledResponse,
