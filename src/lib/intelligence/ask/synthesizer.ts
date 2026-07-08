@@ -14,8 +14,12 @@ import {
   CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE,
   enforceDecisionGradeAnswer,
+  isStrategyToMovesExecutionAsk,
   isTrendAsk,
+  needsAbarvaSolutionGuidance,
   sanitizeAskSynthesis,
+  STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
+  STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
   stripInternalRecordIds,
 } from "./response-policy";
 import {
@@ -598,6 +602,29 @@ ACTIVE INTELLIGENCE CANVAS RULES
     advisorComposer && !answerOnly
       ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
       : "";
+  const strategyToAbarvaSolution = needsAbarvaSolutionGuidance(args.query);
+  const strategyToMovesExecution = isStrategyToMovesExecutionAsk(args.query);
+  const strategyToAbarvaSolutionAddendum = strategyToAbarvaSolution
+    ? `\n\n${STRATEGY_TO_ABARVA_SOLUTION_CONTRACT}${
+        strategyToMovesExecution ? `\n\n${STRATEGY_TO_MOVES_EXECUTION_CONTRACT}` : ""
+      }
+
+FORMAT OVERRIDE FOR THIS MODE
+- The earlier generic handoff guidance is superseded for this answer. Do not merely say "hand off to Moves." Explain how AbarVa would actually run the work through Moves.
+- If rich-text canvas tabs are active, put the phase plan and executive council artifacts in the Decision or Table tabs, put vendor/commercial implications in the Evidence or Table tabs when relevant, and put Tower value metrics in the Chart or Table tabs.
+- If answer-only streaming is active, use compact bold section headers and a phase table.`
+    : "";
+  const strategyToAbarvaSolutionPromptDirective = strategyToAbarvaSolution
+    ? `\n\nACTIVE ANSWER MODE: ${
+        strategyToMovesExecution
+          ? "strategy_to_moves_execution"
+          : "strategy_to_abarva_solution"
+      }. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking.${
+        strategyToMovesExecution
+          ? " Include P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes."
+          : ""
+      }`
+    : "";
   const answerOnlyDirective = answerOnly
     ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. GFM tables, bold section headers, and bullet lists are REQUIRED for comparisons, ranked lists, and multi-attribute data — do not flatten these to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~120-180 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.`
     : "";
@@ -611,8 +638,8 @@ ACTIVE INTELLIGENCE CANVAS RULES
     : CONSULTANT_ANSWER_SHAPE_CONTRACT;
   const rawSystem =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
-      : `${rolePrompt}\n\n${shapeContract}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
+      : `${rolePrompt}\n\n${shapeContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = answerOnly
     ? isVisualTableAsk
       ? `MANDATORY OUTPUT FORMAT — FOLLOW EXACTLY:
@@ -629,9 +656,9 @@ SOURCES PROVIDED:
 ${formatSourcesBlock(args.sources)}
 
 USER QUESTION:
-${args.query}`
-      : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with a crisp executive answer. Open with a single **bold sentence** that states the key finding. Use a GFM table for comparisons, vendor matrices, ranked lists, or multi-attribute data (3+ items × 2+ attributes). Use a fenced \`\`\`chart JSON block for spend/trend/maturity data with ≥3 numeric rows. Do not emit right-canvas tab markers or a canvas payload.`
-    : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
+${args.query}${strategyToAbarvaSolutionPromptDirective}`
+      : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with a crisp executive answer. Open with a single **bold sentence** that states the key finding. Use a GFM table for comparisons, vendor matrices, ranked lists, or multi-attribute data (3+ items × 2+ attributes). Use a fenced \`\`\`chart JSON block for spend/trend/maturity data with ≥3 numeric rows. Do not emit right-canvas tab markers or a canvas payload.`
+    : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
     : "";

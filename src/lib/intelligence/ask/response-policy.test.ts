@@ -1,10 +1,16 @@
 import {
   applyPartialEvidencePolicy,
   buildCurrentStateAdvisory,
+  classifyAbarvaAnswerMode,
   CXO_ANSWER_QUALITY_CONTRACT,
   enforceDecisionGradeAnswer,
   isBroadCurrentStateQuestion,
+  isStrategyToAbarvaSolutionAsk,
+  isStrategyToMovesExecutionAsk,
+  needsAbarvaSolutionGuidance,
   sanitizeAskSynthesis,
+  STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
+  STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
 } from "./response-policy";
 import type { AskSource } from "./types";
 
@@ -65,6 +71,101 @@ describe("Ask Intelligence response policy", () => {
     expect(
       isBroadCurrentStateQuestion("Compare Snowflake and Databricks"),
     ).toBe(false);
+  });
+
+  it("classifies strategy-to-execution questions as Moves execution mode", () => {
+    const strategyQuestions = [
+      "If I run this through Moves for 8 weeks, what would the plan look like by phases?",
+      "Create a Data & AI strategy with the top 5 bets, business case, solution, and roadmap for the executive council.",
+      "Help me decide the top 5 AI use cases for supply chain and how we would execute.",
+      "What implementation plan should we use for this transformation sprint?",
+    ];
+
+    for (const question of strategyQuestions) {
+      expect(isStrategyToMovesExecutionAsk(question)).toBe(true);
+      expect(classifyAbarvaAnswerMode(question)).toBe(
+        "strategy_to_moves_execution",
+      );
+    }
+
+    expect(isStrategyToMovesExecutionAsk("What is our IT budget?")).toBe(false);
+    expect(classifyAbarvaAnswerMode("What is our IT budget?")).toBe(
+      "general",
+    );
+  });
+
+  it("classifies broad strategy-to-solution prompts as AbarVa solution mode", () => {
+    const solutionQuestions = [
+      "Help me decide the right AI bets for supply chain. What is the industry doing?",
+      "How would we solve this through AbarVa?",
+      "Which vendor or sourcing implications should Source handle?",
+      "What should Tower measure?",
+      "What do we already know about the current state?",
+    ];
+
+    for (const question of solutionQuestions) {
+      expect(isStrategyToAbarvaSolutionAsk(question)).toBe(true);
+      expect(needsAbarvaSolutionGuidance(question)).toBe(true);
+      expect(classifyAbarvaAnswerMode(question)).toBe(
+        "strategy_to_abarva_solution",
+      );
+    }
+  });
+
+  it("codifies holistic AbarVa product knowledge for strategy answers", () => {
+    expect(STRATEGY_TO_ABARVA_SOLUTION_CONTRACT).toContain(
+      "How AbarVa would solve this",
+    );
+    for (const surface of [
+      "Intelligence",
+      "Home",
+      "Moves",
+      "Source",
+      "Tower",
+    ]) {
+      expect(STRATEGY_TO_ABARVA_SOLUTION_CONTRACT).toContain(surface);
+    }
+    expect(STRATEGY_TO_ABARVA_SOLUTION_CONTRACT).toContain(
+      "Do not claim artifacts, Moves, Source events, Tower ledgers, or Home evidence packs have been created",
+    );
+    expect(STRATEGY_TO_ABARVA_SOLUTION_CONTRACT).toContain(
+      "Do not say Claude or another model can do better",
+    );
+    expect(STRATEGY_TO_ABARVA_SOLUTION_CONTRACT).toContain(
+      "Do not expose internal IDs, schema names, route names, raw packet fields, or debug terms",
+    );
+  });
+
+  it("codifies the AbarVa operating model for strategy-to-Moves execution", () => {
+    expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(
+      "Moves portfolio sprint",
+    );
+    expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(
+      "Intelligence framing the bets",
+    );
+    expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(
+      "Source validating vendor/commercial levers",
+    );
+    expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(
+      "Tower tracking realized value",
+    );
+    for (const phase of [
+      "P0 Originate",
+      "P1 Charter",
+      "P2 Understand Current State",
+      "P3 Choose the Approach",
+      "P4 Build the Plan",
+      "P5 Prepare to Execute",
+      "Tower Track Outcomes",
+    ]) {
+      expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(phase);
+    }
+    expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(
+      "procurement intelligence",
+    );
+    expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(
+      "Finance or treasury may be a dependency or value lens, but must not replace the supply-chain answer",
+    );
   });
 
   it("strips markdown control characters before plain-text dock rendering", () => {
