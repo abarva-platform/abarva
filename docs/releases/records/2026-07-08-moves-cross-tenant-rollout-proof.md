@@ -52,12 +52,12 @@ Standard Code-lane PR → squash-merge to `main` → `aca-main-deploy.yml` auto-
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` (unchanged; this PR does not touch CI/CD config).
-- Shared runtime mutators: None — no `az containerapp update` run by this change; deploy happens only via the repo-owned workflow on merge.
-- Approved image digest: whatever `aca-main-deploy.yml` produces for this merge commit (verify post-merge per runtime invariant below).
-- ACA runtime invariant: to be confirmed post-deploy — template image, 100%-traffic revision image, and worker job images must match the digest built from this merge commit.
-- Worker image invariant: N/A (no worker-job code touched).
-- Feature/env flag update path: in-code `includeTenants` array, shipped via normal deploy — no separate env var flip required for this change (env allowlist vars mentioned in flag summaries are an alternate override path, not used here).
-- Live signed-in proof required: Yes — signed-in Lakeshore and signed-in SkyHarbor, both post-deploy.
+- Shared runtime mutators: None — no manual `az containerapp update` was run; deploy happened only via the repo-owned workflow on merge.
+- Approved image digest: `sha256:fbfbf6fa994d0ac56e56c6a1d5d03652121654f4afd470473b9ac1efb2f48eba` (`acrabarvalab001.azurecr.io/abarva/web`, tag `main-c334950c`), built by `aca-main-deploy.yml` run [28962009346](https://github.com/abarva-platform/abarva/actions/runs/28962009346) for merge commit `c334950cd9195c9d96d1896e06bbfe78ed80de8f`.
+- ACA runtime invariant: **confirmed** — the workflow's own "Verify ACA runtime invariant" step reported `templateImage`, `activeImage`, and `expectedImage` all equal to the digest above; worker jobs updated to the same image ("All present worker jobs updated to ...").
+- Worker image invariant: confirmed matching (see above); no worker-job code was touched by this change, only the image tag moved forward with the routine deploy.
+- Feature/env flag update path: in-code `includeTenants` array, shipped via normal deploy — no separate env var flip required for this change.
+- Live signed-in proof required: Yes — **Lakeshore: captured.** SkyHarbor: **not captured**, see Known Gaps.
 
 ## Rollback Plan
 
@@ -65,13 +65,17 @@ Revert the single commit that edits `src/lib/features/registry.ts` (restores pri
 
 ## Audit Evidence
 
-- PR URL: (added when opened)
-- CI run: (added when opened)
-- Live smoke-test proof: signed-in Lakeshore + SkyHarbor browser checks (page loads, no console errors, no network 5xxs, phase workflow intact, deliverable generation/fallback intact, no internal ID/schema leakage, tenant data isolation) — captured under `proof/` per this repo's convention.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4587 (merged as `c334950cd9195c9d96d1896e06bbfe78ed80de8f`)
+- CI run (all 20 checks passed): https://github.com/abarva-platform/abarva/pull/4587/checks
+- Deploy run (success, runtime invariant verified): https://github.com/abarva-platform/abarva/actions/runs/28962009346
+- Live smoke-test proof, Lakeshore: `proof/moves-cross-tenant-rollout-lakeshore-live-2026-07-08/README.md` — phase-workspace checklist + approved-Inputs-Pack card confirmed; pattern-assembly "✦ Assemble options" clicked live, returned real Claude-assembled options each labeled (observed "Evidence-backed"), no console errors; orchestrated-deliverable route rendered live "Business Case Readiness Memo" with honest gap-reporting (no fabricated numbers), no console errors.
+- Live smoke-test proof, SkyHarbor: not captured this pass — see Known Gaps.
 - Rollout matrix: `reports/moves-controlled-rollout-readiness-2026-07-08.md`.
 
 ## Known Gaps
 
+- **SkyHarbor live proof not captured.** The available signed-in browser session is scoped to Lakeshore only (confirmed via `/strategic-moves` overview showing only Lakeshore moves, and no cross-tenant switcher under `/setup` → Operations). No SkyHarbor Clerk credentials were available in this session. The code-level flag change is deployed and live for SkyHarbor (confirmed via the ACA runtime invariant above), but has not yet been visually/functionally smoke-tested signed-in as SkyHarbor. Needs either SkyHarbor demo credentials or an operator to run the equivalent of `proof/moves-cross-tenant-rollout-lakeshore-live-2026-07-08/` for SkyHarbor.
 - Strict gate-approval mode (`GATE_APPROVAL_STRICT_MODE`) is not flipped by this release. Self-approve remains the default for every tenant, including any future client-production tenant. This is flagged as an explicit open governance decision in the rollout report, not resolved here.
 - No new cohort beyond Lakeshore/SkyHarbor is enrolled in any flag by this release — third-tenant/cohort rollout and eventual platform-default-on are future releases, contingent on this cross-tenant proof holding up.
-- `moves_workforce_economics` and `moves_decision_storytelling` are enabled for exactly one tenant (Lakeshore) as first proof, not yet cross-tenant proven.
+- `moves_workforce_economics` and `moves_decision_storytelling` are enabled for exactly one tenant (Lakeshore) as first proof; not separately smoke-tested this pass and not yet cross-tenant proven.
+- Response header verification (`x-deliverable-engine`) for the orchestrated-deliverable proof was not captured — browser network-request inspection timed out on this document-level navigation (tooling limitation). The rendered deliverable content itself (correct, honest, gap-reporting output) is strong evidence the path is functioning correctly regardless of which engine served it.
