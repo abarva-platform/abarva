@@ -23,4 +23,3 @@ ALTER TABLE source_event_facts
 ALTER TABLE source_event_facts
   ADD CONSTRAINT source_event_facts_entity_kind_chk
     CHECK (entity_kind IN ('event', 'tower', 'app', 'vendor', 'value_lever', 'vendor_lever'));
-</content>
