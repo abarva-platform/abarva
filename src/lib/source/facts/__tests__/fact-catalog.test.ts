@@ -155,6 +155,19 @@ describe('Source fact catalog — shape + lookups', () => {
     expect(spec!.source).toBe('extracted_contract');
   });
 
+  it('resolves the bafo_concession_captured_usd signal fact under entity_kind value_lever', () => {
+    expect(isCatalogFactKey('bafo_concession_captured_usd')).toBe(true);
+    expect(isSignalFactKey('bafo_concession_captured_usd')).toBe(true);
+    const spec = factSpecByKey('bafo_concession_captured_usd');
+    expect(spec).toBeDefined();
+    expect(spec!.entityKind).toBe('value_lever');
+    // A total-over-term $ figure on the usd unit — same basis as the lever band,
+    // so captured can be compared directly against target.
+    expect(spec!.unit).toBe('usd');
+    // Sourced from the vendor's BAFO submission (a BAFO round is a vendor response).
+    expect(spec!.source).toBe('extracted_vendor');
+  });
+
   it('factSpecByKey returns undefined for unknown keys', () => {
     expect(factSpecByKey('not_a_real_fact')).toBeUndefined();
   });

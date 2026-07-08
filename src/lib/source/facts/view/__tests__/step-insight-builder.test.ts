@@ -577,6 +577,7 @@ describe('MODEL step insights — value / responses / bafo / selection', () => {
     );
     expect(insight.kind).toBe('bafo_progress');
     expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
     expect(insight.rows.length).toBeGreaterThan(0);
     // Captured is 0 (never fabricated); target is a real range.
     expect(insight.rows.every((r) => r.captured === 0)).toBe(true);
@@ -589,6 +590,80 @@ describe('MODEL step insights — value / responses / bafo / selection', () => {
       );
     }
     expect(insight.flipFact).toMatch(/BAFO concession actuals/i);
+    expect(insight.note).toMatch(/model/i);
+  });
+
+  it('bafo_progress MODEL when no concession map is supplied (undefined) — the honest default', () => {
+    const insight = buildBafoProgressInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      undefined,
+    );
+    expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
+    expect(insight.rows.every((r) => r.captured === 0)).toBe(true);
+  });
+
+  it('bafo_progress goes LIVE when concession facts are supplied: captured vs target per lever', () => {
+    // Capture a concession on two AMS levers; leave the rest still-open.
+    const captured = new Map<string, number>([
+      ['AMS.ENHANCEMENT_LEAKAGE', 2_100_000],
+      ['AMS.VOLUME_BAND_PRICING', 4_400_000],
+    ]);
+    const insight = buildBafoProgressInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      captured,
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    // Exactly the two captured levers carry a positive captured value; the rest are
+    // still-open (0) — never fabricated.
+    const capturedRows = insight.rows.filter((r) => r.captured > 0);
+    expect(capturedRows.map((r) => r.leverKey).sort()).toEqual(
+      ['AMS.ENHANCEMENT_LEAKAGE', 'AMS.VOLUME_BAND_PRICING'].sort(),
+    );
+    expect(
+      insight.rows.find((r) => r.leverKey === 'AMS.VOLUME_BAND_PRICING')
+        ?.captured,
+    ).toBe(4_400_000);
+    expect(insight.rows.some((r) => r.captured === 0)).toBe(true);
+    // Target band is still present on every row (captured is compared to target).
+    expect(insight.rows.every((r) => r.targetHigh >= r.targetLow)).toBe(true);
+    // Captured rows sort first (biggest pull first).
+    expect(insight.rows[0].captured).toBe(4_400_000);
+    // Live headline reports captured total + coverage.
+    expect(insight.headline).toMatch(/captured/i);
+    expect(insight.headline).toMatch(/of\s+\d+\s+levers/i);
+    // Advisor layer survives the live path.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+    expect(insight.note).toMatch(/live/i);
+  });
+
+  it('bafo_progress LIVE with an empty concession map → nothing captured yet, still live (assessed-nothing read)', () => {
+    const insight = buildBafoProgressInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      new Map<string, number>(),
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    expect(insight.rows.every((r) => r.captured === 0)).toBe(true);
+    expect(insight.headline).toMatch(/no bafo concession is captured yet/i);
+  });
+
+  it('bafo_progress LIVE with every lever captured → live headline sums the whole round', () => {
+    const allKeys = new Map<string, number>(
+      (AMS_MANAGED_SERVICES.valueLeverRules ?? []).map((r) => [r.key, 900_000]),
+    );
+    const insight = buildBafoProgressInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      allKeys,
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.rows.every((r) => r.captured === 900_000)).toBe(true);
+    expect(insight.headline).toMatch(/all\s+\d+\s+levers/i);
   });
 
   it('committed_value MODEL: compact bars by lever, names the award flip fact, no committed value fabricated', () => {

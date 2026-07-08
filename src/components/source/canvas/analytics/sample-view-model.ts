@@ -338,6 +338,80 @@ export const SAMPLE_SELECTION_STAGE: StageAnalyticsView = {
   },
 };
 
+/**
+ * The BAFO stage scaffold. Mirrors the Scope three-beat structure but foregrounds
+ * the one upload that flips BAFO progress LIVE: the BAFO concession actuals (one row
+ * per value lever, a Concession Captured USD column) parsed into
+ * `bafo_concession_captured_usd` value_lever facts via `BAFO_CONCESSIONS_V1`. The
+ * live stage builder swaps in the fact-derived waterfall + intel lead over this
+ * structure.
+ */
+export const SAMPLE_BAFO_STAGE: StageAnalyticsView = {
+  stageKey: 'bafo',
+  stageName: 'BAFO',
+  purpose:
+    'Pull every open lever into a booked concession — BAFO is the last negotiation round, and a lever not captured here is captured never.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's what BAFO has captured per lever vs its target — confirm the concession actuals so each open lever gets pressed before the round closes.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'Enter BAFO with a per-lever concession ask, not a lump-sum discount — a lever-level ask is defensible; "sharpen your pencil" is not.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'Structured, lever-level BAFO asks recover materially more than a single "best price" round — the concession left un-booked is the concession that never lands.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'BAFO is the last negotiation round — a lever not captured here is captured never; the award locks whatever BAFO booked.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'bafo.concession-actuals',
+      title: 'Confirm BAFO concessions captured',
+      subtitle: 'One row per value lever · captured USD',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload the BAFO concession actuals (CSV or XLSX): one row per value lever (the Lever Key column) with Concession Captured (USD) set to the concession the BAFO round booked for that lever over the contract term. A lever with no row stays 0-captured / still-open. This flips BAFO progress from a model to a live captured-vs-target read.',
+      provenance: {
+        owner: 'Sourcing lead',
+        source: 'BAFO round / concession log',
+      },
+      cta: 'Upload the BAFO concession actuals',
+      // Parsed into BAFO_CONCESSIONS_V1 → bafo_concession_captured_usd value_lever
+      // facts — flips the ✦ Intelligence BAFO progress insight LIVE.
+      factTemplateCode: 'BAFO_CONCESSIONS_V1',
+    },
+  ],
+  gate: {
+    approver: 'K. Oshima, CIO',
+    confirms: [
+      {
+        label: 'Every open lever pressed in BAFO',
+        detail: 'Each value lever has a booked concession or a documented reason it stayed open.',
+      },
+      {
+        label: 'Concessions booked per lever',
+        detail: 'Each captured concession is booked against the lever it moves, so it is auditable at award.',
+      },
+      {
+        label: 'BAFO final',
+        detail: 'The best-and-final round is closed — advance to Executive Decision.',
+      },
+    ],
+    generates: [{ label: 'BAFO concession summary', code: 'd10' }],
+    nextStageName: 'Executive Decision',
+  },
+};
+
 /** aVa's docked-launcher scope for the Scope stage. */
 export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
   role: 'Analyst · Scope',

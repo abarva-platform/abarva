@@ -240,6 +240,23 @@ const DOWNSTREAM_SIGNAL_FACT_SPECS: Record<string, FactSpec> = {
     description:
       'The value the executed award/contract COMMITS for this value lever, in USD over the contract term. One row per lever, keyed by the lever key in entity_ref. Flips committed value from a model to a live committed-vs-target read (how much of each lever’s target band the award actually locked).',
   },
+  // BAFO progress: the concession the BAFO round CAPTURED for this lever. A total-
+  // over-term $ figure on the `usd` unit — the same basis the lever's own computed
+  // band (low/high) is expressed in (value-over-term), so captured can be compared
+  // directly against target. NOT usd_per_year: the lever band is already a term
+  // total, so an annualized captured number would not be comparable (the same
+  // reasoning committed_value_usd used). Sourced from the vendor's BAFO submission
+  // (extracted_vendor — a BAFO round is a vendor response). One row per lever,
+  // keyed by the lever key in entity_ref.
+  bafo_concession_captured_usd: {
+    key: 'bafo_concession_captured_usd',
+    label: 'BAFO concession captured for lever',
+    unit: 'usd',
+    source: 'extracted_vendor',
+    entityKind: 'value_lever',
+    description:
+      'The concession the BAFO round CAPTURED for this value lever, in USD over the contract term. One row per lever, keyed by the lever key in entity_ref. Flips BAFO progress from a model to a live captured-vs-target read (how much of each lever’s target band the BAFO round actually pulled in); a lever with no concession fact stays at 0-captured / still-open, never fabricated.',
+  },
 };
 
 /** True when `key` is a hand-authored downstream signal fact (not a lever input). */

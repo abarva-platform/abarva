@@ -195,3 +195,65 @@ export async function readCommittedValueLevers(input: {
 
   return { signalPresent, committedByLeverKey };
 }
+
+/**
+ * The BAFO-concession read for the BAFO progress insight (BAFO stage).
+ *
+ * Like `readCommittedValueLevers`, this needs the per-lever value of the
+ * `bafo_concession_captured_usd` signal fact — a `value_lever`-kind fact whose
+ * `entity_ref` is a canonical lever key and whose value is the USD-over-term the
+ * BAFO round captured for that lever. It returns:
+ *   • `signalPresent` — whether ANY non-stale bafo_concession_captured_usd fact
+ *     exists for the event (drives live vs model in the insight); and
+ *   • `capturedByLeverKey` — the newest non-stale captured value per lever key.
+ *
+ * Newest-non-stale-per-lever wins (a lever re-captured to a new number supersedes
+ * the older capture). Only FINITE, non-negative numbers are admitted — a bad cell
+ * never fabricates a captured number. Tenant-scoped by client_key (RLS). Returns
+ * `signalPresent: false` + an empty map when the table has no
+ * bafo_concession_captured_usd rows for the event — the insight then honestly stays
+ * a MODEL.
+ */
+export async function readBafoConcessionLevers(input: {
+  eventId: string;
+  clientKey: string;
+}): Promise<{ signalPresent: boolean; capturedByLeverKey: Map<string, number> }> {
+  const { eventId, clientKey } = input;
+  const supabase = getAzureWriteFluentClient();
+
+  const { data, error } = await supabase
+    .from('source_event_facts')
+    .select('entity_ref, value_numeric, captured_at')
+    .eq('source_event_id', eventId)
+    .eq('client_key', clientKey)
+    .eq('fact_key', 'bafo_concession_captured_usd')
+    .eq('entity_kind', 'value_lever')
+    .eq('is_stale', false)
+    .order('captured_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as Array<
+    Pick<SourceEventFactRow, 'entity_ref' | 'value_numeric'>
+  >;
+
+  const capturedByLeverKey = new Map<string, number>();
+  // Rows are ordered newest-first; keep the FIRST value seen per lever key so a
+  // re-capture supersedes older captures.
+  const seen = new Set<string>();
+  let signalPresent = false;
+  for (const row of rows) {
+    const leverKey = row.entity_ref?.trim();
+    if (!leverKey) continue;
+    signalPresent = true;
+    if (seen.has(leverKey)) continue;
+    seen.add(leverKey);
+    const value = Number(row.value_numeric);
+    // Never fabricate a magnitude: only admit a finite, non-negative captured $.
+    if (Number.isFinite(value) && value >= 0) {
+      capturedByLeverKey.set(leverKey, value);
+    }
+  }
+
+  return { signalPresent, capturedByLeverKey };
+}

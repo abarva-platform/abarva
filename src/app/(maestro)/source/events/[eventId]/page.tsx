@@ -41,6 +41,7 @@ import {
   readEventFacts,
   readRfpClausePresentLeverKeys,
   readCommittedValueLevers,
+  readBafoConcessionLevers,
 } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
@@ -163,6 +164,23 @@ export default async function SourceEventDetailPage({
             ? committedByLeverKey
             : undefined;
         }
+        // BAFO progress reads a per-lever concession signal (one
+        // bafo_concession_captured_usd fact per lever, keyed by lever key in
+        // entity_ref) the collapsed event-facts read cannot express. Only fetch it
+        // on the BAFO stage. `undefined` (no signal) keeps the insight an honest
+        // MODEL; a map (even empty) flips it LIVE.
+        let bafoConcessionByLeverKey: ReadonlyMap<string, number> | undefined =
+          undefined;
+        if (viewStage === "bafo") {
+          const { signalPresent, capturedByLeverKey } =
+            await readBafoConcessionLevers({
+              eventId: event.id,
+              clientKey: activeClient.key,
+            });
+          bafoConcessionByLeverKey = signalPresent
+            ? capturedByLeverKey
+            : undefined;
+        }
         // eventType is not on the summary; leave it unset so the builder
         // resolves the value archetype the same way buildLiveStageView does
         // (the first archetype carrying value-lever rules — today AMS).
@@ -175,6 +193,7 @@ export default async function SourceEventDetailPage({
             baselineAmount: event.valueAtStakeUsd ?? 0,
             rfpClausePresentLeverKeys,
             committedValueByLeverKey,
+            bafoConcessionByLeverKey,
           }) ?? undefined;
 
         if (viewStage !== "strategy") {
