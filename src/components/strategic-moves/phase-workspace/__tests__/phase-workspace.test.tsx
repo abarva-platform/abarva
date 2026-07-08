@@ -169,6 +169,13 @@ describe('phase task checklist (increment 4) — Stripe-style, real-signal', () 
     expect(html).toContain('pw-task-hint');
     expect(html).not.toContain('<button');
   });
+
+  it('with an action handler, non-locked tasks become buttons; locked stays a hint', () => {
+    const html = render(<PhaseTaskChecklist phaseLabel="P2" workflow={wf} onAction={() => {}} />);
+    // evidence + gate (not done, not locked) → buttons; advance (locked) → hint
+    expect((html.match(/<button/g) ?? []).length).toBe(2);
+    expect(html).toContain('pw-task-hint'); // the locked advance task
+  });
 });
 
 describe('governance: no internal jargon or raw keys leak to the DOM', () => {
