@@ -9,6 +9,7 @@ export {
   TEMPLATE_BY_ID,
   templatesForPhase,
 } from './catalog';
+export { buildTemplateOutline, templateOutlineFilename } from './template-outline';
 export { classifyUpload } from './classification';
 export type { ClassifyUploadInput } from './classification';
 export {

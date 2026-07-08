@@ -114,6 +114,8 @@ export const PHASE_WORKSPACE_CSS = `
 .pw-task.locked .pw-task-btn{background:var(--soft);color:var(--faint);}
 .pw-task-hint{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--muted);text-transform:uppercase;}
 .pw-task.locked .pw-task-hint{color:var(--faint);}
+.pw-dl-btn{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);white-space:nowrap;cursor:pointer;}
+.pw-dl-btn:hover{background:var(--soft);}
 `;
 
 /** Renders the phase-workspace token/utility stylesheet once. */
