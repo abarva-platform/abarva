@@ -20,6 +20,7 @@ import {
   buildFeedForwardPack,
   type FeedForwardSignals,
 } from '../../../lib/programs/phase-templates/feed-forward';
+import type { WhatChangedResult } from '../../../lib/programs/phase-templates/what-changed';
 import {
   PhaseCompletionGuideCard,
   PhaseTemplatesAndSessionsCard,
@@ -27,6 +28,7 @@ import {
 } from './cards';
 import { PhaseTaskChecklist } from './PhaseTaskChecklist';
 import { NextPhaseFeedForwardCard } from './NextPhaseFeedForwardCard';
+import { WhatChangedCard } from './WhatChangedCard';
 import { PhaseWorkspaceStyles } from './styles';
 
 /** App numeric phase → governed catalog phase code. Only P2-P5 have templates. */
@@ -53,6 +55,10 @@ export function MovePhaseWorkspacePanel({
   onTaskAction,
   uploadClassification,
   onUploadCompletedTemplate,
+  onUploadFinalVersion,
+  whatChanged,
+  onConfirmChanges,
+  changesConfirmed,
 }: {
   phaseNum: number;
   /** The app's own phase label (e.g. "P2 · Discover"), kept authoritative. */
@@ -74,6 +80,14 @@ export function MovePhaseWorkspacePanel({
   uploadClassification?: MoveTemplateUploadClassification | null;
   /** Trigger the host's completed-template file picker (host runs classifyUpload). */
   onUploadCompletedTemplate?: () => void;
+  /** Trigger the host's final-reviewed-version file picker (host computes the diff). */
+  onUploadFinalVersion?: () => void;
+  /** Deterministic draft→final comparison, once a final version is uploaded. */
+  whatChanged?: WhatChangedResult | null;
+  /** Client confirmation of the final version. */
+  onConfirmChanges?: () => void;
+  /** True once the client has confirmed the final version. */
+  changesConfirmed?: boolean;
 }): React.ReactElement | null {
   const code = PHASE_NUM_TO_CODE[phaseNum];
   if (!code) return null; // Originate/Charter (0/1) have no session catalog yet.
@@ -120,6 +134,30 @@ export function MovePhaseWorkspacePanel({
         ) : null}
         {uploadClassification ? (
           <UploadMappingSummaryCard classification={uploadClassification} />
+        ) : null}
+        {uploadClassification && onUploadFinalVersion ? (
+          <div className="pw-card" style={{ gap: 10 }}>
+            <div className="pw-card-head">
+              <span className="pw-kicker">Client final review</span>
+              <h3 className="pw-title serif">Uploaded the final reviewed version?</h3>
+              <span className="pw-note">
+                If the client edited it offline, upload the final — AbarVa shows what changed before
+                carrying it forward.
+              </span>
+            </div>
+            <div>
+              <button type="button" className="pw-dl-btn" onClick={onUploadFinalVersion}>
+                ↑ Upload final reviewed version
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {whatChanged ? (
+          <WhatChangedCard
+            result={whatChanged}
+            onConfirm={onConfirmChanges}
+            confirmed={changesConfirmed}
+          />
         ) : null}
       </div>
     </div>
