@@ -289,6 +289,47 @@ const DOWNSTREAM_SIGNAL_FACT_SPECS: Record<string, FactSpec> = {
     description:
       'Whether a vendor ADDRESSED the value lever in its response (1 = addressed, 0.5 = partial, 0 = dodged). One row per vendor×lever, keyed by the composite <vendorId>::<leverKey> in entity_ref. Flips Responses coverage from a model to a live per-vendor / per-lever answered-vs-dodged read; a vendor×lever with no fact stays "not yet answered", never fabricated.',
   },
+  // ── Shape 2 · per-vendor bid line items (Evaluation should-cost) ────────────
+  // The should-cost / TCO-normalization inputs, one row per VENDOR (entity_kind
+  // 'vendor', entity_ref = the vendor id). Together these three facts let the
+  // Evaluation should-cost insight normalize each vendor's HEADLINE bid to a true
+  // TCO (headline + retained-FTE debit + weak-SLA-credit risk) and surface the
+  // trap: the cheapest headline is not always the lowest normalized TCO. NO new
+  // entity kind (vendor is already allowed) and NO migration — these reuse the
+  // existing per-vendor shape CONTRACT_TERMS_V1 already writes. See
+  // docs/build/source-multivendor-fact-model.md (build order item 2).
+  //
+  // These are NEW keys distinct from CONTRACT_TERMS_V1's retained_fte_delta /
+  // credit_cap_pct: those feed the transition + SLA value LEVERS (lever inputs),
+  // whereas these are the should-cost normalization SIGNAL a vendor's bid carries.
+  // A signal must never shadow a lever input (the catalog build enforces this).
+  vendor_headline_bid: {
+    key: 'vendor_headline_bid',
+    label: 'Vendor headline bid (should-cost)',
+    unit: 'usd',
+    source: 'extracted_vendor',
+    entityKind: 'vendor',
+    description:
+      "The vendor's stated / list price for the deal, in USD over the contract term (the headline bid before normalization). One row per vendor, keyed by the vendor id in entity_ref. The base of the should-cost normalization — the cheapest headline is the paper winner that may flip after retained-cost and SLA-risk debits are added.",
+  },
+  vendor_retained_fte_delta: {
+    key: 'vendor_retained_fte_delta',
+    label: 'Vendor retained-FTE delta (should-cost)',
+    unit: 'fte',
+    source: 'extracted_vendor',
+    entityKind: 'vendor',
+    description:
+      "The retained client/SME FTE this vendor's operating model assumes the buyer keeps (a plain FTE count, e.g. 4). One row per vendor, keyed by the vendor id in entity_ref. Normalizes an over-cheap headline: a bid that pushes more effort back onto the buyer costs more in true TCO. Priced by the should-cost normalization at a fixed loaded-FTE rate.",
+  },
+  vendor_sla_credit_cap_pct: {
+    key: 'vendor_sla_credit_cap_pct',
+    label: 'Vendor SLA credit cap (should-cost)',
+    unit: 'pct',
+    source: 'extracted_vendor',
+    entityKind: 'vendor',
+    description:
+      "The maximum share of the fee pool this vendor's SLA regime lets the buyer recover as service credits (a whole-number pct, e.g. 12 = 12%). One row per vendor, keyed by the vendor id in entity_ref. Normalizes weak remedies: a thin credit cap is a risk debit added to the headline in the should-cost TCO. Do NOT pre-divide.",
+  },
 };
 
 /** True when `key` is a hand-authored downstream signal fact (not a lever input). */

@@ -182,6 +182,28 @@ describe('Source fact catalog — shape + lookups', () => {
     expect(FACT_ENTITY_KINDS).toContain('vendor_lever');
   });
 
+  it('resolves the three vendor-bid signal facts under entity_kind vendor', () => {
+    const bidKeys = [
+      { key: 'vendor_headline_bid', unit: 'usd' },
+      { key: 'vendor_retained_fte_delta', unit: 'fte' },
+      { key: 'vendor_sla_credit_cap_pct', unit: 'pct' },
+    ] as const;
+    for (const { key, unit } of bidKeys) {
+      expect(isCatalogFactKey(key)).toBe(true);
+      // A bid line item is a hand-authored signal (not a lever input).
+      expect(isSignalFactKey(key)).toBe(true);
+      const spec = factSpecByKey(key);
+      expect(spec).toBeDefined();
+      // entity_kind='vendor' — no new entity kind, no migration.
+      expect(spec!.entityKind).toBe('vendor');
+      expect(spec!.unit).toBe(unit);
+      // A vendor's bid is extracted from its proposal.
+      expect(spec!.source).toBe('extracted_vendor');
+    }
+    // vendor is an already-allowed kind (no migration was needed for the bids).
+    expect(FACT_ENTITY_KINDS).toContain('vendor');
+  });
+
   it('factSpecByKey returns undefined for unknown keys', () => {
     expect(factSpecByKey('not_a_real_fact')).toBeUndefined();
   });

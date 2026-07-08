@@ -52,7 +52,39 @@ const MODEL: ShouldCostInsightView = {
   ],
   headlineWinnerKey: 'vendor_b',
   normalizedWinnerKey: 'vendor_a',
+  isModel: true,
   note: 'Model — illustrative AMS vendors. Goes live when vendor responses are ingested.',
+};
+
+const LIVE: ShouldCostInsightView = {
+  kind: 'should_cost_normalization',
+  provenance: 'live',
+  headline:
+    'Vega Systems is cheapest on paper ($21.9M); normalized for retained cost and SLA risk, Orion Managed wins by $338K.',
+  vendors: [
+    {
+      vendorKey: 'Vega Systems',
+      label: 'Vega Systems',
+      headlinePrice: 21_900_000,
+      adjustments: [
+        { label: 'Retained FTE (20 @ $195K)', amount: 3_900_000 },
+        { label: 'SLA-credit risk (cap 6% vs 15% benchmark)', amount: 118_260 },
+      ],
+      normalizedTco: 25_918_260,
+    },
+    {
+      vendorKey: 'Orion Managed',
+      label: 'Orion Managed',
+      headlinePrice: 24_800_000,
+      adjustments: [{ label: 'Retained FTE (4 @ $195K)', amount: 780_000 }],
+      normalizedTco: 25_580_000,
+      needsEvidence: [],
+    },
+  ],
+  headlineWinnerKey: 'Vega Systems',
+  normalizedWinnerKey: 'Orion Managed',
+  isModel: false,
+  note: 'Live — normalized from the vendor bids you provided.',
 };
 
 function countBars(container: HTMLElement): number {
@@ -90,5 +122,16 @@ describe('ShouldCostInsight', () => {
     expect(screen.getByTestId('insight-headline')).toHaveTextContent(
       /cheapest on paper/i,
     );
+  });
+
+  it('renders LIVE (badge reads Live, not Model) when normalized from real bids', () => {
+    render(<ShouldCostInsight insight={LIVE} />);
+    expect(screen.getByTestId('insight-provenance')).toHaveTextContent(/live/i);
+    expect(screen.getByTestId('insight-provenance')).not.toHaveTextContent(/model/i);
+    // The flip still surfaces from the live bids.
+    expect(screen.getByText(/✓ normalized winner/)).toBeInTheDocument();
+    const readout = screen.getByTestId('should-cost-readout');
+    expect(readout).toHaveTextContent('Vega Systems');
+    expect(readout).toHaveTextContent('Orion Managed');
   });
 });

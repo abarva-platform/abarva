@@ -62,6 +62,7 @@ export function ShouldCostInsight({ insight }: ShouldCostInsightProps) {
       adjustmentBreakdown: v.adjustments,
       isNormalizedWinner: v.vendorKey === insight.normalizedWinnerKey,
       isHeadlineWinner: v.vendorKey === insight.headlineWinnerKey,
+      needsEvidence: v.needsEvidence ?? [],
     };
   });
 
@@ -73,7 +74,7 @@ export function ShouldCostInsight({ insight }: ShouldCostInsightProps) {
       headline={insight.headline}
       provenance={insight.provenance}
       note={insight.note}
-      isModel
+      isModel={insight.isModel}
       advisor={{
         bestPractice: insight.bestPractice,
         benchmark: insight.benchmark,
@@ -208,6 +209,18 @@ export function ShouldCostInsight({ insight }: ShouldCostInsightProps) {
               Headline {fmtUsd(row.headline)} → TCO{' '}
               <b style={{ color: ANALYTICS.INK }}>{fmtUsd(row.normalizedTco)}</b>
             </div>
+            {row.needsEvidence.length > 0 ? (
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: ANALYTICS.AMBER_TEXT,
+                  marginTop: 4,
+                }}
+              >
+                Needs evidence — {row.needsEvidence.join(', ')} (not ranked)
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

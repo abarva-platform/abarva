@@ -341,6 +341,52 @@ const RESPONSE_COVERAGE_TEMPLATE: TemplateFactMap = {
   ],
 };
 
+// ── Vendor bids template (multi-vendor Shape 2 · Evaluation should-cost) ──────
+// One row per VENDOR. Carries the per-vendor bid line items the should-cost /
+// TCO-normalization insight reads, which flips Evaluation should-cost from a model
+// (illustrative Vendor A/B/C) to a live per-vendor read (see
+// docs/build/source-multivendor-fact-model.md, build order item 2). The row entity
+// is `vendor` (already an allowed kind — NO new entity kind, NO migration): the
+// `Vendor` column is a governed (present, non-empty) tenant vendor id and becomes
+// each fact's entity_ref. This reuses the existing SINGLE entityRefColumn path —
+// bid line items are per-vendor, not per-vendor×lever, so this is NOT composite.
+// The event's bidding-vendor set is DERIVED from the distinct Vendor values across
+// the rows (same rows-as-registry decision as CONTRACT_TERMS_V1 / RESPONSE_COVERAGE_V1).
+//
+// IMPORTANT (unit discipline, matched to the catalog): the headline bid is a
+// USD-over-term total, the retained-FTE delta is a plain FTE count (e.g. 4), and
+// the SLA credit cap is a WHOLE-NUMBER pct (12 = 12%). Do NOT pre-divide or
+// pre-scale — the should-cost normalization owns the pricing.
+const VENDOR_BIDS_TEMPLATE: TemplateFactMap = {
+  templateCode: 'VENDOR_BIDS_V1',
+  label: 'Vendor bids (should-cost normalization)',
+  rowEntity: 'vendor',
+  entityRefColumn: 'Vendor',
+  columns: [
+    {
+      header: 'Headline Bid (USD)',
+      factKey: 'vendor_headline_bid',
+      entityKind: 'vendor',
+      unit: 'usd',
+      note: "The vendor's stated / list price for the deal, in USD over the contract term (before normalization). One row per vendor.",
+    },
+    {
+      header: 'Retained FTE Delta',
+      factKey: 'vendor_retained_fte_delta',
+      entityKind: 'vendor',
+      unit: 'fte',
+      note: "Retained client/SME FTE this vendor's model assumes the buyer keeps (a plain count, e.g. 4). Priced by the should-cost normalization to debit an over-cheap headline.",
+    },
+    {
+      header: 'SLA Credit Cap (%)',
+      factKey: 'vendor_sla_credit_cap_pct',
+      entityKind: 'vendor',
+      unit: 'pct',
+      note: "Maximum share of the fee pool recoverable as SLA credits under this vendor's regime (whole number, e.g. 12 = 12%). A thin cap is a weak-remedy risk debit in the normalized TCO. Do not pre-divide.",
+    },
+  ],
+};
+
 /** All shipped structured intake templates, keyed by templateCode. */
 export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
@@ -350,6 +396,7 @@ export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [COMMITTED_VALUE_TEMPLATE.templateCode]: COMMITTED_VALUE_TEMPLATE,
   [BAFO_CONCESSIONS_TEMPLATE.templateCode]: BAFO_CONCESSIONS_TEMPLATE,
   [RESPONSE_COVERAGE_TEMPLATE.templateCode]: RESPONSE_COVERAGE_TEMPLATE,
+  [VENDOR_BIDS_TEMPLATE.templateCode]: VENDOR_BIDS_TEMPLATE,
   // Add new intake templates here — no engine change required.
 };
 
