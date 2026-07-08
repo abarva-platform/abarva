@@ -41,6 +41,9 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(synthesizerCode).toContain("buildCxoAnswerModeSystemAddendum(answerMode)");
     expect(synthesizerCode).toContain("buildCxoAnswerModePromptDirective(answerMode)");
     expect(synthesizerCode).toContain("applyCxoAnswerModeFallbacks(text, answerMode)");
+    expect(synthesizerCode).toContain(
+      "applyCxoAnswerModeFallbacks(\n      enforceDecisionGradeAnswer(evidenceDisciplined),\n      answerMode,\n    )",
+    );
   });
 
   it("keeps critical CXO answer modes in one registry", () => {
