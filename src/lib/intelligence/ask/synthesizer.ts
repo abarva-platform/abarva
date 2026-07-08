@@ -621,7 +621,7 @@ FORMAT OVERRIDE FOR THIS MODE
           : "strategy_to_abarva_solution"
       }. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking.${
         strategyToMovesExecution
-          ? " Include P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes."
+          ? " Include a compact Moves phase table with one literal row for each label: P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes."
           : ""
       }`
     : "";
