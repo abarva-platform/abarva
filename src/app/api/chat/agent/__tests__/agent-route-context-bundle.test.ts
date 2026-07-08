@@ -268,8 +268,12 @@ describe("agent route · CB-6 context-bundle wiring", () => {
     expect(source).toContain("CONTEXT BROKER RECEIPT:");
     expect(source).toContain("Private client facts:");
     expect(source).toContain("Shared AbarVa corpus/worldview chunks:");
+    // Cross-Source-event leak guard (3rd attempt / #4602-#4605 follow-up)
+    // threads a resolved event-scope guard into this call so
+    // `enterprise_context_chunks` rows naming a DIFFERENT Source event never
+    // reach the prompt — see source-ava-cross-event-leak-gate.test.ts.
     expect(source).toContain(
-      "await buildTenantContextBlock(tenantInventoryKey)",
+      "await buildTenantContextBlock(tenantInventoryKey, sourceEventScopeGuard)",
     );
     expect(source).toContain(
       "if (isTenantCurrentStateSurface && activeClientKey)",

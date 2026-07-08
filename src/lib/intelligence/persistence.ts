@@ -44,6 +44,76 @@ interface ContextChunkRow {
 }
 
 /**
+ * Cross-Source-event leak guard (3rd attempt, follow-up to #4602 / #4605).
+ *
+ * `enterprise_context_chunks` has no per-row Source-event scoping column or
+ * metadata convention — `program_inventory` / `cross_program_signals` /
+ * `it_landscape` chunks for a tenant mix content from EVERY Source event
+ * ever ingested for that tenant into the same tenant-wide segment. Live
+ * re-testing proved this: asking "What evidence is missing?" inside the
+ * Lakeshore AMS Source event (LAKE-AMS-2026-46EADB28) returned content
+ * naming a DIFFERENT, real Lakeshore Source event — "Kyriba Treasury
+ * Rollout Commercial Readiness" (LSH-KYRIBA-TREASURY-2026) — because both
+ * events' chunk text lives in the same `program_inventory` segment for
+ * tenant `lakeshore` and the query has no event filter to apply.
+ *
+ * This is a REAL, unconditional code-level filter (not a prompt
+ * instruction): given the active Source event's code and the full list of
+ * the tenant's OTHER Source event codes, drop any chunk whose text
+ * mentions another event's code. A chunk that names no other event code at
+ * all (tenant profile, org chart, generic IT landscape) is kept — only
+ * chunks that are demonstrably ABOUT a different Source event are dropped.
+ */
+export interface SourceEventScopeGuard {
+  /** The event code (e.g. "LAKE-AMS-2026-46EADB28") the current turn is scoped to. */
+  activeEventCode: string;
+  /** Every OTHER Source event code known for this tenant — candidates to drop. */
+  otherEventCodes: string[];
+}
+
+export interface CrossEventFilterResult {
+  kept: ContextChunkRow[];
+  droppedCount: number;
+  droppedEventCodes: string[];
+}
+
+/**
+ * Drops any chunk whose text references an event code in
+ * `guard.otherEventCodes` and does NOT also reference
+ * `guard.activeEventCode`. A chunk naming the active event alongside an
+ * older reference is kept (it's about the current event); a chunk naming
+ * only another event is dropped outright.
+ */
+export function filterChunksToActiveSourceEvent(
+  chunks: ContextChunkRow[],
+  guard: SourceEventScopeGuard | null,
+): CrossEventFilterResult {
+  if (!guard || guard.otherEventCodes.length === 0) {
+    return { kept: chunks, droppedCount: 0, droppedEventCodes: [] };
+  }
+  const kept: ContextChunkRow[] = [];
+  const droppedEventCodes = new Set<string>();
+  for (const chunk of chunks) {
+    const text = chunk.chunk_text ?? '';
+    const mentionsActive =
+      guard.activeEventCode.length > 0 && text.includes(guard.activeEventCode);
+    const mentionedOtherCodes = guard.otherEventCodes.filter((code) =>
+      text.includes(code),
+    );
+    if (mentionedOtherCodes.length > 0 && !mentionsActive) {
+      mentionedOtherCodes.forEach((code) => droppedEventCodes.add(code));
+      continue;
+    }
+    kept.push(chunk);
+  }
+  return {
+    kept,
+    droppedCount: chunks.length - kept.length,
+    droppedEventCodes: Array.from(droppedEventCodes),
+  };
+}
+
+/**
  * Query `enterprise_context_chunks` for the given tenant and segment list.
  *
  * Fetches at most `maxPerSegment` chunks per segment in chunk_index
@@ -104,13 +174,45 @@ export async function queryEnterpriseContextChunks(
  *
  * @param tenantKey  Inventory-substrate key, e.g. 'apex-retail'. Pass
  *                   null/undefined when unauthenticated — returns null.
+ * @param sourceEventScope  When the caller is grounding a specific Source
+ *                          event turn, pass the active event's code plus
+ *                          every OTHER Source event code known for the
+ *                          tenant. Any chunk that names one of the other
+ *                          codes (and not the active one) is dropped
+ *                          before the block is assembled — see
+ *                          `filterChunksToActiveSourceEvent`. Omit for
+ *                          every non-Source-event caller; behavior is
+ *                          unchanged.
  */
 export async function buildTenantContextBlock(
   tenantKey: string | null | undefined,
+  sourceEventScope?: SourceEventScopeGuard | null,
 ): Promise<string | null> {
   if (!tenantKey) return null;
   try {
-    const chunks = await queryEnterpriseContextChunks(tenantKey);
+    const rawChunks = await queryEnterpriseContextChunks(tenantKey);
+    if (rawChunks.length === 0) return null;
+
+    const { kept: chunks, droppedCount, droppedEventCodes } =
+      filterChunksToActiveSourceEvent(rawChunks, sourceEventScope ?? null);
+
+    // Audit-mode diagnostic — only emitted when a Source-event scope was
+    // supplied (i.e. only on source-detail turns with an active event),
+    // and only proves the guard ran; it never blocks the response. Kept
+    // deliberately terse and grep-able (`[source-event-scope-guard]`) so
+    // it can be filtered out of default logs. This is a permanent,
+    // env-gated audit-mode log, not a temporary ad-hoc debug print — it
+    // stays in the shipped code so the guard's effect can be verified
+    // against a real tenant at any time.
+    if (sourceEventScope && process.env.ABARVA_SOURCE_SCOPE_GUARD_LOG === '1') {
+      console.log('[source-event-scope-guard]', {
+        sourceEventId: sourceEventScope.activeEventCode,
+        contextItemsIncluded: chunks.length,
+        contextItemsDroppedCrossEvent: droppedCount,
+        droppedEventCodes,
+      });
+    }
+
     if (chunks.length === 0) return null;
 
     const lines: string[] = [

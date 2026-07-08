@@ -184,7 +184,7 @@ import {
 // "gate unmet" facts that contradict what the canvas shows for the identical
 // event/stage — the exact invariant violation this import fixes.
 import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
-import { getSourcingEvent } from "@/lib/source/queries";
+import { getSourcingEvent, listSourcingEvents } from "@/lib/source/queries";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
 import { getStageVoiceDepth } from "@/lib/source/stage-voice-depth";
@@ -1071,8 +1071,58 @@ export async function POST(request: Request) {
         "- In your answer, distinguish private client facts from shared AbarVa corpus knowledge in natural language.",
       ].join("\n")
     : "";
+  // Cross-Source-event leak guard (3rd attempt, follow-up to #4602 / #4605).
+  //
+  // `tenantSystemBlock` below reads `enterprise_context_chunks`, which has
+  // NO per-row Source-event scoping — a tenant's `program_inventory` /
+  // `cross_program_signals` chunks mix every Source event's content
+  // together. Live re-testing after #4605 deployed proved this: asking
+  // "What evidence is missing?" inside the Lakeshore AMS Source event
+  // (LAKE-AMS-2026-46EADB28) returned content naming a DIFFERENT, real
+  // Lakeshore Source event ("Kyriba Treasury Rollout Commercial
+  // Readiness", LSH-KYRIBA-TREASURY-2026). Resolved here, independent of
+  // the `source_analytics` grounding flag below (this is a data-scoping
+  // bug, not an analytics feature — the guard must apply whenever the
+  // surface carries an active Source event, flag or no flag), so
+  // `buildTenantContextBlock` can drop any chunk that names a different
+  // Source event before it ever reaches the prompt.
+  const earlySourceEventIdFromContext =
+    typeof surfaceContext.sourceEventId === "string" &&
+    surfaceContext.sourceEventId.trim()
+      ? surfaceContext.sourceEventId.trim()
+      : null;
+  let sourceEventScopeGuard: {
+    activeEventCode: string;
+    otherEventCodes: string[];
+  } | null = null;
+  if (earlySourceEventIdFromContext && effectiveClientKey) {
+    try {
+      const [activeEvent, allTenantEvents] = await Promise.all([
+        getSourcingEvent(earlySourceEventIdFromContext).catch(() => null),
+        listSourcingEvents().catch(() => []),
+      ]);
+      if (activeEvent?.code) {
+        sourceEventScopeGuard = {
+          activeEventCode: activeEvent.code,
+          otherEventCodes: allTenantEvents
+            .map((event) => event.code)
+            .filter(
+              (code): code is string =>
+                typeof code === "string" &&
+                code.length > 0 &&
+                code !== activeEvent.code,
+            ),
+        };
+      }
+    } catch {
+      // Guard resolution is best-effort — on failure, tenantSystemBlock
+      // falls back to its pre-existing unscoped behavior for this turn
+      // rather than breaking the chat response.
+      sourceEventScopeGuard = null;
+    }
+  }
   const tenantSystemBlock =
-    (await buildTenantContextBlock(tenantInventoryKey)) ??
+    (await buildTenantContextBlock(tenantInventoryKey, sourceEventScopeGuard)) ??
     getTenantSystemBlock(effectiveClientKey);
   const tenantTechnologyContextBlock =
     agentName === "Sentinel" &&
@@ -1238,11 +1288,9 @@ export async function POST(request: Request) {
   // vendor/lever ask (for the generic-ask-when-data-exists check).
   let sourceAvaModeGroundingBlockText = "";
   let sourceAvaModeHasSpecificAsk = false;
-  const sourceEventIdFromContext =
-    typeof surfaceContext.sourceEventId === "string" &&
-    surfaceContext.sourceEventId.trim()
-      ? surfaceContext.sourceEventId.trim()
-      : null;
+  // Reuse the hoisted resolution above (cross-event leak guard) so this
+  // turn only reads `surfaceContext.sourceEventId` once.
+  const sourceEventIdFromContext = earlySourceEventIdFromContext;
   const sourceAnalyticsGroundingEnabled = isFeatureEnabled(
     { clientKey: activeClientKey ?? null, clientId: activeClient?.id ?? null },
     "source_analytics",
@@ -1578,6 +1626,45 @@ export async function POST(request: Request) {
       ? ""
       : agentTenantContextBlock;
 
+  // aVa Source polish gate — 3rd attempt (follow-up to #4602 / #4605).
+  //
+  // Live re-tests AFTER #4605 deployed still reproduced the off-topic-answer
+  // symptom: "What evidence is missing?" on the RFP stage of a real Lakeshore
+  // Source event (adcb1cd0-c586-4622-bd29-574cc5a10862, AMS Sourcing Event)
+  // was answered by naming a DIFFERENT, real Lakeshore Source event —
+  // "Kyriba Treasury Rollout Commercial Readiness" (LSH-KYRIBA-TREASURY-2026).
+  // This is NOT the cross-module leak #4602/#4605 targeted (both of those
+  // paths were correctly suppressed and verified suppressed by runtime
+  // test — see persistence-cross-event-leak.test.ts). It is a THIRD,
+  // still-live generic-injection path: `tenantSystemBlock` (above, built
+  // from `buildTenantContextBlock` / `queryEnterpriseContextChunks` in
+  // `src/lib/intelligence/persistence.ts`), which queries
+  // `enterprise_context_chunks` filtered ONLY by `tenant_key` +
+  // `source_segment_id` (`program_inventory`, `it_landscape`,
+  // `cross_program_signals`, ...) — with NO event/program scoping at all,
+  // and no per-chunk event-id metadata convention exists to filter on
+  // in-process either. When a tenant has more than one Source event's
+  // content ingested under the same tenant-wide segments (as Lakeshore
+  // does — AMS + Kyriba), EVERY event's chunk text is concatenated into
+  // this ONE block regardless of which event the user is viewing.
+  // `tenantSystemBlock` was injected into the system prompt completely
+  // unconditionally — unlike `contextBundlePromptBlockForPrompt` and
+  // `agentTenantContextBlockForPrompt` above, it was never derived through
+  // `shouldSuppressGenericContextBundleForSourceMode`. That gap is why the
+  // symptom survived both prior fixes unchanged.
+  //
+  // Fix: apply the SAME suppression predicate to this third path. Once a
+  // grounded, non-passthrough Source answer mode has fired, the
+  // deterministic Source grounding + Source-scoped broker block remain the
+  // authoritative context for the turn; the generic tenant-wide chunk block
+  // adds no Source-event value and is the demonstrated leak vector.
+  // `stakeholder_alignment` and every non-Source surface keep receiving
+  // `tenantSystemBlock` exactly as before.
+  const tenantSystemBlockForPrompt =
+    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode)
+      ? ""
+      : tenantSystemBlock;
+
   // OV2-WIRE-AND-FM-PROMPT Part 1 — failure-mode catalog block. Universal
   // across all Programs surfaces (`/programs*`, `/demo/programs*`, `/tower*`).
   // Empty string elsewhere; the prompt-array filter strips it cleanly.
@@ -1896,7 +1983,7 @@ export async function POST(request: Request) {
         ]
       : []),
     agentQualityAnswerKeyBlock,
-    tenantSystemBlock,
+    tenantSystemBlockForPrompt,
   ]
     .filter((s) => s !== "" && s !== undefined && s !== null)
     .join("\n");
