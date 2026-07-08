@@ -1505,6 +1505,9 @@ async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
     richText:
       url.searchParams.get("richText") === "1" ||
       url.searchParams.get("richText") === "true",
+    answerOnlyStreaming:
+      url.searchParams.get("answerOnlyStreaming") === "1" ||
+      url.searchParams.get("answerOnlyStreaming") === "true",
   };
 }
 
