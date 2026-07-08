@@ -257,3 +257,101 @@ export async function readBafoConcessionLevers(input: {
 
   return { signalPresent, capturedByLeverKey };
 }
+
+/** Whether a vendor addressed a lever: on the `ratio` scale (0=dodged … 1=addressed). */
+export type ResponseStatus = 'addressed' | 'partial' | 'dodged';
+
+/** Map a `response_addressed` ratio value to a status. Anything <=0 is dodged. */
+function responseStatusOf(value: number): ResponseStatus {
+  if (!Number.isFinite(value)) return 'dodged';
+  if (value >= 1) return 'addressed';
+  if (value > 0) return 'partial';
+  return 'dodged';
+}
+
+/**
+ * The vendor-response read for the Responses coverage insight (Responses stage).
+ *
+ * Multi-vendor Shape 2 (see docs/build/source-multivendor-fact-model.md): unlike
+ * the per-lever reads above, this needs the per-VENDOR × per-LEVER value of the
+ * `response_addressed` signal fact — a `vendor_lever`-kind fact whose `entity_ref`
+ * is the canonical composite `<vendorId>::<leverKey>` and whose value is 0/0.5/1.
+ * It returns:
+ *   • `signalPresent` — whether ANY non-stale response_addressed fact exists for
+ *     the event (drives live vs model in the insight); and
+ *   • `statusByVendorLever` — a map `vendorId → (leverKey → status)`, newest
+ *     non-stale capture per (vendor, lever) winning; and
+ *   • `vendors` — the DERIVED bidding-vendor set (distinct vendor ids seen), in
+ *     first-seen (newest-first) order (no separate registry — the rows ARE the
+ *     registry, per the fact-model doc).
+ *
+ * The composite entity_ref is split on the FIRST `::` so a lever key that itself
+ * contains a dot (AMS.VOLUME_BAND_PRICING) is preserved intact. A row whose
+ * entity_ref is not a well-formed composite is skipped (never fabricates a cell).
+ * Tenant-scoped by client_key (RLS). Returns `signalPresent: false` + empties when
+ * the table has no response_addressed rows for the event — the insight then
+ * honestly stays a MODEL.
+ */
+export async function readVendorLeverResponses(input: {
+  eventId: string;
+  clientKey: string;
+}): Promise<{
+  signalPresent: boolean;
+  statusByVendorLever: Map<string, Map<string, ResponseStatus>>;
+  vendors: string[];
+}> {
+  const { eventId, clientKey } = input;
+  const supabase = getAzureWriteFluentClient();
+
+  const { data, error } = await supabase
+    .from('source_event_facts')
+    .select('entity_ref, value_numeric, captured_at')
+    .eq('source_event_id', eventId)
+    .eq('client_key', clientKey)
+    .eq('fact_key', 'response_addressed')
+    .eq('entity_kind', 'vendor_lever')
+    .eq('is_stale', false)
+    .order('captured_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as Array<
+    Pick<SourceEventFactRow, 'entity_ref' | 'value_numeric'>
+  >;
+
+  const statusByVendorLever = new Map<string, Map<string, ResponseStatus>>();
+  const vendors: string[] = [];
+  const vendorSeen = new Set<string>();
+  // Newest-first: keep the FIRST value seen per (vendor, lever) cell.
+  const cellSeen = new Set<string>();
+  let signalPresent = false;
+
+  for (const row of rows) {
+    const ref = row.entity_ref?.trim();
+    if (!ref) continue;
+    // Split on the FIRST '::' so a dotted lever key stays intact.
+    const sep = ref.indexOf('::');
+    if (sep <= 0 || sep >= ref.length - 2) continue; // need non-empty both sides
+    const vendorId = ref.slice(0, sep).trim();
+    const leverKey = ref.slice(sep + 2).trim();
+    if (!vendorId || !leverKey) continue;
+
+    signalPresent = true;
+    const cellKey = `${vendorId}::${leverKey}`;
+    if (cellSeen.has(cellKey)) continue;
+    cellSeen.add(cellKey);
+
+    if (!vendorSeen.has(vendorId)) {
+      vendorSeen.add(vendorId);
+      vendors.push(vendorId);
+    }
+    let leverMap = statusByVendorLever.get(vendorId);
+    if (!leverMap) {
+      leverMap = new Map<string, ResponseStatus>();
+      statusByVendorLever.set(vendorId, leverMap);
+    }
+    leverMap.set(leverKey, responseStatusOf(Number(row.value_numeric)));
+  }
+
+  return { signalPresent, statusByVendorLever, vendors };
+}

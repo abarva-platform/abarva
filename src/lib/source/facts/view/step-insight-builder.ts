@@ -47,6 +47,7 @@ import type {
   ExecDecisionSliceView,
   ResponseCoverageInsightView,
   ResponseCoverageRowView,
+  VendorCoverageView,
   RfpClauseInsightView,
   RfpClauseRowView,
   ScopeCoverageInsightView,
@@ -178,6 +179,14 @@ export interface BuildStepInsightInput {
    * "assessed, nothing captured yet" read — distinct from `undefined`.
    */
   bafoConcessionByLeverKey?: ReadonlyMap<string, number>;
+  /**
+   * The per-vendor / per-lever response signal (from the vendor-response facts
+   * read) that drives Responses coverage. When PROVIDED (even with an empty vendor
+   * set) a response signal exists and the insight goes LIVE; when `undefined` no
+   * response fact exists and the insight stays a MODEL. Empty is a valid live
+   * "assessed, nothing addressed yet" read — distinct from `undefined`.
+   */
+  vendorResponses?: VendorResponseSignal;
 }
 
 /**
@@ -219,7 +228,11 @@ export function buildStepInsight(
     case 'value_realization':
       return buildValueRealizationInsight(resolved, input.inputs);
     case 'response_coverage':
-      return buildResponseCoverageInsight(resolved, input.inputs);
+      return buildResponseCoverageInsight(
+        resolved,
+        input.inputs,
+        input.vendorResponses,
+      );
     case 'bafo_progress':
       return buildBafoProgressInsight(
         resolved,
@@ -1404,15 +1417,25 @@ function valueRealizationAdvisor(archetype: SourceEventArchetype): {
 // ── Responses · VENDOR DODGE-MAP (MODEL) ─────────────────────────────────────
 
 /**
- * Response coverage: per value dimension, whether vendors answered or dodged. MODEL
- * — vendor-response facts are not in the fact model yet, so every dimension is shown
- * as "dodged" (the exposure) until proven answered. Goes live when vendor responses
- * are ingested per lever/clause. $ at stake is real where the lever computes, else
- * the illustrative scale. Each row carries its evaluationImpact from the playbook.
+ * Response coverage: per value dimension, whether vendors answered or dodged, and
+ * (LIVE) per-vendor coverage across the levers.
+ *
+ * LIVE when a vendor-response signal exists for the event (`vendorResponses` is
+ * provided): each lever is `answered` iff ANY vendor addressed it
+ * (response_addressed >= 1 → addressed, 0<v<1 → partial counts as answered for the
+ * lever row), else `dodged`; and each vendor's coverage across the levers is
+ * summarized. A vendor×lever with no fact stays "not yet answered", never
+ * fabricated.
+ *
+ * MODEL when no signal exists (`vendorResponses` is undefined): every dimension is
+ * shown as "dodged" (the exposure) — the honest default preserved from before the
+ * fact existed. $ at stake is real where the lever computes, else the illustrative
+ * scale. Each row carries its evaluationImpact from the playbook.
  */
 export function buildResponseCoverageInsight(
   archetype: SourceEventArchetype,
   facts: EventFactMap,
+  vendorResponses?: VendorResponseSignal,
 ): ResponseCoverageInsightView {
   const rules = archetype.valueLeverRules ?? [];
   const advisor = responseAdvisor();
@@ -1423,22 +1446,32 @@ export function buildResponseCoverageInsight(
       provenance: 'sample',
       headline: 'No value levers are wired for this archetype yet.',
       rows: [],
+      isModel: true,
       flipFact: 'Vendor responses ingested per lever/clause.',
       note: 'No value levers are wired for this archetype yet.',
       ...advisor,
     };
   }
 
+  // A signal exists when the map was provided (even empty — an event assessed with
+  // no addressed lever). Undefined → no signal → MODEL.
+  const isLive = vendorResponses !== undefined;
   const results = evaluateValueLevers(archetype, facts);
+
   const rows: ResponseCoverageRowView[] = rules.map((rule) => {
     const band = leverBand(rule, results);
+    // LIVE: a lever is answered iff ANY vendor addressed (or partially addressed)
+    // it. MODEL: every lever dodged until a response signal exists.
+    const answered = isLive
+      ? anyVendorAddressed(vendorResponses!, rule.key)
+      : false;
     return {
       leverKey: rule.key,
       label: rule.name,
       valueType: rule.valueType,
       low: band.low,
       high: band.high,
-      status: 'dodged' as const, // no vendor-response signal yet → dodged until proven
+      status: answered ? ('answered' as const) : ('dodged' as const),
       evaluationImpact: rule.evaluationImpact,
     };
   });
@@ -1449,6 +1482,23 @@ export function buildResponseCoverageInsight(
 
   const totalLow = ordered.reduce((s, r) => s + r.low, 0);
   const totalHigh = ordered.reduce((s, r) => s + r.high, 0);
+
+  if (isLive) {
+    const vendors = buildVendorCoverage(rules, results, vendorResponses!);
+    return {
+      kind: 'response_coverage',
+      provenance: 'live',
+      headline: responseCoverageLiveHeadline(ordered, vendors),
+      rows: ordered,
+      vendors,
+      isModel: false,
+      flipFact:
+        'Vendor responses ingested per lever/clause (a parsed vendor proposal whose commitments are extracted and matched to each value dimension).',
+      note: 'Live — answered vs dodged is read from the vendor response coverage you provided (one response_addressed fact per vendor×lever). A dimension is answered when at least one vendor addressed it; per-vendor coverage shows each vendor’s answered/dodged split. A vendor×lever with no fact stays "not yet answered", never fabricated. The $ at stake and evaluation-impact text are the same cited/advisor values as the model.',
+      ...advisor,
+    };
+  }
+
   return {
     kind: 'response_coverage',
     provenance: 'sample',
@@ -1456,11 +1506,123 @@ export function buildResponseCoverageInsight(
       `${fmtUsdRange(totalLow, totalHigh)} across ${ordered.length} value dimensions depends on a vendor ` +
       `answer; until responses are ingested every dimension is shown as unanswered — the exposure to press in evaluation.`,
     rows: ordered,
+    isModel: true,
     flipFact:
       'Vendor responses ingested per lever/clause (a parsed vendor proposal whose commitments are extracted and matched to each value dimension).',
     note: 'Model — vendor-response facts are not in the fact model yet, so every dimension is shown as unanswered (the exposure) against its $ at stake. It goes live once vendor responses are ingested per lever/clause. The evaluation-impact text is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
     ...advisor,
   };
+}
+
+/**
+ * The vendor-response signal the Responses insight reads: per vendor, per lever,
+ * the response status, plus the derived bidding-vendor order. Mirrors the
+ * `readVendorLeverResponses` reader shape but as a plain data contract the builder
+ * consumes (so it stays testable without the data plane).
+ */
+/**
+ * A vendor's response status for a lever, on the `response_addressed` ratio scale.
+ * Structurally identical to `ResponseStatus` in event-facts-reader; declared here
+ * so the builder stays free of the data-plane import and is unit-testable.
+ */
+export type VendorResponseStatus = 'addressed' | 'partial' | 'dodged';
+
+export interface VendorResponseSignal {
+  /** vendorId → (leverKey → 'addressed' | 'partial' | 'dodged'). */
+  statusByVendorLever: ReadonlyMap<
+    string,
+    ReadonlyMap<string, VendorResponseStatus>
+  >;
+  /** The derived bidding-vendor set, in stable (first-seen) order. */
+  vendors: readonly string[];
+}
+
+/** True when at least one vendor addressed (fully or partially) the lever. */
+function anyVendorAddressed(
+  signal: VendorResponseSignal,
+  leverKey: string,
+): boolean {
+  for (const leverMap of signal.statusByVendorLever.values()) {
+    const status = leverMap.get(leverKey);
+    if (status === 'addressed' || status === 'partial') return true;
+  }
+  return false;
+}
+
+/** Per-vendor coverage across the archetype's levers (LIVE). */
+function buildVendorCoverage(
+  rules: readonly ValueLeverRule[],
+  results: ReturnType<typeof evaluateValueLevers>,
+  signal: VendorResponseSignal,
+): VendorCoverageView[] {
+  return signal.vendors.map((vendorId) => {
+    const leverMap = signal.statusByVendorLever.get(vendorId);
+    let addressed = 0;
+    let partial = 0;
+    let dodged = 0;
+    let notYetAnswered = 0;
+    let addressedHighUsd = 0;
+    let exposedHighUsd = 0;
+    const byLever = rules.map((rule) => {
+      const band = leverBand(rule, results);
+      const raw = leverMap?.get(rule.key);
+      const status: 'addressed' | 'partial' | 'dodged' | 'not_answered' =
+        raw === undefined ? 'not_answered' : raw;
+      if (status === 'addressed') {
+        addressed += 1;
+        addressedHighUsd += band.high;
+      } else if (status === 'partial') {
+        partial += 1;
+        addressedHighUsd += band.high;
+      } else if (status === 'dodged') {
+        dodged += 1;
+        exposedHighUsd += band.high;
+      } else {
+        notYetAnswered += 1;
+        exposedHighUsd += band.high;
+      }
+      return {
+        leverKey: rule.key,
+        label: rule.name,
+        valueType: rule.valueType,
+        high: band.high,
+        status,
+      };
+    });
+    return {
+      vendorId,
+      addressed,
+      partial,
+      dodged,
+      notYetAnswered,
+      totalLevers: rules.length,
+      addressedHighUsd,
+      exposedHighUsd,
+      byLever,
+    };
+  });
+}
+
+function responseCoverageLiveHeadline(
+  rows: readonly ResponseCoverageRowView[],
+  vendors: readonly VendorCoverageView[],
+): string {
+  const answered = rows.filter((r) => r.status === 'answered');
+  const dodged = rows.filter((r) => r.status === 'dodged');
+  const dodgedLow = dodged.reduce((s, r) => s + r.low, 0);
+  const dodgedHigh = dodged.reduce((s, r) => s + r.high, 0);
+  const vendorCount = vendors.length;
+  if (dodged.length === 0) {
+    return (
+      `All ${rows.length} value dimensions were answered by at least one of ` +
+      `${vendorCount} ${vendorCount === 1 ? 'vendor' : 'vendors'} — nothing left dodged.`
+    );
+  }
+  return (
+    `${answered.length} of ${rows.length} value dimensions answered across ` +
+    `${vendorCount} ${vendorCount === 1 ? 'vendor' : 'vendors'}; ` +
+    `${dodged.length} still dodged (${fmtUsdRange(dodgedLow, dodgedHigh)}) — press each in evaluation.`
+  );
 }
 
 function responseAdvisor(): {

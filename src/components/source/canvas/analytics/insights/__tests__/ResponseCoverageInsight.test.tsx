@@ -36,11 +36,53 @@ const MODEL: ResponseCoverageInsightView = {
     { leverKey: 'AMS.ENHANCEMENT_LEAKAGE', label: 'Enhancement / change-order leakage', valueType: 'protected', low: 1_800_000, high: 2_600_000, status: 'dodged', evaluationImpact: 'Penalize vague enhancement exclusions.' },
     { leverKey: 'AMS.VOLUME_BAND_PRICING', label: 'Volume-band price flex-down', valueType: 'incremental_negotiated', low: 1_200_000, high: 1_900_000, status: 'dodged', evaluationImpact: 'Disqualify pricing with no band step-down.' },
   ],
+  isModel: true,
   flipFact: 'Vendor responses ingested per lever/clause (a parsed vendor proposal whose commitments are extracted).',
   note: 'Model — vendor-response facts are not in the fact model yet.',
   bestPractice: ['Score each dimension on whether the vendor committed.'],
   benchmark: 'Market range — vendors under-answer SLA remedies.',
   downstreamImpact: 'A dodged dimension not pressed becomes an exposed lever at award.',
+};
+
+const LIVE: ResponseCoverageInsightView = {
+  ...MODEL,
+  provenance: 'live',
+  isModel: false,
+  headline: '1 of 2 value dimensions answered across 2 vendors; 1 still dodged.',
+  rows: [
+    { ...MODEL.rows[0], status: 'dodged' },
+    { ...MODEL.rows[1], status: 'answered' },
+  ],
+  vendors: [
+    {
+      vendorId: 'Vega Systems',
+      addressed: 1,
+      partial: 0,
+      dodged: 1,
+      notYetAnswered: 0,
+      totalLevers: 2,
+      addressedHighUsd: 1_900_000,
+      exposedHighUsd: 2_600_000,
+      byLever: [
+        { leverKey: 'AMS.ENHANCEMENT_LEAKAGE', label: 'Enhancement / change-order leakage', valueType: 'protected', high: 2_600_000, status: 'dodged' },
+        { leverKey: 'AMS.VOLUME_BAND_PRICING', label: 'Volume-band price flex-down', valueType: 'incremental_negotiated', high: 1_900_000, status: 'addressed' },
+      ],
+    },
+    {
+      vendorId: 'Orion Managed',
+      addressed: 2,
+      partial: 0,
+      dodged: 0,
+      notYetAnswered: 0,
+      totalLevers: 2,
+      addressedHighUsd: 4_500_000,
+      exposedHighUsd: 0,
+      byLever: [
+        { leverKey: 'AMS.ENHANCEMENT_LEAKAGE', label: 'Enhancement / change-order leakage', valueType: 'protected', high: 2_600_000, status: 'addressed' },
+        { leverKey: 'AMS.VOLUME_BAND_PRICING', label: 'Volume-band price flex-down', valueType: 'incremental_negotiated', high: 1_900_000, status: 'addressed' },
+      ],
+    },
+  ],
 };
 
 function countBars(container: HTMLElement): number {
@@ -60,5 +102,20 @@ describe('ResponseCoverageInsight', () => {
     expect(dodged).toHaveTextContent(/vague enhancement exclusions/i);
     const flip = screen.getByTestId('response-coverage-flip');
     expect(flip).toHaveTextContent(/vendor responses ingested/i);
+  });
+
+  it('does NOT render the per-vendor block in MODEL mode', () => {
+    render(<ResponseCoverageInsight insight={MODEL} />);
+    expect(screen.queryByTestId('response-coverage-vendors')).toBeNull();
+  });
+
+  it('is LIVE (not a MODEL badge) and renders per-vendor coverage', () => {
+    render(<ResponseCoverageInsight insight={LIVE} />);
+    expect(screen.getByTestId('insight-provenance')).not.toHaveTextContent(/model/i);
+    const vendors = screen.getByTestId('response-coverage-vendors');
+    expect(vendors).toHaveTextContent(/Vega Systems/);
+    expect(vendors).toHaveTextContent(/Orion Managed/);
+    expect(vendors).toHaveTextContent(/answered/i);
+    expect(vendors).toHaveTextContent(/dodged/i);
   });
 });

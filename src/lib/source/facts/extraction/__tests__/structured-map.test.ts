@@ -18,6 +18,18 @@ const CTX = { sourceEventId: "event-uuid-1", clientKey: "lakeshore" };
 const APP_INVENTORY = templateFactMapByCode("APP_INVENTORY_V1")!;
 const VOLUMETRICS = templateFactMapByCode("VOLUMETRICS_V1")!;
 const CONTRACT_TERMS = templateFactMapByCode("CONTRACT_TERMS_V1")!;
+const RESPONSE_COVERAGE = templateFactMapByCode("RESPONSE_COVERAGE_V1")!;
+
+// AMS lever keys the response-coverage composite validates its lever half against.
+const VALID_LEVER_KEYS = new Set<string>([
+  "AMS.ENHANCEMENT_LEAKAGE",
+  "AMS.VOLUME_BAND_PRICING",
+  "AMS.PRODUCTIVITY_CREDITS",
+  "AMS.RETAINED_COST",
+  "AMS.SLA_ECONOMICS",
+  "AMS.TRANSITION_RISK",
+]);
+const CTX_LEVERS = { ...CTX, validLeverKeys: VALID_LEVER_KEYS };
 
 describe("coerceNumericCell", () => {
   it("passes through finite numbers", () => {
@@ -422,5 +434,119 @@ describe("mapTemplateUploadToFacts — drift + rejection (no silent loss)", () =
     const { facts, rejectedRows } = mapTemplateUploadToFacts(drifted, upload, CTX);
     expect(facts).toHaveLength(0);
     expect(rejectedRows[0].reason).toMatch(/not in the catalog/);
+  });
+});
+
+describe("mapTemplateUploadToFacts — RESPONSE_COVERAGE_V1 (composite vendor×lever entity_ref)", () => {
+  const upload: ParsedTemplateUpload = {
+    headers: ["Vendor", "Lever Key", "Addressed (1/0/0.5)"],
+    rows: [
+      {
+        Vendor: "Vega Systems",
+        "Lever Key": "AMS.VOLUME_BAND_PRICING",
+        "Addressed (1/0/0.5)": "1",
+      },
+      {
+        Vendor: "Vega Systems",
+        "Lever Key": "AMS.ENHANCEMENT_LEAKAGE",
+        "Addressed (1/0/0.5)": "0",
+      },
+      {
+        Vendor: "Orion Managed",
+        "Lever Key": "AMS.SLA_ECONOMICS",
+        "Addressed (1/0/0.5)": "0.5",
+      },
+    ],
+  };
+
+  it("joins Vendor + Lever Key into a canonical <vendor>::<lever> entity_ref", () => {
+    const { facts, rejectedRows, unmappedColumns } = mapTemplateUploadToFacts(
+      RESPONSE_COVERAGE,
+      upload,
+      CTX_LEVERS,
+    );
+    expect(rejectedRows).toHaveLength(0);
+    expect(unmappedColumns).toEqual([]);
+    expect(facts).toHaveLength(3);
+    for (const f of facts) {
+      expect(f.fact_key).toBe("response_addressed");
+      expect(f.entity_kind).toBe("vendor_lever");
+    }
+    const refs = facts.map((f) => f.entity_ref).sort();
+    expect(refs).toEqual(
+      [
+        "Orion Managed::AMS.SLA_ECONOMICS",
+        "Vega Systems::AMS.ENHANCEMENT_LEAKAGE",
+        "Vega Systems::AMS.VOLUME_BAND_PRICING",
+      ].sort(),
+    );
+    // The composite is legible in the citation.
+    expect(String(facts[0].source_citation?.entity_ref_column)).toBe(
+      "Vendor::Lever Key",
+    );
+  });
+
+  it("keeps the 0/0.5/1 ratio value without pre-scaling", () => {
+    const { facts } = mapTemplateUploadToFacts(
+      RESPONSE_COVERAGE,
+      upload,
+      CTX_LEVERS,
+    );
+    const byRef = new Map(facts.map((f) => [f.entity_ref, f]));
+    expect(byRef.get("Vega Systems::AMS.VOLUME_BAND_PRICING")!.value_numeric).toBe(1);
+    expect(byRef.get("Vega Systems::AMS.ENHANCEMENT_LEAKAGE")!.value_numeric).toBe(0);
+    expect(byRef.get("Orion Managed::AMS.SLA_ECONOMICS")!.value_numeric).toBe(0.5);
+    for (const f of facts) expect(f.unit).toBe("ratio");
+  });
+
+  it("rejects a row whose LEVER half is not a canonical archetype lever key (loud, not silent)", () => {
+    const bad: ParsedTemplateUpload = {
+      headers: upload.headers,
+      rows: [
+        {
+          Vendor: "Vega Systems",
+          "Lever Key": "AMS.NOT_A_LEVER",
+          "Addressed (1/0/0.5)": "1",
+        },
+      ],
+    };
+    const { facts, rejectedRows } = mapTemplateUploadToFacts(
+      RESPONSE_COVERAGE,
+      bad,
+      CTX_LEVERS,
+    );
+    expect(facts).toHaveLength(0);
+    expect(rejectedRows).toHaveLength(1);
+    expect(rejectedRows[0].reason).toMatch(/not a canonical archetype lever key/);
+  });
+
+  it("rejects a row whose VENDOR half is blank (composite needs both parts)", () => {
+    const bad: ParsedTemplateUpload = {
+      headers: upload.headers,
+      rows: [
+        {
+          Vendor: "",
+          "Lever Key": "AMS.VOLUME_BAND_PRICING",
+          "Addressed (1/0/0.5)": "1",
+        },
+      ],
+    };
+    const { facts, rejectedRows } = mapTemplateUploadToFacts(
+      RESPONSE_COVERAGE,
+      bad,
+      CTX_LEVERS,
+    );
+    expect(facts).toHaveLength(0);
+    expect(rejectedRows).toHaveLength(1);
+    expect(rejectedRows[0].reason).toMatch(/composite entity-ref column 'Vendor' is blank/);
+  });
+
+  it("does NOT treat the composite entity-ref columns as unmapped", () => {
+    const { unmappedColumns } = mapTemplateUploadToFacts(
+      RESPONSE_COVERAGE,
+      upload,
+      CTX_LEVERS,
+    );
+    expect(unmappedColumns).toEqual([]);
   });
 });

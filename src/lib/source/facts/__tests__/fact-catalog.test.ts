@@ -168,6 +168,20 @@ describe('Source fact catalog — shape + lookups', () => {
     expect(spec!.source).toBe('extracted_vendor');
   });
 
+  it('resolves the response_addressed signal fact under entity_kind vendor_lever', () => {
+    expect(isCatalogFactKey('response_addressed')).toBe(true);
+    expect(isSignalFactKey('response_addressed')).toBe(true);
+    const spec = factSpecByKey('response_addressed');
+    expect(spec).toBeDefined();
+    expect(spec!.entityKind).toBe('vendor_lever');
+    // 0/0.5/1 on the ratio unit (see the multi-vendor design doc) — no new unit.
+    expect(spec!.unit).toBe('ratio');
+    // A vendor's answer is extracted from the vendor response.
+    expect(spec!.source).toBe('extracted_vendor');
+    // The new composite entity kind is admitted.
+    expect(FACT_ENTITY_KINDS).toContain('vendor_lever');
+  });
+
   it('factSpecByKey returns undefined for unknown keys', () => {
     expect(factSpecByKey('not_a_real_fact')).toBeUndefined();
   });

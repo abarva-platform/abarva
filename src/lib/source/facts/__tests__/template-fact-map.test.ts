@@ -58,13 +58,14 @@ describe('template → fact map — catalog binding integrity', () => {
 });
 
 describe('template → fact map — worked examples present', () => {
-  it('ships the app-inventory, volumetrics, contract-terms, rfp-clauses, committed-value, and bafo-concessions templates', () => {
+  it('ships the app-inventory, volumetrics, contract-terms, rfp-clauses, committed-value, bafo-concessions, and response-coverage templates', () => {
     expect(templateFactMapByCode('APP_INVENTORY_V1')).toBeDefined();
     expect(templateFactMapByCode('VOLUMETRICS_V1')).toBeDefined();
     expect(templateFactMapByCode('CONTRACT_TERMS_V1')).toBeDefined();
     expect(templateFactMapByCode('RFP_CLAUSES_V1')).toBeDefined();
     expect(templateFactMapByCode('COMMITTED_VALUE_V1')).toBeDefined();
     expect(templateFactMapByCode('BAFO_CONCESSIONS_V1')).toBeDefined();
+    expect(templateFactMapByCode('RESPONSE_COVERAGE_V1')).toBeDefined();
   });
 
   it('BAFO_CONCESSIONS_V1 binds one row per value lever to the bafo_concession_captured_usd signal', () => {
@@ -147,9 +148,38 @@ describe('template → fact map — worked examples present', () => {
     }
   });
 
-  it('each template declares an entityRefColumn and at least one column', () => {
+  it('RESPONSE_COVERAGE_V1 binds one row per vendor×lever to the response_addressed signal (composite entity_ref)', () => {
+    const tpl = templateFactMapByCode('RESPONSE_COVERAGE_V1')!;
+    expect(tpl.rowEntity).toBe('vendor_lever');
+    // Composite entity_ref: Vendor::Lever Key. Single entityRefColumn is unset.
+    expect(tpl.entityRefColumn).toBeUndefined();
+    expect(tpl.entityRefColumns).toEqual(['Vendor', 'Lever Key']);
+    expect(tpl.columns).toHaveLength(1);
+    const col = tpl.columns[0];
+    expect(col.header).toBe('Addressed (1/0/0.5)');
+    expect(col.factKey).toBe('response_addressed');
+    // The column's entityKind + unit must match the catalog (no drift): 0/0.5/1 on
+    // the ratio unit, attached to a vendor_lever entity.
+    const spec = factSpecByKey(col.factKey);
+    expect(spec).toBeDefined();
+    expect(col.entityKind).toBe('vendor_lever');
+    expect(col.entityKind).toBe(spec!.entityKind);
+    expect(col.unit).toBe('ratio');
+    expect(col.unit).toBe(spec!.unit);
+  });
+
+  it('each template declares EXACTLY ONE of entityRefColumn / entityRefColumns and at least one column', () => {
     for (const tpl of listTemplateFactMaps()) {
-      expect(tpl.entityRefColumn.length).toBeGreaterThan(0);
+      const hasSingle = (tpl.entityRefColumn?.length ?? 0) > 0;
+      const hasComposite = (tpl.entityRefColumns?.length ?? 0) > 0;
+      // Exactly one entity-ref carrier (single XOR composite).
+      expect(hasSingle !== hasComposite).toBe(true);
+      if (hasComposite) {
+        // Every composite part is a non-empty header.
+        for (const h of tpl.entityRefColumns!) {
+          expect(h.length).toBeGreaterThan(0);
+        }
+      }
       expect(tpl.columns.length).toBeGreaterThan(0);
     }
   });
