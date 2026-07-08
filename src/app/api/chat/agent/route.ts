@@ -119,6 +119,14 @@ import {
   getPhasePackV2,
   formatPhasePackV2ForPrompt,
 } from "@/lib/programs/phase-packs";
+// Moves aVa chat hardening (flag-gated, default off) — deterministic
+// grounding packet + answer-mode classifier for /strategic-moves/* chat.
+// See src/lib/programs/ava-chat/.
+import {
+  buildMovesAvaChatPacket,
+  classifyMovesAvaQuestion,
+  formatMovesAvaChatPacketForPrompt,
+} from "@/lib/programs/ava-chat";
 import {
   getStagePack,
   formatStagePackForPrompt,
@@ -592,6 +600,14 @@ export async function POST(request: Request) {
   // prompt for program-detail surfaces. Null when no pack authored yet.
   let phasePackBlock = "";
 
+  // Moves aVa chat hardening (flag-gated, default off): grounds Nexus in a
+  // deterministic MovesAvaChatPacket built from real Move state instead of a
+  // blank prompt, and classifies the question into a bounded answer mode
+  // (with an out-of-scope redirect for ad hoc strategy questions). Resolved
+  // alongside programData below. Additive — appended to contextLines, never
+  // replaces the existing phase pack block. See src/lib/programs/ava-chat/.
+  let movesAvaHardeningBlock = "";
+
   // Reuse the earlier active-client lookup (resolved before voice doctrine
   // wiring so tenantName is authoritative). Aliased for downstream readers.
   const activeClient = earlyActiveClient;
@@ -701,6 +717,49 @@ export async function POST(request: Request) {
           const pack = getPhasePack(promptPhase);
           if (pack) {
             phasePackBlock = formatPhasePackForPrompt(pack);
+          }
+        }
+
+        const movesAvaChatHardeningEnabled = isFeatureEnabled(
+          { clientKey: activeClientKey ?? null, clientId: activeClient?.id ?? null },
+          "moves_ava_chat_hardening",
+        );
+        if (
+          movesAvaChatHardeningEnabled &&
+          surface.startsWith("/strategic-moves/") &&
+          message
+        ) {
+          try {
+            const packet = buildMovesAvaChatPacket(
+              {
+                tenant: tenantName,
+                moveId: programId,
+                moveTitle: engagement.name,
+                currentPhase: promptPhase,
+                currentPhaseClientLabel: `P${promptPhase} ${promptPhaseLabel}`,
+                evidenceNeedPackets:
+                  evidence.length > 0
+                    ? [`${evidence.length} evidence item(s) uploaded — priority/coverage not loaded this turn`]
+                    : [],
+                gateCriteria:
+                  gateApprovals.length > 0
+                    ? [
+                        {
+                          label: `Latest gate action: ${gateApprovals[0].action} by ${gateApprovals[0].actor_name}`,
+                          met: gateApprovals[0].action === "approved",
+                          severity: "hard",
+                        },
+                      ]
+                    : [],
+              },
+              message,
+            );
+            const { mode } = classifyMovesAvaQuestion(message);
+            movesAvaHardeningBlock = formatMovesAvaChatPacketForPrompt(packet, mode);
+          } catch {
+            // Never block the chat turn on the hardening layer — fall back
+            // to the existing phase-pack-only prompt.
+            movesAvaHardeningBlock = "";
           }
         }
       }
@@ -1608,6 +1667,11 @@ export async function POST(request: Request) {
     // where a pack has been authored for the engagement's current phase.
     // Empty string for other surfaces / phases without a pack yet.
     phasePackBlock,
+    "",
+    // Moves aVa chat hardening — deterministic packet grounding + answer-mode
+    // classification for /strategic-moves/* surfaces. Empty string when the
+    // flag is off or the surface/tenant doesn't qualify.
+    movesAvaHardeningBlock,
     "",
     sourceOperatingDoctrineBlock,
     "",
