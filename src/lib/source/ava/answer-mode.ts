@@ -117,6 +117,41 @@ export function isGroundedAnswerMode(mode: SourceAnswerMode): boolean {
   );
 }
 
+/**
+ * Source aVa polish gate — Gap 1 fix.
+ *
+ * Live-found: "What evidence is missing?" asked on the RFP stage was
+ * answered with an unrelated cross-module risk item (a generic SOX /
+ * payment-approval control flag) instead of Source-event evidence
+ * readiness. Root cause (verified, not guessed): the question classifies
+ * correctly to `evidence_readiness` — no earlier rule in `RULES` matches
+ * "what evidence is missing?" ahead of it — and its Source-scoped grounding
+ * (`buildModeGrounding`) builds correctly too. The actual bug is one layer
+ * up, in the chat route (`/api/chat/agent/route.ts`): the route ALSO
+ * assembles a generic, tenant-wide `ContextBundle` on every turn
+ * (`getContextBroker().assemble` with mode `'full'` for `/source*`
+ * surfaces) via a keyword/semantic search that is completely independent of
+ * the active Source event. Broad keywords like "evidence" and "missing" can
+ * surface an unrelated tenant-wide compliance/risk chunk, and that generic
+ * "CONTEXT BROKER RECEIPT" block was injected into the SAME system prompt
+ * as the correctly Source-scoped grounding, with nothing telling the model
+ * the generic receipt was off-topic for this turn.
+ *
+ * This predicate is the decision the route now makes: once a GROUNDED,
+ * non-passthrough Source answer mode has fired for this turn, the
+ * deterministic Source grounding block is authoritative for the topic, and
+ * the generic cross-module context-broker receipt should be suppressed
+ * from the prompt entirely (see route.ts's
+ * `contextBundlePromptBlockForPrompt`). `stakeholder_alignment` (the one
+ * mode `isGroundedAnswerMode` returns false for) keeps receiving the
+ * generic receipt exactly as before — this fix changes nothing for it.
+ */
+export function shouldSuppressGenericContextBundleForSourceMode(
+  mode: SourceAnswerMode | null,
+): boolean {
+  return mode !== null && isGroundedAnswerMode(mode);
+}
+
 export interface ClassifySourceAnswerModeInput {
   /** The user's raw question text for this turn. */
   question: string;

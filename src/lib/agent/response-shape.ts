@@ -409,6 +409,163 @@ function repairMalformedComparisonTables(text: string): string {
   return normalizeVisibleWhitespace(repaired.join("\n"));
 }
 
+// ── run-on pipe-table repair (Source aVa polish gate — Gap 2) ────────────────
+//
+// Live-found on the Source event canvas: a value-lever answer with real,
+// correctly-grounded classified-value data rendered as a run-on, unstructured
+// line — e.g. "Lever | Type | Range Enhancement / change-order leakage |
+// Protected (risk hedge) | $12M–$18M Volume-band price flex-down |." — instead
+// of a table. Root cause (verified): AgentMarkdown renders through
+// react-markdown + remark-gfm, which correctly parses WELL-FORMED GFM pipe
+// tables (header row + a "| --- | --- |" separator row + one data row per
+// line). The garbled text is missing BOTH of those requirements — there is no
+// separator row, and the "rows" are not even on separate lines — so
+// remark-gfm never recognizes a table node at all and the literal `|`
+// characters render as plain-paragraph text. Neither `stripChatMarkdownFormatting`
+// nor `repairMalformedComparisonTables` (which only targets the specific
+// 4-column "Option | Strength | Weakness | Fit" comparison shape) touch this
+// case, so it reached the user unrepaired.
+//
+// This is a genuinely lossy repair target: once row boundaries have been
+// collapsed into one line, there is no reliable way to recover which cell
+// belonged to which column (a free-text cell can itself contain the words
+// "Type" or "Range"). Rather than guess column alignment and risk an even
+// more misleading table, we defensively reflow the collapsed pipe-fragments
+// into a plain bulleted list — this guarantees the user never sees a raw `|`
+// character or a run-on sentence, even though the crisp table shape is lost
+// for this one degraded case. The real fix is prevention (the model is now
+// instructed — see AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD's TABLE FORMAT line —
+// to emit a valid multi-line GFM table or a bulleted list, never collapsed
+// pipe text); this repair is the safety net for when it doesn't comply.
+const PIPE_RUN_ON_MIN_SEGMENTS = 4;
+
+/** True when `line` looks like a single well-formed table row (or separator
+ * row) that a real markdown table renderer will already handle correctly —
+ * i.e. starts and ends with `|` and contains no more than a handful of cells.
+ * Used to avoid "fixing" text that already renders fine. */
+function isWellFormedSingleTableRow(line: string): boolean {
+  return /^\|.+\|$/.test(line.trim());
+}
+
+/** Detects a paragraph carrying 2+ pipe-delimited "rows" worth of cells
+ * collapsed onto one line (no row-separating newlines and no GFM separator
+ * row) — the exact shape of the live-found value-lever garbling. Deliberately
+ * conservative: a normal sentence that merely contains a couple of literal
+ * "|" characters (rare, but possible in pasted content) will not trip this —
+ * it requires at least PIPE_RUN_ON_MIN_SEGMENTS pipe-delimited segments AND
+ * the line must not already be a clean single table row. */
+function isRunOnPipeTableLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed.includes("|")) return false;
+  if (isWellFormedSingleTableRow(trimmed)) return false;
+  const segments = trimmed.split("|").map((s) => s.trim());
+  const nonEmptySegments = segments.filter(Boolean);
+  return nonEmptySegments.length >= PIPE_RUN_ON_MIN_SEGMENTS;
+}
+
+/** Reflows a collapsed pipe run-on into a bulleted list of its non-empty
+ * cell fragments — never attempts to re-derive column alignment (see module
+ * doc above for why that would be unsafe). A genuine narrative lead-in
+ * before the first pipe (e.g. "Here is the lever breakdown:" — text that
+ * ends in a colon) is kept as its own line before the list; text before the
+ * first pipe that does NOT end in a colon is treated as the first cell
+ * (e.g. a bare header word like "Lever" with no lead-in at all), not
+ * discarded or mis-split off. */
+function reflowRunOnPipeTableLine(line: string): string {
+  const trimmed = line.trim();
+  const firstPipe = trimmed.indexOf("|");
+  const beforeFirstPipe = firstPipe > 0 ? trimmed.slice(0, firstPipe).trim() : "";
+  const hasNarrativeLeadIn = /:\s*$/.test(beforeFirstPipe);
+  const lead = hasNarrativeLeadIn ? beforeFirstPipe : "";
+  const cellsPart = hasNarrativeLeadIn
+    ? trimmed.slice(firstPipe)
+    : trimmed;
+  const cells = cellsPart
+    .split("|")
+    .map((cell) => normalizeCompactLine(cell))
+    // Drop empty cells AND cells that are pure trailing punctuation (e.g. a
+    // lone "." left over from the run-on's closing sentence period) — these
+    // carry no real content and would otherwise render as a bare "-." bullet.
+    .filter((cell) => cell.length > 0 && /[\p{L}\p{N}]/u.test(cell));
+  const bullets = cells.map((cell) => `- ${sentenceWithPeriod(cell)}`);
+  return [lead, ...bullets].filter(Boolean).join("\n");
+}
+
+/**
+ * Safety-net repair for the Gap 2 table-garbling failure mode: scans
+ * line-by-line and reflows any run-on pipe-collapsed "table" into a clean
+ * bulleted list so the user never sees literal `|` characters or a
+ * run-on sentence. Leaves already-well-formed markdown (real GFM tables,
+ * plain prose, bullet/numbered lists) untouched.
+ */
+function repairRunOnPipeTableText(text: string): string {
+  const lines = text.split("\n");
+  const repaired = lines.map((line) =>
+    isRunOnPipeTableLine(line) ? reflowRunOnPipeTableLine(line) : line,
+  );
+  return normalizeVisibleWhitespace(repaired.join("\n"));
+}
+
+// ── orphaned numbered-list-marker repair (Source aVa polish gate — Gap 2) ────
+//
+// Live-found on a BAFO-ask answer: "Here is how I would frame the BAFO ask:
+// 1." appeared alone on its own line, then the actual ask text appeared as a
+// separate, visually disconnected paragraph below it. This is the model
+// emitting a numbered-list marker ("1.") with nothing after it on the same
+// line, then a blank line, then the item's real content as what markdown
+// treats as a NEW, unrelated paragraph (a bare "1." with no following text
+// on that line is not a valid list-item start by itself). No join/streaming
+// bug in our code produces this shape — `splitOverlongParagraphs`
+// (output-discipline/response-contract.ts) only ever splits on existing
+// blank-line paragraph boundaries, never merges or re-orders across them —
+// so this is the model's own malformed markdown. We repair it defensively:
+// a line that is ONLY a numbered marker, followed by one or more blank
+// lines and then a plain-text paragraph (not itself a list/table/heading),
+// gets the marker re-joined onto that paragraph as a single well-formed
+// list item.
+const LONE_NUMBERED_MARKER_RE = /^(\d{1,2})\.\s*$/;
+
+function repairOrphanedNumberedMarkers(text: string): string {
+  const lines = text.split("\n");
+  const repaired: string[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    const markerMatch = LONE_NUMBERED_MARKER_RE.exec(line.trim());
+    if (!markerMatch) {
+      repaired.push(line);
+      continue;
+    }
+
+    // Skip blank lines to find the next non-blank line.
+    let cursor = index + 1;
+    while (cursor < lines.length && (lines[cursor] ?? "").trim() === "") {
+      cursor += 1;
+    }
+    const next = cursor < lines.length ? (lines[cursor] ?? "") : null;
+    const nextTrimmed = next?.trim() ?? "";
+    const nextIsPlainParagraph =
+      nextTrimmed.length > 0 &&
+      !/^(\d{1,2})\.\s/.test(nextTrimmed) &&
+      !/^[-*·]\s/.test(nextTrimmed) &&
+      !/^\|/.test(nextTrimmed) &&
+      !/^#{1,6}\s/.test(nextTrimmed);
+
+    if (next !== null && nextIsPlainParagraph) {
+      repaired.push(`${markerMatch[1]}. ${nextTrimmed}`);
+      index = cursor;
+      continue;
+    }
+
+    // No usable following paragraph to join — leave the marker as-is
+    // rather than guess; better an odd-looking "1." than silently
+    // dropping content.
+    repaired.push(line);
+  }
+
+  return normalizeVisibleWhitespace(repaired.join("\n"));
+}
+
 function preserveReadableTable(text: string): string | null {
   const lines = text
     .split("\n")
@@ -930,9 +1087,11 @@ export function shapeStreamingAgentTextForSurface(
   _surface: string,
   text: string,
 ): string {
-  const cleaned = repairMalformedComparisonTables(
-    scrubInternalAdvisorText(
-      stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+  const cleaned = repairRunOnPipeTableText(
+    repairMalformedComparisonTables(
+      scrubInternalAdvisorText(
+        stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+      ),
     ),
   );
   return repairAgentOutputContractText(cleaned).text;
@@ -1036,9 +1195,19 @@ export function shapeAgentResponseForSurface(
   // bypass class as compactConsultantChatText (different shape, same Brief
   // violation by construction). Surfaces correctly compacted now flow
   // through the single shouldCompactSurface gate.
-  const cleaned = repairMalformedComparisonTables(
-    scrubInternalAdvisorText(
-      stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+  //
+  // repairOrphanedNumberedMarkers only runs here (the post-stream / final
+  // shaping pass), not in shapeStreamingAgentTextForSurface: joining a lone
+  // "1." marker onto "the next paragraph" is only safe once the full text
+  // has arrived — mid-stream, that next paragraph may not exist yet, and
+  // joining prematurely could flicker or attach the wrong content.
+  const cleaned = repairOrphanedNumberedMarkers(
+    repairRunOnPipeTableText(
+      repairMalformedComparisonTables(
+        scrubInternalAdvisorText(
+          stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+        ),
+      ),
     ),
   );
   // ATLAS-HI-3-2026-05-30 — bypass the compactor when the LLM already

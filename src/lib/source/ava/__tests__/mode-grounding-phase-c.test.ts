@@ -6,6 +6,7 @@
 // builders themselves produce.
 
 import { buildModeGrounding } from "../mode-grounding";
+import { classifySourceAnswerMode } from "../answer-mode";
 import { AMS_MANAGED_SERVICES } from "@/lib/source/archetypes/registry";
 import {
   SAMPLE_SCOPE_STAGE,
@@ -270,5 +271,46 @@ describe("buildModeGrounding — general_advisory (Phase C, compact roll-up)", (
     const exposedCount = (result.block.match(/EXPOSED — clause not present\./g) ?? []).length;
     expect(protectedCount).toBe(4);
     expect(exposedCount).toBe(2);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Source aVa polish gate — Gap 2 regression ("What value levers exist?").
+//
+// This question classifies to `general_advisory` (no Phase A/B/C pattern
+// matches this exact phrasing — confirmed against answer-mode.ts's RULES),
+// which IS a grounded mode (Phase C grounds the catch-all with a compact
+// roll-up rather than leaving it as a bare passthrough). The live-found Gap 2
+// bug was that a value-lever answer rendered as a garbled run-on pipe
+// "table" — this suite proves the GROUNDING side of that answer never emits
+// a pipe-delimited fragment itself (it uses bullet-style value-type
+// classification lines, e.g. "Protected (risk hedge): Enhancement / ...
+// leakage."), so any garbling that DOES happen is a model-generation /
+// render concern, not a grounding-data concern — and is covered on the
+// render side by response-shape's repairRunOnPipeTableText suite
+// (source-ava-polish-gate-response-shape.test.ts).
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Source aVa polish gate — Gap 2: 'What value levers exist?' grounding never emits a raw pipe fragment", () => {
+  it("classifies to general_advisory (the grounded catch-all), not a fallback that skips grounding", () => {
+    const result = classifySourceAnswerMode({ question: "What value levers exist?" });
+    expect(result.mode).toBe("general_advisory");
+  });
+
+  it("general_advisory's grounding block for this question's stage/facts contains no un-tabled pipe fragments", () => {
+    const result = buildModeGrounding({
+      mode: "general_advisory",
+      event: EVENT,
+      archetype: AMS_MANAGED_SERVICES,
+      factInputs: FACTS_TWO_LEVERS,
+      viewStageKey: "pricing",
+    });
+    // The grounding block itself must never contain a literal "|" — it
+    // formats lever/value-type data as bullet lines, never as inline
+    // pipe-delimited text a downstream renderer would have to parse.
+    expect(result.block).not.toContain("|");
+    // It still names the levers/value types (so the model has real data to
+    // narrate as a clean table or list, per the TABLE FORMAT guard in
+    // AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD).
+    expect(result.block).toContain("VALUE-TYPE CLASSIFICATION");
   });
 });

@@ -9,6 +9,7 @@ import {
   isPhaseBImplementedMode,
   isPhaseCImplementedMode,
   isGroundedAnswerMode,
+  shouldSuppressGenericContextBundleForSourceMode,
   PHASE_A_IMPLEMENTED_MODES,
   PHASE_B_IMPLEMENTED_MODES,
   PHASE_C_IMPLEMENTED_MODES,
@@ -211,5 +212,67 @@ describe("classifySourceAnswerMode — determinism", () => {
     const first = classifySourceAnswerMode(input);
     const second = classifySourceAnswerMode(input);
     expect(first).toEqual(second);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Source aVa polish gate — Gap 1 regression.
+//
+// Live-found: "What evidence is missing?" asked on the RFP stage was answered
+// with an unrelated cross-module risk item (a generic SOX/payment-approval
+// control flag), not Source-event evidence readiness. This suite proves the
+// classifier itself was never the bug — by construction, no rule earlier in
+// RULES than evidence_readiness.missing matches this exact phrasing — so a
+// regression here would mean a NEW rule was added ahead of evidence_readiness
+// that steals this question. It also locks in the actual fix: once a grounded
+// mode fires, the route must suppress the generic cross-module context-broker
+// receipt (see shouldSuppressGenericContextBundleForSourceMode / route.ts's
+// contextBundlePromptBlockForPrompt).
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Source aVa polish gate — Gap 1: 'What evidence is missing?' stays on-topic", () => {
+  it("classifies 'What evidence is missing?' as evidence_readiness, not any earlier rule", () => {
+    const result = classifySourceAnswerMode({ question: "What evidence is missing?" });
+    expect(result.mode).toBe("evidence_readiness");
+    expect(result.matchedRule).toBe("evidence_readiness.missing");
+    expect(result.isFallback).toBe(false);
+  });
+
+  it("is not accidentally claimed by event_status, stage_gate, or any other rule that precedes it in RULES", () => {
+    // Regression guard: if a future rule is added/reordered ahead of
+    // evidence_readiness.missing and starts matching this exact question,
+    // this test catches the topic hijack immediately instead of only being
+    // caught by a live/manual QA pass.
+    const result = classifySourceAnswerMode({ question: "What evidence is missing?" });
+    expect(result.mode).not.toBe("event_status");
+    expect(result.mode).not.toBe("stage_gate");
+    expect(result.mode).not.toBe("risk_exposure");
+    expect(result.mode).not.toBe("general_advisory");
+  });
+
+  it("also classifies the case-insensitive / no-question-mark variants the same way", () => {
+    for (const question of [
+      "what evidence is missing",
+      "WHAT EVIDENCE IS MISSING?",
+      "What evidence is missing on this stage?",
+    ]) {
+      const result = classifySourceAnswerMode({ question });
+      expect(result.mode).toBe("evidence_readiness");
+    }
+  });
+
+  it("shouldSuppressGenericContextBundleForSourceMode is true for evidence_readiness (the fix's actual gate)", () => {
+    expect(shouldSuppressGenericContextBundleForSourceMode("evidence_readiness")).toBe(true);
+  });
+
+  it("shouldSuppressGenericContextBundleForSourceMode is true for every grounded mode and false for stakeholder_alignment or null", () => {
+    for (const mode of [
+      ...PHASE_A_IMPLEMENTED_MODES,
+      ...PHASE_B_IMPLEMENTED_MODES,
+      ...PHASE_C_IMPLEMENTED_MODES,
+    ]) {
+      expect(shouldSuppressGenericContextBundleForSourceMode(mode)).toBe(true);
+    }
+    expect(shouldSuppressGenericContextBundleForSourceMode("stakeholder_alignment")).toBe(false);
+    expect(shouldSuppressGenericContextBundleForSourceMode(null)).toBe(false);
   });
 });
