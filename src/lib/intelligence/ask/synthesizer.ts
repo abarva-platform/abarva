@@ -1388,7 +1388,10 @@ ${args.query}${strategyToAbarvaSolutionPromptDirective}`
       sanitized,
       args.sources,
     );
-    const decisionGrade = enforceDecisionGradeAnswer(evidenceDisciplined);
+    const decisionGrade = applyCxoAnswerModeFallbacks(
+      enforceDecisionGradeAnswer(evidenceDisciplined),
+      answerMode,
+    );
     // No-tab-marker fallback + reconciliation. This branch is reached when the
     // final text has no parseable tabs. `decisionGrade` is the final answer.
     // If nothing was streamed live (plain-text path, or rich-text where no

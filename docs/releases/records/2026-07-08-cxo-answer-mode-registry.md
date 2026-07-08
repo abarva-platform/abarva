@@ -30,7 +30,9 @@ This release centralizes CXO-grade Intelligence answer contracts in a small answ
 
 - `src/lib/intelligence/ask/answer-mode-registry.ts`: Adds the CXO answer mode registry, required sections, required artifacts, banned phrases, export requirement flags, proof prompts, and deterministic fallback ownership.
 - `src/lib/intelligence/ask/synthesizer.ts`: Uses the registry for mode system addenda, prompt directives, and deterministic fallback application.
+- `src/lib/intelligence/ask/synthesizer.ts`: Re-applies registry deterministic fallback at the final no-tabs emission boundary after evidence/decision-grade transforms.
 - `src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts`: Verifies registry ownership and the deterministic Moves phase-table fallback behavior.
+- `src/lib/intelligence/ask/response-policy.test.ts`: Adds the exact live proof prompt as a `strategy_to_moves_execution` classifier regression.
 
 ## QA / Validation
 
@@ -38,7 +40,8 @@ This release centralizes CXO-grade Intelligence answer contracts in a small answ
 - Pass: `NODE_OPTIONS='--max-old-space-size=6144' ./node_modules/.bin/tsc --noEmit --pretty false --incremental false`
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
-- Not run: live ACA proof for this registry refactor. This branch is not deployed yet.
+- Fail: live ACA proof on deployed `main-1358261c` returned HTTP 200 and all five surfaces, but omitted literal P0-P5/Tower labels because a later final-answer transform bypassed the first registry fallback application.
+- Not run: live ACA proof for the final-boundary fallback fix. This branch is not deployed yet.
 
 ## Rollout Plan
 
@@ -67,3 +70,4 @@ Revert the merge commit and redeploy through the ACA main deploy workflow. The r
 ## Known Gaps
 
 - The registry seeds future answer modes such as `industry_trend_to_ai_bets`, `board_ai_governance_plan`, and `strategy_to_tower_value_case` as inactive contracts. Those modes still need classifiers, typed artifact validators, export proof, and live proof prompts before being activated.
+- Live acceptance for the final-boundary fallback fix requires merge, ACA deploy, runtime invariant proof, and rerun of the exact Lakeshore Moves phase prompt.

@@ -76,6 +76,7 @@ describe("Ask Intelligence response policy", () => {
   it("classifies strategy-to-execution questions as Moves execution mode", () => {
     const strategyQuestions = [
       "If I run this through Moves for 8 weeks, what would the plan look like by phases?",
+      "If I run the supply-chain AI top bets through Moves for 8 weeks, what would the plan look like by phases?",
       "Create a Data & AI strategy with the top 5 bets, business case, solution, and roadmap for the executive council.",
       "Help me decide the top 5 AI use cases for supply chain and how we would execute.",
       "What implementation plan should we use for this transformation sprint?",
