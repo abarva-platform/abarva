@@ -1,6 +1,10 @@
 import { classifyIntent } from "./classifier";
 import { route } from "./router";
-import { isExplicitConciseAsk, synthesizeStream } from "./synthesizer";
+import {
+  chunkAskText,
+  isExplicitConciseAsk,
+  synthesizeStream,
+} from "./synthesizer";
 import { generateFollowups } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
@@ -47,6 +51,11 @@ import {
 import { buildIntelligenceDossier } from "@/lib/intelligence/dossiers";
 import { buildCompanionCanvasPayload } from "@/lib/intelligence/ask/companion-canvas-engine";
 import { canonicalClientDisplayName } from "@/lib/client-config";
+import {
+  buildRetiredFactError,
+  scanRetiredFacts,
+  type RetiredFactFinding,
+} from "./retired-fact-gate";
 
 export type {
   AskIntent,
@@ -74,6 +83,7 @@ export interface AskEvent {
   text?: string;
   followups?: string[];
   error?: string;
+  retiredFactFindings?: RetiredFactFinding[];
   /** Question-specific advisory packet passed into the Intelligence synthesizer. */
   intelligenceDossier?: IntelligenceDossier;
   advisoryPacket?: AdvisoryPacket;
@@ -106,8 +116,14 @@ export interface AskOptions {
   };
   /** Called with the raw system + user prompt just before the model is invoked. Used by QA probes to hash/log the model input. */
   onModelInput?: (parts: { system: string; user: string }) => void;
-  /** Called with the raw model output text after streaming completes. Used by QA probes to capture full answer text. */
-  onModelOutput?: (text: string) => void;
+  /** Called with the raw model output after streaming completes. Used by QA probes to capture full answer text. */
+  onModelOutput?: (parts: {
+    rawText: string;
+    text: string;
+    model?: string;
+    auditId?: string;
+    route: string;
+  }) => void;
   /** Latency trace request ID to resume an existing trace (passed from the route layer). */
   latencyTraceId?: string | null;
   /** Timestamp (ms) when the latency trace started at the route layer. */
@@ -205,6 +221,14 @@ export async function* askIntelligence(
       trimmed,
       classification.intent,
     );
+    const tenantKeyForRetiredFactGate =
+      opts.tenant?.canonicalKey ??
+      opts.tenant?.appClientKey ??
+      opts.tenantInventoryKey ??
+      opts.tenantClientKey ??
+      opts.surfaceContext?.clientKey ??
+      opts.surfaceContext?.activeClient ??
+      null;
 
     const surfaceStartedAt = Date.now();
     const surfaceContext = retrieveSurfaceContextSources(
@@ -216,6 +240,20 @@ export async function* askIntelligence(
         sourceCount: surfaceContext.length,
       }),
     );
+    const surfaceRetiredFacts = scanRetiredFacts({
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      surfaceContext: opts.surfaceContext,
+      sources: surfaceContext,
+    });
+    if (surfaceRetiredFacts.length > 0) {
+      yield {
+        type: "error",
+        error: buildRetiredFactError(surfaceRetiredFacts),
+        retiredFactFindings: surfaceRetiredFacts,
+      };
+      return;
+    }
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
     const v7DossierStartedAt = Date.now();
     const v7Dossier = await retrieveV7DossierSources(trimmed, {
@@ -309,7 +347,6 @@ export async function* askIntelligence(
         sourceCount: worldview.sources.length,
       }),
     );
-    const fingerprintStartedAt = Date.now();
     const factFingerprint = await getTenantFactFingerprint({
       tenantId: opts.tenantId,
       tenantInventoryKey: opts.tenantInventoryKey,
@@ -365,6 +402,27 @@ export async function* askIntelligence(
         ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
         : 0;
     const coverageReport = assertCoverage(questionCategory, sources);
+    const preModelRetiredFacts = scanRetiredFacts({
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      surfaceContext: opts.surfaceContext,
+      sources,
+      textBlocks: [
+        { location: "factAvailabilityBlock", text: factAvailabilityBlock },
+        {
+          location: "coverageReportBlock",
+          text: formatCoverageReportForPrompt(coverageReport),
+        },
+      ],
+    });
+    if (preModelRetiredFacts.length > 0) {
+      yield {
+        type: "error",
+        error: buildRetiredFactError(preModelRetiredFacts),
+        retiredFactFindings: preModelRetiredFacts,
+      };
+      return;
+    }
     yield { type: "sources", sources, coverageReport };
     const demoSafeTenantName =
       canonicalClientDisplayName({
@@ -402,14 +460,34 @@ export async function* askIntelligence(
         evidenceStrength: intelligenceDossier.tenantEvidenceDossier.confidence,
       }),
     );
+    const advisoryPacketForEvent = advisoryPacketForClientEvent(
+      advisoryPacket,
+      opts.includeAdvisoryPacketAudit === true,
+    );
+    const packetRetiredFacts = scanRetiredFacts({
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      textBlocks: [
+        {
+          location: "intelligenceDossier",
+          text: JSON.stringify(intelligenceDossier),
+        },
+        {
+          location: "advisoryPacket",
+          text: JSON.stringify(advisoryPacketForEvent),
+        },
+      ],
+    });
+    if (packetRetiredFacts.length > 0) {
+      yield {
+        type: "error",
+        error: buildRetiredFactError(packetRetiredFacts),
+        retiredFactFindings: packetRetiredFacts,
+      };
+      return;
+    }
     yield { type: "intelligence-dossier", intelligenceDossier };
-    yield {
-      type: "advisory-packet",
-      advisoryPacket: advisoryPacketForClientEvent(
-        advisoryPacket,
-        opts.includeAdvisoryPacketAudit === true,
-      ),
-    };
+    yield { type: "advisory-packet", advisoryPacket: advisoryPacketForEvent };
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     const currentStateAsk = isBroadCurrentStateQuestion(trimmed);
@@ -429,6 +507,7 @@ export async function* askIntelligence(
     const companionCanvasEnabled = opts.companionCanvasEnabled === true;
     const coverageReportBlock = formatCoverageReportForPrompt(coverageReport);
     let answer = "";
+    const pendingDeltas: string[] = [];
     for await (const delta of synthesizeStream({
       richText: opts.richText,
       // Companion-canvas turns stream answer-only (true streaming); the
@@ -464,6 +543,24 @@ export async function* askIntelligence(
       latencyStartedAt: trace.startedAt,
     })) {
       answer += delta;
+      pendingDeltas.push(delta);
+    }
+    const modelOutputRetiredFacts = scanRetiredFacts({
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      textBlocks: [{ location: "modelOutput", text: answer }],
+    });
+    if (modelOutputRetiredFacts.length > 0) {
+      yield {
+        type: "error",
+        error: buildRetiredFactError(modelOutputRetiredFacts),
+        retiredFactFindings: modelOutputRetiredFacts,
+      };
+      return;
+    }
+    for (const delta of pendingDeltas.length > 0
+      ? pendingDeltas
+      : chunkAskText(answer)) {
       yield { type: "delta", text: delta };
     }
 
@@ -481,9 +578,25 @@ export async function* askIntelligence(
           tenantClientKey: opts.tenantClientKey ?? null,
           tenantId: opts.tenantId ?? null,
           userId: opts.userId,
-          factAvailabilityBlock: groundedFactBlock,
+          factAvailabilityBlock,
           coverageReportBlock,
         });
+        const canvasRetiredFacts = scanRetiredFacts({
+          tenantKey: tenantKeyForRetiredFactGate,
+          tenantName:
+            opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+          textBlocks: [
+            { location: "companionCanvas", text: JSON.stringify(canvas) },
+          ],
+        });
+        if (canvasRetiredFacts.length > 0) {
+          yield {
+            type: "error",
+            error: buildRetiredFactError(canvasRetiredFacts),
+            retiredFactFindings: canvasRetiredFacts,
+          };
+          return;
+        }
         emitTiming(
           trace.finish("companion_canvas.built", canvasStartedAt, {
             tenantThin: canvas.meta.tenantThin,
@@ -581,6 +694,19 @@ export async function* askIntelligence(
       tenantId: opts.tenantId,
       userId: opts.userId,
     });
+    const followupRetiredFacts = scanRetiredFacts({
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      textBlocks: [{ location: "followups", text: JSON.stringify(followups) }],
+    });
+    if (followupRetiredFacts.length > 0) {
+      yield {
+        type: "error",
+        error: buildRetiredFactError(followupRetiredFacts),
+        retiredFactFindings: followupRetiredFacts,
+      };
+      return;
+    }
     yield { type: "followups", followups };
     yield { type: "done" };
   } catch (err) {

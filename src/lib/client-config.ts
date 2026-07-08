@@ -41,6 +41,8 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bSkyHarbor Airlines\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor Air\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bLakeshore Holdings Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  [/\bLakeshore Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore Holdings(?:\s+Holdings)+\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore Holdings\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
@@ -62,6 +64,8 @@ const DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS: ReadonlyArray<
   ["SkyHarbor Airlines", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Air", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["Lakeshore Holdings Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  ["Lakeshore Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Holdings", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore", DEMO_SAFE_CLIENT_NAMES.lakeshore],
 ];
@@ -161,13 +165,6 @@ export const ALL_CLIENTS: ClientOption[] = [
     color: "#2563EB",
     vertical: "Diversified Holdco",
   },
-  {
-    id: 'lakeshore',
-    name: 'Lakeshore Industries',
-    shortName: 'Lakeshore',
-    color: '#2563EB',
-    vertical: 'Industrial Manufacturing',
-  },
 ] as const;
 
 export type ClientKey = (typeof ALL_CLIENTS)[number]["id"];
@@ -184,6 +181,8 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   apexretail: ['Apex Retail', 'Apex Retail Group'],
   northstar: ['Northstar Clinical Technologies', 'Northstar'],
   skyharbor: ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
+  // Keep retired aliases only as inbound lookup aliases. User-visible output is
+  // canonicalized to DEMO_SAFE_CLIENT_NAMES.lakeshore.
   lakeshore: ['Lakeshore Industries', 'Lakeshore Holdings', 'Lakeshore'],
 };
 
@@ -235,6 +234,27 @@ export function canonicalClientDisplayName(args: {
   const key = args.key?.trim().toLowerCase();
   const name = args.name?.trim();
   const normalizedName = name?.toLowerCase();
+  const demoSafeName = name ? demoSafeClientText(name) : null;
+  const normalizedDemoSafeName = demoSafeName?.toLowerCase();
+
+  if (normalizedDemoSafeName === DEMO_SAFE_CLIENT_NAMES.apexretail.toLowerCase()) {
+    return DEMO_SAFE_CLIENT_NAMES.apexretail;
+  }
+  if (normalizedDemoSafeName === DEMO_SAFE_CLIENT_NAMES.meridian.toLowerCase()) {
+    return DEMO_SAFE_CLIENT_NAMES.meridian;
+  }
+  if (normalizedDemoSafeName === DEMO_SAFE_CLIENT_NAMES.arcturus.toLowerCase()) {
+    return DEMO_SAFE_CLIENT_NAMES.arcturus;
+  }
+  if (normalizedDemoSafeName === DEMO_SAFE_CLIENT_NAMES.northstar.toLowerCase()) {
+    return DEMO_SAFE_CLIENT_NAMES.northstar;
+  }
+  if (normalizedDemoSafeName === DEMO_SAFE_CLIENT_NAMES.skyharbor.toLowerCase()) {
+    return DEMO_SAFE_CLIENT_NAMES.skyharbor;
+  }
+  if (normalizedDemoSafeName === DEMO_SAFE_CLIENT_NAMES.lakeshore.toLowerCase()) {
+    return DEMO_SAFE_CLIENT_NAMES.lakeshore;
+  }
 
   if (
     key === "meridian" ||
@@ -292,11 +312,12 @@ export function canonicalClientDisplayName(args: {
     key === 'lakeshore' ||
     key === 'lakeshore-industries' ||
     key === 'lakeshore-holdings' ||
-    normalizedName === 'lakeshore industries' ||
-    normalizedName === 'lakeshore holdings' ||
-    normalizedName === 'lakeshore'
+    normalizedName === "lakeshore holdings industries" ||
+    normalizedName === "lakeshore industries" ||
+    normalizedName === "lakeshore holdings" ||
+    normalizedName === "lakeshore"
   ) {
-    return 'Lakeshore Industries';
+    return DEMO_SAFE_CLIENT_NAMES.lakeshore;
   }
 
   if (name) return name;

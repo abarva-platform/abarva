@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { askIntelligence } from "@/lib/intelligence/ask";
+import {
+  buildRetiredFactError,
+  scanRetiredFacts,
+} from "@/lib/intelligence/ask/retired-fact-gate";
 import { inferClientKeyFromEmail } from "@/lib/client-config";
 import {
   classifySentinelIntent,
@@ -13,7 +17,6 @@ import type { AskSource, AskSurfaceContext } from "@/lib/intelligence/ask";
 import {
   buildAvaTrace,
   emitAgentContextTraceAsync,
-  hashModelInput,
   type RawAskSource,
 } from "@/lib/agent-trace";
 import { randomUUID } from "node:crypto";
@@ -244,6 +247,39 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           ),
         );
       };
+      const blockRetiredFacts = (input: {
+        sources?: AskSource[];
+        textBlocks?: Array<{
+          location: string;
+          text: string | null | undefined;
+        }>;
+      }) => {
+        const findings = scanRetiredFacts({
+          tenantKey:
+            tenantInventoryKey ??
+            tenantClientKey ??
+            requestedOrSurfaceClient ??
+            tenant?.canonicalKey ??
+            tenant?.appClientKey ??
+            null,
+          tenantName: tenant?.displayName ?? surfaceContext?.activeClient,
+          surfaceContext,
+          sources: input.sources,
+          textBlocks: input.textBlocks,
+        });
+        if (findings.length === 0) return false;
+        sawStreamError = true;
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              type: "error",
+              error: buildRetiredFactError(findings),
+              retiredFactFindings: findings,
+            }) + "\n",
+          ),
+        );
+        return true;
+      };
       try {
         for (const timing of preStreamTimings) {
           enqueueTiming(timing);
@@ -261,6 +297,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             ),
           );
         }
+        if (blockRetiredFacts({})) return;
         if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext })) {
           const homeTenant = sessionTenant ?? tenant;
           const homeTenantAliases =
@@ -291,6 +328,17 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 requestedOrSurfaceClient ??
                 "the signed-in tenant",
             });
+            if (
+              blockRetiredFacts({
+                textBlocks: [
+                  {
+                    location: "route.home_know_tenant_fence.answer",
+                    text: JSON.stringify(answer),
+                  },
+                ],
+              })
+            )
+              return;
             assistantText = answer.directAnswer;
             controller.enqueue(
               encoder.encode(
@@ -358,6 +406,21 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             intent: response.intent,
             answerStatus: response.answerStatus,
           };
+          if (
+            blockRetiredFacts({
+              textBlocks: [
+                {
+                  location: "route.home_know.response",
+                  text: JSON.stringify(response),
+                },
+                {
+                  location: "route.home_know.answer",
+                  text: JSON.stringify(answer),
+                },
+              ],
+            })
+          )
+            return;
           assistantText = answer.directAnswer;
           citationCount = answer.citations.length;
           controller.enqueue(
@@ -426,6 +489,21 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             conversationContextBlock: memory?.contextBlock,
             intelligenceSessionId: memory?.sessionId ?? null,
           })) {
+            const stageSources = intelligenceSourcesFromCitations(
+              stage.citations,
+            );
+            if (
+              blockRetiredFacts({
+                sources: stageSources,
+                textBlocks: [
+                  {
+                    location: `route.sentinel.stage:${stage.name}`,
+                    text: stage.content,
+                  },
+                ],
+              })
+            )
+              return;
             assistantText += `${stage.name}: ${stage.content}\n`;
             citationCount += stage.citations.length;
             sentinelCitations.push(...stage.citations);
@@ -513,6 +591,18 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 hasExperts: false,
               },
             });
+            if (
+              blockRetiredFacts({
+                sources: sentinelSources,
+                textBlocks: [
+                  {
+                    location: "route.sentinel.agent_answer",
+                    text: JSON.stringify(agentAnswer),
+                  },
+                ],
+              })
+            )
+              return;
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -803,6 +893,18 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 hasExperts: false,
               },
             });
+            if (
+              blockRetiredFacts({
+                sources: advisorSources,
+                textBlocks: [
+                  {
+                    location: "route.agent_answer.tabbed",
+                    text: JSON.stringify(agentAnswer),
+                  },
+                ],
+              })
+            )
+              return;
             enqueueTiming(
               routeTrace.finish("route.answer_compose.done", composeStartedAt, {
                 artifactCount: agentAnswer.artifacts?.length ?? 0,
@@ -911,6 +1013,18 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 hasExperts: false,
               },
             });
+            if (
+              blockRetiredFacts({
+                sources: advisorSources,
+                textBlocks: [
+                  {
+                    location: "route.agent_answer.exhibits",
+                    text: JSON.stringify(agentAnswer),
+                  },
+                ],
+              })
+            )
+              return;
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -1391,6 +1505,9 @@ async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
     richText:
       url.searchParams.get("richText") === "1" ||
       url.searchParams.get("richText") === "true",
+    answerOnlyStreaming:
+      url.searchParams.get("answerOnlyStreaming") === "1" ||
+      url.searchParams.get("answerOnlyStreaming") === "true",
   };
 }
 

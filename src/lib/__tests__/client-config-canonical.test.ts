@@ -70,6 +70,25 @@ describe("canonicalClientDisplayName", () => {
     ).toBe("Retail Demo advisor");
   });
 
+  it("maps retired Lakeshore Industries aliases to Lakeshore Holdings", () => {
+    expect(canonicalClientDisplayName({ key: "lakeshore" })).toBe(
+      "Lakeshore Holdings",
+    );
+    expect(
+      canonicalClientDisplayName({ name: "Lakeshore Industries" }),
+    ).toBe("Lakeshore Holdings");
+    expect(
+      canonicalClientDisplayName({ name: "Lakeshore Holdings Industries" }),
+    ).toBe("Lakeshore Holdings");
+    expect(
+      demoSafeClientText(
+        "For Lakeshore Holdings Industries, the stale alias must not surface.",
+      ),
+    ).toBe(
+      "For Lakeshore Holdings, the stale alias must not surface.",
+    );
+  });
+
   it("scrubs legacy names inside JSON-escaped prompt strings", () => {
     expect(
       demoSafeClientText(

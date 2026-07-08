@@ -50,6 +50,7 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
   const [comments, setComments] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, ActionResult>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (events.length === 0) return null;
 
@@ -143,7 +144,9 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
           const busy = processing[ev.id];
           const isOpen = expanded[ev.id] ?? false;
           const conf = confirmationsFor(ev.id);
-          const canApprove = allConfirmed(ev.id) && !busy;
+          const commentReady =
+            (comments[ev.id]?.trim().length ?? 0) >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
+          const canApprove = allConfirmed(ev.id) && commentReady && !busy;
 
           return (
             <div key={ev.id} style={{ borderBottom: '1px solid #f5efc8' }}>
@@ -244,6 +247,7 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                   >
                     Approving confirms your review of the strategy memo, value target, and archetype +
                     rigor. On approval the event moves to Scope.{' '}
+                    <strong>Self-approval notice:</strong> this is your accountable human approval decision.{' '}
                     <a
                       href={`/source/events/${ev.id}?stage=Strategy`}
                       target="_blank"
@@ -289,7 +293,8 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                   <textarea
                     value={comments[ev.id] ?? ''}
                     onChange={(e) => setComments((c) => ({ ...c, [ev.id]: e.target.value }))}
-                    placeholder="Comment (optional — required context when sending back)"
+                    data-testid={`source-event-approval-reason-${ev.id}`}
+                    placeholder={`Approval reason (minimum ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}
                     rows={2}
                     style={{
                       width: '100%',
@@ -305,12 +310,31 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                     }}
                   />
 
+                  {errors[ev.id] ? (
+                    <div
+                      role="alert"
+                      style={{
+                        fontFamily: SHELL.SANS,
+                        fontSize: 11.5,
+                        color: '#991b1b',
+                      }}
+                    >
+                      {errors[ev.id]}
+                    </div>
+                  ) : null}
+
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <button
                       type="button"
                       disabled={!canApprove}
-                      title={allConfirmed(ev.id) ? undefined : 'Check all three confirmations to approve'}
+                      title={
+                        commentReady
+                          ? allConfirmed(ev.id)
+                            ? undefined
+                            : 'Check all three confirmations to approve'
+                          : `Enter at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters before approving`
+                      }
                       onClick={() => void handleAction(ev.id, 'approve')}
                       style={{
                         padding: '7px 16px',
