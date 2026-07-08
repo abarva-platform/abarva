@@ -22,6 +22,7 @@ import { buildFeedForwardPack } from '../../../../lib/programs/phase-templates/f
 import { classifyUpload } from '../../../../lib/programs/phase-templates/classification';
 import { WhatChangedCard } from '../WhatChangedCard';
 import { ApprovedInputsPackCard } from '../ApprovedInputsPackCard';
+import { AssembledPatternCard } from '../AssembledPatternCard';
 import { computeWhatChanged } from '../../../../lib/programs/phase-templates/what-changed';
 import { buildApprovedInputsPack } from '../../../../lib/programs/phase-templates/approved-inputs-pack';
 import { buildFeedForwardPack as buildFF } from '../../../../lib/programs/phase-templates/feed-forward';
@@ -379,6 +380,50 @@ describe('approved Inputs Pack (increment 10) — inherited, Move-scoped, not pr
   it('no internal schema labels leak (type discriminator, column names)', () => {
     const html = render(<ApprovedInputsPackCard pack={approvedPack} />);
     expect(html).not.toMatch(/approved_inputs_pack|deliverable_versions|generated_artifacts|targetPhase|moveScopedOnly/);
+  });
+});
+
+describe('assembled pattern card (increment 12) — Claude assembled, AbarVa labeled', () => {
+  it('renders each item with a client-friendly label and the no-invention note', () => {
+    const html = render(
+      <AssembledPatternCard
+        items={[
+          { statement: 'Average cycle time is 31.6 days.', label: 'evidence_backed' },
+          { statement: 'Cycle time will drop 40%.', label: 'needs_confirmation', reason: 'Numeric claim not backed by evidence.' },
+          { statement: 'Move to fully autonomous contract review.', label: 'not_allowed', reason: 'Exceeds control readiness.' },
+        ]}
+      />,
+    );
+    expect(html).toContain('Evidence-backed');
+    expect(html).toContain('Needs confirmation');
+    expect(html).toContain('Not recommended');
+    expect(html.toLowerCase()).toContain('never invented');
+    // raw enum labels must NOT leak
+    expect(html).not.toMatch(/evidence_backed|needs_confirmation|not_allowed/);
+  });
+
+  it('renders nothing when there are no assembled items', () => {
+    expect(render(<AssembledPatternCard items={[]} />)).toBe('');
+  });
+
+  it('panel shows the assemble control only when the feature handler is provided', () => {
+    const on = render(<MovePhaseWorkspacePanel phaseNum={3} phaseLabel="P3" onAssemble={() => {}} />);
+    expect(on).toContain('Assemble options');
+    const off = render(<MovePhaseWorkspacePanel phaseNum={3} phaseLabel="P3" />);
+    expect(off).not.toContain('Assemble options');
+  });
+
+  it('panel renders the validated assembly output when present', () => {
+    const html = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={3}
+        phaseLabel="P3"
+        onAssemble={() => {}}
+        assembledItems={[{ statement: 'Attorney approves risk tier.', label: 'evidence_backed' }]}
+      />,
+    );
+    expect(html).toContain('AbarVa assembled these');
+    expect(html).toContain('Evidence-backed');
   });
 });
 
