@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { askIntelligence } from "@/lib/intelligence/ask";
 import {
-  buildRetiredFactError,
+  buildClientSafeRetiredFactMessage,
   scanRetiredFacts,
 } from "@/lib/intelligence/ask/retired-fact-gate";
 import { inferClientKeyFromEmail } from "@/lib/client-config";
@@ -57,6 +57,10 @@ import {
   type IntelligenceLatencyTiming,
 } from "@/lib/intelligence/latency-trace";
 import "@/lib/reasoning/telemetry-init";
+import {
+  applyProductTruthRuntimeGuard,
+  productTruthGroundingText,
+} from "@/lib/agent/product-truth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -273,13 +277,32 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           encoder.encode(
             JSON.stringify({
               type: "error",
-              error: buildRetiredFactError(findings),
+              error: buildClientSafeRetiredFactMessage(),
               retiredFactFindings: findings,
             }) + "\n",
           ),
         );
         return true;
       };
+      const productTruthContext = (input?: {
+        surface?: string | null;
+        groundingParts?: readonly unknown[];
+      }) => ({
+        tenantKey:
+          tenantInventoryKey ??
+          tenantClientKey ??
+          requestedOrSurfaceClient ??
+          tenant?.canonicalKey ??
+          tenant?.appClientKey ??
+          null,
+        tenantName: tenant?.displayName ?? surfaceContext?.activeClient,
+        surface: input?.surface ?? surfaceContext?.activeTab ?? "intelligence",
+        query,
+        groundingText: productTruthGroundingText([
+          surfaceContext,
+          input?.groundingParts ?? [],
+        ]),
+      });
       try {
         for (const timing of preStreamTimings) {
           enqueueTiming(timing);
@@ -320,7 +343,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               )) ||
             mentionsForeignTenant(query, foreignTenantAliases)
           ) {
-            const answer = buildHomeKnowTenantFenceAnswer({
+            let answer = buildHomeKnowTenantFenceAnswer({
               activeTenantDisplayName:
                 homeTenant?.displayName ??
                 tenant?.displayName ??
@@ -339,6 +362,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               })
             )
               return;
+            answer = applyProductTruthToAvaAnswer(
+              answer,
+              productTruthContext({ surface: "home" }),
+            );
             assistantText = answer.directAnswer;
             controller.enqueue(
               encoder.encode(
@@ -401,6 +428,13 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             });
             answer = homeKnowResponseToAvaAnswer(response);
           }
+          answer = applyProductTruthToAvaAnswer(
+            answer,
+            productTruthContext({
+              surface: "home",
+              groundingParts: [response],
+            }),
+          );
           classificationForMemory = {
             mode: "home-know",
             intent: response.intent,
@@ -504,12 +538,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               })
             )
               return;
-            assistantText += `${stage.name}: ${stage.content}\n`;
+            const guardedStage = applyProductTruthRuntimeGuard(
+              stage.content,
+              productTruthContext({
+                surface: "intelligence",
+                groundingParts: [stage.citations],
+              }),
+            );
+            const safeStage = { ...stage, content: guardedStage.text };
+            assistantText += `${safeStage.name}: ${safeStage.content}\n`;
             citationCount += stage.citations.length;
             sentinelCitations.push(...stage.citations);
             controller.enqueue(
               encoder.encode(
-                JSON.stringify({ type: "ava-stage", stage }) + "\n",
+                JSON.stringify({ type: "ava-stage", stage: safeStage }) + "\n",
               ),
             );
           }
@@ -591,13 +633,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 hasExperts: false,
               },
             });
+            const guardedAgentAnswer = applyProductTruthToAvaAnswer(
+              agentAnswer,
+              productTruthContext({
+                surface: "intelligence",
+                groundingParts: [sentinelSources],
+              }),
+            );
             if (
               blockRetiredFacts({
                 sources: sentinelSources,
                 textBlocks: [
                   {
                     location: "route.sentinel.agent_answer",
-                    text: JSON.stringify(agentAnswer),
+                    text: JSON.stringify(guardedAgentAnswer),
                   },
                 ],
               })
@@ -607,7 +656,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               encoder.encode(
                 JSON.stringify({
                   type: "agent-answer",
-                  answer: agentAnswer,
+                  answer: guardedAgentAnswer,
                 }) + "\n",
               ),
             );
@@ -893,13 +942,23 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 hasExperts: false,
               },
             });
+            const guardedAgentAnswer = applyProductTruthToAvaAnswer(
+              {
+                ...agentAnswer,
+                prose: tabbedResponse.mainAnswer,
+              } as AvaAnswerPacket,
+              productTruthContext({
+                surface: "intelligence",
+                groundingParts: [advisorSources, tabbedResponse.tabs],
+              }),
+            );
             if (
               blockRetiredFacts({
                 sources: advisorSources,
                 textBlocks: [
                   {
                     location: "route.agent_answer.tabbed",
-                    text: JSON.stringify(agentAnswer),
+                    text: JSON.stringify(guardedAgentAnswer),
                   },
                 ],
               })
@@ -915,10 +974,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               encoder.encode(
                 JSON.stringify({
                   type: "agent-answer",
-                  answer: {
-                    ...agentAnswer,
-                    prose: tabbedResponse.mainAnswer,
-                  },
+                  answer: guardedAgentAnswer,
                 }) + "\n",
               ),
             );
@@ -1013,13 +1069,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 hasExperts: false,
               },
             });
+            const guardedAgentAnswer = applyProductTruthToAvaAnswer(
+              agentAnswer,
+              productTruthContext({
+                surface: "intelligence",
+                groundingParts: [advisorSources, exhibits],
+              }),
+            );
             if (
               blockRetiredFacts({
                 sources: advisorSources,
                 textBlocks: [
                   {
                     location: "route.agent_answer.exhibits",
-                    text: JSON.stringify(agentAnswer),
+                    text: JSON.stringify(guardedAgentAnswer),
                   },
                 ],
               })
@@ -1029,7 +1092,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               encoder.encode(
                 JSON.stringify({
                   type: "agent-answer",
-                  answer: agentAnswer,
+                  answer: guardedAgentAnswer,
                 }) + "\n",
               ),
             );
@@ -1145,6 +1208,38 @@ function displaySafeIntelligenceDelta(text: string): string {
   }
 
   return text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
+}
+
+function applyProductTruthToAvaAnswer(
+  answer: AvaAnswerPacket,
+  context: Parameters<typeof applyProductTruthRuntimeGuard>[1],
+): AvaAnswerPacket {
+  const direct = applyProductTruthRuntimeGuard(answer.directAnswer, context);
+  const prose =
+    typeof (answer as { prose?: unknown }).prose === "string"
+      ? applyProductTruthRuntimeGuard(
+          (answer as { prose: string }).prose,
+          context,
+        ).text
+      : undefined;
+  return {
+    ...answer,
+    directAnswer: direct.text,
+    ...(prose ? { prose } : {}),
+    caveats: [
+      ...(answer.caveats ?? []),
+      ...(direct.violations.length > 0
+        ? [
+            {
+              id: "product-truth-guard",
+              label: "Product truth guard",
+              detail:
+                "Client-visible answer was checked for product scope, tenant evidence, professional boundaries, and unsafe replacement language.",
+            },
+          ]
+        : []),
+    ],
+  };
 }
 
 function recordIntelligenceTelemetry(input: {

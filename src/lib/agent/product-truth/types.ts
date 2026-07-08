@@ -47,7 +47,13 @@ export interface ProductCapabilityEntry {
 export type ProductTruthViolationCategory =
   | "capability_overreach"
   | "third_party_replacement_claim"
-  | "unsupported_tenant_claim";
+  | "unsupported_tenant_claim"
+  | "tenant_leakage_or_stale_fact"
+  | "wrong_moves_model"
+  | "out_of_scope"
+  | "internal_error_leak"
+  | "unsafe_suggested_question"
+  | "professional_boundary_missing";
 
 export interface ProductTruthViolation {
   category: ProductTruthViolationCategory;
@@ -59,4 +65,19 @@ export interface ProductTruthViolation {
 export interface ProductTruthCheckResult {
   pass: boolean;
   violations: ProductTruthViolation[];
+}
+
+export interface ProductTruthRuntimeContext {
+  tenantKey?: string | null;
+  tenantName?: string | null;
+  surface?: string | null;
+  query?: string | null;
+  groundingText?: string;
+}
+
+export interface ProductTruthRepairResult {
+  text: string;
+  violations: ProductTruthViolation[];
+  repaired: boolean;
+  blocked: boolean;
 }

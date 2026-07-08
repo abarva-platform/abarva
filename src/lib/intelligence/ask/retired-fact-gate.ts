@@ -84,6 +84,10 @@ export function buildRetiredFactError(findings: RetiredFactFinding[]): string {
   return `retired_fact_violation: ${sample}`;
 }
 
+export function buildClientSafeRetiredFactMessage(): string {
+  return "I can't safely answer that from the currently loaded evidence. I can show confirmed facts, likely gaps, and what would need to be loaded before making a client-ready claim.";
+}
+
 function dedupeFindings(findings: RetiredFactFinding[]): RetiredFactFinding[] {
   const seen = new Set<string>();
   return findings.filter((finding) => {

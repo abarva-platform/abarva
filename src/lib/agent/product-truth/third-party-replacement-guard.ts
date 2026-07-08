@@ -10,6 +10,8 @@ import type { ProductTruthViolation } from "./types";
 const NAMED_THIRD_PARTIES: readonly RegExp[] = [
   /\bgartner\b/i,
   /\bforrester\b/i,
+  /\bisg\b/i,
+  /\bupperedge\b/i,
   /\bbig four\b/i,
   /\bmckinsey\b/i,
   /\bbain\b/i,
@@ -19,6 +21,13 @@ const NAMED_THIRD_PARTIES: readonly RegExp[] = [
   /\bpwc\b|\bpricewaterhousecoopers\b/i,
   /\bey\b|\bernst\s*&?\s*young\b/i,
   /\bkpmg\b/i,
+  /\blegal counsel\b/i,
+  /\bprocurement advisor\b/i,
+  /\bcredit desk\b/i,
+  /\banalyst reports?\b/i,
+  /\bauditors?\b/i,
+  /\bfp&a\b/i,
+  /\bclinicians?\b/i,
 ];
 
 const REPLACEMENT_OR_CERTIFICATION_FRAMING: readonly RegExp[] = [
@@ -28,6 +37,9 @@ const REPLACEMENT_OR_CERTIFICATION_FRAMING: readonly RegExp[] = [
   /\boutperforms?\b/i,
   /\bno (longer )?need(s)? (a |your )?/i,
   /\bmakes? .*(obsolete|unnecessary)\b/i,
+  /\binstead of hiring\b/i,
+  /\bconsultant-grade without consultant cost\b/i,
+  /\bexternal advisory input unnecessary\b/i,
 ];
 
 export function checkThirdPartyReplacementClaims(text: string): ProductTruthViolation[] {
