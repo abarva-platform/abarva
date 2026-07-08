@@ -23,6 +23,7 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(synthesizerCode).toContain("How AbarVa would solve this");
     expect(synthesizerCode).toContain("Home for current-state evidence");
     expect(synthesizerCode).toContain("Source for vendor/commercial levers");
+    expect(synthesizerCode).toContain("compact Moves phase table");
     expect(synthesizerCode).toContain("P0 Originate");
     expect(synthesizerCode).toContain("P5 Prepare to Execute");
     expect(synthesizerCode).toContain("Tower Track Outcomes");
