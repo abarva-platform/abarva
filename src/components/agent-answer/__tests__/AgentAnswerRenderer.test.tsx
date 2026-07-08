@@ -55,7 +55,7 @@ describe("AgentAnswerRenderer", () => {
       <AnswerChartRenderer chart={chart} citations={citations} />,
     );
     expect(screen.getByText("Run/change cost mix")).toBeInTheDocument();
-    expect(screen.getByText("costStack")).toBeInTheDocument();
+    expect(screen.queryByText("costStack")).not.toBeInTheDocument();
     expect(
       container.querySelector("[data-chart-builder='costStack'] svg"),
     ).not.toBeNull();

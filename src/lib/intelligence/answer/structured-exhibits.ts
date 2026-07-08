@@ -381,6 +381,124 @@ function inlineMarkdownTablesFromProse(
   };
 }
 
+const SUPPORTED_CHART_FENCE_TYPES = new Set([
+  "bar",
+  "horizontal-bar",
+  "line",
+  "area",
+  "pie",
+]);
+
+function isSupportedChartFenceType(
+  value: unknown,
+): value is "bar" | "horizontal-bar" | "line" | "area" | "pie" {
+  return typeof value === "string" && SUPPORTED_CHART_FENCE_TYPES.has(value);
+}
+
+function validChartFenceRows(
+  value: unknown,
+  xKey: string,
+  yKey: string,
+): Array<Record<string, string | number>> {
+  if (!Array.isArray(value)) return [];
+  return value
+    .flatMap((row) => {
+      if (typeof row !== "object" || row === null || Array.isArray(row)) {
+        return [];
+      }
+      const record = row as Record<string, unknown>;
+      const label = record[xKey];
+      const numeric = exactCurrencyOrNumber(
+        record[yKey] as string | number | null,
+      );
+      if (
+        numeric === null ||
+        (typeof label !== "string" && typeof label !== "number")
+      ) {
+        return [];
+      }
+      return [
+        {
+          ...Object.fromEntries(
+            Object.entries(record).filter(
+              (entry): entry is [string, string | number] =>
+                typeof entry[1] === "string" || typeof entry[1] === "number",
+            ),
+          ),
+          [xKey]: label,
+          [yKey]: numeric,
+        },
+      ];
+    })
+    .slice(0, 12);
+}
+
+function chartFenceToArtifact(
+  raw: string,
+  index: number,
+  citationIds: string[],
+): AnswerChart | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+  const record = parsed as Record<string, unknown>;
+  if (!isSupportedChartFenceType(record.type)) return null;
+  const xKey = typeof record.xKey === "string" ? record.xKey : "";
+  const yKey = typeof record.yKey === "string" ? record.yKey : "";
+  if (!xKey || !yKey) return null;
+  const rows = validChartFenceRows(record.data, xKey, yKey);
+  if (rows.length < 2) return null;
+
+  const type = record.type;
+  return {
+    id: `answer-chart-fence-${index + 1}`,
+    kind: type === "line" || type === "area" ? "line" : "bar",
+    title:
+      typeof record.title === "string" && record.title.trim()
+        ? record.title.trim()
+        : "Answer Chart",
+    data: {
+      type,
+      title: typeof record.title === "string" ? record.title : undefined,
+      subtitle:
+        typeof record.subtitle === "string" ? record.subtitle : undefined,
+      data: rows,
+      xKey,
+      yKey,
+      yKey2: typeof record.yKey2 === "string" ? record.yKey2 : undefined,
+      unit: typeof record.unit === "string" ? record.unit : undefined,
+      note: typeof record.note === "string" ? record.note : undefined,
+    },
+    builder: "inlineChart",
+    citationIds,
+  };
+}
+
+function chartFencesFromProse(
+  prose: string,
+  citationIds: string[],
+): { prose: string; charts: AnswerChart[] } {
+  const charts: AnswerChart[] = [];
+  const cleaned = prose.replace(
+    /```chart\s*([\s\S]*?)```/gi,
+    (_match, raw: string) => {
+      const chart = chartFenceToArtifact(raw, charts.length, citationIds);
+      if (chart) charts.push(chart);
+      return "\n";
+    },
+  );
+  return {
+    prose: cleaned.replace(/\n{3,}/g, "\n\n").trim(),
+    charts,
+  };
+}
+
 function stripResidualTableFragments(prose: string): string {
   const stripped = prose
     .split(/\r?\n/)
@@ -835,8 +953,12 @@ export function buildStructuredExhibits(
     input.routing,
   );
   const sourceExhibits = structuredSourceExhibits(input.sources, input.routing);
-  const markdown = markdownTablesFromProse(
+  const chartFences = chartFencesFromProse(
     input.prose,
+    citations.map((citation) => citation.id),
+  );
+  const markdown = markdownTablesFromProse(
+    chartFences.prose,
     citations.map((citation) => citation.id),
   );
   const inline = inlineMarkdownTablesFromProse(
@@ -848,6 +970,7 @@ export function buildStructuredExhibits(
   const graphs: AnswerGraph[] = [];
   tables.push(...sourceExhibits.tables);
   charts.push(...sourceExhibits.charts);
+  charts.push(...chartFences.charts);
   graphs.push(...sourceExhibits.graphs);
   if (shouldRenderStructured) {
     tables.push(...markdown.tables);

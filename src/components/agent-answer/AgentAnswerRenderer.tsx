@@ -103,7 +103,7 @@ function invokeSvgBuilder(builderName: string, data: unknown): string {
 }
 
 export function renderAnswerChartSvg(chart: AnswerChart): RenderedChartSvg {
-  const builderName = builderForChartKind(chart.kind);
+  const builderName = chart.builder ?? builderForChartKind(chart.kind);
   if (!isSvgBuilderName(builderName)) {
     return {
       builderName,
@@ -360,7 +360,6 @@ export function AnswerChartRenderer({
     <div className="aaChart">
       <div className="aaChartHead">
         <div className="aaChartTitle">{chart.title ?? chart.kind}</div>
-        <div className="aaBuilder">{rendered.builderName}</div>
       </div>
       {rendered.svg ? (
         <div

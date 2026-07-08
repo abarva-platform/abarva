@@ -73,4 +73,38 @@ describe("renderAvaAnswerStandaloneHtml", () => {
     expect(html).toContain("$12.5M");
     expect(html).not.toContain("12500000");
   });
+
+  it("exports model-emitted chart fences after they are lifted to inlineChart artifacts", () => {
+    const answer = answerFixture();
+    answer.artifacts = [
+      {
+        artifact: "chart",
+        id: "ai-adoption-trend",
+        kind: "line",
+        title: "AI adoption trend",
+        builder: "inlineChart",
+        data: {
+          type: "line",
+          title: "AI adoption trend",
+          subtitle: "Back-office functions",
+          xKey: "Year",
+          yKey: "Adoption",
+          unit: "%",
+          data: [
+            { Year: "2024", Adoption: 22 },
+            { Year: "2025", Adoption: 41 },
+            { Year: "2026", Adoption: 68 },
+          ],
+        },
+      },
+    ];
+
+    const html = renderAvaAnswerStandaloneHtml(answer);
+
+    expect(html).toContain("AI adoption trend");
+    expect(html).toContain("Back-office functions");
+    expect(html).toContain("<svg");
+    expect(html).toContain("68%");
+    expect(html).not.toContain("inlineChart");
+  });
 });

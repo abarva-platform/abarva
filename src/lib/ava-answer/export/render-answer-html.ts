@@ -66,7 +66,7 @@ export function renderAnswerChartSvgForExport(chart: AnswerChart): {
   svg: string | null;
   error?: string;
 } {
-  const builderName = builderForChartKind(chart.kind);
+  const builderName = chart.builder ?? builderForChartKind(chart.kind);
   if (!isSvgBuilderName(builderName)) {
     return { builderName, svg: null, error: `No SVG builder named ${builderName}` };
   }
@@ -187,7 +187,7 @@ function chartHtml(chart: AnswerChart): string {
     rendered.svg
       ? `<div class="svg">${rendered.svg}</div>`
       : `<p class="note">Chart unavailable: ${esc(rendered.error)}</p>`
-  }<p class="builder">${esc(rendered.builderName)}</p></section>`;
+  }</section>`;
 }
 
 function graphHtml(graph: AnswerGraph): string {

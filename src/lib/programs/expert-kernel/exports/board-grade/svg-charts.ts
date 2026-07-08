@@ -255,6 +255,212 @@ export interface StackSegment {
   color: string;
 }
 
+export interface InlineChartPoint {
+  [key: string]: string | number | null | undefined;
+}
+
+export interface InlineChartInput {
+  type: 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie';
+  title?: string;
+  subtitle?: string;
+  data: InlineChartPoint[];
+  xKey: string;
+  yKey: string;
+  yKey2?: string;
+  unit?: string;
+  note?: string;
+}
+
+function inlineChartNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+  const parsed = Number(value.replace(/[$,%\s,]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function inlineChartValueLabel(value: number, unit = ''): string {
+  if (unit === '$') return compactUsd(value);
+  if (unit === '%') return `${Math.round(value * 10) / 10}%`;
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: Math.abs(value) >= 10 ? 1 : 2,
+  }).format(value);
+}
+
+/**
+ * Generic chart renderer for model-emitted governed `chart` blocks.
+ * The model chooses simple chart intent; this function owns the visual grammar.
+ */
+export function inlineChart(input: InlineChartInput): string {
+  const rows = input.data
+    .map((row) => ({
+      label: String(row[input.xKey] ?? '').trim(),
+      value: inlineChartNumber(row[input.yKey]),
+      value2: input.yKey2 ? inlineChartNumber(row[input.yKey2]) : null,
+    }))
+    .filter(
+      (row): row is { label: string; value: number; value2: number | null } =>
+        Boolean(row.label) && row.value !== null,
+    )
+    .slice(0, 8);
+
+  const W = 720;
+  const H =
+    input.type === 'horizontal-bar'
+      ? Math.max(260, rows.length * 44 + 110)
+      : input.type === 'pie'
+        ? 340
+        : 320;
+  const padL = input.type === 'horizontal-bar' ? 154 : 58;
+  const padR = 36;
+  const padT = 62;
+  const padB = 58;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const rawMaxValue =
+    Math.max(1, ...rows.flatMap((row) => [row.value, row.value2 ?? 0])) * 1.12;
+  const maxValue = input.unit === '%' ? Math.max(100, rawMaxValue) : rawMaxValue;
+
+  let svg = open({
+    width: W,
+    height: H,
+    title: input.title ?? 'Answer chart',
+  });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+  svg += txt(28, 28, input.title ?? 'Answer chart', {
+    size: 14,
+    weight: 800,
+  });
+  if (input.subtitle) {
+    svg += txt(28, 46, input.subtitle, {
+      size: 10,
+      fill: CHART.inkSoft,
+      weight: 600,
+    });
+  }
+
+  if (rows.length === 0) {
+    svg += txt(28, 90, 'No numeric rows available for this chart.', {
+      size: 12,
+      fill: CHART.inkSoft,
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  if (input.type === 'pie') {
+    const total = rows.reduce((sum, row) => sum + row.value, 0);
+    const colors = [CHART.accent, CHART.good, CHART.warn, CHART.bad, CHART.inkSoft, CHART.accentSoft];
+    let y = 82;
+    rows.forEach((row, index) => {
+      const pct = total > 0 ? Math.round((row.value / total) * 100) : 0;
+      svg += `<rect x="42" y="${y - 10}" width="14" height="14" rx="2" fill="${colors[index % colors.length]}"/>`;
+      svg += txt(66, y, row.label, { size: 11, weight: 700 });
+      svg += txt(W - 44, y, `${inlineChartValueLabel(row.value, input.unit)} · ${pct}%`, {
+        size: 11,
+        anchor: 'end',
+        weight: 800,
+        mono: true,
+      });
+      y += 28;
+    });
+    svg += txt(42, H - 24, input.note ?? 'Share view rendered as a ranked legend for print-safe export.', {
+      size: 10,
+      fill: CHART.inkSoft,
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (plotH / 4) * i;
+    svg += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${CHART.grid}" stroke-width="1"/>`;
+    const labelValue = (maxValue / 4) * (4 - i);
+    svg += txt(padL - 10, y + 3, inlineChartValueLabel(labelValue, input.unit), {
+      size: 9,
+      anchor: 'end',
+      fill: CHART.inkSoft,
+      mono: true,
+    });
+  }
+
+  const yFor = (value: number): number => padT + plotH - (value / maxValue) * plotH;
+  const slot = plotW / rows.length;
+
+  if (input.type === 'line' || input.type === 'area') {
+    const points = rows.map((row, index) => {
+      const x = padL + slot * index + slot / 2;
+      return { x, y: yFor(row.value), row };
+    });
+    if (input.type === 'area') {
+      svg += `<path d="M${points[0]?.x ?? padL},${padT + plotH} ${points
+        .map((point) => `L${point.x},${point.y}`)
+        .join(' ')} L${points[points.length - 1]?.x ?? padL},${padT + plotH} Z" fill="${CHART.accentSoft}" opacity="0.8"/>`;
+    }
+    svg += `<polyline points="${points.map((point) => `${point.x},${point.y}`).join(' ')}" fill="none" stroke="${CHART.accent}" stroke-width="2.5"/>`;
+    points.forEach((point) => {
+      svg += `<circle cx="${point.x}" cy="${point.y}" r="4" fill="${CHART.paper}" stroke="${CHART.accent}" stroke-width="2"/>`;
+      svg += txt(point.x, point.y - 10, inlineChartValueLabel(point.row.value, input.unit), {
+        size: 9,
+        anchor: 'middle',
+        weight: 800,
+        fill: CHART.accent,
+        mono: true,
+      });
+      svg += txt(point.x, padT + plotH + 20, point.row.label.slice(0, 16), {
+        size: 9,
+        anchor: 'middle',
+        fill: CHART.inkSoft,
+        weight: 700,
+      });
+    });
+  } else if (input.type === 'horizontal-bar') {
+    const rowSlot = plotH / rows.length;
+    rows.forEach((row, index) => {
+      const y = padT + rowSlot * index + rowSlot * 0.22;
+      const width = (row.value / maxValue) * plotW;
+      svg += txt(padL - 12, y + 16, row.label.slice(0, 24), {
+        size: 10,
+        anchor: 'end',
+        fill: CHART.ink,
+        weight: 700,
+      });
+      svg += `<rect x="${padL}" y="${y}" width="${width}" height="${Math.min(24, rowSlot * 0.54)}" fill="${CHART.accent}" rx="3"/>`;
+      svg += txt(padL + width + 8, y + 16, inlineChartValueLabel(row.value, input.unit), {
+        size: 10,
+        fill: CHART.inkSoft,
+        weight: 800,
+        mono: true,
+      });
+    });
+  } else {
+    const barW = Math.min(58, slot * 0.56);
+    rows.forEach((row, index) => {
+      const cx = padL + slot * index + slot / 2;
+      const top = yFor(row.value);
+      svg += `<rect x="${cx - barW / 2}" y="${top}" width="${barW}" height="${padT + plotH - top}" fill="${CHART.accent}" rx="2"/>`;
+      svg += txt(cx, top - 7, inlineChartValueLabel(row.value, input.unit), {
+        size: 9,
+        anchor: 'middle',
+        weight: 800,
+        mono: true,
+      });
+      svg += txt(cx, padT + plotH + 20, row.label.slice(0, 16), {
+        size: 9,
+        anchor: 'middle',
+        fill: CHART.inkSoft,
+        weight: 700,
+      });
+    });
+  }
+
+  svg += `<line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="${CHART.ink}" stroke-width="1.4"/>`;
+  if (input.note) {
+    svg += txt(28, H - 18, input.note, { size: 10, fill: CHART.inkSoft });
+  }
+  svg += `</svg>`;
+  return svg;
+}
+
 /** A single stacked horizontal bar with proportional, labelled segments. */
 export function costStack(segments: StackSegment[]): string {
   const W = 720;
