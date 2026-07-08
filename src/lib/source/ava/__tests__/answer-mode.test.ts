@@ -7,9 +7,11 @@ import {
   classifySourceAnswerMode,
   isPhaseAImplementedMode,
   isPhaseBImplementedMode,
+  isPhaseCImplementedMode,
   isGroundedAnswerMode,
   PHASE_A_IMPLEMENTED_MODES,
   PHASE_B_IMPLEMENTED_MODES,
+  PHASE_C_IMPLEMENTED_MODES,
   type SourceAnswerMode,
 } from "../answer-mode";
 
@@ -142,12 +144,64 @@ describe("classifySourceAnswerMode — Phase B implemented modes + the 2 remaini
     expect(isPhaseBImplementedMode("general_advisory")).toBe(false);
   });
 
-  it("isGroundedAnswerMode is true for every Phase A or Phase B mode and false for the 2 remaining deferred modes", () => {
+  it("isGroundedAnswerMode is true for every Phase A or Phase B mode (general_advisory is grounded by Phase C — see the Phase C describe block below — but is not itself a Phase B mode)", () => {
     for (const mode of [...PHASE_A_IMPLEMENTED_MODES, ...PHASE_B_IMPLEMENTED_MODES]) {
       expect(isGroundedAnswerMode(mode)).toBe(true);
     }
+    // stakeholder_alignment is the ONLY mode left ungrounded after Phase C.
     expect(isGroundedAnswerMode("stakeholder_alignment")).toBe(false);
-    expect(isGroundedAnswerMode("general_advisory")).toBe(false);
+  });
+});
+
+describe("classifySourceAnswerMode — Phase C implemented modes", () => {
+  const cases: Array<{ question: string; expected: SourceAnswerMode }> = [
+    { question: "What should we do here?", expected: "decision_recommendation" },
+    { question: "Recommend an award for this event", expected: "decision_recommendation" },
+    { question: "Which vendor should we award?", expected: "decision_recommendation" },
+    { question: "Renew or rebid this contract?", expected: "contract_optimization" },
+    { question: "Should we renegotiate the current vendor?", expected: "contract_optimization" },
+    { question: "What's the incumbent contract economics?", expected: "contract_optimization" },
+  ];
+
+  it.each(cases)("classifies '$question' as $expected", ({ question, expected }) => {
+    const result = classifySourceAnswerMode({ question });
+    expect(result.mode).toBe(expected);
+    expect(result.isFallback).toBe(false);
+  });
+
+  it("PHASE_C_IMPLEMENTED_MODES lists exactly the 3 Phase C modes", () => {
+    expect([...PHASE_C_IMPLEMENTED_MODES].sort()).toEqual(
+      ["decision_recommendation", "contract_optimization", "general_advisory"].sort(),
+    );
+  });
+
+  it("isPhaseCImplementedMode is true for all 3 Phase C modes and false otherwise", () => {
+    for (const mode of PHASE_C_IMPLEMENTED_MODES) {
+      expect(isPhaseCImplementedMode(mode)).toBe(true);
+    }
+    expect(isPhaseCImplementedMode("event_status")).toBe(false);
+    expect(isPhaseCImplementedMode("value_at_stake")).toBe(false);
+    expect(isPhaseCImplementedMode("stakeholder_alignment")).toBe(false);
+  });
+
+  it("isGroundedAnswerMode is true for every Phase A/B/C mode and false ONLY for stakeholder_alignment", () => {
+    for (const mode of [
+      ...PHASE_A_IMPLEMENTED_MODES,
+      ...PHASE_B_IMPLEMENTED_MODES,
+      ...PHASE_C_IMPLEMENTED_MODES,
+    ]) {
+      expect(isGroundedAnswerMode(mode)).toBe(true);
+    }
+    expect(isGroundedAnswerMode("stakeholder_alignment")).toBe(false);
+  });
+
+  it("general_advisory (the fallback) is grounded even though it is reached via isFallback=true", () => {
+    const result = classifySourceAnswerMode({
+      question: "Tell me a joke about procurement",
+    });
+    expect(result.mode).toBe("general_advisory");
+    expect(result.isFallback).toBe(true);
+    expect(isGroundedAnswerMode(result.mode)).toBe(true);
   });
 });
 

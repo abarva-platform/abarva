@@ -144,6 +144,7 @@ import {
 import {
   classifySourceAnswerMode,
   isPhaseBImplementedMode,
+  isPhaseCImplementedMode,
   isGroundedAnswerMode,
 } from "@/lib/source/ava/answer-mode";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
@@ -1208,16 +1209,17 @@ export async function POST(request: Request) {
         sourceAvaQuoteNotComputeGuard = AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD;
       }
 
-      // ── Phase A/B · answer-mode classification + mode-specific grounding ───
+      // ── Phase A/B/C · answer-mode classification + mode-specific grounding ─
       // Classify the question so aVa answers workflow questions (status,
-      // how-to, evidence, artifacts, gates) AND vendor/value/commercial
+      // how-to, evidence, artifacts, gates), vendor/value/commercial
       // questions (value at stake, vendor comparison, should-cost, risk
       // exposure, clause coverage, BAFO strategy, committed value, value
-      // realization) from the SAME deterministic reads the canvas uses, not
-      // from the LLM's own guess. Only the 6 Phase A + 8 Phase B modes build a
-      // mode-specific block; the remaining 2 (stakeholder_alignment,
-      // general_advisory) classify (telemetry + future extension point) and
-      // fall through to existing behavior.
+      // realization), AND the composite/advisory questions (decision
+      // recommendation, contract optimization, general advisory) from the
+      // SAME deterministic reads the canvas uses, not from the LLM's own
+      // guess. Only the remaining mode (stakeholder_alignment) classifies
+      // (telemetry + future extension point) and falls through to existing
+      // behavior — every other mode now builds a mode-specific block.
       const modeClassification = classifySourceAnswerMode({
         question: message,
         viewedStage: viewStageFromContext,
@@ -1226,8 +1228,16 @@ export async function POST(request: Request) {
       if (isGroundedAnswerMode(modeClassification.mode) && groundingEvent) {
         const modeStageKey = viewStageFromContext ?? groundingEvent.currentStageKey;
         const isPhaseB = isPhaseBImplementedMode(modeClassification.mode);
+        const isPhaseC = isPhaseCImplementedMode(modeClassification.mode);
+        // decision_recommendation and contract_optimization ALWAYS need the
+        // archetype (they composite Phase B builders / call buildStepInsight
+        // directly); general_advisory only benefits from it opportunistically
+        // (buildGeneralAdvisoryGrounding checks `input.archetype` itself and
+        // skips the value-bridge facet when it's null) — resolving it for
+        // every Phase C mode is harmless and keeps this branch simple.
+        const needsArchetype = isPhaseB || isPhaseC;
 
-        // Phase B modes need the archetype + whichever per-lever/per-vendor
+        // Phase B/C modes need the archetype + whichever per-lever/per-vendor
         // signal that mode's insight reads — mirrored from the canvas
         // call-site's per-stage reads (source/events/[eventId]/page.tsx) so the
         // SAME signal-presence contract (undefined = no signal = honest MODEL;
@@ -1261,7 +1271,10 @@ export async function POST(request: Request) {
                 clientKey: activeClientKey,
               }).catch(() => ({ signalPresent: false, committedByLeverKey: new Map<string, number>() }))
             : Promise.resolve({ signalPresent: false, committedByLeverKey: new Map<string, number>() }),
-          isPhaseB && modeClassification.mode === "bafo_strategy"
+          // decision_recommendation composites the BAFO facet
+          // (buildBafoStrategyGrounding) — it needs the same signal.
+          (isPhaseB && modeClassification.mode === "bafo_strategy") ||
+          (isPhaseC && modeClassification.mode === "decision_recommendation")
             ? readBafoConcessionLevers({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
@@ -1273,7 +1286,10 @@ export async function POST(request: Request) {
                 clientKey: activeClientKey,
               }).catch(() => ({ signalPresent: false, realizedByLeverKey: new Map<string, number>() }))
             : Promise.resolve({ signalPresent: false, realizedByLeverKey: new Map<string, number>() }),
-          isPhaseB && modeClassification.mode === "vendor_comparison"
+          // decision_recommendation composites the vendor comparison facet
+          // (buildVendorComparisonGrounding) — it needs the same signals.
+          (isPhaseB && modeClassification.mode === "vendor_comparison") ||
+          (isPhaseC && modeClassification.mode === "decision_recommendation")
             ? readVendorLeverResponses({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
@@ -1287,9 +1303,10 @@ export async function POST(request: Request) {
                 statusByVendorLever: new Map<string, Map<string, "addressed" | "partial" | "dodged">>(),
                 vendors: [] as string[],
               }),
-          isPhaseB &&
-          (modeClassification.mode === "vendor_comparison" ||
-            modeClassification.mode === "should_cost")
+          (isPhaseB &&
+            (modeClassification.mode === "vendor_comparison" ||
+              modeClassification.mode === "should_cost")) ||
+          (isPhaseC && modeClassification.mode === "decision_recommendation")
             ? readVendorBids({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
@@ -1327,10 +1344,10 @@ export async function POST(request: Request) {
           factInputs: modeFactInputs,
           artifacts: modeArtifacts,
           question: message,
-          // Phase B inputs — eventType left unset so the archetype resolves the
-          // same way the canvas/value-grounding does (the first archetype
+          // Phase B/C inputs — eventType left unset so the archetype resolves
+          // the same way the canvas/value-grounding does (the first archetype
           // carrying value-lever rules — today AMS).
-          archetype: isPhaseB ? resolveValueArchetype(null) : undefined,
+          archetype: needsArchetype ? resolveValueArchetype(null) : undefined,
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           rfpClausePresentLeverKeys: rfpClauseSignal.signalPresent
             ? rfpClauseSignal.presentLeverKeys
