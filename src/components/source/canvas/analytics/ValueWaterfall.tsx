@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { ANALYTICS, valueTypeMeta } from './analytics-tokens';
 import { ValueTypeChip, ValueTypeLegend } from './ValueTypeChip';
 import type { FactConfidence, ValueUnit, ValueWaterfallView } from './view-model';
+import { isCredibleBaseline } from '@/lib/source/facts/view/waterfall-view-adapter';
 
 interface ValueWaterfallProps {
   waterfall: ValueWaterfallView;
@@ -67,11 +68,14 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
   const quantified = bands.filter((b) => b.state === 'quantified');
   const totalLow = quantified.reduce((acc, b) => acc + b.amountLow, 0);
   const totalHigh = quantified.reduce((acc, b) => acc + b.amountHigh, 0);
-  // A baseline is only meaningful when a valid positive amount exists. When the
-  // event carries no baseline (or a garbage <= 0 value), suppress the "Value at
-  // stake: $0" line and the "% of baseline" fragment rather than fabricating a
-  // denominator — the classified total still shows on its own.
-  const hasBaseline = baselineAmount > 0;
+  // A baseline is only meaningful when a valid positive AND credible amount
+  // exists. When the event carries no baseline (garbage <= 0) OR a positive-but-
+  // incredible one (orders of magnitude smaller than the classified value — e.g.
+  // a bare `15` mis-parsed from "15-20%", which would print "millions of % of
+  // baseline"), suppress the "Value at stake" line and the "% of baseline"
+  // fragment rather than fabricating/keeping a nonsense denominator — the
+  // classified total still shows on its own.
+  const hasBaseline = isCredibleBaseline(baselineAmount, totalHigh);
   const pctLow = hasBaseline ? Math.round((totalLow / baselineAmount) * 100) : 0;
   const pctHigh = hasBaseline ? Math.round((totalHigh / baselineAmount) * 100) : 0;
 
