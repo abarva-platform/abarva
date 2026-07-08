@@ -5,6 +5,7 @@ import {
   isExplicitConciseAsk,
   synthesizeStream,
 } from "./synthesizer";
+import { applyCxoAnswerModeFallbacks } from "./answer-mode-registry";
 import { generateFollowups } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
@@ -31,7 +32,10 @@ import {
   type CoverageReport,
 } from "@/lib/knowledge/coverage";
 import { formatCoverageReportForPrompt } from "@/lib/knowledge/coverageReport";
-import { isBroadCurrentStateQuestion } from "./response-policy";
+import {
+  classifyAbarvaAnswerMode,
+  isBroadCurrentStateQuestion,
+} from "./response-policy";
 import type { AnswerTraceEnvelope } from "@/lib/debug/answer-trace";
 import {
   buildSkyHarborCtoReadinessPromptAddendum,
@@ -581,7 +585,10 @@ export async function* askIntelligence(
       ...productTruthContext,
       groundingText: productTruthGrounding,
     });
-    answer = guardedAnswer.text;
+    answer = applyCxoAnswerModeFallbacks(
+      guardedAnswer.text,
+      classifyAbarvaAnswerMode(trimmed),
+    );
     for (const delta of chunkAskText(answer)) {
       yield { type: "delta", text: delta };
     }

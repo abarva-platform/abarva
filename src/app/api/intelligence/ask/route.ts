@@ -42,6 +42,8 @@ import {
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
 import { parseIntelligenceTabbedResponse } from "@/lib/intelligence/tabbed-response";
+import { applyCxoAnswerModeFallbacks } from "@/lib/intelligence/ask/answer-mode-registry";
+import { classifyAbarvaAnswerMode } from "@/lib/intelligence/ask/response-policy";
 import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
@@ -1215,16 +1217,21 @@ function applyProductTruthToAvaAnswer(
   context: Parameters<typeof applyProductTruthRuntimeGuard>[1],
 ): AvaAnswerPacket {
   const direct = applyProductTruthRuntimeGuard(answer.directAnswer, context);
+  const answerMode = classifyAbarvaAnswerMode(context?.query ?? "");
+  const directAnswer = applyCxoAnswerModeFallbacks(direct.text, answerMode);
   const prose =
     typeof (answer as { prose?: unknown }).prose === "string"
-      ? applyProductTruthRuntimeGuard(
-          (answer as { prose: string }).prose,
-          context,
-        ).text
+      ? applyCxoAnswerModeFallbacks(
+          applyProductTruthRuntimeGuard(
+            (answer as { prose: string }).prose,
+            context,
+          ).text,
+          answerMode,
+        )
       : undefined;
   return {
     ...answer,
-    directAnswer: direct.text,
+    directAnswer,
     ...(prose ? { prose } : {}),
     caveats: [
       ...(answer.caveats ?? []),

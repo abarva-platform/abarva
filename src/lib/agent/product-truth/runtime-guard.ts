@@ -8,12 +8,12 @@ import type {
 } from "./types";
 
 const CANONICAL_MOVES_PHASES = [
-  "P0 — Intake & Decision Framing",
-  "P1 — Charter & Baseline",
-  "P2 — Diagnose & Evidence Pressure-Test",
-  "P3 — Options & Business Case",
-  "P4 — Executive Decision & Commit",
-  "P5 — Execution Handoff",
+  "P0 Originate",
+  "P1 Charter",
+  "P2 Understand Current State",
+  "P3 Choose the Approach",
+  "P4 Build the Plan",
+  "P5 Prepare to Execute",
   "Tower Track Outcomes",
 ] as const;
 
@@ -66,6 +66,8 @@ const PROFESSIONAL_OWNER_PATTERN =
 
 const EVIDENCE_CLAIM_PATTERN =
   /\b(loaded estate shows|confirmed in the data|we have loaded|the data shows|evidence confirms)\b/i;
+const RAW_INTERNAL_ID_RE =
+  /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6}|[A-Z]\d{3,4})\b/g;
 
 export function applyProductTruthRuntimeGuard(
   text: string,
@@ -303,7 +305,7 @@ function repairMovesModel(text: string): string {
   if (!OLD_MOVES_MODEL_PATTERN.test(text)) return text;
   return text.replace(
     OLD_MOVES_MODEL_PATTERN,
-    `${CANONICAL_MOVES_PHASES.join("; ")}. The old Charter / Diagnose / Decide / Commit wording is shorthand only and should be mapped under this P0-P5 model`,
+    `${CANONICAL_MOVES_PHASES.join("; ")}. Treat retired four-step shorthand as only a loose legacy summary under this P0-P5 plus Tower model`,
   );
 }
 
@@ -405,7 +407,14 @@ function normalizedSurface(surface: string | null | undefined): string {
 }
 
 function normalizeWhitespace(text: string): string {
-  return text.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return text
+    .replace(RAW_INTERNAL_ID_RE, "")
+    .replace(/\s+\)/g, ")")
+    .replace(/\(\s+/g, "(")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function dedupe(values: readonly string[]): string[] {
