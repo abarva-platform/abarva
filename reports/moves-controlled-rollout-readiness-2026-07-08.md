@@ -95,3 +95,26 @@ This is deliberately left as a decision to make, not a flag flipped in this rele
 **SkyHarbor — BLOCKED, not a code issue.** The available browser session is scoped to Lakeshore only; no cross-tenant switcher exists (checked `/strategic-moves` overview and `/setup` → Operations), and no SkyHarbor Clerk credentials were available. The flag change is live in the deployed code (confirmed via the ACA runtime invariant), but SkyHarbor's phase-workspace-v2/pattern-assembly rendering has not been visually/functionally verified. **Action needed:** either share SkyHarbor demo credentials, or have an operator run the equivalent smoke test and drop the proof under `proof/moves-cross-tenant-rollout-skyharbor-live-<timestamp>/`.
 
 **Not tested this pass:** `moves_workforce_economics` and `moves_decision_storytelling` on Lakeshore (enabled but not separately smoke-tested — no known reason to expect an issue, but unverified).
+
+## 10. Live-proof results, part 2 (2026-07-08, SkyHarbor + dormant-flag follow-up)
+
+**SkyHarbor — DONE.** Full proof in `proof/moves-cross-tenant-rollout-skyharbor-live-2026-07-08/README.md` (Move `GLOBAL_NETWORK_AIRLINE-CANARY-2026`, P3, 60%):
+- Phase workspace v2: real checklist ("4 of 4 in", "0 of 2 met"), guidance card rendered, no console errors. **Cross-tenant proof complete** — phase_workspace_v2 is now proven on both Lakeshore and SkyHarbor.
+- Pattern assembly: clicked "✦ Assemble options" live → real, SkyHarbor-specific evidence-backed options about IROPS command architecture (not overfit to Lakeshore's legal use case), no console errors. **Cross-tenant proof complete.**
+- Orchestrated deliverables: re-confirmed healthy (5 existing board-grade deliverables listed at 100/100 quality) — this was SkyHarbor's original proof tenant, so this re-confirms no regression rather than new cross-tenant proof.
+- Confirmed tenant isolation: while signed in as SkyHarbor, a direct Lakeshore moveId URL correctly returned "This item is not available for this account."
+
+**Both `moves_phase_workspace_v2` and `moves_pattern_assembly` are now fully cross-tenant proven** (Lakeshore ✅ + SkyHarbor ✅) — candidates for a 3rd-tenant cohort per §8.
+
+**Lakeshore dormant flags — INCONCLUSIVE, honest reason.** Full notes in `proof/moves-lakeshore-dormant-flags-live-2026-07-08/README.md`. `moves_workforce_economics` and `moves_decision_storytelling` both attach to the kernel-derived Costed Business-Case Pack. Lakeshore's `RETAIL-LEGAL-2026` Move (and all 5 of Lakeshore's active Moves, checked) resolves to an **UNBOUND** kernel state ("No curated Domain Function Pack covers this Move's function") — an existing, correct, honest-fallback behavior unrelated to this release. With no kernel deck to attach to, neither flag has anything to visibly render on any current Lakeshore Move. The page loads cleanly with no console errors either way, so nothing broke — but the actual new content (workforce estimate-twice view / decision-storytelling deck) remains functionally unverified. **Open follow-up:** find or create a Move that resolves to a curated Domain Function Pack (any tenant) to complete this proof.
+
+## 11. Updated rollout matrix (post live-proof)
+
+| Capability | Lakeshore | SkyHarbor | Status |
+|---|---|---|---|
+| Phase workspace v2 | ✅ proven | ✅ proven | Cross-tenant proof COMPLETE |
+| Pattern assembly | ✅ proven | ✅ proven | Cross-tenant proof COMPLETE |
+| Orchestrated deliverables | ✅ proven | ✅ proven (pre-existing) | Cross-tenant proof COMPLETE |
+| Workforce economics | ⚠️ deployed, unverified (kernel-unbound Move) | off | First-proof INCONCLUSIVE — needs a kernel-bound Move |
+| Decision storytelling | ⚠️ deployed, unverified (kernel-unbound Move) | off | First-proof INCONCLUSIVE — needs a kernel-bound Move |
+| Strict gate approval | optional (off) | optional (off) | Decision still open (§6) |
