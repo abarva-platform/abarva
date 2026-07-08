@@ -1535,6 +1535,49 @@ export async function POST(request: Request) {
       ? ""
       : contextBundlePromptBlock;
 
+  // aVa Source polish gate — Gap 2 fix (follow-up to Gap 1 / #4602).
+  //
+  // Live-found (still broken after #4602): "What evidence is missing?" asked
+  // on the RFP stage of a real Source event was STILL answered with
+  // off-topic tenant-wide content (portfolio KPI figures, benchmark
+  // percentile framing, "active users" style metrics) even though #4602's
+  // fix correctly suppresses `contextBundlePromptBlock` (the
+  // `getContextBroker().assemble` mechanism) for grounded Source modes. Two
+  // independent live re-tests produced DIFFERENT off-topic content each
+  // time, ruling out a stale cache and confirming a second, still-live
+  // generic-injection path.
+  //
+  // Root cause (verified via static trace, not guessed): `agentTenantContextBlock`
+  // (PR-R "CXO grounding") is a SEPARATE broker call from
+  // `contextBundlePromptBlock` — gated only by `isTenantCurrentStateSurface`
+  // (any non-auth surface with an active tenant), never by
+  // `shouldSuppressGenericContextBundleForSourceMode` / `isGroundedAnswerMode`.
+  // On this route, `agentName` normalizes to "Sentinel" by default
+  // (`normalizeEnterpriseAgentName`), and the Sentinel branch of the broker's
+  // persisted-data path (`selectPersistedContextItems`, agent-context-broker.ts)
+  // unconditionally fetches `kpi_dictionary` (24 rows), `it_landscape`,
+  // `cross_program_signals`, `evidence_ledger`, and chunk retrieval across
+  // `application_portfolio` / `initiative_financials` /
+  // `regulatory_and_dependency_context` / `vendor_contract` / `sponsor_signal`
+  // — tenant-wide portfolio/KPI data with NO Source-event scoping — and folds
+  // it into the SAME system prompt as the correctly Source-scoped grounding.
+  // This explains why the leaked content differs each call (it's live KPI/
+  // signal rows, not a fixed string) while still being off-topic for a
+  // Source-event evidence question.
+  //
+  // Fix: apply the SAME suppression predicate #4602 established for
+  // `contextBundlePromptBlockForPrompt` to this second injection path. Once a
+  // grounded, non-passthrough Source answer mode has fired, the deterministic
+  // Source grounding (`sourceAvaGroundingBlock`) and the Source-scoped broker
+  // block (`sourceTenantContextBlock`) are the authoritative context for this
+  // turn — the generic cross-module tenant bundle adds no Source-event value
+  // and is the demonstrated leak vector. `stakeholder_alignment` and any
+  // non-Source surface keep receiving this block exactly as before.
+  const agentTenantContextBlockForPrompt =
+    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode)
+      ? ""
+      : agentTenantContextBlock;
+
   // OV2-WIRE-AND-FM-PROMPT Part 1 — failure-mode catalog block. Universal
   // across all Programs surfaces (`/programs*`, `/demo/programs*`, `/tower*`).
   // Empty string elsewhere; the prompt-array filter strips it cleanly.
@@ -1670,8 +1713,10 @@ export async function POST(request: Request) {
     VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT,
     "",
     // PR-R / CXO grounding · tenant current-state block for all
-    // canonical agents on tenant-scoped surfaces.
-    agentTenantContextBlock,
+    // canonical agents on tenant-scoped surfaces. Gap 2 fix: suppressed
+    // (agentTenantContextBlockForPrompt, not the raw block) once a grounded
+    // Source answer mode has fired — see the derivation above.
+    agentTenantContextBlockForPrompt,
     "",
     // W1.4 Home · Consilium expert grounding ("" unless surface === "/home"
     // and scb_shared_engine_home is on for the tenant). Placed with the tenant
@@ -2170,7 +2215,21 @@ export async function POST(request: Request) {
 }
 
 function isSourceSurface(surface: string): boolean {
-  return surface === "/source" || surface.startsWith("/source/");
+  // "source-detail" (no leading slash) is the literal surface value the
+  // event-detail canvas passes (UniversalCanvasShell, the RFP
+  // approval page — see src/components/source/canvas/UniversalCanvasShell.tsx
+  // and src/app/(maestro)/source/events/[eventId]/approval/page.tsx). Before
+  // this fix, `isSourceSurface` only matched "/source"/"/source/*", so on
+  // the event-detail canvas the Source-scoped access policy
+  // (`sourceAccessPolicy`), Source client-key resolution (`sourceClientKey`),
+  // and the Source-scoped broker block (`sourceTenantContextBlock`) never
+  // ran — while the generic tenant-wide `agentTenantContextBlock` still did
+  // (see the Gap 2 fix above), compounding the off-topic-content bug.
+  return (
+    surface === "/source" ||
+    surface.startsWith("/source/") ||
+    surface === "source-detail"
+  );
 }
 
 function isStrategicMovesSurface(surface: string): boolean {
