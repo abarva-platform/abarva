@@ -66,13 +66,13 @@ Revert the commit, merge, redeploy. No data migration, no flag to unwind. Becaus
 
 ## Audit Evidence
 
-- PR URL: (added when opened)
-- CI run: (added when opened)
-- Live smoke-test proof: pending — will re-run the 6 specified prompts on Lakeshore `RETAIL-LEGAL-2026`/P2 and confirm grounded answers, under `proof/moves-ava-chat-programid-fix-live-<timestamp>/`.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4599 (merged as `227c28929bf6d1986d1b4ca275e666195b801378`)
+- CI run (all 21 checks passed): https://github.com/abarva-platform/abarva/pull/4599/checks
+- Deploy run (success, runtime invariant verified — digest `sha256:4f3f31d51692655fed855356a654cd305248dc5147262274d62f9bcca60befe9`): run `28973931514`
+- Live smoke-test proof: **CONFIRMED WORKING** — `proof/moves-ava-chat-programid-fix-live-2026-07-08/README.md`. All 6 specified prompts, on a fresh conversation on the exact Move/phase page that previously said "No active Move session is visible," now ground correctly: references to P2, real gate-criterion IDs (e.g. "GC-P2-1"), the real evidence ledger, and appropriate Source/Tower mentions. "Can we move to the next phase?" correctly answered "No — P2 cannot close yet" without claiming to advance anything. Zero mentions of the unrelated-program contamination (Kyriba/SOX/Treasury) seen before the fix. One pre-existing, unrelated React hydration warning on initial page load; no errors on any of the 6 chat turns; no network 5xxs.
 - Root-cause trace: `proof/moves-ava-chat-hardening-live-2026-07-08/README.md` (the pass that discovered this bug).
 
 ## Known Gaps
 
-- Live re-proof pending (see above) — this record will be updated once captured.
 - This fix restores grounding for the Moves phase-workspace chat surface specifically. The broader "does every agentic surface correctly bind to its product-surface context" audit the user proposed (Intelligence/Source/Tower/Home) is out of scope for this fix and not started.
-- Once live-proven, the deferred items from the original hardening release (full packet richness via `buildPhaseWorkflow`/`buildFeedForwardPack`/`buildApprovedInputsPack`; quality-gate wired into the live streaming response) remain the next real quality work — now actually reachable for the first time.
+- Now that grounding is confirmed live, the deferred items from the original hardening release (full packet richness via `buildPhaseWorkflow`/`buildFeedForwardPack`/`buildApprovedInputsPack`; quality-gate wired into the live streaming response) are the next real quality work — now actually reachable and worth prioritizing since the base grounding is proven sound.
