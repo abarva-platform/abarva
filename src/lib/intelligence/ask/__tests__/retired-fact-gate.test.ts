@@ -47,6 +47,56 @@ describe("retired fact gate", () => {
     expect(findings).toEqual([]);
   });
 
+  it("hard-flags retired First Capital aliases in source packets", () => {
+    const findings = scanRetiredFacts({
+      tenantKey: "arcturus",
+      sources: [
+        {
+          type: "TENANT",
+          id: "first-capital:enterprise_profile",
+          name: "Enterprise profile",
+          detail:
+            "First Capital Financial is shown as the company display name in this stale profile row.",
+          confidence: 0.98,
+        },
+      ],
+    });
+
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tenantKey: "first-capital",
+          factId: "retired_alias_firstcapitalfinancial",
+          location: "source:first-capital:enterprise_profile:detail",
+        }),
+      ]),
+    );
+    expect(buildRetiredFactError(findings)).toContain(
+      "retired_alias_firstcapitalfinancial",
+    );
+  });
+
+  it("hard-flags retired First Capital aliases in model output", () => {
+    const findings = scanRetiredFacts({
+      tenantKey: "first-capital",
+      textBlocks: [
+        {
+          location: "modelOutput",
+          text: "First Capital Financial should not be emitted in a final advisory answer.",
+        },
+      ],
+    });
+
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          factId: "retired_alias_firstcapitalfinancial",
+          location: "modelOutput",
+        }),
+      ]),
+    );
+  });
+
   it("flags retired Lakeshore facts in model output and followups", () => {
     const findings = scanRetiredFacts({
       tenantKey: "lakeshore",
@@ -67,8 +117,8 @@ describe("retired fact gate", () => {
     expect(findings.map((finding) => finding.factId)).toEqual(
       expect.arrayContaining([
         "old_ai_budget_54m",
-        "old_alias_lakeshore_industries",
-        "old_opco_harborpoint",
+        "retired_alias_lakeshoreindustries",
+        "retired_alias_harborpoint",
       ]),
     );
   });
