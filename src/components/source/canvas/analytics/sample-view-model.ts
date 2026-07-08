@@ -81,6 +81,34 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
       factTemplateCode: 'VOLUMETRICS_V1',
     },
     {
+      id: 'scope.app-inventory',
+      title: 'Provide the application inventory',
+      subtitle: 'Run cost + retained-FTE cost per app',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload your application & system inventory (CSV or XLSX). We read per-app annual run cost, loaded FTE cost, and the variable-cost share — the facts the volume-band pricing and retained-cost levers need.',
+      provenance: { owner: 'Ravi Menon, IT-Ops', source: 'CMDB / finance export' },
+      cta: 'Confirm inventory',
+      // Parsed into APP_INVENTORY_V1 facts (annual_run_cost, loaded_fte_cost,
+      // variable_cost_share_pct) — flips the pricing / retained-cost levers LIVE.
+      factTemplateCode: 'APP_INVENTORY_V1',
+    },
+    {
+      id: 'scope.vendor-commercials',
+      title: 'Provide vendor commercials & contract terms',
+      subtitle: 'Transition, SLA credits, credits, term',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload the vendor commercials sheet (CSV or XLSX): transition fee, overrun probability & cost multiple, SLA credit cap and at-risk fee pool, committed productivity credit, retained-FTE delta, and contract term. This lands the vendor-side facts the SLA, productivity-credit, and transition-risk levers need.',
+      provenance: { owner: 'Procurement lead', source: 'Vendor proposal / commercials sheet' },
+      cta: 'Confirm commercials',
+      // Parsed into CONTRACT_TERMS_V1 facts — flips the SLA, productivity-credit,
+      // transition-risk, and retained-cost levers LIVE.
+      factTemplateCode: 'CONTRACT_TERMS_V1',
+    },
+    {
       id: 'scope.exclusions',
       title: "Confirm what's out of scope",
       subtitle: '6 exclusions',

@@ -130,10 +130,91 @@ const VOLUMETRICS_TEMPLATE: TemplateFactMap = {
   ],
 };
 
+// ── Vendor commercials / contract terms template ─────────────────────────────
+// One row per vendor/bid. Carries the commercial + benchmark scalars the AMS
+// value levers need beyond volumetrics and the app inventory: transition risk,
+// SLA credit economics, committed productivity credits, retained-effort delta,
+// and the contract term. Some columns are vendor-entity facts (they take the
+// row's vendor id as entity_ref); others are event-level benchmarks/term (they
+// write with a null entity_ref) — the structured map splits them by the FACT's
+// entityKind, so a single row lands both. The vendor id column is therefore
+// required: a vendor-entity fact with no vendor id is rejected loudly, never
+// silently dropped.
+//
+// IMPORTANT (unit discipline, matched to the catalog / lever inputs): pct facts
+// are WHOLE NUMBERS (18 = 18%), `ratio` is a plain multiple (1.6), `count`
+// (term_years) is a plain number (5). Do NOT pre-divide — the value math owns
+// the scaling.
+const CONTRACT_TERMS_TEMPLATE: TemplateFactMap = {
+  templateCode: 'CONTRACT_TERMS_V1',
+  label: 'Vendor commercials & contract terms',
+  rowEntity: 'vendor',
+  entityRefColumn: 'Vendor',
+  columns: [
+    {
+      header: 'Transition Fee (USD)',
+      factKey: 'transition_fee',
+      entityKind: 'vendor',
+      unit: 'usd',
+      note: 'One-time transition / KT fee the vendor quotes. The value at risk if transition overruns.',
+    },
+    {
+      header: 'Transition Overrun Probability (%)',
+      factKey: 'overrun_probability',
+      entityKind: 'event',
+      unit: 'pct',
+      note: 'Benchmark probability that transition overruns (whole number, e.g. 30 = 30%).',
+    },
+    {
+      header: 'Overrun Cost Multiple (x)',
+      factKey: 'overrun_cost_multiple',
+      entityKind: 'event',
+      unit: 'ratio',
+      note: 'Overrun cost as a plain multiple of the transition fee (e.g. 1.6). Do not pre-divide.',
+    },
+    {
+      header: 'SLA Credit Cap (%)',
+      factKey: 'credit_cap_pct',
+      entityKind: 'vendor',
+      unit: 'pct',
+      note: 'Maximum share of the fee pool recoverable as SLA credits (whole number).',
+    },
+    {
+      header: 'At-Risk Fee Pool (USD/yr)',
+      factKey: 'at_risk_fee_pool',
+      entityKind: 'vendor',
+      unit: 'usd_per_year',
+      note: 'Annual fee pool exposed to SLA credits. The base of the protected-value SLA calc.',
+    },
+    {
+      header: 'Committed Productivity Credit (%)',
+      factKey: 'committed_credit_pct',
+      entityKind: 'vendor',
+      unit: 'pct',
+      note: 'Year-over-year productivity/automation credit the vendor commits to in writing (whole number).',
+    },
+    {
+      header: 'Retained FTE Delta',
+      factKey: 'retained_fte_delta',
+      entityKind: 'vendor',
+      unit: 'fte',
+      note: "Difference in retained client/SME FTE vs the baseline model. Normalizes over-cheap bids.",
+    },
+    {
+      header: 'Contract Term (Years)',
+      factKey: 'term_years',
+      entityKind: 'event',
+      unit: 'count',
+      note: 'Length of the contract term in years (plain number). Multiplies annualized levers over the deal.',
+    },
+  ],
+};
+
 /** All shipped structured intake templates, keyed by templateCode. */
 export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
   [VOLUMETRICS_TEMPLATE.templateCode]: VOLUMETRICS_TEMPLATE,
+  [CONTRACT_TERMS_TEMPLATE.templateCode]: CONTRACT_TERMS_TEMPLATE,
   // Add new intake templates here — no engine change required.
 };
 

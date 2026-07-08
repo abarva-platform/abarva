@@ -17,6 +17,7 @@ const CTX = { sourceEventId: "event-uuid-1", clientKey: "lakeshore" };
 
 const APP_INVENTORY = templateFactMapByCode("APP_INVENTORY_V1")!;
 const VOLUMETRICS = templateFactMapByCode("VOLUMETRICS_V1")!;
+const CONTRACT_TERMS = templateFactMapByCode("CONTRACT_TERMS_V1")!;
 
 describe("coerceNumericCell", () => {
   it("passes through finite numbers", () => {
@@ -146,6 +147,135 @@ describe("mapTemplateUploadToFacts — VOLUMETRICS_V1 mixed entity + sparse rows
     )!;
     expect(decline.entity_kind).toBe("tower");
     expect(decline.entity_ref).toBe("AMS-Core");
+  });
+});
+
+describe("mapTemplateUploadToFacts — CONTRACT_TERMS_V1 (vendor commercials)", () => {
+  const upload: ParsedTemplateUpload = {
+    headers: [
+      "Vendor",
+      "Transition Fee (USD)",
+      "Transition Overrun Probability (%)",
+      "Overrun Cost Multiple (x)",
+      "SLA Credit Cap (%)",
+      "At-Risk Fee Pool (USD/yr)",
+      "Committed Productivity Credit (%)",
+      "Retained FTE Delta",
+      "Contract Term (Years)",
+    ],
+    rows: [
+      {
+        Vendor: "VENDOR-A",
+        "Transition Fee (USD)": "$2,400,000",
+        "Transition Overrun Probability (%)": "30",
+        "Overrun Cost Multiple (x)": "1.6",
+        "SLA Credit Cap (%)": "12",
+        "At-Risk Fee Pool (USD/yr)": "18,000,000",
+        "Committed Productivity Credit (%)": "4",
+        "Retained FTE Delta": "9",
+        "Contract Term (Years)": "5",
+      },
+    ],
+  };
+
+  it("maps a valid row to all 8 vendor/contract facts with no drift", () => {
+    const { facts, unmappedColumns, rejectedRows } = mapTemplateUploadToFacts(
+      CONTRACT_TERMS,
+      upload,
+      CTX,
+    );
+    expect(rejectedRows).toHaveLength(0);
+    expect(unmappedColumns).toEqual([]);
+    expect(facts.map((f) => f.fact_key).sort()).toEqual(
+      [
+        "at_risk_fee_pool",
+        "committed_credit_pct",
+        "credit_cap_pct",
+        "overrun_cost_multiple",
+        "overrun_probability",
+        "retained_fte_delta",
+        "term_years",
+        "transition_fee",
+      ].sort(),
+    );
+    expect(facts).toHaveLength(8);
+  });
+
+  it("every fact's unit mirrors the catalog (no unit drift)", () => {
+    const { facts } = mapTemplateUploadToFacts(CONTRACT_TERMS, upload, CTX);
+    for (const f of facts) {
+      expect(f.unit).toBe(factSpecByKey(f.fact_key)!.unit);
+    }
+  });
+
+  it("keeps pct/ratio/count values as whole/plain numbers (no pre-division)", () => {
+    const { facts } = mapTemplateUploadToFacts(CONTRACT_TERMS, upload, CTX);
+    const byKey = new Map(facts.map((f) => [f.fact_key, f]));
+    expect(byKey.get("overrun_probability")!.value_numeric).toBe(30);
+    expect(byKey.get("overrun_cost_multiple")!.value_numeric).toBe(1.6);
+    expect(byKey.get("credit_cap_pct")!.value_numeric).toBe(12);
+    expect(byKey.get("committed_credit_pct")!.value_numeric).toBe(4);
+    expect(byKey.get("term_years")!.value_numeric).toBe(5);
+    expect(byKey.get("transition_fee")!.value_numeric).toBe(2_400_000);
+    expect(byKey.get("at_risk_fee_pool")!.value_numeric).toBe(18_000_000);
+    expect(byKey.get("retained_fte_delta")!.value_numeric).toBe(9);
+  });
+
+  it("attaches entity_ref per FACT entityKind: vendor facts carry the vendor id, event facts are null", () => {
+    const { facts } = mapTemplateUploadToFacts(CONTRACT_TERMS, upload, CTX);
+    const byKey = new Map(facts.map((f) => [f.fact_key, f]));
+    // vendor-entity facts take the row's vendor id
+    for (const k of [
+      "transition_fee",
+      "credit_cap_pct",
+      "at_risk_fee_pool",
+      "committed_credit_pct",
+      "retained_fte_delta",
+    ]) {
+      expect(byKey.get(k)!.entity_kind).toBe("vendor");
+      expect(byKey.get(k)!.entity_ref).toBe("VENDOR-A");
+    }
+    // event-level benchmarks / term are null entity_ref
+    for (const k of ["overrun_probability", "overrun_cost_multiple", "term_years"]) {
+      expect(byKey.get(k)!.entity_kind).toBe("event");
+      expect(byKey.get(k)!.entity_ref).toBeNull();
+    }
+  });
+
+  it("rejects the vendor-entity facts when the row has no vendor id", () => {
+    const noVendor: ParsedTemplateUpload = {
+      headers: upload.headers,
+      rows: [{ ...upload.rows[0], Vendor: "" }],
+    };
+    const { facts, rejectedRows } = mapTemplateUploadToFacts(
+      CONTRACT_TERMS,
+      noVendor,
+      CTX,
+    );
+    // The 3 event-level facts still land; the 5 vendor facts are rejected loudly.
+    expect(facts.map((f) => f.fact_key).sort()).toEqual(
+      ["overrun_cost_multiple", "overrun_probability", "term_years"].sort(),
+    );
+    expect(rejectedRows).toHaveLength(5);
+    for (const r of rejectedRows) {
+      expect(r.reason).toMatch(/entity-ref column/);
+    }
+  });
+
+  it("rejects a present-but-uncoercible commercial cell (no silent loss)", () => {
+    const bad: ParsedTemplateUpload = {
+      headers: upload.headers,
+      rows: [{ ...upload.rows[0], "Transition Fee (USD)": "TBD" }],
+    };
+    const { facts, rejectedRows } = mapTemplateUploadToFacts(
+      CONTRACT_TERMS,
+      bad,
+      CTX,
+    );
+    expect(facts.map((f) => f.fact_key)).not.toContain("transition_fee");
+    const rej = rejectedRows.find((r) => r.factKey === "transition_fee");
+    expect(rej).toBeDefined();
+    expect(rej!.reason).toMatch(/not a valid number/);
   });
 });
 
