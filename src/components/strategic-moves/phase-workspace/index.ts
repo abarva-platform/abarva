@@ -15,3 +15,4 @@ export {
 } from './cards';
 export { PhaseWorkspaceComposition } from './PhaseWorkspaceComposition';
 export { MovePhaseWorkspacePanel } from './MovePhaseWorkspacePanel';
+export { PhaseTaskChecklist } from './PhaseTaskChecklist';

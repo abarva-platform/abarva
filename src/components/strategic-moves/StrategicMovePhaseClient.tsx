@@ -2372,7 +2372,27 @@ export function StrategicMovePhaseClient({
         workspace={
           <>
           {showPhaseWorkspaceV2 && (
-            <MovePhaseWorkspacePanel phaseNum={phaseNum} phaseLabel={config.label} />
+            <MovePhaseWorkspacePanel
+              phaseNum={phaseNum}
+              phaseLabel={config.label}
+              nextPhaseLabel={PHASE_CONFIGS[phaseNum + 1]?.label ?? null}
+              evidence={
+                isCurrentPhase
+                  ? evidenceNeedPackets.map((p) => ({
+                      priority: p.priority,
+                      status: p.status,
+                    }))
+                  : []
+              }
+              gate={
+                isCurrentPhase
+                  ? move.gateCriteria.map((g) => ({
+                      completed: g.completed,
+                      severity: g.severity,
+                    }))
+                  : []
+              }
+            />
           )}
           {useWorkbench ? (
             <CharterWorkflow
