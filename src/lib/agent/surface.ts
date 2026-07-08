@@ -77,8 +77,16 @@ export function canonicalizeSurface(
     // The phase workspace chat sends this semantic key; without a mapping it
     // bypassed every URL-prefixed doctrine/tool gate (founder-reported: the
     // Nexus deliverable doctrine silently never applied in the workspace).
+    // Fallback to `moveId` too: the Moves phase chat client historically sent
+    // the Move id under that key instead of `programId`, which silently
+    // dropped grounding entirely (confirmed live: aVa lost all Move context).
     case "strategic-moves-workspace": {
-      const pid = typeof ctx.programId === "string" ? ctx.programId : null;
+      const pid =
+        typeof ctx.programId === "string"
+          ? ctx.programId
+          : typeof ctx.moveId === "string"
+            ? ctx.moveId
+            : null;
       return pid ? `/strategic-moves/${pid}` : "/strategic-moves";
     }
     // Add cases here as detail-level surfaces gain canonical URL forms.
@@ -104,7 +112,9 @@ export function canonicalizeFromBody(body: {
     body.programId ??
     (typeof surfaceContext.programId === "string"
       ? surfaceContext.programId
-      : undefined);
+      : typeof surfaceContext.moveId === "string"
+        ? surfaceContext.moveId
+        : undefined);
   const surface = canonicalizeSurface(body.surface ?? "", {
     ...surfaceContext,
     programId,

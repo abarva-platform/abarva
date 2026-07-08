@@ -66,6 +66,42 @@ describe('canonicalizeSurface', () => {
   it('empty surface stays empty', () => {
     expect(canonicalizeSurface('', {})).toBe('');
   });
+
+  describe("'strategic-moves-workspace' — regression for the live grounding-loss bug", () => {
+    // Confirmed live (2026-07-08 Moves aVa chat hardening proof): the phase
+    // chat client sent surfaceContext.moveId (not .programId), so this case
+    // fell through to the bare "/strategic-moves" branch and every
+    // downstream programId-gated block (phase pack, Moves aVa packet) never
+    // built — aVa answered "No active Move session is visible."
+
+    it('resolves via programId in context (the documented contract)', () => {
+      expect(canonicalizeSurface('strategic-moves-workspace', { programId: 'move-123' })).toBe(
+        '/strategic-moves/move-123',
+      );
+    });
+
+    it('falls back to moveId in context when programId is absent (the bug fix)', () => {
+      expect(canonicalizeSurface('strategic-moves-workspace', { moveId: 'move-123' })).toBe(
+        '/strategic-moves/move-123',
+      );
+    });
+
+    it('programId wins over moveId when both are present', () => {
+      expect(
+        canonicalizeSurface('strategic-moves-workspace', {
+          programId: 'from-program-id',
+          moveId: 'from-move-id',
+        }),
+      ).toBe('/strategic-moves/from-program-id');
+    });
+
+    it('falls back to the bare surface only when neither id is present', () => {
+      expect(canonicalizeSurface('strategic-moves-workspace', {})).toBe('/strategic-moves');
+      expect(canonicalizeSurface('strategic-moves-workspace', { moveId: 123 as unknown as string })).toBe(
+        '/strategic-moves',
+      );
+    });
+  });
 });
 
 describe('canonicalizeFromBody', () => {
@@ -106,5 +142,26 @@ describe('canonicalizeFromBody', () => {
       programId: 'apx-cdp-2026',
     });
     expect(r.surface).toBe('/programs/apx-cdp-2026');
+  });
+
+  it('regression: Moves phase chat body (semantic surface + surfaceContext.moveId only) now resolves programId and the URL-shaped surface', () => {
+    // This is the exact shape StrategicMovePhaseClient.tsx sent before the
+    // fix — surface as the semantic key, id only under surfaceContext.moveId,
+    // no top-level programId. Before the fix this returned
+    // { surface: '/strategic-moves', programId: undefined }, which is what
+    // caused aVa to lose all Move context live.
+    const r = canonicalizeFromBody({
+      surface: 'strategic-moves-workspace',
+      surfaceContext: { moveId: '908c9bf8-e745-45dc-9ad8-3d493a2a1c8a', phase: 2 },
+    });
+    expect(r).toEqual({
+      surface: '/strategic-moves/908c9bf8-e745-45dc-9ad8-3d493a2a1c8a',
+      programId: '908c9bf8-e745-45dc-9ad8-3d493a2a1c8a',
+    });
+  });
+
+  it('a fresh call with no id anywhere still correctly reports no active Move (no false grounding)', () => {
+    const r = canonicalizeFromBody({ surface: 'strategic-moves-workspace', surfaceContext: {} });
+    expect(r).toEqual({ surface: '/strategic-moves', programId: undefined });
   });
 });

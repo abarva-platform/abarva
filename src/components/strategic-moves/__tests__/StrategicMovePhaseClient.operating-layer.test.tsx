@@ -16,6 +16,15 @@ jest.mock("next/navigation", () => ({
     push: mockRouterPush,
     refresh: mockRouterRefresh,
   }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/strategic-moves",
+}));
+
+// useClientContext (src/lib/use-client-context.ts) calls useUser() directly,
+// which throws outside a <ClerkProvider>. Mocked here (not app-wide) so this
+// suite can render the client component without a real Clerk session.
+jest.mock("@clerk/nextjs", () => ({
+  useUser: () => ({ user: null, isLoaded: true }),
 }));
 
 beforeEach(() => {
@@ -194,6 +203,56 @@ describe("StrategicMovePhaseClient operating layer", () => {
     expect(advanceButton).toBeInTheDocument();
     expect(advanceButton).toBeEnabled();
     expect(screen.queryByText(/Work with Ava in the chat pane to populate this section/i)).not.toBeInTheDocument();
+  });
+
+  it("chat request includes programId and the URL-shaped surface — regression for the live grounding-loss bug", async () => {
+    // Confirmed live (2026-07-08): the chat POST previously sent
+    // surface: "strategic-moves-workspace" with the id only under
+    // surfaceContext.moveId. canonicalizeFromBody (src/lib/agent/surface.ts)
+    // looked for surfaceContext.programId, never found it, and programId
+    // stayed undefined — so the phase pack / MovesAvaChatPacket grounding
+    // never built and aVa answered "No active Move session is visible."
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode("") })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        }),
+      },
+    });
+
+    const move = makeMove();
+    render(<StrategicMovePhaseClient move={move} phaseNum={2} evidenceNeedPackets={[]} />);
+
+    // The dock starts collapsed on the current phase — restore it first.
+    const restoreChip = await screen.findByTestId("agent-dock-collapsed-chip");
+    fireEvent.click(restoreChip);
+
+    const input = await screen.findByPlaceholderText(/Ask aVa…/i);
+    fireEvent.change(input, { target: { value: "What should I do next?" } });
+    fireEvent.submit(input.closest("form")!);
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/chat/agent",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+
+    const call = fetchMock.mock.calls.find(([url]) => url === "/api/chat/agent");
+    expect(call).toBeDefined();
+    const body = JSON.parse(call![1].body);
+
+    // The bug fix: programId reaches the request, both as a top-level field
+    // and inside surfaceContext, and the surface is already URL-shaped with
+    // the phase suffix rather than the bare semantic key.
+    expect(body.programId).toBe(move.id);
+    expect(body.surfaceContext.programId).toBe(move.id);
+    expect(body.surface).toBe(`/strategic-moves/${move.id}/phase/2`);
   });
 
   it("posts complete P0 capture and uses the governed gate approval route when advancing", async () => {
