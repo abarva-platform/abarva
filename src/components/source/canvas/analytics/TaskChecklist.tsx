@@ -50,10 +50,23 @@ const TYPE_LABEL: Record<TaskType, string> = {
 export function TaskChecklist({ tasks, eventId, stageKey }: TaskChecklistProps) {
   // Track local "just completed" so the demo feels responsive without a backend.
   const [openId, setOpenId] = useState<string | null>(() => {
-    const firstOpen = tasks.find((t) => t.state === 'todo');
+    // Open the first genuinely-incomplete task — one that is neither marked done
+    // by the server nor complete from persisted evidence.
+    const firstOpen = tasks.find(
+      (t) => t.state !== 'done' && t.evidenceComplete !== true,
+    );
     return firstOpen?.id ?? null;
   });
-  const [locallyDone, setLocallyDone] = useState<ReadonlySet<string>>(new Set());
+  // Seed the in-session "done" set from server-derived persisted evidence so a
+  // reloaded / tab-switched page reflects real uploaded facts/artifacts — not just
+  // this session's just-uploaded flag. A task is seeded only when its evidence
+  // genuinely reached a usable, persisted state (`evidenceComplete`); the honest
+  // "done = evidence, never a fake done" rule is preserved. The just-uploaded path
+  // still adds to this set live via onComplete.
+  const [locallyDone, setLocallyDone] = useState<ReadonlySet<string>>(
+    () =>
+      new Set(tasks.filter((t) => t.evidenceComplete === true).map((t) => t.id)),
+  );
 
   const done = tasks.filter(
     (t) => t.state === 'done' || locallyDone.has(t.id),

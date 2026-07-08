@@ -149,6 +149,18 @@ export interface StageTaskView {
    * this additionally flips the step insight LIVE. Absent → registry-only upload.
    */
   factTemplateCode?: string;
+  /**
+   * SERVER-DERIVED done-state from ALREADY-PERSISTED evidence (facts or a stored
+   * artifact), computed on page load so a reloaded / tab-switched page reflects
+   * real persisted evidence — not just the client/session "just uploaded" flag.
+   *
+   * Honesty rule: this is true ONLY because the task's evidence reached a usable,
+   * persisted state — a `provide` task's template facts exist for the event, or
+   * its mapped artifact is registered. It is NEVER a fabricated "done" without
+   * evidence. Absent/undefined → the checklist falls back to its in-session
+   * behavior (the just-uploaded success path still flips a task done live).
+   */
+  evidenceComplete?: boolean;
 }
 
 // ── Beat 3 · the gate ────────────────────────────────────────────────────────

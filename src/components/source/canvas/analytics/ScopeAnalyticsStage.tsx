@@ -45,7 +45,13 @@ export function ScopeAnalyticsStage({
 
   const { done, total } = useMemo(() => {
     const t = view.tasks.length;
-    const d = view.tasks.filter((task) => task.state === 'done').length;
+    // Count a task complete when the server marked it done OR its persisted
+    // evidence (facts/artifact) makes it complete — so the top progress bar +
+    // "N of M complete" counter survive a reload / tab switch, matching the
+    // checklist below. Honest: `evidenceComplete` is only set from real evidence.
+    const d = view.tasks.filter(
+      (task) => task.state === 'done' || task.evidenceComplete === true,
+    ).length;
     return { done: d, total: t };
   }, [view.tasks]);
   const allComplete = total > 0 && done === total;
