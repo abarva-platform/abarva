@@ -780,19 +780,27 @@ ${args.query}${strategyToAbarvaSolutionPromptDirective}`
         }
       }
       const cleanedText = stripInternalRecordIds(streamedText);
+      const finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode);
+      const { remainder: deterministicRemainder, diverged } =
+        reconcileStreamRemainder(streamedText, finalText);
+      if (deterministicRemainder) {
+        yield deterministicRemainder;
+      }
       emitTiming(
         latencyTrace.finish("claude.primary.stream.done", primaryStartedAt, {
           model,
           sawFirstToken: sawAnswerOnlyFirstToken,
           answerOnlyStreaming: true,
-          outputChars: streamedText.length,
-          outputApproxTokens: summarizeTextPayload(streamedText).approxTokens,
+          outputChars: finalText.length,
+          outputApproxTokens: summarizeTextPayload(finalText).approxTokens,
           strippedCodes: cleanedText.length !== streamedText.length,
+          deterministicFallbackApplied: finalText.length !== cleanedText.length,
+          deterministicRemainderDiverged: diverged,
         }),
       );
       args.onModelOutput?.({
         rawText: streamedText,
-        text: cleanedText,
+        text: finalText,
         model,
         auditId,
         route: "intelligence-ask-synthesis-answer-only",

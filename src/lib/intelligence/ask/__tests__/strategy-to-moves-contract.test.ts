@@ -42,6 +42,10 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(synthesizerCode).toContain("buildCxoAnswerModePromptDirective(answerMode)");
     expect(synthesizerCode).toContain("applyCxoAnswerModeFallbacks(text, answerMode)");
     expect(synthesizerCode).toContain(
+      "const finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode)",
+    );
+    expect(synthesizerCode).toContain("yield deterministicRemainder");
+    expect(synthesizerCode).toContain(
       "applyCxoAnswerModeFallbacks(\n      enforceDecisionGradeAnswer(evidenceDisciplined),\n      answerMode,\n    )",
     );
   });

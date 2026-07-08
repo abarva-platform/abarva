@@ -31,6 +31,7 @@ This release centralizes CXO-grade Intelligence answer contracts in a small answ
 - `src/lib/intelligence/ask/answer-mode-registry.ts`: Adds the CXO answer mode registry, required sections, required artifacts, banned phrases, export requirement flags, proof prompts, and deterministic fallback ownership.
 - `src/lib/intelligence/ask/synthesizer.ts`: Uses the registry for mode system addenda, prompt directives, and deterministic fallback application.
 - `src/lib/intelligence/ask/synthesizer.ts`: Re-applies registry deterministic fallback at the final no-tabs emission boundary after evidence/decision-grade transforms.
+- `src/lib/intelligence/ask/synthesizer.ts`: Re-applies registry deterministic fallback at the answer-only streaming terminal boundary used when companion canvas is enabled.
 - `src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts`: Verifies registry ownership and the deterministic Moves phase-table fallback behavior.
 - `src/lib/intelligence/ask/response-policy.test.ts`: Adds the exact live proof prompt as a `strategy_to_moves_execution` classifier regression.
 
@@ -42,6 +43,8 @@ This release centralizes CXO-grade Intelligence answer contracts in a small answ
 - Pass: `git diff --check`
 - Fail: live ACA proof on deployed `main-1358261c` returned HTTP 200 and all five surfaces, but omitted literal P0-P5/Tower labels because a later final-answer transform bypassed the first registry fallback application.
 - Pass: live ACA proof on deployed `main-9dc24f5a` returned HTTP 200 and included every required P0-P5/Tower label, a Markdown phase table, all five AbarVa surfaces, no Claude deflection, no internal terms, and no artifact overclaim.
+- Fail: live ACA proof on deployed `main-c3b90463` returned HTTP 200 but omitted literal P0-P5/Tower labels on the companion-canvas answer-only path. The final-boundary fix did not cover this streaming route.
+- Not run: live ACA proof for the answer-only terminal fallback fix. This branch is not deployed yet.
 
 ## Rollout Plan
 
@@ -68,7 +71,9 @@ Revert the merge commit and redeploy through the ACA main deploy workflow. The r
 - ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/28974549054
 - Live proof dependency: PR #4597 already proved the deterministic phase-table fallback on deployed `main-0a1f4252`.
 - Live final acceptance: `/Users/anand/Downloads/abarva-live-strategy-solution-proof/cxo-answer-mode-registry-final-2026-07-08T20-54-38-193Z.json`
+- Companion-canvas answer-only failure: `/Users/anand/Downloads/abarva-live-strategy-solution-proof/cxo-answer-mode-registry-current-2026-07-08T21-10-07-138Z.json`
 
 ## Known Gaps
 
 - The registry seeds future answer modes such as `industry_trend_to_ai_bets`, `board_ai_governance_plan`, and `strategy_to_tower_value_case` as inactive contracts. Those modes still need classifiers, typed artifact validators, export proof, and live proof prompts before being activated.
+- Live acceptance for the answer-only terminal fallback fix requires merge, ACA deploy, runtime invariant proof, and rerun of the exact Lakeshore Moves phase prompt on the current companion-canvas route.
