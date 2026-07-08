@@ -16,6 +16,8 @@ export {
   inferTemplateFromFilename,
   uploadCategoryForTemplate,
 } from './upload-inference';
+export { computeWhatChanged } from './what-changed';
+export type { WhatChangedResult } from './what-changed';
 export {
   buildPatternAssemblyPacket,
   validateAssembledResponse,

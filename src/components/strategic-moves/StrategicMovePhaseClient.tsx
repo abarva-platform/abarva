@@ -34,10 +34,12 @@ import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-work
 import { useFeature } from "@/lib/features/use-feature";
 import {
   classifyUpload,
+  computeWhatChanged,
   inferTemplateFromFilename,
   uploadCategoryForTemplate,
   type MovePhaseCode,
   type MoveTemplateUploadClassification,
+  type WhatChangedResult,
 } from "@/lib/programs/phase-templates";
 import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
@@ -2030,10 +2032,20 @@ export function StrategicMovePhaseClient({
   // from the filename and mapped through the governed catalog. The file is not
   // persisted here (persistence is a later increment) — this shows the mapping.
   const templateUploadRef = useRef<HTMLInputElement>(null);
+  const finalVersionRef = useRef<HTMLInputElement>(null);
   const [templateUpload, setTemplateUpload] =
     useState<MoveTemplateUploadClassification | null>(null);
+  // The completed-template upload is the "draft"; the final reviewed upload is
+  // compared against it (client-side text read). See phase-templates/what-changed.
+  const [draftText, setDraftText] = useState<string | null>(null);
+  const [whatChanged, setWhatChanged] = useState<WhatChangedResult | null>(null);
+  const [changesConfirmed, setChangesConfirmed] = useState(false);
   const pickCompletedTemplate = useCallback(
     () => templateUploadRef.current?.click(),
+    [],
+  );
+  const pickFinalVersion = useCallback(
+    () => finalVersionRef.current?.click(),
     [],
   );
   const onCompletedTemplateSelected = useCallback(
@@ -2057,9 +2069,33 @@ export function StrategicMovePhaseClient({
           confidence: tmpl ? "high" : "low",
         }),
       );
+      // This upload is the draft baseline; reset any prior comparison.
+      setWhatChanged(null);
+      setChangesConfirmed(false);
+      setDraftText(null);
+      void file.text().then((t) => setDraftText(t));
     },
     [move.id, phaseNum],
   );
+  const onFinalVersionSelected = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file || draftText == null) return;
+      void file.text().then((finalText) => {
+        setWhatChanged(
+          computeWhatChanged(
+            draftText,
+            finalText,
+            templateUpload?.nextPhaseInputsUpdated ?? [],
+          ),
+        );
+        setChangesConfirmed(false);
+      });
+    },
+    [draftText, templateUpload],
+  );
+  const confirmChanges = useCallback(() => setChangesConfirmed(true), []);
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
@@ -2435,6 +2471,15 @@ export function StrategicMovePhaseClient({
             />
           )}
           {showPhaseWorkspaceV2 && (
+            <input
+              ref={finalVersionRef}
+              type="file"
+              accept=".md,.docx,.xlsx,.pdf,.txt,.html,.csv"
+              style={{ display: "none" }}
+              onChange={onFinalVersionSelected}
+            />
+          )}
+          {showPhaseWorkspaceV2 && (
             <MovePhaseWorkspacePanel
               phaseNum={phaseNum}
               phaseLabel={config.label}
@@ -2488,6 +2533,10 @@ export function StrategicMovePhaseClient({
               onTaskAction={focusWorkspaceControls}
               uploadClassification={templateUpload}
               onUploadCompletedTemplate={pickCompletedTemplate}
+              onUploadFinalVersion={pickFinalVersion}
+              whatChanged={whatChanged}
+              onConfirmChanges={confirmChanges}
+              changesConfirmed={changesConfirmed}
             />
           )}
           {useWorkbench ? (

@@ -20,6 +20,8 @@ import { NextPhaseFeedForwardCard } from '../NextPhaseFeedForwardCard';
 import { buildPhaseWorkflow } from '../../../../lib/programs/phase-templates/phase-workflow';
 import { buildFeedForwardPack } from '../../../../lib/programs/phase-templates/feed-forward';
 import { classifyUpload } from '../../../../lib/programs/phase-templates/classification';
+import { WhatChangedCard } from '../WhatChangedCard';
+import { computeWhatChanged } from '../../../../lib/programs/phase-templates/what-changed';
 
 const F = LAKESHORE_LEGAL_DEMO_FIXTURE;
 const render = (el: React.ReactElement) => renderToStaticMarkup(el);
@@ -265,6 +267,64 @@ describe('completed-template upload → mapping (increment 8)', () => {
     expect(html).toContain('What AbarVa found');
     expect(html).toContain('Move-scoped only');
     expect(html.toLowerCase()).toContain('not added to enterprise context');
+  });
+});
+
+describe('client-final → What Changed (increment 9)', () => {
+  const result = computeWhatChanged(
+    '## Selected approach\nOrchestration layer.\n## Scope\nAll.',
+    '## Selected approach\nCLM-embedded triage.\n## Scope\nNDAs and SOWs.\n## Risks\nNew.',
+    ['P4 workstream inputs'],
+  );
+
+  it('shows changed/added sections, impacted next phase, and a confirm control', () => {
+    const html = render(<WhatChangedCard result={result} onConfirm={() => {}} />);
+    expect(html).toContain('What changed vs. the draft');
+    expect(html).toContain('Selected approach'); // changed
+    expect(html).toContain('Risks'); // added
+    expect(html).toContain('Next phase to review');
+    expect(html).toContain('P4 workstream inputs');
+    expect(html).toContain('Confirm changes');
+  });
+
+  it('reflects the confirmed state (no re-confirm button)', () => {
+    const html = render(<WhatChangedCard result={result} confirmed />);
+    expect(html).toContain('Final version confirmed');
+    expect(html).toContain('✓ Confirmed');
+    expect(html).not.toContain('<button');
+  });
+
+  it('reports no differences cleanly when draft === final', () => {
+    const same = computeWhatChanged('## A\nx', '## A\nx');
+    const html = render(<WhatChangedCard result={same} />);
+    expect(html).toContain('No differences found');
+  });
+
+  it('panel shows the final-upload control only after a completed template exists', () => {
+    const decision = templatesForPhase('P3').find((x) => x.label.toLowerCase().includes('decision'))!;
+    const classification = classifyUpload({
+      uploadId: 'd.md',
+      moveId: 'm1',
+      phase: 'P3',
+      uploadCategory: 'review_summary',
+      inferredTemplateId: decision.templateId,
+      confidence: 'high',
+    });
+    const withDraft = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={3}
+        phaseLabel="P3"
+        uploadClassification={classification}
+        onUploadCompletedTemplate={() => {}}
+        onUploadFinalVersion={() => {}}
+      />,
+    );
+    expect(withDraft).toContain('Upload final reviewed version');
+
+    const noDraft = render(
+      <MovePhaseWorkspacePanel phaseNum={3} phaseLabel="P3" onUploadFinalVersion={() => {}} />,
+    );
+    expect(noDraft).not.toContain('Upload final reviewed version');
   });
 });
 

@@ -17,3 +17,4 @@ export { PhaseWorkspaceComposition } from './PhaseWorkspaceComposition';
 export { MovePhaseWorkspacePanel } from './MovePhaseWorkspacePanel';
 export { PhaseTaskChecklist } from './PhaseTaskChecklist';
 export { NextPhaseFeedForwardCard } from './NextPhaseFeedForwardCard';
+export { WhatChangedCard } from './WhatChangedCard';
