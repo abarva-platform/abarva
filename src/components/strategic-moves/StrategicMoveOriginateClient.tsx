@@ -739,6 +739,10 @@ export function StrategicMoveOriginateClient({
           {/* orig-chat-input-area */}
           <div id="orig-chat-input-area" className={styles.chatInput}>
             <div className={styles.inputRow}>
+              <AvaAskMark
+                className={styles.avaComposerMark}
+                variant="wordmark-light"
+              />
               <textarea
                 id="orig-chat-input-field"
                 rows={1}

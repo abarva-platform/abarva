@@ -138,10 +138,14 @@ describe("StrategicMoveOriginateClient", () => {
 
     render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
 
-    const [headerMark] = screen.getAllByTestId("ava-ask-wordmark");
+    const [headerMark, composerMark] = screen.getAllByTestId("ava-ask-wordmark");
     expect(headerMark).toHaveAttribute(
       "src",
       "/brand/ava/ava-avatar-dark.svg",
+    );
+    expect(composerMark).toHaveAttribute(
+      "src",
+      "/brand/ava/ava-wordmark-2tone-light.svg",
     );
     expect(screen.queryByText(/^Ava$/)).not.toBeInTheDocument();
 
