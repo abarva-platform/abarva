@@ -82,3 +82,16 @@ This is deliberately left as a decision to make, not a flag flipped in this rele
 2. If Lakeshore smoke-proof for orchestrated-deliverables is clean → cross-tenant proven; candidate for a 3rd-tenant cohort.
 3. If Lakeshore first-proof for workforce-economics/decision-storytelling is clean → pick a 2nd proof tenant next.
 4. Bring the gate-approval-strictness decision (§6) back to the product owner before any client-production tenant onboarding.
+
+## 9. Live-proof results (2026-07-08, post-deploy)
+
+**Deploy:** PR #4587 merged as `c334950cd`; `aca-main-deploy.yml` run [28962009346](https://github.com/abarva-platform/abarva/actions/runs/28962009346) succeeded; ACA runtime invariant confirmed by the workflow itself — template image, active revision image, and worker jobs all on digest `sha256:fbfbf6fa994d0ac56e56c6a1d5d03652121654f4afd470473b9ac1efb2f48eba`.
+
+**Lakeshore — DONE.** Full proof in `proof/moves-cross-tenant-rollout-lakeshore-live-2026-07-08/README.md`:
+- Phase workspace v2: checklist with real counts, approved-Inputs-Pack card, confirmed rendering.
+- Pattern assembly: clicked "✦ Assemble options" live → Claude returned real assembled options, each labeled (observed "Evidence-backed"), no console errors.
+- Orchestrated deliverables: `board-grade-business-case` route rendered live "Business Case Readiness Memo," correctly reporting the evidence gap rather than fabricating a number (honesty discipline held), no console errors.
+
+**SkyHarbor — BLOCKED, not a code issue.** The available browser session is scoped to Lakeshore only; no cross-tenant switcher exists (checked `/strategic-moves` overview and `/setup` → Operations), and no SkyHarbor Clerk credentials were available. The flag change is live in the deployed code (confirmed via the ACA runtime invariant), but SkyHarbor's phase-workspace-v2/pattern-assembly rendering has not been visually/functionally verified. **Action needed:** either share SkyHarbor demo credentials, or have an operator run the equivalent smoke test and drop the proof under `proof/moves-cross-tenant-rollout-skyharbor-live-<timestamp>/`.
+
+**Not tested this pass:** `moves_workforce_economics` and `moves_decision_storytelling` on Lakeshore (enabled but not separately smoke-tested — no known reason to expect an issue, but unverified).
