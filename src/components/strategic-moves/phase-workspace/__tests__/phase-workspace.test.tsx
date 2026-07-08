@@ -21,7 +21,10 @@ import { buildPhaseWorkflow } from '../../../../lib/programs/phase-templates/pha
 import { buildFeedForwardPack } from '../../../../lib/programs/phase-templates/feed-forward';
 import { classifyUpload } from '../../../../lib/programs/phase-templates/classification';
 import { WhatChangedCard } from '../WhatChangedCard';
+import { ApprovedInputsPackCard } from '../ApprovedInputsPackCard';
 import { computeWhatChanged } from '../../../../lib/programs/phase-templates/what-changed';
+import { buildApprovedInputsPack } from '../../../../lib/programs/phase-templates/approved-inputs-pack';
+import { buildFeedForwardPack as buildFF } from '../../../../lib/programs/phase-templates/feed-forward';
 
 const F = LAKESHORE_LEGAL_DEMO_FIXTURE;
 const render = (el: React.ReactElement) => renderToStaticMarkup(el);
@@ -325,6 +328,57 @@ describe('client-final → What Changed (increment 9)', () => {
       <MovePhaseWorkspacePanel phaseNum={3} phaseLabel="P3" onUploadFinalVersion={() => {}} />,
     );
     expect(noDraft).not.toContain('Upload final reviewed version');
+  });
+});
+
+describe('approved Inputs Pack (increment 10) — inherited, Move-scoped, not promoted', () => {
+  const approvedPack = buildApprovedInputsPack({
+    moveId: 'm1',
+    sourcePhase: 2,
+    targetPhase: 3,
+    targetPhaseLabel: 'P3 Choose the Approach',
+    approvedBy: 'person-1',
+    approvedAt: '2026-07-08T00:00:00.000Z',
+    sourceUploadId: 'decision.md',
+    feedForward: buildFF(2, 'P3 Choose the Approach', {
+      gaps: [{ capability: 'Data ownership model', severity: 'foundational' }],
+      hardGaps: ['System of record unconfirmed'],
+      softGaps: [],
+      missingEvidence: [],
+    }),
+    whatChanged: computeWhatChanged('## A\nx', '## A\ny\n## B\nnew'),
+  });
+
+  it('card shows the approved status and states enterprise context is NOT added', () => {
+    const html = render(<ApprovedInputsPackCard pack={approvedPack} approvedOnLabel="Jul 8, 2026" />);
+    expect(html).toContain('Approved for next phase');
+    expect(html.toLowerCase()).toContain('enterprise context: not added yet');
+  });
+
+  it('panel renders the inherited approved pack when present', () => {
+    const html = render(
+      <MovePhaseWorkspacePanel phaseNum={3} phaseLabel="P3 · Design" approvedPack={approvedPack} />,
+    );
+    expect(html).toContain('approved Inputs Pack');
+    expect(html).toContain('Approved for next phase');
+  });
+
+  it('FALLBACK: no approved pack → panel does not show the approved card (deterministic feed-forward stands)', () => {
+    const html = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={3}
+        phaseLabel="P3 · Design"
+        nextPhaseLabel="P4"
+        feedForward={{ gaps: [{ capability: 'X', severity: 'high' }], hardGaps: [], softGaps: [], missingEvidence: [] }}
+      />,
+    );
+    expect(html).not.toContain('Approved for next phase');
+    expect(html).toContain('Prepared for P4'); // feed-forward fallback intact
+  });
+
+  it('no internal schema labels leak (type discriminator, column names)', () => {
+    const html = render(<ApprovedInputsPackCard pack={approvedPack} />);
+    expect(html).not.toMatch(/approved_inputs_pack|deliverable_versions|generated_artifacts|targetPhase|moveScopedOnly/);
   });
 });
 

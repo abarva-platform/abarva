@@ -21,6 +21,7 @@ import {
   type FeedForwardSignals,
 } from '../../../lib/programs/phase-templates/feed-forward';
 import type { WhatChangedResult } from '../../../lib/programs/phase-templates/what-changed';
+import type { ApprovedInputsPack } from '../../../lib/programs/phase-templates/approved-inputs-pack';
 import {
   PhaseCompletionGuideCard,
   PhaseTemplatesAndSessionsCard,
@@ -29,6 +30,7 @@ import {
 import { PhaseTaskChecklist } from './PhaseTaskChecklist';
 import { NextPhaseFeedForwardCard } from './NextPhaseFeedForwardCard';
 import { WhatChangedCard } from './WhatChangedCard';
+import { ApprovedInputsPackCard } from './ApprovedInputsPackCard';
 import { PhaseWorkspaceStyles } from './styles';
 
 /** App numeric phase → governed catalog phase code. Only P2-P5 have templates. */
@@ -59,6 +61,8 @@ export function MovePhaseWorkspacePanel({
   whatChanged,
   onConfirmChanges,
   changesConfirmed,
+  approvedPack,
+  approvedPackOnLabel,
 }: {
   phaseNum: number;
   /** The app's own phase label (e.g. "P2 · Discover"), kept authoritative. */
@@ -88,6 +92,10 @@ export function MovePhaseWorkspacePanel({
   onConfirmChanges?: () => void;
   /** True once the client has confirmed the final version. */
   changesConfirmed?: boolean;
+  /** An approved Inputs Pack this phase inherited from the prior phase, if any. */
+  approvedPack?: ApprovedInputsPack | null;
+  /** Human-formatted approval date for the inherited pack. */
+  approvedPackOnLabel?: string;
 }): React.ReactElement | null {
   const code = PHASE_NUM_TO_CODE[phaseNum];
   if (!code) return null; // Originate/Charter (0/1) have no session catalog yet.
@@ -109,6 +117,9 @@ export function MovePhaseWorkspacePanel({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '4px 0 8px' }}>
         {workflow ? (
           <PhaseTaskChecklist phaseLabel={phaseLabel} workflow={workflow} onAction={onTaskAction} />
+        ) : null}
+        {approvedPack ? (
+          <ApprovedInputsPackCard pack={approvedPack} approvedOnLabel={approvedPackOnLabel} />
         ) : null}
         <PhaseCompletionGuideCard phaseLabel={phaseLabel} templates={templates} steps={PHASE_STEPS} />
         {feedForwardPack && !feedForwardPack.isBlank ? (

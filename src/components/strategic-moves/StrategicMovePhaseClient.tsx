@@ -33,10 +33,14 @@ import { DeliverableArtifactCard } from "@/components/strategic-moves/Deliverabl
 import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace";
 import { useFeature } from "@/lib/features/use-feature";
 import {
+  buildApprovedInputsPack,
+  buildFeedForwardPack,
   classifyUpload,
   computeWhatChanged,
   inferTemplateFromFilename,
   uploadCategoryForTemplate,
+  type ApprovedInputsPack,
+  type FeedForwardSignals,
   type MovePhaseCode,
   type MoveTemplateUploadClassification,
   type WhatChangedResult,
@@ -1962,6 +1966,11 @@ interface Props {
   recommendation?: CurrentStateRecommendation | null;
   plan?: CurrentStatePlan | null;
   evidenceNeedPackets?: MoveEvidenceNeedPacket[];
+  /** An approved Inputs Pack this phase inherited from the prior phase, if any. */
+  approvedInputsPack?: {
+    pack: ApprovedInputsPack;
+    approvedOnLabel?: string;
+  } | null;
 }
 
 export function StrategicMovePhaseClient({
@@ -1971,6 +1980,7 @@ export function StrategicMovePhaseClient({
   recommendation,
   plan,
   evidenceNeedPackets = [],
+  approvedInputsPack = null,
 }: Props) {
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
@@ -2095,7 +2105,62 @@ export function StrategicMovePhaseClient({
     },
     [draftText, templateUpload],
   );
-  const confirmChanges = useCallback(() => setChangesConfirmed(true), []);
+  const nextPhaseLabelFF = PHASE_CONFIGS[phaseNum + 1]?.label ?? "the next phase";
+  const ffSignals: FeedForwardSignals | undefined = useMemo(
+    () =>
+      isCurrentPhase
+        ? {
+            whereToStart: recommendation?.whereToStart ?? null,
+            maturity: (recommendation?.maturity ?? []).map((m) => ({
+              label: m.label,
+              score: m.score,
+            })),
+            gaps: (recommendation?.gaps ?? []).map((g) => ({
+              capability: g.capability,
+              severity: g.severity,
+            })),
+            hardGaps: readiness?.hardGaps ?? [],
+            softGaps: readiness?.softGaps ?? [],
+            coverageScore: readiness?.coverageScore ?? null,
+            missingEvidence: evidenceNeedPackets
+              .filter((p) => p.status === "missing" || p.status === "partial")
+              .map((p) =>
+                p.evidenceSlot
+                  .replace(/[_-]+/g, " ")
+                  .replace(/^\w/, (c) => c.toUpperCase()),
+              ),
+            openGateCriteria: move.gateCriteria
+              .filter((g) => !g.completed)
+              .map((g) => g.label),
+          }
+        : undefined,
+    [isCurrentPhase, recommendation, readiness, evidenceNeedPackets, move.gateCriteria],
+  );
+  // Confirm the client-final review: persist a Move-scoped approved next-phase
+  // Inputs Pack, then mark confirmed. Best-effort — a write failure still
+  // reflects locally; nothing is promoted to enterprise context.
+  const confirmChanges = useCallback(() => {
+    setChangesConfirmed(true);
+    if (!ffSignals) return;
+    const targetPhase = phaseNum + 1;
+    const pack = buildApprovedInputsPack({
+      moveId: move.id,
+      sourcePhase: phaseNum,
+      targetPhase,
+      targetPhaseLabel: nextPhaseLabelFF,
+      approvedBy: "",
+      approvedAt: "",
+      sourceUploadId: templateUpload?.uploadId ?? null,
+      feedForward: buildFeedForwardPack(phaseNum, nextPhaseLabelFF, ffSignals),
+      whatChanged,
+    });
+    void fetch(`/api/programs/workspace/${move.id}/approved-inputs-pack`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pack }),
+    }).catch(() => {});
+  }, [ffSignals, nextPhaseLabelFF, phaseNum, move.id, templateUpload, whatChanged]);
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
@@ -2500,36 +2565,7 @@ export function StrategicMovePhaseClient({
                     }))
                   : []
               }
-              feedForward={
-                isCurrentPhase
-                  ? {
-                      whereToStart: recommendation?.whereToStart ?? null,
-                      maturity: (recommendation?.maturity ?? []).map((m) => ({
-                        label: m.label,
-                        score: m.score,
-                      })),
-                      gaps: (recommendation?.gaps ?? []).map((g) => ({
-                        capability: g.capability,
-                        severity: g.severity,
-                      })),
-                      hardGaps: readiness?.hardGaps ?? [],
-                      softGaps: readiness?.softGaps ?? [],
-                      coverageScore: readiness?.coverageScore ?? null,
-                      missingEvidence: evidenceNeedPackets
-                        .filter(
-                          (p) => p.status === "missing" || p.status === "partial",
-                        )
-                        .map((p) =>
-                          p.evidenceSlot
-                            .replace(/[_-]+/g, " ")
-                            .replace(/^\w/, (c) => c.toUpperCase()),
-                        ),
-                      openGateCriteria: move.gateCriteria
-                        .filter((g) => !g.completed)
-                        .map((g) => g.label),
-                    }
-                  : undefined
-              }
+              feedForward={ffSignals}
               onTaskAction={focusWorkspaceControls}
               uploadClassification={templateUpload}
               onUploadCompletedTemplate={pickCompletedTemplate}
@@ -2537,6 +2573,8 @@ export function StrategicMovePhaseClient({
               whatChanged={whatChanged}
               onConfirmChanges={confirmChanges}
               changesConfirmed={changesConfirmed}
+              approvedPack={approvedInputsPack?.pack ?? null}
+              approvedPackOnLabel={approvedInputsPack?.approvedOnLabel}
             />
           )}
           {useWorkbench ? (
