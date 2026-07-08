@@ -94,16 +94,16 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_pattern_assembly",
     summary:
-      "Moves phase workspace: AbarVa assembles candidate solution options/tradeoffs/risks via Claude (audited egress) from a governed packet, then validates each item (evidence_backed / needs_confirmation / not_allowed). Claude never invents baselines, value, evidence, readiness, or approvals — the validator labels any unbacked number needs_confirmation and any overreach not_allowed; on error it falls back to the deterministic feed-forward. Requires moves_phase_workspace_v2 + ANTHROPIC_API_KEY. Tenant opt-in; default off. Env: ABARVA_FEATURE_MOVES_PATTERN_ASSEMBLY_TENANTS.",
+      "Moves phase workspace: AbarVa assembles candidate solution options/tradeoffs/risks via Claude (audited egress) from a governed packet, then validates each item (evidence_backed / needs_confirmation / not_allowed). Claude never invents baselines, value, evidence, readiness, or approvals — the validator labels any unbacked number needs_confirmation and any overreach not_allowed; on error it falls back to the deterministic feed-forward. Requires moves_phase_workspace_v2 + ANTHROPIC_API_KEY. Tenant opt-in; default off. Lakeshore proved first (2026-07-08); SkyHarbor added 2026-07-08 for cross-tenant proof (not overfit to Lakeshore's Legal Contract Intake use case). Env: ABARVA_FEATURE_MOVES_PATTERN_ASSEMBLY_TENANTS.",
     policy: "tenant",
-    includeTenants: ["lakeshore"],
+    includeTenants: ["lakeshore", "skyharbor"],
   },
   {
     key: "moves_phase_workspace_v2",
     summary:
-      "Adds the phase-workspace guidance panel to the Moves phase page: for the current phase, a catalog-driven 'How to complete this phase' + 'Sessions and templates for this phase' pair (from the governed phase-template catalog, keyed on the phase). Purely additive and presentational — falls back to the existing workspace when off. Move-scoped data only; no fabricated numbers. Tenant opt-in for live proof (Lakeshore). Env: ABARVA_FEATURE_MOVES_PHASE_WORKSPACE_V2_TENANTS.",
+      "Adds the phase-workspace guidance panel to the Moves phase page: for the current phase, a catalog-driven 'How to complete this phase' + 'Sessions and templates for this phase' pair (from the governed phase-template catalog, keyed on the phase). Purely additive and presentational — falls back to the existing workspace when off. Move-scoped data only; no fabricated numbers. Lakeshore proved first (2026-07-08); SkyHarbor added 2026-07-08 for cross-tenant proof. Env: ABARVA_FEATURE_MOVES_PHASE_WORKSPACE_V2_TENANTS.",
     policy: "tenant",
-    includeTenants: ["lakeshore"],
+    includeTenants: ["lakeshore", "skyharbor"],
   },
   {
     key: "intelligence_companion_canvas",
@@ -192,23 +192,23 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_orchestrated_deliverables",
     summary:
-      "Author Move board-grade deliverables through the Deliverable Intelligence Orchestrator (governed multi-pass Claude authoring) instead of the deterministic template renderer. Quality/plan gates enforced; falls back to the deterministic deck when the gate blocks. SkyHarbor is enrolled for live board-grade validation; other tenants remain opt-in.",
+      "Author Move board-grade deliverables through the Deliverable Intelligence Orchestrator (governed multi-pass Claude authoring) instead of the deterministic template renderer. Quality/plan gates enforced; falls back to the deterministic deck when the gate blocks. SkyHarbor proved first for live board-grade validation; Lakeshore added 2026-07-08 for cross-tenant proof (not overfit to SkyHarbor's use case). Other tenants remain opt-in.",
     policy: "tenant",
-    includeTenants: ["skyharbor"],
+    includeTenants: ["skyharbor", "lakeshore"],
   },
   {
     key: "moves_workforce_economics",
     summary:
-      "Attach the Workforce Economics 'estimate-twice' view (traditional people-only vs AI-native people+agents, with the cost/timeline/headcount delta and the productivity gain) to the Move board-grade Costed Business-Case Pack. The estimate-twice is DERIVED from the kernel's own effort skeleton (headcount × duration × rate-card), so the traditional figure reconciles to the kernel investment — no parallel estimate path. Default OFF; tenant opt-in. Flag off = byte-identical (the engine is not called and no workforce field is attached). Honesty discipline preserved: planning ranges, conservative agent-capacity haircut, NOT a quote. Env allowlist: ABARVA_FEATURE_MOVES_WORKFORCE_ECONOMICS_TENANTS.",
+      "Attach the Workforce Economics 'estimate-twice' view (traditional people-only vs AI-native people+agents, with the cost/timeline/headcount delta and the productivity gain) to the Move board-grade Costed Business-Case Pack. The estimate-twice is DERIVED from the kernel's own effort skeleton (headcount × duration × rate-card), so the traditional figure reconciles to the kernel investment — no parallel estimate path. Default OFF; tenant opt-in. Flag off = byte-identical (the engine is not called and no workforce field is attached). Honesty discipline preserved: planning ranges, conservative agent-capacity haircut, NOT a quote. Lakeshore enrolled 2026-07-08 for first live proof (phase workspace already strong there). Env allowlist: ABARVA_FEATURE_MOVES_WORKFORCE_ECONOMICS_TENANTS.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["lakeshore"],
   },
   {
     key: "moves_decision_storytelling",
     summary:
-      "Render Move deliverables as an exhibit-led executive deck (decision-storytelling pipeline: MoveDecisionModel → Story Director → Visual Director → deck) from the SAME governed generation, instead of the prose HTML. Falls back to prose on any error. Tenant opt-in; default off until live-proven per tenant. Env allowlist: ABARVA_FEATURE_MOVES_DECISION_STORYTELLING_TENANTS.",
+      "Render Move deliverables as an exhibit-led executive deck (decision-storytelling pipeline: MoveDecisionModel → Story Director → Visual Director → deck) from the SAME governed generation, instead of the prose HTML. Falls back to prose on any error. Tenant opt-in; default off until live-proven per tenant. Lakeshore enrolled 2026-07-08 for first live proof. Env allowlist: ABARVA_FEATURE_MOVES_DECISION_STORYTELLING_TENANTS.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["lakeshore"],
   },
   {
     key: "discovery_intake_v2",
