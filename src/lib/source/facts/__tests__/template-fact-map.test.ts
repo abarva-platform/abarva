@@ -58,7 +58,7 @@ describe('template → fact map — catalog binding integrity', () => {
 });
 
 describe('template → fact map — worked examples present', () => {
-  it('ships the app-inventory, volumetrics, contract-terms, rfp-clauses, committed-value, bafo-concessions, and response-coverage templates', () => {
+  it('ships the app-inventory, volumetrics, contract-terms, rfp-clauses, committed-value, bafo-concessions, response-coverage, and vendor-bids templates', () => {
     expect(templateFactMapByCode('APP_INVENTORY_V1')).toBeDefined();
     expect(templateFactMapByCode('VOLUMETRICS_V1')).toBeDefined();
     expect(templateFactMapByCode('CONTRACT_TERMS_V1')).toBeDefined();
@@ -66,6 +66,7 @@ describe('template → fact map — worked examples present', () => {
     expect(templateFactMapByCode('COMMITTED_VALUE_V1')).toBeDefined();
     expect(templateFactMapByCode('BAFO_CONCESSIONS_V1')).toBeDefined();
     expect(templateFactMapByCode('RESPONSE_COVERAGE_V1')).toBeDefined();
+    expect(templateFactMapByCode('VENDOR_BIDS_V1')).toBeDefined();
   });
 
   it('BAFO_CONCESSIONS_V1 binds one row per value lever to the bafo_concession_captured_usd signal', () => {
@@ -166,6 +167,35 @@ describe('template → fact map — worked examples present', () => {
     expect(col.entityKind).toBe(spec!.entityKind);
     expect(col.unit).toBe('ratio');
     expect(col.unit).toBe(spec!.unit);
+  });
+
+  it('VENDOR_BIDS_V1 binds one row per vendor to the three should-cost bid signals (single entity_ref, no migration)', () => {
+    const tpl = templateFactMapByCode('VENDOR_BIDS_V1')!;
+    // Per-vendor (not per-vendor×lever): the SINGLE entityRefColumn path, reusing
+    // the already-allowed `vendor` kind — no new entity kind, no migration.
+    expect(tpl.rowEntity).toBe('vendor');
+    expect(tpl.entityRefColumn).toBe('Vendor');
+    expect(tpl.entityRefColumns).toBeUndefined();
+    expect(tpl.columns).toHaveLength(3);
+
+    const byKey = new Map(tpl.columns.map((c) => [c.factKey, c]));
+    const expected = [
+      { factKey: 'vendor_headline_bid', header: 'Headline Bid (USD)', unit: 'usd' },
+      { factKey: 'vendor_retained_fte_delta', header: 'Retained FTE Delta', unit: 'fte' },
+      { factKey: 'vendor_sla_credit_cap_pct', header: 'SLA Credit Cap (%)', unit: 'pct' },
+    ] as const;
+    for (const { factKey, header, unit } of expected) {
+      const col = byKey.get(factKey);
+      expect(col).toBeDefined();
+      expect(col!.header).toBe(header);
+      // The column's entityKind + unit must match the catalog (no drift).
+      const spec = factSpecByKey(factKey);
+      expect(spec).toBeDefined();
+      expect(col!.entityKind).toBe('vendor');
+      expect(col!.entityKind).toBe(spec!.entityKind);
+      expect(col!.unit).toBe(unit);
+      expect(col!.unit).toBe(spec!.unit);
+    }
   });
 
   it('each template declares EXACTLY ONE of entityRefColumn / entityRefColumns and at least one column', () => {

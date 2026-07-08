@@ -513,9 +513,9 @@ export interface ValueBridgeInsightView extends AdvisorLayer {
 
 /** One vendor's headline vs normalized cost, decomposed for the grouped bars. */
 export interface ShouldCostVendorView {
-  /** Vendor id (cover name for the model). */
+  /** Vendor id (cover name for the model; the derived tenant vendor id when live). */
   vendorKey: string;
-  /** Display name, e.g. 'Vendor A'. */
+  /** Display name, e.g. 'Vendor A' (the derived vendor id itself when live). */
   label: string;
   /** The headline / list price the vendor bid (USD over term). */
   headlinePrice: number;
@@ -527,12 +527,25 @@ export interface ShouldCostVendorView {
   adjustments: readonly { label: string; amount: number }[];
   /** headlinePrice + Σ adjustments — the normalized TCO. */
   normalizedTco: number;
+  /**
+   * When LIVE from vendor-bid facts: the bid inputs this vendor DID NOT provide
+   * (e.g. 'headline bid', 'retained-FTE delta'). A vendor missing a required input
+   * is shown honestly as needs-evidence and is NOT ranked as the winner — its
+   * normalization is incomplete. Absent/empty for a complete vendor and for the
+   * MODEL (illustrative vendors are always complete).
+   */
+  needsEvidence?: readonly string[];
 }
 
 /**
- * Evaluation — SHOULD-COST NORMALIZATION. "The cheapest bid is a trap." Ships as
- * a MODEL (illustrative vendors) because vendor-bid facts are not in the fact
- * model yet — `provenance` is always 'sample' here and the note says so.
+ * Evaluation — SHOULD-COST NORMALIZATION. "The cheapest bid is a trap." Goes LIVE
+ * per-vendor when vendor-bid facts exist (`VENDOR_BIDS_V1` → vendor_headline_bid /
+ * vendor_retained_fte_delta / vendor_sla_credit_cap_pct), running the SAME
+ * deterministic normalization the model demonstrates (headline + retained-cost
+ * debit + SLA-risk debit → normalized TCO) over the real per-vendor bids and
+ * surfacing the trap from real facts. Ships as a clearly-badged MODEL (illustrative
+ * Vendor A/B/C) when no vendor-bid fact exists — `provenance` 'sample',
+ * `isModel: true`, and the note says so.
  */
 export interface ShouldCostInsightView extends AdvisorLayer {
   kind: 'should_cost_normalization';
@@ -545,7 +558,12 @@ export interface ShouldCostInsightView extends AdvisorLayer {
   headlineWinnerKey: string;
   /** The vendor key that wins on NORMALIZED TCO (the real winner). */
   normalizedWinnerKey: string;
-  /** Always present for the model — states it goes live when responses ingest. */
+  /**
+   * True when illustrative vendors (no vendor-bid facts); false when normalized
+   * from real per-vendor bids. Drives the Model/Live badge honestly.
+   */
+  isModel: boolean;
+  /** States it goes live when vendor bids ingest (model) or the live provenance. */
   note?: string;
 }
 

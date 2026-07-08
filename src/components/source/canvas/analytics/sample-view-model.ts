@@ -486,6 +486,83 @@ export const SAMPLE_RESPONSES_STAGE: StageAnalyticsView = {
   },
 };
 
+/**
+ * The Evaluation stage scaffold. Mirrors the Scope three-beat structure but
+ * foregrounds the one upload that flips Evaluation should-cost LIVE: the vendor
+ * bids (one row per vendor — a Headline Bid USD, a Retained FTE Delta, and an SLA
+ * Credit Cap % column) parsed into `vendor_headline_bid` /
+ * `vendor_retained_fte_delta` / `vendor_sla_credit_cap_pct` vendor-kind facts via
+ * `VENDOR_BIDS_V1`. The live stage builder swaps in the fact-derived waterfall +
+ * intel lead over this structure; should-cost normalizes each real bid and surfaces
+ * the trap (cheapest headline ≠ lowest normalized TCO) from real facts.
+ */
+export const SAMPLE_EVALUATION_STAGE: StageAnalyticsView = {
+  stageKey: 'evaluation',
+  stageName: 'Evaluation',
+  purpose:
+    'Normalize every bid to should-cost — the cheapest headline is a trap once retained-client cost and weak-SLA risk are priced in; the lowest TRUE TCO is the real winner.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's each vendor's headline bid normalized to true TCO — confirm the bid inputs so the paper-cheapest bid can't win on a number that hides retained cost and SLA risk.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'A headline price is not a TCO — the cheapest bid often pushes the most effort back onto the retained team and offers the thinnest SLA remedies, so it loses once normalized.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'Best-in-class AMS evaluations rank on normalized should-cost (headline + retained-FTE cost + weak-remedy risk), not list price — the flip after normalization is where the real winner appears.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'Score on headline price alone and you award the trap — the retained cost and SLA-credit exposure surface after signature, when they are no longer negotiable.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'evaluation.vendor-bids',
+      title: 'Confirm vendor bids for should-cost',
+      subtitle: 'One row per vendor · headline bid, retained FTE, SLA cap',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload the vendor bids (CSV or XLSX): one row per vendor, with Vendor set to the bidding vendor, Headline Bid (USD) set to the vendor’s stated price over the term, Retained FTE Delta set to the retained client/SME FTE the vendor’s model assumes (a plain count), and SLA Credit Cap (%) set to the maximum fee-pool share recoverable as SLA credits (whole number). This flips Evaluation should-cost from a model to a live per-vendor normalized-TCO read.',
+      provenance: {
+        owner: 'Sourcing lead',
+        source: 'Vendor proposals / bid tabulation',
+      },
+      cta: 'Upload the vendor bids',
+      // Parsed into VENDOR_BIDS_V1 → vendor_headline_bid / vendor_retained_fte_delta /
+      // vendor_sla_credit_cap_pct vendor facts — flips the ✦ Intelligence Evaluation
+      // should-cost insight LIVE (normalized per real bid, surfacing the trap).
+      factTemplateCode: 'VENDOR_BIDS_V1',
+    },
+  ],
+  gate: {
+    approver: 'K. Oshima, CIO',
+    confirms: [
+      {
+        label: 'Every bid normalized to should-cost',
+        detail: 'Each vendor’s headline bid carries its retained-FTE cost and SLA-credit risk into a true TCO.',
+      },
+      {
+        label: 'The trap surfaced',
+        detail: 'The paper-cheapest bid is checked against the lowest normalized TCO — the flip, if any, is on the record.',
+      },
+      {
+        label: 'Evaluation complete',
+        detail: 'Bids are normalized and ranked — advance to Pricing.',
+      },
+    ],
+    generates: [{ label: 'Should-cost evaluation summary', code: 'd10' }],
+    nextStageName: 'Pricing',
+  },
+};
+
 /** aVa's docked-launcher scope for the Scope stage. */
 export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
   role: 'Analyst · Scope',

@@ -843,12 +843,13 @@ describe('MODEL step insights — value / responses / bafo / selection', () => {
 });
 
 describe('buildShouldCostModelInsight — Evaluation (MODEL)', () => {
-  it('is always a sample/model — never presented as real bids', () => {
+  it('is a sample/model when no vendor-bid signal is supplied (undefined)', () => {
     const insight = buildShouldCostModelInsight(AMS_MANAGED_SERVICES);
     expect(insight.kind).toBe('should_cost_normalization');
     expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
     expect(insight.note).toMatch(/model|illustrative/i);
-    expect(insight.note).toMatch(/vendor responses are ingested/i);
+    expect(insight.note).toMatch(/vendor bids are ingested/i);
   });
 
   it('flips the winner after normalization (the trap)', () => {
@@ -861,6 +862,131 @@ describe('buildShouldCostModelInsight — Evaluation (MODEL)', () => {
       expect(v.normalizedTco).toBe(v.headlinePrice + adj);
     }
     expect(insight.headline).toMatch(/cheapest on paper/i);
+  });
+});
+
+describe('buildShouldCostModelInsight — Evaluation (LIVE from real per-vendor bids)', () => {
+  it('goes LIVE and surfaces the trap: cheapest headline loses on normalized TCO', () => {
+    // Vega is cheapest on HEADLINE but assumes the most retained FTE and the
+    // weakest SLA credit cap → it loses on normalized TCO. Orion's higher headline
+    // wins once retained cost + SLA risk are priced in — the trap, from real facts.
+    const signal = {
+      bids: [
+        {
+          vendorId: 'Vega Systems',
+          headlineBid: 21_900_000,
+          retainedFteDelta: 20,
+          slaCreditCapPct: 6,
+        },
+        {
+          vendorId: 'Orion Managed',
+          headlineBid: 24_800_000,
+          retainedFteDelta: 4,
+          slaCreditCapPct: 15,
+        },
+      ],
+      vendors: ['Vega Systems', 'Orion Managed'],
+    };
+    const insight = buildShouldCostModelInsight(AMS_MANAGED_SERVICES, signal);
+
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    // Headline winner is the paper-cheapest (Vega); normalized winner flips (Orion).
+    expect(insight.headlineWinnerKey).toBe('Vega Systems');
+    expect(insight.normalizedWinnerKey).toBe('Orion Managed');
+    expect(insight.headlineWinnerKey).not.toBe(insight.normalizedWinnerKey);
+    expect(insight.headline).toMatch(/cheapest on paper/i);
+    expect(insight.note).toMatch(/live/i);
+
+    // Every vendor: normalizedTco = headline + Σ adjustments (deterministic).
+    for (const v of insight.vendors) {
+      const adj = v.adjustments.reduce((s, a) => s + a.amount, 0);
+      expect(v.normalizedTco).toBeCloseTo(v.headlinePrice + adj, 2);
+    }
+    // Vega's retained-FTE debit (14 @ $195k) drives it above Orion's TCO.
+    const vega = insight.vendors.find((v) => v.vendorKey === 'Vega Systems')!;
+    const orion = insight.vendors.find((v) => v.vendorKey === 'Orion Managed')!;
+    expect(vega.headlinePrice).toBeLessThan(orion.headlinePrice); // cheaper on paper
+    expect(vega.normalizedTco).toBeGreaterThan(orion.normalizedTco); // loses on TCO
+    // The retained-FTE debit is priced at the fixed loaded cost (20 × $195k).
+    const vegaFte = vega.adjustments.find((a) => /Retained FTE/.test(a.label))!;
+    expect(vegaFte.amount).toBe(20 * 195_000);
+    // No vendor is missing evidence in this complete-bid set.
+    expect(insight.vendors.every((v) => (v.needsEvidence?.length ?? 0) === 0)).toBe(
+      true,
+    );
+  });
+
+  it('keeps the winner on both when no flip (higher headline also highest TCO)', () => {
+    const signal = {
+      bids: [
+        {
+          vendorId: 'Alpha',
+          headlineBid: 20_000_000,
+          retainedFteDelta: 2,
+          slaCreditCapPct: 20,
+        },
+        {
+          vendorId: 'Beta',
+          headlineBid: 26_000_000,
+          retainedFteDelta: 10,
+          slaCreditCapPct: 5,
+        },
+      ],
+      vendors: ['Alpha', 'Beta'],
+    };
+    const insight = buildShouldCostModelInsight(AMS_MANAGED_SERVICES, signal);
+    expect(insight.provenance).toBe('live');
+    // Alpha is cheapest on headline AND lowest TCO — no flip.
+    expect(insight.headlineWinnerKey).toBe('Alpha');
+    expect(insight.normalizedWinnerKey).toBe('Alpha');
+    expect(insight.headline).toMatch(/no flip/i);
+  });
+
+  it('shows a vendor missing an input as needs-evidence and never ranks it as winner', () => {
+    const signal = {
+      bids: [
+        // Complete bid.
+        {
+          vendorId: 'Complete Co',
+          headlineBid: 22_000_000,
+          retainedFteDelta: 5,
+          slaCreditCapPct: 12,
+        },
+        // Missing the headline bid → cannot be normalized → needs evidence.
+        {
+          vendorId: 'Partial Co',
+          retainedFteDelta: 3,
+          slaCreditCapPct: 10,
+        },
+      ],
+      vendors: ['Complete Co', 'Partial Co'],
+    };
+    const insight = buildShouldCostModelInsight(AMS_MANAGED_SERVICES, signal);
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+
+    const partial = insight.vendors.find((v) => v.vendorKey === 'Partial Co')!;
+    expect(partial.needsEvidence).toContain('headline bid');
+    // The incomplete vendor is never the winner (its TCO is unfinished).
+    expect(insight.normalizedWinnerKey).not.toBe('Partial Co');
+    expect(insight.headlineWinnerKey).not.toBe('Partial Co');
+    // The only complete bid is the ranked winner.
+    expect(insight.normalizedWinnerKey).toBe('Complete Co');
+    expect(insight.headline).toMatch(/need/i);
+  });
+
+  it('LIVE with an empty signal → live but no complete bid to normalize (honest, no fabricated winner)', () => {
+    const insight = buildShouldCostModelInsight(AMS_MANAGED_SERVICES, {
+      bids: [],
+      vendors: [],
+    });
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    expect(insight.vendors).toHaveLength(0);
+    expect(insight.headlineWinnerKey).toBe('');
+    expect(insight.normalizedWinnerKey).toBe('');
+    expect(insight.headline).toMatch(/no priced vendor bid/i);
   });
 });
 

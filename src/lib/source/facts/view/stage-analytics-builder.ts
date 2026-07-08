@@ -37,6 +37,7 @@ import {
   SAMPLE_BAFO_STAGE,
   SAMPLE_SELECTION_STAGE,
   SAMPLE_RESPONSES_STAGE,
+  SAMPLE_EVALUATION_STAGE,
 } from '@/components/source/canvas/analytics/sample-view-model';
 import {
   SOURCE_STAGE_LABELS,
@@ -140,27 +141,30 @@ export function buildLiveStageView(
   }
 
   // Pick the intake scaffold (intel points / tasks / gate structure) for the stage
-  // being built. Today Scope, RFP, Responses, BAFO, and Selection have a
+  // being built. Today Scope, RFP, Responses, Evaluation, BAFO, and Selection have a
   // stage-specific scaffold — RFP so its dropzone offers the RFP_CLAUSES_V1
   // clause-checklist upload (flips RFP clause coverage live), Responses so its
   // dropzone offers the RESPONSE_COVERAGE_V1 vendor-response matrix (flips Responses
-  // coverage live), BAFO so its dropzone offers the BAFO_CONCESSIONS_V1
-  // concession-actuals upload (flips BAFO progress live), Selection so its dropzone
-  // offers the COMMITTED_VALUE_V1 award-commitments upload (flips committed value
-  // live) — instead of the Scope intake tasks; every other stage still reuses the
-  // Scope exemplar structure while the live value proof rides the fact-derived
-  // waterfall.
+  // coverage live), Evaluation so its dropzone offers the VENDOR_BIDS_V1 vendor-bid
+  // upload (flips Evaluation should-cost live), BAFO so its dropzone offers the
+  // BAFO_CONCESSIONS_V1 concession-actuals upload (flips BAFO progress live),
+  // Selection so its dropzone offers the COMMITTED_VALUE_V1 award-commitments upload
+  // (flips committed value live) — instead of the Scope intake tasks; every other
+  // stage still reuses the Scope exemplar structure while the live value proof rides
+  // the fact-derived waterfall.
   const requestedStageKey = input.stageKey ?? SAMPLE_SCOPE_STAGE.stageKey;
   const scaffold =
     requestedStageKey === 'rfp'
       ? SAMPLE_RFP_STAGE
       : requestedStageKey === 'responses'
         ? SAMPLE_RESPONSES_STAGE
-        : requestedStageKey === 'bafo'
-          ? SAMPLE_BAFO_STAGE
-          : requestedStageKey === 'selection'
-            ? SAMPLE_SELECTION_STAGE
-            : SAMPLE_SCOPE_STAGE;
+        : requestedStageKey === 'evaluation'
+          ? SAMPLE_EVALUATION_STAGE
+          : requestedStageKey === 'bafo'
+            ? SAMPLE_BAFO_STAGE
+            : requestedStageKey === 'selection'
+              ? SAMPLE_SELECTION_STAGE
+              : SAMPLE_SCOPE_STAGE;
 
   // The next stage this gate advances to, resolved through the canonical order so
   // the gate CTA ("Approve & advance to …") and the presentational nextStageName

@@ -43,6 +43,7 @@ import {
   readCommittedValueLevers,
   readBafoConcessionLevers,
   readVendorLeverResponses,
+  readVendorBids,
 } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
@@ -213,6 +214,32 @@ export default async function SourceEventDetailPage({
             ? { statusByVendorLever, vendors }
             : undefined;
         }
+        // Evaluation should-cost reads a per-vendor bid signal (one row per vendor:
+        // vendor_headline_bid / vendor_retained_fte_delta / vendor_sla_credit_cap_pct
+        // vendor-kind facts, each keyed by the vendor id in entity_ref) the collapsed
+        // event-facts read cannot express. Only fetch it on the Evaluation stage.
+        // `undefined` (no signal) keeps the insight an honest MODEL (illustrative
+        // vendors); a signal (even empty) flips it LIVE.
+        let vendorBids:
+          | {
+              bids: readonly {
+                vendorId: string;
+                headlineBid?: number;
+                retainedFteDelta?: number;
+                slaCreditCapPct?: number;
+              }[];
+              vendors: readonly string[];
+            }
+          | undefined = undefined;
+        if (viewStage === "evaluation") {
+          const { signalPresent, bidsByVendor, vendors } = await readVendorBids({
+            eventId: event.id,
+            clientKey: activeClient.key,
+          });
+          vendorBids = signalPresent
+            ? { bids: [...bidsByVendor.values()], vendors }
+            : undefined;
+        }
         // eventType is not on the summary; leave it unset so the builder
         // resolves the value archetype the same way buildLiveStageView does
         // (the first archetype carrying value-lever rules — today AMS).
@@ -227,6 +254,7 @@ export default async function SourceEventDetailPage({
             committedValueByLeverKey,
             bafoConcessionByLeverKey,
             vendorResponses,
+            vendorBids,
           }) ?? undefined;
 
         if (viewStage !== "strategy") {

@@ -187,6 +187,15 @@ export interface BuildStepInsightInput {
    * "assessed, nothing addressed yet" read — distinct from `undefined`.
    */
   vendorResponses?: VendorResponseSignal;
+  /**
+   * The per-vendor bid signal (from the vendor-bid facts read) that drives
+   * Evaluation should-cost. When PROVIDED (even with an empty vendor set) a
+   * vendor-bid signal exists and the insight goes LIVE (normalizing each real bid);
+   * when `undefined` no vendor-bid fact exists and the insight stays a MODEL
+   * (illustrative Vendor A/B/C). Empty is a valid live "assessed, no priced bid yet"
+   * read — distinct from `undefined`.
+   */
+  vendorBids?: VendorBidSignal;
 }
 
 /**
@@ -220,7 +229,7 @@ export function buildStepInsight(
     case 'value_bridge':
       return buildValueBridgeInsight(resolved, input);
     case 'should_cost_normalization':
-      return buildShouldCostModelInsight(resolved);
+      return buildShouldCostModelInsight(resolved, input.vendorBids);
     case 'transition_risk':
       return buildTransitionRiskInsight(resolved, input.inputs);
     case 'exec_decision':
@@ -1012,9 +1021,143 @@ function sampleWaterfallFromRules(
  * the model matches the archetype's real normalization methods (feedsMethods:
  * should_cost / tco_normalization).
  */
+/**
+ * The per-vendor bid signal the should-cost insight reads to go LIVE. Mirrors the
+ * `readVendorBids` reader shape but as a plain data contract the builder consumes
+ * (so it stays testable without the data plane). A missing input on a bid is
+ * `undefined` — shown honestly as needs-evidence, never fabricated.
+ */
+export interface VendorBidInputRow {
+  /** The vendor id (entity_ref) — the derived, governed tenant identifier. */
+  vendorId: string;
+  /** Headline / list bid, USD over term. Undefined = not provided. */
+  headlineBid?: number;
+  /** Retained-FTE delta this vendor's model assumes. Undefined = not provided. */
+  retainedFteDelta?: number;
+  /** SLA credit cap, whole-number pct. Undefined = not provided. */
+  slaCreditCapPct?: number;
+}
+
+export interface VendorBidSignal {
+  /** One bid row per vendor. */
+  bids: readonly VendorBidInputRow[];
+  /** The derived bidding-vendor set, in stable (first-seen) order. */
+  vendors: readonly string[];
+}
+
+/**
+ * The should-cost normalization constants — the SAME deterministic pricing the
+ * illustrative MODEL demonstrates, applied to real bids when live. Loaded cost of a
+ * retained FTE (matches the model's "@ $195k" retained-FTE pricing), a benchmark
+ * SLA credit cap a bid is measured against, and the weight that turns a
+ * below-benchmark cap into a headline-scaled weak-remedy risk debit.
+ */
+const RETAINED_FTE_LOADED_COST = 195_000;
+const SLA_CREDIT_CAP_BENCHMARK_PCT = 15;
+const SLA_RISK_WEIGHT = 0.06;
+
+/**
+ * Normalize ONE real vendor bid to should-cost TCO, deterministically: headline +
+ * retained-FTE debit (delta × loaded cost) + weak-SLA-credit risk debit
+ * (headline-scaled by how far the cap falls below the benchmark). Returns the
+ * decomposed adjustments (for the stacked bar) and the list of missing inputs. A
+ * bid missing the headline cannot be normalized (no base) → needs-evidence.
+ */
+function normalizeVendorBid(bid: VendorBidInputRow): {
+  vendor: ShouldCostVendorView;
+  complete: boolean;
+} {
+  const needsEvidence: string[] = [];
+  if (typeof bid.headlineBid !== 'number' || !Number.isFinite(bid.headlineBid)) {
+    needsEvidence.push('headline bid');
+  }
+  if (
+    typeof bid.retainedFteDelta !== 'number' ||
+    !Number.isFinite(bid.retainedFteDelta)
+  ) {
+    needsEvidence.push('retained-FTE delta');
+  }
+  if (
+    typeof bid.slaCreditCapPct !== 'number' ||
+    !Number.isFinite(bid.slaCreditCapPct)
+  ) {
+    needsEvidence.push('SLA credit cap');
+  }
+
+  const headlinePrice =
+    typeof bid.headlineBid === 'number' && Number.isFinite(bid.headlineBid)
+      ? bid.headlineBid
+      : 0;
+
+  const adjustments: { label: string; amount: number }[] = [];
+  if (
+    typeof bid.retainedFteDelta === 'number' &&
+    Number.isFinite(bid.retainedFteDelta) &&
+    bid.retainedFteDelta > 0
+  ) {
+    const fte = bid.retainedFteDelta;
+    adjustments.push({
+      label: `Retained FTE (${Number.isInteger(fte) ? fte : fte.toFixed(1)} @ ${fmtUsd(RETAINED_FTE_LOADED_COST)})`,
+      amount: fte * RETAINED_FTE_LOADED_COST,
+    });
+  }
+  if (
+    typeof bid.slaCreditCapPct === 'number' &&
+    Number.isFinite(bid.slaCreditCapPct) &&
+    headlinePrice > 0
+  ) {
+    const shortfall = Math.max(
+      0,
+      SLA_CREDIT_CAP_BENCHMARK_PCT - bid.slaCreditCapPct,
+    );
+    if (shortfall > 0) {
+      adjustments.push({
+        label: `SLA-credit risk (cap ${bid.slaCreditCapPct}% vs ${SLA_CREDIT_CAP_BENCHMARK_PCT}% benchmark)`,
+        amount: (shortfall / 100) * headlinePrice * SLA_RISK_WEIGHT,
+      });
+    }
+  }
+
+  const normalizedTco =
+    headlinePrice + adjustments.reduce((s, a) => s + a.amount, 0);
+
+  const complete = needsEvidence.length === 0;
+  return {
+    vendor: {
+      vendorKey: bid.vendorId,
+      label: bid.vendorId,
+      headlinePrice,
+      adjustments,
+      normalizedTco,
+      ...(needsEvidence.length > 0 ? { needsEvidence } : {}),
+    },
+    complete,
+  };
+}
+
+/**
+ * Evaluation should-cost. LIVE per-vendor when vendor-bid facts exist
+ * (`vendorBids` supplied): reads each vendor's real headline bid + retained-FTE
+ * delta + SLA credit cap and runs the SAME deterministic normalization the model
+ * demonstrates (headline + retained-cost debit + SLA-risk debit → normalized TCO),
+ * ranks the COMPLETE bids, and surfaces the trap (cheapest headline ≠ lowest
+ * normalized TCO) FROM the real facts. A vendor missing an input is shown honestly
+ * as needs-evidence and is NOT ranked as the winner — never fabricated.
+ *
+ * MODEL (illustrative Vendor A/B/C) when no vendor-bid fact exists (`vendorBids`
+ * undefined): the honest default preserved from before the facts existed, where the
+ * cheapest HEADLINE bid loses on normalized TCO — the trap, demonstrated.
+ */
 export function buildShouldCostModelInsight(
   archetype: SourceEventArchetype,
+  vendorBids?: VendorBidSignal,
 ): ShouldCostInsightView {
+  // LIVE: a vendor-bid signal exists (even empty — an event assessed with no
+  // priced bid). Undefined → no signal → MODEL.
+  if (vendorBids !== undefined) {
+    return buildShouldCostLiveInsight(archetype, vendorBids);
+  }
+
   // Illustrative AMS vendors. Vendor B is cheapest on HEADLINE but adds the most
   // retained FTE + weak-SLA risk, so it LOSES on normalized TCO — the trap.
   const vendors: ShouldCostVendorView[] = [
@@ -1076,10 +1219,92 @@ export function buildShouldCostModelInsight(
     vendors,
     headlineWinnerKey: headlineWinner.vendorKey,
     normalizedWinnerKey: normalizedWinner.vendorKey,
+    isModel: true,
     note:
       `Model — illustrative ${archetype.name} vendors, not real bids. It demonstrates the ` +
       `should-cost / TCO-normalization logic (retained FTE + SLA + transition risk added to headline). ` +
-      `It goes live per-vendor the moment vendor responses are ingested into the fact model.`,
+      `It goes live per-vendor the moment vendor bids are ingested into the fact model.`,
+  };
+}
+
+/**
+ * The LIVE should-cost read — normalizes each real per-vendor bid and ranks the
+ * COMPLETE bids to surface the trap. Complete bids (all inputs present) are ranked;
+ * incomplete bids are listed honestly as needs-evidence and never win. When no
+ * complete bid exists the insight is live but cannot yet rank — an honest "no priced
+ * bid to normalize" read, never a fabricated winner.
+ */
+function buildShouldCostLiveInsight(
+  archetype: SourceEventArchetype,
+  signal: VendorBidSignal,
+): ShouldCostInsightView {
+  // Normalize each vendor's bid, in the derived (first-seen) vendor order.
+  const orderIndex = new Map<string, number>();
+  signal.vendors.forEach((v, i) => orderIndex.set(v, i));
+  const bidsOrdered = [...signal.bids].sort(
+    (a, b) =>
+      (orderIndex.get(a.vendorId) ?? Number.MAX_SAFE_INTEGER) -
+      (orderIndex.get(b.vendorId) ?? Number.MAX_SAFE_INTEGER),
+  );
+
+  const normalized = bidsOrdered.map(normalizeVendorBid);
+  const vendors: ShouldCostVendorView[] = normalized.map((n) => n.vendor);
+  const complete = normalized.filter((n) => n.complete).map((n) => n.vendor);
+
+  // Rank only COMPLETE bids — an incomplete bid never wins (its TCO is unfinished).
+  const byHeadline = [...complete].sort(
+    (a, b) => a.headlinePrice - b.headlinePrice,
+  );
+  const byNormalized = [...complete].sort(
+    (a, b) => a.normalizedTco - b.normalizedTco,
+  );
+  const headlineWinner = byHeadline[0];
+  const normalizedWinner = byNormalized[0];
+  const flips =
+    !!headlineWinner &&
+    !!normalizedWinner &&
+    headlineWinner.vendorKey !== normalizedWinner.vendorKey;
+
+  const needsCount = vendors.length - complete.length;
+  const needsFrag =
+    needsCount > 0
+      ? ` ${needsCount} vendor${needsCount > 1 ? 's' : ''} still need${needsCount > 1 ? '' : 's'} a complete bid to normalize.`
+      : '';
+
+  let headline: string;
+  if (!normalizedWinner || !headlineWinner) {
+    headline =
+      complete.length === 0
+        ? `No priced vendor bid is complete enough to normalize yet — provide each vendor's headline bid, retained-FTE delta, and SLA credit cap.${needsFrag}`
+        : `${normalizedWinner!.label} is the only complete bid — normalized TCO ${fmtUsd(
+            normalizedWinner!.normalizedTco,
+          )}.${needsFrag}`;
+  } else if (flips) {
+    const gap =
+      byNormalized.length > 1
+        ? Math.abs(byNormalized[1].normalizedTco - normalizedWinner.normalizedTco)
+        : 0;
+    headline =
+      `${headlineWinner.label} is cheapest on paper (${fmtUsd(headlineWinner.headlinePrice)}); ` +
+      `normalized for retained cost and SLA risk, ${normalizedWinner.label} wins by ${fmtUsd(gap)}.${needsFrag}`;
+  } else {
+    headline = `${normalizedWinner.label} wins on both headline and normalized TCO — no flip on this bid set.${needsFrag}`;
+  }
+
+  return {
+    kind: 'should_cost_normalization',
+    provenance: 'live',
+    headline,
+    vendors,
+    headlineWinnerKey: headlineWinner?.vendorKey ?? '',
+    normalizedWinnerKey: normalizedWinner?.vendorKey ?? '',
+    isModel: false,
+    note:
+      `Live — normalized from the vendor bids you provided (one row per vendor: headline bid, ` +
+      `retained-FTE delta, SLA credit cap). Each bid is normalized the same way the model demonstrates ` +
+      `(headline + retained cost at ${fmtUsd(RETAINED_FTE_LOADED_COST)}/FTE + weak-SLA-credit risk vs a ` +
+      `${SLA_CREDIT_CAP_BENCHMARK_PCT}% benchmark) so the cheapest headline can lose on true TCO. A vendor ` +
+      `missing an input is shown as needs-evidence and never ranked as the winner — never fabricated.`,
   };
 }
 

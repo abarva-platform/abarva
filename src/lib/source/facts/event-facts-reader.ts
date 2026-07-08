@@ -355,3 +355,105 @@ export async function readVendorLeverResponses(input: {
 
   return { signalPresent, statusByVendorLever, vendors };
 }
+
+/** One vendor's should-cost bid inputs, newest-non-stale per fact key. */
+export interface VendorBidInputs {
+  /** The vendor id (entity_ref) — the derived, governed tenant identifier. */
+  vendorId: string;
+  /** Headline / list bid, USD over term (`vendor_headline_bid`). Undefined = not provided. */
+  headlineBid?: number;
+  /** Retained-FTE delta this vendor's model assumes (`vendor_retained_fte_delta`). Undefined = not provided. */
+  retainedFteDelta?: number;
+  /** SLA credit cap, whole-number pct (`vendor_sla_credit_cap_pct`). Undefined = not provided. */
+  slaCreditCapPct?: number;
+}
+
+/** The three per-vendor bid fact keys the should-cost normalization reads. */
+const VENDOR_BID_FACT_KEYS = [
+  'vendor_headline_bid',
+  'vendor_retained_fte_delta',
+  'vendor_sla_credit_cap_pct',
+] as const;
+
+/**
+ * The per-vendor bid read for the Evaluation should-cost insight (Evaluation stage).
+ *
+ * Multi-vendor Shape 2 (see docs/build/source-multivendor-fact-model.md, build
+ * order item 2): unlike the per-lever reads above, this needs the per-VENDOR value
+ * of three `vendor`-kind bid signal facts — `vendor_headline_bid`,
+ * `vendor_retained_fte_delta`, `vendor_sla_credit_cap_pct` — each keyed by the
+ * vendor id in `entity_ref` (NO composite; the vendor id is the whole ref). It
+ * returns:
+ *   • `signalPresent` — whether ANY non-stale vendor-bid fact exists for the event
+ *     (drives live vs model in the insight); and
+ *   • `bidsByVendor` — one `VendorBidInputs` per vendor seen, newest non-stale
+ *     capture per (vendor, fact_key) winning; a missing input stays `undefined`
+ *     (shown honestly as needs-evidence, never fabricated); and
+ *   • `vendors` — the DERIVED bidding-vendor set (distinct vendor ids seen), in
+ *     first-seen (newest-first) order (no separate registry — the rows ARE the
+ *     registry, per the fact-model doc).
+ *
+ * Only FINITE numbers are admitted — a bad cell never fabricates a bid number.
+ * Tenant-scoped by client_key (RLS). Returns `signalPresent: false` + empties when
+ * the table has no vendor-bid rows for the event — the insight then honestly stays
+ * a MODEL (illustrative vendors).
+ */
+export async function readVendorBids(input: {
+  eventId: string;
+  clientKey: string;
+}): Promise<{
+  signalPresent: boolean;
+  bidsByVendor: Map<string, VendorBidInputs>;
+  vendors: string[];
+}> {
+  const { eventId, clientKey } = input;
+  const supabase = getAzureWriteFluentClient();
+
+  const { data, error } = await supabase
+    .from('source_event_facts')
+    .select('fact_key, entity_ref, value_numeric, captured_at')
+    .eq('source_event_id', eventId)
+    .eq('client_key', clientKey)
+    .eq('entity_kind', 'vendor')
+    .in('fact_key', VENDOR_BID_FACT_KEYS as unknown as string[])
+    .eq('is_stale', false)
+    .order('captured_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as Array<
+    Pick<SourceEventFactRow, 'fact_key' | 'entity_ref' | 'value_numeric'>
+  >;
+
+  const bidsByVendor = new Map<string, VendorBidInputs>();
+  const vendors: string[] = [];
+  // Newest-first: keep the FIRST value seen per (vendor, fact_key) cell.
+  const cellSeen = new Set<string>();
+  let signalPresent = false;
+
+  for (const row of rows) {
+    const vendorId = row.entity_ref?.trim();
+    const factKey = row.fact_key;
+    if (!vendorId || !factKey) continue;
+
+    signalPresent = true;
+    const cellKey = `${vendorId}::${factKey}`;
+    if (cellSeen.has(cellKey)) continue;
+    cellSeen.add(cellKey);
+
+    let bid = bidsByVendor.get(vendorId);
+    if (!bid) {
+      bid = { vendorId };
+      bidsByVendor.set(vendorId, bid);
+      vendors.push(vendorId);
+    }
+
+    const value = Number(row.value_numeric);
+    if (!Number.isFinite(value)) continue; // never fabricate a bid magnitude
+    if (factKey === 'vendor_headline_bid') bid.headlineBid = value;
+    else if (factKey === 'vendor_retained_fte_delta') bid.retainedFteDelta = value;
+    else if (factKey === 'vendor_sla_credit_cap_pct') bid.slaCreditCapPct = value;
+  }
+
+  return { signalPresent, bidsByVendor, vendors };
+}
