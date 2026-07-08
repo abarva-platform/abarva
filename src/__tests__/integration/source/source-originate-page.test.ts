@@ -11,6 +11,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import {
   SourceOriginatePage,
   buildEventName,
+  extractEstimatedValue,
 } from "@/components/source/SourceOriginatePage";
 
 const mockRouterPush = jest.fn();
@@ -429,5 +430,50 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(source).toMatch(/height: ["']calc\(100vh - 64px\)["']/);
     // Drag-resize handle in the splitter component.
     expect(html).toMatch(/role="separator"[^>]*aria-orientation="vertical"/);
+  });
+});
+
+describe("extractEstimatedValue (SRC-FLW-INTAKE value parsing)", () => {
+  // Defect guarded (live): the FIRST number in a free-text value target was
+  // treated as USD. "Target 15-20% run-cost reduction" captured "15" and stored
+  // $15 as the event baseline, producing garbage like "$15" / "305,654,347% of
+  // baseline" in the value-type-waterfall header. A number becomes a dollar
+  // amount ONLY with a currency signal — a `$` prefix OR a magnitude suffix.
+  it("rejects a percentage range target — '15-20% run-cost reduction' → undefined", () => {
+    expect(
+      extractEstimatedValue("Target 15-20% run-cost reduction via repricing"),
+    ).toBeUndefined();
+  });
+
+  it("rejects a bare percentage — '15%' → undefined", () => {
+    expect(extractEstimatedValue("15% unit cost improvement")).toBeUndefined();
+  });
+
+  it("rejects a bare count with no currency signal — '3 vendors' → undefined", () => {
+    expect(extractEstimatedValue("Consolidate to top 3 vendors")).toBeUndefined();
+    expect(extractEstimatedValue("15")).toBeUndefined();
+  });
+
+  it("parses a $-signalled millions amount — '$4M savings' → 4_000_000", () => {
+    expect(extractEstimatedValue("$4M savings")).toBe(4_000_000);
+  });
+
+  it("parses a $-signalled thousands amount — 'target $500k' → 500_000", () => {
+    expect(extractEstimatedValue("target $500k")).toBe(500_000);
+  });
+
+  it("parses a billions amount — '$1.2bn' → 1_200_000_000", () => {
+    expect(extractEstimatedValue("$1.2bn run-rate")).toBe(1_200_000_000);
+    expect(extractEstimatedValue("$2 billion baseline")).toBe(2_000_000_000);
+  });
+
+  it("returns the FIRST currency-signalled candidate, skipping a trailing rate — '$4M savings, 15% unit cost' → 4_000_000", () => {
+    expect(extractEstimatedValue("target $4M savings, 15% unit cost")).toBe(
+      4_000_000,
+    );
+  });
+
+  it("still parses a bare magnitude suffix with no $ — '4M run-rate' → 4_000_000", () => {
+    expect(extractEstimatedValue("4M run-rate savings")).toBe(4_000_000);
   });
 });
