@@ -58,9 +58,36 @@ describe('template → fact map — catalog binding integrity', () => {
 });
 
 describe('template → fact map — worked examples present', () => {
-  it('ships the app-inventory and volumetrics templates', () => {
+  it('ships the app-inventory, volumetrics, and contract-terms templates', () => {
     expect(templateFactMapByCode('APP_INVENTORY_V1')).toBeDefined();
     expect(templateFactMapByCode('VOLUMETRICS_V1')).toBeDefined();
+    expect(templateFactMapByCode('CONTRACT_TERMS_V1')).toBeDefined();
+  });
+
+  it('CONTRACT_TERMS_V1 binds the 8 vendor/contract facts the AMS levers need', () => {
+    const tpl = templateFactMapByCode('CONTRACT_TERMS_V1')!;
+    expect(tpl.rowEntity).toBe('vendor');
+    expect(tpl.entityRefColumn).toBe('Vendor');
+    expect(tpl.columns.map((c) => c.factKey).sort()).toEqual(
+      [
+        'at_risk_fee_pool',
+        'committed_credit_pct',
+        'credit_cap_pct',
+        'overrun_cost_multiple',
+        'overrun_probability',
+        'retained_fte_delta',
+        'term_years',
+        'transition_fee',
+      ].sort(),
+    );
+    // Every column's unit + entityKind must match the catalog (asserted globally
+    // above too; pinned here so a CONTRACT_TERMS drift fails loudly by name).
+    for (const col of tpl.columns) {
+      const spec = factSpecByKey(col.factKey);
+      expect(spec).toBeDefined();
+      expect(col.unit).toBe(spec!.unit);
+      expect(col.entityKind).toBe(spec!.entityKind);
+    }
   });
 
   it('each template declares an entityRefColumn and at least one column', () => {
