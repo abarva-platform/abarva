@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// aVa Source ANSWER QUALITY GATE — Phase A.
+// aVa Source ANSWER QUALITY GATE — Phase A (9 checks) + Phase B (3 more checks).
 //
 // Mirrors Intelligence's `answer-safety.ts` pattern (see
 // src/lib/intelligence/answer/answer-safety.ts): a deterministic, non-LLM gate
@@ -15,6 +15,20 @@
 // same mode-grounding facts bag that was read ONCE for prompt injection —
 // passed into both the generation prompt and this gate so they can never
 // disagree by construction (checklist item #9 in the design).
+//
+// Phase B adds 3 checks scoped to the 8 vendor/value/commercial modes:
+//   - `traceable_to_grounding` (value/pricing modes): every $ figure the answer
+//     states must appear verbatim in the grounding block — the SAME
+//     quote-not-compute philosophy as #4567, applied post-hoc to the buffered
+//     answer text instead of only as a prompt directive.
+//   - `includes_value_type_breakdown` (value/pricing modes): when the grounding
+//     block carries a classified value-type breakdown, the answer must reflect
+//     at least one value-type label — never fold classified value into one
+//     blended savings claim.
+//   - `uses_specific_ask_when_available` (BAFO/vendor modes): when the grounding
+//     has a real, specific vendor/lever ask, the answer must not stay generic.
+// The existing 9 Phase A checks are unchanged; Phase B checks are additive and
+// only evaluated for Phase B modes (Phase A modes always pass them vacuously).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
@@ -32,7 +46,30 @@ export type SourceAnswerQualityCheckId =
   | "no_raw_internal_ids"
   | "includes_gap_or_caveat_when_incomplete"
   | "includes_next_step"
-  | "matches_read_once_grounding";
+  | "matches_read_once_grounding"
+  | "traceable_to_grounding"
+  | "includes_value_type_breakdown"
+  | "uses_specific_ask_when_available";
+
+/** The Phase B modes whose answers state $ / value-type figures — the
+ * traceability + value-type-breakdown checks apply only to these. */
+const PHASE_B_VALUE_MODES = new Set<SourceAnswerMode>([
+  "value_at_stake",
+  "vendor_comparison",
+  "should_cost",
+  "risk_exposure",
+  "clause_coverage",
+  "bafo_strategy",
+  "committed_value",
+  "value_realization",
+]);
+
+/** The Phase B modes where a specific vendor/lever ask is the expected answer
+ * shape — the generic-answer-when-data-exists check applies only to these. */
+const PHASE_B_ASK_MODES = new Set<SourceAnswerMode>([
+  "bafo_strategy",
+  "vendor_comparison",
+]);
 
 export interface SourceAnswerQualityCheckResult {
   id: SourceAnswerQualityCheckId;
@@ -69,7 +106,40 @@ export interface SourceAnswerQualityGateInput {
   /** Whether the evidence/artifact data behind this answer is known incomplete
    * (drives the "must include a gap/caveat" check for evidence/artifact modes). */
   evidenceIsIncomplete?: boolean;
+  /**
+   * The RAW mode-grounding block text (the SAME string injected into the
+   * generation prompt via `buildModeGrounding(...).block`) — Phase B's
+   * traceability check scans this for the $ figures the answer is allowed to
+   * quote. Optional: Phase A modes never set it, so their existing 9 checks are
+   * unaffected; Phase B modes should always pass it when grounding is active.
+   */
+  groundingBlockText?: string;
+  /**
+   * True when the grounding block for this turn names a SPECIFIC vendor/lever
+   * ask (e.g. a BAFO-open-lever list, or a per-vendor should-cost breakdown) —
+   * drives the "generic answer when real data exists" check for BAFO/vendor
+   * modes. Absent/false when the grounding is itself a MODEL with nothing
+   * specific to point to (the check then does not require specificity).
+   */
+  groundingHasSpecificAsk?: boolean;
 }
+
+/** Every $ figure appearing in a text, compact-notation aware (e.g. "$4.2M",
+ * "$650K", "$1,200,000"). Used by the traceability check to compare the
+ * answer's stated figures against the grounding block's cited figures. */
+const USD_FIGURE_RE = /\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?\b/g;
+
+function extractUsdFigures(text: string): string[] {
+  const matches = text.match(USD_FIGURE_RE) ?? [];
+  // Normalize whitespace/case for a tolerant comparison (the model may render
+  // "$4.2M" vs "$4.2 M" — both should compare equal).
+  return matches.map((m) => m.replace(/\s+/g, "").toLowerCase());
+}
+
+/** Value-type labels the classification lines use — matched loosely (word
+ * fragments) so "protected value" and "protected" both count as a hit. */
+const VALUE_TYPE_SIGNAL_RE =
+  /\b(expected concession|incremental negotiated|solution tightening|protected( value)?|risk[- ]adjusted)\b/i;
 
 // Banned model-deflection / inferiority phrases (spec-mandated list, verbatim
 // intent). Case-insensitive; matched as substrings since the model may vary
@@ -114,6 +184,13 @@ const NEXT_STEP_SIGNAL_RE =
   /\b(next step|next,|you (should|can|need to)|upload|provide|confirm|approve|advance|review|ask|check)\b/i;
 const CAVEAT_SIGNAL_RE =
   /\b(not (yet )?(computed|available|complete|persisted)|missing|outstanding|still (need|open)|has not been)\b/i;
+
+// Vague negotiation-posture phrases that dodge naming the SPECIFIC vendor/lever
+// ask the grounding block already carries (e.g. the archetype's `bafoAsk` text,
+// or a named vendor/lever). Flagged only when the grounding actually HAS a
+// specific ask to point to — see `groundingHasSpecificAsk` on the gate input.
+const GENERIC_ASK_DEFLECTION_RE =
+  /\b(negotiate (harder|better)|push for (a )?better (price|deal|terms)|ask for (a )?discount|try to (get|negotiate) (a )?better (price|deal)|sharpen (your|their) pencil|see what (they|the vendor) (can|will) do)\b/i;
 
 function runChecks(
   input: SourceAnswerQualityGateInput,
@@ -246,6 +323,71 @@ function runChecks(
       : "This mode requires read-once grounding facts but none were provided to the gate.",
   });
 
+  // ── Phase B checks (only evaluated for the 8 vendor/value/commercial modes;
+  // vacuously pass for every Phase A / Phase C mode) ──────────────────────────
+
+  // 10. Traceability: every $ figure the answer states must appear verbatim in
+  // the grounding block — the same quote-not-compute philosophy as #4567's
+  // prompt guard, checked post-hoc against the buffered answer text. A mode
+  // outside the value/pricing set, or a turn with no grounding block, passes
+  // vacuously (nothing to check against).
+  const isValueMode = input.mode !== null && PHASE_B_VALUE_MODES.has(input.mode);
+  const needsTraceability =
+    isValueMode && input.hasGroundingContext && Boolean(input.groundingBlockText);
+  let traceableToGrounding = true;
+  let traceabilityDetail = "Not a value/pricing mode, or no grounding block to trace against.";
+  if (needsTraceability) {
+    const groundingFigures = new Set(extractUsdFigures(input.groundingBlockText!));
+    const answerFigures = extractUsdFigures(text);
+    const untraceable = answerFigures.filter((f) => !groundingFigures.has(f));
+    traceableToGrounding = untraceable.length === 0;
+    traceabilityDetail = traceableToGrounding
+      ? "Every $ figure in the answer appears verbatim in the grounding block."
+      : `Answer states $ figure(s) not found in the grounding block: ${untraceable.join(", ")}.`;
+  }
+  checks.push({
+    id: "traceable_to_grounding",
+    passed: traceableToGrounding,
+    detail: traceabilityDetail,
+  });
+
+  // 11. Value-type breakdown present: when the grounding block carries a
+  // classified value-type breakdown (its VALUE-TYPE CLASSIFICATION section),
+  // the answer must reflect at least one value-type label — never fold
+  // classified value into one blended savings claim.
+  const groundingHasValueTypeBreakdown =
+    Boolean(input.groundingBlockText) &&
+    input.groundingBlockText!.includes("VALUE-TYPE CLASSIFICATION");
+  const needsValueTypeBreakdown =
+    isValueMode && input.hasGroundingContext && groundingHasValueTypeBreakdown;
+  const hasValueTypeSignal = VALUE_TYPE_SIGNAL_RE.test(text);
+  checks.push({
+    id: "includes_value_type_breakdown",
+    passed: !needsValueTypeBreakdown || hasValueTypeSignal,
+    detail: !needsValueTypeBreakdown
+      ? "Grounding carries no classified value-type breakdown for this turn — no breakdown required."
+      : hasValueTypeSignal
+        ? "Answer names at least one value-type classification."
+        : "Grounding carries a classified value-type breakdown but the answer does not name any value type — risks reading as one blended savings figure.",
+  });
+
+  // 12. Generic-ask check: for BAFO/vendor modes, when the grounding has a real,
+  // specific vendor/lever ask, the answer must not stay generic (e.g. "negotiate
+  // harder") instead of using the specific ask/vendor/lever the data provides.
+  const isAskMode = input.mode !== null && PHASE_B_ASK_MODES.has(input.mode);
+  const needsSpecificAsk =
+    isAskMode && input.hasGroundingContext && input.groundingHasSpecificAsk === true;
+  const hasGenericDeflection = GENERIC_ASK_DEFLECTION_RE.test(text);
+  checks.push({
+    id: "uses_specific_ask_when_available",
+    passed: !needsSpecificAsk || !hasGenericDeflection,
+    detail: !needsSpecificAsk
+      ? "Not a BAFO/vendor mode with a specific ask available — no specificity required."
+      : hasGenericDeflection
+        ? "Grounding names a specific vendor/lever ask but the answer stayed generic."
+        : "Answer does not fall back to a generic ask when specific data is available.",
+  });
+
   return checks;
 }
 
@@ -286,6 +428,44 @@ function repairAnswer(
       input.groundingFacts?.howToAction ??
       "Next: check the current stage's task checklist and gate panel for the exact outstanding item.";
     repaired = `${repaired.trim()} ${fallbackNextStep}`.trim();
+  }
+
+  // Phase B repairs — strip/append only, never a full regeneration.
+
+  if (failedIds.has("traceable_to_grounding") && input.groundingBlockText) {
+    // Strip the specific untraceable $ token(s) rather than the whole sentence
+    // (a targeted strip, not a rewrite) and append a caveat pointing back to the
+    // grounding block's own cited figures — never silently ship a self-computed
+    // number as if it were cited.
+    const groundingFigures = new Set(extractUsdFigures(input.groundingBlockText));
+    repaired = repaired.replace(USD_FIGURE_RE, (match) => {
+      const normalized = match.replace(/\s+/g, "").toLowerCase();
+      return groundingFigures.has(normalized) ? match : "[figure not in the grounding record]";
+    });
+    repaired =
+      `${repaired.trim()} Every dollar figure above is quoted from the deterministic grounding record for this event — I do not compute new figures myself.`.trim();
+  }
+
+  if (failedIds.has("includes_value_type_breakdown") && input.groundingBlockText) {
+    // Append the grounding block's own VALUE-TYPE CLASSIFICATION section
+    // verbatim — quoted, never re-derived — so the answer never reads as one
+    // blended savings number.
+    const classificationLines = input.groundingBlockText
+      .split("\n")
+      .filter((line) => /value[- ]?type|expected concession|incremental negotiated|solution tightening|protected|risk[- ]adjusted/i.test(line))
+      .slice(0, 6);
+    if (classificationLines.length > 0) {
+      repaired =
+        `${repaired.trim()}\n\nValue is classified, not blended: ${classificationLines.map((l) => l.trim()).join(" ")}`.trim();
+    }
+  }
+
+  if (failedIds.has("uses_specific_ask_when_available")) {
+    const specificAsk =
+      input.groundingFacts?.bafoOpenLeverCount !== undefined
+        ? "See the BAFO grounding above for the specific per-lever ask — press each open lever's named concession, not a general price reduction."
+        : "See the grounding above for the specific vendor/lever detail rather than a general negotiation posture.";
+    repaired = `${repaired.trim()} ${specificAsk}`.trim();
   }
 
   return repaired;

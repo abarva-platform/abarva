@@ -132,22 +132,37 @@ import {
   buildAvaSourceGrounding,
   AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD,
 } from "@/lib/source/facts/view/ava-grounding-context";
-// Source aVa answer-mode hardening (Phase A) — classify the question into one
-// of 16 modes, build mode-specific grounding for the 6 Phase A modes (event
-// status / workflow how-to / evidence readiness / artifact lineage & finality /
-// stage gate), and run the answer through a deterministic quality gate before
-// it ships. Additive + flag-gated exactly like the value grounding above: when
-// `source_analytics` is off or no event id is present, none of this runs and
-// the chat is byte-for-byte unchanged.
+// Source aVa answer-mode hardening (Phase A + Phase B) — classify the question
+// into one of 16 modes, build mode-specific grounding for the 6 Phase A modes
+// (event status / workflow how-to / evidence readiness / artifact lineage &
+// finality / stage gate) and the 8 Phase B modes (value at stake / vendor
+// comparison / should-cost / risk exposure / clause coverage / BAFO strategy /
+// committed value / value realization), and run the answer through a
+// deterministic quality gate before it ships. Additive + flag-gated exactly
+// like the value grounding above: when `source_analytics` is off or no event id
+// is present, none of this runs and the chat is byte-for-byte unchanged.
 import {
   classifySourceAnswerMode,
-  isPhaseAImplementedMode,
+  isPhaseBImplementedMode,
+  isGroundedAnswerMode,
 } from "@/lib/source/ava/answer-mode";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
 import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
-import { readEventFacts } from "@/lib/source/facts/event-facts-reader";
-import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
+import {
+  readEventFacts,
+  readRfpClausePresentLeverKeys,
+  readCommittedValueLevers,
+  readBafoConcessionLevers,
+  readRealizedValueLevers,
+  readVendorLeverResponses,
+  readVendorBids,
+  type VendorBidInputs,
+} from "@/lib/source/facts/event-facts-reader";
+import {
+  buildLiveStageView,
+  resolveValueArchetype,
+} from "@/lib/source/facts/view/stage-analytics-builder";
 import { getSourcingEvent } from "@/lib/source/queries";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
@@ -1138,13 +1153,19 @@ export async function POST(request: Request) {
   // event id is present, nothing here runs and the chat behaves exactly as before.
   let sourceAvaGroundingBlock = "";
   let sourceAvaQuoteNotComputeGuard = "";
-  // Phase A answer-mode hardening state — populated only when grounding is
-  // active. Threaded into the post-stream quality gate so generation and gate
-  // check read the SAME facts (checklist item #9: read-once, not a stale
-  // re-read). Left null/empty on every other surface/turn (byte-identical).
+  // Phase A + Phase B answer-mode hardening state — populated only when
+  // grounding is active. Threaded into the post-stream quality gate so
+  // generation and gate check read the SAME facts (checklist item #9:
+  // read-once, not a stale re-read). Left null/empty on every other
+  // surface/turn (byte-identical).
   let sourceAvaAnswerMode: ReturnType<typeof classifySourceAnswerMode>["mode"] | null = null;
   let sourceAvaModeGroundingFacts: Record<string, string> = {};
   let sourceAvaModeEvidenceIncomplete = false;
+  // Phase B only: the raw mode-grounding block text (for the quality gate's
+  // number-traceability check) and whether the grounding names a specific
+  // vendor/lever ask (for the generic-ask-when-data-exists check).
+  let sourceAvaModeGroundingBlockText = "";
+  let sourceAvaModeHasSpecificAsk = false;
   const sourceEventIdFromContext =
     typeof surfaceContext.sourceEventId === "string" &&
     surfaceContext.sourceEventId.trim()
@@ -1187,19 +1208,40 @@ export async function POST(request: Request) {
         sourceAvaQuoteNotComputeGuard = AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD;
       }
 
-      // ── Phase A · answer-mode classification + mode-specific grounding ──────
+      // ── Phase A/B · answer-mode classification + mode-specific grounding ───
       // Classify the question so aVa answers workflow questions (status,
-      // how-to, evidence, artifacts, gates) from the SAME deterministic reads
-      // the canvas uses, not from the LLM's own guess. Only the 6 Phase A
-      // modes build a mode-specific block; the other 10 classify (telemetry +
-      // future extension point) and fall through to existing behavior.
+      // how-to, evidence, artifacts, gates) AND vendor/value/commercial
+      // questions (value at stake, vendor comparison, should-cost, risk
+      // exposure, clause coverage, BAFO strategy, committed value, value
+      // realization) from the SAME deterministic reads the canvas uses, not
+      // from the LLM's own guess. Only the 6 Phase A + 8 Phase B modes build a
+      // mode-specific block; the remaining 2 (stakeholder_alignment,
+      // general_advisory) classify (telemetry + future extension point) and
+      // fall through to existing behavior.
       const modeClassification = classifySourceAnswerMode({
         question: message,
         viewedStage: viewStageFromContext,
       });
       sourceAvaAnswerMode = modeClassification.mode;
-      if (isPhaseAImplementedMode(modeClassification.mode) && groundingEvent) {
-        const [{ inputs: modeFactInputs }, modeArtifacts] = await Promise.all([
+      if (isGroundedAnswerMode(modeClassification.mode) && groundingEvent) {
+        const modeStageKey = viewStageFromContext ?? groundingEvent.currentStageKey;
+        const isPhaseB = isPhaseBImplementedMode(modeClassification.mode);
+
+        // Phase B modes need the archetype + whichever per-lever/per-vendor
+        // signal that mode's insight reads — mirrored from the canvas
+        // call-site's per-stage reads (source/events/[eventId]/page.tsx) so the
+        // SAME signal-presence contract (undefined = no signal = honest MODEL;
+        // a map/set, even empty, = LIVE) governs the chat grounding too.
+        const [
+          { inputs: modeFactInputs },
+          modeArtifacts,
+          rfpClauseSignal,
+          committedSignal,
+          bafoSignal,
+          realizedSignal,
+          vendorResponseSignal,
+          vendorBidSignal,
+        ] = await Promise.all([
           readEventFacts({
             eventId: sourceEventIdFromContext,
             clientKey: activeClientKey,
@@ -1207,8 +1249,62 @@ export async function POST(request: Request) {
           listSourceArtifactsForSourceEventId(sourceEventIdFromContext).catch(
             () => [],
           ),
+          isPhaseB && modeClassification.mode === "clause_coverage"
+            ? readRfpClausePresentLeverKeys({
+                eventId: sourceEventIdFromContext,
+                clientKey: activeClientKey,
+              }).catch(() => ({ signalPresent: false, presentLeverKeys: new Set<string>() }))
+            : Promise.resolve({ signalPresent: false, presentLeverKeys: new Set<string>() }),
+          isPhaseB && modeClassification.mode === "committed_value"
+            ? readCommittedValueLevers({
+                eventId: sourceEventIdFromContext,
+                clientKey: activeClientKey,
+              }).catch(() => ({ signalPresent: false, committedByLeverKey: new Map<string, number>() }))
+            : Promise.resolve({ signalPresent: false, committedByLeverKey: new Map<string, number>() }),
+          isPhaseB && modeClassification.mode === "bafo_strategy"
+            ? readBafoConcessionLevers({
+                eventId: sourceEventIdFromContext,
+                clientKey: activeClientKey,
+              }).catch(() => ({ signalPresent: false, capturedByLeverKey: new Map<string, number>() }))
+            : Promise.resolve({ signalPresent: false, capturedByLeverKey: new Map<string, number>() }),
+          isPhaseB && modeClassification.mode === "value_realization"
+            ? readRealizedValueLevers({
+                eventId: sourceEventIdFromContext,
+                clientKey: activeClientKey,
+              }).catch(() => ({ signalPresent: false, realizedByLeverKey: new Map<string, number>() }))
+            : Promise.resolve({ signalPresent: false, realizedByLeverKey: new Map<string, number>() }),
+          isPhaseB && modeClassification.mode === "vendor_comparison"
+            ? readVendorLeverResponses({
+                eventId: sourceEventIdFromContext,
+                clientKey: activeClientKey,
+              }).catch(() => ({
+                signalPresent: false,
+                statusByVendorLever: new Map<string, Map<string, "addressed" | "partial" | "dodged">>(),
+                vendors: [] as string[],
+              }))
+            : Promise.resolve({
+                signalPresent: false,
+                statusByVendorLever: new Map<string, Map<string, "addressed" | "partial" | "dodged">>(),
+                vendors: [] as string[],
+              }),
+          isPhaseB &&
+          (modeClassification.mode === "vendor_comparison" ||
+            modeClassification.mode === "should_cost")
+            ? readVendorBids({
+                eventId: sourceEventIdFromContext,
+                clientKey: activeClientKey,
+              }).catch(() => ({
+                signalPresent: false,
+                bidsByVendor: new Map<string, VendorBidInputs>(),
+                vendors: [] as string[],
+              }))
+            : Promise.resolve({
+                signalPresent: false,
+                bidsByVendor: new Map<string, VendorBidInputs>(),
+                vendors: [] as string[],
+              }),
         ]);
-        const modeStageKey = viewStageFromContext ?? groundingEvent.currentStageKey;
+
         const modeStageView = buildLiveStageView({
           inputs: modeFactInputs,
           citations: {},
@@ -1216,6 +1312,7 @@ export async function POST(request: Request) {
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           stageKey: modeStageKey,
         });
+
         const modeGrounding = buildModeGrounding({
           mode: modeClassification.mode,
           event: {
@@ -1230,6 +1327,32 @@ export async function POST(request: Request) {
           factInputs: modeFactInputs,
           artifacts: modeArtifacts,
           question: message,
+          // Phase B inputs — eventType left unset so the archetype resolves the
+          // same way the canvas/value-grounding does (the first archetype
+          // carrying value-lever rules — today AMS).
+          archetype: isPhaseB ? resolveValueArchetype(null) : undefined,
+          baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
+          rfpClausePresentLeverKeys: rfpClauseSignal.signalPresent
+            ? rfpClauseSignal.presentLeverKeys
+            : undefined,
+          committedValueByLeverKey: committedSignal.signalPresent
+            ? committedSignal.committedByLeverKey
+            : undefined,
+          bafoConcessionByLeverKey: bafoSignal.signalPresent
+            ? bafoSignal.capturedByLeverKey
+            : undefined,
+          realizedValueByLeverKey: realizedSignal.signalPresent
+            ? realizedSignal.realizedByLeverKey
+            : undefined,
+          vendorResponses: vendorResponseSignal.signalPresent
+            ? {
+                statusByVendorLever: vendorResponseSignal.statusByVendorLever,
+                vendors: vendorResponseSignal.vendors,
+              }
+            : undefined,
+          vendorBids: vendorBidSignal.signalPresent
+            ? { bids: [...vendorBidSignal.bidsByVendor.values()], vendors: vendorBidSignal.vendors }
+            : undefined,
         });
         if (modeGrounding.block) {
           sourceAvaGroundingBlock = sourceAvaGroundingBlock
@@ -1240,9 +1363,19 @@ export async function POST(request: Request) {
           }
         }
         sourceAvaModeGroundingFacts = modeGrounding.quotableFacts;
+        sourceAvaModeGroundingBlockText = modeGrounding.block;
         sourceAvaModeEvidenceIncomplete =
           modeGrounding.quotableFacts.evidenceMissingCount !== undefined &&
           modeGrounding.quotableFacts.evidenceMissingCount !== "0";
+        // A "specific ask" exists when the BAFO grounding named at least one
+        // still-open lever (each carries its own bafoAsk text), or the vendor
+        // comparison grounding surfaced a live should-cost/response-coverage
+        // read with at least one named vendor.
+        sourceAvaModeHasSpecificAsk =
+          (modeGrounding.quotableFacts.bafoOpenLeverCount !== undefined &&
+            modeGrounding.quotableFacts.bafoOpenLeverCount !== "0") ||
+          modeGrounding.quotableFacts.headlineWinnerKey !== undefined ||
+          modeGrounding.quotableFacts.shouldCostHeadline !== undefined;
       }
     } catch {
       // Grounding is best-effort: a failure here must never break the chat turn.
@@ -1252,6 +1385,8 @@ export async function POST(request: Request) {
       sourceAvaAnswerMode = null;
       sourceAvaModeGroundingFacts = {};
       sourceAvaModeEvidenceIncomplete = false;
+      sourceAvaModeGroundingBlockText = "";
+      sourceAvaModeHasSpecificAsk = false;
     }
   }
 
@@ -1664,16 +1799,17 @@ export async function POST(request: Request) {
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
   let pendingAgentOutput = "";
-  // Phase A quality gate: when a Phase A mode was classified AND grounding is
-  // active, hold the agent's text back from the client until the full turn is
-  // in hand, run it through `runSourceAnswerQualityGate`, and emit the
-  // (possibly repaired) text in one shot instead of token-by-token. This is the
-  // ONLY behavior change vs. the existing token-streaming path, and it is
-  // strictly additive: any other surface/turn (including Source turns where no
-  // Phase A mode matched, or grounding is off) streams exactly as before.
+  // Phase A + Phase B quality gate: when a Phase A OR Phase B mode was
+  // classified AND grounding is active, hold the agent's text back from the
+  // client until the full turn is in hand, run it through
+  // `runSourceAnswerQualityGate`, and emit the (possibly repaired) text in one
+  // shot instead of token-by-token. This is the ONLY behavior change vs. the
+  // existing token-streaming path, and it is strictly additive: any other
+  // surface/turn (including Source turns where no Phase A/B mode matched, or
+  // grounding is off) streams exactly as before.
   const sourceAvaQualityGateActive =
     sourceAvaAnswerMode !== null &&
-    isPhaseAImplementedMode(sourceAvaAnswerMode) &&
+    isGroundedAnswerMode(sourceAvaAnswerMode) &&
     sourceAvaGroundingBlock !== "";
   let heldAgentText = "";
   const readable = new ReadableStream({
@@ -1785,8 +1921,8 @@ export async function POST(request: Request) {
         writer.write(`\n\n[stream error: ${errMessage}]`);
       } finally {
         flushAgentOutput();
-        // Phase A quality gate — the held-back text is checked (and, if
-        // needed, repaired once) here, BEFORE close, so the gated/repaired
+        // Phase A + Phase B quality gate — the held-back text is checked (and,
+        // if needed, repaired once) here, BEFORE close, so the gated/repaired
         // text is what the client actually receives. Best-effort: a gate
         // failure never blocks the turn — the held text still ships.
         if (sourceAvaQualityGateActive) {
@@ -1797,12 +1933,19 @@ export async function POST(request: Request) {
               hasGroundingContext: sourceAvaGroundingBlock !== "",
               groundingFacts: sourceAvaModeGroundingFacts,
               evidenceIsIncomplete: sourceAvaModeEvidenceIncomplete,
+              // Phase B checks (traceability, value-type breakdown, generic-ask)
+              // read the SAME raw grounding block text + specific-ask signal that
+              // was computed once above — Phase A modes never set
+              // sourceAvaModeGroundingBlockText's mode-specific content beyond
+              // their own block, so these are inert for Phase A turns.
+              groundingBlockText: sourceAvaModeGroundingBlockText || undefined,
+              groundingHasSpecificAsk: sourceAvaModeHasSpecificAsk,
             });
             const finalText = gateResult.finalText;
             bufferedOutput += finalText;
             controller.enqueue(encoder.encode(finalText));
             if (!gateResult.passed) {
-              // Telemetry-only: the Phase A gate's check ids are not part of
+              // Telemetry-only: the Phase A/B gate's check ids are not part of
               // the shared Intelligence `ViolationType` union (that file is
               // frozen for this change), so we log directly rather than widen
               // a shared type. The repaired text still ships — this never

@@ -6,7 +6,10 @@
 import {
   classifySourceAnswerMode,
   isPhaseAImplementedMode,
+  isPhaseBImplementedMode,
+  isGroundedAnswerMode,
   PHASE_A_IMPLEMENTED_MODES,
+  PHASE_B_IMPLEMENTED_MODES,
   type SourceAnswerMode,
 } from "../answer-mode";
 
@@ -76,7 +79,7 @@ describe("classifySourceAnswerMode — Phase A implemented modes", () => {
   });
 });
 
-describe("classifySourceAnswerMode — the 10 deferred (classify-only-passthrough) modes", () => {
+describe("classifySourceAnswerMode — Phase B implemented modes + the 2 remaining deferred modes", () => {
   const cases: Array<{ question: string; expected: SourceAnswerMode }> = [
     { question: "What's our value at stake?", expected: "value_at_stake" },
     { question: "Compare vendors for this event", expected: "vendor_comparison" },
@@ -93,12 +96,12 @@ describe("classifySourceAnswerMode — the 10 deferred (classify-only-passthroug
     { question: "What do you think about this vendor's culture fit?", expected: "general_advisory" },
   ];
 
-  it.each(cases)("classifies '$question' as $expected (deferred)", ({ question, expected }) => {
+  it.each(cases)("classifies '$question' as $expected", ({ question, expected }) => {
     const result = classifySourceAnswerMode({ question });
     expect(result.mode).toBe(expected);
-    if (expected !== "general_advisory") {
-      expect(isPhaseAImplementedMode(result.mode)).toBe(false);
-    }
+    // Phase A's predicate stays false for every Phase B/C mode — Phase A's
+    // implemented-mode set is unchanged by this slice.
+    expect(isPhaseAImplementedMode(result.mode)).toBe(false);
   });
 
   it("falls back to general_advisory (isFallback=true) for an empty question", () => {
@@ -113,6 +116,38 @@ describe("classifySourceAnswerMode — the 10 deferred (classify-only-passthroug
     });
     expect(result.mode).toBe("general_advisory");
     expect(result.isFallback).toBe(true);
+  });
+
+  it("PHASE_B_IMPLEMENTED_MODES lists exactly the 8 Phase B modes", () => {
+    expect([...PHASE_B_IMPLEMENTED_MODES].sort()).toEqual(
+      [
+        "value_at_stake",
+        "vendor_comparison",
+        "should_cost",
+        "risk_exposure",
+        "clause_coverage",
+        "bafo_strategy",
+        "committed_value",
+        "value_realization",
+      ].sort(),
+    );
+  });
+
+  it("isPhaseBImplementedMode is true for all 8 Phase B modes and false otherwise", () => {
+    for (const mode of PHASE_B_IMPLEMENTED_MODES) {
+      expect(isPhaseBImplementedMode(mode)).toBe(true);
+    }
+    expect(isPhaseBImplementedMode("event_status")).toBe(false);
+    expect(isPhaseBImplementedMode("stakeholder_alignment")).toBe(false);
+    expect(isPhaseBImplementedMode("general_advisory")).toBe(false);
+  });
+
+  it("isGroundedAnswerMode is true for every Phase A or Phase B mode and false for the 2 remaining deferred modes", () => {
+    for (const mode of [...PHASE_A_IMPLEMENTED_MODES, ...PHASE_B_IMPLEMENTED_MODES]) {
+      expect(isGroundedAnswerMode(mode)).toBe(true);
+    }
+    expect(isGroundedAnswerMode("stakeholder_alignment")).toBe(false);
+    expect(isGroundedAnswerMode("general_advisory")).toBe(false);
   });
 });
 
