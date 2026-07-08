@@ -390,19 +390,55 @@ function inferEventType(
   return "other";
 }
 
-function extractEstimatedValue(valueTarget: string): number | undefined {
+/**
+ * Parse a currency amount out of the free-text value-target field for use as the
+ * event's `estimated_value_usd` baseline.
+ *
+ * A number only becomes a dollar amount when the text carries a clear CURRENCY
+ * signal — a leading `$` OR a magnitude suffix (k/thousand, m/million,
+ * b/bn/billion). Bare numbers ("15", "top 3 vendors") and rates/targets
+ * ("15-20%", "15%") are rejected, because a percentage or bare count must never
+ * be mistaken for a USD baseline denominator in the value-pool waterfall.
+ *
+ * All candidates are scanned and the FIRST currency-signalled one wins, so
+ * "target $4M savings, 15% unit cost" returns 4_000_000 and the "15%" is skipped.
+ */
+export function extractEstimatedValue(valueTarget: string): number | undefined {
   const normalized = valueTarget.toLowerCase().replace(/,/g, "");
-  const match = normalized.match(
-    /\$?\s*(\d+(?:\.\d+)?)\s*(m|million|k|thousand)?/,
-  );
-  if (!match) return undefined;
-  const raw = Number(match[1]);
-  if (!Number.isFinite(raw)) return undefined;
-  const suffix = match[2];
-  if (suffix === "m" || suffix === "million")
-    return Math.round(raw * 1_000_000);
-  if (suffix === "k" || suffix === "thousand") return Math.round(raw * 1_000);
-  return Math.round(raw);
+  // Capture: optional `$`, the number, and (only) a currency-magnitude suffix.
+  // A trailing `%` is intentionally NOT part of the suffix group; we look ahead
+  // for it separately to reject rate/target numbers like "15%" / "15-20%".
+  const candidatePattern =
+    /(\$)?\s*(\d+(?:\.\d+)?)\s*(bn|billion|b|m|million|k|thousand)?/g;
+
+  for (const match of normalized.matchAll(candidatePattern)) {
+    const hasDollar = Boolean(match[1]);
+    const raw = Number(match[2]);
+    if (!Number.isFinite(raw)) continue;
+    const suffix = match[3];
+
+    // Reject rate/target numbers: a number immediately followed (allowing
+    // spaces) by `%` is a percentage, not a currency amount. Only skip when
+    // there is no explicit currency suffix — a bare "15%" or "15-20%" must be
+    // ignored.
+    if (!suffix) {
+      const afterIndex = (match.index ?? 0) + match[0].length;
+      const rest = normalized.slice(afterIndex);
+      if (/^\s*%/.test(rest)) continue;
+    }
+
+    if (suffix === "b" || suffix === "bn" || suffix === "billion")
+      return Math.round(raw * 1_000_000_000);
+    if (suffix === "m" || suffix === "million")
+      return Math.round(raw * 1_000_000);
+    if (suffix === "k" || suffix === "thousand") return Math.round(raw * 1_000);
+
+    // No magnitude suffix: only accept when a `$` currency signal is present.
+    // A bare number with neither `$` nor a magnitude suffix is not a baseline.
+    if (hasDollar) return Math.round(raw);
+  }
+
+  return undefined;
 }
 
 function buildDecisionOwnerPreview(

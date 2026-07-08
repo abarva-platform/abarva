@@ -67,8 +67,13 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
   const quantified = bands.filter((b) => b.state === 'quantified');
   const totalLow = quantified.reduce((acc, b) => acc + b.amountLow, 0);
   const totalHigh = quantified.reduce((acc, b) => acc + b.amountHigh, 0);
-  const pctLow = baselineAmount > 0 ? Math.round((totalLow / baselineAmount) * 100) : 0;
-  const pctHigh = baselineAmount > 0 ? Math.round((totalHigh / baselineAmount) * 100) : 0;
+  // A baseline is only meaningful when a valid positive amount exists. When the
+  // event carries no baseline (or a garbage <= 0 value), suppress the "Value at
+  // stake: $0" line and the "% of baseline" fragment rather than fabricating a
+  // denominator — the classified total still shows on its own.
+  const hasBaseline = baselineAmount > 0;
+  const pctLow = hasBaseline ? Math.round((totalLow / baselineAmount) * 100) : 0;
+  const pctHigh = hasBaseline ? Math.round((totalHigh / baselineAmount) * 100) : 0;
 
   const cardStyle: CSSProperties = {
     border: `1px solid ${ANALYTICS.LINE}`,
@@ -101,9 +106,11 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
           >
             Value-type waterfall
           </h3>
-          <div style={{ fontSize: 12.5, color: ANALYTICS.MUTED, marginTop: 4 }}>
-            {baselineLabel}: <b style={{ color: ANALYTICS.INK_2 }}>{fmtAmount(baselineAmount, unit)}</b>
-          </div>
+          {hasBaseline ? (
+            <div style={{ fontSize: 12.5, color: ANALYTICS.MUTED, marginTop: 4 }}>
+              {baselineLabel}: <b style={{ color: ANALYTICS.INK_2 }}>{fmtAmount(baselineAmount, unit)}</b>
+            </div>
+          ) : null}
         </div>
         <div style={{ textAlign: 'right' }}>
           <div
@@ -125,7 +132,7 @@ export function ValueWaterfall({ waterfall }: ValueWaterfallProps) {
               marginTop: 2,
             }}
           >
-            {pctLow}–{pctHigh}% of baseline · classified value
+            {hasBaseline ? `${pctLow}–${pctHigh}% of baseline · ` : ''}classified value
           </div>
         </div>
       </div>

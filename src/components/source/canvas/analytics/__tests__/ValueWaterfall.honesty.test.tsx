@@ -89,4 +89,40 @@ describe("ValueWaterfall — honesty invariants", () => {
     // guards against.
     expect(SAMPLE_SCOPE_STAGE.waterfall).toBeUndefined();
   });
+
+  describe("no valid baseline (freshly-created event)", () => {
+    // Defect guarded: a bare/percentage intake value ("Target 15-20% run-cost
+    // reduction") must NOT become a $ baseline. When baselineAmount <= 0 the
+    // header must suppress the "Value at stake: $0" line and the "% of baseline"
+    // fragment — the classified total still shows on its own, never a fabricated
+    // denominator.
+    const noBaseline: ValueWaterfallView = {
+      ...waterfall,
+      baselineLabel: "Value at stake (event estimate)",
+      baselineAmount: 0,
+    };
+
+    it("suppresses the 'Value at stake: $X' baseline line when there is no valid amount", () => {
+      render(<ValueWaterfall waterfall={noBaseline} />);
+      expect(
+        screen.queryByText(/Value at stake \(event estimate\)/),
+      ).not.toBeInTheDocument();
+      // No fabricated $0 baseline anywhere.
+      expect(screen.queryByText(/\$0\b/)).not.toBeInTheDocument();
+    });
+
+    it("omits the '% of baseline' fragment but keeps the classified-value label", () => {
+      render(<ValueWaterfall waterfall={noBaseline} />);
+      expect(screen.queryByText(/% of baseline/)).not.toBeInTheDocument();
+      // The classified total still renders (label present, plus the range).
+      expect(screen.getByText(/classified value/)).toBeInTheDocument();
+      expect(screen.getAllByText(/\$1M–\$2M/).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("still shows the baseline + percentage when a real amount IS present", () => {
+      render(<ValueWaterfall waterfall={waterfall} />);
+      expect(screen.getByText(/Incumbent AMS spend/)).toBeInTheDocument();
+      expect(screen.getByText(/12–18% of baseline/)).toBeInTheDocument();
+    });
+  });
 });
