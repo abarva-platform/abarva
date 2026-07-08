@@ -1,5 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// aVa Source answer-mode classifier — Phase A of the senior-advisor hardening.
+// aVa Source answer-mode classifier — the senior-advisor hardening series
+// (Phase A/B/C, all landed).
 //
 // aVa on a Source event needs to know WHAT KIND of question it is being asked
 // before it can answer like a practitioner instead of a generic chatbot. This
@@ -9,11 +10,11 @@
 // Only 6 modes are IMPLEMENTED in Phase A (grounding + quality gate wired):
 //   event_status · workflow_how_to · evidence_readiness · artifact_lineage ·
 //   artifact_finality · stage_gate
-// The other 10 classify (so the type and the keyword signal both exist now,
-// keeping Phase B/C additive-only) but the caller does not build mode-specific
-// grounding for them yet — the chat route falls through to its existing
-// (unchanged) behavior. Classifying them here is deliberately harmless: it
-// costs nothing, and gives Phase B/C a stable extension point.
+// Phase B added 8 more (vendor/value/commercial). Phase C (this slice) adds
+// the final 2 fully-grounded modes — `decision_recommendation` and
+// `contract_optimization` — plus grounds `general_advisory` (the catch-all
+// "senior sourcing judgment" mode, previously classify-only). Classifying them
+// costs nothing, and gives each phase a stable extension point.
 //
 // Deterministic on purpose: classification must be fast, cheap, and testable
 // without an LLM round-trip — this is pattern/keyword matching only.
@@ -21,11 +22,15 @@
 
 /**
  * The full 16-mode union the Source aVa answer taxonomy defines. Phase A
- * implements the first 6 (see module doc); Phase B (this module's next slice)
- * implements 7 more — the vendor/value/commercial modes — reusing the SAME
- * deterministic `buildStepInsight` / `evaluateValueLevers` substrate the canvas
- * already trusts. `stakeholder_alignment` and `general_advisory` remain
- * classify-only-passthrough, deferred to Phase C.
+ * implements the first 6 (see module doc); Phase B implements 8 more — the
+ * vendor/value/commercial modes; Phase C implements the final 2
+ * (`decision_recommendation`, `contract_optimization`) and grounds
+ * `general_advisory` as a lighter-bar catch-all. `stakeholder_alignment`
+ * remains classify-only-passthrough — it asks about human sentiment/consensus
+ * (has the committee/sponsor agreed?) which this event-bound deterministic
+ * tool has no persisted signal for; grounding it would require fabricating a
+ * "who agrees with what" state the data model does not capture, so it is left
+ * as an honest passthrough rather than a grounded mode.
  */
 export type SourceAnswerMode =
   // ── Phase A — implemented (grounding + quality gate wired) ──────────────────
@@ -44,9 +49,12 @@ export type SourceAnswerMode =
   | "should_cost"
   | "committed_value"
   | "value_realization"
-  // ── Phase C — classify-only-passthrough (existing chat behavior unchanged) ──
-  | "stakeholder_alignment"
-  | "general_advisory";
+  // ── Phase C — implemented (grounding + quality gate wired) ──────────────────
+  | "decision_recommendation"
+  | "contract_optimization"
+  | "general_advisory"
+  // ── Deferred — classify-only-passthrough (existing chat behavior unchanged) ─
+  | "stakeholder_alignment";
 
 /** The 6 modes Phase A actually builds mode-specific grounding for. */
 export const PHASE_A_IMPLEMENTED_MODES: readonly SourceAnswerMode[] = [
@@ -75,6 +83,19 @@ export const PHASE_B_IMPLEMENTED_MODES: readonly SourceAnswerMode[] = [
   "value_realization",
 ];
 
+/**
+ * The 3 modes Phase C builds mode-specific grounding for. `decision_recommendation`
+ * and `contract_optimization` are net-new composite modes (they assemble OTHER
+ * modes' grounding, never re-deriving); `general_advisory` is the pre-existing
+ * catch-all fallback, now grounded with a compact roll-up instead of a bare
+ * passthrough.
+ */
+export const PHASE_C_IMPLEMENTED_MODES: readonly SourceAnswerMode[] = [
+  "decision_recommendation",
+  "contract_optimization",
+  "general_advisory",
+];
+
 export function isPhaseAImplementedMode(mode: SourceAnswerMode): boolean {
   return (PHASE_A_IMPLEMENTED_MODES as readonly string[]).includes(mode);
 }
@@ -83,9 +104,17 @@ export function isPhaseBImplementedMode(mode: SourceAnswerMode): boolean {
   return (PHASE_B_IMPLEMENTED_MODES as readonly string[]).includes(mode);
 }
 
-/** True when the mode has ANY mode-specific grounding wired (Phase A or B). */
+export function isPhaseCImplementedMode(mode: SourceAnswerMode): boolean {
+  return (PHASE_C_IMPLEMENTED_MODES as readonly string[]).includes(mode);
+}
+
+/** True when the mode has ANY mode-specific grounding wired (Phase A, B, or C). */
 export function isGroundedAnswerMode(mode: SourceAnswerMode): boolean {
-  return isPhaseAImplementedMode(mode) || isPhaseBImplementedMode(mode);
+  return (
+    isPhaseAImplementedMode(mode) ||
+    isPhaseBImplementedMode(mode) ||
+    isPhaseCImplementedMode(mode)
+  );
 }
 
 export interface ClassifySourceAnswerModeInput {
@@ -200,6 +229,28 @@ const RULES: ModeRule[] = [
       /\bwhere (do i|can i|should i) (upload|click|find|go)\b/.test(q),
   },
 
+  // ── Phase C: decision_recommendation / contract_optimization ─────────────────
+  // Tested BEFORE Phase B's broader value/risk rules — "what should we do" /
+  // "recommend an award" / "renew vs rebid" phrasing is more specific than a
+  // bare value-at-stake or risk-exposure ask and should resolve to the
+  // composite decision/optimization modes instead.
+  {
+    mode: "decision_recommendation",
+    id: "decision_recommendation.core",
+    test: (q) =>
+      /\b(what should (we|i) (do|decide|award|recommend)|recommend (an? )?(award|decision|vendor)|who should (we|i) award|which vendor should (we|i) (pick|choose|select|award)|award recommendation|make the (award )?decision|ready to award)\b/.test(
+        q,
+      ),
+  },
+  {
+    mode: "contract_optimization",
+    id: "contract_optimization.core",
+    test: (q) =>
+      /\b(renew (or|vs\.?|versus) (rebid|renegotiate)|renegotiate (the )?(contract|incumbent|current vendor)|rebid (this|the) (contract|event)|incumbent (economics|leakage|contract)|contract optimization|optimize (the )?(current )?contract|cure (the )?contract|current[- ]state economics)\b/.test(
+        q,
+      ),
+  },
+
   // ── Phase B: vendor/value/commercial modes (grounding + quality gate wired) ──
   {
     mode: "value_at_stake",
@@ -248,7 +299,7 @@ const RULES: ModeRule[] = [
     test: (q) => /\bvalue realiz\w*|\brealized value\b|\btracking (the )?savings\b/.test(q),
   },
 
-  // ── Phase C: classify-only-passthrough (existing chat behavior unchanged) ───
+  // ── Deferred: classify-only-passthrough (existing chat behavior unchanged) ──
   {
     mode: "stakeholder_alignment",
     id: "stakeholder_alignment.deferred",
@@ -262,9 +313,10 @@ const RULES: ModeRule[] = [
 /**
  * Classify a Source aVa question into one of the 16 modes. Pure + deterministic
  * (no LLM call). Falls back to `general_advisory` when nothing matches — this is
- * the honest "I don't have a specific pattern for this" bucket, which the caller
- * treats identically to the other classify-only-passthrough modes (existing chat
- * behavior, unchanged).
+ * the honest "I don't have a specific pattern for this" bucket. Phase C grounds
+ * `general_advisory` with a compact roll-up (see `mode-grounding.ts`); it is the
+ * ONLY fallback mode that is grounded — `stakeholder_alignment` still falls
+ * through to existing (ungrounded) chat behavior when matched.
  */
 export function classifySourceAnswerMode(
   input: ClassifySourceAnswerModeInput,

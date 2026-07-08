@@ -1,5 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// aVa Source ANSWER QUALITY GATE — Phase A (9 checks) + Phase B (3 more checks).
+// aVa Source ANSWER QUALITY GATE — Phase A (9 checks) + Phase B (3 more checks)
+// + Phase C (extends the Phase B checks to 2 new value modes; lightens the bar
+// for `general_advisory`).
 //
 // Mirrors Intelligence's `answer-safety.ts` pattern (see
 // src/lib/intelligence/answer/answer-safety.ts): a deterministic, non-LLM gate
@@ -29,6 +31,15 @@
 //     has a real, specific vendor/lever ask, the answer must not stay generic.
 // The existing 9 Phase A checks are unchanged; Phase B checks are additive and
 // only evaluated for Phase B modes (Phase A modes always pass them vacuously).
+//
+// Phase C extends the SAME 3 Phase B checks to `decision_recommendation` and
+// `contract_optimization` (both state $ / value-type figures, composited from
+// existing groundings — the traceability check still holds because every
+// figure they surface is quoted verbatim from an underlying Phase A/B
+// builder's block). `general_advisory` gets a LIGHTER bar by design (it's the
+// catch-all, intentionally general): it is exempted from the value-mode and
+// ask-mode checks (nothing in its compact roll-up is a specific vendor/lever
+// ask) but still must pass every core Phase A check unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
@@ -70,6 +81,23 @@ const PHASE_B_ASK_MODES = new Set<SourceAnswerMode>([
   "bafo_strategy",
   "vendor_comparison",
 ]);
+
+/**
+ * The Phase C modes whose answers ALSO state $ / value-type figures —
+ * `decision_recommendation` composites the exec-decision + vendor-comparison +
+ * BAFO facets (all $ figures quoted from their underlying blocks);
+ * `contract_optimization` composites the value-pool + scope-coverage facets.
+ * `general_advisory` is deliberately excluded — its compact roll-up is not
+ * held to the same value-mode bar (see module doc).
+ */
+const PHASE_C_VALUE_MODES = new Set<SourceAnswerMode>([
+  "decision_recommendation",
+  "contract_optimization",
+]);
+
+/** decision_recommendation's assembled BAFO facet can name a specific
+ * still-open lever ask — same bar as Phase B's bafo_strategy/vendor_comparison. */
+const PHASE_C_ASK_MODES = new Set<SourceAnswerMode>(["decision_recommendation"]);
 
 export interface SourceAnswerQualityCheckResult {
   id: SourceAnswerQualityCheckId;
@@ -323,15 +351,17 @@ function runChecks(
       : "This mode requires read-once grounding facts but none were provided to the gate.",
   });
 
-  // ── Phase B checks (only evaluated for the 8 vendor/value/commercial modes;
-  // vacuously pass for every Phase A / Phase C mode) ──────────────────────────
+  // ── Phase B + Phase C checks (only evaluated for the value/pricing modes;
+  // vacuously pass for every Phase A mode and for general_advisory) ───────────
 
   // 10. Traceability: every $ figure the answer states must appear verbatim in
   // the grounding block — the same quote-not-compute philosophy as #4567's
   // prompt guard, checked post-hoc against the buffered answer text. A mode
   // outside the value/pricing set, or a turn with no grounding block, passes
   // vacuously (nothing to check against).
-  const isValueMode = input.mode !== null && PHASE_B_VALUE_MODES.has(input.mode);
+  const isValueMode =
+    input.mode !== null &&
+    (PHASE_B_VALUE_MODES.has(input.mode) || PHASE_C_VALUE_MODES.has(input.mode));
   const needsTraceability =
     isValueMode && input.hasGroundingContext && Boolean(input.groundingBlockText);
   let traceableToGrounding = true;
@@ -371,10 +401,13 @@ function runChecks(
         : "Grounding carries a classified value-type breakdown but the answer does not name any value type — risks reading as one blended savings figure.",
   });
 
-  // 12. Generic-ask check: for BAFO/vendor modes, when the grounding has a real,
-  // specific vendor/lever ask, the answer must not stay generic (e.g. "negotiate
+  // 12. Generic-ask check: for BAFO/vendor modes (+ decision_recommendation,
+  // which composites the BAFO facet), when the grounding has a real, specific
+  // vendor/lever ask, the answer must not stay generic (e.g. "negotiate
   // harder") instead of using the specific ask/vendor/lever the data provides.
-  const isAskMode = input.mode !== null && PHASE_B_ASK_MODES.has(input.mode);
+  const isAskMode =
+    input.mode !== null &&
+    (PHASE_B_ASK_MODES.has(input.mode) || PHASE_C_ASK_MODES.has(input.mode));
   const needsSpecificAsk =
     isAskMode && input.hasGroundingContext && input.groundingHasSpecificAsk === true;
   const hasGenericDeflection = GENERIC_ASK_DEFLECTION_RE.test(text);

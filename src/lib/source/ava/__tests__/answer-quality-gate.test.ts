@@ -352,3 +352,105 @@ describe("runSourceAnswerQualityGate — Phase B checks never regress a passing 
     expect(result.repaired).toBe(false);
   });
 });
+
+describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / contract_optimization extend the value-mode checks", () => {
+  const DECISION_GROUNDING = [
+    "DECISION RECOMMENDATION GROUNDING (composite):",
+    "EXECUTIVE DECISION FACET: Net negotiable value $4.2M–$6.5M.",
+    "VALUE-TYPE CLASSIFICATION (never claim these as one blended savings figure):",
+    "  incremental negotiated value: Volume-band price flex-down.",
+  ].join("\n");
+
+  it("traceable_to_grounding applies to decision_recommendation (composite $ figures must be quoted)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Net negotiable value is $4.2M–$6.5M. Next: confirm with the vendor before award.",
+      mode: "decision_recommendation",
+      hasGroundingContext: true,
+      groundingBlockText: DECISION_GROUNDING,
+    });
+    const check = result.checks.find((c) => c.id === "traceable_to_grounding");
+    expect(check?.passed).toBe(true);
+  });
+
+  it("fails and repairs decision_recommendation when a $ figure is not in the composed grounding", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "Net negotiable value is $9.9M. Next: confirm with the vendor before award.",
+      mode: "decision_recommendation",
+      hasGroundingContext: true,
+      groundingBlockText: DECISION_GROUNDING,
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText).not.toContain("$9.9M");
+  });
+
+  it("includes_value_type_breakdown applies to decision_recommendation", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "You're locking in $4.2M–$6.5M. Next: confirm with the vendor before award.",
+      mode: "decision_recommendation",
+      hasGroundingContext: true,
+      groundingBlockText: DECISION_GROUNDING,
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText.toLowerCase()).toContain("incremental negotiated");
+  });
+
+  it("uses_specific_ask_when_available applies to decision_recommendation (composited BAFO facet)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "You should negotiate harder before awarding. Next: confirm with the vendor.",
+      mode: "decision_recommendation",
+      hasGroundingContext: true,
+      groundingHasSpecificAsk: true,
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText.toLowerCase()).toContain("grounding above");
+  });
+
+  it("traceable_to_grounding applies to contract_optimization", () => {
+    const CONTRACT_OPT_GROUNDING = [
+      "CONTRACT OPTIMIZATION GROUNDING (authoritative):",
+      "Leakage / opportunity pool: $2.1M–$3.4M across 1 lever.",
+    ].join("\n");
+    const result = runSourceAnswerQualityGate({
+      answerText: "The leakage pool is $2.1M–$3.4M. Next: review the scope memo.",
+      mode: "contract_optimization",
+      hasGroundingContext: true,
+      groundingBlockText: CONTRACT_OPT_GROUNDING,
+    });
+    const check = result.checks.find((c) => c.id === "traceable_to_grounding");
+    expect(check?.passed).toBe(true);
+  });
+});
+
+describe("runSourceAnswerQualityGate — Phase C: general_advisory has a lighter bar", () => {
+  it("passes without a value-type breakdown or specific ask even when the grounding carries one (lighter bar by design)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "This event is on the RFP stage with $4.2M at stake overall. Next: keep pushing evidence uploads.",
+      mode: "general_advisory",
+      hasGroundingContext: true,
+      groundingBlockText: [
+        "GENERAL ADVISORY ROLL-UP (compact):",
+        "VALUE-TYPE CLASSIFICATION (never claim these as one blended savings figure):",
+        "  protected value (risk hedge): Enhancement leakage.",
+      ].join("\n"),
+    });
+    // general_advisory is excluded from PHASE_C_VALUE_MODES / ask-mode sets —
+    // these checks vacuously pass regardless of the grounding's content.
+    const valueTypeCheck = result.checks.find((c) => c.id === "includes_value_type_breakdown");
+    const askCheck = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    expect(valueTypeCheck?.passed).toBe(true);
+    expect(askCheck?.passed).toBe(true);
+    expect(result.passed).toBe(true);
+  });
+
+  it("still enforces the core Phase A checks (no banned language, has a next step)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "I am just a workflow assistant.",
+      mode: "general_advisory",
+      hasGroundingContext: true,
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText.toLowerCase()).not.toContain("i am just a workflow assistant");
+  });
+});

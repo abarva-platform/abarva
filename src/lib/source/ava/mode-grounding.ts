@@ -1,5 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// aVa Source MODE-SPECIFIC GROUNDING — Phase A (6 modes) + Phase B (8 modes).
+// aVa Source MODE-SPECIFIC GROUNDING — Phase A (6 modes) + Phase B (8 modes) +
+// Phase C (3 modes).
 //
 // `ava-grounding-context.ts` (merged #4567) gives aVa the deterministic VALUE
 // numbers (value bridge / lever insight) for a Source event. This module is its
@@ -26,6 +27,28 @@
 // protected / risk_adjusted) straight from the insight row's `valueType` field
 // (itself sourced from `evaluateValueLevers` via the archetype's
 // `ValueLeverRule.valueType`) — never reclassified, never invented.
+//
+// Phase C adds the final 3 modes:
+//   - `decision_recommendation` — a COMPOSITE. It calls the exec_decision
+//     insight (`buildStepInsight('executive_decision')`) for the value/risk
+//     split, PLUS assembles `buildVendorComparisonGrounding`,
+//     `buildBafoStrategyGrounding`, and `buildStageGateGrounding` /
+//     `buildEvidenceReadinessGrounding`'s own blocks for the vendor, BAFO, and
+//     unresolved-award-condition facets. It never re-derives any of those
+//     numbers — it calls the existing builders and concatenates their output.
+//   - `contract_optimization` — grounds the INCUMBENT/current-state economics
+//     (distinct from vendor-bid comparison): `buildStepInsight('strategy')`
+//     (value_pool — leakage/opportunity vs the incumbent baseline) and
+//     `buildStepInsight('scope')` (scope_coverage — reachable vs stranded,
+//     including the potential-at-risk banding). Surfaces each lever's own
+//     `triggerLogic` / `valueBasis` (the archetype's stated cure/renegotiate/
+//     rebid pattern) rather than inventing a decision framework beyond what
+//     the archetype already encodes.
+//   - `general_advisory` — the catch-all "senior sourcing judgment" mode. A
+//     COMPACT roll-up: current stage (event_status), the value bridge
+//     headline (value_at_stake), and the top open items across evidence/gate/
+//     BAFO. Lighter quality bar (see answer-quality-gate.ts) — it's
+//     intentionally general — but still passes the core Phase A checks.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
@@ -44,10 +67,13 @@ import type { EvaluatorInputs } from "@/lib/source/facts/evaluators/types";
 import type {
   BafoProgressInsightView,
   CommittedValueInsightView,
+  ExecDecisionInsightView,
   ResponseCoverageInsightView,
   RfpClauseInsightView,
+  ScopeCoverageInsightView,
   ShouldCostInsightView,
   StageAnalyticsView,
+  ValuePoolInsightView,
   ValueRealizationInsightView,
   ValueType,
 } from "@/components/source/canvas/analytics/view-model";
@@ -946,11 +972,295 @@ function buildValueRealizationGrounding(input: BuildModeGroundingInput): ModeGro
   };
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// PHASE C — decision_recommendation · contract_optimization · general_advisory.
+//
+// `decision_recommendation` and `contract_optimization` are COMPOSITE builders:
+// they call the OTHER mode builders above (and `buildStepInsight` directly for
+// the two insight kinds Phase A/B never wired — `exec_decision`/`value_pool`/
+// `scope_coverage`) and concatenate the resulting blocks. Neither one
+// re-implements a Phase A/B builder's math or text — every fact string in their
+// output is produced by an existing function call.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ── decision_recommendation ─────────────────────────────────────────────────
+
 /**
- * Build the mode-specific grounding block for one of Phase A's 6 or Phase B's 8
- * implemented modes. Returns an empty result for any other mode (the caller
- * falls through to existing chat behavior unchanged) — this function is only
- * ever called when the classifier already resolved an implemented mode.
+ * The value/commercial view: reuses `buildStepInsight('executive_decision')`
+ * (`exec_decision`) — the SAME classified negotiable/protected/risk-adjusted
+ * split the canvas Executive Decision tab renders. Never blended into one
+ * headline savings number (the canonical doctrine).
+ */
+function buildExecDecisionFacet(input: BuildModeGroundingInput): {
+  block: string;
+  quotableFacts: Record<string, string>;
+} {
+  const { archetype, factInputs = {} } = input;
+  if (!archetype) return { block: "", quotableFacts: {} };
+
+  const insight = buildStepInsight({
+    stageKey: "executive_decision",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+  }) as ExecDecisionInsightView | null;
+  if (!insight) return { block: "", quotableFacts: {} };
+
+  const lines = [
+    "EXECUTIVE DECISION FACET (authoritative — the same value+risk split the canvas Executive Decision tab renders):",
+    `Provenance: ${insight.provenance === "live" ? "LIVE — computed from this event's cited facts." : "SAMPLE/MODEL — illustrative shape, not a tenant number."}`,
+    `Headline: ${insight.headline}`,
+  ];
+  for (const slice of insight.slices) {
+    lines.push(`  ${slice.label} (${slice.bucket}): ${fmtUsdRange(slice.low, slice.high)}.`);
+  }
+  lines.push(`Confidence (negotiable slice): ${insight.confidence}.`);
+  if (insight.residualRiskLevers.length > 0) {
+    lines.push(
+      `Residual risk — levers still needing evidence (${insight.residualRiskLeverCount}): ${insight.residualRiskLevers.join(", ")}.`,
+    );
+  }
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      execDecisionHeadline: insight.headline,
+      execDecisionProvenance: insight.provenance,
+    },
+  };
+}
+
+/**
+ * decision_recommendation — a COMPOSITE grounding for "what should we do /
+ * who should we award" questions. Assembles FOUR facets, each produced by
+ * calling an EXISTING builder (never re-derived):
+ *   1. The value/commercial view — `buildExecDecisionFacet` (exec_decision).
+ *   2. The vendor comparison facet — `buildVendorComparisonGrounding` verbatim.
+ *   3. The BAFO facet — `buildBafoStrategyGrounding` verbatim.
+ *   4. Unresolved award conditions — `buildStageGateGrounding` +
+ *      `buildEvidenceReadinessGrounding` verbatim (the "what's still open
+ *      before this can be awarded" read).
+ * Any facet with nothing to say (no archetype, no stage view, etc.) is simply
+ * omitted — this never fabricates a facet the underlying builder itself
+ * couldn't ground.
+ */
+function buildDecisionRecommendationGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
+  const sections: string[] = [
+    "DECISION RECOMMENDATION GROUNDING (composite — assembled from the same builders the other modes use, never re-derived):",
+  ];
+  const quotableFacts: Record<string, string> = {};
+
+  const execDecision = buildExecDecisionFacet(input);
+  if (execDecision.block) {
+    sections.push(execDecision.block);
+    Object.assign(quotableFacts, execDecision.quotableFacts);
+  }
+
+  const vendorComparison = buildVendorComparisonGrounding(input);
+  if (vendorComparison.block) {
+    sections.push(vendorComparison.block);
+    Object.assign(quotableFacts, vendorComparison.quotableFacts);
+  }
+
+  const bafo = buildBafoStrategyGrounding(input);
+  if (bafo.block) {
+    sections.push(bafo.block);
+    Object.assign(quotableFacts, bafo.quotableFacts);
+  }
+
+  // Unresolved award conditions: the stage gate (what must clear to advance)
+  // plus evidence readiness (what's still missing) for the CURRENT stage —
+  // named "unresolved award conditions" here since decision_recommendation is
+  // asked when the user is deciding whether the event is ready to award.
+  const stageGate = buildStageGateGrounding(input);
+  const evidenceReadiness = buildEvidenceReadinessGrounding(input);
+  const unresolvedLines: string[] = [];
+  if (stageGate.block) unresolvedLines.push(stageGate.block);
+  if (evidenceReadiness.block) unresolvedLines.push(evidenceReadiness.block);
+  if (unresolvedLines.length > 0) {
+    sections.push(
+      ["UNRESOLVED AWARD CONDITIONS (from the stage gate + evidence readiness reads):", ...unresolvedLines].join(
+        "\n",
+      ),
+    );
+    Object.assign(quotableFacts, stageGate.quotableFacts, evidenceReadiness.quotableFacts);
+  }
+
+  if (sections.length === 1) {
+    // Nothing to assemble (no archetype, no stage view) — honest empty.
+    return EMPTY_RESULT;
+  }
+
+  return { block: sections.join("\n\n"), quotableFacts };
+}
+
+// ── contract_optimization ───────────────────────────────────────────────────
+
+/**
+ * contract_optimization — grounds the INCUMBENT/current-state economics
+ * (distinct from vendor_comparison's bid-vs-bid view). Reuses:
+ *   - `buildStepInsight('strategy')` (value_pool) for the leakage/opportunity
+ *     read against the incumbent baseline.
+ *   - `buildStepInsight('scope')` (scope_coverage) for reachable-vs-stranded
+ *     value, including the potential-at-risk banding for stranded levers.
+ * For each lever this surfaces the archetype's OWN `triggerLogic` and
+ * `valueBasis` text (the pattern that triggered the lever, and the basis for
+ * its range) — this is the cure/renegotiate/rebid framing already encoded in
+ * the playbook; no additional decision framework is invented on top of it.
+ */
+function buildContractOptimizationGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
+  const { archetype, factInputs = {} } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const valuePoolInsight = buildStepInsight({
+    stageKey: "strategy",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+  }) as ValuePoolInsightView | null;
+
+  const scopeInsight = buildStepInsight({
+    stageKey: "scope",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+  }) as ScopeCoverageInsightView | null;
+
+  if (!valuePoolInsight && !scopeInsight) return EMPTY_RESULT;
+
+  const rulesByKey = new Map<string, ValueLeverRule>(
+    (archetype.valueLeverRules ?? []).map((r) => [r.key, r]),
+  );
+
+  const lines = [
+    "CONTRACT OPTIMIZATION GROUNDING (authoritative — incumbent/current-state economics, distinct from vendor-bid comparison):",
+  ];
+  const quotableFacts: Record<string, string> = {};
+
+  if (valuePoolInsight) {
+    lines.push(
+      `Leakage / opportunity pool [${valuePoolInsight.provenance === "live" ? "LIVE" : "SAMPLE/MODEL — illustrative, not a tenant number"}]: ${valuePoolInsight.headline}`,
+    );
+    for (const bar of valuePoolInsight.bars) {
+      const rule = rulesByKey.get(bar.leverKey);
+      lines.push(
+        `  ${bar.label} (${valueTypeLabel(bar.valueType)}, ${fmtUsdRange(bar.low, bar.high)}): trigger — ${rule?.triggerLogic ?? "not declared for this lever"}. Basis — ${rule?.valueBasis ?? "not declared for this lever"}.`,
+      );
+    }
+    if (valuePoolInsight.needsEvidenceLevers.length > 0) {
+      lines.push(
+        `Levers needing evidence before they can be sized: ${valuePoolInsight.needsEvidenceLevers.join(", ")}.`,
+      );
+    }
+    lines.push(
+      ...valueTypeClassificationLines(
+        valuePoolInsight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+      ),
+    );
+    quotableFacts.contractOptValuePoolHeadline = valuePoolInsight.headline;
+    quotableFacts.contractOptValuePoolProvenance = valuePoolInsight.provenance;
+  }
+
+  if (scopeInsight) {
+    lines.push(
+      `Value exposure — reachable vs stranded [${scopeInsight.isModel ? "MODEL" : "LIVE"}]: ${scopeInsight.headline}`,
+    );
+    const strandedRows = scopeInsight.rows.filter((r) => !r.reachable);
+    if (strandedRows.length > 0) {
+      lines.push("Stranded (value exposed, not currently reachable under scope/evidence):");
+      for (const row of strandedRows) {
+        const riskBandFrag = row.potentialAtRisk
+          ? " [benchmark-scaled potential-at-risk — illustrative, not a cited figure]"
+          : "";
+        lines.push(
+          `  ${row.label} (${valueTypeLabel(row.valueType)}, ${fmtUsdRange(row.low, row.high)}${riskBandFrag}): missing ${row.missingEvidence.join(", ") || "evidence not specified"}.`,
+        );
+      }
+    } else {
+      lines.push("Stranded: none — every lever is reachable under current scope/evidence.");
+    }
+    quotableFacts.contractOptScopeHeadline = scopeInsight.headline;
+    quotableFacts.contractOptScopeIsModel = String(scopeInsight.isModel);
+  }
+
+  return { block: lines.join("\n"), quotableFacts };
+}
+
+// ── general_advisory ─────────────────────────────────────────────────────────
+
+/**
+ * general_advisory — the catch-all "senior sourcing judgment about the
+ * current event" mode. A COMPACT roll-up, reusing existing groundings rather
+ * than new logic: current stage (`buildEventStatusGrounding`), the value
+ * bridge headline (`buildValueAtStakeGrounding`, when an archetype resolves),
+ * and the top 2–3 open items across evidence/gate/BAFO. Intentionally lighter
+ * than the other modes — the quality gate applies a lighter bar to it (see
+ * `answer-quality-gate.ts`) — but it must still pass the core Phase A checks
+ * (no banned language, no fabrication, etc).
+ */
+function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const sections: string[] = [
+    "GENERAL ADVISORY ROLL-UP (compact — current stage + value headline + top open items, all reused from existing groundings):",
+  ];
+  const quotableFacts: Record<string, string> = {};
+
+  const eventStatus = buildEventStatusGrounding(input);
+  if (eventStatus.block) {
+    sections.push(eventStatus.block);
+    Object.assign(quotableFacts, eventStatus.quotableFacts);
+  }
+
+  if (input.archetype) {
+    const valueAtStake = buildValueAtStakeGrounding(input);
+    if (valueAtStake.block) {
+      sections.push(valueAtStake.block);
+      Object.assign(quotableFacts, valueAtStake.quotableFacts);
+    }
+  }
+
+  const openItems: string[] = [];
+  const evidenceReadiness = buildEvidenceReadinessGrounding(input);
+  if (
+    evidenceReadiness.quotableFacts.evidenceMissingCount !== undefined &&
+    evidenceReadiness.quotableFacts.evidenceMissingCount !== "0"
+  ) {
+    openItems.push(
+      `${evidenceReadiness.quotableFacts.evidenceMissingCount} evidence item(s) still missing on the current stage.`,
+    );
+  }
+  const stageGate = buildStageGateGrounding(input);
+  if (stageGate.quotableFacts.gateAllTasksComplete === "false") {
+    openItems.push("The current stage's gate is not yet met — open tasks remain.");
+  }
+  if (input.archetype) {
+    const bafo = buildBafoStrategyGrounding(input);
+    if (
+      bafo.quotableFacts.bafoOpenLeverCount !== undefined &&
+      bafo.quotableFacts.bafoOpenLeverCount !== "0"
+    ) {
+      openItems.push(`${bafo.quotableFacts.bafoOpenLeverCount} BAFO lever(s) still open.`);
+    }
+  }
+  if (openItems.length > 0) {
+    sections.push(["Top open items:", ...openItems.slice(0, 3).map((l) => `  - ${l}`)].join("\n"));
+  }
+
+  if (sections.length === 1) {
+    return EMPTY_RESULT;
+  }
+
+  return { block: sections.join("\n\n"), quotableFacts };
+}
+
+/**
+ * Build the mode-specific grounding block for one of Phase A's 6, Phase B's 8,
+ * or Phase C's 3 implemented modes. Returns an empty result for any other mode
+ * (the caller falls through to existing chat behavior unchanged) — this
+ * function is only ever called when the classifier already resolved an
+ * implemented mode.
  */
 export function buildModeGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
   switch (input.mode) {
@@ -982,6 +1292,12 @@ export function buildModeGrounding(input: BuildModeGroundingInput): ModeGroundin
       return buildCommittedValueGrounding(input);
     case "value_realization":
       return buildValueRealizationGrounding(input);
+    case "decision_recommendation":
+      return buildDecisionRecommendationGrounding(input);
+    case "contract_optimization":
+      return buildContractOptimizationGrounding(input);
+    case "general_advisory":
+      return buildGeneralAdvisoryGrounding(input);
     default:
       return EMPTY_RESULT;
   }
