@@ -70,9 +70,10 @@ Revert the commit, merge, redeploy. No data migration, no flag to unwind. The ne
 
 ## Audit Evidence
 
-- PR URL: (added when opened)
-- CI run: (added when opened)
-- Live smoke-test proof: pending — will sanity-check Moves chat grounding is unaffected post-deploy.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4606 (merged as `6f3e676e7cc0a13c83f7d36d27e59c07cb80dcc6`)
+- CI run (all 21 checks passed): https://github.com/abarva-platform/abarva/pull/4606/checks
+- Deploy run (success, runtime invariant verified — digest `sha256:e4f09978e075023ad8ad5f4ce0c8a1ae1c32a03598c92cbb2766a8976c4bed1d`): run `28977943627`
+- Live sanity-check: `proof/global-ava-product-truth-guard-sanity-2026-07-08/README.md` — confirmed the new global system-prompt block did not regress the already-proven Moves grounding fix (fresh conversation on `RETAIL-LEGAL-2026`/P2 still correctly referenced P2 evidence/gate state and this Move's actual subject; no console errors).
 
 ## Known Gaps
 
