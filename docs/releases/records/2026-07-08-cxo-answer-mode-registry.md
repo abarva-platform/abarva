@@ -41,7 +41,7 @@ This release centralizes CXO-grade Intelligence answer contracts in a small answ
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
 - Fail: live ACA proof on deployed `main-1358261c` returned HTTP 200 and all five surfaces, but omitted literal P0-P5/Tower labels because a later final-answer transform bypassed the first registry fallback application.
-- Not run: live ACA proof for the final-boundary fallback fix. This branch is not deployed yet.
+- Pass: live ACA proof on deployed `main-9dc24f5a` returned HTTP 200 and included every required P0-P5/Tower label, a Markdown phase table, all five AbarVa surfaces, no Claude deflection, no internal terms, and no artifact overclaim.
 
 ## Rollout Plan
 
@@ -51,9 +51,9 @@ Merge through PR to `main`. The repo-owned ACA main deploy workflow will build a
 
 - Repo-owned deploy workflow: Required for shared lab runtime.
 - Shared runtime mutators: No branch-local Azure mutation.
-- Approved image digest: To be produced by ACA main deploy workflow after merge.
-- ACA runtime invariant: Required before live acceptance.
-- Worker image invariant: Required if worker images are updated by the deploy workflow.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:6fdc7585862596bb92c392fac109de6a87e82b9cc04a8bc599bd68aed19c58fb`
+- ACA runtime invariant: Pass on revision `ca-abarva-web-lab-eastus--m9dc24f5a` at 100% traffic.
+- Worker image invariant: Pass through ACA main deploy workflow `28974549054`.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes.
 
@@ -63,11 +63,12 @@ Revert the merge commit and redeploy through the ACA main deploy workflow. The r
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Local validation: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4598
+- Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/4600
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/28974549054
 - Live proof dependency: PR #4597 already proved the deterministic phase-table fallback on deployed `main-0a1f4252`.
+- Live final acceptance: `/Users/anand/Downloads/abarva-live-strategy-solution-proof/cxo-answer-mode-registry-final-2026-07-08T20-54-38-193Z.json`
 
 ## Known Gaps
 
 - The registry seeds future answer modes such as `industry_trend_to_ai_bets`, `board_ai_governance_plan`, and `strategy_to_tower_value_case` as inactive contracts. Those modes still need classifiers, typed artifact validators, export proof, and live proof prompts before being activated.
-- Live acceptance for the final-boundary fallback fix requires merge, ACA deploy, runtime invariant proof, and rerun of the exact Lakeshore Moves phase prompt.
