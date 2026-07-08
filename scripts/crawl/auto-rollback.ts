@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import { spawn } from 'node:child_process';
 import { hasP0, type CrawlComparison } from '../../src/lib/crawl/baseline-compare';
 
 interface Payload {
@@ -40,23 +39,15 @@ async function main() {
     return;
   }
 
-  const rollbackArgs = ['rollback'];
-  if (target) rollbackArgs.push(target);
-  rollbackArgs.push('--yes');
-  await run('vercel', rollbackArgs);
+  console.error(
+    'Automatic production rollback is disabled. Use the Azure Container Apps deploy runbook to restore an approved digest.',
+  );
+  process.exitCode = 1;
 }
 
 function valueAfter(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   return index >= 0 ? args[index + 1] : undefined;
-}
-
-function run(command: string, args: string[]): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit', env: process.env });
-    child.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`${command} exited ${code}`)));
-    child.on('error', reject);
-  });
 }
 
 void main().catch((error) => {
