@@ -30,6 +30,8 @@ import {
   IndicativePlanBlock,
 } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { DeliverableArtifactCard } from "@/components/strategic-moves/DeliverableArtifactCard";
+import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace";
+import { useFeature } from "@/lib/features/use-feature";
 import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
@@ -1964,6 +1966,11 @@ export function StrategicMovePhaseClient({
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
 
+  // Phase-workspace v2 (increment 3): catalog-driven guidance panel mounted at
+  // the top of the workspace, gated per tenant. Purely additive — when off the
+  // workspace is exactly as before. See phase-workspace/MovePhaseWorkspacePanel.
+  const showPhaseWorkspaceV2 = useFeature("moves_phase_workspace_v2");
+
   // Gate criteria come straight from `move.gateCriteria` — the SINGLE
   // criterion-id scheme and evaluator (`governance.evaluateGate`, surfaced
   // via `transformers.buildGateCriteria`). The detail page renders the same
@@ -2363,7 +2370,11 @@ export function StrategicMovePhaseClient({
           displayCode: move.displayCode,
         }}
         workspace={
-          useWorkbench ? (
+          <>
+          {showPhaseWorkspaceV2 && (
+            <MovePhaseWorkspacePanel phaseNum={phaseNum} phaseLabel={config.label} />
+          )}
+          {useWorkbench ? (
             <CharterWorkflow
               key={serverCapture ? "wb-loaded" : "wb-loading"}
               workbench
@@ -2865,7 +2876,8 @@ export function StrategicMovePhaseClient({
             </CollapsePanel>
           </div>
         </article>
-          )
+          )}
+          </>
         }
       />
     </div>
