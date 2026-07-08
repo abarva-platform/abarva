@@ -11,6 +11,7 @@ import {
   factSpecByKey,
   factsByEntityKind,
   isCatalogFactKey,
+  isSignalFactKey,
   type FactEntityKind,
 } from '../fact-catalog';
 import { listSourceArchetypes } from '../../archetypes/registry';
@@ -43,15 +44,34 @@ describe('Source fact catalog — value-lever lockstep', () => {
     expect(orphans).toEqual([]);
   });
 
-  it('carries no dead facts (every catalog key is consumed by some lever)', () => {
+  it('carries no dead facts (every catalog key is a lever input OR a signal fact)', () => {
     const consumed = allRuleInputKeys();
-    const dead = FACT_CATALOG_KEYS.filter((key) => !consumed.has(key));
+    // Signal facts (downstream-insight extension) are catalog entries that no
+    // lever consumes — they are read by insight builders, not the value math — so
+    // they are legitimately not lever inputs. Everything else must be consumed.
+    const dead = FACT_CATALOG_KEYS.filter(
+      (key) => !consumed.has(key) && !isSignalFactKey(key),
+    );
     expect(dead).toEqual([]);
   });
 
-  it('the catalog key set equals the lever input key set exactly', () => {
+  it('the lever-derived catalog key set equals the lever input key set exactly', () => {
     const consumed = [...allRuleInputKeys()].sort();
-    expect([...FACT_CATALOG_KEYS].sort()).toEqual(consumed);
+    // Exclude signal facts from the lever-derived slice before comparing.
+    const leverDerived = [...FACT_CATALOG_KEYS]
+      .filter((key) => !isSignalFactKey(key))
+      .sort();
+    expect(leverDerived).toEqual(consumed);
+  });
+
+  it('every signal fact resolves and is NOT a lever input', () => {
+    const consumed = allRuleInputKeys();
+    const signalKeys = FACT_CATALOG_KEYS.filter(isSignalFactKey);
+    expect(signalKeys.length).toBeGreaterThan(0);
+    for (const key of signalKeys) {
+      expect(isCatalogFactKey(key)).toBe(true);
+      expect(consumed.has(key)).toBe(false);
+    }
   });
 
   it('preserves each input unit + source from the registry (catalog does not rewrite them)', () => {
@@ -109,6 +129,17 @@ describe('Source fact catalog — shape + lookups', () => {
     ]) {
       expect(isCatalogFactKey(key)).toBe(true);
     }
+  });
+
+  it('resolves the rfp_clause_present signal fact under entity_kind value_lever', () => {
+    expect(isCatalogFactKey('rfp_clause_present')).toBe(true);
+    expect(isSignalFactKey('rfp_clause_present')).toBe(true);
+    const spec = factSpecByKey('rfp_clause_present');
+    expect(spec).toBeDefined();
+    expect(spec!.entityKind).toBe('value_lever');
+    // Boolean carried as 0/1 on the ratio unit (see the design doc).
+    expect(spec!.unit).toBe('ratio');
+    expect(FACT_ENTITY_KINDS).toContain('value_lever');
   });
 
   it('factSpecByKey returns undefined for unknown keys', () => {

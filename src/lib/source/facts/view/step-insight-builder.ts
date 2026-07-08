@@ -147,6 +147,16 @@ export interface BuildStepInsightInput {
   /** Baseline label/amount for the value bridge. */
   baselineLabel?: string;
   baselineAmount?: number;
+  /**
+   * The set of canonical value-lever keys whose `rfp_clause_present` signal fact
+   * is present and = 1 (from the RFP-clause facts read). Drives RFP clause
+   * coverage: a lever is protected iff its key is in this set. When the set is
+   * PROVIDED (even empty) it means an RFP-clause signal exists for the event and
+   * the insight goes LIVE; when it is `undefined` no signal exists and the insight
+   * stays a MODEL. Empty-set (a signal exists but no clause is present) is a valid
+   * live "everything exposed" read — distinct from `undefined`.
+   */
+  rfpClausePresentLeverKeys?: ReadonlySet<string>;
 }
 
 /**
@@ -172,7 +182,11 @@ export function buildStepInsight(
     case 'scope_coverage':
       return buildScopeCoverageInsight(resolved, input.inputs);
     case 'rfp_clause_coverage':
-      return buildRfpClauseInsight(resolved, input.inputs);
+      return buildRfpClauseInsight(
+        resolved,
+        input.inputs,
+        input.rfpClausePresentLeverKeys,
+      );
     case 'value_bridge':
       return buildValueBridgeInsight(resolved, input);
     case 'should_cost_normalization':
@@ -700,16 +714,24 @@ function scopeAdvisor(rules: readonly ValueLeverRule[]): {
 
 /**
  * RFP clause coverage: one row per value lever, protected (the RFP requires its
- * clause) vs exposed. There is no structured RFP-draft in the fact model yet, so
- * this defaults to a MODEL — every lever is EXPOSED ("to require") — until an
- * RFP-draft signal exists. $ at stake is real where the lever computes, else the
- * illustrative scale. Each exposed row carries the exact rfpClause + bafoAsk text
- * (the clause library). Advisor layer surfaces best-practice, a labeled market
- * benchmark, and the downstream cost of leaving a lever unprotected.
+ * clause) vs exposed.
+ *
+ * LIVE when an RFP-clause signal exists for the event (`presentLeverKeys` is
+ * provided): a lever is `protected` iff its key is in that set (its
+ * `rfp_clause_present` fact = 1), else `exposed`. The headline reports live
+ * coverage (N of M lever clauses present).
+ *
+ * MODEL when no signal exists (`presentLeverKeys` is undefined): every lever is
+ * EXPOSED ("to require") — the honest default preserved from before the fact
+ * existed. $ at stake is real where the lever computes, else the illustrative
+ * scale. Each row carries the exact rfpClause + bafoAsk text (the clause
+ * library). Advisor layer surfaces best-practice, a labeled market benchmark, and
+ * the downstream cost of leaving a lever unprotected — in BOTH modes.
  */
 export function buildRfpClauseInsight(
   archetype: SourceEventArchetype,
   facts: EventFactMap,
+  presentLeverKeys?: ReadonlySet<string>,
 ): RfpClauseInsightView {
   const rules = archetype.valueLeverRules ?? [];
   const advisor = rfpAdvisor();
@@ -726,17 +748,25 @@ export function buildRfpClauseInsight(
     };
   }
 
+  // A signal exists when the set was provided (even if empty — that means an RFP
+  // draft was assessed and no clause was found present). Undefined → no signal.
+  const isLive = presentLeverKeys !== undefined;
+
   const results = evaluateValueLevers(archetype, facts);
-  // MODEL: no RFP-draft signal in the fact model — every lever is "to require".
   const rows: RfpClauseRowView[] = rules.map((rule) => {
     const band = leverBand(rule, results);
+    // LIVE: protected iff this lever's rfp_clause_present fact = 1. MODEL: every
+    // lever exposed until an RFP-draft signal exists.
+    const isProtected = isLive
+      ? presentLeverKeys!.has(rule.key)
+      : false;
     return {
       leverKey: rule.key,
       label: rule.name,
       valueType: rule.valueType,
       low: band.low,
       high: band.high,
-      protected: false, // no RFP-draft signal yet → exposed until required
+      protected: isProtected,
       rfpClause: rule.rfpClause,
       bafoAsk: rule.bafoAsk,
     };
@@ -748,24 +778,56 @@ export function buildRfpClauseInsight(
     return b.high - a.high;
   });
 
+  if (isLive) {
+    return {
+      kind: 'rfp_clause_coverage',
+      provenance: 'live',
+      headline: rfpClauseHeadline(ordered, true),
+      rows: ordered,
+      isModel: false,
+      note: 'Live — protected vs exposed is read from the RFP clause checklist you provided (one rfp_clause_present fact per lever). A protected lever has its clause required in the RFP draft; an exposed lever does not — recover it in the RFP or lose it. The $ at stake and clause text are the same cited/advisor values as the model.',
+      ...advisor,
+    };
+  }
+
   return {
     kind: 'rfp_clause_coverage',
     provenance: 'sample',
-    headline: rfpClauseHeadline(ordered),
+    headline: rfpClauseHeadline(ordered, false),
     rows: ordered,
     isModel: true,
-    note: 'Model — no structured RFP draft is in the fact model yet, so every lever is shown as a clause to require. It resolves protected-vs-exposed for real once an RFP-draft signal exists (an uploaded/authored RFP whose required clauses are extracted). The clause text below is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
+    note: 'Model — no structured RFP draft is in the fact model yet, so every lever is shown as a clause to require. It resolves protected-vs-exposed for real once an RFP-clause signal exists (upload the RFP clause checklist so each lever gets an rfp_clause_present fact). The clause text below is real advisor guidance from the archetype playbook. Not a tenant savings claim.',
     ...advisor,
   };
 }
 
-function rfpClauseHeadline(rows: readonly RfpClauseRowView[]): string {
+function rfpClauseHeadline(
+  rows: readonly RfpClauseRowView[],
+  isLive: boolean,
+): string {
   if (rows.length === 0) return 'No value levers are wired for this archetype yet.';
   const exposed = rows.filter((r) => !r.protected);
+  const protectedRows = rows.filter((r) => r.protected);
   const totalLow = rows.reduce((s, r) => s + r.low, 0);
   const totalHigh = rows.reduce((s, r) => s + r.high, 0);
   const exposedLow = exposed.reduce((s, r) => s + r.low, 0);
   const exposedHigh = exposed.reduce((s, r) => s + r.high, 0);
+
+  if (isLive) {
+    // Live coverage read: N of M lever clauses present, exposed pool sized.
+    if (exposed.length === 0) {
+      return (
+        `All ${rows.length} lever clauses are present in the RFP — your ` +
+        `${fmtUsdRange(totalLow, totalHigh)} pool is protected, nothing exposed.`
+      );
+    }
+    return (
+      `${protectedRows.length} of ${rows.length} lever clauses present in the RFP; ` +
+      `${exposed.length} still exposed (${fmtUsdRange(exposedLow, exposedHigh)}) — ` +
+      `recover each in the RFP or lose it downstream.`
+    );
+  }
+
   return (
     `Your ${fmtUsdRange(totalLow, totalHigh)} pool depends on ${rows.length} levers; ` +
     `best-in-class AMS RFPs protect each with a clause — ${exposed.length} still exposed (${fmtUsdRange(exposedLow, exposedHigh)}).`

@@ -37,7 +37,10 @@ import {
   isSkyHarborContractOptimizationEvent,
 } from "@/lib/source/contract-optimization";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { readEventFacts } from "@/lib/source/facts/event-facts-reader";
+import {
+  readEventFacts,
+  readRfpClausePresentLeverKeys,
+} from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
 import {
@@ -125,6 +128,23 @@ export default async function SourceEventDetailPage({
           eventId: event.id,
           clientKey: activeClient.key,
         });
+        // RFP clause coverage reads a per-lever presence signal (one
+        // rfp_clause_present fact per lever, keyed by lever key in entity_ref)
+        // that the collapsed event-facts read cannot express. Only fetch it on the
+        // RFP stage. `undefined` (no signal) keeps the insight an honest MODEL;
+        // a set (even empty) flips it LIVE.
+        let rfpClausePresentLeverKeys: ReadonlySet<string> | undefined =
+          undefined;
+        if (viewStage === "rfp") {
+          const { signalPresent, presentLeverKeys } =
+            await readRfpClausePresentLeverKeys({
+              eventId: event.id,
+              clientKey: activeClient.key,
+            });
+          rfpClausePresentLeverKeys = signalPresent
+            ? presentLeverKeys
+            : undefined;
+        }
         // eventType is not on the summary; leave it unset so the builder
         // resolves the value archetype the same way buildLiveStageView does
         // (the first archetype carrying value-lever rules — today AMS).
@@ -135,6 +155,7 @@ export default async function SourceEventDetailPage({
             citations,
             baselineLabel: "Value at stake (event estimate)",
             baselineAmount: event.valueAtStakeUsd ?? 0,
+            rfpClausePresentLeverKeys,
           }) ?? undefined;
 
         if (viewStage !== "strategy") {

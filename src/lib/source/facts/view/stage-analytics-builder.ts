@@ -31,7 +31,10 @@ import {
   buildLiveWaterfallView,
   quantifiedRollup,
 } from './waterfall-view-adapter';
-import { SAMPLE_SCOPE_STAGE } from '@/components/source/canvas/analytics/sample-view-model';
+import {
+  SAMPLE_SCOPE_STAGE,
+  SAMPLE_RFP_STAGE,
+} from '@/components/source/canvas/analytics/sample-view-model';
 import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
@@ -133,11 +136,19 @@ export function buildLiveStageView(
     });
   }
 
-  const scaffold = SAMPLE_SCOPE_STAGE;
+  // Pick the intake scaffold (intel points / tasks / gate structure) for the stage
+  // being built. Today only Scope and RFP have a stage-specific scaffold — RFP so
+  // its dropzone offers the RFP_CLAUSES_V1 clause-checklist upload (flips RFP
+  // clause coverage live) instead of the Scope intake tasks; every other stage
+  // still reuses the Scope exemplar structure while the live value proof rides the
+  // fact-derived waterfall.
+  const requestedStageKey = input.stageKey ?? SAMPLE_SCOPE_STAGE.stageKey;
+  const scaffold =
+    requestedStageKey === 'rfp' ? SAMPLE_RFP_STAGE : SAMPLE_SCOPE_STAGE;
 
   // The next stage this gate advances to, resolved through the canonical order so
   // the gate CTA ("Approve & advance to …") and the presentational nextStageName
-  // match the stage actually being built — not the Scope exemplar's fixed "RFP".
+  // match the stage actually being built — not the exemplar's fixed next stage.
   const stageKey = input.stageKey ?? scaffold.stageKey;
   const nextStage = nextSourceStage(stageKey);
   const nextStageName = nextStage

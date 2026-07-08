@@ -210,11 +210,40 @@ const CONTRACT_TERMS_TEMPLATE: TemplateFactMap = {
   ],
 };
 
+// ── RFP clause coverage template (downstream-insight Shape 1) ────────────────
+// One row per VALUE LEVER. Carries the per-lever RFP-clause presence signal that
+// flips RFP clause coverage from a model to a live protected-vs-exposed read (see
+// docs/build/source-downstream-insight-fact-model.md). The row entity is
+// `value_lever`: the `Lever Key` column MUST be a canonical archetype lever key
+// (e.g. 'AMS.VOLUME_BAND_PRICING') — it becomes the fact's entity_ref, and the
+// insight only marks a lever protected when a row's key matches a lever the
+// archetype actually declares (a phantom key can never inject a lever).
+//
+// The single fact column is a boolean carried as 0/1 on the `ratio` unit
+// (1 = clause present/required, 0 = absent) — the lower-churn representation vs a
+// new `flag` unit. Do NOT pre-scale; 1 means present, 0 means absent.
+const RFP_CLAUSES_TEMPLATE: TemplateFactMap = {
+  templateCode: 'RFP_CLAUSES_V1',
+  label: 'RFP clause coverage checklist',
+  rowEntity: 'value_lever',
+  entityRefColumn: 'Lever Key',
+  columns: [
+    {
+      header: 'Clause Included (1/0)',
+      factKey: 'rfp_clause_present',
+      entityKind: 'value_lever',
+      unit: 'ratio',
+      note: "Whether the RFP draft requires this lever's protecting clause (1 = present/required, 0 = absent). One row per canonical lever key.",
+    },
+  ],
+};
+
 /** All shipped structured intake templates, keyed by templateCode. */
 export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
   [VOLUMETRICS_TEMPLATE.templateCode]: VOLUMETRICS_TEMPLATE,
   [CONTRACT_TERMS_TEMPLATE.templateCode]: CONTRACT_TERMS_TEMPLATE,
+  [RFP_CLAUSES_TEMPLATE.templateCode]: RFP_CLAUSES_TEMPLATE,
   // Add new intake templates here — no engine change required.
 };
 
