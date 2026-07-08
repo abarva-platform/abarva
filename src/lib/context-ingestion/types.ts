@@ -238,20 +238,6 @@ export interface ContextEvidenceRow {
   ownerRole: string;
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Classification types (added with migration 20260616180000)
-// ──────────────────────────────────────────────────────────────────────────────
-
-export type DomainSegment =
-  | "DATA_ANALYTICS"
-  | "ERP"
-  | "DIGITAL_CX"
-  | "OPERATIONS"
-  | "INFRASTRUCTURE"
-  | "SECURITY_IDENTITY"
-  | "HR_WORKFORCE"
-  | "COLLABORATION";
-
 export type BusinessFunction =
   | "FINANCE"
   | "SUPPLY_CHAIN"

@@ -147,6 +147,13 @@ import { VendorChallengeLeveragePanel } from "./responses/VendorChallengeLeverag
 import { VendorBafoInstructionPackPanel } from "./responses/VendorBafoInstructionPackPanel";
 import { VendorEvaluationScorecardPanel } from "./responses/VendorEvaluationScorecardPanel";
 import { StageNextMoveCard } from "./StageNextMoveCard";
+import { approvalViewForCriterion } from "@/lib/source/approval-routing";
+import { criterionById } from "@/lib/source/canonical-specs";
+import {
+  assessStageGate,
+  buildStageRecommendation,
+} from "@/lib/source/gate-auto-assessment";
+import { resolveStageNextMove } from "@/lib/source/stage-next-move";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import type {
   VendorChallengeIntelligence,
@@ -510,7 +517,7 @@ export function UniversalCanvasShell({
       ReturnType<typeof approvalViewForCriterion>
     > = {};
     for (const criterion of stageCriteria) {
-      const def = specCriterionById(criterion.criterionId);
+      const def = criterionById(criterion.criterionId);
       if (!def?.ownerRole) continue;
       result[criterion.criterionId] = approvalViewForCriterion({
         event: approvalEvent,

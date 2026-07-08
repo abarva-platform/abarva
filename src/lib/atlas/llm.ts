@@ -15,9 +15,11 @@ import {
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
+import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
 import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
 import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
+import type { CuratedDossierLoadResult } from '@/lib/semantic-dossiers';
 
 /**
  * Atlas live-prod composition wiring (ATLAS-RUNLLM-COMPOSITION 2026-05-31).
