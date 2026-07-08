@@ -8,14 +8,21 @@
 // design: a compact summary, not an over-built surface.
 //
 // MODEL — award facts are not in the fact model yet, so committed value is the
-// awarded-lever roll-up. The badge reads "Model" and the note names the fact that
-// flips it live.
+// awarded-lever target roll-up. The badge reads "Model" and the note names the
+// fact that flips it live.
+//
+// LIVE — once award commitments are ingested (one committed_value_usd fact per
+// lever via COMMITTED_VALUE_V1), the insight goes live: each bar shows the target
+// band with the COMMITTED value the award locked marked on it; a lever with no
+// award fact is shown as awaiting-award (no committed marker), never fabricated.
 
+import type { ReactNode } from 'react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -41,7 +48,7 @@ interface CommittedValueInsightProps {
 }
 
 export function CommittedValueInsight({ insight }: CommittedValueInsightProps) {
-  const { bars } = insight;
+  const { bars, isModel } = insight;
   const advisor = {
     bestPractice: insight.bestPractice,
     benchmark: insight.benchmark,
@@ -55,7 +62,7 @@ export function CommittedValueInsight({ insight }: CommittedValueInsightProps) {
         headline={insight.headline}
         provenance={insight.provenance}
         note={insight.note}
-        isModel
+        isModel={isModel}
         advisor={advisor}
       >
         <div
@@ -85,6 +92,9 @@ export function CommittedValueInsight({ insight }: CommittedValueInsightProps) {
     span: Math.max(b.high - b.low, 0),
     low: b.low,
     high: b.high,
+    // LIVE only — the committed $ the award locked for this lever (undefined when
+    // awaiting award). Plotted as a reference dot on the target band.
+    committed: b.committed,
   }));
 
   const height = Math.max(160, chartRows.length * 46);
@@ -95,7 +105,7 @@ export function CommittedValueInsight({ insight }: CommittedValueInsightProps) {
       headline={insight.headline}
       provenance={insight.provenance}
       note={insight.note}
-      isModel
+      isModel={isModel}
       advisor={advisor}
     >
       <ResponsiveContainer width="100%" height={height}>
@@ -125,10 +135,17 @@ export function CommittedValueInsight({ insight }: CommittedValueInsightProps) {
             cursor={{ fill: 'rgba(10,10,11,0.03)' }}
             formatter={(_value, _name, entry) => {
               const row = (entry?.payload ?? undefined) as
-                | { low: number; high: number }
+                | { low: number; high: number; committed?: number }
                 | undefined;
               if (!row) return '';
-              return `${fmtUsd(row.low)}–${fmtUsd(row.high)} committed`;
+              // LIVE: name the committed $ against the target band (or awaiting
+              // award); MODEL: the band is the awarded-lever target roll-up.
+              if (!isModel) {
+                return row.committed !== undefined
+                  ? `${fmtUsd(row.committed)} committed · target ${fmtUsd(row.low)}–${fmtUsd(row.high)}`
+                  : `Awaiting award · target ${fmtUsd(row.low)}–${fmtUsd(row.high)}`;
+              }
+              return `${fmtUsd(row.low)}–${fmtUsd(row.high)} target`;
             }}
             labelFormatter={(label, payload) =>
               (payload?.[0]?.payload as { fullLabel?: string } | undefined)
@@ -146,16 +163,43 @@ export function CommittedValueInsight({ insight }: CommittedValueInsightProps) {
             {chartRows.map((row) => (
               <Cell key={row.leverKey} fill={valueTypeMeta(row.valueType).fg} />
             ))}
+            {!isModel && (
+              <LabelList
+                dataKey="committed"
+                position="right"
+                formatter={(value: ReactNode) => {
+                  const num =
+                    typeof value === 'number' ? value : Number(value);
+                  return value === undefined ||
+                    value === null ||
+                    !Number.isFinite(num)
+                    ? 'awaiting award'
+                    : `${fmtUsd(num)} committed`;
+                }}
+                style={{ fontFamily: ANALYTICS.SANS, fontSize: 11, fill: ANALYTICS.INK_2 }}
+              />
+            )}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
 
-      <div
-        data-testid="committed-value-flip"
-        style={{ marginTop: 12, fontSize: 12, color: ANALYTICS.INK_2, lineHeight: 1.5 }}
-      >
-        <b style={{ color: ANALYTICS.INK }}>Goes live when:</b> {insight.flipFact}
-      </div>
+      {isModel ? (
+        <div
+          data-testid="committed-value-flip"
+          style={{ marginTop: 12, fontSize: 12, color: ANALYTICS.INK_2, lineHeight: 1.5 }}
+        >
+          <b style={{ color: ANALYTICS.INK }}>Goes live when:</b> {insight.flipFact}
+        </div>
+      ) : (
+        <div
+          data-testid="committed-value-live"
+          style={{ marginTop: 12, fontSize: 12, color: ANALYTICS.INK_2, lineHeight: 1.5 }}
+        >
+          <b style={{ color: ANALYTICS.INK }}>Live:</b> committed value read from the
+          award commitments — each bar shows what the executed award locked against
+          the lever’s target band.
+        </div>
+      )}
     </InsightShell>
   );
 }

@@ -58,11 +58,30 @@ describe('template → fact map — catalog binding integrity', () => {
 });
 
 describe('template → fact map — worked examples present', () => {
-  it('ships the app-inventory, volumetrics, contract-terms, and rfp-clauses templates', () => {
+  it('ships the app-inventory, volumetrics, contract-terms, rfp-clauses, and committed-value templates', () => {
     expect(templateFactMapByCode('APP_INVENTORY_V1')).toBeDefined();
     expect(templateFactMapByCode('VOLUMETRICS_V1')).toBeDefined();
     expect(templateFactMapByCode('CONTRACT_TERMS_V1')).toBeDefined();
     expect(templateFactMapByCode('RFP_CLAUSES_V1')).toBeDefined();
+    expect(templateFactMapByCode('COMMITTED_VALUE_V1')).toBeDefined();
+  });
+
+  it('COMMITTED_VALUE_V1 binds one row per value lever to the committed_value_usd signal', () => {
+    const tpl = templateFactMapByCode('COMMITTED_VALUE_V1')!;
+    expect(tpl.rowEntity).toBe('value_lever');
+    expect(tpl.entityRefColumn).toBe('Lever Key');
+    expect(tpl.columns).toHaveLength(1);
+    const col = tpl.columns[0];
+    expect(col.header).toBe('Committed Value (USD)');
+    expect(col.factKey).toBe('committed_value_usd');
+    // The column's entityKind + unit must match the catalog (no drift): a
+    // total-over-term $ on the usd unit, attached to a value_lever entity.
+    const spec = factSpecByKey(col.factKey);
+    expect(spec).toBeDefined();
+    expect(col.entityKind).toBe('value_lever');
+    expect(col.entityKind).toBe(spec!.entityKind);
+    expect(col.unit).toBe('usd');
+    expect(col.unit).toBe(spec!.unit);
   });
 
   it('RFP_CLAUSES_V1 binds one row per value lever to the rfp_clause_present signal', () => {

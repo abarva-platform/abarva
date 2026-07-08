@@ -265,6 +265,79 @@ export const SAMPLE_RFP_STAGE: StageAnalyticsView = {
   },
 };
 
+/**
+ * The Selection stage scaffold. Mirrors the Scope three-beat structure but
+ * foregrounds the one upload that flips committed value LIVE: the award
+ * commitments (one row per value lever, a Committed Value USD column) parsed into
+ * `committed_value_usd` value_lever facts via `COMMITTED_VALUE_V1`. The live stage
+ * builder swaps in the fact-derived waterfall + intel lead over this structure.
+ */
+export const SAMPLE_SELECTION_STAGE: StageAnalyticsView = {
+  stageKey: 'selection',
+  stageName: 'Selection',
+  purpose:
+    'Confirm the value the executed award actually locked — the award is the contract of record the Value step measures realization against.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's what the award committed per lever — confirm each negotiated line survived into the executed contract, or it is value forfeited.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'The award is the contract of record — a lever priced and negotiated but not written into the award is value the buyer forfeits.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'A meaningful share of negotiated sourcing value is lost between BAFO and signature when concessions are not carried into contract language.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'Without a committed-value confirmation, the Value step has no baseline to measure realization against — realization becomes unfalsifiable.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'selection.committed-value',
+      title: 'Confirm committed value at award',
+      subtitle: 'One row per value lever · committed USD',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload the award commitments (CSV or XLSX): one row per value lever (the Lever Key column) with Committed Value (USD) set to the value the executed award locked for that lever over the contract term. This flips committed value from a model to a live committed-vs-target read.',
+      provenance: {
+        owner: 'Sourcing lead',
+        source: 'Executed contract / award record',
+      },
+      cta: 'Upload the award commitments',
+      // Parsed into COMMITTED_VALUE_V1 → committed_value_usd value_lever facts —
+      // flips the ✦ Intelligence committed value insight LIVE.
+      factTemplateCode: 'COMMITTED_VALUE_V1',
+    },
+  ],
+  gate: {
+    approver: 'K. Oshima, CIO',
+    confirms: [
+      {
+        label: 'Every priced lever carried into the award',
+        detail: 'Each value lever’s committed value is confirmed against the executed contract.',
+      },
+      {
+        label: 'Committed baseline set',
+        detail: 'The committed value becomes the baseline the Value step measures realization against.',
+      },
+      {
+        label: 'Award final',
+        detail: 'The contract is executed — advance to Transition.',
+      },
+    ],
+    generates: [{ label: 'Award commitment summary', code: 'd11' }],
+    nextStageName: 'Transition',
+  },
+};
+
 /** aVa's docked-launcher scope for the Scope stage. */
 export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
   role: 'Analyst · Scope',

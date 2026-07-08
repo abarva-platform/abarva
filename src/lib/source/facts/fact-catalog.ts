@@ -224,6 +224,22 @@ const DOWNSTREAM_SIGNAL_FACT_SPECS: Record<string, FactSpec> = {
     description:
       'Whether the RFP draft REQUIRES the clause that protects this value lever (1 = present/required, 0 = absent). One row per lever, keyed by the lever key in entity_ref. Flips RFP clause coverage from a model to a live protected-vs-exposed read.',
   },
+  // Committed value: the value LOCKED for this lever by the executed award/contract.
+  // A total-over-term $ figure on the `usd` unit — the same basis the lever's own
+  // computed band (low/high) is expressed in (value-over-term), so committed can be
+  // compared directly against target. NOT usd_per_year: the lever band is already a
+  // term total, so an annualized committed number would not be comparable. Sourced
+  // from the executed contract / award record (extracted_contract). One row per
+  // lever, keyed by the lever key in entity_ref.
+  committed_value_usd: {
+    key: 'committed_value_usd',
+    label: 'Committed value at award for lever',
+    unit: 'usd',
+    source: 'extracted_contract',
+    entityKind: 'value_lever',
+    description:
+      'The value the executed award/contract COMMITS for this value lever, in USD over the contract term. One row per lever, keyed by the lever key in entity_ref. Flips committed value from a model to a live committed-vs-target read (how much of each lever’s target band the award actually locked).',
+  },
 };
 
 /** True when `key` is a hand-authored downstream signal fact (not a lever input). */
