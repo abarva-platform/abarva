@@ -79,36 +79,6 @@ function checkLegacyEnvAbsence() {
   );
 }
 
-async function checkPineconeLive() {
-  if (!envHas('PINECONE_API_KEY') || !envHas('PINECONE_INDEX')) {
-    addResult(
-      'Pinecone live',
-      false,
-      'Skipped because local Pinecone env is incomplete.',
-      'Set PINECONE_API_KEY and PINECONE_INDEX first.',
-    );
-    return;
-  }
-
-  try {
-    const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
-    const stats = await pc.index(process.env.PINECONE_INDEX).describeIndexStats();
-    addResult(
-      'Pinecone live',
-      true,
-      `Connected to index ${process.env.PINECONE_INDEX} with ${stats.totalRecordCount ?? 0} total records.`,
-      '',
-    );
-  } catch (error) {
-    addResult(
-      'Pinecone live',
-      false,
-      `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
-      'Check network access, API key permissions, and index name.',
-    );
-  }
-}
-
 function checkAzureLocal() {
   const azureEnvPath = path.join(cwd, '.env.azure.local');
   const runbookPath = path.join(cwd, 'docs/runbooks/azure-container-apps-deploy.md');
@@ -133,7 +103,7 @@ function checkAzureLocal() {
 }
 
 function checkAzureLive() {
-  const account = spawnSync('az', ['account', 'show', '--query', '{name:name,id:id}', '-o', 'json'], {
+  const gh = spawnSync('gh', ['auth', 'status'], {
     cwd,
     encoding: 'utf8',
     timeout: 6000,
@@ -141,11 +111,17 @@ function checkAzureLive() {
   });
   addResult(
     'GitHub CLI',
-    result.status === 0,
-    result.status === 0 ? 'gh auth status succeeded.' : (result.stderr || result.stdout || 'gh auth status failed.').trim(),
+    gh.status === 0,
+    gh.status === 0 ? 'gh auth status succeeded.' : (gh.stderr || gh.stdout || 'gh auth status failed.').trim(),
     'Run `gh auth login` or clear a stale GH_TOKEN override.',
   );
-}
+
+  const account = spawnSync('az', ['account', 'show', '--query', '{name:name,id:id}', '-o', 'json'], {
+    cwd,
+    encoding: 'utf8',
+    timeout: 6000,
+    env: process.env,
+  });
 
   if (account.error) {
     addResult(
@@ -223,13 +199,11 @@ function printResults() {
 
 function main() {
   checkEnvFile();
-  checkSupabaseLocal();
-  checkPineconeLocal();
+  checkRuntimeEnv();
+  checkLegacyEnvAbsence();
   checkAzureLocal();
 
   if (live) {
-    await checkSupabaseLive();
-    await checkPineconeLive();
     checkAzureLive();
   }
 

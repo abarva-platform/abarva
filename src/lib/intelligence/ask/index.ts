@@ -116,8 +116,14 @@ export interface AskOptions {
   };
   /** Called with the raw system + user prompt just before the model is invoked. Used by QA probes to hash/log the model input. */
   onModelInput?: (parts: { system: string; user: string }) => void;
-  /** Called with the raw model output text after streaming completes. Used by QA probes to capture full answer text. */
-  onModelOutput?: (text: string) => void;
+  /** Called with the raw model output after streaming completes. Used by QA probes to capture full answer text. */
+  onModelOutput?: (parts: {
+    rawText: string;
+    text: string;
+    model?: string;
+    auditId?: string;
+    route: string;
+  }) => void;
   /** Latency trace request ID to resume an existing trace (passed from the route layer). */
   latencyTraceId?: string | null;
   /** Timestamp (ms) when the latency trace started at the route layer. */
