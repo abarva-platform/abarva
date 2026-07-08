@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import type { ApprovedInputsPack } from '../../../lib/programs/phase-templates/approved-inputs-pack';
+import { enterprisePromotionStatus } from '../../../lib/programs/phase-templates/enterprise-promotion';
 import { Card, Chip } from './primitives';
 
 export function ApprovedInputsPackCard({
@@ -16,6 +17,7 @@ export function ApprovedInputsPackCard({
   /** Human date for approvedAt, formatted by the host (core takes no clock). */
   approvedOnLabel?: string;
 }): React.ReactElement {
+  const promotion = enterprisePromotionStatus();
   return (
     <Card
       kicker="Approved for this phase"
@@ -68,7 +70,10 @@ export function ApprovedInputsPackCard({
         </div>
       ) : null}
 
-      <p className="pw-foot">Enterprise context: Not added yet.</p>
+      <div className="pw-callout">
+        <span className="pw-callout-t">{promotion.clientLabel}</span>
+        <span className="pw-note">{promotion.detail}</span>
+      </div>
     </Card>
   );
 }
