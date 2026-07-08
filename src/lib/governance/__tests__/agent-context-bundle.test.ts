@@ -76,6 +76,53 @@ describe("buildValidatedAgentContextBundle", () => {
     expect(b.citations.sort()).toEqual(["doc#1", "doc#2"]);
   });
 
+  it("blocks retired candidates from every model-visible bundle", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({
+        agent_readiness_status: "retired",
+        retrievability: "search_indexed",
+        confidence_level: "high",
+        cited_render_verified_at: "2026-06-08T00:00:00Z",
+      }),
+    ]);
+    expect(b.usable).toHaveLength(0);
+    expect(b.blocked).toHaveLength(1);
+    expect(b.blocked[0].errors.join(" ")).toMatch(/retired/);
+  });
+
+  it("can require agent_ready for advisory packets, blocking loaded-but-unpromoted facts", () => {
+    const ready = candidate({
+      id: "ready",
+      retrievability: "search_indexed",
+      agent_readiness_status: "agent_ready",
+      confidence_level: "high",
+      cited_render_verified_at: "2026-06-08T00:00:00Z",
+      citations: ["doc#ready"],
+    });
+    const loadedButUnreviewed = candidate({
+      id: "loaded",
+      retrievability: "search_indexed",
+      agent_readiness_status: "not_reviewed",
+      confidence_level: "medium",
+      cited_render_verified_at: "2026-06-08T00:00:00Z",
+      citations: ["doc#loaded"],
+    });
+
+    const diagnostic = buildValidatedAgentContextBundle([
+      ready,
+      loadedButUnreviewed,
+    ]);
+    expect(diagnostic.usable.map((c) => c.id)).toEqual(["ready", "loaded"]);
+
+    const advisory = buildValidatedAgentContextBundle(
+      [ready, loadedButUnreviewed],
+      { requireAgentReady: true },
+    );
+    expect(advisory.usable.map((c) => c.id)).toEqual(["ready"]);
+    expect(advisory.blocked.map((b) => b.candidate.id)).toEqual(["loaded"]);
+    expect(advisory.blocked[0].errors.join(" ")).toMatch(/require agent_ready/);
+  });
+
   it("decision is block when every candidate is blocked", () => {
     const b = buildValidatedAgentContextBundle([
       candidate({ tenant_id: null }),

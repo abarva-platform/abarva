@@ -114,6 +114,13 @@ export interface BuildBundleOptions {
    * agent bundle unless a caller with clearance explicitly opts in.
    */
   allowSensitive?: boolean;
+  /**
+   * Advisory/runtime model-visible bundles should set this to true. In that
+   * mode only fully governed `agent_ready` candidates enter `usable`; loaded,
+   * not-reviewed, synthetic/demo, or otherwise unpromoted material remains
+   * visible in diagnostics as blocked context.
+   */
+  requireAgentReady?: boolean;
 }
 
 /**
@@ -147,6 +154,18 @@ export function buildValidatedAgentContextBundle(
     const evaluation = evaluateCandidate(c);
     if (evaluation.decision === "block") {
       blocked.push({ candidate: c, errors: evaluation.errors });
+      continue;
+    }
+    if (options.requireAgentReady && !evaluation.agentReady) {
+      blocked.push({
+        candidate: c,
+        errors: [
+          c.agent_readiness_status === "agent_ready"
+            ? "agent_ready criteria incomplete"
+            : `agent_readiness_status is ${c.agent_readiness_status}; advisory packets require agent_ready`,
+          ...evaluation.warnings,
+        ],
+      });
       continue;
     }
     usable.push(c);
