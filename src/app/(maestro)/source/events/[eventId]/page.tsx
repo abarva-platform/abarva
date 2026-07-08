@@ -40,6 +40,7 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import {
   readEventFacts,
   readRfpClausePresentLeverKeys,
+  readCommittedValueLevers,
 } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
@@ -145,6 +146,23 @@ export default async function SourceEventDetailPage({
             ? presentLeverKeys
             : undefined;
         }
+        // Committed value reads a per-lever award signal (one committed_value_usd
+        // fact per lever, keyed by lever key in entity_ref) the collapsed
+        // event-facts read cannot express. Only fetch it on the Selection stage.
+        // `undefined` (no signal) keeps the insight an honest MODEL; a map (even
+        // empty) flips it LIVE.
+        let committedValueByLeverKey: ReadonlyMap<string, number> | undefined =
+          undefined;
+        if (viewStage === "selection") {
+          const { signalPresent, committedByLeverKey } =
+            await readCommittedValueLevers({
+              eventId: event.id,
+              clientKey: activeClient.key,
+            });
+          committedValueByLeverKey = signalPresent
+            ? committedByLeverKey
+            : undefined;
+        }
         // eventType is not on the summary; leave it unset so the builder
         // resolves the value archetype the same way buildLiveStageView does
         // (the first archetype carrying value-lever rules — today AMS).
@@ -156,6 +174,7 @@ export default async function SourceEventDetailPage({
             baselineLabel: "Value at stake (event estimate)",
             baselineAmount: event.valueAtStakeUsd ?? 0,
             rfpClausePresentLeverKeys,
+            committedValueByLeverKey,
           }) ?? undefined;
 
         if (viewStage !== "strategy") {

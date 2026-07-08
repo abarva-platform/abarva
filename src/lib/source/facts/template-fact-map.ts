@@ -238,12 +238,42 @@ const RFP_CLAUSES_TEMPLATE: TemplateFactMap = {
   ],
 };
 
+// ── Committed value template (downstream-insight Shape 1) ────────────────────
+// One row per VALUE LEVER. Carries the per-lever value the executed award/contract
+// COMMITTED, which flips committed value from a model to a live committed-vs-target
+// read (see docs/build/source-downstream-insight-fact-model.md). The row entity is
+// `value_lever`: the `Lever Key` column MUST be a canonical archetype lever key
+// (e.g. 'AMS.VOLUME_BAND_PRICING') — it becomes the fact's entity_ref, and the
+// insight only marks a lever committed when a row's key matches a lever the
+// archetype actually declares (a phantom key can never inject a lever).
+//
+// The single fact column is a total-over-term $ figure on the `usd` unit — the same
+// basis the lever's computed target band is expressed in — so committed can be
+// compared directly against target. Enter the value the AWARD locks, not an annual
+// figure.
+const COMMITTED_VALUE_TEMPLATE: TemplateFactMap = {
+  templateCode: 'COMMITTED_VALUE_V1',
+  label: 'Committed value at award',
+  rowEntity: 'value_lever',
+  entityRefColumn: 'Lever Key',
+  columns: [
+    {
+      header: 'Committed Value (USD)',
+      factKey: 'committed_value_usd',
+      entityKind: 'value_lever',
+      unit: 'usd',
+      note: 'The value the executed award/contract commits for this lever, in USD over the contract term (not annualized). One row per canonical lever key.',
+    },
+  ],
+};
+
 /** All shipped structured intake templates, keyed by templateCode. */
 export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [APP_INVENTORY_TEMPLATE.templateCode]: APP_INVENTORY_TEMPLATE,
   [VOLUMETRICS_TEMPLATE.templateCode]: VOLUMETRICS_TEMPLATE,
   [CONTRACT_TERMS_TEMPLATE.templateCode]: CONTRACT_TERMS_TEMPLATE,
   [RFP_CLAUSES_TEMPLATE.templateCode]: RFP_CLAUSES_TEMPLATE,
+  [COMMITTED_VALUE_TEMPLATE.templateCode]: COMMITTED_VALUE_TEMPLATE,
   // Add new intake templates here — no engine change required.
 };
 

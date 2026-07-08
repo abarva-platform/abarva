@@ -591,16 +591,93 @@ describe('MODEL step insights — value / responses / bafo / selection', () => {
     expect(insight.flipFact).toMatch(/BAFO concession actuals/i);
   });
 
-  it('committed_value: compact bars by lever, names the award flip fact', () => {
+  it('committed_value MODEL: compact bars by lever, names the award flip fact, no committed value fabricated', () => {
     const insight = buildCommittedValueInsight(
       AMS_MANAGED_SERVICES,
       FACTS_ONE_LEVER,
     );
     expect(insight.kind).toBe('committed_value');
     expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
     expect(insight.bars.length).toBeGreaterThan(0);
     expect(insight.bars.every((b) => b.high >= b.low)).toBe(true);
+    // MODEL never carries a committed value — it is the target roll-up only.
+    expect(insight.bars.every((b) => b.committed === undefined)).toBe(true);
     expect(insight.flipFact).toMatch(/award facts/i);
+    expect(insight.note).toMatch(/model/i);
+  });
+
+  it('committed_value goes LIVE when award facts are supplied: committed vs target per lever', () => {
+    // Commit a value on two AMS levers; leave the rest awaiting award.
+    const committed = new Map<string, number>([
+      ['AMS.ENHANCEMENT_LEAKAGE', 3_800_000],
+      ['AMS.VOLUME_BAND_PRICING', 6_500_000],
+    ]);
+    const insight = buildCommittedValueInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      committed,
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    // Exactly the two committed levers carry a committed value; the rest are
+    // awaiting award (committed undefined) — never fabricated.
+    const committedBars = insight.bars.filter((b) => b.committed !== undefined);
+    expect(committedBars.map((b) => b.leverKey).sort()).toEqual(
+      ['AMS.ENHANCEMENT_LEAKAGE', 'AMS.VOLUME_BAND_PRICING'].sort(),
+    );
+    expect(
+      insight.bars.find((b) => b.leverKey === 'AMS.VOLUME_BAND_PRICING')
+        ?.committed,
+    ).toBe(6_500_000);
+    expect(insight.bars.some((b) => b.committed === undefined)).toBe(true);
+    // Target band is still present on every bar (committed is compared to target).
+    expect(insight.bars.every((b) => b.high >= b.low)).toBe(true);
+    // Committed bars sort first (biggest award first).
+    expect(insight.bars[0].committed).toBe(6_500_000);
+    // Live headline reports committed total + coverage.
+    expect(insight.headline).toMatch(/locks/i);
+    expect(insight.headline).toMatch(/of\s+\d+\s+levers/i);
+    // Advisor layer survives the live path.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+    expect(insight.note).toMatch(/live/i);
+  });
+
+  it('committed_value LIVE with an empty award map → nothing committed yet, still live (assessed-nothing read)', () => {
+    const insight = buildCommittedValueInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      new Map<string, number>(),
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    expect(insight.bars.every((b) => b.committed === undefined)).toBe(true);
+    expect(insight.headline).toMatch(/no committed value locked yet/i);
+  });
+
+  it('committed_value LIVE with every lever committed → live headline sums the whole award', () => {
+    const allKeys = new Map<string, number>(
+      (AMS_MANAGED_SERVICES.valueLeverRules ?? []).map((r) => [r.key, 1_000_000]),
+    );
+    const insight = buildCommittedValueInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      allKeys,
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.bars.every((b) => b.committed === 1_000_000)).toBe(true);
+    expect(insight.headline).toMatch(/all\s+\d+\s+levers/i);
+  });
+
+  it('committed_value MODEL when no award map is supplied (undefined) — the honest default', () => {
+    const insight = buildCommittedValueInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      undefined,
+    );
+    expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
+    expect(insight.bars.every((b) => b.committed === undefined)).toBe(true);
   });
 });
 

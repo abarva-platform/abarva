@@ -160,6 +160,15 @@ export interface BuildStepInsightInput {
    * live "everything exposed" read — distinct from `undefined`.
    */
   rfpClausePresentLeverKeys?: ReadonlySet<string>;
+  /**
+   * Per-lever committed value (canonical lever key → committed USD over term) from
+   * the award-facts read. Drives committed value: when PROVIDED (even empty) an
+   * award signal exists and the insight goes LIVE (each lever's `committed` set
+   * where a fact exists, awaiting-award otherwise); when `undefined` no award fact
+   * exists and the insight stays a MODEL. Empty-map is a valid live "assessed, none
+   * committed yet" read — distinct from `undefined`.
+   */
+  committedValueByLeverKey?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -205,7 +214,11 @@ export function buildStepInsight(
     case 'bafo_progress':
       return buildBafoProgressInsight(resolved, input.inputs);
     case 'committed_value':
-      return buildCommittedValueInsight(resolved, input.inputs);
+      return buildCommittedValueInsight(
+        resolved,
+        input.inputs,
+        input.committedValueByLeverKey,
+      );
     default:
       return null;
   }
@@ -1531,17 +1544,30 @@ function bafoAdvisor(): {
   };
 }
 
-// ── Selection · COMMITTED VALUE by lever (MODEL, compact) ─────────────────────
+// ── Selection · COMMITTED VALUE by lever (MODEL → LIVE, compact) ──────────────
 
 /**
- * Committed value: the value locked by the awarded contract, by lever. MODEL until
- * award facts land (the award confirms which levers the winning vendor committed).
- * Compact by design — a bar set, not an over-built surface. Uses real lever bands
- * where they compute, else the illustrative scale.
+ * Committed value: the value locked by the awarded contract, by lever.
+ *
+ * LIVE when award facts exist for the event (`committedByLeverKey` is provided): a
+ * bar carries the COMMITTED value the executed award locked for the lever (its
+ * `committed_value_usd` fact) alongside the lever's TARGET band (its computed
+ * economic band where it computes, else the illustrative scale). The headline
+ * reports committed total vs target and how many levers the award actually locked.
+ * A lever with no committed fact is shown HONESTLY as awaiting-award (`committed`
+ * left undefined) — never fabricated as 0.
+ *
+ * MODEL when no award fact exists (`committedByLeverKey` is undefined): the bar is
+ * the awarded-lever TARGET roll-up (the honest default preserved from before the
+ * fact existed). Compact by design — a bar set, not an over-built surface.
+ *
+ * The advisor layer (best-practice / benchmark / downstream impact) survives BOTH
+ * modes. No value-lever economic math changes — target bands are read, not altered.
  */
 export function buildCommittedValueInsight(
   archetype: SourceEventArchetype,
   facts: EventFactMap,
+  committedByLeverKey?: ReadonlyMap<string, number>,
 ): CommittedValueInsightView {
   const rules = archetype.valueLeverRules ?? [];
   const advisor = committedValueAdvisor();
@@ -1553,15 +1579,25 @@ export function buildCommittedValueInsight(
       headline: 'No value levers are wired for this archetype yet.',
       bars: [],
       flipFact: 'Award facts (the executed contract confirming committed levers).',
+      isModel: true,
       note: 'No value levers are wired for this archetype yet.',
       ...advisor,
     };
   }
 
+  // A signal exists when the map was provided (even empty — an award was assessed
+  // and no lever committed). Undefined → no award fact → honest MODEL.
+  const isLive = committedByLeverKey !== undefined;
+
   const results = evaluateValueLevers(archetype, facts);
   const bars: CommittedValueBarView[] = rules
     .map((rule) => {
       const band = leverBand(rule, results);
+      // LIVE: attach the committed $ where this lever has an award fact; leave it
+      // undefined (awaiting award) otherwise — never fabricate a committed number.
+      const committed = isLive
+        ? committedByLeverKey!.get(rule.key)
+        : undefined;
       return {
         leverKey: rule.key,
         label: rule.name,
@@ -1569,12 +1605,46 @@ export function buildCommittedValueInsight(
         low: band.low,
         high: band.high,
         confidence: rule.defaultConfidence,
+        ...(committed !== undefined ? { committed } : {}),
       };
     })
-    .sort((a, b) => b.high - a.high);
+    // LIVE sorts by committed $ (biggest award first, awaiting-award levers last);
+    // MODEL sorts by target high.
+    .sort((a, b) => {
+      if (isLive) {
+        return (b.committed ?? -1) - (a.committed ?? -1) || b.high - a.high;
+      }
+      return b.high - a.high;
+    });
 
   const totalLow = bars.reduce((s, b) => s + b.low, 0);
   const totalHigh = bars.reduce((s, b) => s + b.high, 0);
+
+  if (isLive) {
+    const committedBars = bars.filter((b) => b.committed !== undefined);
+    const committedTotal = committedBars.reduce(
+      (s, b) => s + (b.committed ?? 0),
+      0,
+    );
+    return {
+      kind: 'committed_value',
+      provenance: 'live',
+      headline: committedValueHeadline(
+        bars.length,
+        committedBars.length,
+        committedTotal,
+        totalLow,
+        totalHigh,
+      ),
+      bars,
+      flipFact:
+        'Award facts (the executed contract / award record confirming which levers and $ the winning vendor committed).',
+      isModel: false,
+      note: 'Live — committed value is read from the award commitments you provided (one committed_value_usd fact per lever). Each bar shows what the executed award LOCKED for the lever against its target band; a lever with no award fact is shown as awaiting award, never as $0. The target band and advisor guidance are the same cited/advisor values as the model.',
+      ...advisor,
+    };
+  }
+
   return {
     kind: 'committed_value',
     provenance: 'sample',
@@ -1584,9 +1654,42 @@ export function buildCommittedValueInsight(
     bars,
     flipFact:
       'Award facts (the executed contract / award record confirming which levers and $ the winning vendor committed).',
-    note: 'Model — award facts are not in the fact model yet, so the committed value is the awarded-lever roll-up shown against each lever. It goes live once the executed-contract award facts are ingested. Not a tenant savings claim.',
+    isModel: true,
+    note: 'Model — award facts are not in the fact model yet, so the committed value is the awarded-lever roll-up shown against each lever. It goes live once the executed-contract award commitments are ingested (upload the award commitments so each lever gets a committed_value_usd fact). Not a tenant savings claim.',
     ...advisor,
   };
+}
+
+/**
+ * The live committed-value headline: committed total vs the target pool + how many
+ * of the levers the award actually locked. Honest when NOTHING is committed yet.
+ */
+function committedValueHeadline(
+  leverCount: number,
+  committedCount: number,
+  committedTotal: number,
+  targetLow: number,
+  targetHigh: number,
+): string {
+  if (committedCount === 0) {
+    return (
+      `The award record shows no committed value locked yet across ${leverCount} ` +
+      `levers — the ${fmtUsdRange(targetLow, targetHigh)} target pool is all ` +
+      `still awaiting award confirmation.`
+    );
+  }
+  if (committedCount === leverCount) {
+    return (
+      `The executed award locks ${fmtUsd(committedTotal)} across all ${leverCount} ` +
+      `levers against a ${fmtUsdRange(targetLow, targetHigh)} target — confirm each ` +
+      `committed line carried into the contract of record.`
+    );
+  }
+  return (
+    `The executed award locks ${fmtUsd(committedTotal)} across ${committedCount} of ` +
+    `${leverCount} levers (target pool ${fmtUsdRange(targetLow, targetHigh)}); the ` +
+    `rest are still awaiting award confirmation.`
+  );
 }
 
 function committedValueAdvisor(): {

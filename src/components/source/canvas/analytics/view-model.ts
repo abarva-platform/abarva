@@ -737,11 +737,22 @@ export interface CommittedValueBarView {
   label: string;
   /** The value type — drives the bar color. */
   valueType: ValueType;
-  /** Low–high $ locked (USD over term). */
+  /**
+   * The lever's TARGET band (USD over term) — its computed economic band where the
+   * lever computes, else the illustrative scale. In MODEL mode this is the whole
+   * bar; in LIVE mode it is the reference the committed value is compared against.
+   */
   low: number;
   high: number;
   /** Confidence in the range. */
   confidence: FactConfidence;
+  /**
+   * LIVE only — the value the executed award COMMITTED for this lever (USD over
+   * term), from the `committed_value_usd` fact. `undefined` when this lever has no
+   * committed fact (shown honestly as awaiting-award, never fabricated as 0) or in
+   * MODEL mode. `null` is never used — absence is `undefined`.
+   */
+  committed?: number;
 }
 
 /**
@@ -759,7 +770,13 @@ export interface CommittedValueInsightView extends AdvisorLayer {
   bars: readonly CommittedValueBarView[];
   /** The fact that flips this MODEL → LIVE, named for the operator. */
   flipFact: string;
-  /** Always present — states this is a model and what makes it live. */
+  /**
+   * True when this is the honest MODEL (no committed_value_usd fact yet); false
+   * when LIVE (≥1 committed fact exists and bars carry a `committed` value). The
+   * renderer keys its badge and note off this — never off `provenance` alone.
+   */
+  isModel: boolean;
+  /** Always present — states model-vs-live and what makes it live. */
   note?: string;
 }
 

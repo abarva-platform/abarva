@@ -142,6 +142,19 @@ describe('Source fact catalog — shape + lookups', () => {
     expect(FACT_ENTITY_KINDS).toContain('value_lever');
   });
 
+  it('resolves the committed_value_usd signal fact under entity_kind value_lever', () => {
+    expect(isCatalogFactKey('committed_value_usd')).toBe(true);
+    expect(isSignalFactKey('committed_value_usd')).toBe(true);
+    const spec = factSpecByKey('committed_value_usd');
+    expect(spec).toBeDefined();
+    expect(spec!.entityKind).toBe('value_lever');
+    // A total-over-term $ figure on the usd unit — same basis as the lever band,
+    // so committed can be compared directly against target.
+    expect(spec!.unit).toBe('usd');
+    // Sourced from the executed contract / award record.
+    expect(spec!.source).toBe('extracted_contract');
+  });
+
   it('factSpecByKey returns undefined for unknown keys', () => {
     expect(factSpecByKey('not_a_real_fact')).toBeUndefined();
   });
