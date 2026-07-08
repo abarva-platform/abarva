@@ -1,14 +1,16 @@
 // POST /api/v1/source/events/[eventId]/approve
 //
-// Client-scoped Source approval endpoint. The event-creation approval IS the
-// strategy gate: approving attests that the reviewer read the auto-generated
-// strategy memo, the value target, and the archetype + rigor call. There is
-// no separate "Strategy" canvas stage — an approve advances the event
-// straight to Scope (the first stage with real client work).
+// Client-scoped Source approval endpoint. EVERY stage gate is a real approval
+// that advances the event to the next stage in the canonical SOURCE_STAGE_ORDER.
+// The event-creation approval IS the strategy gate (attests the reviewer read the
+// auto-generated strategy memo, the value target, and the archetype + rigor call)
+// and advances strategy → scope; approving on any later stage advances to that
+// stage's successor (scope → rfp, pricing → bafo, …). Confirmations are validated
+// against the CURRENT stage's gate keys, not a hardcoded strategy set.
 //
 // Actions:
-//   approve   → lifecycle_state 'active' (requires all three confirmations);
-//               advances current_stage_key 'strategy' → 'scope'.
+//   approve   → lifecycle_state 'active' (requires the current stage's
+//               confirmations); advances current_stage_key to the next stage.
 //   send_back → stays 'waiting_on_client'; the reviewer's comment is recorded
 //               so the creator can revise.
 //   reject    → lifecycle_state 'archived'.
@@ -21,13 +23,14 @@ import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import {
   evaluateSourceApprovalDecision,
-  type SourceApprovalConfirmations,
+  type SourceStageConfirmations,
 } from '@/lib/source/approval-decision';
+import { confirmationKeysForStage } from '@/lib/source/stage-gate-confirmations';
 
 interface ApproveBody {
   action: 'approve' | 'reject' | 'send_back';
   notes?: string;
-  confirmations?: SourceApprovalConfirmations;
+  confirmations?: SourceStageConfirmations;
 }
 
 /**
@@ -37,10 +40,16 @@ interface ApproveBody {
 function composeApprovalNotes(
   comment: string | undefined,
   action: ApproveBody['action'],
+  currentStageKey: string | null,
 ): string | null {
   const trimmed = comment?.trim();
   if (action === 'approve') {
-    const attest = 'Confirmed review of strategy memo, value target, and archetype + rigor.';
+    // Strategy approval is the P0 memo/value/archetype attestation; every other
+    // stage attests that stage's gate boxes.
+    const attest =
+      currentStageKey === 'strategy'
+        ? 'Confirmed review of strategy memo, value target, and archetype + rigor.'
+        : 'Confirmed the stage gate: evidence complete, inputs reviewed, stage final.';
     return trimmed ? `${attest}\n${trimmed}` : attest;
   }
   return trimmed ? trimmed : null;
@@ -105,9 +114,13 @@ export async function POST(
   }
 
   // Resolve the decision (validates action + confirmations, decides the
-  // lifecycle transition and whether to advance the stage).
+  // lifecycle transition and whether to advance the stage). Confirmations are
+  // validated against the CURRENT stage's gate keys — not a hardcoded strategy
+  // set — so an approve on any stage requires exactly that stage's boxes.
+  const currentStageKey = event.current_stage_key as string | null;
   const decision = evaluateSourceApprovalDecision(body.action, body.confirmations, {
-    currentStageKey: event.current_stage_key as string | null,
+    currentStageKey,
+    requiredConfirmationKeys: confirmationKeysForStage(currentStageKey),
   });
   if (!decision.ok) {
     const status = decision.error === 'confirmations_required' ? 422 : 400;
@@ -137,7 +150,7 @@ export async function POST(
     toState,
     approvalAction: decision.approvalAction,
     approvedByUserId: tenancy.userId,
-    notes: composeApprovalNotes(body.notes, body.action),
+    notes: composeApprovalNotes(body.notes, body.action, currentStageKey),
   });
 
   if (!approvalWrite.ok) {
@@ -147,10 +160,9 @@ export async function POST(
     );
   }
 
-  // Advance the stage past the (unworked) strategy stage on approval. The
-  // strategy memo remains viewable in the rail; Scope is the first stage the
-  // client actually works. Non-fatal: a stage-advance miss leaves the event
-  // active at strategy rather than blocking the approval.
+  // Advance the event to the next stage on approval (strategy→scope, scope→rfp,
+  // …; no-op on the final `value` stage). Non-fatal: a stage-advance miss leaves
+  // the event active on its current stage rather than blocking the approval.
   let stageAdvancedTo: string | null = null;
   if (decision.advanceStageTo) {
     const stageWrite = await selectSourceWriteAdapter(

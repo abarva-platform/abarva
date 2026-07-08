@@ -67,6 +67,23 @@ export function isSourceStageKey(value: unknown): value is SourceStageKey {
   return typeof value === 'string' && value in SOURCE_STAGE_LABELS;
 }
 
+/**
+ * The canonical NEXT stage after `stageKey` in `SOURCE_STAGE_ORDER`, or `null`
+ * when `stageKey` is the final stage (`value`) or is unknown/absent/legacy.
+ * Legacy aliases are normalized first so a persisted legacy key still advances.
+ * This is THE single source of truth for stage progression — the approval
+ * decision, the stage-progression engine, and the canvas rail all resolve the
+ * next stage through the same order, so a gate can never advance to a stage the
+ * rail does not know about.
+ */
+export function nextSourceStage(stageKey: unknown): SourceStageKey | null {
+  const canonical = normalizeSourceStageKey(stageKey);
+  if (!canonical) return null;
+  const index = SOURCE_STAGE_ORDER.indexOf(canonical);
+  if (index < 0 || index >= SOURCE_STAGE_ORDER.length - 1) return null;
+  return SOURCE_STAGE_ORDER[index + 1] ?? null;
+}
+
 export function isCanonicalSourceStageKey(value: unknown): value is SourceStageKey {
   return typeof value === 'string' && (SOURCE_STAGE_ORDER as readonly string[]).includes(value);
 }

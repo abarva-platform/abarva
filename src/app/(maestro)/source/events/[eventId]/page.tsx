@@ -16,8 +16,11 @@ import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-regis
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
 import {
   SOURCE_STAGE_ORDER,
+  SOURCE_STAGE_LABELS,
   normalizeSourceStageKey,
+  nextSourceStage,
 } from "@/lib/source/constants";
+import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import type { SourceStageKey } from "@/lib/source/types";
 import { ensureThreadForSourceEvent } from "@/lib/decisions/auto-linker";
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
@@ -47,6 +50,7 @@ import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type {
   StageAnalyticsView,
+  StageGateActionView,
   StepInsightView,
 } from "@/components/source/canvas/analytics";
 
@@ -142,6 +146,25 @@ export default async function SourceEventDetailPage({
               baselineAmount: event.valueAtStakeUsd ?? 0,
               stageKey: viewStage,
             }) ?? undefined;
+
+          // Arm the LIVE approve action on the gate ONLY when the event actually
+          // SITS on the stage being viewed (viewStage === current stage) and the
+          // user can approve. A future stage the event has not reached stays
+          // presentational (no action). Strategy is handled on its own path below.
+          if (liveStageView) {
+            const approveAction = await resolveStageGateAction(
+              event.id,
+              activeClient.key,
+              viewStage,
+              event.currentStageKey,
+            );
+            if (approveAction) {
+              liveStageView = {
+                ...liveStageView,
+                gate: { ...liveStageView.gate, action: approveAction },
+              };
+            }
+          }
         }
       } catch (error) {
         console.error(
@@ -335,6 +358,48 @@ const STRATEGY_APPROVAL_STATES = new Set([
  * approving in-canvas reuses the existing approve backend. When the row can't be
  * read, returns undefined so the canvas shows the honestly-marked sample view.
  */
+/**
+ * Resolve the LIVE approve action for a WORKED (non-strategy) stage's gate, or
+ * null when it should stay presentational. The action is armed only when:
+ *   1. the event genuinely SITS on the stage being viewed (`viewStage ===
+ *      currentStageKey`) — a future stage the event has not reached is never
+ *      armed, and a past stage is not re-approvable; and
+ *   2. the current user can approve Source stages.
+ * Strategy is excluded — it has its own P0 path (`buildStrategyStageForRoute`).
+ * The approve route re-checks access + the stage's confirmations server-side; this
+ * just avoids arming a gate the route would reject.
+ */
+async function resolveStageGateAction(
+  eventId: string,
+  clientKey: string,
+  viewStage: SourceStageKey,
+  currentStageKey: SourceStageKey,
+): Promise<StageGateActionView | null> {
+  if (viewStage === "strategy") return null;
+  if (viewStage !== currentStageKey) return null;
+
+  const tenancy = await requireTenancy().catch(() => null);
+  if (!tenancy) return null;
+  const policy = await loadUserSourceAccessPolicy(tenancy, {
+    activeClientKey: clientKey,
+    sourceEventId: eventId,
+  }).catch(() => null);
+  if (policy?.canApproveSourceStages !== true) return null;
+
+  const nextStage = nextSourceStage(viewStage);
+  const stageLabel = SOURCE_STAGE_LABELS[viewStage] ?? viewStage;
+  const rationale = nextStage
+    ? `${stageLabel} gate confirmed on the unified canvas — evidence complete, inputs reviewed, ${stageLabel} final. Advancing to ${SOURCE_STAGE_LABELS[nextStage] ?? nextStage}.`
+    : `${stageLabel} gate confirmed on the unified canvas — the final value record is accepted; closing the event.`;
+
+  return {
+    eventId,
+    rationale,
+    confirmationKeys: [...confirmationKeysForStage(viewStage)],
+    redirectStageKey: nextStage,
+  };
+}
+
 async function buildStrategyStageForRoute(
   eventId: string,
   clientKey: string,

@@ -32,6 +32,10 @@ import {
   quantifiedRollup,
 } from './waterfall-view-adapter';
 import { SAMPLE_SCOPE_STAGE } from '@/components/source/canvas/analytics/sample-view-model';
+import {
+  SOURCE_STAGE_LABELS,
+  nextSourceStage,
+} from '@/lib/source/constants';
 import type {
   IntelPointView,
   StageAnalyticsView,
@@ -131,8 +135,17 @@ export function buildLiveStageView(
 
   const scaffold = SAMPLE_SCOPE_STAGE;
 
+  // The next stage this gate advances to, resolved through the canonical order so
+  // the gate CTA ("Approve & advance to …") and the presentational nextStageName
+  // match the stage actually being built — not the Scope exemplar's fixed "RFP".
+  const stageKey = input.stageKey ?? scaffold.stageKey;
+  const nextStage = nextSourceStage(stageKey);
+  const nextStageName = nextStage
+    ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
+    : null;
+
   return {
-    stageKey: input.stageKey ?? scaffold.stageKey,
+    stageKey,
     stageName: input.stageName ?? scaffold.stageName,
     purpose: scaffold.purpose,
     intel: {
@@ -144,7 +157,9 @@ export function buildLiveStageView(
     // The intake beats are not fact-derived in this slice; reuse the sample
     // structure so the page renders, while the value proof above is fully live.
     tasks: scaffold.tasks,
-    gate: scaffold.gate,
+    // Reuse the sample gate's confirm boxes + generates (not yet fact-derived per
+    // stage) but correct the next-stage label for the stage being built.
+    gate: { ...scaffold.gate, nextStageName },
     waterfall: waterfallView,
   };
 }

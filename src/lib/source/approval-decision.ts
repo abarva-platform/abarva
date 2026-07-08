@@ -1,13 +1,20 @@
 // Source event approval decision · pure logic
 //
-// The event-creation approval IS the strategy gate. Approving an event
-// means the reviewer confirms they have read the auto-generated strategy
-// memo, the value target, and the archetype + rigor call. There is no
-// separate "Strategy" canvas stage to work through — approval advances the
-// event straight to Scope (the first stage with real client work).
+// Every Source stage gate is a real approval that advances the event to the next
+// stage in the canonical `SOURCE_STAGE_ORDER`. The event-creation approval IS the
+// strategy gate — approving confirms the reviewer read the auto-generated strategy
+// memo, the value target, and the archetype + rigor call — and advances the event
+// to Scope (the first worked stage). Approving on any LATER stage advances the
+// event to that stage's successor (Scope→RFP, Pricing→BAFO, …); approving on the
+// final stage (`value`) closes without advancing.
 //
-// This module holds the pure decision function so the route stays thin and
-// the confirmation + state-transition rules are unit-testable without a DB.
+// This module holds the pure decision function so the route stays thin and the
+// confirmation + state-transition rules are unit-testable without a DB. The next
+// stage is resolved through the canonical order (`nextSourceStage`), so a gate can
+// never advance to a stage the rail does not know about.
+
+import { nextSourceStage } from './constants';
+import type { SourceStageKey } from './types';
 
 /** Actions an approver can take on a pending sourcing event. */
 export type SourceApprovalAction = 'approve' | 'reject' | 'send_back';
@@ -32,6 +39,15 @@ export const REQUIRED_APPROVAL_CONFIRMATIONS = [
   'archetypeRigorConfirmed',
 ] as const satisfies readonly (keyof SourceApprovalConfirmations)[];
 
+/**
+ * The attested confirmations, as sent by any stage's gate. The Strategy gate
+ * sends the three `SourceApprovalConfirmations` keys; a worked stage's gate sends
+ * that stage's own confirmation keys (see `stage-gate-confirmations.ts`). Keyed
+ * loosely by string so a stage can attest its own set without widening the typed
+ * strategy interface.
+ */
+export type SourceStageConfirmations = Record<string, boolean | undefined>;
+
 /** Lifecycle state the event moves to as a result of the decision. */
 export type SourceApprovalToState = 'active' | 'archived' | 'waiting_on_client';
 
@@ -45,9 +61,11 @@ export interface SourceApprovalDecision {
   toState?: SourceApprovalToState;
   /**
    * current_stage_key to advance to when ok === true, or null to leave the
-   * stage untouched. Only an approve of a still-in-strategy event advances.
+   * stage untouched. An approve advances the event to the NEXT stage after its
+   * current stage in `SOURCE_STAGE_ORDER` (strategy→scope, scope→rfp, …); null
+   * when the event is on the final stage (`value`) or its stage is unknown.
    */
-  advanceStageTo?: 'scope' | null;
+  advanceStageTo?: SourceStageKey | null;
   /** Value recorded in the append-only source_event_approvals row. */
   approvalAction: 'admin_review' | 'rejected' | 'sent_back';
   /** Confirmation keys still missing when error === 'confirmations_required'. */
@@ -62,14 +80,25 @@ export interface SourceApprovalDecision {
  * - reject     → archived, no stage change.
  * - send_back  → stays waiting_on_client (the reviewer's comment travels back
  *                to the creator via the approval record), no stage change.
- * - approve    → requires all three confirmations; on success moves to active
- *                and, if the event is still sitting in the strategy stage,
- *                advances it to scope (the strategy stage is not "worked").
+ * - approve    → requires EVERY confirmation the current stage's gate declares
+ *                (defaults to the strategy P0 set when the caller does not pass
+ *                `requiredConfirmationKeys`); on success moves to active and
+ *                advances the event to the NEXT stage in `SOURCE_STAGE_ORDER`
+ *                (or leaves the stage untouched when it is the final stage or is
+ *                unknown/absent).
+ *
+ * `requiredConfirmationKeys` lets the route validate against the stage the event
+ * actually sits on (e.g. the three Scope-gate boxes on Scope) rather than a
+ * hardcoded strategy set. Absent → the canonical strategy set, preserving the
+ * exact P0 behavior.
  */
 export function evaluateSourceApprovalDecision(
   action: unknown,
-  confirmations: SourceApprovalConfirmations | null | undefined,
-  opts?: { currentStageKey?: string | null },
+  confirmations: SourceStageConfirmations | null | undefined,
+  opts?: {
+    currentStageKey?: string | null;
+    requiredConfirmationKeys?: readonly string[];
+  },
 ): SourceApprovalDecision {
   if (action !== 'approve' && action !== 'reject' && action !== 'send_back') {
     return {
@@ -94,21 +123,28 @@ export function evaluateSourceApprovalDecision(
     };
   }
 
-  // approve — every confirmation must be explicitly true.
-  const missing = REQUIRED_APPROVAL_CONFIRMATIONS.filter(
-    (key) => confirmations?.[key] !== true,
-  );
+  // approve — every confirmation the stage's gate declares must be explicitly
+  // true. Default to the strategy P0 set so an approve with no stage context
+  // still attests the P0 confirmations exactly as before.
+  const requiredKeys =
+    opts?.requiredConfirmationKeys && opts.requiredConfirmationKeys.length > 0
+      ? opts.requiredConfirmationKeys
+      : REQUIRED_APPROVAL_CONFIRMATIONS;
+  const missing = requiredKeys.filter((key) => confirmations?.[key] !== true);
   if (missing.length > 0) {
     return {
       ok: false,
       error: 'confirmations_required',
       detail:
-        'Approving is a review gate: confirm the strategy memo, value target, and archetype + rigor before approving.',
+        'Approving is a review gate: confirm every box this stage requires before approving.',
       missingConfirmations: [...missing],
       approvalAction: 'admin_review',
     };
   }
 
-  const advanceStageTo = opts?.currentStageKey === 'strategy' ? 'scope' : null;
+  // Advance to the next stage in the canonical order. nextSourceStage returns
+  // null on the final stage (`value`) or an unknown/absent key, leaving the
+  // stage untouched.
+  const advanceStageTo = nextSourceStage(opts?.currentStageKey);
   return { ok: true, toState: 'active', advanceStageTo, approvalAction: 'admin_review' };
 }
