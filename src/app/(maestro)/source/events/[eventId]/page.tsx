@@ -45,6 +45,7 @@ import {
 } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
+import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
 import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
@@ -123,6 +124,10 @@ export default async function SourceEventDetailPage({
     // the viewing stage. Built from the same facts the stage view reads, so it
     // rides live when facts exist and a clearly-marked sample/model otherwise.
     let stepInsight: StepInsightView | undefined = undefined;
+    // The event's committed facts (factKey → value), captured so the task
+    // checklist's done-state can be re-derived from persisted evidence on load
+    // (a reload / tab switch must reflect uploaded facts, not reset to empty).
+    let hydrationFactInputs: Record<string, number> = {};
 
     if (activeClient?.key) {
       try {
@@ -130,6 +135,7 @@ export default async function SourceEventDetailPage({
           eventId: event.id,
           clientKey: activeClient.key,
         });
+        hydrationFactInputs = inputs;
         // RFP clause coverage reads a per-lever presence signal (one
         // rfp_clause_present fact per lever, keyed by lever key in entity_ref)
         // that the collapsed event-facts read cannot express. Only fetch it on the
@@ -239,6 +245,36 @@ export default async function SourceEventDetailPage({
           event.id,
           activeClient.key,
           event.currentStageKey,
+        );
+      }
+    }
+
+    // Re-derive each upload task's done-state from ALREADY-PERSISTED evidence so a
+    // reloaded / tab-switched page reflects real uploaded facts/artifacts — the
+    // checklist's client state starts empty on every mount, which is why the
+    // "N of M complete" counter reset even though the facts (and the ✦ Intelligence
+    // insight they drive) persisted. Facts are already in hand (`hydrationFactInputs`);
+    // template-less `provide` tasks (e.g. the signed sponsor letter) derive from the
+    // artifact registry. Honest: a task is stamped complete ONLY because its evidence
+    // reached a usable, persisted state — never a fabricated done. Never fatal.
+    if (liveStageView) {
+      try {
+        const registryArtifacts = await listSourceArtifactsForSourceEventId(
+          event.id,
+        ).catch(() => []);
+        liveStageView = {
+          ...liveStageView,
+          tasks: hydrateTaskEvidenceState({
+            tasks: liveStageView.tasks,
+            factInputs: hydrationFactInputs,
+            artifacts: registryArtifacts,
+            stageKey: liveStageView.stageKey,
+          }),
+        };
+      } catch (error) {
+        console.error(
+          "[SourceEventDetailPage] task evidence hydration failed; leaving in-session behavior",
+          error instanceof Error ? error.message : String(error),
         );
       }
     }

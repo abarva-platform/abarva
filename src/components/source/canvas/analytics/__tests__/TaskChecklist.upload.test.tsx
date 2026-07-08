@@ -133,6 +133,32 @@ describe('TaskChecklist provide-task upload', () => {
     expect(screen.queryByTestId('task-file-input')).not.toBeInTheDocument();
   });
 
+  it('reflects server-hydrated done-state on mount (reload survives)', () => {
+    // A task whose persisted evidence was re-derived server-side (evidenceComplete)
+    // must render done + count in the "N of M complete" counter WITHOUT a fresh
+    // in-session upload — this is the reload / tab-switch fix.
+    const hydratedDone: StageTaskView = {
+      ...PROVIDE_TASK,
+      id: 'provide-volumetrics',
+      evidenceComplete: true,
+    };
+    const stillTodo: StageTaskView = {
+      ...PROVIDE_TASK,
+      id: 'provide-app-inventory',
+      title: 'Provide the application inventory',
+    };
+    render(<TaskChecklist tasks={[hydratedDone, stillTodo]} eventId="evt-1" />);
+
+    // Counter reflects the hydrated evidence: 1 of 2.
+    expect(screen.getByText(/1 \/ 2 complete/)).toBeInTheDocument();
+  });
+
+  it('does NOT mark a task done without persisted evidence (no fake done)', () => {
+    render(<TaskChecklist tasks={[PROVIDE_TASK]} eventId="evt-1" />);
+    // No evidenceComplete + no upload → 0 of 1; never a fabricated done.
+    expect(screen.getByText(/0 \/ 1 complete/)).toBeInTheDocument();
+  });
+
   it('also ingests facts and refreshes when the task binds a template', async () => {
     // Two POSTs: 1) artifact upload, 2) fact ingest-file. Both return ok.
     const fetchMock = jest
