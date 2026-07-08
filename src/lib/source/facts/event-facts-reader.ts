@@ -78,3 +78,59 @@ export async function readEventFacts(input: {
 
   return { inputs, citations };
 }
+
+/**
+ * The RFP-clause presence read for the RFP clause-coverage insight.
+ *
+ * Unlike `readEventFacts` (which collapses to ONE value per fact_key), this needs
+ * the per-lever presence of the `rfp_clause_present` signal fact — a
+ * `value_lever`-kind fact whose `entity_ref` is a canonical lever key and whose
+ * value is 0/1. It returns:
+ *   • `signalPresent` — whether ANY non-stale rfp_clause_present fact exists for
+ *     the event (drives live vs model in the insight); and
+ *   • `presentLeverKeys` — the set of lever keys whose newest non-stale fact = 1.
+ *
+ * Newest-non-stale-per-lever wins (a lever reassessed to 0 flips back to exposed).
+ * Tenant-scoped by client_key (RLS). Returns `signalPresent: false` + an empty set
+ * when the table has no rfp_clause_present rows for the event — the insight then
+ * honestly stays a MODEL.
+ */
+export async function readRfpClausePresentLeverKeys(input: {
+  eventId: string;
+  clientKey: string;
+}): Promise<{ signalPresent: boolean; presentLeverKeys: Set<string> }> {
+  const { eventId, clientKey } = input;
+  const supabase = getAzureWriteFluentClient();
+
+  const { data, error } = await supabase
+    .from('source_event_facts')
+    .select('entity_ref, value_numeric, captured_at')
+    .eq('source_event_id', eventId)
+    .eq('client_key', clientKey)
+    .eq('fact_key', 'rfp_clause_present')
+    .eq('entity_kind', 'value_lever')
+    .eq('is_stale', false)
+    .order('captured_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as Array<
+    Pick<SourceEventFactRow, 'entity_ref' | 'value_numeric'>
+  >;
+
+  const presentLeverKeys = new Set<string>();
+  // Rows are ordered newest-first; keep the FIRST value seen per lever key so a
+  // reassessment supersedes older captures.
+  const seen = new Set<string>();
+  let signalPresent = false;
+  for (const row of rows) {
+    const leverKey = row.entity_ref?.trim();
+    if (!leverKey) continue;
+    signalPresent = true;
+    if (seen.has(leverKey)) continue;
+    seen.add(leverKey);
+    if (Number(row.value_numeric) === 1) presentLeverKeys.add(leverKey);
+  }
+
+  return { signalPresent, presentLeverKeys };
+}

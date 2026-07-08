@@ -169,7 +169,84 @@ describe('buildRfpClauseInsight — RFP', () => {
     expect(insight.benchmark).toMatch(/market range/i);
     expect(insight.downstreamImpact).toMatch(/last point to lock/i);
     // Honesty note explains what makes it fully live.
-    expect(insight.note).toMatch(/RFP-draft signal/i);
+    expect(insight.note).toMatch(/RFP-clause signal/i);
+  });
+
+  it('goes LIVE when a clause-presence set is supplied: some levers protected, some exposed', () => {
+    // Mark two AMS levers' clauses present; the rest are exposed.
+    const present = new Set<string>([
+      'AMS.ENHANCEMENT_LEAKAGE',
+      'AMS.VOLUME_BAND_PRICING',
+    ]);
+    const insight = buildRfpClauseInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      present,
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    // Exactly the two present levers are protected; every other lever is exposed.
+    const protectedRows = insight.rows.filter((r) => r.protected);
+    const exposedRows = insight.rows.filter((r) => !r.protected);
+    expect(protectedRows.map((r) => r.leverKey).sort()).toEqual(
+      ['AMS.ENHANCEMENT_LEAKAGE', 'AMS.VOLUME_BAND_PRICING'].sort(),
+    );
+    expect(exposedRows.length).toBeGreaterThan(0);
+    // Ordering keeps exposed-first (the ask), protected after.
+    const firstProtectedIdx = insight.rows.findIndex((r) => r.protected);
+    const lastExposedIdx = insight.rows.reduce(
+      (acc, r, i) => (!r.protected ? i : acc),
+      -1,
+    );
+    if (firstProtectedIdx >= 0) {
+      expect(lastExposedIdx).toBeLessThan(firstProtectedIdx);
+    }
+    // Live headline reports coverage (N of M present) + the exposed pool.
+    expect(insight.headline).toMatch(/present in the RFP/i);
+    expect(insight.headline).toMatch(/exposed/i);
+    // Advisor layer + clause library survive the live path.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+    expect(
+      insight.rows.find((r) => r.leverKey === 'AMS.ENHANCEMENT_LEAKAGE')
+        ?.rfpClause,
+    ).toMatch(/classify recurring support/i);
+    expect(insight.note).toMatch(/Live/i);
+  });
+
+  it('LIVE with an empty presence set → every lever exposed, still live (a real assessed-nothing-present read)', () => {
+    const insight = buildRfpClauseInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      new Set<string>(),
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    expect(insight.rows.every((r) => !r.protected)).toBe(true);
+  });
+
+  it('all levers present → nothing exposed, live headline says so', () => {
+    const allKeys = new Set<string>(
+      (AMS_MANAGED_SERVICES.valueLeverRules ?? []).map((r) => r.key),
+    );
+    const insight = buildRfpClauseInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      allKeys,
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.rows.every((r) => r.protected)).toBe(true);
+    expect(insight.headline).toMatch(/nothing exposed/i);
+  });
+
+  it('MODEL when no presence set is supplied (undefined) — the honest default', () => {
+    const insight = buildRfpClauseInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      undefined,
+    );
+    expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
+    expect(insight.rows.every((r) => !r.protected)).toBe(true);
   });
 });
 

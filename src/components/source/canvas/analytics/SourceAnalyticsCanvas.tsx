@@ -7,7 +7,11 @@ import { ANALYTICS } from './analytics-tokens';
 import { AnalyticsStageRail } from './AnalyticsStageRail';
 import { ScopeAnalyticsStage } from './ScopeAnalyticsStage';
 import { AvaLauncher } from './AvaLauncher';
-import { SAMPLE_SCOPE_AVA, SAMPLE_SCOPE_STAGE } from './sample-view-model';
+import {
+  SAMPLE_SCOPE_AVA,
+  SAMPLE_SCOPE_STAGE,
+  SAMPLE_RFP_STAGE,
+} from './sample-view-model';
 import {
   SAMPLE_STRATEGY_AVA,
   SAMPLE_STRATEGY_STAGE,
@@ -21,12 +25,16 @@ import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 
 /**
  * The honest SAMPLE stage view for a given viewing stage. Strategy is the
- * mandate/intake exemplar; every other stage shares the Scope exemplar until its
- * own live view wires in. This is what makes clicking Strategy render the
- * Strategy stage (not the Scope placeholder) when no live view is supplied.
+ * mandate/intake exemplar; RFP has its own scaffold so its dropzone offers the
+ * RFP clause-checklist upload (RFP_CLAUSES_V1) that flips RFP clause coverage
+ * live; every other stage shares the Scope exemplar until its own live view wires
+ * in. This is what makes clicking a stage render that stage (not the Scope
+ * placeholder) when no live view is supplied.
  */
 function sampleStageViewFor(stageKey: SourceStageKey): StageAnalyticsView {
-  return stageKey === 'strategy' ? SAMPLE_STRATEGY_STAGE : SAMPLE_SCOPE_STAGE;
+  if (stageKey === 'strategy') return SAMPLE_STRATEGY_STAGE;
+  if (stageKey === 'rfp') return SAMPLE_RFP_STAGE;
+  return SAMPLE_SCOPE_STAGE;
 }
 
 /** The matching aVa launcher scope for a viewing stage. */

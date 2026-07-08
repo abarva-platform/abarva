@@ -32,14 +32,22 @@ export const FACT_CATALOG_VERSION = '1.0.0' as const;
  * What real-world entity a fact attaches to. Drives `entity_ref` on the persisted
  * fact row (a tower id, vendor id, or app id — or null for event-level facts) and
  * the template→fact intake mapping.
+ *
+ * `value_lever` is the downstream-insight extension (see
+ * docs/build/source-downstream-insight-fact-model.md): a fact of this kind hangs
+ * off a canonical archetype lever key via `entity_ref` (e.g.
+ * `AMS.VOLUME_BAND_PRICING`) — one fact key, one row per lever — so the downstream
+ * insights (RFP clause, BAFO, committed value) can carry a per-lever signal
+ * WITHOUT faking composite fact keys.
  */
-export type FactEntityKind = 'event' | 'tower' | 'app' | 'vendor';
+export type FactEntityKind = 'event' | 'tower' | 'app' | 'vendor' | 'value_lever';
 
 export const FACT_ENTITY_KINDS: readonly FactEntityKind[] = [
   'event',
   'tower',
   'app',
   'vendor',
+  'value_lever',
 ] as const;
 
 /**
@@ -186,12 +194,52 @@ const FACT_ENRICHMENT: Record<string, FactEnrichment> = {
 };
 
 /**
- * Derive the catalog from the registry. Collects every distinct
- * `computation.inputs[].key` across all archetypes' `valueLeverRules`, joins each
- * with its enrichment, and freezes the result. Throws if a rule input has no
- * enrichment entry (an undescribed fact must never silently enter the model), or
- * if the same key appears with a conflicting unit/source across rules (the fact
- * model requires one canonical meaning per key).
+ * Hand-authored SIGNAL facts the downstream INSIGHT builders read that NO value
+ * lever computes over — the fact-model extension that makes the six downstream
+ * Source insights real (see docs/build/source-downstream-insight-fact-model.md).
+ *
+ * Unlike the lever-derived facts above, a signal fact carries its OWN full spec
+ * (key, label, unit, source, entityKind, description) — it is not derived from a
+ * rule input, so there is nothing to derive it from. It is still hand-authored and
+ * still described before it can enter the model (the same "undescribed key must
+ * not enter" discipline), but it is EXEMPT from the "every catalog key is a lever
+ * input" invariant, because by definition a signal is not a lever input.
+ *
+ * A `value_lever` signal's `entity_ref` MUST be a canonical archetype lever key
+ * (validated at read time against the resolved archetype's `valueLeverRules`);
+ * it is never free text.
+ */
+const DOWNSTREAM_SIGNAL_FACT_SPECS: Record<string, FactSpec> = {
+  // ── Shape 1 · per-lever status ─────────────────────────────────────────────
+  // RFP clause coverage: is this lever's clause required in the RFP draft?
+  // 0/1 carried on the `ratio` unit (a `flag` unit would churn the type surface,
+  // the DB, and every exhaustive switch for no functional gain — see the design
+  // doc's "Boolean representation" note). 1 = clause present/required, 0 = absent.
+  rfp_clause_present: {
+    key: 'rfp_clause_present',
+    label: 'RFP clause present for lever',
+    unit: 'ratio',
+    source: 'analyst_input',
+    entityKind: 'value_lever',
+    description:
+      'Whether the RFP draft REQUIRES the clause that protects this value lever (1 = present/required, 0 = absent). One row per lever, keyed by the lever key in entity_ref. Flips RFP clause coverage from a model to a live protected-vs-exposed read.',
+  },
+};
+
+/** True when `key` is a hand-authored downstream signal fact (not a lever input). */
+export function isSignalFactKey(key: string): boolean {
+  return key in DOWNSTREAM_SIGNAL_FACT_SPECS;
+}
+
+/**
+ * Derive the catalog from the registry, then merge the hand-authored downstream
+ * signal facts. Collects every distinct `computation.inputs[].key` across all
+ * archetypes' `valueLeverRules`, joins each with its enrichment, adds the signal
+ * specs, and freezes the result. Throws if a rule input has no enrichment entry
+ * (an undescribed fact must never silently enter the model), if the same key
+ * appears with a conflicting unit/source across rules (the fact model requires one
+ * canonical meaning per key), or if a signal fact key collides with a lever-derived
+ * key (a signal must be a NEW key, never a shadow of a lever input).
  */
 function buildFactCatalog(): ReadonlyMap<string, FactSpec> {
   const catalog = new Map<string, FactSpec>();
@@ -232,6 +280,19 @@ function buildFactCatalog(): ReadonlyMap<string, FactSpec> {
         });
       }
     }
+  }
+
+  // Merge the hand-authored downstream signal facts. A signal key must be NEW —
+  // colliding with a lever-derived key would give one key two meanings.
+  for (const [key, spec] of Object.entries(DOWNSTREAM_SIGNAL_FACT_SPECS)) {
+    if (catalog.has(key)) {
+      throw new Error(
+        `[fact-catalog] Downstream signal fact '${key}' collides with a ` +
+          `lever-derived catalog key. A signal fact must introduce a NEW key, ` +
+          `never shadow a value-lever computation input.`,
+      );
+    }
+    catalog.set(key, spec);
   }
 
   return catalog;

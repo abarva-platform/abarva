@@ -192,6 +192,79 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
   // fabricated at an intake stage. The Intelligence tab here is the read only.
 };
 
+/**
+ * The RFP stage scaffold. Mirrors the Scope three-beat structure but foregrounds
+ * the one upload that flips RFP clause coverage LIVE: the RFP clause checklist
+ * (one row per value lever, a Clause Included 1/0 column) parsed into
+ * `rfp_clause_present` value_lever facts via `RFP_CLAUSES_V1`. The live stage
+ * builder swaps in the fact-derived waterfall + intel lead over this structure.
+ */
+export const SAMPLE_RFP_STAGE: StageAnalyticsView = {
+  stageKey: 'rfp',
+  stageName: 'RFP',
+  purpose:
+    'Lock every priced lever into a required clause — the RFP is the last point to make value a requirement vendors must answer.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's which levers your RFP already protects — confirm the clause checklist so nothing worth negotiating slips out exposed.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'Every value lever needs a matching RFP clause — the clause is what turns the value into a requirement, not a hope.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'An estimated ~70% of AMS RFPs omit the volume-band step-down clause — the buyer keeps paying peak-volume rates as tickets fall.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'An unprotected lever cannot be recovered in Evaluation or BAFO — vendors answer only what the RFP required.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'rfp.clause-coverage',
+      title: 'Confirm RFP clause coverage',
+      subtitle: 'One row per value lever · 1/0 per clause',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload the RFP clause checklist (CSV or XLSX): one row per value lever (the Lever Key column) with Clause Included set to 1 when the RFP draft requires that lever\'s protecting clause, 0 when it does not. This flips RFP clause coverage from a model to a live protected-vs-exposed read.',
+      provenance: {
+        owner: 'Sourcing lead',
+        source: 'RFP draft / clause checklist',
+      },
+      cta: 'Confirm clause coverage',
+      // Parsed into RFP_CLAUSES_V1 → rfp_clause_present value_lever facts —
+      // flips the ✦ Intelligence RFP clause coverage insight LIVE.
+      factTemplateCode: 'RFP_CLAUSES_V1',
+    },
+  ],
+  gate: {
+    approver: 'K. Oshima, CIO',
+    confirms: [
+      {
+        label: 'Every priced lever has a clause',
+        detail: 'Each value lever is protected by a required RFP clause.',
+      },
+      {
+        label: 'BAFO fallbacks paired',
+        detail: 'Each clause has its BAFO ask if it slips the RFP.',
+      },
+      {
+        label: 'RFP final',
+        detail: 'The RFP is ready to issue — advance to Responses.',
+      },
+    ],
+    generates: [{ label: 'RFP package (final)', code: 'd09' }],
+    nextStageName: 'Responses',
+  },
+};
+
 /** aVa's docked-launcher scope for the Scope stage. */
 export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
   role: 'Analyst · Scope',
