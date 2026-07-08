@@ -157,6 +157,44 @@ export function buildLiveWaterfallView(input: {
 }
 
 /**
+ * The largest defensible ratio of classified value to its stated baseline. Above
+ * this, the "baseline" is not a credible denominator — it is garbage (e.g. a
+ * percentage mis-parsed to a bare `15`), so the "% of baseline" figure would be a
+ * nonsense number in the millions of percent.
+ *
+ * Why 50, and why it cleanly separates the two live cases:
+ *   • A LEGITIMATE baseline can be smaller than the classified value — a seeded
+ *     event shows baseline $15,000,000 against $30M–$43M classified value, a ratio
+ *     of ~2.9 ("199–285% of baseline"). That is intended and must keep rendering.
+ *   • The BUG is a positive-but-garbage baseline of $15 against ~$65M classified
+ *     value — a ratio of ~4,300,000. That is not a baseline; it must be suppressed.
+ *   • 50 sits safely between the two by three-plus orders of magnitude. No genuine
+ *     "value at stake" estimate is 50×+ smaller than the classified value it is
+ *     measured against: a real baseline is the spend/scope the value is carved out
+ *     of, so the value it yields is a fraction (or a small multiple) of it, not
+ *     tens of times larger. 50× is a generous ceiling for that small multiple; a
+ *     denominator that fails it is definitionally not the thing being measured.
+ */
+export const MAX_VALUE_TO_BASELINE_RATIO = 50;
+
+/**
+ * Is the stated baseline a CREDIBLE denominator for the classified value? A
+ * baseline is credible only when it is positive AND not orders of magnitude
+ * smaller than the value measured against it. This is the single predicate both
+ * render sites (the ValueWaterfall header and the step-insight headline) use to
+ * decide whether to print the "Value at stake: $X" line and the "% of baseline"
+ * fragment — an incredible baseline is suppressed rather than shown as a nonsense
+ * percentage. It never fabricates or derives a replacement baseline.
+ */
+export function isCredibleBaseline(
+  baselineAmount: number,
+  classifiedTotalHigh: number,
+): boolean {
+  if (!(baselineAmount > 0)) return false;
+  return classifiedTotalHigh / baselineAmount <= MAX_VALUE_TO_BASELINE_RATIO;
+}
+
+/**
  * The roll-up total the UI can trust: sum amountLow/amountHigh across ONLY
  * quantified bands. Insufficient bands contribute nothing (never their inert 0 as
  * a real figure). Returned as a low/high pair — there is no single headline.

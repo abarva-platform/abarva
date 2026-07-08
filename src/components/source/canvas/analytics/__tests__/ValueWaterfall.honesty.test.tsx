@@ -125,4 +125,70 @@ describe("ValueWaterfall — honesty invariants", () => {
       expect(screen.getByText(/12–18% of baseline/)).toBeInTheDocument();
     });
   });
+
+  describe("incredible baseline (positive-but-garbage)", () => {
+    // Defect guarded (found in live testing after PR #4555): an event created
+    // before the parse fix carries a POSITIVE-but-garbage stored value (e.g. `15`,
+    // mis-parsed from "15-20%"). It is > 0 so it slips the old `baselineAmount > 0`
+    // guard and prints "Value at stake: $15" plus a nonsense "millions of % of
+    // baseline". The credibility guard must reject a baseline orders of magnitude
+    // smaller than the classified value — while KEEPING a legitimately small
+    // baseline (e.g. $15M vs ~$43M value = 199–285%, ratio ~2.9).
+
+    // Bands totalling ~$30M–$43M classified value (mirrors the seeded event).
+    const bigBands: ValueWaterfallView["bands"] = [
+      {
+        id: "b1",
+        valueType: "expected_concession",
+        label: "Change-order leakage folded to base",
+        amountLow: 30_000_000,
+        amountHigh: 43_000_000,
+        unit: "usd",
+        confidence: "med",
+        state: "quantified",
+        citation: { doc: "Incumbent MSA", locator: "Sch. C" },
+      },
+    ];
+
+    it("KEEPS a legitimately small baseline (ratio ~2.9) — line + % both render", () => {
+      const credible: ValueWaterfallView = {
+        ...waterfall,
+        baselineLabel: "Value at stake (event estimate)",
+        baselineAmount: 15_000_000,
+        bands: bigBands,
+      };
+      render(<ValueWaterfall waterfall={credible} />);
+      // The "Value at stake" line renders...
+      expect(
+        screen.getByText(/Value at stake \(event estimate\)/),
+      ).toBeInTheDocument();
+      // ...and the "% of baseline" fragment renders (200–287% for 30–43M / 15M).
+      expect(screen.getByText(/200–287% of baseline/)).toBeInTheDocument();
+      expect(screen.getByText(/classified value/)).toBeInTheDocument();
+    });
+
+    it("SUPPRESSES an incredible baseline (baseline 15 vs ~$65M) — both gone, total stays", () => {
+      const incredible: ValueWaterfallView = {
+        ...waterfall,
+        baselineLabel: "Value at stake (event estimate)",
+        baselineAmount: 15,
+        bands: [
+          {
+            ...bigBands[0],
+            amountLow: 46_000_000,
+            amountHigh: 65_000_000,
+          },
+        ],
+      };
+      render(<ValueWaterfall waterfall={incredible} />);
+      // The "Value at stake: $15" line is suppressed...
+      expect(
+        screen.queryByText(/Value at stake \(event estimate\)/),
+      ).not.toBeInTheDocument();
+      // ...and no "% of baseline" fragment (would have been ~millions of %).
+      expect(screen.queryByText(/% of baseline/)).not.toBeInTheDocument();
+      // But the classified total still renders on its own.
+      expect(screen.getByText(/classified value/)).toBeInTheDocument();
+    });
+  });
 });

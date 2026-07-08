@@ -15,6 +15,7 @@ import {
   buildResponseCoverageInsight,
   buildBafoProgressInsight,
   buildCommittedValueInsight,
+  buildValueBridgeInsight,
   stepInsightKindForStage,
 } from '../step-insight-builder';
 import { AMS_MANAGED_SERVICES } from '@/lib/source/archetypes/registry';
@@ -282,6 +283,51 @@ describe('buildValuePoolInsight — Strategy', () => {
     for (const bar of insight.bars) {
       expect(bar.high).toBeGreaterThan(bar.low);
     }
+  });
+});
+
+describe('buildValueBridgeInsight — baseline credibility guard', () => {
+  // FACTS_ONE_LEVER quantifies the change-order-leakage lever to
+  // 0.35 × 4,000,000 × 3 = $4.2M classified value (totalHigh). The "% of baseline"
+  // fragment in the headline must render ONLY when the baseline is a credible
+  // denominator (positive AND not orders of magnitude smaller than the value).
+
+  it('KEEPS the "% of baseline" fragment for a credible baseline (ratio ~2.8)', () => {
+    // baseline $1.5M vs ~$4.2M value = ratio ~2.8, well under the 50× ceiling.
+    const insight = buildValueBridgeInsight(AMS_MANAGED_SERVICES, {
+      stageKey: 'pricing',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      baselineAmount: 1_500_000,
+    });
+    expect(insight.provenance).toBe('live');
+    expect(insight.headline).toMatch(/% of baseline/);
+  });
+
+  it('SUPPRESSES the "% of baseline" fragment for an incredible baseline (baseline 1)', () => {
+    // baseline $1 vs ~$4.2M value = ratio ~4,200,000, far above the 50× ceiling —
+    // the "% of baseline" fragment must be omitted, but the classified value stays.
+    const insight = buildValueBridgeInsight(AMS_MANAGED_SERVICES, {
+      stageKey: 'pricing',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      baselineAmount: 1,
+    });
+    expect(insight.provenance).toBe('live');
+    expect(insight.headline).not.toMatch(/% of baseline/);
+    expect(insight.headline).toMatch(/classified value/);
+  });
+
+  it('SUPPRESSES the "% of baseline" fragment when baseline is 0', () => {
+    const insight = buildValueBridgeInsight(AMS_MANAGED_SERVICES, {
+      stageKey: 'pricing',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      baselineAmount: 0,
+    });
+    expect(insight.provenance).toBe('live');
+    expect(insight.headline).not.toMatch(/% of baseline/);
+    expect(insight.headline).toMatch(/classified value/);
   });
 });
 

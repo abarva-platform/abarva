@@ -61,7 +61,10 @@ import type {
   ValueRealizationInsightView,
   ValueRealizationPointView,
 } from '@/components/source/canvas/analytics/view-model';
-import { buildLiveWaterfallView } from './waterfall-view-adapter';
+import {
+  buildLiveWaterfallView,
+  isCredibleBaseline,
+} from './waterfall-view-adapter';
 import { resolveValueArchetype } from './stage-analytics-builder';
 
 // ── formatting (compact USD, matching the ValueWaterfall renderer) ───────────
@@ -889,12 +892,20 @@ export function buildValueBridgeInsight(
     const quantified = waterfall.bands.filter((b) => b.state === 'quantified');
     const totalLow = quantified.reduce((s, b) => s + b.amountLow, 0);
     const totalHigh = quantified.reduce((s, b) => s + b.amountHigh, 0);
-    const pctLow =
-      baselineAmount > 0 ? Math.round((totalLow / baselineAmount) * 100) : 0;
-    const pctHigh =
-      baselineAmount > 0 ? Math.round((totalHigh / baselineAmount) * 100) : 0;
-    const pctFrag =
-      baselineAmount > 0 ? ` — ${pctLow}–${pctHigh}% of baseline` : '';
+    // Only print the "% of baseline" fragment when the baseline is a CREDIBLE
+    // denominator for the classified value — positive AND not orders of magnitude
+    // smaller than the value (a garbage `15` against ~$65M would be millions of
+    // percent). Otherwise suppress the fragment; the classified total stands alone.
+    const baselineCredible = isCredibleBaseline(baselineAmount, totalHigh);
+    const pctLow = baselineCredible
+      ? Math.round((totalLow / baselineAmount) * 100)
+      : 0;
+    const pctHigh = baselineCredible
+      ? Math.round((totalHigh / baselineAmount) * 100)
+      : 0;
+    const pctFrag = baselineCredible
+      ? ` — ${pctLow}–${pctHigh}% of baseline`
+      : '';
     return {
       kind: 'value_bridge',
       provenance: 'live',
