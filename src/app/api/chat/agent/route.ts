@@ -172,6 +172,17 @@ import {
   buildLiveStageView,
   resolveValueArchetype,
 } from "@/lib/source/facts/view/stage-analytics-builder";
+// The canvas page (source/events/[eventId]/page.tsx) always re-derives each
+// stage task's done-state from ALREADY-PERSISTED evidence via
+// `hydrateTaskEvidenceState` before rendering "N of M complete" / the gate's
+// evidence-box MET/UNMET state — otherwise the checklist reflects only
+// `buildLiveStageView`'s static scaffold (`state: 'todo'` for every task,
+// regardless of what the user actually uploaded). The chat grounding builder
+// must apply the SAME hydration to the SAME stage view before it computes
+// task/gate completion counts, or it reports stale "0 of N complete" /
+// "gate unmet" facts that contradict what the canvas shows for the identical
+// event/stage — the exact invariant violation this import fixes.
+import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
 import { getSourcingEvent } from "@/lib/source/queries";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
@@ -1318,7 +1329,14 @@ export async function POST(request: Request) {
           listSourceArtifactsForSourceEventId(sourceEventIdFromContext).catch(
             () => [],
           ),
-          isPhaseB && modeClassification.mode === "clause_coverage"
+          // general_advisory also needs this signal when the viewed stage is
+          // RFP — buildGeneralAdvisoryGrounding composites the clause-coverage
+          // facet in that case (a generically-phrased "is the RFP ready to
+          // issue" question does not always match the clause_coverage
+          // classifier pattern, but still needs the real protected/exposed
+          // lever read, not the MODEL/all-exposed fallback).
+          (isPhaseB && modeClassification.mode === "clause_coverage") ||
+          (modeClassification.mode === "general_advisory" && modeStageKey === "rfp")
             ? readRfpClausePresentLeverKeys({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
@@ -1381,13 +1399,32 @@ export async function POST(request: Request) {
               }),
         ]);
 
-        const modeStageView = buildLiveStageView({
+        const modeStageViewRaw = buildLiveStageView({
           inputs: modeFactInputs,
           citations: {},
           baselineLabel: "Value at stake (event estimate)",
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           stageKey: modeStageKey,
         });
+
+        // Parity with the canvas page: re-derive each task's done-state from
+        // ALREADY-PERSISTED evidence (facts + registered artifacts) before this
+        // stage view feeds task/gate completion counts into the grounding
+        // block. Without this, `modeStageView.tasks` keeps the static scaffold
+        // state (always "todo") even when the user has uploaded the exact
+        // evidence the canvas already recognizes as complete — which is what
+        // produced the live "0 of 1 complete" / gate-unmet contradiction.
+        const modeStageView = modeStageViewRaw
+          ? {
+              ...modeStageViewRaw,
+              tasks: hydrateTaskEvidenceState({
+                tasks: modeStageViewRaw.tasks,
+                factInputs: modeFactInputs,
+                artifacts: modeArtifacts,
+                stageKey: modeStageViewRaw.stageKey,
+              }),
+            }
+          : modeStageViewRaw;
 
         const modeGrounding = buildModeGrounding({
           mode: modeClassification.mode,

@@ -7,7 +7,10 @@
 
 import { buildModeGrounding } from "../mode-grounding";
 import { AMS_MANAGED_SERVICES } from "@/lib/source/archetypes/registry";
-import { SAMPLE_SCOPE_STAGE } from "@/components/source/canvas/analytics/sample-view-model";
+import {
+  SAMPLE_SCOPE_STAGE,
+  SAMPLE_RFP_STAGE,
+} from "@/components/source/canvas/analytics/sample-view-model";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
 import type { EventFactMap } from "@/lib/source/facts/evaluators/orchestrator";
 
@@ -179,5 +182,93 @@ describe("buildModeGrounding — general_advisory (Phase C, compact roll-up)", (
     expect(result.block).toContain("GENERAL ADVISORY ROLL-UP");
     expect(result.block).toContain("EVENT STATUS GROUNDING");
     expect(result.block).not.toContain("VALUE-AT-STAKE GROUNDING");
+  });
+
+  // ── REGRESSION: live invariant violation, Lakeshore Holdings AMS event
+  // adcb1cd0-c586-4622-bd29-574cc5a10862, RFP stage ────────────────────────
+  //
+  // The canvas correctly showed "1 of 1 complete" on the RFP stage's task
+  // checklist (the RFP clause-coverage upload was persisted as
+  // `RFP_CLAUSES_V1` facts / rfp_clause_present) and 4 of 6 AMS value levers
+  // PROTECTED / 2 EXPOSED (from the real rfpClausePresentLeverKeys signal),
+  // with every gate confirm green. Asking aVa "Is the RFP final and ready to
+  // issue?" classifies to `general_advisory` (no Phase A/B/C pattern matches
+  // that exact phrasing — confirmed against answer-mode.ts's RULES). Two
+  // bugs compounded to make the grounding block itself wrong for this
+  // question:
+  //   1. `buildEventStatusGrounding` / `buildStageGateGrounding` computed
+  //      "N of M complete" from `stageView.tasks`, which — before this fix —
+  //      the chat route (route.ts) built via `buildLiveStageView` alone,
+  //      WITHOUT the same `hydrateTaskEvidenceState` re-derivation step the
+  //      canvas page always applies. So `stageView.tasks` kept the static
+  //      scaffold's `state: 'todo'`, and the grounding reported "0 of 1
+  //      complete" / gate UNMET even though the real facts/artifacts were
+  //      persisted — this test fixtures the SAME hydrated stageView the fix
+  //      now produces and asserts "1 of 1" / MET.
+  //   2. `buildGeneralAdvisoryGrounding` never surfaced RFP clause coverage
+  //      at all (only `clause_coverage` mode did), so a generically-phrased
+  //      RFP-finality question got no protected/exposed read whatsoever —
+  //      this test asserts the roll-up now includes the CLAUSE COVERAGE
+  //      GROUNDING facet with the real 4-protected/2-exposed signal, not a
+  //      MODEL/all-exposed fallback.
+  it("REGRESSION: RFP-stage general_advisory reports the REAL hydrated task count and REAL clause coverage, never '0 of 1' / all-exposed", () => {
+    // 4 of the 6 AMS_MANAGED_SERVICES levers have their RFP clause present;
+    // the other 2 are genuinely exposed — this is the exact 4-protected/
+    // 2-exposed split from the live bug report.
+    const rfpClausePresentLeverKeys = new Set([
+      "AMS.ENHANCEMENT_LEAKAGE",
+      "AMS.VOLUME_BAND_PRICING",
+      "AMS.PRODUCTIVITY_CREDITS",
+      "AMS.SLA_ECONOMICS",
+    ]);
+
+    // The SAME hydration the canvas page performs before rendering: the RFP
+    // stage's single "Confirm RFP clause coverage" task is stamped
+    // evidenceComplete once its bound RFP_CLAUSES_V1 fact template has
+    // landed (mirrors `hydrateTaskEvidenceState`'s honesty rule — this test
+    // fixtures its OUTPUT directly rather than re-importing it, to isolate
+    // what the grounding builder does with an already-hydrated view).
+    const hydratedRfpStageView: StageAnalyticsView = {
+      ...(SAMPLE_RFP_STAGE as StageAnalyticsView),
+      tasks: SAMPLE_RFP_STAGE.tasks.map((t) => ({ ...t, evidenceComplete: true })),
+    };
+
+    const result = buildModeGrounding({
+      mode: "general_advisory",
+      event: { ...EVENT, currentStageKey: "rfp" },
+      archetype: AMS_MANAGED_SERVICES,
+      factInputs: FACTS_TWO_LEVERS,
+      baselineAmount: 30_000_000,
+      viewStageKey: "rfp",
+      stageView: hydratedRfpStageView,
+      rfpClausePresentLeverKeys,
+    });
+
+    // Bug 1: task checklist must read "1 of 1 complete", never "0 of 1".
+    expect(result.block).toContain("Current-stage task checklist: 1 of 1 complete");
+    expect(result.block).not.toContain("Current-stage task checklist: 0 of 1");
+    expect(result.quotableFacts.taskChecklistDone).toBe("1");
+    expect(result.quotableFacts.taskChecklistTotal).toBe("1");
+
+    // Bug 1 (gate): gateAllTasksComplete must be "true" (the RFP stage's own
+    // confirm labels — "Every priced lever has a clause" / "BAFO fallbacks
+    // paired" / "RFP final" — don't match the evidence-box label pattern, so
+    // they read as "requires human confirmation" rather than MET/UNMET; the
+    // task-derived signal is what must not regress to false/unmet).
+    expect(result.block).not.toContain("UNMET");
+    expect(result.quotableFacts.gateAllTasksComplete).toBe("true");
+
+    // Bug 2: the clause-coverage facet must be present and LIVE, with the
+    // real 4-protected/2-exposed split — never omitted, and never the
+    // MODEL/"every lever shown as exposed" fallback.
+    expect(result.block).toContain("CLAUSE COVERAGE GROUNDING");
+    expect(result.block).toContain("LIVE — read from the RFP clause checklist facts");
+    expect(result.block).not.toContain("MODEL — no RFP-clause signal yet");
+    expect(result.quotableFacts.clauseCoverageIsModel).toBe("false");
+    const protectedCount = (result.block.match(/PROTECTED — clause present in the RFP\./g) ?? [])
+      .length;
+    const exposedCount = (result.block.match(/EXPOSED — clause not present\./g) ?? []).length;
+    expect(protectedCount).toBe(4);
+    expect(exposedCount).toBe(2);
   });
 });

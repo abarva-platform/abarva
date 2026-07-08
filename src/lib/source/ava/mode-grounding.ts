@@ -235,12 +235,22 @@ function buildEventStatusGrounding(input: BuildModeGroundingInput): ModeGroundin
     lines.push(`Next action: ${event.nextAction}.`);
   }
 
+  const quotableFacts: Record<string, string> = {
+    currentStageLabel: SOURCE_STAGE_LABELS[currentStage],
+    stageOfEleven: `${stageOfEleven} of ${SOURCE_STAGE_ORDER.length}`,
+  };
+  if (stageView) {
+    const doneCount = stageView.tasks.filter((t) => t.state === "done" || t.evidenceComplete).length;
+    // Quoted by the quality gate's numeric-contradiction check — an answer
+    // stating "N of M tasks/complete" for the current stage must match THIS
+    // count, the exact same one the canvas checklist counter renders.
+    quotableFacts.taskChecklistDone = String(doneCount);
+    quotableFacts.taskChecklistTotal = String(stageView.tasks.length);
+  }
+
   return {
     block: lines.join("\n"),
-    quotableFacts: {
-      currentStageLabel: SOURCE_STAGE_LABELS[currentStage],
-      stageOfEleven: `${stageOfEleven} of ${SOURCE_STAGE_ORDER.length}`,
-    },
+    quotableFacts,
   };
 }
 
@@ -508,11 +518,25 @@ function buildStageGateGrounding(input: BuildModeGroundingInput): ModeGroundingR
     lines.push(`Generates on approval: ${gate.generates.map((g) => g.label).join(", ")}.`);
   }
 
+  const metConfirmCount = gate.confirms.filter((confirm) => {
+    const isEvidenceBox = /evidence/i.test(confirm.label);
+    return isEvidenceBox && allTasksComplete;
+  }).length;
+
   return {
     block: lines.join("\n"),
     quotableFacts: {
       gateStageLabel: stageView.stageName,
       gateAllTasksComplete: String(allTasksComplete),
+      // Quoted by the quality gate's numeric-contradiction check — an answer
+      // stating "N of M complete/confirmed" for the stage's task checklist
+      // must match THESE counts, not an invented pair.
+      taskChecklistDone: String(
+        stageView.tasks.filter((t) => t.state === "done" || t.evidenceComplete).length,
+      ),
+      taskChecklistTotal: String(stageView.tasks.length),
+      gateMetConfirmCount: String(metConfirmCount),
+      gateRequiredConfirmCount: String(requiredKeys.length),
     },
   };
 }
@@ -1194,16 +1218,25 @@ function buildContractOptimizationGrounding(
 /**
  * general_advisory — the catch-all "senior sourcing judgment about the
  * current event" mode. A COMPACT roll-up, reusing existing groundings rather
- * than new logic: current stage (`buildEventStatusGrounding`), the value
- * bridge headline (`buildValueAtStakeGrounding`, when an archetype resolves),
- * and the top 2–3 open items across evidence/gate/BAFO. Intentionally lighter
- * than the other modes — the quality gate applies a lighter bar to it (see
+ * than new logic: current stage (`buildEventStatusGrounding`), the FULL stage
+ * gate read (`buildStageGateGrounding` — not just its boolean, so a
+ * finality/"ready to issue" question phrased generically enough to fall
+ * through to this mode still gets the exact confirm-box states, never a
+ * summarized/inferred one), the value bridge headline
+ * (`buildValueAtStakeGrounding`, when an archetype resolves), the RFP
+ * clause-coverage facet (`buildClauseCoverageGrounding`, when the viewed stage
+ * is RFP and an archetype resolves — this is the exact protected-vs-exposed
+ * lever read a "is the RFP ready" question needs), and the top 2–3 remaining
+ * open items across evidence/BAFO. Intentionally lighter than the other
+ * modes — the quality gate applies a lighter bar to it (see
  * `answer-quality-gate.ts`) — but it must still pass the core Phase A checks
- * (no banned language, no fabrication, etc).
+ * (no banned language, no fabrication, etc) and must never omit a facet the
+ * question is actually asking about just because it classified to the
+ * catch-all mode.
  */
 function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
   const sections: string[] = [
-    "GENERAL ADVISORY ROLL-UP (compact — current stage + value headline + top open items, all reused from existing groundings):",
+    "GENERAL ADVISORY ROLL-UP (compact — current stage + stage gate + value headline + top open items, all reused from existing groundings):",
   ];
   const quotableFacts: Record<string, string> = {};
 
@@ -1213,11 +1246,38 @@ function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGrou
     Object.assign(quotableFacts, eventStatus.quotableFacts);
   }
 
+  // Full stage-gate read (not just the "met/unmet" boolean folded into the
+  // open-items list below) — a generic "is this ready to advance/issue"
+  // question needs the ACTUAL confirm-box states, not a one-line summary.
+  const stageGate = buildStageGateGrounding(input);
+  if (stageGate.block) {
+    sections.push(stageGate.block);
+    Object.assign(quotableFacts, stageGate.quotableFacts);
+  }
+
   if (input.archetype) {
     const valueAtStake = buildValueAtStakeGrounding(input);
     if (valueAtStake.block) {
       sections.push(valueAtStake.block);
       Object.assign(quotableFacts, valueAtStake.quotableFacts);
+    }
+  }
+
+  // RFP clause coverage: the protected-vs-exposed-lever read the canvas RFP
+  // tab renders. Surfaced here (not just in the dedicated `clause_coverage`
+  // mode) because "is the RFP final / ready to issue" style questions name
+  // the RFP stage's gate condition ("every priced lever has a clause") but do
+  // not always match the `clause_coverage` classifier pattern — omitting this
+  // facet is what let a prior answer claim "all levers exposed" without ever
+  // reading the real per-lever protected/exposed signal.
+  const viewedStageForClauseCoverage = normalizeSourceStageKey(
+    input.viewStageKey ?? input.event.currentStageKey,
+  );
+  if (input.archetype && viewedStageForClauseCoverage === "rfp") {
+    const clauseCoverage = buildClauseCoverageGrounding(input);
+    if (clauseCoverage.block) {
+      sections.push(clauseCoverage.block);
+      Object.assign(quotableFacts, clauseCoverage.quotableFacts);
     }
   }
 
@@ -1231,7 +1291,6 @@ function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGrou
       `${evidenceReadiness.quotableFacts.evidenceMissingCount} evidence item(s) still missing on the current stage.`,
     );
   }
-  const stageGate = buildStageGateGrounding(input);
   if (stageGate.quotableFacts.gateAllTasksComplete === "false") {
     openItems.push("The current stage's gate is not yet met — open tasks remain.");
   }

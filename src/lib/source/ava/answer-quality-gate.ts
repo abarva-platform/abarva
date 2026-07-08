@@ -208,6 +208,36 @@ function stripBannedPhrases(text: string, hasGroundingContext: boolean): string 
   return result.replace(/[ \t]{2,}/g, " ").trim();
 }
 
+/**
+ * Matches an "N of M" count the answer states near a completion/confirmation
+ * word (e.g. "0 of 1 tasks complete", "4 of 6 levers protected", "2 of 3
+ * confirmed") — captures the two integers plus the trailing word so the
+ * numeric-contradiction check can decide which grounded count-pair it should
+ * be compared against.
+ */
+const COUNT_CLAIM_RE =
+  /\b(\d+)\s+of\s+(\d+)\s+(complete|completed|done|tasks?|confirm(?:ed|ations?)?|protected|met)\b/gi;
+
+/**
+ * Extract every "N of M <word>" count claim the answer text states, so the
+ * numeric-contradiction check can compare each against the grounding block's
+ * OWN stated counts for the same concept (never a fresh computation — purely
+ * a string/number comparison against facts already read once for this turn).
+ */
+function extractCountClaims(
+  text: string,
+): { done: number; total: number; word: string }[] {
+  const claims: { done: number; total: number; word: string }[] = [];
+  for (const match of text.matchAll(COUNT_CLAIM_RE)) {
+    const done = Number(match[1]);
+    const total = Number(match[2]);
+    if (Number.isFinite(done) && Number.isFinite(total)) {
+      claims.push({ done, total, word: match[3].toLowerCase() });
+    }
+  }
+  return claims;
+}
+
 const NEXT_STEP_SIGNAL_RE =
   /\b(next step|next,|you (should|can|need to)|upload|provide|confirm|approve|advance|review|ask|check)\b/i;
 const CAVEAT_SIGNAL_RE =
@@ -278,6 +308,30 @@ function runChecks(
     matchesDetail = claimsWrongStage
       ? `Answer appears to claim a stage other than the grounded "${groundingStageLabel}".`
       : `Answer does not contradict the grounded stage "${groundingStageLabel}".`;
+  }
+  // 4b. Does not contradict the grounding block's OWN stated task/gate
+  // counts — this is the specific failure class a live invariant violation
+  // surfaced: the answer claimed "0 of 1 tasks complete" / gate confirms
+  // unmet while the grounding block (built from the SAME read-once facts)
+  // stated "1 of 1" / gate confirms met. Folded into `matches_workflow_state`
+  // (the "does this answer match structured state" check) rather than a new
+  // check id, since it is the same invariant, just on counts instead of a
+  // stage label.
+  const groundingTaskDone = input.groundingFacts?.taskChecklistDone;
+  const groundingTaskTotal = input.groundingFacts?.taskChecklistTotal;
+  if (groundingTaskDone !== undefined && groundingTaskTotal !== undefined) {
+    const groundedDone = Number(groundingTaskDone);
+    const groundedTotal = Number(groundingTaskTotal);
+    const claims = extractCountClaims(text);
+    const contradictingClaim = claims.find(
+      (c) => c.total === groundedTotal && c.done !== groundedDone,
+    );
+    if (contradictingClaim) {
+      matchesWorkflowState = false;
+      matchesDetail = `Answer states "${contradictingClaim.done} of ${contradictingClaim.total} ${contradictingClaim.word}" but the grounding block's own task checklist shows "${groundingTaskDone} of ${groundingTaskTotal}" complete — numeric contradiction.`;
+    } else if (matchesWorkflowState) {
+      matchesDetail = `${matchesDetail} No task-count contradiction (grounded: ${groundingTaskDone} of ${groundingTaskTotal}).`;
+    }
   }
   checks.push({
     id: "matches_workflow_state",
@@ -445,6 +499,33 @@ function repairAnswer(
 
   if (failedIds.has("no_raw_internal_ids")) {
     repaired = sanitizePublicText(repaired, repaired.length > 0 ? repaired : "the event");
+  }
+
+  // matches_workflow_state / numeric-contradiction repair: correct any
+  // "N of M <word>" claim whose total matches the grounding's task-checklist
+  // total but whose done-count does not, replacing it with the grounding
+  // block's OWN count (never re-derived — quoted straight from
+  // `groundingFacts.taskChecklistDone/Total`, the exact numbers the canvas
+  // renders for this event/stage).
+  if (
+    failedIds.has("matches_workflow_state") &&
+    input.groundingFacts?.taskChecklistDone !== undefined &&
+    input.groundingFacts?.taskChecklistTotal !== undefined
+  ) {
+    const groundedDone = input.groundingFacts.taskChecklistDone;
+    const groundedTotal = input.groundingFacts.taskChecklistTotal;
+    let correctedAny = false;
+    repaired = repaired.replace(COUNT_CLAIM_RE, (match, done, total, word) => {
+      if (Number(total) === Number(groundedTotal) && Number(done) !== Number(groundedDone)) {
+        correctedAny = true;
+        return `${groundedDone} of ${groundedTotal} ${word}`;
+      }
+      return match;
+    });
+    if (correctedAny) {
+      repaired =
+        `${repaired.trim()} (Corrected to match this event's actual stage checklist — ${groundedDone} of ${groundedTotal} — rather than a stale or invented count.)`.trim();
+    }
   }
 
   if (failedIds.has("has_direct_answer") && repaired.trim().length === 0) {
