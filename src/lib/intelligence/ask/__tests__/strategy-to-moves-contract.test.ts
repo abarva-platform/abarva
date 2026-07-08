@@ -15,6 +15,22 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     join(__dirname, "..", "answer-mode-registry.ts"),
     "utf8",
   );
+  const askIndexCode = readFileSync(join(__dirname, "..", "index.ts"), "utf8");
+  const routeCode = readFileSync(
+    join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "..",
+      "app",
+      "api",
+      "intelligence",
+      "ask",
+      "route.ts",
+    ),
+    "utf8",
+  );
 
   it("injects the strategy-to-AbarVa solution contract into the active synthesis path", () => {
     expect(synthesizerCode).toContain(
@@ -48,6 +64,10 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(synthesizerCode).toContain(
       "applyCxoAnswerModeFallbacks(\n      enforceDecisionGradeAnswer(evidenceDisciplined),\n      answerMode,\n    )",
     );
+    expect(askIndexCode).toContain("applyCxoAnswerModeFallbacks(");
+    expect(askIndexCode).toContain("classifyAbarvaAnswerMode(trimmed)");
+    expect(routeCode).toContain("applyCxoAnswerModeFallbacks(");
+    expect(routeCode).toContain("classifyAbarvaAnswerMode(context?.query ?? \"\")");
   });
 
   it("keeps critical CXO answer modes in one registry", () => {

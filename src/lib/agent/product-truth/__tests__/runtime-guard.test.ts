@@ -46,11 +46,26 @@ describe("applyProductTruthRuntimeGuard", () => {
       },
     );
 
-    expect(result.text).toContain("P0 — Intake & Decision Framing");
+    expect(result.text).toContain("P0 Originate");
+    expect(result.text).toContain("P5 Prepare to Execute");
     expect(result.text).toContain("Tower Track Outcomes");
+    expect(result.text).not.toContain("Charter / Diagnose / Decide / Commit");
     expect(result.violations.map((v) => v.category)).toContain(
       "wrong_moves_model",
     );
+  });
+
+  it("removes internal evidence codes from client-visible repaired answers", () => {
+    const result = applyProductTruthRuntimeGuard(
+      "Tower tracks the value baseline from BASE-007 and CTX-AI-001-42.",
+      {
+        tenantKey: "lakeshore",
+        tenantName: "Lakeshore Holdings",
+        surface: "tower",
+      },
+    );
+
+    expect(result.text).not.toMatch(/\b(?:BASE-007|CTX-AI-001-42)\b/);
   });
 
   it("uses a surface boundary for obvious out-of-scope questions", () => {
