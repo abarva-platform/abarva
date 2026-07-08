@@ -154,6 +154,7 @@ import {
   isPhaseBImplementedMode,
   isPhaseCImplementedMode,
   isGroundedAnswerMode,
+  shouldSuppressGenericContextBundleForSourceMode,
 } from "@/lib/source/ava/answer-mode";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
 import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
@@ -1503,6 +1504,37 @@ export async function POST(request: Request) {
     }
   }
 
+  // aVa Source polish gate — Gap 1 fix (live-found: "What evidence is
+  // missing?" on the RFP stage answered with an unrelated cross-module risk
+  // item, e.g. a generic SOX/payment-approval control flag). Root cause: the
+  // question classified correctly to `evidence_readiness` (verified — no
+  // earlier rule in answer-mode.ts's RULES array matches "what evidence is
+  // missing?"), and its Source-scoped grounding built correctly. The bug is
+  // that `contextBundlePromptBlock` (CONTEXT BROKER RECEIPT, above) runs a
+  // TENANT-WIDE keyword/semantic search unconditionally on every turn
+  // (getContextBroker().assemble with mode 'full') and is injected into the
+  // same system prompt alongside the Source-scoped grounding — with nothing
+  // telling the model the generic receipt is off-topic for a Source-event
+  // question. "Evidence" + "missing" are broad keywords that can surface an
+  // unrelated tenant-wide compliance/risk chunk (e.g. SOX/payment-approval
+  // controls) that has nothing to do with this Source event's evidence
+  // readiness, and the model folded it into the answer instead of staying on
+  // the event-scoped topic.
+  //
+  // Fix: once a GROUNDED, non-passthrough Source answer mode has fired
+  // (isGroundedAnswerMode — Phase A/B/C), the deterministic Source grounding
+  // is the authoritative context for this turn's topic. Suppress the
+  // generic cross-module context-broker receipt from the prompt entirely
+  // (it adds no Source-event-specific value once mode-grounding is present,
+  // and its tenant-wide chunks are the demonstrated off-topic leak vector).
+  // `stakeholder_alignment` stays a passthrough (isGroundedAnswerMode is
+  // false for it), so it keeps receiving the generic receipt exactly as
+  // before — unchanged behavior for every mode this fix does not target.
+  const contextBundlePromptBlockForPrompt =
+    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode)
+      ? ""
+      : contextBundlePromptBlock;
+
   // OV2-WIRE-AND-FM-PROMPT Part 1 — failure-mode catalog block. Universal
   // across all Programs surfaces (`/programs*`, `/demo/programs*`, `/tower*`).
   // Empty string elsewhere; the prompt-array filter strips it cleanly.
@@ -1674,7 +1706,7 @@ export async function POST(request: Request) {
     "",
     privateDataPlaneBlock,
     "",
-    contextBundlePromptBlock,
+    contextBundlePromptBlockForPrompt,
     "",
     sourceEventSeedBlock,
     "",
