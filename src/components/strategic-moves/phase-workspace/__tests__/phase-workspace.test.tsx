@@ -41,10 +41,12 @@ describe('phase-workspace cards render the fixture', () => {
     expect(html).toContain('Templates to use');
   });
 
-  it('templates card lists P2 templates with session + format', () => {
+  it('templates card lists P2 templates with session + format + a download control', () => {
     const html = render(<PhaseTemplatesAndSessionsCard templates={templatesForPhase('P2')} />);
     expect(html).toContain('Current-State Interview Guide');
     expect(html).toMatch(/Document|Spreadsheet/);
+    expect(html).toContain('Template'); // "↓ Template" download button
+    expect(html).toContain('pw-dl-btn');
   });
 
   it('assessment map shows dimensions with status + client-friendly lane labels', () => {

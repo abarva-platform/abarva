@@ -17,7 +17,12 @@ import type {
   SolutionOption,
   WorkstreamPreviewRow,
 } from '../../../lib/programs/phase-templates/fixtures/lakeshore-legal';
+import {
+  buildTemplateOutline,
+  templateOutlineFilename,
+} from '../../../lib/programs/phase-templates/template-outline';
 import { Card, Chip, KeyValue, Lane, confidenceTone, statusMeta } from './primitives';
+import { downloadTextFile } from './download';
 
 const SESSION_LABELS: Record<SessionType, string> = {
   interview: 'Interview',
@@ -84,6 +89,13 @@ export function PhaseTemplatesAndSessionsCard({
             <div className="pw-row-meta">
               <Chip tone="blue">{SESSION_LABELS[t.recommendedSessionType]}</Chip>
               <Chip>{t.fileFormat === 'XLSX' ? 'Spreadsheet' : 'Document'}</Chip>
+              <button
+                type="button"
+                className="pw-dl-btn"
+                onClick={() => downloadTextFile(templateOutlineFilename(t), buildTemplateOutline(t))}
+              >
+                ↓ Template
+              </button>
             </div>
           </div>
         ))}
