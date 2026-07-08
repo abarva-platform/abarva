@@ -9,11 +9,14 @@ import type { AskSource, AskIntent } from "./types";
 import {
   applyPartialEvidencePolicy,
   chunkAskText,
+  CHART_OUTPUT_CONTRACT,
   CONSULTANT_ANSWER_SHAPE_CONTRACT,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE,
   enforceDecisionGradeAnswer,
+  isTrendAsk,
   sanitizeAskSynthesis,
+  stripInternalRecordIds,
 } from "./response-policy";
 import {
   buildTenantIdentityPin,
@@ -567,26 +570,7 @@ MANDATORY FORMATTING RULES — follow every one of these exactly:
 5. **Bold** the single most decision-critical number or phrase per section.
 6. Never write more than 4 sentences in a single paragraph. Depth over length. No hollow openers.
 
-CHART CONTRACT: The renderer supports inline charts rendered from fenced code blocks with language identifier \`chart\`. When you have data that would be clearer as a visual (spend trends, maturity comparisons, top-N ranked items, allocation breakdowns), emit a chart block INSTEAD of or ALONGSIDE the table. Chart block format:
-
-\`\`\`chart
-{
-  "type": "bar",
-  "title": "AI Initiative Spend by Domain",
-  "subtitle": "FY2026 · $ millions",
-  "data": [
-    { "domain": "Ops AI", "spend": 12.4 },
-    { "domain": "Supply Chain", "spend": 8.1 },
-    { "domain": "Customer", "spend": 6.7 }
-  ],
-  "xKey": "domain",
-  "yKey": "spend",
-  "unit": "$",
-  "note": "Source: V6 corpus spend signals"
-}
-\`\`\`
-
-Supported types: "bar" (vertical bars), "horizontal-bar" (best for ranked lists ≥4 items), "line" (trends over time), "area" (cumulative trends), "pie" (share/allocation, ≤6 slices). Use "horizontal-bar" for any ranked list ≥4 items. Use "line" or "area" for time-series. Use "pie" only for part-of-whole where ≤6 slices make the point. For dual-series, add "yKey2" and "color2". Only emit a chart if you have ≥3 real data rows with numeric y-values — never fabricate data to fill a chart.`
+${CHART_OUTPUT_CONTRACT}`
     : "";
   const decisionCanvasAddendum =
     args.richText && !answerOnly
@@ -781,6 +765,7 @@ ${args.query}`
           yield chunk;
         }
       }
+      const cleanedText = stripInternalRecordIds(streamedText);
       emitTiming(
         latencyTrace.finish("claude.primary.stream.done", primaryStartedAt, {
           model,
@@ -788,11 +773,12 @@ ${args.query}`
           answerOnlyStreaming: true,
           outputChars: streamedText.length,
           outputApproxTokens: summarizeTextPayload(streamedText).approxTokens,
+          strippedCodes: cleanedText.length !== streamedText.length,
         }),
       );
       args.onModelOutput?.({
         rawText: streamedText,
-        text: streamedText,
+        text: cleanedText,
         model,
         auditId,
         route: "intelligence-ask-synthesis-answer-only",

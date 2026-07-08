@@ -8,6 +8,10 @@ import {
   type VisibleAnswerContractResult,
 } from "@/lib/agent/visible-answer-contract";
 import { isExplicitVisualAsk } from "@/lib/intelligence/ask/synthesizer";
+import {
+  CHART_OUTPUT_CONTRACT,
+  isTrendAsk,
+} from "@/lib/intelligence/ask/response-policy";
 
 const MODEL_NAME = "claude-sonnet-4-6";
 const PROMPT_VERSION = "cio_tower_advisor_prompt_v1";
@@ -361,6 +365,16 @@ export function buildCioTowerClaudePrompt(
           "- You MUST include at least one table in tables[].",
           "- Also embed the same table as a GFM markdown table directly in the answer field so the inline renderer can display it.",
           "- In the answer field: table header row first (| Col | Col | ...), then separator (|---|---|...), then data rows. Follow with 1-2 bold analysis sentences.",
+        ]
+      : []),
+    ...(isTrendAsk(context.question)
+      ? [
+          "",
+          "TREND/CHART INSTRUCTION (this question asks about trends, changes over time, or time-series data):",
+          "- You MUST include a chart block in the answer field using the chart contract below.",
+          "- Embed a fenced ```chart block in the answer text with real numeric values from the Tower context.",
+          "- Use type 'line' or 'area' for time-series, 'horizontal-bar' for ranked lists.",
+          CHART_OUTPUT_CONTRACT,
         ]
       : []),
     "",

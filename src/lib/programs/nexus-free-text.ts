@@ -1,8 +1,10 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { isExplicitVisualAsk } from "@/lib/intelligence/ask/synthesizer";
 import {
+  CHART_OUTPUT_CONTRACT,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH,
+  isTrendAsk,
 } from "@/lib/intelligence/ask/response-policy";
 import {
   buildAgentGroundingDisclosure,
@@ -811,6 +813,7 @@ async function synthesizeWithClaude(args: {
     2,
   );
   const visualAsk = isExplicitVisualAsk(args.message);
+  const trendAsk = isTrendAsk(args.message);
   const shapeContract = visualAsk
     ? CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE
     : CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH;
@@ -824,6 +827,7 @@ async function synthesizeWithClaude(args: {
     "Be explicit that most support here is authored/composite unless the composition says otherwise.",
     "Close with one concrete next step.",
     shapeContract,
+    CHART_OUTPUT_CONTRACT,
     AGENT_DEMO_SYSTEM_BLOCK,
   ].join("\n");
   const { client } = await getAuditedAnthropicClient({
@@ -837,7 +841,7 @@ async function synthesizeWithClaude(args: {
   });
   const result = await client.messages.create({
     model: process.env.NEXUS_COMPOSER_MODEL ?? "claude-opus-4-7",
-    max_tokens: visualAsk ? 700 : 380,
+    max_tokens: visualAsk ? 700 : trendAsk ? 600 : 380,
     system,
     messages: [
       {

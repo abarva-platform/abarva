@@ -6,7 +6,7 @@ const HOLLOW_OPENER_RE =
 const BROAD_CURRENT_STATE_RE =
   /\b(current state|state of play|where are we|where do we stand|how are we doing|what is going on|what do you see|give me perspective|your perspective|executive read|simple question|our state)\b/i;
 const RAW_INTERNAL_ID_RE =
-  /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
+  /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6}|[A-Z]\d{3,4})\b/g;
 const CONSULTANT_INLINE_SECTION_RE =
   /\s*\b(Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action)\s*(?:[-—]\s*[^:\n]{1,96})?:\s*/gi;
 
@@ -19,6 +19,8 @@ For Home, Intelligence, and Tower, answer like a senior expert consultant in a G
 - Then explain what this means for the executive decision and the next useful action.
 
 Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
+
+EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or internal citation identifiers such as BASE-XXX, CTX-XXX, VAL-XXX, X123, or any similar alphanumeric code. The loaded context does not expose database record IDs or pattern reference numbers to you. If a fact comes from loaded tenant data, state it in plain business English — dollar value, owner, date, status — without attaching a code. A fabricated code is worse than no citation.
 
 If the user explicitly asks for a table, chart, graph, matrix, scorecard, or visual, answer in two parts:
 1. A short natural-language advisory answer.
@@ -36,7 +38,9 @@ The user has explicitly requested a table, ranking, or comparison. Output rules:
 3. Each subsequent row is one data item. Use real data from the loaded evidence — never fabricate.
 4. After the table, write 1-3 analysis sentences in bold naming the key decision implication.
 5. Do NOT write any sentence, opener, or preamble before the table. No "Lakeshore Holdings..." opener. No "Here is the table". Start with "|".
-6. This surface renders full GitHub-Flavored Markdown. Pipes, headers, and bold all render correctly.`;
+6. This surface renders full GitHub-Flavored Markdown. Pipes, headers, and bold all render correctly.
+
+EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or internal citation identifiers such as BASE-XXX, CTX-XXX, VAL-XXX, X123, or any similar alphanumeric code. Cite facts as plain business values — dollar amount, vendor name, date, owner — with no attached code.`;
 
 // Rich-text variant used when answerOnlyStreaming=true (aVa dock inline rendering).
 // Removes the table prohibition and replaces it with a table requirement for structured data.
@@ -50,7 +54,30 @@ For Home, Intelligence, and Tower, answer like a senior expert consultant in a G
 
 Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
 
+EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or internal citation identifiers such as BASE-XXX, CTX-XXX, VAL-XXX, X123, or any similar alphanumeric code. The loaded context does not expose database record IDs or pattern reference numbers to you. Cite facts in plain business English — dollar value, owner, date, status — with no attached code. A fabricated code is worse than no citation.
+
 This surface renders full GitHub-Flavored Markdown. Use GFM tables for ANY comparison, ranked list, vendor matrix, spend breakdown, or multi-attribute data (3+ items × 2+ attributes). Use bold for the single most decision-critical number or phrase per section. Use bullet lists where items scan better than prose. Tables and structure are expected — prose-only responses are substandard for tabular questions.`;
+
+const TREND_ASK_RE =
+  /\b(trend|trends|over time|quarterly|quarter|annual|year(?:ly|-over-year|ly)|y(?:ear)?-?o-?y|q-?o-?q|month(?:ly)?|historical|history|progression|trajectory|growth|decline|ramp|forecast|projection|evolv|chang(?:e|ed|ing)|increas|decreas|improv|worsen|compar(?:e|ed|ison) (?:by|over|across) (?:year|quarter|month|period|time)|period|over the (?:last|past|next)|trend line|time[ -]series|adoption rate|spending over|spend over|budget over|cost over|savings over|rate of)\b/i;
+
+export function isTrendAsk(query: string): boolean {
+  return TREND_ASK_RE.test(query);
+}
+
+export const CHART_OUTPUT_CONTRACT = `CHART-FIRST RULE: The rendering surface supports inline charts via fenced \`\`\`chart\`\`\` code blocks. Apply this rule proactively:
+- MANDATORY for any trend, time-series, quarter-over-quarter, year-over-year, or period-based data — emit a chart block even if not explicitly asked
+- MANDATORY for any ranked list of ≥4 items with numeric values — use horizontal-bar
+- RECOMMENDED for spend breakdowns, allocation shares (≤6 slices use pie), or maturity comparisons
+- OPTIONAL alongside a GFM table when both complement each other
+- NEVER fabricate data points to fill a chart; only emit a chart block when you have ≥3 real numeric values
+
+Chart block format:
+\`\`\`chart
+{"type":"line","title":"IT Spend Trend","subtitle":"FY2024–FY2026 · $M","xKey":"Period","yKey":"Spend","data":[{"Period":"FY2024","Spend":47.2},{"Period":"FY2025","Spend":51.8},{"Period":"FY2026","Spend":58.4}],"unit":"$","note":"Source: tenant evidence"}
+\`\`\`
+
+Supported types: "line" (time-series trends), "area" (cumulative trends), "bar" (category comparison ≤6 items), "horizontal-bar" (ranked list ≥4 items), "pie" (share/allocation ≤6 slices). For two metrics on one chart add "yKey2" and "color2". The unit prefix appears in axis ticks and tooltips.`;
 
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
