@@ -10,6 +10,14 @@
 //
 // MODEL — realized-value actuals are not in the fact model yet. The badge reads
 // "Model" and the note names the fact that flips it live.
+//
+// LIVE (snapshot) — once realized-to-date actuals are ingested (one
+// realized_value_usd fact per lever via VALUE_REALIZATION_V1), the insight goes
+// live: the realized-to-date TOTAL is marked as the current point on the committed
+// track, and a per-lever realized-to-date-vs-committed list is shown. This is a
+// realized-to-date snapshot, not a per-period ramp — a lever with no realized fact
+// is shown as "not yet realized", never fabricated. The full per-period time-series
+// is a deferred enhancement.
 
 import {
   CartesianGrid,
@@ -21,7 +29,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ANALYTICS } from '../analytics-tokens';
+import { ANALYTICS, valueTypeMeta } from '../analytics-tokens';
 import { InsightShell } from './InsightShell';
 import type { ValueRealizationInsightView } from '../view-model';
 
@@ -58,13 +66,16 @@ export function ValueRealizationInsight({
     realized: p.realized, // null renders as a gap — never a fabricated 0-as-fact
   }));
 
+  // LIVE snapshot only — the per-lever realized-to-date-vs-committed list.
+  const bars = insight.bars ?? [];
+
   return (
     <InsightShell
       eyebrow="Value · Committed vs realized"
       headline={insight.headline}
       provenance={insight.provenance}
       note={insight.note}
-      isModel
+      isModel={insight.isModel}
       advisor={advisor}
     >
       <ResponsiveContainer width="100%" height={240}>
@@ -124,6 +135,80 @@ export function ValueRealizationInsight({
           />
         </LineChart>
       </ResponsiveContainer>
+
+      {/* LIVE snapshot — per-lever realized-to-date vs committed. A lever with no
+          realized fact is shown honestly as "not yet realized", never fabricated. */}
+      {bars.length > 0 ? (
+        <div
+          data-testid="value-realization-bars"
+          style={{ marginTop: 12, display: 'grid', gap: 6 }}
+        >
+          {bars.map((bar) => {
+            const meta = valueTypeMeta(bar.valueType);
+            const realizedLabel =
+              bar.realized === undefined
+                ? 'Not yet realized'
+                : `${fmtUsd(bar.realized)} realized`;
+            return (
+              <div
+                key={bar.leverKey}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  fontFamily: ANALYTICS.SANS,
+                  fontSize: 12,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    color: ANALYTICS.INK,
+                    minWidth: 0,
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: meta.fg,
+                      flex: '0 0 auto',
+                    }}
+                  />
+                  <span
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {bar.label}
+                  </span>
+                </span>
+                <span
+                  style={{
+                    color:
+                      bar.realized === undefined
+                        ? ANALYTICS.MUTED
+                        : ANALYTICS.INK,
+                    flex: '0 0 auto',
+                  }}
+                >
+                  {realizedLabel}{' '}
+                  <span style={{ color: ANALYTICS.MUTED }}>
+                    / {fmtUsd(bar.committed)} committed
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
 
       {/* The fact that flips this MODEL → LIVE, named for the operator. */}
       <div

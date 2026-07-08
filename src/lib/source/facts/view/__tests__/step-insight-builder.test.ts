@@ -439,6 +439,20 @@ describe('buildStepInsight — dispatch', () => {
     expect(selection?.provenance).toBe('sample');
   });
 
+  it('value stage flips LIVE through buildStepInsight when realizedValueByLeverKey is supplied', () => {
+    const value = buildStepInsight({
+      stageKey: 'value',
+      inputs: FACTS_ONE_LEVER,
+      citations: {},
+      archetypeId: 'AMS_MANAGED_SERVICES',
+      realizedValueByLeverKey: new Map<string, number>([
+        ['AMS.VOLUME_BAND_PRICING', 2_000_000],
+      ]),
+    });
+    expect(value?.kind).toBe('value_realization');
+    expect(value?.provenance).toBe('live');
+  });
+
   it('returns null for a step with no insight in this slice', () => {
     const insight = buildStepInsight({
       stageKey: 'closeout',
@@ -547,14 +561,87 @@ describe('MODEL step insights — value / responses / bafo / selection', () => {
     );
     expect(insight.kind).toBe('value_realization');
     expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
     // Committed is a positive track; realized is null (never a fabricated number).
     expect(insight.points.length).toBeGreaterThan(0);
     expect(insight.points.every((p) => p.committed >= 0)).toBe(true);
     expect(insight.points.every((p) => p.realized === null)).toBe(true);
+    // No per-lever snapshot in MODEL mode.
+    expect(insight.bars ?? []).toHaveLength(0);
     expect(insight.flipFact).toMatch(/realized-value actuals/i);
     expect(insight.note).toMatch(/model/i);
     // Advisor layer present.
     expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('value_realization goes LIVE (snapshot) when realized facts are supplied: realized-to-date vs committed per lever', () => {
+    // Realize a value on two AMS levers; leave the rest not-yet-realized.
+    const realized = new Map<string, number>([
+      ['AMS.ENHANCEMENT_LEAKAGE', 1_200_000],
+      ['AMS.VOLUME_BAND_PRICING', 3_400_000],
+    ]);
+    const insight = buildValueRealizationInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      realized,
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    // Per-lever snapshot present; exactly the two realized levers carry a realized
+    // value; the rest stay not-yet-realized (undefined) — never fabricated.
+    const bars = insight.bars ?? [];
+    expect(bars.length).toBeGreaterThan(0);
+    const realizedBars = bars.filter((b) => b.realized !== undefined);
+    expect(realizedBars.map((b) => b.leverKey).sort()).toEqual(
+      ['AMS.ENHANCEMENT_LEAKAGE', 'AMS.VOLUME_BAND_PRICING'].sort(),
+    );
+    expect(
+      bars.find((b) => b.leverKey === 'AMS.VOLUME_BAND_PRICING')?.realized,
+    ).toBe(3_400_000);
+    expect(bars.some((b) => b.realized === undefined)).toBe(true);
+    // Every bar carries a positive committed reference to measure realized against.
+    expect(bars.every((b) => b.committed > 0)).toBe(true);
+    // Realized bars sort first (biggest realized $ first).
+    expect(bars[0].realized).toBe(3_400_000);
+    // The realized-to-date TOTAL is marked on the CURRENT (final) period only — a
+    // snapshot, not a per-period ramp. Earlier periods stay pending (null).
+    const points = insight.points;
+    expect(points[points.length - 1].realized).toBe(4_600_000);
+    expect(points.slice(0, -1).every((p) => p.realized === null)).toBe(true);
+    // Live headline reports realized total + coverage.
+    expect(insight.headline).toMatch(/realized to date/i);
+    expect(insight.note).toMatch(/live/i);
+    // Advisor layer survives the live path.
+    expect(insight.bestPractice?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('value_realization LIVE with an empty realized map → nothing realized yet, still live (assessed-nothing read)', () => {
+    const insight = buildValueRealizationInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      new Map<string, number>(),
+    );
+    expect(insight.provenance).toBe('live');
+    expect(insight.isModel).toBe(false);
+    expect((insight.bars ?? []).every((b) => b.realized === undefined)).toBe(
+      true,
+    );
+    // Final period's realized snapshot is 0 (assessed, nothing realized) — not null,
+    // and never fabricated above 0.
+    expect(insight.points[insight.points.length - 1].realized).toBe(0);
+    expect(insight.headline).toMatch(/no realized value has been booked yet/i);
+  });
+
+  it('value_realization MODEL when no realized map is supplied (undefined) — the honest default', () => {
+    const insight = buildValueRealizationInsight(
+      AMS_MANAGED_SERVICES,
+      FACTS_ONE_LEVER,
+      undefined,
+    );
+    expect(insight.provenance).toBe('sample');
+    expect(insight.isModel).toBe(true);
+    expect(insight.points.every((p) => p.realized === null)).toBe(true);
+    expect(insight.bars ?? []).toHaveLength(0);
   });
 
   it('response_coverage: every dimension dodged (MODEL), carries evaluationImpact', () => {

@@ -311,6 +311,39 @@ const BAFO_CONCESSIONS_TEMPLATE: TemplateFactMap = {
   ],
 };
 
+// ── Value realization template (downstream-insight Shape 3 · snapshot) ───────
+// One row per VALUE LEVER. Carries the per-lever value REALIZED TO DATE (the
+// cumulative realized value captured so far), which flips value realization from a
+// model to a live realized-vs-committed read (see
+// docs/build/source-downstream-insight-fact-model.md). The row entity is
+// `value_lever`: the `Lever Key` column MUST be a canonical archetype lever key
+// (e.g. 'AMS.VOLUME_BAND_PRICING') — it becomes the fact's entity_ref, and the
+// insight only marks a lever realized when a row's key matches a lever the
+// archetype actually declares (a phantom key can never inject a lever).
+//
+// The single fact column is a total-over-term $ figure on the `usd` unit — the same
+// basis committed value is expressed in — so realized-to-date can be compared
+// directly against committed and target. This is a SNAPSHOT (realized so far), NOT
+// a per-period ramp: source_event_facts has no period dimension, so the full per-
+// period time-series is a deferred enhancement. Enter the value REALIZED so far for
+// the lever, not an annual or per-period figure; a lever with no row stays "not yet
+// realized".
+const VALUE_REALIZATION_TEMPLATE: TemplateFactMap = {
+  templateCode: 'VALUE_REALIZATION_V1',
+  label: 'Realized value to date',
+  rowEntity: 'value_lever',
+  entityRefColumn: 'Lever Key',
+  columns: [
+    {
+      header: 'Realized Value To Date (USD)',
+      factKey: 'realized_value_usd',
+      entityKind: 'value_lever',
+      unit: 'usd',
+      note: 'The value realized to date for this lever (cumulative realized so far), in USD over the contract term (a snapshot, not annualized or per-period). One row per canonical lever key; a lever with no row stays "not yet realized".',
+    },
+  ],
+};
+
 // ── Response coverage template (multi-vendor Shape 2) ────────────────────────
 // One row per VENDOR × VALUE LEVER. Carries the per-vendor / per-lever
 // response-coverage signal that flips Responses coverage from a model to a live
@@ -395,6 +428,7 @@ export const TEMPLATE_FACT_MAPS: Record<string, TemplateFactMap> = {
   [RFP_CLAUSES_TEMPLATE.templateCode]: RFP_CLAUSES_TEMPLATE,
   [COMMITTED_VALUE_TEMPLATE.templateCode]: COMMITTED_VALUE_TEMPLATE,
   [BAFO_CONCESSIONS_TEMPLATE.templateCode]: BAFO_CONCESSIONS_TEMPLATE,
+  [VALUE_REALIZATION_TEMPLATE.templateCode]: VALUE_REALIZATION_TEMPLATE,
   [RESPONSE_COVERAGE_TEMPLATE.templateCode]: RESPONSE_COVERAGE_TEMPLATE,
   [VENDOR_BIDS_TEMPLATE.templateCode]: VENDOR_BIDS_TEMPLATE,
   // Add new intake templates here — no engine change required.

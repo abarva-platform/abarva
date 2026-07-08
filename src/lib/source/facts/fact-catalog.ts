@@ -272,6 +272,25 @@ const DOWNSTREAM_SIGNAL_FACT_SPECS: Record<string, FactSpec> = {
     description:
       'The concession the BAFO round CAPTURED for this value lever, in USD over the contract term. One row per lever, keyed by the lever key in entity_ref. Flips BAFO progress from a model to a live captured-vs-target read (how much of each lever’s target band the BAFO round actually pulled in); a lever with no concession fact stays at 0-captured / still-open, never fabricated.',
   },
+  // Value realization: the value REALIZED-TO-DATE for this lever — the cumulative
+  // realized value captured so far against what the award committed. A total-over-
+  // term $ figure on the `usd` unit — the same basis committed_value_usd and the
+  // lever's own computed band use — so realized-to-date can be compared directly
+  // against committed and target. This is a SNAPSHOT (realized so far), NOT a per-
+  // period ramp: source_event_facts has no period dimension, so Phase 3 lands the
+  // tractable increment — one realized-to-date fact per lever — and the full per-
+  // period time-series is a deferred enhancement (see the design doc's Shape 3).
+  // Sourced from the enterprise run/SLA/productivity actuals record
+  // (enterprise_inventory). One row per lever, keyed by the lever key in entity_ref.
+  realized_value_usd: {
+    key: 'realized_value_usd',
+    label: 'Realized value to date for lever',
+    unit: 'usd',
+    source: 'enterprise_inventory',
+    entityKind: 'value_lever',
+    description:
+      'The value REALIZED TO DATE for this value lever (the cumulative realized value captured so far), in USD over the contract term — a realized-to-date snapshot, not a per-period ramp. One row per lever, keyed by the lever key in entity_ref. Flips value realization from a model to a live realized-vs-committed read (how much of each lever’s committed value has actually been booked so far); a lever with no realized fact stays "not yet realized", never fabricated.',
+  },
   // ── Shape 2 · per-vendor / vendor×lever status ─────────────────────────────
   // Response coverage: did a VENDOR address a LEVER? A `vendor_lever`-kind fact
   // whose `entity_ref` is the canonical composite `<vendorId>::<leverKey>` (see

@@ -38,6 +38,7 @@ import {
   SAMPLE_SELECTION_STAGE,
   SAMPLE_RESPONSES_STAGE,
   SAMPLE_EVALUATION_STAGE,
+  SAMPLE_VALUE_STAGE,
 } from '@/components/source/canvas/analytics/sample-view-model';
 import {
   SOURCE_STAGE_LABELS,
@@ -149,9 +150,10 @@ export function buildLiveStageView(
   // upload (flips Evaluation should-cost live), BAFO so its dropzone offers the
   // BAFO_CONCESSIONS_V1 concession-actuals upload (flips BAFO progress live),
   // Selection so its dropzone offers the COMMITTED_VALUE_V1 award-commitments upload
-  // (flips committed value live) — instead of the Scope intake tasks; every other
-  // stage still reuses the Scope exemplar structure while the live value proof rides
-  // the fact-derived waterfall.
+  // (flips committed value live), Value so its dropzone offers the
+  // VALUE_REALIZATION_V1 realized-value-actuals upload (flips value realization live)
+  // — instead of the Scope intake tasks; every other stage still reuses the Scope
+  // exemplar structure while the live value proof rides the fact-derived waterfall.
   const requestedStageKey = input.stageKey ?? SAMPLE_SCOPE_STAGE.stageKey;
   const scaffold =
     requestedStageKey === 'rfp'
@@ -164,7 +166,9 @@ export function buildLiveStageView(
             ? SAMPLE_BAFO_STAGE
             : requestedStageKey === 'selection'
               ? SAMPLE_SELECTION_STAGE
-              : SAMPLE_SCOPE_STAGE;
+              : requestedStageKey === 'value'
+                ? SAMPLE_VALUE_STAGE
+                : SAMPLE_SCOPE_STAGE;
 
   // The next stage this gate advances to, resolved through the canonical order so
   // the gate CTA ("Approve & advance to …") and the presentational nextStageName

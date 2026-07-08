@@ -647,7 +647,7 @@ export interface ExecDecisionInsightView extends AdvisorLayer {
   note?: string;
 }
 
-// ── Value · COMMITTED vs REALIZED over time (MODEL) ──────────────────────────
+// ── Value · COMMITTED vs REALIZED over time (MODEL / LIVE snapshot) ───────────
 
 /** One period point on the committed-vs-realized track. */
 export interface ValueRealizationPointView {
@@ -656,17 +656,52 @@ export interface ValueRealizationPointView {
   /** Cumulative committed value at this period (USD, from the awarded levers). */
   committed: number;
   /**
-   * Cumulative realized value at this period (USD). 0 / null until periodic
-   * realized-value actuals are ingested — the chart shows the gap honestly.
+   * Cumulative realized value at this period (USD). `null` until realized-value
+   * actuals are ingested — the chart shows the gap honestly. In LIVE mode the
+   * realized-to-date snapshot is attached to the CURRENT (final) period only; the
+   * earlier periods stay `null` (there is no per-period series yet — see the design
+   * doc's deferred Shape 3), never a fabricated ramp.
    */
   realized: number | null;
 }
 
 /**
+ * One lever's realized-to-date-vs-committed row (LIVE snapshot). Present only when
+ * realized_value_usd facts exist. A lever with no realized fact stays "not yet
+ * realized" (`realized` undefined), never fabricated as 0-as-fact.
+ */
+export interface ValueRealizationBarView {
+  /** The lever key (stable id). */
+  leverKey: string;
+  /** Human lever name. */
+  label: string;
+  /** The value type — drives the accent. */
+  valueType: ValueType;
+  /**
+   * The lever's committed value (USD over term) — from its committed_value_usd fact
+   * where an award exists, else its target-band midpoint reference. What realized-
+   * to-date is measured against.
+   */
+  committed: number;
+  /**
+   * LIVE only — the value REALIZED TO DATE for this lever (USD over term), from its
+   * `realized_value_usd` fact. `undefined` when the lever has no realized fact (shown
+   * honestly as not-yet-realized, never fabricated as 0). `null` is never used —
+   * absence is `undefined`.
+   */
+  realized?: number;
+}
+
+/**
  * Value — COMMITTED vs REALIZED over the term. MODEL: realized-value actuals are
- * not in the fact model yet, so the realized track is a placeholder (0) against the
- * committed track (from the awarded levers). Goes live when periodic realized-value
- * actuals per lever are ingested. Never fabricates a realization number.
+ * not in the fact model yet, so the realized track is pending against the committed
+ * track (from the awarded levers). LIVE (snapshot — see
+ * docs/build/source-downstream-insight-fact-model.md): once realized_value_usd facts
+ * are ingested per lever (one realized-to-date snapshot per lever via
+ * VALUE_REALIZATION_V1), `bars` report each lever's realized-to-date vs committed and
+ * the current realized-to-date total is marked on the committed track as the current
+ * period's realized point. A lever with no realized fact stays "not yet realized",
+ * never fabricated. The full per-period time-series is a deferred enhancement.
  */
 export interface ValueRealizationInsightView extends AdvisorLayer {
   kind: 'value_realization';
@@ -675,6 +710,18 @@ export interface ValueRealizationInsightView extends AdvisorLayer {
   headline: string;
   /** The committed vs realized track over the term. */
   points: readonly ValueRealizationPointView[];
+  /**
+   * Per-lever realized-to-date vs committed — LIVE only. Undefined/empty in MODEL
+   * mode. Additive to the committed-vs-realized track; the renderer reads it when
+   * present without changing its existing chart.
+   */
+  bars?: readonly ValueRealizationBarView[];
+  /**
+   * True when this is the honest MODEL (no realized_value_usd fact yet); false when
+   * LIVE (≥1 realized fact exists and a realized-to-date snapshot is shown). The
+   * renderer keys its badge and note off this — never off `provenance` alone.
+   */
+  isModel: boolean;
   /** The fact that flips this MODEL → LIVE, named for the operator. */
   flipFact: string;
   /** Always present — states this is a model and what makes it live. */
