@@ -172,6 +172,33 @@ export interface AvaAnswerQuality {
   evidenceStrength: "strong" | "partial" | "thin";
   tenantGrounding: "complete" | "partial" | "missing";
   answerCompleteness: "complete" | "partial" | "blocked";
+  cxo?: AvaCxoQuality;
+}
+
+export type AvaCxoAnswerMode =
+  | "direct_fact"
+  | "strategy_insight"
+  | "industry_trend"
+  | "tenant_diagnosis"
+  | "investment_case"
+  | "operating_model"
+  | "sourcing_decision"
+  | "risk_control"
+  | "roadmap"
+  | "portfolio_comparison";
+
+export interface AvaCxoQualityFinding {
+  code: string;
+  severity: "error" | "warning";
+  message: string;
+  field?: string;
+}
+
+export interface AvaCxoQuality {
+  mode: AvaCxoAnswerMode;
+  score: number;
+  passed: boolean;
+  findings: AvaCxoQualityFinding[];
 }
 
 export interface AvaAnswerSafety {

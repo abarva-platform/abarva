@@ -177,6 +177,12 @@ describe("AgentAnswerRenderer", () => {
         evidenceStrength: "partial",
         tenantGrounding: "partial",
         answerCompleteness: "complete",
+        cxo: {
+          mode: "risk_control",
+          score: 92,
+          passed: true,
+          findings: [],
+        },
       },
       safety: {
         tenantFencePassed: true,
@@ -189,6 +195,9 @@ describe("AgentAnswerRenderer", () => {
     render(<AgentAnswerRenderer answer={answer} />);
 
     expect(screen.getByText("Graphs")).toBeInTheDocument();
+    expect(screen.getByText("risk control · 92")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export HTML" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export PDF" })).toBeInTheDocument();
     expect(screen.getByText("Dependency graph")).toBeInTheDocument();
     expect(screen.getByText("2 nodes · 1 links")).toBeInTheDocument();
     expect(screen.getByLabelText("Dependency graph")).toBeInTheDocument();

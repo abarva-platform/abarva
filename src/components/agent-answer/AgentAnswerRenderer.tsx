@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import * as SvgCharts from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { builderForChartKind } from "@/lib/intelligence/answer/chart-kind-builders";
@@ -26,6 +28,11 @@ const CSS = `
 .agentAnswer .aaKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.08em;color:var(--aa-green);font-weight:700}
 .agentAnswer .aaMeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .agentAnswer .aaPill{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:999px;padding:3px 9px;font-size:12px;color:var(--aa-muted);background:var(--aa-paper)}
+.agentAnswer .aaActions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.agentAnswer .aaExportButton{appearance:none;border:1px solid var(--aa-line);border-radius:6px;background:var(--aa-paper);color:var(--aa-ink);cursor:pointer;font-size:12px;font-weight:650;padding:7px 10px}
+.agentAnswer .aaExportButton:hover{border-color:#9ca3af;background:#f3f4f6}
+.agentAnswer .aaExportButton:disabled{cursor:not-allowed;opacity:.55}
+.agentAnswer .aaExportStatus{font-size:12px;color:var(--aa-muted);min-width:68px;text-align:right}
 .agentAnswer .aaProse{font-size:14px;line-height:1.65}
 .agentAnswer .aaSection{display:grid;gap:12px}
 .agentAnswer .aaTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aa-muted);font-weight:700}
@@ -300,6 +307,75 @@ function alignmentClass(column: AnswerTableColumn): string {
   return "";
 }
 
+type ExportFormat = "html" | "pdf";
+
+async function downloadAnswerExport(
+  answer: AvaAnswerPacket,
+  format: ExportFormat,
+) {
+  const response = await fetch("/api/intelligence/ask/export", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ answer, format }),
+  });
+  if (!response.ok) {
+    throw new Error(`Export failed (${response.status})`);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const filename =
+    disposition.match(/filename="([^"]+)"/)?.[1] ??
+    `ava-answer.${format}`;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function ExportActions({ answer }: { answer: AvaAnswerPacket }) {
+  const [pending, setPending] = useState<ExportFormat | null>(null);
+  const [status, setStatus] = useState<string>("");
+
+  async function run(format: ExportFormat) {
+    setPending(format);
+    setStatus("");
+    try {
+      await downloadAnswerExport(answer, format);
+      setStatus("Ready");
+    } catch {
+      setStatus("Failed");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  return (
+    <div className="aaActions" aria-label="Export answer">
+      <button
+        className="aaExportButton"
+        disabled={pending !== null}
+        onClick={() => void run("html")}
+        type="button"
+      >
+        {pending === "html" ? "Preparing..." : "Export HTML"}
+      </button>
+      <button
+        className="aaExportButton"
+        disabled={pending !== null}
+        onClick={() => void run("pdf")}
+        type="button"
+      >
+        {pending === "pdf" ? "Preparing..." : "Export PDF"}
+      </button>
+      {status ? <span className="aaExportStatus">{status}</span> : null}
+    </div>
+  );
+}
+
 export function DataTable({
   table,
   citations = [],
@@ -501,10 +577,12 @@ export function AgentAnswerRenderer({
   answer,
   showChrome = true,
   showProse = true,
+  showExport = true,
 }: {
   answer: AvaAnswerPacket;
   showChrome?: boolean;
   showProse?: boolean;
+  showExport?: boolean;
 }) {
   const displayAnswer = sanitizeAvaAnswerForRender(answer);
   const visibleArtifacts = displayAnswer.artifacts.filter(isVisibleAvaArtifact);
@@ -535,8 +613,15 @@ export function AgentAnswerRenderer({
               <span className="aaPill">
                 {displayAnswer.quality.confidence} confidence
               </span>
+              {displayAnswer.quality.cxo ? (
+                <span className="aaPill">
+                  {displayAnswer.quality.cxo.mode.replace(/_/g, " ")} ·{" "}
+                  {displayAnswer.quality.cxo.score}
+                </span>
+              ) : null}
             </div>
           </div>
+          {showExport ? <ExportActions answer={displayAnswer} /> : null}
         </header>
       ) : null}
 
