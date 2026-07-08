@@ -87,9 +87,17 @@ export type FeatureFlagKey =
   | "deliverable_structured_exhibits"
   | "deliverable_quality_contract"
   | "intelligence_companion_canvas"
-  | "moves_phase_workspace_v2";
+  | "moves_phase_workspace_v2"
+  | "moves_pattern_assembly";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "moves_pattern_assembly",
+    summary:
+      "Moves phase workspace: AbarVa assembles candidate solution options/tradeoffs/risks via Claude (audited egress) from a governed packet, then validates each item (evidence_backed / needs_confirmation / not_allowed). Claude never invents baselines, value, evidence, readiness, or approvals — the validator labels any unbacked number needs_confirmation and any overreach not_allowed; on error it falls back to the deterministic feed-forward. Requires moves_phase_workspace_v2 + ANTHROPIC_API_KEY. Tenant opt-in; default off. Env: ABARVA_FEATURE_MOVES_PATTERN_ASSEMBLY_TENANTS.",
+    policy: "tenant",
+    includeTenants: ["lakeshore"],
+  },
   {
     key: "moves_phase_workspace_v2",
     summary:

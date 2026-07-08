@@ -43,6 +43,8 @@ import {
   type FeedForwardSignals,
   type MovePhaseCode,
   type MoveTemplateUploadClassification,
+  type PatternAssemblyPacket,
+  type ValidatedPatternItem,
   type WhatChangedResult,
 } from "@/lib/programs/phase-templates";
 import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
@@ -2162,6 +2164,83 @@ export function StrategicMovePhaseClient({
     }).catch(() => {});
   }, [ffSignals, nextPhaseLabelFF, phaseNum, move.id, templateUpload, whatChanged]);
 
+  // Pattern Assembly (increment 12): AbarVa builds a governed packet from THIS
+  // Move's real data, Claude assembles options/tradeoffs/risks via the audited
+  // egress, AbarVa validates each item. Flag-gated; on failure the deterministic
+  // feed-forward stands (no items). Claude never sources numbers.
+  const patternAssemblyOn = useFeature("moves_pattern_assembly");
+  const [assembledItems, setAssembledItems] = useState<ValidatedPatternItem[]>([]);
+  const [assembling, setAssembling] = useState(false);
+  const onAssemble = useCallback(() => {
+    const code = ({ 2: "P2", 3: "P3", 4: "P4", 5: "P5" } as Record<
+      number,
+      MovePhaseCode
+    >)[phaseNum];
+    if (!code) return;
+    const cov = readiness?.coverageScore ?? null;
+    const controlGaps = (readiness?.hardGaps ?? []).filter((g) =>
+      /approv|control|privileg|complian|legal|indemnit/i.test(g),
+    );
+    const packet: PatternAssemblyPacket = {
+      moveId: move.id,
+      moveName: move.name,
+      industry: move.tenant?.name ?? "",
+      function: "",
+      phase: code,
+      approvedPriorFindings: approvedInputsPack?.pack.carriesForward ?? [],
+      currentUploadedEvidence: evidenceNeedPackets
+        .filter((p) => p.status === "covered" || p.status === "waived")
+        .map((p) =>
+          p.evidenceSlot.replace(/[_-]+/g, " ").replace(/^\w/, (c) => c.toUpperCase()),
+        ),
+      selectedBuildingBlocks: [],
+      readiness: {
+        data:
+          cov == null
+            ? "low"
+            : cov >= 75
+              ? "high"
+              : cov >= 50
+                ? "medium"
+                : cov >= 25
+                  ? "medium-low"
+                  : "low",
+        control: "medium-low",
+        evaluation: "low",
+      },
+      readinessGaps: readiness?.hardGaps ?? [],
+      controlConstraints: [
+        ...controlGaps,
+        "Human approval required for high-control decisions",
+      ],
+      valueProofLevel: "directional",
+      missingInputs: readiness?.softGaps ?? [],
+      requiredOutputs: ["Solution options", "Tradeoffs", "Risks"],
+    };
+    setAssembling(true);
+    setAssembledItems([]);
+    void fetch(`/api/programs/workspace/${move.id}/assemble-pattern`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ packet }),
+    })
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((d) =>
+        setAssembledItems(Array.isArray(d?.items) ? (d.items as ValidatedPatternItem[]) : []),
+      )
+      .catch(() => setAssembledItems([]))
+      .finally(() => setAssembling(false));
+  }, [
+    phaseNum,
+    move.id,
+    move.name,
+    move.tenant,
+    readiness,
+    evidenceNeedPackets,
+    approvedInputsPack,
+  ]);
+
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
       id: "nexus-open-p" + phaseNum,
@@ -2575,6 +2654,9 @@ export function StrategicMovePhaseClient({
               changesConfirmed={changesConfirmed}
               approvedPack={approvedInputsPack?.pack ?? null}
               approvedPackOnLabel={approvedInputsPack?.approvedOnLabel}
+              onAssemble={patternAssemblyOn && isCurrentPhase ? onAssemble : undefined}
+              assembledItems={assembledItems}
+              assembling={assembling}
             />
           )}
           {useWorkbench ? (

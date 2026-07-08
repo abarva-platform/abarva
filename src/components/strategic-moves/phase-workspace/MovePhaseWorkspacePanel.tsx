@@ -22,6 +22,7 @@ import {
 } from '../../../lib/programs/phase-templates/feed-forward';
 import type { WhatChangedResult } from '../../../lib/programs/phase-templates/what-changed';
 import type { ApprovedInputsPack } from '../../../lib/programs/phase-templates/approved-inputs-pack';
+import type { ValidatedPatternItem } from '../../../lib/programs/phase-templates/types';
 import {
   PhaseCompletionGuideCard,
   PhaseTemplatesAndSessionsCard,
@@ -31,6 +32,7 @@ import { PhaseTaskChecklist } from './PhaseTaskChecklist';
 import { NextPhaseFeedForwardCard } from './NextPhaseFeedForwardCard';
 import { WhatChangedCard } from './WhatChangedCard';
 import { ApprovedInputsPackCard } from './ApprovedInputsPackCard';
+import { AssembledPatternCard } from './AssembledPatternCard';
 import { PhaseWorkspaceStyles } from './styles';
 
 /** App numeric phase → governed catalog phase code. Only P2-P5 have templates. */
@@ -63,6 +65,9 @@ export function MovePhaseWorkspacePanel({
   changesConfirmed,
   approvedPack,
   approvedPackOnLabel,
+  onAssemble,
+  assembledItems = [],
+  assembling = false,
 }: {
   phaseNum: number;
   /** The app's own phase label (e.g. "P2 · Discover"), kept authoritative. */
@@ -96,6 +101,12 @@ export function MovePhaseWorkspacePanel({
   approvedPack?: ApprovedInputsPack | null;
   /** Human-formatted approval date for the inherited pack. */
   approvedPackOnLabel?: string;
+  /** Trigger the governed Claude pattern-assembly (undefined = feature off). */
+  onAssemble?: () => void;
+  /** Validated assembly output (labeled by AbarVa). */
+  assembledItems?: ValidatedPatternItem[];
+  /** True while the assembly request is in flight. */
+  assembling?: boolean;
 }): React.ReactElement | null {
   const code = PHASE_NUM_TO_CODE[phaseNum];
   if (!code) return null; // Originate/Charter (0/1) have no session catalog yet.
@@ -125,6 +136,24 @@ export function MovePhaseWorkspacePanel({
         {feedForwardPack && !feedForwardPack.isBlank ? (
           <NextPhaseFeedForwardCard pack={feedForwardPack} />
         ) : null}
+        {onAssemble ? (
+          <div className="pw-card" style={{ gap: 10 }}>
+            <div className="pw-card-head">
+              <span className="pw-kicker">Assemble options</span>
+              <h3 className="pw-title serif">Let AbarVa assemble solution options</h3>
+              <span className="pw-note">
+                AbarVa composes candidate options, tradeoffs, and risks from your evidence and labels
+                each one. Numbers stay from your evidence — nothing is invented.
+              </span>
+            </div>
+            <div>
+              <button type="button" className="pw-dl-btn" onClick={onAssemble} disabled={assembling}>
+                {assembling ? 'Assembling…' : '✦ Assemble options'}
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {assembledItems.length > 0 ? <AssembledPatternCard items={assembledItems} /> : null}
         <PhaseTemplatesAndSessionsCard templates={templates} />
         {onUploadCompletedTemplate ? (
           <div className="pw-card" style={{ gap: 10 }}>
