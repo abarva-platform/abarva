@@ -16,7 +16,9 @@ import {
 import { PhaseWorkspaceComposition } from '../PhaseWorkspaceComposition';
 import { MovePhaseWorkspacePanel } from '../MovePhaseWorkspacePanel';
 import { PhaseTaskChecklist } from '../PhaseTaskChecklist';
+import { NextPhaseFeedForwardCard } from '../NextPhaseFeedForwardCard';
 import { buildPhaseWorkflow } from '../../../../lib/programs/phase-templates/phase-workflow';
+import { buildFeedForwardPack } from '../../../../lib/programs/phase-templates/feed-forward';
 
 const F = LAKESHORE_LEGAL_DEMO_FIXTURE;
 const render = (el: React.ReactElement) => renderToStaticMarkup(el);
@@ -175,6 +177,54 @@ describe('phase task checklist (increment 4) — Stripe-style, real-signal', () 
     // evidence + gate (not done, not locked) → buttons; advance (locked) → hint
     expect((html.match(/<button/g) ?? []).length).toBe(2);
     expect(html).toContain('pw-task-hint'); // the locked advance task
+  });
+});
+
+describe('feed-forward card (increment 6) — real current-state carried forward', () => {
+  const pack = buildFeedForwardPack(2, 'P3 Choose the Approach', {
+    whereToStart: 'Start with data governance.',
+    gaps: [{ capability: 'Data ownership model', severity: 'foundational' }],
+    hardGaps: ['System of record unconfirmed'],
+    softGaps: ['Data owner not named'],
+    missingEvidence: ['Baseline metrics'],
+    coverageScore: 62,
+    controlConstraints: ['Attorney approval for non-standard terms'],
+  });
+
+  it('renders the "Prepared for" headline, carry-forward bullets, and named sections', () => {
+    const html = render(<NextPhaseFeedForwardCard pack={pack} />);
+    expect(html).toContain('Prepared for P3 Choose the Approach');
+    expect(html).toContain('AbarVa will carry forward');
+    expect(html).toContain('Design inputs');
+    expect(html).toContain('Data ownership model');
+    expect(html).toContain('Evidence gaps');
+    expect(html).toContain('Baseline metrics');
+    expect(html).toContain('Recommended P3 Choose the Approach focus');
+  });
+
+  it('unpopulated sections render "Needs confirmation", never fabricated', () => {
+    const sparse = buildFeedForwardPack(3, 'P4 Build the Plan', {}); // no approach/workstreams
+    const html = render(<NextPhaseFeedForwardCard pack={sparse} />);
+    expect(html).toContain('Selected approach');
+    expect(html).toContain('Needs confirmation');
+  });
+
+  it('panel shows the feed-forward card when real signals are present', () => {
+    const withFF = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={2}
+        phaseLabel="P2 · Discover"
+        nextPhaseLabel="P3 Choose the Approach"
+        feedForward={{
+          gaps: [{ capability: 'Data ownership model', severity: 'foundational' }],
+          hardGaps: ['System of record unconfirmed'],
+          softGaps: [],
+          missingEvidence: [],
+          coverageScore: 50,
+        }}
+      />,
+    );
+    expect(withFF).toContain('Prepared for P3 Choose the Approach');
   });
 });
 

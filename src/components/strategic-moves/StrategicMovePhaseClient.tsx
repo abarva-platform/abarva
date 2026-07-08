@@ -2403,6 +2403,36 @@ export function StrategicMovePhaseClient({
                     }))
                   : []
               }
+              feedForward={
+                isCurrentPhase
+                  ? {
+                      whereToStart: recommendation?.whereToStart ?? null,
+                      maturity: (recommendation?.maturity ?? []).map((m) => ({
+                        label: m.label,
+                        score: m.score,
+                      })),
+                      gaps: (recommendation?.gaps ?? []).map((g) => ({
+                        capability: g.capability,
+                        severity: g.severity,
+                      })),
+                      hardGaps: readiness?.hardGaps ?? [],
+                      softGaps: readiness?.softGaps ?? [],
+                      coverageScore: readiness?.coverageScore ?? null,
+                      missingEvidence: evidenceNeedPackets
+                        .filter(
+                          (p) => p.status === "missing" || p.status === "partial",
+                        )
+                        .map((p) =>
+                          p.evidenceSlot
+                            .replace(/[_-]+/g, " ")
+                            .replace(/^\w/, (c) => c.toUpperCase()),
+                        ),
+                      openGateCriteria: move.gateCriteria
+                        .filter((g) => !g.completed)
+                        .map((g) => g.label),
+                    }
+                  : undefined
+              }
               onTaskAction={focusWorkspaceControls}
             />
           )}

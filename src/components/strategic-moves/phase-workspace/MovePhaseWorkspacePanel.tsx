@@ -13,8 +13,13 @@ import {
   type PhaseGateSignal,
   type PhaseTask,
 } from '../../../lib/programs/phase-templates/phase-workflow';
+import {
+  buildFeedForwardPack,
+  type FeedForwardSignals,
+} from '../../../lib/programs/phase-templates/feed-forward';
 import { PhaseCompletionGuideCard, PhaseTemplatesAndSessionsCard } from './cards';
 import { PhaseTaskChecklist } from './PhaseTaskChecklist';
+import { NextPhaseFeedForwardCard } from './NextPhaseFeedForwardCard';
 import { PhaseWorkspaceStyles } from './styles';
 
 /** App numeric phase → governed catalog phase code. Only P2-P5 have templates. */
@@ -37,6 +42,7 @@ export function MovePhaseWorkspacePanel({
   nextPhaseLabel = null,
   evidence = [],
   gate = [],
+  feedForward,
   onTaskAction,
 }: {
   phaseNum: number;
@@ -48,6 +54,8 @@ export function MovePhaseWorkspacePanel({
   evidence?: PhaseEvidenceSignal[];
   /** REAL gate criteria (structural subset of move.gateCriteria). */
   gate?: PhaseGateSignal[];
+  /** REAL current-state intelligence to feed forward (maturity/gaps/readiness/evidence/gate). */
+  feedForward?: FeedForwardSignals;
   /**
    * Wire a checklist task's action to the host. The checklist NEVER commits —
    * this only navigates the user to the host's own controls (single write path).
@@ -64,6 +72,10 @@ export function MovePhaseWorkspacePanel({
     ? buildPhaseWorkflow({ phaseLabel, nextPhaseLabel, evidence, gate })
     : null;
 
+  const feedForwardPack = feedForward
+    ? buildFeedForwardPack(phaseNum, nextPhaseLabel ?? 'the next phase', feedForward)
+    : null;
+
   return (
     <div className="pw" id="move-phase-workspace-v2" data-testid="move-phase-workspace-v2">
       <PhaseWorkspaceStyles />
@@ -72,6 +84,9 @@ export function MovePhaseWorkspacePanel({
           <PhaseTaskChecklist phaseLabel={phaseLabel} workflow={workflow} onAction={onTaskAction} />
         ) : null}
         <PhaseCompletionGuideCard phaseLabel={phaseLabel} templates={templates} steps={PHASE_STEPS} />
+        {feedForwardPack && !feedForwardPack.isBlank ? (
+          <NextPhaseFeedForwardCard pack={feedForwardPack} />
+        ) : null}
         <PhaseTemplatesAndSessionsCard templates={templates} />
       </div>
     </div>
