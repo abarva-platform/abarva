@@ -123,6 +123,16 @@ import {
   getStagePack,
   formatStagePackForPrompt,
 } from "@/lib/source/stage-packs";
+// Source aVa deterministic grounding + quote-not-compute guard (flag-gated).
+// When `source_analytics` is ON for the tenant AND the chat surface carries a
+// Source event id, we ground aVa in the SAME deterministic value numbers the
+// canvas renders (readEventFacts → buildStepInsight / value bridge) and forbid it
+// from computing or contradicting a number. Additive: never called otherwise.
+import {
+  buildAvaSourceGrounding,
+  AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD,
+} from "@/lib/source/facts/view/ava-grounding-context";
+import { getSourcingEvent } from "@/lib/source/queries";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
 import { getStageVoiceDepth } from "@/lib/source/stage-voice-depth";
@@ -1098,6 +1108,69 @@ export async function POST(request: Request) {
     }
   }
 
+  // ── aVa DETERMINISTIC GROUNDING · Source event (flag-gated, additive) ────────
+  //
+  // The Source product is deterministic: `source_event_facts` + the archetype
+  // value-lever math own every number, and the canvas renders the computed
+  // StepInsight / value bridge from them. Without grounding, aVa answers a value
+  // question ("what's my value at stake?") from the LLM's own reasoning and can
+  // emit a figure that CONTRADICTS the canvas ($46M–$65M) — destroying trust in
+  // the whole deterministic design. Here we wire the missing `sourceEventId`: when
+  // `source_analytics` is ON for the tenant AND the chat surface carries a Source
+  // event id, we run the SAME builders the canvas call-site runs and inject their
+  // exact numbers plus a QUOTE-NOT-COMPUTE guard. When the flag is OFF or no
+  // event id is present, nothing here runs and the chat behaves exactly as before.
+  let sourceAvaGroundingBlock = "";
+  let sourceAvaQuoteNotComputeGuard = "";
+  const sourceEventIdFromContext =
+    typeof surfaceContext.sourceEventId === "string" &&
+    surfaceContext.sourceEventId.trim()
+      ? surfaceContext.sourceEventId.trim()
+      : null;
+  const sourceAnalyticsGroundingEnabled = isFeatureEnabled(
+    { clientKey: activeClientKey ?? null, clientId: activeClient?.id ?? null },
+    "source_analytics",
+  );
+  if (
+    sourceAnalyticsGroundingEnabled &&
+    sourceEventIdFromContext &&
+    activeClientKey
+  ) {
+    try {
+      // Resolve the value-at-stake baseline + viewing stage exactly as the canvas
+      // page does (getSourcingEvent → valueAtStakeUsd / currentStageKey). eventType
+      // is left unset so the archetype resolves the same way the canvas does (the
+      // first archetype carrying value-lever rules — today AMS).
+      const groundingEvent = await getSourcingEvent(
+        sourceEventIdFromContext,
+      ).catch(() => null);
+      const viewStageFromContext =
+        typeof surfaceContext.viewStage === "string" &&
+        surfaceContext.viewStage.trim()
+          ? surfaceContext.viewStage.trim()
+          : (groundingEvent?.currentStageKey ?? null);
+      const grounding = await buildAvaSourceGrounding({
+        eventId: sourceEventIdFromContext,
+        clientKey: activeClientKey,
+        stageKey: viewStageFromContext,
+        baselineAmount: groundingEvent?.valueAtStakeUsd ?? null,
+        eventType: null,
+      });
+      if (grounding.block) {
+        sourceAvaGroundingBlock = grounding.block;
+        // The guard rides WITH a grounding block so the model is told to quote the
+        // numbers above and never compute new ones. We attach it whenever grounding
+        // is active so the "not computed yet" honesty path is governed too.
+        sourceAvaQuoteNotComputeGuard = AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD;
+      }
+    } catch {
+      // Grounding is best-effort: a failure here must never break the chat turn.
+      // aVa falls back to its existing (ungrounded) behavior for this event.
+      sourceAvaGroundingBlock = "";
+      sourceAvaQuoteNotComputeGuard = "";
+    }
+  }
+
   // OV2-WIRE-AND-FM-PROMPT Part 1 — failure-mode catalog block. Universal
   // across all Programs surfaces (`/programs*`, `/demo/programs*`, `/tower*`).
   // Empty string elsewhere; the prompt-array filter strips it cleanly.
@@ -1258,6 +1331,13 @@ export async function POST(request: Request) {
     "",
     sourceTenantContextBlock,
     "",
+    // aVa DETERMINISTIC GROUNDING · authoritative value numbers for the active
+    // Source event (flag-gated). Positioned with the source tenant context so aVa
+    // reads the deterministic value bridge / lever numbers BEFORE reasoning. Empty
+    // string when the flag is off or no event id is present — the join-filter
+    // strips it and the chat is unchanged.
+    sourceAvaGroundingBlock,
+    "",
     tenantTechnologyContextBlock,
     "",
     privateDataPlaneBlock,
@@ -1305,6 +1385,10 @@ export async function POST(request: Request) {
     stagePlaybook ? `\nCurrent stage guidance:\n${stagePlaybook}` : "",
     "",
     "Response guidelines:",
+    // aVa QUOTE-NOT-COMPUTE guard for a grounded Source event (flag-gated). Placed
+    // first in the response guidelines so the value-number discipline governs the
+    // whole reply. Empty string when grounding is not active — join-filter strips.
+    sourceAvaQuoteNotComputeGuard,
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
     "- If current-state context is present, use it before demo fallback context. If a persisted program/Move row, page context, broker block, or context-bundle receipt conflicts with demo context, trust the persisted/current context and say the older demo fallback appears stale.",
@@ -1410,7 +1494,20 @@ export async function POST(request: Request) {
   // /programs/new the agent gets `commit_program`; other surfaces get
   // an empty tool list and the loop degenerates to a single text turn.
 
-  const tools = getRelevantTools(surface);
+  const relevantTools = getRelevantTools(surface);
+  // READ-ONLY on a grounded Source event. The only write tool that can register on
+  // a Source event dock (`surface="source-detail"`) is `commit_source_event`, which
+  // creates a BRAND-NEW sourcing event. No tool can write source_event_facts,
+  // approve a gate, or advance a stage — those capabilities are human-driven in the
+  // deterministic workflow (the "no Build buttons" principle). When aVa is grounded
+  // on an EXISTING event, we additionally suppress `commit_source_event` so aVa
+  // cannot spin up a new event mid-conversation on this event's page. This is
+  // strictly additive: it only removes a create-new-event power while grounding is
+  // active; every other surface's tool set is unchanged.
+  const tools =
+    sourceAvaGroundingBlock !== ""
+      ? relevantTools.filter((tool) => tool.name !== "commit_source_event")
+      : relevantTools;
   const toolNames = new Set(tools.map((tool) => tool.name));
   const selectedInitialToolChoice = selectInitialDeliverableToolChoice(
     surface,
