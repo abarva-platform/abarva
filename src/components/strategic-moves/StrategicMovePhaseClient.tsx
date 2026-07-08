@@ -2007,6 +2007,17 @@ export function StrategicMovePhaseClient({
     window.location.assign(`/strategic-moves/${move.id}?tab=cabinet`);
   }, [move.id]);
 
+  // Phase-workspace v2 checklist actions: NEVER commit — just scroll the user to
+  // the workspace controls below the panel (evidence upload + gate live there),
+  // preserving the single write path. See phase-workspace/PhaseTaskChecklist.
+  const focusWorkspaceControls = useCallback(() => {
+    requestAnimationFrame(() => {
+      document
+        .getElementById("move-phase-workspace-v2")
+        ?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+  }, []);
+
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
       id: "nexus-open-p" + phaseNum,
@@ -2392,6 +2403,7 @@ export function StrategicMovePhaseClient({
                     }))
                   : []
               }
+              onTaskAction={focusWorkspaceControls}
             />
           )}
           {useWorkbench ? (
