@@ -6,7 +6,10 @@
 
 import * as React from 'react';
 import { templatesForPhase } from '../../../lib/programs/phase-templates/catalog';
-import type { MovePhaseCode } from '../../../lib/programs/phase-templates/types';
+import type {
+  MovePhaseCode,
+  MoveTemplateUploadClassification,
+} from '../../../lib/programs/phase-templates/types';
 import {
   buildPhaseWorkflow,
   type PhaseEvidenceSignal,
@@ -17,7 +20,11 @@ import {
   buildFeedForwardPack,
   type FeedForwardSignals,
 } from '../../../lib/programs/phase-templates/feed-forward';
-import { PhaseCompletionGuideCard, PhaseTemplatesAndSessionsCard } from './cards';
+import {
+  PhaseCompletionGuideCard,
+  PhaseTemplatesAndSessionsCard,
+  UploadMappingSummaryCard,
+} from './cards';
 import { PhaseTaskChecklist } from './PhaseTaskChecklist';
 import { NextPhaseFeedForwardCard } from './NextPhaseFeedForwardCard';
 import { PhaseWorkspaceStyles } from './styles';
@@ -44,6 +51,8 @@ export function MovePhaseWorkspacePanel({
   gate = [],
   feedForward,
   onTaskAction,
+  uploadClassification,
+  onUploadCompletedTemplate,
 }: {
   phaseNum: number;
   /** The app's own phase label (e.g. "P2 · Discover"), kept authoritative. */
@@ -61,6 +70,10 @@ export function MovePhaseWorkspacePanel({
    * this only navigates the user to the host's own controls (single write path).
    */
   onTaskAction?: (taskId: PhaseTask['id']) => void;
+  /** The most recent completed-template upload classification, if any. */
+  uploadClassification?: MoveTemplateUploadClassification | null;
+  /** Trigger the host's completed-template file picker (host runs classifyUpload). */
+  onUploadCompletedTemplate?: () => void;
 }): React.ReactElement | null {
   const code = PHASE_NUM_TO_CODE[phaseNum];
   if (!code) return null; // Originate/Charter (0/1) have no session catalog yet.
@@ -88,6 +101,26 @@ export function MovePhaseWorkspacePanel({
           <NextPhaseFeedForwardCard pack={feedForwardPack} />
         ) : null}
         <PhaseTemplatesAndSessionsCard templates={templates} />
+        {onUploadCompletedTemplate ? (
+          <div className="pw-card" style={{ gap: 10 }}>
+            <div className="pw-card-head">
+              <span className="pw-kicker">Upload</span>
+              <h3 className="pw-title serif">Upload a completed template</h3>
+              <span className="pw-note">
+                AbarVa reads it, maps what it finds to your solution lanes, and prepares the next
+                phase. It stays in this Move.
+              </span>
+            </div>
+            <div>
+              <button type="button" className="pw-dl-btn" onClick={onUploadCompletedTemplate}>
+                ↑ Upload completed template
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {uploadClassification ? (
+          <UploadMappingSummaryCard classification={uploadClassification} />
+        ) : null}
       </div>
     </div>
   );
