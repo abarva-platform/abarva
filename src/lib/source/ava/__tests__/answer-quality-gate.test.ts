@@ -117,6 +117,75 @@ describe("runSourceAnswerQualityGate — matches_workflow_state consistency chec
     const check = result.checks.find((c) => c.id === "matches_workflow_state");
     expect(check?.passed).toBe(true);
   });
+
+  // REGRESSION: live invariant violation — aVa answered "0 of 1 tasks
+  // complete" / gate unmet for a question about the RFP stage's finality
+  // while the grounding block (built from the SAME read-once facts as the
+  // canvas) actually showed "1 of 1" / gate met. Even with a CORRECT
+  // grounding block in hand, a model could still ignore it and restate a
+  // stale/invented count — this hardens the gate to catch that specific
+  // numeric-contradiction class and repair it before shipping, independent
+  // of whether the root cause is a bad grounding builder or a model that
+  // ignored a good one.
+  it("detects the contradiction (triggers repair) when the answer states a task-count that contradicts the grounding block's own count", () => {
+    // This is the EXACT text from the live bug report. The gate's FIRST pass
+    // must detect the contradiction (proven here via `repaired === true` and
+    // the corrected final text) — asserting on `result.checks` directly would
+    // only show the POST-repair (already-corrected, passing) state, since
+    // `runSourceAnswerQualityGate` returns the repaired checks once a repair
+    // pass runs successfully.
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "The current stage gate shows 0 of 1 tasks complete. Right now all 6 are still exposed. Next step: confirm RFP clause coverage across all 6 value levers before the stage gate clears.",
+      mode: "general_advisory",
+      hasGroundingContext: true,
+      groundingFacts: {
+        currentStageLabel: "RFP",
+        taskChecklistDone: "1",
+        taskChecklistTotal: "1",
+      },
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText).toContain("1 of 1 tasks complete");
+    expect(result.finalText).not.toContain("0 of 1 tasks complete");
+    expect(result.unresolvedChecks).not.toContain("matches_workflow_state");
+    // The final (post-repair) check now legitimately passes, because the
+    // repair corrected the contradiction rather than leaving it in place.
+    const check = result.checks.find((c) => c.id === "matches_workflow_state");
+    expect(check?.passed).toBe(true);
+  });
+
+  it("repairs a contradicting task-count claim to the grounding block's own count", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "The current stage gate shows 0 of 1 tasks complete.",
+      mode: "general_advisory",
+      hasGroundingContext: true,
+      groundingFacts: {
+        currentStageLabel: "RFP",
+        taskChecklistDone: "1",
+        taskChecklistTotal: "1",
+      },
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText).toContain("1 of 1 tasks complete");
+    expect(result.finalText).not.toContain("0 of 1 tasks complete");
+  });
+
+  it("passes when the answer's task-count matches the grounding block's own count", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "The current stage gate shows 1 of 1 tasks complete. Next step: review the gate confirms.",
+      mode: "general_advisory",
+      hasGroundingContext: true,
+      groundingFacts: {
+        currentStageLabel: "RFP",
+        taskChecklistDone: "1",
+        taskChecklistTotal: "1",
+      },
+    });
+    const check = result.checks.find((c) => c.id === "matches_workflow_state");
+    expect(check?.passed).toBe(true);
+  });
 });
 
 describe("runSourceAnswerQualityGate — gap/caveat requirement for incomplete evidence", () => {
