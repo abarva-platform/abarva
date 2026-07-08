@@ -307,8 +307,108 @@ function renderChartBody(
   return null;
 }
 
+function ChartLightbox({
+  hint,
+  onClose,
+}: {
+  hint: ChartHint;
+  onClose: () => void;
+}) {
+  const { title, subtitle, unit = "", note } = hint;
+  const fmtVal = (v: unknown) => (unit ? `${unit}${String(v)}` : String(v));
+  const chartH =
+    hint.type === "horizontal-bar"
+      ? Math.max(260, hint.data.length * 38)
+      : hint.type === "pie"
+        ? 320
+        : 340;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title ?? "Chart"}
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(10,18,40,0.55)",
+        zIndex: 9000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#FAFAF8",
+          borderRadius: 12,
+          padding: "24px 28px 18px",
+          width: "min(860px, 92vw)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.28)",
+          position: "relative",
+        }}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close chart"
+          style={{
+            position: "absolute",
+            top: 14,
+            right: 14,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            color: "#6d675f",
+            fontSize: 18,
+            lineHeight: 1,
+          }}
+        >
+          ✕
+        </button>
+        {title && (
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#161411",
+              marginBottom: subtitle ? 3 : 14,
+            }}
+          >
+            {title}
+          </div>
+        )}
+        {subtitle && (
+          <div style={{ fontSize: 11, color: "#6d675f", marginBottom: 14 }}>
+            {subtitle}
+          </div>
+        )}
+        <div style={{ height: chartH }}>{renderChartBody(hint, fmtVal)}</div>
+        {note && (
+          <div style={{ fontSize: 10, color: "#8d8680", marginTop: 10 }}>
+            {note}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+ChartLightbox.displayName = "ChartLightbox";
+
 function InlineChart({ raw }: { raw: string }) {
   const [mounted, setMounted] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -331,43 +431,70 @@ function InlineChart({ raw }: { raw: string }) {
         : 190;
 
   return (
-    <div
-      style={{
-        margin: "10px 0",
-        background: "rgba(12,26,58,0.02)",
-        border: "1px solid rgba(12,26,58,0.1)",
-        borderRadius: 8,
-        padding: "12px 12px 8px",
-        overflow: "hidden",
-      }}
-    >
-      {title && (
-        <div
+    <>
+      {expanded && mounted && (
+        <ChartLightbox hint={hint} onClose={() => setExpanded(false)} />
+      )}
+      <div
+        style={{
+          margin: "10px 0",
+          background: "rgba(12,26,58,0.02)",
+          border: "1px solid rgba(12,26,58,0.1)",
+          borderRadius: 8,
+          padding: "12px 12px 8px",
+          overflow: "hidden",
+          position: "relative",
+        }}
+      >
+        <button
+          onClick={() => setExpanded(true)}
+          aria-label="Expand chart"
+          title="Expand chart"
           style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "#161411",
-            marginBottom: subtitle ? 2 : 8,
-            lineHeight: 1.3,
+            position: "absolute",
+            top: 8,
+            right: 8,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 3,
+            color: "#8d8680",
+            fontSize: 13,
+            lineHeight: 1,
+            opacity: 0.7,
           }}
         >
-          {title}
+          ⤢
+        </button>
+        {title && (
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#161411",
+              marginBottom: subtitle ? 2 : 8,
+              lineHeight: 1.3,
+              paddingRight: 20,
+            }}
+          >
+            {title}
+          </div>
+        )}
+        {subtitle && (
+          <div style={{ fontSize: 10, color: "#6d675f", marginBottom: 8 }}>
+            {subtitle}
+          </div>
+        )}
+        <div style={{ height: mounted ? chartH : 0 }}>
+          {mounted && renderChartBody(hint, fmtVal)}
         </div>
-      )}
-      {subtitle && (
-        <div style={{ fontSize: 10, color: "#6d675f", marginBottom: 8 }}>
-          {subtitle}
-        </div>
-      )}
-      <div style={{ height: mounted ? chartH : 0 }}>
-        {mounted && renderChartBody(hint, fmtVal)}
+        {note && (
+          <div style={{ fontSize: 10, color: "#8d8680", marginTop: 6 }}>
+            {note}
+          </div>
+        )}
       </div>
-      {note && (
-        <div style={{ fontSize: 10, color: "#8d8680", marginTop: 6 }}>
-          {note}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 InlineChart.displayName = "InlineChart";

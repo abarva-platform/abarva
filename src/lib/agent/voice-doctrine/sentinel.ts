@@ -17,10 +17,11 @@
  * staging-only rollout until the founder signs off.
  */
 
-import type { BrokerMode } from '@/lib/knowledge/context-broker/types';
+import type { BrokerMode } from "@/lib/knowledge/context-broker/types";
+import { CHART_OUTPUT_CONTRACT } from "@/lib/intelligence/ask/response-policy";
 
 export const SENTINEL_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-15a',
+  voice: "0.draft.2026-05-15a",
   worldviewAddendum: 1,
   refusalTriggers: 1,
 } as const;
@@ -30,16 +31,16 @@ export function getSentinelDoctrineVersionString(): string {
     `voice=${SENTINEL_DOCTRINE_VERSION.voice}`,
     `wv=${SENTINEL_DOCTRINE_VERSION.worldviewAddendum}`,
     `refusal=${SENTINEL_DOCTRINE_VERSION.refusalTriggers}`,
-  ].join('; ');
+  ].join("; ");
 }
 
 export const SURFACE_WORD_CAPS: Readonly<Record<string, number>> = {
-  '/intelligence': 120,
-  '/intelligence/ask': 120,
-  '/programs': 140,
-  '/source': 140,
-  '/tower': 160,
-  '/admin': 120,
+  "/intelligence": 120,
+  "/intelligence/ask": 120,
+  "/programs": 140,
+  "/source": 140,
+  "/tower": 160,
+  "/admin": 120,
 } as const;
 
 // ── Banned patterns ──────────────────────────────────────────────────────────
@@ -51,16 +52,16 @@ export const SURFACE_WORD_CAPS: Readonly<Record<string, number>> = {
 // doc references this list.
 
 export type VoiceDriftCategory =
-  | 'coach_drift'
-  | 'marketing'
-  | 'hedge_drift'
-  | 'hollow_opener'
-  | 'ungrounded_opener'
-  | 'retrieval_mechanics'
-  | 'academic_disclaimer'
-  | 'internal_artifact_leak'
-  | 'fabricated_statistic'
-  | 'internal_consistency';
+  | "coach_drift"
+  | "marketing"
+  | "hedge_drift"
+  | "hollow_opener"
+  | "ungrounded_opener"
+  | "retrieval_mechanics"
+  | "academic_disclaimer"
+  | "internal_artifact_leak"
+  | "fabricated_statistic"
+  | "internal_consistency";
 
 export interface BannedPattern {
   category: VoiceDriftCategory;
@@ -70,38 +71,130 @@ export interface BannedPattern {
 
 export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
   // Coach drift — Nexus's voice, not Sentinel's
-  { category: 'coach_drift', phrase: 'you should', pattern: /\byou\s+should\b/i },
-  { category: 'coach_drift', phrase: 'you must', pattern: /\byou\s+must\b/i },
-  { category: 'coach_drift', phrase: 'you need to', pattern: /\byou\s+need\s+to\b/i },
-  { category: 'coach_drift', phrase: 'the next step is', pattern: /\bthe\s+next\s+step\s+is\b/i },
-  { category: 'coach_drift', phrase: 'I recommend', pattern: /\bI\s+recommend\b/i },
-  { category: 'coach_drift', phrase: 'my recommendation', pattern: /\bmy\s+recommendation\b/i },
+  {
+    category: "coach_drift",
+    phrase: "you should",
+    pattern: /\byou\s+should\b/i,
+  },
+  { category: "coach_drift", phrase: "you must", pattern: /\byou\s+must\b/i },
+  {
+    category: "coach_drift",
+    phrase: "you need to",
+    pattern: /\byou\s+need\s+to\b/i,
+  },
+  {
+    category: "coach_drift",
+    phrase: "the next step is",
+    pattern: /\bthe\s+next\s+step\s+is\b/i,
+  },
+  {
+    category: "coach_drift",
+    phrase: "I recommend",
+    pattern: /\bI\s+recommend\b/i,
+  },
+  {
+    category: "coach_drift",
+    phrase: "my recommendation",
+    pattern: /\bmy\s+recommendation\b/i,
+  },
 
   // Marketing register — banned across all surfaces
-  { category: 'marketing', phrase: 'unlock', pattern: /\b(?:unlock|unlocks|unlocked|unlocking)\b/i },
-  { category: 'marketing', phrase: 'accelerate', pattern: /\b(?:accelerate|accelerates|accelerated|accelerating)\b/i },
-  { category: 'marketing', phrase: 'leverage', pattern: /\b(?:leverage|leverages|leveraged|leveraging)\b/i },
-  { category: 'marketing', phrase: 'empower', pattern: /\b(?:empower|empowers|empowered|empowering)\b/i },
-  { category: 'marketing', phrase: 'revolutionary', pattern: /\brevolutionary\b/i },
-  { category: 'marketing', phrase: 'cutting-edge', pattern: /\bcutting[- ]edge\b/i },
-  { category: 'marketing', phrase: 'game-changer', pattern: /\bgame[- ]chang(?:er|ing|e)\b/i },
-  { category: 'marketing', phrase: 'next-generation', pattern: /\bnext[- ]generation\b/i },
-  { category: 'marketing', phrase: 'best-in-class', pattern: /\bbest[- ]in[- ]class\b/i },
+  {
+    category: "marketing",
+    phrase: "unlock",
+    pattern: /\b(?:unlock|unlocks|unlocked|unlocking)\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "accelerate",
+    pattern: /\b(?:accelerate|accelerates|accelerated|accelerating)\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "leverage",
+    pattern: /\b(?:leverage|leverages|leveraged|leveraging)\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "empower",
+    pattern: /\b(?:empower|empowers|empowered|empowering)\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "revolutionary",
+    pattern: /\brevolutionary\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "cutting-edge",
+    pattern: /\bcutting[- ]edge\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "game-changer",
+    pattern: /\bgame[- ]chang(?:er|ing|e)\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "next-generation",
+    pattern: /\bnext[- ]generation\b/i,
+  },
+  {
+    category: "marketing",
+    phrase: "best-in-class",
+    pattern: /\bbest[- ]in[- ]class\b/i,
+  },
 
   // Hedge drift — LinkedIn-thought-leadership register
-  { category: 'hedge_drift', phrase: "in today's rapidly changing", pattern: /\bin\s+today'?s\s+rapidly\s+changing\b/i },
-  { category: 'hedge_drift', phrase: 'in the modern enterprise', pattern: /\bin\s+the\s+modern\s+enterprise\b/i },
+  {
+    category: "hedge_drift",
+    phrase: "in today's rapidly changing",
+    pattern: /\bin\s+today'?s\s+rapidly\s+changing\b/i,
+  },
+  {
+    category: "hedge_drift",
+    phrase: "in the modern enterprise",
+    pattern: /\bin\s+the\s+modern\s+enterprise\b/i,
+  },
 
   // Hollow openers — caught at start of response only
-  { category: 'hollow_opener', phrase: 'Great question', pattern: /^\s*great\s+question\b/i },
-  { category: 'hollow_opener', phrase: 'Good question', pattern: /^\s*good\s+question\b/i },
-  { category: 'hollow_opener', phrase: 'Excellent question', pattern: /^\s*excellent\s+question\b/i },
-  { category: 'hollow_opener', phrase: "I'd be happy to", pattern: /^\s*i'?d\s+be\s+happy\s+to\b/i },
-  { category: 'hollow_opener', phrase: 'Let me help', pattern: /^\s*let\s+me\s+help\b/i },
+  {
+    category: "hollow_opener",
+    phrase: "Great question",
+    pattern: /^\s*great\s+question\b/i,
+  },
+  {
+    category: "hollow_opener",
+    phrase: "Good question",
+    pattern: /^\s*good\s+question\b/i,
+  },
+  {
+    category: "hollow_opener",
+    phrase: "Excellent question",
+    pattern: /^\s*excellent\s+question\b/i,
+  },
+  {
+    category: "hollow_opener",
+    phrase: "I'd be happy to",
+    pattern: /^\s*i'?d\s+be\s+happy\s+to\b/i,
+  },
+  {
+    category: "hollow_opener",
+    phrase: "Let me help",
+    pattern: /^\s*let\s+me\s+help\b/i,
+  },
 
   // Ungrounded openers
-  { category: 'ungrounded_opener', phrase: 'Generally speaking', pattern: /^\s*generally\s+speaking\b/i },
-  { category: 'ungrounded_opener', phrase: "It's well-known that", pattern: /^\s*it'?s\s+well[- ]known\s+that\b/i },
+  {
+    category: "ungrounded_opener",
+    phrase: "Generally speaking",
+    pattern: /^\s*generally\s+speaking\b/i,
+  },
+  {
+    category: "ungrounded_opener",
+    phrase: "It's well-known that",
+    pattern: /^\s*it'?s\s+well[- ]known\s+that\b/i,
+  },
 
   // Retrieval-mechanics drift — talking like a search index instead of a senior
   // advisor. Sentinel should answer general AI-strategy / pattern questions
@@ -110,55 +203,63 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
   // quantified value claim. Even then, the phrasing should be natural, not a
   // structural template.
   // Naming what is or is not in the corpus / index / sources.
-  { category: 'retrieval_mechanics', phrase: 'corpus lacks', pattern: /\bcorpus\s+lacks\b/i },
   {
-    category: 'retrieval_mechanics',
-    phrase: 'corpus does not include',
-    pattern: /\bcorpus\s+(?:does\s+not|doesn'?t)\s+(?:include|contain|cover)\b/i,
+    category: "retrieval_mechanics",
+    phrase: "corpus lacks",
+    pattern: /\bcorpus\s+lacks\b/i,
   },
   {
-    category: 'retrieval_mechanics',
-    phrase: 'indexed data is missing',
-    pattern: /\bindexed\s+(?:data|sources?|benchmark\s+data|evidence)\s+(?:is|are)\s+missing\b/i,
+    category: "retrieval_mechanics",
+    phrase: "corpus does not include",
+    pattern:
+      /\bcorpus\s+(?:does\s+not|doesn'?t)\s+(?:include|contain|cover)\b/i,
   },
   {
-    category: 'retrieval_mechanics',
-    phrase: 'limited indexed data',
+    category: "retrieval_mechanics",
+    phrase: "indexed data is missing",
+    pattern:
+      /\bindexed\s+(?:data|sources?|benchmark\s+data|evidence)\s+(?:is|are)\s+missing\b/i,
+  },
+  {
+    category: "retrieval_mechanics",
+    phrase: "limited indexed data",
     pattern: /\blimited\s+indexed\s+(?:data|sources?|evidence)\b/i,
   },
   {
-    category: 'retrieval_mechanics',
+    category: "retrieval_mechanics",
     phrase: "sources don't contain",
-    pattern: /\b(?:the\s+)?(?:indexed\s+)?sources?\s+(?:don'?t|do\s+not)\s+contain\b/i,
+    pattern:
+      /\b(?:the\s+)?(?:indexed\s+)?sources?\s+(?:don'?t|do\s+not)\s+contain\b/i,
   },
   {
-    category: 'retrieval_mechanics',
+    category: "retrieval_mechanics",
     phrase: "isn't in the corpus / available corpus",
-    pattern: /\b(?:is\s+not|isn'?t|aren'?t|are\s+not)\s+in\s+the\s+(?:available\s+)?corpus\b/i,
+    pattern:
+      /\b(?:is\s+not|isn'?t|aren'?t|are\s+not)\s+in\s+the\s+(?:available\s+)?corpus\b/i,
   },
   {
-    category: 'retrieval_mechanics',
+    category: "retrieval_mechanics",
     phrase: "what the sources do show",
     pattern: /\bwhat\s+the\s+(?:indexed\s+)?sources?\s+do\s+show\b/i,
   },
   {
-    category: 'retrieval_mechanics',
-    phrase: 'I do not have a retrieved record',
+    category: "retrieval_mechanics",
+    phrase: "I do not have a retrieved record",
     pattern: /\bi\s+(?:do\s+not|don'?t)\s+have\s+a\s+retrieved\s+record\b/i,
   },
   {
-    category: 'retrieval_mechanics',
-    phrase: 'I did not find enough indexed evidence',
+    category: "retrieval_mechanics",
+    phrase: "I did not find enough indexed evidence",
     pattern: /\bi\s+did\s+not\s+find\s+enough\s+indexed\b/i,
   },
   {
-    category: 'retrieval_mechanics',
-    phrase: 'Tenant evidence:',
+    category: "retrieval_mechanics",
+    phrase: "Tenant evidence:",
     pattern: /(?:^|\n|\.\s+)\s*tenant\s+evidence\s*:/i,
   },
   {
-    category: 'retrieval_mechanics',
-    phrase: 'Pattern-level read:',
+    category: "retrieval_mechanics",
+    phrase: "Pattern-level read:",
     pattern: /(?:^|\n|\.\s+)\s*pattern[- ]level\s+read\s*:/i,
   },
 
@@ -168,60 +269,64 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
   // delivering its answer. A senior consultant would never start with
   // "based on the limited data available to me…" — Carlos would fire her.
   {
-    category: 'academic_disclaimer',
-    phrase: 'based on the limited data available',
-    pattern: /\bbased\s+on\s+the\s+limited\s+(?:data|evidence|information)\s+available\b/i,
+    category: "academic_disclaimer",
+    phrase: "based on the limited data available",
+    pattern:
+      /\bbased\s+on\s+the\s+limited\s+(?:data|evidence|information)\s+available\b/i,
   },
   {
-    category: 'academic_disclaimer',
-    phrase: 'at the general AI industry level',
-    pattern: /\bat\s+the\s+general\s+(?:ai\s+)?(?:industry|pattern|domain)\s+level\b/i,
+    category: "academic_disclaimer",
+    phrase: "at the general AI industry level",
+    pattern:
+      /\bat\s+the\s+general\s+(?:ai\s+)?(?:industry|pattern|domain)\s+level\b/i,
   },
   {
-    category: 'academic_disclaimer',
-    phrase: 'not corpus-grounded for [tenant] specifically',
+    category: "academic_disclaimer",
+    phrase: "not corpus-grounded for [tenant] specifically",
     pattern: /\bnot\s+corpus[- ]grounded\s+(?:for|to)\b/i,
   },
   {
-    category: 'academic_disclaimer',
-    phrase: 'from a high level / at a high level (as a hedge opener)',
+    category: "academic_disclaimer",
+    phrase: "from a high level / at a high level (as a hedge opener)",
     pattern: /^\s*(?:from|at)\s+a\s+high\s+level\b/i,
   },
   {
-    category: 'academic_disclaimer',
+    category: "academic_disclaimer",
     phrase: "On the one hand … on the other hand … (fence-sitting)",
-    pattern: /\bon\s+the\s+one\s+hand\b[\s\S]{1,200}\bon\s+the\s+other\s+hand\b/i,
+    pattern:
+      /\bon\s+the\s+one\s+hand\b[\s\S]{1,200}\bon\s+the\s+other\s+hand\b/i,
   },
   {
-    category: 'academic_disclaimer',
+    category: "academic_disclaimer",
     phrase: "It's important to note (as a hedge before reasoning)",
     pattern: /^\s*it'?s\s+important\s+to\s+note\b/i,
   },
 
   // Internal artifact / retrieval plumbing — never CXO-visible.
   {
-    category: 'internal_artifact_leak',
-    phrase: 'worldview corpus',
+    category: "internal_artifact_leak",
+    phrase: "worldview corpus",
     pattern: /\bworldview\s+corpus\b/i,
   },
   {
-    category: 'internal_artifact_leak',
-    phrase: 'worldview chunk id',
+    category: "internal_artifact_leak",
+    phrase: "worldview chunk id",
     pattern: /\bworldview:W\d+:\d{3}\b/i,
   },
   {
-    category: 'internal_artifact_leak',
-    phrase: 'signal id',
+    category: "internal_artifact_leak",
+    phrase: "signal id",
     pattern: /\bsig:[a-z0-9:_-]+\b/i,
   },
   {
-    category: 'internal_artifact_leak',
-    phrase: 'raw tenant program id',
-    pattern: /\b(?:fcfi|firstcapital|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/i,
+    category: "internal_artifact_leak",
+    phrase: "raw tenant program id",
+    pattern:
+      /\b(?:fcfi|firstcapital|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/i,
   },
   {
-    category: 'internal_artifact_leak',
-    phrase: 'corpus being authored',
+    category: "internal_artifact_leak",
+    phrase: "corpus being authored",
     pattern: /\bcorpus\s+is\s+being\s+authored\b/i,
   },
 
@@ -234,13 +339,13 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
   // [retailers / etc.])". Compounded with "[A-Z][a-z]+ has \d+%" for
   // vendor-share fabrications.
   {
-    category: 'fabricated_statistic',
+    category: "fabricated_statistic",
     phrase: 'fabricated peer statistic — "N% of (peers / retailers / …)"',
     pattern:
       /\b\d{1,3}\s*%\s+of\s+(?:peer|peers|retailers?|banks?|enterprises?|companies|health\s+systems?|insurers?|specialty\s+retailers?|multi[- ]banner\s+retailers?|mid[- ]market\s+\w+|fortune\s+\d+\s+\w+)\b/i,
   },
   {
-    category: 'fabricated_statistic',
+    category: "fabricated_statistic",
     phrase: 'fabricated vendor market share — "Vendor has N% market share"',
     pattern:
       /\b[A-Z][A-Za-z0-9]{2,}\s+(?:has|holds|commands|owns|captures)\s+\d{1,3}\s*%\s+(?:of\s+)?(?:market\s+share|the\s+market|share)\b/,
@@ -263,17 +368,17 @@ const HONESTY_MARK =
   /\b(?:i\s+don'?t\s+have|i\s+can'?t\s+claim|i\s+wouldn'?t\s+invent|less\s+sure|high\s+confidence|directional|judgment|not\s+benchmark\s+data|would\s+want\s+to\s+see)\b/i;
 
 const STRUCTURAL_PATTERNS: ReadonlyArray<{ name: string; pattern: RegExp }> = [
-  { name: 'pattern_id', pattern: CITATION_PATTERN_ID },
-  { name: 'record_id', pattern: CITATION_RECORD_ID },
-  { name: 'natural_evidence', pattern: NATURAL_EVIDENCE_MARK },
-  { name: 'graph_fragment', pattern: GRAPH_FRAGMENT },
-  { name: 'honesty_mark', pattern: HONESTY_MARK },
+  { name: "pattern_id", pattern: CITATION_PATTERN_ID },
+  { name: "record_id", pattern: CITATION_RECORD_ID },
+  { name: "natural_evidence", pattern: NATURAL_EVIDENCE_MARK },
+  { name: "graph_fragment", pattern: GRAPH_FRAGMENT },
+  { name: "honesty_mark", pattern: HONESTY_MARK },
 ];
 
 // ── Voice-drift detector ─────────────────────────────────────────────────────
 
 export interface VoiceDriftViolation {
-  category: VoiceDriftCategory | 'missing_structural_element' | 'word_cap';
+  category: VoiceDriftCategory | "missing_structural_element" | "word_cap";
   phrase: string;
   match: string;
 }
@@ -333,7 +438,10 @@ export function checkSentinelVoice(
     violations.push(arithmeticViolation);
   }
 
-  for (const consistencyViolation of detectPhaseOneConsistencyViolations(text, options)) {
+  for (const consistencyViolation of detectPhaseOneConsistencyViolations(
+    text,
+    options,
+  )) {
     violations.push(consistencyViolation);
   }
 
@@ -342,9 +450,9 @@ export function checkSentinelVoice(
     const hasStructural = STRUCTURAL_PATTERNS.some((p) => p.pattern.test(text));
     if (!hasStructural) {
       violations.push({
-        category: 'missing_structural_element',
-        phrase: 'no citation, graph fragment, or honesty mark',
-        match: '',
+        category: "missing_structural_element",
+        phrase: "no citation, graph fragment, or honesty mark",
+        match: "",
       });
     }
   }
@@ -352,13 +460,18 @@ export function checkSentinelVoice(
   const wordCount = countWords(text);
   if (options.maxWords !== undefined && wordCount > options.maxWords) {
     violations.push({
-      category: 'word_cap',
+      category: "word_cap",
       phrase: `max ${options.maxWords} words`,
       match: `${wordCount} words`,
     });
   }
 
-  return { pass: violations.length === 0, violations, sentenceCount, wordCount };
+  return {
+    pass: violations.length === 0,
+    violations,
+    sentenceCount,
+    wordCount,
+  };
 }
 
 function countSentences(text: string): number {
@@ -374,27 +487,34 @@ function countWords(text: string): number {
   return matches ? matches.length : 0;
 }
 
-function detectRankedMoneyOrderingContradiction(text: string): VoiceDriftViolation | null {
+function detectRankedMoneyOrderingContradiction(
+  text: string,
+): VoiceDriftViolation | null {
   const rankLines = text
     .split(/\n|(?<=\.)\s+/)
-    .filter((line) => /\b(?:rank|ranking|top|largest|highest|true rank|by spend)\b/i.test(line));
+    .filter((line) =>
+      /\b(?:rank|ranking|top|largest|highest|true rank|by spend)\b/i.test(line),
+    );
 
   for (const line of rankLines) {
-    const moneyMatches = [...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi)];
+    const moneyMatches = [
+      ...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi),
+    ];
     if (moneyMatches.length < 2) continue;
 
     const values = moneyMatches.map((match) => {
       const amount = Number(match[1]);
       const unit = match[2]?.toUpperCase();
-      const multiplier = unit === 'B' ? 1_000_000_000 : unit === 'M' ? 1_000_000 : 1_000;
+      const multiplier =
+        unit === "B" ? 1_000_000_000 : unit === "M" ? 1_000_000 : 1_000;
       return amount * multiplier;
     });
 
     for (let i = 1; i < values.length; i += 1) {
       if (values[i]! > values[i - 1]!) {
         return {
-          category: 'internal_consistency',
-          phrase: 'ranked money values are not in descending order',
+          category: "internal_consistency",
+          phrase: "ranked money values are not in descending order",
           match: line.trim(),
         };
       }
@@ -410,7 +530,10 @@ function detectPhaseOneConsistencyViolations(
 ): VoiceDriftViolation[] {
   return [
     ...detectMoneySumReconciliationViolations(text),
-    ...detectRelativeDateMathViolations(text, normalizeReferenceDate(options.referenceDate)),
+    ...detectRelativeDateMathViolations(
+      text,
+      normalizeReferenceDate(options.referenceDate),
+    ),
     ...detectPatternCitationValidityViolations(text),
     ...detectPercentageBoundsViolations(text),
     ...detectNamedEntityConsistencyViolations(text),
@@ -420,30 +543,37 @@ function detectPhaseOneConsistencyViolations(
   ];
 }
 
-function normalizeReferenceDate(referenceDate: Date | string | undefined): Date {
+function normalizeReferenceDate(
+  referenceDate: Date | string | undefined,
+): Date {
   if (referenceDate instanceof Date) return referenceDate;
-  if (typeof referenceDate === 'string') {
+  if (typeof referenceDate === "string") {
     const parsed = new Date(referenceDate);
     if (!Number.isNaN(parsed.getTime())) return parsed;
   }
   return new Date();
 }
 
-function detectMoneySumReconciliationViolations(text: string): VoiceDriftViolation[] {
+function detectMoneySumReconciliationViolations(
+  text: string,
+): VoiceDriftViolation[] {
   const violations: VoiceDriftViolation[] = [];
   const lines = text.split(/\n|(?<=\.)\s+/);
 
   for (const line of lines) {
     if (!/\b(?:totaling|total(?:s|ed)?|sum|combined)\b/i.test(line)) continue;
-    const totalTrigger = line.search(/\b(?:totaling|total(?:s|ed)?|sum|combined)\b/i);
+    const totalTrigger = line.search(
+      /\b(?:totaling|total(?:s|ed)?|sum|combined)\b/i,
+    );
     if (totalTrigger < 0) continue;
 
-    const matches = [...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi)]
-      .map((match) => ({
-        raw: match[0],
-        value: moneyToBaseUnits(match[1] ?? '0', match[2] ?? 'M'),
-        index: match.index ?? 0,
-      }));
+    const matches = [
+      ...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi),
+    ].map((match) => ({
+      raw: match[0],
+      value: moneyToBaseUnits(match[1] ?? "0", match[2] ?? "M"),
+      index: match.index ?? 0,
+    }));
     const components = matches.filter((match) => match.index < totalTrigger);
     const total = matches.find((match) => match.index > totalTrigger);
     if (components.length < 2 || !total) continue;
@@ -452,8 +582,8 @@ function detectMoneySumReconciliationViolations(text: string): VoiceDriftViolati
     const tolerance = Math.max(total.value * 0.05, 100_000);
     if (Math.abs(sum - total.value) > tolerance) {
       violations.push({
-        category: 'internal_consistency',
-        phrase: 'money components do not reconcile to stated total',
+        category: "internal_consistency",
+        phrase: "money components do not reconcile to stated total",
         match: line.trim(),
       });
     }
@@ -465,11 +595,15 @@ function detectMoneySumReconciliationViolations(text: string): VoiceDriftViolati
 function moneyToBaseUnits(amountText: string, unitText: string): number {
   const amount = Number(amountText);
   const unit = unitText.toUpperCase();
-  const multiplier = unit === 'B' ? 1_000_000_000 : unit === 'M' ? 1_000_000 : 1_000;
+  const multiplier =
+    unit === "B" ? 1_000_000_000 : unit === "M" ? 1_000_000 : 1_000;
   return amount * multiplier;
 }
 
-function detectRelativeDateMathViolations(text: string, referenceDate: Date): VoiceDriftViolation[] {
+function detectRelativeDateMathViolations(
+  text: string,
+  referenceDate: Date,
+): VoiceDriftViolation[] {
   const violations: VoiceDriftViolation[] = [];
   const monthPattern =
     /\bin\s+(\d{1,2})\s+months?\b[^.\n]{0,100}\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2}),?\s+(\d{4})\b/gi;
@@ -478,13 +612,17 @@ function detectRelativeDateMathViolations(text: string, referenceDate: Date): Vo
 
   for (const match of text.matchAll(monthPattern)) {
     const statedMonths = Number(match[1]);
-    const absoluteDate = dateFromParts(match[2] ?? '', match[3] ?? '', match[4] ?? '');
+    const absoluteDate = dateFromParts(
+      match[2] ?? "",
+      match[3] ?? "",
+      match[4] ?? "",
+    );
     if (!absoluteDate) continue;
     const actualMonths = monthDistance(referenceDate, absoluteDate);
     if (Math.abs(actualMonths - statedMonths) > 1) {
       violations.push({
-        category: 'internal_consistency',
-        phrase: 'relative month count conflicts with absolute date',
+        category: "internal_consistency",
+        phrase: "relative month count conflicts with absolute date",
         match: match[0],
       });
     }
@@ -492,13 +630,20 @@ function detectRelativeDateMathViolations(text: string, referenceDate: Date): Vo
 
   for (const match of text.matchAll(dayPattern)) {
     const statedDays = Number(match[1]);
-    const absoluteDate = dateFromParts(match[2] ?? '', match[3] ?? '', match[4] ?? '');
+    const absoluteDate = dateFromParts(
+      match[2] ?? "",
+      match[3] ?? "",
+      match[4] ?? "",
+    );
     if (!absoluteDate) continue;
-    const actualDays = Math.round((stripTime(absoluteDate).getTime() - stripTime(referenceDate).getTime()) / 86_400_000);
+    const actualDays = Math.round(
+      (stripTime(absoluteDate).getTime() - stripTime(referenceDate).getTime()) /
+        86_400_000,
+    );
     if (Math.abs(actualDays - statedDays) > 2) {
       violations.push({
-        category: 'internal_consistency',
-        phrase: 'relative day count conflicts with absolute date',
+        category: "internal_consistency",
+        phrase: "relative day count conflicts with absolute date",
         match: match[0],
       });
     }
@@ -507,39 +652,66 @@ function detectRelativeDateMathViolations(text: string, referenceDate: Date): Vo
   return violations;
 }
 
-function dateFromParts(monthText: string, dayText: string, yearText: string): Date | null {
+function dateFromParts(
+  monthText: string,
+  dayText: string,
+  yearText: string,
+): Date | null {
   const month = monthIndex(monthText);
   const day = Number(dayText);
   const year = Number(yearText);
-  if (month === null || !Number.isInteger(day) || !Number.isInteger(year)) return null;
+  if (month === null || !Number.isInteger(day) || !Number.isInteger(year))
+    return null;
   return new Date(Date.UTC(year, month, day));
 }
 
 function monthIndex(monthText: string): number | null {
-  const normalized = monthText.toLowerCase().replace(/\.$/, '').slice(0, 3);
-  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const normalized = monthText.toLowerCase().replace(/\.$/, "").slice(0, 3);
+  const months = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+  ];
   const index = months.indexOf(normalized);
   return index >= 0 ? index : null;
 }
 
 function stripTime(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
 }
 
 function monthDistance(from: Date, to: Date): number {
   const fromUtc = stripTime(from);
   const toUtc = stripTime(to);
-  let months = (toUtc.getUTCFullYear() - fromUtc.getUTCFullYear()) * 12
-    + (toUtc.getUTCMonth() - fromUtc.getUTCMonth());
+  let months =
+    (toUtc.getUTCFullYear() - fromUtc.getUTCFullYear()) * 12 +
+    (toUtc.getUTCMonth() - fromUtc.getUTCMonth());
   if (toUtc.getUTCDate() < fromUtc.getUTCDate()) months -= 1;
   return months;
 }
 
-function detectPatternCitationValidityViolations(text: string): VoiceDriftViolation[] {
+function detectPatternCitationValidityViolations(
+  text: string,
+): VoiceDriftViolation[] {
   const ids = Array.from(
     new Set([
-      ...Array.from(text.matchAll(/\bPAT-[A-Z0-9-]{3,}\b/g)).map((match) => match[0]),
-      ...Array.from(text.matchAll(/\bP-[A-Z]{2,3}-\d{3}\b/g)).map((match) => match[0]),
+      ...Array.from(text.matchAll(/\bPAT-[A-Z0-9-]{3,}\b/g)).map(
+        (match) => match[0],
+      ),
+      ...Array.from(text.matchAll(/\bP-[A-Z]{2,3}-\d{3}\b/g)).map(
+        (match) => match[0],
+      ),
       ...Array.from(text.matchAll(/\bF\d{3}\b/g)).map((match) => match[0]),
     ]),
   );
@@ -547,8 +719,8 @@ function detectPatternCitationValidityViolations(text: string): VoiceDriftViolat
   return ids
     .filter((id) => !isKnownPatternCitation(id))
     .map((id) => ({
-      category: 'internal_consistency' as const,
-      phrase: 'pattern citation is not in known registry',
+      category: "internal_consistency" as const,
+      phrase: "pattern citation is not in known registry",
       match: id,
     }));
 }
@@ -561,11 +733,20 @@ function isKnownPatternCitation(id: string): boolean {
   if (/^PAT-RET-AI-00[1-9]$/.test(id)) return true;
   if (/^PAT-(?:COMP|FOW)-00[1-8]$/.test(id)) return true;
   if (/^PAT-IND-(?:RET|FIN|HC)-00[1-9]$/.test(id)) return true;
-  if (/^PAT-SRC-(?:0(?:0[1-9]|1\d|20)|CAT-[A-Z-]+-00[1-9]|AMS-001|RFP-001|SOLE-001|FRAMEWORK-001|RENEWAL-001|DECOM-001)$/.test(id)) {
+  if (
+    /^PAT-SRC-(?:0(?:0[1-9]|1\d|20)|CAT-[A-Z-]+-00[1-9]|AMS-001|RFP-001|SOLE-001|FRAMEWORK-001|RENEWAL-001|DECOM-001)$/.test(
+      id,
+    )
+  ) {
     return true;
   }
   if (/^PAT-PRG-[A-Z0-9-]+-00[1-9]$/.test(id)) return true;
-  if (/^PAT-(?:AMS|CCAI|CC-AI|DEMAND|MARGIN|AMBIENT|PRIOR-AUTH|RCM)-00[1-9]$/.test(id)) return true;
+  if (
+    /^PAT-(?:AMS|CCAI|CC-AI|DEMAND|MARGIN|AMBIENT|PRIOR-AUTH|RCM)-00[1-9]$/.test(
+      id,
+    )
+  )
+    return true;
   return false;
 }
 
@@ -581,36 +762,36 @@ function isKnownPatternCitation(id: string): boolean {
  * at 100% — a value above that is incoherent and gets flagged.
  */
 const CAN_EXCEED_100_PERCENT_NOUNS: ReadonlyArray<string> = [
-  'commitment',
-  'commit',
-  'committed value',
-  'committed spend',
-  'target',
-  'plan',
-  'planned value',
-  'baseline',
-  'budget',
-  'forecast',
-  'projection',
-  'quota',
-  'goal',
-  'run-rate',
-  'run rate',
-  'runrate',
-  'growth',
-  'increase',
-  'uplift',
-  'lift',
-  'gain',
-  'return',
-  'roi',
-  'yield',
-  'expansion',
-  'over-delivery',
-  'overdelivery',
-  'attainment',
-  'capacity',
-  'estimate',
+  "commitment",
+  "commit",
+  "committed value",
+  "committed spend",
+  "target",
+  "plan",
+  "planned value",
+  "baseline",
+  "budget",
+  "forecast",
+  "projection",
+  "quota",
+  "goal",
+  "run-rate",
+  "run rate",
+  "runrate",
+  "growth",
+  "increase",
+  "uplift",
+  "lift",
+  "gain",
+  "return",
+  "roi",
+  "yield",
+  "expansion",
+  "over-delivery",
+  "overdelivery",
+  "attainment",
+  "capacity",
+  "estimate",
 ];
 
 /**
@@ -618,30 +799,30 @@ const CAN_EXCEED_100_PERCENT_NOUNS: ReadonlyArray<string> = [
  * modifying one of these is incoherent ("margin compression is 142%").
  */
 const RATIO_BOUNDED_PERCENT_NOUNS: ReadonlyArray<string> = [
-  'margin',
-  'margin compression',
-  'utilization',
-  'utilisation',
-  'adoption',
-  'adoption rate',
-  'completion',
-  'completion rate',
-  'share',
-  'market share',
-  'penetration',
-  'coverage',
-  'accuracy',
-  'precision',
-  'recall',
-  'confidence',
-  'win rate',
-  'win-rate',
-  'hit rate',
-  'success rate',
-  'compliance',
-  'compliance rate',
-  'satisfaction',
-  'occupancy',
+  "margin",
+  "margin compression",
+  "utilization",
+  "utilisation",
+  "adoption",
+  "adoption rate",
+  "completion",
+  "completion rate",
+  "share",
+  "market share",
+  "penetration",
+  "coverage",
+  "accuracy",
+  "precision",
+  "recall",
+  "confidence",
+  "win rate",
+  "win-rate",
+  "hit rate",
+  "success rate",
+  "compliance",
+  "compliance rate",
+  "satisfaction",
+  "occupancy",
 ];
 
 /**
@@ -666,7 +847,9 @@ function detectPercentageBoundsViolations(text: string): VoiceDriftViolation[] {
     const matchStart = match.index ?? 0;
     const matchEnd = matchStart + match[0].length;
     // Window of context on either side of the percentage.
-    const before = text.slice(Math.max(0, matchStart - 80), matchStart).toLowerCase();
+    const before = text
+      .slice(Math.max(0, matchStart - 80), matchStart)
+      .toLowerCase();
     const after = text.slice(matchEnd, matchEnd + 80).toLowerCase();
     const context = `${before} ${after}`;
 
@@ -676,12 +859,14 @@ function detectPercentageBoundsViolations(text: string): VoiceDriftViolation[] {
     );
     if (exceedsAllowed) continue;
 
-    const ratioNoun = RATIO_BOUNDED_PERCENT_NOUNS.find((noun) => context.includes(noun));
+    const ratioNoun = RATIO_BOUNDED_PERCENT_NOUNS.find((noun) =>
+      context.includes(noun),
+    );
     if (!ratioNoun) continue;
 
     violations.push({
-      category: 'internal_consistency',
-      phrase: 'ratio-style percentage exceeds 100%',
+      category: "internal_consistency",
+      phrase: "ratio-style percentage exceeds 100%",
       match: match[0].trim(),
     });
   }
@@ -697,27 +882,112 @@ function detectPercentageBoundsViolations(text: string): VoiceDriftViolation[] {
  * with one of these is not treated as a person.
  */
 const NON_PERSON_LEADING_WORDS: ReadonlySet<string> = new Set([
-  'The', 'A', 'An', 'This', 'That', 'These', 'Those', 'It', 'We', 'They',
-  'I', 'You', 'He', 'She',
+  "The",
+  "A",
+  "An",
+  "This",
+  "That",
+  "These",
+  "Those",
+  "It",
+  "We",
+  "They",
+  "I",
+  "You",
+  "He",
+  "She",
   // Sentence-leading connectors that can capitalise before a name.
-  'As', 'Per', 'Though', 'And', 'But', 'So', 'If', 'When', 'While', 'After',
-  'Before', 'Since', 'Because', 'Per', 'According', 'Both', 'Either',
-  'Salesforce', 'Adobe', 'Microsoft', 'Google', 'Amazon', 'Oracle', 'SAP',
-  'Snowflake', 'Databricks', 'Palantir', 'ServiceNow', 'Workday', 'AWS',
-  'Azure', 'Epic', 'Cerner', 'Anthropic', 'OpenAI',
-  'Apex', 'Meridian', 'First', 'Sentinel', 'Atlas', 'Steward', 'Nexus',
-  'Maestro', 'AbarVa',
-  'Chief', 'Vice', 'Senior', 'Director', 'Manager', 'President',
-  'Contact', 'Center', 'Demand', 'Margin', 'Store', 'Customer',
-  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
-  'Sunday', 'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-  'North', 'South', 'East', 'West', 'United', 'New',
+  "As",
+  "Per",
+  "Though",
+  "And",
+  "But",
+  "So",
+  "If",
+  "When",
+  "While",
+  "After",
+  "Before",
+  "Since",
+  "Because",
+  "Per",
+  "According",
+  "Both",
+  "Either",
+  "Salesforce",
+  "Adobe",
+  "Microsoft",
+  "Google",
+  "Amazon",
+  "Oracle",
+  "SAP",
+  "Snowflake",
+  "Databricks",
+  "Palantir",
+  "ServiceNow",
+  "Workday",
+  "AWS",
+  "Azure",
+  "Epic",
+  "Cerner",
+  "Anthropic",
+  "OpenAI",
+  "Apex",
+  "Meridian",
+  "First",
+  "Sentinel",
+  "Atlas",
+  "Steward",
+  "Nexus",
+  "Maestro",
+  "AbarVa",
+  "Chief",
+  "Vice",
+  "Senior",
+  "Director",
+  "Manager",
+  "President",
+  "Contact",
+  "Center",
+  "Demand",
+  "Margin",
+  "Store",
+  "Customer",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+  "North",
+  "South",
+  "East",
+  "West",
+  "United",
+  "New",
 ]);
 
 /** Honorifics that may precede a name and are not the first name. */
 const HONORIFICS: ReadonlySet<string> = new Set([
-  'Mr', 'Mrs', 'Ms', 'Miss', 'Dr', 'Prof',
+  "Mr",
+  "Mrs",
+  "Ms",
+  "Miss",
+  "Dr",
+  "Prof",
 ]);
 
 interface NameSpan {
@@ -743,7 +1013,10 @@ function extractNameSpans(text: string): NameSpan[] {
     /\b((?:[A-Z][a-z]+|[A-Z]\.)(?:\s+(?:[A-Z][a-z]+|[A-Z]\.)){1,3})\b/g;
 
   for (const match of text.matchAll(spanPattern)) {
-    let words = match[0].trim().split(/\s+/).map((w) => w.replace(/\.$/, ''));
+    let words = match[0]
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.replace(/\.$/, ""));
 
     // Drop a leading honorific or sentence connector — it is not the
     // first name. Strip repeatedly ("As Dr. Maria Gonzalez").
@@ -758,7 +1031,7 @@ function extractNameSpans(text: string): NameSpan[] {
     }
     if (words.length < 2) continue;
 
-    const raw = words.join(' ');
+    const raw = words.join(" ");
     const leading = words[0]!;
     // Skip spans that clearly start with a non-person word.
     if (NON_PERSON_LEADING_WORDS.has(leading)) continue;
@@ -770,7 +1043,7 @@ function extractNameSpans(text: string): NameSpan[] {
 
     const isInitial = leading.length === 1;
     spans.push({
-      firstName: isInitial ? '' : leading,
+      firstName: isInitial ? "" : leading,
       firstInitial: leading.charAt(0).toLowerCase(),
       lastName: lastName.toLowerCase(),
       raw,
@@ -790,7 +1063,9 @@ function extractNameSpans(text: string): NameSpan[] {
  * never conflict — they are consistent with any full first name sharing
  * the initial.
  */
-function detectNamedEntityConsistencyViolations(text: string): VoiceDriftViolation[] {
+function detectNamedEntityConsistencyViolations(
+  text: string,
+): VoiceDriftViolation[] {
   const spans = extractNameSpans(text);
   const clusters = new Map<string, NameSpan[]>();
 
@@ -818,9 +1093,9 @@ function detectNamedEntityConsistencyViolations(text: string): VoiceDriftViolati
       .map((span) => span.raw);
 
     violations.push({
-      category: 'internal_consistency',
-      phrase: 'same person referred to by conflicting first names',
-      match: Array.from(new Set(conflicting)).join(' / '),
+      category: "internal_consistency",
+      phrase: "same person referred to by conflicting first names",
+      match: Array.from(new Set(conflicting)).join(" / "),
     });
   }
 
@@ -845,7 +1120,9 @@ function detectNamedEntityConsistencyViolations(text: string): VoiceDriftViolati
  *    scale gap a reader expects, not a normalisation slip. The guard
  *    only flags a $M-vs-$K mix where both values sit below $1B.
  */
-function detectCurrencyUnitConsistencyViolations(text: string): VoiceDriftViolation[] {
+function detectCurrencyUnitConsistencyViolations(
+  text: string,
+): VoiceDriftViolation[] {
   const violations: VoiceDriftViolation[] = [];
   const comparisonVocab =
     /\b(?:above|below|versus|vs\.?|compared|compares?|than|while|whereas|ahead\s+of|behind|outspends?|exceeds?|trails?)\b/i;
@@ -854,13 +1131,15 @@ function detectCurrencyUnitConsistencyViolations(text: string): VoiceDriftViolat
   for (const line of lines) {
     if (!comparisonVocab.test(line)) continue;
 
-    const moneyMatches = [...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi)];
+    const moneyMatches = [
+      ...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi),
+    ];
     if (moneyMatches.length < 2) continue;
 
     const entries = moneyMatches.map((match) => ({
       raw: match[0].trim(),
-      unit: (match[2] ?? '').toUpperCase(),
-      value: moneyToBaseUnits(match[1] ?? '0', match[2] ?? 'M'),
+      unit: (match[2] ?? "").toUpperCase(),
+      value: moneyToBaseUnits(match[1] ?? "0", match[2] ?? "M"),
     }));
 
     // Restrict to the $M / $K confusion below the $1B threshold. A
@@ -868,10 +1147,10 @@ function detectCurrencyUnitConsistencyViolations(text: string): VoiceDriftViolat
     const subBillion = entries.filter((entry) => entry.value < 1_000_000_000);
     const units = new Set(subBillion.map((entry) => entry.unit));
     if (subBillion.length < 2) continue;
-    if (units.has('M') && units.has('K')) {
+    if (units.has("M") && units.has("K")) {
       violations.push({
-        category: 'internal_consistency',
-        phrase: 'comparison line mixes currency units ($M with $K)',
+        category: "internal_consistency",
+        phrase: "comparison line mixes currency units ($M with $K)",
         match: line.trim(),
       });
     }
@@ -915,7 +1194,9 @@ const TENSE_CONTRAST_VOCAB =
 const TENSE_RECURRENCE_VOCAB =
   /\b(?:renew(?:s|ed|al|ing)?|recur(?:s|ring|red)?|repeat(?:s|ed|ing)?|extend(?:s|ed|ing)?|continu(?:e|es|ed|ing)|re-?signs?|rolls?\s+over|carry(?:ing)?\s+forward)\b/i;
 
-function detectTimeTenseConsistencyViolations(text: string): VoiceDriftViolation[] {
+function detectTimeTenseConsistencyViolations(
+  text: string,
+): VoiceDriftViolation[] {
   const violations: VoiceDriftViolation[] = [];
   const sentences = text.split(/(?<=[.!?])\s+/);
 
@@ -936,8 +1217,9 @@ function detectTimeTenseConsistencyViolations(text: string): VoiceDriftViolation
     if (!/\band\b/i.test(sentence)) continue;
 
     violations.push({
-      category: 'internal_consistency',
-      phrase: 'sentence mixes past-tense and future-tense markers for one event',
+      category: "internal_consistency",
+      phrase:
+        "sentence mixes past-tense and future-tense markers for one event",
       match: sentence.trim(),
     });
   }
@@ -967,7 +1249,9 @@ function detectTimeTenseConsistencyViolations(text: string): VoiceDriftViolation
  * list indices because the inline-reference regex requires an explicit
  * scaffold noun ("point", "item", "step", "footnote", "see").
  */
-function detectForwardReferenceIntegrityViolations(text: string): VoiceDriftViolation[] {
+function detectForwardReferenceIntegrityViolations(
+  text: string,
+): VoiceDriftViolation[] {
   const violations: VoiceDriftViolation[] = [];
 
   // Highest numbered list item declared (line-leading "N." or "N)").
@@ -986,15 +1270,17 @@ function detectForwardReferenceIntegrityViolations(text: string): VoiceDriftViol
   }
 
   // Inline back-references to a list point / item / step.
-  for (const match of text.matchAll(/\b(?:point|item|step|bullet)\s+(\d{1,2})\b/gi)) {
+  for (const match of text.matchAll(
+    /\b(?:point|item|step|bullet)\s+(\d{1,2})\b/gi,
+  )) {
     const referenced = Number(match[1]);
     if (referenced > highestListIndex) {
       violations.push({
-        category: 'internal_consistency',
+        category: "internal_consistency",
         phrase:
           highestListIndex === 0
-            ? 'references a numbered point with no numbered list present'
-            : 'references a numbered point beyond the declared list',
+            ? "references a numbered point with no numbered list present"
+            : "references a numbered point beyond the declared list",
         match: match[0].trim(),
       });
     }
@@ -1009,11 +1295,11 @@ function detectForwardReferenceIntegrityViolations(text: string): VoiceDriftViol
     const referenced = Number(match[1]);
     if (referenced > highestFootnoteIndex) {
       violations.push({
-        category: 'internal_consistency',
+        category: "internal_consistency",
         phrase:
           highestFootnoteIndex === 0
-            ? 'references a footnote with no footnotes present'
-            : 'references a footnote beyond the declared set',
+            ? "references a footnote with no footnotes present"
+            : "references a footnote beyond the declared set",
         match: match[0].trim(),
       });
     }
@@ -1025,15 +1311,15 @@ function detectForwardReferenceIntegrityViolations(text: string): VoiceDriftViol
 // ── Refusal trigger contract ─────────────────────────────────────────────────
 
 export type RefusalTriggerId =
-  | 'cross_tenant_data'
-  | 'legal_compliance_advice'
-  | 'forecast_without_evidence'
-  | 'corpus_contradiction_side'
-  | 'worldview_as_tenant_fact'
-  | 'out_of_scope_agent_task'
-  | 'external_publication_without_review'
-  | 'personal_data_extraction'
-  | 'stakeholder_conflict_advice';
+  | "cross_tenant_data"
+  | "legal_compliance_advice"
+  | "forecast_without_evidence"
+  | "corpus_contradiction_side"
+  | "worldview_as_tenant_fact"
+  | "out_of_scope_agent_task"
+  | "external_publication_without_review"
+  | "personal_data_extraction"
+  | "stakeholder_conflict_advice";
 
 export interface RefusalTrigger {
   id: RefusalTriggerId;
@@ -1045,20 +1331,21 @@ export interface RefusalTrigger {
 
 export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
   {
-    id: 'cross_tenant_data',
-    label: 'Cross-tenant data',
-    exampleUserInput: "Show me Meridian's contracts while I'm logged in as Apex.",
+    id: "cross_tenant_data",
+    label: "Cross-tenant data",
+    exampleUserInput:
+      "Show me Meridian's contracts while I'm logged in as Apex.",
     sentinelResponse:
-      'I can only ground against your active client. Switch tenants in the top nav, or use Tower for portfolio-level rollups.',
+      "I can only ground against your active client. Switch tenants in the top nav, or use Tower for portfolio-level rollups.",
     patterns: [
       /\b(?:show|compare|pull|list|summarize)\b.*\b(?:meridian|apex|first capital)\b.*\b(?:logged in|active client|tenant)\b/i,
       /\b(?:apex|meridian|first capital)\b.*\b(?:contracts|data|records)\b.*\b(?:while|from)\b.*\b(?:apex|meridian|first capital)\b/i,
     ],
   },
   {
-    id: 'legal_compliance_advice',
-    label: 'Legal/compliance advice',
-    exampleUserInput: 'Will this contract clause hold up in court?',
+    id: "legal_compliance_advice",
+    label: "Legal/compliance advice",
+    exampleUserInput: "Will this contract clause hold up in court?",
     sentinelResponse:
       "I can cite contract language in your evidence ledger; I can't give legal advice. Route to Setup / Admin for governance review or to your GC.",
     patterns: [
@@ -1067,9 +1354,9 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
     ],
   },
   {
-    id: 'forecast_without_evidence',
-    label: 'Forecast without evidence',
-    exampleUserInput: 'Predict the FY2026 EBITDA.',
+    id: "forecast_without_evidence",
+    label: "Forecast without evidence",
+    exampleUserInput: "Predict the FY2026 EBITDA.",
     sentinelResponse:
       "I can ground against your KPI dictionary baselines. Forward-looking forecasts that aren't in the loaded data would be speculation; I will mark them as such if you want a directional read.",
     patterns: [
@@ -1078,9 +1365,9 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
     ],
   },
   {
-    id: 'corpus_contradiction_side',
-    label: 'Take a side in a corpus contradiction',
-    exampleUserInput: 'Is sponsor cadence or evidence ledger more important?',
+    id: "corpus_contradiction_side",
+    label: "Take a side in a corpus contradiction",
+    exampleUserInput: "Is sponsor cadence or evidence ledger more important?",
     sentinelResponse:
       "Two perspectives are well-evidenced here. PAT-PRG-SPN-001 makes the cadence case; PAT-PRG-EVD-001 makes the evidence case. The reconciliation depends on your program's failure-mode profile.",
     patterns: [
@@ -1089,20 +1376,20 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
     ],
   },
   {
-    id: 'worldview_as_tenant_fact',
-    label: 'Strategic framing as proof of tenant fact',
+    id: "worldview_as_tenant_fact",
+    label: "Strategic framing as proof of tenant fact",
     exampleUserInput: "Cite the AbarVa thesis to prove Apex's CDP is at risk.",
     sentinelResponse:
-      'Strategic framing is not customer evidence. Your tenant risk needs a tenant record or graph citation; the thesis can explain why that pattern matters structurally.',
+      "Strategic framing is not customer evidence. Your tenant risk needs a tenant record or graph citation; the thesis can explain why that pattern matters structurally.",
     patterns: [
       /\b(?:cite|use)\b.*\b(?:worldview|thesis|W[1-5])\b.*\b(?:prove|confirm|show)\b.*\b(?:apex|meridian|tenant|program)\b/i,
       /\b(?:worldview|thesis|W[1-5])\b.*\b(?:proves|confirms)\b.*\b(?:tenant|apex|meridian)\b/i,
     ],
   },
   {
-    id: 'out_of_scope_agent_task',
-    label: 'Out-of-scope agent task',
-    exampleUserInput: 'Approve this gate advance.',
+    id: "out_of_scope_agent_task",
+    label: "Out-of-scope agent task",
+    exampleUserInput: "Approve this gate advance.",
     sentinelResponse:
       "I read and reason; I don't approve. Route to the Moves surface or the gate's named approver.",
     patterns: [
@@ -1111,9 +1398,9 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
     ],
   },
   {
-    id: 'external_publication_without_review',
-    label: 'External publication without review',
-    exampleUserInput: 'Use this in the investor deck verbatim.',
+    id: "external_publication_without_review",
+    label: "External publication without review",
+    exampleUserInput: "Use this in the investor deck verbatim.",
     sentinelResponse:
       "Worldview chunks have a last_validated timestamp and a citation audit. Public publication needs the founder's review of the audit flags before the chunk leaves review.",
     patterns: [
@@ -1122,9 +1409,10 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
     ],
   },
   {
-    id: 'stakeholder_conflict_advice',
-    label: 'Stakeholder conflict advice',
-    exampleUserInput: 'What should I do about the tension between the CMO and CFO?',
+    id: "stakeholder_conflict_advice",
+    label: "Stakeholder conflict advice",
+    exampleUserInput:
+      "What should I do about the tension between the CMO and CFO?",
     sentinelResponse:
       "Stakeholder dynamics are Tower territory. I can surface evidence — program commitments, sponsor history, evidence records — but I don't advise on interpersonal or political navigation. Tower reads the full portfolio context needed to reason about who should do what.",
     patterns: [
@@ -1135,9 +1423,9 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
     ],
   },
   {
-    id: 'personal_data_extraction',
-    label: 'Personal data extraction',
-    exampleUserInput: 'List all Meridian patient names.',
+    id: "personal_data_extraction",
+    label: "Personal data extraction",
+    exampleUserInput: "List all Meridian patient names.",
     sentinelResponse:
       "I don't surface PHI/PII. The evidence ledger is classified; I can summarize patterns without exposing protected fields.",
     patterns: [
@@ -1148,9 +1436,11 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
 ];
 
 export function detectRefusalNeeded(query: string): RefusalTrigger | null {
-  return REFUSAL_TRIGGERS.find((trigger) =>
-    trigger.patterns.some((pattern) => pattern.test(query)),
-  ) ?? null;
+  return (
+    REFUSAL_TRIGGERS.find((trigger) =>
+      trigger.patterns.some((pattern) => pattern.test(query)),
+    ) ?? null
+  );
 }
 
 // ── System prompt composition ────────────────────────────────────────────────
@@ -1432,7 +1722,7 @@ Five Source intake fields and what to capture:
 Once the trigger field is filled, the user can submit and open the event canvas. The other four are strongly recommended but not blocking. A senior advisor closes all five in three to five turns on a responsive user, not eight to ten.`;
 
 function doctrineHeader(surface: string): string {
-  if (surface === '/source' || surface.startsWith('/source/')) {
+  if (surface === "/source" || surface.startsWith("/source/")) {
     return DOCTRINE_HEADER_SOURCE;
   }
   return DOCTRINE_HEADER_INTELLIGENCE;
@@ -1584,10 +1874,14 @@ const WORLDVIEW_GUIDANCE = `When strategic framing chunks are present:
   • Do not expose raw chunk ids in visible prose. Translate the evidence into advisor language.`;
 
 function refusalTriggerBlock(): string {
-  const lines = REFUSAL_TRIGGERS.map((trigger, index) =>
-    `  ${index + 1}. ${trigger.label}: ${trigger.sentinelResponse}`,
+  const lines = REFUSAL_TRIGGERS.map(
+    (trigger, index) =>
+      `  ${index + 1}. ${trigger.label}: ${trigger.sentinelResponse}`,
   );
-  return ['Refusal triggers — when one matches, refuse narrowly and route to the right agent:', ...lines].join('\n');
+  return [
+    "Refusal triggers — when one matches, refuse narrowly and route to the right agent:",
+    ...lines,
+  ].join("\n");
 }
 
 const TOOL_USE_POLICY = `Tool-use policy:
@@ -1629,13 +1923,21 @@ const AI_INITIATIVE_CITATION_RULE = `AI initiatives citation discipline:
   identify the display ID from the bundle, state that the ID is unavailable rather than
   omitting it silently.`;
 
-function aiInitiativeCitationLine(input: ComposeSentinelSystemPromptInput): string {
+function aiInitiativeCitationLine(
+  input: ComposeSentinelSystemPromptInput,
+): string {
   // Only inject when a tenant is authenticated — anonymous visitors have no initiative registry.
-  return input.tenantKey ? AI_INITIATIVE_CITATION_RULE : '';
+  return input.tenantKey ? AI_INITIATIVE_CITATION_RULE : "";
 }
 
-function intelligencePriorityLine(input: ComposeSentinelSystemPromptInput): string {
-  if (input.surface !== '/intelligence' && !input.surface.startsWith('/intelligence/')) return '';
+function intelligencePriorityLine(
+  input: ComposeSentinelSystemPromptInput,
+): string {
+  if (
+    input.surface !== "/intelligence" &&
+    !input.surface.startsWith("/intelligence/")
+  )
+    return "";
   return INTELLIGENCE_PRIORITY_DISCIPLINE;
 }
 
@@ -1645,37 +1947,37 @@ function bundleContextLines(input: ComposeSentinelSystemPromptInput): string {
   lines.push(
     input.tenantKey
       ? `Tenant: ${input.tenantKey}.`
-      : 'Tenant: unauthenticated cold visitor.',
+      : "Tenant: unauthenticated cold visitor.",
   );
   lines.push(`Surface: ${input.surface}.`);
   lines.push(
-    'Ground from bundle.facts (records), bundle.graphPaths, bundle.chunks (semantic chunks), bundle.corpusPatterns, and strategic framing chunks. Use ids internally only; write visible responses in CXO-readable language.',
+    "Ground from bundle.facts (records), bundle.graphPaths, bundle.chunks (semantic chunks), bundle.corpusPatterns, and strategic framing chunks. Use ids internally only; write visible responses in CXO-readable language.",
   );
   if (input.worldviewHitsPresent) {
     lines.push(
-      'Strategic framing hits are present. Use them as framing only; tenant claims still require tenant evidence.',
+      "Strategic framing hits are present. Use them as framing only; tenant claims still require tenant evidence.",
     );
   }
   if (input.vectorIndexPending) {
     lines.push(
-      'IMPORTANT: bundle.chunks may be empty due to pending vector retrieval. Use the vector-pending honesty mode when answering tenant-scoped semantic questions.',
+      "IMPORTANT: bundle.chunks may be empty due to pending vector retrieval. Use the vector-pending honesty mode when answering tenant-scoped semantic questions.",
     );
   }
   if (input.worldviewPending) {
     lines.push(
-      'IMPORTANT: strategic framing chunks are not yet ingested. Do not mention this unless the user asks about retrieval coverage.',
+      "IMPORTANT: strategic framing chunks are not yet ingested. Do not mention this unless the user asks about retrieval coverage.",
     );
   }
-  return lines.join(' ');
+  return lines.join(" ");
 }
 
 const SURFACE_DEFAULT_MODES: Record<string, string> = {
-  '/intelligence': 'corpus',
-  '/intelligence/ask': 'corpus',
-  '/programs': 'full',
-  '/source': 'corpus',
-  '/tower': 'full',
-  '/admin': 'tenant',
+  "/intelligence": "corpus",
+  "/intelligence/ask": "corpus",
+  "/programs": "full",
+  "/source": "corpus",
+  "/tower": "full",
+  "/admin": "tenant",
 };
 
 function surfaceRoutingLine(surface: string): string {
@@ -1701,9 +2003,9 @@ function getSurfaceWordCap(surface: string, memoMode?: boolean): number | null {
 function wordCapLine(input: ComposeSentinelSystemPromptInput): string {
   const cap = getSurfaceWordCap(input.surface, input.memoMode);
   if (cap === null) {
-    return 'Word cap: memo mode or unknown surface. Stay concise, but no hard cap is applied.';
+    return "Word cap: memo mode or unknown surface. Stay concise, but no hard cap is applied.";
   }
-  return `HARD LIMIT: ${cap} words for ${input.surface}. Count before you respond. Cut ruthlessly — drop preamble, drop summarising closers, keep only the grounded claim and its citation. If the question genuinely needs more space, tell the user to request a memo.`;
+  return `HARD LIMIT: ${cap} words for ${input.surface}. Count before you respond. Cut ruthlessly — drop preamble, drop summarising closers, keep only the grounded claim and its citation. If the question genuinely needs more space, tell the user to request a memo. EXCEPTION: JSON inside a fenced \`\`\`chart\`\`\` block does not count toward the word cap — emit the chart block freely when the data warrants it.`;
 }
 
 function versionFooter(): string {
@@ -1743,49 +2045,54 @@ When a question spans multiple lenses, apply each in sequence and label them.`;
 export function composeSentinelSystemPrompt(
   input: ComposeSentinelSystemPromptInput,
 ): string {
-  const isSource = input.surface === '/source' || input.surface.startsWith('/source/');
+  const isSource =
+    input.surface === "/source" || input.surface.startsWith("/source/");
   return [
     doctrineHeader(input.surface),
-    '',
+    "",
     isSource ? SOURCE_FIVE_RULES : FIVE_RULES,
-    '',
+    "",
     BANNED_PHRASES,
-    '',
+    "",
     STRUCTURAL_REQUIREMENT,
-    '',
-    isSource ? '' : PROFILE_ANSWER_DISCIPLINE,
-    '',
-    isSource ? '' : OPERATING_ADVISOR_DISCIPLINE,
-    '',
-    isSource ? '' : CLOUD_DATA_AI_DISCIPLINE,
-    '',
-    isSource ? '' : ARITHMETIC_REFLECTION_GUARD,
-    '',
+    "",
+    isSource ? "" : PROFILE_ANSWER_DISCIPLINE,
+    "",
+    isSource ? "" : OPERATING_ADVISOR_DISCIPLINE,
+    "",
+    isSource ? "" : CLOUD_DATA_AI_DISCIPLINE,
+    "",
+    isSource ? "" : ARITHMETIC_REFLECTION_GUARD,
+    "",
     HONESTY_MODES,
-    '',
-    isSource ? '' : PATTERN_LEVEL_FALLBACK,
-    '',
+    "",
+    isSource ? "" : PATTERN_LEVEL_FALLBACK,
+    "",
     refusalTriggerBlock(),
-    '',
-    input.worldviewHitsPresent ? `${WORLDVIEW_GUIDANCE}\n` : '',
+    "",
+    input.worldviewHitsPresent ? `${WORLDVIEW_GUIDANCE}\n` : "",
     TOOL_USE_POLICY,
-    '',
+    "",
     MULTI_TURN_POLICY,
-    '',
-    isSource ? '' : intelligencePriorityLine(input),
-    '',
-    isSource ? SOURCE_SPECIALIST_DISPATCH : '',
-    '',
+    "",
+    isSource ? "" : intelligencePriorityLine(input),
+    "",
+    isSource ? SOURCE_SPECIALIST_DISPATCH : "",
+    "",
     bundleContextLines(input),
-    '',
+    "",
     aiInitiativeCitationLine(input),
-    '',
+    "",
     wordCapLine(input),
-    '',
+    "",
+    CHART_OUTPUT_CONTRACT,
+    "",
     surfaceRoutingLine(input.surface),
-    '',
+    "",
     versionFooter(),
-  ].filter((line) => line !== undefined).join('\n');
+  ]
+    .filter((line) => line !== undefined)
+    .join("\n");
 }
 
 // ── Doctrine gating ──────────────────────────────────────────────────────────
@@ -1796,5 +2103,5 @@ export function composeSentinelSystemPrompt(
 // to turn it off if a regression surfaces.
 
 export function isSentinelVoiceDoctrineEnabled(): boolean {
-  return process.env.SENTINEL_VOICE_DOCTRINE_DRAFT !== 'disabled';
+  return process.env.SENTINEL_VOICE_DOCTRINE_DRAFT !== "disabled";
 }
