@@ -2323,9 +2323,19 @@ export function StrategicMovePhaseClient({
             message: fullMessage,
             tenantName: move.tenant.name,
             agentName: "Nexus",
-            surface: `strategic-moves-workspace`,
+            // URL-shaped surface (matches the AgentDock `surface` prop above)
+            // + top-level programId. Previously this sent the semantic key
+            // "strategic-moves-workspace" with the id only under
+            // surfaceContext.moveId — canonicalizeSurface/canonicalizeFromBody
+            // (src/lib/agent/surface.ts) look for surfaceContext.programId,
+            // not moveId, so programId never reached the route and the phase
+            // pack / MovesAvaChatPacket grounding never built (confirmed live:
+            // aVa answered "No active Move session is visible").
+            surface: `/strategic-moves/${move.id}/phase/${phaseNum}`,
+            programId: move.id,
             conversationHistory,
             surfaceContext: {
+              programId: move.id,
               moveId: move.id,
               phase: phaseNum,
               moveDisplayCode: move.displayCode,
