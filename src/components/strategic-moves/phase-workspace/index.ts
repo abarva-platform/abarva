@@ -14,3 +14,4 @@ export {
   ClientFinalReviewCard,
 } from './cards';
 export { PhaseWorkspaceComposition } from './PhaseWorkspaceComposition';
+export { MovePhaseWorkspacePanel } from './MovePhaseWorkspacePanel';

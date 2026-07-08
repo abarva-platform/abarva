@@ -14,6 +14,7 @@ import {
   UploadMappingSummaryCard,
 } from '../cards';
 import { PhaseWorkspaceComposition } from '../PhaseWorkspaceComposition';
+import { MovePhaseWorkspacePanel } from '../MovePhaseWorkspacePanel';
 
 const F = LAKESHORE_LEGAL_DEMO_FIXTURE;
 const render = (el: React.ReactElement) => renderToStaticMarkup(el);
@@ -102,6 +103,28 @@ describe('phase-workspace cards render the fixture', () => {
     expect(html).toContain('What changed vs. the AbarVa draft');
     expect(html).toContain('on file');
     expect(html).toContain('Approve');
+  });
+});
+
+describe('live mount panel (increment 3) — catalog-driven, keyed on numeric phase', () => {
+  it('renders the guidance + templates for a catalog phase (P2 = numeric 2)', () => {
+    const html = render(<MovePhaseWorkspacePanel phaseNum={2} phaseLabel="P2 · Discover" />);
+    expect(html).toContain('How to complete this phase');
+    expect(html).toContain('Sessions and templates for this phase');
+    expect(html).toContain('P2 · Discover'); // the app's own phase label stays authoritative
+    expect(html).toContain('Current-State Interview Guide');
+    expect(RAW_KEYS.test(html)).toBe(false);
+  });
+
+  it('renders nothing for phases with no session catalog (Originate/Charter = 0/1)', () => {
+    expect(render(<MovePhaseWorkspacePanel phaseNum={0} phaseLabel="P0 · Originate" />)).toBe('');
+    expect(render(<MovePhaseWorkspacePanel phaseNum={1} phaseLabel="P1 · Charter" />)).toBe('');
+  });
+
+  it('maps numeric 3/4/5 to the right catalog phases', () => {
+    expect(render(<MovePhaseWorkspacePanel phaseNum={3} phaseLabel="P3" />)).toContain('Solution Options Canvas');
+    expect(render(<MovePhaseWorkspacePanel phaseNum={4} phaseLabel="P4" />)).toContain('Roadmap');
+    expect(render(<MovePhaseWorkspacePanel phaseNum={5} phaseLabel="P5" />)).toContain('RACI');
   });
 });
 

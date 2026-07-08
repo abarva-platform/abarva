@@ -86,9 +86,17 @@ export type FeatureFlagKey =
   | "home_know_claude_synthesis"
   | "deliverable_structured_exhibits"
   | "deliverable_quality_contract"
-  | "intelligence_companion_canvas";
+  | "intelligence_companion_canvas"
+  | "moves_phase_workspace_v2";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "moves_phase_workspace_v2",
+    summary:
+      "Adds the phase-workspace guidance panel to the Moves phase page: for the current phase, a catalog-driven 'How to complete this phase' + 'Sessions and templates for this phase' pair (from the governed phase-template catalog, keyed on the phase). Purely additive and presentational — falls back to the existing workspace when off. Move-scoped data only; no fabricated numbers. Tenant opt-in for live proof (Lakeshore). Env: ABARVA_FEATURE_MOVES_PHASE_WORKSPACE_V2_TENANTS.",
+    policy: "tenant",
+    includeTenants: ["lakeshore"],
+  },
   {
     key: "intelligence_companion_canvas",
     summary:
