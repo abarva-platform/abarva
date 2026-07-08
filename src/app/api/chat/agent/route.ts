@@ -51,6 +51,9 @@ import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
   sanitizeAutonomousDecisionLanguage,
 } from "@/lib/ai-liability/human-decision-controls";
+// Global aVa Product Truth + Scope Guard (all agents, all surfaces).
+// See src/lib/agent/product-truth/.
+import { buildProductTruthSystemPromptBlock } from "@/lib/agent/product-truth";
 import {
   canonicalClientDisplayName,
   demoSafeClientText,
@@ -1692,6 +1695,12 @@ export async function POST(request: Request) {
     restrictedOutputPolicyBlock,
     "",
     AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+    "",
+    // Global aVa Product Truth + Scope Guard — applies to every agent, every
+    // surface, unconditionally. Prevents hallucinated product capability
+    // claims, third-party replacement/certification claims, and unsupported
+    // tenant-specific figures. See src/lib/agent/product-truth/.
+    buildProductTruthSystemPromptBlock(),
     "",
     // OV2-WIRE-AND-FM-PROMPT Part 1 — universal failure-mode catalog
     // for Programs surfaces. Positioned AFTER user context (Layer 0)
