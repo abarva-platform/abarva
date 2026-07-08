@@ -15,6 +15,8 @@ import {
 } from '../cards';
 import { PhaseWorkspaceComposition } from '../PhaseWorkspaceComposition';
 import { MovePhaseWorkspacePanel } from '../MovePhaseWorkspacePanel';
+import { PhaseTaskChecklist } from '../PhaseTaskChecklist';
+import { buildPhaseWorkflow } from '../../../../lib/programs/phase-templates/phase-workflow';
 
 const F = LAKESHORE_LEGAL_DEMO_FIXTURE;
 const render = (el: React.ReactElement) => renderToStaticMarkup(el);
@@ -125,6 +127,47 @@ describe('live mount panel (increment 3) — catalog-driven, keyed on numeric ph
     expect(render(<MovePhaseWorkspacePanel phaseNum={3} phaseLabel="P3" />)).toContain('Solution Options Canvas');
     expect(render(<MovePhaseWorkspacePanel phaseNum={4} phaseLabel="P4" />)).toContain('Roadmap');
     expect(render(<MovePhaseWorkspacePanel phaseNum={5} phaseLabel="P5" />)).toContain('RACI');
+  });
+});
+
+describe('phase task checklist (increment 4) — Stripe-style, real-signal', () => {
+  const wf = buildPhaseWorkflow({
+    phaseLabel: 'P2 · Discover',
+    nextPhaseLabel: 'P3 · Design',
+    evidence: [{ priority: 'required', status: 'covered' }, { priority: 'required', status: 'missing' }],
+    gate: [{ completed: true, severity: 'hard' }, { completed: false, severity: 'hard' }],
+  });
+
+  it('renders the ordered tasks with real progress + a progress header', () => {
+    const html = render(<PhaseTaskChecklist phaseLabel="P2 · Discover" workflow={wf} />);
+    expect(html).toContain('What to do next');
+    expect(html).toContain('Provide the evidence this phase needs');
+    expect(html).toContain('1 of 2 in'); // real evidence count
+    expect(html).toContain('Meet the gate criteria');
+    expect(html).toContain('of 2 done'); // progress header
+  });
+
+  it('the panel shows the checklist when real signals are present, hides it otherwise', () => {
+    const withSignals = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={2}
+        phaseLabel="P2 · Discover"
+        nextPhaseLabel="P3 · Design"
+        evidence={[{ priority: 'required', status: 'missing' }]}
+        gate={[{ completed: false, severity: 'hard' }]}
+      />,
+    );
+    expect(withSignals).toContain('What to do next');
+
+    const noSignals = render(<MovePhaseWorkspacePanel phaseNum={2} phaseLabel="P2 · Discover" />);
+    expect(noSignals).not.toContain('What to do next'); // guidance only
+    expect(noSignals).toContain('How to complete this phase');
+  });
+
+  it('non-wired actions render as status hints, not fake buttons (single write path)', () => {
+    const html = render(<PhaseTaskChecklist phaseLabel="P2" workflow={wf} />);
+    expect(html).toContain('pw-task-hint');
+    expect(html).not.toContain('<button');
   });
 });
 

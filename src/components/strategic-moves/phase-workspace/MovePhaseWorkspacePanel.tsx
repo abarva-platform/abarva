@@ -1,14 +1,19 @@
-// Moves phase workspace — the live mount panel (increment 3).
+// Moves phase workspace — the live mount panel (increments 3-4).
 // Presentational: maps the app's numeric phase (0-5) to the governed phase-
-// template catalog and renders the catalog-driven guidance cards. Everything
-// here comes from real catalog data keyed on the phase — no fabricated numbers,
-// no fixture. Data-hungry cards (assessment/options/workstreams) wire in as
-// their real sources come online (Pattern Assembly = later increment).
+// template catalog and renders (1) a Stripe-style task checklist built from REAL
+// move state and (2) the catalog-driven guidance cards. Everything here comes
+// from real data keyed on the phase — no fabricated numbers, no fixture.
 
 import * as React from 'react';
 import { templatesForPhase } from '../../../lib/programs/phase-templates/catalog';
 import type { MovePhaseCode } from '../../../lib/programs/phase-templates/types';
+import {
+  buildPhaseWorkflow,
+  type PhaseEvidenceSignal,
+  type PhaseGateSignal,
+} from '../../../lib/programs/phase-templates/phase-workflow';
 import { PhaseCompletionGuideCard, PhaseTemplatesAndSessionsCard } from './cards';
+import { PhaseTaskChecklist } from './PhaseTaskChecklist';
 import { PhaseWorkspaceStyles } from './styles';
 
 /** App numeric phase → governed catalog phase code. Only P2-P5 have templates. */
@@ -28,20 +33,35 @@ const PHASE_STEPS = [
 export function MovePhaseWorkspacePanel({
   phaseNum,
   phaseLabel,
+  nextPhaseLabel = null,
+  evidence = [],
+  gate = [],
 }: {
   phaseNum: number;
   /** The app's own phase label (e.g. "P2 · Discover"), kept authoritative. */
   phaseLabel: string;
+  /** The app's label for the next phase, for the advance task. */
+  nextPhaseLabel?: string | null;
+  /** REAL evidence-need signals (structural subset of MoveEvidenceNeedPacket). */
+  evidence?: PhaseEvidenceSignal[];
+  /** REAL gate criteria (structural subset of move.gateCriteria). */
+  gate?: PhaseGateSignal[];
 }): React.ReactElement | null {
   const code = PHASE_NUM_TO_CODE[phaseNum];
   if (!code) return null; // Originate/Charter (0/1) have no session catalog yet.
   const templates = templatesForPhase(code);
   if (templates.length === 0) return null;
 
+  const hasWorkflowSignal = evidence.length > 0 || gate.length > 0;
+  const workflow = hasWorkflowSignal
+    ? buildPhaseWorkflow({ phaseLabel, nextPhaseLabel, evidence, gate })
+    : null;
+
   return (
     <div className="pw" data-testid="move-phase-workspace-v2">
       <PhaseWorkspaceStyles />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '4px 0 8px' }}>
+        {workflow ? <PhaseTaskChecklist phaseLabel={phaseLabel} workflow={workflow} /> : null}
         <PhaseCompletionGuideCard phaseLabel={phaseLabel} templates={templates} steps={PHASE_STEPS} />
         <PhaseTemplatesAndSessionsCard templates={templates} />
       </div>
