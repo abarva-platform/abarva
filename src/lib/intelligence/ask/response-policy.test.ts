@@ -1,6 +1,7 @@
 import {
   applyPartialEvidencePolicy,
   buildCurrentStateAdvisory,
+  CXO_ANSWER_QUALITY_CONTRACT,
   enforceDecisionGradeAnswer,
   isBroadCurrentStateQuestion,
   sanitizeAskSynthesis,
@@ -34,6 +35,24 @@ const surfaceSources: AskSource[] = [
 ];
 
 describe("Ask Intelligence response policy", () => {
+  it("codifies the CXO answer bar for visuals, caveats, next moves, and no model deflection", () => {
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "Never imply that the user should go to Claude",
+    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "direct_fact, strategy_insight, industry_trend",
+    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "Include a compact table, chart, graph, scorecard, or 2x2",
+    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "what evidence is needed",
+    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "End with next moves",
+    );
+  });
+
   it("recognizes broad current-state questions", () => {
     expect(
       isBroadCurrentStateQuestion(

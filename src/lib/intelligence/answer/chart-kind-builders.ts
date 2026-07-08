@@ -27,6 +27,7 @@ export const CHART_KIND_TO_BUILDER: Record<AnswerChartKind, string> = {
   heatmap: "riskHeatmap",
   swimlane: "roadmapSwimlane",
   "cost-stack": "costStack",
+  "quadrant-matrix": "quadrantMatrix",
 };
 
 /** The real builder name for a chart kind (always defined for valid kinds). */

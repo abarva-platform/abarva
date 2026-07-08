@@ -46,6 +46,7 @@ const CHART_KIND_SET: Record<AnswerChartKind, true> = {
   heatmap: true,
   swimlane: true,
   "cost-stack": true,
+  "quadrant-matrix": true,
 };
 const isValidChartKind = (k: string): k is AnswerChartKind =>
   Object.prototype.hasOwnProperty.call(CHART_KIND_SET, k);

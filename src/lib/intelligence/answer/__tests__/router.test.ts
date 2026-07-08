@@ -83,5 +83,13 @@ describe("routeQuestion", () => {
         industry: expertIndustryForClientKey("skyharbor"),
       }).outputShape,
     ).toBe("table");
+
+    expect(
+      routeQuestion({
+        query:
+          "Give me the top 5 AI use cases for supply chain ranked in a 2x2 matrix across value and complexity.",
+        industry: expertIndustryForClientKey("lakeshore-holdings"),
+      }).outputShape,
+    ).toBe("chart");
   });
 });

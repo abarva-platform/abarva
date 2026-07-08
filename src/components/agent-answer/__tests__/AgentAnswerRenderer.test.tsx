@@ -55,11 +55,46 @@ describe("AgentAnswerRenderer", () => {
       <AnswerChartRenderer chart={chart} citations={citations} />,
     );
     expect(screen.getByText("Run/change cost mix")).toBeInTheDocument();
-    expect(screen.getByText("costStack")).toBeInTheDocument();
+    expect(screen.queryByText("costStack")).not.toBeInTheDocument();
     expect(
       container.querySelector("[data-chart-builder='costStack'] svg"),
     ).not.toBeNull();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+  });
+
+  it("renders a typed quadrant matrix chart", () => {
+    const chart: AnswerChart = {
+      id: "chart-quadrant",
+      kind: "quadrant-matrix",
+      title: "Supply chain AI use-case matrix",
+      data: {
+        points: [
+          { label: "Demand sensing", x: 52, y: 78 },
+          { label: "Supplier risk sensing", x: 24, y: 52 },
+          {
+            label: "Autonomous planning exception triage",
+            x: 78,
+            y: 92,
+          },
+        ],
+      },
+      citationIds: ["c1"],
+    };
+
+    const rendered = renderAnswerChartSvg(chart);
+    expect(rendered.builderName).toBe("quadrantMatrix");
+    expect(rendered.svg).toContain("Quick wins");
+    expect(rendered.svg).toContain("Demand sensing");
+
+    const { container } = render(
+      <AnswerChartRenderer chart={chart} citations={citations} />,
+    );
+    expect(
+      screen.getByText("Supply chain AI use-case matrix"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector("[data-chart-builder='quadrantMatrix'] svg"),
+    ).not.toBeNull();
   });
 
   it("renders a typed AnswerTable with formatting and citations", () => {
@@ -142,6 +177,12 @@ describe("AgentAnswerRenderer", () => {
         evidenceStrength: "partial",
         tenantGrounding: "partial",
         answerCompleteness: "complete",
+        cxo: {
+          mode: "risk_control",
+          score: 92,
+          passed: true,
+          findings: [],
+        },
       },
       safety: {
         tenantFencePassed: true,
@@ -154,6 +195,9 @@ describe("AgentAnswerRenderer", () => {
     render(<AgentAnswerRenderer answer={answer} />);
 
     expect(screen.getByText("Graphs")).toBeInTheDocument();
+    expect(screen.getByText("risk control · 92")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export HTML" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export PDF" })).toBeInTheDocument();
     expect(screen.getByText("Dependency graph")).toBeInTheDocument();
     expect(screen.getByText("2 nodes · 1 links")).toBeInTheDocument();
     expect(screen.getByLabelText("Dependency graph")).toBeInTheDocument();

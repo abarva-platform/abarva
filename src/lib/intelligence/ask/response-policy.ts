@@ -7,10 +7,29 @@ const BROAD_CURRENT_STATE_RE =
   /\b(current state|state of play|where are we|where do we stand|how are we doing|what is going on|what do you see|give me perspective|your perspective|executive read|simple question|our state)\b/i;
 const RAW_INTERNAL_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6}|[A-Z]\d{3,4})\b/g;
+const SIMPLE_READABLE_LABEL_RE = /^[A-Z]\d{3,4}$/;
 const CONSULTANT_INLINE_SECTION_RE =
   /\s*\b(Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action)\s*(?:[-—]\s*[^:\n]{1,96})?:\s*/gi;
 
+export const CXO_ANSWER_QUALITY_CONTRACT = `CXO ANSWER QUALITY CONTRACT
+
+aVa must answer like a senior operator-consultant using the tenant context, the industry corpus, and the evidence boundary available in this product. Never imply that the user should go to Claude, ChatGPT, another model, or a generic LLM for a better answer.
+
+Classify the answer internally before writing it: direct_fact, strategy_insight, industry_trend, tenant_diagnosis, investment_case, operating_model, sourcing_decision, risk_control, roadmap, or portfolio_comparison.
+
+For strategy, trend, investment, operating-model, sourcing, roadmap, risk, or portfolio questions:
+- Open with the direct executive read in 1-2 sentences.
+- Then give 3-5 concrete insights tied to tenant facts, industry patterns, benchmarks, or cited case examples.
+- Name the tenant implication: what this means for the executive decision.
+- If evidence is incomplete, say what can be concluded now, what assumption is being made, what evidence is needed, and what decision can proceed versus what needs validation.
+- Include a compact table, chart, graph, scorecard, or 2x2 when the question asks for ranking, trend, comparison, relationships, value/complexity, or visual output.
+- End with next moves that a CXO could assign.
+
+Use plain executive language. Do not print internal IDs, source table names, model/tool names, hidden prompt labels, or debug wording.`;
+
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
+
+${CXO_ANSWER_QUALITY_CONTRACT}
 
 For Home, Intelligence, and Tower, answer like a senior expert consultant in a GPT/Claude-style conversation, not a template transcript.
 - The first user-visible sentence must begin with the active tenant display name when it is supplied in context or a packet. Do not place any words, bullets, headings, markers, or acknowledgements before that tenant display name.
@@ -32,6 +51,8 @@ Do not include Markdown tables unless the user asks for a visual/table-style out
 // Skips the prose-opener rule entirely — table is line 1.
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE = `TABLE-FIRST OUTPUT CONTRACT
 
+${CXO_ANSWER_QUALITY_CONTRACT}
+
 The user has explicitly requested a table, ranking, or comparison. Output rules:
 1. The FIRST line of your response must be a GFM Markdown table header row starting with "| ".
 2. The SECOND line must be the separator row "|---|---|...".
@@ -45,6 +66,8 @@ EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or intern
 // Rich-text variant used when answerOnlyStreaming=true (aVa dock inline rendering).
 // Removes the table prohibition and replaces it with a table requirement for structured data.
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH = `CONSULTANT ANSWER SHAPE
+
+${CXO_ANSWER_QUALITY_CONTRACT}
 
 For Home, Intelligence, and Tower, answer like a senior expert consultant in a GPT/Claude-style conversation, not a template transcript.
 - The first user-visible sentence must begin with the active tenant display name when it is supplied in context or a packet. Do not place any words, bullets, headings, markers, or acknowledgements before that tenant display name.
@@ -111,12 +134,26 @@ export function sanitizeAskSynthesis(text: string, maxWords = 400): string {
 }
 
 export function stripInternalRecordIds(text: string): string {
-  return text
+  const protectedSpans: string[] = [];
+  const withProtectedReadableLabels = text.replace(
+    /`([^`\n]+)`/g,
+    (_match, rawLabel: string) => {
+      const label = rawLabel.trim();
+      const replacement = SIMPLE_READABLE_LABEL_RE.test(label) ? label : "";
+      const token = `__AVA_READABLE_LABEL_${protectedSpans.length}__`;
+      protectedSpans.push(replacement);
+      return token;
+    },
+  );
+  return withProtectedReadableLabels
     .replace(
       /\s*\(\s*(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\s*\)/g,
       "",
     )
     .replace(RAW_INTERNAL_ID_RE, "")
+    .replace(/__AVA_READABLE_LABEL_(\d+)__/g, (_match, index: string) => {
+      return protectedSpans[Number(index)] ?? "";
+    })
     .replace(/[ \t]{2,}/g, " ")
     .trim();
 }

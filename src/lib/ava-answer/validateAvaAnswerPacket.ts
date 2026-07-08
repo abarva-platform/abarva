@@ -1,5 +1,6 @@
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { assertRetrievalPolicy } from "@/lib/ava-answer/retrievalPolicy";
+import { evaluateCxoAnswerQuality } from "@/lib/ava-answer/cxo-quality-gate";
 
 export interface AvaAnswerValidationViolation {
   code: string;
@@ -35,6 +36,7 @@ export function validateAvaAnswerPacket(
   packet: AvaAnswerPacket,
 ): AvaAnswerValidationResult {
   const violations: AvaAnswerValidationViolation[] = [];
+  const cxoQuality = evaluateCxoAnswerQuality(packet);
 
   for (const field of PUBLIC_FIELDS) {
     const value = packet[field];
@@ -119,6 +121,15 @@ export function validateAvaAnswerPacket(
     });
   }
 
+  for (const finding of cxoQuality.findings) {
+    violations.push({
+      code: `cxo-${finding.code}`,
+      severity: finding.severity,
+      message: finding.message,
+      field: finding.field,
+    });
+  }
+
   const errorCount = violations.filter(
     (violation) => violation.severity === "error",
   ).length;
@@ -127,6 +138,10 @@ export function validateAvaAnswerPacket(
     violations,
     packet: {
       ...packet,
+      quality: {
+        ...packet.quality,
+        cxo: cxoQuality,
+      },
       safety: {
         ...packet.safety,
         forbiddenLanguagePassed:

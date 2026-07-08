@@ -443,6 +443,99 @@ describe("buildStructuredExhibits", () => {
     ]);
   });
 
+  it("converts value and complexity tables into typed quadrant matrix charts", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query:
+          "Give me the top 5 AI use cases for supply chain and rank them in a 2x2 matrix across value and complexity.",
+        outputShape: "chart",
+      },
+      sources,
+      prose:
+        "Use-case priority\n\n| Use case | Value | Complexity | Rationale |\n|---|---|---|---|\n| Demand sensing | High | Medium | Improves forecast accuracy |\n| Supplier risk sensing | Medium | Low | Uses supplier and shipment signals |\n| Autonomous planning exception triage | Very high | High | Needs workflow integration |\n\nNext move: validate source coverage.",
+    });
+
+    expect(exhibits.tables).toHaveLength(1);
+    expect(exhibits.charts).toEqual([
+      expect.objectContaining({
+        id: "answer-markdown-table-1-quadrant-matrix",
+        kind: "quadrant-matrix",
+        title: "Value / Complexity 2x2 Matrix",
+        data: expect.objectContaining({
+          xAxisLabel: "Implementation complexity",
+          yAxisLabel: "Business value",
+          points: expect.arrayContaining([
+            expect.objectContaining({
+              label: "Demand sensing",
+              x: 52,
+              y: 78,
+            }),
+            expect.objectContaining({
+              label: "Autonomous planning exception triage",
+              x: 78,
+              y: 92,
+            }),
+          ]),
+        }),
+      }),
+    ]);
+  });
+
+  it("converts governed chart fences into typed chart artifacts", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query:
+          "Show me an AI adoption trend chart for back-office functions.",
+        outputShape: "chart",
+      },
+      sources,
+      prose:
+        "Adoption has moved from pilots into operating workflows.\n\n```chart\n{\"type\":\"line\",\"title\":\"AI adoption trend\",\"subtitle\":\"Back-office functions\",\"xKey\":\"Year\",\"yKey\":\"Adoption\",\"unit\":\"%\",\"data\":[{\"Year\":\"2024\",\"Adoption\":22},{\"Year\":\"2025\",\"Adoption\":41},{\"Year\":\"2026\",\"Adoption\":68}],\"note\":\"Directional benchmark view\"}\n```\n\nThe slope is the board message.",
+    });
+
+    expect(exhibits.prose).toContain(
+      "Adoption has moved from pilots into operating workflows.",
+    );
+    expect(exhibits.prose).toContain("The slope is the board message.");
+    expect(exhibits.prose).not.toContain("```chart");
+    expect(exhibits.prose).not.toContain("\"type\":\"line\"");
+    expect(exhibits.charts).toEqual([
+      expect.objectContaining({
+        id: "answer-chart-fence-1",
+        kind: "line",
+        title: "AI adoption trend",
+        builder: "inlineChart",
+        data: expect.objectContaining({
+          type: "line",
+          xKey: "Year",
+          yKey: "Adoption",
+          unit: "%",
+          data: [
+            { Year: "2024", Adoption: 22 },
+            { Year: "2025", Adoption: 41 },
+            { Year: "2026", Adoption: 68 },
+          ],
+        }),
+      }),
+    ]);
+  });
+
+  it("strips invalid chart fences without creating fabricated exhibits", () => {
+    const exhibits = buildStructuredExhibits({
+      routing,
+      sources,
+      prose:
+        "Here is the recommendation.\n\n```chart\n{\"type\":\"line\",\"title\":\"Bad chart\",\"xKey\":\"Year\",\"yKey\":\"Adoption\",\"data\":[{\"Year\":\"2026\",\"Adoption\":\"directional\"}]}\n```\n\nUse the loaded facts only.",
+    });
+
+    expect(exhibits.prose).toContain("Here is the recommendation.");
+    expect(exhibits.prose).toContain("Use the loaded facts only.");
+    expect(exhibits.prose).not.toContain("Bad chart");
+    expect(exhibits.charts).toHaveLength(0);
+  });
+
   it("does not chart directional ranges from an extracted table", () => {
     const exhibits = buildStructuredExhibits({
       routing,
