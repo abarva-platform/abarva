@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// aVa Source MODE-SPECIFIC GROUNDING — Phase A (6 modes).
+// aVa Source MODE-SPECIFIC GROUNDING — Phase A (6 modes) + Phase B (8 modes).
 //
 // `ava-grounding-context.ts` (merged #4567) gives aVa the deterministic VALUE
 // numbers (value bridge / lever insight) for a Source event. This module is its
@@ -14,6 +14,18 @@
 // `workflow_how_to` is the one exception by design: it is NOT data-grounded. It
 // is a small deterministic KNOWLEDGE TABLE mapping "how do I X" intents to the
 // actual UI action, authored in code so the LLM cannot invent UI structure.
+//
+// Phase B extends the same discipline to the 8 VENDOR/VALUE/COMMERCIAL modes —
+// `value_at_stake`, `vendor_comparison`, `should_cost`, `risk_exposure`,
+// `clause_coverage`, `bafo_strategy`, `committed_value`, `value_realization`.
+// Every Phase B builder reuses `buildStepInsight` (the SAME per-step insight the
+// "✦ Intelligence" tab renders) for the relevant stage — it never re-derives a
+// number the deterministic engine already computed. Every lever/value figure a
+// Phase B block surfaces also carries its VALUE-TYPE CLASSIFICATION
+// (expected_concession / incremental_negotiated / solution_tightening /
+// protected / risk_adjusted) straight from the insight row's `valueType` field
+// (itself sourced from `evaluateValueLevers` via the archetype's
+// `ValueLeverRule.valueType`) — never reclassified, never invented.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
@@ -23,9 +35,24 @@ import {
 } from "@/lib/source/constants";
 import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import { templateFactsPresent } from "@/lib/source/facts/view/task-evidence-hydration";
+import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
+import type {
+  VendorBidSignal,
+  VendorResponseSignal,
+} from "@/lib/source/facts/view/step-insight-builder";
 import type { EvaluatorInputs } from "@/lib/source/facts/evaluators/types";
-import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
+import type {
+  BafoProgressInsightView,
+  CommittedValueInsightView,
+  ResponseCoverageInsightView,
+  RfpClauseInsightView,
+  ShouldCostInsightView,
+  StageAnalyticsView,
+  ValueRealizationInsightView,
+  ValueType,
+} from "@/components/source/canvas/analytics/view-model";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
+import type { SourceEventArchetype, ValueLeverRule } from "@/lib/source/archetypes/types";
 import type { SourceAnswerMode } from "./answer-mode";
 
 /** Minimal shape needed from the event row for status/gate grounding. */
@@ -50,6 +77,27 @@ export interface BuildModeGroundingInput {
   artifacts?: readonly SourceArtifactRegistryRecord[];
   /** The user's raw question text — used only by workflow_how_to's intent lookup. */
   question?: string;
+  /**
+   * The resolved value archetype for this event (from `resolveValueArchetype` /
+   * `getSourceArchetype`) — Phase B builders pass this straight into
+   * `buildStepInsight` so the SAME archetype resolution the canvas uses drives
+   * the grounding. Required for every Phase B mode; Phase A modes ignore it.
+   */
+  archetype?: SourceEventArchetype | null;
+  /** The event's value-at-stake baseline (the canvas's `event.valueAtStakeUsd`). */
+  baselineAmount?: number | null;
+  /** The RFP-clause presence signal (from `readRfpClausePresentLeverKeys`) — `clause_coverage`. */
+  rfpClausePresentLeverKeys?: ReadonlySet<string>;
+  /** The committed-value-per-lever signal (from `readCommittedValueLevers`) — `committed_value`. */
+  committedValueByLeverKey?: ReadonlyMap<string, number>;
+  /** The BAFO-concession-per-lever signal (from `readBafoConcessionLevers`) — `bafo_strategy`. */
+  bafoConcessionByLeverKey?: ReadonlyMap<string, number>;
+  /** The realized-value-per-lever signal (from `readRealizedValueLevers`) — `value_realization`. */
+  realizedValueByLeverKey?: ReadonlyMap<string, number>;
+  /** The vendor-response signal (from `readVendorLeverResponses`) — `vendor_comparison`. */
+  vendorResponses?: VendorResponseSignal;
+  /** The vendor-bid signal (from `readVendorBids`) — `vendor_comparison`, `should_cost`. */
+  vendorBids?: VendorBidSignal;
 }
 
 export interface ModeGroundingResult {
@@ -61,6 +109,63 @@ export interface ModeGroundingResult {
 }
 
 const EMPTY_RESULT: ModeGroundingResult = { block: "", quotableFacts: {} };
+
+// ── Phase B shared helpers ───────────────────────────────────────────────────
+
+const USD_COMPACT = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+  notation: "compact",
+});
+
+function fmtUsd(value: number): string {
+  return USD_COMPACT.format(value);
+}
+
+function fmtUsdRange(low: number, high: number): string {
+  if (low === high) return fmtUsd(low);
+  return `${fmtUsd(low)}–${fmtUsd(high)}`;
+}
+
+/** Human label for a value-type classification — the canonical 5-way taxonomy. */
+const VALUE_TYPE_LABELS: Record<ValueType, string> = {
+  expected_concession: "expected concession",
+  incremental_negotiated: "incremental negotiated value",
+  solution_tightening: "solution tightening",
+  protected: "protected value (risk hedge)",
+  risk_adjusted: "risk-adjusted (TCO normalization)",
+};
+
+function valueTypeLabel(vt: ValueType): string {
+  return VALUE_TYPE_LABELS[vt] ?? vt;
+}
+
+/**
+ * The VALUE-TYPE CLASSIFICATION line every Phase B block must carry when it
+ * surfaces lever/value figures — reuses each row's own `valueType` (itself
+ * sourced from `evaluateValueLevers` / the archetype's `ValueLeverRule.valueType`),
+ * never reclassified. Grouped so the model reads the classification distribution
+ * at a glance rather than one line per lever.
+ */
+function valueTypeClassificationLines(
+  rows: readonly { label: string; valueType: ValueType }[],
+): string[] {
+  if (rows.length === 0) return [];
+  const byType = new Map<ValueType, string[]>();
+  for (const row of rows) {
+    const list = byType.get(row.valueType) ?? [];
+    list.push(row.label);
+    byType.set(row.valueType, list);
+  }
+  const lines = ["VALUE-TYPE CLASSIFICATION (never claim these as one blended savings figure):"];
+  for (const [vt, labels] of byType) {
+    lines.push(`  ${valueTypeLabel(vt)}: ${labels.join("; ")}.`);
+  }
+  return lines;
+}
+
+const BASELINE_LABEL = "Value at stake (event estimate)";
 
 // ── event_status ─────────────────────────────────────────────────────────────
 
@@ -386,11 +491,466 @@ function buildStageGateGrounding(input: BuildModeGroundingInput): ModeGroundingR
   };
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// PHASE B — vendor/value/commercial modes.
+//
+// Each builder below calls `buildStepInsight` for the stage that insight kind
+// foregrounds (see `stepInsightKindForStage` in step-insight-builder.ts), passing
+// through whichever per-lever/per-vendor signal the route already read for the
+// canvas (rfpClausePresentLeverKeys / committedValueByLeverKey /
+// bafoConcessionByLeverKey / realizedValueByLeverKey / vendorResponses /
+// vendorBids). It never re-implements the insight's math — it renders the SAME
+// headline + rows/bars the canvas tab shows, plus the value-type classification
+// every row already carries.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ── value_at_stake ───────────────────────────────────────────────────────────
+
 /**
- * Build the mode-specific grounding block for one of Phase A's 6 implemented
- * modes. Returns an empty result for any other mode (the caller falls through
- * to existing chat behavior unchanged) — this function is only ever called
- * when the classifier already resolved an implemented mode.
+ * value_at_stake was already effectively covered by the pre-existing
+ * `buildAvaSourceGrounding` / `renderAvaSourceGroundingFromFacts` wire (#4567) —
+ * the route injects that block on EVERY grounded turn (it is the base grounding,
+ * not mode-specific), so this builder does not duplicate it. It confirms/labels
+ * that the value bridge is the authoritative source for this mode rather than
+ * re-deriving a second view of the same numbers.
+ */
+function buildValueAtStakeGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {}, baselineAmount } = input;
+  if (!archetype) return EMPTY_RESULT;
+  const insight = buildStepInsight({
+    stageKey: "pricing",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    baselineLabel: BASELINE_LABEL,
+    baselineAmount: baselineAmount ?? 0,
+  });
+  if (!insight || insight.kind !== "value_bridge") return EMPTY_RESULT;
+  const quantified = insight.waterfall.bands.filter((b) => b.state === "quantified");
+  const lines = [
+    "VALUE-AT-STAKE GROUNDING (authoritative — the same value bridge the canvas Pricing tab renders):",
+    `Provenance: ${insight.provenance === "live" ? "LIVE — computed from this event's cited facts." : "SAMPLE/MODEL — illustrative shape, not a tenant number."}`,
+    `Headline: ${insight.headline}`,
+    ...valueTypeClassificationLines(
+      quantified.map((b) => ({ label: b.label, valueType: b.valueType })),
+    ),
+  ];
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      valueBridgeHeadline: insight.headline,
+      valueBridgeProvenance: insight.provenance,
+    },
+  };
+}
+
+// ── vendor_comparison ────────────────────────────────────────────────────────
+
+/**
+ * Vendor comparison grounds BOTH facets when available: Responses stage
+ * (`response_coverage` — per-vendor lever-addressed/dodged coverage) AND
+ * Evaluation stage (`should_cost_normalization` — the vendor bid normalization +
+ * the cheapest-headline-loses-on-TCO trap). If only one has data, ground what
+ * exists and say the other is model/pending — never fabricate the missing one.
+ */
+function buildVendorComparisonGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {}, vendorResponses, vendorBids } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const responseInsight = buildStepInsight({
+    stageKey: "responses",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    vendorResponses,
+  }) as ResponseCoverageInsightView | null;
+
+  const shouldCostInsight = buildStepInsight({
+    stageKey: "evaluation",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    vendorBids,
+  }) as ShouldCostInsightView | null;
+
+  const lines = [
+    "VENDOR COMPARISON GROUNDING (authoritative — the same response-coverage and should-cost insights the canvas renders):",
+  ];
+  const quotableFacts: Record<string, string> = {};
+
+  if (responseInsight) {
+    lines.push(
+      `Response coverage [${responseInsight.isModel ? "MODEL — illustrative, no vendor-response signal yet" : "LIVE"}]: ${responseInsight.headline}`,
+    );
+    if (responseInsight.vendors && responseInsight.vendors.length > 0) {
+      for (const v of responseInsight.vendors) {
+        lines.push(
+          `  ${v.vendorId}: ${v.addressed} addressed, ${v.partial} partial, ${v.dodged} dodged, ${v.notYetAnswered} not yet answered (of ${v.totalLevers} levers) — addressed pool up to ${fmtUsd(v.addressedHighUsd)}, exposed pool up to ${fmtUsd(v.exposedHighUsd)}.`,
+        );
+      }
+    }
+    lines.push(
+      ...valueTypeClassificationLines(
+        responseInsight.rows.map((r) => ({ label: r.label, valueType: r.valueType })),
+      ),
+    );
+    quotableFacts.responseCoverageHeadline = responseInsight.headline;
+    quotableFacts.responseCoverageIsModel = String(responseInsight.isModel);
+  } else {
+    lines.push(
+      "Response coverage: no value levers wired for this archetype — nothing to compare.",
+    );
+  }
+
+  if (shouldCostInsight) {
+    lines.push(
+      `Should-cost normalization [${shouldCostInsight.isModel ? "MODEL — illustrative vendors, no vendor-bid signal yet" : "LIVE"}]: ${shouldCostInsight.headline}`,
+    );
+    for (const v of shouldCostInsight.vendors) {
+      const evidenceFrag =
+        v.needsEvidence && v.needsEvidence.length > 0
+          ? ` (needs evidence: ${v.needsEvidence.join(", ")})`
+          : "";
+      lines.push(
+        `  ${v.label}: headline ${fmtUsd(v.headlinePrice)}, normalized TCO ${fmtUsd(v.normalizedTco)}${evidenceFrag}.`,
+      );
+    }
+    quotableFacts.shouldCostHeadline = shouldCostInsight.headline;
+    quotableFacts.shouldCostIsModel = String(shouldCostInsight.isModel);
+  } else {
+    lines.push(
+      "Should-cost normalization: no value levers wired for this archetype — nothing to normalize.",
+    );
+  }
+
+  return { block: lines.join("\n"), quotableFacts };
+}
+
+// ── should_cost ──────────────────────────────────────────────────────────────
+
+/**
+ * Per-vendor headline bid vs normalized TCO, the ranking, and the trap
+ * explanation when the ranking flips — reuses `should_cost_normalization`
+ * verbatim (never re-normalizes a bid itself).
+ */
+function buildShouldCostGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {}, vendorBids } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const insight = buildStepInsight({
+    stageKey: "evaluation",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    vendorBids,
+  }) as ShouldCostInsightView | null;
+  if (!insight) return EMPTY_RESULT;
+
+  const lines = [
+    "SHOULD-COST GROUNDING (authoritative — the same should-cost normalization the canvas Evaluation tab renders):",
+    `Provenance: ${insight.isModel ? "MODEL — illustrative vendors, not real bids." : "LIVE — normalized from the vendor bids provided."}`,
+    `Headline: ${insight.headline}`,
+  ];
+  for (const v of insight.vendors) {
+    const winnerFrag =
+      v.vendorKey === insight.headlineWinnerKey
+        ? " [cheapest on headline]"
+        : v.vendorKey === insight.normalizedWinnerKey
+          ? " [wins on normalized TCO]"
+          : "";
+    const evidenceFrag =
+      v.needsEvidence && v.needsEvidence.length > 0
+        ? ` — needs evidence: ${v.needsEvidence.join(", ")} (not ranked)`
+        : "";
+    lines.push(
+      `  ${v.label}${winnerFrag}: headline ${fmtUsd(v.headlinePrice)} + adjustments (${v.adjustments.map((a) => `${a.label}: ${fmtUsd(a.amount)}`).join("; ") || "none"}) = normalized TCO ${fmtUsd(v.normalizedTco)}.${evidenceFrag}`,
+    );
+  }
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      shouldCostHeadline: insight.headline,
+      shouldCostIsModel: String(insight.isModel),
+      headlineWinnerKey: insight.headlineWinnerKey,
+      normalizedWinnerKey: insight.normalizedWinnerKey,
+    },
+  };
+}
+
+// ── risk_exposure ────────────────────────────────────────────────────────────
+
+/**
+ * Grounds the archetype's stated COMMERCIAL RISK per lever (the `commercialRisk`
+ * field on `ValueLeverRule`, when the rule declares one) alongside the lever's
+ * confidence + evidence basis from `evaluateValueLevers` via the Strategy-stage
+ * value-pool insight (the same per-lever confidence the canvas shows). Never
+ * invents a risk category beyond what the archetype/evidence already states —
+ * a lever with no declared `commercialRisk` is named as such, not filled in.
+ */
+function buildRiskExposureGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {} } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const insight = buildStepInsight({
+    stageKey: "strategy",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+  });
+  if (!insight || insight.kind !== "value_pool") return EMPTY_RESULT;
+
+  const rulesByKey = new Map<string, ValueLeverRule>(
+    (archetype.valueLeverRules ?? []).map((r) => [r.key, r]),
+  );
+
+  const lines = [
+    "RISK EXPOSURE GROUNDING (authoritative — the same value-pool levers the canvas Strategy tab renders, with each lever's stated commercial risk and confidence):",
+    `Provenance: ${insight.provenance === "live" ? "LIVE — computed from this event's cited facts." : "SAMPLE/MODEL — illustrative shape, not a tenant number."}`,
+    `Headline: ${insight.headline}`,
+  ];
+  for (const bar of insight.bars) {
+    const rule = rulesByKey.get(bar.leverKey);
+    const riskFrag = rule?.commercialRisk
+      ? rule.commercialRisk
+      : "no commercial-risk note is declared for this lever in the archetype playbook — do not invent one.";
+    lines.push(
+      `  ${bar.label} (${valueTypeLabel(bar.valueType)}, confidence ${bar.confidence}): ${fmtUsdRange(bar.low, bar.high)}. Commercial risk: ${riskFrag}`,
+    );
+  }
+  if (insight.needsEvidenceLevers.length > 0) {
+    lines.push(
+      `Levers needing evidence before they can be sized (unsized risk, not zero risk): ${insight.needsEvidenceLevers.join(", ")}.`,
+    );
+  }
+  lines.push(
+    ...valueTypeClassificationLines(
+      insight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+    ),
+  );
+
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      valuePoolHeadline: insight.headline,
+      valuePoolProvenance: insight.provenance,
+    },
+  };
+}
+
+// ── clause_coverage ──────────────────────────────────────────────────────────
+
+/**
+ * Protected vs exposed levers, cited to the RFP clause checklist facts — reuses
+ * `rfp_clause_coverage` verbatim.
+ */
+function buildClauseCoverageGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {}, rfpClausePresentLeverKeys } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const insight = buildStepInsight({
+    stageKey: "rfp",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    rfpClausePresentLeverKeys,
+  }) as RfpClauseInsightView | null;
+  if (!insight) return EMPTY_RESULT;
+
+  const lines = [
+    "CLAUSE COVERAGE GROUNDING (authoritative — the same RFP clause-coverage insight the canvas RFP tab renders):",
+    `Provenance: ${insight.isModel ? "MODEL — no RFP-clause signal yet, every lever shown as exposed (to require)." : "LIVE — read from the RFP clause checklist facts."}`,
+    `Headline: ${insight.headline}`,
+  ];
+  for (const row of insight.rows) {
+    lines.push(
+      `  ${row.label} (${valueTypeLabel(row.valueType)}, ${fmtUsdRange(row.low, row.high)}): ${row.protected ? "PROTECTED — clause present in the RFP." : "EXPOSED — clause not present."} Clause: ${row.rfpClause} BAFO fallback if it slips: ${row.bafoAsk}`,
+    );
+  }
+  lines.push(
+    ...valueTypeClassificationLines(
+      insight.rows.map((r) => ({ label: r.label, valueType: r.valueType })),
+    ),
+  );
+
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      clauseCoverageHeadline: insight.headline,
+      clauseCoverageIsModel: String(insight.isModel),
+    },
+  };
+}
+
+// ── bafo_strategy ────────────────────────────────────────────────────────────
+
+/**
+ * Captured-vs-target per lever, which levers are still open, and (reusing each
+ * lever's `bafoAsk` from the archetype rule) the specific ask for each open
+ * lever — reuses `bafo_progress` verbatim.
+ */
+function buildBafoStrategyGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {}, bafoConcessionByLeverKey } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const insight = buildStepInsight({
+    stageKey: "bafo",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    bafoConcessionByLeverKey,
+  }) as BafoProgressInsightView | null;
+  if (!insight) return EMPTY_RESULT;
+
+  const openRows = insight.rows.filter((r) => r.captured <= 0);
+  const capturedRows = insight.rows.filter((r) => r.captured > 0);
+
+  const lines = [
+    "BAFO STRATEGY GROUNDING (authoritative — the same BAFO captured-vs-target insight the canvas BAFO tab renders):",
+    `Provenance: ${insight.isModel ? "MODEL — no BAFO concession signal yet, every lever shown as still-open (0 captured)." : "LIVE — read from the BAFO concession actuals provided."}`,
+    `Headline: ${insight.headline}`,
+  ];
+  if (capturedRows.length > 0) {
+    lines.push("Captured so far:");
+    for (const row of capturedRows) {
+      lines.push(
+        `  ${row.label} (${valueTypeLabel(row.valueType)}): captured ${fmtUsd(row.captured)} of target ${fmtUsdRange(row.targetLow, row.targetHigh)}.`,
+      );
+    }
+  }
+  if (openRows.length > 0) {
+    lines.push("Still open — the specific ask for each (from the archetype's BAFO playbook):");
+    for (const row of openRows) {
+      lines.push(
+        `  ${row.label} (${valueTypeLabel(row.valueType)}, target ${fmtUsdRange(row.targetLow, row.targetHigh)}): ask — ${row.bafoAsk}`,
+      );
+    }
+  }
+  lines.push(
+    ...valueTypeClassificationLines(
+      insight.rows.map((r) => ({ label: r.label, valueType: r.valueType })),
+    ),
+  );
+
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      bafoProgressHeadline: insight.headline,
+      bafoProgressIsModel: String(insight.isModel),
+      bafoOpenLeverCount: String(openRows.length),
+    },
+  };
+}
+
+// ── committed_value ──────────────────────────────────────────────────────────
+
+/**
+ * Committed-vs-target per lever, which levers are awaiting award confirmation —
+ * reuses `committed_value` verbatim.
+ */
+function buildCommittedValueGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {}, committedValueByLeverKey } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const insight = buildStepInsight({
+    stageKey: "selection",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    committedValueByLeverKey,
+  }) as CommittedValueInsightView | null;
+  if (!insight) return EMPTY_RESULT;
+
+  const awaitingRows = insight.bars.filter((b) => b.committed === undefined);
+  const committedRows = insight.bars.filter((b) => b.committed !== undefined);
+
+  const lines = [
+    "COMMITTED VALUE GROUNDING (authoritative — the same award-committed-value insight the canvas Selection tab renders):",
+    `Provenance: ${insight.isModel ? "MODEL — no award signal yet, shown as the awarded-lever target roll-up." : "LIVE — read from the award commitments provided."}`,
+    `Headline: ${insight.headline}`,
+  ];
+  if (committedRows.length > 0) {
+    lines.push("Committed by the executed award:");
+    for (const bar of committedRows) {
+      lines.push(
+        `  ${bar.label} (${valueTypeLabel(bar.valueType)}): committed ${fmtUsd(bar.committed ?? 0)} against target ${fmtUsdRange(bar.low, bar.high)}.`,
+      );
+    }
+  }
+  if (awaitingRows.length > 0) {
+    lines.push(
+      `Still awaiting award confirmation (never shown as $0 — honestly unresolved): ${awaitingRows.map((b) => b.label).join("; ")}.`,
+    );
+  }
+  lines.push(
+    ...valueTypeClassificationLines(
+      insight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+    ),
+  );
+
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      committedValueHeadline: insight.headline,
+      committedValueIsModel: String(insight.isModel),
+      committedAwaitingCount: String(awaitingRows.length),
+    },
+  };
+}
+
+// ── value_realization ────────────────────────────────────────────────────────
+
+/**
+ * Realized-to-date vs committed per lever — reuses `value_realization` verbatim.
+ */
+function buildValueRealizationGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const { archetype, factInputs = {}, realizedValueByLeverKey } = input;
+  if (!archetype) return EMPTY_RESULT;
+
+  const insight = buildStepInsight({
+    stageKey: "value",
+    inputs: factInputs,
+    citations: {},
+    archetypeId: archetype.id,
+    realizedValueByLeverKey,
+  }) as ValueRealizationInsightView | null;
+  if (!insight) return EMPTY_RESULT;
+
+  const lines = [
+    "VALUE REALIZATION GROUNDING (authoritative — the same committed-vs-realized insight the canvas Value tab renders):",
+    `Provenance: ${insight.isModel ? "MODEL — no realized-value signal yet, realization tracked as pending against committed." : "LIVE (snapshot) — read from the realized-to-date actuals provided."}`,
+    `Headline: ${insight.headline}`,
+  ];
+  if (insight.bars && insight.bars.length > 0) {
+    for (const bar of insight.bars) {
+      const realizedFrag =
+        bar.realized !== undefined
+          ? `realized to date ${fmtUsd(bar.realized)}`
+          : "not yet realized";
+      lines.push(
+        `  ${bar.label} (${valueTypeLabel(bar.valueType)}): ${realizedFrag} against committed ${fmtUsd(bar.committed)}.`,
+      );
+    }
+    lines.push(
+      ...valueTypeClassificationLines(
+        insight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+      ),
+    );
+  }
+
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      valueRealizationHeadline: insight.headline,
+      valueRealizationIsModel: String(insight.isModel),
+    },
+  };
+}
+
+/**
+ * Build the mode-specific grounding block for one of Phase A's 6 or Phase B's 8
+ * implemented modes. Returns an empty result for any other mode (the caller
+ * falls through to existing chat behavior unchanged) — this function is only
+ * ever called when the classifier already resolved an implemented mode.
  */
 export function buildModeGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
   switch (input.mode) {
@@ -406,6 +966,22 @@ export function buildModeGrounding(input: BuildModeGroundingInput): ModeGroundin
       return buildArtifactFinalityGrounding(input);
     case "stage_gate":
       return buildStageGateGrounding(input);
+    case "value_at_stake":
+      return buildValueAtStakeGrounding(input);
+    case "vendor_comparison":
+      return buildVendorComparisonGrounding(input);
+    case "should_cost":
+      return buildShouldCostGrounding(input);
+    case "risk_exposure":
+      return buildRiskExposureGrounding(input);
+    case "clause_coverage":
+      return buildClauseCoverageGrounding(input);
+    case "bafo_strategy":
+      return buildBafoStrategyGrounding(input);
+    case "committed_value":
+      return buildCommittedValueGrounding(input);
+    case "value_realization":
+      return buildValueRealizationGrounding(input);
     default:
       return EMPTY_RESULT;
   }

@@ -21,8 +21,11 @@
 
 /**
  * The full 16-mode union the Source aVa answer taxonomy defines. Phase A
- * implements the first 6 (see module doc); the remaining 10 are classified now
- * so Phase B/C can extend grounding without touching this type again.
+ * implements the first 6 (see module doc); Phase B (this module's next slice)
+ * implements 7 more — the vendor/value/commercial modes — reusing the SAME
+ * deterministic `buildStepInsight` / `evaluateValueLevers` substrate the canvas
+ * already trusts. `stakeholder_alignment` and `general_advisory` remain
+ * classify-only-passthrough, deferred to Phase C.
  */
 export type SourceAnswerMode =
   // ── Phase A — implemented (grounding + quality gate wired) ──────────────────
@@ -32,7 +35,7 @@ export type SourceAnswerMode =
   | "artifact_lineage"
   | "artifact_finality"
   | "stage_gate"
-  // ── Phase B/C — classify-only-passthrough (existing chat behavior unchanged) ─
+  // ── Phase B — implemented (grounding + quality gate wired) ──────────────────
   | "value_at_stake"
   | "vendor_comparison"
   | "risk_exposure"
@@ -41,6 +44,7 @@ export type SourceAnswerMode =
   | "should_cost"
   | "committed_value"
   | "value_realization"
+  // ── Phase C — classify-only-passthrough (existing chat behavior unchanged) ──
   | "stakeholder_alignment"
   | "general_advisory";
 
@@ -54,8 +58,34 @@ export const PHASE_A_IMPLEMENTED_MODES: readonly SourceAnswerMode[] = [
   "stage_gate",
 ];
 
+/**
+ * The 8 modes Phase B builds mode-specific grounding for — `value_at_stake` was
+ * already effectively covered by the pre-existing `buildAvaSourceGrounding` value
+ * wire (#4567), so its grounding here just confirms/labels that coverage rather
+ * than re-deriving it; the other 7 are net-new vendor/value/commercial modes.
+ */
+export const PHASE_B_IMPLEMENTED_MODES: readonly SourceAnswerMode[] = [
+  "value_at_stake",
+  "vendor_comparison",
+  "should_cost",
+  "risk_exposure",
+  "clause_coverage",
+  "bafo_strategy",
+  "committed_value",
+  "value_realization",
+];
+
 export function isPhaseAImplementedMode(mode: SourceAnswerMode): boolean {
   return (PHASE_A_IMPLEMENTED_MODES as readonly string[]).includes(mode);
+}
+
+export function isPhaseBImplementedMode(mode: SourceAnswerMode): boolean {
+  return (PHASE_B_IMPLEMENTED_MODES as readonly string[]).includes(mode);
+}
+
+/** True when the mode has ANY mode-specific grounding wired (Phase A or B). */
+export function isGroundedAnswerMode(mode: SourceAnswerMode): boolean {
+  return isPhaseAImplementedMode(mode) || isPhaseBImplementedMode(mode);
 }
 
 export interface ClassifySourceAnswerModeInput {
@@ -170,10 +200,10 @@ const RULES: ModeRule[] = [
       /\bwhere (do i|can i|should i) (upload|click|find|go)\b/.test(q),
   },
 
-  // ── Phase B/C: classify-only-passthrough ────────────────────────────────────
+  // ── Phase B: vendor/value/commercial modes (grounding + quality gate wired) ──
   {
     mode: "value_at_stake",
-    id: "value_at_stake.deferred",
+    id: "value_at_stake.core",
     test: (q) =>
       /\b(value at stake|how much (savings|value)|value bridge|value pool)\b/.test(
         q,
@@ -181,42 +211,44 @@ const RULES: ModeRule[] = [
   },
   {
     mode: "vendor_comparison",
-    id: "vendor_comparison.deferred",
+    id: "vendor_comparison.core",
     test: (q) =>
-      /\b(compare vendors?|vendor comparison|which vendor|best vendor|vendor scorecard)\b/.test(
+      /\b(compare vendors?|vendor comparison|which vendor|best vendor|vendor scorecard|vendor coverage|who (addressed|dodged))\b/.test(
         q,
       ),
   },
   {
     mode: "risk_exposure",
-    id: "risk_exposure.deferred",
-    test: (q) => /\b(risk exposure|transition risk|what('s| is) (the )?risk)\b/.test(q),
+    id: "risk_exposure.core",
+    test: (q) => /\b(risk exposure|transition risk|commercial risk|what('s| is) (the )?risk)\b/.test(q),
   },
   {
     mode: "clause_coverage",
-    id: "clause_coverage.deferred",
-    test: (q) => /\b(clause coverage|rfp clause|which clauses?)\b/.test(q),
+    id: "clause_coverage.core",
+    test: (q) => /\b(clause coverage|rfp clause|which clauses?|protected vs exposed|what('s| is) exposed)\b/.test(q),
   },
   {
     mode: "bafo_strategy",
-    id: "bafo_strategy.deferred",
+    id: "bafo_strategy.core",
     test: (q) => /\bbafo\b/.test(q),
   },
   {
     mode: "should_cost",
-    id: "should_cost.deferred",
-    test: (q) => /\bshould[- ]cost\b/.test(q),
+    id: "should_cost.core",
+    test: (q) => /\bshould[- ]cost|normalized tco|tco normalization\b/.test(q),
   },
   {
     mode: "committed_value",
-    id: "committed_value.deferred",
-    test: (q) => /\bcommitted value\b/.test(q),
+    id: "committed_value.core",
+    test: (q) => /\bcommitted value|what did (we|the award) (lock|commit)\b/.test(q),
   },
   {
     mode: "value_realization",
-    id: "value_realization.deferred",
+    id: "value_realization.core",
     test: (q) => /\bvalue realiz\w*|\brealized value\b|\btracking (the )?savings\b/.test(q),
   },
+
+  // ── Phase C: classify-only-passthrough (existing chat behavior unchanged) ───
   {
     mode: "stakeholder_alignment",
     id: "stakeholder_alignment.deferred",

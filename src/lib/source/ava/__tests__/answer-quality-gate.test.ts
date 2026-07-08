@@ -187,3 +187,168 @@ describe("runSourceAnswerQualityGate — read-once grounding facts threading", (
     expect(check?.passed).toBe(false);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase B — the 3 additional checks scoped to the 8 vendor/value/commercial
+// modes: traceability (numbers only from the grounding block), value-type
+// breakdown presence (never a blended savings figure), and generic-ask
+// rejection (BAFO/vendor modes must use the specific data when it exists).
+// The existing 9 Phase A checks above stay green — these are additive checks
+// in the SAME gate function, same one-pass repair discipline.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("runSourceAnswerQualityGate — Phase B traceability (traceable_to_grounding)", () => {
+  const GROUNDING_BLOCK = [
+    "VALUE-AT-STAKE GROUNDING (authoritative):",
+    "Headline: $46M–$65M of classified value across 3 bands.",
+  ].join("\n");
+
+  it("passes when every $ figure in the answer appears verbatim in the grounding block", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Your value at stake is $46M–$65M of classified value. Next: review the value bridge for details.",
+      mode: "value_at_stake",
+      hasGroundingContext: true,
+      groundingBlockText: GROUNDING_BLOCK,
+    });
+    const check = result.checks.find((c) => c.id === "traceable_to_grounding");
+    expect(check?.passed).toBe(true);
+  });
+
+  it("fails and repairs when the answer states a $ figure NOT in the grounding block (self-computed)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Your value at stake is $78M once you annualize it. Next: review the value bridge for details.",
+      mode: "value_at_stake",
+      hasGroundingContext: true,
+      groundingBlockText: GROUNDING_BLOCK,
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText).not.toContain("$78M");
+    expect(result.finalText.toLowerCase()).toContain("grounding record");
+  });
+
+  it("does not apply to non-value Phase A modes (vacuous pass)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "This event is on the RFP stage. Next: check the gate panel.",
+      mode: "event_status",
+      hasGroundingContext: true,
+      groundingFacts: { currentStageLabel: "RFP" },
+    });
+    const check = result.checks.find((c) => c.id === "traceable_to_grounding");
+    expect(check?.passed).toBe(true);
+    expect(check?.detail).toMatch(/not a value\/pricing mode/i);
+  });
+});
+
+describe("runSourceAnswerQualityGate — Phase B value-type breakdown (includes_value_type_breakdown)", () => {
+  const GROUNDING_WITH_CLASSIFICATION = [
+    "COMMITTED VALUE GROUNDING (authoritative):",
+    "Headline: The executed award locks $5M across 2 levers.",
+    "VALUE-TYPE CLASSIFICATION (never claim these as one blended savings figure):",
+    "  protected value (risk hedge): Enhancement / change-order leakage.",
+    "  incremental negotiated value: Volume-band price flex-down.",
+  ].join("\n");
+
+  it("passes when the answer names at least one value-type label", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "The award locks $5M, mostly protected value from the change-order leakage lever. Next: confirm the contract language.",
+      mode: "committed_value",
+      hasGroundingContext: true,
+      groundingBlockText: GROUNDING_WITH_CLASSIFICATION,
+    });
+    const check = result.checks.find((c) => c.id === "includes_value_type_breakdown");
+    expect(check?.passed).toBe(true);
+  });
+
+  it("fails and repairs by appending the grounding's own classification when the answer blends the value into one figure", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "You're locking in $5M of savings. Next: confirm the contract language.",
+      mode: "committed_value",
+      hasGroundingContext: true,
+      groundingBlockText: GROUNDING_WITH_CLASSIFICATION,
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText.toLowerCase()).toMatch(
+      /protected value|incremental negotiated/,
+    );
+  });
+
+  it("does not require a breakdown when the grounding carries none", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "The award locks $5M. Next: confirm the contract language.",
+      mode: "committed_value",
+      hasGroundingContext: true,
+      groundingBlockText: "COMMITTED VALUE GROUNDING: Headline: The executed award locks $5M.",
+    });
+    const check = result.checks.find((c) => c.id === "includes_value_type_breakdown");
+    expect(check?.passed).toBe(true);
+    expect(check?.detail).toMatch(/no breakdown required/i);
+  });
+});
+
+describe("runSourceAnswerQualityGate — Phase B generic-ask rejection (uses_specific_ask_when_available)", () => {
+  it("fails and repairs a generic negotiation answer by appending the specific-ask pointer (append, not strip — stripping would mangle the sentence)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "You should negotiate harder in BAFO. Next: press the vendor.",
+      mode: "bafo_strategy",
+      hasGroundingContext: true,
+      groundingFacts: { bafoOpenLeverCount: "2" },
+      groundingHasSpecificAsk: true,
+    });
+    expect(result.repaired).toBe(true);
+    expect(result.finalText.toLowerCase()).toContain("grounding above");
+    expect(result.finalText.toLowerCase()).toContain("named concession");
+  });
+
+  it("passes when the answer already uses the specific ask", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Press for the fixed service catalog conversion on the enhancement-leakage lever. Next: confirm with the vendor.",
+      mode: "bafo_strategy",
+      hasGroundingContext: true,
+      groundingFacts: { bafoOpenLeverCount: "1" },
+      groundingHasSpecificAsk: true,
+    });
+    const check = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    expect(check?.passed).toBe(true);
+  });
+
+  it("does not require specificity when the grounding has no specific ask to point to (honest MODEL)", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "You should negotiate harder in BAFO. Next: press the vendor.",
+      mode: "bafo_strategy",
+      hasGroundingContext: true,
+      groundingHasSpecificAsk: false,
+    });
+    const check = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    expect(check?.passed).toBe(true);
+  });
+
+  it("does not apply outside BAFO/vendor modes", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText: "You should negotiate harder. Next: press the vendor.",
+      mode: "committed_value",
+      hasGroundingContext: true,
+      groundingHasSpecificAsk: true,
+    });
+    const check = result.checks.find((c) => c.id === "uses_specific_ask_when_available");
+    expect(check?.passed).toBe(true);
+    expect(check?.detail).toMatch(/not a bafo\/vendor mode/i);
+  });
+});
+
+describe("runSourceAnswerQualityGate — Phase B checks never regress a passing Phase A turn", () => {
+  it("a well-formed event_status answer still passes with zero Phase B interference", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "This event is on the RFP stage, stage 3 of 11. Next step: upload the signed sponsor letter.",
+      mode: "event_status",
+      hasGroundingContext: true,
+      groundingFacts: { currentStageLabel: "RFP" },
+    });
+    expect(result.passed).toBe(true);
+    expect(result.repaired).toBe(false);
+  });
+});
