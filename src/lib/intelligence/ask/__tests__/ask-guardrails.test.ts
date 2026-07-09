@@ -7,6 +7,7 @@ import {
   SYSTEM_PROMPT,
   chunkAskText,
   chooseSynthesisTokenBudget,
+  reconcileStreamRemainder,
   sanitizeAskSynthesis,
 } from '../synthesizer';
 import { buildDeterministicConciseFollowups } from '../followups';
@@ -28,6 +29,23 @@ describe("Ask Intelligence guardrails", () => {
     expect(
       atlasStakeholderConflictHandoff("Why is Apex CDP at risk right now?"),
     ).toBeNull();
+  });
+
+  it("does not append duplicated repaired text when live-stream reconciliation diverges", () => {
+    expect(reconcileStreamRemainder("", "final answer")).toEqual({
+      remainder: "final answer",
+      diverged: false,
+    });
+    expect(reconcileStreamRemainder("final", "final answer")).toEqual({
+      remainder: " answer",
+      diverged: false,
+    });
+    expect(
+      reconcileStreamRemainder(
+        "The answer has review_required evidence and a table.",
+        "The answer has evidence and a repaired table.",
+      ),
+    ).toEqual({ remainder: "", diverged: true });
   });
 
   it("strips hollow openers from synthesized answers", () => {
