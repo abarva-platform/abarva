@@ -66,7 +66,7 @@ const PLACEHOLDER_RE = /\[CLIENT TO COMPLETE[^\]]*\]|\bTBC\b|\bto be confirmed\b
 export function buildContractInput(args: {
   doc: RenderableDeliverable;
   deliverableKey: DeliverableKey;
-  outputFormat: OutputFormat;
+  outputFormat?: OutputFormat;
   tenantTerms?: ReadonlyArray<string>;
   governanceOk?: boolean;
   /** Exhibits the structured generation passes produced (stage 4). */

@@ -29,6 +29,41 @@ export interface AuditedModelCallerOptions {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * A long-lived streaming fetch to the Anthropic API can have its underlying socket
+ * closed prematurely (proxy/idle timeout, transient network blip) — Node's fetch
+ * implementation surfaces this as a bare `TypeError: terminated` with no retry, no
+ * status code, and no indication it was a transient network event rather than a
+ * real generation failure. Observed live: a section_draft/synthesis pass reaching
+ * 100% progress and then failing the whole run with error "terminated". Retry a
+ * bounded number of times on this narrow class of network-transient errors only —
+ * a real model/prompt error (bad request, content policy, etc.) is not retried.
+ */
+const RETRYABLE_STREAM_ERROR_RE =
+  /\bterminated\b|other side closed|ECONNRESET|ETIMEDOUT|EPIPE|socket hang up|fetch failed|network (error|timeout)/i;
+
+function isRetryableStreamError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return RETRYABLE_STREAM_ERROR_RE.test(message);
+}
+
+const MAX_STREAM_RETRIES = 2;
+
+async function withStreamRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= MAX_STREAM_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt === MAX_STREAM_RETRIES || !isRetryableStreamError(err)) throw err;
+      const backoffMs = 1000 * (attempt + 1);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    }
+  }
+  throw lastErr;
+}
+
 function extractResponseText(response: unknown): string {
   const content = (response as { content?: unknown } | null)?.content;
   if (Array.isArray(content)) {
@@ -111,14 +146,16 @@ export function createAuditedModelCaller(
     // 10 minutes"). Stream the response and assemble the final Message instead;
     // this lifts the ceiling while preserving the same Message shape that
     // extractResponseText / response.id already consume.
-    const response = await preflight.client.messages
-      .stream({
-        model,
-        system: prompt.system,
-        messages: [{ role: "user", content: prompt.user }],
-        max_tokens: prompt.maxTokens,
-      })
-      .finalMessage();
+    const response = await withStreamRetry(() =>
+      preflight.client.messages
+        .stream({
+          model,
+          system: prompt.system,
+          messages: [{ role: "user", content: prompt.user }],
+          max_tokens: prompt.maxTokens,
+        })
+        .finalMessage(),
+    );
 
     return {
       text: extractResponseText(response),

@@ -156,6 +156,15 @@ export async function persistDeliverable(
     result.brief.deliverableType,
   );
   let profileRenderedHtml = false;
+  // True whenever a profile/deck renderer deliberately overrides outputFormat to
+  // "html" as an alternate presentation of the SAME governed document — not a
+  // format mismatch. format_fit exists to catch accidental mismatches (e.g. a
+  // narrative profile that should be docx rendering as something else by
+  // mistake); it must not fire against an intentional deck/exhibit render, or
+  // every docx/xlsx-profiled deliverable (business_case, financial models, etc.)
+  // is guaranteed to block the moment moves_decision_storytelling / a structured
+  // renderer is enabled for a tenant, regardless of the prose content quality.
+  let deckRendered = false;
 
   // ── Stage 6: renderer selection by profile (flag-gated rollout) ──
   // When the generation passes produced structured models, render the profile's
@@ -167,10 +176,12 @@ export async function persistDeliverable(
       html = renderArchitectureHtml(models.architectureModel);
       outputFormat = "html";
       profileRenderedHtml = true;
+      deckRendered = true;
     } else if (profile.renderer === "pptx_storyline" && models?.storylineDeck) {
       // HTML storyline deck now; native PPTX export is the same model later.
       html = renderDeckHtml(models.storylineDeck);
       outputFormat = "html";
+      deckRendered = true;
     }
   }
 
@@ -193,6 +204,7 @@ export async function persistDeliverable(
       if (deck) {
         html = deck;
         outputFormat = "html";
+        deckRendered = true;
       }
     } catch (err) {
       console.error(
@@ -233,7 +245,11 @@ export async function persistDeliverable(
     const contractInput = buildContractInput({
       doc,
       deliverableKey,
-      outputFormat: outputFormat as OutputFormat,
+      // Omit outputFormat entirely when the render was a deliberate profile/deck
+      // override — format_fit treats a missing outputFormat as "nothing to check"
+      // (see checkFormatFit), which is correct here: the html IS the deliverable
+      // by design, not a mismatch against the profile's docx/pptx/xlsx contract.
+      ...(deckRendered ? {} : { outputFormat: outputFormat as OutputFormat }),
       additionalExhibits,
       ...(profileRenderedHtml
         ? { narrativeTextOverride: visibleTextFromHtml(html) }

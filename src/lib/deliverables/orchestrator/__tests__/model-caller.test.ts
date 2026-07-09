@@ -92,6 +92,70 @@ describe('generateDeliverable — full live-shaped loop (mocked egress)', () => 
   });
 });
 
+describe('stream-termination retry (regression 2026-07-08)', () => {
+  it('retries and succeeds when the stream throws a transient "terminated" error', async () => {
+    const req = amsRfpRequest();
+    const brief = getArtifactBrief(req);
+    const caller = createAuditedModelCaller({ tenantId: 'lakeshore', userId: 'u1' });
+    const prompt = buildPassPrompt('full_draft', { req, brief, evidence: req.governedEvidenceBundle, approvedPlanJson: '{}' });
+
+    const { preflightAnthropicDirectClient } = jest.requireMock('@/lib/integrations/ai-egress') as {
+      preflightAnthropicDirectClient: jest.Mock;
+    };
+    let attempt = 0;
+    preflightAnthropicDirectClient.mockImplementationOnce(async () => ({
+      ok: true,
+      auditId: 'audit-retry',
+      dataClass: 'confidential',
+      client: {
+        messages: {
+          stream: jest.fn(() => ({
+            finalMessage: async () => {
+              attempt += 1;
+              if (attempt < 2) throw new TypeError('terminated');
+              return { id: 'msg-retry-ok', content: [{ type: 'text', text: 'recovered output' }] };
+            },
+          })),
+        },
+      },
+    }));
+
+    const res = await caller(prompt, req);
+    expect(attempt).toBe(2);
+    expect(res.text).toBe('recovered output');
+  }, 10_000);
+
+  it('does not retry and rethrows a non-network error immediately', async () => {
+    const req = amsRfpRequest();
+    const brief = getArtifactBrief(req);
+    const caller = createAuditedModelCaller({ tenantId: 'lakeshore', userId: 'u1' });
+    const prompt = buildPassPrompt('full_draft', { req, brief, evidence: req.governedEvidenceBundle, approvedPlanJson: '{}' });
+
+    const { preflightAnthropicDirectClient } = jest.requireMock('@/lib/integrations/ai-egress') as {
+      preflightAnthropicDirectClient: jest.Mock;
+    };
+    let attempts = 0;
+    preflightAnthropicDirectClient.mockImplementationOnce(async () => ({
+      ok: true,
+      auditId: 'audit-no-retry',
+      dataClass: 'confidential',
+      client: {
+        messages: {
+          stream: jest.fn(() => ({
+            finalMessage: async () => {
+              attempts += 1;
+              throw new Error('content policy violation');
+            },
+          })),
+        },
+      },
+    }));
+
+    await expect(caller(prompt, req)).rejects.toThrow('content policy violation');
+    expect(attempts).toBe(1);
+  });
+});
+
 describe('architect prompt — plan validity rules (regression 2026-06-17)', () => {
   it('states the exact valid citation numbers and the grounding rule so the plan gate passes reliably', () => {
     const req = amsRfpRequest();

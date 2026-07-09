@@ -49,6 +49,26 @@ describe("transformation gates (W1)", () => {
     expect(r).toHaveLength(0);
   });
 
+  it("does NOT flag a phase label glued into a hyphenated id (regression 2026-07-08: FIN-BASE-P2)", () => {
+    // The business_case prompt hint instructs the model to cite a finance baseline
+    // id; a hyphenated compound like "FIN-BASE-P2" must not collide with the bare
+    // phase-label ban — only a standalone "P2" (e.g. "as discussed in P2") should.
+    const r = scanMachinery(
+      base({
+        narrativeText:
+          "Every number in this memo is traceable to the FIN-BASE-P2 baseline approved by finance.",
+      }),
+    );
+    expect(r).toHaveLength(0);
+  });
+
+  it("still flags a standalone phase label even next to punctuation", () => {
+    const r = scanMachinery(
+      base({ narrativeText: "As discussed in P2, the scope was reduced." }),
+    );
+    expect(r).toHaveLength(1);
+  });
+
   it("blocks scattered missing-input placeholders, demanding one table", () => {
     const r = runTransformationGates(
       base({
