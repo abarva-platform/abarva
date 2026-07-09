@@ -149,7 +149,11 @@ export function normalizeMarkdownTables(text: string): string {
 
   const flushTable = () => {
     if (tableBlock.length === 0) return;
+    if (output.length > 0 && output[output.length - 1]?.trim()) {
+      output.push("");
+    }
     output.push(...normalizeMarkdownTableBlock(tableBlock));
+    output.push("");
     tableBlock = [];
   };
 
@@ -187,7 +191,7 @@ export function normalizeMarkdownTables(text: string): string {
   }
 
   flushTable();
-  return output.join("\n");
+  return output.join("\n").replace(/\n+$/g, "");
 }
 
 export function normalizeAbarvaAgentMarkup(text: string): string {
