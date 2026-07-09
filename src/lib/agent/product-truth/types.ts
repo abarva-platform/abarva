@@ -55,6 +55,15 @@ export type ProductTruthViolationCategory =
   | "unsafe_suggested_question"
   | "professional_boundary_missing";
 
+export type SuggestedQuestionSafetyClass =
+  | "safe_deeper_evidence"
+  | "safe_next_action"
+  | "safe_surface_transition"
+  | "risky_unsupported_capability"
+  | "risky_external_claim"
+  | "risky_legal_or_contract_claim"
+  | "risky_unloaded_fact";
+
 export interface ProductTruthViolation {
   category: ProductTruthViolationCategory;
   id: string;

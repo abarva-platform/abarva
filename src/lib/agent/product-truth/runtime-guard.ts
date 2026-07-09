@@ -5,6 +5,7 @@ import type {
   ProductTruthRepairResult,
   ProductTruthRuntimeContext,
   ProductTruthViolation,
+  SuggestedQuestionSafetyClass,
 } from "./types";
 
 const CANONICAL_MOVES_PHASES = [
@@ -127,8 +128,10 @@ export function sanitizeSuggestedQuestions(
   const violations: ProductTruthViolation[] = [];
   const safeQuestions: string[] = [];
   for (const question of questions) {
+    const safetyClass = classifySuggestedQuestion(question);
     const result = applyProductTruthRuntimeGuard(question, context);
     const unsafe =
+      safetyClass.startsWith("risky_") ||
       result.blocked ||
       result.violations.some((violation) =>
         [
@@ -147,7 +150,7 @@ export function sanitizeSuggestedQuestions(
         ...result.violations,
         {
           category: "unsafe_suggested_question",
-          id: "suggested-question-unsafe",
+          id: `suggested-question-${safetyClass}`,
           matchedText: question,
           detail:
             "Suggested questions must not imply unsupported capabilities, replacement of advisors, workflow approval, or stale/cross-tenant facts.",
@@ -166,6 +169,52 @@ export function sanitizeSuggestedQuestions(
     questions: defaultSafeSuggestedQuestions(context),
     violations,
   };
+}
+
+export function classifySuggestedQuestion(
+  question: string,
+): SuggestedQuestionSafetyClass {
+  const q = question.toLowerCase();
+  if (
+    /\b(replace|instead of|no longer need|benchmark against gartner|compare to forrester|big four|mckinsey|bain|bcg|upperedge|isg)\b/.test(
+      q,
+    )
+  ) {
+    return "risky_external_claim";
+  }
+  if (
+    /\b(source|tower|moves|abarva|home|intelligence)\b/.test(q) &&
+    /\b(automatically|certify|approve|negotiate|read all|compare all|guarantee|prove savings|true[- ]?up|volume commitment)\b/.test(
+      q,
+    )
+  ) {
+    return "risky_unsupported_capability";
+  }
+  if (
+    /\b(legal conclusion|legal advice|audit opinion|certify|approve|sign off|binding|negotiate clause|pressure vendor)\b/.test(
+      q,
+    )
+  ) {
+    return "risky_legal_or_contract_claim";
+  }
+  if (
+    /\b(which|what|who|when|how many)\b/.test(q) &&
+    /\b(exact|specific|confirmed|loaded|source|evidence|contract|vendor|owner|date|amount|budget|spend|savings)\b/.test(
+      q,
+    ) &&
+    !/\b(what evidence|what is missing|loaded versus|confirmed versus|needed before|safe(?:ly)? assess)\b/.test(
+      q,
+    )
+  ) {
+    return "risky_unloaded_fact";
+  }
+  if (/\b(hand off|handoff|connect|moves|tower|source|home)\b/.test(q)) {
+    return "safe_surface_transition";
+  }
+  if (/\b(next|owner|gate|p0|p1|p2|p3|p4|p5|track|measure)\b/.test(q)) {
+    return "safe_next_action";
+  }
+  return "safe_deeper_evidence";
 }
 
 export function buildClientSafeFallback(

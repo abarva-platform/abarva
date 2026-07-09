@@ -18,6 +18,7 @@ import type {
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
 import type { AvaChatSessionExport } from "@/lib/ava-answer/export/session-types";
+import { cleanAvaExportText } from "@/lib/ava-answer/export/render-text";
 
 const styles = StyleSheet.create({
   page: {
@@ -151,11 +152,11 @@ const styles = StyleSheet.create({
 });
 
 function text(value: unknown): string {
-  return String(value ?? "").replace(/\s+/g, " ").trim();
+  return cleanAvaExportText(value).replace(/\s+/g, " ").trim();
 }
 
 function paragraphs(value: string): string[] {
-  return value
+  return cleanAvaExportText(value)
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
@@ -200,7 +201,7 @@ function quadrantPoints(chart: AnswerChart): Array<{ label: string; x: number; y
 }
 
 function chartBlock(chart: AnswerChart): ReactElement {
-  if (chart.kind !== "quadrant-matrix") {
+  if (chart.kind !== "quadrant-matrix" && chart.kind !== "2x2-matrix") {
     return (
       <View style={styles.card} wrap={false}>
         <Text style={styles.cardTitle}>{chart.title ?? chart.kind}</Text>

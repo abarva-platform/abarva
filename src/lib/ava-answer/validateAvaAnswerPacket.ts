@@ -1,4 +1,5 @@
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import { validateAvaAnswerClaims } from "@/lib/ava-answer/claim-source-validation";
 import { assertRetrievalPolicy } from "@/lib/ava-answer/retrievalPolicy";
 import { evaluateCxoAnswerQuality } from "@/lib/ava-answer/cxo-quality-gate";
 
@@ -37,6 +38,7 @@ export function validateAvaAnswerPacket(
 ): AvaAnswerValidationResult {
   const violations: AvaAnswerValidationViolation[] = [];
   const cxoQuality = evaluateCxoAnswerQuality(packet);
+  const claimValidation = validateAvaAnswerClaims(packet);
 
   for (const field of PUBLIC_FIELDS) {
     const value = packet[field];
@@ -130,6 +132,16 @@ export function validateAvaAnswerPacket(
     });
   }
 
+  for (const finding of claimValidation.findings) {
+    if (finding.severity === "pass") continue;
+    violations.push({
+      code: `claim-${finding.type}`,
+      severity: finding.severity === "fail" ? "error" : "warning",
+      message: `${finding.claim}: ${finding.detail}`,
+      field: "directAnswer",
+    });
+  }
+
   const errorCount = violations.filter(
     (violation) => violation.severity === "error",
   ).length;
@@ -141,6 +153,7 @@ export function validateAvaAnswerPacket(
       quality: {
         ...packet.quality,
         cxo: cxoQuality,
+        claimValidation,
       },
       safety: {
         ...packet.safety,
@@ -153,7 +166,8 @@ export function validateAvaAnswerPacket(
           !RAW_UUID_RE.test(packet.directAnswer) &&
           !RAW_UUID_RE.test(packet.interpretation ?? "") &&
           !RAW_UUID_RE.test(packet.businessImplication ?? ""),
-        unsupportedClaimsBlocked: errorCount === 0,
+        unsupportedClaimsBlocked:
+          errorCount === 0 && claimValidation.unsupportedMaterialClaims === 0,
       },
     },
   };

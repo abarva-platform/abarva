@@ -14,6 +14,7 @@ import type {
   AvaChatSessionExport,
   AvaChatSessionExportStats,
 } from "@/lib/ava-answer/export/session-types";
+import { cleanAvaExportText } from "@/lib/ava-answer/export/render-text";
 
 type SvgBuilderName = Extract<keyof typeof SvgCharts, string>;
 
@@ -161,7 +162,7 @@ function formatCell(value: string | number | null, column: AnswerTableColumn): s
 }
 
 function proseHtml(text: string): string {
-  return text
+  return cleanAvaExportText(text)
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean)

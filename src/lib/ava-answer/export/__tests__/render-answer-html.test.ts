@@ -111,6 +111,41 @@ describe("renderAvaAnswerStandaloneHtml", () => {
     expect(html).not.toContain("inlineChart");
   });
 
+  it("does not leak raw markdown tables or chart JSON in HTML export prose", () => {
+    const answer = answerFixture();
+    answer.directAnswer = `Here is the table:
+
+| Phase | Owner |
+| --- | --- |
+| P0 Originate | CFO |
+
+\`\`\`chart
+{"type":"bar","xKey":"Phase","yKey":"Value","data":[{"Phase":"P0","Value":1}]}
+\`\`\`
+
+Use the typed artifact if available.`;
+    answer.artifacts = [];
+
+    const html = renderAvaAnswerStandaloneHtml(answer);
+
+    expect(html).not.toContain("| --- |");
+    expect(html).not.toContain("```chart");
+    expect(html).not.toContain('"type":"bar"');
+    expect(html).toContain("table-shaped answer was detected");
+    expect(html).toContain("chart-shaped answer was detected");
+  });
+
+  it("decodes basic escaped characters before export escaping", () => {
+    const answer = answerFixture();
+    answer.directAnswer = "Finance &amp; Procurement shouldn&#39;t see raw entities.";
+
+    const html = renderAvaAnswerStandaloneHtml(answer);
+
+    expect(html).toContain("Finance &amp; Procurement shouldn't");
+    expect(html).not.toContain("&amp;amp;");
+    expect(html).not.toContain("&amp;#39;");
+  });
+
   it("exports a full chat session with prompts, governed answers, visuals, and evidence stats", () => {
     const html = renderAvaChatSessionStandaloneHtml({
       surface: "intelligence",

@@ -13,6 +13,7 @@ import type { ProductTruthViolation } from "./types";
 const DEFINITIVE_FRAMING_PATTERNS: readonly RegExp[] = [
   /\b(we|abarva|this platform|the system) (automatically|already )?(does|do|runs|provides|supports|handles)\b/i,
   /\b(we|abarva|this platform|the system) (automatically|already)\b/i,
+  /\b(?:abarva\s+)?(?:source|tower|moves|home|intelligence) automatically\b/i,
   /\byou can (already )?(use|access|run)\b/i,
   /\bis (fully )?(live|available|built|working|automatic)\b/i,
   /\bhas been (built|implemented|shipped)\b/i,

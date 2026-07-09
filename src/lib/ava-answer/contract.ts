@@ -84,10 +84,12 @@ export interface AnswerTable {
 
 export type AnswerChartKind =
   | "bar"
+  | "horizontal-bar"
   | "stacked-bar"
   | "line"
   | "waterfall"
   | "value-bridge"
+  | "2x2-matrix"
   | "tornado"
   | "range-bar"
   | "heatmap"
@@ -99,8 +101,13 @@ export interface AnswerChart {
   id: string;
   kind: AnswerChartKind;
   title?: string;
+  subtitle?: string;
   data: unknown;
   builder?: string;
+  xKey?: string;
+  yKey?: string;
+  unit?: string;
+  sourceNote?: string;
   citationIds?: string[];
 }
 
@@ -173,6 +180,41 @@ export interface AvaAnswerQuality {
   tenantGrounding: "complete" | "partial" | "missing";
   answerCompleteness: "complete" | "partial" | "blocked";
   cxo?: AvaCxoQuality;
+  claimValidation?: AvaClaimValidationReport;
+}
+
+export type AvaClaimType =
+  | "dollar_amount"
+  | "percentage"
+  | "date"
+  | "count"
+  | "vendor_or_system"
+  | "control_status"
+  | "product_capability";
+
+export type AvaClaimSupport =
+  | "exact_source_fact"
+  | "derived_calculation"
+  | "reasoned_inference"
+  | "product_registry"
+  | "unsupported"
+  | "assumption";
+
+export interface AvaClaimValidationFinding {
+  id: string;
+  type: AvaClaimType;
+  claim: string;
+  support: AvaClaimSupport;
+  severity: "pass" | "watch" | "fail";
+  sourceIds: string[];
+  detail: string;
+}
+
+export interface AvaClaimValidationReport {
+  passed: boolean;
+  findings: AvaClaimValidationFinding[];
+  unsupportedMaterialClaims: number;
+  productCapabilityViolations: number;
 }
 
 export type AvaCxoAnswerMode =

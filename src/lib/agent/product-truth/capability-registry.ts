@@ -12,6 +12,62 @@
 import type { ProductCapabilityEntry } from "./types";
 
 export const PRODUCT_CAPABILITY_REGISTRY: ReadonlyArray<ProductCapabilityEntry> = [
+  // ── Live product truth anchors used by aVa when explaining AbarVa ──
+  {
+    key: "intelligence_evidence_aware_answers",
+    surface: "intelligence",
+    label: "evidence-aware AI strategy synthesis",
+    maturity: "shipped",
+    claimGuidance:
+      "Intelligence can synthesize loaded enterprise context, industry patterns, evidence gaps, and CXO next moves. It must caveat unsupported facts.",
+    triggerPhrases: [/strategy synthesis/i, /evidence-aware answers/i],
+  },
+  {
+    key: "home_loaded_context_boundary",
+    surface: "home",
+    label: "loaded enterprise-context browser",
+    maturity: "shipped",
+    claimGuidance:
+      "Home shows loaded enterprise context, source boundaries, and gaps; it is not an authority to invent missing current-state facts.",
+    triggerPhrases: [/loaded enterprise context/i, /loaded versus missing/i],
+  },
+  {
+    key: "moves_p0_p5_governance",
+    surface: "moves",
+    label: "P0-P5 plus Tower Track Outcomes governance model",
+    maturity: "shipped",
+    claimGuidance:
+      "Moves structures work through P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes.",
+    triggerPhrases: [/P0.*P5/i, /Tower Track Outcomes/i],
+  },
+  {
+    key: "source_evidence_boundary",
+    surface: "source",
+    label: "Source evidence-bound sourcing workflow",
+    maturity: "shipped",
+    claimGuidance:
+      "Source supports vendor, RFP, contract, renewal, and commercial evidence workflows when the relevant source material is loaded. It does not autonomously negotiate or provide legal approval.",
+    triggerPhrases: [/source .*evidence/i, /contract evidence/i],
+  },
+  {
+    key: "tower_outcome_tracking",
+    surface: "tower",
+    label: "Tower outcome and value tracking",
+    maturity: "shipped",
+    claimGuidance:
+      "Tower tracks loaded value, adoption, funding, and outcome evidence for accountable owner review. It does not independently certify savings.",
+    triggerPhrases: [/value tracking/i, /outcome tracking/i],
+  },
+  {
+    key: "ava_packet_export",
+    surface: "platform",
+    label: "aVa packet export to HTML and PDF",
+    maturity: "shipped",
+    claimGuidance:
+      "aVa exports the same answer packet shown in chat to HTML or PDF. Export must not call the model again.",
+    triggerPhrases: [/export .*html/i, /export .*pdf/i],
+  },
+
   // ── Setup / Admin (Steward) — not_built, per specialist-catalog.md §5.1 ──
   {
     key: "coverage_scorer",
@@ -118,6 +174,37 @@ export const PRODUCT_CAPABILITY_REGISTRY: ReadonlyArray<ProductCapabilityEntry> 
       /replaces? (your |the )?consult(ing|ants?)/i,
       /no longer need(s)? (a |your )?consult(ing firm|ants?)/i,
     ],
+  },
+  {
+    key: "source_not_autonomous_legal_negotiator",
+    surface: "source",
+    label: "autonomous legal or procurement negotiator",
+    maturity: "not_built",
+    claimGuidance:
+      "Source prepares evidence and decision artifacts for Legal, Procurement, Finance, Risk, and business owners. It must not be described as autonomously negotiating or approving legal/commercial positions.",
+    triggerPhrases: [
+      /source .*negotiates?/i,
+      /source .*approves? .*contract/i,
+      /source .*legal conclusion/i,
+    ],
+  },
+  {
+    key: "tower_not_savings_certifier",
+    surface: "tower",
+    label: "automatic savings certification",
+    maturity: "not_built",
+    claimGuidance:
+      "Tower can track and present value evidence, but Finance or the accountable outcome owner certifies savings.",
+    triggerPhrases: [/tower .*certif(?:y|ies).*savings/i, /tower .*guarantees? .*value/i],
+  },
+  {
+    key: "moves_not_approval_authority",
+    surface: "moves",
+    label: "automatic phase approval authority",
+    maturity: "not_built",
+    claimGuidance:
+      "Moves structures evidence gates and decisions; accountable sponsors approve phase movement.",
+    triggerPhrases: [/moves .*approves? .*phase/i, /moves .*signs? off/i],
   },
 ] as const;
 

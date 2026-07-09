@@ -1,4 +1,5 @@
 import {
+  classifySuggestedQuestion,
   applyProductTruthRuntimeGuard,
   sanitizeSuggestedQuestions,
 } from "../runtime-guard";
@@ -83,6 +84,21 @@ describe("applyProductTruthRuntimeGuard", () => {
 });
 
 describe("sanitizeSuggestedQuestions", () => {
+  it("classifies safe and risky generated follow-ups", () => {
+    expect(
+      classifySuggestedQuestion("What evidence supports this recommendation?"),
+    ).toBe("safe_deeper_evidence");
+    expect(
+      classifySuggestedQuestion("How would this connect to Moves and Tower?"),
+    ).toBe("safe_surface_transition");
+    expect(
+      classifySuggestedQuestion("Can Tower certify savings automatically?"),
+    ).toBe("risky_unsupported_capability");
+    expect(
+      classifySuggestedQuestion("Does this replace Gartner for us?"),
+    ).toBe("risky_external_claim");
+  });
+
   it("drops unsafe suggested questions and supplies safe replacements", () => {
     const result = sanitizeSuggestedQuestions(
       [
