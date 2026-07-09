@@ -90,6 +90,7 @@ describe("Ask Intelligence response policy", () => {
       "How should Tower connect evidence from Home, strategy from Intelligence, execution from Moves, and vendor actions from Source?",
       "If Intelligence identifies top 5 AI supply-chain bets, how should Home, Moves, Source, and Tower each participate without overclaiming live artifacts?",
       "For SkyHarbor IROPS AI, explain how Intelligence frames the bet, Moves executes, Source supports vendors, Tower tracks value, and Home exposes evidence.",
+      "For healthcare administrative AI, how should AbarVa avoid clinical overclaim while connecting strategy to execution and value?",
       "If Source finds a vendor renewal risk, how should it hand off to Moves and Tower without saying the Move or KPI tracker already exists?",
       "What is the safest executive answer pattern when the user wants strategy, visuals, tables, source evidence, and downstream Moves/Tower actions in one response?",
       "What are the phase-gate evidence requirements for a Contract Intelligence Move?",
