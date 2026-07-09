@@ -268,10 +268,32 @@ export async function persistDeliverable(
       deliverableKey,
     });
     if (!assessment.clientReady) {
-      const reasons = assessment.quality.findings
-        .filter((f) => f.severity === "block")
-        .map((f) => f.dimension)
-        .join(", ");
+      const blockingFindings = assessment.quality.findings.filter((f) => f.severity === "block");
+      const reasons = blockingFindings.map((f) => f.dimension).join(", ");
+      // TEMPORARY DIAGNOSTIC (2026-07-09): non_mechanical_writing has recurred live
+      // post-fix on a DIFFERENT term than the FIN-BASE-P2 collision already fixed, and
+      // a blocked run's draft text is never persisted anywhere retrievable — so the
+      // exact leaked term could not be inspected from outside the running process.
+      // Log only the matched term + a short surrounding snippet (never the full
+      // document) so the next occurrence is diagnosable from ACA logs. Remove once
+      // the residual leak class is understood and fixed, or keep as a standing
+      // diagnostic if it proves broadly useful.
+      for (const f of blockingFindings) {
+        if (f.dimension !== "non_mechanical_writing" || !f.detail?.length) continue;
+        for (const term of f.detail) {
+          const bareTerm = term.replace(/\s*×\d+$/, "");
+          const idx = contractInput.narrativeText.toLowerCase().indexOf(bareTerm.toLowerCase());
+          const snippet =
+            idx >= 0
+              ? contractInput.narrativeText.slice(Math.max(0, idx - 60), idx + bareTerm.length + 60)
+              : null;
+          console.warn(
+            `[persistDeliverable][non_mechanical_writing] matchedTerm=${JSON.stringify(term)} ` +
+              `deliverableKey=${deliverableKey} clientId=${opts.clientId} sourceArtifactRef=${opts.sourceArtifactRef}` +
+              (snippet ? ` snippet=${JSON.stringify(snippet)}` : " snippet=<not found in narrativeText>"),
+          );
+        }
+      }
       console.warn(
         `[persistDeliverable] quality contract: ${assessment.state} (${reasons || "n/a"})` +
           (opts.enforceQualityContract
