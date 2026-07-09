@@ -28,7 +28,8 @@ This release fixes a live aVa rendering defect where some Claude answers emitted
 ## Changes Included
 
 - `src/lib/agent/markdownTokens.tsx`: Normalize tab-separated table rows into GFM Markdown tables before rendering/export.
-- `src/lib/agent/__tests__/markdownTokens.test.tsx`: Regression coverage for the live tab-separated table shape.
+- `src/lib/agent/markdownTokens.tsx`: Add blank-line boundaries around normalized tables so prose-following tables parse as tables instead of paragraphs.
+- `src/lib/agent/__tests__/markdownTokens.test.tsx`: Regression coverage for the live tab-separated table shapes.
 - `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx`: Replace raw error phrasing with evidence-boundary answer copy.
 
 ## QA / Validation

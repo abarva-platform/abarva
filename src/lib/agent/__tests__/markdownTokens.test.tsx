@@ -90,4 +90,26 @@ describe("markdown table normalization", () => {
       normalized.match(/\| --- \| --- \| --- \| --- \| --- \|/g),
     ).toHaveLength(1);
   });
+
+  it("adds table boundaries when a tab-separated table follows prose", () => {
+    const malformed = [
+      "A retrained model pushed to production without HITL sign-off is a governance breach.",
+      "Decision Protocol by Drift Type",
+      "Drift Classification\tTrigger\tResponse",
+      "---\t---\t---",
+      "Statistical noise\tMAPE 10-15%\tAttempt in-window retraining if gates pass",
+      "Structural shift\tMAPE >15%\tAutomatic rollback; long retraining cycle",
+    ].join("\n");
+
+    const normalized = normalizeMarkdownTables(malformed);
+
+    expect(normalized).toContain(
+      "Decision Protocol by Drift Type\n\n| Drift Classification | Trigger | Response |",
+    );
+    expect(normalized).toContain("| --- | --- | --- |");
+    expect(normalized).toContain(
+      "| Structural shift | MAPE >15% | Automatic rollback; long retraining cycle |",
+    );
+    expect(normalized).not.toContain("\n---\t---\t---\n");
+  });
 });
