@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-health-v6-v7-current-state-v1",
+  "title": "Meridian Health V6/V7 Current-State Evidence-Bound Pack",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "confidential",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "user_provided_current_state_plus_synthetic_demo_structuring",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade pack. No patient, member, provider, claim-line, PHI, PII, or real production Meridian records are included. Any future PHI-bearing evidence must use a separate phi manifest and approved handling.",
+  "expected_object_count": 665,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-07-09",
+  "notes": "Manifest gates the actual generated dataset at datasets/meridian-health-v6-v7-current-state-v1 plus its V7 Azure payload. It does not cover older Meridian packs or the local Downloads demo bundle."
+}
