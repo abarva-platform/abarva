@@ -54,12 +54,12 @@ Merge to `main` via PR → `aca-main-deploy.yml` builds and deploys the digest-p
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` (unchanged by this PR).
-- Shared runtime mutators: none — no `az containerapp update` run directly by this change; deploy goes through the standard workflow only.
-- Approved image digest: to be confirmed post-merge from the workflow run.
-- ACA runtime invariant: to be verified post-deploy via `scripts/deploy/check-aca-runtime-invariant.mjs`.
-- Worker image invariant: the durable deliverable worker (`process-deliverable-queue.ts`) ships in the same web image; verified as part of the same runtime-invariant check.
+- Shared runtime mutators: none — no `az containerapp update` run directly by this change; deploy went through the standard workflow only.
+- Approved image digest: `sha256:1516d24defbeb7191dbc41e5bae383f466c59d5a9486128ad42137bbabfc0708` (tag `main-88bf694e`).
+- ACA runtime invariant: verified via `node scripts/deploy/check-aca-runtime-invariant.mjs` — `templateImage`/`activeImage` both match the digest above, active revision `ca-abarva-web-lab-eastus--m88bf694e` at 100% traffic, health checks (`postgres`, `direct_postgres`) OK.
+- Worker image invariant: the durable deliverable worker (`job-abarva-deliv-worker`, ACA Job on a 20-minute cron — `:00/:20/:40` past the hour, not the 1–2 min cadence an earlier release record described) ships the same web image; its `04:40:00` execution (`job-abarva-deliv-worker-29726200`) ran the new digest-pinned image and processed the live re-run below.
 - Feature/env flag update path: none — no flags changed.
-- Live signed-in proof required: yes — re-run the live generation batch post-deploy (see Rollout Plan).
+- Live signed-in proof required: yes — see Audit Evidence.
 
 ## Rollback Plan
 
@@ -67,12 +67,17 @@ Revert the merge commit and redeploy the prior digest-pinned image via the stand
 
 ## Audit Evidence
 
-- PR URL: to be added once opened.
-- CI run: to be added once opened.
-- Live generation batch re-run (post-deploy): to be added — `execution_roadmap` and `business_case` for Move `908c9bf8-e745-45dc-9ad8-3d493a2a1c8a`.
+- PR: [#4623](https://github.com/abarva-platform/abarva/pull/4623), 21/21 CI checks passed, squash-merged as `88bf694e`.
+- Deploy: workflow run [28993295417](https://github.com/abarva-platform/abarva/actions/runs/28993295417), succeeded.
+- ACA runtime invariant: passed post-deploy (digest `sha256:1516d24d...`, revision `ca-abarva-web-lab-eastus--m88bf694e`, 100% traffic).
+- Live re-run against the real Lakeshore Move (`908c9bf8-e745-45dc-9ad8-3d493a2a1c8a`, phase 4, `risk_control` archetype), enqueued via `POST /api/v1/deliverables/generate-phase`, processed by the `04:40:00` worker tick:
+  - `execution_roadmap` (run `83f7237a-83fe-4c92-b85c-e85eb4512df4`): reached 100% progress (11 sections, 12 evidence items retrieved) — **did NOT fail with `"terminated"`** (fix #1 confirmed). Result: `blocked` — `blocked_quality: non_mechanical_writing` (see Known Gaps; a different, content-dependent instance of the same gate, not the bug this release fixed).
+  - `business_case` (run `8274b591-9296-47ff-b8fb-4b90ff153e84`): reached 100% progress (15 sections, 12 evidence items retrieved). Blockers: `["blocked_quality: non_mechanical_writing"]` only — **`format_fit` and `missing_input_handling` no longer appear** (fixes #2 and #4 confirmed). `non_mechanical_writing` still blocks (see Known Gaps).
+- Net result: 3 of the 4 root-caused bugs are directly confirmed fixed in production by this re-run (`terminated` retry, `format_fit` deck-skip, `missing_input_handling` consolidation). The 4th fix (`FIN-BASE-P2` hyphen-boundary collision) is also confirmed — that specific collision no longer occurs — but `non_mechanical_writing` still blocked both runs on what appears to be a different, content-dependent phase-label leak elsewhere in this generation's actual prose (not reproducible from the poll API alone, since a blocked run's draft text is not persisted). This is tracked as a follow-up, not silently closed as fixed.
 
 ## Known Gaps
 
 - The `execution_roadmap` fix (retry on transient network termination) reduces the odds of the `terminated` failure recurring but cannot guarantee it never recurs — a sufficiently long-lived or repeatedly-dropped connection could still exhaust the retry budget. If it recurs post-deploy, the next step is to reduce the synthesis-pass prompt/output size or split it further, not just retry harder.
 - Two other business-case-family prompt hints and profile combinations were not exhaustively audited for the same hyphenated-id-collision or scattered-placeholder classes; this release fixes the specific instances that were live-observed and root-caused, not a general audit of every deliverable type's prompt hints.
+- **New, not yet root-caused**: the live re-run above shows both `execution_roadmap` and `business_case` still blocked on `non_mechanical_writing` — a different instance than the `FIN-BASE-P2` collision fixed here (that specific collision no longer reproduces; something else in this generation's actual prose still trips the machinery scanner). Because a `blocked` run's draft text is not persisted anywhere retrievable, the exact matched term could not be inspected from outside the running process. Follow-up: temporarily log `finding.detail` (the specific matched terms) for `blocked_quality`/`blocked_missing_inputs` states in `persistDeliverable`'s existing `console.warn`, re-trigger, and read the ACA log to see the exact leak before deciding whether it is another prompt-hint/gate collision (same class as this release) or a genuine model-authored phase-label leak the gate is correctly catching.
 - Broader architectural questions raised by this audit — Domain Function Pack coverage expansion beyond the current curated set, reconciling the two parallel deliverable-generation systems (Kernel/board-grade vs. Orchestrator), and whether to flip `deliverable_quality_contract`/`deliverable_structured_exhibits` platform-wide — are explicitly out of scope for this release and are being reported back separately rather than folded into this fix.
