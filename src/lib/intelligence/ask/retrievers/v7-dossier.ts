@@ -106,8 +106,16 @@ const FIELD_PRIORITY: Record<string, string[]> = {
     'system_name',
     'system_category',
     'vendor_product',
+    'hosting_model',
     'business_functions_supported',
+    'business_function_refs',
+    'critical_process_refs',
     'criticality',
+    'technical_owner_role',
+    'data_domains',
+    'decision_relevance',
+    'known_gaps',
+    'system_business_context',
     'pain_points_constraints',
     'future_state_role',
     'business_owner',
@@ -117,10 +125,18 @@ const FIELD_PRIORITY: Record<string, string[]> = {
     'asset_type',
     'data_owner',
     'system_of_record',
+    'integration_type',
     'consumer_refs',
+    'business_question_supported',
     'quality_posture',
+    'data_quality_status',
+    'lineage_status',
     'freshness_sla',
+    'refresh_frequency',
     'ai_readiness_status',
+    'ai_consumption_readiness',
+    'minimum_validation_needed',
+    'known_gaps',
   ],
   v7_07_vendors_contracts: [
     'vendor_name',
@@ -324,7 +340,12 @@ function selectDimensions(query: string): string[] {
     selected.add('v7_11_operations_risk_controls');
     selected.add('v7_18_function_system_data_vendor_bridge');
   }
-  if (/\b(system|application|erp|sap|data|integration|vendor|contract|cloud|infrastructure|cost|spend|rate|budget)\b/.test(normalized)) {
+  if (
+    /\b(system|application|erp|sap|data|integration|vendor|contract|cloud|infrastructure|cost|spend|rate|budget|analytics|reporting|bi|dashboard|lakehouse|clinical|claims|pharmacy|epic|clarity|caboodle|tableau|power bi|sas|sql)\b/.test(
+      normalized,
+    ) ||
+    /\b(reporting|analytics)\s+estate\b/.test(normalized)
+  ) {
     selected.add('v7_05_applications_systems');
     selected.add('v7_06_data_assets_integrations');
     selected.add('v7_07_vendors_contracts');
