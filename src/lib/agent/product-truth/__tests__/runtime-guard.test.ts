@@ -37,6 +37,22 @@ describe("applyProductTruthRuntimeGuard", () => {
     );
   });
 
+  it("repairs phrasing that makes Tower sound like the certifying authority", () => {
+    const result = applyProductTruthRuntimeGuard(
+      "Stand up Tower to certify the measured-value pool every month.",
+      {
+        tenantKey: "lakeshore",
+        tenantName: "Lakeshore Holdings",
+        surface: "intelligence",
+      },
+    );
+
+    expect(result.text).toContain(
+      "use Tower to track evidence for Finance and outcome-owner certification",
+    );
+    expect(result.text).not.toMatch(/Tower to certify/i);
+  });
+
   it("maps the old Moves shorthand under the canonical P0-P5 contract", () => {
     const result = applyProductTruthRuntimeGuard(
       "The Moves model is Charter / Diagnose / Decide / Commit.",

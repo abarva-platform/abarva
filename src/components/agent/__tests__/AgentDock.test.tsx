@@ -1156,7 +1156,7 @@ describe("AgentDock · thread render", () => {
     clickSpy.mockRestore();
   });
 
-  it("keeps Intelligence structured artifacts out of the left dock even when expanded", () => {
+  it("renders Intelligence structured artifacts in the dock once a governed packet arrives", () => {
     render(
       <AgentDock
         agent={{ ...AGENT, name: "aVa" }}
@@ -1222,10 +1222,8 @@ describe("AgentDock · thread render", () => {
 
     const turn = screen.getByTestId("agent-dock-turn-agent");
     expect(turn).toHaveTextContent("Fund IROPS recovery automation");
-    expect(turn).not.toHaveTextContent("Tables");
-    expect(turn).not.toHaveTextContent("SkyHarbor AI investment posture");
-    expect(turn).not.toHaveTextContent("IROPS agentic recovery");
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(turn).toHaveTextContent("Airline Demo AI investment posture");
+    expect(turn).toHaveTextContent("IROPS agentic recovery");
   });
 
   it("keeps auto-scroll inside the thread pane when new turns arrive", async () => {

@@ -73,7 +73,8 @@ function shouldRenderAvaArtifactsInDock(
   surface: string,
   answer?: AvaAnswerPacket | null,
 ): answer is AvaAnswerPacket {
-  return surface !== "intelligence" && hasRenderableAvaArtifacts(answer);
+  void surface;
+  return hasRenderableAvaArtifacts(answer);
 }
 
 function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {

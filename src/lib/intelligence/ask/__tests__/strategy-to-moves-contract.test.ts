@@ -48,9 +48,8 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(registryCode).toContain("How AbarVa would solve this");
     expect(registryCode).toContain("Home for current-state evidence");
     expect(registryCode).toContain("Source for vendor/commercial levers");
-    expect(registryCode).toContain("compact Moves phase table");
+    expect(registryCode).toContain("compact Moves phase plan");
     expect(registryCode).toContain("ensureMovesExecutionPhaseTable");
-    expect(registryCode).toContain("| Phase | What AbarVa does | Proposed output |");
     expect(registryCode).toContain("P0 Originate");
     expect(registryCode).toContain("P5 Prepare to Execute");
     expect(registryCode).toContain("Tower Track Outcomes");
@@ -87,13 +86,14 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     });
   });
 
-  it("deterministically appends the Moves P0-P5 phase table when Claude omits it", () => {
+  it("deterministically appends the Moves P0-P5 phase plan when Claude omits it", () => {
     const answer = applyCxoAnswerModeFallbacks(
       "**Lakeshore Holdings should run this as a Moves sprint.**",
       "strategy_to_moves_execution",
     );
 
-    expect(answer).toContain("| Phase | What AbarVa does | Proposed output |");
+    expect(answer).toContain("**Moves phase plan**");
+    expect(answer).not.toContain("|---|");
     for (const label of MOVES_EXECUTION_PHASE_LABELS) {
       expect(answer).toContain(label);
     }
@@ -149,7 +149,8 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     );
 
     expect(answer).toContain("I can't safely answer");
-    expect(answer).toContain("| Phase | What AbarVa does | Proposed output |");
+    expect(answer).toContain("**Moves phase plan**");
+    expect(answer).not.toContain("|---|");
     expect(answer).toContain("P0 Originate");
     expect(answer).toContain("Tower Track Outcomes");
   });
