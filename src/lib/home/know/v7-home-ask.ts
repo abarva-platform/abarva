@@ -444,7 +444,7 @@ function buildParagraphs(args: {
   const samples = args.rows
     .map((row) => display(firstPreferredValue(row.values_json, preferredSampleColumns)) || display(row.record_name) || display(firstMeaningfulValue(row.values_json)))
     .filter((value) => value !== 'Needs evidence')
-    .slice(0, 6);
+    .slice(0, 8);
   const contextDetails = uniqueMeaningfulValues(args.rows, contextColumns).slice(0, 8);
   const dimensionLabel = humanize(args.config.primaryDimension).toLowerCase();
   if (args.config.primaryDimension === 'v7_01_enterprise_profile') {

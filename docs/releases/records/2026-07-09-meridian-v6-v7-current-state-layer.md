@@ -61,6 +61,7 @@ This release does not wire Moves or Source to V6/V7 and does not create a worksh
 - Pass: independent Azure/Postgres readback confirmed the active validated Meridian V7 run and zero weak/unscored graph edges.
 - Pass: signed-in Chrome Home proof reached `tenantKey=meridian-health`, `composer=home_v7_dataset_contract`, no V7 fallback, no dollar figure fabrication, and no real-patient/real-member claim.
 - Follow-up Pass: Chrome proof exposed a shallow deterministic summary for systems/gaps prompts; patched the generic Home V7 composer and added a regression proving concrete system details and loaded blockers surface from record fields.
+- Follow-up Pass: Increased the generic V7 systems summary sample depth so medium-size reporting estates can show additional tools such as Power BI instead of truncating after the first six records.
 
 ## Rollout Plan
 
