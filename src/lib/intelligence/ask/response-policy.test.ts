@@ -80,6 +80,12 @@ describe("Ask Intelligence response policy", () => {
       "Create a Data & AI strategy with the top 5 bets, business case, solution, and roadmap for the executive council.",
       "Help me decide the top 5 AI use cases for supply chain and how we would execute.",
       "What implementation plan should we use for this transformation sprint?",
+      "Describe the correct Moves model for taking a supply-chain AI idea from strategy through execution. Use the canonical phases.",
+      "Is the AbarVa Moves model Charter / Diagnose / Decide / Commit, or P0-P5 plus Tower? Explain the difference.",
+      "For a banking AI risk-control Move, what belongs in P0, P1, P2, P3, P4, P5, and Tower?",
+      "What are the phase-gate evidence requirements for a Contract Intelligence Move?",
+      "If Claude writes a good strategy answer but forgets the P0-P5 table, what should the AbarVa runtime guarantee?",
+      "How should Source connect a sourcing issue to Moves and Tower without overclaiming that downstream artifacts already exist?",
     ];
 
     for (const question of strategyQuestions) {
