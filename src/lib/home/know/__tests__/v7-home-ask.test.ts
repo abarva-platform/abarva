@@ -85,6 +85,57 @@ function fakeSession(): SessionRunner {
 }
 
 describe('answerHomeKnowFromV7', () => {
+  it('uses the active V7 tenant pack contract returned by the run query', async () => {
+    const seenBusinessRecordContracts: unknown[] = [];
+    const session: SessionRunner = async (fn) =>
+      fn(async <R>(sql: string, params: unknown[] = []) => {
+        if (sql.includes('from intelligence_v7.tenant_pack_runs')) {
+          return [{
+            tenant_key: 'meridian-health',
+            tenant_name: 'Meridian Health System',
+            contract_version: 'v7.latest-meridian-test',
+            source_dataset: 'datasets/meridian-health-v6-v7-current-state-v1',
+            row_count: 442,
+            field_count: 11507,
+            graph_node_count: 97,
+            relationship_edge_count: 69,
+            chunk_count: 118,
+            loaded_at: '2026-07-09T18:47:43.212Z',
+          }] as R[];
+        }
+        if (sql.includes('from intelligence_v7.business_records')) {
+          seenBusinessRecordContracts.push(params[1]);
+        }
+        if (sql.includes('group by source_file')) {
+          return [{ source_file: 'V7_05_applications_systems.csv', count: 1 }] as R[];
+        }
+        return [{
+          record_name: 'Epic Clarity',
+          source_file: 'V7_05_applications_systems.csv',
+          source_row_number: 2,
+          source_artifact_name: 'V7_05_applications_systems.csv',
+          source_validation_status: 'validated',
+          values_json: {
+            system_name: 'Epic Clarity',
+            technical_owner: 'Clinical data platform team',
+            criticality: 'critical',
+            lifecycle_status: 'current_state',
+          },
+        }] as R[];
+      });
+
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'meridian',
+      tenantDisplayName: 'Meridian Health System',
+      question: 'What application and core systems context is loaded?',
+      session,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.tenant.datasetDir).toBe('datasets/meridian-health-v6-v7-current-state-v1');
+    expect(seenBusinessRecordContracts).toEqual(['v7.latest-meridian-test', 'v7.latest-meridian-test']);
+  });
+
   it('answers deterministically from V7 records without raw substrate IDs', async () => {
     const result = await answerHomeKnowFromV7({
       tenantKey: 'skyharbor',

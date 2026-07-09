@@ -47,7 +47,7 @@ interface V7CitationRow {
   count: number;
 }
 
-const CONTRACT_VERSION = 'v7.0.0-synthetic-depth-v2-20260703';
+const CONTRACT_VERSION_OVERRIDE = process.env.HOME_V7_CONTRACT_VERSION?.trim() || null;
 
 const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
   apexretail: 'apex-retail',
@@ -97,15 +97,24 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
     await run("select set_config('app.tenant_key', $1, false)", [tenantKey]);
 
     const runs = await run<V7RunRow>(
-      `select tenant_key, tenant_name, contract_version, source_dataset, row_count::int, field_count::int,
+      CONTRACT_VERSION_OVERRIDE
+        ? `select tenant_key, tenant_name, contract_version, source_dataset, row_count::int, field_count::int,
         graph_node_count::int, relationship_edge_count::int, chunk_count::int, loaded_at::text
        from intelligence_v7.tenant_pack_runs
        where tenant_key = $1 and contract_version = $2 and load_status in ('loaded', 'validated')
+       order by loaded_at desc limit 1`
+        : `select tenant_key, tenant_name, contract_version, source_dataset, row_count::int, field_count::int,
+        graph_node_count::int, relationship_edge_count::int, chunk_count::int, loaded_at::text
+       from intelligence_v7.tenant_pack_runs
+       where tenant_key = $1
+         and superseded_at is null
+         and load_status in ('loaded', 'validated')
        order by loaded_at desc limit 1`,
-      [tenantKey, CONTRACT_VERSION],
+      CONTRACT_VERSION_OVERRIDE ? [tenantKey, CONTRACT_VERSION_OVERRIDE] : [tenantKey],
     );
     const runRow = runs[0];
     if (!runRow) throw new Error(`V7 pack is not loaded for ${tenantKey}.`);
+    const contractVersion = runRow.contract_version;
 
     const rows = await run<V7RecordRow>(
       `select record_name, source_file, source_row_number::int, source_artifact_name, source_validation_status, values_json
@@ -113,7 +122,7 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
        where tenant_key = $1 and contract_version = $2 and dimension_key = $3
        order by source_row_number asc
        limit 12`,
-      [tenantKey, CONTRACT_VERSION, config.primaryDimension],
+      [tenantKey, contractVersion, config.primaryDimension],
     );
     const citations = await run<V7CitationRow>(
       `select source_file, count(*)::int as count
@@ -121,7 +130,7 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
        where tenant_key = $1 and contract_version = $2 and dimension_key = $3
        group by source_file
        order by source_file`,
-      [tenantKey, CONTRACT_VERSION, config.primaryDimension],
+      [tenantKey, contractVersion, config.primaryDimension],
     );
 
     const gaps = buildGaps(rows);

@@ -18,7 +18,7 @@ This release does not wire Moves or Source to V6/V7 and does not create a worksh
 
 - `client-data-lane`: Adds `datasets/meridian-health-v6-v7-current-state-v1/`, a new governed manifest, and Meridian Tower-standardized projections generated from the same V6 facts.
 - `internal-admin`: Adds reusable operator scripts and shared modules for tenant V6 generation, validation, V7 derivation, Tower projection, and V7 Azure loading.
-- `global-control-lane`: No runtime product routes are changed in this candidate. The generic V7 loader is script-only and requires an explicit payload plus database credentials.
+- `global-control-lane`: Home's V7 answer selector now uses the tenant's current active validated V7 pack instead of a single hardcoded contract version. The generic V7 loader is script-only and requires an explicit payload plus database credentials.
 
 ## Client Applicability
 
@@ -38,6 +38,8 @@ This release does not wire Moves or Source to V6/V7 and does not create a worksh
 - `scripts/tenant-v6/configs/meridian-health.mjs`
 - `scripts/v7/derive-tenant-v7-insights.mjs`
 - `scripts/v7/load-tenant-v7-azure.mjs`
+- `src/lib/home/know/v7-home-ask.ts`
+- `src/lib/home/know/__tests__/v7-home-ask.test.ts`
 - `datasets/meridian-health-v6-v7-current-state-v1/`
 - `tower-standardized-v1/meridian-health/`
 - `package.json` operator scripts for the reusable path.
@@ -49,6 +51,7 @@ This release does not wire Moves or Source to V6/V7 and does not create a worksh
 - Pass: `npm run v7:tenant:derive -- --tenant meridian-health`
 - Pass: `npm run tenant-v6:tower-sync -- --tenant meridian-health`
 - Pass: `npm run validate:context-corpus:manifests`
+- Pass: `npx jest src/lib/home/know/__tests__/v7-home-ask.test.ts --runInBand`
 - Pass: `node --check` on the new V6/V7 operator scripts
 - Pass: `git diff --check`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
