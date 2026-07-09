@@ -52,12 +52,45 @@ export const MOVES_EXECUTION_PHASE_LABELS = [
 ] as const;
 
 export function ensureMovesExecutionPhaseTable(text: string): string {
-  const hasEveryPhase = MOVES_EXECUTION_PHASE_LABELS.every((label) =>
+  const presentPhaseLabels = MOVES_EXECUTION_PHASE_LABELS.filter((label) =>
     text.includes(label),
   );
+  const hasEveryPhase =
+    presentPhaseLabels.length === MOVES_EXECUTION_PHASE_LABELS.length;
   const hasPhaseTable =
     /\|\s*Phase\s*\|/i.test(text) || /\|\s*P0 Originate\s*\|/.test(text);
   if (hasEveryPhase && hasPhaseTable) return text;
+
+  if (hasPhaseTable && presentPhaseLabels.length >= 4) {
+    const missingRows = MOVES_EXECUTION_PHASE_LABELS.filter(
+      (label) => !presentPhaseLabels.includes(label),
+    ).map((label) => {
+      switch (label) {
+        case "P0 Originate":
+          return "- P0 Originate: frame the bet, sponsor, decision owner, and why-now logic.";
+        case "P1 Charter":
+          return "- P1 Charter: define scope, sponsor, success metric, and decision cadence.";
+        case "P2 Understand Current State":
+          return "- P2 Understand Current State: ground systems, data, owners, contracts, gaps, and evidence boundaries.";
+        case "P3 Choose the Approach":
+          return "- P3 Choose the Approach: compare options by value, readiness, risk, and dependency.";
+        case "P4 Build the Plan":
+          return "- P4 Build the Plan: turn the chosen approach into workstreams, milestones, risks, and funding asks.";
+        case "P5 Prepare to Execute":
+          return "- P5 Prepare to Execute: confirm owners, controls, vendors, adoption plan, and launch readiness.";
+        case "Tower Track Outcomes":
+          return "- Tower Track Outcomes: track adoption, KPI movement, benefits, risks, and funding gates.";
+      }
+    });
+
+    return [
+      text.trim(),
+      "**Moves phase contract completion**",
+      ...missingRows,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
 
   const fallbackTable = [
     "**Moves phase plan**",
