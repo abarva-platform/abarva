@@ -1015,20 +1015,33 @@ function hasExplicitStructuredArtifactRequest(
   routing: RoutingDecision,
 ): boolean {
   const q = routing.query.toLowerCase();
-  if (routing.outputShape === "graph") {
-    return /\b(graph|map|network|relationship|relationships|dependenc|upstream|downstream)\b/.test(
-      q,
-    );
-  }
-  if (routing.outputShape === "chart") {
-    return /\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically|trend|trends|over time|by month|by quarter|year over year|trajectory|2\s*x\s*2|2x2|quadrant)\b/.test(
-      q,
-    ) || /\bvalue\b[\s\S]{0,80}\bcomplexity\b/.test(q) || /\bcomplexity\b[\s\S]{0,80}\bvalue\b/.test(q);
-  }
-  if (routing.outputShape === "table") {
-    return /\b(table|tables|tabular|matrix|scorecard|workbook)\b/.test(q);
-  }
-  return false;
+  return (
+    wantsGraphArtifact(q) ||
+    wantsChartArtifact(q) ||
+    wantsTableArtifact(q)
+  );
+}
+
+function wantsGraphArtifact(query: string): boolean {
+  return /\b(graph|map|network|relationship|relationships|dependenc|upstream|downstream)\b/.test(
+    query,
+  );
+}
+
+function wantsChartArtifact(query: string): boolean {
+  return (
+    /\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically|trend|trends|over time|by month|by quarter|year over year|trajectory|2\s*x\s*2|2x2|quadrant)\b/.test(
+      query,
+    ) ||
+    /\bvalue\b[\s\S]{0,80}\bcomplexity\b/.test(query) ||
+    /\bcomplexity\b[\s\S]{0,80}\bvalue\b/.test(query)
+  );
+}
+
+function wantsTableArtifact(query: string): boolean {
+  return /\b(table|tables|tabular|matrix|scorecard|workbook|top\s+\d|rank|ranked|compare|comparison)\b/.test(
+    query,
+  );
 }
 
 export function buildStructuredExhibits(
@@ -1039,6 +1052,11 @@ export function buildStructuredExhibits(
   const shouldRenderStructured = hasExplicitStructuredArtifactRequest(
     input.routing,
   ) || answerMode === "strategy_to_moves_execution";
+  const query = input.routing.query.toLowerCase();
+  const shouldBuildChart =
+    input.routing.outputShape === "chart" || wantsChartArtifact(query);
+  const shouldBuildGraph =
+    input.routing.outputShape === "graph" || wantsGraphArtifact(query);
   const sourceExhibits = structuredSourceExhibits(input.sources, input.routing);
   const chartFences = chartFencesFromProse(
     input.prose,
@@ -1059,7 +1077,11 @@ export function buildStructuredExhibits(
   charts.push(...sourceExhibits.charts);
   charts.push(...chartFences.charts);
   graphs.push(...sourceExhibits.graphs);
-  if (shouldRenderStructured) {
+  if (
+    shouldRenderStructured ||
+    markdown.tables.length > 0 ||
+    inline.tables.length > 0
+  ) {
     tables.push(...markdown.tables);
     tables.push(...inline.tables);
   }
@@ -1077,7 +1099,7 @@ export function buildStructuredExhibits(
     shouldRenderStructured &&
     charts.length === 0 &&
     tables.length > 0 &&
-    input.routing.outputShape === "chart"
+    shouldBuildChart
   ) {
     const chart = chartFromExtractedTable(
       tables[0],
@@ -1090,7 +1112,7 @@ export function buildStructuredExhibits(
     shouldRenderStructured &&
     graphs.length === 0 &&
     tables.length > 0 &&
-    input.routing.outputShape === "graph"
+    shouldBuildGraph
   ) {
     const graph = graphFromExtractedTable(
       tables[0],

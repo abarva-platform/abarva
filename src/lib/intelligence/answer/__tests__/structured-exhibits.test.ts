@@ -290,6 +290,52 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("keeps model-emitted markdown tables as typed export artifacts even when routing is prose", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query: "What is the purpose of AbarVa?",
+        outputShape: "prose",
+      },
+      sources,
+      prose: [
+        "AbarVa is decision infrastructure for CXOs.",
+        "",
+        "| Surface | Purpose | When to use |",
+        "|---|---|---|",
+        "| Intelligence | Shape the executive read | Strategy questions |",
+        "| Source | Build sourcing evidence | Vendor and contract decisions |",
+        "| Moves | Govern execution | Phase-based transformation work |",
+        "",
+        "Decision boundary: accountable owners approve the decision.",
+      ].join("\n"),
+    });
+
+    expect(exhibits.prose).toContain("decision infrastructure");
+    expect(exhibits.prose).toContain("Decision boundary");
+    expect(exhibits.prose).not.toContain("| Surface |");
+    expect(exhibits.tables).toEqual([
+      expect.objectContaining({
+        id: "answer-markdown-table-1",
+        title: "Answer Table",
+        rows: [
+          expect.objectContaining({
+            surface: "Intelligence",
+            purpose: "Shape the executive read",
+          }),
+          expect.objectContaining({
+            surface: "Source",
+            when_to_use: "Vendor and contract decisions",
+          }),
+          expect.objectContaining({
+            surface: "Moves",
+            purpose: "Govern execution",
+          }),
+        ],
+      }),
+    ]);
+  });
+
   it("assembles the canonical Moves phase table for strategy-to-execution answers", () => {
     const exhibits = buildStructuredExhibits({
       routing: tableRouting(
@@ -518,6 +564,28 @@ describe("buildStructuredExhibits", () => {
             }),
           ]),
         }),
+      }),
+    ]);
+  });
+
+  it("converts value and complexity tables into quadrant charts even when routing is prose", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query:
+          "Give me the top 5 AI use cases for supply chain and rank them in a 2x2 matrix across value and complexity.",
+        outputShape: "prose",
+      },
+      sources,
+      prose:
+        "Use-case priority\n\n| Use case | Value | Complexity | Rationale |\n|---|---|---|---|\n| Demand sensing | High | Medium | Improves forecast accuracy |\n| Supplier risk sensing | Medium | Low | Uses supplier and shipment signals |\n| Autonomous planning exception triage | Very high | High | Needs workflow integration |\n\nNext move: validate source coverage.",
+    });
+
+    expect(exhibits.tables).toHaveLength(1);
+    expect(exhibits.charts).toEqual([
+      expect.objectContaining({
+        id: "answer-markdown-table-1-quadrant-matrix",
+        kind: "quadrant-matrix",
       }),
     ]);
   });
