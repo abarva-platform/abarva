@@ -50,4 +50,19 @@ describe("markdown table normalization", () => {
     expect(normalized).toContain("| P0 | Originate |");
     expect(normalized.match(/\| --- \| --- \|/g)).toHaveLength(1);
   });
+
+  it("turns inline pipe tables into proper markdown blocks", () => {
+    const malformed =
+      'Build a named authority chain, not a generic "escalate up": | Priority | Role | Authority | | --- | --- | --- | | 1 | CFO Deputy | Sign cash holds | | 2 | Treasury Lead | Update forecast inputs |';
+
+    const normalized = normalizeMarkdownTables(malformed);
+
+    expect(normalized).toContain(
+      'Build a named authority chain, not a generic "escalate up":\n\n| Priority | Role | Authority |',
+    );
+    expect(normalized).toContain("| 1 | CFO Deputy | Sign cash holds |");
+    expect(normalized).toContain("| 2 | Treasury Lead | Update forecast inputs |");
+    expect(normalized.match(/\| --- \| --- \| --- \|/g)).toHaveLength(1);
+    expect(normalized).not.toContain("| | ---");
+  });
 });

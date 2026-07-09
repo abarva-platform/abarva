@@ -99,8 +99,29 @@ function normalizeMarkdownTableBlock(lines: string[]): string[] {
   return [header, separator, ...bodyRows];
 }
 
+function expandInlineMarkdownTables(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => {
+      if (
+        !line.includes('|') ||
+        !/\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|/.test(line)
+      ) {
+        return line;
+      }
+
+      return line
+        .replace(/\|\s+\|/g, '|\n|')
+        .replace(
+          /([^\n|])\s+(\|[^\n]*\|)\n(?=\|\s*:?-{3,}:?\s*\|)/g,
+          '$1\n\n$2\n',
+        );
+    })
+    .join('\n');
+}
+
 export function normalizeMarkdownTables(text: string): string {
-  const lines = text.split(/\r?\n/);
+  const lines = expandInlineMarkdownTables(text).split(/\r?\n/);
   const output: string[] = [];
   let tableBlock: string[] = [];
   let inFence = false;
