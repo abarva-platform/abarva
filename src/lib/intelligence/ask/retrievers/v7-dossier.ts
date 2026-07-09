@@ -38,8 +38,6 @@ interface V7RetrievalOptions {
   contractVersion?: string;
 }
 
-const CONTRACT_VERSION = 'v7.0.0-synthetic-depth-v2-20260703';
-
 const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
   apexretail: 'apex-retail',
   firstcapital: 'first-capital-financial',
@@ -245,22 +243,29 @@ export async function retrieveV7DossierSources(
   if (!tenantKey) return { sources: [], averageConfidence: 0 };
 
   const dimensions = selectDimensions(query);
-  const contractVersion = opts.contractVersion ?? CONTRACT_VERSION;
+  const contractVersion = opts.contractVersion?.trim() || null;
   const session = opts.session ?? defaultSession;
 
   try {
     return await session(async (run) => {
       const runs = await run<V7RunRow>(
-        `select tenant_key, tenant_name, contract_version, row_count::int, field_count::int,
+        contractVersion
+          ? `select tenant_key, tenant_name, contract_version, row_count::int, field_count::int,
           graph_node_count::int, relationship_edge_count::int, chunk_count::int, loaded_at::text
          from intelligence_v7.tenant_pack_runs
          where tenant_key = $1 and contract_version = $2 and load_status in ('loaded', 'validated')
          order by loaded_at desc
+         limit 1`
+          : `select tenant_key, tenant_name, contract_version, row_count::int, field_count::int,
+          graph_node_count::int, relationship_edge_count::int, chunk_count::int, loaded_at::text
+         from intelligence_v7.current_tenant_pack_runs
+         where tenant_key = $1
          limit 1`,
-        [tenantKey, contractVersion],
+        contractVersion ? [tenantKey, contractVersion] : [tenantKey],
       );
       const runRow = runs[0];
       if (!runRow) return { sources: [], averageConfidence: 0 };
+      const activeContractVersion = runRow.contract_version;
 
       const rows = await run<V7RecordRow>(
         `select record_name, dimension_key, source_file, source_artifact_name,
@@ -269,7 +274,7 @@ export async function retrieveV7DossierSources(
          where tenant_key = $1 and contract_version = $2 and dimension_key = any($3::text[])
          order by array_position($3::text[], dimension_key), source_row_number asc
          limit 36`,
-        [tenantKey, contractVersion, dimensions],
+        [tenantKey, activeContractVersion, dimensions],
       );
 
       const grouped = groupRows(rows);

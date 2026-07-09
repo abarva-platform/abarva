@@ -270,13 +270,20 @@ ON CONFLICT (tenant_key, measure_key, scope, period, basis, dimensions) DO UPDAT
 -- Now that cio_tower.facts is populated (checked first), these stale rows are dead weight.
 -- Soft-retire them so the fallback never surfaces wrong numbers.
 
-UPDATE enterprise_context_records
-   SET metadata = COALESCE(metadata, '{}'::jsonb) ||
-                  '{"retired_by":"20260705180000_lakeshore_cio_tower_budget_seed","retirement_reason":"superseded_by_cio_tower_facts","prior_total_usd":983600000,"correct_total_usd":190600000}'::jsonb,
-       record_subtype = 'it-budget-financials-retired'
- WHERE lower(tenant_key) IN ('lakeshore-industries','lakeshore-holdings','lakeshore')
-   AND (
-     source_file ILIKE '%F12_it-budget-financials%'
-     OR record_type = 'it_budget_financials'
-     OR record_subtype = 'it-budget-financials'
-   );
+DO $$
+BEGIN
+  IF to_regclass('public.enterprise_context_records') IS NOT NULL THEN
+    EXECUTE $sql$
+      UPDATE enterprise_context_records
+         SET metadata = COALESCE(metadata, '{}'::jsonb) ||
+                        '{"retired_by":"20260705180000_lakeshore_cio_tower_budget_seed","retirement_reason":"superseded_by_cio_tower_facts","prior_total_usd":983600000,"correct_total_usd":190600000}'::jsonb,
+             record_subtype = 'it-budget-financials-retired'
+       WHERE lower(tenant_key) IN ('lakeshore-industries','lakeshore-holdings','lakeshore')
+         AND (
+           source_file ILIKE '%F12_it-budget-financials%'
+           OR record_type = 'it_budget_financials'
+           OR record_subtype = 'it-budget-financials'
+         )
+    $sql$;
+  END IF;
+END $$;

@@ -372,7 +372,8 @@
     "tenant-v6:validate": "node scripts/tenant-v6/validate-tenant-v6-pack.mjs",
     "tenant-v6:tower-sync": "node scripts/tenant-v6/sync-tenant-v6-to-tower-standardized.mjs",
     "v7:tenant:derive": "node scripts/v7/derive-tenant-v7-insights.mjs",
-    "v7:tenant:azure-load": "node scripts/v7/load-tenant-v7-azure.mjs"
+    "v7:tenant:azure-load": "node scripts/v7/load-tenant-v7-azure.mjs",
+    "v7:moat:verify": "node scripts/v7/verify-intelligence-moat-foundation.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

@@ -4,7 +4,7 @@ import { answerHomeKnowFromV7 } from '../v7-home-ask';
 function fakeSession(): SessionRunner {
   return async (fn) =>
     fn(async <R>(sql: string, params: unknown[] = []) => {
-      if (sql.includes('from intelligence_v7.tenant_pack_runs')) {
+      if (sql.includes('from intelligence_v7.current_tenant_pack_runs') || sql.includes('from intelligence_v7.tenant_pack_runs')) {
         return [{
           tenant_key: 'skyharbor-air',
           tenant_name: 'SkyHarbor Air Group',
@@ -87,9 +87,11 @@ function fakeSession(): SessionRunner {
 describe('answerHomeKnowFromV7', () => {
   it('uses the active V7 tenant pack contract returned by the run query', async () => {
     const seenBusinessRecordContracts: unknown[] = [];
+    const seenRunQueries: string[] = [];
     const session: SessionRunner = async (fn) =>
       fn(async <R>(sql: string, params: unknown[] = []) => {
-        if (sql.includes('from intelligence_v7.tenant_pack_runs')) {
+        if (sql.includes('from intelligence_v7.current_tenant_pack_runs') || sql.includes('from intelligence_v7.tenant_pack_runs')) {
+          seenRunQueries.push(sql);
           return [{
             tenant_key: 'meridian-health',
             tenant_name: 'Meridian Health System',
@@ -134,12 +136,14 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.ok).toBe(true);
     expect(result.tenant.datasetDir).toBe('datasets/meridian-health-v6-v7-current-state-v1');
     expect(seenBusinessRecordContracts).toEqual(['v7.latest-meridian-test', 'v7.latest-meridian-test']);
+    expect(seenRunQueries.join('\n')).toContain('from intelligence_v7.current_tenant_pack_runs');
+    expect(seenRunQueries.join('\n')).not.toContain('order by loaded_at desc');
   });
 
   it('surfaces concrete V7 system details and loaded blockers for systems questions', async () => {
     const session: SessionRunner = async (fn) =>
       fn(async <R>(sql: string, params: unknown[] = []) => {
-        if (sql.includes('from intelligence_v7.tenant_pack_runs')) {
+        if (sql.includes('from intelligence_v7.current_tenant_pack_runs') || sql.includes('from intelligence_v7.tenant_pack_runs')) {
           return [{
             tenant_key: 'meridian-health',
             tenant_name: 'Meridian Health System',

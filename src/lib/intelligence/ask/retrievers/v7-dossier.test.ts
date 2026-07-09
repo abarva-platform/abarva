@@ -1,10 +1,11 @@
 import type { SessionRunner } from '@/lib/data-plane/read-adapters/azureSession';
 import { retrieveV7DossierSources } from './v7-dossier';
 
-function fakeSession(): SessionRunner {
+function fakeSession(seenRunQueries: string[] = []): SessionRunner {
   return async (fn) =>
     fn(async <R>(sql: string) => {
-      if (sql.includes('from intelligence_v7.tenant_pack_runs')) {
+      if (sql.includes('from intelligence_v7.current_tenant_pack_runs') || sql.includes('from intelligence_v7.tenant_pack_runs')) {
+        seenRunQueries.push(sql);
         return [{
           tenant_key: 'lakeshore-industries',
           tenant_name: 'Lakeshore Holdings',
@@ -72,14 +73,17 @@ function fakeSession(): SessionRunner {
 
 describe('retrieveV7DossierSources', () => {
   it('builds a Lakeshore v7 executive dossier for Intelligence synthesis', async () => {
+    const seenRunQueries: string[] = [];
     const result = await retrieveV7DossierSources(
       'How should the CIO prioritize AI across HR, finance, treasury, legal, and shared services?',
       {
         tenantInventoryKey: 'lakeshore',
-        session: fakeSession(),
+        session: fakeSession(seenRunQueries),
       },
     );
 
+    expect(seenRunQueries.join('\n')).toContain('from intelligence_v7.current_tenant_pack_runs');
+    expect(seenRunQueries.join('\n')).not.toContain('contract_version = $2');
     expect(result.sources[0]).toEqual(expect.objectContaining({
       type: 'TENANT',
       name: 'Lakeshore Holdings V7 executive dossier',
