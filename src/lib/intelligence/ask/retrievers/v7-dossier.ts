@@ -110,10 +110,10 @@ const FIELD_PRIORITY: Record<string, string[]> = {
     'business_functions_supported',
     'business_function_refs',
     'critical_process_refs',
+    'decision_relevance',
     'criticality',
     'technical_owner_role',
     'data_domains',
-    'decision_relevance',
     'known_gaps',
     'system_business_context',
     'pain_points_constraints',
@@ -289,7 +289,7 @@ export async function retrieveV7DossierSources(
          from intelligence_v7.business_records
          where tenant_key = $1 and contract_version = $2 and dimension_key = any($3::text[])
          order by array_position($3::text[], dimension_key), source_row_number asc
-         limit 36`,
+         limit 96`,
         [tenantKey, activeContractVersion, dimensions],
       );
 
@@ -383,7 +383,7 @@ function buildOverviewSource(run: V7RunRow, dimensions: string[]): AskSource {
 function buildDimensionSource(dimension: string, rows: V7RecordRow[]): AskSource | null {
   if (rows.length === 0) return null;
   const label = DIMENSION_LABELS[dimension] ?? humanize(dimension);
-  const records = rows.slice(0, 5).map((row) => summarizeRecord(dimension, row)).filter(Boolean);
+  const records = rows.slice(0, 8).map((row) => summarizeRecord(dimension, row)).filter(Boolean);
   if (records.length === 0) return null;
 
   return {
@@ -419,7 +419,7 @@ function summarizeRecord(dimension: string, row: V7RecordRow): string {
   const fields = (FIELD_PRIORITY[dimension] ?? Object.keys(values).slice(0, 8))
     .map((key) => [humanize(key), stringifyValue(values[key])] as const)
     .filter(([, value]) => value && value !== title)
-    .slice(0, 7);
+    .slice(0, 8);
 
   const fieldText = fields.map(([key, value]) => `${key}: ${value}`).join('; ');
   const source = [
