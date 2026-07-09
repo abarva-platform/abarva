@@ -83,6 +83,15 @@ describe("Ask Intelligence response policy", () => {
       "Describe the correct Moves model for taking a supply-chain AI idea from strategy through execution. Use the canonical phases.",
       "Is the AbarVa Moves model Charter / Diagnose / Decide / Commit, or P0-P5 plus Tower? Explain the difference.",
       "For a banking AI risk-control Move, what belongs in P0, P1, P2, P3, P4, P5, and Tower?",
+      "Can a Meridian clinical AI Move skip P2 if Intelligence already has a strong hypothesis?",
+      "What does Moves need before it can move an Apex Retail inventory optimization idea from P3 to P4?",
+      "What should Moves refuse to decide by itself in an airline workforce planning transformation?",
+      "How should Moves connect a regulatory AI governance strategy to implementation without claiming the workflow is already approved?",
+      "How should Tower connect evidence from Home, strategy from Intelligence, execution from Moves, and vendor actions from Source?",
+      "If Intelligence identifies top 5 AI supply-chain bets, how should Home, Moves, Source, and Tower each participate without overclaiming live artifacts?",
+      "For SkyHarbor IROPS AI, explain how Intelligence frames the bet, Moves executes, Source supports vendors, Tower tracks value, and Home exposes evidence.",
+      "If Source finds a vendor renewal risk, how should it hand off to Moves and Tower without saying the Move or KPI tracker already exists?",
+      "What is the safest executive answer pattern when the user wants strategy, visuals, tables, source evidence, and downstream Moves/Tower actions in one response?",
       "What are the phase-gate evidence requirements for a Contract Intelligence Move?",
       "If Claude writes a good strategy answer but forgets the P0-P5 table, what should the AbarVa runtime guarantee?",
       "How should Source connect a sourcing issue to Moves and Tower without overclaiming that downstream artifacts already exist?",
@@ -99,6 +108,9 @@ describe("Ask Intelligence response policy", () => {
     expect(classifyAbarvaAnswerMode("What is our IT budget?")).toBe(
       "general",
     );
+    expect(
+      classifyAbarvaAnswerMode("Write a funny poem about AI procurement."),
+    ).toBe("general");
   });
 
   it("classifies broad strategy-to-solution prompts as AbarVa solution mode", () => {
