@@ -493,7 +493,8 @@ describe("buildStructuredExhibits", () => {
         "Read: First Capital Financial has several live technology investments where the risk profile and ownership are clear enough to drive action now — the table below organizes them by urgency.\n2M run cost | Critical; restricted non-public data, vendor-hosted | Data residency and exit rights review — restricted classification + vendor-hosted is a red flag combination |\n| Marqeta Dispute Manager | Head of Cards & Payments | $4.\nNext move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
+    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
     expect(exhibits.prose).toContain("First Capital Financial");
     expect(exhibits.prose).toContain("Next, assign");
     expect(exhibits.prose).not.toContain("|");
@@ -764,6 +765,28 @@ describe("buildStructuredExhibits", () => {
             type: "tenant material",
           }),
         ],
+      }),
+    );
+  });
+
+  it("scrubs orphan pipe headers from visual answers with no validated rows", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query:
+          "Give me the top 5 AI use cases for supply chain and rank them in a 2x2 matrix across value and complexity.",
+        outputShape: "chart",
+      },
+      sources,
+      prose:
+        "| AI Use Case | Value (1-5) | Complexity (1-5) | Quadrant |\n\nNo source-backed rows were available.",
+    });
+
+    expect(exhibits.prose).not.toContain("| AI Use Case |");
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        id: "answer-requested-visual-fallback",
+        title: "Requested Visual Boundary",
       }),
     );
   });

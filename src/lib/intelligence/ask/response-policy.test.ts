@@ -112,6 +112,11 @@ describe("Ask Intelligence response policy", () => {
     expect(
       classifyAbarvaAnswerMode("Write a funny poem about AI procurement."),
     ).toBe("general");
+    expect(
+      classifyAbarvaAnswerMode(
+        "Give me the top 5 AI use cases for supply chain and rank them in a 2x2 matrix across value and complexity.",
+      ),
+    ).toBe("general");
   });
 
   it("classifies broad strategy-to-solution prompts as AbarVa solution mode", () => {
