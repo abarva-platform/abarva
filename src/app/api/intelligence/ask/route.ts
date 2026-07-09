@@ -279,7 +279,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           encoder.encode(
             JSON.stringify({
               type: "error",
-              error: buildClientSafeRetiredFactMessage(),
+              error: applyCxoAnswerModeFallbacks(
+                buildClientSafeRetiredFactMessage(),
+                classifyAbarvaAnswerMode(query),
+              ),
               retiredFactFindings: findings,
             }) + "\n",
           ),

@@ -244,6 +244,12 @@ export async function* askIntelligence(
       surface: opts.surfaceContext?.activeTab ?? "intelligence",
       query: trimmed,
     };
+    const answerMode = classifyAbarvaAnswerMode(trimmed);
+    const clientSafeRetiredFactMessage = () =>
+      applyCxoAnswerModeFallbacks(
+        buildClientSafeRetiredFactMessage(),
+        answerMode,
+      );
 
     const surfaceStartedAt = Date.now();
     const surfaceContext = retrieveSurfaceContextSources(
@@ -264,7 +270,7 @@ export async function* askIntelligence(
     if (surfaceRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildClientSafeRetiredFactMessage(),
+        error: clientSafeRetiredFactMessage(),
         retiredFactFindings: surfaceRetiredFacts,
       };
       return;
@@ -433,7 +439,7 @@ export async function* askIntelligence(
     if (preModelRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildClientSafeRetiredFactMessage(),
+        error: clientSafeRetiredFactMessage(),
         retiredFactFindings: preModelRetiredFacts,
       };
       return;
@@ -496,7 +502,7 @@ export async function* askIntelligence(
     if (packetRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildClientSafeRetiredFactMessage(),
+        error: clientSafeRetiredFactMessage(),
         retiredFactFindings: packetRetiredFacts,
       };
       return;
@@ -568,7 +574,7 @@ export async function* askIntelligence(
     if (modelOutputRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildClientSafeRetiredFactMessage(),
+        error: clientSafeRetiredFactMessage(),
         retiredFactFindings: modelOutputRetiredFacts,
       };
       return;
@@ -621,7 +627,7 @@ export async function* askIntelligence(
         if (canvasRetiredFacts.length > 0) {
           yield {
             type: "error",
-            error: buildClientSafeRetiredFactMessage(),
+            error: clientSafeRetiredFactMessage(),
             retiredFactFindings: canvasRetiredFacts,
           };
           return;
@@ -731,7 +737,7 @@ export async function* askIntelligence(
     if (followupRetiredFacts.length > 0) {
       yield {
         type: "error",
-        error: buildClientSafeRetiredFactMessage(),
+        error: clientSafeRetiredFactMessage(),
         retiredFactFindings: followupRetiredFacts,
       };
       return;

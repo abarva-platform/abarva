@@ -98,4 +98,16 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
       expect(answer).toContain(label);
     }
   });
+
+  it("keeps safe-blocked answers useful by appending the governed phase contract", () => {
+    const answer = applyCxoAnswerModeFallbacks(
+      "I can't safely answer that from the currently loaded evidence.",
+      "strategy_to_moves_execution",
+    );
+
+    expect(answer).toContain("I can't safely answer");
+    expect(answer).toContain("| Phase | What AbarVa does | Proposed output |");
+    expect(answer).toContain("P0 Originate");
+    expect(answer).toContain("Tower Track Outcomes");
+  });
 });
