@@ -17,7 +17,14 @@
 // doesn't try to actually hit the route handler.
 
 import "@testing-library/jest-dom";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 
 import { AI_RESPONSIBILITY_FOOTER_COPY } from "@/components/abarva/AIResponsibilityFooter";
 import { AGENT_ACTION_APPROVAL_NOTICE_COPY } from "../AgentActionApprovalNotice";
@@ -1015,6 +1022,100 @@ describe("AgentDock · thread render", () => {
     expect(turn).not.toHaveTextContent("Sources");
     expect(turn).not.toHaveTextContent("high confidence");
     expect(screen.queryByTestId("evidence-basis")).not.toBeInTheDocument();
+  });
+
+  it("exports the current chat session without making a model call", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({
+        "content-disposition": 'attachment; filename="ava-session.html"',
+      }),
+      blob: async () => new Blob(["<html>export</html>"], { type: "text/html" }),
+    });
+    (global as { fetch: unknown }).fetch = fetchMock;
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: jest.fn(() => "blob:ava-session"),
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: jest.fn(),
+    });
+    const clickSpy = jest
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        thread={[
+          { id: "u1", role: "user", body: "Rank supply chain AI bets." },
+          {
+            id: "a1",
+            role: "agent",
+            body: "Demand sensing is the strongest near-term bet.",
+            agentAnswer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "lakeshore-holdings",
+              question: "Rank supply chain AI bets.",
+              intent: "table",
+              status: "answered",
+              directAnswer: "Demand sensing is the strongest near-term bet.",
+              artifacts: [],
+              citations: [],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              quality: {
+                confidence: "high",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+              nextSteps: [],
+              gaps: [],
+              caveats: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Export chat session as HTML" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/intelligence/ask/export",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const request = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(request.format).toBe("html");
+    expect(request.session.surface).toBe("intelligence");
+    expect(request.session.turns).toHaveLength(2);
+    expect(request.session.turns[1].answer.tenantKey).toBe("lakeshore-holdings");
+    await waitFor(() => expect(screen.getByText("Ready")).toBeInTheDocument());
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: originalCreateObjectUrl,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: originalRevokeObjectUrl,
+    });
+    clickSpy.mockRestore();
   });
 
   it("keeps Intelligence structured artifacts out of the left dock even when expanded", () => {

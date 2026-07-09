@@ -1,4 +1,7 @@
-import { renderAvaAnswerStandaloneHtml } from "@/lib/ava-answer/export/render-answer-html";
+import {
+  renderAvaAnswerStandaloneHtml,
+  renderAvaChatSessionStandaloneHtml,
+} from "@/lib/ava-answer/export/render-answer-html";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
 function answerFixture(): AvaAnswerPacket {
@@ -106,5 +109,63 @@ describe("renderAvaAnswerStandaloneHtml", () => {
     expect(html).toContain("<svg");
     expect(html).toContain("68%");
     expect(html).not.toContain("inlineChart");
+  });
+
+  it("exports a full chat session with prompts, governed answers, visuals, and evidence stats", () => {
+    const html = renderAvaChatSessionStandaloneHtml({
+      surface: "intelligence",
+      tenantKey: "lakeshore-holdings",
+      title: "Supply chain AI investment session",
+      turns: [
+        {
+          id: "u1",
+          role: "user",
+          body: "Give me the top 5 supply chain AI bets.",
+        },
+        {
+          id: "a1",
+          role: "agent",
+          body: "Demand sensing is the strongest near-term bet.",
+          answer: {
+            ...answerFixture(),
+            caveats: [
+              {
+                id: "caveat-1",
+                label: "Readiness gate",
+                detail: "Validate source-system readiness before funding.",
+              },
+            ],
+            nextSteps: [
+              {
+                id: "next-1",
+                label: "Move demand sensing into P0 Originate.",
+                rationale: "It has the clearest value signal.",
+              },
+            ],
+            citations: [
+              {
+                id: "c1",
+                label: "Supply chain benchmark pack",
+                sourceClass: "corpus-pattern",
+                excerpt: "Demand sensing has strong evidence in volatile networks.",
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(html).toContain("aVa Executive Session Export");
+    expect(html).toContain("Supply chain AI investment session");
+    expect(html).toContain("User prompt 1");
+    expect(html).toContain("Give me the top 5 supply chain AI bets.");
+    expect(html).toContain("aVa response 2");
+    expect(html).toContain("Supply Chain AI Matrix");
+    expect(html).toContain("Ranked Use Cases");
+    expect(html).toContain("Visual artifacts");
+    expect(html).toContain("Evidence Used");
+    expect(html).toContain("Supply chain benchmark pack");
+    expect(html).toContain("Validate source-system readiness before funding.");
+    expect(html).toContain("Move demand sensing into P0 Originate.");
   });
 });
