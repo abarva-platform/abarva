@@ -317,12 +317,23 @@ export function AppTopBar({
               display: "inline-flex",
               alignItems: "center",
               whiteSpace: "nowrap",
+              // Never shrink/disappear at narrow widths — the display-name
+              // span below already truncates with an ellipsis and should
+              // absorb the squeeze instead (regression 2026-07-09: this link
+              // used to vanish entirely, clipped by the right-rail's
+              // overflow: hidden, while "Tower" stayed fully visible next to
+              // empty space — confusing, not a clean degradation).
+              flexShrink: 0,
             }}
           >
             Learn
           </Link>
         )}
-        {signedIn && <AdminInboxTopNavBadge />}
+        {signedIn && (
+          <span style={{ flexShrink: 0 }}>
+            <AdminInboxTopNavBadge />
+          </span>
+        )}
         {/* While Clerk is still resolving the session, auth state is
             indeterminate — render neither chip nor "Sign in" (a signed-in user
             briefly seeing "Sign in" reads as being logged out; audit F4). */}
@@ -336,6 +347,11 @@ export function AppTopBar({
                 gap: 10,
                 paddingRight: 14,
                 borderRight: `1px solid ${BRAND.hair}`,
+                // Lets the name span's ellipsis (below) actually engage when
+                // the right-rail is squeezed — a flex item's default min-width
+                // is "auto" (its content's full size), which would otherwise
+                // block this whole block from shrinking at all.
+                minWidth: 0,
               }}
             >
               <span
@@ -353,6 +369,7 @@ export function AppTopBar({
                   fontSize: 10.5,
                   fontWeight: 700,
                   border: `1px solid ${BRAND.hair}`,
+                  flexShrink: 0,
                 }}
               >
                 {initials || "U"}
@@ -387,6 +404,8 @@ export function AppTopBar({
                 borderRadius: 999,
                 cursor: "pointer",
                 letterSpacing: "0.01em",
+                // Sign-out must never disappear at narrow widths.
+                flexShrink: 0,
               }}
             >
               Sign out
