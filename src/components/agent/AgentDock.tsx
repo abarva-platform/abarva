@@ -69,6 +69,12 @@ function hasRenderableAvaArtifacts(
   return hasVisibleAvaArtifacts(answer);
 }
 
+function hasRawMarkdownTableFragment(value: string): boolean {
+  return value
+    .split(/\r?\n/)
+    .some((line) => (line.match(/\|/g) ?? []).length >= 2);
+}
+
 function shouldRenderAvaArtifactsInDock(
   surface: string,
   answer?: AvaAnswerPacket | null,
@@ -79,14 +85,17 @@ function shouldRenderAvaArtifactsInDock(
 
 function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
   if (!answer) return "";
-  return (
+  const text =
     answer.prose?.trim() ||
     answer.directAnswer?.trim() ||
     [answer.interpretation, answer.businessImplication, answer.recommendation]
       .filter((part): part is string => Boolean(part?.trim()))
       .join("\n\n")
-      .trim()
-  );
+      .trim();
+  if (hasRenderableAvaArtifacts(answer) && hasRawMarkdownTableFragment(text)) {
+    return "";
+  }
+  return text;
 }
 
 const TECHNICAL_STRING_FIELDS = new Set([
@@ -171,7 +180,14 @@ function visibleAgentDockBody(
   preserveVisibleText = false,
 ): string {
   void surface;
-  const text = avaAnswerTextForDock(agentAnswer) || body;
+  const packetText = avaAnswerTextForDock(agentAnswer);
+  const bodyText =
+    agentAnswer &&
+    hasRenderableAvaArtifacts(agentAnswer) &&
+    hasRawMarkdownTableFragment(body)
+      ? ""
+      : body;
+  const text = packetText || bodyText;
   return preserveVisibleText ? text : demoSafeClientText(text);
 }
 
@@ -1114,7 +1130,14 @@ export function AgentDock(props: AgentDockProps) {
                 ) : null}
                 <div style={BUBBLE_STYLE}>
                   {turn.role === "agent" ? (
-                    <AgentMarkdown text={turn.body} />
+                    <AgentMarkdown
+                      text={visibleAgentDockBody(
+                        surface,
+                        turn.body,
+                        turn.agentAnswer,
+                        preserveVisibleText,
+                      )}
+                    />
                   ) : (
                     turn.body
                   )}
@@ -1305,6 +1328,7 @@ export function AgentDock(props: AgentDockProps) {
     onComposerKeyDown,
     canExportSession,
     placeholder,
+    preserveVisibleText,
     onDragLeave,
     onDragOver,
     onDrop,

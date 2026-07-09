@@ -501,6 +501,27 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.prose).not.toContain("Marqeta Dispute Manager");
   });
 
+  it("strips lone visual table headers when requested chart data is not validated", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query:
+          "Give me the top 5 AI use cases and rank them in a 2x2 matrix chart across value and complexity.",
+        outputShape: "chart",
+      },
+      sources,
+      prose:
+        "| AI Use Case | Value (1-5) | Complexity (1-5) | Quadrant | Industry Case Evidence | Lakeshore Holdings-Specific Signal |",
+    });
+
+    expect(exhibits.prose).toBe("");
+    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    expect(exhibits.tables[0]?.note).toContain(
+      "did not expose unvalidated model text",
+    );
+    expect(JSON.stringify(exhibits)).not.toContain("| AI Use Case |");
+  });
+
   it("renders a chart only from exact numeric columns in an extracted table", () => {
     const exhibits = buildStructuredExhibits({
       routing,
