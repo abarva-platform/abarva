@@ -265,14 +265,48 @@ ON CONFLICT (tenant_key, measure_key, scope, period, basis, dimensions) DO UPDAT
       computed_at      = now();
 
 -- ── 7. Retire stale enterprise_context_records for Lakeshore F12 ──────────────
--- The fallback path (tower-budget-rollups.ts line 358) reads enterprise_context_records
--- and would return the old $983M data if cio_tower.facts were absent.
--- Now that cio_tower.facts is populated (checked first), these stale rows are dead weight.
--- Soft-retire them so the fallback never surfaces wrong numbers.
+-- Some environments no longer carry the legacy enterprise_context_records shape.
+-- Soft-retire the stale rows only when that compatibility table and the columns
+-- referenced below are present; the CIO Tower facts above remain the source of truth.
 
 DO $$
 BEGIN
-  IF to_regclass('public.enterprise_context_records') IS NOT NULL THEN
+  IF to_regclass('public.enterprise_context_records') IS NOT NULL
+     AND EXISTS (
+       SELECT 1
+         FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'enterprise_context_records'
+          AND column_name = 'metadata'
+     )
+     AND EXISTS (
+       SELECT 1
+         FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'enterprise_context_records'
+          AND column_name = 'record_subtype'
+     )
+     AND EXISTS (
+       SELECT 1
+         FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'enterprise_context_records'
+          AND column_name = 'tenant_key'
+     )
+     AND EXISTS (
+       SELECT 1
+         FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'enterprise_context_records'
+          AND column_name = 'source_file'
+     )
+     AND EXISTS (
+       SELECT 1
+         FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'enterprise_context_records'
+          AND column_name = 'record_type'
+     ) THEN
     EXECUTE $sql$
       UPDATE enterprise_context_records
          SET metadata = COALESCE(metadata, '{}'::jsonb) ||
