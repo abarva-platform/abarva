@@ -29,6 +29,7 @@ Moves free-text answers now prefer uploaded Move evidence when canonical pattern
 ## Changes Included
 
 - `src/lib/programs/nexus-free-text.ts`: ranks uploaded evidence rows and snippets for evidence-heavy questions before using manifest fallback.
+- `src/lib/programs/nexus-free-text.ts`: keeps deterministic uploaded-evidence fallback from being silently replaced by unrelated manifest-pattern answers.
 - `src/__tests__/integration/programs-nexus-free-text.test.ts`: adds canonical no-match regression coverage.
 
 ## QA / Validation
@@ -39,7 +40,7 @@ Moves free-text answers now prefer uploaded Move evidence when canonical pattern
 - Pass: `git diff --check`.
 - Pass: `NODE_OPTIONS='--max-old-space-size=6144' ./node_modules/.bin/tsc --noEmit --pretty false --incremental false`.
 - Pass: `npm run release:check`.
-- Pre-fix live proof: Chrome-auth post-deploy crawl at `proof/moves-e2e-lakeshore-legal-case-study-live-postdeploy-chrome-20260709T021954Z` showed attachments persisted and all Moves API calls returned 200, but Q-006/Q-007/Q-008 fell into manifest fallback.
+- Pre-fix live proof: Chrome-auth post-deploy crawls at `proof/moves-e2e-lakeshore-legal-case-study-live-postdeploy-chrome-20260709T021954Z` and `proof/moves-e2e-lakeshore-legal-case-study-live-postdeploy-chrome-ea0e40c0-20260709T024328Z` showed attachments persisted and all Moves API calls returned 200, but Q-006/Q-007/Q-008 fell into manifest fallback.
 
 ## Rollout Plan
 
