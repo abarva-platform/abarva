@@ -282,6 +282,24 @@ const canonicalPatternIndex: CanonicalPatternIndexResult = {
   cache: { mode: 'disabled', key: null, ttl_ms: 60000 },
 };
 
+const noMatchCanonicalPatternIndex: CanonicalPatternIndexResult = {
+  source: 'persisted_canonical_corpus',
+  status: 'no_match',
+  patterns: [],
+  total: 0,
+  warnings: [
+    'WARNING_CANONICAL_PATTERN_NO_MATCH: no persisted canonical patterns matched the query.',
+  ],
+  filters_applied: {
+    tenant_key: 'lakeshore-holdings',
+    industry: 'retail',
+    strategic_move_phase: 'diagnose_discover',
+    query: 'rate card delivery scenarios',
+    limit: 3,
+  },
+  cache: { mode: 'disabled', key: null, ttl_ms: 60000 },
+};
+
 describe('Programs Nexus free-text runtime', () => {
   it('anchors retail estimation questions on the relevant pattern and emits preview citations', async () => {
     const result = await runProgramsNexusTurn({
@@ -439,6 +457,35 @@ describe('Programs Nexus free-text runtime', () => {
       checkTenantEvidenceClaims(
         `${rateResult.response}\n${planResult.response}`,
         evidenceGroundingText(contractOpsContext),
+      ),
+    ).toEqual([]);
+  });
+
+  it('prefers uploaded evidence over manifest patterns when canonical retrieval has no match', async () => {
+    const result = await runProgramsNexusTurn({
+      ctx: {
+        clientKey: 'lakeshore-holdings',
+        clientName: 'Lakeshore Holdings',
+        industryCode: 'retail',
+        userId: 'user_1',
+      },
+      message:
+        'Estimate implementation cost using rate cards: Big 4 vs boutique vs offshore-heavy.',
+      context: lakeshoreLegalContext,
+      canonicalPatternIndex: noMatchCanonicalPatternIndex,
+    });
+
+    expect(result.response).toContain('uploaded evidence');
+    expect(result.response).toContain('03_estimation_rate_card.csv');
+    expect(result.response).toContain('04_delivery_scenarios.csv');
+    expect(result.response).toContain('$950K-$1.45M');
+    expect(result.response).toContain('$2.4M-$3.6M');
+    expect(result.response).toContain('$620K-$980K');
+    expect(result.response).not.toContain('/preview/intelligence/patterns/');
+    expect(
+      checkTenantEvidenceClaims(
+        result.response,
+        evidenceGroundingText(lakeshoreLegalContext),
       ),
     ).toEqual([]);
   });

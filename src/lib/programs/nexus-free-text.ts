@@ -850,7 +850,7 @@ function selectEvidenceSnippets(args: {
   context: ProgramContextBundle;
 }): Array<{ title: string; text: string; score: number }> {
   const queryTokens = tokenize(args.message);
-  return args.context.evidence
+  const scoredSnippets = args.context.evidence
     .map((item) => {
       const fullText = evidenceItemText(item);
       const candidateSentences = evidenceSentences(fullText);
@@ -878,6 +878,74 @@ function selectEvidenceSnippets(args: {
     .filter((snippet) => snippet.text.length > 0 && snippet.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
+
+  if (scoredSnippets.length > 0) return scoredSnippets;
+
+  return args.context.evidence
+    .map((item) => ({
+      title: item.title,
+      text: compactEvidenceText(evidenceItemText(item)),
+      score: 0,
+    }))
+    .filter((snippet) => snippet.text.length > 0)
+    .slice(0, 5);
+}
+
+function evidenceAskIntent(message: string): string {
+  if (/(rate|cost|estimate|scenario|big\s*4|big four|boutique|offshore)/i.test(message)) {
+    return "cost and delivery scenarios";
+  }
+  if (/(architecture|solution|system|workflow|clm|integration|source)/i.test(message)) {
+    return "solution architecture";
+  }
+  if (/(plan|move|phase|roadmap|p[0-5]|mobilize|execute)/i.test(message)) {
+    return "phase plan";
+  }
+  return "uploaded evidence";
+}
+
+function evidenceRowPriority(message: string, text: string): number {
+  const normalized = `${message} ${text}`.toLowerCase();
+  let score = scoreEvidenceText(text, tokenize(message));
+  if (/(rate|cost|estimate|scenario|big\s*4|big four|boutique|offshore)/i.test(message)) {
+    if (/(scenario|estimated external cost|rate|usd|offshore|boutique|big 4|big four)/i.test(text)) {
+      score += 8;
+    }
+  }
+  if (/(architecture|solution|system|workflow|clm|integration|source)/i.test(message)) {
+    if (/(clm|workflow|servicenow|mailbox|coupa|reference|privilege|approval|audit|system)/i.test(text)) {
+      score += 8;
+    }
+  }
+  if (/(plan|move|phase|roadmap|p[0-5]|mobilize|execute)/i.test(message)) {
+    if (/(option|recommended|phase|approval|finance|control|raci|tower|metric|human)/i.test(text)) {
+      score += 8;
+    }
+  }
+  if (normalized.includes("must_not_claim")) score -= 2;
+  return score;
+}
+
+function selectEvidenceRows(args: {
+  message: string;
+  context: ProgramContextBundle;
+}): Array<{ title: string; text: string; score: number }> {
+  return args.context.evidence
+    .flatMap((item) => {
+      const rows = evidenceItemText(item)
+        .split(/\n+/)
+        .map((row) => row.replace(/\s+/g, " ").trim())
+        .filter((row) => row.length > 0);
+      const candidates = rows.length > 0 ? rows : evidenceSentences(evidenceItemText(item));
+      return candidates.map((text) => ({
+        title: item.title,
+        text: compactEvidenceText(text, 700),
+        score: evidenceRowPriority(args.message, `${item.title} ${text}`),
+      }));
+    })
+    .filter((row) => row.text.length > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8);
 }
 
 function hasEvidenceReference(
@@ -900,20 +968,25 @@ function buildEvidenceLedgerFallback(args: {
 }): string | null {
   if (args.context.evidence.length === 0) return null;
   const snippets = selectEvidenceSnippets(args);
-  if (snippets.length === 0) return null;
+  const rows = selectEvidenceRows(args);
+  if (snippets.length === 0 && rows.length === 0) return null;
 
   const titles = args.context.evidence
     .slice(0, 6)
     .map((item) => item.title)
     .join(", ");
-  const groundedSignals = snippets
+  const strongestRows = rows
+    .filter((row) => row.score > 0)
+    .slice(0, 5);
+  const selectedSignals = strongestRows.length > 0 ? strongestRows : snippets;
+  const groundedSignals = selectedSignals
     .map((snippet, index) => `${index + 1}. ${snippet.title}: ${snippet.text}`)
     .join("\n");
 
   const response = [
-    `Evidence is present for ${args.context.program.name}: ${titles}.`,
+    `Evidence is present for ${args.context.program.name}; answer this ${evidenceAskIntent(args.message)} question from the uploaded evidence, not a generic pattern: ${titles}.`,
     `Grounded signals from the uploaded evidence:\n${groundedSignals}`,
-    "Next step: answer from the uploaded evidence text, cite the uploaded evidence titles, and keep every numeric claim tied to that same grounding text.",
+    "Next step: use these uploaded evidence titles as the grounding spine, keep specialist judgment human-approved, and treat planning values as finance-caveated until the owner validates them.",
   ].join("\n\n");
 
   const truthGate = runProductTruthGate(response, {
