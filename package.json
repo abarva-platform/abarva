@@ -304,6 +304,7 @@
     "qa:agent-response-shape:cipo": "npx tsx src/scripts/qa/agent-response-shape-cipo-qa.ts",
     "qa:agent-output:golden": "npx tsx src/scripts/qa/agent-output-golden-eval.ts",
     "qa:adversarial-quality": "node scripts/qa/adversarial-quality-dashboard.mjs --check",
+    "qa:lakeshore-ams-artifact-audit": "node scripts/qa/lakeshore-ams-artifact-audit.mjs",
     "qa:agent-quality:corpus": "npx tsx src/scripts/qa/agent-quality-corpus-validate.ts",
     "qa:agent-quality:runner": "npx tsx src/scripts/qa/agent-quality-live-runner.ts",
     "qa:agent-quality:score": "npx tsx src/scripts/qa/agent-quality-live-runner.ts --mode score-file",
