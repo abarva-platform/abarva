@@ -121,6 +121,27 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     ).toBeNull();
   });
 
+  it("recognizes plain phase tables and does not append a duplicate generic table", () => {
+    const answer = applyCxoAnswerModeFallbacks(
+      [
+        "Moves Phase\tHITL Checkpoint\tDrift Threshold",
+        "P0 Originate\tFrame the bet.\tNo model yet.",
+        "P1 Charter\tSign the charter.\tDefine MAPE.",
+        "P2 Understand Current State\tGround the evidence.\tBacktest drift.",
+        "P3 Choose the Approach\tPick the path.\tReview options.",
+        "P4 Build the Plan\tBuild milestones.\tSet gates.",
+        "P5 Prepare to Execute\tConfirm readiness.\tRun cutover.",
+        "Tower Track Outcomes\tTrack value.\tReport drift.",
+      ].join("\n"),
+      "strategy_to_moves_execution",
+    );
+
+    expect(answer).toContain("Moves Phase\tHITL Checkpoint\tDrift Threshold");
+    expect(
+      answer.match(/\| Phase \| What AbarVa does \| Proposed output \|/g),
+    ).toBeNull();
+  });
+
   it("keeps safe-blocked answers useful by appending the governed phase contract", () => {
     const answer = applyCxoAnswerModeFallbacks(
       "I can't safely answer that from the currently loaded evidence.",
