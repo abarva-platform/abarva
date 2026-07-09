@@ -215,6 +215,76 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.directAnswer).not.toMatch(/\$[0-9]/);
   });
 
+  it('routes analytics and reporting estate questions to applications and systems evidence', async () => {
+    const session: SessionRunner = async (fn) =>
+      fn(async <R>(sql: string, params: unknown[] = []) => {
+        if (sql.includes('from intelligence_v7.current_tenant_pack_runs') || sql.includes('from intelligence_v7.tenant_pack_runs')) {
+          return [{
+            tenant_key: 'meridian-health',
+            tenant_name: 'Meridian Health System',
+            contract_version: 'v7.current-pack-test',
+            source_dataset: 'datasets/meridian-health-v6-v7-current-state-v1',
+            row_count: 442,
+            field_count: 11507,
+            graph_node_count: 97,
+            relationship_edge_count: 69,
+            chunk_count: 118,
+            loaded_at: '2026-07-09T18:47:43.212Z',
+          }] as R[];
+        }
+        if (sql.includes('group by source_file')) {
+          return [{ source_file: 'V7_05_applications_systems.csv', count: 6 }] as R[];
+        }
+        if (sql.includes('from intelligence_v7.business_records')) {
+          expect(params[2]).toBe('v7_05_applications_systems');
+          return [
+            {
+              record_name: 'Epic Clarity',
+              source_file: 'V7_05_applications_systems.csv',
+              source_row_number: 2,
+              source_artifact_name: 'V7_05_applications_systems.csv',
+              source_validation_status: 'validated',
+              values_json: {
+                system_name: 'Epic Clarity',
+                technical_owner: 'Clinical data platform team',
+                key_technologies_vendors: 'Epic; SQL Server',
+                lifecycle_status: 'current_core',
+              },
+            },
+            {
+              record_name: 'Enterprise BI and analytics stack',
+              source_file: 'V7_05_applications_systems.csv',
+              source_row_number: 3,
+              source_artifact_name: 'V7_05_applications_systems.csv',
+              source_validation_status: 'validated',
+              values_json: {
+                system_name: 'Enterprise BI and analytics stack',
+                technical_owner: 'Analytics managed services',
+                key_technologies_vendors: 'Tableau; SAS; Power BI',
+                lifecycle_status: 'fragmented_current_state',
+              },
+            },
+          ] as R[];
+        }
+        return [] as R[];
+      });
+
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'meridian',
+      tenantDisplayName: 'Meridian Health System',
+      question: 'What does Meridian know about its current analytics and reporting estate?',
+      session,
+    });
+
+    expect(result.proof.questionIntent).toBe('apps_systems');
+    expect(result.answer.primaryDimension).toBe('v7_05_applications_systems');
+    expect(result.answer.directAnswer).toMatch(/Epic Clarity/i);
+    expect(result.answer.directAnswer).toMatch(/SQL Server/i);
+    expect(result.answer.directAnswer).toMatch(/Tableau/i);
+    expect(result.answer.directAnswer).toMatch(/SAS/i);
+    expect(result.answer.directAnswer).toMatch(/Power BI/i);
+  });
+
   it('answers deterministically from V7 records without raw substrate IDs', async () => {
     const result = await answerHomeKnowFromV7({
       tenantKey: 'skyharbor',

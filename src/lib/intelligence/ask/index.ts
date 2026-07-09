@@ -397,16 +397,22 @@ export async function* askIntelligence(
     );
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
+    const hasActiveV7Dossier = v7Dossier.sources.length > 0;
+    const legacyTenantSources = hasActiveV7Dossier
+      ? []
+      : [
+          ...tenantStructuredFacts,
+          ...tenantEnterprise,
+          ...tenantTechnology,
+          ...routed.sources,
+          ...worldview.sources,
+        ];
     const rawSources: AskSource[] = [
       ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
       ...v7Dossier.sources,
-      ...tenantStructuredFacts,
-      ...tenantEnterprise,
-      ...tenantTechnology,
       ...retailOverlay,
-      ...routed.sources,
-      ...worldview.sources,
+      ...legacyTenantSources,
     ].slice(0, sourceLimit);
     const sources = conciseAsk
       ? compactSourceDetailsForConciseAsk(rawSources)
@@ -416,6 +422,14 @@ export async function* askIntelligence(
         rawSourceCount: rawSources.length,
         sourceCount: sources.length,
         sourceLimit,
+        v7DossierDominant: hasActiveV7Dossier,
+        suppressedLegacySourceCount: hasActiveV7Dossier
+          ? tenantStructuredFacts.length +
+            tenantEnterprise.length +
+            tenantTechnology.length +
+            routed.sources.length +
+            worldview.sources.length
+          : 0,
       }),
     );
     const averageConfidence =

@@ -3,7 +3,7 @@ import { retrieveV7DossierSources } from './v7-dossier';
 
 function fakeSession(seenRunQueries: string[] = []): SessionRunner {
   return async (fn) =>
-    fn(async <R>(sql: string) => {
+    fn(async <R>(sql: string, params: unknown[] = []) => {
       if (sql.includes('from intelligence_v7.current_tenant_pack_runs') || sql.includes('from intelligence_v7.tenant_pack_runs')) {
         seenRunQueries.push(sql);
         return [{
@@ -20,7 +20,8 @@ function fakeSession(seenRunQueries: string[] = []): SessionRunner {
       }
 
       if (sql.includes('from intelligence_v7.business_records')) {
-        return [
+        const dimensions = Array.isArray(params[2]) ? new Set(params[2] as string[]) : null;
+        const rows = [
           {
             record_name: 'Shared HR exception triage 03',
             dimension_key: 'v7_10_ai_initiatives',
@@ -64,7 +65,37 @@ function fakeSession(seenRunQueries: string[] = []): SessionRunner {
               recommended_actions: 'Use as question guide and fit-check against tenant facts before narrative.',
             },
           },
-        ] as R[];
+          {
+            record_name: 'Epic Clarity',
+            dimension_key: 'v7_05_applications_systems',
+            source_file: 'V7_05_applications_systems.csv',
+            source_artifact_name: 'V7_05_applications_systems.csv',
+            source_validation_status: 'synthetic_demo',
+            values_json: {
+              system_name: 'Epic Clarity',
+              vendor_product: 'Epic',
+              decision_relevance: 'SQL Server extracts; Caboodle; Tableau',
+              lifecycle_status: 'current core',
+              known_gaps: 'No certified medallion architecture is loaded.',
+            },
+          },
+          {
+            record_name: 'Reporting marts and BI layer',
+            dimension_key: 'v7_06_data_assets_integrations',
+            source_file: 'V7_06_data_assets_integrations.csv',
+            source_artifact_name: 'V7_06_data_assets_integrations.csv',
+            source_validation_status: 'synthetic_demo',
+            values_json: {
+              data_asset_name: 'Reporting marts and BI layer',
+              system_of_record: 'Epic Clarity; Epic Caboodle; claims marts',
+              consumer_refs: 'Tableau; SAS; Power BI',
+              upstream_systems: 'Epic Clarity; Epic Caboodle; claims marts',
+              downstream_consumers: 'Tableau; SAS; Power BI',
+              governance_status: 'fragmented',
+            },
+          },
+        ];
+        return rows.filter((row) => !dimensions || dimensions.has(row.dimension_key)) as R[];
       }
 
       return [] as R[];
@@ -94,6 +125,25 @@ describe('retrieveV7DossierSources', () => {
     expect(result.sources.map((source) => source.id)).toContain('v7_15_industry_market_knowledge_patterns');
     expect(result.sources.map((source) => source.detail).join('\n')).toMatch(/Shared HR exception triage/i);
     expect(result.sources.map((source) => source.detail).join('\n')).toMatch(/synthetic demo until client validated/i);
+  });
+
+  it('selects system and data-estate evidence for analytics and reporting estate questions', async () => {
+    const result = await retrieveV7DossierSources(
+      'What does Meridian know about its current analytics and reporting estate?',
+      {
+        tenantInventoryKey: 'meridian',
+        session: fakeSession(),
+      },
+    );
+
+    expect(result.sources.map((source) => source.id)).toContain('v7_05_applications_systems');
+    expect(result.sources.map((source) => source.id)).toContain('v7_06_data_assets_integrations');
+    const details = result.sources.map((source) => source.detail).join('\n');
+    expect(details).toMatch(/Epic Clarity/i);
+    expect(details).toMatch(/SQL Server/i);
+    expect(details).toMatch(/Tableau/i);
+    expect(details).toMatch(/SAS/i);
+    expect(details).toMatch(/Power BI/i);
   });
 
   it('fails closed when the v7 schema is unavailable', async () => {
