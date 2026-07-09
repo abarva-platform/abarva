@@ -19,7 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   extractArtifacts,
   visibleArtifactPendingText,
@@ -1990,6 +1990,17 @@ export function StrategicMovePhaseClient({
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
 
+  // Requesting a locked (not-yet-reached) phase redirects here server-side
+  // with ?phaseLocked=<requestedPhase> (see the phase page's redirect) — a
+  // silent redirect otherwise reads as a broken/wrong link. Shown once,
+  // dismissible; not persisted, so it never nags on a normal visit.
+  const searchParams = useSearchParams();
+  const lockedPhaseRequested = searchParams.get("phaseLocked");
+  const [phaseLockedNoticeDismissed, setPhaseLockedNoticeDismissed] =
+    useState(false);
+  const showPhaseLockedNotice =
+    lockedPhaseRequested !== null && !phaseLockedNoticeDismissed;
+
   // Phase-workspace v2 (increment 3): catalog-driven guidance panel mounted at
   // the top of the workspace, gated per tenant. Purely additive — when off the
   // workspace is exactly as before. See phase-workspace/MovePhaseWorkspacePanel.
@@ -2593,6 +2604,30 @@ export function StrategicMovePhaseClient({
           &#8592; Back to overview
         </Link>
       </div>
+
+      {showPhaseLockedNotice && (
+        <div
+          className={`${styles.statusBanner} ${styles.statusBannerAmber}`}
+        >
+          <span className={styles.statusBannerPulse} aria-hidden />
+          <div className={styles.statusBannerText}>
+            <div className={styles.statusBannerStatus}>
+              P{lockedPhaseRequested} isn&rsquo;t open yet
+            </div>
+            <div className={styles.statusBannerDesc}>
+              This Move is at {config.shortLabel}. You&rsquo;ll land on
+              P{lockedPhaseRequested} once the phases in between are complete.
+            </div>
+          </div>
+          <button
+            type="button"
+            className={styles.originCancel}
+            onClick={() => setPhaseLockedNoticeDismissed(true)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Chat (AgentDock) + phase canvas. AgentDock owns the 6 dock modes
           (side-rail left/right, pin top/bottom, expand, collapsed); the phase

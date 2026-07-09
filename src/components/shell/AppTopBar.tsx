@@ -128,8 +128,18 @@ export function AppTopBar({
         // (Snowflake-style), independent of brand/right-rail widths. The 1fr
         // side columns reserve space so the three groups can never overlap —
         // the collision that ran the tenant name into the old tagline.
+        //
+        // minmax(0, 1fr) (not bare 1fr) on the side columns: a bare `1fr`
+        // track's implicit minimum is its content's min-content size, which
+        // for nowrap nav/user-chip text is its full rendered width — so at
+        // narrower viewports the grid refused to shrink the side columns and
+        // instead overflowed, running the last nav item (Tower) into the
+        // right rail's first item (Learn) as unclipped, overlapping text
+        // (regression found 2026-07-09 live-browser polish audit). Explicit
+        // `minmax(0, ...)` lets the side columns actually shrink toward 0 so
+        // their own `overflow: hidden` + `minWidth: 0` can do its job.
         display: "grid",
-        gridTemplateColumns: "1fr auto 1fr",
+        gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
         alignItems: "center",
         gap: 24,
         padding: "0 32px",
