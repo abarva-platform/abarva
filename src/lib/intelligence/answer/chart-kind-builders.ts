@@ -18,10 +18,12 @@ import type { AnswerChartKind } from "@/lib/ava-answer/contract";
 
 export const CHART_KIND_TO_BUILDER: Record<AnswerChartKind, string> = {
   bar: "opportunityRangeBar", // no generic categorical bar in the kit; ranked horizontal bars are the closest
+  "horizontal-bar": "inlineChart",
   "stacked-bar": "workstreamCostStack",
   line: "adoptionCurve", // no generic line; the adoption-curve line builder is the closest
   waterfall: "investmentWaterfall",
   "value-bridge": "valueBridge",
+  "2x2-matrix": "quadrantMatrix",
   tornado: "sensitivityTornado",
   "range-bar": "opportunityRangeBar",
   heatmap: "riskHeatmap",

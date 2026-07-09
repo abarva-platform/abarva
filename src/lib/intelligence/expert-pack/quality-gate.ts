@@ -37,10 +37,12 @@ export interface GateResult {
 // here — the runtime check can never silently diverge from the type contract.
 const CHART_KIND_SET: Record<AnswerChartKind, true> = {
   bar: true,
+  "horizontal-bar": true,
   "stacked-bar": true,
   line: true,
   waterfall: true,
   "value-bridge": true,
+  "2x2-matrix": true,
   tornado: true,
   "range-bar": true,
   heatmap: true,
