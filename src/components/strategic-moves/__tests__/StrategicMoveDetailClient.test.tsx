@@ -78,19 +78,26 @@ beforeEach(() => {
 });
 
 describe("StrategicMoveDetailClient", () => {
-  it("renders the workspace inside the AgentDock side rail", () => {
+  it("renders the workspace with a collapsed aVa dock launcher by default", async () => {
     render(
       <StrategicMoveDetailClient
         move={makeMove()}
         workspace={<div data-testid="ws">workspace content</div>}
       />,
     );
-    // AgentDock is mounted (paperclip, send button, mode picker present).
+    expect(screen.getByTestId("ws")).toBeInTheDocument();
+    const restoreChip = screen.getByTestId("agent-dock-collapsed-chip");
+    expect(restoreChip).toBeInTheDocument();
+    expect(screen.queryByTestId("agent-dock-panel")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(restoreChip);
+    });
+
+    expect(screen.getByTestId("agent-dock-expand-overlay")).toBeInTheDocument();
     expect(screen.getByTestId("agent-dock-attach")).toBeInTheDocument();
     expect(screen.getByTestId("agent-dock-send")).toBeInTheDocument();
     expect(screen.getByTestId("agent-dock-mode-picker")).toBeInTheDocument();
-    // Workspace child renders.
-    expect(screen.getByTestId("ws")).toBeInTheDocument();
   });
 
   it("seeds the thread with two Nexus turns scoped to the move", () => {
@@ -101,6 +108,7 @@ describe("StrategicMoveDetailClient", () => {
         workspace={<div />}
       />,
     );
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
     const turns = screen.getAllByTestId("agent-dock-turn-agent");
     expect(turns.length).toBeGreaterThanOrEqual(2);
     expect(turns[0].textContent).toMatch(/Customer Data Platform/);
@@ -115,6 +123,7 @@ describe("StrategicMoveDetailClient", () => {
         workspace={<div />}
       />,
     );
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
     expect(
       screen.getByTestId("agent-dock-suggestion-gate-missing"),
     ).toHaveTextContent("Show me what is still missing.");
@@ -134,6 +143,7 @@ describe("StrategicMoveDetailClient", () => {
         workspace={<div />}
       />,
     );
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
 
     await act(async () => {
       fireEvent.click(
@@ -161,6 +171,7 @@ describe("StrategicMoveDetailClient", () => {
         workspace={<div />}
       />,
     );
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
 
     const input = screen.getByTestId("agent-dock-input") as HTMLTextAreaElement;
     await act(async () => {
@@ -204,10 +215,12 @@ describe("StrategicMoveDetailClient", () => {
 
   it("persists the dock surface key as moves/detail", () => {
     render(<StrategicMoveDetailClient move={makeMove()} workspace={<div />} />);
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
+    act(() => {
+      fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+    });
     const panel = screen.getByTestId("agent-dock-panel");
-    // Default mode is side-rail; mode is persisted under
-    // abarva.agent-dock.moves/detail.mode after a switch.
-    expect(panel).toHaveAttribute("data-mode", "side-rail");
+    expect(panel).toHaveAttribute("data-mode", "expand");
     act(() => {
       fireEvent.click(screen.getByTestId("agent-dock-mode-pin-bottom"));
     });

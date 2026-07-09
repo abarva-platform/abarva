@@ -138,10 +138,17 @@ describe("StrategicMoveOriginateClient", () => {
 
     render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
 
+    const launcher = screen.getByTestId("orig-ava-launcher");
+    expect(launcher).toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText(/describe the outcome/i),
+    ).not.toBeInTheDocument();
+    fireEvent.click(launcher);
+
     const [headerMark] = screen.getAllByTestId("ava-ask-wordmark");
     expect(headerMark).toHaveAttribute(
       "src",
-      "/brand/ava/ava-avatar-dark.svg",
+      "/brand/ava/ava-wordmark-2tone-light.svg",
     );
     expect(screen.queryByText(/^Ava$/)).not.toBeInTheDocument();
 
@@ -249,6 +256,7 @@ describe("StrategicMoveOriginateClient", () => {
     mockFetchWithChatArtifactAndExtraction(staleArtifact, extractionFields);
 
     render(<StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />);
+    fireEvent.click(screen.getByTestId("orig-ava-launcher"));
 
     await act(async () => {
       fireEvent.change(screen.getByPlaceholderText(/describe the outcome/i), {
@@ -272,6 +280,7 @@ describe("StrategicMoveOriginateClient", () => {
     mockFetchWithChatArtifactAndExtraction("", {});
 
     render(<StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />);
+    fireEvent.click(screen.getByTestId("orig-ava-launcher"));
 
     const prompt = `Create a strategic Move named "Kyriba Treasury Controls Proof" for Lakeshore Holdings' Kyriba treasury rollout. The business problem is treasury visibility and payment-control risk across banks, SAP feeds, signers, payment formats, and SOX evidence. Sponsor candidate: CFO and Treasurer, with CIO support. Scope: treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence; out of scope: changing the ERP core in this move. Evidence family: finance systems, treasury operations, risk and controls, vendor/contracts, data readiness. Value hypothesis: faster cash visibility, lower manual reconciliation effort, cleaner payment-control evidence, and better board confidence. Foundation readiness: Kyriba rollout is underway, but data lineage, bank connectivity inventory, signer controls, and SOX evidence need validation.`;
 
