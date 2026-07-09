@@ -95,7 +95,15 @@ migration, no data mutation, no flag.
 
 ## Audit Evidence
 
-- To be added once merged/deployed and the live re-check confirms both fixes.
+- PR: [#4643](https://github.com/abarva-platform/abarva/pull/4643), 21/21 CI checks passed, squash-merged as `7545dc8d`. Deployed and runtime-invariant verified.
+- **Locked-phase redirect banner: confirmed live and working**, including Dismiss.
+- **Nav overlap: this release's `minmax(0, 1fr)` fix was necessary but NOT sufficient.** Live
+  re-check post-deploy showed "Tower"/"Learn" still overlapping at the same viewport width. Root
+  cause of the remainder (the right-rail container's `justifySelf: "end"` sizing the item to its own
+  content instead of its grid track) fixed in a same-day follow-up:
+  `docs/releases/records/2026-07-09-moves-nav-overlap-followup.md` (PR #4645) — see that record for
+  the full second-fix evidence, including how a `getBoundingClientRect()` check initially looked like
+  a repeat failure and required direct pixel inspection to correctly interpret.
 
 ## Known Gaps
 
