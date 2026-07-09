@@ -413,15 +413,12 @@ function formatSourcesBlock(sources: AskSource[]): string {
  *   2. finalText starts with liveStreamedText (the normal case — the pre-tab
  *      main answer survived repair unchanged) → emit only the suffix
  *      finalText.slice(liveStreamedText.length). No duplication, no loss.
- *   3. A repair diverged the streamed prefix from finalText (rare — the tab /
- *      native-canvas / standalone repairs reassign the whole `text`). We cannot
- *      un-send the already-streamed bytes, so append-only byte-equality is
- *      physically impossible for that streamed region. To lose NO final content
- *      we emit finalText.slice(commonPrefixLen) — a resync that continues from
- *      the last byte both strings agree on. The user sees the streamed prefix,
- *      then the diverged tail of the repaired answer; the complete final answer
- *      is still delivered (no content lost), only its earliest bytes may differ
- *      from the repaired version. `diverged` is returned so callers can trace it.
+ *   3. A repair diverged the streamed prefix from finalText. The client cannot
+ *      replace bytes it already rendered. Appending from the common-prefix split
+ *      creates duplicate paragraphs and broken tables in the transcript, which
+ *      is worse than omitting the repaired tail. In that case we emit no
+ *      user-visible remainder and rely on the already-streamed answer while
+ *      returning `diverged` so the server can trace the repair mismatch.
  */
 export function reconcileStreamRemainder(
   liveStreamedText: string,
@@ -436,13 +433,7 @@ export function reconcileStreamRemainder(
       diverged: false,
     };
   }
-  // Diverged: emit from the longest common prefix so no final content is lost.
-  let common = 0;
-  const max = Math.min(liveStreamedText.length, finalText.length);
-  while (common < max && liveStreamedText[common] === finalText[common]) {
-    common += 1;
-  }
-  return { remainder: finalText.slice(common), diverged: true };
+  return { remainder: "", diverged: true };
 }
 
 export async function* synthesizeStream(args: {
