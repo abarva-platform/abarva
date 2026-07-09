@@ -73,6 +73,20 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
     }
   });
 
+  it('strips the internal phase-label prefix from decisionContext before it reaches the model (regression 2026-07-09)', async () => {
+    // Live-observed: decisionContext = "<move> — P4 Roadmap & Business Case: <purpose>"
+    // reached the model prompt verbatim, and the model faithfully echoed "P4" into the
+    // client-facing narrative ("...at this stage of the P4 roadmap...") — which the
+    // non_mechanical_writing gate then correctly blocked as a leaked phase label. The
+    // registry's phaseLabel must never reach decisionContext with its "P<n>" prefix intact.
+    await POST(req({ moveId: 'm-4', phase: 4, useCaseArchetype: 'risk_control', moveName: 'Legal and Vendor Contract Obligation Control' }));
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const c of createCalls) {
+      const decisionContext = (c.jobPayload as { decisionContext: string }).decisionContext;
+      expect(decisionContext).not.toMatch(/(?<![A-Za-z0-9-])P\d(?![A-Za-z0-9])/);
+    }
+  });
+
   it('reports a per-deliverable error without aborting the batch, staying 202 if any queued', async () => {
     let n = 0;
     createBehavior = () => {
