@@ -291,7 +291,7 @@ function scoreTurn(item, tenant, result) {
     if (!lower.includes(term.toLowerCase())) flags.push(`missing:${term}`);
   }
   for (const term of item.mustNotClaim ?? []) {
-    if (lower.includes(term.toLowerCase())) flags.push(`must_not_claim:${term}`);
+    if (containsUnsupportedMustNotClaim(answer, term)) flags.push(`must_not_claim:${term}`);
   }
   for (const pattern of tenant.forbiddenTenantTerms ?? []) {
     if (pattern.test(answer)) flags.push(`tenant_bleed:${pattern}`);
@@ -305,6 +305,32 @@ function scoreTurn(item, tenant, result) {
   if (/```json|raw json|debug|sentinel/i.test(answer)) flags.push("protocol_leak");
   const hard = flags.filter((flag) => /http_|tenant_bleed|unsupported_claim|must_not_claim|protocol_leak/.test(flag));
   return { verdict: hard.length ? "fail" : flags.length ? "watch" : "pass", flags };
+}
+
+function containsUnsupportedMustNotClaim(answer, term) {
+  const normalizedTerm = escapeRegExp(term.toLowerCase());
+  const answerLower = answer.toLowerCase();
+  const matcher = new RegExp(normalizedTerm, "g");
+  for (const match of answerLower.matchAll(matcher)) {
+    const start = match.index ?? 0;
+    const before = answerLower.slice(Math.max(0, start - 48), start);
+    const after = answerLower.slice(start + term.length, start + term.length + 48);
+    if (/\b(not|no|never|without|isn'?t|aren'?t|wasn'?t|weren'?t|hasn'?t|haven'?t|hadn'?t|doesn'?t|don'?t|can'?t|cannot)\b[\s\w-]*$/.test(before)) {
+      continue;
+    }
+    if (/^\s+(yet|with|as proven|as certified|as client-approved|as production-ready)\b/.test(after)) {
+      continue;
+    }
+    if (term.toLowerCase() === "implemented" && /\bfailed implementations?\b/.test(before + term.toLowerCase() + after)) {
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function extractClaimReport(result) {
