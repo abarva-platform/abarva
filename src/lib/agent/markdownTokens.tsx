@@ -45,6 +45,103 @@ export const ABARVA_ENTITY_TOKEN_REGEX =
 export const ABARVA_SOURCE_TAG_REGEX =
   /<abv-source\s+ref="([^"]+)"\s+reliability="(HIGH|MEDIUM|LOW)"\/>/g;
 
+function isMarkdownTableLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed || !trimmed.includes('|')) return false;
+  const pipeCount = (trimmed.match(/\|/g) ?? []).length;
+  return pipeCount >= 2 && (trimmed.startsWith('|') || /\s\|\s/.test(trimmed));
+}
+
+function splitMarkdownTableCells(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  return trimmed.split('|').map((cell) => cell.trim());
+}
+
+function isMarkdownTableSeparatorLine(line: string): boolean {
+  const cells = splitMarkdownTableCells(line).filter(Boolean);
+  return (
+    cells.length > 0 &&
+    cells.every((cell) => /^:?-{3,}:?$/.test(cell) || /^-+$/.test(cell))
+  );
+}
+
+function normalizeMarkdownTableRow(line: string): string {
+  const cells = splitMarkdownTableCells(line);
+  return `| ${cells.join(' | ')} |`;
+}
+
+function separatorForMarkdownTable(headerLine: string): string {
+  const count = Math.max(1, splitMarkdownTableCells(headerLine).length);
+  return `| ${Array.from({ length: count }, () => '---').join(' | ')} |`;
+}
+
+function normalizeMarkdownTableBlock(lines: string[]): string[] {
+  if (lines.length < 2) return lines;
+
+  const headerIndex = lines.findIndex(
+    (line) => !isMarkdownTableSeparatorLine(line),
+  );
+  if (headerIndex < 0) return lines;
+
+  const header = normalizeMarkdownTableRow(lines[headerIndex]);
+  const firstSeparator = lines.find((line) =>
+    isMarkdownTableSeparatorLine(line),
+  );
+  const separator = firstSeparator
+    ? normalizeMarkdownTableRow(firstSeparator)
+    : separatorForMarkdownTable(header);
+  const bodyRows = lines
+    .slice(headerIndex + 1)
+    .filter((line) => !isMarkdownTableSeparatorLine(line))
+    .map(normalizeMarkdownTableRow);
+
+  if (bodyRows.length === 0 && !firstSeparator) return lines;
+  return [header, separator, ...bodyRows];
+}
+
+export function normalizeMarkdownTables(text: string): string {
+  const lines = text.split(/\r?\n/);
+  const output: string[] = [];
+  let tableBlock: string[] = [];
+  let inFence = false;
+
+  const flushTable = () => {
+    if (tableBlock.length === 0) return;
+    output.push(...normalizeMarkdownTableBlock(tableBlock));
+    tableBlock = [];
+  };
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^\s*```/.test(line)) {
+      flushTable();
+      inFence = !inFence;
+      output.push(line);
+      continue;
+    }
+
+    if (!inFence && isMarkdownTableLine(line)) {
+      tableBlock.push(line);
+      continue;
+    }
+
+    if (
+      !inFence &&
+      tableBlock.length > 0 &&
+      !line.trim() &&
+      isMarkdownTableLine(lines[index + 1] ?? '')
+    ) {
+      continue;
+    }
+
+    flushTable();
+    output.push(line);
+  }
+
+  flushTable();
+  return output.join('\n');
+}
+
 export function normalizeAbarvaAgentMarkup(text: string): string {
   ABARVA_SOURCE_TAG_REGEX.lastIndex = 0;
   const sourceRefs = Array.from(text.matchAll(ABARVA_SOURCE_TAG_REGEX))
@@ -78,8 +175,10 @@ export function normalizeAbarvaAgentMarkup(text: string): string {
     .replace(/\s+([,.;:!?])/g, '$1')
     .trim();
 
-  if (sourceRefs.length === 0) return withReadableSpacing;
-  return `${withReadableSpacing}\n\nSource basis: ${sourceRefs.join('; ')}.`;
+  const withNormalizedTables = normalizeMarkdownTables(withReadableSpacing);
+
+  if (sourceRefs.length === 0) return withNormalizedTables;
+  return `${withNormalizedTables}\n\nSource basis: ${sourceRefs.join('; ')}.`;
 }
 
 // ── Citation chip ─────────────────────────────────────────────────────────────

@@ -553,11 +553,12 @@ function buildComponents(
     h1: ({ children }) => (
       <h1
         style={{
-          fontFamily: BrandTypography.serif,
-          fontSize: "1.4em",
-          fontWeight: 400,
-          margin: "0.8em 0 0.4em",
+          fontFamily: BrandTypography.sans,
+          fontSize: "1.08em",
+          fontWeight: 700,
+          margin: "0.75em 0 0.35em",
           color: BrandColors.inkBlack,
+          lineHeight: 1.28,
         }}
       >
         {tokenizeChildren(children, "h1", inlineNodes)}
@@ -566,11 +567,12 @@ function buildComponents(
     h2: ({ children }) => (
       <h2
         style={{
-          fontFamily: BrandTypography.serif,
-          fontSize: "1.2em",
-          fontWeight: 400,
-          margin: "0.7em 0 0.35em",
+          fontFamily: BrandTypography.sans,
+          fontSize: "1.02em",
+          fontWeight: 700,
+          margin: "0.7em 0 0.3em",
           color: BrandColors.inkBlack,
+          lineHeight: 1.32,
         }}
       >
         {tokenizeChildren(children, "h2", inlineNodes)}
@@ -579,10 +581,11 @@ function buildComponents(
     h3: ({ children }) => (
       <h3
         style={{
-          fontSize: "1.05em",
-          fontWeight: 600,
+          fontSize: "0.98em",
+          fontWeight: 700,
           margin: "0.6em 0 0.3em",
           color: BrandColors.inkBlack,
+          lineHeight: 1.35,
         }}
       >
         {tokenizeChildren(children, "h3", inlineNodes)}
@@ -722,13 +725,22 @@ function buildComponents(
     ),
 
     table: ({ children }) => (
-      <div style={{ overflowX: "auto", margin: "0.8em 0" }}>
+      <div
+        style={{
+          overflowX: "auto",
+          margin: "0.75em 0",
+          border: `1px solid rgba(12,26,58,0.14)`,
+          borderRadius: 8,
+          background: BrandColors.paper,
+        }}
+      >
         <table
           style={{
             borderCollapse: "collapse",
             background: BrandColors.paper,
-            border: `1px solid rgba(12,26,58,0.18)`,
-            fontSize: "0.92em",
+            fontSize: "0.86em",
+            minWidth: "720px",
+            tableLayout: "fixed",
             width: "100%",
           }}
         >
@@ -743,12 +755,13 @@ function buildComponents(
       <th
         style={{
           textAlign: "left",
-          padding: "6px 10px",
+          padding: "8px 10px",
           borderBottom: `1px solid rgba(12,26,58,0.18)`,
-          fontWeight: 600,
+          fontWeight: 700,
           color: BrandColors.inkBlack,
-          fontSize: "0.86em",
+          fontSize: "0.78em",
           letterSpacing: "0.02em",
+          verticalAlign: "top",
         }}
       >
         {tokenizeChildren(children, "th", inlineNodes)}
@@ -757,8 +770,10 @@ function buildComponents(
     td: ({ children }) => (
       <td
         style={{
-          padding: "6px 10px",
+          padding: "8px 10px",
           borderBottom: `1px solid rgba(12,26,58,0.08)`,
+          lineHeight: 1.45,
+          overflowWrap: "anywhere",
           verticalAlign: "top",
         }}
       >
