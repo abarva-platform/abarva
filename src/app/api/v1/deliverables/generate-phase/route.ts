@@ -109,6 +109,14 @@ export async function POST(req: NextRequest) {
     }
 
     const phaseLabel = specs[0]?.phaseLabel ?? `P${phase}`;
+    // The registry's phaseLabel (e.g. "P4 Roadmap & Business Case") is an internal
+    // gate name — it must never reach the model's prompt verbatim. decisionContext IS
+    // sent to the model (prompt-builder.ts), so a model faithfully following its own
+    // instructions will naturally echo "P4" back into the client-facing narrative,
+    // which the non_mechanical_writing gate then (correctly) blocks. Strip the leading
+    // "P<n>" token for the client-safe decision framing; phaseLabel itself is kept
+    // as-is for the route's own response (internal/ops-facing, not model input).
+    const clientSafePhaseLabel = phaseLabel.replace(/^P\d+\s*/i, '').trim() || 'this phase';
 
     // Enqueue one run per deliverable. Best-effort: a failure on one is reported in
     // its row, not fatal to the batch — so the user still gets the rest building.
@@ -120,7 +128,7 @@ export async function POST(req: NextRequest) {
           module: 'moves',
           useCaseArchetype,
           deliverableType,
-          decisionContext: `${moveName} — ${phaseLabel}: ${spec.documentPurpose}`,
+          decisionContext: `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
           clientDisplayName,
           initiativeDisplayName: moveName,
           sourceArtifactRef: moveId,
