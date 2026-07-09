@@ -55,10 +55,14 @@ function formatSafeAnswerBoundary(error?: string): string {
   return [
     "I cannot make that client-ready claim from the loaded evidence yet.",
     "",
+    "Executive read: do not name a person, date, approval status, or go-live decision unless that fact is loaded and reviewable. For a consequential finance-control workflow, keep the move in advisory/shadow mode until the accountable owner, backup authority, decision limits, training attestation, and control evidence are named.",
+    "",
     "What is safe to use now:",
     "- Show the confirmed facts already loaded for this tenant.",
     "- Separate what is loaded, inferred, and missing.",
-    "- Outline the evidence needed before the claim is board-ready.",
+    "- Turn the gap into a decision checklist: owner named, backup named, SLA accepted, attestation captured, SOX/control evidence attached, and approval authority confirmed.",
+    "",
+    "What needs to be loaded before this becomes board-ready: the named accountable role/person, the effective date or target timeline, the delegation or sign-off artifact, the training/attestation record, and the evidence owner who can certify it.",
     reason,
   ]
     .filter(Boolean)
