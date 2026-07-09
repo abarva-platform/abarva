@@ -103,9 +103,13 @@ export function scanMachinery(input: GateInput): GateFinding[] {
   const hits: string[] = [];
   for (const term of CLIENT_NARRATIVE_BANNED_TERMS) {
     // Word-boundary-ish match; phase labels like "P1" need a boundary so we
-    // don't match "P10" or "API1".
+    // don't match "P10" or "API1". A leading hyphen is also excluded from the
+    // boundary: a bare phase label like "P2" (as in "as discussed in P2") is a
+    // real leak, but "-P2" glued onto a compound identifier (e.g. a prompt
+    // instructing the model to cite a baseline id like "FIN-BASE-P2") is not —
+    // legitimate hyphenated ids must not collide with the phase-label ban.
     const re = new RegExp(
-      `(?<![A-Za-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z0-9])`,
+      `(?<![A-Za-z0-9-])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z0-9])`,
       "gi",
     );
     const m = text.match(re);

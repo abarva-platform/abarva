@@ -1,5 +1,9 @@
 // PR-5 proof: a completed deliverable persists through the artifacts repository
 // contract (mapping is correct), and a gate-blocked result is refused.
+jest.mock('@/lib/deliverables/deck-from-result', () => ({
+  buildDeckHtmlFromDocument: jest.fn(() => '<html><body>Executive deck</body></html>'),
+}));
+
 import { persistDeliverable } from '../persistence';
 import type { OrchestrationResult } from '../orchestrator';
 import { getArtifactBrief } from '../artifact-brief-registry';
@@ -132,6 +136,45 @@ describe('persistDeliverable', () => {
       { save: mockSave },
     );
     expect(rendered?.outputFormat).toBe('html');
+  });
+
+  it('does not block on format_fit when a decision-storytelling deck deliberately renders as html (regression 2026-07-08)', async () => {
+    // business_case's profile only allows docx/pptx/xlsx. When moves_decision_
+    // storytelling forces the exhibit-led deck (html) for a Moves deliverable,
+    // that html IS the deliverable by design — format_fit must not fire against
+    // the original docx contract, or every docx/xlsx-profiled Moves deliverable
+    // is guaranteed to quarantine the moment the flag is on for a tenant.
+    let rendered: Record<string, unknown> | undefined;
+    const mockSave = (async (_input: unknown, r: unknown) => {
+      rendered = r as Record<string, unknown>;
+      return { id: 'a', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
+    }) as never;
+
+    const req = amsRfpRequest({ module: 'moves', deliverableType: 'business_case' });
+    const result = {
+      ok: true,
+      brief: getArtifactBrief(req),
+      document: goodDocument(),
+      quality: { pass: true, blockers: [], warnings: [], metrics: {} as never },
+      passTrace: [],
+    } as OrchestrationResult;
+
+    await persistDeliverable(
+      result,
+      {
+        clientId: 'c1',
+        renderedBy: 'u1',
+        sourceArtifactRef: 'evt-lakeshore-legal',
+        tenantPolicy,
+        renderAsDeck: true,
+        tenantKey: 'lakeshore',
+      },
+      { save: mockSave },
+    );
+
+    expect(rendered?.outputFormat).toBe('html');
+    const reason = String(rendered?.quarantineReason ?? '');
+    expect(reason).not.toMatch(/format_fit/);
   });
 
   it('refuses to persist a gate-blocked result', async () => {

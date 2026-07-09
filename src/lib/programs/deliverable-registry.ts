@@ -289,7 +289,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       'Funding Ask & Approval Path (amount requested; phasing; approval authority; conditions)',
     ],
     consultingAnalog: 'McKinsey Business Case & Investment Memo',
-    generationPromptHint: 'This is an executive document — every number must be traceable to the FIN-BASE-P2 baseline. Do NOT include detailed financial tables (those belong in the Financial Model Excel). Focus on the narrative investment thesis and headline returns.',
+    generationPromptHint: 'This is an executive document — every number must be traceable to the approved finance baseline. Do NOT include detailed financial tables (those belong in the Financial Model Excel). Focus on the narrative investment thesis and headline returns.',
   },
 
   {

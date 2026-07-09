@@ -5,6 +5,7 @@ import {
   repairUncitedFigures,
   buildSourceRegister,
   assembleDeliverable,
+  consolidateOpenInputPlaceholders,
   type SynthesisResult,
 } from '../section-generation';
 import { amsRfpRequest } from '../__fixtures__/ams-rfp';
@@ -82,5 +83,42 @@ describe('assembleDeliverable', () => {
         expect.arrayContaining(['The program will generate $8.5M in year one.']),
       ]),
     );
+  });
+
+  it('consolidates scattered per-section [CLIENT TO COMPLETE] tags into one Open Inputs table (regression 2026-07-08)', () => {
+    // Each section independently follows its own "mark missing inputs inline"
+    // instruction, so no single section scatters placeholders — but across N
+    // sections the aggregated document previously still tripped the
+    // whole-document "scattered placeholder" check and blocked export.
+    const req = amsRfpRequest({ module: 'moves', deliverableType: 'business_case' });
+    const sections: RenderableSection[] = [
+      { key: 'a', title: 'Investment Summary', bodyMarkdown: 'Total cost [CLIENT TO COMPLETE: capex range].', groundingMode: 'mixed', citationsUsed: [] },
+      { key: 'b', title: 'Financial Returns', bodyMarkdown: 'Discount rate TBC.', groundingMode: 'mixed', citationsUsed: [] },
+      { key: 'c', title: 'Scenario Analysis', bodyMarkdown: 'Headcount assumption to be confirmed.', groundingMode: 'mixed', citationsUsed: [] },
+    ];
+    const doc = assembleDeliverable(req, sections, {}, req.governedEvidenceBundle);
+
+    const scatteredInBody = doc.generatedSections
+      .map((s) => s.bodyMarkdown)
+      .join('\n')
+      .match(/\[CLIENT TO COMPLETE[^\]]*\]|\bTBC\b|\bto be confirmed\b/gi);
+    expect(scatteredInBody).toBeNull();
+
+    const openInputs = doc.tables.find((t) => t.key === 'open_inputs_required');
+    const rowText = (openInputs?.rows ?? []).map((r) => r.join(' ')).join(' | ');
+    expect(rowText).toMatch(/capex range/);
+    expect(rowText).toMatch(/TBC/);
+    expect(rowText).toMatch(/to be confirmed/i);
+  });
+});
+
+describe('consolidateOpenInputPlaceholders', () => {
+  it('leaves a section with no placeholders untouched (same reference)', () => {
+    const sections: RenderableSection[] = [
+      { key: 'a', title: 'A', bodyMarkdown: 'Clean prose with no open items.', groundingMode: 'mixed', citationsUsed: [] },
+    ];
+    const { sections: cleaned, harvested } = consolidateOpenInputPlaceholders(sections);
+    expect(cleaned[0]).toBe(sections[0]);
+    expect(harvested).toHaveLength(0);
   });
 });
