@@ -58,10 +58,13 @@ import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type {
+  GateArtifactQualityView,
   StageAnalyticsView,
   StageGateActionView,
   StepInsightView,
 } from "@/components/source/canvas/analytics";
+import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate";
+import { evaluateSourceArtifactSetReadiness } from "@/lib/source/source-governance-enforcement";
 
 export const dynamic = "force-dynamic";
 
@@ -354,6 +357,21 @@ export default async function SourceEventDetailPage({
       }
     }
 
+    if (liveStageView) {
+      try {
+        const artifactStates = await listArtifactStatesForEvent(event.id);
+        liveStageView = attachArtifactQualityStatesToGate(
+          liveStageView,
+          artifactStates,
+        );
+      } catch (error) {
+        console.error(
+          "[SourceEventDetailPage] gate artifact quality hydration failed; leaving generated-list presentation only",
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    }
+
     return (
       <SourceAnalyticsCanvas
         event={event}
@@ -508,6 +526,59 @@ export default async function SourceEventDetailPage({
       simpleFrontEnabled={simpleFrontEnabled}
     />
   );
+}
+
+function attachArtifactQualityStatesToGate(
+  view: StageAnalyticsView,
+  artifactStates: readonly SourceEventArtifactState[],
+): StageAnalyticsView {
+  const generatedCodes = view.gate.generates
+    .map((deliverable) => deliverable.code)
+    .filter((code): code is string => Boolean(code));
+  if (generatedCodes.length === 0) return view;
+  const readiness = evaluateSourceArtifactSetReadiness(
+    artifactStates.filter((artifact) => generatedCodes.includes(artifact.artifactCode)),
+  );
+  const artifactQualityStates: GateArtifactQualityView[] = generatedCodes.map(
+    (code) => {
+      const verdict = readiness.artifacts.find(
+        (artifact) => artifact.artifactCode === code,
+      );
+      if (!verdict) {
+        return {
+          artifactCode: code,
+          label: code,
+          status: "not_generated",
+          vendorFacingSafe: false,
+          blockerCount: 1,
+          warningCount: 0,
+          summary: "No artifact state exists for this generated deliverable yet.",
+        };
+      }
+      return {
+        artifactCode: verdict.artifactCode,
+        label: verdict.artifactLabel,
+        status:
+          verdict.readiness === "ready" && verdict.status === "approved"
+            ? "approved"
+            : verdict.readiness,
+        vendorFacingSafe: verdict.vendorFacingSafe,
+        blockerCount: verdict.blockers.length,
+        warningCount: verdict.warnings.length,
+        summary:
+          verdict.blockers[0]?.detail ??
+          verdict.warnings[0]?.detail ??
+          "Generated artifact has no deterministic quality blockers.",
+      };
+    },
+  );
+  return {
+    ...view,
+    gate: {
+      ...view.gate,
+      artifactQualityStates,
+    },
+  };
 }
 
 // Lifecycle states where the P0 approval is still pending — the same set the

@@ -56,6 +56,12 @@ export interface SourceArtifactBodyGenerationMetadata {
   stopReason: string | null;
   /** Optional consulting-grade quality gate for flagship artifacts. */
   qualityGate?: Record<string, unknown>;
+  /**
+   * Deterministic artifact-readiness verdict. This is not Claude prose; it is
+   * the platform's fail-closed check for vendor-facing safety, raw citation
+   * leakage, required sections, math consistency, and review state.
+   */
+  deterministicGovernance?: Record<string, unknown>;
   /** Deterministic required-section check for generated drafts. */
   sectionVerification?: {
     status: "verified" | "incomplete";

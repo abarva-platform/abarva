@@ -39,6 +39,32 @@ describe("Source client-facing draft hygiene", () => {
     );
   });
 
+  it("strips internal UUIDs from generated client-facing drafts", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      "Internal reference 123e4567-e89b-12d3-a456-426614174000 should never appear.",
+    );
+
+    expect(result).toContain("internal reference removed");
+    expect(result).not.toMatch(
+      /123e4567-e89b-12d3-a456-426614174000/i,
+    );
+  });
+
+  it("replaces real-looking raw spreadsheet filenames with an exhibit reference", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      "The committed value came from source-test-committed-COMMITTED_VALUE_V1.csv.",
+    );
+
+    expect(result).toContain("Exhibit reference");
+    expect(result).not.toContain("source-test-committed-COMMITTED_VALUE_V1.csv");
+  });
+
+  it("leaves broken tiny citation fragments for the readiness gate to catch", () => {
+    const result = sanitizeClientFacingSourceDraft("The value appears in (r.csv).");
+
+    expect(result).toContain("(r.csv)");
+  });
+
   it("adds a company label after the document line when missing", () => {
     const result = sanitizeClientFacingSourceDraft(
       ["Document: Sourcing Strategy Memo", "Decision owner: Tomas Singh"].join(

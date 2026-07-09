@@ -1,5 +1,5 @@
 // Deterministic classification of a Source aVa question into one of the 16
-// modes. Phase A implements 6 modes (grounding + quality gate); the other 10
+// modes. Phase A implements 7 modes (grounding + quality gate); the other modes
 // must still classify correctly and fall through to existing chat behavior —
 // this suite proves both halves of that contract.
 
@@ -35,6 +35,14 @@ describe("classifySourceAnswerMode — Phase A implemented modes", () => {
       expected: "evidence_readiness",
     },
     {
+      question: "Is the RFP package ready to issue?",
+      expected: "artifact_quality",
+    },
+    {
+      question: "Can we send this document to vendors?",
+      expected: "artifact_quality",
+    },
+    {
       question: "Which version is the final one?",
       expected: "artifact_finality",
     },
@@ -60,12 +68,13 @@ describe("classifySourceAnswerMode — Phase A implemented modes", () => {
     expect(result.isFallback).toBe(false);
   });
 
-  it("PHASE_A_IMPLEMENTED_MODES lists exactly the 6 Phase A modes", () => {
+  it("PHASE_A_IMPLEMENTED_MODES lists exactly the 7 Phase A modes", () => {
     expect([...PHASE_A_IMPLEMENTED_MODES].sort()).toEqual(
       [
         "event_status",
         "workflow_how_to",
         "evidence_readiness",
+        "artifact_quality",
         "artifact_lineage",
         "artifact_finality",
         "stage_gate",
@@ -73,7 +82,7 @@ describe("classifySourceAnswerMode — Phase A implemented modes", () => {
     );
   });
 
-  it("isPhaseAImplementedMode is true for all 6 Phase A modes and false otherwise", () => {
+  it("isPhaseAImplementedMode is true for all 7 Phase A modes and false otherwise", () => {
     for (const mode of PHASE_A_IMPLEMENTED_MODES) {
       expect(isPhaseAImplementedMode(mode)).toBe(true);
     }

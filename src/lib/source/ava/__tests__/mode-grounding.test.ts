@@ -1,4 +1,4 @@
-// Mode-specific grounding for Phase A's 6 answer modes. Each builder must read
+// Mode-specific grounding for Phase A's answer modes. Each builder must read
 // the SAME structures the canvas already trusts (stage view tasks/gate,
 // artifact registry records, template-fact presence) and never invent a
 // number/state the data doesn't show — this suite fixtures a known event with
@@ -7,6 +7,7 @@
 import { buildModeGrounding } from "../mode-grounding";
 import { SAMPLE_SCOPE_STAGE } from "@/components/source/canvas/analytics/sample-view-model";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
+import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
 
 const EVENT = {
@@ -54,6 +55,36 @@ function artifactFixture(
   };
 }
 
+function artifactStateFixture(
+  overrides: Partial<SourceEventArtifactState>,
+): SourceEventArtifactState {
+  return {
+    id: "state-1",
+    sourceEventId: "event-1",
+    tenantKey: "lakeshore",
+    artifactCode: "d09_rfp_pack",
+    stage: "rfp",
+    family: "rfp",
+    tier: "outline",
+    status: "needs_review",
+    requirementLevel: "required",
+    gateDefining: true,
+    linkedArtifactId: null,
+    notes: null,
+    body: "# RFP Package\n\nValue at stake: $27.0M",
+    bodyFormat: "markdown",
+    bodyAuthoredBy: null,
+    bodyUpdatedAt: "2026-07-09T00:00:00.000Z",
+    bodyGenerationMetadata: {
+      qualityGate: { passed: false },
+      generatedAt: "2026-07-09T00:00:00.000Z",
+    },
+    createdAt: "2026-07-09T00:00:00.000Z",
+    updatedAt: "2026-07-09T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
 describe("buildModeGrounding — event_status", () => {
   it("names the current stage, stage-of-11, and the named blocker/next action", () => {
     const result = buildModeGrounding({
@@ -78,6 +109,24 @@ describe("buildModeGrounding — event_status", () => {
     expect(result.block).toContain("Completed stages: none yet");
     expect(result.block).toContain("Remaining stages:");
     expect(result.block).toContain("Value"); // last stage should be in remaining list
+  });
+});
+
+describe("buildModeGrounding — artifact_quality", () => {
+  it("quotes the persisted artifact readiness state and blocker count", () => {
+    const result = buildModeGrounding({
+      mode: "artifact_quality",
+      event: EVENT,
+      question: "Is the RFP package ready to issue?",
+      artifactStates: [artifactStateFixture({})],
+    });
+
+    expect(result.block).toContain("ARTIFACT QUALITY GROUNDING");
+    expect(result.block).toContain("readiness=needs_review");
+    expect(result.block).toContain("vendorFacingSafe=false");
+    expect(result.block).toContain("quality gate");
+    expect(result.quotableFacts.rfpReadiness).toBe("needs_review");
+    expect(result.quotableFacts.rfpReady).toBe("false");
   });
 });
 
