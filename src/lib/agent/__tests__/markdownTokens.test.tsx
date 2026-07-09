@@ -61,8 +61,33 @@ describe("markdown table normalization", () => {
       'Build a named authority chain, not a generic "escalate up":\n\n| Priority | Role | Authority |',
     );
     expect(normalized).toContain("| 1 | CFO Deputy | Sign cash holds |");
-    expect(normalized).toContain("| 2 | Treasury Lead | Update forecast inputs |");
+    expect(normalized).toContain(
+      "| 2 | Treasury Lead | Update forecast inputs |",
+    );
     expect(normalized.match(/\| --- \| --- \| --- \|/g)).toHaveLength(1);
     expect(normalized).not.toContain("| | ---");
+  });
+
+  it("turns tab-separated table output into a proper markdown table", () => {
+    const malformed = [
+      "Suppression Event Layer\tTreasurer-Facing Alert\tEscalation\tHome\tIntelligence",
+      "---\t---\t\t\t",
+      "Circuit breaker trip\tNamed banner\tCFO owner\tPublish evidence\tFrame breach",
+      "Data quality warning\tDigest alert\tData owner\tShow source freshness\tExplain caveat",
+    ].join("\n");
+
+    const normalized = normalizeMarkdownTables(malformed);
+
+    expect(normalized).toContain(
+      "| Suppression Event Layer | Treasurer-Facing Alert | Escalation | Home | Intelligence |",
+    );
+    expect(normalized).toContain("| --- | --- | --- | --- | --- |");
+    expect(normalized).toContain(
+      "| Circuit breaker trip | Named banner | CFO owner | Publish evidence | Frame breach |",
+    );
+    expect(normalized).not.toContain("---\t---");
+    expect(
+      normalized.match(/\| --- \| --- \| --- \| --- \| --- \|/g),
+    ).toHaveLength(1);
   });
 });

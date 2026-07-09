@@ -8,10 +8,10 @@
 // `markdownRenderer.tsx` consumes this file and adds the markdown
 // rendering layer on top.
 
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
-import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
+import type { ReactNode } from "react";
+import { BrandColors, BrandTypography } from "@/lib/shell/brand-tokens";
 
 // ── Token regexes ─────────────────────────────────────────────────────────────
 //
@@ -34,7 +34,7 @@ export const SOURCE_ID_REGEX = /\bSRC-[A-Z]+-\d{4}\b/g;
 
 // Layer-3 fallback preface (literal phrase, no brackets)
 export const GENERAL_PRACTICE_PREFACE =
-  'Drawing on general practice (not AbarVa-specific):';
+  "Drawing on general practice (not AbarVa-specific):";
 
 export const ABARVA_ENTITY_TAG_REGEX =
   /<abv-(pattern|usecase|vendor)\s+id="([^"]+)">([^<]+)<\/abv-\1>/g;
@@ -47,14 +47,27 @@ export const ABARVA_SOURCE_TAG_REGEX =
 
 function isMarkdownTableLine(line: string): boolean {
   const trimmed = line.trim();
-  if (!trimmed || !trimmed.includes('|')) return false;
+  if (!trimmed || !trimmed.includes("|")) return false;
   const pipeCount = (trimmed.match(/\|/g) ?? []).length;
-  return pipeCount >= 2 && (trimmed.startsWith('|') || /\s\|\s/.test(trimmed));
+  return pipeCount >= 2 && (trimmed.startsWith("|") || /\s\|\s/.test(trimmed));
 }
 
 function splitMarkdownTableCells(line: string): string[] {
-  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');
-  return trimmed.split('|').map((cell) => cell.trim());
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return trimmed.split("|").map((cell) => cell.trim());
+}
+
+function splitTabularTableCells(line: string): string[] {
+  return line
+    .trim()
+    .split(/\t+/)
+    .map((cell) => cell.trim())
+    .filter(Boolean);
+}
+
+function isTabularTableLine(line: string): boolean {
+  if (!line.includes("\t")) return false;
+  return splitTabularTableCells(line).length >= 2;
 }
 
 function isMarkdownTableSeparatorLine(line: string): boolean {
@@ -67,12 +80,17 @@ function isMarkdownTableSeparatorLine(line: string): boolean {
 
 function normalizeMarkdownTableRow(line: string): string {
   const cells = splitMarkdownTableCells(line);
-  return `| ${cells.join(' | ')} |`;
+  return `| ${cells.join(" | ")} |`;
+}
+
+function normalizeTabularTableRow(line: string): string {
+  const cells = splitTabularTableCells(line);
+  return `| ${cells.join(" | ")} |`;
 }
 
 function separatorForMarkdownTable(headerLine: string): string {
   const count = Math.max(1, splitMarkdownTableCells(headerLine).length);
-  return `| ${Array.from({ length: count }, () => '---').join(' | ')} |`;
+  return `| ${Array.from({ length: count }, () => "---").join(" | ")} |`;
 }
 
 function normalizeMarkdownTableBlock(lines: string[]): string[] {
@@ -84,8 +102,11 @@ function normalizeMarkdownTableBlock(lines: string[]): string[] {
   if (headerIndex < 0) return lines;
 
   const header = normalizeMarkdownTableRow(lines[headerIndex]);
-  const firstSeparator = lines.find((line) =>
-    isMarkdownTableSeparatorLine(line),
+  const headerCellCount = splitMarkdownTableCells(header).length;
+  const firstSeparator = lines.find(
+    (line) =>
+      isMarkdownTableSeparatorLine(line) &&
+      splitMarkdownTableCells(line).filter(Boolean).length === headerCellCount,
   );
   const separator = firstSeparator
     ? normalizeMarkdownTableRow(firstSeparator)
@@ -104,20 +125,20 @@ function expandInlineMarkdownTables(text: string): string {
     .split(/\r?\n/)
     .map((line) => {
       if (
-        !line.includes('|') ||
+        !line.includes("|") ||
         !/\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|/.test(line)
       ) {
         return line;
       }
 
       return line
-        .replace(/\|\s+\|/g, '|\n|')
+        .replace(/\|\s+\|/g, "|\n|")
         .replace(
           /([^\n|])\s+(\|[^\n]*\|)\n(?=\|\s*:?-{3,}:?\s*\|)/g,
-          '$1\n\n$2\n',
+          "$1\n\n$2\n",
         );
     })
-    .join('\n');
+    .join("\n");
 }
 
 export function normalizeMarkdownTables(text: string): string {
@@ -146,11 +167,17 @@ export function normalizeMarkdownTables(text: string): string {
       continue;
     }
 
+    if (!inFence && isTabularTableLine(line)) {
+      tableBlock.push(normalizeTabularTableRow(line));
+      continue;
+    }
+
     if (
       !inFence &&
       tableBlock.length > 0 &&
       !line.trim() &&
-      isMarkdownTableLine(lines[index + 1] ?? '')
+      (isMarkdownTableLine(lines[index + 1] ?? "") ||
+        isTabularTableLine(lines[index + 1] ?? ""))
     ) {
       continue;
     }
@@ -160,7 +187,7 @@ export function normalizeMarkdownTables(text: string): string {
   }
 
   flushTable();
-  return output.join('\n');
+  return output.join("\n");
 }
 
 export function normalizeAbarvaAgentMarkup(text: string): string {
@@ -169,43 +196,47 @@ export function normalizeAbarvaAgentMarkup(text: string): string {
     .slice(0, 5)
     .map((match) => `${match[1]} (${match[2]})`);
 
-  const withoutSources = text.replace(/<abv-sources>[\s\S]*?<\/abv-sources>/g, '');
+  const withoutSources = text.replace(
+    /<abv-sources>[\s\S]*?<\/abv-sources>/g,
+    "",
+  );
   ABARVA_ENTITY_TAG_REGEX.lastIndex = 0;
   const withEntityTokens = withoutSources.replace(
     ABARVA_ENTITY_TAG_REGEX,
-    (_match, kind: string, id: string, label: string) => ` [abv-${kind}:${id}:${label}] `,
+    (_match, kind: string, id: string, label: string) =>
+      ` [abv-${kind}:${id}:${label}] `,
   );
   const withReadableSpacing = withEntityTokens
-    .replace(/<\/(p|div|h[1-6])>/gi, '\n\n')
-    .replace(/<(p|div|h[1-6])(?:\s+[^>]*)?>/gi, '\n\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<li(?:\s+[^>]*)?>/gi, '\n- ')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<\/?(ul|ol)(?:\s+[^>]*)?>/gi, '\n')
-    .replace(/<\/tr>/gi, '\n')
-    .replace(/<tr(?:\s+[^>]*)?>/gi, '')
-    .replace(/<\/(td|th)>/gi, ' | ')
-    .replace(/<(td|th)(?:\s+[^>]*)?>/gi, ' | ')
-    .replace(/<\/?(table|thead|tbody)(?:\s+[^>]*)?>/gi, '\n')
-    .replace(/<\/?(strong|b|em|i|span|cite)(?:\s+[^>]*)?>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/[ \t]{2,}/g, ' ')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n[ \t]+/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/<\/(p|div|h[1-6])>/gi, "\n\n")
+    .replace(/<(p|div|h[1-6])(?:\s+[^>]*)?>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<li(?:\s+[^>]*)?>/gi, "\n- ")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<\/?(ul|ol)(?:\s+[^>]*)?>/gi, "\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<tr(?:\s+[^>]*)?>/gi, "")
+    .replace(/<\/(td|th)>/gi, " | ")
+    .replace(/<(td|th)(?:\s+[^>]*)?>/gi, " | ")
+    .replace(/<\/?(table|thead|tbody)(?:\s+[^>]*)?>/gi, "\n")
+    .replace(/<\/?(strong|b|em|i|span|cite)(?:\s+[^>]*)?>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s+([,.;:!?])/g, "$1")
     .trim();
 
   const withNormalizedTables = normalizeMarkdownTables(withReadableSpacing);
 
   if (sourceRefs.length === 0) return withNormalizedTables;
-  return `${withNormalizedTables}\n\nSource basis: ${sourceRefs.join('; ')}.`;
+  return `${withNormalizedTables}\n\nSource basis: ${sourceRefs.join("; ")}.`;
 }
 
 // ── Citation chip ─────────────────────────────────────────────────────────────
 
-type CitationKind = 'user-context' | 'tenant-specific' | 'pattern';
-type AbarvaEntityKind = 'pattern' | 'usecase' | 'vendor';
+type CitationKind = "user-context" | "tenant-specific" | "pattern";
+type AbarvaEntityKind = "pattern" | "usecase" | "vendor";
 
 interface CitationChipProps {
   kind: CitationKind;
@@ -218,27 +249,27 @@ interface CitationChipProps {
 export function CitationChip({ kind, tagHead, detail }: CitationChipProps) {
   const [bg, fg, border, label, href] = (() => {
     switch (kind) {
-      case 'user-context':
+      case "user-context":
         return [
-          'rgba(12,26,58,0.08)', // navyInk @ 8%
+          "rgba(12,26,58,0.08)", // navyInk @ 8%
           BrandColors.navyInk,
-          'rgba(12,26,58,0.18)',
-          'YOU',
+          "rgba(12,26,58,0.18)",
+          "YOU",
           undefined,
         ] as const;
-      case 'tenant-specific':
+      case "tenant-specific":
         return [
-          'rgba(0,102,204,0.08)', // signalBlue @ 8%
+          "rgba(0,102,204,0.08)", // signalBlue @ 8%
           BrandColors.signalBlue,
-          'rgba(0,102,204,0.22)',
-          'TENANT',
+          "rgba(0,102,204,0.22)",
+          "TENANT",
           undefined,
         ] as const;
-      case 'pattern':
+      case "pattern":
         return [
           BrandColors.paper,
           BrandColors.navyInk,
-          'rgba(12,26,58,0.22)',
+          "rgba(12,26,58,0.22)",
           tagHead,
           `/source/patterns/${tagHead}`,
         ] as const;
@@ -248,10 +279,10 @@ export function CitationChip({ kind, tagHead, detail }: CitationChipProps) {
   const inner = (
     <span
       style={{
-        display: 'inline-flex',
-        alignItems: 'baseline',
+        display: "inline-flex",
+        alignItems: "baseline",
         gap: 6,
-        padding: '0 8px',
+        padding: "0 8px",
         borderRadius: 999,
         background: bg,
         border: `1px solid ${border}`,
@@ -259,15 +290,15 @@ export function CitationChip({ kind, tagHead, detail }: CitationChipProps) {
         fontFamily: BrandTypography.sans,
         fontSize: 11,
         lineHeight: 1.6,
-        verticalAlign: 'baseline',
+        verticalAlign: "baseline",
       }}
     >
       <span
         style={{
           fontFamily: BrandTypography.mono,
           fontSize: 9,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
           fontWeight: 700,
           opacity: 0.85,
         }}
@@ -279,7 +310,7 @@ export function CitationChip({ kind, tagHead, detail }: CitationChipProps) {
   );
 
   return href ? (
-    <a href={href} style={{ textDecoration: 'none' }}>
+    <a href={href} style={{ textDecoration: "none" }}>
       {inner}
     </a>
   ) : (
@@ -292,22 +323,22 @@ export function CitationChip({ kind, tagHead, detail }: CitationChipProps) {
 interface IdLinkProps {
   id: string;
   href: string;
-  family: 'pattern' | 'program' | 'source';
+  family: "pattern" | "program" | "source";
 }
 
 export function IdLink({ id, href, family }: IdLinkProps) {
   const color =
-    family === 'program' ? BrandColors.signalBlue : BrandColors.navyInk;
+    family === "program" ? BrandColors.signalBlue : BrandColors.navyInk;
   return (
     <a
       href={href}
       style={{
         color,
         fontFamily: BrandTypography.mono,
-        fontSize: '0.92em',
-        textDecoration: 'underline',
+        fontSize: "0.92em",
+        textDecoration: "underline",
         textUnderlineOffset: 2,
-        textDecorationColor: 'rgba(12,26,58,0.32)',
+        textDecorationColor: "rgba(12,26,58,0.32)",
       }}
     >
       {id}
@@ -325,9 +356,9 @@ export function AbarvaEntityChip({
   label: string;
 }) {
   const href =
-    kind === 'pattern'
+    kind === "pattern"
       ? `/intelligence/${encodeURIComponent(id)}`
-      : kind === 'usecase'
+      : kind === "usecase"
         ? `/intelligence/solutions/${encodeURIComponent(id)}`
         : `/source/vendors/${encodeURIComponent(id)}`;
 
@@ -338,9 +369,9 @@ export function AbarvaEntityChip({
       aria-label={`${label}; ${kind}; source id ${id}`}
       style={{
         color: BrandColors.signalBlue,
-        textDecoration: 'underline',
+        textDecoration: "underline",
         textUnderlineOffset: 2,
-        textDecorationColor: 'rgba(0,102,204,0.28)',
+        textDecorationColor: "rgba(0,102,204,0.28)",
         fontWeight: 600,
       }}
     >
@@ -368,9 +399,9 @@ export function tokenize(
   // Stage 0: extract caller-provided inline node substitutions.
   if (inlineNodes && inlineNodes.size > 0) {
     const escaped = Array.from(inlineNodes.keys())
-      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-      .join('|');
-    const inlineRegex = new RegExp(`(${escaped})`, 'g');
+      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|");
+    const inlineRegex = new RegExp(`(${escaped})`, "g");
     const segments = text.split(inlineRegex);
     const out: ReactNode[] = [];
     let segIdx = 0;
@@ -379,7 +410,9 @@ export function tokenize(
       if (node !== undefined) {
         out.push(<span key={`${keyPrefix}-inline-${segIdx++}`}>{node}</span>);
       } else if (segment.length > 0) {
-        out.push(...tokenizeWithoutInline(segment, `${keyPrefix}-seg-${segIdx++}`));
+        out.push(
+          ...tokenizeWithoutInline(segment, `${keyPrefix}-seg-${segIdx++}`),
+        );
       }
     }
     return out;
@@ -387,7 +420,10 @@ export function tokenize(
   return tokenizeWithoutInline(text, keyPrefix);
 }
 
-export function tokenizeWithoutInline(text: string, keyPrefix: string): ReactNode[] {
+export function tokenizeWithoutInline(
+  text: string,
+  keyPrefix: string,
+): ReactNode[] {
   // Stage 1: pull out AbarVa entity tags as human-readable links. Everything
   // between entity tags continues to citation/bare-ID replacement.
   const entityOut: ReactNode[] = [];
@@ -418,14 +454,20 @@ export function tokenizeWithoutInline(text: string, keyPrefix: string): ReactNod
 
   if (entityCursor < text.length) {
     entityOut.push(
-      ...tokenizeWithoutAbarvaEntity(text.slice(entityCursor), `${keyPrefix}-entity-tail`),
+      ...tokenizeWithoutAbarvaEntity(
+        text.slice(entityCursor),
+        `${keyPrefix}-entity-tail`,
+      ),
     );
   }
 
   return entityOut;
 }
 
-function tokenizeWithoutAbarvaEntity(text: string, keyPrefix: string): ReactNode[] {
+function tokenizeWithoutAbarvaEntity(
+  text: string,
+  keyPrefix: string,
+): ReactNode[] {
   // Stage 2: pull out citation tags as chips. Everything between chips
   // continues to stage 2 (bare ID replacement).
   const out: ReactNode[] = [];
@@ -437,16 +479,19 @@ function tokenizeWithoutAbarvaEntity(text: string, keyPrefix: string): ReactNode
   while ((citeMatch = CITATION_TAG_REGEX.exec(text)) !== null) {
     if (citeMatch.index > cursor) {
       out.push(
-        ...replaceBareIds(text.slice(cursor, citeMatch.index), `${keyPrefix}-bare-${chipIdx}`),
+        ...replaceBareIds(
+          text.slice(cursor, citeMatch.index),
+          `${keyPrefix}-bare-${chipIdx}`,
+        ),
       );
     }
     const tagHead = citeMatch[1];
     const detail = citeMatch[2].trim();
-    const kind: CitationKind = tagHead.startsWith('PAT-')
-      ? 'pattern'
-      : tagHead === 'user-context'
-        ? 'user-context'
-        : 'tenant-specific';
+    const kind: CitationKind = tagHead.startsWith("PAT-")
+      ? "pattern"
+      : tagHead === "user-context"
+        ? "user-context"
+        : "tenant-specific";
     out.push(
       <CitationChip
         key={`${keyPrefix}-chip-${chipIdx++}`}
@@ -471,9 +516,9 @@ export function replaceBareIds(text: string, keyPrefix: string): ReactNode[] {
   let n = 0;
 
   for (const [regex, family] of [
-    [PATTERN_ID_REGEX, 'pattern'],
-    [PROGRAM_ID_REGEX, 'program'],
-    [SOURCE_ID_REGEX, 'source'],
+    [PATTERN_ID_REGEX, "pattern"],
+    [PROGRAM_ID_REGEX, "program"],
+    [SOURCE_ID_REGEX, "source"],
   ] as const) {
     regex.lastIndex = 0;
     let m: RegExpExecArray | null;
@@ -484,9 +529,9 @@ export function replaceBareIds(text: string, keyPrefix: string): ReactNode[] {
       // Skip if overlaps a higher-priority match already recorded
       if (matches.some((x) => start < x.end && end > x.start)) continue;
       const href =
-        family === 'pattern'
+        family === "pattern"
           ? `/source/patterns/${id}`
-          : family === 'program'
+          : family === "program"
             ? `/programs/${id}`
             : `/source/${id}`;
       matches.push({
@@ -529,12 +574,12 @@ export function tokenizeChildren(
   keyPrefix: string,
   inlineNodes?: ReadonlyMap<string, ReactNode>,
 ): ReactNode {
-  if (typeof children === 'string') {
+  if (typeof children === "string") {
     return tokenize(children, keyPrefix, inlineNodes);
   }
   if (Array.isArray(children)) {
     return children.flatMap((child, idx) => {
-      if (typeof child === 'string') {
+      if (typeof child === "string") {
         return tokenize(child, `${keyPrefix}-${idx}`, inlineNodes);
       }
       return [child];

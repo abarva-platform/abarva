@@ -46,6 +46,25 @@ type AssistantMessage = {
 type UserMessage = { id: string; role: "user"; text: string };
 type ThreadMessage = AssistantMessage | UserMessage;
 
+function formatSafeAnswerBoundary(error?: string): string {
+  const reason =
+    error && !/^(unknown|ask_synthesis_empty)$/i.test(error)
+      ? `\n\nEvidence boundary: ${error.replace(/^retired_fact_violation:\s*/i, "A retired or stale fact was blocked: ")}`
+      : "";
+
+  return [
+    "I cannot make that client-ready claim from the loaded evidence yet.",
+    "",
+    "What is safe to use now:",
+    "- Show the confirmed facts already loaded for this tenant.",
+    "- Separate what is loaded, inferred, and missing.",
+    "- Outline the evidence needed before the claim is board-ready.",
+    reason,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 const CORPUS_TABS: Array<{ id: CorpusTab; label: string }> = [
   { id: "outlook", label: "Industry Outlook" },
   { id: "peer", label: "Peer Benchmarks" },
@@ -269,7 +288,7 @@ export function AdvisoryIntelligencePage({
               role: "agent" as const,
               body:
                 m.status === "error"
-                  ? `_Could not complete this answer${m.error ? `: ${m.error}` : ""}_`
+                  ? formatSafeAnswerBoundary(m.error)
                   : m.answer.trim(),
               citations: m.sources.length > 0 ? m.sources : undefined,
               agentAnswer: m.agentAnswer ?? undefined,
@@ -668,10 +687,7 @@ function PeerPanel({
                   formatter={(v, _n, props) => {
                     const youFmt = payloadValue(props?.payload, "youFmt");
                     const peerFmt = payloadValue(props?.payload, "peerFmt");
-                    return [
-                      `You ${youFmt ?? v} · Peer ${peerFmt ?? "-"}`,
-                      "",
-                    ];
+                    return [`You ${youFmt ?? v} · Peer ${peerFmt ?? "-"}`, ""];
                   }}
                 />
                 <Bar
