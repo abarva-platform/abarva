@@ -235,10 +235,18 @@ export function AdvisoryIntelligencePage({
           return delta ? { ...m, answer: `${m.answer}${delta}` } : m;
         }
         if (event.type === "agent-answer" && isAvaAnswerPacket(event.answer)) {
+          const packetBody = answerBodyFromPacket(event.answer);
+          const hasArtifacts = event.answer.artifacts.length > 0;
           return {
             ...m,
             agentAnswer: event.answer,
-            answer: answerBodyFromPacket(event.answer) || m.answer,
+            answer:
+              packetBody &&
+              (hasArtifacts ||
+                !m.answer.trim() ||
+                packetBody.length >= m.answer.trim().length / 2)
+                ? packetBody
+                : m.answer,
             sources: event.answer.citations.map((c) => ({
               id: c.id,
               type: askSourceTypeFromCitation(c.sourceClass),

@@ -97,27 +97,25 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
       .join("\n\n");
   }
 
-  const fallbackTable = [
+  const fallbackPlan = [
     "**Moves phase plan**",
     "",
-    "| Phase | What AbarVa does | Proposed output |",
-    "|---|---|---|",
-    "| P0 Originate | Intelligence frames the candidate bets, decision owner, and why-now logic. | Bet slate and executive question. |",
-    "| P1 Charter | Moves defines scope, sponsor, success metric, and decision cadence. | Sprint charter and governance path. |",
-    "| P2 Understand Current State | Home grounds systems, data, owners, contracts, gaps, and evidence boundaries. | Current-state evidence pack. |",
-    "| P3 Choose the Approach | Moves compares options by value, readiness, risk, and dependency. | Recommended approach and stop/go gate. |",
-    "| P4 Build the Plan | Moves turns the chosen approach into workstreams, milestones, risks, and funding asks. | Roadmap and business case. |",
-    "| P5 Prepare to Execute | Moves confirms owners, controls, vendors, adoption plan, and launch readiness. | Execution-ready plan. |",
-    "| Tower Track Outcomes | Tower tracks adoption, KPI movement, benefits, risks, and funding gates. | Value-realization scorecard. |",
+    "- P0 Originate: Intelligence frames the candidate bets, decision owner, and why-now logic. Output: bet slate and executive question.",
+    "- P1 Charter: Moves defines scope, sponsor, success metric, and decision cadence. Output: sprint charter and governance path.",
+    "- P2 Understand Current State: Home grounds systems, data, owners, contracts, gaps, and evidence boundaries. Output: current-state evidence pack.",
+    "- P3 Choose the Approach: Moves compares options by value, readiness, risk, and dependency. Output: recommended approach and stop/go gate.",
+    "- P4 Build the Plan: Moves turns the chosen approach into workstreams, milestones, risks, and funding asks. Output: roadmap and business case.",
+    "- P5 Prepare to Execute: Moves confirms owners, controls, vendors, adoption plan, and launch readiness. Output: execution-ready plan.",
+    "- Tower Track Outcomes: Tower tracks adoption, KPI movement, benefits, risks, and funding gates for accountable owner review. Output: value-realization scorecard.",
   ].join("\n");
 
   const firstTabIndex = text.search(/\n\s*<<<TAB:/);
   if (firstTabIndex === -1) {
-    return [text.trim(), fallbackTable].filter(Boolean).join("\n\n");
+    return [text.trim(), fallbackPlan].filter(Boolean).join("\n\n");
   }
   return [
     text.slice(0, firstTabIndex).trim(),
-    fallbackTable,
+    fallbackPlan,
     text.slice(firstTabIndex).trimStart(),
   ]
     .filter(Boolean)
@@ -184,7 +182,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
       "If I run the supply-chain AI top bets through Moves for 8 weeks, what would the plan look like by phases?",
     systemContract: `${STRATEGY_TO_ABARVA_SOLUTION_CONTRACT}\n\n${STRATEGY_TO_MOVES_EXECUTION_CONTRACT}`,
     promptDirective:
-      'ACTIVE ANSWER MODE: strategy_to_moves_execution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking. Include a compact Moves phase table with one literal row for each label: P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes.',
+      'ACTIVE ANSWER MODE: strategy_to_moves_execution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking. Include a compact Moves phase plan with one clear item for each label: P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes. Do not say Tower certifies by itself; Tower tracks value evidence for Finance or the accountable outcome owner to certify.',
     deterministicFallback: ensureMovesExecutionPhaseTable,
   },
   strategy_to_source_execution: {

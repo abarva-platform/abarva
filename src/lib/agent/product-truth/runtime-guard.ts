@@ -41,6 +41,7 @@ const UNSAFE_CAPABILITY_REPAIR_PATTERNS: ReadonlyArray<readonly [RegExp, string]
   [/\bSource reads all MSAs and compares them against a clause library\b/gi, "A client-safe Source workflow would compare loaded executed agreements against approved clause positions for Legal and Procurement review"],
   [/\bSource distinguishes legacy from active MSAs\b/gi, "Source can help identify agreement status when effective dates, amendments, and ownership fields are loaded"],
   [/\bTower (?:automatically )?certifies?\b/gi, "Tower tracks evidence for Finance and outcome-owner certification; it does not certify by itself"],
+  [/\b(?:stand up|use|run|deploy|configure)\s+Tower\s+to\s+certif(?:y|ies)\b/gi, "use Tower to track evidence for Finance and outcome-owner certification"],
   [/\bMoves (?:automatically )?approves?\b/gi, "Moves structures readiness for sponsor approval; it does not approve by itself"],
   [/\bAbarVa (?:automatically )?approves?\b/gi, "AbarVa structures the decision path for accountable owners; it does not approve by itself"],
   [/\bHome knows every\b/gi, "Home can show loaded and missing"],

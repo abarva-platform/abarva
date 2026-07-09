@@ -290,6 +290,46 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("assembles the canonical Moves phase table for strategy-to-execution answers", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: tableRouting(
+        "Develop an AI strategy with Moves and show Tower outcomes.",
+      ),
+      sources,
+      prose: [
+        "Lakeshore Holdings should run this as a governed Moves sprint.",
+        "",
+        "Moves phase plan",
+        "- P0 Originate: frame the bet.",
+        "- P1 Charter: sign the charter.",
+        "- P2 Understand Current State: ground the evidence.",
+        "- P3 Choose the Approach: compare options.",
+        "- P4 Build the Plan: build the roadmap.",
+        "- P5 Prepare to Execute: confirm readiness.",
+        "- Tower Track Outcomes: track value evidence.",
+      ].join("\n"),
+    });
+
+    expect(exhibits.prose).not.toContain("|---|");
+    expect(exhibits.tables).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "answer-moves-phase-plan",
+          title: "Moves Phase Plan",
+          rows: expect.arrayContaining([
+            expect.objectContaining({ phase: "P0 Originate" }),
+            expect.objectContaining({ phase: "P5 Prepare to Execute" }),
+            expect.objectContaining({
+              phase: "Tower Track Outcomes",
+              boundary:
+                "Tower supports Finance or outcome-owner certification; it does not certify by itself.",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
   it("converts collapsed inline markdown tables from live Ava prose into typed tables", () => {
     const exhibits = buildStructuredExhibits({
       routing: tableRouting("Show me an omnichannel dependency risk table"),

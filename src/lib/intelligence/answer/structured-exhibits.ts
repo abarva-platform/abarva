@@ -13,7 +13,10 @@ import type {
   AnswerTableColumn,
 } from "@/lib/ava-answer/contract";
 import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
-import { enforceDecisionGradeAnswer } from "@/lib/intelligence/ask/response-policy";
+import {
+  classifyAbarvaAnswerMode,
+  enforceDecisionGradeAnswer,
+} from "@/lib/intelligence/ask/response-policy";
 
 export interface StructuredExhibitsInput {
   prose: string;
@@ -101,6 +104,89 @@ function availableContextTable(citations: AnswerCitation[]): AnswerTable {
     note: "This panel lists the material used for the answer. It does not invent missing values or relationships.",
     citationIds: citations.map((citation) => citation.id),
   };
+}
+
+const MOVES_PHASE_ROWS: AnswerTable["rows"] = [
+  {
+    phase: "P0 Originate",
+    focus: "Frame the bet, sponsor, decision owner, and why-now logic.",
+    artifact: "Bet slate and executive question",
+    boundary: "No execution approval yet.",
+  },
+  {
+    phase: "P1 Charter",
+    focus: "Define scope, sponsor, success metric, decision cadence, and evidence gates.",
+    artifact: "Sprint charter and governance path",
+    boundary: "Accountable sponsor approves the charter.",
+  },
+  {
+    phase: "P2 Understand Current State",
+    focus: "Ground systems, data, owners, contracts, gaps, and evidence boundaries.",
+    artifact: "Current-state evidence pack",
+    boundary: "Data and process owners validate the evidence.",
+  },
+  {
+    phase: "P3 Choose the Approach",
+    focus: "Compare options by value, readiness, risk, and dependency.",
+    artifact: "Recommended approach and stop/go gate",
+    boundary: "Executive owner chooses the path.",
+  },
+  {
+    phase: "P4 Build the Plan",
+    focus: "Turn the chosen approach into workstreams, milestones, risks, and funding asks.",
+    artifact: "Roadmap and business case",
+    boundary: "Finance and sponsor review the funding case.",
+  },
+  {
+    phase: "P5 Prepare to Execute",
+    focus: "Confirm owners, controls, vendors, adoption plan, and launch readiness.",
+    artifact: "Execution-ready plan",
+    boundary: "Launch authority remains with accountable owners.",
+  },
+  {
+    phase: "Tower Track Outcomes",
+    focus: "Track adoption, KPI movement, benefits, risks, and funding gates.",
+    artifact: "Value-realization scorecard",
+    boundary: "Tower supports Finance or outcome-owner certification; it does not certify by itself.",
+  },
+];
+
+function movesExecutionPhaseTable(citationIds: string[]): AnswerTable {
+  return {
+    id: "answer-moves-phase-plan",
+    title: "Moves Phase Plan",
+    columns: [
+      { key: "phase", label: "Phase" },
+      { key: "focus", label: "Focus" },
+      { key: "artifact", label: "Governed artifact" },
+      { key: "boundary", label: "Decision boundary" },
+    ],
+    rows: MOVES_PHASE_ROWS,
+    note:
+      "Assembled by the AbarVa answer-mode contract so the canonical P0-P5 plus Tower structure is always present.",
+    citationIds,
+  };
+}
+
+function hasMovesPhaseTable(tables: readonly AnswerTable[]): boolean {
+  return tables.some((table) => {
+    const text = [
+      table.title,
+      ...table.columns.map((column) => column.label),
+      ...table.rows.flatMap((row) => Object.values(row).map(String)),
+    ].join("\n");
+    return (
+      /P0 Originate/.test(text) &&
+      /P5 Prepare to Execute/.test(text) &&
+      /Tower Track Outcomes/.test(text)
+    );
+  });
+}
+
+function needsMovesPhaseArtifact(query: string): boolean {
+  return /\b(moves?|p0|p1|p2|p3|p4|p5|phase|phases|phase[-\s]?gate|execution|execute|tower outcomes?|tower track outcomes?|show tower)\b/i.test(
+    query,
+  );
 }
 
 function sourceClassDisplay(
@@ -949,9 +1035,10 @@ export function buildStructuredExhibits(
   input: StructuredExhibitsInput,
 ): StructuredExhibits {
   const citations = answerCitationsFromAskSources(input.sources);
+  const answerMode = classifyAbarvaAnswerMode(input.routing.query);
   const shouldRenderStructured = hasExplicitStructuredArtifactRequest(
     input.routing,
-  );
+  ) || answerMode === "strategy_to_moves_execution";
   const sourceExhibits = structuredSourceExhibits(input.sources, input.routing);
   const chartFences = chartFencesFromProse(
     input.prose,
@@ -975,6 +1062,15 @@ export function buildStructuredExhibits(
   if (shouldRenderStructured) {
     tables.push(...markdown.tables);
     tables.push(...inline.tables);
+  }
+  if (
+    answerMode === "strategy_to_moves_execution" &&
+    needsMovesPhaseArtifact(input.routing.query) &&
+    !hasMovesPhaseTable(tables)
+  ) {
+    tables.push(
+      movesExecutionPhaseTable(citations.map((citation) => citation.id)),
+    );
   }
 
   if (
