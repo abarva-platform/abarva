@@ -190,6 +190,44 @@ describe("AgentDock · default mode", () => {
     );
   });
 
+  it("submits default suggested questions instead of only pre-filling the composer", async () => {
+    const onMessage = jest.fn();
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="tower"
+        variant="focused"
+        keepSuggestedActionsVisible
+        thread={[
+          {
+            id: "opening",
+            role: "agent",
+            body: "Tower has the CIO operating view ready.",
+          },
+        ]}
+        suggestedActions={[
+          {
+            id: "drift-escalation",
+            label: "How do we operationalize the drift escalation workflow?",
+            body: "How do we operationalize the drift escalation workflow?",
+          },
+        ]}
+        onMessage={onMessage}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("agent-dock-suggestion-drift-escalation"));
+
+    await waitFor(() =>
+      expect(onMessage).toHaveBeenCalledWith(
+        "How do we operationalize the drift escalation workflow?",
+        [],
+      ),
+    );
+    expect(screen.getByTestId("agent-dock-input")).toHaveValue("");
+  });
+
   it("reads a stored mode preference", () => {
     window.localStorage.setItem(modeStorageKey(SURFACE), "expand");
     render(
