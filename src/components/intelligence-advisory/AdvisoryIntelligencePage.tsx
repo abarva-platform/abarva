@@ -113,6 +113,15 @@ function hasRawMarkdownTableFragment(value: string): boolean {
     .some((line) => (line.match(/\|/g) ?? []).length >= 2);
 }
 
+function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
+  return (
+    answer.artifacts.length > 0 ||
+    (answer.tables?.length ?? 0) > 0 ||
+    (answer.charts?.length ?? 0) > 0 ||
+    (answer.graphs?.length ?? 0) > 0
+  );
+}
+
 export function AdvisoryIntelligencePage({
   viewModel,
 }: {
@@ -241,20 +250,25 @@ export function AdvisoryIntelligencePage({
           return delta ? { ...m, answer: `${m.answer}${delta}` } : m;
         }
         if (event.type === "agent-answer" && isAvaAnswerPacket(event.answer)) {
-          const packetBody = answerBodyFromPacket(event.answer);
-          const hasArtifacts = event.answer.artifacts.length > 0;
+          const rawPacketBody = answerBodyFromPacket(event.answer);
+          const hasArtifacts = hasPacketArtifacts(event.answer);
           const hasRawTableLeak = hasRawMarkdownTableFragment(m.answer);
+          const packetBody =
+            hasArtifacts && hasRawMarkdownTableFragment(rawPacketBody)
+              ? ""
+              : rawPacketBody;
+          const shouldUsePacketBody =
+            hasArtifacts && hasRawTableLeak
+              ? true
+              : Boolean(
+                  packetBody &&
+                    (!m.answer.trim() ||
+                      packetBody.length >= m.answer.trim().length / 2),
+                );
           return {
             ...m,
             agentAnswer: event.answer,
-            answer:
-              packetBody &&
-              (hasArtifacts ||
-                hasRawTableLeak ||
-                !m.answer.trim() ||
-                packetBody.length >= m.answer.trim().length / 2)
-                ? packetBody
-                : m.answer,
+            answer: shouldUsePacketBody ? packetBody : m.answer,
             sources: event.answer.citations.map((c) => ({
               id: c.id,
               type: askSourceTypeFromCitation(c.sourceClass),

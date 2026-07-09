@@ -41,6 +41,9 @@ Hardens the aVa answer lifecycle so client-visible answers, suggested follow-up 
 - Pass: `npx eslint src/lib/ava-answer/contract.ts src/lib/ava-answer/claim-source-validation.ts src/lib/ava-answer/validateAvaAnswerPacket.ts src/lib/ava-answer/export/render-text.ts src/lib/ava-answer/export/render-answer-html.ts src/lib/ava-answer/export/render-answer-pdf.tsx src/lib/agent/product-truth/runtime-guard.ts src/lib/agent/product-truth/types.ts src/lib/agent/product-truth/capability-registry.ts src/lib/agent/product-truth/capability-claim-guard.ts src/lib/intelligence/answer/chart-kind-builders.ts src/lib/intelligence/expert-pack/quality-gate.ts`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
 - Pass: `npm run release:check`
+- Pass: post-#4639 follow-up local regression for the visual leak: `npm test -- --runTestsByPath src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts --runInBand`
+- Pass: post-#4639 focused dock regression for artifact/body rendering: `npm test -- --runTestsByPath src/components/agent/__tests__/AgentDock.test.tsx -t "focused mode|suppresses raw markdown" --runInBand`
+- Blocker found before acceptance: post-#4639 live signed-in screenshot still showed a raw orphan markdown table header (`| AI Use Case | ... |`) above the governed visual-boundary table. This follow-up candidate fixes that body/artifact reconciliation path.
 - Pending: full CI, ACA deploy, and live signed-in follow-up/export regression after merge.
 
 ## Rollout Plan
@@ -65,8 +68,9 @@ Revert the squash merge and redeploy `main` through the repo-owned ACA main depl
 
 - PR: Pending.
 - Focused tests and lint commands listed above.
+- Post-#4639 failed visual sanity proof: `/Users/anand/Projects/nexus/proof/ava-client-demo-hardening-v1-live-post4639-2026-07-09T16-02-38-446Z/screenshots/01-seed.png` showed the orphan pipe header; the automated runner otherwise produced 4 UI turns, HTML export, PDF export, and 10 API regression streams for the deployed revision.
 - Live proof: Pending post-deploy.
 
 ## Known Gaps
 
-This PR adds the runtime/packet validation and export/suggestion safety foundations. A full 100-turn client-demo regression and deployed claim-to-source report remain pending until the PR is merged and deployed.
+This PR adds the runtime/packet validation and export/suggestion safety foundations. A full 100-turn client-demo regression and deployed claim-to-source report remain pending until the PR is merged and deployed. Production acceptance remains pending until the post-orphan-header-fix deployed run shows no visible raw pipe-header text in the signed-in chat transcript, HTML export, or PDF export.

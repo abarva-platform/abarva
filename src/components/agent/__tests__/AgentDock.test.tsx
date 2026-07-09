@@ -1298,6 +1298,76 @@ describe("AgentDock · thread render", () => {
     expect(turn).not.toHaveTextContent("aVa · intelligence");
   });
 
+  it("suppresses raw markdown table fragments when focused mode has governed artifacts", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        variant="focused"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body: "| AI Use Case | Value (1-5) | Complexity (1-5) |",
+            agentAnswer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "lakeshore-holdings",
+              question: "Rank supply-chain AI use cases.",
+              intent: "chart",
+              status: "answered",
+              directAnswer:
+                "| AI Use Case | Value (1-5) | Complexity (1-5) |",
+              artifacts: [
+                {
+                  artifact: "table",
+                  id: "visual-boundary",
+                  title: "Requested Visual Boundary",
+                  columns: [
+                    { key: "request", label: "Requested output" },
+                    { key: "status", label: "Render status" },
+                  ],
+                  rows: [
+                    {
+                      request: "table / chart",
+                      status: "Needs validated records",
+                    },
+                  ],
+                },
+              ],
+              citations: [],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              quality: {
+                confidence: "high",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+              nextSteps: [],
+              gaps: [],
+              caveats: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("Requested Visual Boundary");
+    expect(turn).toHaveTextContent("Needs validated records");
+    expect(turn).not.toHaveTextContent("| AI Use Case |");
+  });
+
   it("keeps auto-scroll inside the thread pane when new turns arrive", async () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const scrollIntoView = jest.fn();
