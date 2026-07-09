@@ -406,9 +406,9 @@ export interface AttachmentRef {
 export interface SuggestedAction {
   id: string;
   label: string;
-  /** Body that pre-fills the composer when clicked. */
+  /** Body submitted when clicked. */
   body: string;
-  /** Optional override — when provided, click does NOT pre-fill. */
+  /** Optional override — when provided, click uses the caller's behavior. */
   onClick?: () => void;
 }
 
@@ -865,6 +865,23 @@ export function AgentDock(props: AgentDockProps) {
     [draft, uploads, onMessage],
   );
 
+  const submitSuggestedAction = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || submitting) return;
+      setDraft("");
+      const ta = inputRef.current;
+      if (ta) ta.style.height = "auto";
+      try {
+        setSubmitting(true);
+        await onMessage(trimmed, []);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [onMessage, submitting],
+  );
+
   // ── Upload handling ─────────────────────────────────────────────────────
 
   const startUploads = useCallback(
@@ -1172,8 +1189,7 @@ export function AgentDock(props: AgentDockProps) {
                   if (action.onClick) {
                     action.onClick();
                   } else {
-                    onChangeDraft(action.body);
-                    inputRef.current?.focus();
+                    void submitSuggestedAction(action.body);
                   }
                 }}
                 disabled={submitting}
@@ -1296,6 +1312,7 @@ export function AgentDock(props: AgentDockProps) {
     sessionExportStatus,
     setMode,
     showReviewChrome,
+    submitSuggestedAction,
     surface,
     startUploads,
     submit,
