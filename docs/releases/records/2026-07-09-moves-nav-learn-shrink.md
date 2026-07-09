@@ -52,8 +52,29 @@ Revert the commit; pure CSS/layout change, no data/migration/flag impact.
 
 ## Audit Evidence
 
-- To be added once merged/deployed and the live re-check confirms graceful truncation.
+- PR: [#4651](https://github.com/abarva-platform/abarva/pull/4651), 21/21 CI checks passed on the first run (no runner-backlog reruns needed), squash-merged as `8090be6b`.
+- Deploy: workflow run [29053882487](https://github.com/abarva-platform/abarva/actions/runs/29053882487), succeeded.
+- ACA runtime invariant: passed — active revision `ca-abarva-web-lab-eastus--m8090be6b`, 100% traffic, healthy.
+- Live verification via direct `getBoundingClientRect()` measurement (not just a visual glance, learning
+  from the prior release's false alarm):
+  - `Learn`: `left: 765.6, right: 825.5, width: 59.9, visible: true` — positioned entirely within the
+    right-rail's track (previously measured at `left: 711.8`, outside the track and clipped from view).
+  - `Sign out`: `left: 994.3, right: 1073, width: 78.7, visible: true`.
+  - Zoomed screenshot of the full right-rail region confirms visually: `Source`, `Tower`, `Learn`, the
+    avatar, a truncated display name (`Anand S...`), and `Sign out` all render cleanly with no overlap
+    and nothing missing.
+
+This closes out the three-part nav-overlap thread from today's Moves polish audit, all three now
+confirmed live with direct measurement, not just deploy success:
+1. `2026-07-09-moves-nav-overlap-and-locked-phase-redirect.md` — original `minmax(0, 1fr)` fix
+   (necessary but incomplete) + the locked-phase redirect banner (worked on the first attempt).
+2. `2026-07-09-moves-nav-overlap-followup.md` — the real remaining cause (`justifySelf: "end"`),
+   which actually fixed the illegible overlap.
+3. This record — the graceful-degradation follow-up so fixing the overlap didn't just trade it for
+   nav items disappearing at narrow widths.
 
 ## Known Gaps
 
-- None identified yet for this specific change; this closes out the three-part nav-overlap thread from today's Moves polish audit (`2026-07-09-moves-nav-overlap-and-locked-phase-redirect.md`, `2026-07-09-moves-nav-overlap-followup.md`, this record).
+- None identified for this specific change. The broader look/feel audit that started this thread was
+  still not exhaustive (see the first record's Known Gaps) — other phases, other surfaces, and other
+  viewport widths were not swept.
