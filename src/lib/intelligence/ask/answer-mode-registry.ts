@@ -59,7 +59,12 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
     presentPhaseLabels.length === MOVES_EXECUTION_PHASE_LABELS.length;
   const hasPhaseTable =
     /\|\s*Phase\s*\|/i.test(text) || /\|\s*P0 Originate\s*\|/.test(text);
-  if (hasEveryPhase && hasPhaseTable) return text;
+  const hasPlainPhaseTable =
+    /\bMoves\s+Phase\b[\s\S]{0,800}\bP0\s+Originate\b/i.test(text) ||
+    /^\s*Phase\s+(?:Objective|Checkpoint|Focus|What\s+AbarVa\s+does)\b/im.test(
+      text,
+    );
+  if (hasEveryPhase && (hasPhaseTable || hasPlainPhaseTable)) return text;
 
   if (hasPhaseTable && presentPhaseLabels.length >= 4) {
     const missingRows = MOVES_EXECUTION_PHASE_LABELS.filter(
