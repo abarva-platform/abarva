@@ -16,6 +16,10 @@ import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { NexusThreadMode, TenancyCtx } from './types.db';
 import { getProgramById, getModuleState } from './queries';
 import { selectProgramsWriteAdapter } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
+import {
+  listProgramEvidenceForPrompt,
+  type ProgramEvidencePromptItem,
+} from './evidence-context';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -140,6 +144,7 @@ export interface ProgramContextBundle {
   patternPreload: Record<string, unknown> | null;
   deliverables: Array<{ id: string; title: string; status: string; typeKey: string }>;
   flags: Array<{ id: string; headline: string; severity: string }>;
+  evidence: ProgramEvidencePromptItem[];
 }
 
 export async function assembleContext(ctx: TenancyCtx, programId: string): Promise<ProgramContextBundle> {
@@ -149,10 +154,11 @@ export async function assembleContext(ctx: TenancyCtx, programId: string): Promi
   const modules = await getModuleState(ctx, programId);
 
   const sb = getAzureWriteFluentClient();
-  const [delivQ, flagsQ, patternQ] = await Promise.all([
+  const [delivQ, flagsQ, patternQ, evidence] = await Promise.all([
     sb.from('deliverables_v2').select('id, title, status, deliverable_type_key').eq('engagement_id', programId).order('updated_at', { ascending: false }).limit(10),
     sb.from('maestro_oversight_flags').select('id, headline, severity').eq('engagement_id', programId).is('resolved_at', null).limit(10),
     sb.from('pattern_match_logs').select('pattern_key, match_context_jsonb').eq('engagement_id', programId).eq('acted_upon', true).order('acted_upon_at', { ascending: false }).limit(1),
+    listProgramEvidenceForPrompt(ctx, programId, 12).catch(() => []),
   ]);
 
   const patternKey = (patternQ.data as Array<{ pattern_key: string }> | null ?? [])[0]?.pattern_key;
@@ -182,6 +188,7 @@ export async function assembleContext(ctx: TenancyCtx, programId: string): Promi
       headline: f.headline as string,
       severity: f.severity as string,
     })),
+    evidence,
   };
 }
 

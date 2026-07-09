@@ -11,6 +11,7 @@ import {
   formatUnsupportedClaimFlag,
   type AgentGroundingDisclosure,
 } from "@/lib/intelligence/canonical/agent-grounding-disclosure";
+import { runProductTruthGate } from "@/lib/agent/product-truth";
 import type {
   CanonicalConfidenceLevel,
   CanonicalIndustry,
@@ -29,6 +30,7 @@ import type {
   PatternApplicableProgram,
   PatternManifestEntry,
 } from "@/lib/intelligence/pattern-manifest";
+import { formatProgramEvidenceForPrompt } from "@/lib/programs/evidence-context";
 import {
   getPatternApplicableProgramsForTenant,
   getPatternManifestEntriesWithMetrics,
@@ -79,6 +81,9 @@ const STOPWORDS = new Set([
   "main",
   "risk",
 ]);
+
+const EVIDENCE_NUMERIC_SIGNAL_PATTERN =
+  /\$\s?[\d,]+(?:\.\d+)?\s?(?:[kmb]|thousand|million|billion)?\b|\b\d+(?:\.\d+)?\s?%|\b\d[\d,]*(?:\.\d+)?\b/gi;
 
 export interface ProgramsNexusTenantCtx {
   clientKey: string;
@@ -215,7 +220,22 @@ function programContextSource(context: ProgramContextBundle): Source {
         : `Phase ${context.program.currentPhase}`,
       `${context.deliverables.length} deliverables`,
       `${context.flags.length} open flags`,
+      `${context.evidence.length} evidence items`,
     ].join(" · "),
+    confidence: "high",
+  };
+}
+
+function programEvidenceSource(context: ProgramContextBundle): Source | null {
+  if (context.evidence.length === 0) return null;
+  return {
+    id: `program:${context.programId}:evidence-ledger`,
+    type: "client_fact",
+    name: "Program evidence ledger",
+    detail: context.evidence
+      .slice(0, 5)
+      .map((item) => item.title)
+      .join(" · "),
     confidence: "high",
   };
 }
@@ -769,6 +789,140 @@ function buildStructuredResponse(args: {
   ].join("\n\n");
 }
 
+function programEvidenceGroundingText(context: ProgramContextBundle): string {
+  return context.evidence
+    .map((item) =>
+      [
+        item.title,
+        item.evidenceType,
+        item.summary ?? "",
+        item.structuredSignals.join(" "),
+        item.extractedText ?? "",
+      ].join(" "),
+    )
+    .join("\n")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function compactEvidenceText(value: string, limit = 520): string {
+  const compacted = value.replace(/\s+/g, " ").trim();
+  if (compacted.length <= limit) return compacted;
+  return `${compacted.slice(0, limit - 3).trim()}...`;
+}
+
+function evidenceItemText(item: ProgramContextBundle["evidence"][number]): string {
+  return [
+    item.summary ?? "",
+    item.structuredSignals.join("; "),
+    item.extractedText ?? "",
+  ]
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function evidenceSentences(value: string): string[] {
+  return value
+    .split(/(?:\.\s+|\n+|;\s+)/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line.length > 0);
+}
+
+function scoreEvidenceText(text: string, queryTokens: string[]): number {
+  const normalized = text.toLowerCase();
+  const tokenScore = queryTokens.reduce(
+    (score, token) => score + (normalized.includes(token) ? 2 : 0),
+    0,
+  );
+  const numericScore = (text.match(EVIDENCE_NUMERIC_SIGNAL_PATTERN) ?? [])
+    .length;
+  return tokenScore + Math.min(numericScore, 4);
+}
+
+function hasNumericEvidenceSignal(value: string): boolean {
+  EVIDENCE_NUMERIC_SIGNAL_PATTERN.lastIndex = 0;
+  return EVIDENCE_NUMERIC_SIGNAL_PATTERN.test(value);
+}
+
+function selectEvidenceSnippets(args: {
+  message: string;
+  context: ProgramContextBundle;
+}): Array<{ title: string; text: string; score: number }> {
+  const queryTokens = tokenize(args.message);
+  return args.context.evidence
+    .map((item) => {
+      const fullText = evidenceItemText(item);
+      const candidateSentences = evidenceSentences(fullText);
+      const rankedSentences = candidateSentences
+        .map((sentence) => ({
+          sentence,
+          score: scoreEvidenceText(`${item.title} ${sentence}`, queryTokens),
+        }))
+        .sort((a, b) => b.score - a.score);
+      const numericSentences = candidateSentences.filter((sentence) =>
+        hasNumericEvidenceSignal(sentence),
+      );
+      const selectedText =
+        (numericSentences.length > 0
+          ? numericSentences.slice(0, 5)
+          : rankedSentences.slice(0, 3).map((entry) => entry.sentence)
+        ).join("; ") ||
+        (item.summary ?? item.structuredSignals[0] ?? item.extractedText ?? "");
+      return {
+        title: item.title,
+        text: compactEvidenceText(selectedText),
+        score: scoreEvidenceText(`${item.title} ${fullText}`, queryTokens),
+      };
+    })
+    .filter((snippet) => snippet.text.length > 0 && snippet.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+
+function hasEvidenceReference(
+  response: string,
+  context: ProgramContextBundle,
+): boolean {
+  if (context.evidence.length === 0) return false;
+  const normalized = response.toLowerCase();
+  return context.evidence.some((item) => {
+    const title = item.title.toLowerCase();
+    const stem = title.replace(/\.[^.]+$/, "");
+    return normalized.includes(title) || normalized.includes(stem);
+  });
+}
+
+function buildEvidenceLedgerFallback(args: {
+  message: string;
+  context: ProgramContextBundle;
+  tenantKey: string;
+}): string | null {
+  if (args.context.evidence.length === 0) return null;
+  const snippets = selectEvidenceSnippets(args);
+  if (snippets.length === 0) return null;
+
+  const titles = args.context.evidence
+    .slice(0, 6)
+    .map((item) => item.title)
+    .join(", ");
+  const groundedSignals = snippets
+    .map((snippet, index) => `${index + 1}. ${snippet.title}: ${snippet.text}`)
+    .join("\n");
+
+  const response = [
+    `Evidence is present for ${args.context.program.name}: ${titles}.`,
+    `Grounded signals from the uploaded evidence:\n${groundedSignals}`,
+    "Next step: answer from the uploaded evidence text, cite the uploaded evidence titles, and keep every numeric claim tied to that same grounding text.",
+  ].join("\n\n");
+
+  const truthGate = runProductTruthGate(response, {
+    tenantKey: args.tenantKey,
+    groundingText: programEvidenceGroundingText(args.context),
+  });
+  return truthGate.pass ? response : null;
+}
+
 async function synthesizeWithClaude(args: {
   message: string;
   ctx: ProgramsNexusTenantCtx;
@@ -780,11 +934,15 @@ async function synthesizeWithClaude(args: {
   if (
     process.env.NODE_ENV === "test" ||
     !process.env.ANTHROPIC_API_KEY ||
-    args.citations.length === 0
+    (args.citations.length === 0 && args.context.evidence.length === 0)
   ) {
     return null;
   }
 
+  const evidencePromptBlock = formatProgramEvidenceForPrompt(
+    args.context.evidence,
+  );
+  const groundingText = programEvidenceGroundingText(args.context);
   const userPayload = JSON.stringify(
     {
       tenant: args.ctx.clientName,
@@ -792,6 +950,8 @@ async function synthesizeWithClaude(args: {
       modules: args.context.modules,
       deliverables: args.context.deliverables,
       flags: args.context.flags,
+      evidence: args.context.evidence,
+      evidencePromptBlock: evidencePromptBlock || null,
       sparseEvidence: args.sparseEvidence,
       canonicalPatternEvidence: args.patternEvidence,
       question: args.message,
@@ -822,6 +982,8 @@ async function synthesizeWithClaude(args: {
     "Use only the provided composition and context. Do not invent program state, evidence, or gate decisions.",
     "Stay direct, structured, and specific. Never flatter the user.",
     "Use the provided markdown citations verbatim.",
+    "For uploaded program evidence, name the uploaded evidence title that supports the claim.",
+    "For tenant-specific dollar amounts, percentages, or ranges, only quote values that appear in the uploaded program evidence for this turn. If the evidence is insufficient, say what is missing instead of estimating.",
     'If sparseEvidence is true, say "Evidence is thin" in the first sentence.',
     "If canonicalPatternEvidence.noMatch or missingEvidence is true, surface that limitation explicitly and do not fill gaps with invented pattern evidence.",
     "Be explicit that most support here is authored/composite unless the composition says otherwise.",
@@ -867,7 +1029,14 @@ async function synthesizeWithClaude(args: {
     (citation) =>
       response.includes(citation.href) || response.includes(citation.label),
   );
-  return hasKnownCitation ? response : null;
+  const hasKnownEvidence = hasEvidenceReference(response, args.context);
+  if (!hasKnownCitation && !hasKnownEvidence) return null;
+
+  const truthGate = runProductTruthGate(response, {
+    tenantKey: args.ctx.clientKey,
+    groundingText,
+  });
+  return truthGate.pass ? response : null;
 }
 
 export async function runProgramsNexusTurn(args: {
@@ -931,6 +1100,11 @@ export async function runProgramsNexusTurn(args: {
     sparseEvidence,
     patternEvidence,
   });
+  const evidenceFallback = buildEvidenceLedgerFallback({
+    message: args.message,
+    context: args.context,
+    tenantKey: args.ctx.clientKey,
+  });
 
   const llmText = await synthesizeWithClaude({
     message: args.message,
@@ -941,11 +1115,13 @@ export async function runProgramsNexusTurn(args: {
     patternEvidence,
   }).catch(() => null);
 
-  const response = llmText ?? fallback;
+  const response = llmText ?? evidenceFallback ?? fallback;
   const routeType = llmText ? "llm" : "manifest_fallback";
   const confidence = citations[0]?.confidenceBand ?? "low";
+  const evidenceSource = programEvidenceSource(args.context);
   const sources = [
     programContextSource(args.context),
+    ...(evidenceSource ? [evidenceSource] : []),
     ...citations.map(buildSource),
   ];
 
@@ -1044,6 +1220,14 @@ export function buildProgramsNexusCanonicalPatternQuery(args: {
     ...args.context.flags.map((flag) => flag.headline),
     ...args.context.deliverables.map(
       (deliverable) => `${deliverable.title} ${deliverable.typeKey}`,
+    ),
+    ...args.context.evidence.map((item) =>
+      [
+        item.title,
+        item.evidenceType,
+        item.summary ?? "",
+        item.structuredSignals.join(" "),
+      ].join(" "),
     ),
   ]
     .join(" ")
