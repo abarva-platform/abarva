@@ -32,8 +32,9 @@ export async function generateMetadata({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
+  const event = await getSourcingEvent(eventId).catch(() => null);
   return {
-    title: `Source Event Report · ${eventId.toUpperCase()} · AbarVa`,
+    title: `Source Event Report · ${event?.code ?? eventId.toUpperCase()} · AbarVa`,
   };
 }
 

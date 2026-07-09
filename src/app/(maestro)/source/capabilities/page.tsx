@@ -120,7 +120,7 @@ export default async function SourceCapabilitiesPage() {
     >
       <main style={MAIN_STYLE}>
         <section style={HERO_STYLE}>
-          <div style={EYEBROW_STYLE}>AbarVa Source</div>
+          <div style={EYEBROW_STYLE}>Source · Capabilities</div>
           <h1 style={TITLE_STYLE}>Technology sourcing intelligence, governed execution, and value proof.</h1>
           <p style={LEDE_STYLE}>
             Source is more than an RFP workbench. It helps teams understand the sourcing trigger, bind the right evidence,

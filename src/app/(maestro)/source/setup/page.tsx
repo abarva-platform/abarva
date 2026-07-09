@@ -239,7 +239,7 @@ function SourceSetupArtifactOperationsPage() {
               paddingBottom: 22,
             }}
           >
-            <div style={SECTION_LABEL}>Source artifact operations</div>
+            <div style={SECTION_LABEL}>Source · Setup</div>
             <h1
               style={{
                 margin: 0,

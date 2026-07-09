@@ -534,7 +534,7 @@ export function buildEventName(
 function sanitizeEventNameClause(value: string | undefined): string {
   return (value ?? "")
     .replace(
-      /^(scope boundary|scope|in scope|out of scope|value basis|baseline owner|trigger)\s*:\s*/i,
+      /^(scope boundary|scope|in scope|out of scope|in|out|value basis|baseline owner|trigger)\s*:\s*/i,
       "",
     )
     .replace(/\b(in scope|out of scope)\b\s*:\s*/gi, "")
@@ -1381,7 +1381,7 @@ const SUBHEAD: CSSProperties = {
 
 const SECTION_LABEL: CSSProperties = {
   fontFamily: SHELL.MONO,
-  fontSize: 8.5,
+  fontSize: 10.5,
   letterSpacing: "0.12em",
   textTransform: "uppercase",
   color: SHELL.INK_MUTED,
@@ -1407,10 +1407,10 @@ const STATUS_CHIP: CSSProperties = {
   alignItems: "center",
   border: "1px solid",
   borderRadius: 4,
-  padding: "2px 6px",
+  padding: "2px 7px",
   fontFamily: SHELL.MONO,
-  fontSize: 7.5,
-  letterSpacing: "0.08em",
+  fontSize: 10,
+  letterSpacing: "0.06em",
   textTransform: "uppercase",
   fontWeight: 700,
   whiteSpace: "nowrap",

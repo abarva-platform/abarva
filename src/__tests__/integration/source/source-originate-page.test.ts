@@ -356,6 +356,25 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     ).toBe("Apex Retail Integration Fabric Commercial Control Event");
   });
 
+  it("strips the bare 'In:'/'Out:' prefix the scope-boundary placeholder itself models, not just 'in scope:'", () => {
+    // The field's own placeholder text reads "In: AMS for SAP and eCommerce.
+    // Out: security operations and deskside support...", so users naturally
+    // follow that exact convention. The sanitizer previously only stripped
+    // "in scope:"/"out of scope:", leaving a raw "In:" leaking into the
+    // auto-generated event title (e.g. "Acme In: EHR application
+    // management... Sourcing Event").
+    expect(
+      buildEventName("Acme Health", {
+        trigger: "Incumbent contract expires in 7 months.",
+        decisionOwner: "CIO",
+        scopeBoundary:
+          "In: EHR application management and integration engine support. Out: network operations and end-user helpdesk.",
+        valueTarget: "Target 18% run-cost reduction.",
+        baselineOwner: "Finance owns the baseline.",
+      }),
+    ).not.toMatch(/^Acme Health In:/);
+  });
+
   it("threads the tenant name into the page header without hard-coding Apex", () => {
     const meridianHtml = renderToStaticMarkup(
       createElement(SourceOriginatePage, {

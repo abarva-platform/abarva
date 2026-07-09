@@ -133,7 +133,10 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-const pageStyle = { minHeight: '100vh', background: '#F8F7F4', color: '#111827', padding: '32px 28px 56px' } as const;
+// #F8F7F4 was the superseded v2 cream background (Georgia/DM Sans era). The
+// v3 design system (locked 2026-05-07) mandates white for all product pages —
+// see design_system.md. This page predates that migration.
+const pageStyle = { minHeight: '100vh', background: '#FFFFFF', color: '#111827', padding: '32px 28px 56px' } as const;
 const shellStyle = { maxWidth: 1120, margin: '0 auto' } as const;
 const backLinkStyle = { color: '#4b5563', fontSize: 13, fontWeight: 720, textDecoration: 'none' } as const;
 const crumbStyle = { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', color: '#667085', fontSize: 13, fontWeight: 720 } as const;
