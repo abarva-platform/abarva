@@ -874,6 +874,25 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             tabbedResponse.mainAnswer.trim()
           ) {
             const composeStartedAt = Date.now();
+            const tabbedExhibits = buildStructuredExhibits({
+              prose: tabbedResponse.mainAnswer,
+              routing: answerRouting,
+              sources: advisorSources,
+            });
+            const tabbedArtifacts = [
+              ...tabbedExhibits.tables.map((table) => ({
+                ...table,
+                artifact: "table" as const,
+              })),
+              ...tabbedExhibits.charts.map((chart) => ({
+                ...chart,
+                artifact: "chart" as const,
+              })),
+              ...tabbedExhibits.graphs.map((graph) => ({
+                ...graph,
+                artifact: "graph" as const,
+              })),
+            ];
             const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
               mode: "ANALYZE",
@@ -885,26 +904,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               question: query,
               intent: "decision_canvas",
               status: "answered",
-              directAnswer: tabbedResponse.mainAnswer,
-              artifacts: [],
-              citations: advisorSources.map((source, index) => ({
-                id: source.id ?? `intelligence-source-${index}`,
-                label: source.name || source.id || `Source ${index + 1}`,
-                sourceClass:
-                  source.type === "TENANT"
-                    ? ("tenant-fact" as const)
-                    : source.type === "PATTERN"
-                      ? ("corpus-pattern" as const)
-                      : ("graph" as const),
-                confidence:
-                  typeof source.confidence === "number" &&
-                  source.confidence >= 0.8
-                    ? "high"
-                    : typeof source.confidence === "number" &&
-                        source.confidence >= 0.55
-                      ? "medium"
-                      : "low",
-              })),
+              directAnswer:
+                tabbedExhibits.prose.trim() || tabbedResponse.mainAnswer,
+              artifacts: tabbedArtifacts,
+              citations: tabbedExhibits.citations,
               corpusUsed: tabbedResponse.tabs.some(
                 (tab) =>
                   tab.grounding === "industry-context" ||
@@ -959,7 +962,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               return;
             enqueueTiming(
               routeTrace.finish("route.answer_compose.done", composeStartedAt, {
-                artifactCount: agentAnswer.artifacts?.length ?? 0,
+                artifactCount: tabbedArtifacts.length,
                 citationCount: agentAnswer.citations?.length ?? 0,
               }),
             );
