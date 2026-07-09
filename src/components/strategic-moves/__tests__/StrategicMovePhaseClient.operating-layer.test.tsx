@@ -10,13 +10,14 @@ import type { StrategicMove } from "@/lib/programs/types.ui";
 
 const mockRouterPush = jest.fn();
 const mockRouterRefresh = jest.fn();
+const mockSearchParams = jest.fn(() => new URLSearchParams());
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockRouterPush,
     refresh: mockRouterRefresh,
   }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockSearchParams(),
   usePathname: () => "/strategic-moves",
 }));
 
@@ -30,6 +31,8 @@ jest.mock("@clerk/nextjs", () => ({
 beforeEach(() => {
   mockRouterPush.mockReset();
   mockRouterRefresh.mockReset();
+  mockSearchParams.mockReset();
+  mockSearchParams.mockReturnValue(new URLSearchParams());
   global.fetch = jest.fn().mockResolvedValue({
     ok: false,
     json: async () => null,
@@ -308,5 +311,41 @@ describe("StrategicMovePhaseClient operating layer", () => {
     expect(mockRouterPush).toHaveBeenCalledWith(
       "/strategic-moves/49c77bca-471d-4398-8b13-fa8ed1487597/phase/1",
     );
+  });
+
+  it("shows a dismissible notice when redirected off a locked phase (regression 2026-07-09)", async () => {
+    // Live-observed: requesting /phase/4 while the Move is still at P2 silently
+    // landed the user back on /phase/2 with zero explanation. The redirect now
+    // carries ?phaseLocked=<requested>, which this banner surfaces.
+    mockSearchParams.mockReturnValue(new URLSearchParams("phaseLocked=4"));
+    render(
+      <StrategicMovePhaseClient
+        move={makeMove()}
+        phaseNum={2}
+        evidenceNeedPackets={[needPacket]}
+      />,
+    );
+
+    expect(await screen.findByText(/isn.t open yet/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
+    expect(screen.queryByText(/isn.t open yet/i)).not.toBeInTheDocument();
+  });
+
+  it("shows no locked-phase notice on a normal visit (no phaseLocked param)", async () => {
+    render(
+      <StrategicMovePhaseClient
+        move={makeMove()}
+        phaseNum={2}
+        evidenceNeedPackets={[needPacket]}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /\+ Add evidence/i }),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/isn.t open yet/i)).not.toBeInTheDocument();
   });
 });

@@ -68,7 +68,13 @@ export default async function StrategicMovePhaseWorkspacePage({
   // looking requests back to the true current phase.
   const currentPhase = move.currentPhase ?? 0;
   if (parsedPhase > currentPhase) {
-    redirect(`/strategic-moves/${moveId}/phase/${currentPhase}`);
+    // Carry the reason as a query param — a silent redirect here reads as a
+    // broken link (bookmarked/shared URLs to a future phase would otherwise
+    // land the user somewhere else with zero explanation). StrategicMove-
+    // PhaseClient reads this to show a one-time dismissible banner.
+    redirect(
+      `/strategic-moves/${moveId}/phase/${currentPhase}?phaseLocked=${parsedPhase}`,
+    );
   }
 
   // Estate-derived current-state readiness for this phase (best-effort; never
