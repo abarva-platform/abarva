@@ -58,6 +58,7 @@ import { specByCode } from "./canonical-specs";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { coerceUsdAmountOrZero } from "./usd-amount";
+import { autoDraftOnStageEntry } from "./stage-entry-autodraft";
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -289,6 +290,24 @@ export async function createSourcingEvent(
       scaffoldError instanceof Error ? scaffoldError.message : scaffoldError,
     );
   }
+
+  // Auto-draft the Strategy memo (d01) the moment the event is created, so
+  // the sponsor has a real memo to review before confirming the Strategy
+  // gate. Not awaited — generation can take minutes; event creation must not
+  // block on it. Durable: goes through the same enqueue-then-process job the
+  // stage-entry autodraft uses everywhere else, so a mid-generation process
+  // restart leaves a recoverable "running" job rather than losing the work.
+  void autoDraftOnStageEntry({
+    eventId: row.id,
+    clientKey: row.client_key,
+    enteredStage: "strategy",
+  }).catch((autoDraftError) => {
+    console.warn(
+      "source strategy autodraft failure:",
+      row.id,
+      autoDraftError instanceof Error ? autoDraftError.message : autoDraftError,
+    );
+  });
 
   return row;
 }
@@ -678,6 +697,23 @@ export async function ensurePersistedSourceEventForClient(
       scaffoldError instanceof Error ? scaffoldError.message : scaffoldError,
     );
   }
+
+  // Materializing a seed event can land it on any stage (not just Strategy).
+  // Auto-draft whatever that stage's primary deliverable is so the canvas
+  // has a real memo the first time this event is actually opened. Not
+  // awaited — same durable-queue rationale as createSourcingEvent above.
+  void autoDraftOnStageEntry({
+    eventId: row.id,
+    clientKey: row.client_key,
+    enteredStage: (normalizeSourceStageKey(row.current_stage_key) ??
+      "strategy") as SourceStageKey,
+  }).catch((autoDraftError) => {
+    console.warn(
+      "source seed-materialize autodraft failure:",
+      row.id,
+      autoDraftError instanceof Error ? autoDraftError.message : autoDraftError,
+    );
+  });
 
   return row;
 }

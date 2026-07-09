@@ -26,6 +26,7 @@ import {
   type SourceStageConfirmations,
 } from '@/lib/source/approval-decision';
 import { confirmationKeysForStage } from '@/lib/source/stage-gate-confirmations';
+import { autoDraftOnStageEntry } from '@/lib/source/stage-entry-autodraft';
 
 interface ApproveBody {
   action: 'approve' | 'reject' | 'send_back';
@@ -182,6 +183,23 @@ export async function POST(
       });
     } else {
       stageAdvancedTo = decision.advanceStageTo;
+      // Auto-draft the newly-entered stage's primary deliverable (Scope memo
+      // on scope entry, RFP package on rfp entry, etc. — see
+      // AUTO_DRAFT_PRIMARY_CODES_BY_STAGE). Not awaited: board-grade
+      // artifacts can take minutes to generate and the approve button must
+      // not block on it. Durable via source_artifact_generation_jobs — a
+      // mid-generation restart leaves a recoverable job, not lost work.
+      void autoDraftOnStageEntry({
+        eventId,
+        clientKey: activeClient.key,
+        enteredStage: decision.advanceStageTo,
+      }).catch((autoDraftError) => {
+        console.error('[POST /api/v1/source/events/:eventId/approve] stage_entry_autodraft_failed', {
+          eventId,
+          enteredStage: decision.advanceStageTo,
+          message: autoDraftError instanceof Error ? autoDraftError.message : autoDraftError,
+        });
+      });
     }
   }
 
