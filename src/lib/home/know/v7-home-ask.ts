@@ -331,7 +331,7 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (isAdvisoryOrUseCaseQuestion(q)) return 'handoff_intelligence';
   if (/business areas|business functions|available business|organization structure/.test(q)) return 'business_areas';
   if (/technology leaders|it organization|it org|structured today|roles|accountability/.test(q)) return 'it_org';
-  if (/\b(applications?|apps?|core systems?|it systems?|systems? of record|systems? landscape|systems? inventory|systems? context|erp|sap|mainframe)\b/.test(q)) return 'apps_systems';
+  if (/\b(applications?|apps?|core systems?|source systems?|reporting tools?|bi tools?|it systems?|systems? of record|systems? landscape|systems? inventory|systems? context|erp|sap|mainframe|epic|clarity|caboodle|power bi|sas)\b/.test(q)) return 'apps_systems';
   if (/infrastructure|cloud|data center|network|hosting|aws|azure/.test(q)) return 'infrastructure';
   // Word-bounded tokens so a tenant/company name never collides with a
   // dimension keyword (e.g. "Lakeshore" must not match a bare "lake").
@@ -375,7 +375,12 @@ function buildGaps(rows: V7RecordRow[]) {
   for (const row of rows) {
     for (const [key, value] of Object.entries(row.values_json)) {
       const text = String(value ?? '').toLowerCase();
-      if (text.includes('needs evidence') || text.includes('data_thin')) {
+      if (
+        text.includes('needs evidence') ||
+        text.includes('data_thin') ||
+        key === 'known_gaps' ||
+        /\b(no |not |missing|gap|block|incomplete|unproven|not loaded|not proven|not certified)\b/.test(text)
+      ) {
         gaps.set(key, (gaps.get(key) ?? 0) + 1);
       }
     }
@@ -421,10 +426,26 @@ function buildParagraphs(args: {
     'company_name',
     'client_display_name',
   ];
+  const contextColumns = [
+    'key_technologies_vendors',
+    'dependencies',
+    'known_dependencies',
+    'blockers',
+    'known_blockers',
+    'bottleneck',
+    'known_gaps',
+    'governance_status',
+    'lifecycle_status',
+    'current_status',
+    'target_outcome',
+    'business_impact',
+    'critical_processes_structured',
+  ];
   const samples = args.rows
     .map((row) => display(firstPreferredValue(row.values_json, preferredSampleColumns)) || display(row.record_name) || display(firstMeaningfulValue(row.values_json)))
     .filter((value) => value !== 'Needs evidence')
     .slice(0, 6);
+  const contextDetails = uniqueMeaningfulValues(args.rows, contextColumns).slice(0, 8);
   const dimensionLabel = humanize(args.config.primaryDimension).toLowerCase();
   if (args.config.primaryDimension === 'v7_01_enterprise_profile') {
     return buildEnterpriseProfileParagraphs({
@@ -438,7 +459,9 @@ function buildParagraphs(args: {
     : `${args.displayName}'s loaded ${dimensionLabel} context is present, but the preview rows need stronger client-readable names.`;
   return [
     `${sampleSentence} Home can use this as current-state context while keeping confidence and validation boundaries visible.`,
-    'The business context is broad enough for orientation and current-state discovery, but Home still keeps validation gaps visible before board-grade use.',
+    contextDetails.length
+      ? `Loaded detail fields also show ${joinList(contextDetails)}.`
+      : 'The business context is broad enough for orientation and current-state discovery, but Home still keeps validation gaps visible before board-grade use.',
     args.config.handoffTarget
       ? `${surfaceName(args.config.handoffTarget)} should take over when the user wants decisions, recommendations, or execution moves; Home should stay focused on available facts and validation boundaries.`
       : args.gaps[0]
@@ -509,6 +532,31 @@ function firstPreferredValue(record: Record<string, unknown>, columns: string[])
     if (displayed !== 'Needs evidence') return displayed;
   }
   return '';
+}
+
+function uniqueMeaningfulValues(rows: V7RecordRow[], columns: string[]): string[] {
+  const seen = new Set<string>();
+  const values: string[] = [];
+  for (const column of columns) {
+    for (const row of rows) {
+      const displayed = display(row.values_json[column]);
+      if (displayed === 'Needs evidence') continue;
+      for (const part of splitDisplayValue(displayed)) {
+        const normalized = part.toLowerCase();
+        if (seen.has(normalized)) continue;
+        seen.add(normalized);
+        values.push(part);
+      }
+    }
+  }
+  return values;
+}
+
+function splitDisplayValue(value: string): string[] {
+  return value
+    .split(/\s*(?:,|;|\|)\s*/g)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0 && part !== 'Needs evidence');
 }
 
 function display(value: unknown): string {

@@ -136,6 +136,81 @@ describe('answerHomeKnowFromV7', () => {
     expect(seenBusinessRecordContracts).toEqual(['v7.latest-meridian-test', 'v7.latest-meridian-test']);
   });
 
+  it('surfaces concrete V7 system details and loaded blockers for systems questions', async () => {
+    const session: SessionRunner = async (fn) =>
+      fn(async <R>(sql: string, params: unknown[] = []) => {
+        if (sql.includes('from intelligence_v7.tenant_pack_runs')) {
+          return [{
+            tenant_key: 'meridian-health',
+            tenant_name: 'Meridian Health System',
+            contract_version: 'v7.current-pack-test',
+            source_dataset: 'datasets/meridian-health-v6-v7-current-state-v1',
+            row_count: 442,
+            field_count: 11507,
+            graph_node_count: 97,
+            relationship_edge_count: 69,
+            chunk_count: 118,
+            loaded_at: '2026-07-09T18:47:43.212Z',
+          }] as R[];
+        }
+        if (sql.includes('group by source_file')) {
+          return [{ source_file: 'V7_05_applications_systems.csv', count: 6 }] as R[];
+        }
+        if (sql.includes('from intelligence_v7.business_records')) {
+          expect(params[2]).toBe('v7_05_applications_systems');
+          return [
+            {
+              record_name: 'Epic Clarity',
+              source_file: 'V7_05_applications_systems.csv',
+              source_row_number: 2,
+              source_artifact_name: 'V7_05_applications_systems.csv',
+              source_validation_status: 'validated',
+              values_json: {
+                system_name: 'Epic Clarity',
+                technical_owner: 'Clinical data platform team',
+                key_technologies_vendors: 'Epic; SQL Server',
+                lifecycle_status: 'current_core',
+                known_gaps: 'No certified medallion architecture is loaded. | No formal data governance operating model is loaded.',
+              },
+            },
+            {
+              record_name: 'Epic Caboodle',
+              source_file: 'V7_05_applications_systems.csv',
+              source_row_number: 3,
+              source_artifact_name: 'V7_05_applications_systems.csv',
+              source_validation_status: 'validated',
+              values_json: {
+                system_name: 'Epic Caboodle',
+                technical_owner: 'Clinical data platform team',
+                key_technologies_vendors: 'Epic; Tableau; SAS; Power BI',
+                lifecycle_status: 'current_core',
+                known_gaps: 'No certified semantic layer is loaded.',
+              },
+            },
+          ] as R[];
+        }
+        return [] as R[];
+      });
+
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'meridian',
+      tenantDisplayName: 'Meridian Health System',
+      question: 'Which source systems and reporting tools are loaded, including Epic, Clarity, Caboodle, SQL Server, Tableau, SAS, and Power BI?',
+      session,
+    });
+
+    expect(result.proof.questionIntent).toBe('apps_systems');
+    expect(result.answer.primaryDimension).toBe('v7_05_applications_systems');
+    expect(result.answer.directAnswer).toMatch(/Epic Clarity/i);
+    expect(result.answer.directAnswer).toMatch(/Epic Caboodle/i);
+    expect(result.answer.directAnswer).toMatch(/SQL Server/i);
+    expect(result.answer.directAnswer).toMatch(/Tableau/i);
+    expect(result.answer.directAnswer).toMatch(/SAS/i);
+    expect(result.answer.directAnswer).toMatch(/Power BI/i);
+    expect(result.answer.directAnswer).toMatch(/No certified medallion architecture is loaded/i);
+    expect(result.answer.directAnswer).not.toMatch(/\$[0-9]/);
+  });
+
   it('answers deterministically from V7 records without raw substrate IDs', async () => {
     const result = await answerHomeKnowFromV7({
       tenantKey: 'skyharbor',
@@ -152,7 +227,7 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.proof.answerSource.claudeInvoked).toBe(false);
     expect(result.answer.primaryDimension).toBe('v7_05_applications_systems');
     expect(result.answer.directAnswer).toMatch(/SkyOps Recovery Platform/i);
-    expect(result.answer.directAnswer).toMatch(/business context is broad enough/i);
+    expect(result.answer.directAnswer).toMatch(/Loaded detail fields/i);
     expect(result.answer.directAnswer).not.toMatch(/\bevidence\b|supporting material/i);
     expect(result.answer.directAnswer).not.toMatch(/field facts|graph nodes|retrieval chunks/i);
     expect(result.answer.table?.headers).toEqual(['System', 'Owner', 'Criticality', 'Lifecycle']);

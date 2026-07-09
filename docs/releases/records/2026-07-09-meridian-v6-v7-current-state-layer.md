@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-live-proof-in-progress`
 
 ## Plain-English Summary
 
@@ -19,6 +19,7 @@ This release does not wire Moves or Source to V6/V7 and does not create a worksh
 - `client-data-lane`: Adds `datasets/meridian-health-v6-v7-current-state-v1/`, a new governed manifest, and Meridian Tower-standardized projections generated from the same V6 facts.
 - `internal-admin`: Adds reusable operator scripts and shared modules for tenant V6 generation, validation, V7 derivation, Tower projection, and V7 Azure loading.
 - `global-control-lane`: Home's V7 answer selector now uses the tenant's current active validated V7 pack instead of a single hardcoded contract version. The generic V7 loader is script-only and requires an explicit payload plus database credentials.
+- `global-control-lane`: Home's deterministic V7 answer composer now routes source-system/reporting-tool questions to the applications/systems dimension and surfaces loaded detail fields such as technologies, blockers, dependencies, lifecycle, and known gaps instead of only row display names.
 
 ## Client Applicability
 
@@ -56,8 +57,10 @@ This release does not wire Moves or Source to V6/V7 and does not create a worksh
 - Pass: `git diff --check`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
 - Pass: `npm run release:check`
-- Pending: Azure/Postgres V7 load.
-- Pending: signed-in Meridian Home answer proof.
+- Pass: Azure/Postgres V7 load through the approved operator job lane; run `run:v7.1.0-meridian-current-state-20260709:meridian-health` loaded 25 files, 442 records, 11,507 fields, 97 graph nodes, 69 relationship edges, and 118 chunks.
+- Pass: independent Azure/Postgres readback confirmed the active validated Meridian V7 run and zero weak/unscored graph edges.
+- Pass: signed-in Chrome Home proof reached `tenantKey=meridian-health`, `composer=home_v7_dataset_contract`, no V7 fallback, no dollar figure fabrication, and no real-patient/real-member claim.
+- Follow-up Pass: Chrome proof exposed a shallow deterministic summary for systems/gaps prompts; patched the generic Home V7 composer and added a regression proving concrete system details and loaded blockers surface from record fields.
 
 ## Rollout Plan
 
@@ -66,14 +69,15 @@ This release does not wire Moves or Source to V6/V7 and does not create a worksh
 3. Confirm `intelligence_v7.tenant_pack_runs` has the Meridian contract loaded and validated.
 4. Deploy through the repo-owned Azure Container Apps lane if runtime code changes require a new image.
 5. Run signed-in Meridian Home KNOW proof for the three required CDAO questions and capture transcripts/screenshots.
+6. Follow up with the Home V7 composer hardening PR if Chrome proof shows the route is correct but answer text is too shallow for demo use.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Required before any runtime proof claim if merged code differs from live.
 - Shared runtime mutators: Azure Postgres `intelligence_v7` load through the approved operator path.
-- Approved image digest: Pending after merge/deploy.
-- ACA runtime invariant: Pending after deploy.
-- Worker image invariant: Pending for the operator load job.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:90c63a51322ae26183a2b602b756852bbe1e72a41f86fd36f3dbec197a1fc35c` after the active-pack selector deployment.
+- ACA runtime invariant: Pass; web template and 100 percent traffic revision were on the approved digest after deployment.
+- Worker image invariant: Pass; delivery worker jobs matched the approved digest after deployment.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes.
 
@@ -87,7 +91,11 @@ Code rollback reverts the PR. Data rollback marks the Meridian V7 tenant pack ru
 - V7 derivation summary: `out/meridian-health-v6-v7-current-state-v1-v7-derivation-summary.json`
 - Tower sync summary: `out/meridian-health-v6-v7-current-state-v1-tower-sync.json`
 - Generated dataset manifest: `datasets/meridian-health-v6-v7-current-state-v1/V6_V7_GENERATED_MANIFEST.json`
-- Pending: PR URL, CI, Azure load summary, SQL readback, signed-in Home transcripts/screenshots.
+- PRs: `https://github.com/abarva-platform/abarva/pull/4641`, `https://github.com/abarva-platform/abarva/pull/4642`, plus follow-up Home V7 composer hardening.
+- ACA deploy workflow runs: `29041065478` for the data-layer merge and `29042347525` for the Home active-pack selector merge.
+- Azure V7 load execution: `job-abarva-private-operator-eus-kj2hxad`.
+- Azure readback execution: `job-abarva-private-operator-eus-bssz0lg`.
+- Signed-in Chrome proof artifacts: `/tmp/meridian-home-chrome-proof-*.json` and `/tmp/meridian-home-targeted-proof-*.json`.
 
 ## Known Gaps
 
