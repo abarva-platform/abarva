@@ -838,6 +838,10 @@
   align-items: stretch;
 }
 
+.detailShellChatCollapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .chatPane {
   background: var(--abarva-navy-ink);
   color: #eff6ff;
@@ -852,6 +856,53 @@
 .chatHead {
   padding: 12px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.origChatHeadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.origChatClose {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #eff6ff;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.origChatClose:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.origAvaLauncher {
+  appearance: none;
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: var(--abarva-navy-ink);
+  box-shadow: 0 18px 44px rgba(12, 26, 58, 0.22);
+  cursor: pointer;
+}
+
+.origAvaLauncher:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 52px rgba(12, 26, 58, 0.28);
 }
 
 .agentRow {

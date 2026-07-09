@@ -2599,14 +2599,16 @@ export function StrategicMovePhaseClient({
           canvas is passed as its workspace pane. */}
       <AgentDock
         agent={{
-          initials: "Av",
+          initials: "aVa",
           mark: "ava",
-          name: "Ava",
-          role: config.shortLabel,
+          name: "aVa",
+          role: "Move advisor",
         }}
         key={`dock-${dockRemount}`}
         surface={`/strategic-moves/${move.id}/phase/${phaseNum}`}
-        defaultMode={useWorkbench ? "collapsed" : "side-rail"}
+        defaultMode="collapsed"
+        collapsedRestoreMode="expand"
+        collapsedSummary={{ label: "aVa", detail: config.shortLabel }}
         isAgentBusy={streaming}
         thread={dockThread}
         suggestedActions={dockSuggestedActions}

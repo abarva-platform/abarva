@@ -40,8 +40,6 @@ import {
 import { CANVAS } from "@/components/source/canvas/canvas-tokens";
 import { ResizableSplitter } from "@/components/source/canvas/ResizableSplitter";
 import { SynthesisFeedbackWidget } from "@/components/reasoning/SynthesisFeedbackWidget";
-import { AvaWordmark } from "@/components/brand/AvaWordmark";
-import { shapeAgentResponseForSurface } from "@/lib/agent/response-shape";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { demoSafeClientText } from "@/lib/client-config";
@@ -324,6 +322,8 @@ export type DockMode =
   | "expand"
   | "collapsed";
 
+type RestorableDockMode = Exclude<DockMode, "collapsed">;
+
 export const DOCK_MODES: readonly DockMode[] = [
   "side-rail",
   "side-rail-right",
@@ -425,6 +425,8 @@ export interface AgentDockProps {
   /** Suppress loud draft/citation review chrome while preserving the normal rail layout. */
   quietReviewChrome?: boolean;
   defaultMode?: DockMode;
+  /** Mode to open when the collapsed chip is invoked. Defaults to the last rich mode. */
+  collapsedRestoreMode?: RestorableDockMode;
   /** Free-form context passed back to the API on submit. */
   surfaceContext?: Record<string, unknown>;
   /** Optional "in reply to …" quote rendered above the composer. */
@@ -497,6 +499,13 @@ function writeStoredMode(surface: string, mode: DockMode): void {
   } catch {
     /* ignore */
   }
+}
+
+function resolveCollapsedRestoreMode(
+  defaultMode: DockMode,
+  collapsedRestoreMode?: RestorableDockMode,
+): RestorableDockMode {
+  return collapsedRestoreMode ?? (defaultMode === "collapsed" ? "side-rail" : defaultMode);
 }
 
 // ── Mime allowlist (matches API + spec) ───────────────────────────────────
@@ -635,6 +644,7 @@ export function AgentDock(props: AgentDockProps) {
     variant = "standard",
     quietReviewChrome = false,
     defaultMode = "side-rail",
+    collapsedRestoreMode,
     surfaceContext: rawSurfaceContext,
     initialQuote: rawInitialQuote,
     suggestedActions: rawSuggestedActions = [],
@@ -706,7 +716,9 @@ export function AgentDock(props: AgentDockProps) {
   const previousSurfaceRef = useRef(surface);
   // Last non-collapsed mode — used when restoring from the floating chip.
   const [lastRichMode, setLastRichMode] = useState<DockMode>(
-    mode === "collapsed" ? defaultMode : mode,
+    mode === "collapsed"
+      ? resolveCollapsedRestoreMode(defaultMode, collapsedRestoreMode)
+      : mode,
   );
 
   useEffect(() => {
@@ -714,8 +726,12 @@ export function AgentDock(props: AgentDockProps) {
     previousSurfaceRef.current = surface;
     const nextMode = readStoredMode(surface) ?? defaultMode;
     setModeState(nextMode);
-    setLastRichMode(nextMode === "collapsed" ? defaultMode : nextMode);
-  }, [defaultMode, surface]);
+    setLastRichMode(
+      nextMode === "collapsed"
+        ? resolveCollapsedRestoreMode(defaultMode, collapsedRestoreMode)
+        : nextMode,
+    );
+  }, [collapsedRestoreMode, defaultMode, surface]);
 
   const setMode = useCallback(
     (next: DockMode) => {
@@ -980,6 +996,9 @@ export function AgentDock(props: AgentDockProps) {
   );
   const collapsedSummaryLabel = collapsedSummary?.label;
   const collapsedSummaryDetail = collapsedSummary?.detail;
+  const collapsedRestoreLabel = collapsedSummaryDetail
+    ? `${collapsedSummaryLabel ?? displayAgentName}: ${collapsedSummaryDetail}`
+    : `Restore ${collapsedSummaryLabel ?? displayAgentName} chat`;
   const visibleSuggestedActions = useMemo(
     () =>
       focused && thread.length > 0 && !keepSuggestedActionsVisible
@@ -1023,7 +1042,7 @@ export function AgentDock(props: AgentDockProps) {
         {/* Header */}
         <div style={HEADER_STYLE}>
           <div style={AGENT_ROW_STYLE}>
-            <AvaWordmark tone="light" style={AGENT_WORDMARK_STYLE} />
+            <AvaAskMark variant="wordmark-light" style={AGENT_WORDMARK_STYLE} />
             <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
               <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
             </div>
@@ -1220,7 +1239,7 @@ export function AgentDock(props: AgentDockProps) {
             value={draft}
             onChange={(e) => onChangeDraft(e.target.value)}
             onKeyDown={onComposerKeyDown}
-            placeholder={`Ask ${displayAgentName}…`}
+            placeholder={placeholder ?? `Ask ${displayAgentName}…`}
             rows={1}
             spellCheck
             disabled={submitting}
@@ -1266,7 +1285,6 @@ export function AgentDock(props: AgentDockProps) {
     onComposerKeyDown,
     canExportSession,
     placeholder,
-    preserveVisibleText,
     onDragLeave,
     onDragOver,
     onDrop,
@@ -1279,7 +1297,6 @@ export function AgentDock(props: AgentDockProps) {
     setMode,
     showReviewChrome,
     surface,
-    surfaceContext,
     startUploads,
     submit,
     submitting,
@@ -1292,23 +1309,26 @@ export function AgentDock(props: AgentDockProps) {
   // ── Render by mode ──────────────────────────────────────────────────────
 
   if (mode === "collapsed") {
+    const restoreMode =
+      lastRichMode === "collapsed"
+        ? resolveCollapsedRestoreMode(defaultMode, collapsedRestoreMode)
+        : lastRichMode;
     return (
       <>
         {workspace}
         <button
           type="button"
-          aria-label={`Restore ${displayAgentName} chat`}
+          aria-label={collapsedRestoreLabel}
           data-testid="agent-dock-collapsed-chip"
-          onClick={() =>
-            setMode(lastRichMode === "collapsed" ? "side-rail" : lastRichMode)
-          }
-          onDoubleClick={() =>
-            setMode(lastRichMode === "collapsed" ? "side-rail" : lastRichMode)
-          }
+          onClick={() => setMode(restoreMode)}
+          onDoubleClick={() => setMode(restoreMode)}
           style={COLLAPSED_CHIP_STYLE}
         >
           <span style={COLLAPSED_CHIP_INITIALS_STYLE}>
-            <AvaWordmark tone="light" style={{ width: 42 }} />
+            <AvaAskMark
+              variant="wordmark-light"
+              style={{ width: 42, minWidth: 42 }}
+            />
           </span>
         </button>
       </>
@@ -2404,36 +2424,6 @@ const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
   fontSize: 18,
   fontWeight: 500,
   letterSpacing: "0.02em",
-};
-
-const COLLAPSED_CHIP_AVA_MARK_STYLE: CSSProperties = {
-  minWidth: 41,
-  width: 41,
-  fontSize: 22,
-};
-
-const COLLAPSED_CHIP_LABEL_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  fontWeight: 700,
-  letterSpacing: 0,
-  whiteSpace: "nowrap",
-};
-
-const COLLAPSED_CHIP_TEXT_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 2,
-  textAlign: "left",
-  lineHeight: 1.1,
-};
-
-const COLLAPSED_CHIP_DETAIL_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: 0,
-  whiteSpace: "nowrap",
-  opacity: 0.78,
 };
 
 // ── Agent busy throbber ───────────────────────────────────────────────────

@@ -252,6 +252,7 @@ export function StrategicMoveOriginateClient({
     fields: { ...INITIAL_FIELDS },
   });
   const [composer, setComposer] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [scaffoldOpen, setScaffoldOpen] = useState(false);
@@ -643,13 +644,18 @@ export function StrategicMoveOriginateClient({
       </div>
 
       {/* orig-grid */}
-      <section id="orig-grid" className={styles.detailShell}>
+      <section
+        id="orig-grid"
+        className={`${styles.detailShell} ${chatOpen ? "" : styles.detailShellChatCollapsed}`.trim()}
+      >
         {/* orig-chat */}
+        {chatOpen ? (
         <aside id="orig-chat" className={styles.chatPane}>
           <div className={styles.chatHead}>
+            <div className={styles.origChatHeadRow}>
             <div className={styles.agentRow}>
               <AvaAskMark
-                variant="avatar-dark"
+                variant="wordmark-light"
                 style={{ width: 52, minWidth: 52 }}
               />
               <div>
@@ -658,6 +664,15 @@ export function StrategicMoveOriginateClient({
                   New Move
                 </div>
               </div>
+            </div>
+            <button
+              type="button"
+              className={styles.origChatClose}
+              onClick={() => setChatOpen(false)}
+              aria-label="Collapse aVa chat"
+            >
+              &#10005;
+            </button>
             </div>
           </div>
 
@@ -772,6 +787,7 @@ export function StrategicMoveOriginateClient({
             </div>
           </div>
         </aside>
+        ) : null}
 
         {/* orig-canvas */}
         <article id="orig-canvas" className={styles.rightPane}>
@@ -942,6 +958,21 @@ export function StrategicMoveOriginateClient({
           </footer>
         </article>
       </section>
+
+      {!chatOpen ? (
+        <button
+          type="button"
+          className={styles.origAvaLauncher}
+          onClick={() => setChatOpen(true)}
+          aria-label="Open aVa chat"
+          data-testid="orig-ava-launcher"
+        >
+          <AvaAskMark
+            variant="wordmark-light"
+            style={{ width: 42, minWidth: 42 }}
+          />
+        </button>
+      ) : null}
 
       {/* Discard confirmation */}
       {showConfirm ? (

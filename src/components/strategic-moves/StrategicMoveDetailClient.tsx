@@ -261,20 +261,18 @@ export function StrategicMoveDetailClient({
   return (
     <AgentDock
       agent={{
-        initials: "A",
-        name: presentationMode ? "aVa" : "Ava",
-        role: presentationMode ? "Move advisor" : "Strategic Moves Conductor",
+        initials: "aVa",
+        mark: "ava",
+        name: "aVa",
+        role: "Move advisor",
       }}
       surface={presentationMode ? "moves/detail/presentation" : "moves/detail"}
       quietReviewChrome
-      defaultMode={presentationMode ? "collapsed" : "side-rail"}
+      defaultMode="collapsed"
+      collapsedRestoreMode="expand"
       defaultLeftPercent={35}
       minLeftPx={320}
-      collapsedSummary={
-        presentationMode
-          ? { label: "Ask aVa", detail: "Open the Move advisor" }
-          : undefined
-      }
+      collapsedSummary={{ label: "aVa", detail: "Open the Move advisor" }}
       surfaceContext={{
         moveId: move.id,
         moveCode,
