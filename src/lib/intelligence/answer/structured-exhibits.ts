@@ -609,6 +609,46 @@ function stripResidualTableFragments(prose: string): string {
     .trim();
 }
 
+function requestedVisualFallbackTable(
+  routing: RoutingDecision,
+  prose: string,
+  citationIds: string[],
+): AnswerTable | null {
+  if (!hasExplicitStructuredArtifactRequest(routing)) return null;
+  const query = routing.query.toLowerCase();
+  const hasOrphanPipeHeader = prose
+    .split(/\r?\n/)
+    .some((line) => (line.match(/\|/g) ?? []).length >= 2);
+  if (!hasOrphanPipeHeader && !isQuadrantMatrixRequest(query)) return null;
+  const requested = [
+    wantsTableArtifact(query) ? "table" : null,
+    wantsChartArtifact(query) ? "chart" : null,
+    wantsGraphArtifact(query) ? "graph" : null,
+  ]
+    .filter(Boolean)
+    .join(" / ");
+  return {
+    id: "answer-requested-visual-fallback",
+    title: "Requested Visual Boundary",
+    columns: [
+      { key: "request", label: "Requested output" },
+      { key: "status", label: "Render status" },
+      { key: "evidenceNeeded", label: "Evidence needed" },
+    ],
+    rows: [
+      {
+        request: requested || "structured exhibit",
+        status: "Needs validated rows before rendering as a decision artifact",
+        evidenceNeeded:
+          "Load or cite the ranked items, values, complexity/readiness scores, and source basis for each row.",
+      },
+    ],
+    note:
+      "aVa did not expose unvalidated model text as a table or chart. Load source-backed rows to render the requested visual.",
+    citationIds,
+  };
+}
+
 function exactCurrencyOrNumber(value: string | number | null): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value !== "string") return null;
@@ -1128,6 +1168,12 @@ export function buildStructuredExhibits(
       input.routing.outputShape === "chart" ||
       input.routing.outputShape === "graph")
   ) {
+    const fallback = requestedVisualFallbackTable(
+      input.routing,
+      inline.prose,
+      citations.map((citation) => citation.id),
+    );
+    if (fallback) tables.push(fallback);
     tables.push(availableContextTable(citations));
   }
 

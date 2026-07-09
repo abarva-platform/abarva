@@ -127,24 +127,12 @@ function validateSession(
     const answer = turn.answer
       ? validateAvaAnswerPacket(turn.answer)
       : null;
-    if (answer && !answer.passed) {
-      return {
-        error: Response.json(
-          {
-            error: "invalid_answer_packet",
-            turnId: turn.id,
-            violations: answer.violations,
-          },
-          { status: 422 },
-        ),
-      };
-    }
     turns.push({
       id: turn.id,
       role: turn.role,
       body: turn.body.slice(0, 30_000),
       at: typeof turn.at === "string" ? turn.at : undefined,
-      answer: answer?.packet ?? null,
+      answer: answer?.passed ? answer.packet : null,
     });
   }
 

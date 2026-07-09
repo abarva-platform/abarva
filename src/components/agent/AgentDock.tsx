@@ -420,7 +420,7 @@ export interface AgentDockProps {
   /**
    * `standard` keeps the full operational dock used by Source/Moves/Tower.
    * `focused` keeps the chat rail quiet for GPT-like advisor surfaces and
-   * leaves citations, artifacts, feedback, and guardrails to the workspace.
+   * renders governed answer artifacts without repeating packet chrome.
    */
   variant?: "standard" | "focused";
   /** Suppress loud draft/citation review chrome while preserving the normal rail layout. */
@@ -1126,11 +1126,14 @@ export function AgentDock(props: AgentDockProps) {
                 turn.citations.length > 0 ? (
                   <EvidenceBasis citations={turn.citations} />
                 ) : null}
-                {!focused &&
-                turn.role === "agent" &&
+                {turn.role === "agent" &&
                 shouldRenderAvaArtifactsInDock(surface, turn.agentAnswer) ? (
                   <div style={{ marginTop: 12 }}>
-                    <AgentAnswerRenderer answer={turn.agentAnswer} />
+                    <AgentAnswerRenderer
+                      answer={turn.agentAnswer}
+                      showChrome={!focused}
+                      showProse={!focused}
+                    />
                   </div>
                 ) : null}
                 {!focused && turn.role === "agent" && turn.feedbackEventId ? (

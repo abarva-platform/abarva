@@ -1226,6 +1226,78 @@ describe("AgentDock · thread render", () => {
     expect(turn).toHaveTextContent("IROPS agentic recovery");
   });
 
+  it("renders Intelligence artifacts in focused mode without duplicating packet prose", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        variant="focused"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body: "Demand sensing is the strongest near-term bet.",
+            agentAnswer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "lakeshore-holdings",
+              question: "Rank supply-chain AI use cases.",
+              intent: "chart",
+              status: "answered",
+              directAnswer: "Demand sensing is the strongest near-term bet.",
+              artifacts: [
+                {
+                  artifact: "table",
+                  id: "lakeshore-ai-bets",
+                  title: "AI Bet Matrix",
+                  columns: [
+                    { key: "bet", label: "Bet" },
+                    { key: "posture", label: "Posture" },
+                  ],
+                  rows: [
+                    {
+                      bet: "Demand sensing",
+                      posture: "High value, moderate complexity",
+                    },
+                  ],
+                },
+              ],
+              citations: [],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              quality: {
+                confidence: "high",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+              nextSteps: [],
+              gaps: [],
+              caveats: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent(
+      "Demand sensing is the strongest near-term bet.",
+    );
+    expect(turn).toHaveTextContent("AI Bet Matrix");
+    expect(turn).toHaveTextContent("High value, moderate complexity");
+    expect(turn).not.toHaveTextContent("aVa · intelligence");
+  });
+
   it("keeps auto-scroll inside the thread pane when new turns arrive", async () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const scrollIntoView = jest.fn();

@@ -107,6 +107,12 @@ function payloadValue(
     : undefined;
 }
 
+function hasRawMarkdownTableFragment(value: string): boolean {
+  return value
+    .split(/\r?\n/)
+    .some((line) => (line.match(/\|/g) ?? []).length >= 2);
+}
+
 export function AdvisoryIntelligencePage({
   viewModel,
 }: {
@@ -237,12 +243,14 @@ export function AdvisoryIntelligencePage({
         if (event.type === "agent-answer" && isAvaAnswerPacket(event.answer)) {
           const packetBody = answerBodyFromPacket(event.answer);
           const hasArtifacts = event.answer.artifacts.length > 0;
+          const hasRawTableLeak = hasRawMarkdownTableFragment(m.answer);
           return {
             ...m,
             agentAnswer: event.answer,
             answer:
               packetBody &&
               (hasArtifacts ||
+                hasRawTableLeak ||
                 !m.answer.trim() ||
                 packetBody.length >= m.answer.trim().length / 2)
                 ? packetBody
