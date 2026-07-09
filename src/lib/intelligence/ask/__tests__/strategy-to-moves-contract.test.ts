@@ -99,6 +99,28 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     }
   });
 
+  it("does not append a duplicate generic table when an existing phase table only misses one phase", () => {
+    const answer = applyCxoAnswerModeFallbacks(
+      [
+        "| Phase | Checkpoint |",
+        "|---|---|",
+        "| P0 Originate | Frame the bet. |",
+        "| P1 Charter | Sign the charter. |",
+        "| P2 Understand Current State | Ground the evidence. |",
+        "| P3 Choose the Approach | Pick the path. |",
+        "| P5 Prepare to Execute | Confirm readiness. |",
+        "| Tower Track Outcomes | Track value. |",
+      ].join("\n"),
+      "strategy_to_moves_execution",
+    );
+
+    expect(answer).toContain("**Moves phase contract completion**");
+    expect(answer).toContain("P4 Build the Plan");
+    expect(
+      answer.match(/\| Phase \| What AbarVa does \| Proposed output \|/g),
+    ).toBeNull();
+  });
+
   it("keeps safe-blocked answers useful by appending the governed phase contract", () => {
     const answer = applyCxoAnswerModeFallbacks(
       "I can't safely answer that from the currently loaded evidence.",
