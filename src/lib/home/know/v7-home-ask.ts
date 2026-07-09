@@ -105,11 +105,9 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
        order by loaded_at desc limit 1`
         : `select tenant_key, tenant_name, contract_version, source_dataset, row_count::int, field_count::int,
         graph_node_count::int, relationship_edge_count::int, chunk_count::int, loaded_at::text
-       from intelligence_v7.tenant_pack_runs
+       from intelligence_v7.current_tenant_pack_runs
        where tenant_key = $1
-         and superseded_at is null
-         and load_status in ('loaded', 'validated')
-       order by loaded_at desc limit 1`,
+       limit 1`,
       CONTRACT_VERSION_OVERRIDE ? [tenantKey, CONTRACT_VERSION_OVERRIDE] : [tenantKey],
     );
     const runRow = runs[0];

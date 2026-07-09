@@ -11,6 +11,16 @@ if (!payloadUrl && !payloadFile) throw new Error('V7_PAYLOAD_URL or V7_PAYLOAD_F
 const connectionString = process.env.DATABASE_URL || process.env.ABARVA_AZURE_DATABASE_URL || process.env.AZURE_DATABASE_URL;
 if (!connectionString) throw new Error('DATABASE_URL is required');
 const entitySqlFile = fileURLToPath(new URL('./sql/intelligence-v7-holdco-entity-spine.sql', import.meta.url));
+const moatSqlFile = fileURLToPath(new URL('./sql/intelligence-v7-moat-foundation.sql', import.meta.url));
+
+const MODULE_REQUIREMENTS = {
+  home: ['v7_01_enterprise_profile', 'v7_02_business_functions', 'v7_05_applications_systems', 'v7_06_data_assets_integrations', 'v7_13_source_evidence_registry', 'v7_20_chunk_retrieval_registry'],
+  intelligence: ['v7_01_enterprise_profile', 'v7_02_business_functions', 'v7_05_applications_systems', 'v7_06_data_assets_integrations', 'v7_09_programs_initiatives_business_priorities', 'v7_12_relationships_graph_edges', 'v7_15_industry_market_knowledge_patterns', 'v7_16_expert_lenses'],
+  moves: ['v7_09_programs_initiatives_business_priorities', 'v7_12_relationships_graph_edges', 'v7_14_metric_definitions', 'v7_22_operational_evidence_process_intelligence'],
+  source: ['v7_07_vendors_contracts', 'v7_08_spend_value', 'v7_13_source_evidence_registry', 'v7_18_function_system_data_vendor_bridge'],
+  tower: ['v7_08_spend_value', 'v7_09_programs_initiatives_business_priorities', 'v7_10_ai_initiatives', 'v7_14_metric_definitions'],
+  export: ['v7_13_source_evidence_registry', 'v7_20_chunk_retrieval_registry'],
+};
 
 function key(...parts) {
   return parts.filter((part) => part !== undefined && part !== null && part !== '').join(':').replace(/[^a-zA-Z0-9:_./-]+/g, '_').slice(0, 360);
@@ -292,6 +302,207 @@ async function applyEntityReadModel(client) {
   await q(client, sql);
 }
 
+async function applyMoatFoundation(client) {
+  const sql = fs.readFileSync(moatSqlFile, 'utf8');
+  await q(client, sql);
+}
+
+function tenantDimensionCounts(tenant) {
+  const counts = new Map();
+  for (const file of tenant.files) {
+    counts.set(file.dimensionKey, (counts.get(file.dimensionKey) ?? 0) + file.rows.length);
+  }
+  return counts;
+}
+
+function readinessStatus(score, missingDimensions) {
+  if (missingDimensions.length > 0) return score >= 70 ? 'partial' : 'blocked';
+  if (score >= 85) return 'ready';
+  if (score >= 60) return 'partial';
+  return 'blocked';
+}
+
+function buildModuleReadinessRows({ tenant, contractVersion, fieldCount, edgeCount, chunkCount }) {
+  const counts = tenantDimensionCounts(tenant);
+  const sourceFiles = tenant.files.map((file) => ({
+    file: file.file,
+    dimensionKey: file.dimensionKey,
+    rows: file.rows.length,
+    checksumSha256: file.checksumSha256,
+  }));
+  return Object.entries(MODULE_REQUIREMENTS).map(([moduleKey, requiredDimensions]) => {
+    const presentDimensions = requiredDimensions.filter((dimension) => (counts.get(dimension) ?? 0) > 0);
+    const missingDimensions = requiredDimensions.filter((dimension) => !presentDimensions.includes(dimension));
+    const factCoverageScore = Math.round((presentDimensions.length / requiredDimensions.length) * 100);
+    const sourceCoverageScore = Math.min(100, Math.round((sourceFiles.filter((file) => requiredDimensions.includes(file.dimensionKey)).length / requiredDimensions.length) * 100));
+    const relationshipCoverageScore = requiredDimensions.includes('v7_12_relationships_graph_edges') ? (edgeCount > 0 ? 100 : 0) : 100;
+    const retrievalCoverageScore = requiredDimensions.includes('v7_20_chunk_retrieval_registry') ? (chunkCount > 0 ? 100 : 0) : 100;
+    const readinessScore = Math.round((factCoverageScore * 0.45) + (sourceCoverageScore * 0.25) + (relationshipCoverageScore * 0.2) + (retrievalCoverageScore * 0.1));
+    const blockers = [
+      ...missingDimensions.map((dimension) => `Missing required dimension ${dimension}.`),
+      ...(fieldCount > 0 ? [] : ['No field facts were loaded for this contract.']),
+      ...(requiredDimensions.includes('v7_12_relationships_graph_edges') && edgeCount === 0 ? ['No relationship edges loaded for graph-backed reasoning.'] : []),
+      ...(requiredDimensions.includes('v7_20_chunk_retrieval_registry') && chunkCount === 0 ? ['No retrieval registry chunks loaded for evidence retrieval.'] : []),
+    ];
+    return {
+      readinessKey: key('readiness', tenant.tenantKey, contractVersion, moduleKey),
+      moduleKey,
+      readinessStatus: readinessStatus(readinessScore, missingDimensions),
+      readinessScore,
+      requiredDimensions,
+      presentDimensions,
+      missingDimensions,
+      sourceCoverageScore,
+      factCoverageScore,
+      relationshipCoverageScore,
+      retrievalCoverageScore,
+      unsupportedClaimRisk: blockers.length > 0 ? 'medium' : 'low',
+      blockers,
+      proofRefs: sourceFiles.filter((file) => requiredDimensions.includes(file.dimensionKey)),
+    };
+  });
+}
+
+async function promoteTenantContract(client, { tenant, runKey, activeBefore, expectedRows, fieldCount, nodeCount, edgeCount, chunkCount }) {
+  const rollbackContractVersion = activeBefore ?? null;
+  const sourceFiles = tenant.files.map((file) => ({
+    file: file.file,
+    dimensionKey: file.dimensionKey,
+    rows: file.rows.length,
+    checksumSha256: file.checksumSha256,
+  }));
+  const promotionKey = key('promotion', tenant.tenantKey, payload.contractVersion, runKey);
+  const promotionMetadata = {
+    runKey,
+    sourceDataset: payload.sourceDataDir,
+    fileCount: tenant.files.length,
+    rowCount: expectedRows,
+    fieldCount,
+    graphNodeCount: nodeCount,
+    relationshipEdgeCount: edgeCount,
+    chunkCount,
+  };
+  await q(client, `
+    insert into intelligence_v7.active_tenant_contract_versions(
+      tenant_key, active_contract_version, rollback_contract_version, promotion_status,
+      promoted_by, promoted_at, proof_bundle_uri, promotion_notes, metadata, updated_at
+    )
+    values($1,$2,$3,'active','v7-loader',now(),$4,$5,$6::jsonb,now())
+    on conflict(tenant_key) do update set
+      active_contract_version=excluded.active_contract_version,
+      rollback_contract_version=excluded.rollback_contract_version,
+      promotion_status='active',
+      promoted_by=excluded.promoted_by,
+      promoted_at=excluded.promoted_at,
+      proof_bundle_uri=excluded.proof_bundle_uri,
+      promotion_notes=excluded.promotion_notes,
+      metadata=excluded.metadata,
+      updated_at=now()`,
+    [
+      tenant.tenantKey,
+      payload.contractVersion,
+      rollbackContractVersion,
+      payload.proofBundleUri || null,
+      'Promoted by V7 tenant loader after schema reconciliation and load validation.',
+      JSON.stringify(promotionMetadata),
+    ]);
+  await q(client, `
+    insert into intelligence_v7.tenant_contract_promotion_events(
+      event_key, tenant_key, from_contract_version, to_contract_version, event_type,
+      promotion_status, actor, reason, validation_summary, proof_bundle_uri
+    )
+    values($1,$2,$3,$4,'promote','passed','v7-loader',$5,$6::jsonb,$7)
+    on conflict(event_key) do nothing`,
+    [
+      promotionKey,
+      tenant.tenantKey,
+      rollbackContractVersion,
+      payload.contractVersion,
+      'Validated V7 tenant pack and made it the active contract version.',
+      JSON.stringify(promotionMetadata),
+      payload.proofBundleUri || null,
+    ]);
+
+  for (const row of buildModuleReadinessRows({ tenant, contractVersion: payload.contractVersion, fieldCount, edgeCount, chunkCount })) {
+    await q(client, `
+      insert into intelligence_v7.module_readiness_scores(
+        readiness_key, tenant_key, contract_version, module_key, readiness_status, readiness_score,
+        required_dimensions, present_dimensions, missing_dimensions, source_coverage_score,
+        fact_coverage_score, relationship_coverage_score, retrieval_coverage_score,
+        unsupported_claim_risk, blockers, proof_refs, metadata, updated_at
+      )
+      values($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,$10,$11,$12,$13,$14,$15::jsonb,$16::jsonb,$17::jsonb,now())
+      on conflict(readiness_key) do update set
+        readiness_status=excluded.readiness_status,
+        readiness_score=excluded.readiness_score,
+        required_dimensions=excluded.required_dimensions,
+        present_dimensions=excluded.present_dimensions,
+        missing_dimensions=excluded.missing_dimensions,
+        source_coverage_score=excluded.source_coverage_score,
+        fact_coverage_score=excluded.fact_coverage_score,
+        relationship_coverage_score=excluded.relationship_coverage_score,
+        retrieval_coverage_score=excluded.retrieval_coverage_score,
+        unsupported_claim_risk=excluded.unsupported_claim_risk,
+        blockers=excluded.blockers,
+        proof_refs=excluded.proof_refs,
+        metadata=excluded.metadata,
+        updated_at=now()`,
+      [
+        row.readinessKey,
+        tenant.tenantKey,
+        payload.contractVersion,
+        row.moduleKey,
+        row.readinessStatus,
+        row.readinessScore,
+        JSON.stringify(row.requiredDimensions),
+        JSON.stringify(row.presentDimensions),
+        JSON.stringify(row.missingDimensions),
+        row.sourceCoverageScore,
+        row.factCoverageScore,
+        row.relationshipCoverageScore,
+        row.retrievalCoverageScore,
+        row.unsupportedClaimRisk,
+        JSON.stringify(row.blockers),
+        JSON.stringify(row.proofRefs),
+        JSON.stringify({ runKey, sourceDataset: payload.sourceDataDir }),
+      ]);
+  }
+
+  await q(client, `
+    insert into intelligence_v7.derived_intelligence_quality_reports(
+      report_key, tenant_key, contract_version, derived_ref, module_key, gate_status,
+      confidence, source_fact_refs, graph_relationship_refs, assumptions, evidence_gaps,
+      not_allowed_claims, derivation_reason, blocked_reasons
+    )
+    values($1,$2,$3,$4,'platform',$5,$6,$7::jsonb,$8::jsonb,'[]'::jsonb,$9::jsonb,$10::jsonb,$11,$12::jsonb)
+    on conflict(report_key) do update set
+      gate_status=excluded.gate_status,
+      confidence=excluded.confidence,
+      source_fact_refs=excluded.source_fact_refs,
+      graph_relationship_refs=excluded.graph_relationship_refs,
+      evidence_gaps=excluded.evidence_gaps,
+      not_allowed_claims=excluded.not_allowed_claims,
+      derivation_reason=excluded.derivation_reason,
+      blocked_reasons=excluded.blocked_reasons`,
+    [
+      key('quality', tenant.tenantKey, payload.contractVersion, 'aggregate'),
+      tenant.tenantKey,
+      payload.contractVersion,
+      `contract:${payload.contractVersion}:aggregate`,
+      fieldCount > 0 && expectedRows > 0 ? 'passed' : 'blocked',
+      edgeCount > 0 ? 'high' : 'medium',
+      JSON.stringify(sourceFiles),
+      JSON.stringify(edgeCount > 0 ? [{ contractVersion: payload.contractVersion, edgeCount }] : []),
+      JSON.stringify([]),
+      JSON.stringify([
+        'Do not describe synthetic or planning-grade fields as client-approved production facts.',
+        'Do not derive ROI, cost, risk, or benchmark conclusions unless the source fact refs support the value.',
+      ]),
+      'Aggregate quality gate written by the V7 loader from loaded facts, relationship edges, retrieval chunks, and source file lineage.',
+      JSON.stringify(fieldCount > 0 && expectedRows > 0 ? [] : ['No loadable field facts or business records were present.']),
+    ]);
+}
+
 const payload = payloadFile
   ? JSON.parse(fs.readFileSync(payloadFile, 'utf8'))
   : await fetch(payloadUrl).then(async (r) => {
@@ -305,6 +516,7 @@ const summary = { generatedAt: new Date().toISOString(), contractVersion: payloa
 try {
   await client.query('begin');
   await ensureSchema(client);
+  await applyMoatFoundation(client);
   await q(client, `insert into intelligence_v7.contract_versions(contract_version, contract_name, status, generated_from, metadata, updated_at)
     values($1,$2,'active',$3,$4::jsonb,now())
     on conflict(contract_version) do update set status='active', metadata=excluded.metadata, updated_at=now()`,
@@ -339,7 +551,8 @@ try {
 
   for (const tenant of payload.tenantPacks) {
     const runKey = key('run', payload.contractVersion, tenant.tenantKey);
-    await q(client, `update intelligence_v7.tenant_pack_runs set superseded_at=now(), load_status='superseded' where tenant_key=$1 and run_key<>$2 and superseded_at is null`, [tenant.tenantKey, runKey]);
+    const activeBefore = await q(client, `select active_contract_version from intelligence_v7.active_tenant_contract_versions where tenant_key=$1`, [tenant.tenantKey]);
+    const rollbackContractVersion = activeBefore.rows[0]?.active_contract_version ?? null;
     await q(client, `delete from intelligence_v7.tenant_pack_runs where run_key=$1`, [runKey]);
     const expectedRows = tenant.files.reduce((sum, f) => sum + f.rows.length, 0);
     await q(client, `insert into intelligence_v7.tenant_pack_runs(run_key, tenant_key, tenant_name, contract_version, source_dataset, load_status, file_count, row_count, field_count)
@@ -462,9 +675,20 @@ try {
     }
 
     const nodeCount = await q(client, `select count(*)::int as c from intelligence_v7.graph_nodes where tenant_key=$1 and contract_version=$2`, [tenant.tenantKey, payload.contractVersion]);
+    const graphNodeCount = Number(nodeCount.rows[0].c);
     await q(client, `update intelligence_v7.tenant_pack_runs set field_count=$1, graph_node_count=$2, relationship_edge_count=$3, chunk_count=$4, load_status='validated', validation_report=$5::jsonb where run_key=$6`,
-      [fieldCount, nodeCount.rows[0].c, edgeCount, chunkCount, JSON.stringify({ expectedRows, fieldCount, edgeCount, chunkCount }), runKey]);
-    summary.tenants.push({ tenantKey: tenant.tenantKey, files: tenant.files.length, rows: expectedRows, fields: fieldCount, graphNodes: nodeCount.rows[0].c, relationshipEdges: edgeCount, chunks: chunkCount });
+      [fieldCount, graphNodeCount, edgeCount, chunkCount, JSON.stringify({ expectedRows, fieldCount, edgeCount, chunkCount }), runKey]);
+    await promoteTenantContract(client, {
+      tenant,
+      runKey,
+      activeBefore: rollbackContractVersion,
+      expectedRows,
+      fieldCount,
+      nodeCount: graphNodeCount,
+      edgeCount,
+      chunkCount,
+    });
+    summary.tenants.push({ tenantKey: tenant.tenantKey, files: tenant.files.length, rows: expectedRows, fields: fieldCount, graphNodes: graphNodeCount, relationshipEdges: edgeCount, chunks: chunkCount, activeContractVersion: payload.contractVersion, rollbackContractVersion });
   }
 
   await applyEntityReadModel(client);
