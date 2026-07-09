@@ -279,8 +279,19 @@ export function AppTopBar({
         style={{
           display: "flex",
           alignItems: "center",
+          // `justifySelf: "end"` (not "stretch") sizes THIS ITEM to its own
+          // max-content and right-aligns it — meaning the item's border box
+          // can be wider than its `minmax(0, 1fr)` grid track, in which case
+          // its own `overflow: hidden` clips nothing (there's nothing outside
+          // the item's OWN box) and content instead bled left into the nav
+          // column (the actual live regression: "Tower"/"Learn" overlap
+          // persisted even after the track-sizing fix). `justifySelf:
+          // "stretch"` (the grid default) makes this item's box equal the
+          // track width, so overflow: hidden has a real boundary to clip
+          // against; `justifyContent: "flex-end"` keeps the content visually
+          // right-aligned within that now-track-width box.
+          justifyContent: "flex-end",
           gap: 16,
-          justifySelf: "end",
           minWidth: 0,
           overflow: "hidden",
         }}
