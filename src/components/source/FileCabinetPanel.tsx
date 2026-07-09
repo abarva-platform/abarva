@@ -6,6 +6,7 @@
 // download links. History (superseded versions) is opt-in.
 
 import { useCallback, useEffect, useState } from 'react';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface Artifact {
   id: string;
@@ -90,6 +91,19 @@ function Chip({ text, color }: { text: string; color?: string }) {
   return <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: `${color ?? '#6b6b6b'}1a`, color: color ?? '#6b6b6b' }}>{text}</span>;
 }
 
+// Rows in this table can carry generatedAt as either an ISO string
+// ("2026-07-09T...") or a plain JS Date.toString() ("Thu Jul 09 2026...")
+// depending on which write path produced them. A blind .slice(0, 10) makes
+// the same table show two different date formats for the same batch. Always
+// parse through Date so the displayed format is consistent regardless of
+// how the value was stored.
+function formatFileCabinetDate(value: string | null | undefined): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value.slice(0, 10);
+  return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
 export function FileCabinetPanel({ eventId, eventName }: { eventId: string; eventName?: string }) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [grouped, setGrouped] = useState<Record<string, Artifact[]>>({});
@@ -126,9 +140,12 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
     <div style={{ maxWidth: 1000, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: 24, color: NAVY, margin: 0 }}>File Cabinet</h1>
+          <div style={{ fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+            Source · File Cabinet
+          </div>
+          <h1 style={{ fontFamily: SHELL.SERIF, fontWeight: 400, fontSize: 24, color: NAVY, margin: 0 }}>File Cabinet</h1>
           <p style={{ color: '#706D66', fontSize: 13, marginTop: 4 }}>
-            Every artifact for {eventName ? <strong>{eventName}</strong> : 'this sourcing event'} — durably stored in Azure Blob, versioned, and re-downloadable.
+            Every artifact for {eventName ? <strong>{eventName}</strong> : 'this sourcing event'} — securely stored, versioned, and re-downloadable.
           </p>
         </div>
         <label style={{ fontSize: 12, color: '#706D66', display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -201,7 +218,7 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                     </td>
                     <td style={{ padding: '9px 8px', whiteSpace: 'nowrap' }}><Chip text={`v${a.version}`} color="#1d5e87" /></td>
                     <td style={{ padding: '9px 8px', whiteSpace: 'nowrap' }}><Chip text={a.status.replace(/_/g, ' ')} color={STATUS_COLOR[a.status]} /></td>
-                    <td style={{ padding: '9px 8px', whiteSpace: 'nowrap', color: '#9a9a9a', fontSize: 11 }}>{a.generatedAt?.slice(0, 10)}</td>
+                    <td style={{ padding: '9px 8px', whiteSpace: 'nowrap', color: '#9a9a9a', fontSize: 11 }}>{formatFileCabinetDate(a.generatedAt)}</td>
                     <td style={{ padding: '9px 14px', whiteSpace: 'nowrap', textAlign: 'right' }}>
                       <a
                         href={`/api/v1/source/artifacts/${a.id}/download${a.fileFormat === 'html' ? '?format=html' : ''}`}

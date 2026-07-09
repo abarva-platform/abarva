@@ -149,7 +149,7 @@ function Header({ totalCount }: { totalCount: number }) {
           color: SHELL.INK_MUTED,
         }}
       >
-        Reasoning layer · doctrine
+        Source · Patterns
       </div>
       <h1
         style={{

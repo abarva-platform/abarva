@@ -3,6 +3,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
+import { SHELL } from "@/lib/shell/shell-tokens";
 import {
   loadApprovalsInbox,
   type ApprovalsInboxItem,
@@ -10,7 +11,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const NAVY = "#0C1A3A";
+const NAVY = SHELL.INK;
 
 function money(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "";
@@ -55,38 +56,49 @@ export default async function SourceApprovalsPage() {
       }}
       subNav={<SourceSubNav />}
     >
-      <main
-        style={{ maxWidth: 880, margin: "0 auto", padding: "34px 24px 80px" }}
-      >
-        <header style={{ marginBottom: 18 }}>
-          <h1
-            style={{
-              fontFamily: "Georgia, serif",
-              fontWeight: 400,
-              fontSize: 28,
-              color: NAVY,
-              margin: 0,
-            }}
-          >
-            {inbox.items.length === 0
-              ? "Nothing waiting on you"
-              : `${inbox.items.length} waiting on you`}
-          </h1>
-          <p style={{ color: "#706D66", fontSize: 14, marginTop: 6 }}>
-            Every approval in one place. Each item has one button — it takes you
-            exactly where you decide. Approving with gaps is allowed: gaps are
-            recorded with your rationale and carried forward, never hidden.
-          </p>
-        </header>
+      <main style={{ padding: "28px 32px 80px" }}>
+        <div style={{ maxWidth: 880 }}>
+          <header style={{ marginBottom: 18 }}>
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: SHELL.INK_MUTED,
+                marginBottom: 10,
+              }}
+            >
+              Source · Approvals
+            </div>
+            <h1
+              style={{
+                fontFamily: SHELL.SERIF,
+                fontWeight: 400,
+                fontSize: 28,
+                color: NAVY,
+                margin: 0,
+              }}
+            >
+              {inbox.items.length === 0
+                ? "Nothing waiting on you"
+                : `${inbox.items.length} waiting on you`}
+            </h1>
+            <p style={{ color: SHELL.INK_SOFT, fontSize: 14, marginTop: 6 }}>
+              Every approval in one place. Each item has one button — it takes you
+              exactly where you decide. Approving with gaps is allowed: gaps are
+              recorded with your rationale and carried forward, never hidden.
+            </p>
+          </header>
 
         {inbox.items.length === 0 ? (
           <div
             style={{
-              background: "#fff",
-              border: "1px solid #e4e1da",
+              background: SHELL.CARD_WHITE,
+              border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 10,
               padding: 22,
-              color: "#706D66",
+              color: SHELL.INK_SOFT,
               fontSize: 14,
             }}
           >
@@ -101,8 +113,8 @@ export default async function SourceApprovalsPage() {
                 <div
                   key={`${item.kind}-${item.eventId}`}
                   style={{
-                    background: "#fff",
-                    border: "1px solid #e4e1da",
+                    background: SHELL.CARD_WHITE,
+                    border: `1px solid ${SHELL.CARD_LINE}`,
                     borderRadius: 10,
                     padding: "16px 18px",
                     display: "flex",
@@ -134,8 +146,8 @@ export default async function SourceApprovalsPage() {
                       <span
                         style={{
                           fontSize: 11,
-                          color: "#9a9a9a",
-                          fontFamily: "JetBrains Mono, monospace",
+                          color: SHELL.INK_MUTED,
+                          fontFamily: SHELL.MONO,
                         }}
                       >
                         {item.eventCode}
@@ -157,11 +169,11 @@ export default async function SourceApprovalsPage() {
                     >
                       {item.eventName}
                     </div>
-                    <div style={{ fontSize: 13, color: "#444", marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: SHELL.INK_MID, marginTop: 2 }}>
                       {item.ask}
                     </div>
                     <div
-                      style={{ fontSize: 12, color: "#706D66", marginTop: 2 }}
+                      style={{ fontSize: 12, color: SHELL.INK_SOFT, marginTop: 2 }}
                     >
                       {item.readiness}
                     </div>
@@ -171,7 +183,7 @@ export default async function SourceApprovalsPage() {
                     style={{
                       flexShrink: 0,
                       background: NAVY,
-                      color: "#fff",
+                      color: SHELL.CARD_WHITE,
                       padding: "10px 18px",
                       borderRadius: 8,
                       textDecoration: "none",
@@ -191,8 +203,8 @@ export default async function SourceApprovalsPage() {
         <section
           style={{
             marginTop: 28,
-            background: "#fff",
-            border: "1px solid #e4e1da",
+            background: SHELL.CARD_WHITE,
+            border: `1px solid ${SHELL.CARD_LINE}`,
             borderRadius: 10,
             padding: "14px 18px",
           }}
@@ -210,7 +222,7 @@ export default async function SourceApprovalsPage() {
           <ol
             style={{
               fontSize: 13,
-              color: "#444",
+              color: SHELL.INK_MID,
               margin: 0,
               paddingLeft: 18,
               lineHeight: 1.7,
@@ -229,6 +241,7 @@ export default async function SourceApprovalsPage() {
             </li>
           </ol>
         </section>
+        </div>
       </main>
     </AppShell>
   );

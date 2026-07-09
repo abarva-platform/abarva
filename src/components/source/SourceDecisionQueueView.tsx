@@ -41,6 +41,24 @@ import {
   type SourceTriageSort,
 } from "@/lib/source/queue/triage-banding";
 
+// Native <select> elements ignore most custom styling (border/radius render,
+// but the browser's own dropdown arrow still paints on top), which reads as
+// an unstyled system control next to the custom-designed Apply/New event
+// buttons beside it. appearance:none + an inlined SVG chevron makes it match.
+const SOURCE_QUEUE_SELECT_STYLE: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  color: SHELL.INK,
+  background:
+    `${SHELL.CARD_WHITE} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525866' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center`,
+  border: "1px solid " + SHELL.CARD_LINE,
+  borderRadius: 6,
+  padding: "8px 26px 8px 10px",
+  appearance: "none",
+  WebkitAppearance: "none",
+  cursor: "pointer",
+};
+
 const CARD: CSSProperties = {
   background: SHELL.CARD_WHITE,
   border: "1px solid " + SHELL.CARD_LINE,
@@ -810,15 +828,7 @@ function QueueToolbar({
           name="band"
           defaultValue={activeBand}
           data-testid="source-triage-filter"
-          style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 12,
-            color: SHELL.INK,
-            background: SHELL.CARD_WHITE,
-            border: "1px solid " + SHELL.CARD_LINE,
-            borderRadius: 6,
-            padding: "7px 10px",
-          }}
+          style={SOURCE_QUEUE_SELECT_STYLE}
         >
           <option value="all">All</option>
           <option value="overdue">Overdue</option>
@@ -843,15 +853,7 @@ function QueueToolbar({
           name="sort"
           defaultValue={sort}
           data-testid="source-triage-sort"
-          style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 12,
-            color: SHELL.INK,
-            background: SHELL.CARD_WHITE,
-            border: "1px solid " + SHELL.CARD_LINE,
-            borderRadius: 6,
-            padding: "7px 10px",
-          }}
+          style={SOURCE_QUEUE_SELECT_STYLE}
         >
           {Object.entries(TRIAGE_SORT_LABELS).map(([key, label]) => (
             <option key={key} value={key}>

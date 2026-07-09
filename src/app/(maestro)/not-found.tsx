@@ -6,42 +6,47 @@ import { SHELL } from '@/lib/shell/shell-tokens'
 export default function MaestroNotFound() {
   return (
     <AppShell surface="programs">
-      <AgentColumn
-        agent={{ initials: 'aVa', name: 'aVa', role: 'Workspace advisor' }}
-        quote="This item is not available for this account."
-        agentContext="Item unavailable"
-        actions={[
-          {
-            letter: 'A',
-            text: 'Go to Moves',
-            detail: 'Return to the Moves portfolio',
-          },
-          {
-            letter: 'B',
-            text: 'Go to Home',
-            detail: 'Return to the workspace home page',
-          },
-          {
-            letter: 'C',
-            text: 'Contact support',
-            detail: 'Reach the AbarVa support team',
-          },
-        ]}
-        surface="home"
-      />
+      {/* AppShell's children slot stacks its content in a column, but this
+          page needs the AgentColumn sidebar and the WorkPane side by side —
+          wrap both in an explicit row so the WorkPane isn't collapsed to
+          zero height by AgentColumn's own full-height sizing. */}
+      <div style={{ display: 'flex', flexDirection: 'row', flex: 1, minHeight: 0 }}>
+        <AgentColumn
+          agent={{ initials: 'aVa', name: 'aVa', role: 'Workspace advisor' }}
+          quote="This item is not available for this account."
+          agentContext="Item unavailable"
+          actions={[
+            {
+              letter: 'A',
+              text: 'Go to Moves',
+              detail: 'Return to the Moves portfolio',
+            },
+            {
+              letter: 'B',
+              text: 'Go to Home',
+              detail: 'Return to the workspace home page',
+            },
+            {
+              letter: 'C',
+              text: 'Contact support',
+              detail: 'Reach the AbarVa support team',
+            },
+          ]}
+          surface="home"
+        />
 
-      {/* WorkPane */}
-      <div
-        style={{
-          flex: 1,
-          background: SHELL.PAPER,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 24px',
-        }}
-      >
+        {/* WorkPane */}
+        <div
+          style={{
+            flex: 1,
+            background: SHELL.PAPER,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px 24px',
+          }}
+        >
         <div style={{ textAlign: 'center', maxWidth: 400 }}>
           {/* Decorative number */}
           <div
@@ -70,7 +75,7 @@ export default function MaestroNotFound() {
               letterSpacing: '-0.01em',
             }}
           >
-            Item unavailable
+            Can&rsquo;t open this
           </div>
 
           <div
@@ -82,8 +87,8 @@ export default function MaestroNotFound() {
               lineHeight: 1.6,
             }}
           >
-            This item may have moved, or your current account may not have access
-            to it.
+            It may have moved, or your current account doesn&rsquo;t have access
+            to it. Try one of the options aVa suggested, or head back to home.
           </div>
 
           <Link
@@ -99,6 +104,7 @@ export default function MaestroNotFound() {
           >
             ← Back to home
           </Link>
+        </div>
         </div>
       </div>
     </AppShell>
