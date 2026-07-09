@@ -17,6 +17,7 @@ import type {
   AnswerTable,
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
+import type { AvaChatSessionExport } from "@/lib/ava-answer/export/session-types";
 
 const styles = StyleSheet.create({
   page: {
@@ -104,6 +105,48 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#6b7280",
     marginTop: 6,
+  },
+  turn: {
+    borderLeftColor: "#dedacf",
+    borderLeftWidth: 3,
+    paddingLeft: 10,
+    marginBottom: 14,
+  },
+  userTurn: {
+    borderLeftColor: "#111827",
+  },
+  agentTurn: {
+    borderLeftColor: "#166534",
+  },
+  turnLabel: {
+    fontSize: 7,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: "#6b7280",
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 5,
+  },
+  statGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 14,
+  },
+  statBox: {
+    width: "31%",
+    borderColor: "#dedacf",
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 7,
+  },
+  statNumber: {
+    fontSize: 15,
+    fontFamily: "Helvetica-Bold",
+  },
+  statLabel: {
+    fontSize: 7,
+    color: "#6b7280",
+    textTransform: "uppercase",
   },
 });
 
@@ -210,13 +253,51 @@ function chartBlock(chart: AnswerChart): ReactElement {
   );
 }
 
-export function buildAvaAnswerPdf(
-  answer: AvaAnswerPacket,
-): ReactElement<DocumentProps> {
+function answerBlocks(answer: AvaAnswerPacket): ReactElement[] {
   const display = sanitizeAvaAnswerForRender(answer);
   const artifacts = display.artifacts.filter(isVisibleAvaArtifact);
   const charts = artifacts.filter((artifact) => artifact.artifact === "chart");
   const tables = artifacts.filter((artifact) => artifact.artifact === "table");
+
+  return [
+    ...paragraphs(display.directAnswer).map((paragraph, index) => (
+      <Text key={`p-${index}`} style={styles.prose}>
+        {paragraph}
+      </Text>
+    )),
+    ...charts.map((chart) => <View key={chart.id}>{chartBlock(chart)}</View>),
+    ...tables.map((table) => <View key={table.id}>{tableBlock(table)}</View>),
+    ...(display.caveats.length > 0
+      ? [
+          <View key="caveats" style={styles.card} wrap={false}>
+            <Text style={styles.cardTitle}>Caveats</Text>
+            {display.caveats.slice(0, 8).map((caveat) => (
+              <Text key={caveat.id} style={styles.bullet}>
+                {[caveat.label, caveat.detail].filter(Boolean).join(" - ")}
+              </Text>
+            ))}
+          </View>,
+        ]
+      : []),
+    ...(display.nextSteps.length > 0
+      ? [
+          <View key="next-steps" style={styles.card} wrap={false}>
+            <Text style={styles.cardTitle}>Recommended Next Moves</Text>
+            {display.nextSteps.slice(0, 8).map((step) => (
+              <Text key={step.id} style={styles.bullet}>
+                {[step.label, step.rationale].filter(Boolean).join(" - ")}
+              </Text>
+            ))}
+          </View>,
+        ]
+      : []),
+  ];
+}
+
+export function buildAvaAnswerPdf(
+  answer: AvaAnswerPacket,
+): ReactElement<DocumentProps> {
+  const display = sanitizeAvaAnswerForRender(answer);
   const generatedAt = new Date().toISOString();
 
   return (
@@ -232,17 +313,81 @@ export function buildAvaAnswerPdf(
         <Text style={styles.meta}>
           {display.tenantKey} | {display.status} | {display.quality.confidence} confidence | {generatedAt}
         </Text>
-        {paragraphs(display.directAnswer).map((paragraph, index) => (
-          <Text key={index} style={styles.prose}>
-            {paragraph}
-          </Text>
+        {answerBlocks(display)}
+      </Page>
+    </Document>
+  );
+}
+
+export function buildAvaChatSessionPdf(
+  session: AvaChatSessionExport,
+): ReactElement<DocumentProps> {
+  const generatedAt = new Date().toISOString();
+  const answers = session.turns.flatMap((turn) => (turn.answer ? [turn.answer] : []));
+  const artifacts = answers.flatMap((answer) =>
+    sanitizeAvaAnswerForRender(answer).artifacts.filter(isVisibleAvaArtifact),
+  );
+  const title = session.title?.trim() || "aVa Executive Session Export";
+  const tenant =
+    session.tenantKey?.trim() ||
+    session.turns.find((turn) => turn.answer)?.answer?.tenantKey ||
+    "tenant";
+  const stats = [
+    ["User turns", session.turns.filter((turn) => turn.role === "user").length],
+    ["aVa turns", session.turns.filter((turn) => turn.role === "agent").length],
+    ["Governed answers", answers.length],
+    ["Visual artifacts", artifacts.length],
+    ["Evidence refs", answers.reduce((sum, answer) => sum + answer.citations.length, 0)],
+    ["Blocked answers", answers.filter((answer) => answer.status === "blocked").length],
+  ] as const;
+
+  return (
+    <Document
+      title={`aVa session export - ${tenant}`}
+      author="AbarVa"
+      creator="AbarVa"
+      producer="AbarVa"
+    >
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.eyebrow}>aVa Executive Session Export</Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.meta}>
+          {tenant} | {session.surface} | {session.turns.length} turns | {generatedAt}
+        </Text>
+        <View style={styles.statGrid}>
+          {stats.map(([label, value]) => (
+            <View key={label} style={styles.statBox}>
+              <Text style={styles.statNumber}>{value}</Text>
+              <Text style={styles.statLabel}>{label}</Text>
+            </View>
+          ))}
+        </View>
+        {session.turns.map((turn, index) => (
+          <View
+            key={turn.id || index}
+            style={[
+              styles.turn,
+              turn.role === "user" ? styles.userTurn : styles.agentTurn,
+            ]}
+          >
+            <Text style={styles.turnLabel}>
+              {turn.role === "user" ? "User prompt" : "aVa response"} {index + 1}
+            </Text>
+            {turn.answer ? (
+              answerBlocks(turn.answer)
+            ) : (
+              paragraphs(turn.body).map((paragraph, paragraphIndex) => (
+                <Text key={paragraphIndex} style={styles.prose}>
+                  {paragraph}
+                </Text>
+              ))
+            )}
+          </View>
         ))}
-        {charts.map((chart) => (
-          <View key={chart.id}>{chartBlock(chart)}</View>
-        ))}
-        {tables.map((table) => (
-          <View key={table.id}>{tableBlock(table)}</View>
-        ))}
+        <Text style={styles.note}>
+          Decision-support artifact. Accountable owners remain responsible for
+          review, approval, and external use.
+        </Text>
       </Page>
     </Document>
   );

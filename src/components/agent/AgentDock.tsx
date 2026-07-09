@@ -53,6 +53,10 @@ import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import type {
+  AvaChatSessionExport,
+  AvaChatSessionExportFormat,
+} from "@/lib/ava-answer/export/session-types";
 import type { AgentResponsePart } from "@/lib/agent/response-parts";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
@@ -170,6 +174,57 @@ function visibleAgentDockBody(
   void surface;
   const text = avaAnswerTextForDock(agentAnswer) || body;
   return preserveVisibleText ? text : demoSafeClientText(text);
+}
+
+function chatSessionTitle(thread: readonly ChatMessage[]): string {
+  const firstUserTurn = thread.find((turn) => turn.role === "user");
+  const title = firstUserTurn?.body.trim() || "aVa Executive Session Export";
+  return title.length > 120 ? `${title.slice(0, 117).trimEnd()}...` : title;
+}
+
+function buildChatSessionExport(
+  surface: string,
+  thread: readonly ChatMessage[],
+): AvaChatSessionExport {
+  const firstAnswer = thread.find((turn) => turn.agentAnswer)?.agentAnswer;
+  return {
+    title: chatSessionTitle(thread),
+    surface,
+    tenantKey: firstAnswer?.tenantKey,
+    turns: thread.map((turn) => ({
+      id: turn.id,
+      role: turn.role,
+      body: visibleAgentDockBody(surface, turn.body, turn.agentAnswer, true),
+      at: turn.at,
+      answer: turn.agentAnswer ?? null,
+    })),
+  };
+}
+
+async function downloadChatSessionExport(
+  session: AvaChatSessionExport,
+  format: AvaChatSessionExportFormat,
+) {
+  const response = await fetch("/api/intelligence/ask/export", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ session, format }),
+  });
+  if (!response.ok) {
+    throw new Error(`Session export failed (${response.status})`);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const filename =
+    disposition.match(/filename="([^"]+)"/)?.[1] ?? `ava-session.${format}`;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 /**
@@ -701,6 +756,9 @@ export function AgentDock(props: AgentDockProps) {
   const [uploads, setUploads] = useState<PendingUpload[]>([]);
   const [draggingOver, setDraggingOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [sessionExportPending, setSessionExportPending] =
+    useState<AvaChatSessionExportFormat | null>(null);
+  const [sessionExportStatus, setSessionExportStatus] = useState("");
   const [uploadProgressNowMs, setUploadProgressNowMs] = useState(() =>
     Date.now(),
   );
@@ -710,6 +768,31 @@ export function AgentDock(props: AgentDockProps) {
     submitting ||
     anyUploading ||
     (draft.trim().length === 0 && uploads.length === 0);
+  const canExportSession =
+    thread.length > 0 &&
+    thread.some(
+      (turn) => turn.body.trim().length > 0 || Boolean(turn.agentAnswer),
+    );
+  const sessionExportPayload = useMemo(
+    () => buildChatSessionExport(surface, thread),
+    [surface, thread],
+  );
+  const runSessionExport = useCallback(
+    async (format: AvaChatSessionExportFormat) => {
+      if (!canExportSession) return;
+      setSessionExportPending(format);
+      setSessionExportStatus("");
+      try {
+        await downloadChatSessionExport(sessionExportPayload, format);
+        setSessionExportStatus("Ready");
+      } catch {
+        setSessionExportStatus("Failed");
+      } finally {
+        setSessionExportPending(null);
+      }
+    },
+    [canExportSession, sessionExportPayload],
+  );
 
   // Auto-grow textarea (cap ~6 rows / 160px)
   const onChangeDraft = useCallback((value: string) => {
@@ -945,7 +1028,16 @@ export function AgentDock(props: AgentDockProps) {
               <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
             </div>
           </div>
-          <ModePicker mode={mode} onChange={setMode} dockId={dockId} />
+          <div style={HEADER_ACTIONS_STYLE}>
+            {canExportSession ? (
+              <SessionExportActions
+                pending={sessionExportPending}
+                status={sessionExportStatus}
+                onExport={runSessionExport}
+              />
+            ) : null}
+            <ModePicker mode={mode} onChange={setMode} dockId={dockId} />
+          </div>
         </div>
 
         {/* Optional quote */}
@@ -1172,6 +1264,7 @@ export function AgentDock(props: AgentDockProps) {
     mode,
     onChangeDraft,
     onComposerKeyDown,
+    canExportSession,
     placeholder,
     preserveVisibleText,
     onDragLeave,
@@ -1179,7 +1272,10 @@ export function AgentDock(props: AgentDockProps) {
     onDrop,
     removeUpload,
     requestRawMode,
+    runSessionExport,
     sendDisabled,
+    sessionExportPending,
+    sessionExportStatus,
     setMode,
     showReviewChrome,
     surface,
@@ -1303,6 +1399,44 @@ export function AgentDock(props: AgentDockProps) {
         <div style={EXPAND_PANEL_STYLE}>{chatPanel}</div>
       </div>
     </>
+  );
+}
+
+interface SessionExportActionsProps {
+  pending: AvaChatSessionExportFormat | null;
+  status: string;
+  onExport: (format: AvaChatSessionExportFormat) => void | Promise<void>;
+}
+
+function SessionExportActions({
+  pending,
+  status,
+  onExport,
+}: SessionExportActionsProps) {
+  return (
+    <div aria-label="Export chat session" style={SESSION_EXPORT_STYLE}>
+      <button
+        type="button"
+        aria-label="Export chat session as HTML"
+        title="Export session as HTML"
+        disabled={pending !== null}
+        onClick={() => void onExport("html")}
+        style={SESSION_EXPORT_BUTTON_STYLE}
+      >
+        {pending === "html" ? "..." : "HTML"}
+      </button>
+      <button
+        type="button"
+        aria-label="Export chat session as PDF"
+        title="Export session as PDF"
+        disabled={pending !== null}
+        onClick={() => void onExport("pdf")}
+        style={SESSION_EXPORT_BUTTON_STYLE}
+      >
+        {pending === "pdf" ? "..." : "PDF"}
+      </button>
+      {status ? <span style={SESSION_EXPORT_STATUS_STYLE}>{status}</span> : null}
+    </div>
   );
 }
 
@@ -1735,6 +1869,13 @@ const HEADER_STYLE: CSSProperties = {
   flexShrink: 0,
 };
 
+const HEADER_ACTIONS_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  flexShrink: 0,
+};
+
 const AGENT_ROW_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -1762,6 +1903,35 @@ const MODE_PICKER_STYLE: CSSProperties = {
   padding: 2,
   borderRadius: 6,
   border: `1px solid ${CANVAS.HAIRLINE}`,
+};
+
+const SESSION_EXPORT_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+};
+
+const SESSION_EXPORT_BUTTON_STYLE: CSSProperties = {
+  appearance: "none",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 5,
+  background: "#FFFFFF",
+  color: CANVAS.INK,
+  cursor: "pointer",
+  fontFamily: CANVAS.SANS,
+  fontSize: 10,
+  fontWeight: 700,
+  lineHeight: 1,
+  minWidth: 34,
+  height: 24,
+  padding: "0 7px",
+};
+
+const SESSION_EXPORT_STATUS_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.SANS,
+  fontSize: 10,
+  minWidth: 32,
 };
 
 const MODE_BUTTON_STYLE: CSSProperties = {
