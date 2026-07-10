@@ -2053,11 +2053,16 @@ export function StrategicMovePhaseClient({
         };
       }
       if (phase === move.currentPhase) {
+        // Mirrors buildPhaseWorkflow's hard-only scoping (falls back to the
+        // full set when a phase has no hard criteria) so this never shows a
+        // different "gate criteria" number than the on-screen gate tile.
+        const hard = move.gateCriteria.filter((c) => c.severity === "hard");
+        const scoped = hard.length > 0 ? hard : move.gateCriteria;
         return {
           phase,
           label: PHASE_LABELS_SHORT[phase] ?? `P${phase}`,
-          met: move.gateCriteria.filter((c) => c.completed).length,
-          total: move.gateCriteria.length,
+          met: scoped.filter((c) => c.completed).length,
+          total: scoped.length,
           state: "current" as const,
         };
       }
