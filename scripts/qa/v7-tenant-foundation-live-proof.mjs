@@ -372,6 +372,9 @@ function containsUnsupportedMustNotClaim(answer, term) {
     if (/\b(not|no|none|neither|never|without|isn'?t|aren'?t|wasn'?t|weren'?t|hasn'?t|haven'?t|hadn'?t|doesn'?t|don'?t|can'?t|cannot|does not|do not|has not|have not)\b[^.!?\n]*$/.test(before)) {
       continue;
     }
+    if (/\b(no|none|neither)\b[^.!?\n]{0,220}$/.test(before)) {
+      continue;
+    }
     if (/^\s+(yet|with|as proven|as certified|as client-approved|as production-ready)\b/.test(after)) {
       continue;
     }

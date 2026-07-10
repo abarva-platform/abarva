@@ -37,6 +37,7 @@ This release prepares the SkyHarbor Air existing-tenant upgrade proof. It adds a
 - `scripts/qa/skyharbor-v7-upgrade-proof-job.mjs`: added private ACA DB snapshot, candidate load, and promotion proof job.
 - `scripts/qa/skyharbor-v7-upgrade-live-proof.mjs`: added signed-in SkyHarbor Home/Intelligence proof harness.
 - `src/lib/client-config.ts`: updates the SkyHarbor app-client display label from the stale generic `Airline Demo` cover label to `SkyHarbor Air`.
+- `src/lib/home/know/v7-home-ask.ts`: routes `technology estate` Home questions to V7 application/system evidence so systems such as mainframe/MQ are not missed behind operations controls evidence.
 - `scripts/qa/v7-tenant-foundation-live-proof.mjs` and `scripts/qa/skyharbor-v7-upgrade-live-proof.mjs`: score safe negations such as `None are production-ready` as non-claims.
 - `docs/governance/dataset-manifests/skyharbor-air-v6-v7-upgrade-candidate-20260710.json`: added governance manifest.
 - `package.json`: added SkyHarbor generation, load, proof, and live proof scripts.
