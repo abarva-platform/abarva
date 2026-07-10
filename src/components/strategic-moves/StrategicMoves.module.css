@@ -9,6 +9,18 @@
   overflow-y: auto;
 }
 
+.phaseBody {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 -28px -28px;
+}
+
+.phaseBodyMain {
+  flex: 1;
+  min-width: 0;
+}
+
 .topbar {
   display: flex;
   align-items: center;

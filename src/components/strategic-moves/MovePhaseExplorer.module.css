@@ -1,0 +1,123 @@
+/* MovePhaseExplorer — persistent left phase journey (Stripe-style, ported
+   from Source's CanvasGateSidebar). Honors the AbarVa locked design system
+   (#F8F7F4 ground, Georgia headings, black/ghost active state). */
+
+.explorer {
+  --ground: #f8f7f4;
+  --surface: #ffffff;
+  --ink: #1b1a16;
+  --muted: #6e6a62;
+  --faint: #a19c91;
+  --line: #eae6de;
+  --lineStrong: #dad5ca;
+  --black: #16150f;
+  --attested: #2e7a4c;
+  --serif: Georgia, "Times New Roman", serif;
+
+  flex: none;
+  width: 216px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding: 18px 12px;
+  align-self: stretch;
+}
+
+.head {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+  padding: 0 8px 10px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 12.5px;
+}
+a.row:hover {
+  background: #f1eee7;
+}
+.rowCurrent {
+  background: var(--ground);
+  box-shadow: inset 2px 0 0 var(--black);
+}
+.rowDone {
+  color: var(--ink);
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--lineStrong);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: #fff;
+}
+.rowDone .dot {
+  background: var(--attested);
+  border-color: var(--attested);
+}
+.rowCurrent .dot {
+  border-color: var(--black);
+  border-width: 2px;
+}
+
+.label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rowCurrent .label {
+  color: var(--black);
+}
+.rowDone .label,
+div.row:not(.rowCurrent):not(.rowDone) .label {
+  font-weight: 500;
+}
+div.row:not(.rowCurrent):not(.rowDone) .label {
+  color: var(--muted);
+}
+
+.tally {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.rowCurrent .tally {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.towerRow {
+  margin-top: 8px;
+  padding: 9px 8px 2px;
+  border-top: 1px solid var(--line);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--faint);
+}
+
+@media (max-width: 900px) {
+  .explorer {
+    display: none;
+  }
+}

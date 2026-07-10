@@ -32,6 +32,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { clientKeyToBrokerTenantKey } from "@/lib/agent/tools/intelligence/_shared";
 import { getLatestApprovedInputsPack } from "@/lib/programs/approved-inputs-pack-store";
 import type { ApprovedInputsPack } from "@/lib/programs/phase-templates";
+import { getMovePhaseTallies } from "@/lib/programs/phase-explorer-tallies";
 
 export const dynamic = "force-dynamic";
 
@@ -151,6 +152,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         plan={plan}
         evidenceNeedPackets={evidenceNeedPackets}
         approvedInputsPack={approvedInputsPack}
+        phaseTallies={getMovePhaseTallies(move)}
       />
     </AppShell>
   );
