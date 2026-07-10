@@ -7,6 +7,10 @@ import type {
   SourceArtifactDetail,
   SourceArtifactTier,
 } from "@/lib/source/types";
+import {
+  htmlToPlainText,
+  isFullHtmlDocument,
+} from "@/lib/source/html-to-plain-text";
 
 interface ArtifactProvenance {
   createdFrom: string;
@@ -55,29 +59,6 @@ function formatFreshness(value: unknown): string {
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "not recorded";
   return String(value);
-}
-
-/** A generated artifact body can be a full, self-contained HTML document
- *  (the Sentinel HTML render). Detect it so we render the document rather than
- *  dumping its source as escaped text. */
-function isFullHtmlDocument(value: unknown): value is string {
-  return (
-    typeof value === "string" &&
-    /^\s*(<!doctype html|<html[\s>])/i.test(value)
-  );
-}
-
-/** Best-effort plain-text excerpt of HTML, for the one-line summary blurb where
- *  the full document is rendered separately below. */
-function htmlToPlainText(value: string): string {
-  return value
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<head[\s\S]*?<\/head>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&[a-z#0-9]+;/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function stripMarkdownForSummary(value: string): string {

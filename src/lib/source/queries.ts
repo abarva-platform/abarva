@@ -59,6 +59,7 @@ import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/so
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { coerceUsdAmountOrZero } from "./usd-amount";
 import { autoDraftOnStageEntry } from "./stage-entry-autodraft";
+import { htmlToPlainText, isFullHtmlDocument } from "./html-to-plain-text";
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -1377,6 +1378,14 @@ async function sourceArtifactRegistryRecordToDetail(
 ): Promise<SourceArtifactDetail> {
   const content = await readSourceArtifactBlobText(record);
   const sections = splitSourceArtifactMarkdownSections(content, record);
+  // Strip HTML from the FULL content before truncating to a summary length —
+  // truncating first can slice off an unclosed <style>/<script> block's
+  // closing tag, leaving raw CSS/JS text exposed in the summary blurb.
+  const trimmedContent = content?.trim();
+  const summarySource =
+    trimmedContent && isFullHtmlDocument(trimmedContent)
+      ? htmlToPlainText(trimmedContent)
+      : trimmedContent;
   return {
     id: record.id,
     eventId: record.sourceEventId,
@@ -1385,7 +1394,7 @@ async function sourceArtifactRegistryRecordToDetail(
     status: sourceArtifactStatusFromApprovalState(record.approvalState),
     tier: record.parseStatus === "parsed" ? "rich" : "outline",
     summary:
-      content?.trim().slice(0, 600) ??
+      summarySource?.slice(0, 600) ??
       `${record.originalName} is registered in the Source artifact registry. Content preview is unavailable for this mime type.`,
     sourceCount: sections.length,
     updatedAt: formatSourceTimestamp(record.updatedAt),
