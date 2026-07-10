@@ -1175,7 +1175,7 @@ const TENANT_DISPLAY_NAMES: Record<ClientKey, string> = {
   arcturus: 'First Capital Financial',
   apexretail: 'Apex Retail Group',
   northstar: getClientOption('northstar').name,
-  skyharbor: 'SkyHarbor Air',
+  skyharbor: 'Airline Demo',
 };
 
 /**

@@ -13,7 +13,7 @@ import type {
 const TENANT_DISPLAY_NAMES: Record<AgentGroundingTenant, string> = {
   'apex-retail': 'Apex Retail Group',
   'meridian-health': 'Meridian Health System',
-  'skyharbor-air': 'SkyHarbor Air',
+  'skyharbor-air': 'Airline Demo',
   'first-capital': 'First Capital Financial',
 };
 

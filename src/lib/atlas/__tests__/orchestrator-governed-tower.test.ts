@@ -29,7 +29,7 @@ jest.mock("@/lib/cio-tower/answer", () => ({
 jest.mock("@/lib/cio-tower/metric-packet", () => ({
   canonicalCioTowerTenantDisplayName: jest.fn(
     ({ key, name }: { key?: string | null; name?: string | null }) =>
-      key === "skyharbor-air" || name === "Airline Demo" ? "SkyHarbor Air" : name,
+      key === "skyharbor-air" || name === "Airline Demo" ? "Airline Demo" : name,
   ),
 }));
 
@@ -91,10 +91,10 @@ describe("runAtlasTurnDetailed governed Tower path", () => {
     queryTowerCurrentState.mockResolvedValue(towerState);
     answerCioTowerQuestion.mockResolvedValue({
       response:
-        "Top 10 IT programs at SkyHarbor Air, ranked by budget and value proof.",
+        "Top 10 IT programs at Airline Demo, ranked by budget and value proof.",
       modelOutputRaw: JSON.stringify({
         answer:
-          "Top 10 IT programs at SkyHarbor Air, ranked by budget and value proof.",
+          "Top 10 IT programs at Airline Demo, ranked by budget and value proof.",
       }),
       promptPackageKey: "prompt-governed",
       traceKey: "trace-governed",
@@ -118,24 +118,24 @@ describe("runAtlasTurnDetailed governed Tower path", () => {
     expect(answerCioTowerQuestion).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantKey: "skyharbor-air",
-        tenantName: "SkyHarbor Air",
+        tenantName: "Airline Demo",
         question: "give me the list of top 10 IT programs",
       }),
     );
     expect(runAtlasLlm).not.toHaveBeenCalled();
-    expect(result.response).toContain("Top 10 IT programs at SkyHarbor Air");
-    expect(result.response).not.toContain("Airline Demo");
+    expect(result.response).toContain("Top 10 IT programs at Airline Demo");
+    expect(result.response).not.toContain("SkyHarbor Air");
     expect(result.toolsUsed).toContain("answer_cio_tower_question");
-    expect(result.debugTrace?.rawModelResponse).toContain("SkyHarbor Air");
+    expect(result.debugTrace?.rawModelResponse).toContain("Airline Demo");
   });
 
   it("routes advisor-posture questions through the governed CIO Tower answer contract", async () => {
     answerCioTowerQuestion.mockResolvedValueOnce({
       response:
-        "SkyHarbor Air should inspect before scaling Engineering Productivity AI.",
+        "Airline Demo should inspect before scaling Engineering Productivity AI.",
       modelOutputRaw: JSON.stringify({
         answer:
-          "SkyHarbor Air should inspect before scaling Engineering Productivity AI.",
+          "Airline Demo should inspect before scaling Engineering Productivity AI.",
       }),
       promptPackageKey: "prompt-governed-posture",
       traceKey: "trace-governed-posture",
@@ -158,7 +158,7 @@ describe("runAtlasTurnDetailed governed Tower path", () => {
     expect(answerCioTowerQuestion).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantKey: "skyharbor-air",
-        tenantName: "SkyHarbor Air",
+        tenantName: "Airline Demo",
         question:
           "Which investment posture should the CIO take on Engineering Productivity AI, and why?",
       }),

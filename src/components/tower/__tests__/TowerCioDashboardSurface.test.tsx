@@ -260,10 +260,10 @@ const ZERO_AMOUNT_VENDORS: AIInitiativeVendorRow[] = VENDORS.map((vendor) => ({
 
 const GOVERNED_CXO_VIEW: CioTowerCxoViewModel = {
   tenantKey: "skyharbor-air",
-  tenantName: "SkyHarbor Air",
+  tenantName: "Airline Demo",
   generatedFrom: "cio_tower",
   headline:
-    "SkyHarbor Air has $2.6B of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.",
+    "Airline Demo has $2.6B of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.",
   sections: [],
   cards: [
     {
@@ -464,7 +464,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
   it("does not present zero loaded amounts as real spend when Tower values are missing", () => {
     render(
       <TowerIndexPage
-        tenantName="SkyHarbor Air"
+        tenantName="Airline Demo"
         context="Tower"
         towerToday="2026-06-25"
         clientId="client-skyharbor"
@@ -679,7 +679,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
 
     render(
       <TowerIndexPage
-        tenantName="SkyHarbor Air"
+        tenantName="Airline Demo"
         context="Tower"
         towerToday="2026-06-25"
         clientId="client-skyharbor"
@@ -698,7 +698,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
   it("renders the governed Portfolio Value Pack from the CXO view model", () => {
     render(
       <TowerIndexPage
-        tenantName="SkyHarbor Air"
+        tenantName="Airline Demo"
         context="Tower"
         towerToday="2026-06-25"
         clientId="client-skyharbor"

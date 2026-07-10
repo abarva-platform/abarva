@@ -77,7 +77,7 @@ export function renderPreviewMarkdown(d: PreviewData, generatedAt: string): stri
   }
   L.push("");
   L.push("## Failure reasons (why rows are not agent_ready)\n\n| Reason | Count |\n|---|---:|\n" + rows(d.failureReasons) + "\n");
-  L.push("## SkyHarbor Air (tenant-specific)\n");
+  L.push("## Airline Demo (tenant-specific)\n");
   L.push(`- Rows: **${d.skyharbor.total}**`);
   L.push("- By recommendation:\n\n| Recommendation | Count |\n|---|---:|\n" + rows(d.skyharbor.byRecommendation));
   L.push("\n- By object type:\n\n| Object table | Count |\n|---|---:|\n" + rows(d.skyharbor.byObjectType) + "\n");

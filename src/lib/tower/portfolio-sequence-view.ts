@@ -61,7 +61,7 @@ const CLIENT_TO_PORTFOLIO_KEY: Partial<Record<ClientKey, string>> = {
 const CLIENT_NAMES: Record<string, string> = {
   apexretail: 'Apex Retail Group',
   meridian: 'Meridian Health System',
-  skyharbor: 'SkyHarbor Air',
+  skyharbor: 'Airline Demo',
 };
 
 export function buildPortfolioSequenceView(input: {

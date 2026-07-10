@@ -40,7 +40,7 @@ const CONTRACT_OPTIMIZATION_CONFIG: NarrativeDocxConfig = {
 };
 
 const CONTRACT_OPTIMIZATION_DISPLAY = {
-  tenantName: "SkyHarbor Air",
+  tenantName: "Airline Demo",
   eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
 } as const;
 

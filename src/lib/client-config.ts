@@ -13,7 +13,7 @@ export const DEMO_SAFE_CLIENT_NAMES = {
   meridian: "Healthcare Demo",
   arcturus: "Financial Services Demo",
   northstar: "Clinical Technology Demo",
-  skyharbor: "SkyHarbor Air",
+  skyharbor: "Airline Demo",
   lakeshore: "Lakeshore Holdings",
 } as const satisfies Record<string, string>;
 

@@ -253,7 +253,7 @@ export function buildTop100AdvisoryAuditInputs(): Top100AdvisoryAuditInput[] {
     return {
       ...item,
       tenantKey: "skyharbor",
-      tenantName: "SkyHarbor Air",
+      tenantName: "Airline Demo",
       classification,
       sources: skyHarborSources(),
     };

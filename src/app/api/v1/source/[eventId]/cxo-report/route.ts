@@ -115,7 +115,7 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
     });
     const report = isContractOptimization
       ? buildContractOptimizationCxoNarrativeReport({
-          tenantName: "SkyHarbor Air",
+          tenantName: "Airline Demo",
           eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
           eventName: ctx.event.name,
           generatedAt,

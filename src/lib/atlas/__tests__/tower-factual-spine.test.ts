@@ -330,7 +330,7 @@ describe("buildTowerFactualSpineAnswer", () => {
       ...towerState,
       client: {
         ...towerState.client,
-        clientName: "SkyHarbor Air",
+        clientName: "Airline Demo",
       },
       initiatives: Array.from({ length: 12 }, (_, index) => ({
         ...towerState.initiatives[index % towerState.initiatives.length],
@@ -350,7 +350,7 @@ describe("buildTowerFactualSpineAnswer", () => {
 
     expect(answer?.matchedIntent).toBe("tower_top_it_programs");
     expect(answer?.response).toContain(
-      "Top 10 IT programs at SkyHarbor Air",
+      "Top 10 IT programs at Airline Demo",
     );
     expect(answer?.response).toContain("1. Program 01");
     expect(answer?.response).toContain("10. Program 10");
@@ -362,7 +362,7 @@ describe("buildTowerFactualSpineAnswer", () => {
       ...towerState,
       client: {
         ...towerState.client,
-        clientName: "SkyHarbor Air",
+        clientName: "Airline Demo",
       },
       initiatives: [
         ...Array.from({ length: 6 }, (_, index) => ({
@@ -396,7 +396,7 @@ describe("buildTowerFactualSpineAnswer", () => {
     );
 
     expect(answer?.matchedIntent).toBe("tower_top_ai_programs");
-    expect(answer?.response).toContain("Top 5 AI programs at SkyHarbor Air");
+    expect(answer?.response).toContain("Top 5 AI programs at Airline Demo");
     expect(answer?.response).toContain("1. AI Program 01");
     expect(answer?.response).toContain("5. AI Program 05");
     expect(answer?.response).toContain("measured value not tracked");

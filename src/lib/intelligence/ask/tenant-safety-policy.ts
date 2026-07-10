@@ -149,7 +149,7 @@ const POLICIES: TenantSafetyPolicy[] = [
   },
   {
     tenantKey: "skyharbor-air",
-    displayName: "SkyHarbor Air",
+    displayName: "Airline Demo",
     matchKeys: ["skyharbor", "skyharborair", "skyharbor-air"],
     retiredAliases: [],
     staleFactPatterns: [],

@@ -112,7 +112,7 @@ export const CANONICAL_TENANTS = [
   },
   {
     key: "skyharbor-air",
-    name: "SkyHarbor Air",
+    name: "Airline Demo",
     industry: "airline",
     mimics: "Delta-shape global airline",
     patternOverlays: ["core", "airline-industry-v1"],

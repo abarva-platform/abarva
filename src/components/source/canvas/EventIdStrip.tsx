@@ -100,16 +100,16 @@ function normalizeEventDisplay(
   if (isContractOptimization) {
     return {
       ...event,
-      accountName: 'SkyHarbor Air',
+      accountName: 'Airline Demo',
       code: 'SKYH-AMS-CONTRACT-OPT-2026',
-      name: 'SkyHarbor Air AMS Contract Optimization',
+      name: 'Airline Demo AMS Contract Optimization',
     };
   }
   return {
     ...event,
-    accountName: 'SkyHarbor Air',
+    accountName: 'Airline Demo',
     code: 'SKYH-AMS-RFP-2026',
-    name: 'SkyHarbor Air AMS Outsourcing RFP',
+    name: 'Airline Demo AMS Outsourcing RFP',
   };
 }
 

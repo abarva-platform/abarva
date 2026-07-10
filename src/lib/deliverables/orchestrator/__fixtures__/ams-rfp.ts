@@ -13,7 +13,7 @@ export function amsRfpRequest(overrides: Partial<DeliverableIntelligenceRequest>
     deliverableType: 'rfp_package',
     audience: ['cio', 'cpo', 'procurement'],
     decisionContext: 'Approve issuance of the AMS RFP and the scope/evaluation/commercial model it commits to.',
-    clientDisplayName: 'SkyHarbor Air',
+    clientDisplayName: 'Airline Demo',
     initiativeDisplayName: 'AMS / IT Outsourcing 2026',
     governedEvidenceBundle: [
       { citationNumber: 1, label: 'Service tower scope', statement: '7 in-scope towers including Mainframe, Application Mgmt, Service Desk.', evidenceFamily: 'service_tower_scope', confidence: 'high', asOf: 'FY2026', disclosureTier: 'vendor_facing', provenanceRef: 'ev-tower-1' },
@@ -104,7 +104,7 @@ const para =
 
 export function goodDocument(): RenderableDeliverable {
   const sections = [
-    { key: 'exec_overview', title: '1. Executive Overview', body: `SkyHarbor Air is sourcing application management across 7 towers [1] covering 320 applications [2]. ${para} The decision sought: approve issuance of the RFP and its commercial model.` },
+    { key: 'exec_overview', title: '1. Executive Overview', body: `Airline Demo is sourcing application management across 7 towers [1] covering 320 applications [2]. ${para} The decision sought: approve issuance of the RFP and its commercial model.` },
     { key: 'scope_service_towers', title: '2. Scope & Service Towers', body: `In-scope towers per [1]; the estate spans 320 applications, 41 tier-1 [2]. ${para}` },
     { key: 'current_environment', title: '3. Current Environment', body: `The application estate [2] anchors vendor sizing. ${para}` },
     { key: 'sla_kpi', title: '4. SLA / KPI Schedule', body: `Mainframe availability target is 99.9% monthly [3]. ${para}` },
@@ -114,9 +114,9 @@ export function goodDocument(): RenderableDeliverable {
     { key: 'recommendation', title: '8. Recommendation & Decision', body: `We recommend approval to issue the RFP. ${para} The ask is a go decision at the next steering committee.` },
   ];
   return {
-    title: 'SkyHarbor Air — AMS / IT Outsourcing RFP',
+    title: 'Airline Demo — AMS / IT Outsourcing RFP',
     subtitle: 'Board-grade sourcing package',
-    clientDisplayName: 'SkyHarbor Air',
+    clientDisplayName: 'Airline Demo',
     initiativeDisplayName: 'AMS / IT Outsourcing 2026',
     generatedSections: sections.map((s) => ({ key: s.key, title: s.title, bodyMarkdown: s.body, groundingMode: 'mixed' as const, citationsUsed: [] })),
     tables: [
