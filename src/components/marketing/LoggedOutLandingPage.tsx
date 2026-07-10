@@ -127,11 +127,20 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         }),
       })
       if (!response.ok) {
-        throw new Error('Request failed')
+        let message = 'Something went wrong. Please try again.'
+        try {
+          const data = (await response.json()) as { error?: unknown }
+          if (typeof data.error === 'string' && data.error.trim()) {
+            message = data.error.trim()
+          }
+        } catch {
+          // Keep the generic fallback when the server does not return JSON.
+        }
+        throw new Error(message)
       }
       setSubmitted(true)
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
