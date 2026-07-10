@@ -174,6 +174,8 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
     fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+    expect(screen.getByRole("button", { name: /Approve & generate →/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Approve & advance/i })).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Approve & generate deliverables/i }),
     ).toBeInTheDocument();
