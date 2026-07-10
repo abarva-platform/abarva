@@ -2,11 +2,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import meridianHealthConfig from "../tenant-v6/configs/meridian-health.mjs";
+import skyharborAirConfig from "../tenant-v6/configs/skyharbor-air.mjs";
 import { buildTenantDataset, deriveFindings, deriveGoldenQuestions, v6Rows, v7Rows } from "../lib/v6-v7/tenant-pack-builder.mjs";
 import { validateTenantDataset } from "../lib/v6-v7/tenant-pack-validator.mjs";
 
 const configs = {
   "meridian-health": meridianHealthConfig,
+  "skyharbor-air": skyharborAirConfig,
 };
 
 function arg(name, fallback = "") {

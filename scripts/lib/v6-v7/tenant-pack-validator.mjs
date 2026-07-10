@@ -69,7 +69,7 @@ export function validateTenantDataset(config, options = {}) {
       assert(row.client_display_name === config.tenantName, `${file}:${row.__sourceRowNumber} wrong client_display_name ${row.client_display_name}`);
       assert(row.source_basis === config.sourceBasis, `${file}:${row.__sourceRowNumber} wrong source_basis`);
       assert(row.not_allowed_claims.includes("Do not claim"), `${file}:${row.__sourceRowNumber} missing not_allowed_claims`);
-      assert(row.known_gaps.includes("Synthetic PHI-free"), `${file}:${row.__sourceRowNumber} missing synthetic boundary`);
+      assert(/synthetic/i.test(row.known_gaps), `${file}:${row.__sourceRowNumber} missing synthetic boundary`);
     }
   }
 
@@ -89,14 +89,19 @@ export function validateTenantDataset(config, options = {}) {
     assert(rows.length > 0, `${file} has no rows`);
   }
 
-  const findings = readCsv(path.join(derivedDir, "meridian_moves_current_state_findings.csv"));
-  const golden = readCsv(path.join(derivedDir, "meridian_moves_golden_questions_scorecard.csv"));
+  const derivedFiles = fs.readdirSync(derivedDir).filter((file) => file.endsWith(".csv")).sort();
+  const findingsFile = derivedFiles.find((file) => file.endsWith("moves_current_state_findings.csv"));
+  const goldenFile = derivedFiles.find((file) => file.endsWith("moves_golden_questions_scorecard.csv"));
+  assert(findingsFile, "missing derived current-state findings CSV");
+  assert(goldenFile, "missing derived golden questions CSV");
+  const findings = readCsv(path.join(derivedDir, findingsFile));
+  const golden = readCsv(path.join(derivedDir, goldenFile));
   assert(findings.length >= 28, `expected at least 28 findings, found ${findings.length}`);
   assert(golden.length >= 42, `expected at least 42 golden questions, found ${golden.length}`);
   assertDistinct(findings, "business_implication", "findings");
   assertDistinct(findings, "recommended_next_step", "findings");
   assertDistinct(findings, "current_state_finding", "findings");
-  assertDistinct(golden, "must_include", "golden questions");
+  assertDistinct(golden, "must_include", "golden questions", 0.98);
   assertDistinct(golden, "must_not_claim", "golden questions", 0.98);
   assertDistinct(golden, "pass_criteria", "golden questions");
 

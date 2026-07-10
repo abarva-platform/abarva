@@ -373,6 +373,13 @@
     "tenant-v6:tower-sync": "node scripts/tenant-v6/sync-tenant-v6-to-tower-standardized.mjs",
     "v7:tenant:derive": "node scripts/v7/derive-tenant-v7-insights.mjs",
     "v7:tenant:azure-load": "node scripts/v7/load-tenant-v7-azure.mjs",
+    "v7:skyharbor:derive": "node scripts/v7/derive-tenant-v7-insights.mjs --tenant skyharbor-air --generate",
+    "v7:skyharbor:candidate-load": "V7_LOAD_MODE=candidate V7_PAYLOAD_FILE=datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710/azure/v7-tenant-load-payload.json node scripts/v7/load-tenant-v7-azure.mjs",
+    "v7:skyharbor:promote": "V7_LOAD_MODE=active V7_PAYLOAD_FILE=datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710/azure/v7-tenant-load-payload.json node scripts/v7/load-tenant-v7-azure.mjs",
+    "v7:skyharbor:snapshot-job": "node scripts/qa/skyharbor-v7-upgrade-proof-job.mjs --mode snapshot",
+    "v7:skyharbor:candidate-load-job": "node scripts/qa/skyharbor-v7-upgrade-proof-job.mjs --mode candidate-load",
+    "v7:skyharbor:promote-job": "node scripts/qa/skyharbor-v7-upgrade-proof-job.mjs --mode promote",
+    "v7:skyharbor:live-proof": "node scripts/qa/skyharbor-v7-upgrade-live-proof.mjs",
     "v7:moat:verify": "node scripts/v7/verify-intelligence-moat-foundation.mjs"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { checksumFile, key, pickRecordName, readCsv, readHeader, slug, writeCsv } from "./csv.mjs";
+import { checksumFile, pickRecordName, readCsv, readHeader, slug, writeCsv } from "./csv.mjs";
 
 const REPO_ROOT = process.cwd();
 const V6_HEADER_ROOT = path.join(REPO_ROOT, "datasets/meridian-health-synthetic-v6/templates");
@@ -84,6 +84,18 @@ function base(config, family, id, name, sourceFile, sourceRowNumber, confidence 
   };
 }
 
+function prefix(config) {
+  return config.recordPrefix || config.entity.entity_short_name?.toUpperCase()?.replace(/[^A-Z0-9]+/g, "-") || "TENANT";
+}
+
+function sourceEvidenceId(config) {
+  return `${prefix(config)}-EVID-001`;
+}
+
+function derivedFileStem(config, suffix) {
+  return `${config.tenantKey.replace(/[^a-z0-9]+/gi, "_")}_${suffix}`;
+}
+
 function evidence(config) {
   return {
     data_provider_name: "AbarVa synthetic data steward",
@@ -118,7 +130,7 @@ function v6Rows(config) {
   const rows = {};
   const entity = config.entity;
   rows["V6_01_enterprise_profile.csv"] = [{
-    ...base(config, "enterprise_profile", "MER-V6-ENT-001", entity.entity_name, "tenant_config", 2, "medium"),
+    ...base(config, "enterprise_profile", `${prefix(config)}-V6-ENT-001`, entity.entity_name, "tenant_config", 2, "medium"),
     company_name: entity.entity_name,
     industry: entity.industry,
     sub_industry: entity.sub_industry,
@@ -139,8 +151,8 @@ function v6Rows(config) {
   }));
 
   rows["V6_03_org_ownership.csv"] = config.functions.map((fn, i) => ({
-    ...base(config, "org_ownership", `MER-ORG-${String(i + 1).padStart(3, "0")}`, `${fn[1]} ownership`, "tenant_config.functions", i + 2),
-    org_unit_id: `MER-ORG-${String(i + 1).padStart(3, "0")}`,
+    ...base(config, "org_ownership", `${prefix(config)}-ORG-${String(i + 1).padStart(3, "0")}`, `${fn[1]} ownership`, "tenant_config.functions", i + 2),
+    org_unit_id: `${prefix(config)}-ORG-${String(i + 1).padStart(3, "0")}`,
     org_unit_name: fn[1],
     leader_role: fn[2],
     reports_to_role: i === 0 ? "CEO / Executive Committee" : "Executive sponsor",
@@ -149,14 +161,14 @@ function v6Rows(config) {
     owned_processes: fn[5],
   }));
 
-  rows["V6_04_workforce_personas.csv"] = [
+  rows["V6_04_workforce_personas.csv"] = (config.workforcePersonas || [
     ["MER-PER-001", "Analytics managed-services report maintainer", "Enterprise Data and Analytics", Math.round(config.workforce.analyticsResourceCount * config.workforce.maintenanceShare), "High", "Break/fix, extract refresh, dashboard maintenance, ad hoc report changes."],
     ["MER-PER-002", "Net-new analytics delivery resource", "Enterprise Data and Analytics", Math.round(config.workforce.analyticsResourceCount * config.workforce.netNewShare), "High", "New data product, semantic model, and use-case delivery constrained by maintenance load."],
     ["MER-PER-003", "Data steward / semantic owner", "Enterprise Data and Analytics", "not_provided", "High", "Definition ownership and quality certification are not formally established."],
     ["MER-PER-004", "Clinical quality analyst", "Quality and Provider Performance", "not_provided", "High", "HEDIS, STAR, attribution, care gap, and provider benchmarking analysis."],
     ["MER-PER-005", "Finance analytics analyst", "Finance and Actuarial", "not_provided", "High", "Cost-of-care, margin, close reporting, and reconciliation analytics."],
     ["MER-PER-006", "Contact center supervisor", "Contact Center and Member Experience", "not_provided", "Medium", "Call QA, agent performance, intent analysis, and escalation review."],
-  ].map((p, i) => ({
+  ]).map((p, i) => ({
     ...base(config, "workforce_persona", p[0], p[1], "tenant_config.workforce", i + 2),
     persona_id: p[0],
     persona_name: p[1],
@@ -182,16 +194,16 @@ function v6Rows(config) {
   }));
 
   const dataRows = [];
-  config.useCases.forEach((uc, i) => {
+  config.useCases.forEach((uc) => {
     uc.dataDomains.forEach((domain, j) => {
       dataRows.push({
-        ...base(config, "data_asset_integration", `MER-DATA-${String(dataRows.length + 1).padStart(3, "0")}`, `${uc.name}: ${domain}`, "derived_from_use_cases", dataRows.length + 2, "medium"),
-        data_asset_id: `MER-DATA-${String(dataRows.length + 1).padStart(3, "0")}`,
+        ...base(config, "data_asset_integration", `${prefix(config)}-DATA-${String(dataRows.length + 1).padStart(3, "0")}`, `${uc.name}: ${domain}`, "derived_from_use_cases", dataRows.length + 2, "medium"),
+        data_asset_id: `${prefix(config)}-DATA-${String(dataRows.length + 1).padStart(3, "0")}`,
         data_asset_name: `${uc.name}: ${domain}`,
         data_owner: "owner_to_confirm_in_workshop",
         system_of_record: uc.systems[j % uc.systems.length],
         lineage: `${uc.systems.join(" + ")} -> current extracts/marts -> governed lakehouse target not certified`,
-        consumers: `${uc.category}; CDAO; accountable business owner`,
+        consumers: `${uc.category}; ${config.entity.cxo_sponsor}; accountable business owner`,
         quality_score: "not_scored",
         governance_status: uc.gaps.join("; "),
       });
@@ -214,10 +226,12 @@ function v6Rows(config) {
   }));
 
   rows["V6_08_spend_value.csv"] = [
+    ...(config.spendBaselineRows || [
     ["MER-SPEND-001", "not_provided", "analytics_resource_count", "Enterprise Data and Analytics", "", "MER-VEN-AMS", "", "not_loaded", "phase_gate", "128 analytics/data resources modeled from user-provided 120+ resource constraint", "resource_count"],
     ["MER-SPEND-002", "not_provided", "maintenance_share", "Enterprise Data and Analytics", "", "MER-VEN-AMS", "", "not_loaded", "phase_gate", "Roughly 80 percent maintenance / ad hoc support work", "work_mix"],
     ["MER-SPEND-003", "not_provided", "net_new_share", "Enterprise Data and Analytics", "", "MER-VEN-AMS", "", "not_loaded", "phase_gate", "Roughly 20 percent net-new request work", "work_mix"],
-    ...config.useCases.map((uc, i) => [`MER-SPEND-${String(i + 4).padStart(3, "0")}`, "not_provided", "value_hypothesis", uc.category, uc.id, "", "", "not_loaded", "phase_gate", uc.valueHypothesis, "baseline_required"]),
+    ]),
+    ...config.useCases.map((uc, i) => [`${prefix(config)}-SPEND-${String(i + 4).padStart(3, "0")}`, "not_provided", "value_hypothesis", uc.category, uc.id, "", "", "not_loaded", "phase_gate", uc.valueHypothesis, "baseline_required"]),
   ].map((s, i) => ({
     ...base(config, "spend_value", s[0], s[9], "derived_value_hypotheses", i + 2, "medium"),
     spend_id: s[0],
@@ -237,8 +251,8 @@ function v6Rows(config) {
     ...base(config, "program_initiative", uc.id, uc.name, "tenant_config.use_cases", i + 2, "medium"),
     program_id: uc.id,
     business_owner: uc.category,
-    technology_owner: "CDAO / Data Platform owner to confirm",
-    executive_sponsor: uc.category === "Finance" ? "CFO" : uc.category === "Clinical" ? "CMO" : "CDAO",
+    technology_owner: config.defaultTechnologyOwner || "CDAO / Data Platform owner to confirm",
+    executive_sponsor: uc.sponsor || (uc.category === "Finance" ? "CFO" : uc.category === "Clinical" ? "CMO" : config.entity.cxo_sponsor || "CDAO"),
     phase: "P0/P1 evidence framing",
     budget_usd: "not_provided",
     spend_to_date_usd: "not_provided",
@@ -253,8 +267,8 @@ function v6Rows(config) {
   }));
 
   rows["V6_10_ai_initiatives.csv"] = config.useCases.slice(0, 3).map((uc, i) => ({
-    ...base(config, "ai_initiative", `MER-AI-${String(i + 1).padStart(3, "0")}`, uc.name, "tenant_config.use_cases", i + 2, "low"),
-    ai_initiative_id: `MER-AI-${String(i + 1).padStart(3, "0")}`,
+    ...base(config, "ai_initiative", `${prefix(config)}-AI-${String(i + 1).padStart(3, "0")}`, uc.name, "tenant_config.use_cases", i + 2, "low"),
+    ai_initiative_id: `${prefix(config)}-AI-${String(i + 1).padStart(3, "0")}`,
     use_case: uc.name,
     business_process: uc.dataDomains.join("; "),
     tool_or_model: "AI/LLM workflow target - not production",
@@ -274,7 +288,7 @@ function v6Rows(config) {
   }));
 
   rows["V6_11_operations_risk_controls.csv"] = config.useCases.flatMap((uc, i) => uc.gaps.map((gap, j) => ({
-    ...base(config, "operations_risk_control", `MER-RISK-${String(i + 1).padStart(2, "0")}-${String(j + 1).padStart(2, "0")}`, `${uc.name}: ${gap}`, "tenant_config.use_cases.gaps", (i * 10) + j + 2, "medium"),
+    ...base(config, "operations_risk_control", `${prefix(config)}-RISK-${String(i + 1).padStart(2, "0")}-${String(j + 1).padStart(2, "0")}`, `${uc.name}: ${gap}`, "tenant_config.use_cases.gaps", (i * 10) + j + 2, "medium"),
     process: uc.name,
     process_owner: uc.category,
     severity: gap.includes("not") || gap.includes("No ") ? "high" : "medium",
@@ -290,12 +304,12 @@ function v6Rows(config) {
       const sys = config.systems.find((s) => s[1] === systemName);
       if (sys) rels.push(["application_system", sys[0], "SUPPORTS", "program_initiative", uc.id, `${systemName} supports ${uc.name}`]);
     });
-    uc.gaps.forEach((gap, i) => rels.push(["operations_risk_control", `MER-RISK-${String(config.useCases.indexOf(uc) + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`, "BLOCKS", "program_initiative", uc.id, gap]));
+    uc.gaps.forEach((gap, i) => rels.push(["operations_risk_control", `${prefix(config)}-RISK-${String(config.useCases.indexOf(uc) + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`, "BLOCKS", "program_initiative", uc.id, gap]));
   });
   config.systems.forEach((s) => rels.push(["vendor_contract", s[6], "VENDOR_SUPPORTS_SYSTEM", "application_system", s[0], `${s[6]} supports ${s[1]}`]));
   rows["V6_12_relationships.csv"] = rels.map((r, i) => ({
-    ...base(config, "relationship", `MER-REL-${String(i + 1).padStart(4, "0")}`, r[5], "derived_relationship_graph", i + 2, "medium"),
-    relationship_id: `MER-REL-${String(i + 1).padStart(4, "0")}`,
+    ...base(config, "relationship", `${prefix(config)}-REL-${String(i + 1).padStart(4, "0")}`, r[5], "derived_relationship_graph", i + 2, "medium"),
+    relationship_id: `${prefix(config)}-REL-${String(i + 1).padStart(4, "0")}`,
     from_object_family: r[0],
     from_record_id: r[1],
     relationship_type: r[2],
@@ -305,12 +319,12 @@ function v6Rows(config) {
     relationship_confidence: "medium",
   }));
 
-  rows["V6_13_evidence_sources.csv"] = [
+  rows["V6_13_evidence_sources.csv"] = (config.evidenceSources || [
     ["MER-EVID-001", "User-provided Meridian current-state brief", "operator_prompt", "Codex thread prompt 2026-07-09", "AbarVa operator", "medium"],
     ["MER-EVID-002", "Generated Meridian V6/V7 current-state pack", "generated_dataset", config.sourceDataset, "AbarVa synthetic data steward", "medium"],
     ["MER-EVID-003", "Meridian use-case priority list", "operator_prompt", "CDAO use cases from prompt", "AbarVa operator", "medium"],
     ["MER-EVID-004", "V7 derivation anti-boilerplate quality gate", "validation_report", "out/meridian-v6-v7-current-state-v1", "AbarVa QA", "high"],
-  ].map((e, i) => ({
+  ]).map((e, i) => ({
     ...base(config, "evidence_source", e[0], e[1], "manifest_and_prompt", i + 2, e[5]),
     evidence_id: e[0],
     evidence_title: e[1],
@@ -321,11 +335,13 @@ function v6Rows(config) {
   }));
 
   rows["V6_14_metric_definitions.csv"] = [
+    ...(config.metricDefinitions || [
     ["MER-MET-001", "Analytics maintenance share", "Share of data/analytics resources consumed by maintenance and ad hoc work.", "maintenance resources / total analytics resources", "percent", "CDAO", "planning_grade"],
     ["MER-MET-002", "Net-new analytics capacity share", "Share of resources available for net-new analytics delivery.", "net-new resources / total analytics resources", "percent", "CDAO", "planning_grade"],
     ["MER-MET-003", "Medallion certification status", "Whether bronze/silver/gold data product layers are certified.", "evidence review", "status", "Data Platform", "gap"],
     ["MER-MET-004", "Governance operating model status", "Whether formal stewardship, semantic ownership, and quality gates exist.", "evidence review", "status", "CDAO", "gap"],
-    ...config.useCases.map((uc, i) => [`MER-MET-${String(i + 5).padStart(3, "0")}`, `${uc.name} baseline readiness`, `Evidence readiness for ${uc.name}.`, "phase evidence checklist", "status", uc.category, "planning_grade"]),
+    ]),
+    ...config.useCases.map((uc, i) => [`${prefix(config)}-MET-${String(i + 5).padStart(3, "0")}`, `${uc.name} baseline readiness`, `Evidence readiness for ${uc.name}.`, "phase evidence checklist", "status", uc.category, "planning_grade"]),
   ].map((m, i) => ({
     ...base(config, "metric_definition", m[0], m[1], "derived_metric_catalog", i + 2, "medium"),
     metric_id: m[0],
@@ -337,24 +353,32 @@ function v6Rows(config) {
     metric_claim_level: m[6],
   }));
 
-  rows["V6_15_industry_corpus_patterns.csv"] = config.useCases.map((uc, i) => ({
-    ...base(config, "industry_corpus_pattern", `MER-PAT-${String(i + 1).padStart(3, "0")}`, `${uc.name} healthcare analytics pattern`, "derived_patterns", i + 2, "medium"),
-    pattern_id: `MER-PAT-${String(i + 1).padStart(3, "0")}`,
-    pattern_name: `${uc.name} healthcare analytics pattern`,
-    industry_domain: "Healthcare",
-    when_to_apply: uc.dataDomains.join("; "),
-    signals: uc.gaps.join("; "),
-    recommended_actions: `Use evidence-gated phase review for ${uc.name}; collect missing source/system/governance evidence before value claims.`,
-    corpus_context_label: uc.category,
+  rows["V6_15_industry_corpus_patterns.csv"] = (config.industryPatterns || config.useCases.map((uc, i) => [
+    `${prefix(config)}-PAT-${String(i + 1).padStart(3, "0")}`,
+    `${uc.name} ${config.industryPatternLabel || "industry"} pattern`,
+    config.entity.industry,
+    uc.dataDomains.join("; "),
+    uc.gaps.join("; "),
+    `Use evidence-gated phase review for ${uc.name}; collect missing source/system/governance evidence before value claims.`,
+    uc.category,
+  ])).map((p, i) => ({
+    ...base(config, "industry_corpus_pattern", p[0], p[1], "derived_patterns", i + 2, "medium"),
+    pattern_id: p[0],
+    pattern_name: p[1],
+    industry_domain: p[2],
+    when_to_apply: p[3],
+    signals: p[4],
+    recommended_actions: p[5],
+    corpus_context_label: p[6],
   }));
 
-  rows["V6_16_expert_lenses.csv"] = [
+  rows["V6_16_expert_lenses.csv"] = (config.expertLenses || [
     ["MER-LENS-001", "Healthcare CDAO data foundation lens", "CDAO", "data foundation or lakehouse modernization", "What source systems, governance gates, and semantic definitions are certified?", "Do not claim production-ready AI without data controls."],
     ["MER-LENS-002", "Clinical quality lens", "Clinical", "quality, HEDIS, STAR, provider performance", "Which measure logic, attribution, and provider-contract facts are certified?", "Do not claim audited HEDIS/STAR outcomes."],
     ["MER-LENS-003", "Finance cost transparency lens", "Finance", "cost-of-care, margin, close, reporting", "Which claims, capitation, contract, GL, and reconciliation evidence is loaded?", "Do not invent dollar values or audited margin."],
     ["MER-LENS-004", "Member experience lens", "Operations", "contact center, CRM, claims, transcript analytics", "Which transcript, CRM, claims, intent, and QA evidence is approved?", "Do not claim real-time agent assist is live."],
     ["MER-LENS-005", "Platform/security readiness lens", "Technology", "AWS Databricks target or AI automation", "Which network, security, IAM, PHI, lineage, and medallion controls are evidenced?", "Do not claim platform foundation exists."],
-  ].map((l, i) => ({
+  ]).map((l, i) => ({
     ...base(config, "expert_lens", l[0], l[1], "derived_expert_lenses", i + 2, "medium"),
     expert_lens_id: l[0],
     expert_lens_name: l[1],
@@ -371,7 +395,7 @@ function v6Rows(config) {
 }
 
 function deriveFindings(config) {
-  return config.useCases.flatMap((uc, i) => uc.gaps.map((gap, j) => {
+  return config.useCases.flatMap((uc) => uc.gaps.map((gap, j) => {
     const system = uc.systems[j % uc.systems.length];
     const domain = uc.dataDomains[j % uc.dataDomains.length];
     return {
@@ -383,7 +407,7 @@ function deriveFindings(config) {
       current_state_finding: `${system} and ${domain} evidence show a blocker for ${uc.name}: ${gap}.`,
       business_implication: `${uc.category} cannot treat ${domain} as decision-grade for ${uc.name} until ${gap.toLowerCase()} is closed with named evidence.`,
       recommended_next_step: `For ${uc.name}, collect ${domain} lineage/control evidence from ${system} and assign a steward before phase advancement.`,
-      evidence_refs: `MER-EVID-001; ${system}; ${domain}`,
+      evidence_refs: `${sourceEvidenceId(config)}; ${system}; ${domain}`,
       not_allowed_claims: uc.notAllowedClaims.join(" | "),
       confidence: "medium",
     };
@@ -402,9 +426,9 @@ function deriveGoldenQuestions(config) {
   const passVariants = [
     (uc, system, domain, gap) => `Pass only if the answer identifies ${system} as evidence for ${uc.name}, ties it to ${domain}, and states that "${gap}" still requires source proof.`,
     (uc, system, domain, gap) => `Pass when the blocker is named as "${gap}", the answer explains why it constrains ${domain}, and ${uc.name} remains in planning-grade language.`,
-    (uc, system, domain, gap) => `Pass if the response refuses production/value claims for ${uc.name}, preserves the forbidden-claim boundary, and cites ${system} as the relevant fact anchor.`,
+    (uc, system, _domain, _gap) => `Pass if the response refuses production/value claims for ${uc.name}, preserves the forbidden-claim boundary, and cites ${system} as the relevant fact anchor.`,
     (uc, system, domain, gap) => `Pass when ${system} is reconciled with the other Move systems, ${domain} is not treated as certified, and the open dependency "${gap}" is explicit.`,
-    (uc, system, domain, gap) => `Pass only if value discussion for ${uc.name} asks for a baseline for ${domain}, names the owner evidence still needed, and avoids dollar or ROI invention.`,
+    (uc, _system, domain, _gap) => `Pass only if value discussion for ${uc.name} asks for a baseline for ${domain}, names the owner evidence still needed, and avoids dollar or ROI invention.`,
     (uc, system, domain, gap) => `Pass when the validating owner path is tied to ${uc.category}, the source artifact is referenced, and the answer explains how "${gap}" affects phase advancement.`,
   ];
   return config.useCases.flatMap((uc) => stems.map((stem, i) => {
@@ -418,7 +442,7 @@ function deriveGoldenQuestions(config) {
       must_include: `${uc.name}; ${system}; ${domain}; ${gap}`,
       must_not_claim: `${uc.notAllowedClaims[i % uc.notAllowedClaims.length]} Specific to ${uc.name}, do not present ${system} / ${domain} as certified while "${gap}" remains open.`,
       pass_criteria: passVariants[i](uc, system, domain, gap),
-      evidence_refs: `MER-EVID-001; ${system}`,
+      evidence_refs: `${sourceEvidenceId(config)}; ${system}`,
       failure_mode_guarded: i === 0 ? "unsupported_tenant_claim" : i === 1 ? "foundation_overclaim" : i === 2 ? "value_fabrication" : "thin_generic_answer",
     };
   }));
@@ -451,14 +475,14 @@ function v7Rows(config, v6) {
     employee_count: "",
     employee_count_basis: "not_loaded",
     operating_company_breakdown: "not_loaded",
-    business_segments: "clinical delivery; health plan operations; finance; analytics",
+    business_segments: config.businessSegments || "clinical delivery; health plan operations; finance; analytics",
     corporate_it_budget_usd: "",
     opco_local_technology_budget_usd: "",
     total_direct_technology_budget_usd: "",
     technology_budget_basis: "not_loaded",
     ai_data_budget_usd: "",
-    primary_cloud: "AWS target for analytics; foundation not evidenced",
-    enterprise_cdp_status: "not_loaded",
+    primary_cloud: config.primaryCloud || "AWS target for analytics; foundation not evidenced",
+    enterprise_cdp_status: config.enterpriseCdpStatus || "not_loaded",
     strategic_priorities: config.useCases.map((uc) => uc.name).join("; "),
     ...evidence(config),
   });
@@ -472,7 +496,7 @@ function v7Rows(config, v6) {
     operating_model: r.operating_model,
     critical_processes_structured: r.critical_processes,
     primary_kpis_structured: r.primary_kpis,
-    kpi_source_ref: "MER-EVID-001",
+    kpi_source_ref: sourceEvidenceId(config),
     function_criticality: "high",
     stakeholder_facing_type: "internal",
     supporting_system_refs: config.systems.filter((s) => r.critical_processes.toLowerCase().split(";").some((p) => s[2].toLowerCase().includes(p.trim().split(" ")[0]))).map((s) => s[0]).join("; "),
@@ -502,8 +526,8 @@ function v7Rows(config, v6) {
     population_count: r.population_count,
     population_basis: r.population_count === "not_provided" ? "not_loaded" : "user_provided_current_state",
     primary_tasks: r.work_context,
-    systems_used: "SQL Server marts; Tableau; SAS; Power BI; Epic analytics where applicable",
-    pain_points: "Maintenance load; fragmented marts; missing governance; foundation gaps",
+    systems_used: config.defaultPersonaSystemsUsed || "SQL Server marts; Tableau; SAS; Power BI; Epic analytics where applicable",
+    pain_points: config.defaultPersonaPainPoints || "Maintenance load; fragmented marts; missing governance; foundation gaps",
     change_readiness: "requires workshop validation",
     ai_enablement_need: r.ai_relevance,
     decisions_supported: "phase evidence and baseline readiness",
@@ -642,8 +666,8 @@ function v7Rows(config, v6) {
     pattern_name: r.pattern_name,
     industry_domain: r.industry_domain,
     recommended_actions: r.recommended_actions,
-    executive_audience: "CDAO; CFO; CMO; COO",
-    relevance_to_lakeshore: "not_applicable_meridian_health",
+    executive_audience: config.executiveAudience || "CDAO; CFO; CMO; COO",
+    relevance_to_lakeshore: "not_applicable",
     pattern_confidence: r.confidence,
     grounding_boundary: config.dataBoundary,
     ...evidence(config),
@@ -657,12 +681,12 @@ function v7Rows(config, v6) {
     default_canvas: r.lens_forbidden_claims,
     ...evidence(config),
   }));
-  out["V7_17_client_rate_card_cost_basis.csv"] = [
+  out["V7_17_client_rate_card_cost_basis.csv"] = (config.rateCardRows || [
     ["MER-RATE-001", "Data foundation discovery", "solution architect", "senior", "US", "", "P0/P1 evidence review", "No rate loaded; client must provide rate card."],
     ["MER-RATE-002", "Healthcare data engineering", "data engineer", "mid", "nearshore", "", "P2/P3 delivery scenario", "No rate loaded; client must provide rate card."],
     ["MER-RATE-003", "Governance and semantic modeling", "data steward", "senior", "US", "", "P2/P4 controls", "No rate loaded; client must provide rate card."],
     ["MER-RATE-004", "Analytics AMS run support", "report maintainer", "mid", "outsourced", "", "current-state baseline", "No contract rate loaded; vendor terms not provided."],
-  ].map((r) => withEntity(config, {
+  ]).map((r) => withEntity(config, {
     rate_card_id: r[0],
     service_tower: r[1],
     role_family: r[2],
@@ -673,7 +697,7 @@ function v7Rows(config, v6) {
     assumptions: r[7],
   }));
   out["V7_18_function_system_data_vendor_bridge.csv"] = v6["V6_12_relationships.csv"].slice(0, 60).map((r, i) => withEntity(config, {
-    bridge_id: `MER-BRIDGE-${String(i + 1).padStart(3, "0")}`,
+    bridge_id: `${prefix(config)}-BRIDGE-${String(i + 1).padStart(3, "0")}`,
     function_ref: r.to_record_id,
     dependency_type: r.relationship_type,
     object_ref: r.from_record_id,
@@ -684,11 +708,11 @@ function v7Rows(config, v6) {
     data_exchanged: r.evidence_basis,
     evidence_ref: r.relationship_id,
   }));
-  out["V7_19_service_tower_managed_services_scope.csv"] = [
+  out["V7_19_service_tower_managed_services_scope.csv"] = (config.serviceTowerScopeRows || [
     ["MER-SCOPE-001", "Analytics managed services", "Dashboard and report maintenance", "SQL mart refresh; Tableau/Power BI extract fixes; SAS support", "not_loaded", "not_loaded"],
     ["MER-SCOPE-002", "Analytics managed services", "Ad hoc reporting support", "Business user report changes and extracts", "not_loaded", "not_loaded"],
     ["MER-SCOPE-003", "Data foundation delivery", "Net-new data product build", "Candidate future-state delivery; currently capacity constrained", "not_loaded", "not_loaded"],
-  ].map((r) => withEntity(config, {
+  ]).map((r) => withEntity(config, {
     scope_id: r[0],
     service_tower: r[1],
     scope_item: r[2],
@@ -697,7 +721,7 @@ function v7Rows(config, v6) {
     pricing_unit: r[5],
   }));
   out["V7_20_chunk_retrieval_registry.csv"] = Object.entries(out).filter(([file]) => !["V7_20_chunk_retrieval_registry.csv"].includes(file)).flatMap(([file, rows]) => rows.slice(0, 8).map((row, i) => withEntity(config, {
-    chunk_id: `MER-CHUNK-${slug(file)}-${String(i + 1).padStart(3, "0")}`,
+    chunk_id: `${prefix(config)}-CHUNK-${slug(file)}-${String(i + 1).padStart(3, "0")}`,
     source_artifact_ref: file,
     dimension: file.replace(".csv", ""),
     fact_refs: pickRecordName(row),
@@ -720,10 +744,12 @@ function v7Rows(config, v6) {
     ...evidence(config),
   }));
   out["V7_22_operational_evidence_process_intelligence.csv"] = [
+    ...(config.operationalEvidenceRows || [
     ["MER-PROC-001", "Analytics AMS work intake", "ticket", String(config.workforce.analyticsResourceCount), "80 percent maintenance mix", "maintenance load constrains net-new work"],
     ["MER-PROC-002", "Lakehouse foundation readiness", "workshop gate", "not_loaded", "foundation incomplete", "no medallion/platform/network/security evidence"],
     ["MER-PROC-003", "Data governance readiness", "workshop gate", "not_loaded", "governance incomplete", "no formal stewardship or semantic certification evidence"],
-    ...config.useCases.map((uc) => [`MER-PROC-${String(config.useCases.indexOf(uc) + 4).padStart(3, "0")}`, uc.name, "move evidence review", "not_loaded", uc.gaps[0], uc.gaps.join("; ")]),
+    ]),
+    ...config.useCases.map((uc) => [`${prefix(config)}-PROC-${String(config.useCases.indexOf(uc) + 4).padStart(3, "0")}`, uc.name, "move evidence review", "not_loaded", uc.gaps[0], uc.gaps.join("; ")]),
   ].map((r) => withEntity(config, {
     process_id: r[0],
     process: r[1],
@@ -732,10 +758,10 @@ function v7Rows(config, v6) {
     cycle_time: r[4],
     bottleneck: r[5],
   }));
-  out["V7_23_external_benchmark_market_corpus.csv"] = [
+  out["V7_23_external_benchmark_market_corpus.csv"] = (config.benchmarkRows || [
     ["MER-BENCH-001", "Healthcare lakehouse foundation benchmark placeholder", "Healthcare", "US", "", "", "Use only after approved external benchmark is loaded.", "not_loaded", "Do not benchmark Meridian until corpus evidence is approved."],
     ["MER-BENCH-002", "Analytics operating model benchmark placeholder", "Healthcare", "US", "", "", "Use only after approved external benchmark is loaded.", "not_loaded", "Do not compare 80/20 resource mix to market without sourced benchmark."],
-  ].map((r) => ({
+  ]).map((r) => ({
     benchmark_id: r[0],
     benchmark_name: r[1],
     industry: r[2],
@@ -747,12 +773,12 @@ function v7Rows(config, v6) {
     recommended_use: r[8],
     ...evidence(config),
   }));
-  out["V7_24_infrastructure_cloud_estate.csv"] = [
+  out["V7_24_infrastructure_cloud_estate.csv"] = (config.infrastructureRows || [
     ["MER-INFRA-001", "AWS analytics landing zone", "cloud_foundation", "target_not_ready", "critical", "not_loaded"],
     ["MER-INFRA-002", "Databricks on AWS workspace", "lakehouse_platform", "target_not_ready", "critical", "not_loaded"],
     ["MER-INFRA-003", "On-prem SQL Server reporting estate", "legacy_reporting", "current_state", "critical", "on_premise"],
     ["MER-INFRA-004", "BI gateway and extract estate", "reporting_infrastructure", "current_state", "high", "on_premise_and_saas"],
-  ].map((r) => withEntity(config, {
+  ]).map((r) => withEntity(config, {
     estate_item_id: r[0],
     estate_item_name: r[1],
     infrastructure_category: r[2],
@@ -789,10 +815,12 @@ function writeDataset(config, outDir) {
     writeCsv(path.join(v7Dir, file), headers, fillHeaders(headers, rows));
     rowCounts[`v7/${file}`] = rows.length;
   }
-  writeCsv(path.join(derivedDir, "meridian_moves_current_state_findings.csv"), Object.keys(findings[0]), findings);
-  writeCsv(path.join(derivedDir, "meridian_moves_golden_questions_scorecard.csv"), Object.keys(goldenQuestions[0]), goldenQuestions);
-  rowCounts["derived/meridian_moves_current_state_findings.csv"] = findings.length;
-  rowCounts["derived/meridian_moves_golden_questions_scorecard.csv"] = goldenQuestions.length;
+  const findingsFile = derivedFileStem(config, "moves_current_state_findings.csv");
+  const goldenFile = derivedFileStem(config, "moves_golden_questions_scorecard.csv");
+  writeCsv(path.join(derivedDir, findingsFile), Object.keys(findings[0]), findings);
+  writeCsv(path.join(derivedDir, goldenFile), Object.keys(goldenQuestions[0]), goldenQuestions);
+  rowCounts[`derived/${findingsFile}`] = findings.length;
+  rowCounts[`derived/${goldenFile}`] = goldenQuestions.length;
 
   const dimensions = V7_FILES.map(([file, dimensionKey, label]) => {
     const columns = readHeader(path.join(V7_HEADER_ROOT, file));
@@ -853,7 +881,7 @@ function writeDataset(config, outDir) {
     commonKnownGaps: config.commonKnownGaps,
   };
   fs.writeFileSync(path.join(outDir, "V6_V7_GENERATED_MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-  fs.writeFileSync(path.join(outDir, "README.md"), `# Meridian Health V6/V7 Current-State Pack\n\nSynthetic, PHI-free, planning-grade pack generated by the reusable tenant V6/V7 pipeline. It encodes the current-state facts supplied by the operator and avoids unsupported spend, renewal, ROI, production, or PHI claims.\n\n- V6 files: \`templates/\`\n- V7 files: \`v7/\`\n- Loader payload: \`azure/v7-tenant-load-payload.json\`\n- Derived Move QA: \`derived/\`\n`);
+  fs.writeFileSync(path.join(outDir, "README.md"), `# ${config.tenantName} V6/V7 Current-State Pack\n\nSynthetic, planning-grade pack generated by the reusable tenant V6/V7 pipeline. It encodes configured current-state facts and avoids unsupported spend, renewal, ROI, production, or client-approved claims.\n\n- V6 files: \`templates/\`\n- V7 files: \`v7/\`\n- Loader payload: \`azure/v7-tenant-load-payload.json\`\n- Derived Move QA: \`derived/\`\n`);
   return { outDir, rowCounts, findings, goldenQuestions, payload };
 }
 
