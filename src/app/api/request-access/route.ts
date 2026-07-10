@@ -19,6 +19,81 @@ type RequestAccessBody = {
 
 // Inbound private-preview lead notifications go here.
 const LEAD_INBOX = 'admin@abarva.ai';
+const DEFAULT_REQUEST_ACCESS_FROM = 'AbarVa Preview <support@send.abarva.ai>';
+
+function requestAccessFrom(): string {
+  return process.env.RESEND_FROM_EMAIL?.trim() || DEFAULT_REQUEST_ACCESS_FROM;
+}
+
+function formatError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
+async function sendRequestAccessOperationalAlert(input: {
+  severity: 'warning' | 'critical';
+  failures: string[];
+  lead: {
+    name: string;
+    email: string;
+    company: string;
+    role: string | null;
+    company_size: string | null;
+    industry: string | null;
+    org_type: string;
+    initiative: string | null;
+    source: string;
+    user_agent: string | null;
+  };
+  stored: boolean;
+  emailed: boolean;
+}): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.error('[request-access] operational alert skipped: RESEND_API_KEY missing', {
+      severity: input.severity,
+      failures: input.failures,
+      stored: input.stored,
+      emailed: input.emailed,
+    });
+    return false;
+  }
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: requestAccessFrom(),
+      to: [LEAD_INBOX],
+      subject: `[AbarVa alert] Request access ${input.severity}`,
+      text: [
+        `Request-access ${input.severity} alert`,
+        '',
+        'The public private-preview request path hit an operational failure.',
+        '',
+        `Failures: ${input.failures.join('; ')}`,
+        `Stored in access_requests: ${input.stored ? 'yes' : 'no'}`,
+        `Lead email sent: ${input.emailed ? 'yes' : 'no'}`,
+        '',
+        'Lead context:',
+        `Name:          ${input.lead.name}`,
+        `Work email:    ${input.lead.email}`,
+        `Company:       ${input.lead.company}`,
+        `Role:          ${input.lead.role ?? '-'}`,
+        `Company size:  ${input.lead.company_size ?? '-'}`,
+        `Industry:      ${input.lead.industry ?? '-'}`,
+        `Org type:      ${input.lead.org_type}`,
+        `Source:        ${input.lead.source}`,
+        `User agent:    ${input.lead.user_agent ?? '-'}`,
+        '',
+        'Top AI initiative to pressure-test:',
+        input.lead.initiative ?? '-',
+      ].join('\n'),
+    });
+    return true;
+  } catch (err) {
+    console.error('[request-access] operational alert failed:', err);
+    return false;
+  }
+}
 
 /**
  * Public, unauthenticated lead capture for the signed-out marketing landing page.
@@ -64,6 +139,7 @@ export async function POST(req: NextRequest) {
 
   let stored = false;
   let emailed = false;
+  const failures: string[] = [];
 
   // 1) Durable store.
   try {
@@ -73,6 +149,7 @@ export async function POST(req: NextRequest) {
     stored = true;
   } catch (err) {
     console.error('[request-access] store failed:', err);
+    failures.push(`store_failed: ${formatError(err)}`);
   }
 
   // 2) Notify admin@abarva.ai.
@@ -80,8 +157,8 @@ export async function POST(req: NextRequest) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: 'AbarVa Preview <noreply@abarva.ai>',
-        to: LEAD_INBOX,
+        from: requestAccessFrom(),
+        to: [LEAD_INBOX],
         replyTo: email,
         subject: `Preview request — ${name} · ${company}`,
         text: [
@@ -102,9 +179,22 @@ export async function POST(req: NextRequest) {
       emailed = true;
     } catch (err) {
       console.error('[request-access] email failed:', err);
+      failures.push(`lead_email_failed: ${formatError(err)}`);
     }
   } else if (process.env.NODE_ENV !== 'production') {
     console.info('[request-access] (no RESEND_API_KEY set) lead:', lead);
+  } else {
+    failures.push('lead_email_skipped: RESEND_API_KEY missing');
+  }
+
+  if (failures.length > 0) {
+    await sendRequestAccessOperationalAlert({
+      severity: stored || emailed ? 'warning' : 'critical',
+      failures,
+      lead,
+      stored,
+      emailed,
+    });
   }
 
   // In production, only surface an error if we captured the lead nowhere.

@@ -1,0 +1,74 @@
+name: Request access monitor
+
+on:
+  schedule:
+    # Catch public request-access breakage quickly without creating fake leads.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: request-access-monitor
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+  REQUEST_ACCESS_ALERT_TO: admin@abarva.ai
+  RESEND_FROM_EMAIL: ${{ vars.RESEND_FROM_EMAIL || 'AbarVa Monitor <support@send.abarva.ai>' }}
+
+jobs:
+  request-access-monitor:
+    name: Verify public sign-in and request-access validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Run request-access canary
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/qa/request-access-canary.mjs \
+            --base-url "${PRODUCTION_BASE_URL}" \
+            --out audit-artifacts/request-access-monitor/result.json
+
+      - name: Write monitor summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Request access monitor"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Base URL | \`${PRODUCTION_BASE_URL}\` |"
+            echo "| Alert recipient | \`${REQUEST_ACCESS_ALERT_TO}\` |"
+            echo "| Checked at | \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\` |"
+            echo
+            if [[ -f audit-artifacts/request-access-monitor/result.json ]]; then
+              echo "Result:"
+              echo
+              echo '```json'
+              cat audit-artifacts/request-access-monitor/result.json
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload monitor evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: request-access-monitor
+          path: audit-artifacts/request-access-monitor
+          if-no-files-found: warn
