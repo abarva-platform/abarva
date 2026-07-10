@@ -68,6 +68,33 @@ export function scanRetiredFacts(input: {
   return dedupeFindings(findings);
 }
 
+export function filterSourcesWithRetiredFacts(input: {
+  tenantKey?: string | null;
+  tenantName?: string | null;
+  sources: AskSource[];
+}): { sources: AskSource[]; findings: RetiredFactFinding[] } {
+  const findings: RetiredFactFinding[] = [];
+  const sources: AskSource[] = [];
+
+  for (const source of input.sources) {
+    const sourceFindings = scanRetiredFacts({
+      tenantKey: input.tenantKey,
+      tenantName: input.tenantName,
+      sources: [source],
+    });
+    if (sourceFindings.length > 0) {
+      findings.push(...sourceFindings);
+      continue;
+    }
+    sources.push(source);
+  }
+
+  return {
+    sources,
+    findings: dedupeFindings(findings),
+  };
+}
+
 export function buildRetiredFactError(findings: RetiredFactFinding[]): string {
   const sample = findings
     .slice(0, 5)

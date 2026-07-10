@@ -1,4 +1,8 @@
-import { buildRetiredFactError, scanRetiredFacts } from "../retired-fact-gate";
+import {
+  buildRetiredFactError,
+  filterSourcesWithRetiredFacts,
+  scanRetiredFacts,
+} from "../retired-fact-gate";
 
 describe("retired fact gate", () => {
   it("hard-flags retired Lakeshore facts before they can reach synthesis", () => {
@@ -92,6 +96,42 @@ describe("retired fact gate", () => {
         expect.objectContaining({
           factId: "retired_alias_firstcapitalfinancial",
           location: "modelOutput",
+        }),
+      ]),
+    );
+  });
+
+  it("filters stale source rows without suppressing clean context rows", () => {
+    const result = filterSourcesWithRetiredFacts({
+      tenantKey: "lakeshore-holdings",
+      sources: [
+        {
+          type: "TENANT",
+          id: "v7_01_enterprise_profile",
+          name: "V7 Enterprise profile",
+          detail:
+            "HarborPoint Packaging Group appears in this stale source row.",
+          confidence: 0.9,
+        },
+        {
+          type: "TENANT",
+          id: "v7_02_current_state",
+          name: "Current state",
+          detail:
+            "Lakeshore Holdings uses a federated-with-center model across governed portfolio companies.",
+          confidence: 0.86,
+        },
+      ],
+    });
+
+    expect(result.sources.map((source) => source.id)).toEqual([
+      "v7_02_current_state",
+    ]);
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          factId: "retired_alias_harborpoint",
+          sourceId: "v7_01_enterprise_profile",
         }),
       ]),
     );
