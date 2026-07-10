@@ -1,4 +1,4 @@
-// SkyHarbor Air corpus fixture for Intelligence Map + Brief.
+// Airline Demo corpus fixture for Intelligence Map + Brief.
 //
 // Sourced from datasets/skyharbor-air-synthetic-v1. This is de-identified
 // synthetic tenant substrate, not live carrier-confidential data.
@@ -486,7 +486,7 @@ const proofPoints: ProofPoint[] = [];
 
 export function getSkyHarborMapData(): MapData {
   return {
-    tenantName: 'SkyHarbor Air',
+    tenantName: 'Airline Demo',
     tenantBrandColor: '#1d4ed8',
     industry: 'airline',
     totalUseCases: 7,
@@ -528,12 +528,12 @@ export function getSkyHarborMapData(): MapData {
 
 export function getSkyHarborBriefData(): BriefData {
   return {
-    tenantName: 'SkyHarbor Air',
+    tenantName: 'Airline Demo',
     tenantBrandColor: '#1d4ed8',
     industry: 'airline',
     composedAt: '2026-05-27T00:00:00.000Z',
     synthesis:
-      'SkyHarbor Air has a deep airline modernization substrate: the strongest near-term bets are disruption recovery, crew legality extraction, and an AI-assisted SDLC factory. The decision risk is not whether the corpus exists; it is whether acceleration is tied to operational telemetry, dual-run exit evidence, and vendor outcome proof.',
+      'Airline Demo has a deep airline modernization substrate: the strongest near-term bets are disruption recovery, crew legality extraction, and an AI-assisted SDLC factory. The decision risk is not whether the corpus exists; it is whether acceleration is tied to operational telemetry, dual-run exit evidence, and vendor outcome proof.',
     valueAtStake: [
       { label: 'Operational recovery', value: '$10.2M projected', captured: 20, blocked: 35, candidate: 25, tone: 'teal' },
       { label: 'Crew and legacy extraction', value: '$12.4M projected', captured: 15, blocked: 45, candidate: 20, tone: 'amber' },

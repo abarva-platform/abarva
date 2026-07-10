@@ -134,7 +134,7 @@ const skyharborSections: Record<string, LandscapeSection> = {
   profile: section({
     id: 'profile',
     eyebrow: 'CURRENT STATE ASSESSMENT - ENTERPRISE PROFILE',
-    title: 'SkyHarbor Air',
+    title: 'Airline Demo',
     subtitle: 'A global airline technology estate with mainframe depth, cloud modernization, and operational AI ambition.',
     executiveSummary:
       'SkyHarbor is a large, complex airline enterprise. The technology opportunity is not a simple cloud migration. It is a current-state modernization problem across core airline operations, data products, integration, customer identity, and disciplined AI sequencing.',

@@ -333,7 +333,7 @@
     "skyharbor-air": {
       "tenant": {
         "key": "skyharbor-air",
-        "displayName": "SkyHarbor Air",
+        "displayName": "Airline Demo",
         "industry": "Aviation"
       },
       "ask": {

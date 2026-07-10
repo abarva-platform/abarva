@@ -34,7 +34,7 @@ export function buildContractOptimizationCxoNarrativeReport(args: {
         kind: "cover",
         title: DOCUMENT_TITLE,
         message:
-          "Existing-contract optimization report for the SkyHarbor Air AMS agreement. The report aligns contract evidence, commercial exposure, cure actions, and renewal decision timing.",
+          "Existing-contract optimization report for the Airline Demo AMS agreement. The report aligns contract evidence, commercial exposure, cure actions, and renewal decision timing.",
         proofLabel: "Contract optimization",
         metrics: [
           { label: "Company", value: args.tenantName, note: args.eventCode },

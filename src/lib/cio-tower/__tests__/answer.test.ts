@@ -8,7 +8,7 @@ import {
 function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPromptContext {
   return {
     tenantKey: 'skyharbor-air',
-    tenantName: 'SkyHarbor Air',
+    tenantName: 'Airline Demo',
     question: 'give me the list of top 10 IT programs',
     contract: {
       contract_key: 'tower_top_it_programs_by_budget',

@@ -1,3 +1,5 @@
+import { DEMO_SAFE_CLIENT_NAMES } from "@/lib/client-config";
+
 export type CioTowerMetricKey =
   | 'total_it_budget_fy26'
   | 'total_it_budget_fy25_baseline'
@@ -72,7 +74,7 @@ const CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY: Record<string, string> = {
   'apex-retail': 'Apex Retail Group',
   'meridian-health': 'Meridian Health System',
   'first-capital-financial': 'First Capital Financial',
-  'skyharbor-air': 'SkyHarbor Air',
+  'skyharbor-air': DEMO_SAFE_CLIENT_NAMES.skyharbor,
   'lakeshore-industries': 'Lakeshore Holdings',
 };
 

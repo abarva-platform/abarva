@@ -370,7 +370,7 @@ function composeBranchOverview(
 function humanizeTenantKey(tenantKey: string): string {
   const knownTenantNames: Record<string, string> = {
     skyharbor: "SkyHarbor",
-    "skyharbor-air": "SkyHarbor Air",
+    "skyharbor-air": "Airline Demo",
     lakeshore: "Lakeshore Holdings",
     "lakeshore-holdings": "Lakeshore Holdings",
     apex: "Apex",

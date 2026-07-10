@@ -412,7 +412,7 @@ export function buildSkyHarborAmsExistingContractInput(
   return {
     tenantKey: overrides.tenantKey ?? "skyharbor-air",
     sourceEventId: overrides.sourceEventId ?? "skyh-ams-contract-optimization-2026",
-    contractName: "SkyHarbor Air Application Managed Services Agreement",
+    contractName: "Airline Demo Application Managed Services Agreement",
     incumbentVendorName: "Vendor A — incumbent operations profile",
     syntheticDemo: true,
     currentAnnualRunRateUsd: 38_400_000,

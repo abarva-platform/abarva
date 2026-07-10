@@ -110,7 +110,7 @@ const DEMO_ROUTE_STUB_TENANTS: readonly TenantSeedPlan[] = Object.freeze([
   {
     tenantKey: 'skyharbor',
     routeSlug: 'skyharbor-air',
-    displayName: 'SkyHarbor Air',
+    displayName: 'Airline Demo',
     programs: [],
   },
   {

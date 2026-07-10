@@ -60,8 +60,8 @@ describe("buildAtlasTowerCurrentState client labels", () => {
       clientKey: "skyharbor",
     });
 
-    expect(state.client.clientName).toBe("SkyHarbor Air");
-    expect(state.client.clientName).not.toBe("Airline Demo");
+    expect(state.client.clientName).toBe("Airline Demo");
+    expect(state.client.clientName).not.toBe("SkyHarbor Air");
   });
 
   it("passes active-client tenant candidates into the V7 Tower projection", async () => {

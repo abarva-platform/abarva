@@ -211,7 +211,7 @@ function inferSourceEventTenantName(args: {
   eventName?: string | null;
 }): string | null {
   const text = `${args.eventCode ?? ''} ${args.eventName ?? ''}`;
-  if (/\bSKYH\b|SkyHarbor/i.test(text)) return 'SkyHarbor Air';
+  if (/\bSKYH\b|SkyHarbor/i.test(text)) return 'Airline Demo';
   return null;
 }
 

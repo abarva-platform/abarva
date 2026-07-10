@@ -259,9 +259,9 @@ function normalizeSourceContractOptimizationDisplay(args: {
 
   return {
     ...args.eventDetail,
-    accountName: "SkyHarbor Air",
+    accountName: "Airline Demo",
     code: "SKYH-AMS-CONTRACT-OPT-2026",
-    name: "SkyHarbor Air AMS Contract Optimization",
+    name: "Airline Demo AMS Contract Optimization",
   };
 }
 

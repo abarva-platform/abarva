@@ -133,7 +133,7 @@ async function handleGet(req: NextRequest, { params }: RouteCtx) {
     })
   ) {
     const html = renderContractOptimizationDealPackHtml({
-      tenantName: "SkyHarbor Air",
+      tenantName: "Airline Demo",
       eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
       eventName: ctx.event.name,
       generatedAt,

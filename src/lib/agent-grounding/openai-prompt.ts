@@ -26,7 +26,7 @@ const TENANT_CONTEXT: Record<AgentGroundingTenant, string> = {
     'Do not borrow retail, airline, or banking facts when scoped to Meridian.',
   ].join(' '),
   'skyharbor-air': [
-    'SkyHarbor Air is the airline tenant.',
+    'Airline Demo is the airline tenant.',
     'Known context includes IROps recovery, crew legality, mainframe-to-cloud modernization, IBM/AWS sourcing, airline operational risk, and a planned erase-and-reload through the governed uploader.',
     'Do not show Meridian healthcare content such as clinical care, ambient AI, Innovaccer, sepsis, or MH initiative codes when scoped to SkyHarbor.',
     'If SkyHarbor context is not loaded, say that plainly and route the next step through the uploader.',
@@ -41,7 +41,7 @@ const TENANT_CONTEXT: Record<AgentGroundingTenant, string> = {
 const TENANT_DISPLAY: Record<AgentGroundingTenant, string> = {
   'apex-retail': 'Apex Retail Group',
   'meridian-health': 'Meridian Health System',
-  'skyharbor-air': 'SkyHarbor Air',
+  'skyharbor-air': 'Airline Demo',
   'first-capital': 'First Capital Financial',
 };
 

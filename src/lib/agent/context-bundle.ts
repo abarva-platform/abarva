@@ -615,7 +615,7 @@ const TENANT_CONTEXT_BY_SLUG: Record<
   "meridian-health": { name: "Meridian Health System", tier: "rich" },
   "first-capital": { name: "First Capital Financial", tier: "rich" },
   "northstar-clinical": { name: NORTHSTAR_DISPLAY_NAME, tier: "rich" },
-  "skyharbor-air": { name: "SkyHarbor Air", tier: "rich" },
+  "skyharbor-air": { name: "Airline Demo", tier: "rich" },
 };
 
 const PLATFORM_TENANT = {
@@ -941,7 +941,7 @@ const ALLOWED_CANONICAL_DISPLAY_NAMES: ReadonlySet<string> = new Set([
   "Meridian Health",
   "First Capital Financial",
   NORTHSTAR_DISPLAY_NAME,
-  "SkyHarbor Air",
+  "Airline Demo",
 ]);
 
 function resolveNonCanonicalDisplayName(tenantSlug: string): string {

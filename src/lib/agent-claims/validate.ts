@@ -144,6 +144,10 @@ const COMMON_NAME_WORDS = new Set([
   'central',
 ]);
 
+const TENANT_LEAKAGE_ALIASES: Record<string, string[]> = {
+  'skyharbor-air': ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
+};
+
 /** Detect references to OTHER canonical tenants in the answer. */
 export function detectTenantLeakage(
   answerText: string,
@@ -165,7 +169,12 @@ export function detectTenantLeakage(
       firstWord.length >= 4 && !COMMON_NAME_WORDS.has(firstWord.toLowerCase())
         ? firstWord
         : null;
-    const tokens = [t.name, distinctiveFirst, t.key].filter((x): x is string => Boolean(x));
+    const tokens = [
+      t.name,
+      distinctiveFirst,
+      t.key,
+      ...(TENANT_LEAKAGE_ALIASES[t.key] ?? []),
+    ].filter((x): x is string => Boolean(x));
     for (const token of tokens) {
       const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(`\\b${escaped}\\b`, 'i');
