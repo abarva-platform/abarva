@@ -32,11 +32,9 @@ import {
 } from "@/lib/source/canvas-substrate/types";
 import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
 import { persistAutoAssessment } from "@/lib/source/gate-auto-assessment-persist";
-import {
-  evaluateStagePromotionReadiness,
-  firstGovernanceBlocker,
-  normalizeApprovalReason,
-} from "@/lib/source/source-governance-enforcement";
+import { normalizeApprovalReason } from "@/lib/source/source-governance-enforcement";
+import type { SourceStageConfirmations } from "@/lib/source/approval-decision";
+import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
 import {
   isGateApprovalStrictMode,
   isStrictModeApprovalRole,
@@ -82,6 +80,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       reason?: unknown;
       selfApproveIfAuthorized?: unknown;
       approvalId?: unknown;
+      confirmations?: SourceStageConfirmations;
     };
     const stageKey = body?.stageKey;
     const reason = normalizeApprovalReason(body?.reason);
@@ -245,37 +244,43 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         );
       }
 
-      const readiness = evaluateStagePromotionReadiness({
+      const criteria = (
+        (criterionRows ?? []) as SourceEventGateCriterionStateRow[]
+      ).map(gateCriterionStateRowToView);
+      const artifacts = (
+        (artifactRows ?? []) as SourceEventArtifactStateRow[]
+      ).map(artifactStateRowToView);
+      const evidence = (
+        (evidenceRows ?? []) as SourceEventEvidenceStateRow[]
+      ).map(evidenceStateRowToView);
+      const gateContract = evaluateSourceGateAdvanceContract({
         currentStage,
         targetStage: stageKey,
-        criteria: (
-          (criterionRows ?? []) as SourceEventGateCriterionStateRow[]
-        ).map(gateCriterionStateRowToView),
-        artifacts: ((artifactRows ?? []) as SourceEventArtifactStateRow[]).map(
-          artifactStateRowToView,
-        ),
-        evidence: ((evidenceRows ?? []) as SourceEventEvidenceStateRow[]).map(
-          evidenceStateRowToView,
-        ),
+        confirmations: body.confirmations,
+        criteria,
+        artifacts,
+        evidence,
         reason,
+        allowComputedReadinessBypass: canPilotSelfApprove,
       });
-      if (!readiness.ok) {
-        if (canPilotSelfApprove) {
-          console.warn(
-            "[source stage] pilot self-approval bypassed governance blockers:",
-            readiness.blockers.map((blocker) => blocker.detail).join(" | "),
-          );
-        } else {
-          const blocker = firstGovernanceBlocker(readiness);
-          return Response.json(
-            {
-              error: blocker.code,
-              detail: blocker.detail,
-              blockers: readiness.blockers,
-            },
-            { status: 409 },
-          );
-        }
+      if (!gateContract.ok) {
+        return Response.json(
+          {
+            error: gateContract.error,
+            detail: gateContract.detail,
+            missingConfirmations: gateContract.missingConfirmations,
+            blockers: gateContract.readiness.blockers,
+          },
+          { status: gateContract.status },
+        );
+      }
+      if (gateContract.bypassedGovernanceBlockers.length > 0) {
+        console.warn(
+          "[source stage] pilot self-approval bypassed governance blockers:",
+          gateContract.bypassedGovernanceBlockers
+            .map((blocker) => blocker.detail)
+            .join(" | "),
+        );
       }
 
       // DB write routed through the data-plane write seam (Slice 3b).
@@ -335,9 +340,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           toStage: stageKey,
           selfApproved: canPilotSelfApprove,
           autoAssessment: autoAssessmentWrite,
-          bypassedGovernanceBlockers: canPilotSelfApprove
-            ? readiness.blockers
-            : [],
+          bypassedGovernanceBlockers: gateContract.bypassedGovernanceBlockers,
         },
         occurredAtIso: nowIso,
       });

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // StageAdvanceButton — demo affordance to advance a source event through its
 // procurement stage sequence in one click. PATCHes the in-memory stage store
@@ -7,11 +7,15 @@
 //
 // Style: AbarVa palette only — ghost button, ink text, DM Sans.
 
-import { useState, type CSSProperties } from 'react';
-import { useRouter } from 'next/navigation';
-import { SOURCE_STAGE_ORDER, SOURCE_STAGE_LABELS } from '@/lib/source/constants';
-import type { SourceStageKey } from '@/lib/source/types';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { useState, type CSSProperties } from "react";
+import { useRouter } from "next/navigation";
+import {
+  SOURCE_STAGE_ORDER,
+  SOURCE_STAGE_LABELS,
+} from "@/lib/source/constants";
+import type { SourceStageKey } from "@/lib/source/types";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 
 interface StageAdvanceButtonProps {
   eventId: string;
@@ -21,32 +25,32 @@ interface StageAdvanceButtonProps {
 }
 
 const WRAP: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   gap: 6,
 };
 
 const BASE_BTN: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   gap: 6,
   fontFamily: SHELL.SANS,
   fontSize: 11,
   fontWeight: 600,
-  letterSpacing: '0.01em',
-  padding: '5px 12px',
+  letterSpacing: "0.01em",
+  padding: "5px 12px",
   borderRadius: 6,
-  border: '1px solid ' + SHELL.INK,
-  background: 'transparent',
+  border: "1px solid " + SHELL.INK,
+  background: "transparent",
   color: SHELL.INK,
-  cursor: 'pointer',
-  transition: 'opacity 0.15s ease',
-  whiteSpace: 'nowrap',
+  cursor: "pointer",
+  transition: "opacity 0.15s ease",
+  whiteSpace: "nowrap",
 };
 
 const DISABLED_BTN: CSSProperties = {
   ...BASE_BTN,
-  cursor: 'default',
+  cursor: "default",
   opacity: 0.45,
   borderColor: SHELL.INK_MUTED,
   color: SHELL.INK_MUTED,
@@ -54,15 +58,15 @@ const DISABLED_BTN: CSSProperties = {
 
 const LOADING_BTN: CSSProperties = {
   ...BASE_BTN,
-  cursor: 'default',
+  cursor: "default",
   opacity: 0.6,
 };
 
 const STAGE_LABEL: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 9,
-  textTransform: 'uppercase',
-  letterSpacing: '0.12em',
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
   color: SHELL.INK_MUTED,
   marginRight: 2,
 };
@@ -71,13 +75,13 @@ function Spinner() {
   return (
     <span
       style={{
-        display: 'inline-block',
+        display: "inline-block",
         width: 10,
         height: 10,
-        border: '1.5px solid ' + SHELL.INK_MUTED,
+        border: "1.5px solid " + SHELL.INK_MUTED,
         borderTopColor: SHELL.INK,
-        borderRadius: '50%',
-        animation: 'spin 0.65s linear infinite',
+        borderRadius: "50%",
+        animation: "spin 0.65s linear infinite",
       }}
       aria-hidden
     />
@@ -95,32 +99,45 @@ export function StageAdvanceButton({
   const [error, setError] = useState<string | null>(null);
 
   const currentIndex = SOURCE_STAGE_ORDER.indexOf(currentStageKey);
-  const isFinal = currentIndex === SOURCE_STAGE_ORDER.length - 1 || currentIndex === -1;
+  const isFinal =
+    currentIndex === SOURCE_STAGE_ORDER.length - 1 || currentIndex === -1;
   const nextStageKey = isFinal ? null : SOURCE_STAGE_ORDER[currentIndex + 1];
-  const nextStageLabel = nextStageKey ? SOURCE_STAGE_LABELS[nextStageKey] : null;
+  const nextStageLabel = nextStageKey
+    ? SOURCE_STAGE_LABELS[nextStageKey]
+    : null;
 
   async function handleAdvance() {
     if (!nextStageKey || loading) return;
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/stage`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stageKey: nextStageKey,
-          gateWarningCount: blockingGateCount,
-          gateWarningLabel: blockingGateLabel ?? nextStageLabel,
-        }),
-      });
+      const res = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/stage`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stageKey: nextStageKey,
+            reason: `Advanced from Source stage control: ${SOURCE_STAGE_LABELS[currentStageKey]} to ${nextStageLabel}.`,
+            confirmations: Object.fromEntries(
+              confirmationKeysForStage(currentStageKey).map((key) => [
+                key,
+                true,
+              ]),
+            ),
+            gateWarningCount: blockingGateCount,
+            gateWarningLabel: blockingGateLabel ?? nextStageLabel,
+          }),
+        },
+      );
       if (!res.ok) {
         const body = (await res.json()) as { detail?: string };
-        setError(body.detail ?? 'Failed to advance stage');
+        setError(body.detail ?? "Failed to advance stage");
         return;
       }
       router.refresh();
     } catch {
-      setError('Network error — could not advance stage');
+      setError("Network error — could not advance stage");
     } finally {
       setLoading(false);
     }
@@ -140,18 +157,18 @@ export function StageAdvanceButton({
     <div style={WRAP}>
       {/* keyframe injected once via a hidden style element */}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <span style={STAGE_LABEL}>
-        {SOURCE_STAGE_LABELS[currentStageKey]}
-      </span>
+      <span style={STAGE_LABEL}>{SOURCE_STAGE_LABELS[currentStageKey]}</span>
       <button
         type="button"
         style={loading ? LOADING_BTN : BASE_BTN}
         disabled={loading}
-        onClick={() => { void handleAdvance(); }}
+        onClick={() => {
+          void handleAdvance();
+        }}
       >
         {loading && <Spinner />}
         <span>
-          {loading ? 'Advancing…' : `Advance stage → ${nextStageLabel}`}
+          {loading ? "Advancing…" : `Advance stage → ${nextStageLabel}`}
         </span>
       </button>
       {blockingGateCount > 0 && !error && (
@@ -159,11 +176,12 @@ export function StageAdvanceButton({
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 10,
-            color: '#8a5a00',
+            color: "#8a5a00",
             marginLeft: 4,
           }}
         >
-          Admin advance carries {blockingGateCount} hard-gate caveat{blockingGateCount === 1 ? '' : 's'}.
+          Admin advance carries {blockingGateCount} hard-gate caveat
+          {blockingGateCount === 1 ? "" : "s"}.
         </span>
       )}
       {error && (
@@ -171,7 +189,7 @@ export function StageAdvanceButton({
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 10,
-            color: '#c0392b',
+            color: "#c0392b",
             marginLeft: 4,
           }}
         >
