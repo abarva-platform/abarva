@@ -14,6 +14,15 @@ function humanizeToken(value: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function normalizeTimestamp(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return new Date(value).toISOString();
+  const asString = String(value);
+  return asString === "[object Object]" ? null : asString;
+}
+
 function moveArtifactKind(row: MoveArtifactRow): WorkspaceItemKind {
   if (row.artifact_family === "generated_deliverable") return "deliverable";
   if (row.artifact_family === "approval_artifact") return "approval";
@@ -66,8 +75,8 @@ export function moveArtifactToWorkspaceItem(
     lineage: { cites: [], usedBy: [], status: "not_recorded" },
     audit: {
       createdBy: row.generated_by,
-      createdAt: row.created_at,
-      updatedAt: row.generated_at ?? row.created_at,
+      createdAt: normalizeTimestamp(row.created_at),
+      updatedAt: normalizeTimestamp(row.generated_at ?? row.created_at),
     },
     blobPath: row.blob_path,
   };
@@ -110,9 +119,9 @@ export function generatedMoveArtifactToWorkspaceItem(
         : { cites: [], usedBy: [], status: "not_recorded" },
     audit: {
       createdBy: record.renderedBy,
-      createdAt: record.renderedAt,
+      createdAt: normalizeTimestamp(record.renderedAt),
       updatedBy: record.renderedBy,
-      updatedAt: record.renderedAt,
+      updatedAt: normalizeTimestamp(record.renderedAt),
     },
     blobPath: moveId ? `generated_artifacts:${moveId}` : null,
   };
@@ -126,8 +135,8 @@ export function buildMovesWorkspaceItems(args: {
     ...args.generatedArtifacts.map(generatedMoveArtifactToWorkspaceItem),
     ...args.moveArtifacts.map(moveArtifactToWorkspaceItem),
   ].sort((a, b) => {
-    const aUpdated = a.audit.updatedAt ?? a.audit.createdAt ?? "";
-    const bUpdated = b.audit.updatedAt ?? b.audit.createdAt ?? "";
+    const aUpdated = normalizeTimestamp(a.audit.updatedAt ?? a.audit.createdAt) ?? "";
+    const bUpdated = normalizeTimestamp(b.audit.updatedAt ?? b.audit.createdAt) ?? "";
     return bUpdated.localeCompare(aUpdated);
   });
 }

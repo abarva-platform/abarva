@@ -104,4 +104,30 @@ describe("MovesWorkspaceAdapter mapping", () => {
       "move-artifact:move-artifact-1",
     ]);
   });
+
+  it("normalizes Date-valued audit timestamps before sorting", () => {
+    const olderMoveArtifact = {
+      ...moveArtifact,
+      artifact_id: "move-artifact-date-older",
+      created_at: new Date("2026-06-12T09:55:00.000Z"),
+      generated_at: new Date("2026-06-12T10:00:00.000Z"),
+    } as unknown as MoveArtifactRow;
+    const newerMoveArtifact = {
+      ...moveArtifact,
+      artifact_id: "move-artifact-date-newer",
+      created_at: new Date("2026-06-13T09:55:00.000Z"),
+      generated_at: new Date("2026-06-13T10:00:00.000Z"),
+    } as unknown as MoveArtifactRow;
+
+    const items = buildMovesWorkspaceItems({
+      moveArtifacts: [olderMoveArtifact, newerMoveArtifact],
+      generatedArtifacts: [],
+    });
+
+    expect(items.map((item) => item.id)).toEqual([
+      "move-artifact:move-artifact-date-newer",
+      "move-artifact:move-artifact-date-older",
+    ]);
+    expect(items[0]?.audit.updatedAt).toBe("2026-06-13T10:00:00.000Z");
+  });
 });
