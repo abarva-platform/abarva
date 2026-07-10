@@ -18,6 +18,8 @@
   --attested: #2e7a4c;
   --waived: #8676a6;
   --serif: Georgia, "Times New Roman", serif;
+  --shadow-sm: 0 1px 2px rgba(22, 21, 15, 0.05);
+  --shadow: 0 1px 2px rgba(22, 21, 15, 0.04), 0 8px 24px rgba(22, 21, 15, 0.05);
 
   background: var(--ground);
   color: var(--ink);
@@ -272,7 +274,8 @@
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
 }
 .card + .card {
   margin-top: 16px;
