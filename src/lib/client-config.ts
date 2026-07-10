@@ -13,7 +13,7 @@ export const DEMO_SAFE_CLIENT_NAMES = {
   meridian: "Healthcare Demo",
   arcturus: "Financial Services Demo",
   northstar: "Clinical Technology Demo",
-  skyharbor: "Airline Demo",
+  skyharbor: "SkyHarbor Air",
   lakeshore: "Lakeshore Holdings",
 } as const satisfies Record<string, string>;
 
@@ -40,7 +40,7 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bSkyHarbor Air Group\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor Airlines\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor Air\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
-  [/\bSkyHarbor\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor\b(?!\s+Air\b)/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bLakeshore Holdings Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore Holdings(?:\s+Holdings)+\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
@@ -63,7 +63,6 @@ const DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS: ReadonlyArray<
   ["SkyHarbor Air Group", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Airlines", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Air", DEMO_SAFE_CLIENT_NAMES.skyharbor],
-  ["SkyHarbor", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["Lakeshore Holdings Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Holdings", DEMO_SAFE_CLIENT_NAMES.lakeshore],

@@ -11,7 +11,7 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 // never Apex.
 describe("Move-card tenant name resolution (no cross-tenant Apex default)", () => {
   const cases: Array<[string, string, string]> = [
-    ["skyharbor", "SkyHarbor Air", "Airline Demo"],
+    ["skyharbor", "SkyHarbor Air", "SkyHarbor Air"],
     ["northstar", "Northstar Clinical Technologies", "Clinical Technology Demo"],
     ["lakeshore", "Lakeshore Holdings", "Lakeshore Holdings"],
     ["apexretail", "Apex Retail Group", "Retail Demo"],
