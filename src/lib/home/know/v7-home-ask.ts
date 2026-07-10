@@ -330,6 +330,7 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/business areas|business functions|available business|organization structure/.test(q)) return 'business_areas';
   if (/technology leaders|it organization|it org|structured today|roles|accountability/.test(q)) return 'it_org';
   if (/\b(analytics|reporting|bi|dashboard)\b/.test(q) && /\b(estate|tools?|systems?|platforms?|current)\b/.test(q)) return 'apps_systems';
+  if (/\b(technology estate|tech estate|technology landscape|technology inventory|technology stack)\b/.test(q)) return 'apps_systems';
   if (/\b(applications?|apps?|core systems?|source systems?|reporting tools?|bi tools?|it systems?|systems? of record|systems? landscape|systems? inventory|systems? context|erp|sap|mainframe|epic|clarity|caboodle|power bi|sas)\b/.test(q)) return 'apps_systems';
   if (/infrastructure|cloud|data center|network|hosting|aws|azure/.test(q)) return 'infrastructure';
   // Word-bounded tokens so a tenant/company name never collides with a

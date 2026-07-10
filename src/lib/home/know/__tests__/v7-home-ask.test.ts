@@ -309,6 +309,21 @@ describe('answerHomeKnowFromV7', () => {
     expect('trace' in result ? result.trace?.modelCall.provider : null).toBe('none');
   });
 
+  it('routes technology estate questions to applications and systems evidence', async () => {
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'skyharbor',
+      tenantDisplayName: 'SkyHarbor Air',
+      question: 'What does SkyHarbor know about its airline operations and IROPS technology estate?',
+      includeTrace: true,
+      userId: 'user-test',
+      session: fakeSession(),
+    });
+
+    expect(result.proof.questionIntent).toBe('apps_systems');
+    expect(result.answer.primaryDimension).toBe('v7_05_applications_systems');
+    expect(result.answer.directAnswer).toMatch(/SkyOps Recovery Platform/i);
+  });
+
   it('routes plain IT systems questions to the applications/systems V7 dimension', async () => {
     const result = await answerHomeKnowFromV7({
       tenantKey: 'lakeshore',
