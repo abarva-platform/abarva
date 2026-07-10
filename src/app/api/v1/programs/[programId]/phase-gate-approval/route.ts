@@ -11,7 +11,11 @@ import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getModuleState, getPhaseSnapshots, getProgramById } from "@/lib/programs/queries";
 import { evaluateGate } from "@/lib/programs/governance";
-import { advancePhase } from "@/lib/programs/mutations";
+import {
+  advancePhase,
+  ensurePhaseGateDeliverable,
+  signOffDeliverable,
+} from "@/lib/programs/mutations";
 import { closeP0OnApproval } from "@/lib/programs/origination-close";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
@@ -22,6 +26,14 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const PHASE_GATE_DELIVERABLE: Record<number, { typeKey: string; title: string }> = {
+  1: { typeKey: "charter", title: "Program Charter" },
+  2: { typeKey: "discovery_report", title: "Discovery & Diagnosis Report" },
+  3: { typeKey: "design_spec", title: "Solution Design Specification" },
+  4: { typeKey: "business_case", title: "Business Case" },
+  5: { typeKey: "tower_handoff_plan", title: "Tower Handoff Plan" },
+};
 
 function parsePhase(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return 0;
@@ -64,6 +76,81 @@ async function isPhaseApproved(
   }
   const snapshots = await getPhaseSnapshots(ctx, programId, phase).catch(() => []);
   return snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
+}
+
+async function ensureSponsorAuthorityForApprover(
+  sb: ReturnType<typeof getAzureWriteFluentClient>,
+  programId: string,
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+): Promise<void> {
+  const { data: sponsorRows, error: sponsorError } = await sb
+    .from("engagement_participants")
+    .select("id")
+    .eq("engagement_id", programId)
+    .eq("approval_authority", "sponsor")
+    .limit(1);
+  if (sponsorError) throw sponsorError;
+  if (((sponsorRows as Array<{ id: string }> | null) ?? []).length > 0) return;
+
+  const { data: currentRows, error: currentError } = await sb
+    .from("engagement_participants")
+    .select("id")
+    .eq("engagement_id", programId)
+    .eq("user_id", ctx.userId)
+    .limit(1);
+  if (currentError) throw currentError;
+
+  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ?? [])[0];
+  if (currentParticipant) {
+    const { error } = await sb
+      .from("engagement_participants")
+      .update({
+        role: "Sponsor",
+        approval_authority: "sponsor",
+      })
+      .eq("id", currentParticipant.id)
+      .eq("engagement_id", programId);
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await sb.from("engagement_participants").insert({
+    engagement_id: programId,
+    user_id: ctx.userId,
+    user_name: ctx.email ?? ctx.userId,
+    role: "Sponsor",
+    approval_authority: "sponsor",
+  });
+  if (error) throw error;
+}
+
+async function preparePhaseGateApprovalRecords(
+  sb: ReturnType<typeof getAzureWriteFluentClient>,
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  phase: number,
+  rationale: string,
+): Promise<void> {
+  const gate = PHASE_GATE_DELIVERABLE[phase];
+  if (gate) {
+    const result = await ensurePhaseGateDeliverable(
+      ctx,
+      programId,
+      {
+        deliverableTypeKey: gate.typeKey,
+        title: gate.title,
+        content: `P${phase} gate approval record\n\n${rationale}`,
+      },
+      { supabase: sb },
+    );
+    if (result.status !== "signed_off") {
+      await signOffDeliverable(ctx, programId, result.deliverableId, { supabase: sb });
+    }
+  }
+
+  if (phase === 1) {
+    await ensureSponsorAuthorityForApprover(sb, programId, ctx);
+  }
 }
 
 export async function GET(
@@ -202,6 +289,7 @@ export async function POST(
 
     const sb = getAzureWriteFluentClient();
     const toPhase = phase + 1;
+    await preparePhaseGateApprovalRecords(sb, ctx, programId, phase, rationale);
     const gate = await evaluateGate(ctx, programId, phase, toPhase, { supabase: sb });
     const hardFails = gate.failedChecks.filter((check) => check.severity === "hard");
     if (hardFails.length > 0) {
