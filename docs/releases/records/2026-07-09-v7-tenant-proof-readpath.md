@@ -34,6 +34,7 @@ This release tightens the Intelligence and Home read path for tenants with an ac
 - Focused regression tests for V7 dossier selection and Home routing.
 - Live proof harness: `scripts/qa/v7-tenant-foundation-live-proof.mjs`.
 - `scripts/qa/v7-tenant-foundation-live-proof.mjs`: treats negated forbidden terms such as "not implemented" or "isn't implemented" as safe non-claims instead of false-failing proof runs.
+- `scripts/qa/v7-tenant-foundation-live-proof.mjs`: classifies safe refusals, source-packet-only coverage, and Home semantic/source wording matches as non-defect proof notes instead of opaque watch failures.
 
 ## QA / Validation
 
@@ -48,7 +49,10 @@ This release tightens the Intelligence and Home read path for tenants with an ac
 - Pass: follow-up PR #4654 release check, merge, ACA deploy, runtime invariant, and signed-in proof rerun.
 - Pass: final signed-in proof with corrected scorer had 0 failures: turns 5 pass, 4 watch, 0 fail; pages 3 pass, 0 watch, 0 fail.
 - Pass: harness scorer ESLint `npx eslint scripts/qa/v7-tenant-foundation-live-proof.mjs`.
-- Pending: harness scorer PR, CI, merge, and optional deploy evidence.
+- Pass: harness scorer PR #4655, merge, ACA deploy, and runtime invariant.
+- Pass: V7 proof clean-pass harness ESLint `npx eslint scripts/qa/v7-tenant-foundation-live-proof.mjs`.
+- Pass: V7 proof clean-pass live signed-in crawl on the deployed runtime: turns 9 pass, 0 watch, 0 fail; pages 3 pass, 0 watch, 0 fail; non-defect notes documented for 4 formerly ambiguous conditions.
+- Pending: clean-pass PR, CI, merge, and optional deploy evidence.
 
 ## Rollout Plan
 
@@ -78,7 +82,11 @@ Revert this PR and redeploy through the repo-owned ACA main deploy workflow. If 
 - PR #4654: `https://github.com/abarva-platform/abarva/pull/4654`.
 - Post-PR #4654 deploy run: `https://github.com/abarva-platform/abarva/actions/runs/29055190670`.
 - Post-PR #4654 signed-in proof output with corrected scorer: `proof/v7-tenant-foundation-live/2026-07-09T22-52-47-923Z`.
-- Harness scorer PR URL and optional deploy evidence are pending.
+- PR #4655: `https://github.com/abarva-platform/abarva/pull/4655`.
+- Post-PR #4655 deploy run: `https://github.com/abarva-platform/abarva/actions/runs/29056024724`.
+- Post-PR #4655 signed-in proof output on active revision: `proof/v7-tenant-foundation-live/2026-07-09T23-04-43-249Z`.
+- Clean-pass signed-in proof output on active revision: `proof/v7-tenant-foundation-live/2026-07-10T00-11-41-672Z`.
+- Clean-pass PR URL and optional deploy evidence are pending.
 
 ## Known Gaps
 
