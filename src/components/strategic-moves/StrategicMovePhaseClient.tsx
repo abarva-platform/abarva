@@ -55,6 +55,8 @@ import {
   shapeStreamingAgentTextForSurface,
 } from "@/lib/agent/response-shape";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import { PHASE_LABELS_SHORT, TOTAL_PHASES } from "@/lib/programs/phase-labels";
 import { deliverableBelongsToPhase } from "@/lib/programs/phase-deliverables";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
@@ -65,6 +67,7 @@ import {
 } from "@/lib/programs/diagnosis-facts";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
+import { MovePhaseExplorer } from "./MovePhaseExplorer";
 import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
 import {
   AgentDock,
@@ -1976,6 +1979,8 @@ interface Props {
     pack: ApprovedInputsPack;
     approvedOnLabel?: string;
   } | null;
+  /** Per-phase gate-criteria tallies for the left-side phase explorer. */
+  phaseTallies?: PhaseTallyRow[];
 }
 
 export function StrategicMovePhaseClient({
@@ -1986,6 +1991,7 @@ export function StrategicMovePhaseClient({
   plan,
   evidenceNeedPackets = [],
   approvedInputsPack = null,
+  phaseTallies,
 }: Props) {
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
@@ -2028,6 +2034,42 @@ export function StrategicMovePhaseClient({
   //    panel on top. The in-workbench advance stays gated to P2–P4, so P1's
   //    advance remains the single captureSlot control (no double advance).
   const useWorkbench = isCurrentPhase && phaseNum >= 0 && phaseNum <= 5;
+
+  // Left-side phase explorer tallies come from the server (governance's
+  // canonical gate-criteria catalog, via getMovePhaseTallies). Fall back to
+  // a minimal client-safe projection (current phase's real gate criteria;
+  // "—" for phases whose totals aren't known here) if a caller omits the
+  // prop, so the explorer never fabricates a count.
+  const resolvedPhaseTallies: PhaseTallyRow[] =
+    phaseTallies ??
+    Array.from({ length: TOTAL_PHASES }, (_, phase) => {
+      if (phase < move.currentPhase) {
+        return {
+          phase,
+          label: PHASE_LABELS_SHORT[phase] ?? `P${phase}`,
+          met: 0,
+          total: 0,
+          state: "done" as const,
+        };
+      }
+      if (phase === move.currentPhase) {
+        return {
+          phase,
+          label: PHASE_LABELS_SHORT[phase] ?? `P${phase}`,
+          met: move.gateCriteria.filter((c) => c.completed).length,
+          total: move.gateCriteria.length,
+          state: "current" as const,
+        };
+      }
+      return {
+        phase,
+        label: PHASE_LABELS_SHORT[phase] ?? `P${phase}`,
+        met: 0,
+        total: 0,
+        state: "upcoming" as const,
+      };
+    });
+
   const dockSurface = `/strategic-moves/${move.id}/phase/${phaseNum}`;
   const [dockRemount, setDockRemount] = useState(0);
   const openAva = useCallback(() => {
@@ -2629,9 +2671,17 @@ export function StrategicMovePhaseClient({
         </div>
       )}
 
-      {/* Chat (AgentDock) + phase canvas. AgentDock owns the 6 dock modes
-          (side-rail left/right, pin top/bottom, expand, collapsed); the phase
-          canvas is passed as its workspace pane. */}
+      {/* Persistent phase journey (Source's CanvasGateSidebar pattern) +
+          chat (AgentDock) + phase canvas, side by side. AgentDock owns the 6
+          dock modes (side-rail left/right, pin top/bottom, expand,
+          collapsed); the phase canvas is passed as its workspace pane. */}
+      <div className={styles.phaseBody}>
+      <MovePhaseExplorer
+        moveId={move.id}
+        currentPhase={move.currentPhase}
+        tallies={resolvedPhaseTallies}
+      />
+      <div className={styles.phaseBodyMain}>
       <AgentDock
         agent={{
           initials: "aVa",
@@ -3215,6 +3265,8 @@ export function StrategicMovePhaseClient({
           </>
         }
       />
+      </div>
+      </div>
     </div>
   );
 }
