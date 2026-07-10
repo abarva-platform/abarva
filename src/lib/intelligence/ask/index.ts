@@ -57,6 +57,7 @@ import { buildCompanionCanvasPayload } from "@/lib/intelligence/ask/companion-ca
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   buildClientSafeRetiredFactMessage,
+  filterSourcesWithRetiredFacts,
   scanRetiredFacts,
   type RetiredFactFinding,
 } from "./retired-fact-gate";
@@ -414,13 +415,20 @@ export async function* askIntelligence(
       ...retailOverlay,
       ...legacyTenantSources,
     ].slice(0, sourceLimit);
-    const sources = conciseAsk
+    const selectedSources = conciseAsk
       ? compactSourceDetailsForConciseAsk(rawSources)
       : rawSources;
+    const sourceSafety = filterSourcesWithRetiredFacts({
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      sources: selectedSources,
+    });
+    const sources = sourceSafety.sources;
     emitTiming(
       trace.mark("retrieval.sources_selected", {
         rawSourceCount: rawSources.length,
         sourceCount: sources.length,
+        retiredSourceSuppressedCount: sourceSafety.findings.length,
         sourceLimit,
         v7DossierDominant: hasActiveV7Dossier,
         suppressedLegacySourceCount: hasActiveV7Dossier
