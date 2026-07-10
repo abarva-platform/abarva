@@ -369,7 +369,7 @@ function containsUnsupportedMustNotClaim(answer, term) {
     const start = match.index ?? 0;
     const before = answerLower.slice(Math.max(0, start - 140), start);
     const after = answerLower.slice(start + term.length, start + term.length + 48);
-    if (/\b(not|no|never|without|isn'?t|aren'?t|wasn'?t|weren'?t|hasn'?t|haven'?t|hadn'?t|doesn'?t|don'?t|can'?t|cannot|does not|do not|has not|have not)\b[^.!?\n]*$/.test(before)) {
+    if (/\b(not|no|none|neither|never|without|isn'?t|aren'?t|wasn'?t|weren'?t|hasn'?t|haven'?t|hadn'?t|doesn'?t|don'?t|can'?t|cannot|does not|do not|has not|have not)\b[^.!?\n]*$/.test(before)) {
       continue;
     }
     if (/^\s+(yet|with|as proven|as certified|as client-approved|as production-ready)\b/.test(after)) {
