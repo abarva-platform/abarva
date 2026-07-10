@@ -373,6 +373,7 @@ async function promoteTenantContract(client, { tenant, runKey, activeBefore, exp
   }));
   const promotionKey = key('promotion', tenant.tenantKey, payload.contractVersion, runKey);
   const promotionMetadata = {
+    loadMode,
     runKey,
     sourceDataset: payload.sourceDataDir,
     fileCount: tenant.files.length,
@@ -382,14 +383,56 @@ async function promoteTenantContract(client, { tenant, runKey, activeBefore, exp
     relationshipEdgeCount: edgeCount,
     chunkCount,
   };
+  if (candidateOnly) {
+    await q(client, `
+      insert into intelligence_v7.active_tenant_contract_versions(
+        tenant_key, active_contract_version, candidate_contract_version, rollback_contract_version,
+        promotion_status, promoted_by, promoted_at, proof_bundle_uri, promotion_notes, metadata, updated_at
+      )
+      values($1,$2,$3,$4,'candidate','v7-loader',now(),$5,$6,$7::jsonb,now())
+      on conflict(tenant_key) do update set
+        candidate_contract_version=excluded.candidate_contract_version,
+        rollback_contract_version=coalesce(excluded.rollback_contract_version, intelligence_v7.active_tenant_contract_versions.rollback_contract_version),
+        promoted_by=excluded.promoted_by,
+        proof_bundle_uri=excluded.proof_bundle_uri,
+        promotion_notes=excluded.promotion_notes,
+        metadata=intelligence_v7.active_tenant_contract_versions.metadata || excluded.metadata,
+        updated_at=now()`,
+      [
+        tenant.tenantKey,
+        rollbackContractVersion || payload.contractVersion,
+        payload.contractVersion,
+        rollbackContractVersion,
+        payload.proofBundleUri || null,
+        'Validated by V7 tenant loader as a candidate; active contract version remains unchanged pending proof.',
+        JSON.stringify(promotionMetadata),
+      ]);
+    await q(client, `
+      insert into intelligence_v7.tenant_contract_promotion_events(
+        event_key, tenant_key, from_contract_version, to_contract_version, event_type,
+        promotion_status, actor, reason, validation_summary, proof_bundle_uri
+      )
+      values($1,$2,$3,$4,'validate','passed','v7-loader',$5,$6::jsonb,$7)
+      on conflict(event_key) do nothing`,
+      [
+        key('candidate', tenant.tenantKey, payload.contractVersion, runKey),
+        tenant.tenantKey,
+        rollbackContractVersion,
+        payload.contractVersion,
+        'Validated V7 tenant pack as candidate; active tenant pointer was not changed.',
+        JSON.stringify(promotionMetadata),
+        payload.proofBundleUri || null,
+      ]);
+  } else {
   await q(client, `
     insert into intelligence_v7.active_tenant_contract_versions(
-      tenant_key, active_contract_version, rollback_contract_version, promotion_status,
+      tenant_key, active_contract_version, candidate_contract_version, rollback_contract_version, promotion_status,
       promoted_by, promoted_at, proof_bundle_uri, promotion_notes, metadata, updated_at
     )
-    values($1,$2,$3,'active','v7-loader',now(),$4,$5,$6::jsonb,now())
+    values($1,$2,null,$3,'active','v7-loader',now(),$4,$5,$6::jsonb,now())
     on conflict(tenant_key) do update set
       active_contract_version=excluded.active_contract_version,
+      candidate_contract_version=null,
       rollback_contract_version=excluded.rollback_contract_version,
       promotion_status='active',
       promoted_by=excluded.promoted_by,
@@ -422,6 +465,7 @@ async function promoteTenantContract(client, { tenant, runKey, activeBefore, exp
       JSON.stringify(promotionMetadata),
       payload.proofBundleUri || null,
     ]);
+  }
 
   for (const row of buildModuleReadinessRows({ tenant, contractVersion: payload.contractVersion, fieldCount, edgeCount, chunkCount })) {
     await q(client, `
@@ -509,18 +553,20 @@ const payload = payloadFile
       if (!r.ok) throw new Error('payload fetch failed: ' + r.status + ' ' + await r.text());
       return r.json();
     });
+const loadMode = String(process.env.V7_LOAD_MODE || process.env.V7_TENANT_LOAD_MODE || 'active').toLowerCase();
+const candidateOnly = ['candidate', 'candidate-only', 'validate', 'validate-only'].includes(loadMode);
 
 const client = new Client({ connectionString, ssl: { rejectUnauthorized: false }, application_name: 'abarva-v7-loader' });
 await client.connect();
-const summary = { generatedAt: new Date().toISOString(), contractVersion: payload.contractVersion, tenants: [], totals: {} };
+const summary = { generatedAt: new Date().toISOString(), loadMode, contractVersion: payload.contractVersion, tenants: [], totals: {} };
 try {
   await client.query('begin');
   await ensureSchema(client);
   await applyMoatFoundation(client);
   await q(client, `insert into intelligence_v7.contract_versions(contract_version, contract_name, status, generated_from, metadata, updated_at)
-    values($1,$2,'active',$3,$4::jsonb,now())
-    on conflict(contract_version) do update set status='active', metadata=excluded.metadata, updated_at=now()`,
-    [payload.contractVersion, payload.contractName, payload.sourceDataDir, JSON.stringify({ generatedAt: payload.generatedAt, sourceTemplateDir: payload.sourceTemplateDir })]);
+    values($1,$2,$3,$4,$5::jsonb,now())
+    on conflict(contract_version) do update set status=excluded.status, metadata=excluded.metadata, updated_at=now()`,
+    [payload.contractVersion, payload.contractName, candidateOnly ? 'candidate' : 'active', payload.sourceDataDir, JSON.stringify({ generatedAt: payload.generatedAt, sourceTemplateDir: payload.sourceTemplateDir, loadMode })]);
 
   for (const dim of payload.dimensions) {
     await q(client, `insert into intelligence_v7.dimension_registry(dimension_key, contract_version, dimension_file, dimension_label, column_count, metadata, updated_at)
@@ -551,7 +597,7 @@ try {
 
   for (const tenant of payload.tenantPacks) {
     const runKey = key('run', payload.contractVersion, tenant.tenantKey);
-    const activeBefore = await q(client, `select active_contract_version from intelligence_v7.active_tenant_contract_versions where tenant_key=$1`, [tenant.tenantKey]);
+    const activeBefore = await q(client, `select active_contract_version, candidate_contract_version, rollback_contract_version from intelligence_v7.active_tenant_contract_versions where tenant_key=$1`, [tenant.tenantKey]);
     const rollbackContractVersion = activeBefore.rows[0]?.active_contract_version ?? null;
     await q(client, `delete from intelligence_v7.tenant_pack_runs where run_key=$1`, [runKey]);
     const expectedRows = tenant.files.reduce((sum, f) => sum + f.rows.length, 0);
@@ -688,7 +734,18 @@ try {
       edgeCount,
       chunkCount,
     });
-    summary.tenants.push({ tenantKey: tenant.tenantKey, files: tenant.files.length, rows: expectedRows, fields: fieldCount, graphNodes: graphNodeCount, relationshipEdges: edgeCount, chunks: chunkCount, activeContractVersion: payload.contractVersion, rollbackContractVersion });
+    summary.tenants.push({
+      tenantKey: tenant.tenantKey,
+      files: tenant.files.length,
+      rows: expectedRows,
+      fields: fieldCount,
+      graphNodes: graphNodeCount,
+      relationshipEdges: edgeCount,
+      chunks: chunkCount,
+      activeContractVersion: candidateOnly ? rollbackContractVersion : payload.contractVersion,
+      candidateContractVersion: candidateOnly ? payload.contractVersion : null,
+      rollbackContractVersion,
+    });
   }
 
   await applyEntityReadModel(client);

@@ -1,0 +1,17 @@
+{
+  "dataset_id": "skyharbor-air-v6-v7-upgrade-candidate-20260710",
+  "title": "SkyHarbor Air V6/V7 Existing-Tenant Upgrade Candidate",
+  "client_key": "skyharbor-air",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "existing_skyharbor_synthetic_v6_plus_v7_upgrade_structuring",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic planning-grade airline substrate only. No real flight, passenger, crew, customer, aircraft, operations, financial, vendor contract, or production SkyHarbor records are included. Any future passenger, crew, customer, operational, or contract evidence requires a separate approved manifest and handling plan.",
+  "expected_object_count": 758,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-07-10",
+  "notes": "Manifest covers datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710, including generated V6 templates, V7 dimensions, derived Moves findings, golden questions, and the V7 Azure load payload. It is an existing-tenant upgrade candidate and must be loaded candidate-only until snapshot, claim-to-source, before/after, and live signed-in proof pass."
+}
