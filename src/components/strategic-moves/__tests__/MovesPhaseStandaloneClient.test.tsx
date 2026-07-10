@@ -210,6 +210,22 @@ describe("MovesPhaseStandaloneClient", () => {
       "/api/v1/deliverables/generate-phase",
       expect.objectContaining({ method: "POST" }),
     );
+    const phaseCaptureCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+      String(url).includes("/phase-capture"),
+    );
+    expect(phaseCaptureCall).toBeTruthy();
+    const phaseCaptureBody = JSON.parse(String(phaseCaptureCall?.[1]?.body ?? "{}"));
+    expect(phaseCaptureBody.sections).toEqual(
+      expect.objectContaining({
+        solution_approach: expect.any(String),
+        operating_model: expect.any(String),
+        process_design: expect.any(String),
+        controls_governance: expect.any(String),
+        architecture_integration: expect.any(String),
+        evidence_confidence: expect.any(String),
+        recommendation: expect.any(String),
+      }),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
     expect(screen.getByText(/Ask about this phase/i)).toBeInTheDocument();

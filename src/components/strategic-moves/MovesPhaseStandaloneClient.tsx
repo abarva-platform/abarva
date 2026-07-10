@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -334,15 +335,13 @@ export function MovesPhaseStandaloneClient({
       const finalizeBody: Record<string, unknown> = {
         phase: phase.phase,
         complete: true,
+        sections: buildPhaseCaptureItems({
+          draftedBrief,
+          move,
+          phase,
+          selectedOption,
+        }),
       };
-      if (phase.phase === 0) {
-        finalizeBody.items = Object.fromEntries(
-          ORIGINATE_FIELDS.map((field, index) => [
-            field.title.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-            draftedBrief[index] ?? field.draft,
-          ]),
-        );
-      }
       const finalizeRes = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
         method: "POST",
         credentials: "include",
@@ -1043,6 +1042,61 @@ const ORIGINATE_FIELDS = [
       "Confirm data quality, security posture, process ownership, and evaluation controls before automation expands.",
   },
 ];
+
+function textOrDraft(draftedBrief: Record<number, string>, index: number): string {
+  return draftedBrief[index]?.trim() || ORIGINATE_FIELDS[index]?.draft || "";
+}
+
+function buildPhaseCaptureItems({
+  draftedBrief,
+  move,
+  phase,
+  selectedOption,
+}: {
+  draftedBrief: Record<number, string>;
+  move: StrategicMove;
+  phase: PhaseContract;
+  selectedOption: string;
+}): Record<string, string> {
+  if (phase.phase === 0) {
+    return {
+      business_trigger: textOrDraft(draftedBrief, 0),
+      problem_statement: textOrDraft(draftedBrief, 0),
+      affected_function_process: textOrDraft(draftedBrief, 3),
+      initial_value_hypothesis: textOrDraft(draftedBrief, 5),
+      stakeholder_owner_view: textOrDraft(draftedBrief, 2),
+      known_evidence: textOrDraft(draftedBrief, 4),
+      missing_evidence_open_questions: textOrDraft(draftedBrief, 6),
+      recommendation_to_advance:
+        "Advance to Charter after sponsor review; retain open evidence questions as explicit gate caveats.",
+    };
+  }
+
+  const selectedOptionLabel =
+    selectedOption === "A"
+      ? "Optimize the current workflow"
+      : selectedOption === "C"
+        ? "Large transformation program"
+        : "Phased platform + operating-model shift";
+  const evidenceSummary =
+    move.linkedEvidence.length > 0
+      ? move.linkedEvidence.map((item) => item.summary).join("; ")
+      : "Uploaded phase files, completed templates, workshop outputs, and owner attestations in Files & Evidence.";
+
+  return Object.fromEntries(
+    getPhaseCaptureSections(phase.phase).map((section) => [
+      section.key,
+      [
+        `${section.label}: ${section.description}`,
+        `Move: ${move.name}.`,
+        `Phase: ${phase.code} ${phase.title}.`,
+        `Selected approach: ${selectedOptionLabel}.`,
+        `Evidence basis: ${evidenceSummary}`,
+        "Approval note: accountable owner review and caveats must remain attached to the gate record.",
+      ].join(" "),
+    ]),
+  );
+}
 
 function OriginateConsole({
   draftedBrief,

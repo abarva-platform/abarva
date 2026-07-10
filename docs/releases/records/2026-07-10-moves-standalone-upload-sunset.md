@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Moves phase pages no longer send users back to retired detail tabs for upload, download, or document actions. The standalone phase workspace now owns evidence upload directly inside Files & Evidence and the P3 decision upload area. The retired phase workbench implementation and its private support components were removed so the product cannot silently flip back to the old page.
+Moves phase pages no longer send users back to retired detail tabs for upload, download, or document actions. The standalone phase workspace now owns evidence upload directly inside Files & Evidence and the P3 decision upload area. Gate approval now sends canonical phase-capture sections for P0 through P5 before deliverable generation and approval, so the standalone page does not dead-end on `capture_incomplete`. The retired phase workbench implementation and its private support components were removed so the product cannot silently flip back to the old page.
 
 ## Layer Impact
 
@@ -36,6 +36,7 @@ Moves phase pages no longer send users back to retired detail tabs for upload, d
 - `src/lib/agent/__tests__/surface.test.ts`
 - `src/lib/programs/__tests__/phase-capture-workspace-alignment.test.ts`
 - Removed retired old workbench files: `StrategicMovePhaseClient`, `EvidenceWorkbench`, `MovePhaseExplorer`, and old-only tests.
+- Added canonical phase-capture payload generation for the standalone gate action before `generate-phase` and `phase-gate-approval`.
 
 ## QA / Validation
 
