@@ -1270,11 +1270,12 @@ function HowToCard() {
           ["Run", "Conduct the working session with your SMEs and upload the summary."],
           ["Approve", "Confirm what changed, then approve to unlock the next phase."],
         ].map(([title, detail], index) => (
-          <div key={title}>
-            {index > 0 ? <em>→</em> : null}
+          <div className="mxw-how-step" key={title}>
             <span>{index + 1}</span>
-            <strong>{title}</strong>
-            <small>{detail}</small>
+            <div>
+              <strong>{title}</strong>
+              <small>{detail}</small>
+            </div>
           </div>
         ))}
       </div>
@@ -1450,12 +1451,12 @@ function MovesStandaloneStyles() {
 .mxw-howto header span,.mxw-assembly span{width:26px;height:26px;border-radius:7px;background:#12332e;color:#5fd0c2;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-weight:800;font-size:14px}
 .mxw-ava-head .avaAskMark,.mxw-ava-fab .avaAskMark{border-radius:9px;overflow:hidden}
 .mxw-howto h2,.mxw-zone h2,.mxw-review h2,.mxw-gate h2{font-family:Georgia,serif;font-size:19px;font-weight:700;letter-spacing:-.4px;margin:0}
-.mxw-howflow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:stretch}
-.mxw-howflow>div{display:grid;grid-template-columns:26px 1fr;gap:2px 10px;align-items:start}
-.mxw-howflow em{grid-row:1 / 3;align-self:center;color:var(--faint);font-style:normal}
-.mxw-howflow span{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;grid-row:1 / 3}
-.mxw-howflow strong{font-size:14px;color:var(--ink)}
-.mxw-howflow small{font-size:12.5px;color:var(--muted);line-height:1.4}
+.mxw-howflow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+.mxw-how-step{position:relative;display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:start;border:1px solid rgba(20,20,19,.08);border-radius:11px;background:rgba(255,255,255,.62);padding:13px 14px;min-height:96px}
+.mxw-how-step:not(:last-child)::after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);width:12px;text-align:center;color:var(--faint);font-size:14px;font-weight:700}
+.mxw-how-step span{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.mxw-how-step strong{display:block;font-size:14px;color:var(--ink);margin:1px 0 5px}
+.mxw-how-step small{display:block;font-size:12.5px;color:var(--muted);line-height:1.42;max-width:24ch}
 .mxw-zone{margin-top:24px}
 .mxw-zone>p{font-size:13px;color:var(--muted);margin:5px 0 15px;line-height:1.5;max-width:70ch}
 .mxw-ts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -1578,7 +1579,6 @@ function MovesStandaloneStyles() {
 .mxw-file-row small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mxw-file-row a{color:var(--blue);font-weight:900}
 .mxw-ava-fab{position:fixed;right:24px;bottom:24px;z-index:70;display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:11px 16px 11px 12px;box-shadow:0 6px 20px rgba(20,20,19,.22);cursor:pointer}
-.mxw-ava-fab span{background:#3fb8a8;color:#0c2a26;width:24px;height:24px}
 .mxw-ava-pop{position:fixed;right:24px;bottom:78px;z-index:71;width:348px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 44px rgba(20,20,19,.2);overflow:hidden;display:none}
 .mxw-ava-pop.open{display:block}
 .mxw-ava-head{display:flex;align-items:center;gap:10px;padding:15px 17px;border-bottom:1px solid var(--line)}
@@ -1595,10 +1595,12 @@ function MovesStandaloneStyles() {
   .mxw-side{display:none}
   .mxw-topnav{display:none}
   .mxw-shell{padding:30px 18px 80px}
+  .mxw-howflow{grid-template-columns:1fr}
+  .mxw-how-step{min-height:auto}
+  .mxw-how-step:not(:last-child)::after{content:"↓";right:auto;left:20px;top:auto;bottom:-17px;transform:none;background:var(--card);width:16px}
 }
 @media (max-width:720px){
   .mxw-howflow,.mxw-ts-grid,.mxw-file-cols{grid-template-columns:1fr}
-  .mxw-howflow em{display:none}
   .mxw-stage-bar{align-items:flex-start;flex-direction:column}
   .mxw-options button{grid-template-columns:28px 1fr}
   .mxw-options em{grid-column:2}
