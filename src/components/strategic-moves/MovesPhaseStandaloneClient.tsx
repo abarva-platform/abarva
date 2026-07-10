@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Dispatch, SetStateAction } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -49,6 +49,7 @@ interface MovesPhaseStandaloneClientProps {
 type WorkspaceView = "phase" | "files";
 
 type GateWorkStatus = "idle" | "generating" | "approving" | "approved" | "blocked";
+type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 
 interface GeneratedPhaseOutput {
   title: string;
@@ -248,6 +249,11 @@ const PHASES: PhaseContract[] = [
     ],
   },
 ];
+
+export const MOVES_STANDALONE_SUGGESTED_QUESTIONS = PHASES.map((phase) => ({
+  phase: phase.phase,
+  suggestedPrompts: phase.avaQuestions,
+}));
 
 function phaseFor(phaseNum: number): PhaseContract {
   return PHASES.find((phase) => phase.phase === phaseNum) ?? PHASES[0];
@@ -805,7 +811,7 @@ function PhaseBody({
             Run the workshop with these templates; upload the completed output
             to record the choice and carry evidence forward.
           </p>
-          <TemplatesAndSessions moveId={move.id} phase={phase} />
+          <TemplatesAndSessions phase={phase} />
         </section>
       </>
     );
@@ -847,7 +853,12 @@ function PhaseBody({
             <strong>Upload Solution Approach Decision Summary</strong>
             <span>Session notes, SME sign-off, tradeoffs, and rationale.</span>
           </div>
-          <Link href={`/strategic-moves/${move.id}?tab=cabinet`}>Upload</Link>
+          <EvidenceUploadControl
+            buttonLabel="Upload"
+            moveId={move.id}
+            phase={phase.phase}
+            title="Solution Approach Decision Summary"
+          />
         </section>
       </>
     );
@@ -944,7 +955,7 @@ function PhaseBody({
               <span>{output.typeKey.slice(0, 4).toUpperCase()}</span>
               <strong>{output.title}</strong>
               {output.status === "generated" ? (
-                <Link href={`/strategic-moves/${move.id}?tab=documents`}>Open ↓</Link>
+                <em>Available in Files & Evidence</em>
               ) : output.status === "error" ? (
                 <em>{output.error ?? "Error"}</em>
               ) : gateWork.status === "approved" ? (
@@ -1156,6 +1167,21 @@ function FilesEvidenceExplorer({
           Generated deliverable <em>{totalDeliverables}</em>
         </span>
       </div>
+      <section className="mxw-inline-upload" aria-label="Upload move evidence">
+        <div>
+          <strong>Upload evidence to this phase</strong>
+          <span>
+            Session notes, completed templates, data exports, decision summaries,
+            or owner attestations.
+          </span>
+        </div>
+        <EvidenceUploadControl
+          buttonLabel="Upload evidence"
+          moveId={move.id}
+          phase={move.currentPhase}
+          title={`P${move.currentPhase} workspace evidence`}
+        />
+      </section>
       <div className="mxw-file-phases">
         {PHASES.map((phase) => {
           const tally = phaseTallies.find((row) => row.phase === phase.phase);
@@ -1188,7 +1214,6 @@ function FilesEvidenceExplorer({
                     "Template",
                   ])}
                   kind="tpl"
-                  moveId={move.id}
                   title="Input templates"
                 />
                 <FileColumn
@@ -1202,7 +1227,6 @@ function FilesEvidenceExplorer({
                       : []
                   }
                   kind="evi"
-                  moveId={move.id}
                   title="Client evidence"
                 />
                 <FileColumn
@@ -1220,7 +1244,6 @@ function FilesEvidenceExplorer({
                         ])
                   }
                   kind="del"
-                  moveId={move.id}
                   title="Generated deliverables"
                 />
               </div>
@@ -1235,12 +1258,10 @@ function FilesEvidenceExplorer({
 function FileColumn({
   items,
   kind,
-  moveId,
   title,
 }: {
   items: string[][];
   kind: "tpl" | "evi" | "del";
-  moveId: string;
   title: string;
 }) {
   return (
@@ -1260,12 +1281,83 @@ function FileColumn({
               <strong>{name}</strong>
               <small>{meta}</small>
             </span>
-            <Link href={`/strategic-moves/${moveId}?tab=${kind === "del" ? "documents" : kind === "evi" ? "cabinet" : "downloads"}`}>
-              ↓
-            </Link>
+            <em>{kind === "tpl" ? "Ready" : kind === "evi" ? "Filed" : "Tracked"}</em>
           </div>
         ))
       )}
+    </div>
+  );
+}
+
+function EvidenceUploadControl({
+  buttonLabel,
+  moveId,
+  phase,
+  title,
+}: {
+  buttonLabel: string;
+  moveId: string;
+  phase: number;
+  title: string;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [status, setStatus] = useState<UploadWorkStatus>("idle");
+  const [message, setMessage] = useState("");
+
+  async function upload(file: File | null | undefined) {
+    if (!file) return;
+    setStatus("uploading");
+    setMessage(`Uploading ${file.name}...`);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("phase", String(phase));
+      form.append("family", "uploaded_evidence");
+      form.append("title", title || file.name);
+      const res = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        detail?: string;
+        error?: string;
+      };
+      if (!res.ok || !payload.ok) {
+        throw new Error(
+          payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
+        );
+      }
+      setStatus("uploaded");
+      setMessage(`Uploaded ${file.name}`);
+    } catch (err) {
+      setStatus("error");
+      setMessage(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="mxw-upload-control">
+      <input
+        aria-label={`${buttonLabel} file`}
+        className="mxw-hidden-file"
+        onChange={(event) => void upload(event.currentTarget.files?.[0])}
+        ref={inputRef}
+        type="file"
+      />
+      <button
+        disabled={status === "uploading"}
+        onClick={() => inputRef.current?.click()}
+        type="button"
+      >
+        {status === "uploading" ? "Uploading..." : buttonLabel}
+      </button>
+      {message ? (
+        <span className={`mxw-upload-status ${status}`}>{message}</span>
+      ) : null}
     </div>
   );
 }
@@ -1296,13 +1388,7 @@ function HowToCard() {
   );
 }
 
-function TemplatesAndSessions({
-  moveId,
-  phase,
-}: {
-  moveId: string;
-  phase: PhaseContract;
-}) {
+function TemplatesAndSessions({ phase }: { phase: PhaseContract }) {
   return (
     <div className="mxw-ts-grid">
       <div className="mxw-ts-col">
@@ -1326,7 +1412,7 @@ function TemplatesAndSessions({
           <div className="mxw-template" key={template.name}>
             <em>{template.type}</em>
             <span>{template.name}</span>
-            <Link href={`/strategic-moves/${moveId}?tab=downloads`}>Download ↓</Link>
+            <small>Use in workspace</small>
           </div>
         ))}
       </div>
@@ -1483,7 +1569,7 @@ function MovesStandaloneStyles() {
 .mxw-template{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
 .mxw-template em{width:34px;height:34px;border-radius:8px;background:var(--blue-tint);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-style:normal;font-weight:700}
 .mxw-template span{font-size:13.5px;font-weight:500;color:var(--ink)}
-.mxw-template a{font-size:12.5px;font-weight:600;color:var(--blue);white-space:nowrap}
+.mxw-template small{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
 .mxw-assembly,.mxw-approach,.mxw-review,.mxw-gate{border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow);padding:18px 20px;margin-top:20px}
 .mxw-assembly{background:linear-gradient(180deg,#f4fbf9,var(--card) 60%)}
 .mxw-assembly div{display:flex;align-items:center;gap:11px}
@@ -1508,7 +1594,17 @@ function MovesStandaloneStyles() {
 .mxw-upload{margin-top:20px;border:1px dashed var(--line-2);border-radius:13px;background:var(--soft);padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .mxw-upload strong{display:block;font-size:14px}
 .mxw-upload span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
-.mxw-upload a,.mxw-review-actions a{padding:10px 16px;border-radius:9px;background:var(--ink);color:#fff;font-size:13px;font-weight:700;white-space:nowrap}
+.mxw-review-actions a{padding:10px 16px;border-radius:9px;background:var(--ink);color:#fff;font-size:13px;font-weight:700;white-space:nowrap}
+.mxw-inline-upload{margin:18px 0 22px;border:1px dashed var(--line-2);border-radius:13px;background:var(--soft);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.mxw-inline-upload strong{display:block;font-size:14px}
+.mxw-inline-upload span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;max-width:64ch}
+.mxw-upload-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.mxw-hidden-file{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
+.mxw-upload-control button{padding:10px 16px;border-radius:9px;background:var(--ink);color:#fff;border:0;font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer}
+.mxw-upload-control button:disabled{opacity:.6;cursor:wait}
+.mxw-upload-status{font-size:12px;font-weight:700;color:var(--muted)}
+.mxw-upload-status.uploaded{color:var(--green)}
+.mxw-upload-status.error{color:#b84a31}
 .mxw-lanes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .mxw-lane{border:1px solid var(--line);border-radius:13px;background:var(--card);overflow:hidden}
 .mxw-lane header{display:flex;align-items:center;gap:10px;background:var(--soft);border-bottom:1px solid var(--line);padding:12px 14px}
@@ -1590,7 +1686,7 @@ function MovesStandaloneStyles() {
 .mxw-file-row span{min-width:0}
 .mxw-file-row strong{display:block;font-size:12.8px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mxw-file-row small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mxw-file-row a{color:var(--blue);font-weight:900}
+.mxw-file-row em{font-style:normal;color:var(--muted);font-size:11px;font-weight:800;text-align:right}
 .mxw-ava-fab{position:fixed;right:24px;bottom:24px;z-index:70;display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:11px 16px 11px 12px;box-shadow:0 6px 20px rgba(20,20,19,.22);cursor:pointer}
 .mxw-ava-pop{position:fixed;right:24px;bottom:78px;z-index:71;width:348px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 44px rgba(20,20,19,.2);overflow:hidden;display:none}
 .mxw-ava-pop.open{display:block}
@@ -1616,6 +1712,8 @@ function MovesStandaloneStyles() {
 @media (max-width:720px){
   .mxw-howflow,.mxw-ts-grid,.mxw-file-cols{grid-template-columns:1fr}
   .mxw-stage-bar{align-items:flex-start;flex-direction:column}
+  .mxw-upload,.mxw-inline-upload{align-items:flex-start;flex-direction:column}
+  .mxw-upload-control{justify-content:flex-start;width:100%}
   .mxw-options button{grid-template-columns:28px 1fr}
   .mxw-options em{grid-column:2}
   .mxw-options small{grid-column:2}

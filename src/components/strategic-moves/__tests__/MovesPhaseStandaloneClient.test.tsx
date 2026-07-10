@@ -158,8 +158,8 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/View dossier/i)).not.toBeInTheDocument();
   });
 
-  it("supports the explorer, aVa launcher, and gate ceremony interactions", async () => {
-    render(
+  it("supports the explorer, upload, aVa launcher, and gate ceremony interactions", async () => {
+    const { container } = render(
       <MovesPhaseStandaloneClient
         evidenceNeedPackets={[]}
         move={makeMove()}
@@ -171,6 +171,28 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(screen.getByRole("button", { name: /Files & Evidence/i }));
     expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
     expect(screen.getAllByText(/Input template/i).length).toBeGreaterThan(0);
+    expect(
+      Array.from(container.querySelectorAll("a")).some((anchor) =>
+        anchor.getAttribute("href")?.includes("?tab="),
+      ),
+    ).toBe(false);
+
+    fireEvent.change(screen.getByLabelText(/Upload evidence file/i), {
+      target: {
+        files: [
+          new File(["phase evidence"], "phase-evidence.md", {
+            type: "text/markdown",
+          }),
+        ],
+      },
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/Uploaded phase-evidence.md/i)).toBeInTheDocument();
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/artifacts/upload",
+      expect.objectContaining({ method: "POST" }),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
     fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));

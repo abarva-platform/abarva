@@ -145,7 +145,7 @@ describe('canonicalizeFromBody', () => {
   });
 
   it('regression: Moves phase chat body (semantic surface + surfaceContext.moveId only) now resolves programId and the URL-shaped surface', () => {
-    // This is the exact shape StrategicMovePhaseClient.tsx sent before the
+    // This is the exact shape the Moves phase workspace sent before the
     // fix — surface as the semantic key, id only under surfaceContext.moveId,
     // no top-level programId. Before the fix this returned
     // { surface: '/strategic-moves', programId: undefined }, which is what

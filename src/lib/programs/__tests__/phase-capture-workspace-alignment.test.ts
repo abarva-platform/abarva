@@ -5,7 +5,7 @@ import {
 
 // Regression guard for the P1–P5 phase-workspace capture Save.
 //
-// The workspace (StrategicMovePhaseClient) renders one editable capture card per
+// The standalone Moves workspace renders one editable capture card per
 // section and, on Save, POSTs { [sectionId]: value } to the phase-capture route,
 // which only counts fields whose key matches a canonical contract section key
 // (evaluatePhaseCapture). The workspace card ids MUST therefore equal the

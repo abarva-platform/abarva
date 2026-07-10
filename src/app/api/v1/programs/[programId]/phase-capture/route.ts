@@ -21,7 +21,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // The gate deliverable each phase's Save → Approve → Generate sequence signs
-// off. Mirrors PHASE_WORKFLOW in StrategicMovePhaseClient and the *_signed_off
+// off. Mirrors the standalone Moves phase capture flow and the *_signed_off
 // gate checks in governance.ts (e.g. P1 `charter_signed_off` reads a
 // `deliverables_v2` row of type `charter`). P0's gate deliverable is the
 // origination brief, created by the originate flow — not this path.

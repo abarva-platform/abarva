@@ -1,13 +1,12 @@
 // PhaseDocumentsPanel — async server component
 //
 // Fetches and renders the full phase-by-phase document set for a program.
-// Used in two places:
-//   1. The "Documents" tab on the move detail page (/strategic-moves/[moveId]?tab=documents)
-//   2. The standalone Evidence Hub page (/strategic-moves/[moveId]/evidence)
+// Used by the standalone Evidence Hub page (/strategic-moves/[moveId]/evidence)
+// and any standalone workspace surface that needs the same document set.
 //
 // Props:
 //   moveId        — program / engagement id
-//   compact       — if true, reduces padding and hides the KPI strip (for tab use)
+//   compact       — if true, reduces padding and hides the KPI strip
 //   currentPhase  — highlights the current phase section
 
 import { getServerSupabase } from "@/lib/supabase-server";

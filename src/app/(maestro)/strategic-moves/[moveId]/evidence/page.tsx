@@ -1,8 +1,7 @@
 // Phase Evidence Hub — /strategic-moves/[moveId]/evidence
 //
 // Standalone full-page view of the phase document set.
-// The same content is also available as the "Documents" tab on the move
-// detail page (/strategic-moves/[moveId]?tab=documents).
+// Links route back to the standalone phase workspace, not retired detail tabs.
 // Rendered with PhaseDocumentsPanel (shared server component).
 
 import { notFound, redirect } from "next/navigation";
@@ -102,7 +101,7 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
               }}
             >
               <Link
-                href={`/strategic-moves/${moveId}?tab=documents`}
+                href={`/strategic-moves/${moveId}/phase/${move.currentPhase ?? 1}`}
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
@@ -114,7 +113,7 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
                   backgroundColor: "#F8F7F4",
                 }}
               >
-                ← Back to move
+                ← Back to phase workspace
               </Link>
               <Link
                 href={`/strategic-moves/${moveId}/phase/${move.currentPhase ?? 1}`}
