@@ -1,5 +1,5 @@
 import { auditSuggestedQuestions } from "../suggested-question-audit";
-import { PHASE_CONFIGS } from "@/components/strategic-moves/StrategicMovePhaseClient";
+import { MOVES_STANDALONE_SUGGESTED_QUESTIONS } from "@/components/strategic-moves/MovesPhaseStandaloneClient";
 
 describe("auditSuggestedQuestions — unit behavior", () => {
   it("flags a workflow-bypass trap question", () => {
@@ -26,11 +26,14 @@ describe("auditSuggestedQuestions — unit behavior", () => {
   });
 });
 
-describe("auditSuggestedQuestions — regression against the real Moves phase-workspace static list", () => {
-  it("every phase's curated suggestedPrompts pass the safety audit", () => {
-    for (const [phaseNum, config] of Object.entries(PHASE_CONFIGS)) {
+describe("auditSuggestedQuestions — regression against the real Moves standalone static list", () => {
+  it("every phase's curated suggested prompts pass the safety audit", () => {
+    for (const config of MOVES_STANDALONE_SUGGESTED_QUESTIONS) {
       const violations = auditSuggestedQuestions(config.suggestedPrompts);
-      expect({ phase: phaseNum, violations }).toEqual({ phase: phaseNum, violations: [] });
+      expect({ phase: String(config.phase), violations }).toEqual({
+        phase: String(config.phase),
+        violations: [],
+      });
     }
   });
 });

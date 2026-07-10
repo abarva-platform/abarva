@@ -2,8 +2,8 @@
 //
 // Confirmed (2026-07-08 investigation): every surface's "suggested
 // questions" are static, curated per-phase/per-template strings — not
-// LLM-generated at request time (e.g. StrategicMovePhaseClient.tsx's
-// PHASE_CONFIGS). That makes this an OFFLINE audit of the curated lists
+// LLM-generated at request time (e.g. the standalone Moves phase workspace's
+// curated aVa suggestions). That makes this an OFFLINE audit of the curated lists
 // rather than a live runtime filter: run this over every known static
 // suggestion source in a test, and CI fails if someone adds a question that
 // baits a hallucination trap (implies a not-built capability, a workflow
