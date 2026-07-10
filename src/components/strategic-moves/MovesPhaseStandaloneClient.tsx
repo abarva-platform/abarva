@@ -300,6 +300,8 @@ export function MovesPhaseStandaloneClient({
   const [draftedBrief, setDraftedBrief] = useState<Record<number, string>>({});
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
   const progressPct = Math.round(((substepIndex + 1) / phase.substeps.length) * 100);
+  const isFinalSubstep = substepIndex === phase.substeps.length - 1;
+  const gateActionRunning = gateWork.status === "generating" || gateWork.status === "approving";
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -622,9 +624,20 @@ export function MovesPhaseStandaloneClient({
                     · {substep.label}
                   </span>
                 </div>
-                <button className="mxw-btn mxw-primary" type="button" onClick={continueStep}>
-                  {substepIndex === phase.substeps.length - 1
-                    ? "Approve & advance →"
+                <button
+                  className="mxw-btn mxw-primary"
+                  disabled={isFinalSubstep && gateActionRunning}
+                  onClick={
+                    isFinalSubstep
+                      ? () => void approveGateAndGenerate()
+                      : continueStep
+                  }
+                  type="button"
+                >
+                  {isFinalSubstep
+                    ? gateActionRunning
+                      ? "Approving & generating..."
+                      : "Approve & generate →"
                     : "Continue →"}
                 </button>
               </div>
