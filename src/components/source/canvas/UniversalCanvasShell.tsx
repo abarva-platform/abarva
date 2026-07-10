@@ -109,7 +109,10 @@ import type {
   SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
-import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from "@/lib/source/constants";
+import {
+  SOURCE_STAGE_LABELS,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
 import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type {
@@ -160,6 +163,8 @@ import {
 } from "@/lib/source/stage-next-move";
 import { resolveSimpleStageScreen } from "@/lib/source/simple-front";
 import { nextStepNeeds } from "@/lib/source/next-step-needs";
+import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
+import type { SourceStageConfirmations } from "@/lib/source/approval-decision";
 import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import type {
@@ -627,7 +632,11 @@ export function UniversalCanvasShell({
       const res = await fetch(`/api/v1/source/${event.id}/stage`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ stageKey: toStage, reason }),
+        body: JSON.stringify({
+          stageKey: toStage,
+          reason,
+          confirmations: confirmationsForStage(viewStage),
+        }),
       });
       if (!res.ok) return;
       // Re-fetch the SSR data with the new stage in view, so artifacts +
@@ -1355,6 +1364,14 @@ export function UniversalCanvasShell({
 function displayAgentName(_agent?: "Sentinel" | "Atlas"): string {
   void _agent;
   return "aVa";
+}
+
+function confirmationsForStage(
+  stage: SourceStageKey,
+): SourceStageConfirmations {
+  return Object.fromEntries(
+    confirmationKeysForStage(stage).map((key) => [key, true]),
+  );
 }
 
 function isStageAtOrAfter(current: SourceStageKey, target: SourceStageKey) {

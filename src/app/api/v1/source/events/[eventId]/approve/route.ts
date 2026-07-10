@@ -16,22 +16,30 @@
 //   reject    → lifecycle_state 'archived'.
 // An approval record is written to source_event_approvals in every case.
 
-import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { getActiveClientRow } from '@/lib/active-client';
-import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import {
+  isGateApprovalStrictMode,
+  isStrictModeApprovalRole,
+} from "@/lib/auth/gate-approval-strict-mode";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import {
   evaluateSourceApprovalDecision,
   type SourceStageConfirmations,
-} from '@/lib/source/approval-decision';
-import { confirmationKeysForStage } from '@/lib/source/stage-gate-confirmations';
-import { autoDraftOnStageEntry } from '@/lib/source/stage-entry-autodraft';
+} from "@/lib/source/approval-decision";
+import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
+import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
+import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
+import { normalizeSourceStageKey } from "@/lib/source/constants";
+import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
 
 interface ApproveBody {
-  action: 'approve' | 'reject' | 'send_back';
+  action: "approve" | "reject" | "send_back";
   notes?: string;
   confirmations?: SourceStageConfirmations;
+  selfApproveIfAuthorized?: boolean;
 }
 
 /**
@@ -40,17 +48,17 @@ interface ApproveBody {
  */
 function composeApprovalNotes(
   comment: string | undefined,
-  action: ApproveBody['action'],
+  action: ApproveBody["action"],
   currentStageKey: string | null,
 ): string | null {
   const trimmed = comment?.trim();
-  if (action === 'approve') {
+  if (action === "approve") {
     // Strategy approval is the P0 memo/value/archetype attestation; every other
     // stage attests that stage's gate boxes.
     const attest =
-      currentStageKey === 'strategy'
-        ? 'Confirmed review of strategy memo, value target, and archetype + rigor.'
-        : 'Confirmed the stage gate: evidence complete, inputs reviewed, stage final.';
+      currentStageKey === "strategy"
+        ? "Confirmed review of strategy memo, value target, and archetype + rigor."
+        : "Confirmed the stage gate: evidence complete, inputs reviewed, stage final.";
     return trimmed ? `${attest}\n${trimmed}` : attest;
   }
   return trimmed ? trimmed : null;
@@ -104,10 +112,12 @@ export async function POST(
 
   // Fetch the event to check it exists and get current state + stage.
   const { data: event, error: fetchError } = await supabase
-    .from('source_events')
-    .select('id, lifecycle_state, current_stage_key, event_name, event_code, client_key')
-    .eq('id', eventId)
-    .eq('client_key', activeClient.key)
+    .from("source_events")
+    .select(
+      "id, lifecycle_state, current_stage_key, event_name, event_code, client_key",
+    )
+    .eq("id", eventId)
+    .eq("client_key", activeClient.key)
     .single();
 
   if (fetchError || !event) {
@@ -119,20 +129,86 @@ export async function POST(
   // validated against the CURRENT stage's gate keys — not a hardcoded strategy
   // set — so an approve on any stage requires exactly that stage's boxes.
   const currentStageKey = event.current_stage_key as string | null;
-  const decision = evaluateSourceApprovalDecision(body.action, body.confirmations, {
-    currentStageKey,
-    requiredConfirmationKeys: confirmationKeysForStage(currentStageKey),
-  });
+  const decision = evaluateSourceApprovalDecision(
+    body.action,
+    body.confirmations,
+    {
+      currentStageKey,
+      requiredConfirmationKeys: confirmationKeysForStage(currentStageKey),
+    },
+  );
   if (!decision.ok) {
-    const status = decision.error === 'confirmations_required' ? 422 : 400;
+    const status = decision.error === "confirmations_required" ? 422 : 400;
     return Response.json(
       {
         error: decision.error,
         detail: decision.detail,
-        ...(decision.missingConfirmations ? { missingConfirmations: decision.missingConfirmations } : {}),
+        ...(decision.missingConfirmations
+          ? { missingConfirmations: decision.missingConfirmations }
+          : {}),
       },
       { status },
     );
+  }
+
+  const strictMode = isGateApprovalStrictMode();
+  if (body.selfApproveIfAuthorized && strictMode) {
+    if (!isStrictModeApprovalRole(tenancy.role)) {
+      return Response.json(
+        {
+          error: "forbidden",
+          detail:
+            "GATE_APPROVAL_STRICT_MODE is enabled — self-approval requires an admin or maestro role and a separate approver.",
+        },
+        { status: 403 },
+      );
+    }
+    return Response.json(
+      {
+        error: "forbidden",
+        detail:
+          "GATE_APPROVAL_STRICT_MODE is enabled — same-person self-approval is not allowed for Source stage advancement.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (body.action === "approve" && decision.advanceStageTo) {
+    const currentStage = normalizeSourceStageKey(currentStageKey);
+    if (!currentStage) {
+      return Response.json(
+        {
+          error: "invalid_stage",
+          detail:
+            "Current Source stage is not canonical; approval cannot advance it.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const substrate = await getStageSubstrate(eventId, currentStage);
+    const gateContract = evaluateSourceGateAdvanceContract({
+      currentStage,
+      targetStage: decision.advanceStageTo,
+      confirmations: body.confirmations,
+      criteria: substrate.criteria,
+      artifacts: substrate.artifacts,
+      evidence: substrate.evidence,
+      reason: body.notes,
+      allowComputedReadinessBypass:
+        body.selfApproveIfAuthorized === true && !strictMode,
+    });
+    if (!gateContract.ok) {
+      return Response.json(
+        {
+          error: gateContract.error,
+          detail: gateContract.detail,
+          missingConfirmations: gateContract.missingConfirmations,
+          blockers: gateContract.readiness.blockers,
+        },
+        { status: gateContract.status },
+      );
+    }
   }
 
   const fromState = event.lifecycle_state as string;
@@ -177,10 +253,13 @@ export async function POST(
       updatedAtIso: new Date().toISOString(),
     });
     if (!stageWrite.ok) {
-      console.error('[POST /api/v1/source/events/:eventId/approve] stage_advance_failed', {
-        eventId,
-        message: stageWrite.error,
-      });
+      console.error(
+        "[POST /api/v1/source/events/:eventId/approve] stage_advance_failed",
+        {
+          eventId,
+          message: stageWrite.error,
+        },
+      );
     } else {
       stageAdvancedTo = decision.advanceStageTo;
       // Auto-draft the newly-entered stage's primary deliverable (Scope memo
@@ -194,11 +273,17 @@ export async function POST(
         clientKey: activeClient.key,
         enteredStage: decision.advanceStageTo,
       }).catch((autoDraftError) => {
-        console.error('[POST /api/v1/source/events/:eventId/approve] stage_entry_autodraft_failed', {
-          eventId,
-          enteredStage: decision.advanceStageTo,
-          message: autoDraftError instanceof Error ? autoDraftError.message : autoDraftError,
-        });
+        console.error(
+          "[POST /api/v1/source/events/:eventId/approve] stage_entry_autodraft_failed",
+          {
+            eventId,
+            enteredStage: decision.advanceStageTo,
+            message:
+              autoDraftError instanceof Error
+                ? autoDraftError.message
+                : autoDraftError,
+          },
+        );
       });
     }
   }
