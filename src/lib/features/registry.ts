@@ -109,9 +109,8 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_phase_workspace_v2",
     summary:
-      "Adds the phase-workspace guidance panel to the Moves phase page: for the current phase, a catalog-driven 'How to complete this phase' + 'Sessions and templates for this phase' pair (from the governed phase-template catalog, keyed on the phase). Purely additive and presentational — falls back to the existing workspace when off. Move-scoped data only; no fabricated numbers. Lakeshore proved first (2026-07-08); SkyHarbor added 2026-07-08 for cross-tenant proof. Env: ABARVA_FEATURE_MOVES_PHASE_WORKSPACE_V2_TENANTS.",
-    policy: "tenant",
-    includeTenants: ["lakeshore", "skyharbor"],
+      "Adds the phase-workspace guidance panel to every Moves phase page: for the current phase, a catalog-driven 'How to complete this phase' + 'Sessions and templates for this phase' pair (from the governed phase-template catalog, keyed on the phase). Purely additive and presentational. Move-scoped data only; no fabricated numbers. Promoted to platform default after Lakeshore and SkyHarbor proof (2026-07-10); use excludeTenants only for emergency rollback.",
+    policy: "platform",
   },
   {
     key: "intelligence_companion_canvas",
@@ -172,9 +171,8 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "workspace_explorer_moves",
     summary:
-      "Enables the Moves Workspace Explorer surfacing layer over program attachments, generated artifacts, and deliverables. Tenant opt-in; default off so the current Moves detail surface remains unchanged.",
-    policy: "tenant",
-    includeTenants: [],
+      "Enables the Moves Workspace Explorer surfacing layer over program attachments, generated artifacts, and deliverables for all tenants. This is read-only/governed surfacing over existing Move data; it does not archive or migrate old Moves. Promoted to platform default after Lakeshore and SkyHarbor proof (2026-07-10); use excludeTenants only for emergency rollback.",
+    policy: "platform",
   },
   {
     key: "source_strategy_auto_draft",

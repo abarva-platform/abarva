@@ -23,6 +23,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       expect(
         isFeatureEnabled({ clientKey: "arcturus" }, "intelligence_brief_v4"),
       ).toBe(true);
+      expect(
+        isFeatureEnabled({ clientKey: "apexretail" }, "moves_phase_workspace_v2"),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled({ clientKey: "meridian" }, "moves_phase_workspace_v2"),
+      ).toBe(true);
     });
 
     it("is on when the context is missing a tenant key", () => {
@@ -227,7 +233,7 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       delete process.env[MOVES_ENV];
     });
 
-    it("keeps Source and Moves explorer flags off by default", () => {
+    it("keeps Source explorer tenant-gated while Moves explorer is platform default", () => {
       expect(
         isFeatureEnabled(
           { clientKey: "apexretail" },
@@ -239,10 +245,10 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
           { clientKey: "apexretail" },
           "workspace_explorer_moves",
         ),
-      ).toBe(false);
+      ).toBe(true);
     });
 
-    it("enables each explorer flag independently through tenant env overrides", () => {
+    it("enables Source through tenant env overrides without being needed for Moves", () => {
       process.env[SOURCE_ENV] = "apexretail";
       process.env[MOVES_ENV] = "skyharbor-air";
 
@@ -257,7 +263,7 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
           { clientKey: "apexretail" },
           "workspace_explorer_moves",
         ),
-      ).toBe(false);
+      ).toBe(true);
       expect(
         isFeatureEnabled(
           { clientKey: "skyharbor-air" },
