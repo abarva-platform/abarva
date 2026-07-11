@@ -1,0 +1,286 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import type {
+  CanonicalIngestionRecord,
+  CanonicalValidationFinding,
+  CanonicalValue,
+  QualityStatus,
+} from '../contracts/canonical-ingestion';
+import type { MappingRule } from '../contracts/mapping-registry';
+import type {
+  SourceAdapter,
+  SourceAdapterFinding,
+  SourceAdapterInput,
+  SourceAdapterResult,
+} from '../contracts/source-adapter';
+import { getBuiltInMappingProfile } from './mapping-profiles';
+
+interface ParsedCsv {
+  headers: string[];
+  rows: Record<string, string>[];
+}
+
+export class CsvSourceAdapter implements SourceAdapter {
+  adapterKey = 'csv';
+  adapterVersion = 'csv-adapter/v1';
+  acceptedSourceShapes = ['text/csv', 'csv'];
+  acceptedSourceClasses = [
+    'enterprise_profile',
+    'organization_functions',
+    'applications_systems',
+    'data_assets_integrations',
+    'vendors_contracts',
+    'spend_value',
+    'programs_priorities',
+    'risks_controls',
+    'metric_definitions',
+    'evidence_registry',
+    'module_memory',
+    'outcome_measurements',
+    'benchmark_context',
+  ];
+
+  async parse(input: SourceAdapterInput): Promise<SourceAdapterResult> {
+    const text = await fs.readFile(input.sourcePath, 'utf8');
+    const contentFingerprint = fingerprint(text);
+    const parsed = parseCsv(text);
+    const mappingProfile = getBuiltInMappingProfile(input.mappingProfile);
+    const findings: SourceAdapterFinding[] = [];
+
+    if (!mappingProfile) {
+      return {
+        records: [],
+        findings: [
+          {
+            severity: 'error',
+            code: 'mapping_profile_not_found',
+            message: `No built-in mapping profile exists for ${input.mappingProfile}.`,
+          },
+        ],
+        unmappedFields: parsed.headers,
+        sourceFieldCount: parsed.headers.length,
+        mappedFieldCount: 0,
+        requiredFieldCount: 0,
+        missingRequiredFieldCount: 0,
+        quarantinedRecordCount: parsed.rows.length,
+        contentFingerprint,
+        mappingCoveragePercent: 0,
+      };
+    }
+
+    const mappedFields = new Set(mappingProfile.rules.map((rule) => rule.sourceField));
+    const unmappedFields = parsed.headers.filter((header) => !mappedFields.has(header));
+    const requiredFields = mappingProfile.rules.filter((rule) => rule.required);
+    const mappingCoveragePercent = parsed.headers.length === 0
+      ? 0
+      : roundPercent(((parsed.headers.length - unmappedFields.length) / parsed.headers.length) * 100);
+
+    for (const header of parsed.headers) {
+      if (!mappedFields.has(header)) {
+        findings.push({
+          severity: 'warning',
+          code: 'source_field_unmapped',
+          message: `Source field ${header} has no rule in ${input.mappingProfile}.`,
+          sourceField: header,
+        });
+      }
+    }
+
+    const records = parsed.rows.map((row, index) => {
+      const rowFindings = validateRow(mappingProfile.rules, row, index + 1);
+      findings.push(...rowFindings.map((finding) => ({
+        severity: finding.severity,
+        code: finding.code,
+        message: finding.message,
+        sourceObjectId: finding.sourceObjectId,
+      } satisfies SourceAdapterFinding)));
+      return buildRecord(input, row, index, mappingProfile.rules, rowFindings, contentFingerprint);
+    });
+
+    return {
+        records,
+        findings,
+        unmappedFields,
+        sourceFieldCount: parsed.headers.length,
+        mappedFieldCount: parsed.headers.length - unmappedFields.length,
+        requiredFieldCount: requiredFields.length,
+        missingRequiredFieldCount: findings.filter((finding) => finding.code === 'required_source_field_missing').length,
+        quarantinedRecordCount: records.filter((record) => record.qualityStatus === 'quarantined').length,
+        contentFingerprint,
+        mappingCoveragePercent,
+    };
+  }
+}
+
+export function parseCsv(text: string): ParsedCsv {
+  const rows = parseCsvRows(text.trim());
+  const headers = rows.shift()?.map((header) => header.trim()) ?? [];
+  return {
+    headers,
+    rows: rows.map((values) => Object.fromEntries(headers.map((header, index) => [header, values[index]?.trim() ?? '']))),
+  };
+}
+
+function parseCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    const nextCharacter = text[index + 1];
+    if (character === '"' && inQuotes && nextCharacter === '"') {
+      cell += '"';
+      index += 1;
+      continue;
+    }
+    if (character === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (character === ',' && !inQuotes) {
+      row.push(cell);
+      cell = '';
+      continue;
+    }
+    if ((character === '\n' || character === '\r') && !inQuotes) {
+      if (character === '\r' && nextCharacter === '\n') index += 1;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = '';
+      continue;
+    }
+    cell += character;
+  }
+
+  row.push(cell);
+  rows.push(row);
+  return rows.filter((csvRow) => csvRow.some((value) => value.trim().length > 0));
+}
+
+function buildRecord(
+  input: SourceAdapterInput,
+  row: Record<string, string>,
+  rowIndex: number,
+  rules: MappingRule[],
+  validationFindings: CanonicalValidationFinding[],
+  contentFingerprint: string,
+): CanonicalIngestionRecord {
+  const requiredIdField = rules.find((rule) => rule.required)?.sourceField;
+  const sourceObjectId = normalizeIdentifier(row[requiredIdField ?? '']) || `${path.basename(input.sourcePath)}#row-${rowIndex + 1}`;
+  const firstRule = rules[0];
+  const observedAt = input.observedAt ?? new Date(0).toISOString();
+  const qualityStatus: QualityStatus = validationFindings.some((finding) => finding.severity === 'error')
+    ? 'quarantined'
+    : validationFindings.some((finding) => finding.severity === 'warning')
+      ? 'warning'
+      : 'valid';
+  const attributes: Record<string, CanonicalValue> = {};
+
+  for (const rule of rules) {
+    if (!rule.targetAttribute) continue;
+    const rawValue = row[rule.sourceField];
+    if (rawValue === undefined || rawValue.trim() === '') continue;
+    attributes[rule.targetAttribute] = toCanonicalValue(rawValue, rule);
+  }
+
+  return {
+    tenantKey: input.tenantKey,
+    packetVersion: input.packetVersion,
+    domain: firstRule.targetDomain,
+    objectType: firstRule.targetObjectType,
+    sourceObjectId,
+    canonicalObjectKey: `${input.tenantKey}:${firstRule.targetObjectType}:${sourceObjectId}`,
+    attributes,
+    relationships: [],
+    evidenceReferences: [
+      {
+        evidenceKey: `${input.packetId}:${path.basename(input.sourcePath)}:${sourceObjectId}`,
+        sourceObjectId,
+        excerpt: bestExcerpt(row),
+        confidence: 0.8,
+      },
+    ],
+    sourceAuthority: {
+      sourceSystem: input.packetFile.sourceProfile,
+      sourceType: input.packetFile.sourceClass,
+      owner: input.packetFile.evidenceBasis,
+      authority: input.packetFile.dataStatus === 'benchmark' ? 'benchmark' : 'self_reported',
+    },
+    effectiveDate: undefined,
+    observedAt,
+    confidence: averageConfidence(rules),
+    sensitivity: input.packetFile.sensitivity ?? 'internal',
+    dataStatus: input.packetFile.dataStatus ?? 'synthetic',
+    qualityStatus,
+    validationFindings,
+    lineage: [
+      {
+        step: 'source_adapter_dry_run',
+        version: 'pr3-source-adapter-dry-run/v1',
+        at: observedAt,
+        adapterKey: input.packetFile.adapterKey,
+        mappingProfile: input.mappingProfile,
+        contractVersion: 'tenant-packet/v1',
+        notes: `Dry-run only. Source fingerprint ${contentFingerprint}.`,
+      },
+    ],
+  };
+}
+
+function validateRow(
+  rules: MappingRule[],
+  row: Record<string, string>,
+  rowNumber: number,
+): CanonicalValidationFinding[] {
+  return rules
+    .filter((rule) => rule.required && (!row[rule.sourceField] || row[rule.sourceField].trim() === ''))
+    .map((rule) => ({
+      severity: 'error',
+      code: 'required_source_field_missing',
+      message: `Required source field ${rule.sourceField} is missing on row ${rowNumber}.`,
+      sourceObjectId: `row-${rowNumber}`,
+    }));
+}
+
+function toCanonicalValue(rawValue: string, rule: MappingRule): CanonicalValue {
+  const value = rawValue.trim();
+  if (rule.transform === 'parse_number') {
+    return { value: Number(value.replace(/,/g, '')), valueType: 'number', confidence: rule.confidenceDefault };
+  }
+  if (rule.transform === 'parse_currency') {
+    return { value: Number(value.replace(/[$,]/g, '')), valueType: 'currency', unit: 'USD', confidence: rule.confidenceDefault };
+  }
+  if (rule.transform === 'parse_percent') {
+    return { value: Number(value.replace('%', '')) / 100, valueType: 'percent', confidence: rule.confidenceDefault };
+  }
+  if (rule.transform === 'normalize_code') {
+    return { value: normalizeIdentifier(value), valueType: 'string', confidence: rule.confidenceDefault };
+  }
+  return { value, valueType: 'string', confidence: rule.confidenceDefault };
+}
+
+function normalizeIdentifier(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function bestExcerpt(row: Record<string, string>): string | undefined {
+  return row.excerpt || row.notes || row.entity_name || row.evidence_title;
+}
+
+function averageConfidence(rules: MappingRule[]): number {
+  const confidences = rules.map((rule) => rule.confidenceDefault ?? 0.75);
+  return Number((confidences.reduce((sum, value) => sum + value, 0) / Math.max(confidences.length, 1)).toFixed(2));
+}
+
+function fingerprint(text: string): string {
+  return `sha256:${crypto.createHash('sha256').update(text).digest('hex')}`;
+}
+
+function roundPercent(value: number): number {
+  return Number(value.toFixed(2));
+}
