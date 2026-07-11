@@ -224,6 +224,7 @@
     "audit:tenant-packet-dry-run": "tsx scripts/audit/run-tenant-packet-dry-run.ts",
     "audit:target-writer-dry-run": "tsx scripts/audit/run-target-writer-dry-run.ts",
     "audit:stranded-intelligence-report": "tsx scripts/audit/build-stranded-intelligence-report.ts",
+    "audit:skyharbor-compatibility-snapshot": "tsx scripts/audit/build-skyharbor-compatibility-snapshot.ts",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
     "audit:architecture-rules:self-test": "node scripts/audit/architecture-rules.mjs --self-test",
