@@ -37,10 +37,17 @@ async function loadManifest(filePath) {
   const text = fs.readFileSync(filePath, 'utf8');
   try {
     const yaml = await import('js-yaml');
-    return yaml.load(text);
+    return normalizeManifest(yaml.load(text));
   } catch {
-    return parseSimpleManifestYaml(text);
+    return normalizeManifest(parseSimpleManifestYaml(text));
   }
+}
+
+function normalizeManifest(manifest) {
+  if (manifest?.effectiveDate instanceof Date) {
+    manifest.effectiveDate = manifest.effectiveDate.toISOString().slice(0, 10);
+  }
+  return manifest;
 }
 
 function parseScalar(value) {
