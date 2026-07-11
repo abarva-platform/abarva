@@ -92,6 +92,8 @@ const nextConfig: NextConfig = {
       // dead leaf is enumerated explicitly instead.
       { source: '/intelligence/quality', destination: '/intelligence', permanent: false },
       { source: '/intelligence/quality/:path*', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/ask', destination: '/intelligence', permanent: false },
+      { source: '/intelligence/ask/:path*', destination: '/intelligence', permanent: false },
       { source: '/intelligence/patterns', destination: '/intelligence', permanent: false },
       { source: '/intelligence/patterns/:path*', destination: '/intelligence', permanent: false },
       { source: '/intelligence/signals', destination: '/intelligence', permanent: false },

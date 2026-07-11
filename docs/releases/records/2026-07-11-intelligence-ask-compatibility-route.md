@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-Adds a compatibility redirect for the legacy `/intelligence/ask` page URL so old product links, bookmarks, and post-deploy crawl probes land on the current `/intelligence` surface instead of returning 404. The canonical ask API remains `/api/intelligence/ask`.
+Adds a config-level compatibility redirect for the legacy `/intelligence/ask` page URL so old product links, bookmarks, and post-deploy crawl probes land on the current `/intelligence` surface instead of returning 404. The canonical ask API remains `/api/intelligence/ask`.
 
 ## Layer Impact
 
-- Global control lane: Adds one route-handler redirect for a shared Intelligence page URL.
+- Global control lane: Adds one Next config redirect for a shared Intelligence page URL.
 - Proof harness: Keeps the post-deploy crawl's `intelligence-ask` surface from failing on a retired page path while still exercising the live Intelligence surface and `/api/intelligence/ask` agent probe.
 
 ## Client Applicability
@@ -27,7 +27,8 @@ Adds a compatibility redirect for the legacy `/intelligence/ask` page URL so old
 
 ## Changes Included
 
-- `src/app/(maestro)/intelligence/ask/route.ts`
+- `next.config.ts`
+- `src/__tests__/integration/intelligence/intelligence-legacy-route-redirects.test.ts`
 - `tests/e2e/intelligence-j0.spec.ts`
 - `tests/e2e/intelligence-j1.spec.ts`
 
@@ -35,7 +36,8 @@ Adds a compatibility redirect for the legacy `/intelligence/ask` page URL so old
 
 - `npm run release:check`: Pass after explicit QA status wording was added.
 - `git diff --check`: Pass.
-- Targeted TypeScript compile of the compatibility route: Pass.
+- Targeted TypeScript compile of the compatibility route: Pass before the redirect moved to `next.config.ts`; no route handler remains.
+- `npm test -- src/__tests__/integration/intelligence/intelligence-legacy-route-redirects.test.ts --runInBand`: Pass, 14/14 tests; existing duplicate manual mock warnings were emitted.
 - `npm test -- src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts --runInBand`: Pass, 7/7 tests; existing duplicate manual mock warnings were emitted.
 - Live route check after deploy: Not run yet.
 - Post-deploy crawl rerun after deploy: Not run yet.
