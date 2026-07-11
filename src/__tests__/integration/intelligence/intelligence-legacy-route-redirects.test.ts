@@ -16,9 +16,10 @@
 // Pure file-shape check — reads next.config.ts as text and asserts the
 // redirect entries are present. No Next.js runtime, no server, no auth.
 //
-// COLLISION GUARD: `/intelligence/ask` is owned by a parallel Intelligence
-// workstream and MUST NOT be redirected here (a redirect would shadow its
-// route). This test locks that invariant in.
+// Compatibility guard: `/intelligence/ask` used to be a parallel Intelligence
+// page route, but the canonical page is now `/intelligence` while the shared
+// ask engine remains `/api/intelligence/ask`. Old links and post-deploy crawl
+// probes must redirect to the working advisory surface instead of 404ing.
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -74,14 +75,12 @@ describe('Intelligence legacy-route redirects (next.config.ts)', () => {
     );
   });
 
-  it('does NOT redirect /intelligence/ask (owned by a parallel workstream)', () => {
-    // A redirect from /intelligence/ask would shadow the parallel
-    // workstream's route. There must be no such redirect entry.
-    expect(config).not.toMatch(
-      /source:\s*'\/intelligence\/ask'/,
+  it('redirects /intelligence/ask compatibility URLs to the canonical surface', () => {
+    expect(config).toMatch(
+      /source:\s*'\/intelligence\/ask'\s*,\s*destination:\s*'\/intelligence'/,
     );
-    expect(config).not.toMatch(
-      /source:\s*'\/intelligence\/ask\/:path\*'/,
+    expect(config).toMatch(
+      /source:\s*'\/intelligence\/ask\/:path\*'\s*,\s*destination:\s*'\/intelligence'/,
     );
   });
 
