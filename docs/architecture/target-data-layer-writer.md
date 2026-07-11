@@ -1,6 +1,6 @@
 # Target Data-Layer Writer
 
-Status: official architecture baseline.
+Status: dry-run persistence planning baseline.
 
 The Target Data-Layer Writer converts Canonical Ingestion Records into the target architecture. It is the persistence boundary between source parsing and the enterprise data stores.
 
@@ -64,3 +64,22 @@ The writer creates a candidate tenant data version with:
 - proof bundle location
 
 Active promotion is a separate governed action.
+
+## PR4 Dry-Run Plan
+
+PR4 adds the first executable Target Writer dry-run. It consumes the PR3 tenant-packet proof bundle and produces:
+
+- target write operations,
+- target persistence mappings,
+- candidate tenant data version metadata,
+- quarantine routing,
+- idempotency keys,
+- source record fingerprints,
+- a local proof bundle.
+
+This path is planning only. It does not write physical tables, create a candidate version in the database,
+promote active tenant data, mutate tenant state, or change module runtime behavior.
+
+```bash
+npm run audit:target-writer-dry-run
+```
