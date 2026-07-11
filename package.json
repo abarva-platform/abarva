@@ -222,6 +222,7 @@
     "audit:enterprise-naming": "node scripts/audit/check-enterprise-naming-conventions.mjs",
     "audit:tenant-packet-contract": "node scripts/audit/validate-tenant-packet-contract.mjs",
     "audit:tenant-packet-dry-run": "tsx scripts/audit/run-tenant-packet-dry-run.ts",
+    "audit:target-writer-dry-run": "tsx scripts/audit/run-target-writer-dry-run.ts",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
     "audit:architecture-rules:self-test": "node scripts/audit/architecture-rules.mjs --self-test",
