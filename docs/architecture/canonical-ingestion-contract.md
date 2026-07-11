@@ -1,6 +1,6 @@
 # Canonical Ingestion Contract
 
-Status: operational contract baseline.
+Status: operational contract baseline with PR3 dry-run generation path.
 
 The Canonical Ingestion Contract decouples tenant source packets from the physical data layer. Source templates, client extracts, documents, historical packs, Source events, Moves artifacts, and Tower metrics all become the same neutral record shape before persistence.
 
@@ -93,3 +93,15 @@ The Canonical Ingestion Contract stops at validated neutral records. The Target 
 - relationship materialization
 - candidate tenant data version creation
 - quarantine persistence and proof bundle links
+
+## PR3 Dry-Run Proof
+
+The PR3 source-adapter skeleton can generate canonical ingestion candidates from the minimal tenant packet fixture:
+
+```bash
+npm run audit:tenant-packet-dry-run
+```
+
+The command writes a proof bundle under `audit-artifacts/tenant-packet-dry-run/minimal`.
+That proof bundle is execution evidence only; it is not a database load, module consumption proof,
+candidate promotion, or active tenant migration.

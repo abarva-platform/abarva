@@ -1,12 +1,27 @@
 # Source Adapter Framework
 
-Status: operational contract baseline.
+Status: executable dry-run skeleton.
 
 Source adapters parse source inputs into the Canonical Ingestion Contract. They never write directly to product tables.
 
+## PR3 Executable Skeleton
+
+PR3 adds the first executable source-adapter path for dry-run validation:
+
+Tenant Packet manifest plus declared source files
+-> CSV source adapter
+-> built-in mapping profile
+-> `CanonicalIngestionRecord` candidates
+-> mapping coverage report
+-> quarantine report
+-> local proof bundle
+
+This path is dry-run only. It does not write to production DB, mutate tenant data,
+promote active tenant versions, or change Home, Intelligence, Moves, Source, or Tower runtime behavior.
+
 ## Supported Adapter Families
 
-- CSV adapter
+- CSV adapter: PR3 dry-run skeleton for `enterprise-profile-minimal/v1` and `evidence-registry-minimal/v1`
 - Excel adapter
 - JSON adapter
 - document extraction adapter

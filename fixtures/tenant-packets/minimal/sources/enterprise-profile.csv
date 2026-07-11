@@ -1,0 +1,4 @@
+entity_id,entity_name,entity_type,industry,employee_count,primary_system,risk_tier,notes,source_commentary
+ent-minimal-001,Minimal Demo Enterprise,enterprise,Healthcare and services,18500,Enterprise lakehouse candidate,medium,Representative synthetic profile for dry-run validation,Optional note intentionally left unmapped
+func-ops-001,Operations and Member Experience,function,Healthcare and services,4200,CRM and claims servicing stack,medium,Primary operational function used by Home and Intelligence,
+sys-analytics-001,Analytics and Reporting Estate,system,Healthcare and services,175,Tableau Power BI and SQL reporting marts,high,Fragmented analytics estate candidate for canonical planning,

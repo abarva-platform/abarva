@@ -1,0 +1,3 @@
+evidence_key,evidence_title,source_file,source_owner,domain,risk_flag,excerpt,review_status
+ev-minimal-profile,Enterprise profile source,enterprise-profile.csv,AbarVa Product Architecture,enterprise_structure,false,Synthetic enterprise profile loaded for dry-run validation,reviewed
+ev-minimal-analytics,Analytics estate source,enterprise-profile.csv,AbarVa Product Architecture,technology_estate,true,Analytics estate row identifies reporting fragmentation for canonical planning,reviewed

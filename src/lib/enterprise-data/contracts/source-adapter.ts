@@ -10,6 +10,7 @@ export interface SourceAdapterInput {
   sourceProfile: string;
   parserVersion: string;
   mappingProfile: string;
+  observedAt?: string;
 }
 
 export interface SourceAdapterFinding {
@@ -24,6 +25,10 @@ export interface SourceAdapterResult {
   records: CanonicalIngestionRecord[];
   findings: SourceAdapterFinding[];
   unmappedFields: string[];
+  sourceFieldCount: number;
+  mappedFieldCount: number;
+  requiredFieldCount: number;
+  missingRequiredFieldCount: number;
   quarantinedRecordCount: number;
   contentFingerprint: string;
   mappingCoveragePercent: number;
