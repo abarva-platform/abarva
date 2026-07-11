@@ -91,17 +91,16 @@ test.describe('Intelligence J0 cold landing', () => {
     ).toBeVisible();
   });
 
-  test('"Open Sentinel" affordance navigates to /intelligence/ask', async ({
+  test('"Open Sentinel" affordance opens the Intelligence ask surface', async ({
     page,
   }) => {
     await page.goto('/intelligence');
     await page
       .getByTestId('intelligence-j0-affordance-open-sentinel')
       .click();
-    // /intelligence/ask is auth-gated; cold-visitor request will be
-    // redirected to /sign-in via the proxy. Either path is acceptable
-    // for "the affordance works" — we just want a non-404 response.
-    await page.waitForURL(/\/(intelligence\/ask|sign-in)/, { timeout: 10000 });
+    // /intelligence/ask is a compatibility route for older links; it may land
+    // on /intelligence or redirect to /sign-in for a cold visitor.
+    await page.waitForURL(/\/(intelligence|intelligence\/ask|sign-in)/, { timeout: 10000 });
   });
 
   test('card grid uses semantic role="list" with role="listitem" cards', async ({

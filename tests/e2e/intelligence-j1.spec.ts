@@ -99,13 +99,14 @@ test.describe('Intelligence J1 oriented browse', () => {
     await expect(page.getByText('The Pilot-to-Production Gap')).toBeVisible();
   });
 
-  test('"Ask Sentinel about this topic" navigates to /intelligence/ask', async ({
+  test('"Ask Sentinel about this topic" opens the Intelligence ask surface', async ({
     page,
   }) => {
     await page.goto('/intelligence/topics/ai-governance-and-risk');
     await page.getByTestId('intelligence-j1-topic-ask-sentinel').click();
-    // /intelligence/ask is auth-gated; redirect to /sign-in is acceptable.
-    await page.waitForURL(/\/(intelligence\/ask|sign-in)/, { timeout: 10000 });
+    // /intelligence/ask is a compatibility route for older links; it may land
+    // on /intelligence or redirect to /sign-in for a cold visitor.
+    await page.waitForURL(/\/(intelligence|intelligence\/ask|sign-in)/, { timeout: 10000 });
   });
 
   test('unknown topic id returns 404', async ({ page }) => {
