@@ -1,13 +1,16 @@
 {
-  "generatedAt": "2026-07-11T19:43:12.394Z",
-  "totalProgressPercent": 85,
+  "generatedAt": "2026-07-11T19:44:33.860Z",
+  "totalProgressPercent": 90,
   "currentBranch": "codex/tenant-packet-canonical-ingestion",
-  "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
-  "currentPr": null,
+  "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
+  "currentPr": {
+    "number": 4680,
+    "url": "https://github.com/abarva-platform/abarva/pull/4680"
+  },
   "truthSplit": {
     "pr4679": "merged design/control baseline; not live DB proof or module-consumption proof",
     "pr2": "contract/docs/types/fixture/checks only; no runtime loader, DB schema, tenant migration, module behavior, or live DB proof",
-    "deployment": "ACA main deploy for #4679 merge is in progress via repo-owned workflow run 29165484011",
+    "deployment": "PR #4679 automatic ACA main deploy completed successfully via workflow run 29165484011; PR 2 not deployed.",
     "liveDbProven": false,
     "moduleConsumptionProven": false
   },
@@ -20,7 +23,7 @@
       "startedAt": "2026-07-11T19:43:12.394Z",
       "completedAt": "2026-07-11T19:43:12.394Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
       "prNumber": 4679,
       "prLink": "https://github.com/abarva-platform/abarva/pull/4679",
       "blockers": [],
@@ -46,7 +49,7 @@
       "startedAt": "2026-07-11T19:43:12.394Z",
       "completedAt": "2026-07-11T19:43:12.394Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
       "prNumber": 4679,
       "prLink": "https://github.com/abarva-platform/abarva/pull/4679",
       "blockers": [],
@@ -75,7 +78,7 @@
       "startedAt": "2026-07-11T19:43:12.394Z",
       "completedAt": "2026-07-11T19:43:12.394Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
       "prNumber": 4679,
       "prLink": "https://github.com/abarva-platform/abarva/pull/4679",
       "blockers": [],
@@ -95,7 +98,7 @@
       "startedAt": "2026-07-11T19:43:12.394Z",
       "completedAt": "2026-07-11T19:43:12.394Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
       "prNumber": 4679,
       "prLink": "https://github.com/abarva-platform/abarva/pull/4679",
       "blockers": [],
@@ -112,12 +115,12 @@
     {
       "phaseNumber": "4",
       "phaseName": "Deploy baseline decision",
-      "status": "in_progress",
+      "status": "completed",
       "percentComplete": 50,
       "startedAt": "2026-07-11T19:43:12.394Z",
-      "completedAt": null,
+      "completedAt": "2026-07-11T19:44:33.860Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
       "prNumber": 4679,
       "prLink": "https://github.com/abarva-platform/abarva/pull/4679",
       "blockers": [],
@@ -125,9 +128,9 @@
       "testsRun": [
         "gh run view 29165484011"
       ],
-      "validationResult": "In progress: repo-owned ACA main deploy workflow started automatically for merge commit 98d341ea235a8b2d8511e5fd73068b9a47223cab.",
-      "mergeDeployStatus": "In progress: build/push and revision deployment completed; worker job update/health/runtime invariant still pending at last check.",
-      "nextAction": "Continue monitoring deploy workflow to completion."
+      "validationResult": "Pass: ACA main deploy workflow completed successfully for #4679 merge commit 98d341ea235a8b2d8511e5fd73068b9a47223cab.",
+      "mergeDeployStatus": "Deployed by repo-owned ACA main deploy workflow; revision healthy, traffic shifted, runtime invariant passed, production health endpoint passed.",
+      "nextAction": "Continue PR 2 branch and CI."
     },
     {
       "phaseNumber": "5",
@@ -137,9 +140,9 @@
       "startedAt": "2026-07-11T19:43:12.394Z",
       "completedAt": "2026-07-11T19:43:12.394Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
-      "prNumber": null,
-      "prLink": null,
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
+      "prNumber": 4680,
+      "prLink": "https://github.com/abarva-platform/abarva/pull/4680",
       "blockers": [],
       "filesChanged": [],
       "testsRun": [
@@ -158,9 +161,9 @@
       "startedAt": "2026-07-11T19:43:12.394Z",
       "completedAt": "2026-07-11T19:43:12.394Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
-      "prNumber": null,
-      "prLink": null,
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
+      "prNumber": 4680,
+      "prLink": "https://github.com/abarva-platform/abarva/pull/4680",
       "blockers": [],
       "filesChanged": [
         "docs/architecture/tenant-packet-contract.md",
@@ -193,9 +196,9 @@
       "startedAt": "2026-07-11T19:43:12.394Z",
       "completedAt": "2026-07-11T19:43:12.394Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
-      "prNumber": null,
-      "prLink": null,
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
+      "prNumber": 4680,
+      "prLink": "https://github.com/abarva-platform/abarva/pull/4680",
       "blockers": [],
       "filesChanged": [],
       "testsRun": [
@@ -213,38 +216,42 @@
     {
       "phaseNumber": "8",
       "phaseName": "Open PR 2",
-      "status": "in_progress",
-      "percentComplete": 85,
+      "status": "completed",
+      "percentComplete": 90,
       "startedAt": "2026-07-11T19:43:12.394Z",
-      "completedAt": null,
+      "completedAt": "2026-07-11T19:44:33.860Z",
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
-      "prNumber": null,
-      "prLink": null,
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
+      "prNumber": 4680,
+      "prLink": "https://github.com/abarva-platform/abarva/pull/4680",
       "blockers": [],
       "filesChanged": [],
-      "testsRun": [],
-      "validationResult": "",
-      "mergeDeployStatus": "Not evaluated yet.",
-      "nextAction": "Open PR 2 with truth split and validation evidence."
+      "testsRun": [
+        "gh pr create --repo abarva-platform/abarva --base main --head codex/tenant-packet-canonical-ingestion"
+      ],
+      "validationResult": "Pass: PR 2 opened with truth split and validation evidence.",
+      "mergeDeployStatus": "PR 2 open; not merged; not deployed.",
+      "nextAction": "Monitor PR 2 CI and merge if safe/allowed."
     },
     {
       "phaseNumber": "9",
       "phaseName": "PR 2 CI / merge / deploy decision",
-      "status": "not_started",
-      "percentComplete": 0,
-      "startedAt": null,
+      "status": "in_progress",
+      "percentComplete": 90,
+      "startedAt": "2026-07-11T19:44:33.860Z",
       "completedAt": null,
       "currentBranch": "codex/tenant-packet-canonical-ingestion",
-      "currentCommit": "98d341ea235a8b2d8511e5fd73068b9a47223cab",
-      "prNumber": null,
-      "prLink": null,
+      "currentCommit": "75a0bca07cfa3b8b8d2ddd99c0cfc1a4bce80e29",
+      "prNumber": 4680,
+      "prLink": "https://github.com/abarva-platform/abarva/pull/4680",
       "blockers": [],
       "filesChanged": [],
-      "testsRun": [],
-      "validationResult": "",
-      "mergeDeployStatus": "Not evaluated yet.",
-      "nextAction": "Pending."
+      "testsRun": [
+        "gh pr view 4680 status checks pending"
+      ],
+      "validationResult": "In progress: PR 2 CI not yet complete after open/status update.",
+      "mergeDeployStatus": "PR 2 open; not merged; not deployed.",
+      "nextAction": "Push status update, inspect PR 2 CI, and merge/deploy decision when checks complete."
     }
   ]
 }
