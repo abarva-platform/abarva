@@ -2,12 +2,25 @@
 
 import Link from "next/link";
 import type { Dispatch, SetStateAction } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+
+interface AvaChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+}
+
+let avaTurnCounter = 0;
+function nextAvaTurnId(): string {
+  avaTurnCounter += 1;
+  return `ava-turn-${avaTurnCounter}`;
+}
 
 type SubstepKey =
   | "prepare"
@@ -289,6 +302,11 @@ export function MovesPhaseStandaloneClient({
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
   const [substepIndex, setSubstepIndex] = useState(0);
   const [avaOpen, setAvaOpen] = useState(false);
+  const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
+  const [avaInput, setAvaInput] = useState("");
+  const [avaStreaming, setAvaStreaming] = useState(false);
+  const avaThreadRef = useRef<AvaChatMessage[]>([]);
+  avaThreadRef.current = avaThread;
   const [selectedOption, setSelectedOption] = useState("B");
   const [gateApproved, setGateApproved] = useState(false);
   const [gateWork, setGateWork] = useState<GateWorkState>({
@@ -308,6 +326,103 @@ export function MovesPhaseStandaloneClient({
   }, [move.archetype, move.tenant.industryCode, move.tenant.name]);
 
   const evidenceCount = evidenceNeedPackets.length || move.linkedEvidence.length;
+
+  // aVa chat send. Ported from the retired StrategicMovePhaseClient's `send`
+  // — same endpoint, same surfaceContext shape. Critically keeps
+  // `programId` at the top level AND inside surfaceContext: canonicalizeSurface
+  // (src/lib/agent/surface.ts) reads surfaceContext.programId specifically,
+  // not moveId — sending only moveId here previously made aVa answer "No
+  // active Move session is visible" (confirmed live, fixed, do not regress).
+  const sendAvaMessage = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || avaStreaming) return;
+      setAvaInput("");
+
+      const assistantId = nextAvaTurnId();
+      setAvaThread((prev) => [
+        ...prev,
+        { id: nextAvaTurnId(), role: "user", text: trimmed },
+        { id: assistantId, role: "assistant", text: "" },
+      ]);
+      setAvaStreaming(true);
+
+      const abort = new AbortController();
+      const hangTimer = setTimeout(() => abort.abort(), 180_000);
+
+      try {
+        const conversationHistory = avaThreadRef.current
+          .filter((m) => m.text.trim().length > 0)
+          .map((m) => ({ role: m.role, content: m.text }));
+
+        const res = await fetch("/api/chat/agent", {
+          method: "POST",
+          signal: abort.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: trimmed,
+            tenantName: move.tenant.name,
+            agentName: "Nexus",
+            surface: `/strategic-moves/${move.id}/phase/${phaseNum}`,
+            programId: move.id,
+            conversationHistory,
+            surfaceContext: {
+              programId: move.id,
+              moveId: move.id,
+              phase: phaseNum,
+              moveDisplayCode: move.displayCode,
+              moveName: move.name,
+              phaseLabel: phase.title,
+            },
+          }),
+        });
+
+        if (!res.ok || !res.body) {
+          throw new Error(`Agent returned ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let pendingBuffer = "";
+        let committedVisible = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          pendingBuffer += decoder.decode(value, { stream: true });
+          const { visibleText, remaining } = extractArtifacts(pendingBuffer);
+          committedVisible += visibleText;
+          pendingBuffer = remaining;
+          const display = committedVisible.trimEnd();
+          setAvaThread((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, text: display } : m)),
+          );
+        }
+
+        if (pendingBuffer.length > 0) {
+          const final = extractArtifacts(pendingBuffer);
+          committedVisible += final.visibleText;
+          setAvaThread((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, text: committedVisible.trimEnd() } : m,
+            ),
+          );
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error && err.name === "AbortError"
+            ? "This is taking longer than expected. Try again in a moment."
+            : "Something went wrong reaching aVa. Try again in a moment.";
+        setAvaThread((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, text: message } : m)),
+        );
+      } finally {
+        clearTimeout(hangTimer);
+        setAvaStreaming(false);
+      }
+    },
+    [avaStreaming, move.displayCode, move.id, move.name, move.tenant.name, phase.title, phaseNum],
+  );
 
   function continueStep() {
     if (workspaceView === "files") return;
@@ -683,16 +798,63 @@ export function MovesPhaseStandaloneClient({
           </button>
         </div>
         <div className="mxw-ava-body">
-          <p>{phase.avaContext}</p>
-          <div className="mxw-suggested">
-            {workspaceView === "files" ? "Ask about this workspace" : "Ask about this phase"}
-          </div>
-          {phase.avaQuestions.map((question) => (
-            <button key={question} type="button">
-              {question}
-            </button>
-          ))}
+          {avaThread.length === 0 ? (
+            <>
+              <p>{phase.avaContext}</p>
+              <div className="mxw-suggested">
+                {workspaceView === "files" ? "Ask about this workspace" : "Ask about this phase"}
+              </div>
+              {phase.avaQuestions.map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  onClick={() => void sendAvaMessage(question)}
+                  disabled={avaStreaming}
+                >
+                  {question}
+                </button>
+              ))}
+            </>
+          ) : (
+            <div className="mxw-ava-thread">
+              {avaThread.map((turn) => (
+                <div key={turn.id} className={`mxw-ava-turn mxw-ava-turn-${turn.role}`}>
+                  <span className="mxw-ava-turn-who">
+                    {turn.role === "user" ? "You" : "aVa"}
+                  </span>
+                  <p>
+                    {turn.text ||
+                      (turn.role === "assistant" && avaStreaming ? "…" : "")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+        <form
+          className="mxw-ava-composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void sendAvaMessage(avaInput);
+          }}
+        >
+          <textarea
+            value={avaInput}
+            onChange={(event) => setAvaInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void sendAvaMessage(avaInput);
+              }
+            }}
+            placeholder={`Ask aVa about ${phase.title.toLowerCase()}…`}
+            rows={2}
+            disabled={avaStreaming}
+          />
+          <button type="submit" disabled={avaStreaming || !avaInput.trim()}>
+            Send
+          </button>
+        </form>
       </aside>
     </main>
   );
@@ -1704,10 +1866,19 @@ function MovesStandaloneStyles() {
 .mxw-ava-head strong{display:block;font-size:14.5px}
 .mxw-ava-head small{display:block;font-size:11px;color:var(--muted)}
 .mxw-ava-head button{margin-left:auto;background:none;border:0;color:var(--faint);font-size:18px;cursor:pointer}
-.mxw-ava-body{padding:15px 17px}
+.mxw-ava-body{padding:15px 17px;max-height:320px;overflow-y:auto}
 .mxw-ava-body p{font-size:12.5px;color:var(--ink-2);line-height:1.5;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin:0}
 .mxw-suggested{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);font-weight:600;margin:14px 0 8px}
 .mxw-ava-body button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px;font-size:12.5px;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
+.mxw-ava-body button:disabled{opacity:.5;cursor:default}
+.mxw-ava-thread{display:flex;flex-direction:column;gap:10px}
+.mxw-ava-turn-who{display:block;font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:3px}
+.mxw-ava-turn p{font-size:12.5px;color:var(--ink-2);line-height:1.5;white-space:pre-wrap;margin:0;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.mxw-ava-turn-user p{background:var(--card);border-color:var(--line-2)}
+.mxw-ava-composer{display:flex;gap:8px;padding:12px 17px;border-top:1px solid var(--line);align-items:flex-end}
+.mxw-ava-composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:#fff}
+.mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
+.mxw-ava-composer button:disabled{opacity:.5;cursor:default}
 @media (max-width:980px){.mxw-lanes,.mxw-value-grid{grid-template-columns:1fr}}
 @media (max-width:900px){
   .mxw-surface{grid-template-columns:1fr}

@@ -5,9 +5,25 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { TextDecoder, TextEncoder } from "util";
+import { ReadableStream } from "stream/web";
 import { MovesPhaseStandaloneClient } from "../MovesPhaseStandaloneClient";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+
+// jsdom's test environment doesn't provide these globally; the component
+// runs in a real browser in production, where all three always exist.
+if (typeof global.TextEncoder === "undefined") {
+  (global as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
+}
+if (typeof global.TextDecoder === "undefined") {
+  (global as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder =
+    TextDecoder as unknown as typeof global.TextDecoder;
+}
+if (typeof global.ReadableStream === "undefined") {
+  (global as unknown as { ReadableStream: typeof ReadableStream }).ReadableStream =
+    ReadableStream;
+}
 
 jest.mock("next/link", () => {
   return function MockLink({
@@ -103,6 +119,18 @@ describe("MovesPhaseStandaloneClient", () => {
     window.scrollTo = jest.fn();
     global.fetch = jest.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
+
+      if (url.includes("/api/chat/agent")) {
+        const encoder = new TextEncoder();
+        const body = new ReadableStream({
+          start(controller) {
+            controller.enqueue(encoder.encode("The two blocking gate items are "));
+            controller.enqueue(encoder.encode("the requirements trace and the risk register."));
+            controller.close();
+          },
+        });
+        return { ok: true, status: 200, body } as unknown as Response;
+      }
 
       if (url.includes("/api/v1/deliverables/generate-phase")) {
         return {
@@ -229,5 +257,62 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
     expect(screen.getByText(/Ask about this phase/i)).toBeInTheDocument();
+  });
+
+  it("wires the aVa suggested questions to a real chat send, with programId set correctly to avoid the 'no active Move session' regression", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    fireEvent.click(screen.getByRole("button", { name: /What must be true before P4\?/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/The two blocking gate items are the requirements trace/i),
+      ).toBeInTheDocument();
+    });
+
+    const chatCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+      String(url).includes("/api/chat/agent"),
+    );
+    expect(chatCall).toBeTruthy();
+    const chatBody = JSON.parse(String(chatCall?.[1]?.body ?? "{}"));
+    expect(chatBody.message).toBe("What must be true before P4?");
+    expect(chatBody.programId).toBe("37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4");
+    expect(chatBody.surfaceContext.programId).toBe("37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4");
+    expect(chatBody.surfaceContext.moveId).toBe("37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4");
+    expect(chatBody.surfaceContext.phase).toBe(3);
+  });
+
+  it("supports typing and sending a free-form question via the composer", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    const textarea = screen.getByPlaceholderText(/Ask aVa about/i);
+    fireEvent.change(textarea, { target: { value: "Where are we over-designing?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Where are we over-designing?")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByText(/The two blocking gate items are the requirements trace/i),
+      ).toBeInTheDocument();
+    });
+    expect((textarea as HTMLTextAreaElement).value).toBe("");
   });
 });
