@@ -59,7 +59,7 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
             </Link>
             <span>›</span>
             <Link
-              href={`/strategic-moves/${moveId}`}
+              href={`/strategic-moves/${moveId}/phase/${move.currentPhase ?? 1}`}
               style={{ color: "#9AA3B2", textDecoration: "none" }}
             >
               {move.displayCode}

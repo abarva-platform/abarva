@@ -72,6 +72,10 @@ function statusRank(value: string): number {
   return 4;
 }
 
+function movePhaseHref(move: StrategicMove): string {
+  return `/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`;
+}
+
 export function StrategicMovesHomeClient({
   portfolio,
   initialListView,
@@ -305,7 +309,7 @@ export function StrategicMovesHomeClient({
                                 : styles.kanbanCardGreen
                         }`}
                         key={move.id}
-                        href={`/strategic-moves/${move.id}`}
+                        href={movePhaseHref(move)}
                         prefetch={false}
                       >
                         <div className={styles.kanbanId}>
@@ -396,7 +400,7 @@ export function StrategicMovesHomeClient({
                             ? styles.bubbleGreen
                             : styles.bubbleUnknown
                   }`}
-                  href={`/strategic-moves/${move.id}`}
+                  href={movePhaseHref(move)}
                   prefetch={false}
                   style={{
                     width: `${bubbleSize}px`,
@@ -430,7 +434,7 @@ function MoveCard({ move }: { move: StrategicMove }) {
               ? styles.cardTeal
               : styles.cardGreen
       }`}
-      href={`/strategic-moves/${move.id}`}
+      href={movePhaseHref(move)}
       prefetch={false}
     >
       <div className={styles.cardStrip} aria-hidden />

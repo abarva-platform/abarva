@@ -8,7 +8,7 @@
 // & Build), and a changed deliverable is re-run through the phase, never an isolated
 // regenerate (so there is no generate/regenerate control in here).
 //
-// The model is built server-side (StrategicMoveDetailView → ExplorerContent) from the
+// The model is built server-side from the
 // same deliverables_v2 + attachments + deliverable-registry data the Documents tab uses.
 
 import { useState } from "react";

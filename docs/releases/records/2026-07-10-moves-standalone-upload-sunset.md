@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Moves phase pages no longer send users back to retired detail tabs for upload, download, or document actions. The standalone phase workspace now owns evidence upload directly inside Files & Evidence and the P3 decision upload area. Gate approval now sends canonical phase-capture sections for P0 through P5 before deliverable generation and approval, and the signed-in approval path now writes the evaluator-visible gate sign-off and sponsor authority records before evaluating the gate. The retired phase workbench implementation and its private support components were removed so the product cannot silently flip back to the old page.
+Moves phase pages no longer send users back to retired detail tabs for upload, download, or document actions. The standalone phase workspace now owns evidence upload directly inside Files & Evidence and the P3 decision upload area. Gate approval now sends canonical phase-capture sections for P0 through P5 before deliverable generation and approval, and the signed-in approval path now writes the evaluator-visible gate sign-off and sponsor authority records before evaluating the gate. The retired phase workbench implementation and its private support components were removed so the product cannot silently flip back to the old page. Follow-up correction: the legacy `/strategic-moves/:moveId` detail route now redirects to the Move's current phase workspace, portfolio links open phase workspace URLs directly, and the standalone phase page uses the canonical AppShell toolbar instead of embedding a second custom Moves topbar.
 
 ## Layer Impact
 
@@ -36,15 +36,24 @@ Moves phase pages no longer send users back to retired detail tabs for upload, d
 - `src/lib/agent/__tests__/surface.test.ts`
 - `src/lib/programs/__tests__/phase-capture-workspace-alignment.test.ts`
 - `src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts`
+- `src/app/(maestro)/strategic-moves/[moveId]/page.tsx`
+- `src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx`
+- `src/app/(maestro)/strategic-moves/[moveId]/evidence/page.tsx`
 - Removed retired old workbench files: `StrategicMovePhaseClient`, `EvidenceWorkbench`, `MovePhaseExplorer`, and old-only tests.
+- Removed retired old detail files: `StrategicMoveDetailView`, `StrategicMoveDetailClient`, and their old-only tests.
 - Added canonical phase-capture payload generation for the standalone gate action before `generate-phase` and `phase-gate-approval`.
 - Added idempotent gate approval preparation in the signed-in approval API: create/find the phase gate deliverable, sign it off, and record the approving user as sponsor when no sponsor authority exists yet.
+- Redirected the old detail overview route to the current phase workspace and removed the standalone page's custom toolbar so the app-wide navigation remains canonical.
 
 ## QA / Validation
 
 - `rg -n "StrategicMovePhaseClient|EvidenceWorkbench|MovePhaseExplorer|tab=cabinet|tab=downloads|tab=documents" src/app src/components src/lib` — Pass, no active references.
 - `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx 'src/app/(maestro)/strategic-moves/[moveId]/evidence/page.tsx' src/components/strategic-moves/PhaseDocumentsPanel.tsx src/lib/agent/product-truth/__tests__/suggested-question-audit.test.ts src/lib/agent/product-truth/suggested-question-audit.ts src/lib/agent/__tests__/surface.test.ts src/lib/programs/__tests__/phase-capture-workspace-alignment.test.ts` — Pass.
 - `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/lib/agent/product-truth/__tests__/suggested-question-audit.test.ts src/lib/programs/__tests__/phase-capture-workspace-alignment.test.ts --runInBand` — Pass, 17/17 tests. Existing duplicate manual mock warnings are unchanged.
+- `rg -n "StrategicMoveDetailView|StrategicMoveDetailClient|StrategicMovePhaseClient|EvidenceWorkbench|MovePhaseExplorer|mxw-chrome|mxw-topnav|tab=cabinet|tab=downloads|tab=documents" 'src/app/(maestro)/strategic-moves' src/components/strategic-moves -g '!**/__tests__/**' -S` — Pass, no active old route/workbench/custom-toolbar references.
+- `npx eslint 'src/app/(maestro)/strategic-moves/[moveId]/page.tsx' 'src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx' 'src/app/(maestro)/strategic-moves/[moveId]/evidence/page.tsx' src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/StrategicMovesHomeClient.tsx src/components/strategic-moves/MoveListTable.tsx src/components/strategic-moves/MovesExplorer.tsx src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts` — Pass.
+- `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts --runInBand` — Pass, 5/5 tests. Existing duplicate manual mock warnings are unchanged.
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` — Pass.
 
 ## Rollout Plan
 
