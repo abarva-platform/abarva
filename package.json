@@ -220,6 +220,7 @@
     "audit:data-intelligence-redesign": "node scripts/audit/build-data-intelligence-redesign-report.mjs",
     "audit:enterprise-data-design": "node scripts/audit/build-enterprise-data-implementation-design.mjs",
     "audit:enterprise-naming": "node scripts/audit/check-enterprise-naming-conventions.mjs",
+    "audit:tenant-packet-contract": "node scripts/audit/validate-tenant-packet-contract.mjs",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
     "audit:architecture-rules:self-test": "node scripts/audit/architecture-rules.mjs --self-test",

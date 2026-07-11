@@ -1,6 +1,6 @@
 # Canonical Ingestion Contract
 
-Status: official architecture baseline.
+Status: operational contract baseline.
 
 The Canonical Ingestion Contract decouples tenant source packets from the physical data layer. Source templates, client extracts, documents, historical packs, Source events, Moves artifacts, and Tower metrics all become the same neutral record shape before persistence.
 
@@ -33,6 +33,15 @@ interface CanonicalIngestionRecord {
 }
 ```
 
+## Required Validation Gates
+
+- `tenantKey`, `packetVersion`, `domain`, `objectType`, and `sourceObjectId` are present.
+- At least one evidence reference exists for tenant-owned facts.
+- Every relationship has a relationship type, target type, target key, and evidence basis.
+- `dataStatus` and `sensitivity` are explicit.
+- `qualityStatus` is `valid`, `warning`, or `quarantined`; invalid records cannot be silently dropped.
+- Transformation lineage records adapter, mapping profile, contract version, and timestamp.
+
 ## Required Concepts
 
 - tenant and deployment identity
@@ -61,6 +70,8 @@ The contract must remain independent of:
 - storage technology
 - current module implementation details
 
+The record shape is also independent of historical source-template names. Compatibility names are allowed only in lineage or `legacyMigrationName` fields.
+
 ## Distinctions
 
 - A source file is not a fact.
@@ -69,3 +80,16 @@ The contract must remain independent of:
 - A recommendation is not an outcome measurement.
 - A value commitment is not realized value.
 - A generated artifact is not durable enterprise memory until promoted.
+
+## Target Writer Handoff
+
+The Canonical Ingestion Contract stops at validated neutral records. The Target Data-Layer Writer owns:
+
+- database IDs and foreign keys
+- canonical object identity resolution
+- fact versioning and supersession
+- deduplication and idempotency
+- evidence/source linkage
+- relationship materialization
+- candidate tenant data version creation
+- quarantine persistence and proof bundle links
