@@ -1,11 +1,11 @@
 # AbarVa Enterprise Data Architecture Summary
 
-Generated: 2026-07-11T19:06:21.999Z
+Generated: 2026-07-11T19:26:44.169Z
 
 ## Top 10 Current-State Findings
 
-1. Repo-local files inventoried: 2725.
-2. File-based rows inventoried: 100,537.
+1. Repo-local files inventoried: 2727.
+2. File-based rows inventoried: 100,538.
 3. SQL table definitions inventoried: 377.
 4. Rich tenant data exists across SkyHarbor, First Capital, Apex, Meridian, Lakeshore, Northstar, and others.
 5. The problem is inconsistent normalization, fragmented historical layers, module-local data, weak universal write-back, and inconsistent consumption.

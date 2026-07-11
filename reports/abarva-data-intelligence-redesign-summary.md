@@ -1,11 +1,11 @@
 # AbarVa Data & Intelligence Redesign Summary
 
-Generated: 2026-07-11T19:06:21.999Z
+Generated: 2026-07-11T19:26:44.169Z
 
 ## Top 10 Current-State Findings
 
-1. Repo-local files inventoried: 2725.
-2. File-based rows inventoried: 100,537.
+1. Repo-local files inventoried: 2727.
+2. File-based rows inventoried: 100,538.
 3. SQL table definitions inventoried: 377.
 4. Home and Intelligence are closest to common-layer grounding.
 5. Moves, Source, and Tower have rich workflows but are not universally read/write bound to the Active Tenant Access Layer.

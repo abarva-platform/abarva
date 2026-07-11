@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T19:06:21.999Z",
+  "generatedAt": "2026-07-11T19:26:44.169Z",
   "sourceReportPaths": [
     "reports/abarva-end-to-end-data-flow-latest.html",
     "reports/abarva-end-to-end-data-flow-latest.json",
@@ -9,8 +9,8 @@
   "currentStateDiagnosis": {
     "thesis": "AbarVa has substantial tenant data, but the data layer is fragmented across historical packs, module-local workflows, generated active-access files, graph artifacts, context chunks, proof bundles, and partial Active Tenant Access Layer adoption.",
     "facts": [
-      "Repo-local files inventoried: 2725.",
-      "File-based rows inventoried: 100,537.",
+      "Repo-local files inventoried: 2727.",
+      "File-based rows inventoried: 100,538.",
       "SQL table definitions inventoried: 377.",
       "Home and Intelligence are closest to common-layer grounding.",
       "Moves, Source, and Tower have rich workflows but are not universally read/write bound to the Active Tenant Access Layer.",
@@ -58,8 +58,8 @@
       },
       {
         "layer": "unknown",
-        "files": 1396,
-        "rows": 31314
+        "files": 1398,
+        "rows": 31315
       },
       {
         "layer": "v4",
