@@ -20,6 +20,10 @@ function statusDotClass(color: StrategicMove["statusColor"]): string {
   return styles.legendGreen;
 }
 
+function movePhaseHref(move: StrategicMove): string {
+  return `/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`;
+}
+
 interface Props {
   moves: ReadonlyArray<StrategicMove>;
   /** Epoch ms for relative "last activity" — injected so the table stays pure. */
@@ -137,7 +141,7 @@ export function MoveListTable({
               >
                 <Link
                   className={styles.tblMoveName}
-                  href={`/strategic-moves/${move.id}`}
+                  href={movePhaseHref(move)}
                   prefetch={false}
                 >
                   {moveName}
@@ -214,7 +218,7 @@ export function MoveListTable({
                 {!selectable ? (
                   <Link
                     className={styles.tblOpen}
-                    href={`/strategic-moves/${move.id}`}
+                    href={movePhaseHref(move)}
                     prefetch={false}
                   >
                     Open

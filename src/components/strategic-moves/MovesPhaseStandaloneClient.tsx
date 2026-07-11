@@ -279,15 +279,6 @@ function moneyRange(move: StrategicMove): string {
   return `${formatter.format(projected.low)}-${formatter.format(projected.high)}`;
 }
 
-function tenantInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 export function MovesPhaseStandaloneClient({
   move,
   phaseNum,
@@ -481,30 +472,6 @@ export function MovesPhaseStandaloneClient({
   return (
     <main className="mxw" data-testid="moves-phase-standalone">
       <MovesStandaloneStyles />
-      <header className="mxw-chrome">
-        <Link className="mxw-wordmark" href="/">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt="AbarVa" src="/brand/abarva-logo-inverse.svg" />
-        </Link>
-        <div className="mxw-tenant">
-          <span className="mxw-tenant-mark">{tenantInitials(move.tenant.name) || "A"}</span>
-          <span>
-            <strong>{move.tenant.name}</strong>
-            <small>{move.tenant.industryCode ?? "tenant"}</small>
-          </span>
-        </div>
-        <nav className="mxw-topnav" aria-label="Primary">
-          <Link href="/home">Home</Link>
-          <Link href="/intelligence">Intelligence</Link>
-          <Link className="active" href="/strategic-moves">
-            Moves
-          </Link>
-          <Link href="/source">Source</Link>
-          <Link href="/tower">Tower</Link>
-        </nav>
-        <div className="mxw-avatar">AS</div>
-      </header>
-
       <div className="mxw-surface">
         <aside className="mxw-side" aria-label="Move phases">
           <div className="mxw-move">
@@ -602,7 +569,9 @@ export function MovesPhaseStandaloneClient({
           ) : (
             <>
               <div className="mxw-crumb">
-                <Link href={`/strategic-moves/${move.id}`}>{move.name}</Link>
+                <Link href={`/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`}>
+                  {move.name}
+                </Link>
                 <span>/</span>
                 {phase.code} · {phase.title}
               </div>
@@ -1518,28 +1487,15 @@ function MovesStandaloneStyles() {
   --blue:#0057b8; --blue-tint:#eef4fb; --green:#1d8f68; --green-tint:#e8f5ef;
   --amber:#b0730f; --amber-tint:#fbf1df; --teal:#1f8578; --gold:#9c7b3f;
   --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.05);
-  min-height:100vh; background:var(--bg); color:var(--ink);
+  height:100%; min-height:0; overflow:auto; background:var(--bg); color:var(--ink);
   font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
 }
 .mxw *{box-sizing:border-box}
 .mxw a{text-decoration:none}
 .mxw button{font:inherit}
-.mxw-chrome{height:52px;background:#141412;color:#f3efe7;display:flex;align-items:center;gap:20px;padding:0 20px;position:sticky;top:0;z-index:80}
-.mxw-wordmark{display:flex;align-items:center;height:30px;width:112px;flex-shrink:0}
-.mxw-wordmark img{display:block;width:100%;height:auto;object-fit:contain}
-.mxw-tenant{display:flex;align-items:center;gap:9px;padding:5px 11px;border:1px solid rgba(255,255,255,.14);border-radius:8px}
-.mxw-tenant-mark{width:22px;height:22px;border-radius:5px;background:#1f3b37;color:#5fd0c2;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-weight:700;font-size:12px}
-.mxw-tenant strong{display:block;font-size:12.5px;line-height:1.15;color:#f3efe7}
-.mxw-tenant small{display:block;font-size:8px;letter-spacing:1.3px;text-transform:uppercase;color:rgba(243,239,231,.5);font-weight:600}
-.mxw-topnav{display:flex;align-items:center;gap:2px;margin-left:6px}
-.mxw-topnav a{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;color:rgba(243,239,231,.6);padding:8px 13px;border-radius:7px;position:relative}
-.mxw-topnav a:hover{color:#fff;background:rgba(255,255,255,.06)}
-.mxw-topnav a.active{color:#fff}
-.mxw-topnav a.active:after{content:"";position:absolute;left:13px;right:13px;bottom:-16px;height:2px;background:#3fb8a8}
-.mxw-avatar{margin-left:auto;width:30px;height:30px;border-radius:50%;background:#26433e;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#a9e5db}
-.mxw-surface{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:calc(100vh - 52px)}
-.mxw-side{border-right:1px solid var(--line);background:var(--soft);padding:20px 16px;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;display:flex;flex-direction:column}
+.mxw-surface{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100%}
+.mxw-side{border-right:1px solid var(--line);background:var(--soft);padding:20px 16px;position:sticky;top:0;height:calc(100vh - 64px);overflow-y:auto;display:flex;flex-direction:column}
 .mxw-move{padding:0 8px 15px;border-bottom:1px solid var(--line);margin-bottom:14px}
 .mxw-back{font-size:12px;color:var(--muted);display:inline-flex;margin-bottom:12px}
 .mxw-back:hover{color:var(--ink)}
@@ -1756,7 +1712,6 @@ function MovesStandaloneStyles() {
 @media (max-width:900px){
   .mxw-surface{grid-template-columns:1fr}
   .mxw-side{display:none}
-  .mxw-topnav{display:none}
   .mxw-shell{width:100%;max-width:none}
   .mxw-shell{padding:30px 18px 80px}
   .mxw-howflow{grid-template-columns:1fr}

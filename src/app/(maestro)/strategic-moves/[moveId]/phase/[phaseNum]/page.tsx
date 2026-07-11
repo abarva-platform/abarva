@@ -14,6 +14,8 @@ import {
   type MoveEvidenceNeedPacket,
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getMovePhaseTallies } from "@/lib/programs/phase-explorer-tallies";
+import { AppShell } from "@/components/shell/AppShell";
+import type { StageId } from "@/lib/shell/atlas-page-state";
 
 export const dynamic = "force-dynamic";
 
@@ -74,11 +76,23 @@ export default async function StrategicMovePhaseWorkspacePage({
   }
 
   return (
-    <MovesPhaseStandaloneClient
-      evidenceNeedPackets={evidenceNeedPackets}
-      move={move}
-      phaseNum={parsedPhase}
-      phaseTallies={getMovePhaseTallies(move)}
-    />
+    <AppShell
+      surface="programs-detail"
+      stage={`P${parsedPhase}` as StageId}
+      hasTenantKey
+      surfaceContext={{
+        moveId: move.id,
+        moveName: move.name,
+        phase: parsedPhase,
+        currentPhase,
+      }}
+    >
+      <MovesPhaseStandaloneClient
+        evidenceNeedPackets={evidenceNeedPackets}
+        move={move}
+        phaseNum={parsedPhase}
+        phaseTallies={getMovePhaseTallies(move)}
+      />
+    </AppShell>
   );
 }
