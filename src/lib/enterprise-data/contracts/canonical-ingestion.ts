@@ -18,7 +18,7 @@ export type DataStatus = 'real' | 'synthetic' | 'curated' | 'benchmark';
 export type QualityStatus = 'valid' | 'warning' | 'quarantined';
 
 export interface CanonicalValue {
-  value: string | number | boolean | null;
+  value: string | number | boolean | Record<string, unknown> | unknown[] | null;
   valueType: 'string' | 'number' | 'boolean' | 'date' | 'currency' | 'percent' | 'json' | 'unknown';
   unit?: string;
   confidence?: number;
@@ -51,7 +51,18 @@ export interface TransformationLineage {
   step: string;
   version: string;
   at: string;
+  adapterKey?: string;
+  mappingProfile?: string;
+  contractVersion?: string;
   notes?: string;
+}
+
+export interface CanonicalValidationFinding {
+  severity: 'info' | 'warning' | 'error';
+  code: string;
+  message: string;
+  evidenceKey?: string;
+  sourceObjectId?: string;
 }
 
 export interface CanonicalIngestionRecord {
@@ -72,5 +83,6 @@ export interface CanonicalIngestionRecord {
   sensitivity: DataClassification;
   dataStatus: DataStatus;
   qualityStatus: QualityStatus;
+  validationFindings?: CanonicalValidationFinding[];
   lineage: TransformationLineage[];
 }

@@ -4,6 +4,8 @@ Status: official architecture baseline.
 
 The Target Data-Layer Writer converts Canonical Ingestion Records into the target architecture. It is the persistence boundary between source parsing and the enterprise data stores.
 
+It is the only component in this boundary that may know physical persistence details. Source packets and source adapters remain table-agnostic.
+
 ## Target Stores
 
 - Evidence Registry
@@ -24,6 +26,10 @@ The Target Data-Layer Writer converts Canonical Ingestion Records into the targe
 - relationship resolution
 - source linkage
 - candidate tenant data version creation
+- target store transaction boundaries
+- source evidence linkage
+- proof bundle references
+- rollback pointers
 
 ## Idempotency
 
@@ -41,3 +47,20 @@ Reloading the same packet must not duplicate facts, evidence, relationships, or 
 ## Failure And Quarantine
 
 The writer fails closed. Invalid canonical records are quarantined with source evidence and validation errors. Valid records from the same packet may continue only when tenant isolation, lineage, and version consistency are preserved.
+
+## Candidate Version Creation
+
+The writer creates a candidate tenant data version with:
+
+- packet ID
+- contract versions
+- mapping versions
+- target writer version
+- evidence count
+- canonical record count
+- quarantined record count
+- unmapped field count
+- source fingerprint list
+- proof bundle location
+
+Active promotion is a separate governed action.
