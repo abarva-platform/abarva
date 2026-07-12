@@ -21,6 +21,12 @@ import {
 } from "@/lib/deliverables/deliverable-content-signals";
 import { AppShell } from "@/components/shell/AppShell";
 import type { StageId } from "@/lib/shell/atlas-page-state";
+import {
+  inferMoveProfile,
+  resolveCurrentStateReadiness,
+  type ReadinessReport,
+} from "@/lib/programs/current-state-readiness";
+import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +106,27 @@ export default async function StrategicMovePhaseWorkspacePage({
     carriesForwardContent = [];
   }
 
+  let currentStateReadiness: ReadinessReport | null = null;
+  try {
+    const tctx = await requireTenancy();
+    const archetype = resolveProgramArchetype({
+      archetype: move.archetype,
+      classification: (move.charter as { classification?: string } | null)
+        ?.classification,
+      name: move.name,
+    });
+    const profile = await inferMoveProfile(tctx);
+    currentStateReadiness = await resolveCurrentStateReadiness(
+      tctx,
+      archetype,
+      profile,
+      parsedPhase,
+      moveId,
+    );
+  } catch {
+    currentStateReadiness = null;
+  }
+
   return (
     <AppShell
       surface="programs-detail"
@@ -114,6 +141,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     >
       <MovesPhaseStandaloneClient
         carriesForwardContent={carriesForwardContent}
+        currentStateReadiness={currentStateReadiness}
         evidenceNeedPackets={evidenceNeedPackets}
         move={move}
         phaseNum={parsedPhase}

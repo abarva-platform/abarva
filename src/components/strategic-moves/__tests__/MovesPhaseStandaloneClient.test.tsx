@@ -9,6 +9,7 @@ import { TextDecoder, TextEncoder } from "util";
 import { ReadableStream } from "stream/web";
 import { MovesPhaseStandaloneClient } from "../MovesPhaseStandaloneClient";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -114,6 +115,46 @@ const phaseTallies: PhaseTallyRow[] = [0, 1, 2, 3, 4, 5].map((phase) => ({
   total: 2,
   state: phase < 3 ? "done" : phase === 3 ? "current" : "upcoming",
 }));
+
+function makeCurrentStateReadiness(): ReadinessReport {
+  return {
+    phase: 2,
+    archetypeId: "AI_PRODUCT_DEVELOPMENT_LIFECYCLE",
+    archetypeName: "AI Product Development Lifecycle",
+    archetypeVersion: "0.1.0",
+    profile: {
+      useCaseArchetype: "unknown",
+      teamArchetypes: [],
+      deliveryMaturity: "unknown",
+      orgTopology: "unknown",
+      cloudPosture: "unknown",
+      existingAiTools: [],
+      provenance: {},
+    },
+    instruments: [
+      {
+        key: "eng_performance_dora",
+        label: "Engineering delivery baseline (DORA)",
+        kind: "metric_baseline",
+        whyNeeded:
+          "Deploy frequency, lead time, change-failure rate, and MTTR are the measurable current-state baseline.",
+        sourceDocHint: "CI/CD export as CSV",
+        severity: "hard",
+        status: "missing",
+        backingTable: "tower_dora_metrics",
+        committedRows: 0,
+        rationale:
+          "AI Product Development Lifecycle requires Engineering delivery baseline at diagnose.",
+        documentFamily: false,
+        pendingReviews: [],
+        evidenceDigest: [],
+      },
+    ],
+    coverageScore: 0,
+    hardGaps: ["eng_performance_dora"],
+    softGaps: [],
+  };
+}
 
 describe("MovesPhaseStandaloneClient", () => {
   beforeEach(() => {
@@ -295,6 +336,34 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/Phase complete/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/To advance to P4/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/View dossier/i)).not.toBeInTheDocument();
+  });
+
+  it("mounts governed current-state readiness in the current-state workspace before the static findings lanes", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Current state/i }));
+
+    expect(screen.getByText("Current-state readiness")).toBeInTheDocument();
+    expect(screen.getByText(/0% collected/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 hard current-state gap/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Engineering delivery baseline (DORA)").length,
+    ).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Upload CI/CD export as CSV")).toBeInTheDocument();
+    expect(screen.getByText("Findings to review")).toBeInTheDocument();
+    expect(screen.getByText("Process")).toBeInTheDocument();
   });
 
   it("wires phase workspace v2 task actions to the existing Files and gate controls", async () => {
