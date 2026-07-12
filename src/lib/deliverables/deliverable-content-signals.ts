@@ -21,13 +21,18 @@ export interface DeliverableContentSignal {
 
 /**
  * Keyword vocabulary reused from `golden-bar.ts`'s `extractExhibitKinds` —
- * these are the same terms already used to detect whether a required
- * visual/table is present in generated Moves deliverables.
+ * the full real marker set already used to detect whether a required
+ * visual/table is present in generated Moves deliverables (not just the
+ * narrow subset first shipped here). Each signal tries its keywords in
+ * order and keeps the first real match; a signal with no match at all is
+ * simply absent, never fabricated.
  */
-const SIGNAL_KEYWORDS: ReadonlyArray<{ key: string; keyword: string }> = [
-  { key: "workstreams", keyword: "workstream" },
-  { key: "owners", keyword: "raci" },
-  { key: "metrics", keyword: "kpi" },
+const SIGNAL_KEYWORDS: ReadonlyArray<{ key: string; keywords: readonly string[] }> = [
+  { key: "workstreams", keywords: ["workstream", "roadmap", "timeline", "trajectory"] },
+  { key: "owners", keywords: ["raci", "stakeholder"] },
+  { key: "metrics", keywords: ["kpi", "scorecard", "baseline"] },
+  { key: "decisions", keywords: ["decision record", "tradeoff", "options"] },
+  { key: "cost", keywords: ["cost"] },
 ];
 
 interface LatestDeliverableContentRow {
@@ -54,10 +59,10 @@ async function readLatestDeliverableContent(
 
 /**
  * Reads a Move's latest generated deliverable of the given type and extracts
- * real content signals (workstreams, owners, metrics) from it. Returns an
- * empty array when the deliverable hasn't been generated yet, or when none
- * of the signal keywords have a real matching heading/table — this is
- * expected and honest, not an error.
+ * real content signals (workstreams, owners, metrics, decisions, cost) from
+ * it. Returns an empty array when the deliverable hasn't been generated yet,
+ * or when none of the signal keywords have a real matching heading/table —
+ * this is expected and honest, not an error.
  */
 export async function readDeliverableContentSignals(
   moveId: string,
@@ -67,9 +72,14 @@ export async function readDeliverableContentSignals(
   if (!latest?.content) return [];
 
   const signals: DeliverableContentSignal[] = [];
-  for (const { key, keyword } of SIGNAL_KEYWORDS) {
-    const match = extractExhibitContent(latest.content, keyword);
-    if (match) signals.push({ key, heading: match.heading, snippet: match.snippet });
+  for (const { key, keywords } of SIGNAL_KEYWORDS) {
+    for (const keyword of keywords) {
+      const match = extractExhibitContent(latest.content, keyword);
+      if (match) {
+        signals.push({ key, heading: match.heading, snippet: match.snippet });
+        break;
+      }
+    }
   }
   return signals;
 }

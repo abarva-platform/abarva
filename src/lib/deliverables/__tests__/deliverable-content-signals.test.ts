@@ -71,4 +71,27 @@ describe("readDeliverableContentSignals", () => {
     const signals = await readDeliverableContentSignals("move-4", "execution_roadmap");
     expect(signals).toEqual([]);
   });
+
+  it("falls back through a signal's other real keywords when the primary one is absent", async () => {
+    mockQuery.mockResolvedValueOnce([
+      {
+        content: `
+          <h2>Roadmap Overview</h2>
+          <p>Phase 1 platform migration, phase 2 clinical cutover, phase 3 legacy decommission.</p>
+          <h2>Decision Record</h2>
+          <p>Selected the phased platform + operating-model shift over a big-bang rewrite.</p>
+        `,
+        version: 1,
+      },
+    ]);
+
+    const signals = await readDeliverableContentSignals("move-5", "target_state_architecture");
+    const byKey = Object.fromEntries(signals.map((s) => [s.key, s]));
+
+    // No literal "workstream" heading — matched via the "roadmap" fallback keyword instead.
+    expect(byKey.workstreams?.heading).toBe("Roadmap Overview");
+    expect(byKey.workstreams?.snippet).toContain("platform migration");
+    expect(byKey.decisions?.heading).toBe("Decision Record");
+    expect(byKey.decisions?.snippet).toContain("phased platform");
+  });
 });
