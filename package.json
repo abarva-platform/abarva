@@ -105,6 +105,7 @@
     "smoke:p23-source-value-proof": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p23-source-value-proof.spec.ts",
     "smoke:foundation-fix-2-session-memory": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/foundation-fix-2-session-memory.spec.ts",
     "crawl:post-deploy": "npx tsx scripts/crawl/post-deploy-harness.ts",
+    "crawl:candidate-preview": "npx tsx scripts/crawl/candidate-preview-proof.ts",
     "audit:agent-2task": "npx tsx scripts/audit/run-agent-2task-eval.ts",
     "crawl:persona": "npx tsx scripts/crawl/post-deploy-harness.ts --persona",
     "crawl:auto-rollback": "npx tsx scripts/crawl/auto-rollback.ts",
