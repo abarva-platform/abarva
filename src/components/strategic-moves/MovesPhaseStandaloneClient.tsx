@@ -6,11 +6,13 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
+import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
 import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace/MovePhaseWorkspacePanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { FeedForwardSignals } from "@/lib/programs/phase-templates/feed-forward";
 import type { PhaseTask } from "@/lib/programs/phase-templates/phase-workflow";
 import { buildNextPhaseReadinessPack } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
@@ -65,6 +67,7 @@ interface MovesPhaseStandaloneClientProps {
   phaseTallies: PhaseTallyRow[];
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   carriesForwardContent: DeliverableContentSignal[];
+  currentStateReadiness?: ReadinessReport | null;
 }
 
 type WorkspaceView = "phase" | "files";
@@ -356,6 +359,7 @@ export function MovesPhaseStandaloneClient({
   phaseTallies,
   evidenceNeedPackets,
   carriesForwardContent,
+  currentStateReadiness = null,
 }: MovesPhaseStandaloneClientProps) {
   const phase = phaseFor(phaseNum);
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
@@ -844,6 +848,7 @@ export function MovesPhaseStandaloneClient({
 
               <PhaseBody
                 carriesForwardContent={carriesForwardContent}
+                currentStateReadiness={currentStateReadiness}
                 draftedBrief={draftedBrief}
                 evidenceCount={evidenceCount}
                 evidenceNeedPackets={evidenceNeedPackets}
@@ -955,6 +960,7 @@ export function MovesPhaseStandaloneClient({
 
 function PhaseBody({
   carriesForwardContent,
+  currentStateReadiness,
   draftedBrief,
   evidenceCount,
   evidenceNeedPackets,
@@ -971,6 +977,7 @@ function PhaseBody({
   substep,
 }: {
   carriesForwardContent: DeliverableContentSignal[];
+  currentStateReadiness: ReadinessReport | null;
   draftedBrief: Record<number, string>;
   evidenceCount: number;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
@@ -1011,6 +1018,10 @@ function PhaseBody({
             uploaded evidence stay marked as gaps.
           </p>
         </section>
+        <CurrentStateReadinessPanel
+          programId={move.id}
+          readiness={currentStateReadiness}
+        />
         <section className="mxw-zone">
           <h2>Findings to review</h2>
           <p>Accept, challenge, or comment before approving the phase.</p>
