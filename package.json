@@ -231,6 +231,7 @@
     "audit:tenant-candidate-version": "tsx scripts/audit/build-tenant-candidate-version.ts",
     "audit:skyharbor-candidate-version": "tsx scripts/audit/build-tenant-candidate-version.ts --tenant skyharbor-air",
     "audit:candidate-module-preview": "tsx scripts/audit/build-candidate-module-preview.ts",
+    "audit:candidate-module-derived-plan": "tsx scripts/audit/build-candidate-module-derived-plan.ts",
     "audit:candidate-module-readiness-preview": "tsx scripts/audit/build-candidate-module-readiness-preview.ts",
     "audit:candidate-module-workbench-preview": "tsx scripts/audit/build-candidate-module-workbench-preview.ts",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",

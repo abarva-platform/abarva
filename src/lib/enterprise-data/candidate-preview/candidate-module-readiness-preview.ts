@@ -47,6 +47,16 @@ interface TenantEligibilityMatrixRow {
   blockers: string[];
 }
 
+interface WorkbenchPreviewSummary {
+  requestedModules?: Array<"moves" | "source" | "tower">;
+}
+
+interface ModuleDerivedPlanStage {
+  derivedEntries: Array<{
+    targetModules: TenantPacketModule[];
+  }>;
+}
+
 interface ReadinessGuardrails {
   dryRunOnly: true;
   readOnlyPreview: true;
@@ -123,6 +133,8 @@ export interface CandidateModuleReadinessPreviewOptions {
   candidateModulePreviewSummaryPath?: string;
   promotionGatePath?: string;
   tenantEligibilityMatrixPath?: string;
+  moduleTargetedDerivedPlanPath?: string;
+  workbenchPreviewSummaryPath?: string;
   outputDir?: string;
   generatedAt?: string;
 }
@@ -137,6 +149,10 @@ const DEFAULT_PROMOTION_GATE_PATH =
   "reports/candidate-promotion-gates/skyharbor/promotion-gate-result.json";
 const DEFAULT_TENANT_ELIGIBILITY_MATRIX_PATH =
   "reports/tenant-candidate-generation/all-tenant-eligibility-matrix.json";
+const DEFAULT_MODULE_TARGETED_DERIVED_PLAN_PATH =
+  "reports/candidate-module-derived-plans/skyharbor/module-derived-plan-stage.json";
+const DEFAULT_WORKBENCH_PREVIEW_SUMMARY_PATH =
+  "reports/candidate-module-workbench-previews/skyharbor/preview-summary.json";
 const DEFAULT_OUTPUT_DIR =
   "reports/candidate-module-readiness-previews/skyharbor";
 const MODULES: PreviewModule[] = [
@@ -181,6 +197,22 @@ export async function buildCandidateModuleReadinessPreview(
       DEFAULT_TENANT_ELIGIBILITY_MATRIX_PATH,
     ),
   );
+  const moduleTargetedDerivedPlan =
+    await readOptionalJson<ModuleDerivedPlanStage>(
+      resolve(
+        options,
+        options.moduleTargetedDerivedPlanPath,
+        DEFAULT_MODULE_TARGETED_DERIVED_PLAN_PATH,
+      ),
+    );
+  const workbenchPreviewSummary =
+    await readOptionalJson<WorkbenchPreviewSummary>(
+      resolve(
+        options,
+        options.workbenchPreviewSummaryPath,
+        DEFAULT_WORKBENCH_PREVIEW_SUMMARY_PATH,
+      ),
+    );
 
   const guardrails = buildGuardrails(candidateRecord, promotionGate);
   const moduleReadiness = buildRows({
@@ -188,6 +220,8 @@ export async function buildCandidateModuleReadinessPreview(
     moduleProof,
     modulePreviewSummary,
     promotionGate,
+    moduleTargetedDerivedPlan,
+    workbenchPreviewSummary,
   });
   const qualityGateStatus =
     guardrails.noModuleReadsCandidateByDefault &&
@@ -266,8 +300,13 @@ function buildRows(input: {
   moduleProof: ModuleReadinessProof;
   modulePreviewSummary: CandidateModulePreviewSummary;
   promotionGate: PromotionGateResult;
+  moduleTargetedDerivedPlan: ModuleDerivedPlanStage | undefined;
+  workbenchPreviewSummary: WorkbenchPreviewSummary | undefined;
 }): CandidateModuleReadinessPreviewRow[] {
-  const previewModules = new Set(input.modulePreviewSummary.requestedModules);
+  const previewModules = new Set<TenantPacketModule>([
+    ...input.modulePreviewSummary.requestedModules,
+    ...(input.workbenchPreviewSummary?.requestedModules ?? []),
+  ]);
   return MODULES.map((module) => {
     const proofEntry =
       input.moduleProof.stages.moduleReadiness.moduleReadiness.find(
@@ -276,9 +315,11 @@ function buildRows(input: {
     const evidenceAvailable = proofEntry?.evidenceAvailable ?? false;
     const factPlanAvailable = proofEntry?.factPlanAvailable ?? false;
     const graphPlanAvailable = proofEntry?.graphPlanAvailable ?? false;
-    const derivedPlanAvailable = proofEntry?.derivedPlanAvailable ?? false;
+    const derivedPlanAvailable =
+      proofEntry?.derivedPlanAvailable === true ||
+      hasModuleTargetedDerivedPlan(module, input.moduleTargetedDerivedPlan);
     const previewPacketAvailable =
-      isCandidatePreviewPacketModule(module) && previewModules.has(module);
+      isPreviewPacketModule(module) && previewModules.has(module);
     const readinessStatus = statusFor({
       evidenceAvailable,
       factPlanAvailable,
@@ -309,10 +350,27 @@ function buildRows(input: {
   });
 }
 
-function isCandidatePreviewPacketModule(
+function isPreviewPacketModule(
   module: PreviewModule,
-): module is CandidatePreviewPacketModule {
-  return module === "home" || module === "intelligence";
+): module is CandidatePreviewPacketModule | "moves" | "source" | "tower" {
+  return (
+    module === "home" ||
+    module === "intelligence" ||
+    module === "moves" ||
+    module === "source" ||
+    module === "tower"
+  );
+}
+
+function hasModuleTargetedDerivedPlan(
+  module: PreviewModule,
+  moduleTargetedDerivedPlan: ModuleDerivedPlanStage | undefined,
+): boolean {
+  return (
+    moduleTargetedDerivedPlan?.derivedEntries.some((entry) =>
+      entry.targetModules.includes(module),
+    ) ?? false
+  );
 }
 
 function statusFor(input: {
@@ -499,4 +557,15 @@ function csvCell(value: string | number | boolean): string {
 
 async function readJson<T>(filePath: string): Promise<T> {
   return JSON.parse(await fs.readFile(filePath, "utf8")) as T;
+}
+
+async function readOptionalJson<T>(filePath: string): Promise<T | undefined> {
+  try {
+    return await readJson<T>(filePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return undefined;
+    }
+    throw error;
+  }
 }
