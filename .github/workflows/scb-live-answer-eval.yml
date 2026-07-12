@@ -30,7 +30,7 @@ jobs:
       CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
       PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 24
