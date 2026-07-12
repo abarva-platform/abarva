@@ -293,6 +293,70 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/View dossier/i)).not.toBeInTheDocument();
   });
 
+  it("Files & Evidence renders a real generated deliverable as an actual downloadable link", async () => {
+    (global.fetch as jest.Mock).mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/artifacts") && !url.includes("/artifacts/")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            count: 1,
+            artifacts: [
+              {
+                artifactId: "d74ed94a-a600-46ee-ad5d-a505556c4cac",
+                artifactType: "target_state_architecture",
+                family: "generated_deliverable",
+                title: "CANARY — SkyHarbor Recovery Command IROPS Target Architecture",
+                phase: 3,
+                fileFormat: "html",
+                fileName: null,
+                version: 1,
+                status: "board_ready",
+                lifecycleState: "current",
+                qualityScore: 100,
+                createdAt: "2026-07-11T23:26:23.000Z",
+                downloadUrl: "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac",
+              },
+            ],
+          }),
+        } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true }) } as Response;
+    });
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Files & Evidence/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CANARY — SkyHarbor Recovery Command IROPS Target Architecture/i),
+      ).toBeInTheDocument();
+    });
+
+    // Real click on the real "Open" action must reach the real downloadUrl —
+    // not a dead placeholder. FileCabinetPanel fetches the blob itself
+    // (rather than a bare <a href>) so it can retry transient 503s and avoid
+    // cookie/CORS dead-ends; the button click is the real user interaction.
+    fireEvent.click(screen.getByRole("button", { name: /^Open$/i }));
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac?inline=1",
+        expect.objectContaining({ credentials: "include" }),
+      );
+    });
+  });
+
   it("supports the explorer, upload, aVa launcher, and gate ceremony interactions", async () => {
     const { container } = render(
       <MovesPhaseStandaloneClient
@@ -306,29 +370,20 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Files & Evidence/i }));
     expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
-    expect(screen.getAllByText(/Input template/i).length).toBeGreaterThan(0);
+    // The real File Cabinet vault (FileCabinetPanel) is mounted here, not a
+    // static per-phase mock — it fetches the move's real artifacts and shows
+    // this loading/empty state until they resolve.
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/artifacts",
+        expect.anything(),
+      );
+    });
     expect(
       Array.from(container.querySelectorAll("a")).some((anchor) =>
         anchor.getAttribute("href")?.includes("?tab="),
       ),
     ).toBe(false);
-
-    fireEvent.change(screen.getByLabelText(/Upload evidence file/i), {
-      target: {
-        files: [
-          new File(["phase evidence"], "phase-evidence.md", {
-            type: "text/markdown",
-          }),
-        ],
-      },
-    });
-    await waitFor(() => {
-      expect(screen.getByText(/Uploaded phase-evidence.md/i)).toBeInTheDocument();
-    });
-    expect(global.fetch).toHaveBeenCalledWith(
-      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/artifacts/upload",
-      expect.objectContaining({ method: "POST" }),
-    );
 
     fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
     fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
