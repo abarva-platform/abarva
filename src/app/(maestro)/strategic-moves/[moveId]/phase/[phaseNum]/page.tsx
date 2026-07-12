@@ -14,6 +14,11 @@ import {
   type MoveEvidenceNeedPacket,
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getMovePhaseTallies } from "@/lib/programs/phase-explorer-tallies";
+import { getGateArtifacts } from "@/lib/programs/deliverable-registry";
+import {
+  readDeliverableContentSignals,
+  type DeliverableContentSignal,
+} from "@/lib/deliverables/deliverable-content-signals";
 import { AppShell } from "@/components/shell/AppShell";
 import type { StageId } from "@/lib/shell/atlas-page-state";
 
@@ -75,6 +80,26 @@ export default async function StrategicMovePhaseWorkspacePage({
     evidenceNeedPackets = [];
   }
 
+  // Real "carries forward" content — extracted from the current phase's own
+  // already-generated gate deliverable(s), not fabricated. A phase whose gate
+  // artifact hasn't been generated yet (or whose content has no matching
+  // heading/table) simply yields no signals; the readiness pack renders that
+  // honestly rather than inventing a punch list.
+  let carriesForwardContent: DeliverableContentSignal[] = [];
+  try {
+    const gateArtifactTypeKeys = getGateArtifacts(parsedPhase).map((d) => d.deliverableTypeKey);
+    const signalsByKey = new Map<string, DeliverableContentSignal>();
+    for (const typeKey of gateArtifactTypeKeys) {
+      const signals = await readDeliverableContentSignals(moveId, typeKey);
+      for (const signal of signals) {
+        if (!signalsByKey.has(signal.key)) signalsByKey.set(signal.key, signal);
+      }
+    }
+    carriesForwardContent = Array.from(signalsByKey.values());
+  } catch {
+    carriesForwardContent = [];
+  }
+
   return (
     <AppShell
       surface="programs-detail"
@@ -88,6 +113,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       }}
     >
       <MovesPhaseStandaloneClient
+        carriesForwardContent={carriesForwardContent}
         evidenceNeedPackets={evidenceNeedPackets}
         move={move}
         phaseNum={parsedPhase}

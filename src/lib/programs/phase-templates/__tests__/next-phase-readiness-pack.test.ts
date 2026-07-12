@@ -141,4 +141,32 @@ describe('buildNextPhaseReadinessPack — real gap data, no fabrication', () => 
     expect(pack.nextPhaseLabel).toBe('Tower handoff');
     expect(pack.suggestedSessions).toEqual(['Tower metric handoff']);
   });
+
+  it('defaults carriesForwardContent to empty when the caller supplies none', () => {
+    const pack = buildNextPhaseReadinessPack({
+      nextPhaseLabel: 'Choose the Approach',
+      nextPhaseNum: 3,
+      isTerminalHandoff: false,
+      evidenceNeedPackets: [],
+      suggestedSessions: [],
+      suggestedTemplates: [],
+    });
+    expect(pack.carriesForwardContent).toEqual([]);
+  });
+
+  it('passes real content signals through untouched', () => {
+    const pack = buildNextPhaseReadinessPack({
+      nextPhaseLabel: 'Build the Plan',
+      nextPhaseNum: 4,
+      isTerminalHandoff: false,
+      evidenceNeedPackets: [],
+      suggestedSessions: [],
+      suggestedTemplates: [],
+      carriesForwardContent: [
+        { key: 'workstreams', heading: 'Workstream Breakdown', snippet: 'Data platform migration...' },
+      ],
+    });
+    expect(pack.carriesForwardContent).toHaveLength(1);
+    expect(pack.carriesForwardContent[0].heading).toBe('Workstream Breakdown');
+  });
 });
