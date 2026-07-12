@@ -122,6 +122,7 @@ export default async function CandidatePreviewPage({
               />
               <Metric label="Runtime eligible" value="false" />
             </div>
+            <GuardrailIndicators report={report} />
           </section>
         ) : (
           <section style={styles.panel}>
@@ -165,6 +166,61 @@ function Metric({ label, value }: { label: string; value: string | number }) {
     <div style={styles.metric}>
       <strong>{value}</strong>
       <span>{label}</span>
+    </div>
+  );
+}
+
+function GuardrailIndicators({
+  report,
+}: {
+  report: NonNullable<ReturnType<typeof evaluateCandidatePreviewEnablement>>;
+}) {
+  const rows = [
+    {
+      label: "candidatePromoted",
+      value: report.guardrails.candidatePromoted,
+    },
+    {
+      label: "activeTenantAccessLayerUpdated",
+      value: report.guardrails.activeTenantAccessLayerUpdated,
+    },
+    {
+      label: "productionTenantDataWritten",
+      value: report.guardrails.productionTenantDataWritten,
+    },
+    {
+      label: "moduleRuntimeConsumptionChanged",
+      value: report.guardrails.moduleRuntimeConsumptionChanged,
+    },
+    {
+      label: "moduleReadsCandidateByDefault",
+      value: report.guardrails.moduleReadsCandidateByDefault,
+    },
+    {
+      label: "previewModeRequiresExplicitFlag",
+      value: report.guardrails.previewModeRequiresExplicitFlag,
+    },
+  ];
+
+  return (
+    <div
+      aria-label="Candidate preview guardrail indicators"
+      data-candidate-preview-guardrails="true"
+      style={styles.guardrails}
+    >
+      <div style={styles.kicker}>Guardrail indicators</div>
+      <div style={styles.guardrailGrid}>
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            data-candidate-preview-guardrail={row.label}
+            style={styles.guardrailRow}
+          >
+            <span>{row.label}</span>
+            <strong>{String(row.value)}</strong>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -237,6 +293,29 @@ const styles = {
     padding: 14,
     display: "grid",
     gap: 4,
+  },
+  guardrails: {
+    borderTop: "1px solid #ece7dd",
+    marginTop: 20,
+    paddingTop: 18,
+  },
+  guardrailGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 10,
+    marginTop: 12,
+  },
+  guardrailRow: {
+    alignItems: "center",
+    background: "#f8fafc",
+    border: "1px solid #dbe3ef",
+    borderRadius: 8,
+    color: "#152033",
+    display: "flex",
+    fontSize: 13,
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "10px 12px",
   },
   list: {
     margin: "14px 0 0",

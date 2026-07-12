@@ -23,13 +23,7 @@ assert.equal(resolveCrawlQuestions('phs-meridian').length, 50);
 assert.equal(resolveCrawlQuestions('unknown').length, 10);
 assert.deepEqual(resolveCrawlPersonas('agent-apexretail').map((persona) => persona.key), ['agent-apexretail']);
 assert.equal(resolveCrawlSurfaces().some((surface) => surface.id === 'context-demo'), false);
-assert.deepEqual(
-  resolveCrawlSurfaces('context-demo').map((surface) => ({
-    id: surface.id,
-    vectorProof: surface.requiresContextDemoVectorProof,
-  })),
-  [{ id: 'context-demo', vectorProof: true }],
-);
+assert.deepEqual(resolveCrawlSurfaces('context-demo'), []);
 assert.deepEqual(
   resolveCrawlPersonas('agent-meridian').map((persona) => persona.email),
   ['meridian-agent@abarva.example.com'],
@@ -37,6 +31,9 @@ assert.deepEqual(
 const postDeployWorkflow = fs.readFileSync('.github/workflows/post-deploy-crawl.yml', 'utf8');
 assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
 assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
+assert.match(postDeployWorkflow, /Run candidate preview focused crawl/);
+assert.match(postDeployWorkflow, /candidate-preview-crawl/);
+assert.match(postDeployWorkflow, /npm run crawl:candidate-preview/);
 
 const run: CrawlRun = {
   runId: 'smoke',
