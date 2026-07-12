@@ -227,6 +227,7 @@
     "audit:skyharbor-compatibility-snapshot": "tsx scripts/audit/build-skyharbor-compatibility-snapshot.ts",
     "audit:module-readiness-proof": "tsx scripts/audit/build-module-readiness-proof.ts",
     "audit:candidate-tenant-version": "tsx scripts/audit/build-candidate-tenant-data-version.ts",
+    "audit:candidate-promotion-gate": "tsx scripts/audit/run-candidate-promotion-gate.ts",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
     "audit:architecture-rules:self-test": "node scripts/audit/architecture-rules.mjs --self-test",
