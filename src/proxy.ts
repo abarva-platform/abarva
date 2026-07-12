@@ -28,6 +28,9 @@ const PRODUCTION_READINESS_NO_STORE_HEADERS = {
   Pragma: "no-cache",
   Expires: "0",
 } as const;
+export const ACTIVE_ADMIN_SUBROUTES = new Set<string>([
+  "/admin/candidate-preview",
+] as const);
 
 export const PUBLIC_ROUTE_PATTERNS = [
   "/sign-in(.*)",
@@ -180,6 +183,10 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
 const authRequiredRoutes = createRouteMatcher([
   ...AUTH_REQUIRED_ROUTE_PATTERNS,
 ]);
+
+export function isActiveAdminSubroute(pathname: string): boolean {
+  return ACTIVE_ADMIN_SUBROUTES.has(pathname);
+}
 
 function shouldBypassClerkForAxe(request: NextRequest) {
   return (
@@ -357,7 +364,10 @@ const clerkProtectedProxy = clerkMiddleware(
         NextResponse.redirect(url, 301),
       );
     }
-    if (request.nextUrl.pathname.startsWith("/admin/")) {
+    if (
+      request.nextUrl.pathname.startsWith("/admin/") &&
+      !isActiveAdminSubroute(request.nextUrl.pathname)
+    ) {
       const url = new URL("/admin", request.url);
       if (request.nextUrl.pathname !== "/admin/setup") {
         url.searchParams.set("from", request.nextUrl.pathname);
