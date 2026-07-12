@@ -94,4 +94,32 @@ describe("readDeliverableContentSignals", () => {
     expect(byKey.decisions?.heading).toBe("Decision Record");
     expect(byKey.decisions?.snippet).toContain("phased platform");
   });
+
+  it("matches real headings observed live in a generated target_state_architecture artifact", async () => {
+    // Real heading text captured from a live-generated CANARY (Move 37ee2d85)
+    // target_state_architecture artifact — the premium generation path says
+    // "Implementation waves" and "AI decision & control flow", never the
+    // literal words "workstream" or "decision record".
+    mockQuery.mockResolvedValueOnce([
+      {
+        content: `
+          <h2>Architecture thesis</h2>
+          <p>Consolidate IROPS recovery onto one governed decision surface.</p>
+          <h2>AI decision & control flow</h2>
+          <p>Human dispatchers retain override on any recommendation above the risk threshold.</p>
+          <h2>Implementation waves</h2>
+          <p>Wave 1 stands up the recovery console; wave 2 adds predictive rebooking; wave 3 retires the legacy tool.</p>
+        `,
+        version: 1,
+      },
+    ]);
+
+    const signals = await readDeliverableContentSignals("move-6", "target_state_architecture");
+    const byKey = Object.fromEntries(signals.map((s) => [s.key, s]));
+
+    expect(byKey.workstreams?.heading).toBe("Implementation waves");
+    expect(byKey.workstreams?.snippet).toContain("Wave 1 stands up");
+    expect(byKey.decisions?.heading).toBe("AI decision & control flow");
+    expect(byKey.decisions?.snippet).toContain("Human dispatchers retain override");
+  });
 });
