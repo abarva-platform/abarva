@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { extractArtifacts } from "@/lib/agent/artifacts";
+import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -59,6 +60,7 @@ interface MovesPhaseStandaloneClientProps {
   phaseNum: number;
   phaseTallies: PhaseTallyRow[];
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
+  carriesForwardContent: DeliverableContentSignal[];
 }
 
 type WorkspaceView = "phase" | "files";
@@ -298,6 +300,7 @@ export function MovesPhaseStandaloneClient({
   phaseNum,
   phaseTallies,
   evidenceNeedPackets,
+  carriesForwardContent,
 }: MovesPhaseStandaloneClientProps) {
   const phase = phaseFor(phaseNum);
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
@@ -755,6 +758,7 @@ export function MovesPhaseStandaloneClient({
               </div>
 
               <PhaseBody
+                carriesForwardContent={carriesForwardContent}
                 draftedBrief={draftedBrief}
                 evidenceCount={evidenceCount}
                 evidenceNeedPackets={evidenceNeedPackets}
@@ -863,6 +867,7 @@ export function MovesPhaseStandaloneClient({
 }
 
 function PhaseBody({
+  carriesForwardContent,
   draftedBrief,
   evidenceCount,
   evidenceNeedPackets,
@@ -876,6 +881,7 @@ function PhaseBody({
   selectedOption,
   substep,
 }: {
+  carriesForwardContent: DeliverableContentSignal[];
   draftedBrief: Record<number, string>;
   evidenceCount: number;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
@@ -1057,6 +1063,7 @@ function PhaseBody({
     evidenceNeedPackets,
     suggestedSessions: nextPhaseContract?.sessions ?? [],
     suggestedTemplates: nextPhaseContract?.templates ?? [],
+    carriesForwardContent,
   });
 
   return (
@@ -1168,6 +1175,17 @@ function PhaseBody({
                   <span>Template: {need.exampleTemplate}</span>
                 </div>
                 <em>{need.nextAction}</em>
+              </article>
+            ))}
+          </div>
+        ) : null}
+        {readinessPack.carriesForwardContent.length > 0 ? (
+          <div className="mxw-readiness-carries">
+            <h3>Carries forward from this phase&apos;s generated work</h3>
+            {readinessPack.carriesForwardContent.map((signal) => (
+              <article className="mxw-readiness-carry" key={signal.key}>
+                <strong>{signal.heading}</strong>
+                <p>{signal.snippet}</p>
               </article>
             ))}
           </div>
@@ -1875,6 +1893,11 @@ function MovesStandaloneStyles() {
 .mxw-readiness-sessions h3{font-size:13px;font-weight:700;color:var(--ink);margin:0 0 10px}
 .mxw-readiness-sessions>div{display:flex;flex-wrap:wrap;gap:8px}
 .mxw-readiness-sessions span{padding:6px 11px;border:1px solid var(--line-2);border-radius:999px;font-size:12px;font-weight:600;color:var(--muted)}
+.mxw-readiness-carries{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.mxw-readiness-carries h3{font-size:13px;font-weight:700;color:var(--ink);margin:0 0 10px}
+.mxw-readiness-carry{border:1px solid rgba(0,87,184,.18);border-radius:11px;background:var(--blue-tint);padding:12px 14px;margin-top:8px}
+.mxw-readiness-carry strong{display:block;font-size:12.5px;color:var(--blue);margin-bottom:5px}
+.mxw-readiness-carry p{font-size:13px;color:var(--ink-2);line-height:1.5;margin:0}
 .mxw-originate{border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);padding:22px}
 .mxw-originate header{margin-bottom:18px}
 .mxw-of-crumb{font-size:12px;color:var(--muted);margin-bottom:8px}

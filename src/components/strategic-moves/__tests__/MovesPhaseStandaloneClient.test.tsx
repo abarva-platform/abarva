@@ -207,6 +207,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     render(
       <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
         evidenceNeedPackets={evidenceNeedPackets}
         move={makeMove()}
         phaseNum={3}
@@ -228,9 +229,54 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("Value case workshop")).toBeInTheDocument();
   });
 
+  it("surfaces real carries-forward content extracted from this phase's generated deliverable", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[
+          {
+            key: "workstreams",
+            heading: "Workstream Breakdown",
+            snippet: "Data platform migration led by J. Alvarez; clinical workflow cutover led by R. Chen.",
+          },
+        ]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+
+    expect(
+      screen.getByText("Carries forward from this phase's generated work"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Workstream Breakdown")).toBeInTheDocument();
+    expect(screen.getByText(/Data platform migration led by J. Alvarez/i)).toBeInTheDocument();
+  });
+
+  it("omits the carries-forward section when no real content signals were extracted", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+
+    expect(
+      screen.queryByText("Carries forward from this phase's generated work"),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders the Claude Design standalone phase workspace instead of the old workbench", () => {
     render(
       <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
         phaseNum={3}
@@ -250,6 +296,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("supports the explorer, upload, aVa launcher, and gate ceremony interactions", async () => {
     const { container } = render(
       <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
         phaseNum={3}
@@ -323,6 +370,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("wires the aVa suggested questions to a real chat send, with programId set correctly to avoid the 'no active Move session' regression", async () => {
     render(
       <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
         phaseNum={3}
@@ -354,6 +402,7 @@ describe("MovesPhaseStandaloneClient", () => {
   it("supports typing and sending a free-form question via the composer", async () => {
     render(
       <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
         phaseNum={3}

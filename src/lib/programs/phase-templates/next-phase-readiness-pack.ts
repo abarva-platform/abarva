@@ -11,6 +11,7 @@ import type {
   MoveEvidenceNeedPriority,
   MoveEvidenceNeedStatus,
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 
 export interface NextPhaseReadinessNeed {
   evidenceSlot: string;
@@ -29,6 +30,14 @@ export interface NextPhaseReadinessPack {
   suggestedSessions: string[];
   suggestedTemplates: Array<{ name: string; type: string }>;
   isFullyReady: boolean;
+  /**
+   * Real signals (workstreams, owners, metrics) extracted from the current
+   * phase's own generated deliverable content — see
+   * `deliverable-content-signals.ts`. Empty when nothing has been generated
+   * yet or no signal keyword had a real matching heading/table. Never
+   * fabricated; absence is honest, not an error.
+   */
+  carriesForwardContent: DeliverableContentSignal[];
 }
 
 const PRIORITY_RANK: Record<MoveEvidenceNeedPriority, number> = {
@@ -46,6 +55,8 @@ export interface BuildNextPhaseReadinessPackInput {
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   suggestedSessions: string[];
   suggestedTemplates: Array<{ name: string; type: string }>;
+  /** Real content signals from the current phase's own generated deliverable(s). */
+  carriesForwardContent?: DeliverableContentSignal[];
 }
 
 export function buildNextPhaseReadinessPack(
@@ -74,5 +85,6 @@ export function buildNextPhaseReadinessPack(
     suggestedSessions: input.suggestedSessions,
     suggestedTemplates: input.suggestedTemplates,
     isFullyReady: openNeeds.every((need) => need.priority !== "required"),
+    carriesForwardContent: input.carriesForwardContent ?? [],
   };
 }
