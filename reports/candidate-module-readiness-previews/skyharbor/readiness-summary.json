@@ -17,9 +17,9 @@
   },
   "counts": {
     "modulesEvaluated": 5,
-    "previewPacketModules": 2,
-    "candidateContextModules": 1,
-    "blockedModules": 2,
+    "previewPacketModules": 5,
+    "candidateContextModules": 0,
+    "blockedModules": 0,
     "runtimeReadyModules": 0,
     "otherTenantsInventoried": 5
   },

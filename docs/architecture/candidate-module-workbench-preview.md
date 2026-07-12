@@ -20,7 +20,7 @@ The workbench preview reads:
 - candidate tenant data version metadata
 - module-readiness proof
 - module-readiness preview
-- derived-plan stage
+- module-targeted derived-plan stage
 - canonical candidate source records
 
 It does not:

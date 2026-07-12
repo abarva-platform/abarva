@@ -147,7 +147,7 @@ const DEFAULT_MODULE_READINESS_PROOF_PATH =
 const DEFAULT_MODULE_READINESS_PREVIEW_PATH =
   "reports/candidate-module-readiness-previews/skyharbor/module-readiness-preview.json";
 const DEFAULT_DERIVED_PLAN_STAGE_PATH =
-  "reports/module-readiness-proof/skyharbor/derived-plan-stage.json";
+  "reports/candidate-module-derived-plans/skyharbor/module-derived-plan-stage.json";
 const DEFAULT_OUTPUT_DIR =
   "reports/candidate-module-workbench-previews/skyharbor";
 const WORKBENCH_MODULES: WorkbenchModule[] = ["moves", "source", "tower"];
@@ -409,8 +409,8 @@ function workflowPreviewForModule(
         bucket("Commercial evidence", facts, "invoice"),
       ],
       requiredNextProof: [
-        "Create a Source-stage derived plan for sourcing events, artifacts, vendors, and award evidence.",
-        "Generate Source preview packets only after derived plan coverage exists.",
+        "Validate the Source-stage derived plan for sourcing events, artifacts, vendors, and award evidence.",
+        "Generate Source runtime-consumption packets only after active promotion exists.",
         "Prove RFP/contract artifacts remain evidence-scoped before any runtime Source consumption.",
       ],
     };
@@ -424,7 +424,7 @@ function workflowPreviewForModule(
       bucket("Outcome blockers", facts, "value"),
     ],
     requiredNextProof: [
-      "Create a Tower-derived outcome plan before any realized value or ROI claim.",
+      "Validate the Tower-derived outcome plan before any realized value or ROI claim.",
       "Bind projected value to an Outcome Ledger preview with source evidence.",
       "Run signed-in Tower proof only after active promotion and outcome-ledger validation.",
     ],

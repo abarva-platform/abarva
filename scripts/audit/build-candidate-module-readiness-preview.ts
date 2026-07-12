@@ -8,6 +8,8 @@ interface Args {
   candidateModulePreviewSummaryPath?: string;
   promotionGatePath?: string;
   tenantEligibilityMatrixPath?: string;
+  moduleTargetedDerivedPlanPath?: string;
+  workbenchPreviewSummaryPath?: string;
   outputDir?: string;
   generatedAt?: string;
 }
@@ -21,6 +23,8 @@ async function main() {
     candidateModulePreviewSummaryPath: args.candidateModulePreviewSummaryPath,
     promotionGatePath: args.promotionGatePath,
     tenantEligibilityMatrixPath: args.tenantEligibilityMatrixPath,
+    moduleTargetedDerivedPlanPath: args.moduleTargetedDerivedPlanPath,
+    workbenchPreviewSummaryPath: args.workbenchPreviewSummaryPath,
     outputDir: args.outputDir,
     generatedAt: args.generatedAt,
   });
@@ -64,6 +68,12 @@ function parseArgs(argv: string[]): Args {
       index += 1;
     } else if (arg === "--tenant-eligibility-matrix" && next) {
       args.tenantEligibilityMatrixPath = next;
+      index += 1;
+    } else if (arg === "--module-targeted-derived-plan" && next) {
+      args.moduleTargetedDerivedPlanPath = next;
+      index += 1;
+    } else if (arg === "--workbench-preview-summary" && next) {
+      args.workbenchPreviewSummaryPath = next;
       index += 1;
     } else if (arg === "--out-dir" && next) {
       args.outputDir = next;

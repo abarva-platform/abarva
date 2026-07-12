@@ -598,12 +598,47 @@
     }
   ],
   "relationships": [],
-  "derivedInsights": [],
+  "derivedInsights": [
+    {
+      "derivedObjectKey": "candidate-workbench-derived:tower",
+      "sourceObjectIds": [
+        "sha-air",
+        "sha-sys-occ",
+        "sha-sys-flightops",
+        "sha-sys-crew",
+        "sha-sys-pss",
+        "sha-sys-mainframe",
+        "sha-sys-mq",
+        "sha-sys-sap",
+        "sha-sys-service",
+        "sha-sys-data",
+        "sha-sys-snowflake",
+        "sha-sys-tableau",
+        "sha-sys-salesforce",
+        "sha-evid-001",
+        "sha-evid-002",
+        "sha-evid-003",
+        "sha-evid-004",
+        "sha-move-003-f2",
+        "sha-spend-001",
+        "sha-spend-002",
+        "sha-spend-003",
+        "sha-spend-004",
+        "sha-spend-005",
+        "sha-spend-006",
+        "sha-spend-007",
+        "sha-spend-008",
+        "sha-source-datasets-source-contract-optimization-skyharbor"
+      ],
+      "domains": ["enterprise_structure", "intelligence_answering"],
+      "status": "planned_not_materialized"
+    }
+  ],
   "moduleMemory": [],
   "module": "tower",
   "previewMode": true,
   "runtimeEligible": false,
-  "readinessStatus": "blocked_missing_derived_plan",
+  "readinessStatus": "preview_packet_available",
   "workbenchFocus": "Turn candidate value signals into outcome-ledger and leakage proof.",
   "workflowPreview": {
     "focus": "Candidate Tower inputs for value signals, outcome ledger readiness, and leakage controls.",
@@ -647,7 +682,7 @@
       }
     ],
     "requiredNextProof": [
-      "Create a Tower-derived outcome plan before any realized value or ROI claim.",
+      "Validate the Tower-derived outcome plan before any realized value or ROI claim.",
       "Bind projected value to an Outcome Ledger preview with source evidence.",
       "Run signed-in Tower proof only after active promotion and outcome-ledger validation."
     ]
@@ -657,15 +692,11 @@
     "Active Tenant Access Layer has not been updated.",
     "Promotion execution remains disabled.",
     "Enterprise Relationship Graph plan is not available yet.",
-    "Derived intelligence plan is not available for this module.",
-    "Runtime module-consumption preview packet has not been generated or wired yet.",
-    "Readiness status is blocked_missing_derived_plan.",
     "Workbench preview is read-only and cannot be used by runtime modules by default."
   ],
   "nextProofNeeded": "Run an outcome-ledger proof before any realized value or ROI claim.",
   "previewWarnings": [
     "Candidate uses synthetic/planning-grade SkyHarbor evidence, not production client data.",
-    "Candidate has not been promoted to the Active Tenant Access Layer.",
-    "No module-targeted derived intelligence plan exists yet for this workbench."
+    "Candidate has not been promoted to the Active Tenant Access Layer."
   ]
 }

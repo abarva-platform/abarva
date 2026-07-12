@@ -12,22 +12,22 @@ promote the candidate, or change module runtime behavior.
 
 - Quality gate: pass
 - Modules evaluated: 5
-- Preview-packet modules: 2
-- Candidate-context modules: 1
-- Blocked modules: 2
+- Preview-packet modules: 5
+- Candidate-context modules: 0
+- Blocked modules: 0
 - Runtime-ready modules: 0
 - Promotion decision: ready-for-operator-approval
 - Promotion enabled: false
 
 ## Module Matrix
 
-| Module       | Status                       | Preview packet | Runtime ready | Blockers | Next proof                                                                                                |
-| ------------ | ---------------------------- | -------------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| home         | preview_packet_available     | true           | false         | 4        | Persist and promote the candidate version, then prove Home reads the promoted active tenant slice.        |
-| intelligence | preview_packet_available     | true           | false         | 4        | Run signed-in answer retrieval with citations from the promoted active tenant slice.                      |
-| moves        | candidate_context_available  | false          | false         | 5        | Run a phase workspace proof that consumes promoted facts, evidence, graph context, and derived readiness. |
-| source       | blocked_missing_derived_plan | false          | false         | 7        | Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context.       |
-| tower        | blocked_missing_derived_plan | false          | false         | 7        | Run an outcome-ledger proof before any realized value or ROI claim.                                       |
+| Module       | Status                   | Preview packet | Runtime ready | Blockers | Next proof                                                                                                |
+| ------------ | ------------------------ | -------------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| home         | preview_packet_available | true           | false         | 4        | Persist and promote the candidate version, then prove Home reads the promoted active tenant slice.        |
+| intelligence | preview_packet_available | true           | false         | 4        | Run signed-in answer retrieval with citations from the promoted active tenant slice.                      |
+| moves        | preview_packet_available | true           | false         | 4        | Run a phase workspace proof that consumes promoted facts, evidence, graph context, and derived readiness. |
+| source       | preview_packet_available | true           | false         | 4        | Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context.       |
+| tower        | preview_packet_available | true           | false         | 4        | Run an outcome-ledger proof before any realized value or ROI claim.                                       |
 
 ## Guardrails
 

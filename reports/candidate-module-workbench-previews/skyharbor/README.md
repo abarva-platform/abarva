@@ -21,11 +21,11 @@ to read candidate data by default.
 
 ## Module Packets
 
-| Module | Readiness                    | Facts | Derived insights | Runtime eligible | Blockers |
-| ------ | ---------------------------- | ----: | ---------------: | ---------------- | -------: |
-| moves  | candidate_context_available  |    24 |                1 | false            |        6 |
-| source | blocked_missing_derived_plan |    24 |                0 | false            |        8 |
-| tower  | blocked_missing_derived_plan |    24 |                0 | false            |        8 |
+| Module | Readiness                | Facts | Derived insights | Runtime eligible | Blockers |
+| ------ | ------------------------ | ----: | ---------------: | ---------------- | -------: |
+| moves  | preview_packet_available |    24 |                1 | false            |        5 |
+| source | preview_packet_available |    24 |                1 | false            |        5 |
+| tower  | preview_packet_available |    24 |                1 | false            |        5 |
 
 ## Guardrails
 

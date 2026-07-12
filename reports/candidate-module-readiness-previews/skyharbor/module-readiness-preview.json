@@ -18,9 +18,9 @@
     },
     "counts": {
       "modulesEvaluated": 5,
-      "previewPacketModules": 2,
-      "candidateContextModules": 1,
-      "blockedModules": 2,
+      "previewPacketModules": 5,
+      "candidateContextModules": 0,
+      "blockedModules": 0,
       "runtimeReadyModules": 0,
       "otherTenantsInventoried": 5
     },
@@ -78,15 +78,14 @@
       "factPlanAvailable": true,
       "graphPlanAvailable": false,
       "derivedPlanAvailable": true,
-      "previewPacketAvailable": false,
+      "previewPacketAvailable": true,
       "runtimeConsumptionReady": false,
-      "readinessStatus": "candidate_context_available",
+      "readinessStatus": "preview_packet_available",
       "blockers": [
         "Candidate is inactive and cannot be consumed by runtime modules by default.",
         "Active Tenant Access Layer has not been updated.",
         "Promotion execution remains disabled.",
-        "Enterprise Relationship Graph plan is not available yet.",
-        "Module-specific preview packet has not been generated yet."
+        "Enterprise Relationship Graph plan is not available yet."
       ],
       "nextProofNeeded": "Run a phase workspace proof that consumes promoted facts, evidence, graph context, and derived readiness."
     },
@@ -95,18 +94,15 @@
       "evidenceAvailable": true,
       "factPlanAvailable": true,
       "graphPlanAvailable": false,
-      "derivedPlanAvailable": false,
-      "previewPacketAvailable": false,
+      "derivedPlanAvailable": true,
+      "previewPacketAvailable": true,
       "runtimeConsumptionReady": false,
-      "readinessStatus": "blocked_missing_derived_plan",
+      "readinessStatus": "preview_packet_available",
       "blockers": [
         "Candidate is inactive and cannot be consumed by runtime modules by default.",
         "Active Tenant Access Layer has not been updated.",
         "Promotion execution remains disabled.",
-        "Enterprise Relationship Graph plan is not available yet.",
-        "Derived intelligence plan is not available for this module.",
-        "Module-specific preview packet has not been generated yet.",
-        "Readiness status is blocked_missing_derived_plan."
+        "Enterprise Relationship Graph plan is not available yet."
       ],
       "nextProofNeeded": "Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context."
     },
@@ -115,18 +111,15 @@
       "evidenceAvailable": true,
       "factPlanAvailable": true,
       "graphPlanAvailable": false,
-      "derivedPlanAvailable": false,
-      "previewPacketAvailable": false,
+      "derivedPlanAvailable": true,
+      "previewPacketAvailable": true,
       "runtimeConsumptionReady": false,
-      "readinessStatus": "blocked_missing_derived_plan",
+      "readinessStatus": "preview_packet_available",
       "blockers": [
         "Candidate is inactive and cannot be consumed by runtime modules by default.",
         "Active Tenant Access Layer has not been updated.",
         "Promotion execution remains disabled.",
-        "Enterprise Relationship Graph plan is not available yet.",
-        "Derived intelligence plan is not available for this module.",
-        "Module-specific preview packet has not been generated yet.",
-        "Readiness status is blocked_missing_derived_plan."
+        "Enterprise Relationship Graph plan is not available yet."
       ],
       "nextProofNeeded": "Run an outcome-ledger proof before any realized value or ROI claim."
     }

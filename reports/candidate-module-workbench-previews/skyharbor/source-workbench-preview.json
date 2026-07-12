@@ -590,12 +590,54 @@
     }
   ],
   "relationships": [],
-  "derivedInsights": [],
+  "derivedInsights": [
+    {
+      "derivedObjectKey": "candidate-workbench-derived:source",
+      "sourceObjectIds": [
+        "sha-air",
+        "sha-sys-occ",
+        "sha-sys-flightops",
+        "sha-sys-crew",
+        "sha-sys-pss",
+        "sha-sys-mainframe",
+        "sha-sys-mq",
+        "sha-sys-sap",
+        "sha-sys-service",
+        "sha-sys-data",
+        "sha-sys-snowflake",
+        "sha-sys-tableau",
+        "sha-sys-salesforce",
+        "sha-ven-ibm",
+        "sha-ven-aws",
+        "sha-ven-sap",
+        "sha-ven-servicenow",
+        "sha-ven-salesforce",
+        "sha-ven-pss",
+        "sha-ven-crew",
+        "sha-ven-flightops",
+        "sha-evid-001",
+        "sha-evid-002",
+        "sha-evid-003",
+        "sha-evid-004",
+        "sha-spend-008",
+        "sha-source-datasets-source-contract-optimization-skyharbor",
+        "sha-source-datasets-source-contract-optimization-skyharbor",
+        "sha-source-datasets-source-contract-optimization-skyharbor",
+        "sha-source-datasets-source-contract-optimization-skyharbor",
+        "sha-source-datasets-source-contract-optimization-skyharbor",
+        "sha-source-datasets-source-contract-optimization-skyharbor",
+        "sha-source-datasets-source-contract-optimization-skyharbor",
+        "sha-source-docs-architecture-skyharbor-compatibility-adapte"
+      ],
+      "domains": ["enterprise_structure", "intelligence_answering"],
+      "status": "planned_not_materialized"
+    }
+  ],
   "moduleMemory": [],
   "module": "source",
   "previewMode": true,
   "runtimeEligible": false,
-  "readinessStatus": "blocked_missing_derived_plan",
+  "readinessStatus": "preview_packet_available",
   "workbenchFocus": "Turn candidate contract/vendor evidence into sourcing workflow proof.",
   "workflowPreview": {
     "focus": "Candidate sourcing inputs for contract, vendor, evidence, and value review.",
@@ -630,8 +672,8 @@
       }
     ],
     "requiredNextProof": [
-      "Create a Source-stage derived plan for sourcing events, artifacts, vendors, and award evidence.",
-      "Generate Source preview packets only after derived plan coverage exists.",
+      "Validate the Source-stage derived plan for sourcing events, artifacts, vendors, and award evidence.",
+      "Generate Source runtime-consumption packets only after active promotion exists.",
       "Prove RFP/contract artifacts remain evidence-scoped before any runtime Source consumption."
     ]
   },
@@ -640,15 +682,11 @@
     "Active Tenant Access Layer has not been updated.",
     "Promotion execution remains disabled.",
     "Enterprise Relationship Graph plan is not available yet.",
-    "Derived intelligence plan is not available for this module.",
-    "Runtime module-consumption preview packet has not been generated or wired yet.",
-    "Readiness status is blocked_missing_derived_plan.",
     "Workbench preview is read-only and cannot be used by runtime modules by default."
   ],
   "nextProofNeeded": "Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context.",
   "previewWarnings": [
     "Candidate uses synthetic/planning-grade SkyHarbor evidence, not production client data.",
-    "Candidate has not been promoted to the Active Tenant Access Layer.",
-    "No module-targeted derived intelligence plan exists yet for this workbench."
+    "Candidate has not been promoted to the Active Tenant Access Layer."
   ]
 }
