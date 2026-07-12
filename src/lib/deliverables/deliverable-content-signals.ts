@@ -22,16 +22,21 @@ export interface DeliverableContentSignal {
 /**
  * Keyword vocabulary reused from `golden-bar.ts`'s `extractExhibitKinds` —
  * the full real marker set already used to detect whether a required
- * visual/table is present in generated Moves deliverables (not just the
- * narrow subset first shipped here). Each signal tries its keywords in
- * order and keeps the first real match; a signal with no match at all is
- * simply absent, never fabricated.
+ * visual/table is present in generated Moves deliverables — plus two
+ * additions confirmed against a real generated `target_state_architecture`
+ * artifact (CANARY, Move 37ee2d85, generated via the live Approve & generate
+ * flow): "wave" (real heading "Implementation waves") and broadening
+ * "decision record" to "decision" (real heading "AI decision & control
+ * flow" — the premium generation path doesn't literally say "decision
+ * record"). Each signal tries its keywords in order and keeps the first
+ * real match; a signal with no match at all is simply absent, never
+ * fabricated.
  */
 const SIGNAL_KEYWORDS: ReadonlyArray<{ key: string; keywords: readonly string[] }> = [
-  { key: "workstreams", keywords: ["workstream", "roadmap", "timeline", "trajectory"] },
+  { key: "workstreams", keywords: ["workstream", "roadmap", "timeline", "trajectory", "wave"] },
   { key: "owners", keywords: ["raci", "stakeholder"] },
   { key: "metrics", keywords: ["kpi", "scorecard", "baseline"] },
-  { key: "decisions", keywords: ["decision record", "tradeoff", "options"] },
+  { key: "decisions", keywords: ["decision", "tradeoff", "options"] },
   { key: "cost", keywords: ["cost"] },
 ];
 
