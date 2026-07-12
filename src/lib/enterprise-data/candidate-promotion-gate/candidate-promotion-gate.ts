@@ -435,11 +435,9 @@ function rollbackWindowDays(
   candidate: CandidateTenantDataVersionRecord,
 ): number | null {
   const match = candidate.promotionControl.rollbackPlan.match(
-    /for (?<days>\d+) days/,
+    /for (\d+) days/,
   );
-  const days = match?.groups?.days
-    ? Number.parseInt(match.groups.days, 10)
-    : Number.NaN;
+  const days = match?.[1] ? Number.parseInt(match[1], 10) : Number.NaN;
   return Number.isFinite(days) ? days : null;
 }
 
