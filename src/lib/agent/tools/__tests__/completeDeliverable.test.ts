@@ -21,6 +21,7 @@ jest.mock('@/lib/programs/mutations', () => ({
 }));
 
 import { completeDeliverableTool } from '../program/completeDeliverable';
+import { surfaceMatches } from '../registry';
 
 function makeCtx(surface = '/programs/test-program') {
   return {
@@ -35,6 +36,14 @@ beforeEach(() => {
 });
 
 describe('complete_deliverable tool', () => {
+  it('is available from the Moves phase workspace for human-attested gate evidence', () => {
+    expect(
+      completeDeliverableTool.surfaces.some((pattern) =>
+        surfaceMatches(pattern, '/strategic-moves/move-123/phase/3'),
+      ),
+    ).toBe(true);
+  });
+
   it('rejects unsupported deliverable types before writing', async () => {
     const result = await completeDeliverableTool.handler(
       {

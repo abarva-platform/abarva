@@ -44,7 +44,7 @@ export const completeDeliverablesTool: AgentTool<CompleteDeliverablesToolInput> 
     'tower_handoff_plan. For P0 seed packages use origination_brief. For P2 packages use synthesis_options_memo for options analysis, charter for the signed ' +
     'program charter, and workshop_facilitator_guide for workshop-running materials. Keep each artifact bounded: ' +
     'concise content under 6,000 characters or content_outline.',
-  surfaces: ['/programs/:id'],
+  surfaces: ['/programs/:id', '/strategic-moves/:id/phase/:phase'],
   input_schema: {
     type: 'object',
     properties: {
@@ -124,6 +124,17 @@ export const completeDeliverablesTool: AgentTool<CompleteDeliverablesToolInput> 
         };
       }
       throw err;
+    }
+
+    const wantsAnySignOff = input.deliverables.some((deliverable) => deliverable.sign_off !== false);
+    if (wantsAnySignOff && ctx.accessPolicy && ctx.accessPolicy.canPublishDeliverables !== true) {
+      return {
+        success: false,
+        error: 'forbidden:can_publish_deliverables_required',
+        recovery:
+          'Your Programs access does not allow signing off deliverables. I can save these as drafts ' +
+          '(sign_off:false) instead, or ask a sponsor / client admin with publish rights to sign them off.',
+      };
     }
 
     const saved: Array<{ deliverable_id: string; version_id: string | null; deliverable_type_key: string; status: string }> = [];

@@ -81,7 +81,7 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     'P5 readiness = readiness_and_change_plan, P6 Tower setup = tower_handoff_plan. Keep the content payload ' +
     'bounded: prefer content_outline for large artifacts, and keep content under 6,000 characters. Do not generate ' +
     'a huge hidden tool payload.',
-  surfaces: ['/programs/:id'],
+  surfaces: ['/programs/:id', '/strategic-moves/:id/phase/:phase'],
   input_schema: {
     type: 'object',
     properties: {

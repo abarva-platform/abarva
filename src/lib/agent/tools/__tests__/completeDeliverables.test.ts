@@ -21,6 +21,7 @@ jest.mock('@/lib/programs/mutations', () => ({
 }));
 
 import { completeDeliverablesTool } from '../program/completeDeliverables';
+import { surfaceMatches } from '../registry';
 
 function makeCtx(surface = '/programs/test-program') {
   return {
@@ -29,6 +30,7 @@ function makeCtx(surface = '/programs/test-program') {
     accessPolicy: {
       accessLevel: 'program_user',
       programIdsAllowed: null,
+      canPublishDeliverables: true,
       canViewFinancialData: false,
     },
   };
@@ -40,6 +42,14 @@ beforeEach(() => {
 });
 
 describe('complete_deliverables tool', () => {
+  it('is available from the Moves phase workspace for accepted phase packages', () => {
+    expect(
+      completeDeliverablesTool.surfaces.some((pattern) =>
+        surfaceMatches(pattern, '/strategic-moves/move-123/phase/5'),
+      ),
+    ).toBe(true);
+  });
+
   it('persists a P0 seed package with the canonical origination key', async () => {
     requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
     completeDeliverableMock.mockResolvedValueOnce({
@@ -105,6 +115,36 @@ describe('complete_deliverables tool', () => {
         content: expect.stringContaining('Capacity envelope approved'),
       }),
     );
+  });
+
+  it('blocks signed batch persistence when the user lacks publish rights', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+
+    const result = await completeDeliverablesTool.handler(
+      {
+        program_id: 'program-1',
+        deliverables: [
+          {
+            deliverable_type_key: 'business_case',
+            title: 'Business case',
+            content_outline: ['Accepted value case'],
+          },
+        ],
+      },
+      {
+        ...makeCtx('/strategic-moves/move-123/phase/5'),
+        accessPolicy: {
+          accessLevel: 'program_user',
+          programIdsAllowed: null,
+          canPublishDeliverables: false,
+          canViewFinancialData: false,
+        },
+      },
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe('forbidden:can_publish_deliverables_required');
+    expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 
   it('persists a P2 synthesis package with canonical artifact keys', async () => {
