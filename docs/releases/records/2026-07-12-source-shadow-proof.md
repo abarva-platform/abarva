@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -68,21 +68,48 @@ Current local status:
 - Pass: isolated TypeScript compile for changed files
 - Pass: `git diff --check`
 
+Post-merge deploy status:
+
+- Pass: PR #4702 merged at commit
+  `e35ee9ca385be17d5f33313aad35b2c8a6025c1a`.
+- Pass: ACA main deploy run `29198877559` deployed PR16 to revision
+  `ca-abarva-web-lab-eastus--me35ee9ca`.
+- Pass: PR16 deployed image digest
+  `sha256:35d2d9b88554e0692a6efa67a8a471ac0ab8c1a5b5ab82faa6d56f05291d38f2`.
+- Pass: later main deploy run `29199477835` superseded the PR16 runtime with
+  commit `6d05ee19c876fb69eaefabc3500759b2340c47e9`, which contains the
+  PR16 merge commit.
+- Pass: current live revision
+  `ca-abarva-web-lab-eastus--m6d05ee19` receives 100% traffic.
+- Pass: current live image digest
+  `sha256:67f5cfe199e2492665b7bc076a6c5a7996c441cb0290769731c3d354107458ac`.
+- Pass: runtime invariant passed for the current live revision.
+- Pass: production health endpoint returned ok with Postgres and direct Postgres
+  checks passing.
+- Pass: signed-in post-deploy crawl run `29199701398` completed against
+  `https://app.abarva.ai`.
+- Pass with known watches: crawl artifact
+  `/tmp/nexus-latest-postdeploy-crawl-29199701398/2026-07-12T16-14-58-525Z-local`
+  recorded 150 observations, 0 P0, 100 P1, and 0 P2 findings. The P1 findings
+  were the existing tenant-identity visibility watch class only across
+  ApexRetail, Meridian, Arcturus, and Northstar.
+
 ## Rollout Plan
 
-Merge to main through a PR. The normal ACA main deploy workflow may ship the
-code and generated reports, but no product runtime path reads candidate data by
-default.
+Merged to main through PR #4702 and deployed through the normal ACA main deploy
+workflow. The current live main runtime contains the PR16 merge. No product
+runtime path reads candidate data by default.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: required for any shared runtime deploy.
+- Repo-owned deploy workflow: used for the shared runtime deploy.
 - Shared runtime mutators: none in this PR.
-- Approved image digest: assigned by the ACA main deploy workflow if merged.
-- ACA runtime invariant: required after deploy.
+- Approved image digest: current live digest
+  `sha256:67f5cfe199e2492665b7bc076a6c5a7996c441cb0290769731c3d354107458ac`.
+- ACA runtime invariant: passed after deploy.
 - Worker image invariant: not changed.
 - Feature/env flag update path: none.
-- Live signed-in proof required: post-deploy crawl after merge/deploy.
+- Live signed-in proof: passed with known P1 tenant-identity watches only.
 
 ## Rollback Plan
 
@@ -92,10 +119,15 @@ require data migration, active pointer repair, or tenant cleanup.
 
 ## Audit Evidence
 
-- PR URL after open.
+- PR: https://github.com/abarva-platform/abarva/pull/4702.
 - Local validation output.
 - Generated reports under `reports/source-shadow-proof/skyharbor/`.
-- ACA deploy and post-deploy crawl evidence after merge.
+- ACA deploy evidence:
+  `/tmp/nexus-pr16-deploy-evidence-29198877559`.
+- Current live deploy evidence:
+  `/tmp/nexus-latest-deploy-evidence-29199477835`.
+- Post-deploy crawl evidence:
+  `/tmp/nexus-latest-postdeploy-crawl-29199701398/2026-07-12T16-14-58-525Z-local`.
 
 ## Known Gaps
 
