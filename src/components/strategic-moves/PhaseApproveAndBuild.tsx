@@ -70,6 +70,8 @@ interface EnqueueResponse {
   }>;
 }
 
+type ApproveAndBuildResult = EnqueueResponse;
+
 interface RunStatusResponse {
   status: RunStatus;
   artifactId: string | null;
@@ -89,6 +91,10 @@ interface Props {
   inputCount?: number;
   /** Evidence gaps that determine whether this is final-ready or preliminary only. */
   evidenceNeedPackets?: MoveEvidenceNeedPacket[];
+  /** Parent-owned prerequisite work, such as phase capture finalization. */
+  onBeforeBuild?: () => Promise<void>;
+  /** Parent-owned phase-gate approval after durable deliverable runs are queued. */
+  onBuildQueued?: (result: ApproveAndBuildResult) => Promise<void>;
 }
 
 const POLL_MS = 4000;
@@ -123,6 +129,8 @@ export function PhaseApproveAndBuild({
   clientDisplayName,
   inputCount,
   evidenceNeedPackets = [],
+  onBeforeBuild,
+  onBuildQueued,
 }: Props) {
   const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
     .map((key) =>
@@ -169,7 +177,9 @@ export function PhaseApproveAndBuild({
   const poll = useCallback(
     async (key: string, runId: string) => {
       try {
-        const res = await fetch(`/api/v1/deliverables/runs/${runId}`);
+        const res = await fetch(`/api/v1/deliverables/runs/${runId}`, {
+          credentials: "include",
+        });
         const data = (await res.json()) as RunStatusResponse & {
           error?: string;
         };
@@ -225,9 +235,14 @@ export function PhaseApproveAndBuild({
         error: undefined,
       })),
     );
+
+    let queuedResult: ApproveAndBuildResult | null = null;
+
     try {
+      await onBeforeBuild?.();
       const res = await fetch("/api/v1/deliverables/generate-phase", {
         method: "POST",
+        credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           moveId,
@@ -244,6 +259,7 @@ export function PhaseApproveAndBuild({
       if (!res.ok || !Array.isArray(data.deliverables)) {
         throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
       }
+      queuedResult = data;
       for (const d of data.deliverables) {
         patchRow(d.deliverableTypeKey, {
           runId: d.runId,
@@ -258,6 +274,16 @@ export function PhaseApproveAndBuild({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Approve & Build failed");
       setRows((prev) => prev.map((r) => ({ ...r, status: "idle" })));
+      setBuilding(false);
+      return;
+    }
+
+    try {
+      if (queuedResult) {
+        await onBuildQueued?.(queuedResult);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gate approval failed");
     } finally {
       setBuilding(false);
     }
@@ -267,6 +293,8 @@ export function PhaseApproveAndBuild({
     archetype,
     moveName,
     clientDisplayName,
+    onBeforeBuild,
+    onBuildQueued,
     patchRow,
     poll,
   ]);

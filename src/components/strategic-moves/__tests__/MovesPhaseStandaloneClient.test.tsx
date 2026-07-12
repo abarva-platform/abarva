@@ -181,18 +181,32 @@ describe("MovesPhaseStandaloneClient", () => {
           json: async () => ({
             deliverables: [
               {
-                deliverableTypeKey: "solution_approach_options",
-                documentTitle: "Solution Approach Brief",
+                deliverableTypeKey: "target_state_architecture",
+                documentTitle: "Target State Reference Architecture",
                 runId: "run-1",
                 status: "queued",
               },
               {
-                deliverableTypeKey: "traceability_pack",
-                documentTitle: "Traceability Pack",
+                deliverableTypeKey: "solution_design",
+                documentTitle: "Solution Design Specification",
                 runId: "run-2",
                 status: "queued",
               },
             ],
+          }),
+        } as Response;
+      }
+
+      if (url.includes("/api/v1/deliverables/runs/")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            status: "succeeded",
+            artifactId: "artifact-1",
+            blobUrl: "/api/v1/artifacts/artifact-1?download=1",
+            progressPct: 100,
+            progressLabel: "Built",
           }),
         } as Response;
       }
@@ -515,7 +529,9 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review gate" }));
 
     expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Approve & generate deliverables/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Final build blocked by required evidence/i }),
+    ).toBeDisabled();
   });
 
   it("Files & Evidence renders a real generated deliverable as an actual downloadable link", async () => {
@@ -612,19 +628,29 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
     fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
-    expect(screen.getByRole("button", { name: /Approve & generate →/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Review governed build/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Approve & advance/i })).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Approve & generate deliverables/i }),
+      screen.getByRole("button", { name: /Approve & Build P3 Choose the Approach/i }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Approve & generate deliverables/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Approve & Build P3 Choose the Approach/i }));
     await waitFor(() => {
-      expect(screen.getByText(/Approved and queued/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Gate approved/i).length).toBeGreaterThan(0);
     });
-    expect(screen.getAllByText(/Queued in worker/i).length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(screen.getAllByText(/^Built$/i).length).toBeGreaterThan(0);
+    });
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/v1/deliverables/generate-phase",
-      expect.objectContaining({ method: "POST" }),
+      expect.objectContaining({ credentials: "include", method: "POST" }),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/deliverables/runs/run-1",
+      expect.objectContaining({ credentials: "include" }),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase-gate-approval",
+      expect.objectContaining({ credentials: "include", method: "POST" }),
     );
     const phaseCaptureCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
       String(url).includes("/phase-capture"),
