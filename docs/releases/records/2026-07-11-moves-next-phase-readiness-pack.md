@@ -97,6 +97,15 @@ behavior, route, or API contract is changed. No data migration, no flag to unwin
 - Worker image invariant: unaffected.
 - Feature/env flag update path: none.
 
+## Audit Evidence
+
+- `npx eslint` output (0 errors) and `npx tsc --noEmit -p .` output (0 errors touching changed
+  files) captured in this session's terminal; reproducible via the commands in QA / Validation.
+- `npx jest src/lib/programs/phase-templates/__tests__/next-phase-readiness-pack.test.ts
+  src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx` — both suites
+  green (5/5 and 5/5) as of this commit; re-run to reproduce.
+- Live signed-in browser proof to be attached post-deploy per the Rollout Plan.
+
 ## Known Gaps
 
 - The readiness pack is scoped to evidence-need data already computed for the current phase; it
