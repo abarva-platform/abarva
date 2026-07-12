@@ -6,6 +6,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
+import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -680,11 +681,27 @@ export function MovesPhaseStandaloneClient({
 
         <section className="mxw-shell" aria-label={`${phase.code} phase workspace`}>
           {workspaceView === "files" ? (
-            <FilesEvidenceExplorer
-              move={move}
-              phaseTallies={phaseTallies}
-              setWorkspaceView={setWorkspaceView}
-            />
+            <>
+              <div className="mxw-crumb">
+                <button onClick={() => setWorkspaceView("phase")} type="button">
+                  {move.name}
+                </button>
+                <span>/</span>
+                Files & Evidence
+              </div>
+              <div className="mxw-stage-head">
+                <div className="mxw-agent-chip">
+                  <span />
+                  AVA · MOVES
+                </div>
+                <h1>Files & Evidence</h1>
+                <p>
+                  Every input template, client-loaded evidence file, and AbarVa-generated
+                  deliverable — the real Artifact Vault for this Move, not a preview.
+                </p>
+              </div>
+              <FileCabinetPanel moveId={move.id} phase={phase.phase} />
+            </>
           ) : (
             <>
               <div className="mxw-crumb">
@@ -1374,173 +1391,6 @@ function OriginateConsole({
   );
 }
 
-function FilesEvidenceExplorer({
-  move,
-  phaseTallies,
-  setWorkspaceView,
-}: {
-  move: StrategicMove;
-  phaseTallies: PhaseTallyRow[];
-  setWorkspaceView: Dispatch<SetStateAction<WorkspaceView>>;
-}) {
-  const totalEvidence = move.linkedEvidence.length;
-  const totalDeliverables = move.deliverables.length;
-  const totalTemplates = PHASES.reduce((sum, phase) => sum + phase.templates.length, 0);
-  return (
-    <>
-      <div className="mxw-crumb">
-        <button onClick={() => setWorkspaceView("phase")} type="button">
-          {move.name}
-        </button>
-        <span>/</span>
-        Files & Evidence
-      </div>
-      <div className="mxw-stage-head">
-        <div className="mxw-agent-chip">
-          <span />
-          AVA · MOVES
-        </div>
-        <h1>Files & Evidence</h1>
-        <p>
-          Every input template, client-loaded evidence file, and AbarVa-generated
-          deliverable - organized by phase.
-        </p>
-      </div>
-      <div className="mxw-files-legend">
-        <span>
-          <i className="tpl" />
-          Input template <em>{totalTemplates}</em>
-        </span>
-        <span>
-          <i className="evi" />
-          Client evidence <em>{totalEvidence}</em>
-        </span>
-        <span>
-          <i className="del" />
-          Generated deliverable <em>{totalDeliverables}</em>
-        </span>
-      </div>
-      <section className="mxw-inline-upload" aria-label="Upload move evidence">
-        <div>
-          <strong>Upload evidence to this phase</strong>
-          <span>
-            Session notes, completed templates, data exports, decision summaries,
-            or owner attestations.
-          </span>
-        </div>
-        <EvidenceUploadControl
-          buttonLabel="Upload evidence"
-          moveId={move.id}
-          phase={move.currentPhase}
-          title={`P${move.currentPhase} workspace evidence`}
-        />
-      </section>
-      <div className="mxw-file-phases">
-        {PHASES.map((phase) => {
-          const tally = phaseTallies.find((row) => row.phase === phase.phase);
-          const deliverables =
-            move.deliverables.filter((deliverable) =>
-              deliverable.title.toLowerCase().includes(phase.title.toLowerCase()),
-            ) || [];
-          return (
-            <section className="mxw-file-phase" key={phase.code}>
-              <header>
-                <span className={tally?.state ?? "upcoming"}>
-                  {tally?.state === "done" ? "✓" : phase.code}
-                </span>
-                <strong>
-                  {phase.code} · {phase.navLabel}
-                </strong>
-                <em>
-                  {tally?.state === "done"
-                    ? "Complete"
-                    : tally?.state === "current"
-                      ? "In progress"
-                      : "Upcoming"}
-                </em>
-              </header>
-              <div className="mxw-file-cols">
-                <FileColumn
-                  items={phase.templates.map((template) => [
-                    template.name,
-                    template.type,
-                    "Template",
-                  ])}
-                  kind="tpl"
-                  title="Input templates"
-                />
-                <FileColumn
-                  items={
-                    phase.phase === move.currentPhase
-                      ? move.linkedEvidence.map((evidence) => [
-                          evidence.anchor,
-                          "EVI",
-                          evidence.summary,
-                        ])
-                      : []
-                  }
-                  kind="evi"
-                  title="Client evidence"
-                />
-                <FileColumn
-                  items={
-                    deliverables.length > 0
-                      ? deliverables.map((deliverable) => [
-                          deliverable.title,
-                          "DOC",
-                          deliverable.status,
-                        ])
-                      : phase.templates.slice(0, 2).map((template) => [
-                          template.name.replace("Template", "Deliverable"),
-                          "DOC",
-                          phase.phase <= move.currentPhase ? "Queued" : "Scheduled",
-                        ])
-                  }
-                  kind="del"
-                  title="Generated deliverables"
-                />
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    </>
-  );
-}
-
-function FileColumn({
-  items,
-  kind,
-  title,
-}: {
-  items: string[][];
-  kind: "tpl" | "evi" | "del";
-  title: string;
-}) {
-  return (
-    <div className="mxw-file-col">
-      <header>
-        <i className={kind} />
-        {title}
-        <span>{items.length}</span>
-      </header>
-      {items.length === 0 ? (
-        <p>None yet</p>
-      ) : (
-        items.map(([name, type, meta]) => (
-          <div className="mxw-file-row" key={`${kind}-${name}`}>
-            <b>{type}</b>
-            <span>
-              <strong>{name}</strong>
-              <small>{meta}</small>
-            </span>
-            <em>{kind === "tpl" ? "Ready" : kind === "evi" ? "Filed" : "Tracked"}</em>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
 
 function EvidenceUploadControl({
   buttonLabel,
