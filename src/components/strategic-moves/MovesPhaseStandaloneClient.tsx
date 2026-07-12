@@ -8,6 +8,7 @@ import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import { buildNextPhaseReadinessPack } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
 interface AvaChatMessage {
@@ -756,6 +757,7 @@ export function MovesPhaseStandaloneClient({
               <PhaseBody
                 draftedBrief={draftedBrief}
                 evidenceCount={evidenceCount}
+                evidenceNeedPackets={evidenceNeedPackets}
                 gateApproved={gateApproved}
                 gateWork={gateWork}
                 move={move}
@@ -863,6 +865,7 @@ export function MovesPhaseStandaloneClient({
 function PhaseBody({
   draftedBrief,
   evidenceCount,
+  evidenceNeedPackets,
   gateApproved,
   gateWork,
   move,
@@ -875,6 +878,7 @@ function PhaseBody({
 }: {
   draftedBrief: Record<number, string>;
   evidenceCount: number;
+  evidenceNeedPackets: MoveEvidenceNeedPacket[];
   gateApproved: boolean;
   gateWork: GateWorkState;
   move: StrategicMove;
@@ -1045,6 +1049,16 @@ function PhaseBody({
     );
   }
 
+  const nextPhaseContract = PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
+  const readinessPack = buildNextPhaseReadinessPack({
+    nextPhaseLabel: nextPhaseContract ? `${nextPhaseContract.code} ${nextPhaseContract.title}` : "Tower handoff",
+    nextPhaseNum: phase.phase + 1,
+    isTerminalHandoff: !nextPhaseContract,
+    evidenceNeedPackets,
+    suggestedSessions: nextPhaseContract?.sessions ?? [],
+    suggestedTemplates: nextPhaseContract?.templates ?? [],
+  });
+
   return (
     <>
       <section className="mxw-review">
@@ -1132,6 +1146,42 @@ function PhaseBody({
             <span>No gate criteria are configured for this transition.</span>
           )}
         </div>
+      </section>
+      <section className="mxw-readiness">
+        <h2>Next: {readinessPack.nextPhaseLabel} readiness</h2>
+        <p>
+          {readinessPack.isFullyReady
+            ? "No required evidence gaps are open for the next phase. It can start with what's already on file."
+            : "Bring these before the next phase starts, so it never opens cold."}
+        </p>
+        {readinessPack.openNeeds.length > 0 ? (
+          <div className="mxw-readiness-needs">
+            {readinessPack.openNeeds.map((need) => (
+              <article className={`mxw-readiness-need ${need.priority}`} key={need.evidenceSlot}>
+                <header>
+                  <strong>{need.evidenceSlot}</strong>
+                  <span>{need.priority}</span>
+                </header>
+                <p>{need.whyItMatters}</p>
+                <div className="mxw-rn-meta">
+                  <span>Format: {need.acceptedFormats.join(", ")}</span>
+                  <span>Template: {need.exampleTemplate}</span>
+                </div>
+                <em>{need.nextAction}</em>
+              </article>
+            ))}
+          </div>
+        ) : null}
+        {readinessPack.suggestedSessions.length > 0 ? (
+          <div className="mxw-readiness-sessions">
+            <h3>Suggested working sessions for {readinessPack.nextPhaseLabel}</h3>
+            <div>
+              {readinessPack.suggestedSessions.map((session) => (
+                <span key={session}>{session}</span>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
     </>
   );
@@ -1808,6 +1858,23 @@ function MovesStandaloneStyles() {
 .mxw-gate-button{margin-top:2px;background:var(--ink);color:#fff;border:0;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer}
 .mxw-approved{display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(29,143,104,.35);background:var(--green-tint);border-radius:11px;padding:13px 15px;color:var(--green);font-size:13px}
 .mxw-approved span{color:var(--ink-2)}
+.mxw-readiness{border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow);padding:18px 20px;margin-top:20px}
+.mxw-readiness h2{font-family:Georgia,serif;font-size:19px;font-weight:700;letter-spacing:-.4px;margin:0}
+.mxw-readiness>p{font-size:13px;color:var(--muted);margin:5px 0 15px;line-height:1.5;max-width:70ch}
+.mxw-readiness-needs{display:grid;gap:10px}
+.mxw-readiness-need{border:1px solid var(--line);border-radius:11px;background:var(--soft);padding:13px 15px}
+.mxw-readiness-need.required{border-color:rgba(176,115,15,.3);background:var(--amber-tint)}
+.mxw-readiness-need header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mxw-readiness-need header strong{font-size:13.5px;color:var(--ink)}
+.mxw-readiness-need header span{font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.mxw-readiness-need.required header span{color:var(--amber)}
+.mxw-readiness-need p{font-size:13px;color:var(--ink-2);line-height:1.5;margin:8px 0}
+.mxw-rn-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.mxw-readiness-need em{font-style:normal;font-size:12.5px;color:var(--blue);font-weight:600}
+.mxw-readiness-sessions{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.mxw-readiness-sessions h3{font-size:13px;font-weight:700;color:var(--ink);margin:0 0 10px}
+.mxw-readiness-sessions>div{display:flex;flex-wrap:wrap;gap:8px}
+.mxw-readiness-sessions span{padding:6px 11px;border:1px solid var(--line-2);border-radius:999px;font-size:12px;font-weight:600;color:var(--muted)}
 .mxw-originate{border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);padding:22px}
 .mxw-originate header{margin-bottom:18px}
 .mxw-of-crumb{font-size:12px;color:var(--muted);margin-bottom:8px}

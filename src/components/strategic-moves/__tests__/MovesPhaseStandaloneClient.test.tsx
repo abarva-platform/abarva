@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { TextDecoder, TextEncoder } from "util";
 import { ReadableStream } from "stream/web";
 import { MovesPhaseStandaloneClient } from "../MovesPhaseStandaloneClient";
+import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -165,6 +166,66 @@ describe("MovesPhaseStandaloneClient", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("surfaces a Next-Phase Readiness Pack with real evidence gaps at gate approval", () => {
+    const evidenceNeedPackets: MoveEvidenceNeedPacket[] = [
+      {
+        moveId: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+        phase: 3,
+        artifactType: "execution_roadmap",
+        evidenceSlot: "Cost baseline",
+        familyId: "cost_baseline",
+        priority: "required",
+        ownerSource: "Client owner / evidence steward",
+        acceptedFormats: ["CSV", "XLSX"],
+        exampleTemplate: "Cost and effort baseline packet",
+        exampleContent: [],
+        whyItMatters:
+          "The business case and financial model need traceable cost and value assumptions before funding-grade estimates.",
+        blockedArtifacts: [
+          {
+            artifactType: "execution_roadmap",
+            title: "Roadmap & Business Case",
+            phase: 4,
+            reason: "Cost baseline is needed for a final-quality Roadmap & Business Case.",
+          },
+        ],
+        canDraftBoundary: {
+          canDraft: false,
+          canDraftLabel: "",
+          cannotDraftLabel: "",
+        },
+        preliminaryGenerationCaveat: null,
+        waiverOption: null,
+        nextAction:
+          "Upload finance baseline, AP cost model, rate-card assumptions, or value-estimate worksheet.",
+        status: "missing",
+        evidenceTitles: [],
+      },
+    ];
+
+    render(
+      <MovesPhaseStandaloneClient
+        evidenceNeedPackets={evidenceNeedPackets}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+
+    expect(screen.getByText(/Next: P4 Build the Plan readiness/i)).toBeInTheDocument();
+    expect(screen.getByText("Cost baseline")).toBeInTheDocument();
+    expect(screen.getByText(/Format: CSV, XLSX/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/traceable cost and value assumptions before funding-grade estimates/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Suggested working sessions for P4 Build the Plan"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Value case workshop")).toBeInTheDocument();
   });
 
   it("renders the Claude Design standalone phase workspace instead of the old workbench", () => {
