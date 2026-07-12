@@ -239,6 +239,7 @@
     "audit:all-tenant-candidate-batch": "tsx scripts/audit/build-all-tenant-candidate-batch.ts",
     "audit:moves-shadow-proof": "tsx scripts/audit/build-moves-shadow-proof.ts",
     "audit:candidate-readiness-control": "tsx scripts/audit/build-candidate-readiness-control.ts",
+    "audit:candidate-preview-mode": "tsx scripts/audit/build-candidate-preview-mode.ts",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
     "audit:architecture-rules:self-test": "node scripts/audit/architecture-rules.mjs --self-test",
