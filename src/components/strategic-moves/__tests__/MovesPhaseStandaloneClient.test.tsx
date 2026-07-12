@@ -197,6 +197,10 @@ describe("MovesPhaseStandaloneClient", () => {
         } as Response;
       }
 
+      if (url.includes("/playbook")) {
+        return new Promise<Response>(() => {});
+      }
+
       return {
         ok: true,
         status: 200,
@@ -364,6 +368,101 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("Upload CI/CD export as CSV")).toBeInTheDocument();
     expect(screen.getByText("Findings to review")).toBeInTheDocument();
     expect(screen.getByText("Process")).toBeInTheDocument();
+  });
+
+  it("mounts the facilitated session playbook and generates a phase-scoped session pack", async () => {
+    (global.fetch as jest.Mock).mockImplementation(async (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      const url = String(input);
+      if (url.includes("/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook")) {
+        if (init?.method === "POST") {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              sessionCount: 1,
+              blobStored: true,
+            }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            phase: 3,
+            playbook: {
+              phase: 3,
+              label: "P3 Design",
+              intent: "Run the facilitated design sessions.",
+              sessions: [
+                {
+                  id: "solution-options",
+                  label: "Solution options workshop",
+                  objective: "Compare viable solution approaches.",
+                  participants: ["Sponsor", "Architecture", "Operations"],
+                  discussionGuide: ["Compare option A and B."],
+                  frameworks: [
+                    {
+                      id: "tradeoff",
+                      label: "Tradeoff matrix",
+                      purpose: "Make the decision explicit.",
+                      dimensions: ["Value", "Risk"],
+                    },
+                  ],
+                  captureTemplate: ["Recommended option"],
+                  homework: ["Bring constraints."],
+                  gate: {
+                    criterion: "Preferred option is evidence-backed",
+                    alignedBy: "Sponsor",
+                    severity: "hard",
+                  },
+                  feedsDeliverables: ["solution_approach_options"],
+                },
+              ],
+            },
+          }),
+        } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true }) } as Response;
+    });
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Phase Sessions · P3 Design/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText("Solution options workshop")).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook?phase=3",
+      expect.objectContaining({ credentials: "include" }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Generate Session Pack/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Saved to the File Cabinet/i)).toBeInTheDocument();
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook?phase=3",
+      expect.objectContaining({
+        credentials: "include",
+        method: "POST",
+      }),
+    );
   });
 
   it("wires phase workspace v2 task actions to the existing Files and gate controls", async () => {
