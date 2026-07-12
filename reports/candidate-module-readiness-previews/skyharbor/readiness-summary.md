@@ -25,9 +25,9 @@ promote the candidate, or change module runtime behavior.
 | ------------ | ------------------------ | -------------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------- |
 | home         | preview_packet_available | true           | false         | 4        | Persist and promote the candidate version, then prove Home reads the promoted active tenant slice.        |
 | intelligence | preview_packet_available | true           | false         | 4        | Run signed-in answer retrieval with citations from the promoted active tenant slice.                      |
-| moves        | preview_packet_available | true           | false         | 4        | Run a phase workspace proof that consumes promoted facts, evidence, graph context, and derived readiness. |
-| source       | preview_packet_available | true           | false         | 4        | Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context.       |
-| tower        | preview_packet_available | true           | false         | 4        | Run an outcome-ledger proof before any realized value or ROI claim.                                       |
+| moves        | preview_packet_available | true           | false         | 3        | Run a phase workspace proof that consumes promoted facts, evidence, graph context, and derived readiness. |
+| source       | preview_packet_available | true           | false         | 3        | Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context.       |
+| tower        | preview_packet_available | true           | false         | 3        | Run an outcome-ledger proof before any realized value or ROI claim.                                       |
 
 ## Guardrails
 

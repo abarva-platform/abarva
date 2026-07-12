@@ -62,6 +62,38 @@ interface WorkbenchDerivedInsight {
   status: string;
 }
 
+interface GraphPlanStage {
+  stage: string;
+  status: string;
+  graphObjectsPlanned: number;
+  graphEntries: Array<{
+    graphObjectKey: string;
+    targetModules: string[];
+    sourceObjectIds: string[];
+    status: string;
+    nodes: unknown[];
+    edges: Array<{
+      edgeKey: string;
+      fromNodeKey: string;
+      toNodeKey: string;
+      relationshipType: string;
+      evidenceKeys: string[];
+      confidence: number;
+    }>;
+  }>;
+}
+
+interface WorkbenchRelationship {
+  graphObjectKey: string;
+  edgeKey: string;
+  fromNodeKey: string;
+  toNodeKey: string;
+  relationshipType: string;
+  evidenceKeys: string[];
+  confidence: number;
+  status: string;
+}
+
 interface WorkbenchWorkflowPreview {
   focus: string;
   candidateInputs: Array<{
@@ -136,6 +168,7 @@ export interface CandidateModuleWorkbenchPreviewOptions {
   moduleReadinessProofPath?: string;
   moduleReadinessPreviewPath?: string;
   derivedPlanStagePath?: string;
+  graphPlanStagePath?: string;
   outputDir?: string;
   generatedAt?: string;
 }
@@ -148,6 +181,8 @@ const DEFAULT_MODULE_READINESS_PREVIEW_PATH =
   "reports/candidate-module-readiness-previews/skyharbor/module-readiness-preview.json";
 const DEFAULT_DERIVED_PLAN_STAGE_PATH =
   "reports/candidate-module-derived-plans/skyharbor/module-derived-plan-stage.json";
+const DEFAULT_GRAPH_PLAN_STAGE_PATH =
+  "reports/candidate-module-graph-plans/skyharbor/module-graph-plan-stage.json";
 const DEFAULT_OUTPUT_DIR =
   "reports/candidate-module-workbench-previews/skyharbor";
 const WORKBENCH_MODULES: WorkbenchModule[] = ["moves", "source", "tower"];
@@ -183,6 +218,9 @@ export async function buildCandidateModuleWorkbenchPreview(
       DEFAULT_DERIVED_PLAN_STAGE_PATH,
     ),
   );
+  const graphPlan = await readOptionalJson<GraphPlanStage>(
+    resolve(options, options.graphPlanStagePath, DEFAULT_GRAPH_PLAN_STAGE_PATH),
+  );
 
   const generatedAt = options.generatedAt ?? "2026-07-10T00:00:00.000Z";
   const outputDir = options.outputDir ?? DEFAULT_OUTPUT_DIR;
@@ -195,6 +233,7 @@ export async function buildCandidateModuleWorkbenchPreview(
     generatedAt,
     sourceRecords: moduleProof.sourceRecords,
     derivedPlan,
+    graphPlan,
     evidenceBoundary,
     readinessPreview,
   });
@@ -204,6 +243,7 @@ export async function buildCandidateModuleWorkbenchPreview(
     generatedAt,
     sourceRecords: moduleProof.sourceRecords,
     derivedPlan,
+    graphPlan,
     evidenceBoundary,
     readinessPreview,
   });
@@ -213,6 +253,7 @@ export async function buildCandidateModuleWorkbenchPreview(
     generatedAt,
     sourceRecords: moduleProof.sourceRecords,
     derivedPlan,
+    graphPlan,
     evidenceBoundary,
     readinessPreview,
   });
@@ -284,6 +325,7 @@ function buildWorkbenchPacket(input: {
   generatedAt: string;
   sourceRecords: CanonicalIngestionRecord[];
   derivedPlan: DerivedPlanStage;
+  graphPlan: GraphPlanStage | undefined;
   evidenceBoundary: EvidenceBoundary;
   readinessPreview: CandidateModuleReadinessPreview;
 }): WorkbenchPreviewPacket {
@@ -295,6 +337,7 @@ function buildWorkbenchPacket(input: {
     (row) => row.module === input.module,
   );
   const derivedInsights = derivedForModule(input.module, input.derivedPlan);
+  const relationships = relationshipsForModule(input.module, input.graphPlan);
   const facts = selectedRecords.map(toWorkbenchFact);
   const blockers = [
     ...(readiness?.blockers ?? []).map(normalizeReadinessBlocker),
@@ -309,6 +352,11 @@ function buildWorkbenchPacket(input: {
       "No module-targeted derived intelligence plan exists yet for this workbench.",
     );
   }
+  if (relationships.length === 0) {
+    previewWarnings.push(
+      "No module-targeted graph plan exists yet for this workbench.",
+    );
+  }
 
   return {
     tenantKey: input.candidateRecord.lineage.tenantKey,
@@ -316,7 +364,7 @@ function buildWorkbenchPacket(input: {
     generatedAt: input.generatedAt,
     evidenceBoundary: input.evidenceBoundary,
     facts,
-    relationships: [],
+    relationships,
     derivedInsights,
     moduleMemory: [],
     module: input.module,
@@ -460,6 +508,26 @@ function derivedForModule(
       domains: entry.domains,
       status: entry.status,
     }));
+}
+
+function relationshipsForModule(
+  module: WorkbenchModule,
+  graphPlan: GraphPlanStage | undefined,
+): WorkbenchRelationship[] {
+  const graphEntry = graphPlan?.graphEntries.find((entry) =>
+    entry.targetModules.includes(module),
+  );
+  if (!graphEntry) return [];
+  return graphEntry.edges.slice(0, 48).map((edge) => ({
+    graphObjectKey: graphEntry.graphObjectKey,
+    edgeKey: edge.edgeKey,
+    fromNodeKey: edge.fromNodeKey,
+    toNodeKey: edge.toNodeKey,
+    relationshipType: edge.relationshipType,
+    evidenceKeys: edge.evidenceKeys,
+    confidence: edge.confidence,
+    status: graphEntry.status,
+  }));
 }
 
 function buildEvidenceBoundary(
@@ -674,4 +742,15 @@ function stringify(value: unknown): string {
 
 async function readJson<T>(filePath: string): Promise<T> {
   return JSON.parse(await fs.readFile(filePath, "utf8")) as T;
+}
+
+async function readOptionalJson<T>(filePath: string): Promise<T | undefined> {
+  try {
+    return await readJson<T>(filePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return undefined;
+    }
+    throw error;
+  }
 }

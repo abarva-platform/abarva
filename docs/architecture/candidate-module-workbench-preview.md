@@ -21,6 +21,7 @@ The workbench preview reads:
 - module-readiness proof
 - module-readiness preview
 - module-targeted derived-plan stage
+- module-targeted graph-plan stage, when generated
 - canonical candidate source records
 
 It does not:

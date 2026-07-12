@@ -23,9 +23,9 @@ to read candidate data by default.
 
 | Module | Readiness                | Facts | Derived insights | Runtime eligible | Blockers |
 | ------ | ------------------------ | ----: | ---------------: | ---------------- | -------: |
-| moves  | preview_packet_available |    24 |                1 | false            |        5 |
-| source | preview_packet_available |    24 |                1 | false            |        5 |
-| tower  | preview_packet_available |    24 |                1 | false            |        5 |
+| moves  | preview_packet_available |    24 |                1 | false            |        4 |
+| source | preview_packet_available |    24 |                1 | false            |        4 |
+| tower  | preview_packet_available |    24 |                1 | false            |        4 |
 
 ## Guardrails
 

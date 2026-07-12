@@ -1,26 +1,22 @@
 import path from "node:path";
 
-import { buildCandidateModuleWorkbenchPreview } from "../../src/lib/enterprise-data/candidate-preview/candidate-module-workbench-preview";
+import { buildCandidateModuleGraphPlan } from "../../src/lib/enterprise-data/candidate-preview/candidate-module-graph-plan";
 
 interface Args {
   candidateRecordPath?: string;
   moduleReadinessProofPath?: string;
-  moduleReadinessPreviewPath?: string;
-  derivedPlanStagePath?: string;
-  graphPlanStagePath?: string;
+  moduleDerivedPlanPath?: string;
   outputDir?: string;
   generatedAt?: string;
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const proof = await buildCandidateModuleWorkbenchPreview({
+  const proof = await buildCandidateModuleGraphPlan({
     repoRoot: process.cwd(),
     candidateRecordPath: args.candidateRecordPath,
     moduleReadinessProofPath: args.moduleReadinessProofPath,
-    moduleReadinessPreviewPath: args.moduleReadinessPreviewPath,
-    derivedPlanStagePath: args.derivedPlanStagePath,
-    graphPlanStagePath: args.graphPlanStagePath,
+    moduleDerivedPlanPath: args.moduleDerivedPlanPath,
     outputDir: args.outputDir,
     generatedAt: args.generatedAt,
   });
@@ -28,16 +24,15 @@ async function main() {
   console.log(
     JSON.stringify(
       {
-        status: proof.summary.previewQualityGateStatus,
+        status: proof.summary.qualityGateStatus,
         tenantKey: proof.summary.tenantKey,
         candidateVersionKey: proof.summary.candidateVersionKey,
         outputDir: path.dirname(proof.summary.outputPaths.summaryPath),
         requestedModules: proof.summary.requestedModules,
-        workbenchPreviewPackets: proof.summary.counts.workbenchPreviewPackets,
+        graphObjectsPlanned: proof.summary.counts.graphObjectsPlanned,
+        graphNodesPlanned: proof.summary.counts.graphNodesPlanned,
+        graphEdgesPlanned: proof.summary.counts.graphEdgesPlanned,
         runtimeReadyModules: proof.summary.counts.runtimeReadyModules,
-        movesFacts: proof.summary.counts.movesFacts,
-        sourceFacts: proof.summary.counts.sourceFacts,
-        towerFacts: proof.summary.counts.towerFacts,
         guardrails: proof.summary.guardrails,
       },
       null,
@@ -57,14 +52,8 @@ function parseArgs(argv: string[]): Args {
     } else if (arg === "--module-readiness-proof" && next) {
       args.moduleReadinessProofPath = next;
       index += 1;
-    } else if (arg === "--module-readiness-preview" && next) {
-      args.moduleReadinessPreviewPath = next;
-      index += 1;
-    } else if (arg === "--derived-plan-stage" && next) {
-      args.derivedPlanStagePath = next;
-      index += 1;
-    } else if (arg === "--graph-plan-stage" && next) {
-      args.graphPlanStagePath = next;
+    } else if (arg === "--module-derived-plan" && next) {
+      args.moduleDerivedPlanPath = next;
       index += 1;
     } else if (arg === "--out-dir" && next) {
       args.outputDir = next;

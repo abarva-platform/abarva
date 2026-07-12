@@ -9,6 +9,7 @@ interface Args {
   promotionGatePath?: string;
   tenantEligibilityMatrixPath?: string;
   moduleTargetedDerivedPlanPath?: string;
+  moduleTargetedGraphPlanPath?: string;
   workbenchPreviewSummaryPath?: string;
   outputDir?: string;
   generatedAt?: string;
@@ -24,6 +25,7 @@ async function main() {
     promotionGatePath: args.promotionGatePath,
     tenantEligibilityMatrixPath: args.tenantEligibilityMatrixPath,
     moduleTargetedDerivedPlanPath: args.moduleTargetedDerivedPlanPath,
+    moduleTargetedGraphPlanPath: args.moduleTargetedGraphPlanPath,
     workbenchPreviewSummaryPath: args.workbenchPreviewSummaryPath,
     outputDir: args.outputDir,
     generatedAt: args.generatedAt,
@@ -71,6 +73,9 @@ function parseArgs(argv: string[]): Args {
       index += 1;
     } else if (arg === "--module-targeted-derived-plan" && next) {
       args.moduleTargetedDerivedPlanPath = next;
+      index += 1;
+    } else if (arg === "--module-targeted-graph-plan" && next) {
+      args.moduleTargetedGraphPlanPath = next;
       index += 1;
     } else if (arg === "--workbench-preview-summary" && next) {
       args.workbenchPreviewSummaryPath = next;

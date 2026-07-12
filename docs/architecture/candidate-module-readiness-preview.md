@@ -24,6 +24,7 @@ The readiness preview reads:
 - module-readiness proof
 - Home/Intelligence candidate preview summary
 - module-targeted derived-plan stage, when generated
+- module-targeted graph-plan stage, when generated
 - Moves/Source/Tower workbench preview summary, when generated
 - candidate promotion-gate result
 - all-tenant eligibility matrix

@@ -589,7 +589,582 @@
       "confidence": 0.85
     }
   ],
-  "relationships": [],
+  "relationships": [
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-module:source->candidate-derived:source",
+      "fromNodeKey": "candidate-module:source",
+      "toNodeKey": "candidate-derived:source",
+      "relationshipType": "module_uses_derived_plan",
+      "evidenceKeys": [],
+      "confidence": 0.9,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-air",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-air",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-air"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-occ",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-occ",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-occ"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-flightops",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-flightops",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-flightops"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-crew",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-crew",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-crew"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-pss",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-pss",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-pss"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-mainframe",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-mainframe",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mainframe"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-mq",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-mq",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mq"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-sap",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-sap",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-sap"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-service",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-service",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-service"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-data",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-data",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-data"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-snowflake",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-snowflake",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-snowflake"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-tableau",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-tableau",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-tableau"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-sys-salesforce",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-sys-salesforce",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-salesforce"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-ibm",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-ibm",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-ibm"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-aws",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-aws",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-aws"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-sap",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-sap",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-sap"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-servicenow",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-servicenow",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-servicenow"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-salesforce",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-salesforce",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-salesforce"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-pss",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-pss",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-pss"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-crew",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-crew",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-crew"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-ven-flightops",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-ven-flightops",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-flightops"
+      ],
+      "confidence": 0.86,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-evid-001",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-evid-001",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-001"
+      ],
+      "confidence": 0.85,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-evid-002",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-evid-002",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-002"
+      ],
+      "confidence": 0.85,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "candidate-derived:source->canonical:sha-evid-003",
+      "fromNodeKey": "candidate-derived:source",
+      "toNodeKey": "canonical:sha-evid-003",
+      "relationshipType": "derived_from_canonical_object",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-003"
+      ],
+      "confidence": 0.85,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-air->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-air",
+      "fromNodeKey": "canonical:sha-air",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-air",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-air"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-occ->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-occ",
+      "fromNodeKey": "canonical:sha-sys-occ",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-occ",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-occ"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-flightops->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-flightops",
+      "fromNodeKey": "canonical:sha-sys-flightops",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-flightops",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-flightops"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-crew->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-crew",
+      "fromNodeKey": "canonical:sha-sys-crew",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-crew",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-crew"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-pss->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-pss",
+      "fromNodeKey": "canonical:sha-sys-pss",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-pss",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-pss"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-mainframe->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mainframe",
+      "fromNodeKey": "canonical:sha-sys-mainframe",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mainframe",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mainframe"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-mq->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mq",
+      "fromNodeKey": "canonical:sha-sys-mq",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mq",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-mq"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-sap->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-sap",
+      "fromNodeKey": "canonical:sha-sys-sap",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-sap",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-sap"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-service->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-service",
+      "fromNodeKey": "canonical:sha-sys-service",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-service",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-service"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-data->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-data",
+      "fromNodeKey": "canonical:sha-sys-data",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-data",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-data"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-snowflake->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-snowflake",
+      "fromNodeKey": "canonical:sha-sys-snowflake",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-snowflake",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-snowflake"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-tableau->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-tableau",
+      "fromNodeKey": "canonical:sha-sys-tableau",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-tableau",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-tableau"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-sys-salesforce->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-salesforce",
+      "fromNodeKey": "canonical:sha-sys-salesforce",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-salesforce",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-sys-salesforce"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-ibm->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-ibm",
+      "fromNodeKey": "canonical:sha-ven-ibm",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-ibm",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-ibm"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-aws->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-aws",
+      "fromNodeKey": "canonical:sha-ven-aws",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-aws",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-aws"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-sap->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-sap",
+      "fromNodeKey": "canonical:sha-ven-sap",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-sap",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-sap"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-servicenow->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-servicenow",
+      "fromNodeKey": "canonical:sha-ven-servicenow",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-servicenow",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-servicenow"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-salesforce->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-salesforce",
+      "fromNodeKey": "canonical:sha-ven-salesforce",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-salesforce",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-salesforce"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-pss->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-pss",
+      "fromNodeKey": "canonical:sha-ven-pss",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-pss",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-pss"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-crew->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-crew",
+      "fromNodeKey": "canonical:sha-ven-crew",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-crew",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-crew"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-ven-flightops->evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-flightops",
+      "fromNodeKey": "canonical:sha-ven-flightops",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-flightops",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:enterprise-profile.csv:sha-ven-flightops"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-evid-001->evidence:skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-001",
+      "fromNodeKey": "canonical:sha-evid-001",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-001",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-001"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    },
+    {
+      "graphObjectKey": "candidate-workbench-graph:source",
+      "edgeKey": "canonical:sha-evid-002->evidence:skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-002",
+      "fromNodeKey": "canonical:sha-evid-002",
+      "toNodeKey": "evidence:skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-002",
+      "relationshipType": "canonical_object_evidenced_by",
+      "evidenceKeys": [
+        "skyharbor-air-pr10-candidate:evidence-registry.csv:sha-evid-002"
+      ],
+      "confidence": 0.8,
+      "status": "planned_not_materialized"
+    }
+  ],
   "derivedInsights": [
     {
       "derivedObjectKey": "candidate-workbench-derived:source",
@@ -681,7 +1256,6 @@
     "Candidate is inactive and cannot be consumed by runtime modules by default.",
     "Active Tenant Access Layer has not been updated.",
     "Promotion execution remains disabled.",
-    "Enterprise Relationship Graph plan is not available yet.",
     "Workbench preview is read-only and cannot be used by runtime modules by default."
   ],
   "nextProofNeeded": "Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context.",
