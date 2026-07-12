@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { LEGACY_CONTROLLED_IMPORT_WARNING } from "@/lib/admin/setup-control";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,12 @@ const VALID_DOMAIN_SEGMENTS = [
   "HR_WORKFORCE",
   "COLLABORATION",
 ] as const;
+const LEGACY_CONTROLLED_IMPORT = {
+  legacyControlledImport: true,
+  directActiveMutationPossible: true,
+  candidateRunwayBypassed: true,
+  warning: LEGACY_CONTROLLED_IMPORT_WARNING,
+} as const;
 
 type DomainSegment = (typeof VALID_DOMAIN_SEGMENTS)[number];
 
@@ -143,5 +150,6 @@ export async function PATCH(
     ok: true,
     id,
     domainSegment: parsed.domainSegment,
+    legacyControlledImport: LEGACY_CONTROLLED_IMPORT,
   });
 }

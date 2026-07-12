@@ -216,6 +216,7 @@
     "audit:loaded-datasets": "npx tsx src/scripts/audit/report-loaded-datasets.ts",
     "audit:agent-substrate": "node scripts/audit/agent-substrate-readiness.mjs",
     "audit:agent-substrate:strict": "node scripts/audit/agent-substrate-readiness.mjs --strict",
+    "audit:admin-data-control-center": "node scripts/audit/admin-data-control-center.mjs",
     "audit:end-to-end-data-flow": "node scripts/audit/build-end-to-end-data-flow-report.mjs",
     "audit:data-intelligence-redesign": "node scripts/audit/build-data-intelligence-redesign-report.mjs",
     "audit:enterprise-data-design": "node scripts/audit/build-enterprise-data-implementation-design.mjs",

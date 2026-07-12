@@ -5,6 +5,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
 import { ClassificationTriageQueue } from "@/components/admin/context-layer/ClassificationTriageQueue";
 import type { LoadStudioView } from "@/lib/admin/setup-load-studio-view";
+import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 
 type AdminSetupTab =
   | "overview"
@@ -29,6 +30,7 @@ interface AdminSetupExperienceProps {
   tenantKey: string;
   clientId: string;
   view: LoadStudioView;
+  setupControl?: AdminSetupControlResponse;
   sourceFiles: LoadedSourceFile[];
 }
 
@@ -243,6 +245,96 @@ function LoadedFilesTable({ files }: { files: LoadedSourceFile[] }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+function ControlMetric({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string | number;
+  note: string;
+}) {
+  return (
+    <div className="setup-control-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{note}</small>
+    </div>
+  );
+}
+
+function DataControlStatus({
+  setupControl,
+}: {
+  setupControl?: AdminSetupControlResponse;
+}) {
+  if (!setupControl) return null;
+  const blockers = setupControl.promotionControl.blockers.slice(0, 2);
+  const moduleValues = Object.values(setupControl.moduleReadiness);
+  const previewReady = moduleValues.filter(
+    (module) => module.status === "preview-ready" || module.status === "ready",
+  ).length;
+
+  return (
+    <section className="setup-card setup-control-card">
+      <SectionHeader
+        eyebrow="Data control status"
+        title="Candidate runway is not active yet"
+        subtitle="This panel separates uploaded files from candidate versions, promotion, and module-ready context."
+        compact
+      />
+      <div className="setup-control-grid">
+        <ControlMetric
+          label="Active version"
+          value={setupControl.activeTenantAccess.activeVersionId ?? "Not wired"}
+          note={setupControl.activeTenantAccess.status}
+        />
+        <ControlMetric
+          label="Candidate version"
+          value={
+            setupControl.candidateTenantDataVersion.candidateVersionId ??
+            "Not created"
+          }
+          note={setupControl.candidateTenantDataVersion.status}
+        />
+        <ControlMetric
+          label="Evidence sources"
+          value={setupControl.evidenceRegistry.evidenceSources}
+          note={`${setupControl.evidenceRegistry.evidenceItems.toLocaleString()} chunk items`}
+        />
+        <ControlMetric
+          label="Canonical objects"
+          value={setupControl.canonicalFacts.canonicalObjects.toLocaleString()}
+          note="snapshot-backed, not promotion proof"
+        />
+        <ControlMetric
+          label="Relationships"
+          value={setupControl.relationshipGraph.graphRelationships.toLocaleString()}
+          note={`${setupControl.relationshipGraph.unresolvedRelationships.toLocaleString()} unresolved`}
+        />
+        <ControlMetric
+          label="Module readiness"
+          value={`${previewReady} / ${moduleValues.length}`}
+          note="not green from files alone"
+        />
+      </div>
+      <div className="setup-guardrail-strip">
+        <span className="is-safe">No candidate promoted</span>
+        <span className="is-safe">Active access unchanged</span>
+        <span className="is-safe">Candidate not read by default</span>
+        <span className="is-warn">Legacy import paths labeled</span>
+      </div>
+      {blockers.length > 0 ? (
+        <ul className="setup-control-blockers">
+          {blockers.map((blocker) => (
+            <li key={blocker}>{blocker}</li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }
 
@@ -470,6 +562,8 @@ function Overview(
           tone={blockerMetric?.tone === "risk" ? "risk" : "default"}
         />
       </div>
+
+      <DataControlStatus setupControl={props.setupControl} />
 
       <section className="setup-card">
         <SectionHeader eyebrow="Next steps" title="Finish the setup path" />
@@ -781,6 +875,68 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           margin-top: 22px;
           padding: 18px;
         }
+        .setup-control-card { background: #fbfcfe; }
+        .setup-control-grid {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .setup-control-metric {
+          background: white;
+          border: 1px solid var(--setup-line);
+          border-radius: 8px;
+          min-height: 86px;
+          padding: 12px;
+        }
+        .setup-control-metric span {
+          color: #647084;
+          display: block;
+          font-family: ${mono};
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .setup-control-metric strong {
+          display: block;
+          font-size: 16px;
+          margin-top: 8px;
+          word-break: break-word;
+        }
+        .setup-control-metric small {
+          color: var(--setup-muted);
+          display: block;
+          font-size: 12px;
+          line-height: 1.35;
+          margin-top: 5px;
+        }
+        .setup-guardrail-strip {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 14px;
+        }
+        .setup-guardrail-strip span {
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 800;
+          padding: 5px 8px;
+        }
+        .setup-guardrail-strip .is-safe {
+          background: #e7f7ec;
+          color: #17653a;
+        }
+        .setup-guardrail-strip .is-warn {
+          background: #fff3d8;
+          color: #7a5200;
+        }
+        .setup-control-blockers {
+          color: #45536b;
+          font-size: 13px;
+          line-height: 1.45;
+          margin: 12px 0 0;
+          padding-left: 18px;
+        }
         .setup-rows { border: 1px solid var(--setup-line); border-radius: 8px; overflow: hidden; }
         .setup-row {
           align-items: center;
@@ -943,7 +1099,7 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           .setup-main-inner { padding: 24px 18px 60px; }
           .setup-progress { grid-template-columns: 1fr; }
           .setup-progress-line { display: none; }
-          .setup-metrics, .setup-mini-grid { grid-template-columns: 1fr; }
+          .setup-metrics, .setup-mini-grid, .setup-control-grid { grid-template-columns: 1fr; }
           .setup-topline, .setup-section-head { align-items: stretch; flex-direction: column; }
           .setup-search { min-width: 0; width: 100%; }
         }
