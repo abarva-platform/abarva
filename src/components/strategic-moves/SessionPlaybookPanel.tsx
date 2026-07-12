@@ -160,7 +160,13 @@ function SessionCard({ s, n }: { s: Session; n: number }) {
   );
 }
 
-export function SessionPlaybookPanel({ moveId }: { moveId: string }) {
+export function SessionPlaybookPanel({
+  moveId,
+  phase,
+}: {
+  moveId: string;
+  phase?: number;
+}) {
   const [pb, setPb] = useState<Playbook | null>(null);
   const [loading, setLoading] = useState(true);
   const [phaseLabel, setPhaseLabel] = useState<string>("");
@@ -170,33 +176,41 @@ export function SessionPlaybookPanel({ moveId }: { moveId: string }) {
   const [genMsg, setGenMsg] = useState<string>("");
 
   const [phaseNum, setPhaseNum] = useState<number | null>(null);
+  const phaseQuery = typeof phase === "number" ? `?phase=${phase}` : "";
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (isActive: () => boolean = () => true) => {
     setLoading(true);
     try {
-      const r = await fetch(`/api/v1/programs/${moveId}/playbook`, {
+      const r = await fetch(`/api/v1/programs/${moveId}/playbook${phaseQuery}`, {
         credentials: "include",
       });
       const j = await r.json();
+      if (!isActive()) return;
       setPb(j.playbook ?? null);
       setPhaseNum(typeof j.phase === "number" ? j.phase : null);
       setPhaseLabel(j.playbook?.label ?? "");
     } catch {
+      if (!isActive()) return;
       setPb(null);
     } finally {
+      if (!isActive()) return;
       setLoading(false);
     }
-  }, [moveId]);
+  }, [moveId, phaseQuery]);
 
   useEffect(() => {
-    void load();
+    let active = true;
+    void load(() => active);
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const generate = useCallback(async () => {
     setGenState("running");
     setGenMsg("");
     try {
-      const r = await fetch(`/api/v1/programs/${moveId}/playbook`, {
+      const r = await fetch(`/api/v1/programs/${moveId}/playbook${phaseQuery}`, {
         method: "POST",
         credentials: "include",
       });
@@ -210,7 +224,7 @@ export function SessionPlaybookPanel({ moveId }: { moveId: string }) {
       setGenState("error");
       setGenMsg(e instanceof Error ? e.message : "generation failed");
     }
-  }, [moveId]);
+  }, [moveId, phaseQuery]);
 
   return (
     <div style={{ padding: "0 4px" }}>

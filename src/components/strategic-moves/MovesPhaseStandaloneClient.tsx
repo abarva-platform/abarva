@@ -9,6 +9,7 @@ import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-co
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
 import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace/MovePhaseWorkspacePanel";
+import { SessionPlaybookPanel } from "@/components/strategic-moves/SessionPlaybookPanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -1055,27 +1056,32 @@ function PhaseBody({
       };
 
       return (
-        <MovePhaseWorkspacePanel
-          evidence={evidenceNeedPackets.map((packet) => ({
-            priority: packet.priority,
-            status: packet.status,
-          }))}
-          feedForward={buildFeedForwardSignals({
-            carriesForwardContent,
-            evidenceNeedPackets,
-            move,
-          })}
-          gate={move.gateCriteria.map((criterion) => ({
-            completed: criterion.completed,
-            severity: criterion.severity,
-          }))}
-          nextPhaseLabel={
-            nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"
-          }
-          onTaskAction={onTaskAction}
-          phaseLabel={phaseWorkspaceLabel(phase)}
-          phaseNum={phase.phase}
-        />
+        <>
+          <MovePhaseWorkspacePanel
+            evidence={evidenceNeedPackets.map((packet) => ({
+              priority: packet.priority,
+              status: packet.status,
+            }))}
+            feedForward={buildFeedForwardSignals({
+              carriesForwardContent,
+              evidenceNeedPackets,
+              move,
+            })}
+            gate={move.gateCriteria.map((criterion) => ({
+              completed: criterion.completed,
+              severity: criterion.severity,
+            }))}
+            nextPhaseLabel={
+              nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"
+            }
+            onTaskAction={onTaskAction}
+            phaseLabel={phaseWorkspaceLabel(phase)}
+            phaseNum={phase.phase}
+          />
+          <section className="mxw-zone">
+            <SessionPlaybookPanel moveId={move.id} phase={phase.phase} />
+          </section>
+        </>
       );
     }
 
