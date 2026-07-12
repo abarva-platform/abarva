@@ -273,7 +273,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders the Claude Design standalone phase workspace instead of the old workbench", () => {
+  it("mounts the platform-default phase workspace v2 for P2-P5 instead of the old static prepare cards", () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -287,10 +287,67 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByRole("heading", { name: "Choose the Approach" })).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
-    expect(screen.getByText("Templates & sessions")).toBeInTheDocument();
+    expect(screen.getByTestId("move-phase-workspace-v2")).toBeInTheDocument();
+    expect(screen.getByText("How to complete this phase")).toBeInTheDocument();
+    expect(screen.getByText("Sessions and templates for this phase")).toBeInTheDocument();
+    expect(screen.getByText("Solution Options Canvas")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Templates & sessions" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Phase complete/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/To advance to P4/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/View dossier/i)).not.toBeInTheDocument();
+  });
+
+  it("wires phase workspace v2 task actions to the existing Files and gate controls", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[
+          {
+            moveId: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+            phase: 3,
+            artifactType: "solution_design",
+            evidenceSlot: "Solution architecture constraints",
+            familyId: "architecture_constraints",
+            priority: "required",
+            ownerSource: "Client owner / evidence steward",
+            acceptedFormats: ["DOCX"],
+            exampleTemplate: "Architecture constraints memo",
+            exampleContent: [],
+            whyItMatters: "The design lane needs real architecture constraints.",
+            blockedArtifacts: [],
+            canDraftBoundary: {
+              canDraft: false,
+              canDraftLabel: "",
+              cannotDraftLabel: "",
+            },
+            preliminaryGenerationCaveat: null,
+            waiverOption: null,
+            nextAction: "Upload the architecture constraints memo.",
+            status: "missing",
+            evidenceTitles: [],
+          },
+        ]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add evidence" }));
+
+    expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/artifacts",
+        expect.anything(),
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Review gate" }));
+
+    expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Approve & generate deliverables/i })).toBeInTheDocument();
   });
 
   it("Files & Evidence renders a real generated deliverable as an actual downloadable link", async () => {

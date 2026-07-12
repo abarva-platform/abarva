@@ -7,9 +7,12 @@ import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
+import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace/MovePhaseWorkspacePanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import type { FeedForwardSignals } from "@/lib/programs/phase-templates/feed-forward";
+import type { PhaseTask } from "@/lib/programs/phase-templates/phase-workflow";
 import { buildNextPhaseReadinessPack } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -277,6 +280,57 @@ function phaseFor(phaseNum: number): PhaseContract {
   return PHASES.find((phase) => phase.phase === phaseNum) ?? PHASES[0];
 }
 
+function nextPhaseFor(phase: PhaseContract): PhaseContract | null {
+  return PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
+}
+
+function phaseWorkspaceLabel(phase: PhaseContract): string {
+  return `${phase.code} · ${phase.title}`;
+}
+
+function buildFeedForwardSignals({
+  carriesForwardContent,
+  evidenceNeedPackets,
+  move,
+}: {
+  carriesForwardContent: DeliverableContentSignal[];
+  evidenceNeedPackets: MoveEvidenceNeedPacket[];
+  move: StrategicMove;
+}): FeedForwardSignals {
+  const unsatisfiedEvidence = evidenceNeedPackets.filter(
+    (packet) =>
+      packet.status !== "covered" &&
+      packet.status !== "waived" &&
+      packet.status !== "not_applicable",
+  );
+  const hardGaps = move.gateCriteria
+    .filter((criterion) => !criterion.completed && criterion.severity === "hard")
+    .map((criterion) => criterion.label);
+  const softGaps = move.gateCriteria
+    .filter((criterion) => !criterion.completed && criterion.severity === "soft")
+    .map((criterion) => criterion.label);
+  const snippetsByKey = new Map<string, string[]>();
+  for (const signal of carriesForwardContent) {
+    const snippet = signal.snippet.trim();
+    if (!snippet) continue;
+    const existing = snippetsByKey.get(signal.key) ?? [];
+    snippetsByKey.set(signal.key, [...existing, snippet]);
+  }
+
+  return {
+    hardGaps,
+    softGaps,
+    missingEvidence: unsatisfiedEvidence.map((packet) => packet.evidenceSlot),
+    openGateCriteria: move.gateCriteria
+      .filter((criterion) => !criterion.completed)
+      .map((criterion) => criterion.label),
+    workstreams: snippetsByKey.get("workstreams"),
+    owners: snippetsByKey.get("owners"),
+    metrics: snippetsByKey.get("metrics"),
+    controlConstraints: snippetsByKey.get("decisions"),
+  };
+}
+
 function formatArchetype(value: string | null | undefined): string {
   if (!value) return "Strategic Move";
   return value
@@ -432,6 +486,20 @@ export function MovesPhaseStandaloneClient({
   function continueStep() {
     if (workspaceView === "files") return;
     setSubstepIndex((idx) => Math.min(idx + 1, phase.substeps.length - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goToGateStep() {
+    const approveIndex = phase.substeps.findIndex((item) => item.key === "approve");
+    if (approveIndex >= 0) {
+      setWorkspaceView("phase");
+      setSubstepIndex(approveIndex);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  function openFilesWorkspace() {
+    setWorkspaceView("files");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -784,7 +852,9 @@ export function MovesPhaseStandaloneClient({
                 move={move}
                 onApproveGate={approveGateAndGenerate}
                 onDraftBrief={setDraftedBrief}
+                onOpenFiles={openFilesWorkspace}
                 onSelectOption={setSelectedOption}
+                onShowGate={goToGateStep}
                 phase={phase}
                 selectedOption={selectedOption}
                 substep={substep.key}
@@ -893,7 +963,9 @@ function PhaseBody({
   move,
   onApproveGate,
   onDraftBrief,
+  onOpenFiles,
   onSelectOption,
+  onShowGate,
   phase,
   selectedOption,
   substep,
@@ -907,7 +979,9 @@ function PhaseBody({
   move: StrategicMove;
   onApproveGate: () => void | Promise<void>;
   onDraftBrief: Dispatch<SetStateAction<Record<number, string>>>;
+  onOpenFiles: () => void;
   onSelectOption: (value: string) => void;
+  onShowGate: () => void;
   phase: PhaseContract;
   selectedOption: string;
   substep: SubstepKey;
@@ -959,6 +1033,41 @@ function PhaseBody({
   }
 
   if (substep === "prepare") {
+    if (phase.phase >= 2 && phase.phase <= 5) {
+      const nextPhase = nextPhaseFor(phase);
+      const onTaskAction = (taskId: PhaseTask["id"]) => {
+        if (taskId === "evidence") {
+          onOpenFiles();
+          return;
+        }
+        onShowGate();
+      };
+
+      return (
+        <MovePhaseWorkspacePanel
+          evidence={evidenceNeedPackets.map((packet) => ({
+            priority: packet.priority,
+            status: packet.status,
+          }))}
+          feedForward={buildFeedForwardSignals({
+            carriesForwardContent,
+            evidenceNeedPackets,
+            move,
+          })}
+          gate={move.gateCriteria.map((criterion) => ({
+            completed: criterion.completed,
+            severity: criterion.severity,
+          }))}
+          nextPhaseLabel={
+            nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"
+          }
+          onTaskAction={onTaskAction}
+          phaseLabel={phaseWorkspaceLabel(phase)}
+          phaseNum={phase.phase}
+        />
+      );
+    }
+
     return (
       <>
         <HowToCard />
