@@ -9,6 +9,7 @@ import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-co
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
 import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace/MovePhaseWorkspacePanel";
+import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { SessionPlaybookPanel } from "@/components/strategic-moves/SessionPlaybookPanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
@@ -73,22 +74,7 @@ interface MovesPhaseStandaloneClientProps {
 
 type WorkspaceView = "phase" | "files";
 
-type GateWorkStatus = "idle" | "generating" | "approving" | "approved" | "blocked";
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
-
-interface GeneratedPhaseOutput {
-  title: string;
-  typeKey: string;
-  status: "queued" | "generated" | "error";
-  runId?: string | null;
-  error?: string;
-}
-
-interface GateWorkState {
-  status: GateWorkStatus;
-  message?: string;
-  outputs: GeneratedPhaseOutput[];
-}
 
 const PHASES: PhaseContract[] = [
   {
@@ -373,15 +359,14 @@ export function MovesPhaseStandaloneClient({
   avaThreadRef.current = avaThread;
   const [selectedOption, setSelectedOption] = useState("B");
   const [gateApproved, setGateApproved] = useState(false);
-  const [gateWork, setGateWork] = useState<GateWorkState>({
-    status: "idle",
-    outputs: [],
-  });
+  const [gateApprovalStatus, setGateApprovalStatus] = useState<
+    "idle" | "approving" | "approved" | "blocked"
+  >("idle");
+  const [gateApprovalMessage, setGateApprovalMessage] = useState<string | null>(null);
   const [draftedBrief, setDraftedBrief] = useState<Record<number, string>>({});
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
   const progressPct = Math.round(((substepIndex + 1) / phase.substeps.length) * 100);
   const isFinalSubstep = substepIndex === phase.substeps.length - 1;
-  const gateActionRunning = gateWork.status === "generating" || gateWork.status === "approving";
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -508,157 +493,112 @@ export function MovesPhaseStandaloneClient({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function approveGateAndGenerate() {
+  function focusGateAction() {
+    document
+      .getElementById("mxw-approve-build-action")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function finalizePhaseCapture() {
     setGateApproved(false);
-    setGateWork({
-      status: "generating",
-      message: "Finalizing capture and starting required phase outputs...",
-      outputs: [],
+    setGateApprovalStatus("approving");
+    setGateApprovalMessage("Finalizing phase capture before starting the governed build...");
+    const finalizeBody: Record<string, unknown> = {
+      phase: phase.phase,
+      complete: true,
+      sections: buildPhaseCaptureItems({
+        draftedBrief,
+        move,
+        phase,
+        selectedOption,
+      }),
+    };
+    const finalizeRes = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(finalizeBody),
     });
-    try {
-      const finalizeBody: Record<string, unknown> = {
+    const finalize = (await finalizeRes.json().catch(() => ({}))) as {
+      ok?: boolean;
+      missing?: string[];
+      error?: string;
+      detail?: string;
+    };
+    if (!finalizeRes.ok || !finalize.ok) {
+      setGateApprovalStatus("blocked");
+      throw new Error(
+        finalize.missing?.length
+          ? `Capture incomplete - still missing: ${finalize.missing.join(", ")}`
+          : finalize.detail ||
+              finalize.error ||
+              `Finalize failed (HTTP ${finalizeRes.status})`,
+      );
+    }
+  }
+
+  async function approvePhaseGateAfterBuild(result: {
+    deliverables: Array<{ status: "queued" | "error"; error?: string }>;
+  }) {
+    const queued = result.deliverables.filter((item) => item.status === "queued").length;
+    if (queued === 0) {
+      setGateApprovalStatus("blocked");
+      throw new Error(
+        result.deliverables.find((item) => item.error)?.error ||
+          "No required deliverables could be queued for this phase.",
+      );
+    }
+    setGateApprovalStatus("approving");
+    setGateApprovalMessage(
+      `${queued} required output${queued === 1 ? "" : "s"} queued. Submitting gate approval...`,
+    );
+
+    const approvalRes = await fetch(`/api/v1/programs/${move.id}/phase-gate-approval`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         phase: phase.phase,
-        complete: true,
-        sections: buildPhaseCaptureItems({
-          draftedBrief,
-          move,
-          phase,
-          selectedOption,
-        }),
-      };
-      const finalizeRes = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalizeBody),
-      });
-      const finalize = (await finalizeRes.json().catch(() => ({}))) as {
-        ok?: boolean;
-        missing?: string[];
-        error?: string;
-        detail?: string;
-      };
-      if (!finalizeRes.ok || !finalize.ok) {
-        throw new Error(
-          finalize.missing?.length
-            ? `Capture incomplete - still missing: ${finalize.missing.join(", ")}`
-            : finalize.detail ||
-                finalize.error ||
-                `Finalize failed (HTTP ${finalizeRes.status})`,
-        );
-      }
+        rationale: `P${phase.phase} reviewed, required phase outputs started, and gate approval submitted through the standalone Moves workspace.`,
+      }),
+    });
+    const approval = (await approvalRes.json().catch(() => ({}))) as {
+      ok?: boolean;
+      gate?: { failedChecks?: Array<{ severity: string; reason?: string; check: string }> };
+      detail?: string;
+      error?: string;
+    };
+    if (!approvalRes.ok || !approval.ok) {
+      const hard = approval.gate?.failedChecks
+        ?.filter((check) => check.severity === "hard")
+        .map((check) => check.reason || check.check)
+        .join("; ");
+      setGateApprovalStatus("blocked");
+      throw new Error(
+        hard ||
+          approval.detail ||
+          approval.error ||
+          `Gate approval failed (HTTP ${approvalRes.status})`,
+      );
+    }
 
-      let outputs: GeneratedPhaseOutput[] = [];
-      if (phase.phase >= 1 && phase.phase <= 5) {
-        const genRes = await fetch("/api/v1/deliverables/generate-phase", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            moveId: move.id,
-            phase: phase.phase,
-            useCaseArchetype: move.archetype,
-            moveName: move.name,
-            clientDisplayName: move.tenant.name,
-          }),
-        });
-        const generated = (await genRes.json().catch(() => ({}))) as {
-          deliverables?: Array<{
-            deliverableTypeKey: string;
-            documentTitle: string;
-            runId: string | null;
-            status: "queued" | "error";
-            error?: string;
-          }>;
-          detail?: string;
-          error?: string;
-        };
-        if (!genRes.ok || !Array.isArray(generated.deliverables)) {
-          throw new Error(
-            generated.detail ||
-              generated.error ||
-              `Generation enqueue failed (HTTP ${genRes.status})`,
-          );
-        }
-        outputs = generated.deliverables.map((item) => ({
-          title: item.documentTitle,
-          typeKey: item.deliverableTypeKey,
-          runId: item.runId,
-          status: item.status === "queued" ? "queued" : "error",
-          error: item.error,
-        }));
-        const queued = outputs.filter((item) => item.status === "queued").length;
-        if (queued === 0) {
-          throw new Error(
-            outputs.find((item) => item.error)?.error ||
-              "No required deliverables could be queued for this phase.",
-          );
-        }
-        setGateWork({
-          status: "approving",
-          message: `${queued} required output${queued === 1 ? "" : "s"} queued. Submitting gate approval...`,
-          outputs,
-        });
-      } else {
-        outputs = [
-          {
-            title: "Origination brief and charter request",
-            typeKey: "p0_origination",
-            status: "queued",
-            runId: null,
-          },
-        ];
-        setGateWork({
-          status: "approving",
-          message: "P0 capture finalized. Submitting gate approval...",
-          outputs,
-        });
-      }
+    setGateApproved(true);
+    setGateApprovalStatus("approved");
+    setGateApprovalMessage(
+      "Gate approved. The run status below is now the source of truth for which documents built, failed, or were held below gate.",
+    );
+  }
 
-      const approvalRes = await fetch(`/api/v1/programs/${move.id}/phase-gate-approval`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phase: phase.phase,
-          rationale: `P${phase.phase} reviewed, required phase outputs started, and gate approval submitted through the standalone Moves workspace.`,
-        }),
-      });
-      const approval = (await approvalRes.json().catch(() => ({}))) as {
-        ok?: boolean;
-        gate?: { failedChecks?: Array<{ severity: string; reason?: string; check: string }> };
-        detail?: string;
-        error?: string;
-      };
-      if (!approvalRes.ok || !approval.ok) {
-        const hard = approval.gate?.failedChecks
-          ?.filter((check) => check.severity === "hard")
-          .map((check) => check.reason || check.check)
-          .join("; ");
-        throw new Error(
-          hard ||
-            approval.detail ||
-            approval.error ||
-            `Gate approval failed (HTTP ${approvalRes.status})`,
-        );
-      }
-
-      setGateApproved(true);
-      setGateWork({
-        status: "approved",
-        message:
-          phase.phase >= 1
-            ? "Gate approved. Required phase outputs are queued in the deliverable worker and will appear in Files & Evidence."
-            : "Gate approved. The origination record is ready for Charter.",
-        outputs,
+  async function approveP0Gate() {
+    try {
+      await finalizePhaseCapture();
+      await approvePhaseGateAfterBuild({
+        deliverables: [{ status: "queued" }],
       });
     } catch (err) {
       setGateApproved(false);
-      setGateWork((current) => ({
-        ...current,
-        status: "blocked",
-        message: err instanceof Error ? err.message : "Gate approval failed.",
-      }));
+      setGateApprovalStatus("blocked");
+      setGateApprovalMessage(err instanceof Error ? err.message : "Gate approval failed.");
     }
   }
 
@@ -809,18 +749,21 @@ export function MovesPhaseStandaloneClient({
                 </div>
                 <button
                   className="mxw-btn mxw-primary"
-                  disabled={isFinalSubstep && gateActionRunning}
                   onClick={
                     isFinalSubstep
-                      ? () => void approveGateAndGenerate()
+                      ? phase.phase === 0
+                        ? () => void approveP0Gate()
+                        : focusGateAction
                       : continueStep
                   }
                   type="button"
                 >
                   {isFinalSubstep
-                    ? gateActionRunning
-                      ? "Approving & generating..."
-                      : "Approve & generate →"
+                    ? phase.phase === 0
+                      ? gateApprovalStatus === "approving"
+                        ? "Approving..."
+                        : "Approve gate →"
+                      : "Review governed build →"
                     : "Continue →"}
                 </button>
               </div>
@@ -854,9 +797,12 @@ export function MovesPhaseStandaloneClient({
                 evidenceCount={evidenceCount}
                 evidenceNeedPackets={evidenceNeedPackets}
                 gateApproved={gateApproved}
-                gateWork={gateWork}
+                gateApprovalMessage={gateApprovalMessage}
+                gateApprovalStatus={gateApprovalStatus}
                 move={move}
-                onApproveGate={approveGateAndGenerate}
+                onApproveAfterBuild={approvePhaseGateAfterBuild}
+                onApproveP0Gate={approveP0Gate}
+                onFinalizePhaseCapture={finalizePhaseCapture}
                 onDraftBrief={setDraftedBrief}
                 onOpenFiles={openFilesWorkspace}
                 onSelectOption={setSelectedOption}
@@ -966,9 +912,12 @@ function PhaseBody({
   evidenceCount,
   evidenceNeedPackets,
   gateApproved,
-  gateWork,
+  gateApprovalMessage,
+  gateApprovalStatus,
   move,
-  onApproveGate,
+  onApproveAfterBuild,
+  onApproveP0Gate,
+  onFinalizePhaseCapture,
   onDraftBrief,
   onOpenFiles,
   onSelectOption,
@@ -983,9 +932,14 @@ function PhaseBody({
   evidenceCount: number;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   gateApproved: boolean;
-  gateWork: GateWorkState;
+  gateApprovalMessage: string | null;
+  gateApprovalStatus: "idle" | "approving" | "approved" | "blocked";
   move: StrategicMove;
-  onApproveGate: () => void | Promise<void>;
+  onApproveAfterBuild: (result: {
+    deliverables: Array<{ status: "queued" | "error"; error?: string }>;
+  }) => Promise<void>;
+  onApproveP0Gate: () => void | Promise<void>;
+  onFinalizePhaseCapture: () => Promise<void>;
   onDraftBrief: Dispatch<SetStateAction<Record<number, string>>>;
   onOpenFiles: () => void;
   onSelectOption: (value: string) => void;
@@ -1228,60 +1182,45 @@ function PhaseBody({
             </span>
           ))}
         </div>
-        {gateWork.message ? (
-          <div className={`mxw-gate-message ${gateWork.status}`}>
-            {gateWork.message}
+        {gateApprovalMessage ? (
+          <div className={`mxw-gate-message ${gateApprovalStatus}`}>
+            {gateApprovalMessage}
           </div>
         ) : null}
-        <div className="mxw-deliverables">
-          {(gateWork.outputs.length > 0
-            ? gateWork.outputs
-            : phase.templates.slice(0, 4).map((template) => ({
-                title: template.name.replace("Template", "Deliverable"),
-                typeKey: template.type,
-                status: "queued" as const,
-              }))
-          ).map((output) => (
-            <div
-              className={output.status === "error" ? "error" : output.status}
-              key={`${output.typeKey}-${output.title}`}
+        <div className="mxw-approve-build" id="mxw-approve-build-action">
+          {phase.phase >= 1 ? (
+            <PhaseApproveAndBuild
+              archetype={move.archetype}
+              clientDisplayName={move.tenant.name}
+              evidenceNeedPackets={evidenceNeedPackets}
+              inputCount={evidenceCount}
+              moveId={move.id}
+              moveName={move.name}
+              onBeforeBuild={onFinalizePhaseCapture}
+              onBuildQueued={onApproveAfterBuild}
+              phaseLabel={`${phase.code} ${phase.title}`}
+              phaseNum={phase.phase}
+            />
+          ) : (
+            <button
+              className="mxw-gate-button"
+              disabled={gateApprovalStatus === "approving"}
+              onClick={() => void onApproveP0Gate()}
+              type="button"
             >
-              <span>{output.typeKey.slice(0, 4).toUpperCase()}</span>
-              <strong>{output.title}</strong>
-              {output.status === "generated" ? (
-                <em>Available in Files & Evidence</em>
-              ) : output.status === "error" ? (
-                <em>{output.error ?? "Error"}</em>
-              ) : gateWork.status === "approved" ? (
-                <em>Queued in worker</em>
-              ) : gateWork.status === "generating" || gateWork.status === "approving" ? (
-                <em>Starting...</em>
-              ) : (
-                <em>Queued at approval</em>
-              )}
-            </div>
-          ))}
+              {gateApprovalStatus === "approving" ? "Approving..." : "Approve gate →"}
+            </button>
+          )}
         </div>
         {gateApproved ? (
           <div className="mxw-approved">
-            <strong>✓ Approved and queued.</strong>
+            <strong>✓ Gate approved.</strong>
             <span>
-              The feed-forward pack has been started. Open Files & Evidence to
-              trace the queued documents and worker status.
+              Use the run rows above for build proof, then open Files & Evidence
+              to inspect the completed artifacts.
             </span>
           </div>
-        ) : (
-          <button
-            className="mxw-gate-button"
-            disabled={gateWork.status === "generating" || gateWork.status === "approving"}
-            onClick={() => void onApproveGate()}
-            type="button"
-          >
-            {gateWork.status === "generating" || gateWork.status === "approving"
-              ? "Approving & generating..."
-              : "Approve & generate deliverables →"}
-          </button>
-        )}
+        ) : null}
       </section>
       <section className="mxw-gate">
         <h2>Gate criteria</h2>
@@ -1849,6 +1788,7 @@ function MovesStandaloneStyles() {
 .mxw-deliverables strong{font-size:13.5px;color:var(--ink)}
 .mxw-deliverables em{font-style:normal;font-size:12px;color:var(--muted);font-weight:700}
 .mxw-deliverables a{font-size:12px;color:var(--green);font-weight:800}
+.mxw-approve-build{margin:15px 0}
 .mxw-gate-button{margin-top:2px;background:var(--ink);color:#fff;border:0;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer}
 .mxw-approved{display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(29,143,104,.35);background:var(--green-tint);border-radius:11px;padding:13px 15px;color:var(--green);font-size:13px}
 .mxw-approved span{color:var(--ink-2)}
