@@ -76,7 +76,7 @@
       "module": "moves",
       "evidenceAvailable": true,
       "factPlanAvailable": true,
-      "graphPlanAvailable": false,
+      "graphPlanAvailable": true,
       "derivedPlanAvailable": true,
       "previewPacketAvailable": true,
       "runtimeConsumptionReady": false,
@@ -84,8 +84,7 @@
       "blockers": [
         "Candidate is inactive and cannot be consumed by runtime modules by default.",
         "Active Tenant Access Layer has not been updated.",
-        "Promotion execution remains disabled.",
-        "Enterprise Relationship Graph plan is not available yet."
+        "Promotion execution remains disabled."
       ],
       "nextProofNeeded": "Run a phase workspace proof that consumes promoted facts, evidence, graph context, and derived readiness."
     },
@@ -93,7 +92,7 @@
       "module": "source",
       "evidenceAvailable": true,
       "factPlanAvailable": true,
-      "graphPlanAvailable": false,
+      "graphPlanAvailable": true,
       "derivedPlanAvailable": true,
       "previewPacketAvailable": true,
       "runtimeConsumptionReady": false,
@@ -101,8 +100,7 @@
       "blockers": [
         "Candidate is inactive and cannot be consumed by runtime modules by default.",
         "Active Tenant Access Layer has not been updated.",
-        "Promotion execution remains disabled.",
-        "Enterprise Relationship Graph plan is not available yet."
+        "Promotion execution remains disabled."
       ],
       "nextProofNeeded": "Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context."
     },
@@ -110,7 +108,7 @@
       "module": "tower",
       "evidenceAvailable": true,
       "factPlanAvailable": true,
-      "graphPlanAvailable": false,
+      "graphPlanAvailable": true,
       "derivedPlanAvailable": true,
       "previewPacketAvailable": true,
       "runtimeConsumptionReady": false,
@@ -118,8 +116,7 @@
       "blockers": [
         "Candidate is inactive and cannot be consumed by runtime modules by default.",
         "Active Tenant Access Layer has not been updated.",
-        "Promotion execution remains disabled.",
-        "Enterprise Relationship Graph plan is not available yet."
+        "Promotion execution remains disabled."
       ],
       "nextProofNeeded": "Run an outcome-ledger proof before any realized value or ROI claim."
     }

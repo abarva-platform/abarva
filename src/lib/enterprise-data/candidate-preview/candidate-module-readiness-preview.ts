@@ -57,6 +57,12 @@ interface ModuleDerivedPlanStage {
   }>;
 }
 
+interface ModuleGraphPlanStage {
+  graphEntries: Array<{
+    targetModules: TenantPacketModule[];
+  }>;
+}
+
 interface ReadinessGuardrails {
   dryRunOnly: true;
   readOnlyPreview: true;
@@ -134,6 +140,7 @@ export interface CandidateModuleReadinessPreviewOptions {
   promotionGatePath?: string;
   tenantEligibilityMatrixPath?: string;
   moduleTargetedDerivedPlanPath?: string;
+  moduleTargetedGraphPlanPath?: string;
   workbenchPreviewSummaryPath?: string;
   outputDir?: string;
   generatedAt?: string;
@@ -151,6 +158,8 @@ const DEFAULT_TENANT_ELIGIBILITY_MATRIX_PATH =
   "reports/tenant-candidate-generation/all-tenant-eligibility-matrix.json";
 const DEFAULT_MODULE_TARGETED_DERIVED_PLAN_PATH =
   "reports/candidate-module-derived-plans/skyharbor/module-derived-plan-stage.json";
+const DEFAULT_MODULE_TARGETED_GRAPH_PLAN_PATH =
+  "reports/candidate-module-graph-plans/skyharbor/module-graph-plan-stage.json";
 const DEFAULT_WORKBENCH_PREVIEW_SUMMARY_PATH =
   "reports/candidate-module-workbench-previews/skyharbor/preview-summary.json";
 const DEFAULT_OUTPUT_DIR =
@@ -205,6 +214,13 @@ export async function buildCandidateModuleReadinessPreview(
         DEFAULT_MODULE_TARGETED_DERIVED_PLAN_PATH,
       ),
     );
+  const moduleTargetedGraphPlan = await readOptionalJson<ModuleGraphPlanStage>(
+    resolve(
+      options,
+      options.moduleTargetedGraphPlanPath,
+      DEFAULT_MODULE_TARGETED_GRAPH_PLAN_PATH,
+    ),
+  );
   const workbenchPreviewSummary =
     await readOptionalJson<WorkbenchPreviewSummary>(
       resolve(
@@ -221,6 +237,7 @@ export async function buildCandidateModuleReadinessPreview(
     modulePreviewSummary,
     promotionGate,
     moduleTargetedDerivedPlan,
+    moduleTargetedGraphPlan,
     workbenchPreviewSummary,
   });
   const qualityGateStatus =
@@ -301,6 +318,7 @@ function buildRows(input: {
   modulePreviewSummary: CandidateModulePreviewSummary;
   promotionGate: PromotionGateResult;
   moduleTargetedDerivedPlan: ModuleDerivedPlanStage | undefined;
+  moduleTargetedGraphPlan: ModuleGraphPlanStage | undefined;
   workbenchPreviewSummary: WorkbenchPreviewSummary | undefined;
 }): CandidateModuleReadinessPreviewRow[] {
   const previewModules = new Set<TenantPacketModule>([
@@ -314,7 +332,9 @@ function buildRows(input: {
       );
     const evidenceAvailable = proofEntry?.evidenceAvailable ?? false;
     const factPlanAvailable = proofEntry?.factPlanAvailable ?? false;
-    const graphPlanAvailable = proofEntry?.graphPlanAvailable ?? false;
+    const graphPlanAvailable =
+      proofEntry?.graphPlanAvailable === true ||
+      hasModuleTargetedGraphPlan(module, input.moduleTargetedGraphPlan);
     const derivedPlanAvailable =
       proofEntry?.derivedPlanAvailable === true ||
       hasModuleTargetedDerivedPlan(module, input.moduleTargetedDerivedPlan);
@@ -368,6 +388,17 @@ function hasModuleTargetedDerivedPlan(
 ): boolean {
   return (
     moduleTargetedDerivedPlan?.derivedEntries.some((entry) =>
+      entry.targetModules.includes(module),
+    ) ?? false
+  );
+}
+
+function hasModuleTargetedGraphPlan(
+  module: PreviewModule,
+  moduleTargetedGraphPlan: ModuleGraphPlanStage | undefined,
+): boolean {
+  return (
+    moduleTargetedGraphPlan?.graphEntries.some((entry) =>
       entry.targetModules.includes(module),
     ) ?? false
   );
