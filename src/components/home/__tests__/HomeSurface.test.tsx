@@ -12,6 +12,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { HomeSurface } from "@/components/home/HomeSurface";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
 import type { HomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
+import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 
 const payload = {
   tenant: {
@@ -341,6 +342,120 @@ const v6Browser = {
   },
 } satisfies HomeV6ContextBrowser;
 
+const setupControl = {
+  tenant: {
+    tenantKey: "apexretail",
+    displayName: "Retail Demo",
+    coverName: "Retail Demo",
+    mode: "setup",
+    realOrSyntheticStatus: "demo_safe_synthetic",
+  },
+  activeTenantAccess: {
+    activeVersionId: null,
+    lastPromotedAt: null,
+    source: "active tenant access layer version pointer is not wired in PR22",
+    status: "unknown",
+  },
+  candidateTenantDataVersion: {
+    candidateVersionId: null,
+    status: "not-created",
+    createdAt: null,
+    promotionEnabled: false,
+    promotionGateStatus: "blocked",
+    operatorApprovalRequired: true,
+    activeTenantAccessLayerUpdated: false,
+  },
+  uploadState: {
+    uploadedFiles: 8,
+    stagedFiles: 0,
+    parsedFiles: 0,
+    mappedFiles: 0,
+    validatedFiles: 0,
+    quarantinedRecords: 0,
+    unmappedFields: 63,
+  },
+  evidenceRegistry: {
+    evidenceSources: 8,
+    evidenceItems: 240,
+    evidenceGaps: 63,
+  },
+  canonicalFacts: {
+    canonicalObjects: 512,
+    canonicalAttributes: 2783,
+    factVersions: 0,
+  },
+  relationshipGraph: {
+    graphObjects: 320,
+    graphRelationships: 700,
+    unresolvedRelationships: 18,
+  },
+  derivedIntelligence: {
+    derivedInsights: 0,
+    answerabilityScores: 0,
+    readinessScores: 12,
+  },
+  moduleReadiness: {
+    home: {
+      status: "partially-ready",
+      candidatePreviewAvailable: false,
+      runtimeActiveAvailable: false,
+      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      lastProof: null,
+    },
+    intelligence: {
+      status: "blocked",
+      candidatePreviewAvailable: false,
+      runtimeActiveAvailable: false,
+      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      lastProof: null,
+    },
+    moves: {
+      status: "blocked",
+      candidatePreviewAvailable: false,
+      runtimeActiveAvailable: false,
+      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      lastProof: null,
+    },
+    source: {
+      status: "blocked",
+      candidatePreviewAvailable: false,
+      runtimeActiveAvailable: false,
+      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      lastProof: null,
+    },
+    tower: {
+      status: "blocked",
+      candidatePreviewAvailable: false,
+      runtimeActiveAvailable: false,
+      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      lastProof: null,
+    },
+  },
+  promotionControl: {
+    promotionEnabled: false,
+    operatorApprovalRequired: true,
+    rollbackPlanRequired: true,
+    blockers: ["Promotion gate has not run."],
+    lastGateRun: null,
+  },
+  guardrails: {
+    productionTenantDataWritten: false,
+    activeTenantAccessLayerUpdated: false,
+    candidatePromoted: false,
+    moduleRuntimeConsumptionChanged: false,
+    candidateReadByDefault: false,
+    directActivePromotionBlocked: true,
+  },
+  legacyImportPaths: [],
+  sourceOfTruth: {
+    activeSource: "not yet wired to active tenant access layer",
+    candidateSource: "not yet wired to candidate tenant data versions",
+    readinessSource: "setup inventory snapshot plus source-document inventory",
+    missingSources: ["candidate tenant data versions", "active tenant access layer version pointer"],
+    caveats: ["Uploaded/source files are not treated as active facts by setup-control."],
+  },
+} satisfies AdminSetupControlResponse;
+
 describe("HomeSurface — Explorer context browser", () => {
   it("renders Home as an Explorer-first context browser with scoped aVa", () => {
     const { container } = render(
@@ -356,8 +471,16 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByTestId("home-context-rail")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-dock-panel")).not.toBeInTheDocument();
     expect(screen.getByText("Context Explorer")).toBeInTheDocument();
+    expect(screen.getByText("Home · Enterprise Knowledge")).toBeInTheDocument();
+    expect(screen.getByText("Active Home context")).toBeInTheDocument();
     expect(screen.getByText("Enterprise overview")).toBeInTheDocument();
     expect(screen.queryByText("Context loaded and mapped")).not.toBeInTheDocument();
+    expect(screen.getByTestId("home-enterprise-knowledge-snapshot")).toBeInTheDocument();
+    expect(screen.getByText("Enterprise Knowledge Snapshot")).toBeInTheDocument();
+    expect(screen.getByText("Evidence Coverage")).toBeInTheDocument();
+    expect(screen.getByText("Answerability")).toBeInTheDocument();
+    expect(screen.getByText("Top Gaps")).toBeInTheDocument();
+    expect(screen.getByText("Ready Areas")).toBeInTheDocument();
     expect(container.querySelectorAll(".hx2-ring")).toHaveLength(1);
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
       "aria-selected",
@@ -369,6 +492,52 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByRole("tab", { name: "Relationships" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
     expect(screen.getByText(/Home answers from loaded context/)).toBeInTheDocument();
+  });
+
+  it("binds Home status panels to setup-control when supplied", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        setupControl={setupControl}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    expect(
+      screen.getByText(/active tenant access layer version pointer is not wired in PR22/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("512")).toBeInTheDocument();
+    expect(screen.getByText("63")).toBeInTheDocument();
+    expect(screen.getByText(/partially ready/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/active tenant access layer version pointer/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
+  });
+
+  it("shows candidate preview only when explicitly enabled", () => {
+    const { rerender } = render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    expect(screen.queryByText(/Candidate Preview/)).not.toBeInTheDocument();
+
+    rerender(
+      <HomeSurface
+        candidatePreviewEnabled
+        clientKey="apexretail"
+        payload={payload}
+        setupControl={setupControl}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    expect(screen.getByText(/Candidate Preview — inactive data/)).toBeInTheDocument();
+    expect(screen.getByText(/not active tenant truth/i)).toBeInTheDocument();
+    expect(screen.getByText(/no inactive candidate tenant version is available/i)).toBeInTheDocument();
   });
 
   it("selects a context area from the Explorer tree and defaults the detail view to Summary", () => {

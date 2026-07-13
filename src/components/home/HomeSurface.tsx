@@ -23,6 +23,7 @@ import type {
   HomeV6BrowserPreview,
   HomeV6ContextBrowser,
 } from "@/lib/home/v6-context-browser";
+import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -122,6 +123,15 @@ const CSS = `
 .homex .hx2-stat{min-width:98px;border:1px solid #e7e3da;border-radius:8px;background:#fbfaf7;padding:9px 11px}
 .homex .hx2-stat span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7b7a72}
 .homex .hx2-stat strong{display:block;margin-top:3px;font-family:var(--font-fraunces),Georgia,serif;font-size:19px;color:#111827}
+.homex .hx2-status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;border-bottom:1px solid #e7e3da;background:#fff;padding:14px 24px}
+.homex .hx2-statusText{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:#536073;font-size:12.5px}
+.homex .hx2-statePill{display:inline-flex;align-items:center;gap:7px;border:1px solid #dce8dc;border-radius:999px;background:#f1fbf5;color:#126449;font-weight:800;font-size:11.5px;padding:6px 10px}
+.homex .hx2-statePill i{width:8px;height:8px;border-radius:50%;background:#1f9d6a}
+.homex .hx2-statusActions{display:flex;gap:8px;align-items:center}
+.homex .hx2-statusActions a,.homex .hx2-statusActions button{border:1px solid #ded8ca;border-radius:8px;background:#fff;color:#13213b;font:inherit;font-weight:800;font-size:12px;padding:9px 12px;text-decoration:none}
+.homex .hx2-statusActions .primary{background:#07162f;color:#fff;border-color:#07162f}
+.homex .hx2-candidateBanner{border-bottom:1px solid #e7d7ae;background:#fff8e7;color:#6f4f12;padding:10px 24px;font-size:13px;line-height:1.45}
+.homex .hx2-candidateBanner strong{color:#3f2f0a}
 .homex .hx2-shell{min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 330px;gap:0;overflow:hidden}
 .homex .hx2-explorer{min-height:0;overflow:auto;border-right:1px solid #e7e3da;background:#f6f3ed;padding:16px}
 .homex .hx2-explorerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
@@ -162,6 +172,32 @@ const CSS = `
 .homex .hx2-example{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid #eee9dd;padding:10px 0}
 .homex .hx2-example span,.homex .hx2-relRow .node{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#dff5ef;color:#126449;font-weight:800;font-size:12px}
 .homex .hx2-example p{margin:1px 0 0;color:#111827;line-height:1.45}
+.homex .hx2-knowledgeGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:18px}
+.homex .hx2-knowledgeStack{display:grid;gap:14px}
+.homex .hx2-knowledgeCard{border:1px solid #e7e3da;border-radius:12px;background:#fff;padding:16px}
+.homex .hx2-knowledgeCard h2{font-family:var(--font-fraunces),Georgia,serif;font-size:20px;font-weight:600;margin:0 0 8px;color:#111827}
+.homex .hx2-knowledgeCard p{margin:0;color:#4b5563;font-size:13px;line-height:1.55}
+.homex .hx2-snapshotRows{display:grid;gap:9px;margin-top:12px}
+.homex .hx2-snapshotRow{display:grid;grid-template-columns:140px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:12.5px;color:#536073}
+.homex .hx2-snapshotRow span:first-child{font-weight:800;color:#111827}
+.homex .hx2-snapshotRow div{height:8px;border-radius:999px;background:#eee9dd;overflow:hidden}
+.homex .hx2-snapshotRow i{display:block;height:100%;border-radius:999px;background:#1f9d6a}
+.homex .hx2-snapshotRow strong{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;color:#111827}
+.homex .hx2-pillGrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.homex .hx2-readinessPill{border:1px solid #ded8ca;border-radius:999px;background:#fbfaf7;padding:6px 10px;color:#334155;font-size:12px}
+.homex .hx2-readinessPill strong{color:#07162f}
+.homex .hx2-gapList{display:grid;gap:10px;margin-top:12px}
+.homex .hx2-gapItem{border:1px solid #eee9dd;border-radius:10px;background:#fff;padding:11px}
+.homex .hx2-gapItem strong{display:block;color:#111827;font-size:13px;margin-bottom:3px}
+.homex .hx2-gapItem span{display:block;color:#7b5b18;font-size:12px;line-height:1.45}
+.homex .hx2-answerability{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.homex .hx2-answerability article{border:1px solid #e7e3da;border-radius:10px;background:#fbfaf7;padding:12px}
+.homex .hx2-answerability strong{display:block;font-family:var(--font-fraunces),Georgia,serif;font-size:18px;color:#111827;margin-bottom:4px}
+.homex .hx2-answerability span{color:#536073;font-size:12.5px;line-height:1.35}
+.homex .hx2-relOverview{display:grid;gap:8px;margin-top:12px}
+.homex .hx2-relOverview div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;border:1px solid #eee9dd;border-radius:10px;background:#fbfaf7;padding:10px;color:#111827}
+.homex .hx2-relOverview span{color:#536073;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.homex .hx2-relOverview strong{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;color:#1f6b3a;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
 .homex .hx2-tableMeta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .homex .hx2-tableMeta span{border:1px solid #e7e3da;border-radius:999px;background:#fff;padding:6px 10px;color:#536073;font-size:12px}
 .homex .hx2-tabIntro{border:1px solid #e7e3da;border-radius:10px;background:#fff;padding:13px 15px;margin-bottom:12px;color:#42526b;line-height:1.5}
@@ -204,7 +240,8 @@ const CSS = `
 .homex .hx2-ask{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;margin-top:10px}
 .homex .hx2-ask input{min-width:0;border:1px solid #ded8ca;border-radius:8px;padding:10px;font:inherit;font-size:13px}
 @media(max-width:1180px){.homex .hx2-shell{grid-template-columns:260px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{flex-wrap:wrap}}
-@media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}}
+@media(max-width:900px){.homex .hx2-status,.homex .hx2-knowledgeGrid,.homex .hx2-answerability{grid-template-columns:1fr}.homex .hx2-statusActions{justify-content:flex-start;flex-wrap:wrap}}
+@media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
 `;
 
 const EMPTY_DIMS: BindingDimension[] = [];
@@ -677,17 +714,295 @@ function relationshipItems(
   });
 }
 
+interface EnterpriseKnowledgeModel {
+  totalRows: number;
+  totalSources: number;
+  totalGaps: number;
+  loadedAreas: number;
+  activeAccess: AdminSetupControlResponse["activeTenantAccess"] | null;
+  candidateVersion: AdminSetupControlResponse["candidateTenantDataVersion"] | null;
+  evidenceRegistry: AdminSetupControlResponse["evidenceRegistry"] | null;
+  canonicalFacts: AdminSetupControlResponse["canonicalFacts"] | null;
+  relationshipGraph: AdminSetupControlResponse["relationshipGraph"] | null;
+  derivedIntelligence: AdminSetupControlResponse["derivedIntelligence"] | null;
+  moduleReadiness: AdminSetupControlResponse["moduleReadiness"] | null;
+  sourceOfTruth: AdminSetupControlResponse["sourceOfTruth"] | null;
+  topCategories: Array<{ label: string; rows: number; gaps: number; areas: number }>;
+  topGaps: Array<{ area: string; label: string; count: number; whyItMatters?: string | null }>;
+  readyAreas: Array<{ label: string; score: number; rows: number; sources: number }>;
+  relationshipAreas: Array<{ label: string; rows: number; gaps: number }>;
+}
+
+function buildEnterpriseKnowledgeModel(
+  dimensions: HomeV6BrowserPreview[],
+  setupControl: AdminSetupControlResponse | null | undefined,
+): EnterpriseKnowledgeModel {
+  const categoryStats = new Map<string, { rows: number; gaps: number; areas: number }>();
+  for (const dimension of dimensions) {
+    const category = categoryForDimension(dimension.dimension);
+    const current = categoryStats.get(category) ?? { rows: 0, gaps: 0, areas: 0 };
+    current.rows += dimension.rowCount;
+    current.gaps += dimension.dataThinCells;
+    current.areas += 1;
+    categoryStats.set(category, current);
+  }
+
+  const totalRows = dimensions.reduce((sum, dimension) => sum + dimension.rowCount, 0);
+  const totalSources = new Set(dimensions.flatMap((dimension) => dimension.fileNames)).size;
+  const totalGaps = dimensions.reduce((sum, dimension) => sum + dimension.dataThinCells, 0);
+  const topCategories = [...categoryStats.entries()]
+    .map(([label, stats]) => ({ label, ...stats }))
+    .sort((left, right) => right.rows - left.rows)
+    .slice(0, 5);
+  const topGaps = dimensions
+    .flatMap((dimension) =>
+      dimension.knownGaps.map((gap) => ({
+        area: dimension.dimension,
+        label: gap.label,
+        count: gap.count,
+        whyItMatters: gap.whyItMatters,
+      })),
+    )
+    .sort((left, right) => right.count - left.count)
+    .slice(0, 5);
+  const readyAreas = dimensions
+    .map((dimension) => ({
+      label: dimension.dimension,
+      rows: dimension.rowCount,
+      sources: dimension.sourceCount,
+      score: completenessScore({
+        dimension: dimension.dimension,
+        rows: dimension.rowCount,
+        gaps: dimension.dataThinCells,
+        sources: dimension.sourceCount,
+      }),
+    }))
+    .filter((area) => area.rows > 0)
+    .sort((left, right) => right.score - left.score || right.rows - left.rows)
+    .slice(0, 6);
+  const relationshipAreas = dimensions
+    .filter((dimension) =>
+      /\b(relationship|relationships|dependency|dependencies|bridge|application|applications|system|systems|data|integration|integrations|vendor|vendors)\b/i.test(
+        dimension.dimension,
+      ),
+    )
+    .sort((left, right) => right.rowCount - left.rowCount)
+    .slice(0, 5)
+    .map((dimension) => ({
+      label: dimension.dimension,
+      rows: dimension.rowCount,
+      gaps: dimension.dataThinCells,
+    }));
+
+  return {
+    totalRows,
+    totalSources,
+    totalGaps,
+    loadedAreas: dimensions.length,
+    activeAccess: setupControl?.activeTenantAccess ?? null,
+    candidateVersion: setupControl?.candidateTenantDataVersion ?? null,
+    evidenceRegistry: setupControl?.evidenceRegistry ?? null,
+    canonicalFacts: setupControl?.canonicalFacts ?? null,
+    relationshipGraph: setupControl?.relationshipGraph ?? null,
+    derivedIntelligence: setupControl?.derivedIntelligence ?? null,
+    moduleReadiness: setupControl?.moduleReadiness ?? null,
+    sourceOfTruth: setupControl?.sourceOfTruth ?? null,
+    topCategories,
+    topGaps,
+    readyAreas,
+    relationshipAreas,
+  };
+}
+
+function statusLabel(value: string): string {
+  return value.replace(/-/g, " ");
+}
+
+function moduleReadinessRows(
+  readiness: AdminSetupControlResponse["moduleReadiness"] | null,
+) {
+  if (!readiness) return [];
+  return Object.entries(readiness).map(([module, state]) => ({
+    module,
+    status: state.status,
+    runtimeActiveAvailable: state.runtimeActiveAvailable,
+    candidatePreviewAvailable: state.candidatePreviewAvailable,
+  }));
+}
+
+function KnowledgeOverview({ model }: { model: EnterpriseKnowledgeModel }) {
+  const maxCategoryRows = Math.max(1, ...model.topCategories.map((item) => item.rows));
+  const answerableNow = model.readyAreas.filter((area) => area.score >= 70).length;
+  const needsValidation = Math.max(0, model.loadedAreas - answerableNow);
+  const moduleRows = moduleReadinessRows(model.moduleReadiness);
+  return (
+    <div className="hx2-knowledgeGrid" data-testid="home-enterprise-knowledge-snapshot">
+      <section className="hx2-knowledgeStack">
+        <article className="hx2-knowledgeCard">
+          <div className="hx2-cardKicker">Enterprise Knowledge Snapshot</div>
+          <h2>What Home knows before work moves downstream</h2>
+          <p>
+            This is the active tenant knowledge layer: known facts, source evidence,
+            gaps, and relationships that downstream modules can inspect before
+            advisory synthesis begins.
+          </p>
+          <div className="hx2-snapshotRows">
+            {model.topCategories.map((item) => (
+              <div className="hx2-snapshotRow" key={item.label}>
+                <span>{item.label}</span>
+                <div aria-hidden>
+                  <i style={{ width: `${Math.max(6, (item.rows / maxCategoryRows) * 100)}%` }} />
+                </div>
+                <strong>{shortMetric(item.rows)} facts</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="hx2-knowledgeCard">
+          <div className="hx2-cardKicker">Evidence Coverage</div>
+          <h2>Source-backed, with gaps visible</h2>
+          <p>
+            Home does not hide thin spots. It shows what is loaded, where source
+            evidence exists, and which fields still need client completion.
+          </p>
+          <div className="hx2-answerability">
+            <article>
+              <strong>
+                {shortMetric(model.canonicalFacts?.canonicalObjects ?? model.totalRows)}
+              </strong>
+              <span>
+                Known facts available for browsing
+                {model.canonicalFacts ? " from setup-control." : "."}
+              </span>
+            </article>
+            <article>
+              <strong>
+                {(model.evidenceRegistry?.evidenceSources ?? model.totalSources).toLocaleString()}
+              </strong>
+              <span>Source files mapped into the evidence view.</span>
+            </article>
+            <article>
+              <strong>
+                {shortMetric(model.evidenceRegistry?.evidenceGaps ?? model.totalGaps)}
+              </strong>
+              <span>Fields still marked as gaps or validation needs.</span>
+            </article>
+          </div>
+        </article>
+
+        <article className="hx2-knowledgeCard">
+          <div className="hx2-cardKicker">Answerability</div>
+          <h2>What this surface should answer</h2>
+          <p>
+            Home answers inventory and evidence questions: what exists, where it
+            came from, what is missing, and which context areas are ready to send
+            to Intelligence, Moves, Source, or Tower.
+          </p>
+          <div className="hx2-pillGrid">
+            <span className="hx2-readinessPill">
+              <strong>{answerableNow}</strong> ready areas
+            </span>
+            <span className="hx2-readinessPill">
+              <strong>{needsValidation}</strong> areas need validation
+            </span>
+            <span className="hx2-readinessPill">
+              <strong>Scoped</strong> aVa context only
+            </span>
+          </div>
+        </article>
+      </section>
+
+      <section className="hx2-knowledgeStack">
+        <article className="hx2-knowledgeCard">
+          <div className="hx2-cardKicker">Top Gaps</div>
+          <h2>What needs client completion</h2>
+          {model.topGaps.length > 0 ? (
+            <div className="hx2-gapList">
+              {model.topGaps.map((gap) => (
+                <div className="hx2-gapItem" key={`${gap.area}-${gap.label}`}>
+                  <strong>{gap.label}</strong>
+                  <span>
+                    {displayMetric(gap.count, `${gap.label} gap`)} missing in{" "}
+                    {gap.area}. {gap.whyItMatters ?? "Complete this before using the area for board-grade conclusions."}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No repeated missing-field pattern is visible across loaded areas.</p>
+          )}
+        </article>
+
+        <article className="hx2-knowledgeCard">
+          <div className="hx2-cardKicker">Ready Areas</div>
+          <h2>Ready areas and module posture</h2>
+          <div className="hx2-pillGrid">
+            {model.readyAreas.map((area) => (
+              <span className="hx2-readinessPill" key={area.label}>
+                <strong>{area.score}%</strong> {area.label}
+              </span>
+            ))}
+            {moduleRows.length > 0
+              ? moduleRows.map((row) => (
+                  <span className="hx2-readinessPill" key={row.module}>
+                    <strong>{statusLabel(row.status)}</strong> {row.module}
+                  </span>
+                ))
+              : (
+                  <span className="hx2-readinessPill">
+                    <strong>Not available yet</strong> module readiness
+                  </span>
+                )}
+          </div>
+          {model.sourceOfTruth?.missingSources.length ? (
+            <p style={{ marginTop: 10 }}>
+              Missing sources: {model.sourceOfTruth.missingSources.slice(0, 2).join("; ")}.
+            </p>
+          ) : null}
+        </article>
+
+        <article className="hx2-knowledgeCard">
+          <div className="hx2-cardKicker">Relationships</div>
+          <h2>Where linked context is available</h2>
+          {model.relationshipGraph ? (
+            <p>
+              Setup-control sees {shortMetric(model.relationshipGraph.graphObjects)} objects
+              and {shortMetric(model.relationshipGraph.graphRelationships)} relationships;
+              unresolved links stay visible as gaps.
+            </p>
+          ) : null}
+          {model.relationshipAreas.length > 0 ? (
+            <div className="hx2-relOverview">
+              {model.relationshipAreas.map((area) => (
+                <div key={area.label}>
+                  <span>{area.label}</span>
+                  <strong>{shortMetric(area.rows)} links</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No relationship-heavy context area is available in the active packet yet.</p>
+          )}
+        </article>
+      </section>
+    </div>
+  );
+}
+
 function ExplorerDetail({
   selected,
   preview,
   activeTab,
   onTabChange,
   overview,
+  setupControl,
 }: {
   selected: BindingDimension | null;
   preview: HomeV6BrowserPreview | null;
   activeTab: ExplorerTab;
   onTabChange: (tab: ExplorerTab) => void;
+  setupControl: AdminSetupControlResponse | null;
   overview: {
     dimensions: HomeV6BrowserPreview[];
     totalRows: number;
@@ -696,6 +1011,7 @@ function ExplorerDetail({
   };
 }) {
   const title = selected?.dimension ?? "Enterprise context overview";
+  const knowledgeModel = buildEnterpriseKnowledgeModel(overview.dimensions, setupControl);
   const summary = summarizeSelectedContext({
     dimension: selected,
     preview,
@@ -786,6 +1102,7 @@ function ExplorerDetail({
               <p>Gaps are client-to-complete fields, not confidence theater.</p>
             </article>
           </div>
+          {!selected ? <KnowledgeOverview model={knowledgeModel} /> : null}
           {examples.length > 0 ? (
             <div className="hx2-examples">
               <h2>Representative loaded rows</h2>
@@ -1078,15 +1395,23 @@ export function HomeSurface({
   payload,
   clientKey,
   v6Browser,
+  setupControl,
+  candidatePreviewEnabled = false,
 }: {
   payload: IntelligenceBindingPayload | null;
   clientKey?: string | null;
   v6Browser?: HomeV6ContextBrowser | null;
+  setupControl?: AdminSetupControlResponse | null;
+  candidatePreviewEnabled?: boolean;
 }) {
   const safePayload = useMemo(() => sanitizeVisibleStrings(payload), [payload]);
   const safeV6Browser = useMemo(
     () => sanitizeVisibleStrings(v6Browser),
     [v6Browser],
+  );
+  const safeSetupControl = useMemo(
+    () => sanitizeVisibleStrings(setupControl ?? null),
+    [setupControl],
   );
   const dims = safeV6Browser?.bindingContext ?? safePayload?.context ?? EMPTY_DIMS;
   const [dimKey, setDimKey] = useState<string | null>(null);
@@ -1107,6 +1432,27 @@ export function HomeSurface({
     (sum, dimension) => sum + dimension.dataThinCells,
     0,
   );
+  const loadedPct =
+    totalRows > 0
+      ? Math.max(
+          0,
+          Math.min(100, Math.round(((totalRows * 3) / Math.max(totalRows * 3 + totalGaps, 1)) * 100)),
+        )
+      : 0;
+  const activeAccess = safeSetupControl?.activeTenantAccess ?? null;
+  const activeAccessReady = Boolean(activeAccess?.activeVersionId);
+  const dataStatusLabel = activeAccessReady
+    ? "Active tenant truth"
+    : "Active Home context";
+  const dataStatusDetail = activeAccessReady
+    ? `Active tenant access version ${activeAccess?.activeVersionId} is available.`
+    : activeAccess?.source
+      ? `Active tenant access pointer: ${activeAccess.source}.`
+      : "Active tenant access pointer: Not available yet.";
+  const candidateState = safeSetupControl?.candidateTenantDataVersion ?? null;
+  const candidatePreviewDetail = candidateState?.candidateVersionId
+    ? `Candidate ${candidateState.candidateVersionId} is preview-only and not active tenant truth.`
+    : "Candidate preview was requested, but no inactive candidate tenant version is available through setup-control yet.";
   const explorerItems = dims
     .map((dimension) => {
       const preview = previewForDimension(safeV6Browser, dimension.dimension);
@@ -1226,12 +1572,11 @@ export function HomeSurface({
       <div className="hx2">
         <header className="hx2-enterprise">
           <div>
-            <div className="hx2-kicker">Home · Context Browser</div>
+            <div className="hx2-kicker">Home · Enterprise Knowledge</div>
             <h1>{safeV6Browser?.displayName ?? tenantDisplayName}</h1>
             <p>
-              Browse loaded enterprise context, source-backed data, evidence gaps,
-              and relationships before sending work to Intelligence, Moves, Source,
-              or Tower.
+              Browse known facts, source-backed evidence, evidence gaps, and
+              relationships before sending work to Intelligence, Moves, Source, or Tower.
             </p>
           </div>
           <div className="hx2-stats" aria-label="Home context totals">
@@ -1253,6 +1598,33 @@ export function HomeSurface({
             </div>
           </div>
         </header>
+        <section className="hx2-status" aria-label="Home data status">
+          <div className="hx2-statusText">
+            <span className="hx2-statePill">
+              <i aria-hidden />
+              {dataStatusLabel}
+            </span>
+            <span>
+              {loadedPct}% of browsed fields are loaded across{" "}
+              {dims.length.toLocaleString()} context areas; gaps stay visible for
+              review. {dataStatusDetail}
+            </span>
+          </div>
+          <div className="hx2-statusActions">
+            <button type="button">Explain context</button>
+            <a className="primary" href="/intelligence">
+              Send to Intelligence
+            </a>
+          </div>
+        </section>
+        {candidatePreviewEnabled ? (
+          <div className="hx2-candidateBanner" role="status">
+            <strong>Candidate Preview — inactive data.</strong> Home is showing an
+            explicit preview state only. {candidatePreviewDetail} It is not active
+            tenant truth. Candidate data is not used by modules unless an approved
+            promotion later changes the active access layer.
+          </div>
+        ) : null}
 
         <div className="hx2-shell">
           <aside className="hx2-explorer" data-testid="home-context-explorer">
@@ -1332,6 +1704,7 @@ export function HomeSurface({
             }}
             preview={selectedPreview}
             selected={selected}
+            setupControl={safeSetupControl}
           />
 
           <ExplorerRail

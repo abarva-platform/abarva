@@ -1,16 +1,20 @@
 import type { Metadata } from 'next';
 
 import { HomeSurface } from '@/components/home/HomeSurface';
+import { cachedInventorySnapshot } from '@/app/(maestro)/admin/_cached-helpers';
 import { AppShell } from '@/components/shell/AppShell';
 import { getActiveClientRow } from '@/lib/active-client';
+import { buildAdminSetupControlReadModel } from '@/lib/admin/setup-control';
+import { getTenantSourceFiles } from '@/lib/context-ingestion/tenant-context-read-model';
 import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getHomeV6ContextBrowser } from '@/lib/home/v6-context-browser';
 import { getHomeV7ContextBrowser } from '@/lib/home/v7-context-browser';
 import { getIntelligenceBindingPayload } from '@/lib/intelligence/binding/binding-payload';
 
 export const metadata: Metadata = {
-  title: 'Home · Context Explorer | AbarVa',
-  description: 'Browse loaded enterprise context, source-backed data, evidence gaps, and relationships.',
+  title: 'Home · Enterprise Knowledge | AbarVa',
+  description: 'Browse known facts, source-backed evidence, evidence gaps, and relationships.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +23,7 @@ export const revalidate = 0;
 type HomePageProps = {
   searchParams?: Promise<{
     client?: string | string[];
+    candidatePreview?: string | string[];
   }>;
 };
 
@@ -37,7 +42,10 @@ function bindingTenantKey(value: string | null | undefined): string | null {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const requestedClient = firstSearchParam((await searchParams)?.client);
+  const params = await searchParams;
+  const requestedClient = firstSearchParam(params?.client);
+  const candidatePreviewParam = firstSearchParam(params?.candidatePreview);
+  const candidatePreviewEnabled = candidatePreviewParam === "true";
   const activeClient = await getActiveClientRow(requestedClient).catch(() => null);
   const homeTenantKey = bindingTenantKey(activeClient?.key ?? requestedClient);
   const displayClientKey = activeClient?.key ?? homeTenantKey ?? requestedClient;
@@ -55,6 +63,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     tenantKey: activeClient?.key ?? homeTenantKey,
   }).catch(() => null);
   const browser = v7Browser ?? getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
+  const setupControl =
+    clientOption && activeClient?.key
+      ? buildAdminSetupControlReadModel({
+          tenantKey: clientOption.id,
+          displayName: activeTenantName,
+          coverName: clientOption.name,
+          snapshot: await cachedInventorySnapshot(
+            clientKeyToInventorySubstrateKey(clientOption.id),
+          ).catch(() => null),
+          sourceFiles: await getTenantSourceFiles(activeClient.id).catch(() => []),
+        })
+      : null;
 
   return (
     <AppShell
@@ -68,8 +88,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     >
       <main style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: '#FBFAF7' }}>
         <HomeSurface
+          candidatePreviewEnabled={candidatePreviewEnabled}
           clientKey={activeClient?.key ?? homeTenantKey}
           payload={binding}
+          setupControl={setupControl}
           v6Browser={browser}
         />
       </main>
