@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -63,31 +63,6 @@
       "status": "gap",
       "findings": [
         "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
-        "At least one module lacks graph-plan readiness."
-      ]
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "relationshipOperationCount": 0,
-      "relationshipSourceFiles": 8,
-      "integrationSourceFiles": 5,
-      "graphPlanAvailableForAllModules": false,
-      "status": "gap",
-      "findings": [
-        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
-        "At least one module lacks graph-plan readiness."
-      ]
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
-      "relationshipOperationCount": 0,
-      "relationshipSourceFiles": 0,
-      "integrationSourceFiles": 0,
-      "graphPlanAvailableForAllModules": false,
-      "status": "gap",
-      "findings": [
         "At least one module lacks graph-plan readiness."
       ]
     }

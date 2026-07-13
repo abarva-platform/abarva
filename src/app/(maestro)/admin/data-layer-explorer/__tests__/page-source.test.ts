@@ -39,9 +39,11 @@ describe("admin data layer explorer route", () => {
     expect(pageSource).toContain("data-guardrails");
     expect(pageSource).toContain("data-all-tenant-data-quality");
     expect(pageSource).toContain("data-reference-data-audit");
+    expect(pageSource).toContain("data-manifest-projection-audit");
     expect(pageSource).toContain("readLatestTenantQualityMatrix");
     expect(pageSource).toContain("Source richness, candidate coverage");
     expect(pageSource).toContain("Rich source exists");
+    expect(pageSource).toContain("Tenant manifest completeness");
     expect(pageSource).toContain("Production writes");
     expect(pageSource).toContain("Runtime change");
   });
@@ -51,6 +53,9 @@ describe("admin data layer explorer route", () => {
     expect(packageSource).toContain("audit:data-quality:all-tenants");
     expect(packageSource).toContain("audit:candidate-coverage:all-tenants");
     expect(packageSource).toContain("audit:tenant-isolation:data-quality");
+    expect(packageSource).toContain("audit:tenant-manifest-completeness");
+    expect(packageSource).toContain("audit:source-projection:all-tenants");
+    expect(packageSource).toContain("audit:home-ava-representation");
     expect(packageSource).toContain(
       "tsx scripts/audit/build-admin-data-layer-explorer.ts",
     );

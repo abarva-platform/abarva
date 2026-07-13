@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -39,22 +39,6 @@
       "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
       "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
       "sourcesCaveat": "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-      "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-      "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
-      "sourcesCaveat": "156 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-      "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
-      "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-      "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
-      "sourcesCaveat": "0 discovered source files across 0 domains; surface file categories and evidence signals rather than generic source labels.",
       "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
     }
   ]

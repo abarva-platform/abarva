@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tenant Manifest Completeness</title>
+  <style>
+    :root { --paper:#f8f7f4; --ink:#071225; --muted:#5b6472; --line:#ded7ca; --navy:#071a3a; --teal:#148c78; --amber:#9a6500; --red:#9f2418; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 1680px; margin:0 auto; padding: 34px 42px 72px; }
+    .eyebrow { color:var(--teal); font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    h1,h2,h3 { font-family: Georgia, "Times New Roman", serif; margin:0; letter-spacing:0; }
+    h1 { font-size:52px; line-height:1.02; max-width:1120px; }
+    h2 { font-size:30px; }
+    p { color:#334155; font-size:16px; line-height:1.55; }
+    .top { display:grid; grid-template-columns: minmax(0,1fr) 560px; gap:24px; align-items:end; border-bottom:1px solid var(--line); padding-bottom:24px; }
+    .guardrails { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .chip { border:1px solid var(--line); border-radius:8px; background:#fffdfa; padding:14px 16px; }
+    .chip span { display:block; color:#7b746b; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+    .chip strong { display:block; margin-top:6px; color:var(--teal); font-size:22px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; margin-top:24px; }
+    .tenant { background:#fffefa; border:1px solid var(--line); border-radius:10px; padding:18px; min-height:210px; }
+    .status { display:inline-flex; align-items:center; border-radius:999px; padding:5px 9px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+    .ok { background:#e0f5ec; color:#116c55; }
+    .warn { background:#fff2cf; color:#815500; }
+    .bad { background:#ffe1dc; color:#8f2117; }
+    .muted { background:#edf0f3; color:#526071; }
+    .metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
+    .metric { border-top:1px solid var(--line); padding-top:10px; }
+    .metric span { color:#7b746b; font-size:11px; text-transform:uppercase; letter-spacing:.1em; font-weight:800; }
+    .metric strong { display:block; margin-top:4px; font-size:24px; font-family: Georgia, "Times New Roman", serif; }
+    .section { margin-top:34px; background:#fffefa; border:1px solid var(--line); border-radius:10px; padding:22px; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; font-size:14px; }
+    th { text-align:left; color:#7b746b; font-size:11px; text-transform:uppercase; letter-spacing:.11em; border-bottom:1px solid var(--line); padding:10px 8px; }
+    td { border-bottom:1px solid #ece7dc; padding:11px 8px; vertical-align:top; }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; overflow-wrap:anywhere; color:#39465a; }
+    .blockers { columns:2; column-gap:28px; }
+    .blockers li { break-inside:avoid; margin:0 0 10px; color:#344054; }
+    @media (max-width: 1200px) { .top, .grid { grid-template-columns:1fr; } .blockers { columns:1; } }
+  </style>
+</head>
+<body>
+<main>
+  <section class="top">
+    <div>
+      <div class="eyebrow">Admin · Data layer proof · Read only</div>
+      <h1>Tenant Manifest Completeness and Source Projection Audit</h1>
+      <p>Shows which rich tenant source files exist, which files are actually included in candidate manifests, and where active Home/aVa context is thinner than the available source estate.</p>
+    </div>
+    <div class="guardrails">
+      <div class="chip"><span>productionTenantDataWritten</span><strong>false</strong></div><div class="chip"><span>candidatePromoted</span><strong>false</strong></div><div class="chip"><span>activeTenantAccessLayerUpdated</span><strong>false</strong></div><div class="chip"><span>moduleRuntimeBehaviorChanged</span><strong>false</strong></div><div class="chip"><span>activeTenantTruthChanged</span><strong>false</strong></div>
+    </div>
+  </section>
+  <section class="grid">
+    <article class="tenant">
+          <span class="status bad">blocked</span>
+          <h2 style="margin-top:12px">Airline Demo</h2>
+          <p>Enterprise profile: Active Home context shows fewer records than the richest discovered source for this domain.</p>
+          <div class="metrics">
+            <div class="metric"><span>Source rows</span><strong>58,236</strong></div>
+            <div class="metric"><span>Candidate rows</span><strong>53</strong></div>
+            <div class="metric"><span>Included files</span><strong>2/392</strong></div>
+            <div class="metric"><span>Home rows</span><strong>31,316</strong></div>
+          </div>
+        </article><article class="tenant">
+          <span class="status bad">blocked</span>
+          <h2 style="margin-top:12px">Healthcare Demo</h2>
+          <p>Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</p>
+          <div class="metrics">
+            <div class="metric"><span>Source rows</span><strong>22,184</strong></div>
+            <div class="metric"><span>Candidate rows</span><strong>0</strong></div>
+            <div class="metric"><span>Included files</span><strong>0/401</strong></div>
+            <div class="metric"><span>Home rows</span><strong>7,557</strong></div>
+          </div>
+        </article><article class="tenant">
+          <span class="status bad">blocked</span>
+          <h2 style="margin-top:12px">Financial Services Demo</h2>
+          <p>Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</p>
+          <div class="metrics">
+            <div class="metric"><span>Source rows</span><strong>25,961</strong></div>
+            <div class="metric"><span>Candidate rows</span><strong>0</strong></div>
+            <div class="metric"><span>Included files</span><strong>0/339</strong></div>
+            <div class="metric"><span>Home rows</span><strong>16,591</strong></div>
+          </div>
+        </article><article class="tenant">
+          <span class="status bad">blocked</span>
+          <h2 style="margin-top:12px">Retail Demo</h2>
+          <p>Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</p>
+          <div class="metrics">
+            <div class="metric"><span>Source rows</span><strong>17,548</strong></div>
+            <div class="metric"><span>Candidate rows</span><strong>0</strong></div>
+            <div class="metric"><span>Included files</span><strong>0/259</strong></div>
+            <div class="metric"><span>Home rows</span><strong>7,404</strong></div>
+          </div>
+        </article><article class="tenant">
+          <span class="status bad">blocked</span>
+          <h2 style="margin-top:12px">Lakeshore Holdings</h2>
+          <p>Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</p>
+          <div class="metrics">
+            <div class="metric"><span>Source rows</span><strong>16,617</strong></div>
+            <div class="metric"><span>Candidate rows</span><strong>0</strong></div>
+            <div class="metric"><span>Included files</span><strong>0/283</strong></div>
+            <div class="metric"><span>Home rows</span><strong>1,239</strong></div>
+          </div>
+        </article>
+  </section>
+  <section class="section">
+    <h2>Upload path alignment</h2>
+    <table>
+      <tbody>
+        <tr><th>Target process</th><td>Admin creates a tenant-scoped upload session, files land in Azure Blob, an ACA data-build job reads that exact session, and the proof bundle records every accepted/quarantined source file.</td></tr>
+        <tr><th>Canonical landing</th><td class="path">context-landing/landing/&lt;uploadSessionId&gt;/&lt;segmentKey&gt;/&lt;fileName&gt;</td></tr>
+        <tr><th>Current loader landing</th><td class="path">context-landing/landing/&lt;tenantKey&gt;/inbox/&lt;uuid&gt;-&lt;fileName&gt;</td></tr>
+        <tr><th>Legacy staging</th><td class="path">context-drops</td></tr>
+        <tr><th>Admin upload alignment</th><td><span class="status bad">not_fully_aligned</span></td></tr>
+        <tr><th>Required correction</th><td>Make admin upload, tenant packet manifest, source projection audit, and ACA data-build job use the same upload session id, segment key, source manifest, and proof bundle before any candidate regeneration or promotion.</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="section">
+    <h2>Domain projection matrix</h2>
+    <table>
+      <thead><tr><th>Tenant</th><th>Domain</th><th>Sources</th><th>Templates</th><th>Manifest</th><th>Adapter</th><th>Mapping</th><th>Home/aVa</th><th>Status</th><th>Reason</th></tr></thead>
+      <tbody>
+      <tr>
+            <td>Airline Demo</td>
+            <td>Enterprise profile</td>
+            <td>12</td>
+            <td>6</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Active Home context shows fewer records than the richest discovered source for this domain.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Business functions</td>
+            <td>6</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Organization / ownership</td>
+            <td>7</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Workforce / personas</td>
+            <td>7</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Applications / systems</td>
+            <td>11</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Data assets / data products</td>
+            <td>8</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Integrations</td>
+            <td>14</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Vendors / contracts</td>
+            <td>52</td>
+            <td>8</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Spend / value</td>
+            <td>26</td>
+            <td>6</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Programs / initiatives</td>
+            <td>290</td>
+            <td>98</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status ok">complete</span></td>
+            <td></td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>AI initiatives</td>
+            <td>7</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Risks / controls</td>
+            <td>23</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Relationships</td>
+            <td>32</td>
+            <td>13</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Evidence sources</td>
+            <td>54</td>
+            <td>11</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Metric definitions</td>
+            <td>34</td>
+            <td>6</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Infrastructure / cloud estate</td>
+            <td>15</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Source event pack</td>
+            <td>48</td>
+            <td>1</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Moves program pack</td>
+            <td>21</td>
+            <td>0</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Tower outcome pack</td>
+            <td>21</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Airline Demo</td>
+            <td>Benchmark / industry inputs</td>
+            <td>14</td>
+            <td>10</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Enterprise profile</td>
+            <td>9</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Business functions</td>
+            <td>6</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Organization / ownership</td>
+            <td>7</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Workforce / personas</td>
+            <td>11</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Applications / systems</td>
+            <td>8</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Data assets / data products</td>
+            <td>10</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Integrations</td>
+            <td>14</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Vendors / contracts</td>
+            <td>54</td>
+            <td>6</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Spend / value</td>
+            <td>23</td>
+            <td>6</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Programs / initiatives</td>
+            <td>347</td>
+            <td>61</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>AI initiatives</td>
+            <td>12</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Risks / controls</td>
+            <td>36</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Relationships</td>
+            <td>15</td>
+            <td>10</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Evidence sources</td>
+            <td>95</td>
+            <td>11</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Metric definitions</td>
+            <td>21</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Infrastructure / cloud estate</td>
+            <td>5</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Moves program pack</td>
+            <td>34</td>
+            <td>0</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Tower outcome pack</td>
+            <td>16</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Healthcare Demo</td>
+            <td>Benchmark / industry inputs</td>
+            <td>17</td>
+            <td>10</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Enterprise profile</td>
+            <td>6</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Business functions</td>
+            <td>8</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Organization / ownership</td>
+            <td>8</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Workforce / personas</td>
+            <td>9</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Applications / systems</td>
+            <td>6</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Data assets / data products</td>
+            <td>6</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Integrations</td>
+            <td>7</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Vendors / contracts</td>
+            <td>15</td>
+            <td>3</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Spend / value</td>
+            <td>245</td>
+            <td>42</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Programs / initiatives</td>
+            <td>265</td>
+            <td>19</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>AI initiatives</td>
+            <td>11</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Risks / controls</td>
+            <td>61</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Relationships</td>
+            <td>13</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Evidence sources</td>
+            <td>130</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Metric definitions</td>
+            <td>29</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Infrastructure / cloud estate</td>
+            <td>9</td>
+            <td>1</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Moves program pack</td>
+            <td>2</td>
+            <td>0</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Tower outcome pack</td>
+            <td>54</td>
+            <td>1</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Financial Services Demo</td>
+            <td>Benchmark / industry inputs</td>
+            <td>10</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Enterprise profile</td>
+            <td>3</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Business functions</td>
+            <td>4</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Organization / ownership</td>
+            <td>6</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Workforce / personas</td>
+            <td>6</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Applications / systems</td>
+            <td>6</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Data assets / data products</td>
+            <td>4</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Integrations</td>
+            <td>7</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Vendors / contracts</td>
+            <td>43</td>
+            <td>3</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Spend / value</td>
+            <td>20</td>
+            <td>3</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Programs / initiatives</td>
+            <td>235</td>
+            <td>19</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>AI initiatives</td>
+            <td>10</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Risks / controls</td>
+            <td>20</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Relationships</td>
+            <td>10</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Evidence sources</td>
+            <td>54</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Metric definitions</td>
+            <td>25</td>
+            <td>2</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Infrastructure / cloud estate</td>
+            <td>12</td>
+            <td>1</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Source event pack</td>
+            <td>1</td>
+            <td>0</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Moves program pack</td>
+            <td>3</td>
+            <td>0</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Tower outcome pack</td>
+            <td>16</td>
+            <td>1</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Retail Demo</td>
+            <td>Benchmark / industry inputs</td>
+            <td>10</td>
+            <td>5</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Enterprise profile</td>
+            <td>8</td>
+            <td>6</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Business functions</td>
+            <td>8</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Organization / ownership</td>
+            <td>8</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Workforce / personas</td>
+            <td>8</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Applications / systems</td>
+            <td>7</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Data assets / data products</td>
+            <td>7</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Integrations</td>
+            <td>8</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Vendors / contracts</td>
+            <td>57</td>
+            <td>7</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Spend / value</td>
+            <td>21</td>
+            <td>8</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Programs / initiatives</td>
+            <td>220</td>
+            <td>70</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>AI initiatives</td>
+            <td>8</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Risks / controls</td>
+            <td>39</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Relationships</td>
+            <td>20</td>
+            <td>13</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Evidence sources</td>
+            <td>35</td>
+            <td>15</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Metric definitions</td>
+            <td>29</td>
+            <td>4</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Infrastructure / cloud estate</td>
+            <td>8</td>
+            <td>3</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Source event pack</td>
+            <td>16</td>
+            <td>0</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Moves program pack</td>
+            <td>14</td>
+            <td>0</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Tower outcome pack</td>
+            <td>38</td>
+            <td>3</td>
+            <td>false</td>
+            <td>true</td>
+            <td>false</td>
+            <td>false / false</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr><tr>
+            <td>Lakeshore Holdings</td>
+            <td>Benchmark / industry inputs</td>
+            <td>15</td>
+            <td>11</td>
+            <td>false</td>
+            <td>true</td>
+            <td>true</td>
+            <td>true / true</td>
+            <td><span class="status bad">stranded</span></td>
+            <td>Source domain exists upstream but is not included in the candidate manifest.</td>
+          </tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="section">
+    <h2>SkyHarbor required source check</h2>
+    <table>
+      <thead><tr><th>Required source</th><th>Accessible</th><th>Manifest included</th><th>Rows</th><th>Path</th></tr></thead>
+      <tbody>
+      <tr><td>412-app portfolio CSV from Downloads</td><td>true</td><td>false</td><td>412</td><td class="path">/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv</td></tr><tr><td>900-row older app/system estate</td><td>true</td><td>false</td><td>900</td><td class="path">datasets/skyharbor-air-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv</td></tr><tr><td>956-row transformed app/system template</td><td>true</td><td>false</td><td>956</td><td class="path">datasets/skyharbor-air-synthetic-v6/templates/V6_05_applications_systems.csv</td></tr><tr><td>13-row current upgrade candidate app/system file</td><td>true</td><td>false</td><td>13</td><td class="path">datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710/templates/V6_05_applications_systems.csv</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="section">
+    <h2>Promotion blockers</h2>
+    <ul class="blockers">
+      <li><strong>Airline Demo:</strong> Enterprise profile: Active Home context shows fewer records than the richest discovered source for this domain.</li><li><strong>Airline Demo:</strong> Business functions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Organization / ownership: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Workforce / personas: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Applications / systems: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Data assets / data products: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Integrations: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Vendors / contracts: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Spend / value: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> AI initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Risks / controls: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Relationships: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Evidence sources: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Metric definitions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Infrastructure / cloud estate: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Source event pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Moves program pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Tower outcome pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Airline Demo:</strong> Benchmark / industry inputs: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Business functions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Organization / ownership: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Workforce / personas: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Applications / systems: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Data assets / data products: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Integrations: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Vendors / contracts: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Spend / value: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Programs / initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> AI initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Risks / controls: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Relationships: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Evidence sources: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Metric definitions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Infrastructure / cloud estate: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Moves program pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Tower outcome pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Healthcare Demo:</strong> Benchmark / industry inputs: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Business functions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Organization / ownership: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Workforce / personas: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Applications / systems: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Data assets / data products: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Integrations: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Vendors / contracts: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Spend / value: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Programs / initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> AI initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Risks / controls: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Relationships: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Evidence sources: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Metric definitions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Infrastructure / cloud estate: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Moves program pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Tower outcome pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Financial Services Demo:</strong> Benchmark / industry inputs: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Business functions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Organization / ownership: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Workforce / personas: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Applications / systems: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Data assets / data products: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Integrations: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Vendors / contracts: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Spend / value: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Programs / initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> AI initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Risks / controls: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Relationships: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Evidence sources: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Metric definitions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Infrastructure / cloud estate: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Source event pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Moves program pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Tower outcome pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Retail Demo:</strong> Benchmark / industry inputs: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Enterprise profile: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Business functions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Organization / ownership: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Workforce / personas: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Applications / systems: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Data assets / data products: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Integrations: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Vendors / contracts: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Spend / value: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Programs / initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> AI initiatives: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Risks / controls: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Relationships: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Evidence sources: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Metric definitions: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Infrastructure / cloud estate: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Source event pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Moves program pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Tower outcome pack: Source domain exists upstream but is not included in the candidate manifest.</li><li><strong>Lakeshore Holdings:</strong> Benchmark / industry inputs: Source domain exists upstream but is not included in the candidate manifest.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

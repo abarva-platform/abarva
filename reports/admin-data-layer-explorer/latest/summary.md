@@ -36,8 +36,10 @@ Not implemented:
 - Pipeline steps: 16
 - Page mappings: 9
 - Quality checks: 14
-- Guardrails: 9
-- Reference data audit: review_required
+    - Guardrails: 9
+    - Reference data audit: review_required
+    - Manifest projection audit tenants: 5
+    - Manifest projection blockers: 97
 
 ## Section Status
 
@@ -107,3 +109,17 @@ Quality signals:
 - high: The current relationship plan does not represent the dependency graph expected for a rich existing tenant. Recommended action: Add relationship mappings for system-to-owner, system-to-data-product, integration-to-system, vendor-to-system, program-to-outcome, and evidence-to-claim edges.
 - medium: Some structured inventory rows look generated rather than operationally curated. Recommended action: Run a domain consistency validator before candidate promotion and quarantine rows whose vendor, category, deployment, owner, and source evidence do not agree.
 - medium: The narrative source documents carry better current-state truth than the current candidate projection. Recommended action: Promote narrative-derived facts only after mapping them to canonical objects with citations and confidence, not as loose summary text.
+
+## Tenant Manifest Completeness And Source Projection
+
+Upload path alignment: not_fully_aligned
+
+- Airline Demo: blocked; source files 392; structured rows 58236; candidate records 53; blockers 19
+- Healthcare Demo: blocked; source files 401; structured rows 22184; candidate records 0; blockers 19
+- Financial Services Demo: blocked; source files 339; structured rows 25961; candidate records 0; blockers 19
+- Retail Demo: blocked; source files 259; structured rows 17548; candidate records 0; blockers 20
+- Lakeshore Holdings: blocked; source files 283; structured rows 16617; candidate records 0; blockers 20
+
+Excluded tenants:
+
+- northstar-clinical: Retired/excluded per operator instruction for this data-layer proof; do not process as an active tenant.

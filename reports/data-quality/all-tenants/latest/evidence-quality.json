@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -51,27 +51,6 @@
         "Narrative/source documents exist but are not represented in evidence operations.",
         "Only a thin subset of discovered source documents is represented as evidence."
       ]
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "evidenceOperationCount": 0,
-      "sourceDocumentCount": 10,
-      "evidenceRatio": 0,
-      "status": "gap",
-      "findings": [
-        "Narrative/source documents exist but are not represented in evidence operations.",
-        "Only a thin subset of discovered source documents is represented as evidence."
-      ]
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
-      "evidenceOperationCount": 0,
-      "sourceDocumentCount": 0,
-      "evidenceRatio": 0,
-      "status": "pass",
-      "findings": []
     }
   ]
 }

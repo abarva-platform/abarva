@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -86,40 +86,6 @@
         "Expand candidate packet so canonical records materially cover the discovered source estate.",
         "Add relationship mappings and prove graph-plan coverage before active truth claims.",
         "Map discovered evidence signals into candidate records with citations.",
-        "Clear promotion-gate blockers and capture operator approval."
-      ]
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "promotionGateStatus": "blocked",
-      "activeAccessMetadataPresent": false,
-      "promotionUnsafe": true,
-      "blockers": [
-        "No Moves artifacts discovered in the repository inventory.",
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
-      ],
-      "requiredBeforeActiveTruth": [
-        "Expand candidate packet so canonical records materially cover the discovered source estate.",
-        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
-        "Map discovered evidence signals into candidate records with citations.",
-        "Clear promotion-gate blockers and capture operator approval."
-      ]
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
-      "promotionGateStatus": "blocked",
-      "activeAccessMetadataPresent": false,
-      "promotionUnsafe": true,
-      "blockers": [
-        "Morgan Street appears as a Lakeshore operating-unit access boundary, not as a standalone candidate packet.",
-        "No standalone Tenant Packet manifest or candidate mapping profile is available yet."
-      ],
-      "requiredBeforeActiveTruth": [
-        "Expand candidate packet so canonical records materially cover the discovered source estate.",
-        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
         "Clear promotion-gate blockers and capture operator approval."
       ]
     }

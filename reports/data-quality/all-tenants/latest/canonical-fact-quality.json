@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -58,29 +58,6 @@
       "findings": [
         "No canonical candidate records were generated for this tenant.",
         "Canonical candidate records cover only a small fraction of discovered structured source rows."
-      ]
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "factOperationCount": 0,
-      "canonicalRecordCount": 0,
-      "sourceStructuredRows": 6032,
-      "status": "blocked",
-      "findings": [
-        "No canonical candidate records were generated for this tenant.",
-        "Canonical candidate records cover only a small fraction of discovered structured source rows."
-      ]
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
-      "factOperationCount": 0,
-      "canonicalRecordCount": 0,
-      "sourceStructuredRows": 0,
-      "status": "blocked",
-      "findings": [
-        "No canonical candidate records were generated for this tenant."
       ]
     }
   ]

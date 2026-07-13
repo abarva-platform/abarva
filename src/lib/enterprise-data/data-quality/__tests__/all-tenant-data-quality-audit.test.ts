@@ -85,9 +85,26 @@ describe("all-tenant data quality audit", () => {
     expect(report.rollup.tenantIsolationFailures).toBe(0);
   });
 
+  it("does not scan retired or non-active inventory boundaries as active tenants", () => {
+    expect(report.tenantQualityMatrix.map((row) => row.tenantKey)).not.toContain(
+      "northstar",
+    );
+    expect(report.tenantQualityMatrix.map((row) => row.tenantKey)).not.toContain(
+      "morgan-street",
+    );
+    expect(report.sourceEstateCoverage.map((row) => row.tenantKey)).not.toContain(
+      "northstar",
+    );
+    expect(report.sourceEstateCoverage.map((row) => row.tenantKey)).not.toContain(
+      "morgan-street",
+    );
+  });
+
   it("returns an embedded matrix when report files are absent from the runtime image", async () => {
     const matrix = await readLatestTenantQualityMatrix("/tmp/no-report-root");
-    expect(matrix?.rollup.sourceRichCandidateThinTenants).toBe(6);
+    expect(matrix?.rollup.sourceRichCandidateThinTenants).toBe(5);
+    expect(matrix?.tenants.map((row) => row.tenantKey)).not.toContain("northstar");
+    expect(matrix?.tenants.map((row) => row.tenantKey)).not.toContain("morgan-street");
     expect(matrix?.tenants.find((row) => row.tenantKey === "skyharbor-air")).toMatchObject({
       candidateRecordsGenerated: 53,
       relationshipOperationCount: 0,

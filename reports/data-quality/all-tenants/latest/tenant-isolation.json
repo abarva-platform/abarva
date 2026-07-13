@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -32,20 +32,6 @@
     {
       "tenantKey": "apex-retail",
       "tenantDisplayName": "Apex Retail",
-      "tenantScopedCandidateArtifacts": true,
-      "crossTenantTokenFindings": [],
-      "status": "not_available"
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "tenantScopedCandidateArtifacts": true,
-      "crossTenantTokenFindings": [],
-      "status": "not_available"
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
       "tenantScopedCandidateArtifacts": true,
       "crossTenantTokenFindings": [],
       "status": "not_available"
