@@ -107,6 +107,16 @@ function inputFor(
           title: `${moveInput.name} current-state evidence`,
           artifactType: "uploaded_evidence",
           status: "draft",
+          createdAt: "2026-07-13T09:30:00.000Z",
+          generatedAt: "2026-07-13T10:00:00.000Z",
+        },
+        {
+          id: `${moveInput.id}-artifact-2`,
+          title: `${moveInput.name} sponsor playback`,
+          artifactType: "playback_notes",
+          status: "approved",
+          createdAt: "2026-07-13T10:30:00.000Z",
+          generatedAt: null,
         },
       ],
     }),
@@ -134,7 +144,8 @@ describe("buildPhaseSuccessPackages", () => {
     expect(packages[0].body).toContain("Package Status");
     expect(packages[0].metadata.sourcePhase).toBe(2);
     expect(packages[0].metadata.targetPhase).toBe(3);
-    expect(packages[0].metadata.evidenceCutoffAt).toBe("2026-07-13T12:00:00.000Z");
+    expect(packages[0].metadata.evidenceCutoffAt).toBe("2026-07-13T10:30:00.000Z");
+    expect(packages[0].metadata.findingIds).toEqual([]);
     expect(packages[0].status).toBe("evidence_incomplete");
   });
 
