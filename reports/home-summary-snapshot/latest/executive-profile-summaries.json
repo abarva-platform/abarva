@@ -1,0 +1,597 @@
+[
+  {
+    "tenantKey": "skyharbor-air",
+    "displayName": "Airline Demo",
+    "executiveProfile": {
+      "companySummaryFacts": [
+        "Industry: Airline",
+        "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete."
+      ],
+      "businessModelSignals": [
+        "SkyHarbor Air Group",
+        "SHA-BF-001 - Operations Control Center / IROPS",
+        "SHA-BF-002 - Flight Operations",
+        "SHA-BF-003 - Crew Operations",
+        "SHA-BF-004 - Airport Customer Service"
+      ],
+      "strategicPrioritySignals": [
+        "MET-0001 - Cost-to-Income Ratio",
+        "MET-0002 - Net Promoter Score",
+        "MET-0003 - Employee Attrition Rate",
+        "MET-0004 - Forecast Accuracy",
+        "MET-0005 - EBIT Margin"
+      ],
+      "enterpriseSnapshotMetrics": [
+        {
+          "key": "evidence_items",
+          "label": "Evidence items",
+          "value": "53",
+          "detail": "Visible to the current Home context."
+        },
+        {
+          "key": "evidence_posture",
+          "label": "Evidence posture",
+          "value": "pass",
+          "detail": "Generated or synthetic records must stay clearly labeled."
+        },
+        {
+          "key": "relationship_depth",
+          "label": "Relationship depth",
+          "value": "Limited",
+          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
+        },
+        {
+          "key": "next_actions",
+          "label": "Next best actions",
+          "value": "6",
+          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+        }
+      ],
+      "contextDepthWidth": {
+        "loadedAreas": 19,
+        "loadedRecords": 14194,
+        "sourceCount": 12,
+        "evidenceCount": 53,
+        "relationshipCount": 0,
+        "visibleGaps": 94042,
+        "contextPosture": "Partial"
+      },
+      "whatAbarVaKnows": [
+        "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete.",
+        "53 evidence items are visible for the current Home context. Evidence still needs to stay attached when candidate data is expanded.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+      ],
+      "whatIsMissing": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "Expand candidate packet so canonical records materially cover the discovered source estate."
+      ],
+      "safeToAsk": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "doNotRelyYet": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "recommendedNextDataActions": [
+        "Finish projecting the richer applications, systems, integration, and relationship source into an inactive candidate, attach evidence, validate weak rows, and keep it inactive until controls pass."
+      ],
+      "moduleImpact": [
+        {
+          "module": "Home",
+          "status": "usable with caveats",
+          "explanation": "Home can explain current context, visible sources, gaps, caveats, and answerability."
+        },
+        {
+          "module": "Intelligence",
+          "status": "usable with caveats",
+          "explanation": "Intelligence can synthesize only with explicit caveats about partial coverage and missing relationships."
+        },
+        {
+          "module": "Moves",
+          "status": "limited",
+          "explanation": "Moves should wait for program, owner, value, dependency, and evidence context before using this as execution guidance."
+        },
+        {
+          "module": "Source",
+          "status": "limited",
+          "explanation": "Source should not infer sourcing strategy or commercial savings unless vendor, contract, scope, and commercial evidence is loaded."
+        },
+        {
+          "module": "Tower",
+          "status": "limited",
+          "explanation": "Tower should not claim realized outcomes unless measured outcome records are available and evidence-backed."
+        }
+      ]
+    }
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "displayName": "Lakeshore Holdings",
+    "executiveProfile": {
+      "companySummaryFacts": [
+        "Industry: Diversified Holdings",
+        "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+      ],
+      "businessModelSignals": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-FN-INVEST - Investments and Portfolio Management"
+      ],
+      "strategicPrioritySignals": [
+        "LH-MET-TOTAL-IT-BUDGET - FY26 direct IT budget",
+        "LH-MET-RUN-BUDGET - FY26 run budget",
+        "LH-MET-CHANGE-BUDGET - FY26 change budget",
+        "LH-MET-SPEND-YTD - FY26 spend to date",
+        "LH-MET-PROGRAM-BUDGET - Program committed budget"
+      ],
+      "enterpriseSnapshotMetrics": [
+        {
+          "key": "evidence_items",
+          "label": "Evidence items",
+          "value": "0",
+          "detail": "Visible to the current Home context."
+        },
+        {
+          "key": "evidence_posture",
+          "label": "Evidence posture",
+          "value": "pass",
+          "detail": "Generated or synthetic records must stay clearly labeled."
+        },
+        {
+          "key": "relationship_depth",
+          "label": "Relationship depth",
+          "value": "Limited",
+          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
+        },
+        {
+          "key": "next_actions",
+          "label": "Next best actions",
+          "value": "9",
+          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+        }
+      ],
+      "contextDepthWidth": {
+        "loadedAreas": 19,
+        "loadedRecords": 2054,
+        "sourceCount": 12,
+        "evidenceCount": 0,
+        "relationshipCount": 0,
+        "visibleGaps": 0,
+        "contextPosture": "Partial"
+      },
+      "whatAbarVaKnows": [
+        "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
+        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+      ],
+      "whatIsMissing": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "tenant-packet projection"
+      ],
+      "safeToAsk": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "doNotRelyYet": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "recommendedNextDataActions": [
+        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+      ],
+      "moduleImpact": [
+        {
+          "module": "Home",
+          "status": "usable with caveats",
+          "explanation": "Home can explain current context, visible sources, gaps, caveats, and answerability."
+        },
+        {
+          "module": "Intelligence",
+          "status": "usable with caveats",
+          "explanation": "Intelligence can synthesize only with explicit caveats about partial coverage and missing relationships."
+        },
+        {
+          "module": "Moves",
+          "status": "limited",
+          "explanation": "Moves should wait for program, owner, value, dependency, and evidence context before using this as execution guidance."
+        },
+        {
+          "module": "Source",
+          "status": "limited",
+          "explanation": "Source should not infer sourcing strategy or commercial savings unless vendor, contract, scope, and commercial evidence is loaded."
+        },
+        {
+          "module": "Tower",
+          "status": "limited",
+          "explanation": "Tower should not claim realized outcomes unless measured outcome records are available and evidence-backed."
+        }
+      ]
+    }
+  },
+  {
+    "tenantKey": "meridian-health",
+    "displayName": "Healthcare Demo",
+    "executiveProfile": {
+      "companySummaryFacts": [
+        "Industry: Healthcare",
+        "Meridian Health has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+      ],
+      "businessModelSignals": [
+        "Healthcare Demo",
+        "MER-BF-001 - Ambulatory and Primary Care",
+        "MER-BF-002 - Hospital Operations",
+        "MER-BF-003 - Health Plan Operations",
+        "MER-BF-004 - Pharmacy Services"
+      ],
+      "strategicPrioritySignals": [
+        "MERIDIANHEALTH-MET-0001 - Healthcare Demo benefit realization against committed value metric 1",
+        "MERIDIANHEALTH-MET-0002 - Healthcare Demo elapsed time for target process metric 2",
+        "MERIDIANHEALTH-MET-0003 - Healthcare Demo open control and governance pressure metric 3",
+        "MERIDIANHEALTH-MET-0004 - Healthcare Demo active usage of changed workflow metric 4",
+        "MERIDIANHEALTH-MET-0005 - Healthcare Demo unit cost across served population or customer journey metric 5"
+      ],
+      "enterpriseSnapshotMetrics": [
+        {
+          "key": "evidence_items",
+          "label": "Evidence items",
+          "value": "0",
+          "detail": "Visible to the current Home context."
+        },
+        {
+          "key": "evidence_posture",
+          "label": "Evidence posture",
+          "value": "gap",
+          "detail": "Narrative/source documents exist but are not represented in evidence operations."
+        },
+        {
+          "key": "relationship_depth",
+          "label": "Relationship depth",
+          "value": "Limited",
+          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
+        },
+        {
+          "key": "next_actions",
+          "label": "Next best actions",
+          "value": "10",
+          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+        }
+      ],
+      "contextDepthWidth": {
+        "loadedAreas": 19,
+        "loadedRecords": 3369,
+        "sourceCount": 12,
+        "evidenceCount": 0,
+        "relationshipCount": 0,
+        "visibleGaps": 0,
+        "contextPosture": "Partial"
+      },
+      "whatAbarVaKnows": [
+        "Meridian Health has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
+        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+      ],
+      "whatIsMissing": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "tenant-packet projection"
+      ],
+      "safeToAsk": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "doNotRelyYet": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "recommendedNextDataActions": [
+        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+      ],
+      "moduleImpact": [
+        {
+          "module": "Home",
+          "status": "usable with caveats",
+          "explanation": "Home can explain current context, visible sources, gaps, caveats, and answerability."
+        },
+        {
+          "module": "Intelligence",
+          "status": "usable with caveats",
+          "explanation": "Intelligence can synthesize only with explicit caveats about partial coverage and missing relationships."
+        },
+        {
+          "module": "Moves",
+          "status": "limited",
+          "explanation": "Moves should wait for program, owner, value, dependency, and evidence context before using this as execution guidance."
+        },
+        {
+          "module": "Source",
+          "status": "limited",
+          "explanation": "Source should not infer sourcing strategy or commercial savings unless vendor, contract, scope, and commercial evidence is loaded."
+        },
+        {
+          "module": "Tower",
+          "status": "limited",
+          "explanation": "Tower should not claim realized outcomes unless measured outcome records are available and evidence-backed."
+        }
+      ]
+    }
+  },
+  {
+    "tenantKey": "first-capital",
+    "displayName": "Financial Services Demo",
+    "executiveProfile": {
+      "companySummaryFacts": [
+        "Industry: Financial Services",
+        "First Capital has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+      ],
+      "businessModelSignals": [
+        "Financial Services Demo",
+        "FC-BF-001 - Consumer Banking & Deposits",
+        "FC-BF-002 - Commercial & Corporate Banking",
+        "FC-BF-003 - Cards & Payments",
+        "FC-BF-004 - Wealth & Asset Management"
+      ],
+      "strategicPrioritySignals": [
+        "FIRSTCAPITAL-MET-0001 - Financial Services Demo benefit realization against committed value metric 1",
+        "FIRSTCAPITAL-MET-0002 - Financial Services Demo elapsed time for target process metric 2",
+        "FIRSTCAPITAL-MET-0003 - Financial Services Demo open control and governance pressure metric 3",
+        "FIRSTCAPITAL-MET-0004 - Financial Services Demo active usage of changed workflow metric 4",
+        "FIRSTCAPITAL-MET-0005 - Financial Services Demo unit cost across served population or customer journey metric 5"
+      ],
+      "enterpriseSnapshotMetrics": [
+        {
+          "key": "evidence_items",
+          "label": "Evidence items",
+          "value": "0",
+          "detail": "Visible to the current Home context."
+        },
+        {
+          "key": "evidence_posture",
+          "label": "Evidence posture",
+          "value": "pass",
+          "detail": "Generated or synthetic records must stay clearly labeled."
+        },
+        {
+          "key": "relationship_depth",
+          "label": "Relationship depth",
+          "value": "Limited",
+          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
+        },
+        {
+          "key": "next_actions",
+          "label": "Next best actions",
+          "value": "9",
+          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+        }
+      ],
+      "contextDepthWidth": {
+        "loadedAreas": 19,
+        "loadedRecords": 5415,
+        "sourceCount": 12,
+        "evidenceCount": 0,
+        "relationshipCount": 0,
+        "visibleGaps": 0,
+        "contextPosture": "Partial"
+      },
+      "whatAbarVaKnows": [
+        "First Capital has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
+        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+      ],
+      "whatIsMissing": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "tenant-packet projection"
+      ],
+      "safeToAsk": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "doNotRelyYet": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "recommendedNextDataActions": [
+        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+      ],
+      "moduleImpact": [
+        {
+          "module": "Home",
+          "status": "usable with caveats",
+          "explanation": "Home can explain current context, visible sources, gaps, caveats, and answerability."
+        },
+        {
+          "module": "Intelligence",
+          "status": "usable with caveats",
+          "explanation": "Intelligence can synthesize only with explicit caveats about partial coverage and missing relationships."
+        },
+        {
+          "module": "Moves",
+          "status": "limited",
+          "explanation": "Moves should wait for program, owner, value, dependency, and evidence context before using this as execution guidance."
+        },
+        {
+          "module": "Source",
+          "status": "limited",
+          "explanation": "Source should not infer sourcing strategy or commercial savings unless vendor, contract, scope, and commercial evidence is loaded."
+        },
+        {
+          "module": "Tower",
+          "status": "limited",
+          "explanation": "Tower should not claim realized outcomes unless measured outcome records are available and evidence-backed."
+        }
+      ]
+    }
+  },
+  {
+    "tenantKey": "apex-retail",
+    "displayName": "Retail Demo",
+    "executiveProfile": {
+      "companySummaryFacts": [
+        "Industry: Retail",
+        "Apex Retail has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+      ],
+      "businessModelSignals": [
+        "Retail Demo",
+        "APX-BF-001 - Store Operations",
+        "APX-BF-002 - Digital Commerce",
+        "APX-BF-003 - Merchandising",
+        "APX-BF-004 - Supply Chain and Fulfillment"
+      ],
+      "strategicPrioritySignals": [
+        "APEXRETAIL-MET-0001 - Retail Demo benefit realization against committed value metric 1",
+        "APEXRETAIL-MET-0002 - Retail Demo elapsed time for target process metric 2",
+        "APEXRETAIL-MET-0003 - Retail Demo open control and governance pressure metric 3",
+        "APEXRETAIL-MET-0004 - Retail Demo active usage of changed workflow metric 4",
+        "APEXRETAIL-MET-0005 - Retail Demo unit cost across served population or customer journey metric 5"
+      ],
+      "enterpriseSnapshotMetrics": [
+        {
+          "key": "evidence_items",
+          "label": "Evidence items",
+          "value": "0",
+          "detail": "Visible to the current Home context."
+        },
+        {
+          "key": "evidence_posture",
+          "label": "Evidence posture",
+          "value": "gap",
+          "detail": "Narrative/source documents exist but are not represented in evidence operations."
+        },
+        {
+          "key": "relationship_depth",
+          "label": "Relationship depth",
+          "value": "Limited",
+          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
+        },
+        {
+          "key": "next_actions",
+          "label": "Next best actions",
+          "value": "10",
+          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+        }
+      ],
+      "contextDepthWidth": {
+        "loadedAreas": 19,
+        "loadedRecords": 3601,
+        "sourceCount": 12,
+        "evidenceCount": 0,
+        "relationshipCount": 0,
+        "visibleGaps": 0,
+        "contextPosture": "Partial"
+      },
+      "whatAbarVaKnows": [
+        "Apex Retail has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
+        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+      ],
+      "whatIsMissing": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "tenant-packet projection"
+      ],
+      "safeToAsk": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "doNotRelyYet": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "recommendedNextDataActions": [
+        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+      ],
+      "moduleImpact": [
+        {
+          "module": "Home",
+          "status": "usable with caveats",
+          "explanation": "Home can explain current context, visible sources, gaps, caveats, and answerability."
+        },
+        {
+          "module": "Intelligence",
+          "status": "usable with caveats",
+          "explanation": "Intelligence can synthesize only with explicit caveats about partial coverage and missing relationships."
+        },
+        {
+          "module": "Moves",
+          "status": "limited",
+          "explanation": "Moves should wait for program, owner, value, dependency, and evidence context before using this as execution guidance."
+        },
+        {
+          "module": "Source",
+          "status": "limited",
+          "explanation": "Source should not infer sourcing strategy or commercial savings unless vendor, contract, scope, and commercial evidence is loaded."
+        },
+        {
+          "module": "Tower",
+          "status": "limited",
+          "explanation": "Tower should not claim realized outcomes unless measured outcome records are available and evidence-backed."
+        }
+      ]
+    }
+  }
+]

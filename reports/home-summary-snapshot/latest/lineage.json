@@ -1,0 +1,162 @@
+[
+  {
+    "tenantKey": "skyharbor-air",
+    "displayName": "Airline Demo",
+    "lineage": {
+      "generatedAt": "2026-07-13T16:54:07.407Z",
+      "generatedBy": "home_summary_engine",
+      "inputFingerprint": "8e38849c01ad8eb9fdf9021ef7852154ab22770390528740c6700adc0fe575f9",
+      "tenantDataVersionId": null,
+      "candidateVersionId": null,
+      "sourceSnapshotIds": [
+        "skyharbor-air-synthetic-v6",
+        "V6_01_enterprise_profile.csv",
+        "V6_02_business_functions.csv",
+        "V6_04_workforce_personas.csv",
+        "V6_14_metric_definitions.csv",
+        "V6_05_applications_systems.csv",
+        "V6_06_data_assets_integrations.csv",
+        "V6_11_operations_risk_controls.csv",
+        "V6_07_vendors_contracts.csv",
+        "V6_08_spend_value.csv",
+        "V6_10_ai_initiatives.csv",
+        "V6_09_programs_initiatives.csv",
+        "V6_15_industry_corpus_patterns.csv",
+        "2026-07-13T16:46:29.019Z"
+      ],
+      "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+      "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
+      "answerabilitySnapshotId": "partial",
+      "mode": "active_home_context",
+      "status": "partial"
+    }
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "displayName": "Lakeshore Holdings",
+    "lineage": {
+      "generatedAt": "2026-07-13T16:54:07.407Z",
+      "generatedBy": "home_summary_engine",
+      "inputFingerprint": "c259cee4eeba1db0c1f9c107e56e0bc71ebbeee3c281cd07b4192f5e2042077f",
+      "tenantDataVersionId": null,
+      "candidateVersionId": null,
+      "sourceSnapshotIds": [
+        "lakeshore-holdings-synthetic-v6",
+        "V6_01_enterprise_profile.csv",
+        "V6_02_business_functions.csv",
+        "V6_04_workforce_personas.csv",
+        "V6_14_metric_definitions.csv",
+        "V6_05_applications_systems.csv",
+        "V6_06_data_assets_integrations.csv",
+        "V6_11_operations_risk_controls.csv",
+        "V6_07_vendors_contracts.csv",
+        "V6_08_spend_value.csv",
+        "V6_10_ai_initiatives.csv",
+        "V6_09_programs_initiatives.csv",
+        "V6_15_industry_corpus_patterns.csv",
+        "2026-07-13T16:46:29.019Z"
+      ],
+      "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+      "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
+      "answerabilitySnapshotId": "partial",
+      "mode": "active_home_context",
+      "status": "partial"
+    }
+  },
+  {
+    "tenantKey": "meridian-health",
+    "displayName": "Healthcare Demo",
+    "lineage": {
+      "generatedAt": "2026-07-13T16:54:07.407Z",
+      "generatedBy": "home_summary_engine",
+      "inputFingerprint": "eeac6a505fe94083fc736fc07974fb02d2ac473032176c1ba74c0ea9b5a81150",
+      "tenantDataVersionId": null,
+      "candidateVersionId": null,
+      "sourceSnapshotIds": [
+        "meridian-health-synthetic-v6",
+        "V6_01_enterprise_profile.csv",
+        "V6_02_business_functions.csv",
+        "V6_04_workforce_personas.csv",
+        "V6_14_metric_definitions.csv",
+        "V6_05_applications_systems.csv",
+        "V6_06_data_assets_integrations.csv",
+        "V6_11_operations_risk_controls.csv",
+        "V6_07_vendors_contracts.csv",
+        "V6_08_spend_value.csv",
+        "V6_10_ai_initiatives.csv",
+        "V6_09_programs_initiatives.csv",
+        "V6_15_industry_corpus_patterns.csv",
+        "2026-07-13T16:46:29.019Z"
+      ],
+      "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+      "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
+      "answerabilitySnapshotId": "partial",
+      "mode": "active_home_context",
+      "status": "partial"
+    }
+  },
+  {
+    "tenantKey": "first-capital",
+    "displayName": "Financial Services Demo",
+    "lineage": {
+      "generatedAt": "2026-07-13T16:54:07.407Z",
+      "generatedBy": "home_summary_engine",
+      "inputFingerprint": "245c476670b7ec531e42be1f98aba067379b35661ee51ea82969f833b638bc8f",
+      "tenantDataVersionId": null,
+      "candidateVersionId": null,
+      "sourceSnapshotIds": [
+        "first-capital-financial-synthetic-v6",
+        "V6_01_enterprise_profile.csv",
+        "V6_02_business_functions.csv",
+        "V6_04_workforce_personas.csv",
+        "V6_14_metric_definitions.csv",
+        "V6_05_applications_systems.csv",
+        "V6_06_data_assets_integrations.csv",
+        "V6_11_operations_risk_controls.csv",
+        "V6_07_vendors_contracts.csv",
+        "V6_08_spend_value.csv",
+        "V6_10_ai_initiatives.csv",
+        "V6_09_programs_initiatives.csv",
+        "V6_15_industry_corpus_patterns.csv",
+        "2026-07-13T16:46:29.019Z"
+      ],
+      "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+      "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
+      "answerabilitySnapshotId": "partial",
+      "mode": "active_home_context",
+      "status": "partial"
+    }
+  },
+  {
+    "tenantKey": "apex-retail",
+    "displayName": "Retail Demo",
+    "lineage": {
+      "generatedAt": "2026-07-13T16:54:07.407Z",
+      "generatedBy": "home_summary_engine",
+      "inputFingerprint": "0202357fc5ded2bf29d792543e25a8f52aac36b68aaf8c3e712dbffdd11e9325",
+      "tenantDataVersionId": null,
+      "candidateVersionId": null,
+      "sourceSnapshotIds": [
+        "apex-retail-synthetic-v6",
+        "V6_01_enterprise_profile.csv",
+        "V6_02_business_functions.csv",
+        "V6_04_workforce_personas.csv",
+        "V6_14_metric_definitions.csv",
+        "V6_05_applications_systems.csv",
+        "V6_06_data_assets_integrations.csv",
+        "V6_11_operations_risk_controls.csv",
+        "V6_07_vendors_contracts.csv",
+        "V6_08_spend_value.csv",
+        "V6_10_ai_initiatives.csv",
+        "V6_09_programs_initiatives.csv",
+        "V6_15_industry_corpus_patterns.csv",
+        "2026-07-13T16:46:29.019Z"
+      ],
+      "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+      "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
+      "answerabilitySnapshotId": "partial",
+      "mode": "active_home_context",
+      "status": "partial"
+    }
+  }
+]

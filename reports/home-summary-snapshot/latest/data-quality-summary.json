@@ -1,0 +1,147 @@
+[
+  {
+    "tenantKey": "skyharbor-air",
+    "displayName": "Airline Demo",
+    "dataQualitySummary": {
+      "sourceCoverage": "pass",
+      "candidateCoverage": "Not active by default",
+      "evidenceStrength": "pass",
+      "relationshipCoverage": "gap",
+      "manifestCompleteness": "Source-rich/candidate-thin",
+      "homeAvaRepresentationWarnings": [
+        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
+        "Client validation is required before board-grade use.",
+        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
+        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+        "At least one module lacks graph-plan readiness."
+      ],
+      "promotionBlockers": [
+        "Promotion execution is disabled by default in PR9.",
+        "Operator approval has not been requested or granted.",
+        "Active Tenant Access Layer pointer update remains unavailable in this release.",
+        "Module runtime consumption remains unchanged and disabled for candidate data.",
+        "No module reads candidate data by default.",
+        "Promotion execution is disabled by default in PR9.",
+        "Operator approval has not been requested or granted.",
+        "Active Tenant Access Layer pointer update remains unavailable in this release."
+      ],
+      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+    }
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "displayName": "Lakeshore Holdings",
+    "dataQualitySummary": {
+      "sourceCoverage": "pass",
+      "candidateCoverage": "Not active by default",
+      "evidenceStrength": "pass",
+      "relationshipCoverage": "gap",
+      "manifestCompleteness": "Source-rich/candidate-thin",
+      "homeAvaRepresentationWarnings": [
+        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
+        "Client validation is required before board-grade use.",
+        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
+        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+        "At least one module lacks graph-plan readiness."
+      ],
+      "promotionBlockers": [
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval."
+      ],
+      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+    }
+  },
+  {
+    "tenantKey": "meridian-health",
+    "displayName": "Healthcare Demo",
+    "dataQualitySummary": {
+      "sourceCoverage": "pass",
+      "candidateCoverage": "Not active by default",
+      "evidenceStrength": "gap",
+      "relationshipCoverage": "gap",
+      "manifestCompleteness": "Source-rich/candidate-thin",
+      "homeAvaRepresentationWarnings": [
+        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
+        "Client validation is required before board-grade use.",
+        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
+        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+        "At least one module lacks graph-plan readiness."
+      ],
+      "promotionBlockers": [
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval."
+      ],
+      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+    }
+  },
+  {
+    "tenantKey": "first-capital",
+    "displayName": "Financial Services Demo",
+    "dataQualitySummary": {
+      "sourceCoverage": "pass",
+      "candidateCoverage": "Not active by default",
+      "evidenceStrength": "pass",
+      "relationshipCoverage": "gap",
+      "manifestCompleteness": "Source-rich/candidate-thin",
+      "homeAvaRepresentationWarnings": [
+        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
+        "Client validation is required before board-grade use.",
+        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
+        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+        "At least one module lacks graph-plan readiness."
+      ],
+      "promotionBlockers": [
+        "No Moves artifacts discovered in the repository inventory.",
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "No Moves artifacts discovered in the repository inventory.",
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims."
+      ],
+      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+    }
+  },
+  {
+    "tenantKey": "apex-retail",
+    "displayName": "Retail Demo",
+    "dataQualitySummary": {
+      "sourceCoverage": "pass",
+      "candidateCoverage": "Not active by default",
+      "evidenceStrength": "gap",
+      "relationshipCoverage": "gap",
+      "manifestCompleteness": "Source-rich/candidate-thin",
+      "homeAvaRepresentationWarnings": [
+        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
+        "Client validation is required before board-grade use.",
+        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
+        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+        "At least one module lacks graph-plan readiness."
+      ],
+      "promotionBlockers": [
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "Required packet projection and mapping profile configuration is not available yet.",
+        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval."
+      ],
+      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+    }
+  }
+]

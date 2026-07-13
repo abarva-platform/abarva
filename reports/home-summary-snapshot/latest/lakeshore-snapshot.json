@@ -1,0 +1,781 @@
+{
+  "contractVersion": "home_summary_snapshot.v1",
+  "tenantProfileHeader": {
+    "tenantId": null,
+    "tenantKey": "lakeshore-holdings",
+    "displayName": "Lakeshore Holdings",
+    "industry": "Diversified Holdings",
+    "headquarters": null,
+    "revenue": null,
+    "revenueVerified": false,
+    "employees": null,
+    "employeesVerified": false,
+    "dataOrigin": "Demo-safe",
+    "mode": "active_home_context",
+    "activeContextStatus": "Active Home context",
+    "candidatePreviewStatus": "Not active"
+  },
+  "executiveProfile": {
+    "companySummaryFacts": [
+      "Industry: Diversified Holdings",
+      "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+    ],
+    "businessModelSignals": [
+      "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+      "LH-FN-FIN - Corporate Finance and Treasury",
+      "LH-FN-HR - Corporate HR and Talent",
+      "LH-FN-LEGAL - Corporate Legal and Compliance",
+      "LH-FN-INVEST - Investments and Portfolio Management"
+    ],
+    "strategicPrioritySignals": [
+      "LH-MET-TOTAL-IT-BUDGET - FY26 direct IT budget",
+      "LH-MET-RUN-BUDGET - FY26 run budget",
+      "LH-MET-CHANGE-BUDGET - FY26 change budget",
+      "LH-MET-SPEND-YTD - FY26 spend to date",
+      "LH-MET-PROGRAM-BUDGET - Program committed budget"
+    ],
+    "enterpriseSnapshotMetrics": [
+      {
+        "key": "evidence_items",
+        "label": "Evidence items",
+        "value": "0",
+        "detail": "Visible to the current Home context."
+      },
+      {
+        "key": "evidence_posture",
+        "label": "Evidence posture",
+        "value": "pass",
+        "detail": "Generated or synthetic records must stay clearly labeled."
+      },
+      {
+        "key": "relationship_depth",
+        "label": "Relationship depth",
+        "value": "Limited",
+        "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
+      },
+      {
+        "key": "next_actions",
+        "label": "Next best actions",
+        "value": "9",
+        "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+      }
+    ],
+    "contextDepthWidth": {
+      "loadedAreas": 19,
+      "loadedRecords": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "visibleGaps": 0,
+      "contextPosture": "Partial"
+    },
+    "whatAbarVaKnows": [
+      "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
+      "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
+      "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+    ],
+    "whatIsMissing": [
+      "Full enterprise estate coverage or application rationalization",
+      "Full enterprise application rationalization",
+      "Enterprise-wide sourcing savings estimates",
+      "Realized value or Tower outcome claims",
+      "Cross-system dependency, vendor, risk, or outcome reasoning",
+      "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+      "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+      "tenant-packet projection"
+    ],
+    "safeToAsk": [
+      "Loaded facts in the active Home context",
+      "Evidence gaps",
+      "Source coverage and caveats",
+      "What is loaded in the current Home context",
+      "Which evidence and gaps are visible",
+      "Which related areas should be inspected next"
+    ],
+    "doNotRelyYet": [
+      "Full enterprise estate coverage or application rationalization",
+      "Full enterprise application rationalization",
+      "Enterprise-wide sourcing savings estimates",
+      "Realized value or Tower outcome claims",
+      "Cross-system dependency, vendor, risk, or outcome reasoning"
+    ],
+    "recommendedNextDataActions": [
+      "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+    ],
+    "moduleImpact": [
+      {
+        "module": "Home",
+        "status": "usable with caveats",
+        "explanation": "Home can explain current context, visible sources, gaps, caveats, and answerability."
+      },
+      {
+        "module": "Intelligence",
+        "status": "usable with caveats",
+        "explanation": "Intelligence can synthesize only with explicit caveats about partial coverage and missing relationships."
+      },
+      {
+        "module": "Moves",
+        "status": "limited",
+        "explanation": "Moves should wait for program, owner, value, dependency, and evidence context before using this as execution guidance."
+      },
+      {
+        "module": "Source",
+        "status": "limited",
+        "explanation": "Source should not infer sourcing strategy or commercial savings unless vendor, contract, scope, and commercial evidence is loaded."
+      },
+      {
+        "module": "Tower",
+        "status": "limited",
+        "explanation": "Tower should not claim realized outcomes unless measured outcome records are available and evidence-backed."
+      }
+    ]
+  },
+  "contextAreas": [
+    {
+      "areaKey": "business-functions",
+      "displayName": "Business Functions",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Business Functions has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "applications-systems",
+      "displayName": "Applications & Systems",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Applications & Systems has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "vendors-contracts",
+      "displayName": "Vendors & Contracts",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Vendors & Contracts has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "data-assets",
+      "displayName": "Data Assets",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Data Assets has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "integrations",
+      "displayName": "Integrations",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Integrations has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "programs-initiatives",
+      "displayName": "Programs & Initiatives",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Programs & Initiatives has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "risks-controls",
+      "displayName": "Risks & Controls",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Risks & Controls has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "metrics-kpis",
+      "displayName": "Metrics / KPIs",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Metrics / KPIs has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "evidence-sources",
+      "displayName": "Evidence Sources",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Evidence Sources has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    },
+    {
+      "areaKey": "relationships",
+      "displayName": "Relationships",
+      "executiveSummaryInputs": [
+        "Enterprise profile rows",
+        "Business functions",
+        "Workforce personas",
+        "Metric definitions",
+        "Capabilities by business function",
+        "Application and system inventory"
+      ],
+      "loadedCount": 2054,
+      "mappedCount": 2054,
+      "sourceCount": 12,
+      "evidenceCount": 0,
+      "relationshipCount": 0,
+      "examples": [
+        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
+        "LH-FN-FIN - Corporate Finance and Treasury",
+        "LH-FN-HR - Corporate HR and Talent",
+        "LH-FN-LEGAL - Corporate Legal and Compliance",
+        "LH-PER-CORP-FIN - Corporate finance analyst"
+      ],
+      "topGaps": [],
+      "evidencePosture": "Relationships has 2,054 loaded records from 12 source files.",
+      "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+      "answerability": "answerable_from_loaded_context",
+      "safeQuestions": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context"
+      ],
+      "unsupportedQuestions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims"
+      ],
+      "decisionsSupported": [
+        "Source-backed context browsing",
+        "Evidence inspection"
+      ],
+      "decisionsNotReady": [
+        "Broad advisory synthesis",
+        "Cross-domain dependency decisions"
+      ],
+      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "caveats": [
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      ]
+    }
+  ],
+  "dataQualitySummary": {
+    "sourceCoverage": "pass",
+    "candidateCoverage": "Not active by default",
+    "evidenceStrength": "pass",
+    "relationshipCoverage": "gap",
+    "manifestCompleteness": "Source-rich/candidate-thin",
+    "homeAvaRepresentationWarnings": [
+      "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
+      "Client validation is required before board-grade use.",
+      "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
+      "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+      "At least one module lacks graph-plan readiness."
+    ],
+    "promotionBlockers": [
+      "Required packet projection and mapping profile configuration is not available yet.",
+      "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+      "Required packet projection and mapping profile configuration is not available yet.",
+      "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
+      "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+      "Map discovered evidence signals into candidate records with citations.",
+      "Clear promotion-gate blockers and capture operator approval."
+    ],
+    "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+  },
+  "avaScope": {
+    "canAnswer": [
+      "Loaded facts in the active Home context",
+      "Evidence gaps",
+      "Source coverage and caveats",
+      "What is loaded in the current Home context",
+      "Which evidence and gaps are visible",
+      "Which related areas should be inspected next"
+    ],
+    "shouldCaveat": [
+      "Lakeshore Holdings has source-rich, candidate-thin coverage. 8,721 upstream source rows are not represented in candidate coverage, so Home should describe this as partial context.",
+      "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
+      "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+      "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+      "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+      "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation."
+    ],
+    "mustRefuseOrMarkUnsupported": [
+      "Full enterprise estate coverage or application rationalization",
+      "Full enterprise application rationalization",
+      "Enterprise-wide sourcing savings estimates",
+      "Realized value or Tower outcome claims",
+      "Cross-system dependency, vendor, risk, or outcome reasoning"
+    ],
+    "suggestedPrompts": [
+      "Explain this company in plain English.",
+      "What does AbarVa know?",
+      "What is missing?",
+      "What can I safely ask?",
+      "What should I not rely on yet?",
+      "What data should we load or project next?"
+    ],
+    "sourceSnapshotReference": "lakeshore-holdings:active_home_context"
+  },
+  "caveats": [
+    "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+    "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+    "Relationship panel should state that relationship projection are not yet planned despite dependency-rich source evidence.",
+    "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation.",
+    "Active tenant access pointer is not wired here; Home displays active Home context, not promoted active tenant truth."
+  ],
+  "guardrails": {
+    "deterministicBuilder": true,
+    "callsClaude": false,
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "candidatePromoted": false,
+    "moduleRuntimeConsumptionChanged": false,
+    "candidateReadByDefault": false,
+    "uploadsFiles": false,
+    "validatesFiles": false,
+    "createsCandidates": false
+  },
+  "lineage": {
+    "generatedAt": "2026-07-13T16:54:07.407Z",
+    "generatedBy": "home_summary_engine",
+    "inputFingerprint": "c259cee4eeba1db0c1f9c107e56e0bc71ebbeee3c281cd07b4192f5e2042077f",
+    "tenantDataVersionId": null,
+    "candidateVersionId": null,
+    "sourceSnapshotIds": [
+      "lakeshore-holdings-synthetic-v6",
+      "V6_01_enterprise_profile.csv",
+      "V6_02_business_functions.csv",
+      "V6_04_workforce_personas.csv",
+      "V6_14_metric_definitions.csv",
+      "V6_05_applications_systems.csv",
+      "V6_06_data_assets_integrations.csv",
+      "V6_11_operations_risk_controls.csv",
+      "V6_07_vendors_contracts.csv",
+      "V6_08_spend_value.csv",
+      "V6_10_ai_initiatives.csv",
+      "V6_09_programs_initiatives.csv",
+      "V6_15_industry_corpus_patterns.csv",
+      "2026-07-13T16:46:29.019Z"
+    ],
+    "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+    "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
+    "answerabilitySnapshotId": "partial",
+    "mode": "active_home_context",
+    "status": "partial"
+  }
+}

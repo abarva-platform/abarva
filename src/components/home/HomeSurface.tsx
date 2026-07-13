@@ -22,11 +22,9 @@ import type {
   HomeV6ContextBrowser,
 } from "@/lib/home/v6-context-browser";
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
-import type {
-  HomeContextQualityBadge,
-  HomeDataQualityModel,
-} from "@/lib/home/home-data-quality";
+import type { HomeDataQualityModel } from "@/lib/home/home-data-quality";
 import type { HomeEnglishSummary } from "@/lib/home/home-english-summary";
+import type { HomeSummarySnapshot } from "@/lib/home/home-summary-snapshot";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -172,7 +170,7 @@ const CSS = `
 .homex .hx2-answerBox.note{background:#f6fbff;border-color:#cfe4f6}
 @media(max-width:1180px){.homex .hx2-dqCards,.homex .hx2-dqExplain{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.homex .hx2-dqCards,.homex .hx2-dqExplain,.homex .hx2-dqHead,.homex .hx2-contextQuality{grid-template-columns:1fr}.homex .hx2-contextBadges{justify-content:flex-start}}
-.homex .hx2-shell{min-height:0;display:grid;grid-template-columns:255px minmax(0,1fr) 320px;gap:0;overflow:hidden}
+.homex .hx2-shell{min-height:0;display:grid;grid-template-columns:255px minmax(0,1fr);gap:0;overflow:hidden}
 .homex .hx2-explorer{min-height:0;overflow:auto;border-right:1px solid #e7e3da;background:#f6f3ed;padding:16px}
 .homex .hx2-explorerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .homex .hx2-explorerHead strong{font-family:var(--font-fraunces),Georgia,serif;font-size:18px;color:#111827}
@@ -223,6 +221,30 @@ const CSS = `
 .homex .hx2-moduleImpact{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
 .homex .hx2-moduleImpact article{border:1px solid #eee9dd;border-radius:8px;background:#fff;padding:10px;min-width:0}
 .homex .hx2-moduleImpact strong{display:block;color:#07162f;font-size:12.5px;margin-bottom:3px}.homex .hx2-moduleImpact span{display:inline-flex;border-radius:999px;background:#effaf3;color:#126449;font-size:10px;font-weight:800;padding:3px 6px;margin-bottom:6px}.homex .hx2-moduleImpact p{font-size:11.5px;line-height:1.35;color:#536073}
+.homex .hx2-profile{display:grid;gap:18px}
+.homex .hx2-profileBlock{border:1px solid #e7e3da;border-radius:12px;background:#fff;padding:18px;box-shadow:0 1px 0 rgba(20,20,18,.03)}
+.homex .hx2-profileBlockHead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid #eee9dd;padding-bottom:12px}
+.homex .hx2-profileBlockHead h2{font-family:var(--font-fraunces),Georgia,serif;font-size:22px;line-height:1.1;margin:0;color:#07162f}
+.homex .hx2-profileBlockHead p{margin:5px 0 0;color:#536073;line-height:1.45}
+.homex .hx2-profileBadge{display:inline-flex;align-items:center;border:1px solid #bddfc7;background:#effaf3;color:#126449;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:850;white-space:nowrap}
+.homex .hx2-profileStats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.homex .hx2-profileStat{border:1px solid #eee9dd;border-radius:10px;background:#fbfaf7;padding:12px;min-width:0}
+.homex .hx2-profileStat span,.homex .hx2-profileList span,.homex .hx2-depthChip span,.homex .hx2-safeCard span,.homex .hx2-actionCard span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#7b7a72;margin-bottom:6px}
+.homex .hx2-profileStat strong{display:block;color:#07162f;font-size:14px;line-height:1.35}
+.homex .hx2-profileSummary{border-left:3px solid #1f9d6a;background:#f7fff9;border-radius:9px;padding:12px 14px;color:#183b2f;line-height:1.5;margin-bottom:12px}
+.homex .hx2-profileCols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.homex .hx2-profileList{border:1px solid #eee9dd;border-radius:10px;background:#fff;padding:13px}
+.homex .hx2-profileList ul,.homex .hx2-safeCard ul{display:grid;gap:7px;margin:0;padding:0;list-style:none;color:#334155;font-size:12.5px;line-height:1.4}
+.homex .hx2-profileList li,.homex .hx2-safeCard li{position:relative;padding-left:16px}
+.homex .hx2-profileList li::before,.homex .hx2-safeCard li::before{content:"";position:absolute;left:1px;top:.64em;width:5px;height:5px;border-radius:50%;background:#1f9d6a}
+.homex .hx2-depthGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.homex .hx2-depthChip{border:1px solid #eee9dd;border-radius:10px;background:#fbfaf7;padding:12px}.homex .hx2-depthChip strong{font-family:var(--font-fraunces),Georgia,serif;font-size:23px;color:#07162f}.homex .hx2-depthChip p{margin:5px 0 0;color:#536073;font-size:12px;line-height:1.35}
+.homex .hx2-safeGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.homex .hx2-actionGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.homex .hx2-safeCard{border:1px solid #eee9dd;border-radius:10px;background:#fff;padding:13px}.homex .hx2-safeCard.safe{background:#f7fff9}.homex .hx2-safeCard.warn{background:#fffaf0}.homex .hx2-safeCard.next{background:#f6fbff}.homex .hx2-safeCard h3{font-family:var(--font-fraunces),Georgia,serif;margin:0 0 8px;font-size:18px;color:#07162f}
+.homex .hx2-snapshotCards,.homex .hx2-contextCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.homex .hx2-snapshotCard,.homex .hx2-actionCard,.homex .hx2-contextCard{border:1px solid #e7e3da;border-radius:12px;background:#fff;padding:15px;text-align:left;color:inherit;min-width:0}.homex button.hx2-snapshotCard,.homex button.hx2-actionCard,.homex button.hx2-contextCard{cursor:pointer}
+.homex .hx2-snapshotCard strong{display:block;font-family:var(--font-fraunces),Georgia,serif;font-size:24px;color:#07162f;margin-bottom:5px}.homex .hx2-snapshotCard p,.homex .hx2-actionCard p,.homex .hx2-contextCard p{margin:0;color:#536073;font-size:12.5px;line-height:1.4}.homex .hx2-actionCard strong,.homex .hx2-contextCard strong{display:block;color:#07162f;font-size:14px;margin-bottom:5px}
+.homex .hx2-contextCard small{display:block;color:#1f6b3a;font-weight:850;margin-top:9px}
 .homex .hx2-tabs{display:flex;gap:8px;align-items:end;border-bottom:1px solid #e7e3da;margin-top:18px}
 .homex .hx2-tab{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:#626a76;padding:12px 8px 10px}
 .homex .hx2-tab[aria-selected="true"]{color:#07162f;border-bottom-color:#22aeea}
@@ -286,7 +308,11 @@ const CSS = `
 .homex .hx2-relRow .edge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;color:#667085;text-transform:uppercase;letter-spacing:.08em}
 .homex .hx2-relRow strong{font-size:12px;color:#1f6b3a;white-space:nowrap}
 .homex .hx2-empty{border:1px dashed #d8d1c2;border-radius:10px;background:#fff;padding:16px;color:#536073}
-.homex .hx2-rail{min-height:0;overflow:auto;border-left:1px solid #ded8ca;background:#f5f1eb;padding:16px;display:grid;align-content:start;gap:14px}
+.homex .hx2-rail{position:fixed;right:22px;bottom:92px;z-index:70;width:min(420px,calc(100vw - 34px));max-height:min(760px,calc(100vh - 126px));overflow:auto;border:1px solid #d8d1c2;border-radius:16px;background:#fff;padding:16px;display:grid;align-content:start;gap:14px;box-shadow:0 24px 70px rgba(7,22,47,.22)}
+.homex .hx2-rail.expanded{top:84px;bottom:24px;width:min(720px,calc(100vw - 40px));max-height:none}
+.homex .hx2-avaLauncher{position:fixed;right:24px;bottom:22px;z-index:72;display:inline-flex;align-items:center;gap:10px;border:0;border-radius:999px;background:#07162f;color:#fff;padding:12px 18px;box-shadow:0 18px 42px rgba(7,22,47,.24);font:inherit;font-weight:850;cursor:pointer}
+.homex .hx2-avaLauncherMark{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#0d2f63;color:#22aeea;font-family:var(--font-fraunces),Georgia,serif;font-weight:900}
+.homex .hx2-avaControls{margin-left:auto;display:flex;gap:6px}.homex .hx2-avaControls button{width:30px;height:30px;border:1px solid #ded8ca;border-radius:8px;background:#fff;color:#07162f;font:inherit;font-weight:900;cursor:pointer}
 .homex .hx2-visual{text-align:center}
 .homex .hx2-ring{--score:72%;width:116px;height:116px;border-radius:50%;margin:8px auto 12px;display:grid;place-items:center;background:conic-gradient(#22aeea var(--score),#e9e5dc 0)}
 .homex .hx2-ring span{display:grid;place-items:center;width:82px;height:82px;border-radius:50%;background:#fff;font-family:var(--font-fraunces),Georgia,serif;font-size:25px;font-weight:700;color:#07162f}
@@ -321,9 +347,9 @@ const CSS = `
 .homex .hx2-turn.user{background:#07162f;color:#fff}
 .homex .hx2-ask{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;margin-top:10px}
 .homex .hx2-ask input{min-width:0;border:1px solid #ded8ca;border-radius:8px;padding:10px;font:inherit;font-size:13px}
-@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}.homex .hx2-moduleImpact{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}.homex .hx2-moduleImpact{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-profileStats,.homex .hx2-snapshotCards,.homex .hx2-actionGrid,.homex .hx2-contextCards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.homex .hx2-status,.homex .hx2-knowledgeGrid,.homex .hx2-answerability{grid-template-columns:1fr}.homex .hx2-statusActions{justify-content:flex-start;flex-wrap:wrap}}
-@media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList,.homex .hx2-meaningHead,.homex .hx2-meaningGrid,.homex .hx2-meaningLists,.homex .hx2-moduleImpact{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
+@media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList,.homex .hx2-meaningHead,.homex .hx2-meaningGrid,.homex .hx2-meaningLists,.homex .hx2-moduleImpact,.homex .hx2-profileBlockHead,.homex .hx2-profileStats,.homex .hx2-profileCols,.homex .hx2-depthGrid,.homex .hx2-safeGrid,.homex .hx2-snapshotCards,.homex .hx2-actionGrid,.homex .hx2-contextCards{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
 `;
 
 const EMPTY_DIMS: BindingDimension[] = [];
@@ -1122,18 +1148,6 @@ function buildEnterpriseKnowledgeModel(
   };
 }
 
-function badgeForArea(
-  badges: HomeContextQualityBadge[] | undefined,
-  label: string | null | undefined,
-): HomeContextQualityBadge | null {
-  if (!label) return null;
-  const normalized = label.trim().toLowerCase();
-  return (
-    badges?.find((badge) => badge.area.trim().toLowerCase() === normalized) ??
-    null
-  );
-}
-
 function toneClass(tone: string | null | undefined): string {
   if (tone === "good") return "good";
   if (tone === "blocked") return "blocked";
@@ -1163,7 +1177,9 @@ function HomeDataQualityPanel({
             module.
           </p>
         </div>
-        <span className={`hx2-dqStatus ${toneClass(model.answerability.status)}`}>
+        <span
+          className={`hx2-dqStatus ${toneClass(model.answerability.status)}`}
+        >
           {candidatePreviewEnabled
             ? model.candidatePreview.candidateOnlyLabel
             : model.answerability.label}
@@ -1171,7 +1187,10 @@ function HomeDataQualityPanel({
       </div>
       <div className="hx2-dqCards">
         {model.summaryCards.map((card) => (
-          <article className={`hx2-dqCard ${toneClass(card.tone)}`} key={card.id}>
+          <article
+            className={`hx2-dqCard ${toneClass(card.tone)}`}
+            key={card.id}
+          >
             <span>{card.title}</span>
             <strong>{card.value}</strong>
             <em>{card.status}</em>
@@ -1184,8 +1203,8 @@ function HomeDataQualityPanel({
           <h3>Source Coverage</h3>
           <p>
             {model.sourceCoverage.domainsAvailable.length} source domain
-            {model.sourceCoverage.domainsAvailable.length === 1 ? "" : "s"}{" "}
-            are represented.{" "}
+            {model.sourceCoverage.domainsAvailable.length === 1 ? "" : "s"} are
+            represented.{" "}
             {model.sourceCoverage.sourceRichCandidateThin
               ? "The source estate is richer than candidate coverage, so Home must not imply full runtime readiness."
               : "No source-rich/candidate-thin warning is active for this tenant."}
@@ -1290,8 +1309,12 @@ function DataQualityExplorerDetail({
           </article>
           <article>
             <span>Validation work</span>
-            <strong>{displayMetric(overview.totalGaps, "evidence gaps")}</strong>
-            <p>Missing fields remain visible before downstream module handoff.</p>
+            <strong>
+              {displayMetric(overview.totalGaps, "evidence gaps")}
+            </strong>
+            <p>
+              Missing fields remain visible before downstream module handoff.
+            </p>
           </article>
         </div>
       </section>
@@ -1337,14 +1360,284 @@ function DataQualityExplorerDetail({
 function KnowledgeOverview({
   model,
   areas,
+  summarySnapshot,
+  onAsk,
+  onSelectArea,
+  onSelectDataQuality,
 }: {
   model: EnterpriseKnowledgeModel;
   areas: HomeExplorerArea[];
+  summarySnapshot: HomeSummarySnapshot | null;
+  onAsk: (question: string) => void;
+  onSelectArea: (areaId: string) => void;
+  onSelectDataQuality: () => void;
 }) {
   const unsupportedAreas = areas.filter((area) => area.gaps > 0).length;
   const relationshipCount =
     model.relationshipGraph?.graphRelationships ??
     model.relationshipAreas.reduce((sum, area) => sum + area.rows, 0);
+  if (summarySnapshot) {
+    const profile = summarySnapshot.tenantProfileHeader;
+    const executive = summarySnapshot.executiveProfile;
+    const depth = executive.contextDepthWidth;
+    const relationshipArea = areas.find((area) =>
+      /relationship/i.test(area.label),
+    );
+    const firstArea = areas.find((area) => area.rows > 0) ?? areas[0] ?? null;
+    const contextCards = areas.slice(0, 4);
+    return (
+      <div
+        className="hx2-profile"
+        data-testid="home-enterprise-knowledge-snapshot"
+      >
+        <section className="hx2-profileBlock">
+          <div className="hx2-profileBlockHead">
+            <div>
+              <h2>Executive enterprise profile</h2>
+              <p>Who this tenant is, what is loaded, and what matters next.</p>
+            </div>
+            <span className="hx2-profileBadge">
+              {summarySnapshot.lineage.status.replace(/_/g, " ")}
+            </span>
+          </div>
+          <div className="hx2-profileStats">
+            <article className="hx2-profileStat">
+              <span>Industry</span>
+              <strong>{profile.industry ?? "Not available yet"}</strong>
+            </article>
+            <article className="hx2-profileStat">
+              <span>Headquarters</span>
+              <strong>{profile.headquarters ?? "Not available yet"}</strong>
+            </article>
+            <article className="hx2-profileStat">
+              <span>Revenue</span>
+              <strong>
+                {profile.revenueVerified
+                  ? profile.revenue
+                  : "Not available yet"}
+              </strong>
+            </article>
+            <article className="hx2-profileStat">
+              <span>Employees</span>
+              <strong>
+                {profile.employeesVerified
+                  ? profile.employees
+                  : "Not available yet"}
+              </strong>
+            </article>
+          </div>
+          <p className="hx2-profileSummary">
+            {executive.companySummaryFacts[0] ??
+              `${profile.displayName} has active Home context loaded for source-backed browsing.`}
+          </p>
+          <div className="hx2-profileCols">
+            <article className="hx2-profileList">
+              <span>Business model signals</span>
+              <ul>
+                {executive.businessModelSignals.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+            <article className="hx2-profileList">
+              <span>Strategic priorities</span>
+              <ul>
+                {executive.strategicPrioritySignals.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section className="hx2-profileBlock">
+          <div className="hx2-profileBlockHead">
+            <div>
+              <h2>Context depth &amp; width</h2>
+              <p>How much of the enterprise is covered, and how deep.</p>
+            </div>
+          </div>
+          <div className="hx2-depthGrid">
+            <article className="hx2-depthChip">
+              <span>Loaded areas</span>
+              <strong>{depth.loadedAreas.toLocaleString()}</strong>
+              <p>{depth.contextPosture}</p>
+            </article>
+            <article className="hx2-depthChip">
+              <span>Loaded records</span>
+              <strong>{shortMetric(depth.loadedRecords)}</strong>
+              <p>Visible in active Home context.</p>
+            </article>
+            <article className="hx2-depthChip">
+              <span>Sources</span>
+              <strong>{shortMetric(depth.sourceCount)}</strong>
+              <p>Files backing the current context view.</p>
+            </article>
+            <article className="hx2-depthChip">
+              <span>Evidence</span>
+              <strong>{shortMetric(depth.evidenceCount)}</strong>
+              <p>Items visible for source-backed explanation.</p>
+            </article>
+            <article className="hx2-depthChip">
+              <span>Relationships</span>
+              <strong>{shortMetric(depth.relationshipCount)}</strong>
+              <p>Relationship reasoning stays caveated until validated.</p>
+            </article>
+            <article className="hx2-depthChip">
+              <span>Visible gaps</span>
+              <strong>{shortMetric(depth.visibleGaps)}</strong>
+              <p>Missing evidence stays visible before handoff.</p>
+            </article>
+          </div>
+        </section>
+
+        <section className="hx2-profileBlock">
+          <div className="hx2-profileBlockHead">
+            <div>
+              <h2>What AbarVa can safely answer</h2>
+              <p>The trust boundary before anyone acts on this context.</p>
+            </div>
+          </div>
+          <div className="hx2-safeGrid">
+            <article className="hx2-safeCard safe">
+              <span>Safe to ask</span>
+              <h3>Known context</h3>
+              <ul>
+                {executive.safeToAsk.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+            <article className="hx2-safeCard warn">
+              <span>Do not rely yet</span>
+              <h3>Needs proof</h3>
+              <ul>
+                {executive.doNotRelyYet.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+            <article className="hx2-safeCard next">
+              <span>Next data action</span>
+              <h3>Focus next</h3>
+              <ul>
+                {executive.recommendedNextDataActions
+                  .slice(0, 3)
+                  .map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section className="hx2-profileBlock">
+          <div className="hx2-profileBlockHead">
+            <div>
+              <h2>Enterprise snapshot</h2>
+              <p>The numbers behind the story. Each card leads to detail.</p>
+            </div>
+          </div>
+          <div className="hx2-snapshotCards">
+            {executive.enterpriseSnapshotMetrics.slice(0, 4).map((metric) => (
+              <button
+                className="hx2-snapshotCard"
+                key={metric.key}
+                onClick={
+                  metric.key === "relationship_depth" && relationshipArea
+                    ? () => onSelectArea(relationshipArea.id)
+                    : onSelectDataQuality
+                }
+                type="button"
+              >
+                <strong>{metric.value}</strong>
+                <p>{metric.label}</p>
+                <p>{metric.detail}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="hx2-profileBlock">
+          <div className="hx2-profileBlockHead">
+            <div>
+              <h2>What you can do</h2>
+              <p>Start with the most important things.</p>
+            </div>
+          </div>
+          <div className="hx2-actionGrid">
+            <button
+              className="hx2-actionCard"
+              onClick={() => onAsk("What can Home safely answer right now?")}
+              type="button"
+            >
+              <span>Ask</span>
+              <strong>Ask a question</strong>
+              <p>Get facts, sources, and caveated explanations.</p>
+            </button>
+            <button
+              className="hx2-actionCard"
+              onClick={onSelectDataQuality}
+              type="button"
+            >
+              <span>Quality</span>
+              <strong>Explore gaps</strong>
+              <p>See what is missing before downstream decisions.</p>
+            </button>
+            <button
+              className="hx2-actionCard"
+              onClick={
+                relationshipArea
+                  ? () => onSelectArea(relationshipArea.id)
+                  : onSelectDataQuality
+              }
+              type="button"
+            >
+              <span>Relationships</span>
+              <strong>View relationships</strong>
+              <p>Understand what connects and what still needs validation.</p>
+            </button>
+            <button
+              className="hx2-actionCard"
+              onClick={
+                firstArea
+                  ? () => onSelectArea(firstArea.id)
+                  : onSelectDataQuality
+              }
+              type="button"
+            >
+              <span>Browse</span>
+              <strong>Browse the estate</strong>
+              <p>Open the loaded context areas and source-backed rows.</p>
+            </button>
+          </div>
+        </section>
+
+        <section className="hx2-profileBlock">
+          <div className="hx2-profileBlockHead">
+            <div>
+              <h2>Explore this context</h2>
+              <p>Browse the areas of information Home tracks.</p>
+            </div>
+          </div>
+          <div className="hx2-contextCards">
+            {contextCards.map((area) => (
+              <button
+                className="hx2-contextCard"
+                key={area.id}
+                onClick={() => onSelectArea(area.id)}
+                type="button"
+              >
+                <strong>{area.label}</strong>
+                <p>{areaDescription(area)}</p>
+                <small>{shortMetric(area.rows)} records</small>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
   return (
     <div
       className="hx2-knowledgeGrid"
@@ -1537,7 +1830,9 @@ function WhatThisMeansPanel({
           <h2>{summary.title}</h2>
           <p>{summary.currentUnderstanding}</p>
         </div>
-        <span className={`hx2-meaningStatus ${englishStatusClass(summary.statusLabel)}`}>
+        <span
+          className={`hx2-meaningStatus ${englishStatusClass(summary.statusLabel)}`}
+        >
           {summary.statusLabel}
         </span>
       </div>
@@ -1622,9 +1917,12 @@ function ExplorerDetail({
   overview,
   setupControl,
   englishSummary,
+  summarySnapshot,
   areas,
   tenantDisplayName,
   onAsk,
+  onSelectArea,
+  onSelectDataQuality,
 }: {
   area: HomeExplorerArea | null;
   selected: BindingDimension | null;
@@ -1634,9 +1932,12 @@ function ExplorerDetail({
   onTabChange: (tab: ExplorerTab) => void;
   setupControl: AdminSetupControlResponse | null;
   englishSummary: HomeEnglishSummary | null;
+  summarySnapshot: HomeSummarySnapshot | null;
   areas: HomeExplorerArea[];
   tenantDisplayName: string;
   onAsk: (question: string) => void;
+  onSelectArea: (areaId: string) => void;
+  onSelectDataQuality: () => void;
   overview: {
     dimensions: HomeV6BrowserPreview[];
     totalRows: number;
@@ -1734,10 +2035,17 @@ function ExplorerDetail({
 
       {isOverview ? (
         <>
-          {englishSummary ? (
+          {englishSummary && !summarySnapshot ? (
             <WhatThisMeansPanel summary={englishSummary} onAsk={onAsk} />
           ) : null}
-          <KnowledgeOverview areas={areas} model={knowledgeModel} />
+          <KnowledgeOverview
+            areas={areas}
+            model={knowledgeModel}
+            onAsk={onAsk}
+            onSelectArea={onSelectArea}
+            onSelectDataQuality={onSelectDataQuality}
+            summarySnapshot={summarySnapshot}
+          />
         </>
       ) : (
         <>
@@ -1997,7 +2305,11 @@ function ExplorerRail({
   selectedDisplayName,
   dataQuality,
   englishSummary,
+  summarySnapshot,
   onAsk,
+  onClose,
+  onToggleExpand,
+  expanded,
   thread,
   isBusy,
 }: {
@@ -2005,37 +2317,46 @@ function ExplorerRail({
   selectedDisplayName?: string | null;
   dataQuality: HomeDataQualityModel | null;
   englishSummary: HomeEnglishSummary | null;
+  summarySnapshot: HomeSummarySnapshot | null;
   onAsk: (question: string) => void;
+  onClose: () => void;
+  onToggleExpand: () => void;
+  expanded: boolean;
   thread: ChatMessage[];
   isBusy: boolean;
 }) {
   const [draft, setDraft] = useState("");
   const scopeName = selectedDisplayName ?? selected?.dimension ?? "Overview";
   const qualityLimits = dataQuality?.answerability.limits ?? [];
-  const safeToAsk = englishSummary?.safeToAsk ?? [
-    "what evidence is loaded for this area",
-    "which fields still need client evidence",
-    "where related context should be inspected next",
-  ];
-  const decisionCautions = englishSummary?.decisionCautions ?? [
-    "strategy, use-case design, or advisory synthesis",
-    "facts outside the active Home context",
-  ];
-  const suggestions = selected
-    ? [
-        `Explain ${scopeName.toLowerCase()} in plain English.`,
-        `What can I safely ask about ${scopeName.toLowerCase()}?`,
-        `What is missing in ${scopeName.toLowerCase()}?`,
-        `What should we upload or validate next for ${scopeName.toLowerCase()}?`,
-        `What decisions should not rely on ${scopeName.toLowerCase()} yet?`,
-      ]
-    : [
-        "Explain this context in plain English.",
-        "What can I safely ask about this?",
-        "What is missing?",
-        "What should we upload or validate next?",
-        "What decisions should not rely on this yet?",
-      ];
+  const safeToAsk = summarySnapshot?.avaScope.canAnswer ??
+    englishSummary?.safeToAsk ?? [
+      "what evidence is loaded for this area",
+      "which fields still need client evidence",
+      "where related context should be inspected next",
+    ];
+  const decisionCautions = summarySnapshot?.avaScope
+    .mustRefuseOrMarkUnsupported ??
+    englishSummary?.decisionCautions ?? [
+      "strategy, use-case design, or advisory synthesis",
+      "facts outside the active Home context",
+    ];
+  const suggestions =
+    summarySnapshot?.avaScope.suggestedPrompts ??
+    (selected
+      ? [
+          `Explain ${scopeName.toLowerCase()} in plain English.`,
+          `What can I safely ask about ${scopeName.toLowerCase()}?`,
+          `What is missing in ${scopeName.toLowerCase()}?`,
+          `What should we upload or validate next for ${scopeName.toLowerCase()}?`,
+          `What decisions should not rely on ${scopeName.toLowerCase()} yet?`,
+        ]
+      : [
+          "Explain this context in plain English.",
+          "What can I safely ask about this?",
+          "What is missing?",
+          "What should we upload or validate next?",
+          "What decisions should not rely on this yet?",
+        ]);
   const submit = (question: string) => {
     const text = question.trim();
     if (!text) return;
@@ -2043,18 +2364,35 @@ function ExplorerRail({
     setDraft("");
   };
   return (
-    <aside className="hx2-rail" data-testid="home-context-rail">
+    <aside
+      className={`hx2-rail${expanded ? " expanded" : ""}`}
+      data-testid="home-ava-drawer"
+    >
       <div className="hx2-card hx2-ava">
         <div className="hx2-avaHead">
-          <div className="hx2-avaMark">a</div>
+          <div className="hx2-avaMark">aVa</div>
           <div>
             <strong>aVa</strong>
-            <span>scoped aVa · read-only over evidence</span>
+            <span>your enterprise assistant</span>
+          </div>
+          <div className="hx2-avaControls">
+            <button
+              aria-label={expanded ? "Shrink aVa" : "Expand aVa"}
+              onClick={onToggleExpand}
+              type="button"
+            >
+              {expanded ? "↘" : "↗"}
+            </button>
+            <button aria-label="Hide aVa" onClick={onClose} type="button">
+              ×
+            </button>
           </div>
         </div>
         <div className="hx2-scope">
           Scope · {scopeName} · reading Active Home context
-          {dataQuality ? ` · Answerability: ${dataQuality.answerability.label}` : ""}
+          {dataQuality
+            ? ` · Answerability: ${dataQuality.answerability.label}`
+            : ""}
         </div>
         <div className="hx2-answerBox">
           <div>I can answer</div>
@@ -2131,6 +2469,7 @@ export function HomeSurface({
   setupControl,
   dataQuality,
   englishSummary,
+  summarySnapshot,
   candidatePreviewEnabled = false,
 }: {
   payload: IntelligenceBindingPayload | null;
@@ -2139,6 +2478,7 @@ export function HomeSurface({
   setupControl?: AdminSetupControlResponse | null;
   dataQuality?: HomeDataQualityModel | null;
   englishSummary?: HomeEnglishSummary | null;
+  summarySnapshot?: HomeSummarySnapshot | null;
   candidatePreviewEnabled?: boolean;
 }) {
   const safePayload = useMemo(() => sanitizeVisibleStrings(payload), [payload]);
@@ -2157,6 +2497,10 @@ export function HomeSurface({
   const safeEnglishSummary = useMemo(
     () => sanitizeVisibleStrings(englishSummary ?? null),
     [englishSummary],
+  );
+  const safeSummarySnapshot = useMemo(
+    () => sanitizeVisibleStrings(summarySnapshot ?? null),
+    [summarySnapshot],
   );
   const dimensions = Object.values(safeV6Browser?.dimensions ?? {});
   const dims =
@@ -2187,9 +2531,14 @@ export function HomeSurface({
   const [search, setSearch] = useState("");
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
+  const [isAvaOpen, setIsAvaOpen] = useState(false);
+  const [isAvaExpanded, setIsAvaExpanded] = useState(false);
   const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
   const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
-  const displayedTenantName = safeV6Browser?.displayName ?? tenantDisplayName;
+  const displayedTenantName =
+    safeSummarySnapshot?.tenantProfileHeader.displayName ??
+    safeV6Browser?.displayName ??
+    tenantDisplayName;
   const isDemoContext = /demo|synthetic/i.test(
     `${displayedTenantName} ${safeSetupControl?.tenant.realOrSyntheticStatus ?? ""}`,
   );
@@ -2210,7 +2559,9 @@ export function HomeSurface({
     (sum, dimension) => sum + dimension.dataThinCells,
     0,
   );
-  const dataStatusLabel = "Active Home context";
+  const dataStatusLabel =
+    safeSummarySnapshot?.tenantProfileHeader.activeContextStatus ??
+    "Active Home context";
   const candidateState = safeSetupControl?.candidateTenantDataVersion ?? null;
   const candidatePreviewDetail = candidateState?.candidateVersionId
     ? `Candidate ${candidateState.candidateVersionId} is preview-only and not active tenant truth.`
@@ -2242,6 +2593,7 @@ export function HomeSurface({
     async (text: string) => {
       const question = text.trim();
       if (!question) return;
+      setIsAvaOpen(true);
 
       const userTurn: ChatMessage = {
         id: messageId("home-user"),
@@ -2309,7 +2661,7 @@ export function HomeSurface({
         setIsBusy(false);
       }
     },
-    [clientKey, tenantKey],
+    [clientKey, setIsAvaOpen, tenantKey],
   );
 
   return (
@@ -2338,26 +2690,32 @@ export function HomeSurface({
             </div>
             <div className="hx2-stat">
               <span>Candidate preview</span>
-            <strong>
-              {candidatePreviewEnabled
-                ? safeDataQuality?.candidatePreview.status ?? "Preview requested"
-                : "Not active"}
+              <strong>
+                {safeSummarySnapshot?.tenantProfileHeader
+                  .candidatePreviewStatus ??
+                  (candidatePreviewEnabled
+                    ? (safeDataQuality?.candidatePreview.status ??
+                      "Preview requested")
+                    : "Not active")}
               </strong>
             </div>
             <div className="hx2-stat">
               <span>Last checked</span>
               <strong>
-                {safeV6Browser?.generatedAt
-                  ? formatShortUtcDate(safeV6Browser.generatedAt)
-                  : "Unavailable"}
+                {safeSummarySnapshot?.lineage.generatedAt
+                  ? formatShortUtcDate(safeSummarySnapshot.lineage.generatedAt)
+                  : safeV6Browser?.generatedAt
+                    ? formatShortUtcDate(safeV6Browser.generatedAt)
+                    : "Unavailable"}
               </strong>
             </div>
             <div className="hx2-stat">
               <span>Data origin</span>
               <strong>
-                {safeSetupControl?.tenant.realOrSyntheticStatus
-                  ? "Demo-safe"
-                  : "Source-backed"}
+                {safeSummarySnapshot?.tenantProfileHeader.dataOrigin ??
+                  (safeSetupControl?.tenant.realOrSyntheticStatus
+                    ? "Demo-safe"
+                    : "Source-backed")}
               </strong>
             </div>
           </div>
@@ -2434,7 +2792,9 @@ export function HomeSurface({
               }}
               type="button"
             >
-              <i className={`hx2-nodeDot ${totalGaps > 0 ? "amber" : "green"}`} />
+              <i
+                className={`hx2-nodeDot ${totalGaps > 0 ? "amber" : "green"}`}
+              />
               <span>
                 Data Quality
                 <small>Source coverage, evidence gaps, and answerability</small>
@@ -2446,10 +2806,6 @@ export function HomeSurface({
                 <div className="hx2-treeGroupTitle">{group}</div>
                 {areas.map((area) => {
                   const tone = statusTone(area.gaps, area.rows);
-                  const qualityBadge = badgeForArea(
-                    safeDataQuality?.contextBadges,
-                    area.primaryDimension?.dimension ?? area.label,
-                  );
                   return (
                     <button
                       aria-pressed={selectedArea?.id === area.id}
@@ -2466,13 +2822,6 @@ export function HomeSurface({
                       <span>
                         {area.label}
                         <small>{areaDescription(area)}</small>
-                        {qualityBadge ? (
-                          <span className="hx2-qualityBadges">
-                            <b>{qualityBadge.evidence}</b>
-                            <b>{qualityBadge.relationships}</b>
-                            <b>{qualityBadge.answerability}</b>
-                          </span>
-                        ) : null}
                       </span>
                       <em>{shortMetric(area.rows)}</em>
                     </button>
@@ -2513,20 +2862,46 @@ export function HomeSurface({
               selectedDisplayName={selectedArea?.label}
               setupControl={safeSetupControl}
               englishSummary={safeEnglishSummary}
+              summarySnapshot={safeSummarySnapshot}
               tenantDisplayName={displayedTenantName}
               onAsk={askHomeKnow}
+              onSelectArea={(areaId) => {
+                setDimKey(areaId);
+                setSelectedTool(null);
+                setActiveTab("summary");
+              }}
+              onSelectDataQuality={() => {
+                setDimKey(null);
+                setSelectedTool("data-quality");
+                setActiveTab("summary");
+              }}
             />
           )}
 
-          <ExplorerRail
-            isBusy={isBusy}
-            onAsk={askHomeKnow}
-            dataQuality={safeDataQuality}
-            englishSummary={safeEnglishSummary}
-            selected={selected}
-            selectedDisplayName={selectedArea?.label}
-            thread={thread}
-          />
+          {isAvaOpen ? (
+            <ExplorerRail
+              expanded={isAvaExpanded}
+              isBusy={isBusy}
+              onAsk={askHomeKnow}
+              onClose={() => setIsAvaOpen(false)}
+              onToggleExpand={() => setIsAvaExpanded((current) => !current)}
+              dataQuality={safeDataQuality}
+              englishSummary={safeEnglishSummary}
+              summarySnapshot={safeSummarySnapshot}
+              selected={selected}
+              selectedDisplayName={selectedArea?.label}
+              thread={thread}
+            />
+          ) : null}
+          <button
+            className="hx2-avaLauncher"
+            data-testid="home-ava-launcher"
+            onClick={() => setIsAvaOpen(true)}
+            type="button"
+          >
+            <span className="hx2-avaLauncherMark">aVa</span>
+            Ask aVa
+          </button>
         </div>
       </div>
     </div>
