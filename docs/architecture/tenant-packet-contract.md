@@ -18,23 +18,23 @@ The packet is accepted only when it can be validated, classified, mapped to sour
 
 ## Manifest Fields
 
-| Field | Required | Purpose |
-| --- | --- | --- |
-| `contractVersion` | yes | Tenant Packet contract version. |
-| `packetId` | yes | Stable packet identifier for audit and idempotency. |
-| `tenantKey` | yes | Canonical cover tenant key. |
-| `tenantDisplayName` | yes | Safe display name. |
-| `dataStatus` | yes | `real`, `synthetic`, `curated`, or `benchmark`. |
-| `sensitivity` | yes | Highest packet sensitivity. |
-| `sourceOwner` | yes | Accountable owner of the packet. |
-| `effectiveDate` | yes | Business as-of date. |
-| `intendedDomains` | yes | Canonical domains the packet is meant to populate. |
-| `intendedModules` | yes | Modules expected to consume the candidate version. |
-| `sourceProfiles` | yes | Declared source classes and mapping profiles. |
-| `files` | yes | File inventory with class, adapter, mapping profile, evidence basis, and sensitivity. |
-| `qualityGates` | yes | Minimum validation gates before write/promotion. |
-| `promotionPolicy` | yes | Rules for candidate creation and active promotion. |
-| `legacyMigrationName` | optional | Compatibility label for historical migration source only. |
+| Field                 | Required | Purpose                                                                               |
+| --------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `contractVersion`     | yes      | Tenant Packet contract version.                                                       |
+| `packetId`            | yes      | Stable packet identifier for audit and idempotency.                                   |
+| `tenantKey`           | yes      | Canonical cover tenant key.                                                           |
+| `tenantDisplayName`   | yes      | Safe display name.                                                                    |
+| `dataStatus`          | yes      | `real`, `synthetic`, `curated`, or `benchmark`.                                       |
+| `sensitivity`         | yes      | Highest packet sensitivity.                                                           |
+| `sourceOwner`         | yes      | Accountable owner of the packet.                                                      |
+| `effectiveDate`       | yes      | Business as-of date.                                                                  |
+| `intendedDomains`     | yes      | Canonical domains the packet is meant to populate.                                    |
+| `intendedModules`     | yes      | Modules expected to consume the candidate version.                                    |
+| `sourceProfiles`      | yes      | Declared source classes and mapping profiles.                                         |
+| `files`               | yes      | File inventory with class, adapter, mapping profile, evidence basis, and sensitivity. |
+| `qualityGates`        | yes      | Minimum validation gates before write/promotion.                                      |
+| `promotionPolicy`     | yes      | Rules for candidate creation and active promotion.                                    |
+| `legacyMigrationName` | optional | Compatibility label for historical migration source only.                             |
 
 ## Source Classes
 
@@ -54,18 +54,18 @@ The packet is accepted only when it can be validated, classified, mapped to sour
 
 ## Minimum Bundle
 
-| Input | Classification |
-| --- | --- |
-| enterprise profile | mandatory |
-| organizational/functions map | mandatory |
-| applications/systems | mandatory |
-| data assets/integrations | mandatory |
-| evidence registry | mandatory |
-| vendors/contracts | mandatory for Source/commercial use cases |
-| spend/value | mandatory for Tower/value claims |
-| programs/priorities | mandatory for Moves/AI portfolio use cases |
-| risks/controls | mandatory for governed recommendations |
-| metric definitions | mandatory for Tower |
+| Input                        | Classification                                                                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| enterprise profile           | mandatory; must satisfy the Enterprise Profile Foundation required field groups before Home/aVa profile summaries are considered ready |
+| organizational/functions map | mandatory                                                                                                                              |
+| applications/systems         | mandatory                                                                                                                              |
+| data assets/integrations     | mandatory                                                                                                                              |
+| evidence registry            | mandatory                                                                                                                              |
+| vendors/contracts            | mandatory for Source/commercial use cases                                                                                              |
+| spend/value                  | mandatory for Tower/value claims                                                                                                       |
+| programs/priorities          | mandatory for Moves/AI portfolio use cases                                                                                             |
+| risks/controls               | mandatory for governed recommendations                                                                                                 |
+| metric definitions           | mandatory for Tower                                                                                                                    |
 
 ## Real, Synthetic, And Sensitive Handling
 

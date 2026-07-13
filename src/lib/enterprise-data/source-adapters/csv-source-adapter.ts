@@ -1,21 +1,21 @@
-import crypto from 'node:crypto';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 import type {
   CanonicalIngestionRecord,
   CanonicalValidationFinding,
   CanonicalValue,
   QualityStatus,
-} from '../contracts/canonical-ingestion';
-import type { MappingRule } from '../contracts/mapping-registry';
+} from "../contracts/canonical-ingestion";
+import type { MappingRule } from "../contracts/mapping-registry";
 import type {
   SourceAdapter,
   SourceAdapterFinding,
   SourceAdapterInput,
   SourceAdapterResult,
-} from '../contracts/source-adapter';
-import { getBuiltInMappingProfile } from './mapping-profiles';
+} from "../contracts/source-adapter";
+import { getBuiltInMappingProfile } from "./mapping-profiles";
 
 interface ParsedCsv {
   headers: string[];
@@ -23,27 +23,27 @@ interface ParsedCsv {
 }
 
 export class CsvSourceAdapter implements SourceAdapter {
-  adapterKey = 'csv';
-  adapterVersion = 'csv-adapter/v1';
-  acceptedSourceShapes = ['text/csv', 'csv'];
+  adapterKey = "csv";
+  adapterVersion = "csv-adapter/v1";
+  acceptedSourceShapes = ["text/csv", "csv"];
   acceptedSourceClasses = [
-    'enterprise_profile',
-    'organization_functions',
-    'applications_systems',
-    'data_assets_integrations',
-    'vendors_contracts',
-    'spend_value',
-    'programs_priorities',
-    'risks_controls',
-    'metric_definitions',
-    'evidence_registry',
-    'module_memory',
-    'outcome_measurements',
-    'benchmark_context',
+    "enterprise_profile",
+    "organization_functions",
+    "applications_systems",
+    "data_assets_integrations",
+    "vendors_contracts",
+    "spend_value",
+    "programs_priorities",
+    "risks_controls",
+    "metric_definitions",
+    "evidence_registry",
+    "module_memory",
+    "outcome_measurements",
+    "benchmark_context",
   ];
 
   async parse(input: SourceAdapterInput): Promise<SourceAdapterResult> {
-    const text = await fs.readFile(input.sourcePath, 'utf8');
+    const text = await fs.readFile(input.sourcePath, "utf8");
     const contentFingerprint = fingerprint(text);
     const parsed = parseCsv(text);
     const mappingProfile = getBuiltInMappingProfile(input.mappingProfile);
@@ -54,8 +54,8 @@ export class CsvSourceAdapter implements SourceAdapter {
         records: [],
         findings: [
           {
-            severity: 'error',
-            code: 'mapping_profile_not_found',
+            severity: "error",
+            code: "mapping_profile_not_found",
             message: `No built-in mapping profile exists for ${input.mappingProfile}.`,
           },
         ],
@@ -70,18 +70,27 @@ export class CsvSourceAdapter implements SourceAdapter {
       };
     }
 
-    const mappedFields = new Set(mappingProfile.rules.map((rule) => rule.sourceField));
-    const unmappedFields = parsed.headers.filter((header) => !mappedFields.has(header));
+    const mappedFields = new Set(
+      mappingProfile.rules.map((rule) => rule.sourceField),
+    );
+    const unmappedFields = parsed.headers.filter(
+      (header) => !mappedFields.has(header),
+    );
     const requiredFields = mappingProfile.rules.filter((rule) => rule.required);
-    const mappingCoveragePercent = parsed.headers.length === 0
-      ? 0
-      : roundPercent(((parsed.headers.length - unmappedFields.length) / parsed.headers.length) * 100);
+    const mappingCoveragePercent =
+      parsed.headers.length === 0
+        ? 0
+        : roundPercent(
+            ((parsed.headers.length - unmappedFields.length) /
+              parsed.headers.length) *
+              100,
+          );
 
     for (const header of parsed.headers) {
       if (!mappedFields.has(header)) {
         findings.push({
-          severity: 'warning',
-          code: 'source_field_unmapped',
+          severity: "warning",
+          code: "source_field_unmapped",
           message: `Source field ${header} has no rule in ${input.mappingProfile}.`,
           sourceField: header,
         });
@@ -90,26 +99,42 @@ export class CsvSourceAdapter implements SourceAdapter {
 
     const records = parsed.rows.map((row, index) => {
       const rowFindings = validateRow(mappingProfile.rules, row, index + 1);
-      findings.push(...rowFindings.map((finding) => ({
-        severity: finding.severity,
-        code: finding.code,
-        message: finding.message,
-        sourceObjectId: finding.sourceObjectId,
-      } satisfies SourceAdapterFinding)));
-      return buildRecord(input, row, index, mappingProfile.rules, rowFindings, contentFingerprint);
+      findings.push(
+        ...rowFindings.map(
+          (finding) =>
+            ({
+              severity: finding.severity,
+              code: finding.code,
+              message: finding.message,
+              sourceObjectId: finding.sourceObjectId,
+            }) satisfies SourceAdapterFinding,
+        ),
+      );
+      return buildRecord(
+        input,
+        row,
+        index,
+        mappingProfile.rules,
+        rowFindings,
+        contentFingerprint,
+      );
     });
 
     return {
-        records,
-        findings,
-        unmappedFields,
-        sourceFieldCount: parsed.headers.length,
-        mappedFieldCount: parsed.headers.length - unmappedFields.length,
-        requiredFieldCount: requiredFields.length,
-        missingRequiredFieldCount: findings.filter((finding) => finding.code === 'required_source_field_missing').length,
-        quarantinedRecordCount: records.filter((record) => record.qualityStatus === 'quarantined').length,
-        contentFingerprint,
-        mappingCoveragePercent,
+      records,
+      findings,
+      unmappedFields,
+      sourceFieldCount: parsed.headers.length,
+      mappedFieldCount: parsed.headers.length - unmappedFields.length,
+      requiredFieldCount: requiredFields.length,
+      missingRequiredFieldCount: findings.filter(
+        (finding) => finding.code === "required_source_field_missing",
+      ).length,
+      quarantinedRecordCount: records.filter(
+        (record) => record.qualityStatus === "quarantined",
+      ).length,
+      contentFingerprint,
+      mappingCoveragePercent,
     };
   }
 }
@@ -119,14 +144,18 @@ export function parseCsv(text: string): ParsedCsv {
   const headers = rows.shift()?.map((header) => header.trim()) ?? [];
   return {
     headers,
-    rows: rows.map((values) => Object.fromEntries(headers.map((header, index) => [header, values[index]?.trim() ?? '']))),
+    rows: rows.map((values) =>
+      Object.fromEntries(
+        headers.map((header, index) => [header, values[index]?.trim() ?? ""]),
+      ),
+    ),
   };
 }
 
 function parseCsvRows(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
-  let cell = '';
+  let cell = "";
   let inQuotes = false;
 
   for (let index = 0; index < text.length; index += 1) {
@@ -141,17 +170,17 @@ function parseCsvRows(text: string): string[][] {
       inQuotes = !inQuotes;
       continue;
     }
-    if (character === ',' && !inQuotes) {
+    if (character === "," && !inQuotes) {
       row.push(cell);
-      cell = '';
+      cell = "";
       continue;
     }
-    if ((character === '\n' || character === '\r') && !inQuotes) {
-      if (character === '\r' && nextCharacter === '\n') index += 1;
+    if ((character === "\n" || character === "\r") && !inQuotes) {
+      if (character === "\r" && nextCharacter === "\n") index += 1;
       row.push(cell);
       rows.push(row);
       row = [];
-      cell = '';
+      cell = "";
       continue;
     }
     cell += character;
@@ -159,7 +188,9 @@ function parseCsvRows(text: string): string[][] {
 
   row.push(cell);
   rows.push(row);
-  return rows.filter((csvRow) => csvRow.some((value) => value.trim().length > 0));
+  return rows.filter((csvRow) =>
+    csvRow.some((value) => value.trim().length > 0),
+  );
 }
 
 function buildRecord(
@@ -171,20 +202,24 @@ function buildRecord(
   contentFingerprint: string,
 ): CanonicalIngestionRecord {
   const requiredIdField = rules.find((rule) => rule.required)?.sourceField;
-  const sourceObjectId = normalizeIdentifier(row[requiredIdField ?? '']) || `${path.basename(input.sourcePath)}#row-${rowIndex + 1}`;
+  const sourceObjectId =
+    normalizeIdentifier(row[requiredIdField ?? ""]) ||
+    `${path.basename(input.sourcePath)}#row-${rowIndex + 1}`;
   const firstRule = rules[0];
   const observedAt = input.observedAt ?? new Date(0).toISOString();
-  const qualityStatus: QualityStatus = validationFindings.some((finding) => finding.severity === 'error')
-    ? 'quarantined'
-    : validationFindings.some((finding) => finding.severity === 'warning')
-      ? 'warning'
-      : 'valid';
+  const qualityStatus: QualityStatus = validationFindings.some(
+    (finding) => finding.severity === "error",
+  )
+    ? "quarantined"
+    : validationFindings.some((finding) => finding.severity === "warning")
+      ? "warning"
+      : "valid";
   const attributes: Record<string, CanonicalValue> = {};
 
   for (const rule of rules) {
     if (!rule.targetAttribute) continue;
     const rawValue = row[rule.sourceField];
-    if (rawValue === undefined || rawValue.trim() === '') continue;
+    if (isMissingSourceValue(rawValue)) continue;
     attributes[rule.targetAttribute] = toCanonicalValue(rawValue, rule);
   }
 
@@ -209,23 +244,26 @@ function buildRecord(
       sourceSystem: input.packetFile.sourceProfile,
       sourceType: input.packetFile.sourceClass,
       owner: input.packetFile.evidenceBasis,
-      authority: input.packetFile.dataStatus === 'benchmark' ? 'benchmark' : 'self_reported',
+      authority:
+        input.packetFile.dataStatus === "benchmark"
+          ? "benchmark"
+          : "self_reported",
     },
     effectiveDate: undefined,
     observedAt,
     confidence: averageConfidence(rules),
-    sensitivity: input.packetFile.sensitivity ?? 'internal',
-    dataStatus: input.packetFile.dataStatus ?? 'synthetic',
+    sensitivity: input.packetFile.sensitivity ?? "internal",
+    dataStatus: input.packetFile.dataStatus ?? "synthetic",
     qualityStatus,
     validationFindings,
     lineage: [
       {
-        step: 'source_adapter_dry_run',
-        version: 'pr3-source-adapter-dry-run/v1',
+        step: "source_adapter_dry_run",
+        version: "pr3-source-adapter-dry-run/v1",
         at: observedAt,
         adapterKey: input.packetFile.adapterKey,
         mappingProfile: input.mappingProfile,
-        contractVersion: 'tenant-packet/v1',
+        contractVersion: "tenant-packet/v1",
         notes: `Dry-run only. Source fingerprint ${contentFingerprint}.`,
       },
     ],
@@ -238,34 +276,130 @@ function validateRow(
   rowNumber: number,
 ): CanonicalValidationFinding[] {
   return rules
-    .filter((rule) => rule.required && (!row[rule.sourceField] || row[rule.sourceField].trim() === ''))
+    .filter(
+      (rule) => rule.required && isMissingSourceValue(row[rule.sourceField]),
+    )
     .map((rule) => ({
-      severity: 'error',
-      code: 'required_source_field_missing',
+      severity: "error",
+      code: "required_source_field_missing",
       message: `Required source field ${rule.sourceField} is missing on row ${rowNumber}.`,
       sourceObjectId: `row-${rowNumber}`,
     }));
 }
 
+export function isMissingSourceValue(value: string | undefined): boolean {
+  if (value === undefined) return true;
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "_");
+  return (
+    normalized === "" ||
+    normalized === "not_loaded" ||
+    normalized === "unknown" ||
+    normalized === "tbd" ||
+    normalized === "to_be_determined" ||
+    normalized === "n_a" ||
+    normalized === "na" ||
+    normalized === "none" ||
+    normalized === "null" ||
+    normalized === "sample" ||
+    normalized === "lorem_ipsum" ||
+    normalized === "placeholder"
+  );
+}
+
 function toCanonicalValue(rawValue: string, rule: MappingRule): CanonicalValue {
   const value = rawValue.trim();
-  if (rule.transform === 'parse_number') {
-    return { value: Number(value.replace(/,/g, '')), valueType: 'number', confidence: rule.confidenceDefault };
+  if (rule.transform === "parse_number") {
+    return {
+      value: Number(value.replace(/,/g, "")),
+      valueType: "number",
+      confidence: rule.confidenceDefault,
+    };
   }
-  if (rule.transform === 'parse_currency') {
-    return { value: Number(value.replace(/[$,]/g, '')), valueType: 'currency', unit: 'USD', confidence: rule.confidenceDefault };
+  if (rule.transform === "parse_currency") {
+    return {
+      value: Number(value.replace(/[$,]/g, "")),
+      valueType: "currency",
+      unit: "USD",
+      confidence: rule.confidenceDefault,
+    };
   }
-  if (rule.transform === 'parse_percent') {
-    return { value: Number(value.replace('%', '')) / 100, valueType: 'percent', confidence: rule.confidenceDefault };
+  if (rule.transform === "parse_percent") {
+    return {
+      value: Number(value.replace("%", "")) / 100,
+      valueType: "percent",
+      confidence: rule.confidenceDefault,
+    };
   }
-  if (rule.transform === 'normalize_code') {
-    return { value: normalizeIdentifier(value), valueType: 'string', confidence: rule.confidenceDefault };
+  if (rule.transform === "parse_date") {
+    return { value, valueType: "date", confidence: rule.confidenceDefault };
   }
-  return { value, valueType: 'string', confidence: rule.confidenceDefault };
+  if (rule.transform === "split_list") {
+    return {
+      value: splitList(value),
+      valueType: "json",
+      confidence: rule.confidenceDefault,
+    };
+  }
+  if (rule.transform === "json") {
+    return {
+      value: parseLooseJson(value),
+      valueType: "json",
+      confidence: rule.confidenceDefault,
+    };
+  }
+  if (rule.transform === "normalize_code") {
+    return {
+      value: normalizeIdentifier(value),
+      valueType: "string",
+      confidence: rule.confidenceDefault,
+    };
+  }
+  return { value, valueType: "string", confidence: rule.confidenceDefault };
+}
+
+function splitList(value: string): string[] {
+  return value
+    .split(/\s*[|;]\s*/)
+    .map((item) => item.trim())
+    .filter((item) => !isMissingSourceValue(item));
+}
+
+function parseLooseJson(
+  value: string,
+): string | number | boolean | Record<string, unknown> | unknown[] | null {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (
+      parsed === null ||
+      typeof parsed === "string" ||
+      typeof parsed === "number" ||
+      typeof parsed === "boolean" ||
+      Array.isArray(parsed) ||
+      (typeof parsed === "object" && parsed !== null)
+    ) {
+      return parsed as
+        | string
+        | number
+        | boolean
+        | Record<string, unknown>
+        | unknown[]
+        | null;
+    }
+    return value;
+  } catch {
+    return splitList(value);
+  }
 }
 
 function normalizeIdentifier(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function bestExcerpt(row: Record<string, string>): string | undefined {
@@ -274,11 +408,16 @@ function bestExcerpt(row: Record<string, string>): string | undefined {
 
 function averageConfidence(rules: MappingRule[]): number {
   const confidences = rules.map((rule) => rule.confidenceDefault ?? 0.75);
-  return Number((confidences.reduce((sum, value) => sum + value, 0) / Math.max(confidences.length, 1)).toFixed(2));
+  return Number(
+    (
+      confidences.reduce((sum, value) => sum + value, 0) /
+      Math.max(confidences.length, 1)
+    ).toFixed(2),
+  );
 }
 
 function fingerprint(text: string): string {
-  return `sha256:${crypto.createHash('sha256').update(text).digest('hex')}`;
+  return `sha256:${crypto.createHash("sha256").update(text).digest("hex")}`;
 }
 
 function roundPercent(value: number): number {
