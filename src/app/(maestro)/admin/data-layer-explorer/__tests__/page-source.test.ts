@@ -44,6 +44,10 @@ describe("admin data layer explorer route", () => {
     expect(pageSource).toContain("Source richness, candidate coverage");
     expect(pageSource).toContain("Rich source exists");
     expect(pageSource).toContain("Tenant manifest completeness");
+    expect(pageSource).toContain("Adapter gaps");
+    expect(pageSource).toContain("Mapping gaps");
+    expect(pageSource).toContain("Home/aVa representation warnings");
+    expect(pageSource).toContain("Promotion blockers");
     expect(pageSource).toContain("Production writes");
     expect(pageSource).toContain("Runtime change");
   });
