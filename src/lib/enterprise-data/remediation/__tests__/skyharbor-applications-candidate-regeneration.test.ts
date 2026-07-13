@@ -20,7 +20,7 @@ describe("SkyHarbor applications/systems candidate regeneration", () => {
     expect(result.sourceSelection).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          label: "412-app portfolio CSV from Downloads",
+          label: "412-app portfolio CSV supporting source",
           role: "supporting",
           rowCount: 412,
         }),

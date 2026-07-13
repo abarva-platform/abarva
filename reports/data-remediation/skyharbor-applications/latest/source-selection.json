@@ -16,19 +16,19 @@
     "provenance": "Repo dataset source estate; used as authoritative for the inactive DATA-PR32 applications/systems candidate only."
   },
   {
-    "sourceId": "skyharbor-applications-412-download",
-    "label": "412-app portfolio CSV from Downloads",
-    "path": "/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv",
-    "locationType": "local_downloads_path",
+    "sourceId": "skyharbor-applications-412-supporting",
+    "label": "412-app portfolio CSV supporting source",
+    "path": "datasets/skyharbor-air-supporting-evidence/applications-systems/01_Application_Portfolio_InScope_412Apps.csv",
+    "locationType": "repo_supporting_evidence_path",
     "role": "supporting",
     "rowCount": 412,
     "observedFieldCount": 14,
     "contentFingerprint": "1144dc2547ac9ad13e08385ccf419a1694d56f487df1fe595b3d80f85553e3ea",
-    "selectionReason": "Supporting source only. It is a useful in-scope application subset, but it has fewer rows and currently lives outside the canonical repo/blob landing path.",
+    "selectionReason": "Supporting source only. It is a useful in-scope application subset, but it has fewer rows than the selected estate and is packaged so deployed proof can evaluate it without a local Downloads dependency.",
     "qualityCaveats": [
-      "Local Downloads path must be moved into canonical landing before production data-build use."
+      "Supporting source is packaged for proof parity; upload landing alignment still remains a separate production data-build follow-up."
     ],
-    "provenance": "Operator-provided local evidence upload pack discovered by DATA-PR31."
+    "provenance": "Operator-provided evidence upload pack copied into repo-backed supporting evidence for DATA-PR32 runtime parity."
   },
   {
     "sourceId": "skyharbor-applications-956-transformed-template",
