@@ -1,0 +1,192 @@
+[
+  {
+    "tenantKey": "skyharbor-air",
+    "displayName": "Airline Demo",
+    "avaScope": {
+      "canAnswer": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "shouldCaveat": [
+        "Airline Demo has a rich source estate, but the active Home view is still partial relative to the upstream estate. Applications and systems remediation has an inactive candidate path, but broader enterprise decisions should wait until relationship projection and active-use controls are complete.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation."
+      ],
+      "mustRefuseOrMarkUnsupported": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "suggestedPrompts": [
+        "Explain this company in plain English.",
+        "What does AbarVa know?",
+        "What is missing?",
+        "What can I safely ask?",
+        "What should I not rely on yet?",
+        "What data should we load or project next?"
+      ],
+      "sourceSnapshotReference": "skyharbor-air:active_home_context"
+    }
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "displayName": "Lakeshore Holdings",
+    "avaScope": {
+      "canAnswer": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "shouldCaveat": [
+        "Lakeshore Holdings has source-rich, candidate-thin coverage. 8,721 upstream source rows are not represented in candidate coverage, so Home should describe this as partial context.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation."
+      ],
+      "mustRefuseOrMarkUnsupported": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "suggestedPrompts": [
+        "Explain this company in plain English.",
+        "What does AbarVa know?",
+        "What is missing?",
+        "What can I safely ask?",
+        "What should I not rely on yet?",
+        "What data should we load or project next?"
+      ],
+      "sourceSnapshotReference": "lakeshore-holdings:active_home_context"
+    }
+  },
+  {
+    "tenantKey": "meridian-health",
+    "displayName": "Healthcare Demo",
+    "avaScope": {
+      "canAnswer": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "shouldCaveat": [
+        "Meridian Health has source-rich, candidate-thin coverage. 11,226 upstream source rows are not represented in candidate coverage, so Home should describe this as partial context.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation."
+      ],
+      "mustRefuseOrMarkUnsupported": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "suggestedPrompts": [
+        "Explain this company in plain English.",
+        "What does AbarVa know?",
+        "What is missing?",
+        "What can I safely ask?",
+        "What should I not rely on yet?",
+        "What data should we load or project next?"
+      ],
+      "sourceSnapshotReference": "meridian-health:active_home_context"
+    }
+  },
+  {
+    "tenantKey": "first-capital",
+    "displayName": "Financial Services Demo",
+    "avaScope": {
+      "canAnswer": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "shouldCaveat": [
+        "First Capital has source-rich, candidate-thin coverage. 14,576 upstream source rows are not represented in candidate coverage, so Home should describe this as partial context.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation."
+      ],
+      "mustRefuseOrMarkUnsupported": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "suggestedPrompts": [
+        "Explain this company in plain English.",
+        "What does AbarVa know?",
+        "What is missing?",
+        "What can I safely ask?",
+        "What should I not rely on yet?",
+        "What data should we load or project next?"
+      ],
+      "sourceSnapshotReference": "first-capital:active_home_context"
+    }
+  },
+  {
+    "tenantKey": "apex-retail",
+    "displayName": "Retail Demo",
+    "avaScope": {
+      "canAnswer": [
+        "Loaded facts in the active Home context",
+        "Evidence gaps",
+        "Source coverage and caveats",
+        "What is loaded in the current Home context",
+        "Which evidence and gaps are visible",
+        "Which related areas should be inspected next"
+      ],
+      "shouldCaveat": [
+        "Apex Retail has source-rich, candidate-thin coverage. 10,388 upstream source rows are not represented in candidate coverage, so Home should describe this as partial context.",
+        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
+        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
+        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
+        "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation."
+      ],
+      "mustRefuseOrMarkUnsupported": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ],
+      "suggestedPrompts": [
+        "Explain this company in plain English.",
+        "What does AbarVa know?",
+        "What is missing?",
+        "What can I safely ask?",
+        "What should I not rely on yet?",
+        "What data should we load or project next?"
+      ],
+      "sourceSnapshotReference": "apex-retail:active_home_context"
+    }
+  }
+]

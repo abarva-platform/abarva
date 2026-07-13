@@ -1,0 +1,97 @@
+[
+  {
+    "tenantKey": "skyharbor-air",
+    "displayName": "Airline Demo",
+    "tenantProfileHeader": {
+      "tenantId": null,
+      "tenantKey": "skyharbor-air",
+      "displayName": "Airline Demo",
+      "industry": "Airline",
+      "headquarters": null,
+      "revenue": null,
+      "revenueVerified": false,
+      "employees": null,
+      "employeesVerified": false,
+      "dataOrigin": "Demo-safe",
+      "mode": "active_home_context",
+      "activeContextStatus": "Active Home context",
+      "candidatePreviewStatus": "Not active"
+    }
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "displayName": "Lakeshore Holdings",
+    "tenantProfileHeader": {
+      "tenantId": null,
+      "tenantKey": "lakeshore-holdings",
+      "displayName": "Lakeshore Holdings",
+      "industry": "Diversified Holdings",
+      "headquarters": null,
+      "revenue": null,
+      "revenueVerified": false,
+      "employees": null,
+      "employeesVerified": false,
+      "dataOrigin": "Demo-safe",
+      "mode": "active_home_context",
+      "activeContextStatus": "Active Home context",
+      "candidatePreviewStatus": "Not active"
+    }
+  },
+  {
+    "tenantKey": "meridian-health",
+    "displayName": "Healthcare Demo",
+    "tenantProfileHeader": {
+      "tenantId": null,
+      "tenantKey": "meridian-health",
+      "displayName": "Healthcare Demo",
+      "industry": "Healthcare",
+      "headquarters": null,
+      "revenue": null,
+      "revenueVerified": false,
+      "employees": null,
+      "employeesVerified": false,
+      "dataOrigin": "Demo-safe",
+      "mode": "active_home_context",
+      "activeContextStatus": "Active Home context",
+      "candidatePreviewStatus": "Not active"
+    }
+  },
+  {
+    "tenantKey": "first-capital",
+    "displayName": "Financial Services Demo",
+    "tenantProfileHeader": {
+      "tenantId": null,
+      "tenantKey": "first-capital",
+      "displayName": "Financial Services Demo",
+      "industry": "Financial Services",
+      "headquarters": null,
+      "revenue": null,
+      "revenueVerified": false,
+      "employees": null,
+      "employeesVerified": false,
+      "dataOrigin": "Demo-safe",
+      "mode": "active_home_context",
+      "activeContextStatus": "Active Home context",
+      "candidatePreviewStatus": "Not active"
+    }
+  },
+  {
+    "tenantKey": "apex-retail",
+    "displayName": "Retail Demo",
+    "tenantProfileHeader": {
+      "tenantId": null,
+      "tenantKey": "apex-retail",
+      "displayName": "Retail Demo",
+      "industry": "Retail",
+      "headquarters": null,
+      "revenue": null,
+      "revenueVerified": false,
+      "employees": null,
+      "employeesVerified": false,
+      "dataOrigin": "Demo-safe",
+      "mode": "active_home_context",
+      "activeContextStatus": "Active Home context",
+      "candidatePreviewStatus": "Not active"
+    }
+  }
+]

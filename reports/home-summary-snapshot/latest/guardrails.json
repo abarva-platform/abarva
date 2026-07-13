@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-07-13T16:54:08.370Z",
+  "deterministicBuilder": true,
+  "callsClaude": false,
+  "uploadsFiles": false,
+  "validatesFiles": false,
+  "createsCandidates": false,
+  "candidatePromoted": false,
+  "activeTenantAccessLayerUpdated": false,
+  "productionTenantDataWritten": false,
+  "moduleRuntimeConsumptionChanged": false,
+  "candidateReadByDefault": false,
+  "northstarProcessedAsActive": false,
+  "tenants": [
+    {
+      "tenantKey": "skyharbor-air",
+      "fingerprint": "8e38849c01ad8eb9fdf9021ef7852154ab22770390528740c6700adc0fe575f9",
+      "guardrails": {
+        "deterministicBuilder": true,
+        "callsClaude": false,
+        "productionTenantDataWritten": false,
+        "activeTenantAccessLayerUpdated": false,
+        "candidatePromoted": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "candidateReadByDefault": false,
+        "uploadsFiles": false,
+        "validatesFiles": false,
+        "createsCandidates": false
+      }
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "fingerprint": "c259cee4eeba1db0c1f9c107e56e0bc71ebbeee3c281cd07b4192f5e2042077f",
+      "guardrails": {
+        "deterministicBuilder": true,
+        "callsClaude": false,
+        "productionTenantDataWritten": false,
+        "activeTenantAccessLayerUpdated": false,
+        "candidatePromoted": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "candidateReadByDefault": false,
+        "uploadsFiles": false,
+        "validatesFiles": false,
+        "createsCandidates": false
+      }
+    },
+    {
+      "tenantKey": "meridian-health",
+      "fingerprint": "eeac6a505fe94083fc736fc07974fb02d2ac473032176c1ba74c0ea9b5a81150",
+      "guardrails": {
+        "deterministicBuilder": true,
+        "callsClaude": false,
+        "productionTenantDataWritten": false,
+        "activeTenantAccessLayerUpdated": false,
+        "candidatePromoted": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "candidateReadByDefault": false,
+        "uploadsFiles": false,
+        "validatesFiles": false,
+        "createsCandidates": false
+      }
+    },
+    {
+      "tenantKey": "first-capital",
+      "fingerprint": "245c476670b7ec531e42be1f98aba067379b35661ee51ea82969f833b638bc8f",
+      "guardrails": {
+        "deterministicBuilder": true,
+        "callsClaude": false,
+        "productionTenantDataWritten": false,
+        "activeTenantAccessLayerUpdated": false,
+        "candidatePromoted": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "candidateReadByDefault": false,
+        "uploadsFiles": false,
+        "validatesFiles": false,
+        "createsCandidates": false
+      }
+    },
+    {
+      "tenantKey": "apex-retail",
+      "fingerprint": "0202357fc5ded2bf29d792543e25a8f52aac36b68aaf8c3e712dbffdd11e9325",
+      "guardrails": {
+        "deterministicBuilder": true,
+        "callsClaude": false,
+        "productionTenantDataWritten": false,
+        "activeTenantAccessLayerUpdated": false,
+        "candidatePromoted": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "candidateReadByDefault": false,
+        "uploadsFiles": false,
+        "validatesFiles": false,
+        "createsCandidates": false
+      }
+    }
+  ]
+}
