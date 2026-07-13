@@ -129,11 +129,11 @@ export async function saveMoveArtifact(
 
   const folder =
     family === "uploaded_evidence"
-      ? `uploads/${input.artifactType}`
+      ? `uploads/${input.artifactType}/v${version}`
       : family === "session_artifact"
-        ? `sessions/${input.artifactType}`
+        ? `sessions/${input.artifactType}/v${version}`
         : family === "approval_artifact"
-          ? `approvals/p${input.phase}`
+          ? `approvals/p${input.phase}/v${version}`
           : `generated/p${input.phase}/${input.artifactType}/v${version}`;
   const blobPath = `moves/${tenantKey}/${input.moveId}/${folder}/${input.fileName}`;
 
