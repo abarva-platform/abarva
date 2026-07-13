@@ -17,6 +17,10 @@ import {
   type TenantQualityMatrixArtifact,
   type TenantQualityMatrixRow,
 } from "@/lib/enterprise-data/data-quality/all-tenant-data-quality-audit";
+import {
+  readLatestSkyHarborApplicationsRegeneration,
+  type SkyHarborApplicationsRegenerationResult,
+} from "@/lib/enterprise-data/remediation/skyharbor-applications-candidate-regeneration";
 import { SHELL } from "@/lib/shell/shell-tokens";
 
 export const metadata = {
@@ -50,6 +54,8 @@ export default async function AdminDataLayerExplorerPage() {
   const tenant = await resolveAdminTenant();
   const model = buildAdminDataLayerExplorerModel(tenant.tenantName);
   const tenantQualityMatrix = await readLatestTenantQualityMatrix(process.cwd());
+  const skyHarborApplicationsRemediation =
+    readLatestSkyHarborApplicationsRegeneration(process.cwd());
 
   return (
     <AppShell
@@ -221,6 +227,10 @@ export default async function AdminDataLayerExplorerPage() {
           <ReferenceDataAuditPanel audit={model.referenceDataAudit} />
 
           <ManifestProjectionPanel audit={model.manifestProjectionAudit} />
+
+          <SkyHarborApplicationsRemediationPanel
+            remediation={skyHarborApplicationsRemediation}
+          />
 
           <nav
             data-data-journey-left-nav
@@ -905,6 +915,189 @@ function ManifestProjectionPanel({
           items={audit.excludedTenants.map(
             (tenant) => `${tenant.tenantKey}: ${tenant.reason}`,
           )}
+        />
+      </div>
+    </section>
+  );
+}
+
+function SkyHarborApplicationsRemediationPanel({
+  remediation,
+}: {
+  remediation: SkyHarborApplicationsRegenerationResult;
+}) {
+  const selectedSource = remediation.selectedSource;
+  return (
+    <section
+      data-skyharbor-applications-remediation
+      style={{
+        ...cardStyle,
+        padding: 18,
+        marginBottom: 16,
+        borderColor: "#99F6E4",
+        background: "#F0FDFA",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 16,
+          alignItems: "start",
+          marginBottom: 14,
+        }}
+      >
+        <div>
+          <p style={{ ...labelStyle, margin: 0, color: "#0F766E" }}>
+            DATA-PR32 · SkyHarbor applications/systems remediation
+          </p>
+          <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
+            Rich application estate regenerated as inactive candidate preview.
+          </h2>
+          <p
+            style={{
+              margin: 0,
+              color: "#134E4A",
+              fontSize: 14,
+              lineHeight: 1.55,
+              maxWidth: 1080,
+            }}
+          >
+            This dry-run selects the authoritative SkyHarbor application/system
+            estate, maps it into canonical candidate records, attaches row-level
+            evidence, plans relationship candidates, and keeps default Home and
+            runtime module reads unchanged.
+          </p>
+        </div>
+        <StatusPill>
+          {remediation.candidatePreviewSummary.materialExpansionAchieved
+            ? "candidate preview expanded"
+            : "review required"}
+        </StatusPill>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gap: 10,
+          marginBottom: 14,
+        }}
+      >
+        <QualityMetric
+          label="Selected source rows"
+          value={remediation.counts.authoritativeSourceRows.toLocaleString()}
+        />
+        <QualityMetric
+          label="Candidate records"
+          value={remediation.counts.acceptedCandidateRecords.toLocaleString()}
+        />
+        <QualityMetric
+          label="Quarantined"
+          value={remediation.counts.quarantinedRows.toLocaleString()}
+        />
+        <QualityMetric
+          label="Relationships planned"
+          value={remediation.counts.relationshipCandidatesPlanned.toLocaleString()}
+        />
+      </div>
+
+      <div
+        style={{
+          border: "1px solid rgba(15, 118, 110, 0.18)",
+          borderRadius: 8,
+          background: "#FFFFFF",
+          padding: 12,
+          marginBottom: 14,
+        }}
+      >
+        <p style={{ ...labelStyle, margin: "0 0 8px", color: "#0F766E" }}>
+          Selected source
+        </p>
+        <p
+          style={{
+            margin: 0,
+            color: "#134E4A",
+            fontSize: 13,
+            lineHeight: 1.5,
+          }}
+        >
+          <strong>{selectedSource.label}</strong> · {selectedSource.rowCount} rows ·{" "}
+          <code>{selectedSource.path}</code>. {selectedSource.selectionReason}
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <AuditList
+          title="Source selection"
+          items={remediation.sourceSelection.map(
+            (source) =>
+              `${source.label}: ${source.role}; rows ${source.rowCount}; ${source.selectionReason}`,
+          )}
+        />
+        <AuditList
+          title="Evidence and quality"
+          items={[
+            `Evidence references attached: ${remediation.counts.evidenceReferencesAttached.toLocaleString()}.`,
+            `Warnings: ${remediation.counts.warningCandidateRecords.toLocaleString()}.`,
+            `Source conflicts reported, not merged: ${remediation.counts.sourceConflictsReported.toLocaleString()}.`,
+            `Generated/thin-data risk rows: ${remediation.qualityChecks.generatedInconsistentRowRisk.toLocaleString()}.`,
+          ]}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <AuditList
+          title="Relationship candidates"
+          items={Object.entries(remediation.relationshipSummary).map(
+            ([relationshipType, count]) =>
+              `${relationshipType.replace(/_/g, " ")}: ${count.toLocaleString()}`,
+          )}
+        />
+        <AuditList
+          title="Promotion blockers"
+          items={remediation.promotionBlockers}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
+        }}
+      >
+        <AuditList
+          title="Home/aVa impact"
+          items={[
+            `Default Home active context changed: ${remediation.homeAdminPreviewImpact.defaultHomeActiveContextChanged}.`,
+            `Candidate preview explicit only: ${remediation.homeAdminPreviewImpact.candidatePreviewExplicitOnly}.`,
+            `Candidate data leaks into default Home: ${remediation.homeAdminPreviewImpact.candidateDataLeaksIntoDefaultHome}.`,
+            `aVa reads candidate by default: ${remediation.homeAdminPreviewImpact.avaReadsCandidateByDefault}.`,
+          ]}
+        />
+        <AuditList
+          title="Upload path alignment"
+          items={[
+            `Selected source path mode: ${remediation.uploadPathAlignment.selectedSourcePathMode}.`,
+            `Canonical landing: ${remediation.uploadPathAlignment.canonicalLandingPath}.`,
+            `Current loader scan: ${remediation.uploadPathAlignment.currentLoaderScanPath}.`,
+            `Follow-up: ${remediation.uploadPathAlignment.followUp}.`,
+          ]}
         />
       </div>
     </section>

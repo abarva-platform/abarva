@@ -60,7 +60,7 @@
       {
         "domain": "programs_initiatives",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": true,
+        "candidateManifestIncluded": false,
         "status": "available"
       },
       {

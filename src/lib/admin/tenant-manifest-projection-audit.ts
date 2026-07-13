@@ -366,6 +366,7 @@ function safeExists(filePath: string): boolean {
 
 function walkFiles(dir: string, maxDepth = 8): string[] {
   if (!safeExists(dir) || maxDepth < 0) return [];
+  if (dir.split(path.sep).includes("data-remediation")) return [];
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   const files: string[] = [];
   for (const entry of entries) {

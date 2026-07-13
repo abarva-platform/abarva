@@ -1,0 +1,8 @@
+{
+  "adminDataLayerExplorerShowsRemediation": true,
+  "defaultHomeActiveContextChanged": false,
+  "candidatePreviewExplicitOnly": true,
+  "candidateDataLeaksIntoDefaultHome": false,
+  "homeCandidatePreviewWiredInThisPr": false,
+  "avaReadsCandidateByDefault": false
+}

@@ -1,0 +1,64 @@
+[
+  {
+    "sourceId": "skyharbor-applications-900-estate",
+    "label": "900-row older app/system estate",
+    "path": "datasets/skyharbor-air-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv",
+    "locationType": "repo_dataset_path",
+    "role": "selected_authoritative",
+    "rowCount": 900,
+    "observedFieldCount": 12,
+    "contentFingerprint": "6ff0d8f72dc91be59a0531606b98abc7bc396094c483a8731a736d6bc32e5cf9",
+    "selectionReason": "Selected because it has unique application/system names, IDs, owners, business functions, deployment, lifecycle, criticality, run cost, data class, and integration counts. It is the cleanest application/system inventory for this one-domain remediation.",
+    "qualityCaveats": [
+      "Synthetic demo-safe source; not real airline production data.",
+      "Older source lineage, so promotion remains blocked until client/source-owner review."
+    ],
+    "provenance": "Repo dataset source estate; used as authoritative for the inactive DATA-PR32 applications/systems candidate only."
+  },
+  {
+    "sourceId": "skyharbor-applications-412-download",
+    "label": "412-app portfolio CSV from Downloads",
+    "path": "/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv",
+    "locationType": "local_downloads_path",
+    "role": "supporting",
+    "rowCount": 412,
+    "observedFieldCount": 14,
+    "contentFingerprint": "1144dc2547ac9ad13e08385ccf419a1694d56f487df1fe595b3d80f85553e3ea",
+    "selectionReason": "Supporting source only. It is a useful in-scope application subset, but it has fewer rows and currently lives outside the canonical repo/blob landing path.",
+    "qualityCaveats": [
+      "Local Downloads path must be moved into canonical landing before production data-build use."
+    ],
+    "provenance": "Operator-provided local evidence upload pack discovered by DATA-PR31."
+  },
+  {
+    "sourceId": "skyharbor-applications-956-transformed-template",
+    "label": "956-row transformed app/system template",
+    "path": "datasets/skyharbor-air-synthetic-v6/templates/V6_05_applications_systems.csv",
+    "locationType": "repo_dataset_path",
+    "role": "excluded",
+    "rowCount": 956,
+    "observedFieldCount": 35,
+    "contentFingerprint": "862441c0c8eb69ddcdcffca4a6bfdcb8a09b28ba272c54d889f2dbaafd69de96",
+    "selectionReason": "Excluded as authoritative because 900 rows carry placeholder system_name values. It remains evidence of a transformation defect and is reported as a conflict, not silently merged.",
+    "qualityCaveats": [
+      "Placeholder identity defect: many rows are named 'application_system record'.",
+      "Useful for source lineage, not for authoritative candidate naming in this PR."
+    ],
+    "provenance": "Transformed template generated from source estate; rejected as authoritative for this remediation due to identity quality risk."
+  },
+  {
+    "sourceId": "skyharbor-applications-13-current-candidate",
+    "label": "13-row current upgrade candidate app/system file",
+    "path": "datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710/templates/V6_05_applications_systems.csv",
+    "locationType": "repo_dataset_path",
+    "role": "excluded",
+    "rowCount": 13,
+    "observedFieldCount": 35,
+    "contentFingerprint": "fd4b82035383e3e211568ec481f854a5de875aa03c6452fa2590cf5d4476f5db",
+    "selectionReason": "Excluded because it is the thin candidate path DATA-PR31 found to be incomplete for applications/systems coverage.",
+    "qualityCaveats": [
+      "Good for current-candidate comparison only; not enough coverage for a rich enterprise estate."
+    ],
+    "provenance": "Existing inactive upgrade candidate applications/system slice."
+  }
+]

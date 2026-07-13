@@ -39,7 +39,7 @@ Not implemented:
     - Guardrails: 9
     - Reference data audit: review_required
     - Manifest projection audit tenants: 5
-    - Manifest projection blockers: 97
+    - Manifest projection blockers: 98
 
 ## Section Status
 
@@ -114,7 +114,7 @@ Quality signals:
 
 Upload path alignment: not_fully_aligned
 
-- Airline Demo: blocked; source files 392; structured rows 58236; candidate records 53; blockers 19
+- Airline Demo: blocked; source files 392; structured rows 58236; candidate records 53; blockers 20
 - Healthcare Demo: blocked; source files 401; structured rows 22184; candidate records 0; blockers 19
 - Financial Services Demo: blocked; source files 339; structured rows 25961; candidate records 0; blockers 19
 - Retail Demo: blocked; source files 259; structured rows 17548; candidate records 0; blockers 20

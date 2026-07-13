@@ -47,6 +47,11 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
+    "blocker": "Programs / initiatives: Source domain exists upstream but is not included in the candidate manifest."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "tenantName": "Airline Demo",
     "blocker": "AI initiatives: Source domain exists upstream but is not included in the candidate manifest."
   },
   {
