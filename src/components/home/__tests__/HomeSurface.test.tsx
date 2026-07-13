@@ -14,6 +14,7 @@ import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/bind
 import type { HomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
+import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
 
 const payload = {
   tenant: {
@@ -490,13 +491,15 @@ const previewDataQuality = buildHomeDataQualityModel({
   setupControl,
   candidatePreviewEnabled: true,
 });
+const englishSummary = buildHomeEnglishSummary(dataQuality);
 
 describe("HomeSurface — Explorer context browser", () => {
   it("renders Home as an Explorer-first context browser with scoped aVa", () => {
-    const { container } = render(
+    render(
       <HomeSurface
         clientKey="apexretail"
         payload={payload}
+        englishSummary={englishSummary}
         v6Browser={v6Browser}
       />,
     );
@@ -511,15 +514,19 @@ describe("HomeSurface — Explorer context browser", () => {
       0,
     );
     expect(screen.getByText("Enterprise overview")).toBeInTheDocument();
-    expect(screen.getByText("Context loaded & mapped")).toBeInTheDocument();
     expect(
       screen.getByTestId("home-enterprise-knowledge-snapshot"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("home-english-summary")).toBeInTheDocument();
+    expect(screen.getByText("What this means")).toBeInTheDocument();
+    expect(screen.getByText("Safe to ask")).toBeInTheDocument();
+    expect(screen.getByText("Do not rely on this yet for")).toBeInTheDocument();
+    expect(screen.getByText("Next data action")).toBeInTheDocument();
     expect(
       screen.getByText("Enterprise Knowledge Snapshot"),
     ).toBeInTheDocument();
     expect(screen.getByText("Evidence Coverage")).toBeInTheDocument();
-    expect(screen.getByText("Answerability")).toBeInTheDocument();
+    expect(screen.getAllByText("Answerability").length).toBeGreaterThan(0);
     expect(screen.getByText("Top Gaps")).toBeInTheDocument();
     expect(screen.getByText("Ready Areas")).toBeInTheDocument();
     expect(screen.getByText("Relationship Overview")).toBeInTheDocument();
@@ -544,7 +551,6 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByRole("button", { name: /Metrics & Outcomes/i }),
     ).toBeInTheDocument();
-    expect(container.querySelectorAll(".hx2-ring")).toHaveLength(1);
     expect(
       screen.queryByRole("tab", { name: "Summary" }),
     ).not.toBeInTheDocument();
@@ -557,6 +563,16 @@ describe("HomeSurface — Explorer context browser", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("I can answer")).toBeInTheDocument();
     expect(screen.getByText("I won’t answer")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Explain this context in plain English.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "What decisions should not rely on this yet?",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("binds Home status panels to setup-control when supplied", () => {
@@ -589,6 +605,8 @@ describe("HomeSurface — Explorer context browser", () => {
         v6Browser={v6Browser}
       />,
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Data Quality/i }));
 
     expect(screen.getByTestId("home-data-quality-panel")).toBeInTheDocument();
     expect(screen.getByText("What Home can trust right now")).toBeInTheDocument();
@@ -782,8 +800,9 @@ describe("HomeSurface — Explorer context browser", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Functions/i }));
 
-    expect(screen.getByText("88%")).toBeInTheDocument();
-    expect(screen.getByText(/1 field to complete/i)).toBeInTheDocument();
+    expect(screen.getByText("What is loaded")).toBeInTheDocument();
+    expect(screen.getByText("1 records")).toBeInTheDocument();
+    expect(screen.getByText("What needs work")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(

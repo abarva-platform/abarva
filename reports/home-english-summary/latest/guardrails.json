@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-07-13T14:59:22.270Z",
+  "deterministicRenderer": true,
+  "callsClaude": false,
+  "productionTenantDataWritten": false,
+  "activeTenantAccessLayerUpdated": false,
+  "candidatePromoted": false,
+  "moduleRuntimeConsumptionChanged": false,
+  "candidateReadByDefault": false,
+  "createsCandidates": false,
+  "validatesUploads": false,
+  "uploadsFiles": false,
+  "claimsSavingsOrRealizedOutcomes": false
+}

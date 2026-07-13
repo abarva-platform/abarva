@@ -9,6 +9,7 @@ import { getTenantSourceFiles } from '@/lib/context-ingestion/tenant-context-rea
 import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { buildHomeDataQualityModel } from '@/lib/home/home-data-quality';
+import { buildHomeEnglishSummary } from '@/lib/home/home-english-summary';
 import { getHomeV6ContextBrowser } from '@/lib/home/v6-context-browser';
 import { getHomeV7ContextBrowser } from '@/lib/home/v7-context-browser';
 import { getIntelligenceBindingPayload } from '@/lib/intelligence/binding/binding-payload';
@@ -83,6 +84,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     setupControl,
     browser,
   });
+  const englishSummary = buildHomeEnglishSummary(dataQuality);
 
   return (
     <AppShell
@@ -101,6 +103,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           payload={binding}
           setupControl={setupControl}
           dataQuality={dataQuality}
+          englishSummary={englishSummary}
           v6Browser={browser}
         />
       </main>
