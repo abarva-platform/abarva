@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "canonicalRoot": "datasets/tenant-inputs",
+  "activeRoot": "datasets/tenant-inputs/active",
+  "archiveRoot": "datasets/tenant-inputs/archive",
+  "policy": {
+    "activeLoaderInputsMustBeUnderCanonicalRoot": true,
+    "allNewTenantInputsMustUseUniversalTemplateSet": true,
+    "legacyTemplateNamesAreFileIdentifiersOnly": true,
+    "northstarIsRetired": true,
+    "legacyDatasetRootsAreCompatibilityOnly": true,
+    "legacyDatasetRootsMayNotBecomeActiveTruth": true
+  },
+  "universalTemplateSet": {
+    "templateSetId": "universal-tenant-input-standard-2026-07",
+    "root": "datasets/tenant-inputs/templates/universal/standard-2026-07",
+    "manifest": "datasets/tenant-inputs/templates/universal/standard-2026-07/template-manifest.json",
+    "qualityDepthRules": "datasets/tenant-inputs/templates/universal/standard-2026-07/quality-depth-rules.json",
+    "azureLanding": {
+      "storageAccount": "to-be-bound-by-environment",
+      "container": "tenant-inputs",
+      "rawPrefix": "tenant-inputs/{tenant_key}/{intake_id}/raw/",
+      "validatedPrefix": "tenant-inputs/{tenant_key}/{intake_id}/validated/",
+      "archivePrefix": "tenant-inputs/archive/{tenant_key}/{intake_id}/",
+      "fileNamePattern": "{tenant_key}__{template_name}__{as_of_yyyymmdd}__{source_owner}__r{revision}.csv"
+    }
+  },
+  "activeTenants": [
+    {
+      "tenantKey": "apex-retail",
+      "displayName": "Apex Retail",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/apex-retail/current",
+      "packets": [
+        {
+          "packetId": "enterprise-pack",
+          "path": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input"
+        }
+      ]
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "displayName": "First Capital Financial",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
+      "packets": [
+        {
+          "packetId": "enterprise-pack",
+          "path": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input"
+        }
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "displayName": "Lakeshore Holdings",
+      "companySizeBand": "mid_market",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+      "packets": [
+        {
+          "packetId": "enterprise-pack",
+          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input"
+        }
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "displayName": "Lakeshore Industries",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
+      "packets": [
+        {
+          "packetId": "holdco-pack",
+          "path": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input"
+        }
+      ]
+    },
+    {
+      "tenantKey": "meridian-health",
+      "displayName": "Meridian Health",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/meridian-health/current",
+      "packets": [
+        {
+          "packetId": "current-state-pack",
+          "path": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack",
+          "classification": "synthetic-planning-grade",
+          "status": "active-input"
+        },
+        {
+          "packetId": "rich-enterprise-pack",
+          "path": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack",
+          "classification": "synthetic-planning-grade",
+          "status": "active-input",
+          "note": "Must be included in future Meridian regeneration so Home/aVa does not read only the thin current-state projection."
+        }
+      ]
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "displayName": "SkyHarbor Air",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
+      "packets": [
+        {
+          "packetId": "upgrade-candidate-pack",
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input"
+        },
+        {
+          "packetId": "rich-substrate-pack",
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Authoritative rich substrate for app/system, infrastructure, data, vendor, and relationship depth."
+        }
+      ]
+    }
+  ],
+  "retiredTenants": [
+    {
+      "tenantKey": "northstar-clinical",
+      "displayName": "Northstar Clinical",
+      "status": "retired-excluded",
+      "archivePaths": [
+        "datasets/tenant-inputs/archive/northstar-clinical-tech-synthetic-v1",
+        "datasets/tenant-inputs/archive/client-load-staging/northstar-clinical"
+      ],
+      "reason": "Operator instruction: there should be no Northstar active tenant."
+    }
+  ],
+  "legacyRootsPendingArchiveCleanup": [],
+  "legacyRootsArchived": [
+    {
+      "from": "datasets/apex-retail-synthetic-v1",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v1"
+    },
+    {
+      "from": "datasets/apex-retail-synthetic-v4",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v4"
+    },
+    {
+      "from": "datasets/apex-retail-synthetic-v6",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v6"
+    },
+    {
+      "from": "datasets/first-capital-financial-synthetic-v1",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v1"
+    },
+    {
+      "from": "datasets/first-capital-financial-synthetic-v2",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v2"
+    },
+    {
+      "from": "datasets/first-capital-financial-synthetic-v4",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v4"
+    },
+    {
+      "from": "datasets/first-capital-financial-synthetic-v6",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v6"
+    },
+    {
+      "from": "datasets/lakeshore-holdings-synthetic-v4",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v4"
+    },
+    {
+      "from": "datasets/lakeshore-holdings-synthetic-v6",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v6"
+    },
+    {
+      "from": "datasets/lakeshore-industries-synthetic-v4",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v4"
+    },
+    {
+      "from": "datasets/lakeshore-industries-synthetic-v6",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v6"
+    },
+    {
+      "from": "datasets/lakeshore-industries-synthetic-v7-holdco",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v7-holdco"
+    },
+    {
+      "from": "datasets/meridian-health-synthetic-v1",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v1"
+    },
+    {
+      "from": "datasets/meridian-health-synthetic-v4",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v4"
+    },
+    {
+      "from": "datasets/meridian-health-synthetic-v6",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v6"
+    },
+    {
+      "from": "datasets/meridian-health-v6-v7-current-state-v1",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-v6-v7-current-state-v1"
+    },
+    {
+      "from": "datasets/skyharbor-air-synthetic-v1",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v1"
+    },
+    {
+      "from": "datasets/skyharbor-air-synthetic-v2",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v2"
+    },
+    {
+      "from": "datasets/skyharbor-air-synthetic-v4",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v4"
+    },
+    {
+      "from": "datasets/skyharbor-air-synthetic-v6",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v6"
+    },
+    {
+      "from": "datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710",
+      "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-v6-v7-upgrade-candidate-20260710"
+    }
+  ]
+}

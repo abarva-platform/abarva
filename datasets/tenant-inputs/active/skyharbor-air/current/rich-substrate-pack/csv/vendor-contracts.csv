@@ -1,0 +1,121 @@
+vendor_id,vendor_name,annual_value_usd,renewal_date,exit_terms,ai_clauses,data_rights,category,scope
+VEN-0001,IBM Global Services,280000000,2027-12-31,6mo notice,none,buyer-owned,strategic,AMS + mainframe managed services
+VEN-0002,Amazon Web Services,180000000,2027-12-31,6mo notice,none,vendor-hosted,strategic,Cloud consumption + EDP
+VEN-0003,Accenture,120000000,2027-03-31,6mo notice,none,vendor-hosted,strategic,Application modernization + AMS
+VEN-0004,TCS,95000000,2027-12-31,6mo notice,no-train-on-our-data,vendor-hosted,strategic,Offshore AMS + testing
+VEN-0005,Microsoft Azure,70000000,2026-09-30,6mo notice,none,vendor-hosted,strategic,Cloud + M365
+VEN-0006,Oracle,60000000,2027-12-31,6mo notice,none,vendor-hosted,strategic,ERP + database
+VEN-0007,SAP,55000000,2026-09-30,12mo termination assistance,none,buyer-owned,strategic,S/4HANA + licenses
+VEN-0008,Sabre,48000000,2027-03-31,6mo notice,no-train-on-our-data,buyer-owned,strategic,PSS platform
+VEN-0009,Salesforce,22000000,2027-03-31,TSA up to 9mo,none,shared,strategic,CRM + loyalty
+VEN-0010,Workday,18000000,2026-12-31,6mo notice,no-train-on-our-data,shared,strategic,HCM + finance
+VEN-0011,Helios Technologies,17441191,2026-12-31,auto-renew,none,buyer-owned,commodity,niche AMS
+VEN-0012,Summit Consulting,1676986,2027-06-30,90d notice,none,shared,tactical,licenses
+VEN-0013,Vertex Technologies,6787047,2026-09-30,auto-renew,none,vendor-hosted,tactical,support
+VEN-0014,Summit Technologies,10357354,2026-12-31,6mo notice,none,buyer-owned,commodity,support
+VEN-0015,Helios Technologies,8483457,2027-06-30,6mo notice,none,shared,tactical,niche AMS
+VEN-0016,Helios Software,3953482,2026-09-30,6mo notice,no-train-on-our-data,buyer-owned,commodity,niche AMS
+VEN-0017,Northwind Software,3466242,2027-12-31,auto-renew,none,vendor-hosted,tactical,licenses
+VEN-0018,Vertex Consulting,11773059,2027-06-30,6mo notice,none,vendor-hosted,specialist,support
+VEN-0019,Summit Technologies,12534999,2027-03-31,6mo notice,none,buyer-owned,tactical,staff aug
+VEN-0020,Beacon Technologies,2922569,2027-06-30,90d notice,no-train-on-our-data,vendor-hosted,specialist,licenses
+VEN-0021,Orbit Data,14854414,2027-12-31,6mo notice,none,buyer-owned,commodity,staff aug
+VEN-0022,Orbit Cloud,5984594,2026-12-31,90d notice,none,vendor-hosted,specialist,support
+VEN-0023,Vertex Data,5117327,2026-09-30,6mo notice,no-train-on-our-data,shared,commodity,niche AMS
+VEN-0024,Northwind Data,5656611,2026-09-30,90d notice,none,shared,specialist,niche AMS
+VEN-0025,Beacon Systems,1312036,2027-03-31,6mo notice,none,buyer-owned,tactical,niche AMS
+VEN-0026,Apex Software,14802337,2027-03-31,auto-renew,none,shared,commodity,support
+VEN-0027,Cardinal Software,2245431,2027-12-31,90d notice,no-train-on-our-data,vendor-hosted,specialist,niche AMS
+VEN-0028,Cardinal Data,7921506,2026-09-30,6mo notice,none,vendor-hosted,tactical,licenses
+VEN-0029,Northwind Cloud,14253066,2027-12-31,90d notice,none,vendor-hosted,specialist,niche AMS
+VEN-0030,Cardinal Software,3306306,2027-12-31,6mo notice,none,shared,commodity,support
+VEN-0031,Cardinal Data,17312614,2027-06-30,90d notice,none,buyer-owned,commodity,licenses
+VEN-0032,Northwind Systems,14771227,2027-06-30,90d notice,none,buyer-owned,specialist,support
+VEN-0033,Vertex Consulting,5912795,2027-12-31,auto-renew,none,shared,commodity,licenses
+VEN-0034,Orbit Technologies,1986352,2026-12-31,90d notice,none,shared,tactical,support
+VEN-0035,Helios Technologies,12905778,2027-03-31,6mo notice,none,buyer-owned,specialist,niche AMS
+VEN-0036,Summit Cloud,931159,2027-03-31,6mo notice,none,shared,specialist,licenses
+VEN-0037,Apex Systems,2128693,2027-03-31,6mo notice,none,buyer-owned,specialist,licenses
+VEN-0038,Northwind Software,2331777,2028-06-30,6mo notice,none,buyer-owned,commodity,staff aug
+VEN-0039,Vertex Consulting,2655489,2028-06-30,90d notice,none,buyer-owned,commodity,niche AMS
+VEN-0040,Helios Systems,15714313,2026-09-30,6mo notice,none,vendor-hosted,specialist,niche AMS
+VEN-0041,Northwind Consulting,4130544,2027-12-31,90d notice,no-train-on-our-data,buyer-owned,specialist,support
+VEN-0042,Helios Technologies,14676538,2027-03-31,6mo notice,none,vendor-hosted,tactical,staff aug
+VEN-0043,Vertex Technologies,8318073,2027-03-31,auto-renew,no-train-on-our-data,shared,commodity,support
+VEN-0044,Cardinal Technologies,7832050,2027-06-30,6mo notice,none,shared,commodity,niche AMS
+VEN-0045,Helios Data,10121466,2027-06-30,6mo notice,none,shared,tactical,licenses
+VEN-0046,Northwind Data,11694585,2027-06-30,6mo notice,none,buyer-owned,tactical,SaaS
+VEN-0047,Summit Technologies,4464073,2026-09-30,90d notice,no-train-on-our-data,vendor-hosted,tactical,SaaS
+VEN-0048,Summit Software,12020147,2027-03-31,6mo notice,none,vendor-hosted,tactical,niche AMS
+VEN-0049,Helios Cloud,1984550,2027-12-31,6mo notice,none,buyer-owned,specialist,support
+VEN-0050,Helios Software,2652907,2027-12-31,90d notice,none,shared,commodity,staff aug
+VEN-0051,Summit Cloud,6420220,2026-12-31,6mo notice,none,shared,commodity,staff aug
+VEN-0052,Summit Consulting,16136943,2027-03-31,6mo notice,none,vendor-hosted,specialist,niche AMS
+VEN-0053,Cardinal Technologies,5125272,2027-06-30,6mo notice,no-train-on-our-data,shared,commodity,niche AMS
+VEN-0054,Beacon Systems,3378438,2026-09-30,auto-renew,none,shared,tactical,niche AMS
+VEN-0055,Northwind Systems,3160692,2027-06-30,6mo notice,none,vendor-hosted,commodity,SaaS
+VEN-0056,Northwind Cloud,12750267,2027-06-30,6mo notice,none,shared,tactical,SaaS
+VEN-0057,Helios Systems,9760086,2026-12-31,90d notice,none,buyer-owned,tactical,licenses
+VEN-0058,Orbit Cloud,9303806,2027-03-31,90d notice,none,shared,specialist,SaaS
+VEN-0059,Helios Technologies,6536816,2028-06-30,90d notice,none,shared,commodity,licenses
+VEN-0060,Apex Software,16053853,2028-06-30,6mo notice,no-train-on-our-data,shared,specialist,niche AMS
+VEN-0061,Summit Systems,1053948,2026-09-30,90d notice,none,shared,specialist,SaaS
+VEN-0062,Helios Data,15721897,2026-12-31,6mo notice,none,buyer-owned,commodity,SaaS
+VEN-0063,Apex Consulting,13556322,2027-03-31,90d notice,none,buyer-owned,specialist,SaaS
+VEN-0064,Summit Cloud,16974923,2027-06-30,auto-renew,no-train-on-our-data,buyer-owned,commodity,niche AMS
+VEN-0065,Summit Data,2988888,2027-12-31,6mo notice,none,vendor-hosted,tactical,niche AMS
+VEN-0066,Summit Consulting,7770228,2027-03-31,90d notice,none,vendor-hosted,tactical,SaaS
+VEN-0067,Northwind Systems,11302749,2027-12-31,6mo notice,none,buyer-owned,commodity,SaaS
+VEN-0068,Helios Data,8161331,2027-06-30,auto-renew,none,buyer-owned,commodity,support
+VEN-0069,Summit Systems,13096537,2028-06-30,90d notice,none,buyer-owned,specialist,staff aug
+VEN-0070,Apex Cloud,13373860,2026-12-31,auto-renew,none,shared,specialist,niche AMS
+VEN-0071,Beacon Consulting,1061120,2026-12-31,6mo notice,none,buyer-owned,tactical,niche AMS
+VEN-0072,Cardinal Software,12830973,2028-06-30,auto-renew,no-train-on-our-data,vendor-hosted,tactical,SaaS
+VEN-0073,Northwind Cloud,11237110,2027-12-31,auto-renew,none,buyer-owned,specialist,licenses
+VEN-0074,Cardinal Consulting,15188893,2028-06-30,auto-renew,none,vendor-hosted,specialist,support
+VEN-0075,Beacon Consulting,9143041,2027-12-31,auto-renew,none,buyer-owned,commodity,SaaS
+VEN-0076,Vertex Software,15121626,2027-12-31,90d notice,no-train-on-our-data,buyer-owned,commodity,staff aug
+VEN-0077,Summit Systems,11048516,2027-03-31,auto-renew,none,vendor-hosted,commodity,staff aug
+VEN-0078,Cardinal Consulting,4021676,2026-12-31,6mo notice,no-train-on-our-data,shared,specialist,staff aug
+VEN-0079,Apex Consulting,10855300,2027-03-31,auto-renew,no-train-on-our-data,shared,specialist,licenses
+VEN-0080,Helios Consulting,3085921,2027-06-30,90d notice,none,shared,specialist,support
+VEN-0081,Northwind Data,8752469,2027-12-31,6mo notice,none,buyer-owned,commodity,support
+VEN-0082,Helios Software,13053146,2028-06-30,auto-renew,none,buyer-owned,specialist,niche AMS
+VEN-0083,Cardinal Systems,13311289,2027-03-31,90d notice,no-train-on-our-data,vendor-hosted,commodity,niche AMS
+VEN-0084,Northwind Systems,15410908,2026-12-31,90d notice,none,buyer-owned,specialist,niche AMS
+VEN-0085,Northwind Data,5216155,2026-12-31,6mo notice,none,shared,commodity,SaaS
+VEN-0086,Summit Cloud,7436799,2026-09-30,90d notice,no-train-on-our-data,vendor-hosted,commodity,niche AMS
+VEN-0087,Beacon Consulting,15213228,2026-12-31,90d notice,no-train-on-our-data,buyer-owned,specialist,niche AMS
+VEN-0088,Beacon Technologies,9807255,2027-03-31,auto-renew,none,shared,specialist,licenses
+VEN-0089,Orbit Software,8216276,2026-12-31,6mo notice,none,shared,specialist,support
+VEN-0090,Northwind Software,13194714,2027-12-31,auto-renew,none,buyer-owned,tactical,SaaS
+VEN-0091,Vertex Software,12089377,2027-03-31,auto-renew,none,vendor-hosted,tactical,SaaS
+VEN-0092,Helios Data,11917554,2026-09-30,auto-renew,none,vendor-hosted,commodity,licenses
+VEN-0093,Orbit Technologies,12513898,2026-12-31,auto-renew,none,shared,specialist,SaaS
+VEN-0094,Beacon Systems,16862931,2027-03-31,6mo notice,none,vendor-hosted,commodity,support
+VEN-0095,Northwind Cloud,3163789,2027-12-31,90d notice,no-train-on-our-data,shared,commodity,SaaS
+VEN-0096,Vertex Cloud,10271245,2028-06-30,6mo notice,none,vendor-hosted,specialist,staff aug
+VEN-0097,Vertex Systems,7221417,2027-03-31,auto-renew,none,vendor-hosted,commodity,staff aug
+VEN-0098,Cardinal Software,3727956,2026-09-30,90d notice,none,buyer-owned,specialist,staff aug
+VEN-0099,Beacon Data,11337159,2027-03-31,auto-renew,none,shared,specialist,support
+VEN-0100,Summit Software,5248490,2027-12-31,6mo notice,none,buyer-owned,commodity,SaaS
+VEN-0101,Orbit Cloud,1931631,2026-09-30,auto-renew,none,buyer-owned,specialist,staff aug
+VEN-0102,Apex Data,1065250,2027-06-30,6mo notice,no-train-on-our-data,shared,tactical,SaaS
+VEN-0103,Vertex Consulting,9661588,2027-06-30,90d notice,no-train-on-our-data,vendor-hosted,tactical,licenses
+VEN-0104,Northwind Consulting,2061041,2028-06-30,90d notice,no-train-on-our-data,buyer-owned,tactical,support
+VEN-0105,Cardinal Systems,8262030,2028-06-30,90d notice,none,buyer-owned,commodity,niche AMS
+VEN-0106,Apex Data,1979512,2027-12-31,6mo notice,none,vendor-hosted,specialist,SaaS
+VEN-0107,Beacon Software,4433114,2026-09-30,6mo notice,none,shared,tactical,licenses
+VEN-0108,Helios Systems,5319262,2027-06-30,90d notice,none,vendor-hosted,tactical,licenses
+VEN-0109,Vertex Technologies,2007511,2027-12-31,auto-renew,none,vendor-hosted,tactical,niche AMS
+VEN-0110,Northwind Data,17663697,2026-09-30,90d notice,none,buyer-owned,tactical,staff aug
+VEN-0111,Summit Data,15901197,2028-06-30,auto-renew,none,vendor-hosted,tactical,licenses
+VEN-0112,Beacon Cloud,16811304,2026-12-31,90d notice,none,vendor-hosted,tactical,staff aug
+VEN-0113,Northwind Software,11442663,2026-12-31,90d notice,none,buyer-owned,commodity,niche AMS
+VEN-0114,Helios Technologies,13968585,2026-09-30,6mo notice,none,vendor-hosted,tactical,licenses
+VEN-0115,Apex Technologies,14497572,2026-09-30,90d notice,none,buyer-owned,commodity,SaaS
+VEN-0116,Vertex Data,5001324,2026-09-30,90d notice,none,buyer-owned,specialist,SaaS
+VEN-0117,Vertex Data,8083316,2027-06-30,90d notice,none,vendor-hosted,tactical,SaaS
+VEN-0118,Summit Systems,6393104,2027-12-31,6mo notice,none,buyer-owned,commodity,licenses
+VEN-0119,Orbit Cloud,6951645,2027-06-30,auto-renew,none,shared,tactical,support
+VEN-0120,Helios Technologies,9898613,2026-09-30,6mo notice,none,shared,tactical,SaaS

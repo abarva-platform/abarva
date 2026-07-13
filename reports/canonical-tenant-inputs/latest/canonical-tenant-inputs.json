@@ -1,0 +1,1860 @@
+{
+  "generatedAt": "2026-07-13T23:58:15.797Z",
+  "guardrails": {
+    "activeLoaderInputsMustBeUnderCanonicalRoot": true,
+    "northstarActive": false,
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "moduleRuntimeBehaviorChanged": false
+  },
+  "registry": {
+    "schemaVersion": 1,
+    "canonicalRoot": "datasets/tenant-inputs",
+    "activeRoot": "datasets/tenant-inputs/active",
+    "archiveRoot": "datasets/tenant-inputs/archive",
+    "policy": {
+      "activeLoaderInputsMustBeUnderCanonicalRoot": true,
+      "allNewTenantInputsMustUseUniversalTemplateSet": true,
+      "legacyTemplateNamesAreFileIdentifiersOnly": true,
+      "northstarIsRetired": true,
+      "legacyDatasetRootsAreCompatibilityOnly": true,
+      "legacyDatasetRootsMayNotBecomeActiveTruth": true
+    },
+    "universalTemplateSet": {
+      "templateSetId": "universal-tenant-input-standard-2026-07",
+      "root": "datasets/tenant-inputs/templates/universal/standard-2026-07",
+      "manifest": "datasets/tenant-inputs/templates/universal/standard-2026-07/template-manifest.json",
+      "qualityDepthRules": "datasets/tenant-inputs/templates/universal/standard-2026-07/quality-depth-rules.json",
+      "azureLanding": {
+        "storageAccount": "to-be-bound-by-environment",
+        "container": "tenant-inputs",
+        "rawPrefix": "tenant-inputs/{tenant_key}/{intake_id}/raw/",
+        "validatedPrefix": "tenant-inputs/{tenant_key}/{intake_id}/validated/",
+        "archivePrefix": "tenant-inputs/archive/{tenant_key}/{intake_id}/",
+        "fileNamePattern": "{tenant_key}__{template_name}__{as_of_yyyymmdd}__{source_owner}__r{revision}.csv"
+      }
+    },
+    "activeTenants": [
+      {
+        "tenantKey": "apex-retail",
+        "displayName": "Apex Retail",
+        "companySizeBand": "large",
+        "canonicalInputRoot": "datasets/tenant-inputs/active/apex-retail/current",
+        "packets": [
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack",
+            "classification": "synthetic-demo",
+            "status": "active-input"
+          }
+        ]
+      },
+      {
+        "tenantKey": "first-capital-financial",
+        "displayName": "First Capital Financial",
+        "companySizeBand": "large",
+        "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
+        "packets": [
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack",
+            "classification": "synthetic-demo",
+            "status": "active-input"
+          }
+        ]
+      },
+      {
+        "tenantKey": "lakeshore-holdings",
+        "displayName": "Lakeshore Holdings",
+        "companySizeBand": "mid_market",
+        "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+        "packets": [
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack",
+            "classification": "synthetic-demo",
+            "status": "active-input"
+          }
+        ]
+      },
+      {
+        "tenantKey": "lakeshore-industries",
+        "displayName": "Lakeshore Industries",
+        "companySizeBand": "large",
+        "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
+        "packets": [
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack",
+            "classification": "synthetic-demo",
+            "status": "active-input"
+          }
+        ]
+      },
+      {
+        "tenantKey": "meridian-health",
+        "displayName": "Meridian Health",
+        "companySizeBand": "large",
+        "canonicalInputRoot": "datasets/tenant-inputs/active/meridian-health/current",
+        "packets": [
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack",
+            "classification": "synthetic-planning-grade",
+            "status": "active-input"
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack",
+            "classification": "synthetic-planning-grade",
+            "status": "active-input",
+            "note": "Must be included in future Meridian regeneration so Home/aVa does not read only the thin current-state projection."
+          }
+        ]
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "displayName": "SkyHarbor Air",
+        "companySizeBand": "large",
+        "canonicalInputRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
+        "packets": [
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack",
+            "classification": "synthetic-demo",
+            "status": "active-input"
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack",
+            "classification": "synthetic-demo",
+            "status": "active-input",
+            "note": "Authoritative rich substrate for app/system, infrastructure, data, vendor, and relationship depth."
+          }
+        ]
+      }
+    ],
+    "retiredTenants": [
+      {
+        "tenantKey": "northstar-clinical",
+        "displayName": "Northstar Clinical",
+        "status": "retired-excluded",
+        "archivePaths": [
+          "datasets/tenant-inputs/archive/northstar-clinical-tech-synthetic-v1",
+          "datasets/tenant-inputs/archive/client-load-staging/northstar-clinical"
+        ],
+        "reason": "Operator instruction: there should be no Northstar active tenant."
+      }
+    ],
+    "legacyRootsPendingArchiveCleanup": [],
+    "legacyRootsArchived": [
+      {
+        "from": "datasets/apex-retail-synthetic-v1",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v1"
+      },
+      {
+        "from": "datasets/apex-retail-synthetic-v4",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v4"
+      },
+      {
+        "from": "datasets/apex-retail-synthetic-v6",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v6"
+      },
+      {
+        "from": "datasets/first-capital-financial-synthetic-v1",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v1"
+      },
+      {
+        "from": "datasets/first-capital-financial-synthetic-v2",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v2"
+      },
+      {
+        "from": "datasets/first-capital-financial-synthetic-v4",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v4"
+      },
+      {
+        "from": "datasets/first-capital-financial-synthetic-v6",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v6"
+      },
+      {
+        "from": "datasets/lakeshore-holdings-synthetic-v4",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v4"
+      },
+      {
+        "from": "datasets/lakeshore-holdings-synthetic-v6",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v6"
+      },
+      {
+        "from": "datasets/lakeshore-industries-synthetic-v4",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v4"
+      },
+      {
+        "from": "datasets/lakeshore-industries-synthetic-v6",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v6"
+      },
+      {
+        "from": "datasets/lakeshore-industries-synthetic-v7-holdco",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v7-holdco"
+      },
+      {
+        "from": "datasets/meridian-health-synthetic-v1",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v1"
+      },
+      {
+        "from": "datasets/meridian-health-synthetic-v4",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v4"
+      },
+      {
+        "from": "datasets/meridian-health-synthetic-v6",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v6"
+      },
+      {
+        "from": "datasets/meridian-health-v6-v7-current-state-v1",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-v6-v7-current-state-v1"
+      },
+      {
+        "from": "datasets/skyharbor-air-synthetic-v1",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v1"
+      },
+      {
+        "from": "datasets/skyharbor-air-synthetic-v2",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v2"
+      },
+      {
+        "from": "datasets/skyharbor-air-synthetic-v4",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v4"
+      },
+      {
+        "from": "datasets/skyharbor-air-synthetic-v6",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v6"
+      },
+      {
+        "from": "datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710",
+        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-v6-v7-upgrade-candidate-20260710"
+      }
+    ]
+  },
+  "tenants": [
+    {
+      "tenantKey": "apex-retail",
+      "displayName": "Apex Retail",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/apex-retail/current",
+      "packets": [
+        {
+          "packetId": "enterprise-pack",
+          "path": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "files": [
+            {
+              "relativePath": "README.md",
+              "extension": ".md",
+              "rows": null,
+              "sizeBytes": 1896
+            },
+            {
+              "relativePath": "templates/V6_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 1065
+            },
+            {
+              "relativePath": "templates/V6_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 26,
+              "sizeBytes": 17678
+            },
+            {
+              "relativePath": "templates/V6_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 50,
+              "sizeBytes": 35621
+            },
+            {
+              "relativePath": "templates/V6_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 12,
+              "sizeBytes": 7797
+            },
+            {
+              "relativePath": "templates/V6_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 182,
+              "sizeBytes": 123281
+            },
+            {
+              "relativePath": "templates/V6_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 385,
+              "sizeBytes": 279070
+            },
+            {
+              "relativePath": "templates/V6_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 100,
+              "sizeBytes": 62744
+            },
+            {
+              "relativePath": "templates/V6_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 188,
+              "sizeBytes": 121838
+            },
+            {
+              "relativePath": "templates/V6_09_programs_initiatives.csv",
+              "extension": ".csv",
+              "rows": 159,
+              "sizeBytes": 124225
+            },
+            {
+              "relativePath": "templates/V6_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 155,
+              "sizeBytes": 123462
+            },
+            {
+              "relativePath": "templates/V6_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 375,
+              "sizeBytes": 270510
+            },
+            {
+              "relativePath": "templates/V6_12_relationships.csv",
+              "extension": ".csv",
+              "rows": 1605,
+              "sizeBytes": 1011495
+            },
+            {
+              "relativePath": "templates/V6_13_evidence_sources.csv",
+              "extension": ".csv",
+              "rows": 14,
+              "sizeBytes": 8595
+            },
+            {
+              "relativePath": "templates/V6_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 126,
+              "sizeBytes": 88148
+            },
+            {
+              "relativePath": "templates/V6_15_industry_corpus_patterns.csv",
+              "extension": ".csv",
+              "rows": 206,
+              "sizeBytes": 153641
+            },
+            {
+              "relativePath": "templates/V6_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 4779
+            },
+            {
+              "relativePath": "V6_BUSINESS_METADATA_DICTIONARY.csv",
+              "extension": ".csv",
+              "rows": 523,
+              "sizeBytes": 201740
+            },
+            {
+              "relativePath": "V6_GENERATED_MANIFEST.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 3553
+            },
+            {
+              "relativePath": "V6_SCHEMA_CATALOG.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 362664
+            }
+          ],
+          "fileCount": 20,
+          "csvFileCount": 17,
+          "csvRows": 4112
+        }
+      ],
+      "fileCount": 20,
+      "csvRows": 4112
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "displayName": "First Capital Financial",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
+      "packets": [
+        {
+          "packetId": "enterprise-pack",
+          "path": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "files": [
+            {
+              "relativePath": "README.md",
+              "extension": ".md",
+              "rows": null,
+              "sizeBytes": 1911
+            },
+            {
+              "relativePath": "templates/V6_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 1187
+            },
+            {
+              "relativePath": "templates/V6_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 27,
+              "sizeBytes": 19827
+            },
+            {
+              "relativePath": "templates/V6_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 65,
+              "sizeBytes": 50297
+            },
+            {
+              "relativePath": "templates/V6_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 16,
+              "sizeBytes": 9994
+            },
+            {
+              "relativePath": "templates/V6_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 272,
+              "sizeBytes": 181395
+            },
+            {
+              "relativePath": "templates/V6_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 460,
+              "sizeBytes": 326302
+            },
+            {
+              "relativePath": "templates/V6_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 120,
+              "sizeBytes": 75977
+            },
+            {
+              "relativePath": "templates/V6_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 397,
+              "sizeBytes": 259896
+            },
+            {
+              "relativePath": "templates/V6_09_programs_initiatives.csv",
+              "extension": ".csv",
+              "rows": 299,
+              "sizeBytes": 259706
+            },
+            {
+              "relativePath": "templates/V6_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 282,
+              "sizeBytes": 243108
+            },
+            {
+              "relativePath": "templates/V6_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 547,
+              "sizeBytes": 411661
+            },
+            {
+              "relativePath": "templates/V6_12_relationships.csv",
+              "extension": ".csv",
+              "rows": 2614,
+              "sizeBytes": 1710277
+            },
+            {
+              "relativePath": "templates/V6_13_evidence_sources.csv",
+              "extension": ".csv",
+              "rows": 42,
+              "sizeBytes": 25991
+            },
+            {
+              "relativePath": "templates/V6_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 168,
+              "sizeBytes": 127816
+            },
+            {
+              "relativePath": "templates/V6_15_industry_corpus_patterns.csv",
+              "extension": ".csv",
+              "rows": 294,
+              "sizeBytes": 231610
+            },
+            {
+              "relativePath": "templates/V6_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 4969
+            },
+            {
+              "relativePath": "V6_BUSINESS_METADATA_DICTIONARY.csv",
+              "extension": ".csv",
+              "rows": 523,
+              "sizeBytes": 201772
+            },
+            {
+              "relativePath": "V6_GENERATED_MANIFEST.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 3603
+            },
+            {
+              "relativePath": "V6_SCHEMA_CATALOG.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 362664
+            }
+          ],
+          "fileCount": 20,
+          "csvFileCount": 17,
+          "csvRows": 6132
+        }
+      ],
+      "fileCount": 20,
+      "csvRows": 6132
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "displayName": "Lakeshore Holdings",
+      "companySizeBand": "mid_market",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+      "packets": [
+        {
+          "packetId": "enterprise-pack",
+          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "files": [
+            {
+              "relativePath": "holdco_tower/H01_entity_hierarchy.csv",
+              "extension": ".csv",
+              "rows": 8,
+              "sizeBytes": 3022
+            },
+            {
+              "relativePath": "holdco_tower/H02_dashboard_metric_map.csv",
+              "extension": ".csv",
+              "rows": 8,
+              "sizeBytes": 2586
+            },
+            {
+              "relativePath": "holdco_tower/README.md",
+              "extension": ".md",
+              "rows": null,
+              "sizeBytes": 1272
+            },
+            {
+              "relativePath": "README.md",
+              "extension": ".md",
+              "rows": null,
+              "sizeBytes": 1170
+            },
+            {
+              "relativePath": "templates/V6_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 1855
+            },
+            {
+              "relativePath": "templates/V6_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 14,
+              "sizeBytes": 10541
+            },
+            {
+              "relativePath": "templates/V6_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 8,
+              "sizeBytes": 7263
+            },
+            {
+              "relativePath": "templates/V6_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 7222
+            },
+            {
+              "relativePath": "templates/V6_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 24,
+              "sizeBytes": 18284
+            },
+            {
+              "relativePath": "templates/V6_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 34,
+              "sizeBytes": 27307
+            },
+            {
+              "relativePath": "templates/V6_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 19,
+              "sizeBytes": 13138
+            },
+            {
+              "relativePath": "templates/V6_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 85,
+              "sizeBytes": 69243
+            },
+            {
+              "relativePath": "templates/V6_09_programs_initiatives.csv",
+              "extension": ".csv",
+              "rows": 15,
+              "sizeBytes": 13110
+            },
+            {
+              "relativePath": "templates/V6_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 8,
+              "sizeBytes": 6948
+            },
+            {
+              "relativePath": "templates/V6_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 7473
+            },
+            {
+              "relativePath": "templates/V6_12_relationships.csv",
+              "extension": ".csv",
+              "rows": 199,
+              "sizeBytes": 138289
+            },
+            {
+              "relativePath": "templates/V6_13_evidence_sources.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 6998
+            },
+            {
+              "relativePath": "templates/V6_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 12,
+              "sizeBytes": 9392
+            },
+            {
+              "relativePath": "templates/V6_15_industry_corpus_patterns.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 3963
+            },
+            {
+              "relativePath": "templates/V6_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 4113
+            },
+            {
+              "relativePath": "V6_BUSINESS_METADATA_DICTIONARY.csv",
+              "extension": ".csv",
+              "rows": 523,
+              "sizeBytes": 201852
+            },
+            {
+              "relativePath": "V6_GENERATED_MANIFEST.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 4486
+            },
+            {
+              "relativePath": "V6_SCHEMA_CATALOG.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 362664
+            }
+          ],
+          "fileCount": 23,
+          "csvFileCount": 19,
+          "csvRows": 996
+        }
+      ],
+      "fileCount": 23,
+      "csvRows": 996
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "displayName": "Lakeshore Industries",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
+      "packets": [
+        {
+          "packetId": "holdco-pack",
+          "path": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "files": [
+            {
+              "relativePath": "00_master/V7_DIMENSION_REGISTRY.csv",
+              "extension": ".csv",
+              "rows": 25,
+              "sizeBytes": 2744
+            },
+            {
+              "relativePath": "azure/v7-holdco-azure-load-payload.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 6526822
+            },
+            {
+              "relativePath": "client_templates/V7_00_portfolio_entity_registry.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 609
+            },
+            {
+              "relativePath": "client_templates/V7_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 751
+            },
+            {
+              "relativePath": "client_templates/V7_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 645
+            },
+            {
+              "relativePath": "client_templates/V7_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 482
+            },
+            {
+              "relativePath": "client_templates/V7_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 458
+            },
+            {
+              "relativePath": "client_templates/V7_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 720
+            },
+            {
+              "relativePath": "client_templates/V7_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 513
+            },
+            {
+              "relativePath": "client_templates/V7_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 426
+            },
+            {
+              "relativePath": "client_templates/V7_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 486
+            },
+            {
+              "relativePath": "client_templates/V7_09_programs_initiatives_business_priorities.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 475
+            },
+            {
+              "relativePath": "client_templates/V7_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 401
+            },
+            {
+              "relativePath": "client_templates/V7_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 387
+            },
+            {
+              "relativePath": "client_templates/V7_12_relationships_graph_edges.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 490
+            },
+            {
+              "relativePath": "client_templates/V7_13_source_evidence_registry.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 410
+            },
+            {
+              "relativePath": "client_templates/V7_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 380
+            },
+            {
+              "relativePath": "client_templates/V7_15_industry_market_knowledge_patterns.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 333
+            },
+            {
+              "relativePath": "client_templates/V7_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 281
+            },
+            {
+              "relativePath": "client_templates/V7_17_client_rate_card_cost_basis.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 404
+            },
+            {
+              "relativePath": "client_templates/V7_18_function_system_data_vendor_bridge.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 448
+            },
+            {
+              "relativePath": "client_templates/V7_19_service_tower_managed_services_scope.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 362
+            },
+            {
+              "relativePath": "client_templates/V7_20_chunk_retrieval_registry.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 452
+            },
+            {
+              "relativePath": "client_templates/V7_21_graph_registry_relationship_dictionary.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 286
+            },
+            {
+              "relativePath": "client_templates/V7_22_operational_evidence_process_intelligence.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 356
+            },
+            {
+              "relativePath": "client_templates/V7_23_external_benchmark_market_corpus.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 314
+            },
+            {
+              "relativePath": "client_templates/V7_24_infrastructure_cloud_estate.csv",
+              "extension": ".csv",
+              "rows": 0,
+              "sizeBytes": 410
+            },
+            {
+              "relativePath": "field_catalog/V7_FIELD_CATALOG.csv",
+              "extension": ".csv",
+              "rows": 690,
+              "sizeBytes": 175998
+            },
+            {
+              "relativePath": "V7_00_portfolio_entity_registry.csv",
+              "extension": ".csv",
+              "rows": 8,
+              "sizeBytes": 6815
+            },
+            {
+              "relativePath": "V7_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 8,
+              "sizeBytes": 9398
+            },
+            {
+              "relativePath": "V7_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 96,
+              "sizeBytes": 129876
+            },
+            {
+              "relativePath": "V7_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 116,
+              "sizeBytes": 95937
+            },
+            {
+              "relativePath": "V7_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 82,
+              "sizeBytes": 92099
+            },
+            {
+              "relativePath": "V7_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 152,
+              "sizeBytes": 176392
+            },
+            {
+              "relativePath": "V7_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 82,
+              "sizeBytes": 72259
+            },
+            {
+              "relativePath": "V7_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 96,
+              "sizeBytes": 63828
+            },
+            {
+              "relativePath": "V7_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 57,
+              "sizeBytes": 42357
+            },
+            {
+              "relativePath": "V7_09_programs_initiatives_business_priorities.csv",
+              "extension": ".csv",
+              "rows": 36,
+              "sizeBytes": 39970
+            },
+            {
+              "relativePath": "V7_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 36,
+              "sizeBytes": 24129
+            },
+            {
+              "relativePath": "V7_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 48,
+              "sizeBytes": 31652
+            },
+            {
+              "relativePath": "V7_12_relationships_graph_edges.csv",
+              "extension": ".csv",
+              "rows": 529,
+              "sizeBytes": 344054
+            },
+            {
+              "relativePath": "V7_13_source_evidence_registry.csv",
+              "extension": ".csv",
+              "rows": 48,
+              "sizeBytes": 34334
+            },
+            {
+              "relativePath": "V7_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 384,
+              "sizeBytes": 248460
+            },
+            {
+              "relativePath": "V7_15_industry_market_knowledge_patterns.csv",
+              "extension": ".csv",
+              "rows": 24,
+              "sizeBytes": 15438
+            },
+            {
+              "relativePath": "V7_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 18,
+              "sizeBytes": 9845
+            },
+            {
+              "relativePath": "V7_17_client_rate_card_cost_basis.csv",
+              "extension": ".csv",
+              "rows": 54,
+              "sizeBytes": 32922
+            },
+            {
+              "relativePath": "V7_18_function_system_data_vendor_bridge.csv",
+              "extension": ".csv",
+              "rows": 510,
+              "sizeBytes": 374724
+            },
+            {
+              "relativePath": "V7_19_service_tower_managed_services_scope.csv",
+              "extension": ".csv",
+              "rows": 64,
+              "sizeBytes": 39498
+            },
+            {
+              "relativePath": "V7_20_chunk_retrieval_registry.csv",
+              "extension": ".csv",
+              "rows": 376,
+              "sizeBytes": 277205
+            },
+            {
+              "relativePath": "V7_21_graph_registry_relationship_dictionary.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 3046
+            },
+            {
+              "relativePath": "V7_22_operational_evidence_process_intelligence.csv",
+              "extension": ".csv",
+              "rows": 112,
+              "sizeBytes": 61182
+            },
+            {
+              "relativePath": "V7_23_external_benchmark_market_corpus.csv",
+              "extension": ".csv",
+              "rows": 24,
+              "sizeBytes": 15269
+            },
+            {
+              "relativePath": "V7_24_infrastructure_cloud_estate.csv",
+              "extension": ".csv",
+              "rows": 128,
+              "sizeBytes": 70594
+            },
+            {
+              "relativePath": "V7_HOLDCO_HYGIENE_REPORT.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 6335
+            },
+            {
+              "relativePath": "V7_SYNTHETIC_MANIFEST.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 5351
+            }
+          ],
+          "fileCount": 55,
+          "csvFileCount": 52,
+          "csvRows": 3809
+        }
+      ],
+      "fileCount": 55,
+      "csvRows": 3809
+    },
+    {
+      "tenantKey": "meridian-health",
+      "displayName": "Meridian Health",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/meridian-health/current",
+      "packets": [
+        {
+          "packetId": "current-state-pack",
+          "path": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack",
+          "classification": "synthetic-planning-grade",
+          "status": "active-input",
+          "files": [
+            {
+              "relativePath": "azure/v7-tenant-load-payload.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 1342097
+            },
+            {
+              "relativePath": "derived/meridian_moves_current_state_findings.csv",
+              "extension": ".csv",
+              "rows": 28,
+              "sizeBytes": 22613
+            },
+            {
+              "relativePath": "derived/meridian_moves_golden_questions_scorecard.csv",
+              "extension": ".csv",
+              "rows": 42,
+              "sizeBytes": 30289
+            },
+            {
+              "relativePath": "README.md",
+              "extension": ".md",
+              "rows": null,
+              "sizeBytes": 393
+            },
+            {
+              "relativePath": "templates/V6_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 2281
+            },
+            {
+              "relativePath": "templates/V6_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 11687
+            },
+            {
+              "relativePath": "templates/V6_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 11780
+            },
+            {
+              "relativePath": "templates/V6_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 9555
+            },
+            {
+              "relativePath": "templates/V6_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 15,
+              "sizeBytes": 24185
+            },
+            {
+              "relativePath": "templates/V6_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 36,
+              "sizeBytes": 68417
+            },
+            {
+              "relativePath": "templates/V6_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 11411
+            },
+            {
+              "relativePath": "templates/V6_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 17794
+            },
+            {
+              "relativePath": "templates/V6_09_programs_initiatives.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 15168
+            },
+            {
+              "relativePath": "templates/V6_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 3,
+              "sizeBytes": 7046
+            },
+            {
+              "relativePath": "templates/V6_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 28,
+              "sizeBytes": 48691
+            },
+            {
+              "relativePath": "templates/V6_12_relationships.csv",
+              "extension": ".csv",
+              "rows": 69,
+              "sizeBytes": 105732
+            },
+            {
+              "relativePath": "templates/V6_13_evidence_sources.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 6406
+            },
+            {
+              "relativePath": "templates/V6_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 11,
+              "sizeBytes": 17439
+            },
+            {
+              "relativePath": "templates/V6_15_industry_corpus_patterns.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 13449
+            },
+            {
+              "relativePath": "templates/V6_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 8288
+            },
+            {
+              "relativePath": "V6_V7_GENERATED_MANIFEST.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 3453
+            },
+            {
+              "relativePath": "v7/V7_00_portfolio_entity_registry.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 1772
+            },
+            {
+              "relativePath": "v7/V7_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 2315
+            },
+            {
+              "relativePath": "v7/V7_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 12955
+            },
+            {
+              "relativePath": "v7/V7_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 8496
+            },
+            {
+              "relativePath": "v7/V7_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 7898
+            },
+            {
+              "relativePath": "v7/V7_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 15,
+              "sizeBytes": 27492
+            },
+            {
+              "relativePath": "v7/V7_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 36,
+              "sizeBytes": 51970
+            },
+            {
+              "relativePath": "v7/V7_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 7682
+            },
+            {
+              "relativePath": "v7/V7_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 11838
+            },
+            {
+              "relativePath": "v7/V7_09_programs_initiatives_business_priorities.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 10125
+            },
+            {
+              "relativePath": "v7/V7_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 3,
+              "sizeBytes": 3799
+            },
+            {
+              "relativePath": "v7/V7_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 28,
+              "sizeBytes": 30213
+            },
+            {
+              "relativePath": "v7/V7_12_relationships_graph_edges.csv",
+              "extension": ".csv",
+              "rows": 69,
+              "sizeBytes": 71261
+            },
+            {
+              "relativePath": "v7/V7_13_source_evidence_registry.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 4513
+            },
+            {
+              "relativePath": "v7/V7_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 11,
+              "sizeBytes": 11589
+            },
+            {
+              "relativePath": "v7/V7_15_industry_market_knowledge_patterns.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 8055
+            },
+            {
+              "relativePath": "v7/V7_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 5267
+            },
+            {
+              "relativePath": "v7/V7_17_client_rate_card_cost_basis.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 4343
+            },
+            {
+              "relativePath": "v7/V7_18_function_system_data_vendor_bridge.csv",
+              "extension": ".csv",
+              "rows": 60,
+              "sizeBytes": 65342
+            },
+            {
+              "relativePath": "v7/V7_19_service_tower_managed_services_scope.csv",
+              "extension": ".csv",
+              "rows": 3,
+              "sizeBytes": 3337
+            },
+            {
+              "relativePath": "v7/V7_20_chunk_retrieval_registry.csv",
+              "extension": ".csv",
+              "rows": 118,
+              "sizeBytes": 140036
+            },
+            {
+              "relativePath": "v7/V7_21_graph_registry_relationship_dictionary.csv",
+              "extension": ".csv",
+              "rows": 17,
+              "sizeBytes": 15325
+            },
+            {
+              "relativePath": "v7/V7_22_operational_evidence_process_intelligence.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 11075
+            },
+            {
+              "relativePath": "v7/V7_23_external_benchmark_market_corpus.csv",
+              "extension": ".csv",
+              "rows": 2,
+              "sizeBytes": 2292
+            },
+            {
+              "relativePath": "v7/V7_24_infrastructure_cloud_estate.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 4192
+            }
+          ],
+          "fileCount": 46,
+          "csvFileCount": 43,
+          "csvRows": 735
+        },
+        {
+          "packetId": "rich-enterprise-pack",
+          "path": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack",
+          "classification": "synthetic-planning-grade",
+          "status": "active-input",
+          "note": "Must be included in future Meridian regeneration so Home/aVa does not read only the thin current-state projection.",
+          "files": [
+            {
+              "relativePath": "README.md",
+              "extension": ".md",
+              "rows": null,
+              "sizeBytes": 1901
+            },
+            {
+              "relativePath": "templates/V6_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 1108
+            },
+            {
+              "relativePath": "templates/V6_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 25,
+              "sizeBytes": 17897
+            },
+            {
+              "relativePath": "templates/V6_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 73,
+              "sizeBytes": 56786
+            },
+            {
+              "relativePath": "templates/V6_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 14,
+              "sizeBytes": 8557
+            },
+            {
+              "relativePath": "templates/V6_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 162,
+              "sizeBytes": 111777
+            },
+            {
+              "relativePath": "templates/V6_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 360,
+              "sizeBytes": 255650
+            },
+            {
+              "relativePath": "templates/V6_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 95,
+              "sizeBytes": 64932
+            },
+            {
+              "relativePath": "templates/V6_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 178,
+              "sizeBytes": 119594
+            },
+            {
+              "relativePath": "templates/V6_09_programs_initiatives.csv",
+              "extension": ".csv",
+              "rows": 156,
+              "sizeBytes": 135952
+            },
+            {
+              "relativePath": "templates/V6_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 150,
+              "sizeBytes": 123820
+            },
+            {
+              "relativePath": "templates/V6_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 349,
+              "sizeBytes": 261963
+            },
+            {
+              "relativePath": "templates/V6_12_relationships.csv",
+              "extension": ".csv",
+              "rows": 1551,
+              "sizeBytes": 1011382
+            },
+            {
+              "relativePath": "templates/V6_13_evidence_sources.csv",
+              "extension": ".csv",
+              "rows": 14,
+              "sizeBytes": 8918
+            },
+            {
+              "relativePath": "templates/V6_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 116,
+              "sizeBytes": 85210
+            },
+            {
+              "relativePath": "templates/V6_15_industry_corpus_patterns.csv",
+              "extension": ".csv",
+              "rows": 190,
+              "sizeBytes": 146404
+            },
+            {
+              "relativePath": "templates/V6_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 4859
+            },
+            {
+              "relativePath": "V6_BUSINESS_METADATA_DICTIONARY.csv",
+              "extension": ".csv",
+              "rows": 523,
+              "sizeBytes": 201804
+            },
+            {
+              "relativePath": "V6_GENERATED_MANIFEST.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 3572
+            },
+            {
+              "relativePath": "V6_SCHEMA_CATALOG.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 362664
+            }
+          ],
+          "fileCount": 20,
+          "csvFileCount": 17,
+          "csvRows": 3962
+        }
+      ],
+      "fileCount": 66,
+      "csvRows": 4697
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "displayName": "SkyHarbor Air",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
+      "packets": [
+        {
+          "packetId": "upgrade-candidate-pack",
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "files": [
+            {
+              "relativePath": "azure/v7-tenant-load-payload.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 1361975
+            },
+            {
+              "relativePath": "derived/skyharbor_air_moves_current_state_findings.csv",
+              "extension": ".csv",
+              "rows": 28,
+              "sizeBytes": 24048
+            },
+            {
+              "relativePath": "derived/skyharbor_air_moves_golden_questions_scorecard.csv",
+              "extension": ".csv",
+              "rows": 42,
+              "sizeBytes": 32377
+            },
+            {
+              "relativePath": "README.md",
+              "extension": ".md",
+              "rows": null,
+              "sizeBytes": 375
+            },
+            {
+              "relativePath": "templates/V6_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 2537
+            },
+            {
+              "relativePath": "templates/V6_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 11556
+            },
+            {
+              "relativePath": "templates/V6_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 11646
+            },
+            {
+              "relativePath": "templates/V6_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 10732
+            },
+            {
+              "relativePath": "templates/V6_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 13,
+              "sizeBytes": 24249
+            },
+            {
+              "relativePath": "templates/V6_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 35,
+              "sizeBytes": 77092
+            },
+            {
+              "relativePath": "templates/V6_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 18264
+            },
+            {
+              "relativePath": "templates/V6_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 20528
+            },
+            {
+              "relativePath": "templates/V6_09_programs_initiatives.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 17468
+            },
+            {
+              "relativePath": "templates/V6_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 3,
+              "sizeBytes": 7862
+            },
+            {
+              "relativePath": "templates/V6_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 28,
+              "sizeBytes": 56759
+            },
+            {
+              "relativePath": "templates/V6_12_relationships.csv",
+              "extension": ".csv",
+              "rows": 74,
+              "sizeBytes": 130985
+            },
+            {
+              "relativePath": "templates/V6_13_evidence_sources.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 7336
+            },
+            {
+              "relativePath": "templates/V6_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 12,
+              "sizeBytes": 21761
+            },
+            {
+              "relativePath": "templates/V6_15_industry_corpus_patterns.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 15094
+            },
+            {
+              "relativePath": "templates/V6_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 9717
+            },
+            {
+              "relativePath": "V6_V7_GENERATED_MANIFEST.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 3670
+            },
+            {
+              "relativePath": "v7/V7_00_portfolio_entity_registry.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 1791
+            },
+            {
+              "relativePath": "v7/V7_01_enterprise_profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 2458
+            },
+            {
+              "relativePath": "v7/V7_02_business_functions.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 11559
+            },
+            {
+              "relativePath": "v7/V7_03_org_ownership.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 7427
+            },
+            {
+              "relativePath": "v7/V7_04_workforce_personas.csv",
+              "extension": ".csv",
+              "rows": 6,
+              "sizeBytes": 8767
+            },
+            {
+              "relativePath": "v7/V7_05_applications_systems.csv",
+              "extension": ".csv",
+              "rows": 13,
+              "sizeBytes": 24906
+            },
+            {
+              "relativePath": "v7/V7_06_data_assets_integrations.csv",
+              "extension": ".csv",
+              "rows": 35,
+              "sizeBytes": 53807
+            },
+            {
+              "relativePath": "v7/V7_07_vendors_contracts.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 11033
+            },
+            {
+              "relativePath": "v7/V7_08_spend_value.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 12312
+            },
+            {
+              "relativePath": "v7/V7_09_programs_initiatives_business_priorities.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 10887
+            },
+            {
+              "relativePath": "v7/V7_10_ai_initiatives.csv",
+              "extension": ".csv",
+              "rows": 3,
+              "sizeBytes": 3932
+            },
+            {
+              "relativePath": "v7/V7_11_operations_risk_controls.csv",
+              "extension": ".csv",
+              "rows": 28,
+              "sizeBytes": 31189
+            },
+            {
+              "relativePath": "v7/V7_12_relationships_graph_edges.csv",
+              "extension": ".csv",
+              "rows": 74,
+              "sizeBytes": 78417
+            },
+            {
+              "relativePath": "v7/V7_13_source_evidence_registry.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 4735
+            },
+            {
+              "relativePath": "v7/V7_14_metric_definitions.csv",
+              "extension": ".csv",
+              "rows": 12,
+              "sizeBytes": 12963
+            },
+            {
+              "relativePath": "v7/V7_15_industry_market_knowledge_patterns.csv",
+              "extension": ".csv",
+              "rows": 7,
+              "sizeBytes": 8688
+            },
+            {
+              "relativePath": "v7/V7_16_expert_lenses.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 5720
+            },
+            {
+              "relativePath": "v7/V7_17_client_rate_card_cost_basis.csv",
+              "extension": ".csv",
+              "rows": 4,
+              "sizeBytes": 4489
+            },
+            {
+              "relativePath": "v7/V7_18_function_system_data_vendor_bridge.csv",
+              "extension": ".csv",
+              "rows": 60,
+              "sizeBytes": 68285
+            },
+            {
+              "relativePath": "v7/V7_19_service_tower_managed_services_scope.csv",
+              "extension": ".csv",
+              "rows": 3,
+              "sizeBytes": 3458
+            },
+            {
+              "relativePath": "v7/V7_20_chunk_retrieval_registry.csv",
+              "extension": ".csv",
+              "rows": 117,
+              "sizeBytes": 141940
+            },
+            {
+              "relativePath": "v7/V7_21_graph_registry_relationship_dictionary.csv",
+              "extension": ".csv",
+              "rows": 17,
+              "sizeBytes": 15835
+            },
+            {
+              "relativePath": "v7/V7_22_operational_evidence_process_intelligence.csv",
+              "extension": ".csv",
+              "rows": 10,
+              "sizeBytes": 11481
+            },
+            {
+              "relativePath": "v7/V7_23_external_benchmark_market_corpus.csv",
+              "extension": ".csv",
+              "rows": 2,
+              "sizeBytes": 2430
+            },
+            {
+              "relativePath": "v7/V7_24_infrastructure_cloud_estate.csv",
+              "extension": ".csv",
+              "rows": 5,
+              "sizeBytes": 5255
+            }
+          ],
+          "fileCount": 46,
+          "csvFileCount": 43,
+          "csvRows": 743
+        },
+        {
+          "packetId": "rich-substrate-pack",
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Authoritative rich substrate for app/system, infrastructure, data, vendor, and relationship depth.",
+          "files": [
+            {
+              "relativePath": "csv/ai-tooling.csv",
+              "extension": ".csv",
+              "rows": 40,
+              "sizeBytes": 2809
+            },
+            {
+              "relativePath": "csv/application-portfolio.csv",
+              "extension": ".csv",
+              "rows": 600,
+              "sizeBytes": 64412
+            },
+            {
+              "relativePath": "csv/business-capabilities.csv",
+              "extension": ".csv",
+              "rows": 80,
+              "sizeBytes": 4519
+            },
+            {
+              "relativePath": "csv/dora-baseline.csv",
+              "extension": ".csv",
+              "rows": 40,
+              "sizeBytes": 1573
+            },
+            {
+              "relativePath": "csv/enterprise-profile.csv",
+              "extension": ".csv",
+              "rows": 1,
+              "sizeBytes": 259
+            },
+            {
+              "relativePath": "csv/erp-landscape.csv",
+              "extension": ".csv",
+              "rows": 60,
+              "sizeBytes": 4053
+            },
+            {
+              "relativePath": "csv/incidents.csv",
+              "extension": ".csv",
+              "rows": 400,
+              "sizeBytes": 22392
+            },
+            {
+              "relativePath": "csv/infrastructure-estate.csv",
+              "extension": ".csv",
+              "rows": 686,
+              "sizeBytes": 66429
+            },
+            {
+              "relativePath": "csv/initiatives.csv",
+              "extension": ".csv",
+              "rows": 60,
+              "sizeBytes": 5338
+            },
+            {
+              "relativePath": "csv/integration-topology.csv",
+              "extension": ".csv",
+              "rows": 500,
+              "sizeBytes": 25883
+            },
+            {
+              "relativePath": "csv/it-financials.csv",
+              "extension": ".csv",
+              "rows": 168,
+              "sizeBytes": 17211
+            },
+            {
+              "relativePath": "csv/org-roles.csv",
+              "extension": ".csv",
+              "rows": 272,
+              "sizeBytes": 17906
+            },
+            {
+              "relativePath": "csv/sla-register.csv",
+              "extension": ".csv",
+              "rows": 72,
+              "sizeBytes": 8047
+            },
+            {
+              "relativePath": "csv/vendor-contracts.csv",
+              "extension": ".csv",
+              "rows": 120,
+              "sizeBytes": 11387
+            },
+            {
+              "relativePath": "manifest.json",
+              "extension": ".json",
+              "rows": null,
+              "sizeBytes": 1589
+            }
+          ],
+          "fileCount": 15,
+          "csvFileCount": 14,
+          "csvRows": 3099
+        }
+      ],
+      "fileCount": 61,
+      "csvRows": 3842
+    }
+  ],
+  "failures": []
+}
