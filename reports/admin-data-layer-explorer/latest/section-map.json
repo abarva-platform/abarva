@@ -16,7 +16,11 @@
       "comesOut": [
         "A shared map of layers, pages, checks, caveats, and guardrails"
       ],
-      "usedBy": ["Admin", "Implementation teams", "Client operators"],
+      "usedBy": [
+        "Admin",
+        "Implementation teams",
+        "Client operators"
+      ],
       "currentStatus": "Read-only explorer implemented; live data execution is intentionally out of scope.",
       "guardrails": [
         "Uploaded files do not become active facts by being present.",
@@ -118,7 +122,13 @@
         "lineage links",
         "evidence gaps"
       ],
-      "usedBy": ["Home", "Intelligence", "Moves", "Source", "Tower"],
+      "usedBy": [
+        "Home",
+        "Intelligence",
+        "Moves",
+        "Source",
+        "Tower"
+      ],
       "currentStatus": "Existing read models can expose evidence summaries where wired; missing fields should show Not available yet.",
       "guardrails": [
         "No raw context to models.",
@@ -171,7 +181,11 @@
         "quality report",
         "readiness gaps"
       ],
-      "usedBy": ["Candidate Preview", "Promotion Readiness", "Module Usage"],
+      "usedBy": [
+        "Candidate Preview",
+        "Promotion Readiness",
+        "Module Usage"
+      ],
       "currentStatus": "Quality catalogue implemented; validation execution is intentionally out of scope for this page.",
       "guardrails": [
         "Uploaded-file count is not quality.",
@@ -195,7 +209,13 @@
         "fact confidence",
         "fact gaps"
       ],
-      "usedBy": ["Home", "Intelligence", "Moves", "Source", "Tower"],
+      "usedBy": [
+        "Home",
+        "Intelligence",
+        "Moves",
+        "Source",
+        "Tower"
+      ],
       "currentStatus": "Summaries are available where read models are wired; absent fields should be reported as Not wired yet.",
       "guardrails": [
         "Known Fact requires validation, mapping, and evidence.",
@@ -219,7 +239,13 @@
         "unresolved relationships",
         "relationship gaps"
       ],
-      "usedBy": ["Home", "Intelligence", "Moves", "Source", "Tower"],
+      "usedBy": [
+        "Home",
+        "Intelligence",
+        "Moves",
+        "Source",
+        "Tower"
+      ],
       "currentStatus": "Graph plans and summaries are part of the data runway; this page exposes the business meaning.",
       "guardrails": [
         "Relationship verbs must come from the governed dictionary.",
@@ -250,7 +276,13 @@
         "risk/control coverage gaps",
         "candidate promotion blockers"
       ],
-      "usedBy": ["Home", "Intelligence", "Moves", "Source", "Tower"],
+      "usedBy": [
+        "Home",
+        "Intelligence",
+        "Moves",
+        "Source",
+        "Tower"
+      ],
       "currentStatus": "Insight types are catalogued; live insight generation remains governed by the existing module paths.",
       "guardrails": [
         "no realized savings without measured proof",
@@ -309,7 +341,11 @@
         "blockers",
         "rollback plan"
       ],
-      "usedBy": ["Candidate Preview", "Admin Overview", "Promotion controls"],
+      "usedBy": [
+        "Candidate Preview",
+        "Admin Overview",
+        "Promotion controls"
+      ],
       "currentStatus": "Promotion gate proof exists in the data runway; this page is read-only and never promotes.",
       "guardrails": [
         "Promotion requires approval.",
@@ -333,7 +369,13 @@
         "active source status",
         "runtime read proof"
       ],
-      "usedBy": ["Home", "Intelligence", "Moves", "Source", "Tower"],
+      "usedBy": [
+        "Home",
+        "Intelligence",
+        "Moves",
+        "Source",
+        "Tower"
+      ],
       "currentStatus": "Show Not wired yet where active pointer evidence is not available.",
       "guardrails": [
         "Active pointer must be explicit.",
@@ -360,7 +402,13 @@
         "outcome views",
         "module readiness"
       ],
-      "usedBy": ["Home", "Intelligence", "Moves", "Source", "Tower"],
+      "usedBy": [
+        "Home",
+        "Intelligence",
+        "Moves",
+        "Source",
+        "Tower"
+      ],
       "currentStatus": "Mapped in this page; module runtime behavior is unchanged.",
       "guardrails": [
         "Modules must declare reads and writes.",
@@ -386,7 +434,11 @@
         "leakage",
         "adoption status"
       ],
-      "usedBy": ["Tower", "Moves", "Home"],
+      "usedBy": [
+        "Tower",
+        "Moves",
+        "Home"
+      ],
       "currentStatus": "Ledger concept is mapped; module-specific measured data must come from Tower/read models where wired.",
       "guardrails": [
         "Proposed value is not realized value.",
@@ -410,7 +462,13 @@
         "gap indicators",
         "caveats"
       ],
-      "usedBy": ["Home", "Intelligence", "Moves", "Source", "Tower"],
+      "usedBy": [
+        "Home",
+        "Intelligence",
+        "Moves",
+        "Source",
+        "Tower"
+      ],
       "currentStatus": "Benchmark inputs are catalogued; live benchmark rendering depends on module wiring.",
       "guardrails": [
         "Benchmarks are comparison context, not measured tenant truth."
@@ -427,8 +485,16 @@
         "guardrails",
         "current wiring status"
       ],
-      "comesOut": ["page-layer matrix", "write boundary", "caveats"],
-      "usedBy": ["Admin", "Implementation teams", "QA"],
+      "comesOut": [
+        "page-layer matrix",
+        "write boundary",
+        "caveats"
+      ],
+      "usedBy": [
+        "Admin",
+        "Implementation teams",
+        "QA"
+      ],
       "currentStatus": "Implemented as a static read-only map on this page.",
       "guardrails": [
         "Every page must have a read/write boundary.",
@@ -447,8 +513,17 @@
         "tenant rules",
         "module readiness rules"
       ],
-      "comesOut": ["passed checks", "failed checks", "blockers", "quarantines"],
-      "usedBy": ["Admin", "Candidate Preview", "Promotion Readiness"],
+      "comesOut": [
+        "passed checks",
+        "failed checks",
+        "blockers",
+        "quarantines"
+      ],
+      "usedBy": [
+        "Admin",
+        "Candidate Preview",
+        "Promotion Readiness"
+      ],
       "currentStatus": "Catalogue implemented; this page does not execute validations.",
       "guardrails": [
         "Quality checks must produce explicit pass, fail, or Not wired yet status."
@@ -472,7 +547,12 @@
         "audit records",
         "safe wording"
       ],
-      "usedBy": ["Admin", "QA", "Release control", "All modules"],
+      "usedBy": [
+        "Admin",
+        "QA",
+        "Release control",
+        "All modules"
+      ],
       "currentStatus": "Guardrail catalogue implemented for read-only visibility.",
       "guardrails": [
         "Uploaded files do not become active facts by being present.",

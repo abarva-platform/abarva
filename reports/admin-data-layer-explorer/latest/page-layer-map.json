@@ -10,14 +10,21 @@
         "candidate status",
         "promotion readiness"
       ],
-      "writesTo": ["setup notes where explicitly supported"],
+      "writesTo": [
+        "setup notes where explicitly supported"
+      ],
       "doesNotWriteTo": [
         "production tenant data",
         "candidate promotion",
         "Active Access pointer"
       ],
-      "dependsOn": ["tenant access", "setup-control availability"],
-      "guardrails": ["uploaded files are not active facts"],
+      "dependsOn": [
+        "tenant access",
+        "setup-control availability"
+      ],
+      "guardrails": [
+        "uploaded files are not active facts"
+      ],
       "currentWiringStatus": "Partially wired; caveats should show when active pointer is unavailable.",
       "caveats": [
         "Current status can be Not wired yet when proof metadata is absent."
@@ -30,16 +37,25 @@
         "guide artifacts",
         "field dictionary"
       ],
-      "writesTo": ["template selection metadata where supported"],
+      "writesTo": [
+        "template selection metadata where supported"
+      ],
       "doesNotWriteTo": [
         "validated facts",
         "active tenant truth",
         "promotion decision"
       ],
-      "dependsOn": ["template registry", "guide artifacts"],
-      "guardrails": ["downloaded template does not mean data loaded"],
+      "dependsOn": [
+        "template registry",
+        "guide artifacts"
+      ],
+      "guardrails": [
+        "downloaded template does not mean data loaded"
+      ],
       "currentWiringStatus": "Templates and guidance available; validation execution is out of scope.",
-      "caveats": ["A template is a contract, not evidence."]
+      "caveats": [
+        "A template is a contract, not evidence."
+      ]
     },
     {
       "page": "Tenant Packet Builder",
@@ -48,16 +64,25 @@
         "template mappings",
         "source file manifest"
       ],
-      "writesTo": ["draft packet metadata where supported"],
+      "writesTo": [
+        "draft packet metadata where supported"
+      ],
       "doesNotWriteTo": [
         "production tenant data",
         "active pointer",
         "module memory"
       ],
-      "dependsOn": ["source adapters", "mapping versions"],
-      "guardrails": ["selected templates are not validated records"],
+      "dependsOn": [
+        "source adapters",
+        "mapping versions"
+      ],
+      "guardrails": [
+        "selected templates are not validated records"
+      ],
       "currentWiringStatus": "Contract described; packet creation controls remain separate.",
-      "caveats": ["Packet exists only after explicit builder flow creates it."]
+      "caveats": [
+        "Packet exists only after explicit builder flow creates it."
+      ]
     },
     {
       "page": "Candidate Preview",
@@ -67,16 +92,25 @@
         "proof bundle",
         "module readiness"
       ],
-      "writesTo": ["preview audit event where implemented"],
+      "writesTo": [
+        "preview audit event where implemented"
+      ],
       "doesNotWriteTo": [
         "active tenant truth",
         "production data",
         "default module context"
       ],
-      "dependsOn": ["explicit preview request", "inactive candidate banner"],
-      "guardrails": ["candidate is inactive"],
+      "dependsOn": [
+        "explicit preview request",
+        "inactive candidate banner"
+      ],
+      "guardrails": [
+        "candidate is inactive"
+      ],
       "currentWiringStatus": "Preview path exists; this explorer does not create preview sessions.",
-      "caveats": ["Preview-ready is not active-runtime-ready."]
+      "caveats": [
+        "Preview-ready is not active-runtime-ready."
+      ]
     },
     {
       "page": "Home",
@@ -88,18 +122,25 @@
         "sources",
         "relationships"
       ],
-      "writesTo": ["user-facing navigation state only"],
+      "writesTo": [
+        "user-facing navigation state only"
+      ],
       "doesNotWriteTo": [
         "candidate data by default",
         "production tenant data",
         "candidate promotion"
       ],
-      "dependsOn": ["active pointer proof where available", "safe caveats"],
+      "dependsOn": [
+        "active pointer proof where available",
+        "safe caveats"
+      ],
       "guardrails": [
         "do not claim active tenant truth unless active pointer is wired"
       ],
       "currentWiringStatus": "Home can show context; active truth status must remain caveated unless proven.",
-      "caveats": ["Active Home context is not enough by itself."]
+      "caveats": [
+        "Active Home context is not enough by itself."
+      ]
     },
     {
       "page": "Intelligence",
@@ -110,16 +151,26 @@
         "relationships",
         "insights"
       ],
-      "writesTo": ["answer traces and citations where supported"],
+      "writesTo": [
+        "answer traces and citations where supported"
+      ],
       "doesNotWriteTo": [
         "production tenant data",
         "candidate promotion",
         "unsupported executive claims"
       ],
-      "dependsOn": ["validated context bundle", "cite-render proof"],
-      "guardrails": ["no raw context to models", "no unsupported claims"],
+      "dependsOn": [
+        "validated context bundle",
+        "cite-render proof"
+      ],
+      "guardrails": [
+        "no raw context to models",
+        "no unsupported claims"
+      ],
       "currentWiringStatus": "Runtime path unchanged by this PR.",
-      "caveats": ["Answers must cite or caveat."]
+      "caveats": [
+        "Answers must cite or caveat."
+      ]
     },
     {
       "page": "Moves",
@@ -137,10 +188,17 @@
         "active data promotion",
         "realized value without Tower measurement"
       ],
-      "dependsOn": ["phase gate contract", "evidence coverage"],
-      "guardrails": ["execution state must be proven"],
+      "dependsOn": [
+        "phase gate contract",
+        "evidence coverage"
+      ],
+      "guardrails": [
+        "execution state must be proven"
+      ],
       "currentWiringStatus": "Runtime path unchanged by this PR.",
-      "caveats": ["Gate readiness is not business outcome realization."]
+      "caveats": [
+        "Gate readiness is not business outcome realization."
+      ]
     },
     {
       "page": "Source",
@@ -151,16 +209,25 @@
         "pricing evidence",
         "leverage insights"
       ],
-      "writesTo": ["sourcing artifacts where workflow supports them"],
+      "writesTo": [
+        "sourcing artifacts where workflow supports them"
+      ],
       "doesNotWriteTo": [
         "production tenant data",
         "candidate promotion",
         "unsupported savings claims"
       ],
-      "dependsOn": ["Source event pack", "contract evidence"],
-      "guardrails": ["no savings unless supported"],
+      "dependsOn": [
+        "Source event pack",
+        "contract evidence"
+      ],
+      "guardrails": [
+        "no savings unless supported"
+      ],
       "currentWiringStatus": "Runtime path unchanged by this PR.",
-      "caveats": ["Addressable spend is not realized savings."]
+      "caveats": [
+        "Addressable spend is not realized savings."
+      ]
     },
     {
       "page": "Tower",
@@ -171,14 +238,22 @@
         "controls",
         "variance"
       ],
-      "writesTo": ["outcome reports where supported"],
+      "writesTo": [
+        "outcome reports where supported"
+      ],
       "doesNotWriteTo": [
         "candidate promotion",
         "source file mutation",
         "unmeasured value claims"
       ],
-      "dependsOn": ["baseline proof", "measurement proof", "control evidence"],
-      "guardrails": ["no realized value unless measured"],
+      "dependsOn": [
+        "baseline proof",
+        "measurement proof",
+        "control evidence"
+      ],
+      "guardrails": [
+        "no realized value unless measured"
+      ],
       "currentWiringStatus": "Runtime path unchanged by this PR.",
       "caveats": [
         "Tower must distinguish promised, projected, and measured values."
