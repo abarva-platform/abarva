@@ -1,6 +1,6 @@
 # Home English Summary Audit
 
-Generated: `2026-07-13T14:59:22.270Z`
+Generated: `2026-07-13T15:16:40.058Z`
 
 This is a read-only Home rendering audit. It does not upload files, validate files, create candidates, promote candidates, update Active Tenant Access, write production tenant data, or change module runtime behavior.
 
@@ -23,7 +23,7 @@ This is a read-only Home rendering audit. It does not upload files, validate fil
 
 ## SkyHarbor / Airline Demo
 
-SkyHarbor Air has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.
+Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete.
 
 Airline Demo has a rich source estate, but the active Home view is still partial relative to the upstream estate. Applications and systems remediation has an inactive candidate path, but broader enterprise decisions should wait until relationship projection and active-use controls are complete.
 
@@ -33,7 +33,7 @@ Next action: Finish projecting the richer applications, systems, integration, an
 
 ## Candidate Preview Example
 
-SkyHarbor Air is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth.
+Airline Demo is being viewed in inactive candidate preview. The richer applications and systems candidate can be inspected, but it is not active tenant truth and should not drive broad enterprise decisions until relationship projection and active-use controls are complete.
 
 This is candidate-only coverage. It can be inspected as inactive preview posture, but default Home and downstream modules must not read it as active data.
 

@@ -42,6 +42,34 @@ describe("Home English summary renderer", () => {
     });
   });
 
+  it("applies the SkyHarbor warning to the live route tenant key", () => {
+    const dataQuality = buildHomeDataQualityModel({
+      repoRoot: process.cwd(),
+      tenantKey: "skyharbor",
+      tenantDisplayName: "Airline Demo",
+    });
+
+    const liveRouteSummary = buildHomeEnglishSummary({
+      ...dataQuality,
+      tenantKey: "skyharbor",
+    });
+    const rendered = [
+      liveRouteSummary.currentUnderstanding,
+      liveRouteSummary.completenessMeaning,
+      liveRouteSummary.nextDataAction,
+      ...liveRouteSummary.decisionCautions,
+    ].join(" ");
+
+    expect(rendered).toMatch(/richer upstream source estate/i);
+    expect(rendered).toMatch(/rich source estate/i);
+    expect(rendered).toMatch(/inactive candidate expansion/i);
+    expect(rendered).toMatch(/relationship projection/i);
+    expect(rendered).toMatch(/active-use controls/i);
+    expect(rendered).toMatch(/full enterprise estate coverage/i);
+    expect(rendered).not.toMatch(/full enterprise coverage is available/i);
+    expect(rendered).not.toMatch(/candidate data is active/i);
+  });
+
   it("labels explicit candidate preview as inactive candidate-only context", () => {
     const dataQuality = buildHomeDataQualityModel({
       repoRoot: process.cwd(),

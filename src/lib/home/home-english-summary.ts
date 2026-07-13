@@ -62,7 +62,7 @@ export function buildHomeEnglishSummary(
   if (!model) return buildUnavailableSummary();
 
   const statusLabel = statusLabelFor(model.answerability.status);
-  const isSkyHarbor = model.tenantKey === "skyharbor-air";
+  const isSkyHarbor = isSkyHarborTenant(model);
   const isSourceRichCandidateThin = model.sourceCoverage.sourceRichCandidateThin;
   const candidatePreviewOnly = model.candidatePreview.previewRequested;
   const sourceRowsNotRepresented =
@@ -72,9 +72,11 @@ export function buildHomeEnglishSummary(
   const missingEvidence = model.evidenceQuality.factsMissingEvidence;
   const relationshipCount = model.relationshipCoverage.knownRelationships;
 
-  const currentUnderstanding = candidatePreviewOnly
-    ? `${model.tenantDisplayName} is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth.`
-    : `${model.tenantDisplayName} has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.`;
+  const currentUnderstanding = buildCurrentUnderstanding({
+    model,
+    isSkyHarbor,
+    candidatePreviewOnly,
+  });
 
   const completenessMeaning = buildCompletenessMeaning({
     model,
@@ -98,7 +100,10 @@ export function buildHomeEnglishSummary(
 
   const answerability = buildAnswerabilityText(model, candidatePreviewOnly);
   const safeToAsk = buildSafeToAsk(model);
-  const decisionCautions = buildDecisionCautions(model, isSourceRichCandidateThin);
+  const decisionCautions = buildDecisionCautions(
+    model,
+    isSourceRichCandidateThin || isSkyHarbor,
+  );
   const nextDataAction = buildNextDataAction(model);
 
   return {
@@ -202,7 +207,7 @@ function buildCompletenessMeaning(args: {
   if (model.candidatePreview.previewRequested) {
     return "This is candidate-only coverage. It can be inspected as inactive preview posture, but default Home and downstream modules must not read it as active data.";
   }
-  if (isSkyHarbor && isSourceRichCandidateThin) {
+  if (isSkyHarbor) {
     return "Airline Demo has a rich source estate, but the active Home view is still partial relative to the upstream estate. Applications and systems remediation has an inactive candidate path, but broader enterprise decisions should wait until relationship projection and active-use controls are complete.";
   }
   if (isSourceRichCandidateThin) {
@@ -262,7 +267,7 @@ function buildNextDataAction(model: HomeDataQualityModel): string {
   const p0 = model.gaps.find((gap) => gap.priority === "P0");
   const p1 = model.gaps.find((gap) => gap.priority === "P1");
   const preferred = p0 ?? p1 ?? model.gaps[0] ?? null;
-  if (model.tenantKey === "skyharbor-air" && model.sourceCoverage.sourceRichCandidateThin) {
+  if (isSkyHarborTenant(model)) {
     return "Finish projecting the richer applications, systems, integration, and relationship source into an inactive candidate, attach evidence, validate weak rows, and keep it inactive until controls pass.";
   }
   if (preferred) return plainAction(preferred);
@@ -322,6 +327,30 @@ function statusLabelFor(status: HomeAnswerabilityStatus): HomeEnglishSummaryStat
   if (status === "needs_evidence") return "Needs evidence";
   if (status === "not_available_yet") return "Not ready for decision";
   return "Partial context";
+}
+
+function isSkyHarborTenant(model: Pick<HomeDataQualityModel, "tenantKey" | "tenantDisplayName">): boolean {
+  const key = model.tenantKey.toLowerCase();
+  const displayName = model.tenantDisplayName.toLowerCase();
+  return key === "skyharbor" || key === "skyharbor-air" || displayName === "airline demo";
+}
+
+function buildCurrentUnderstanding(args: {
+  model: HomeDataQualityModel;
+  isSkyHarbor: boolean;
+  candidatePreviewOnly: boolean;
+}): string {
+  const { model, isSkyHarbor, candidatePreviewOnly } = args;
+  if (candidatePreviewOnly) {
+    if (isSkyHarbor) {
+      return "Airline Demo is being viewed in inactive candidate preview. The richer applications and systems candidate can be inspected, but it is not active tenant truth and should not drive broad enterprise decisions until relationship projection and active-use controls are complete.";
+    }
+    return `${model.tenantDisplayName} is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth.`;
+  }
+  if (isSkyHarbor) {
+    return "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete.";
+  }
+  return `${model.tenantDisplayName} has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.`;
 }
 
 function plainAction(gap: HomeGapView): string {

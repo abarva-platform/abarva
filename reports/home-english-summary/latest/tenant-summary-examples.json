@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T14:59:22.270Z",
+  "generatedAt": "2026-07-13T15:16:40.058Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -7,7 +7,7 @@
       "title": "What this means",
       "statusLabel": "Partial context",
       "whyThisMatters": "This keeps Home useful for executives without letting a thin or preview-only data posture turn into unsupported business claims.",
-      "currentUnderstanding": "SkyHarbor Air has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
+      "currentUnderstanding": "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete.",
       "completenessMeaning": "Airline Demo has a rich source estate, but the active Home view is still partial relative to the upstream estate. Applications and systems remediation has an inactive candidate path, but broader enterprise decisions should wait until relationship projection and active-use controls are complete.",
       "evidencePosture": "53 evidence items are visible for the current Home context. Evidence still needs to stay attached when candidate data is expanded.",
       "relationshipPosture": "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
@@ -363,7 +363,7 @@
     "title": "What this means",
     "statusLabel": "Candidate-only",
     "whyThisMatters": "This keeps Home useful for executives without letting a thin or preview-only data posture turn into unsupported business claims.",
-    "currentUnderstanding": "SkyHarbor Air is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth.",
+    "currentUnderstanding": "Airline Demo is being viewed in inactive candidate preview. The richer applications and systems candidate can be inspected, but it is not active tenant truth and should not drive broad enterprise decisions until relationship projection and active-use controls are complete.",
     "completenessMeaning": "This is candidate-only coverage. It can be inspected as inactive preview posture, but default Home and downstream modules must not read it as active data.",
     "evidencePosture": "53 evidence items are visible for the current Home context. Evidence still needs to stay attached when candidate data is expanded.",
     "relationshipPosture": "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
