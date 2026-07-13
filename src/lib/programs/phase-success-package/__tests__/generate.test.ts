@@ -100,7 +100,7 @@ describe("generatePhaseSuccessPackages", () => {
         blob_path: "blob/path",
         file_size: 100,
         version: 3,
-        status: "evidence_incomplete",
+        status: "draft",
         generated_by: "user-1",
         generated_at: "2026-07-13T12:00:00.000Z",
         quality_score: null,
@@ -189,6 +189,8 @@ describe("generatePhaseSuccessPackages", () => {
     expect(saveMoveArtifact).toHaveBeenCalledTimes(2);
     const firstSave = saveMoveArtifact.mock.calls[0][1];
     expect(firstSave.metadata.evidenceCutoffAt).toBe("2026-07-13T11:30:00.000Z");
+    expect(firstSave.metadata.packageStatus).toBe("evidence_incomplete");
+    expect(firstSave.status).toBe("draft");
     expect(firstSave.metadata.sourceArtifactIds).toEqual([
       "source-artifact-1",
       "source-artifact-2",
