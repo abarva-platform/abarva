@@ -1,0 +1,6 @@
+{
+  "mode": "chrome",
+  "consoleErrors": [],
+  "networkErrors": [],
+  "caveat": "Chrome AppleScript proof captures DOM and API payloads from a signed-in desktop tab; it cannot collect DevTools network streams."
+}

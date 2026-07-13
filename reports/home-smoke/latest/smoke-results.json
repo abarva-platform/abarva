@@ -1,0 +1,52 @@
+{
+  "runTimestamp": "2026-07-13T03:43:13.861Z",
+  "sha": "673b565e816303f63bc079177def30cd8a03cac8",
+  "mode": "chrome",
+  "baseUrl": "https://app.abarva.ai",
+  "routesTested": ["/home", "/home?candidatePreview=true"],
+  "passFail": {
+    "verdict": "not release-ready",
+    "p0": 0,
+    "p1": 3,
+    "p2": 0,
+    "findings": [
+      {
+        "severity": "P1",
+        "category": "click map",
+        "message": "Explain context: no visible state change",
+        "evidence": "click primary action classified as read-only-placeholder"
+      },
+      {
+        "severity": "P1",
+        "category": "click map",
+        "message": "Send to Intelligence: no visible state change",
+        "evidence": "click primary action classified as read-only-placeholder"
+      },
+      {
+        "severity": "P1",
+        "category": "aVa scoped Home quality",
+        "message": "Home aVa question did not return 200: What evidence supports this context?",
+        "evidence": "status=422"
+      }
+    ]
+  },
+  "guardrails": {
+    "candidatePromoted": false,
+    "activeTenantAccessLayerUpdated": false,
+    "productionTenantDataWritten": false,
+    "moduleRuntimeConsumptionChanged": false,
+    "moduleReadsCandidateByDefault": false
+  },
+  "artifacts": {
+    "summary": "summary.md",
+    "clickMap": "click-map.json",
+    "dataWiring": "data-wiring.json",
+    "activeVsCandidate": "active-vs-candidate.json",
+    "namingAudit": "naming-audit.json",
+    "avaQuality": "ava-quality.json",
+    "consoleNetwork": "console-network.json",
+    "dom": "dom/",
+    "apiPayloads": "api-payloads/",
+    "screenshots": "screenshots/"
+  }
+}

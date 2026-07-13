@@ -1,0 +1,106 @@
+[
+  {
+    "control": "Functions",
+    "action": "click context area",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Applications & Systems",
+    "action": "click context area",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Vendors & Contracts",
+    "action": "click context area",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Data Assets & Integrations",
+    "action": "click context area",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Programs & Priorities",
+    "action": "click context area",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Risks & Controls",
+    "action": "click context area",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Metrics & Outcomes",
+    "action": "click context area",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Summary",
+    "action": "click selected-area tab",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Data",
+    "action": "click selected-area tab",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Gaps",
+    "action": "click selected-area tab",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Sources",
+    "action": "click selected-area tab",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Relationships",
+    "action": "click selected-area tab",
+    "result": "selected",
+    "classification": "working"
+  },
+  {
+    "control": "Explain context",
+    "action": "click primary action",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  },
+  {
+    "control": "Send to Intelligence",
+    "action": "click primary action",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  },
+  {
+    "control": "Explain",
+    "action": "click aVa suggestion",
+    "result": "submitted",
+    "classification": "working"
+  },
+  {
+    "control": "Show gaps",
+    "action": "click aVa suggestion",
+    "result": "submitted",
+    "classification": "working"
+  },
+  {
+    "control": "What can Home answer",
+    "action": "click aVa suggestion",
+    "result": "submitted",
+    "classification": "working"
+  }
+]

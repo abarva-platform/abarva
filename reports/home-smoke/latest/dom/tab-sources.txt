@@ -1,0 +1,104 @@
+Airline Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Airline Demo
+Sign out
+HOME · ENTERPRISE KNOWLEDGE
+Airline Demo
+DEMO
+
+Browse known facts, source-backed evidence, evidence gaps, and relationships before sending work to Intelligence, Moves, Source, or Tower.
+
+ACTIVE DATA
+Active Home context
+CANDIDATE PREVIEW
+Not active
+LAST CHECKED
+Jul 9
+DATA ORIGIN
+Demo-safe
+100%
+CONTEXT LOADED & MAPPED
+Context Explorer
+7 AREAS
+⌕
+Source-backed
+Needs evidence
+Gap
+Enterprise overview
+446 records across all context areas
+0 gaps
+ENTERPRISE
+Functions
+20 records · source-backed
+20
+Applications & Systems
+92 records · source-backed
+92
+Vendors & Contracts
+27 records · source-backed
+27
+Data Assets & Integrations
+152 records · source-backed
+152
+DELIVERY
+Programs & Priorities
+10 records · source-backed
+10
+Risks & Controls
+42 records · source-backed
+42
+Metrics & Outcomes
+26 records · source-backed
+26
+HOME · ENTERPRISE KNOWLEDGE
+Metrics & Outcomes
+
+Metric Definitions has 12 loaded records from 1 source file. No repeated evidence-gap pattern is visible in this area.
+
+Explain context
+Send to Intelligence
+Summary
+Data
+Gaps
+Sources
+Relationships
+
+Plain English: sources show where this context came from. Home keeps the source trail available for audit, while the main views keep file paths and internal row IDs out of the executive read.
+
+metric definitions
+12 rows
+
+Mapped into the context browser with source lineage preserved.
+
+a
+aVa
+Scoped · read-only over evidence
+SCOPE · METRICS & OUTCOMES · READING ACTIVE HOME CONTEXT
+I CAN ANSWER
+what evidence is loaded for this area
+which fields still need client evidence
+where related context should be inspected next
+I WON’T ANSWER
+strategy, use-case design, or advisory synthesis
+facts outside the active Home context
+Explain metrics & outcomes in plain English.
+Show gaps in metrics & outcomes.
+What can Home answer about metrics & outcomes?
+↑
+CONTEXT QUALITY
+66%
+Metrics & Outcomes
+
+12 records, 1 source file, 0 fields to complete.
+
+WHAT CHANGED
+ON
+Active Home context
+OFF
+Candidate data unless preview is explicit

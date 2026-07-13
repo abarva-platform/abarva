@@ -1,0 +1,34 @@
+{
+  "url": "https://app.abarva.ai/home",
+  "title": "Home · Enterprise Knowledge | AbarVa",
+  "ready": "complete",
+  "text": "Airline Demo\nHome\nIntelligence\nMoves\nSource\nTower\nLearn\nAS\nAnand Sundaram · Airline Demo\nSign out\nHOME · ENTERPRISE KNOWLEDGE\nAirline Demo\nDEMO\n\nBrowse known facts, source-backed evidence, evidence gaps, and relationships before sending work to Intelligence, Moves, Source, or Tower.\n\nACTIVE DATA\nActive Home context\nCANDIDATE PREVIEW\nNot active\nLAST CHECKED\nJul 9\nDATA ORIGIN\nDemo-safe\n100%\nCONTEXT LOADED & MAPPED\nContext Explorer\n7 AREAS\n⌕\nSource-backed\nNeeds evidence\nGap\nEnterprise overview\n446 records across all context areas\n0 gaps\nENTERPRISE\nFunctions\n20 records · source-backed\n20\nApplications & Systems\n92 records · source-backed\n92\nVendors & Contracts\n27 records · source-backed\n27\nData Assets & Integrations\n152 records · source-backed\n152\nDELIVERY\nPrograms & Priorities\n10 records · source-backed\n10\nRisks & Controls\n42 records · source-backed\n42\nMetrics & Outcomes\n26 records · source-backed\n26\nHOME · ENTERPRISE KNOWLEDGE\nVendors & Contracts\n\nVendors Contracts has 10 loaded records from 1 source file. No repeated evidence-gap pattern is visible in this area.\n\nExplain context\nSend to Intelligence\nSummary\nData\nGaps\nSources\nRelationships\nWHAT IS LOADED\n10 records\n\nVendors Contracts loaded records with source-backed values and readable fields.\n\nWHAT CAN BE TRUSTED\n1 source file\n\nHome shows source-backed context and keeps missing evidence visible.\n\nWHAT NEEDS WORK\n0 fields\n\nGaps are client-to-complete fields, not confidence theater.\n\nRepresentative loaded rows\n1\n\nAirline Demo · IBM\n\n2\n\nAirline Demo · Amazon Web Services\n\n3\n\nAirline Demo · SAP\n\n4\n\nAirline Demo · ServiceNow\n\na\naVa\nScoped · read-only over evidence\nSCOPE · VENDORS & CONTRACTS · READING ACTIVE HOME CONTEXT\nI CAN ANSWER\nwhat evidence is loaded for this area\nwhich fields still need client evidence\nwhere related context should be inspected next\nI WON’T ANSWER\nstrategy, use-case design, or advisory synthesis\nfacts outside the active Home context\nExplain vendors & contracts in plain English.\nShow gaps in vendors & contracts.\nWhat can Home answer about vendors & contracts?\n↑\nCONTEXT QUALITY\n65%\nVendors & Contracts\n\n10 records, 1 source file, 0 fields to complete.\n\nWHAT CHANGED\nON\nActive Home context\nOFF\nCandidate data unless preview is explicit",
+  "headings": [
+    "Airline Demo\nDEMO",
+    "Vendors & Contracts",
+    "Representative loaded rows"
+  ],
+  "buttons": [
+    "Sign out",
+    "Enterprise overview\n446 records across all context areas\n0 gaps",
+    "Functions\n20 records · source-backed\n20",
+    "Applications & Systems\n92 records · source-backed\n92",
+    "Vendors & Contracts\n27 records · source-backed\n27",
+    "Data Assets & Integrations\n152 records · source-backed\n152",
+    "Programs & Priorities\n10 records · source-backed\n10",
+    "Risks & Controls\n42 records · source-backed\n42",
+    "Metrics & Outcomes\n26 records · source-backed\n26",
+    "Explain context",
+    "Send to Intelligence",
+    "Summary",
+    "Data",
+    "Gaps",
+    "Sources",
+    "Relationships",
+    "Explain vendors & contracts in plain English.",
+    "Show gaps in vendors & contracts.",
+    "What can Home answer about vendors & contracts?",
+    "↑"
+  ],
+  "links": ["", "Home", "Intelligence", "Moves", "Source", "Tower", "Learn"]
+}
