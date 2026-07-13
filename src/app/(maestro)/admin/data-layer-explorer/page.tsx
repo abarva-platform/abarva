@@ -11,6 +11,11 @@ import {
   type DataJourneySection,
   type DataLayerExplorerReferenceAudit,
 } from "@/lib/admin/data-layer-explorer";
+import {
+  readLatestTenantQualityMatrix,
+  type TenantQualityMatrixArtifact,
+  type TenantQualityMatrixRow,
+} from "@/lib/enterprise-data/data-quality/all-tenant-data-quality-audit";
 import { SHELL } from "@/lib/shell/shell-tokens";
 
 export const metadata = {
@@ -43,6 +48,7 @@ export default async function AdminDataLayerExplorerPage() {
   await connection();
   const tenant = await resolveAdminTenant();
   const model = buildAdminDataLayerExplorerModel(tenant.tenantName);
+  const tenantQualityMatrix = await readLatestTenantQualityMatrix(process.cwd());
 
   return (
     <AppShell
@@ -209,6 +215,8 @@ export default async function AdminDataLayerExplorerPage() {
             <TruthTile label="Runtime change" value="false" />
           </section>
 
+          <AllTenantQualityPanel matrix={tenantQualityMatrix} />
+
           <ReferenceDataAuditPanel audit={model.referenceDataAudit} />
 
           <nav
@@ -287,6 +295,261 @@ export default async function AdminDataLayerExplorerPage() {
         </div>
       </main>
     </AppShell>
+  );
+}
+
+function AllTenantQualityPanel({
+  matrix,
+}: {
+  matrix: TenantQualityMatrixArtifact | null;
+}) {
+  if (!matrix) {
+    return (
+      <section
+        data-all-tenant-data-quality
+        style={{
+          ...cardStyle,
+          padding: 18,
+          marginBottom: 16,
+          borderColor: "#FDBA74",
+          background: "#FFF7ED",
+        }}
+      >
+        <p style={{ ...labelStyle, margin: 0, color: "#C2410C" }}>
+          All-tenant data quality
+        </p>
+        <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
+          Audit bundle not generated yet.
+        </h2>
+        <p style={{ margin: 0, color: "#7C2D12", fontSize: 14 }}>
+          Run <code>npm run audit:data-quality:all-tenants</code> to create
+          the read-only quality matrix consumed by this page.
+        </p>
+      </section>
+    );
+  }
+
+  const topRisks = matrix.tenants
+    .filter((tenant) => tenant.sourceRichCandidateThin || tenant.promotionUnsafe)
+    .slice(0, 6);
+
+  return (
+    <section
+      data-all-tenant-data-quality
+      style={{
+        ...cardStyle,
+        padding: 18,
+        marginBottom: 16,
+        borderColor: "#FCA5A5",
+        background: "#FFF7F7",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 18,
+          alignItems: "start",
+          marginBottom: 14,
+        }}
+      >
+        <div>
+          <p style={{ ...labelStyle, margin: 0, color: "#BE123C" }}>
+            All-tenant data quality · latest audit
+          </p>
+          <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
+            Source richness, candidate coverage, graph gaps, and promotion
+            safety are now scored together.
+          </h2>
+          <p
+            style={{
+              margin: 0,
+              color: "#7F1D1D",
+              fontSize: 14,
+              lineHeight: 1.55,
+              maxWidth: 1050,
+            }}
+          >
+            This panel is read-only. It does not create candidates, promote
+            data, write production tables, update Active Tenant Access, or
+            change module runtime reads. It exposes false-green risk when a
+            tenant has rich source evidence but thin candidate or graph
+            coverage.
+          </p>
+        </div>
+        <StatusPill>{`${matrix.rollup.promotionUnsafeTenants} promotion unsafe`}</StatusPill>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+          gap: 10,
+          marginBottom: 14,
+        }}
+      >
+        <QualityMetric
+          label="Tenants"
+          value={String(matrix.rollup.tenantsScanned)}
+        />
+        <QualityMetric
+          label="Source-rich thin"
+          value={String(matrix.rollup.sourceRichCandidateThinTenants)}
+        />
+        <QualityMetric
+          label="False green"
+          value={String(matrix.rollup.falseGreenRiskTenants)}
+        />
+        <QualityMetric
+          label="Graph gaps"
+          value={String(matrix.rollup.relationshipGapTenants)}
+        />
+        <QualityMetric
+          label="Generated watch"
+          value={String(matrix.rollup.generatedDataWatchTenants)}
+        />
+        <QualityMetric
+          label="Isolation fail"
+          value={String(matrix.rollup.tenantIsolationFailures)}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {topRisks.map((tenant) => (
+          <TenantQualityCard key={tenant.tenantKey} tenant={tenant} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function QualityMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(190, 18, 60, 0.16)",
+        borderRadius: 8,
+        padding: 12,
+        background: "#FFFFFF",
+      }}
+    >
+      <p style={{ ...labelStyle, margin: 0, color: "#9F1239" }}>{label}</p>
+      <p
+        style={{
+          margin: "6px 0 0",
+          color: SHELL.INK,
+          fontSize: 24,
+          lineHeight: 1,
+          fontWeight: 900,
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function TenantQualityCard({ tenant }: { tenant: TenantQualityMatrixRow }) {
+  return (
+    <article
+      style={{
+        border: "1px solid rgba(190, 18, 60, 0.14)",
+        borderRadius: 8,
+        background: "#FFFFFF",
+        padding: 14,
+        display: "grid",
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 10,
+          alignItems: "start",
+        }}
+      >
+        <div>
+          <h3 style={{ margin: 0, color: SHELL.INK, fontSize: 16 }}>
+            {tenant.tenantDisplayName}
+          </h3>
+          <p
+            style={{
+              margin: "5px 0 0",
+              color: SHELL.INK_SOFT,
+              fontSize: 12,
+              lineHeight: 1.4,
+            }}
+          >
+            {tenant.sourceStructuredRows.toLocaleString()} source rows ·{" "}
+            {(tenant.candidateCoverageRatio * 100).toFixed(1)}% candidate
+            coverage
+          </p>
+        </div>
+        <StatusPill>{tenant.overallStatus}</StatusPill>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 8,
+        }}
+      >
+        <CompactStat
+          label="Candidate"
+          value={String(tenant.candidateRecordsGenerated)}
+        />
+        <CompactStat
+          label="Graph ops"
+          value={String(tenant.relationshipOperationCount)}
+        />
+        <CompactStat
+          label="Thin"
+          value={tenant.sourceRichCandidateThin ? "yes" : "no"}
+        />
+      </div>
+      <p
+        style={{
+          margin: 0,
+          color: "#7F1D1D",
+          fontSize: 12,
+          lineHeight: 1.45,
+        }}
+      >
+        {tenant.recommendedNextAction}
+      </p>
+    </article>
+  );
+}
+
+function CompactStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        borderRadius: 8,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+        background: "#FAFAF9",
+        padding: 8,
+      }}
+    >
+      <p style={{ ...labelStyle, margin: 0, fontSize: 10 }}>{label}</p>
+      <p
+        style={{
+          margin: "4px 0 0",
+          color: SHELL.INK,
+          fontSize: 14,
+          fontWeight: 900,
+        }}
+      >
+        {value}
+      </p>
+    </div>
   );
 }
 

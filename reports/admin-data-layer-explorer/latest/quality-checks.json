@@ -6,7 +6,10 @@
       "id": "template-schema",
       "label": "Template/schema validation",
       "purpose": "Checks whether the file matches a known contract.",
-      "appliesTo": ["Input Files", "Tenant Packet"],
+      "appliesTo": [
+        "Input Files",
+        "Tenant Packet"
+      ],
       "currentStatus": "Expected before candidate generation.",
       "failureMode": "Wrong template produces stranded or misread fields."
     },
@@ -14,7 +17,10 @@
       "id": "required-fields",
       "label": "Required-field validation",
       "purpose": "Confirms the minimum fields needed for safe use.",
-      "appliesTo": ["Validation", "Known Facts"],
+      "appliesTo": [
+        "Validation",
+        "Known Facts"
+      ],
       "currentStatus": "Expected before readiness.",
       "failureMode": "Thin records pass without enough context."
     },
@@ -22,7 +28,9 @@
       "id": "accepted-values",
       "label": "Accepted-value validation",
       "purpose": "Checks fields such as status, criticality, and phase against allowed values.",
-      "appliesTo": ["Validation"],
+      "appliesTo": [
+        "Validation"
+      ],
       "currentStatus": "Expected before mapping.",
       "failureMode": "Uncontrolled vocabulary breaks downstream grouping."
     },
@@ -30,7 +38,11 @@
       "id": "evidence-attachment",
       "label": "Evidence attachment",
       "purpose": "Ensures records keep source references.",
-      "appliesTo": ["Evidence", "Known Facts", "Insights"],
+      "appliesTo": [
+        "Evidence",
+        "Known Facts",
+        "Insights"
+      ],
       "currentStatus": "Required for agent-ready context.",
       "failureMode": "Unsupported claims reach users."
     },
@@ -38,7 +50,10 @@
       "id": "quarantine",
       "label": "Quarantine checks",
       "purpose": "Blocks records with missing, conflicting, unsafe, or unmapped data.",
-      "appliesTo": ["Parsing & Extraction", "Validation"],
+      "appliesTo": [
+        "Parsing & Extraction",
+        "Validation"
+      ],
       "currentStatus": "Expected for bad records.",
       "failureMode": "Bad records are silently accepted."
     },
@@ -46,7 +61,10 @@
       "id": "duplicate-detection",
       "label": "Duplicate detection",
       "purpose": "Identifies repeated objects and conflicting records.",
-      "appliesTo": ["Known Facts", "Relationships"],
+      "appliesTo": [
+        "Known Facts",
+        "Relationships"
+      ],
       "currentStatus": "Available where object keys are present.",
       "failureMode": "Duplicate systems or vendors inflate counts."
     },
@@ -54,7 +72,9 @@
       "id": "tenant-isolation",
       "label": "Tenant isolation",
       "purpose": "Confirms all objects are scoped to the active tenant.",
-      "appliesTo": ["All layers"],
+      "appliesTo": [
+        "All layers"
+      ],
       "currentStatus": "Required.",
       "failureMode": "Cross-tenant leakage."
     },
@@ -62,7 +82,10 @@
       "id": "candidate-inactive",
       "label": "Candidate inactive checks",
       "purpose": "Confirms candidate data does not become active by default.",
-      "appliesTo": ["Candidate Preview", "Promotion Readiness"],
+      "appliesTo": [
+        "Candidate Preview",
+        "Promotion Readiness"
+      ],
       "currentStatus": "Required.",
       "failureMode": "Preview data is read by default modules."
     },
@@ -70,7 +93,9 @@
       "id": "promotion-readiness",
       "label": "Promotion readiness",
       "purpose": "Checks proof, blockers, approval, and rollback posture.",
-      "appliesTo": ["Promotion Readiness"],
+      "appliesTo": [
+        "Promotion Readiness"
+      ],
       "currentStatus": "Required before promotion.",
       "failureMode": "Eligible candidate is mistaken for promoted data."
     },
@@ -78,7 +103,10 @@
       "id": "rollback-posture",
       "label": "Rollback posture",
       "purpose": "Confirms prior active state and rollback plan are documented.",
-      "appliesTo": ["Promotion Readiness", "Active Access"],
+      "appliesTo": [
+        "Promotion Readiness",
+        "Active Access"
+      ],
       "currentStatus": "Required before active switch.",
       "failureMode": "No safe return path after promotion."
     },
@@ -86,7 +114,9 @@
       "id": "module-readiness",
       "label": "Module readiness",
       "purpose": "Checks whether modules can safely inspect or read the layer.",
-      "appliesTo": ["Module Usage"],
+      "appliesTo": [
+        "Module Usage"
+      ],
       "currentStatus": "Required before module claims.",
       "failureMode": "Runtime-ready is overclaimed."
     },
@@ -94,7 +124,9 @@
       "id": "page-wiring",
       "label": "Page wiring checks",
       "purpose": "Confirms each page reads and writes only approved layers.",
-      "appliesTo": ["Page Mapping"],
+      "appliesTo": [
+        "Page Mapping"
+      ],
       "currentStatus": "Expected for new surfaces.",
       "failureMode": "Page writes to the wrong layer."
     },
@@ -102,7 +134,9 @@
       "id": "no-example-as-live",
       "label": "No example data as live facts",
       "purpose": "Ensures illustrative rows are labeled as examples and not reported as tenant truth.",
-      "appliesTo": ["All UI sections"],
+      "appliesTo": [
+        "All UI sections"
+      ],
       "currentStatus": "Required.",
       "failureMode": "Example content becomes a live claim."
     },
@@ -110,7 +144,10 @@
       "id": "no-retired-version-labels",
       "label": "No retired version-label UI language",
       "purpose": "Keeps user-facing data-layer language business-readable.",
-      "appliesTo": ["Admin UI", "Reports"],
+      "appliesTo": [
+        "Admin UI",
+        "Reports"
+      ],
       "currentStatus": "Required for this explorer.",
       "failureMode": "Users see implementation history instead of product meaning."
     }
