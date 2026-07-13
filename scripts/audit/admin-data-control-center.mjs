@@ -24,9 +24,12 @@ const requiredFiles = [
   "reports/admin-setup-control/airline-demo/setup-control.json",
   "reports/admin-setup-control/airline-demo/setup-control-summary.md",
   "reports/admin-setup-control/admin-pr2-overview-readout.md",
+  "reports/admin-data-intake-library/latest/admin-data-intake-library.json",
+  "reports/admin-data-intake-library/latest/admin-data-intake-library-summary.md",
   "docs/architecture/admin-data-control-center.md",
   "docs/releases/records/2026-07-12-admin-setup-control.md",
   "docs/releases/records/2026-07-12-admin-overview-setup-control.md",
+  "docs/releases/records/2026-07-12-admin-data-intake-library.md",
 ];
 
 for (const file of requiredFiles) {
@@ -34,6 +37,7 @@ for (const file of requiredFiles) {
 }
 
 const setupControl = read("src/lib/admin/setup-control.ts");
+const intakeLibrary = read("src/lib/admin/data-intake-library.ts");
 const route = read("src/app/api/admin/setup-control/route.ts");
 const adminUi = read("src/components/admin/AdminSetupExperience.tsx");
 const csvRoute = read("src/app/api/admin/context-layer/csv-upload/route.ts");
@@ -42,6 +46,9 @@ const loaderCommitRoute = read("src/app/api/admin/context-layer/loader/commit/ro
 const triageRoute = read("src/app/api/admin/context-layer/triage/[id]/route.ts");
 const proof = JSON.parse(
   read("reports/admin-setup-control/airline-demo/setup-control.json"),
+);
+const intakeProof = JSON.parse(
+  read("reports/admin-data-intake-library/latest/admin-data-intake-library.json"),
 );
 
 const requiredSections = [
@@ -123,6 +130,40 @@ assert(
     adminUi.includes("Active access changed: no") &&
     adminUi.includes("Runtime behavior changed: no"),
   "Admin overview shows production/write/runtime guardrails",
+);
+assert(
+  intakeLibrary.includes("ADMIN_TEMPLATE_CATALOG") &&
+    intakeLibrary.includes("Enterprise Profile") &&
+    intakeLibrary.includes("Tower Outcome Pack"),
+  "Data Intake Library defines the business-facing template catalog",
+);
+assert(
+  intakeProof.catalogCount === 19 &&
+    intakeProof.guideCount === 6 &&
+    intakeProof.guardrails.productionTenantDataWritten === false &&
+    intakeProof.guardrails.activeTenantAccessLayerUpdated === false &&
+    intakeProof.guardrails.candidatePromoted === false &&
+    intakeProof.guardrails.moduleRuntimeConsumptionChanged === false,
+  "Data Intake Library proof preserves read-only guardrails",
+);
+assert(
+  adminUi.includes("Data Intake Library") &&
+    adminUi.includes("Start with the right templates before uploading files") &&
+    adminUi.includes("Choose setup path") &&
+    adminUi.includes("Create candidate preview") &&
+    adminUi.includes("Promote with proof"),
+  "Admin UI exposes a workflow-led Data Intake Library",
+);
+assert(
+  intakeLibrary.includes("Template contract defined - downloadable file not yet generated.") &&
+    intakeLibrary.includes("Evidence source is visible; parsing, mapping, validation, and candidate promotion are not proven here."),
+  "Admin UI distinguishes template contracts from uploaded evidence and active truth",
+);
+assert(
+  adminUi.includes("<button type=\"button\" disabled>") &&
+    adminUi.includes("Download template") &&
+    adminUi.includes("Upload later"),
+  "Data Intake Library actions are honest disabled placeholders in ADMIN-PR3",
 );
 
 if (process.exitCode) {
