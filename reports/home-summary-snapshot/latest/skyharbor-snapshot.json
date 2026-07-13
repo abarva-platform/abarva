@@ -3,13 +3,55 @@
   "tenantProfileHeader": {
     "tenantId": null,
     "tenantKey": "skyharbor-air",
-    "displayName": "Airline Demo",
+    "displayName": "SkyHarbor Air",
+    "legalName": "SkyHarbor Air Group",
     "industry": "Airline",
-    "headquarters": null,
-    "revenue": null,
-    "revenueVerified": false,
-    "employees": null,
-    "employeesVerified": false,
+    "subIndustry": "Global passenger airline",
+    "headquarters": "Atlanta, GA",
+    "revenue": "$52.1B",
+    "revenueVerified": true,
+    "employees": "95,000",
+    "employeesVerified": true,
+    "businessModel": "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+    "businessSegments": [
+      "Passenger operations",
+      "Loyalty and customer experience",
+      "Operations control",
+      "Crew operations",
+      "Cargo and partner operations",
+      "Technology and data platforms"
+    ],
+    "missionStatement": "Move people and goods safely while protecting customer trust during disruption.",
+    "visionStatement": "Become the most resilient AI-enabled airline operations network in the market.",
+    "leadershipRoles": [
+      "CEO: Elena Vasquez",
+      "CIO: Amala Rao",
+      "CFO: Victor Hale",
+      "COO: Darius King",
+      "CDAO: Priya Nair"
+    ],
+    "strategicPriorities": [
+      "IROPS recovery command",
+      "Mainframe and MQ modernization",
+      "Crew recovery decision support",
+      "Customer reaccommodation assist",
+      "Tower value tracking for operational outcomes"
+    ],
+    "globalLocations": [
+      "United States",
+      "Canada",
+      "Europe",
+      "Latin America",
+      "Asia Pacific",
+      "Global airport operations"
+    ],
+    "sourceAsOfDate": "2026-05-27",
+    "sourceValidationStatus": "synthetic_steward_reviewed",
+    "knownGaps": [
+      "Synthetic airline planning-grade substrate; not real SkyHarbor production data",
+      "Client-approved source inventory still required before active promotion",
+      "Revenue and workforce anchors are demo facts, not audited filings"
+    ],
     "dataOrigin": "Demo-safe",
     "mode": "active_home_context",
     "activeContextStatus": "Active Home context",
@@ -17,22 +59,25 @@
   },
   "executiveProfile": {
     "companySummaryFacts": [
-      "Industry: Airline",
+      "SkyHarbor Air Group is Global passenger airline headquartered in Atlanta, GA with $52.1B revenue and 95,000 employees. Its model spans Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+      "Mission: Move people and goods safely while protecting customer trust during disruption.",
+      "Vision: Become the most resilient AI-enabled airline operations network in the market.",
       "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete."
     ],
     "businessModelSignals": [
-      "SkyHarbor Air Group",
-      "SHA-BF-001 - Operations Control Center / IROPS",
-      "SHA-BF-002 - Flight Operations",
-      "SHA-BF-003 - Crew Operations",
-      "SHA-BF-004 - Airport Customer Service"
+      "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+      "Segment: Passenger operations",
+      "Segment: Loyalty and customer experience",
+      "Segment: Operations control",
+      "Segment: Crew operations",
+      "Segment: Cargo and partner operations"
     ],
     "strategicPrioritySignals": [
-      "MET-0001 - Cost-to-Income Ratio",
-      "MET-0002 - Net Promoter Score",
-      "MET-0003 - Employee Attrition Rate",
-      "MET-0004 - Forecast Accuracy",
-      "MET-0005 - EBIT Margin"
+      "IROPS recovery command",
+      "Mainframe and MQ modernization",
+      "Crew recovery decision support",
+      "Customer reaccommodation assist",
+      "Tower value tracking for operational outcomes"
     ],
     "enterpriseSnapshotMetrics": [
       {
@@ -186,7 +231,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -257,7 +304,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -267,7 +316,9 @@
     {
       "areaKey": "vendors-contracts",
       "displayName": "Vendors & Contracts",
-      "executiveSummaryInputs": ["Vendors and contracts"],
+      "executiveSummaryInputs": [
+        "Vendors and contracts"
+      ],
       "loadedCount": 320,
       "mappedCount": 320,
       "sourceCount": 1,
@@ -323,7 +374,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -333,7 +386,9 @@
     {
       "areaKey": "data-assets",
       "displayName": "Data Assets",
-      "executiveSummaryInputs": ["Data assets and analytics coverage"],
+      "executiveSummaryInputs": [
+        "Data assets and analytics coverage"
+      ],
       "loadedCount": 2236,
       "mappedCount": 2236,
       "sourceCount": 1,
@@ -389,7 +444,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -399,7 +456,9 @@
     {
       "areaKey": "integrations",
       "displayName": "Integrations",
-      "executiveSummaryInputs": ["Data and integration dependencies"],
+      "executiveSummaryInputs": [
+        "Data and integration dependencies"
+      ],
       "loadedCount": 2236,
       "mappedCount": 2236,
       "sourceCount": 1,
@@ -455,7 +514,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -532,7 +593,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -610,7 +673,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -687,7 +752,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -697,7 +764,9 @@
     {
       "areaKey": "evidence-sources",
       "displayName": "Evidence Sources",
-      "executiveSummaryInputs": ["Industry corpus patterns"],
+      "executiveSummaryInputs": [
+        "Industry corpus patterns"
+      ],
       "loadedCount": 489,
       "mappedCount": 489,
       "sourceCount": 1,
@@ -753,7 +822,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": [
+        "Close visible evidence gaps for this area."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -791,7 +862,9 @@
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Load source-backed relationships evidence."],
+      "nextDataActions": [
+        "Load source-backed relationships evidence."
+      ],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -878,9 +951,9 @@
     "createsCandidates": false
   },
   "lineage": {
-    "generatedAt": "2026-07-13T20:32:22.126Z",
+    "generatedAt": "2026-07-13T21:32:25.714Z",
     "generatedBy": "home_summary_engine",
-    "inputFingerprint": "e714a640a550873ca1ebdd36d3a1560224a04fb8263ae2ffa84735014c95ef1c",
+    "inputFingerprint": "42ed00330e1ff46dce9c114e4473529594dd43a9e87cf7abd8997d077fb7fbbc",
     "tenantDataVersionId": null,
     "candidateVersionId": null,
     "sourceSnapshotIds": [

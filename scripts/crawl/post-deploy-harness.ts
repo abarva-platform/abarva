@@ -359,6 +359,15 @@ async function crawlSurface(
   if (surface.requiresContextDemoVectorProof) {
     await proveContextDemoVectorPath(page, persona, safeName, out);
   }
+  if (surface.id === "home") {
+    await proveHomeAvaRail(page, persona, safeName, out).catch((error) => {
+      console.warn(
+        `crawl_home_ava_proof_failed:${safeName}:${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    });
+  }
 
   const html = await page.content();
   const visibleText = await page.locator('body').innerText({ timeout: 10_000 }).catch(() => '');
@@ -397,6 +406,45 @@ async function crawlSurface(
     visualCanon: counts.visualCanon,
     metrics: counts.metrics,
   };
+}
+
+async function proveHomeAvaRail(
+  page: Page,
+  persona: { key: string; tenantKey: string; tenantName: string },
+  safeName: string,
+  out: string,
+) {
+  const launcher = page.locator('[data-testid="home-ava-launcher"]');
+  if ((await launcher.count()) === 0) return;
+  await launcher.first().click({ timeout: 10_000 });
+  const drawer = page.locator('[data-testid="home-ava-drawer"]');
+  await drawer.waitFor({ state: "visible", timeout: 10_000 });
+  const expand = page.getByRole("button", { name: /expand ava/i });
+  if ((await expand.count()) > 0) {
+    await expand.first().click({ timeout: 5_000 });
+  }
+  const prompt = "Explain this company in plain English.";
+  const promptButton = drawer.getByRole("button", { name: prompt });
+  if ((await promptButton.count()) > 0) {
+    await promptButton.first().click({ timeout: 5_000 });
+  } else {
+    await drawer.getByPlaceholder(/ask about this context/i).fill(prompt);
+    await drawer.getByRole("button", { name: /ask|send|submit/i }).last().click();
+  }
+  await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => undefined);
+  await page.waitForTimeout(2_000);
+  const text = await drawer.innerText({ timeout: 10_000 }).catch(() => "");
+  await fs.writeFile(
+    path.join(out, "transcripts", `${safeName}__home-ava.txt`),
+    [
+      `persona=${persona.key}`,
+      `tenant=${persona.tenantKey}`,
+      `tenantName=${persona.tenantName}`,
+      `prompt=${prompt}`,
+      "",
+      text,
+    ].join("\n"),
+  );
 }
 
 async function collectPageCounts(page: Page, visibleText: string): Promise<PageCounts> {

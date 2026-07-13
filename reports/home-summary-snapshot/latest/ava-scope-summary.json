@@ -1,7 +1,7 @@
 [
   {
     "tenantKey": "skyharbor-air",
-    "displayName": "Airline Demo",
+    "displayName": "SkyHarbor Air",
     "avaScope": {
       "canAnswer": [
         "Loaded facts in the active Home context",
@@ -77,7 +77,7 @@
   },
   {
     "tenantKey": "meridian-health",
-    "displayName": "Healthcare Demo",
+    "displayName": "Meridian Health System",
     "avaScope": {
       "canAnswer": [
         "Loaded facts in the active Home context",
@@ -115,7 +115,7 @@
   },
   {
     "tenantKey": "first-capital",
-    "displayName": "Financial Services Demo",
+    "displayName": "First Capital",
     "avaScope": {
       "canAnswer": [
         "Loaded facts in the active Home context",
@@ -153,7 +153,7 @@
   },
   {
     "tenantKey": "apex-retail",
-    "displayName": "Retail Demo",
+    "displayName": "Apex Retail",
     "avaScope": {
       "canAnswer": [
         "Loaded facts in the active Home context",

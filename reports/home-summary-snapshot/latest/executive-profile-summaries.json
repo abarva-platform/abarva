@@ -1,25 +1,28 @@
 [
   {
     "tenantKey": "skyharbor-air",
-    "displayName": "Airline Demo",
+    "displayName": "SkyHarbor Air",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Industry: Airline",
+        "SkyHarbor Air Group is Global passenger airline headquartered in Atlanta, GA with $52.1B revenue and 95,000 employees. Its model spans Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+        "Mission: Move people and goods safely while protecting customer trust during disruption.",
+        "Vision: Become the most resilient AI-enabled airline operations network in the market.",
         "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete."
       ],
       "businessModelSignals": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-BF-004 - Airport Customer Service"
+        "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+        "Segment: Passenger operations",
+        "Segment: Loyalty and customer experience",
+        "Segment: Operations control",
+        "Segment: Crew operations",
+        "Segment: Cargo and partner operations"
       ],
       "strategicPrioritySignals": [
-        "MET-0001 - Cost-to-Income Ratio",
-        "MET-0002 - Net Promoter Score",
-        "MET-0003 - Employee Attrition Rate",
-        "MET-0004 - Forecast Accuracy",
-        "MET-0005 - EBIT Margin"
+        "IROPS recovery command",
+        "Mainframe and MQ modernization",
+        "Crew recovery decision support",
+        "Customer reaccommodation assist",
+        "Tower value tracking for operational outcomes"
       ],
       "enterpriseSnapshotMetrics": [
         {
@@ -123,22 +126,25 @@
     "displayName": "Lakeshore Holdings",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Industry: Diversified Holdings",
+        "Lakeshore Holdings is Portfolio-company operator with corporate shared services headquartered in Chicago, IL with $7.12B revenue and 11,800 employees. Its model spans Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+        "Mission: Protect operating-company autonomy while using shared intelligence to improve cost, risk, and growth decisions.",
+        "Vision: Turn fragmented portfolio knowledge into a governed enterprise intelligence layer for smarter transformation and sourcing decisions.",
         "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
       ],
       "businessModelSignals": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-FN-INVEST - Investments and Portfolio Management"
+        "Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+        "Segment: Northline",
+        "Segment: Brightmark",
+        "Segment: Forge and Field",
+        "Segment: Great Lakes Pantry",
+        "Segment: Corporate Shared Services"
       ],
       "strategicPrioritySignals": [
-        "LH-MET-TOTAL-IT-BUDGET - FY26 direct IT budget",
-        "LH-MET-RUN-BUDGET - FY26 run budget",
-        "LH-MET-CHANGE-BUDGET - FY26 change budget",
-        "LH-MET-SPEND-YTD - FY26 spend to date",
-        "LH-MET-PROGRAM-BUDGET - Program committed budget"
+        "Legal contract intake modernization",
+        "Corporate shared-services operating model",
+        "Vendor and consulting spend optimization",
+        "Portfolio data and AI foundation",
+        "Source-to-value governance"
       ],
       "enterpriseSnapshotMetrics": [
         {
@@ -239,25 +245,29 @@
   },
   {
     "tenantKey": "meridian-health",
-    "displayName": "Healthcare Demo",
+    "displayName": "Meridian Health System",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Industry: Healthcare",
+        "Meridian Health System is Integrated delivery network and health plan headquartered in Sacramento, CA with $16.8B revenue and 58,000 employees. Its model spans Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+        "Mission: Improve care access, quality, and affordability through trusted data and coordinated operations.",
+        "Vision: Build a governed clinical, claims, and finance intelligence layer that makes automation safe and measurable.",
         "Meridian Health has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
       ],
       "businessModelSignals": [
-        "Healthcare Demo",
-        "MER-BF-001 - Ambulatory and Primary Care",
-        "MER-BF-002 - Hospital Operations",
-        "MER-BF-003 - Health Plan Operations",
-        "MER-BF-004 - Pharmacy Services"
+        "Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+        "Segment: Clinical delivery",
+        "Segment: Health plan operations",
+        "Segment: Pharmacy and claims",
+        "Segment: Finance and revenue cycle",
+        "Segment: Provider quality"
       ],
       "strategicPrioritySignals": [
-        "MERIDIANHEALTH-MET-0001 - Healthcare Demo benefit realization against committed value metric 1",
-        "MERIDIANHEALTH-MET-0002 - Healthcare Demo elapsed time for target process metric 2",
-        "MERIDIANHEALTH-MET-0003 - Healthcare Demo open control and governance pressure metric 3",
-        "MERIDIANHEALTH-MET-0004 - Healthcare Demo active usage of changed workflow metric 4",
-        "MERIDIANHEALTH-MET-0005 - Healthcare Demo unit cost across served population or customer journey metric 5"
+        "Unified clinical and claims lakehouse",
+        "Governed data foundation for AI automation",
+        "Call center optimization",
+        "Provider quality and performance",
+        "Cost-of-care transparency",
+        "Payment integrity"
       ],
       "enterpriseSnapshotMetrics": [
         {
@@ -358,25 +368,28 @@
   },
   {
     "tenantKey": "first-capital",
-    "displayName": "Financial Services Demo",
+    "displayName": "First Capital",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Industry: Financial Services",
+        "First Capital Financial Services is Consumer and commercial banking headquartered in Charlotte, NC with $52B revenue and 65,000 employees. Its model spans Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+        "Mission: Help customers and businesses manage money with trusted, efficient, and compliant financial services.",
+        "Vision: Modernize banking operations with governed data, resilient platforms, and measurable AI-enabled decision support.",
         "First Capital has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
       ],
       "businessModelSignals": [
-        "Financial Services Demo",
-        "FC-BF-001 - Consumer Banking & Deposits",
-        "FC-BF-002 - Commercial & Corporate Banking",
-        "FC-BF-003 - Cards & Payments",
-        "FC-BF-004 - Wealth & Asset Management"
+        "Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+        "Segment: Consumer banking",
+        "Segment: Commercial banking",
+        "Segment: Cards and payments",
+        "Segment: Lending operations",
+        "Segment: Wealth management"
       ],
       "strategicPrioritySignals": [
-        "FIRSTCAPITAL-MET-0001 - Financial Services Demo benefit realization against committed value metric 1",
-        "FIRSTCAPITAL-MET-0002 - Financial Services Demo elapsed time for target process metric 2",
-        "FIRSTCAPITAL-MET-0003 - Financial Services Demo open control and governance pressure metric 3",
-        "FIRSTCAPITAL-MET-0004 - Financial Services Demo active usage of changed workflow metric 4",
-        "FIRSTCAPITAL-MET-0005 - Financial Services Demo unit cost across served population or customer journey metric 5"
+        "Digital account-opening modernization",
+        "Fraud and payment integrity analytics",
+        "Core banking modernization sequencing",
+        "Vendor and consulting spend transparency",
+        "Risk and compliance automation"
       ],
       "enterpriseSnapshotMetrics": [
         {
@@ -477,25 +490,28 @@
   },
   {
     "tenantKey": "apex-retail",
-    "displayName": "Retail Demo",
+    "displayName": "Apex Retail",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Industry: Retail",
+        "Apex Retail Group is Omnichannel specialty and mass-market retail headquartered in Minneapolis, MN with $18.4B revenue and 72,000 employees. Its model spans Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+        "Mission: Serve customers with convenient, trusted, and value-conscious retail experiences across channels.",
+        "Vision: Make retail operations smarter by connecting customer, inventory, supply-chain, and workforce decisions.",
         "Apex Retail has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
       ],
       "businessModelSignals": [
-        "Retail Demo",
-        "APX-BF-001 - Store Operations",
-        "APX-BF-002 - Digital Commerce",
-        "APX-BF-003 - Merchandising",
-        "APX-BF-004 - Supply Chain and Fulfillment"
+        "Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+        "Segment: Stores",
+        "Segment: Digital commerce",
+        "Segment: Loyalty and marketing",
+        "Segment: Merchandising",
+        "Segment: Supply chain"
       ],
       "strategicPrioritySignals": [
-        "APEXRETAIL-MET-0001 - Retail Demo benefit realization against committed value metric 1",
-        "APEXRETAIL-MET-0002 - Retail Demo elapsed time for target process metric 2",
-        "APEXRETAIL-MET-0003 - Retail Demo open control and governance pressure metric 3",
-        "APEXRETAIL-MET-0004 - Retail Demo active usage of changed workflow metric 4",
-        "APEXRETAIL-MET-0005 - Retail Demo unit cost across served population or customer journey metric 5"
+        "CDP and identity resolution",
+        "Inventory and replenishment intelligence",
+        "Contact-center productivity",
+        "Vendor spend optimization",
+        "Store labor and supply-chain modernization"
       ],
       "enterpriseSnapshotMetrics": [
         {

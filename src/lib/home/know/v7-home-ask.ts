@@ -3,6 +3,12 @@ import {
   type SessionRunner,
 } from "@/lib/data-plane/read-adapters/azureSession";
 import {
+  formatEnterpriseEmployeeCount,
+  formatEnterpriseRevenue,
+  getEnterpriseProfileReadModel,
+  type EnterpriseProfileReadModel,
+} from "@/lib/enterprise-data/enterprise-profile/enterprise-profile-read-model";
+import {
   appClientKeyForTenant,
   tenantProfileForClientKey,
 } from "@/lib/tenant/aliases";
@@ -251,6 +257,7 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
   const topicKey = classifyQuestion(question);
   const config = TOPICS[topicKey] ?? TOPICS.loaded_context;
   const session = input.session ?? defaultSession;
+  const enterpriseProfile = getEnterpriseProfileReadModel(tenantKey);
 
   return session(async (run) => {
     await run("select set_config('app.tenant_key', $1, false)", [tenantKey]);
@@ -293,7 +300,7 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
     );
 
     const gaps = buildGaps(rows);
-    const table = buildTable(rows, config);
+    const table = buildTable(rows, config, enterpriseProfile);
     const displayName = tenantDisplayNameFor({
       tenantKey,
       runName: runRow.tenant_name,
@@ -307,6 +314,7 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
       topicKey,
       rows,
       gaps,
+      enterpriseProfile,
     });
     const answer = {
       mode: "home_know",
@@ -329,11 +337,11 @@ export async function answerHomeKnowFromV7(input: V7HomeAskInput) {
       followUpQuestion: "Which context area should aVa inspect next?",
       answerBoundary: {
         canAnswer: [
-          "Answer from intelligence_v7 business records, source lineage, graph edges, and registered field facts.",
+          "Answer from governed business records, source lineage, graph edges, and registered field facts.",
           "Show loaded facts, explicit gaps, source files, readiness, and handoff boundaries.",
         ],
         cannotAnswer: [
-          "Borrow facts from V4/V5/V6 or retired semantic layers.",
+          "Borrow facts from retired semantic layers.",
           "Show raw internal row IDs, chunk IDs, or synthetic flags in the executive answer.",
           "Let Claude add unsupported amounts, leaders, systems, vendors, or statuses.",
         ],
@@ -615,7 +623,46 @@ function isAdvisoryOrUseCaseQuestion(q: string) {
   );
 }
 
-function buildTable(rows: V7RecordRow[], config: V7TopicConfig) {
+function buildTable(
+  rows: V7RecordRow[],
+  config: V7TopicConfig,
+  enterpriseProfile?: EnterpriseProfileReadModel | null,
+) {
+  if (
+    config.primaryDimension === "v7_01_enterprise_profile" &&
+    enterpriseProfile
+  ) {
+    return {
+      headers: ["Profile field", "Loaded value", "Source"],
+      rows: [
+        ["Legal name", enterpriseProfile.legalName, sourceLabel(enterpriseProfile)],
+        ["Industry", profileIndustryLabel(enterpriseProfile), sourceLabel(enterpriseProfile)],
+        [
+          "Headquarters",
+          enterpriseProfile.headquarters ?? "Needs evidence",
+          sourceLabel(enterpriseProfile),
+        ],
+        [
+          "Revenue",
+          formatEnterpriseRevenue(enterpriseProfile.revenueUsd) ??
+            "Needs evidence",
+          enterpriseProfile.revenueBasis ?? sourceLabel(enterpriseProfile),
+        ],
+        [
+          "Employees",
+          formatEnterpriseEmployeeCount(enterpriseProfile.employeeCount) ??
+            "Needs evidence",
+          enterpriseProfile.employeeCountBasis ?? sourceLabel(enterpriseProfile),
+        ],
+        [
+          "Strategic priorities",
+          enterpriseProfile.strategicPriorities.slice(0, 4).join(", ") ||
+            "Needs evidence",
+          sourceLabel(enterpriseProfile),
+        ],
+      ],
+    };
+  }
   const selected = rows.slice(0, 8);
   if (!selected.length) return null;
   return {
@@ -657,6 +704,7 @@ function buildParagraphs(args: {
   topicKey: string;
   rows: V7RecordRow[];
   gaps: Array<{ label: string; impact: string }>;
+  enterpriseProfile?: EnterpriseProfileReadModel | null;
 }) {
   if (args.topicKey === "unsupported") {
     return [
@@ -718,6 +766,7 @@ function buildParagraphs(args: {
       displayName: args.displayName,
       row: args.rows[0]?.values_json ?? {},
       gaps: args.gaps,
+      enterpriseProfile: args.enterpriseProfile,
     });
   }
   const sampleSentence = samples.length
@@ -740,7 +789,45 @@ function buildEnterpriseProfileParagraphs(args: {
   displayName: string;
   row: Record<string, unknown>;
   gaps: Array<{ label: string; impact: string }>;
+  enterpriseProfile?: EnterpriseProfileReadModel | null;
 }): string[] {
+  if (args.enterpriseProfile) {
+    const profile = args.enterpriseProfile;
+    const revenue = formatEnterpriseRevenue(profile.revenueUsd);
+    const employees = formatEnterpriseEmployeeCount(profile.employeeCount);
+    const directTechnologyBudget = formatUsd(
+      args.row.total_direct_technology_budget_usd,
+    );
+    const sizeParts = [
+      revenue ? `${revenue} revenue` : null,
+      employees ? `${employees} employees` : null,
+      directTechnologyBudget
+        ? `${directTechnologyBudget} direct technology budget`
+        : null,
+    ].filter(Boolean);
+    const profileParts = [
+      profileIndustryLabel(profile),
+      profile.headquarters ? `headquartered in ${profile.headquarters}` : null,
+      sizeParts.length ? `with ${joinList(sizeParts as string[])}` : null,
+    ].filter(Boolean);
+    const priorities = profile.strategicPriorities.slice(0, 8);
+    const segments = profile.businessSegments.slice(0, 8);
+    const caveat =
+      profile.knownGaps.find((gap) => /not real|synthetic|planning-grade/i.test(gap)) ??
+      profile.knownGaps[0] ??
+      "Client validation is still required before board-grade use.";
+
+    return [
+      `${profile.legalName} is ${joinList(profileParts as string[])}. ${profile.businessModel ?? "The loaded profile is available for context browsing."}`,
+      segments.length
+        ? `The operating model spans ${joinList(segments)}.`
+        : "The loaded source does not yet break out business segments.",
+      priorities.length
+        ? `Current priorities in the profile are ${joinList(priorities)}.`
+        : "Strategic priorities are not loaded yet.",
+      `Evidence boundary: ${caveat}`,
+    ];
+  }
   const company = display(args.row.company_name);
   const industry = display(args.row.industry);
   // A holding company can carry $0 direct revenue (revenue rolls up at the
@@ -769,6 +856,18 @@ function buildEnterpriseProfileParagraphs(args: {
       ? `Important evidence gap: ${args.gaps[0].label}. ${args.gaps[0].impact}`
       : "No explicit profile gap appears in the selected fields, but client validation is still required before board-grade use.",
   ];
+}
+
+function profileIndustryLabel(profile: EnterpriseProfileReadModel): string {
+  return [profile.industry, profile.subIndustry]
+    .filter(Boolean)
+    .join(" / ");
+}
+
+function sourceLabel(profile: EnterpriseProfileReadModel): string {
+  return profile.sourceAsOfDate
+    ? `Enterprise profile source as of ${profile.sourceAsOfDate}`
+    : "Enterprise profile source";
 }
 
 function visibleQualityGate(text: string) {

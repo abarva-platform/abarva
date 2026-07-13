@@ -1,7 +1,7 @@
 [
   {
     "tenantKey": "skyharbor-air",
-    "displayName": "Airline Demo",
+    "displayName": "SkyHarbor Air",
     "dataQualitySummary": {
       "sourceCoverage": "pass",
       "candidateCoverage": "Not active by default",
@@ -59,7 +59,7 @@
   },
   {
     "tenantKey": "meridian-health",
-    "displayName": "Healthcare Demo",
+    "displayName": "Meridian Health System",
     "dataQualitySummary": {
       "sourceCoverage": "pass",
       "candidateCoverage": "Not active by default",
@@ -88,7 +88,7 @@
   },
   {
     "tenantKey": "first-capital",
-    "displayName": "Financial Services Demo",
+    "displayName": "First Capital",
     "dataQualitySummary": {
       "sourceCoverage": "pass",
       "candidateCoverage": "Not active by default",
@@ -117,7 +117,7 @@
   },
   {
     "tenantKey": "apex-retail",
-    "displayName": "Retail Demo",
+    "displayName": "Apex Retail",
     "dataQualitySummary": {
       "sourceCoverage": "pass",
       "candidateCoverage": "Not active by default",

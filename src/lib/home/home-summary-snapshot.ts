@@ -1,6 +1,11 @@
 import crypto from "node:crypto";
 
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
+import {
+  formatEnterpriseEmployeeCount,
+  formatEnterpriseRevenue,
+  getEnterpriseProfileReadModel,
+} from "@/lib/enterprise-data/enterprise-profile/enterprise-profile-read-model";
 import type { HomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import {
@@ -28,12 +33,24 @@ export interface HomeTenantProfileHeader {
   tenantId: string | null;
   tenantKey: string;
   displayName: string;
+  legalName: string | null;
   industry: string | null;
+  subIndustry: string | null;
   headquarters: string | null;
   revenue: string | null;
   revenueVerified: boolean;
   employees: string | null;
   employeesVerified: boolean;
+  businessModel: string | null;
+  businessSegments: string[];
+  missionStatement: string | null;
+  visionStatement: string | null;
+  leadershipRoles: string[];
+  strategicPriorities: string[];
+  globalLocations: string[];
+  sourceAsOfDate: string | null;
+  sourceValidationStatus: string | null;
+  knownGaps: string[];
   dataOrigin: string;
   mode: HomeSummarySnapshotMode;
   activeContextStatus: string;
@@ -240,6 +257,7 @@ export function buildHomeSummarySnapshot(
     dimensions,
     dataQuality,
     setupControl: options.setupControl ?? null,
+    repoRoot: options.repoRoot,
   });
   const contextAreas = buildContextAreas({
     dimensions,
@@ -288,11 +306,13 @@ export function buildHomeSummarySnapshot(
       companySummaryFacts: deriveCompanyFacts(profile, englishSummary),
       businessModelSignals: deriveSignals(
         "business",
+        profile,
         dimensions,
         englishSummary,
       ),
       strategicPrioritySignals: deriveSignals(
         "priority",
+        profile,
         dimensions,
         englishSummary,
       ),
@@ -355,7 +375,11 @@ function deriveTenantProfile(args: {
   dimensions: HomeV6BrowserPreview[];
   dataQuality: HomeDataQualityModel;
   setupControl: AdminSetupControlResponse | null;
+  repoRoot?: string;
 }): HomeTenantProfileHeader {
+  const enterpriseProfile = getEnterpriseProfileReadModel(args.tenantKey, {
+    repoRoot: args.repoRoot,
+  });
   const profileRows = args.dimensions.find((dimension) =>
     /enterprise profile|portfolio/i.test(dimension.dimension),
   );
@@ -364,19 +388,40 @@ function deriveTenantProfile(args: {
       .flatMap((row) => Object.entries(row.values))
       .map(([key, value]) => [key.toLowerCase(), value]) ?? [],
   );
+  const revenue =
+    formatEnterpriseRevenue(enterpriseProfile?.revenueUsd ?? null) ??
+    firstValue(values, ["revenue", "revenue usd", "annual revenue"]);
+  const employees =
+    formatEnterpriseEmployeeCount(enterpriseProfile?.employeeCount ?? null) ??
+    firstValue(values, ["employees", "employee count", "headcount"]);
   return {
     tenantId: args.tenantId,
     tenantKey: args.tenantKey,
-    displayName: args.displayName,
+    displayName: enterpriseProfile?.clientDisplayName ?? args.displayName,
+    legalName: enterpriseProfile?.legalName ?? null,
     industry:
+      enterpriseProfile?.industry ??
       args.industry ??
       firstValue(values, ["industry", "vertical", "market"]) ??
       null,
-    headquarters: firstValue(values, ["headquarters", "hq", "location"]),
-    revenue: firstValue(values, ["revenue", "revenue usd", "annual revenue"]),
-    revenueVerified: false,
-    employees: firstValue(values, ["employees", "employee count", "headcount"]),
-    employeesVerified: false,
+    subIndustry: enterpriseProfile?.subIndustry ?? null,
+    headquarters:
+      enterpriseProfile?.headquarters ??
+      firstValue(values, ["headquarters", "hq", "location"]),
+    revenue,
+    revenueVerified: Boolean(enterpriseProfile?.revenueUsd ?? revenue),
+    employees,
+    employeesVerified: Boolean(enterpriseProfile?.employeeCount ?? employees),
+    businessModel: enterpriseProfile?.businessModel ?? null,
+    businessSegments: enterpriseProfile?.businessSegments ?? [],
+    missionStatement: enterpriseProfile?.missionStatement ?? null,
+    visionStatement: enterpriseProfile?.visionStatement ?? null,
+    leadershipRoles: enterpriseProfile?.leadershipRoles ?? [],
+    strategicPriorities: enterpriseProfile?.strategicPriorities ?? [],
+    globalLocations: enterpriseProfile?.globalLocations ?? [],
+    sourceAsOfDate: enterpriseProfile?.sourceAsOfDate ?? null,
+    sourceValidationStatus: enterpriseProfile?.sourceValidationStatus ?? null,
+    knownGaps: enterpriseProfile?.knownGaps ?? [],
     dataOrigin: args.dataQuality.caveats.some((caveat) =>
       /synthetic|generated|demo/i.test(caveat),
     )
@@ -650,20 +695,51 @@ function deriveCompanyFacts(
   profile: HomeTenantProfileHeader,
   summary: HomeEnglishSummary,
 ): string[] {
+  const sizeParts = [
+    profile.revenue ? `${profile.revenue} revenue` : null,
+    profile.employees ? `${profile.employees} employees` : null,
+  ].filter(Boolean) as string[];
+  const profileLead = [
+    `${profile.legalName ?? profile.displayName} is ${
+      profile.subIndustry ?? profile.industry ?? "an enterprise"
+    }${profile.headquarters ? ` headquartered in ${profile.headquarters}` : ""}`,
+    sizeParts.length ? `with ${sizeParts.join(" and ")}` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const profileSummary = [
+    profileLead,
+    profile.businessModel ? `Its model spans ${profile.businessModel}` : null,
+  ]
+    .filter(Boolean)
+    .join(". ");
   return [
-    profile.industry ? `Industry: ${profile.industry}` : null,
-    profile.headquarters ? `Headquarters: ${profile.headquarters}` : null,
-    profile.revenue ? `Revenue: ${profile.revenue}` : null,
-    profile.employees ? `Employees: ${profile.employees}` : null,
+    profileSummary || null,
+    profile.missionStatement ? `Mission: ${profile.missionStatement}` : null,
+    profile.visionStatement ? `Vision: ${profile.visionStatement}` : null,
     summary.currentUnderstanding,
   ].filter(Boolean) as string[];
 }
 
 function deriveSignals(
   kind: "business" | "priority",
+  profile: HomeTenantProfileHeader,
   dimensions: HomeV6BrowserPreview[],
   summary: HomeEnglishSummary,
 ): string[] {
+  if (kind === "business") {
+    const fromProfile = [
+      profile.businessModel,
+      ...profile.businessSegments.map((segment) => `Segment: ${segment}`),
+      ...profile.globalLocations
+        .slice(0, 2)
+        .map((location) => `Location footprint: ${location}`),
+    ].filter(Boolean) as string[];
+    if (fromProfile.length) return fromProfile.slice(0, 6);
+  }
+  if (kind === "priority" && profile.strategicPriorities.length) {
+    return profile.strategicPriorities.slice(0, 6);
+  }
   const pattern =
     kind === "business"
       ? /business|function|operating|profile|vendor|customer|member|passenger/i
@@ -671,7 +747,8 @@ function deriveSignals(
   const derived = dimensions
     .filter((dimension) => pattern.test(dimension.dimension))
     .flatMap((dimension) => dimension.sourceRows.map((row) => row.label))
-    .filter(Boolean)
+    .filter((label) => label && label !== "Needs evidence")
+    .filter((label) => label !== profile.displayName)
     .slice(0, 5);
   return derived.length
     ? derived
@@ -714,11 +791,11 @@ function areaMatches(area: string, dimension: string): boolean {
 }
 
 function firstValue(
-  values: Record<string, string>,
+  values: Record<string, unknown>,
   keys: string[],
 ): string | null {
   for (const key of keys) {
-    const value = values[key]?.trim();
+    const value = String(values[key] ?? "").trim();
     if (value && value !== "Needs evidence") return value;
   }
   return null;
