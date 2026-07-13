@@ -420,6 +420,12 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.directAnswer).toMatch(/Payment integrity/i);
     expect(result.answer.directAnswer).not.toMatch(/not_loaded/i);
     expect(result.answer.directAnswer).not.toMatch(/Healthcare Demo.*Healthcare Demo.*Healthcare Demo/i);
+    expect(result.answer.table?.rows).toContainEqual([
+      'Employees',
+      '58,000 employees',
+      'Synthetic current-state profile; FY2025 workforce anchor',
+    ]);
+    expect(JSON.stringify(result.answer.table)).not.toMatch(/\$58K|\$58,000/);
   });
 
   it('keeps CFO company-profile orientation in Enterprise Profile instead of advisory handoff', async () => {

@@ -650,8 +650,9 @@ function buildTable(
         ],
         [
           "Employees",
-          formatEnterpriseEmployeeCount(enterpriseProfile.employeeCount) ??
-            "Needs evidence",
+          enterpriseProfile.employeeCount === null
+            ? "Needs evidence"
+            : `${formatEnterpriseEmployeeCount(enterpriseProfile.employeeCount) ?? enterpriseProfile.employeeCount.toLocaleString()} employees`,
           enterpriseProfile.employeeCountBasis ?? sourceLabel(enterpriseProfile),
         ],
         [
