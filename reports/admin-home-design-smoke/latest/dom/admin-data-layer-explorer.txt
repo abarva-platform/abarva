@@ -1,0 +1,2288 @@
+Airline Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Airline Demo
+Sign out
+
+DATA JOURNEY · READ-ONLY ARCHITECTURE MAP
+
+Data Layer Explorer
+
+A read-only map of how client files become evidence-backed facts, relationships, insights, candidate previews, and eventually active module context.
+
+CLIENT
+
+Airline Demo
+
+EVIDENCE SOURCE
+
+18 sections
+
+INPUT COVERAGE
+
+19 categories
+
+TRUTH SPLIT
+
+Read-only architecture map, not an execution console.
+
+This page explains where client files go, what becomes evidence, what is only candidate data, what can be promoted later, and which modules are allowed to use each layer.
+
+PRODUCTION WRITES
+
+false
+
+CANDIDATE CREATION
+
+false
+
+CANDIDATE PROMOTION
+
+false
+
+RUNTIME CHANGE
+
+false
+
+01
+Overview
+02
+Input Files
+03
+Tenant Packet
+04
+Evidence
+05
+Parsing & Extraction
+06
+Validation
+07
+Known Facts
+08
+Relationships
+09
+Insights
+10
+Candidate Preview
+11
+Promotion Readiness
+12
+Active Access
+13
+Module Usage
+14
+Outcome Ledger
+15
+Benchmarks
+16
+Page Mapping
+17
+Quality Checks
+18
+Guardrails
+
+GOVERNED FLOW
+
+From input files to module context
+
+16 controlled steps
+
+01
+
+Upload file
+
+02
+
+Identify template/type
+
+03
+
+Parse rows/document sections
+
+04
+
+Extract candidate records
+
+05
+
+Normalize fields
+
+06
+
+Validate required fields
+
+07
+
+Map to known object types
+
+08
+
+Attach evidence references
+
+09
+
+Quarantine bad records
+
+10
+
+Generate known fact candidates
+
+11
+
+Generate relationship candidates
+
+12
+
+Generate insight candidates
+
+13
+
+Create inactive candidate version
+
+14
+
+Preview
+
+15
+
+Promote only after approval
+
+16
+
+Roll back if needed
+
+OVERVIEW
+
+How the data journey works
+
+AbarVa separates client inputs, evidence, candidate data, approval, and active module context so leaders can see what is trusted, what is only proposed, and what still needs proof.
+
+Read-only explorer implemented; live data execution is intentionally out of scope.
+
+WHAT GOES IN
+
+Client files
+templates
+setup-control status
+candidate proof metadata
+
+WHAT COMES OUT
+
+A shared map of layers, pages, checks, caveats, and guardrails
+
+USED BY
+
+Admin
+Implementation teams
+Client operators
+
+EXAMPLE RECORDS
+
+Enterprise profile row
+contract attribute
+program baseline
+promotion blocker
+
+WHAT CAN GO WRONG
+
+Uploaded files are mistaken for active truth
+candidate preview is mistaken for runtime readiness
+
+QUALITY CHECKS
+
+Read-only route check
+no production-write controls
+page-to-layer map completeness
+
+GUARDRAILS
+
+Uploaded files do not become active facts by being present.
+Parsed rows remain candidates until validation and approval complete.
+Candidate data is inactive by default.
+Promotion requires explicit operator approval and rollback posture.
+Module preview is not runtime readiness.
+Proposed value is not realized value.
+Active Home context is not active tenant truth unless the active pointer is wired and proven.
+
+INPUT FILES
+
+Input files and tenant source packs
+
+Input files are the raw materials. They can describe the enterprise, systems, vendors, spend, programs, risks, Source events, Moves work, and Tower outcomes.
+
+Catalogue implemented; upload and validation execution are not implemented on this page.
+
+WHAT GOES IN
+
+Enterprise Profile
+Business Functions
+Organization / Ownership
+Workforce & Personas
+Applications & Systems
+Data Assets & Integrations
+Vendors & Contracts
+Spend & Value
+Programs & Initiatives
+AI Initiatives
+Risks & Controls
+Relationships
+Evidence Sources
+Metric Definitions
+Industry / Benchmark Inputs
+Infrastructure & Cloud Estate
+Source Event Pack
+Moves Program Pack
+Tower Outcome Pack
+
+WHAT COMES OUT
+
+Typed source records
+file inventory
+template coverage
+quarantine candidates
+
+USED BY
+
+Admin Overview
+Data Intake Library
+Tenant Packet Builder
+
+EXAMPLE RECORDS
+
+Enterprise Profile: Example Enterprise
+Business Functions: Customer operations
+Organization / Ownership: Example Leader
+Workforce & Personas: Service agent
+
+WHAT CAN GO WRONG
+
+Thin files leave answer gaps
+wrong owners reduce accountability
+unsupported fields become stranded data
+
+QUALITY CHECKS
+
+file type
+required fields
+accepted values
+tenant isolation
+evidence attachment
+
+GUARDRAILS
+
+A file is not a fact.
+A file count is not data quality.
+Unsupported inputs must be quarantined or mapped before use.
+
+INPUT CATEGORY CATALOGUE
+
+Enterprise Profile
+
+Establish the tenant identity, operating model, industries, regions, and enterprise context.
+
+OWNER
+Executive sponsor / implementation lead
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+tenant_name, industry, operating_model, regions
+
+OPTIONAL
+strategic_priorities, known_constraints
+
+MAPPED LAYER
+Known Facts
+
+MODULE IMPACT
+Home, Intelligence
+
+READINESS IMPACT
+Improves executive summary, industry framing, and tenant-safe answer context.
+
+EXAMPLE ROW
+
+tenant_name: Example Enterprise · industry: Utility · operating_model: regulated operations
+Business Functions
+
+Map the major business functions, service lines, and capability areas.
+
+OWNER
+Business architecture lead
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+function_name, owner, business_purpose
+
+OPTIONAL
+criticality, pain_points
+
+MAPPED LAYER
+Known Facts
+
+MODULE IMPACT
+Home, Moves, Tower
+
+READINESS IMPACT
+Clarifies which areas are ready for diagnosis or value tracking.
+
+EXAMPLE ROW
+
+function_name: Customer operations · owner: COO · business_purpose: Service recovery
+Organization / Ownership
+
+Identify sponsors, accountable owners, decision rights, and governance bodies.
+
+OWNER
+Program sponsor / PMO
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+owner_name, role, decision_right
+
+OPTIONAL
+delegates, approval_forum
+
+MAPPED LAYER
+Relationships
+
+MODULE IMPACT
+Home, Moves, Source
+
+READINESS IMPACT
+Reduces approval ambiguity and phase-gate blockers.
+
+EXAMPLE ROW
+
+owner_name: Example Leader · role: CIO · decision_right: technology investment approval
+Workforce & Personas
+
+Describe teams, roles, capacity, work patterns, and affected personas.
+
+OWNER
+HR / operating model lead
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+persona, team, work_type
+
+OPTIONAL
+fte_count, location, skills
+
+MAPPED LAYER
+Known Facts
+
+MODULE IMPACT
+Moves, Source, Tower
+
+READINESS IMPACT
+Supports operating model, labor baseline, and adoption readiness.
+
+EXAMPLE ROW
+
+persona: Service agent · team: Contact center · work_type: case resolution
+Applications & Systems
+
+Inventory core applications, platforms, ownership, lifecycle, and dependencies.
+
+OWNER
+Enterprise architecture lead
+
+ACCEPTED
+CSV, XLSX, JSON, DOCX
+
+REQUIRED
+application_name, owner, business_function, status
+
+OPTIONAL
+vendor, hosting_model, lifecycle_stage
+
+MAPPED LAYER
+Known Facts
+
+MODULE IMPACT
+Home, Intelligence, Moves, Source
+
+READINESS IMPACT
+Improves systems grounding and modernization dependency mapping.
+
+EXAMPLE ROW
+
+application_name: Customer portal · owner: Digital · business_function: Customer operations
+Data Assets & Integrations
+
+Map datasets, marts, interfaces, integration flows, owners, and quality constraints.
+
+OWNER
+Data architecture lead
+
+ACCEPTED
+CSV, XLSX, JSON, DOCX
+
+REQUIRED
+data_asset, owner, source_system, consumer
+
+OPTIONAL
+refresh_cadence, quality_issue, sensitivity
+
+MAPPED LAYER
+Relationships
+
+MODULE IMPACT
+Home, Intelligence, Moves
+
+READINESS IMPACT
+Identifies automation readiness and data foundation blockers.
+
+EXAMPLE ROW
+
+data_asset: Claims mart · owner: Analytics · source_system: Core platform
+Vendors & Contracts
+
+Capture vendor, contract, service, renewal, SLA, and commercial structure.
+
+OWNER
+Procurement / vendor management
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF
+
+REQUIRED
+vendor_name, contract_name, service_scope, renewal_date
+
+OPTIONAL
+annual_spend, sla, termination_terms
+
+MAPPED LAYER
+Known Facts
+
+MODULE IMPACT
+Source, Tower, Intelligence
+
+READINESS IMPACT
+Supports sourcing leverage, renewal risk, and spend opportunity analysis.
+
+EXAMPLE ROW
+
+vendor_name: Managed services provider · contract_name: Analytics support · service_scope: Run support
+Spend & Value
+
+Provide cost baselines, budget areas, value pools, and financial ownership.
+
+OWNER
+Finance / FP&A
+
+ACCEPTED
+CSV, XLSX
+
+REQUIRED
+cost_area, amount, time_period, owner
+
+OPTIONAL
+budget_type, value_driver, confidence
+
+MAPPED LAYER
+Outcome Ledger
+
+MODULE IMPACT
+Home, Source, Tower
+
+READINESS IMPACT
+Enables value-at-stake framing without claiming realized savings.
+
+EXAMPLE ROW
+
+cost_area: Application support · amount: planning estimate · time_period: annual
+Programs & Initiatives
+
+Inventory transformation programs, objectives, sponsors, status, risks, and dependencies.
+
+OWNER
+PMO / transformation office
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+program_name, sponsor, objective, status
+
+OPTIONAL
+budget, milestones, dependency
+
+MAPPED LAYER
+Known Facts
+
+MODULE IMPACT
+Home, Moves, Tower
+
+READINESS IMPACT
+Feeds Moves candidates, readiness, and execution risk.
+
+EXAMPLE ROW
+
+program_name: Customer recovery modernization · sponsor: COO · objective: Improve recovery speed
+AI Initiatives
+
+Capture AI ideas, experiments, dependencies, risks, expected value, and governance state.
+
+OWNER
+AI office / technology lead
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+initiative_name, business_problem, owner, status
+
+OPTIONAL
+model_type, data_dependency, risk
+
+MAPPED LAYER
+Insights
+
+MODULE IMPACT
+Home, Intelligence, Moves
+
+READINESS IMPACT
+Turns ideas into governed execution candidates and risk-aware prioritization.
+
+EXAMPLE ROW
+
+initiative_name: Agent assist · business_problem: Reduce handle time · owner: Customer technology
+Risks & Controls
+
+Map operational, security, compliance, data, vendor, and program risks to controls.
+
+OWNER
+Risk / compliance lead
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+risk_name, risk_owner, control_name, severity
+
+OPTIONAL
+control_status, evidence_ref, mitigation
+
+MAPPED LAYER
+Relationships
+
+MODULE IMPACT
+Home, Intelligence, Moves, Tower
+
+READINESS IMPACT
+Improves safe recommendations and gate readiness.
+
+EXAMPLE ROW
+
+risk_name: Data quality drift · risk_owner: Data governance · control_name: quality gate
+Relationships
+
+Explicitly connect objects such as applications, owners, vendors, contracts, data assets, programs, risks, and metrics.
+
+OWNER
+Enterprise architecture / data governance
+
+ACCEPTED
+CSV, XLSX
+
+REQUIRED
+source_object, relationship_type, target_object
+
+OPTIONAL
+evidence_ref, confidence
+
+MAPPED LAYER
+Relationships
+
+MODULE IMPACT
+Home, Intelligence, Moves, Source
+
+READINESS IMPACT
+Improves dependency reasoning and reduces stranded facts.
+
+EXAMPLE ROW
+
+source_object: Customer portal · relationship_type: depends on · target_object: Customer profile data
+Evidence Sources
+
+Register source documents, systems, workshops, decisions, and files that support facts and claims.
+
+OWNER
+Implementation lead / records owner
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+source_name, source_type, owner, date
+
+OPTIONAL
+system_of_record, confidence, access_notes
+
+MAPPED LAYER
+Evidence
+
+MODULE IMPACT
+All modules
+
+READINESS IMPACT
+Improves claim support and auditability.
+
+EXAMPLE ROW
+
+source_name: Workshop notes · source_type: SME session · owner: Program lead
+Metric Definitions
+
+Define KPIs, formulas, owners, units, cadence, baselines, and measurement sources.
+
+OWNER
+Performance management / finance
+
+ACCEPTED
+CSV, XLSX, DOCX
+
+REQUIRED
+metric_name, definition, owner, unit
+
+OPTIONAL
+baseline, target, source_system
+
+MAPPED LAYER
+Outcome Ledger
+
+MODULE IMPACT
+Moves, Tower, Home
+
+READINESS IMPACT
+Prevents proxy metrics from being treated as measured outcomes.
+
+EXAMPLE ROW
+
+metric_name: Cycle time · definition: elapsed time from intake to close · owner: Operations
+Industry / Benchmark Inputs
+
+Provide approved external or internal benchmark references for comparison context.
+
+OWNER
+Strategy / benchmarking lead
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+benchmark_name, metric, source_basis, date
+
+OPTIONAL
+range, peer_group, caveat
+
+MAPPED LAYER
+Benchmarks
+
+MODULE IMPACT
+Home, Intelligence, Tower
+
+READINESS IMPACT
+Adds comparison context while preserving caveats.
+
+EXAMPLE ROW
+
+benchmark_name: Service benchmark · metric: response time · source_basis: industry study
+Infrastructure & Cloud Estate
+
+Inventory hosting, cloud, network, security, platform, and environment constraints.
+
+OWNER
+Infrastructure / cloud lead
+
+ACCEPTED
+CSV, XLSX, JSON, DOCX
+
+REQUIRED
+platform, owner, environment, criticality
+
+OPTIONAL
+region, security_zone, constraint
+
+MAPPED LAYER
+Known Facts
+
+MODULE IMPACT
+Intelligence, Moves, Source
+
+READINESS IMPACT
+Shows feasibility blockers for automation and modernization.
+
+EXAMPLE ROW
+
+platform: Data platform · owner: Infrastructure · environment: production
+Source Event Pack
+
+Capture sourcing event scope, vendors, requirements, pricing, evaluation, approvals, and transition state.
+
+OWNER
+Sourcing lead
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF
+
+REQUIRED
+event_name, scope, supplier, stage
+
+OPTIONAL
+price_scenario, risk, approval_status
+
+MAPPED LAYER
+Module Memory
+
+MODULE IMPACT
+Source, Tower
+
+READINESS IMPACT
+Enables end-to-end sourcing flow and value tracking.
+
+EXAMPLE ROW
+
+event_name: Managed services sourcing · scope: analytics support · supplier: Vendor A
+Moves Program Pack
+
+Capture Move charter, phase evidence, gates, deliverables, decisions, risks, and readiness.
+
+OWNER
+Transformation lead / Move owner
+
+ACCEPTED
+CSV, XLSX, DOCX, PDF, MD
+
+REQUIRED
+move_name, phase, sponsor, gate_status
+
+OPTIONAL
+deliverable, risk, value_range
+
+MAPPED LAYER
+Module Memory
+
+MODULE IMPACT
+Moves, Tower
+
+READINESS IMPACT
+Supports governed phase execution and handoff.
+
+EXAMPLE ROW
+
+move_name: AI recovery command · phase: Design · sponsor: Technology executive
+Tower Outcome Pack
+
+Capture baselines, commitments, measurements, adoption, risk, leakage, and value tracking.
+
+OWNER
+Value office / finance
+
+ACCEPTED
+CSV, XLSX, DOCX
+
+REQUIRED
+outcome_name, baseline, measure, period
+
+OPTIONAL
+target, actual, confidence, evidence_ref
+
+MAPPED LAYER
+Outcome Ledger
+
+MODULE IMPACT
+Tower, Home
+
+READINESS IMPACT
+Separates proposed value from measured value after approval.
+
+EXAMPLE ROW
+
+outcome_name: Cost-to-serve · baseline: current baseline · measure: monthly actual
+
+TENANT PACKET · TENANT PACKET CONTRACT
+
+Tenant packet
+
+The tenant packet is the structured contract that says which files belong to the tenant, what type each file is, which adapter should parse it, and what evidence lineage must be preserved.
+
+Contract exists in the data runway; this Admin page explains it and does not create packets.
+
+WHAT GOES IN
+
+input file manifest
+template type
+tenant identity
+packet version
+adapter version
+
+WHAT COMES OUT
+
+packet manifest
+adapter routing
+mapping coverage
+proof fingerprint
+
+USED BY
+
+Tenant Packet Builder
+Candidate Preview
+Data Layer Explorer
+
+EXAMPLE RECORDS
+
+packetId: tenant-onboarding-001
+sourceType: applications-and-systems
+adapter: spreadsheet
+
+WHAT CAN GO WRONG
+
+source files are present but not declared
+wrong adapter selected
+packet version is not linked to proof
+
+QUALITY CHECKS
+
+manifest completeness
+tenant key from canonical source
+adapter availability
+mapping version present
+
+GUARDRAILS
+
+No packet means no governed ingestion.
+Packet selection does not mean validation passed.
+
+EVIDENCE · EVIDENCE REGISTRY
+
+Evidence
+
+Evidence is the traceable source support behind a claim, fact, relationship, or insight. It answers: where did this come from?
+
+Existing read models can expose evidence summaries where wired; missing fields should show Not available yet.
+
+WHAT GOES IN
+
+source files
+document sections
+spreadsheet rows
+source references
+
+WHAT COMES OUT
+
+evidence items
+source citations
+lineage links
+evidence gaps
+
+USED BY
+
+Home
+Intelligence
+Moves
+Source
+Tower
+
+EXAMPLE RECORDS
+
+sourceDoc: applications.csv
+rowRef: R17
+claimSupported: contract renewal date
+
+WHAT CAN GO WRONG
+
+answers cite no source
+evidence belongs to another tenant
+summary loses source lineage
+
+QUALITY CHECKS
+
+source attachment
+citation availability
+tenant isolation
+blocked-object filtering
+
+GUARDRAILS
+
+No raw context to models.
+Evidence-backed claims must retain provenance.
+
+PARSING & EXTRACTION
+
+Parsing and extraction
+
+Parsing turns files into candidate records. Extraction pulls relevant objects and fields from tables and documents before they are trusted.
+
+Explained here; execution belongs to ingestion dry-run and future Admin validation flows.
+
+WHAT GOES IN
+
+Upload file
+Identify template/type
+Parse rows/document sections
+Extract candidate records
+
+WHAT COMES OUT
+
+candidate records
+normalized fields
+unmapped field list
+quarantine queue
+
+USED BY
+
+Data Intake Library
+Tenant Packet Builder
+Candidate Preview
+
+EXAMPLE RECORDS
+
+applicationName: Claims Portal
+vendorName: Cloud vendor
+programName: Customer recovery
+
+WHAT CAN GO WRONG
+
+document sections are missed
+numeric fields parse as text
+same object appears twice
+
+QUALITY CHECKS
+
+schema fit
+field normalization
+duplicate detection
+quarantine rules
+
+GUARDRAILS
+
+Parsed row does not equal promoted truth.
+Bad records must be quarantined instead of silently accepted.
+
+VALIDATION
+
+Validation
+
+Validation checks whether candidate records have the fields, values, evidence, tenant scope, and lineage needed before they can feed candidate versions.
+
+Quality catalogue implemented; validation execution is intentionally out of scope for this page.
+
+WHAT GOES IN
+
+candidate records
+template schema
+accepted values
+required field dictionary
+evidence references
+
+WHAT COMES OUT
+
+validated candidates
+blocked candidates
+quality report
+readiness gaps
+
+USED BY
+
+Candidate Preview
+Promotion Readiness
+Module Usage
+
+EXAMPLE RECORDS
+
+required owner missing
+accepted status value passed
+duplicate vendor quarantined
+
+WHAT CAN GO WRONG
+
+thin records pass because only file count was checked
+missing evidence is ignored
+
+QUALITY CHECKS
+
+required fields
+accepted values
+evidence attachment
+tenant isolation
+duplicate checks
+
+GUARDRAILS
+
+Uploaded-file count is not quality.
+Validation must produce blockers, not hidden assumptions.
+
+KNOWN FACTS · CANONICAL FACT STORE
+
+Known Facts
+
+Known Facts are clean, validated statements about the tenant, backed by evidence and mapped to a business object.
+
+Summaries are available where read models are wired; absent fields should be reported as Not wired yet.
+
+WHAT GOES IN
+
+validated candidates
+evidence links
+mapping rules
+fact version metadata
+
+WHAT COMES OUT
+
+tenant facts
+fact versions
+fact confidence
+fact gaps
+
+USED BY
+
+Home
+Intelligence
+Moves
+Source
+Tower
+
+EXAMPLE RECORDS
+
+application owner
+contract renewal date
+program sponsor
+metric definition
+
+WHAT CAN GO WRONG
+
+candidate fact used before approval
+confidence is omitted
+stale fact is not superseded
+
+QUALITY CHECKS
+
+evidence present
+confidence present
+source basis present
+fact version present
+
+GUARDRAILS
+
+Known Fact requires validation, mapping, and evidence.
+Candidate facts stay inactive until promotion.
+
+RELATIONSHIPS · ENTERPRISE RELATIONSHIP GRAPH
+
+Relationships
+
+Relationships connect the enterprise: systems to owners, vendors to contracts, programs to outcomes, risks to controls, and modules to readiness.
+
+Graph plans and summaries are part of the data runway; this page exposes the business meaning.
+
+WHAT GOES IN
+
+validated objects
+relationship rows
+evidence links
+relationship type dictionary
+
+WHAT COMES OUT
+
+relationship candidates
+graph plan
+unresolved relationships
+relationship gaps
+
+USED BY
+
+Home
+Intelligence
+Moves
+Source
+Tower
+
+EXAMPLE RECORDS
+
+Application depends on data asset
+Vendor supports contract
+Program targets metric
+
+WHAT CAN GO WRONG
+
+free-text note becomes a relationship type
+missing endpoint creates a dangling edge
+
+QUALITY CHECKS
+
+valid relationship type
+both endpoints present
+evidence attached
+tenant scoped
+
+GUARDRAILS
+
+Relationship verbs must come from the governed dictionary.
+Relationships explain context; they do not calculate value.
+
+INSIGHTS · DERIVED INTELLIGENCE STORE
+
+Insights
+
+Insights are derived signals that help users see gaps, readiness, leverage, execution risk, and answerability. They are not realized business outcomes.
+
+Insight types are catalogued; live insight generation remains governed by the existing module paths.
+
+WHAT GOES IN
+
+known facts
+relationships
+evidence coverage
+module readiness checks
+candidate proof
+
+WHAT COMES OUT
+
+evidence gaps
+readiness gaps
+relationship gaps
+answerability
+module readiness
+sourcing leverage signals
+program execution gaps
+outcome measurement gaps
+risk/control coverage gaps
+candidate promotion blockers
+
+USED BY
+
+Home
+Intelligence
+Moves
+Source
+Tower
+
+EXAMPLE RECORDS
+
+evidence gap
+readiness gap
+sourcing leverage signal
+promotion blocker
+
+WHAT CAN GO WRONG
+
+proposed savings reported as realized
+candidate-only signal shown as active truth
+
+QUALITY CHECKS
+
+source trace
+no unsupported value claims
+module readiness proof
+candidate inactive check
+
+GUARDRAILS
+
+no realized savings without measured proof
+no active tenant truth without active pointer
+no candidate data in default Home
+no runtime readiness without proof
+no uploaded-file count as data quality
+
+CANDIDATE PREVIEW
+
+Candidate preview
+
+Candidate Preview lets operators inspect an inactive data version before anything becomes active tenant truth.
+
+Preview runway exists; this page documents it and does not open preview sessions.
+
+WHAT GOES IN
+
+candidate version metadata
+proof bundle
+module preview packets
+quality checks
+
+WHAT COMES OUT
+
+read-only preview
+module readiness summary
+blocker list
+
+USED BY
+
+Candidate Preview
+Home preview
+Intelligence preview
+Moves preview
+Source preview
+Tower preview
+
+EXAMPLE RECORDS
+
+candidateVersionId
+modulePreview: Home
+blocker: missing rollback proof
+
+WHAT CAN GO WRONG
+
+preview data is confused with active runtime
+default modules read candidate data
+
+QUALITY CHECKS
+
+explicit preview request
+inactive banner
+no default module reads
+guardrail booleans false
+
+GUARDRAILS
+
+Candidate data is inactive.
+Preview requires explicit selection.
+Candidate is not promoted by preview.
+
+PROMOTION READINESS · PROMOTION GATE
+
+Promotion readiness
+
+Promotion Readiness is the approval gate that determines whether a candidate version is blocked, eligible, or ready for operator approval.
+
+Promotion gate proof exists in the data runway; this page is read-only and never promotes.
+
+WHAT GOES IN
+
+candidate proof
+quality checks
+module readiness
+rollback plan
+operator approval requirement
+
+WHAT COMES OUT
+
+promotion decision record
+passed checks
+blockers
+rollback plan
+
+USED BY
+
+Candidate Preview
+Admin Overview
+Promotion controls
+
+EXAMPLE RECORDS
+
+operatorApprovalRequired: true
+rollbackPlanRequired: true
+promotionEnabled: false
+
+WHAT CAN GO WRONG
+
+eligible is misread as active
+rollback is missing
+approval is skipped
+
+QUALITY CHECKS
+
+rollback posture
+module readiness
+no active pointer update
+no production write
+
+GUARDRAILS
+
+Promotion requires approval.
+Promotion readiness is not promotion.
+Rollback plan is required.
+
+ACTIVE ACCESS · ACTIVE TENANT ACCESS LAYER
+
+Active Home context and Active Access
+
+Active Access is the governed pointer that says which tenant data version modules may read by default. Home context can show useful current state, but it is not active tenant truth unless that pointer is wired and proven.
+
+Show Not wired yet where active pointer evidence is not available.
+
+WHAT GOES IN
+
+approved promotion decision
+active version pointer
+rollback metadata
+post-promotion proof
+
+WHAT COMES OUT
+
+default module context
+active source status
+runtime read proof
+
+USED BY
+
+Home
+Intelligence
+Moves
+Source
+Tower
+
+EXAMPLE RECORDS
+
+activeVersionId
+lastPromotedAt
+postPromotionProofId
+
+WHAT CAN GO WRONG
+
+Home context is treated as active truth without pointer proof
+rollback path is missing
+
+QUALITY CHECKS
+
+active pointer present
+post-promotion module read proof
+rollback proof
+tenant isolation
+
+GUARDRAILS
+
+Active pointer must be explicit.
+Default module reads must be proven after promotion.
+
+MODULE USAGE · MODULE CONTEXT AND MODULE MEMORY
+
+Module usage
+
+Module Usage explains which layers each product surface can read, what it can write, and which claims it must not make.
+
+Mapped in this page; module runtime behavior is unchanged.
+
+WHAT GOES IN
+
+active context
+module memory
+evidence
+known facts
+relationships
+insights
+
+WHAT COMES OUT
+
+answers
+work plans
+sourcing recommendations
+outcome views
+module readiness
+
+USED BY
+
+Home
+Intelligence
+Moves
+Source
+Tower
+
+EXAMPLE RECORDS
+
+Home summary
+Intelligence answer
+Moves phase readiness
+Source leverage signal
+Tower outcome metric
+
+WHAT CAN GO WRONG
+
+module makes unsupported claim
+module writes to the wrong layer
+candidate data appears by default
+
+QUALITY CHECKS
+
+page wiring
+claim support
+module readiness
+no candidate default read
+
+GUARDRAILS
+
+Modules must declare reads and writes.
+No unsupported executive claims.
+No realized value without measured proof.
+
+OUTCOME LEDGER
+
+Outcome ledger
+
+The Outcome Ledger tracks promised versus measured value, adoption, risk, leakage, and operational impact after approval.
+
+Ledger concept is mapped; module-specific measured data must come from Tower/read models where wired.
+
+WHAT GOES IN
+
+approved value model
+measured outcomes
+baseline metrics
+control evidence
+
+WHAT COMES OUT
+
+promised value
+measured value
+variance
+leakage
+adoption status
+
+USED BY
+
+Tower
+Moves
+Home
+
+EXAMPLE RECORDS
+
+baseline: cost-to-serve
+measured: cycle time
+variance: pending measurement
+
+WHAT CAN GO WRONG
+
+proposal is reported as realized
+proxy metric is treated as board-grade outcome
+
+QUALITY CHECKS
+
+baseline present
+measurement source present
+time window present
+no proxy-as-realized claim
+
+GUARDRAILS
+
+Proposed value is not realized value.
+Tower owns measured outcome reporting.
+
+BENCHMARKS
+
+Benchmarks
+
+Benchmarks provide comparison context for industry norms, performance ranges, cost ranges, maturity, and readiness thresholds.
+
+Benchmark inputs are catalogued; live benchmark rendering depends on module wiring.
+
+WHAT GOES IN
+
+industry inputs
+metric definitions
+tenant facts
+external benchmark references
+
+WHAT COMES OUT
+
+comparison ranges
+maturity bands
+gap indicators
+caveats
+
+USED BY
+
+Home
+Intelligence
+Moves
+Source
+Tower
+
+EXAMPLE RECORDS
+
+benchmarkFamily: contact center
+metric: first call resolution
+range: reference only
+
+WHAT CAN GO WRONG
+
+generic benchmark treated as client measurement
+range lacks source basis
+
+QUALITY CHECKS
+
+source basis
+fit-to-client caveat
+no unsupported precision
+date/version present
+
+GUARDRAILS
+
+Benchmarks are comparison context, not measured tenant truth.
+
+PAGE MAPPING
+
+Page-to-layer mapping
+
+This map tells operators which data layers each page reads, what each page is allowed to write, and which claims are blocked.
+
+Implemented as a static read-only map on this page.
+
+WHAT GOES IN
+
+page contract
+data layer contract
+guardrails
+current wiring status
+
+WHAT COMES OUT
+
+page-layer matrix
+write boundary
+caveats
+
+USED BY
+
+Admin
+Implementation teams
+QA
+
+EXAMPLE RECORDS
+
+Home reads active context
+Candidate Preview reads inactive candidate
+Tower reads outcome ledger
+
+WHAT CAN GO WRONG
+
+surface reads an unapproved layer
+page writes to production unexpectedly
+
+QUALITY CHECKS
+
+page wiring checks
+write boundary checks
+claim boundary checks
+
+GUARDRAILS
+
+Every page must have a read/write boundary.
+Current wiring caveats must be visible.
+
+PAGE-TO-LAYER MAP
+
+Admin Overview
+
+READS FROM
+
+setup-control read model
+upload state
+candidate status
+promotion readiness
+
+WRITES TO
+
+setup notes where explicitly supported
+
+DOES NOT WRITE TO
+
+production tenant data
+candidate promotion
+Active Access pointer
+
+DEPENDS ON
+
+tenant access
+setup-control availability
+
+GUARDRAILS
+
+uploaded files are not active facts
+
+CAVEATS
+
+Current status can be Not wired yet when proof metadata is absent.
+
+Current wiring: Partially wired; caveats should show when active pointer is unavailable.
+
+Data Intake Library
+
+READS FROM
+
+template catalogue
+guide artifacts
+field dictionary
+
+WRITES TO
+
+template selection metadata where supported
+
+DOES NOT WRITE TO
+
+validated facts
+active tenant truth
+promotion decision
+
+DEPENDS ON
+
+template registry
+guide artifacts
+
+GUARDRAILS
+
+downloaded template does not mean data loaded
+
+CAVEATS
+
+A template is a contract, not evidence.
+
+Current wiring: Templates and guidance available; validation execution is out of scope.
+
+Tenant Packet Builder
+
+READS FROM
+
+tenant packet contract
+template mappings
+source file manifest
+
+WRITES TO
+
+draft packet metadata where supported
+
+DOES NOT WRITE TO
+
+production tenant data
+active pointer
+module memory
+
+DEPENDS ON
+
+source adapters
+mapping versions
+
+GUARDRAILS
+
+selected templates are not validated records
+
+CAVEATS
+
+Packet exists only after explicit builder flow creates it.
+
+Current wiring: Contract described; packet creation controls remain separate.
+
+Candidate Preview
+
+READS FROM
+
+candidate version metadata
+preview packets
+proof bundle
+module readiness
+
+WRITES TO
+
+preview audit event where implemented
+
+DOES NOT WRITE TO
+
+active tenant truth
+production data
+default module context
+
+DEPENDS ON
+
+explicit preview request
+inactive candidate banner
+
+GUARDRAILS
+
+candidate is inactive
+
+CAVEATS
+
+Preview-ready is not active-runtime-ready.
+
+Current wiring: Preview path exists; this explorer does not create preview sessions.
+
+Home
+
+READS FROM
+
+active Home context
+setup-control summary
+known facts
+gaps
+sources
+relationships
+
+WRITES TO
+
+user-facing navigation state only
+
+DOES NOT WRITE TO
+
+candidate data by default
+production tenant data
+candidate promotion
+
+DEPENDS ON
+
+active pointer proof where available
+safe caveats
+
+GUARDRAILS
+
+do not claim active tenant truth unless active pointer is wired
+
+CAVEATS
+
+Active Home context is not enough by itself.
+
+Current wiring: Home can show context; active truth status must remain caveated unless proven.
+
+Intelligence
+
+READS FROM
+
+governed answer context
+evidence
+known facts
+relationships
+insights
+
+WRITES TO
+
+answer traces and citations where supported
+
+DOES NOT WRITE TO
+
+production tenant data
+candidate promotion
+unsupported executive claims
+
+DEPENDS ON
+
+validated context bundle
+cite-render proof
+
+GUARDRAILS
+
+no raw context to models
+no unsupported claims
+
+CAVEATS
+
+Answers must cite or caveat.
+
+Current wiring: Runtime path unchanged by this PR.
+
+Moves
+
+READS FROM
+
+program memory
+phase evidence
+readiness
+relationships
+value baseline
+
+WRITES TO
+
+phase artifacts and approvals where workflow supports them
+
+DOES NOT WRITE TO
+
+active data promotion
+realized value without Tower measurement
+
+DEPENDS ON
+
+phase gate contract
+evidence coverage
+
+GUARDRAILS
+
+execution state must be proven
+
+CAVEATS
+
+Gate readiness is not business outcome realization.
+
+Current wiring: Runtime path unchanged by this PR.
+
+Source
+
+READS FROM
+
+sourcing memory
+vendors/contracts
+requirements
+pricing evidence
+leverage insights
+
+WRITES TO
+
+sourcing artifacts where workflow supports them
+
+DOES NOT WRITE TO
+
+production tenant data
+candidate promotion
+unsupported savings claims
+
+DEPENDS ON
+
+Source event pack
+contract evidence
+
+GUARDRAILS
+
+no savings unless supported
+
+CAVEATS
+
+Addressable spend is not realized savings.
+
+Current wiring: Runtime path unchanged by this PR.
+
+Tower
+
+READS FROM
+
+outcome ledger
+metric definitions
+measured values
+controls
+variance
+
+WRITES TO
+
+outcome reports where supported
+
+DOES NOT WRITE TO
+
+candidate promotion
+source file mutation
+unmeasured value claims
+
+DEPENDS ON
+
+baseline proof
+measurement proof
+control evidence
+
+GUARDRAILS
+
+no realized value unless measured
+
+CAVEATS
+
+Tower must distinguish promised, projected, and measured values.
+
+Current wiring: Runtime path unchanged by this PR.
+
+QUALITY CHECKS
+
+Quality checks
+
+Quality checks explain what must be true before data moves from raw input to candidate, preview, promotion readiness, and active use.
+
+Catalogue implemented; this page does not execute validations.
+
+WHAT GOES IN
+
+schemas
+accepted values
+evidence rules
+tenant rules
+module readiness rules
+
+WHAT COMES OUT
+
+passed checks
+failed checks
+blockers
+quarantines
+
+USED BY
+
+Admin
+Candidate Preview
+Promotion Readiness
+
+EXAMPLE RECORDS
+
+Template/schema validation
+Required-field validation
+Accepted-value validation
+Evidence attachment
+
+WHAT CAN GO WRONG
+
+quality is inferred from upload count
+missing evidence is not blocked
+
+QUALITY CHECKS
+
+Template/schema validation
+Required-field validation
+Accepted-value validation
+Evidence attachment
+Quarantine checks
+Duplicate detection
+Tenant isolation
+Candidate inactive checks
+Promotion readiness
+Rollback posture
+Module readiness
+Page wiring checks
+No example data as live facts
+No retired version-label UI language
+
+GUARDRAILS
+
+Quality checks must produce explicit pass, fail, or Not wired yet status.
+
+QUALITY CHECK CATALOGUE
+
+Template/schema validation
+
+Checks whether the file matches a known contract.
+
+APPLIES TO
+Input Files, Tenant Packet
+
+STATUS
+Expected before candidate generation.
+
+FAILURE MODE
+Wrong template produces stranded or misread fields.
+
+Required-field validation
+
+Confirms the minimum fields needed for safe use.
+
+APPLIES TO
+Validation, Known Facts
+
+STATUS
+Expected before readiness.
+
+FAILURE MODE
+Thin records pass without enough context.
+
+Accepted-value validation
+
+Checks fields such as status, criticality, and phase against allowed values.
+
+APPLIES TO
+Validation
+
+STATUS
+Expected before mapping.
+
+FAILURE MODE
+Uncontrolled vocabulary breaks downstream grouping.
+
+Evidence attachment
+
+Ensures records keep source references.
+
+APPLIES TO
+Evidence, Known Facts, Insights
+
+STATUS
+Required for agent-ready context.
+
+FAILURE MODE
+Unsupported claims reach users.
+
+Quarantine checks
+
+Blocks records with missing, conflicting, unsafe, or unmapped data.
+
+APPLIES TO
+Parsing & Extraction, Validation
+
+STATUS
+Expected for bad records.
+
+FAILURE MODE
+Bad records are silently accepted.
+
+Duplicate detection
+
+Identifies repeated objects and conflicting records.
+
+APPLIES TO
+Known Facts, Relationships
+
+STATUS
+Available where object keys are present.
+
+FAILURE MODE
+Duplicate systems or vendors inflate counts.
+
+Tenant isolation
+
+Confirms all objects are scoped to the active tenant.
+
+APPLIES TO
+All layers
+
+STATUS
+Required.
+
+FAILURE MODE
+Cross-tenant leakage.
+
+Candidate inactive checks
+
+Confirms candidate data does not become active by default.
+
+APPLIES TO
+Candidate Preview, Promotion Readiness
+
+STATUS
+Required.
+
+FAILURE MODE
+Preview data is read by default modules.
+
+Promotion readiness
+
+Checks proof, blockers, approval, and rollback posture.
+
+APPLIES TO
+Promotion Readiness
+
+STATUS
+Required before promotion.
+
+FAILURE MODE
+Eligible candidate is mistaken for promoted data.
+
+Rollback posture
+
+Confirms prior active state and rollback plan are documented.
+
+APPLIES TO
+Promotion Readiness, Active Access
+
+STATUS
+Required before active switch.
+
+FAILURE MODE
+No safe return path after promotion.
+
+Module readiness
+
+Checks whether modules can safely inspect or read the layer.
+
+APPLIES TO
+Module Usage
+
+STATUS
+Required before module claims.
+
+FAILURE MODE
+Runtime-ready is overclaimed.
+
+Page wiring checks
+
+Confirms each page reads and writes only approved layers.
+
+APPLIES TO
+Page Mapping
+
+STATUS
+Expected for new surfaces.
+
+FAILURE MODE
+Page writes to the wrong layer.
+
+No example data as live facts
+
+Ensures illustrative rows are labeled as examples and not reported as tenant truth.
+
+APPLIES TO
+All UI sections
+
+STATUS
+Required.
+
+FAILURE MODE
+Example content becomes a live claim.
+
+No retired version-label UI language
+
+Keeps user-facing data-layer language business-readable.
+
+APPLIES TO
+Admin UI, Reports
+
+STATUS
+Required for this explorer.
+
+FAILURE MODE
+Users see implementation history instead of product meaning.
+
+GUARDRAILS
+
+Guardrails
+
+Guardrails keep the platform honest about what has been uploaded, parsed, validated, previewed, promoted, measured, and proven.
+
+Guardrail catalogue implemented for read-only visibility.
+
+WHAT GOES IN
+
+runtime booleans
+quality checks
+proof bundles
+release records
+operator approvals
+
+WHAT COMES OUT
+
+blocked actions
+visible caveats
+audit records
+safe wording
+
+USED BY
+
+Admin
+QA
+Release control
+All modules
+
+EXAMPLE RECORDS
+
+Uploaded file does not equal active fact.
+Parsed row does not equal promoted truth.
+Candidate data is inactive.
+Promotion requires approval.
+Module preview does not mean runtime-ready.
+Proposed value does not mean realized value.
+Home active context is not active tenant truth unless the active pointer is wired and proven.
+This explorer does not write production tenant data.
+This explorer does not change module runtime behavior.
+
+WHAT CAN GO WRONG
+
+status language overclaims
+safe refusal is scored as failure
+candidate ready is called active ready
+
+QUALITY CHECKS
+
+no production write
+no candidate promotion
+no active pointer update
+no module runtime change
+
+GUARDRAILS
+
+Uploaded files do not become active facts by being present.
+Parsed rows remain candidates until validation and approval complete.
+Candidate data is inactive by default.
+Promotion requires explicit operator approval and rollback posture.
+Module preview is not runtime readiness.
+Proposed value is not realized value.
+Active Home context is not active tenant truth unless the active pointer is wired and proven.
+
+GUARDRAIL CATALOGUE
+
+Uploaded file does not equal active fact.
+
+Files are raw evidence until parsed, validated, mapped, and accepted.
+
+ENFORCED BY
+Data Intake Library, Quality checks
+
+STATUS
+documented
+
+Parsed row does not equal promoted truth.
+
+Parsing creates candidates, not active data.
+
+ENFORCED BY
+Parsing & Extraction, Validation
+
+STATUS
+documented
+
+Candidate data is inactive.
+
+Candidate versions must not be read by default modules.
+
+ENFORCED BY
+Candidate Preview, Promotion Readiness
+
+STATUS
+implemented
+
+Promotion requires approval.
+
+Operator approval and rollback posture protect active truth.
+
+ENFORCED BY
+Promotion Readiness
+
+STATUS
+implemented
+
+Module preview does not mean runtime-ready.
+
+Preview proves inspection, not default module consumption.
+
+ENFORCED BY
+Candidate Preview, Module Usage
+
+STATUS
+implemented
+
+Proposed value does not mean realized value.
+
+Measured outcomes require Tower/read-model proof.
+
+ENFORCED BY
+Outcome Ledger, Tower
+
+STATUS
+documented
+
+Home active context is not active tenant truth unless the active pointer is wired and proven.
+
+A useful Home view can still be upstream of active data promotion.
+
+ENFORCED BY
+Home, Active Access
+
+STATUS
+documented
+
+This explorer does not write production tenant data.
+
+The page is for explanation, not execution.
+
+ENFORCED BY
+Admin Data Layer Explorer
+
+STATUS
+implemented
+
+This explorer does not change module runtime behavior.
+
+Product modules continue to use their existing approved paths.
+
+ENFORCED BY
+Home, Intelligence, Moves, Source, Tower
+
+STATUS
+implemented

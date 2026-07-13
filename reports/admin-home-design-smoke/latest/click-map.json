@@ -1,0 +1,195 @@
+[
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Add data",
+    "action": "click visible control",
+    "result": "visible state changed",
+    "classification": "working"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Data",
+    "action": "click visible control",
+    "result": "visible state changed",
+    "classification": "working"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Overview",
+    "action": "click visible control",
+    "result": "visible state changed",
+    "classification": "working"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Candidate Preview",
+    "action": "click visible control",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "View guide",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "View template",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Download template",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Download full packet",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "View field dictionary",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Promotion",
+    "action": "click visible control",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  },
+  {
+    "page": "Admin",
+    "route": "/admin",
+    "control": "Upload",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Enterprise overview",
+    "action": "click visible control",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Summary",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Data",
+    "action": "click visible control",
+    "result": "visible state changed",
+    "classification": "working"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Gaps",
+    "action": "click visible control",
+    "result": "visible state changed",
+    "classification": "working"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Sources",
+    "action": "click visible control",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Relationships",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Explain context",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Send to Intelligence",
+    "action": "click visible control",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Explain",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "Show gaps",
+    "action": "click visible control",
+    "result": "missing",
+    "classification": "failed",
+    "severity": "P1"
+  },
+  {
+    "page": "Home",
+    "route": "/home",
+    "control": "What can Home answer",
+    "action": "click visible control",
+    "result": "no visible state change",
+    "classification": "read-only-placeholder",
+    "severity": "P1"
+  }
+]

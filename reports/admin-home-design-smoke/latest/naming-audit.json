@@ -1,0 +1,86 @@
+{
+  "blockedPrimaryLabels": [
+    {
+      "label": "V4",
+      "visible": false
+    },
+    {
+      "label": "V6",
+      "visible": false
+    },
+    {
+      "label": "V7",
+      "visible": false
+    },
+    {
+      "label": "Canonical Fact Store",
+      "visible": true
+    },
+    {
+      "label": "Evidence Registry",
+      "visible": true
+    },
+    {
+      "label": "Enterprise Relationship Graph",
+      "visible": true
+    },
+    {
+      "label": "Derived Intelligence Store",
+      "visible": true
+    },
+    {
+      "label": "Target Writer",
+      "visible": false
+    }
+  ],
+  "allowedLabels": [
+    {
+      "label": "Tenant Packet",
+      "visible": true
+    },
+    {
+      "label": "Evidence",
+      "visible": true
+    },
+    {
+      "label": "Known Facts",
+      "visible": true
+    },
+    {
+      "label": "Relationships",
+      "visible": true
+    },
+    {
+      "label": "Insights",
+      "visible": true
+    },
+    {
+      "label": "Gaps",
+      "visible": false
+    },
+    {
+      "label": "Answerability",
+      "visible": false
+    },
+    {
+      "label": "Ready Areas",
+      "visible": false
+    },
+    {
+      "label": "Candidate Preview",
+      "visible": true
+    },
+    {
+      "label": "Active Home context",
+      "visible": true
+    },
+    {
+      "label": "Data Status",
+      "visible": false
+    },
+    {
+      "label": "Promotion Readiness",
+      "visible": true
+    }
+  ]
+}

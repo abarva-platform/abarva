@@ -1,0 +1,27 @@
+{
+  "setupControlAvailable": true,
+  "tenant": {
+    "tenantKey": "skyharbor",
+    "displayName": "Airline Demo",
+    "coverName": "Airline Demo",
+    "mode": "setup",
+    "realOrSyntheticStatus": "demo_safe_synthetic"
+  },
+  "guardrails": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "candidatePromoted": false,
+    "moduleRuntimeConsumptionChanged": false,
+    "candidateReadByDefault": false,
+    "directActivePromotionBlocked": true
+  },
+  "renderedValues": {
+    "hasAdminDataControl": true,
+    "hasHomeKnowledgeSnapshot": true,
+    "hasEvidenceCoverage": true,
+    "hasAnswerability": true,
+    "hasRelationshipOverview": false
+  },
+  "mismatches": [],
+  "caveat": "This smoke verifies rendered state against setup-control and route DOM. It does not mutate tenant data."
+}

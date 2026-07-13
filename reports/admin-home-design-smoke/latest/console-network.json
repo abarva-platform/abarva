@@ -1,0 +1,6 @@
+{
+  "mode": "chrome",
+  "consoleErrors": [],
+  "networkErrors": [],
+  "caveat": "Chrome AppleScript captures DOM/API results but not DevTools console streams."
+}

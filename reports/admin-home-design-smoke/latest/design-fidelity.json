@@ -1,0 +1,157 @@
+{
+  "admin": [
+    {
+      "page": "Admin",
+      "route": "/admin",
+      "verdict": "partially faithful",
+      "score": 83,
+      "matched": [
+        "Tenant Setup",
+        "Data Control",
+        "readiness",
+        "Data Intake",
+        "Template",
+        "Tenant Packet",
+        "Evidence",
+        "Candidate",
+        "Promotion",
+        "active"
+      ],
+      "missing": ["setup-control", "Guardrail"],
+      "structureNotes": [
+        "Tenant Setup & Data Control Center",
+        "workflow-led operating surface",
+        "setup-control caveats and guardrails"
+      ]
+    },
+    {
+      "page": "Admin",
+      "route": "/admin/data-intake",
+      "verdict": "partially faithful",
+      "score": 83,
+      "matched": [
+        "Tenant Setup",
+        "Data Control",
+        "readiness",
+        "Data Intake",
+        "Template",
+        "Tenant Packet",
+        "Evidence",
+        "Candidate",
+        "Promotion",
+        "active"
+      ],
+      "missing": ["setup-control", "Guardrail"],
+      "structureNotes": [
+        "Tenant Setup & Data Control Center",
+        "workflow-led operating surface",
+        "setup-control caveats and guardrails"
+      ]
+    },
+    {
+      "page": "Admin",
+      "route": "/admin/candidate-preview",
+      "verdict": "wiring-only / visually not faithful",
+      "score": 50,
+      "matched": [
+        "readiness",
+        "Template",
+        "Evidence",
+        "Candidate",
+        "Guardrail",
+        "active"
+      ],
+      "missing": [
+        "Tenant Setup",
+        "Data Control",
+        "setup-control",
+        "Data Intake",
+        "Tenant Packet",
+        "Promotion"
+      ],
+      "structureNotes": [
+        "Tenant Setup & Data Control Center",
+        "workflow-led operating surface",
+        "setup-control caveats and guardrails"
+      ]
+    },
+    {
+      "page": "Admin",
+      "route": "/admin/data-layer-explorer",
+      "verdict": "partially faithful",
+      "score": 83,
+      "matched": [
+        "setup-control",
+        "readiness",
+        "Data Intake",
+        "Template",
+        "Tenant Packet",
+        "Evidence",
+        "Candidate",
+        "Promotion",
+        "Guardrail",
+        "active"
+      ],
+      "missing": ["Tenant Setup", "Data Control"],
+      "structureNotes": [
+        "Tenant Setup & Data Control Center",
+        "workflow-led operating surface",
+        "setup-control caveats and guardrails"
+      ]
+    }
+  ],
+  "home": [
+    {
+      "page": "Home",
+      "route": "/home",
+      "verdict": "wiring-only / visually not faithful",
+      "score": 36,
+      "matched": [
+        "Enterprise Knowledge Snapshot",
+        "Needs Evidence",
+        "Context Explorer",
+        "Active Home context"
+      ],
+      "missing": [
+        "Evidence Coverage",
+        "Answerability",
+        "Top Gaps",
+        "Ready Areas",
+        "Relationship Overview",
+        "Data Status",
+        "scoped aVa"
+      ],
+      "structureNotes": [
+        "Enterprise Knowledge Surface",
+        "knowledge command center landing",
+        "Context Explorer as drill-down, not the whole page"
+      ]
+    },
+    {
+      "page": "Home",
+      "route": "/home?candidatePreview=true",
+      "verdict": "wiring-only / visually not faithful",
+      "score": 36,
+      "matched": [
+        "Enterprise Knowledge Snapshot",
+        "Needs Evidence",
+        "Context Explorer",
+        "Active Home context"
+      ],
+      "missing": [
+        "Evidence Coverage",
+        "Answerability",
+        "Top Gaps",
+        "Ready Areas",
+        "Relationship Overview",
+        "Data Status",
+        "scoped aVa"
+      ],
+      "structureNotes": [
+        "Enterprise Knowledge Surface",
+        "knowledge command center landing",
+        "Context Explorer as drill-down, not the whole page"
+      ]
+    }
+  ]
+}

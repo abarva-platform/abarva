@@ -1,0 +1,101 @@
+Airline Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Airline Demo
+Sign out
+ADMIN WORKSPACE
+Steward
+Control plane · tenant readiness
+Overview
+Setup status and next actions
+Data Loads
+Governed uploads and approvals
+Templates
+Dimensions, formats, and owners
+Data Journey
+Input-to-layer map and guardrails
+Data Trust
+Loaded evidence and gaps
+Connectors
+Systems to connect
+Outputs
+Moves and Source deliverables
+GOVERNANCE
+Users & Access
+People, roles, and SSO
+Inbox
+Signals and digests
+Customer Admin
+Tenant controls
+Ops Console
+Runbooks, approvals, audit evidence
+Agent Readiness
+What assistants can safely do
+PatternOps
+Knowledge coverage
+Production Readiness
+Demo, pilot, production
+Compliance
+SOC 2, GDPR, DPA
+DIAGNOSTICS
+Reasoning Audit
+Engineering trace review
+RELEASES
+Releases
+Change history
+REPOSITORY MANIFEST + DETERMINISTIC READ MODELS. NO LIVE CONNECTOR/MODEL CLAIMS.
+
+ADMIN · CANDIDATE DATA
+
+Candidate Preview Mode
+
+Inspect an inactive SkyHarbor candidate only when the operator request carries the explicit preview flag and acknowledgement.
+
+CLIENT
+SkyHarbor synthetic/reference
+EVIDENCE SOURCE
+Inactive candidate package
+STATUS
+Preview disabled by default
+REQUIRED PREVIEW BANNER
+Candidate Preview Mode - inactive candidate data. Not active tenant truth.
+PREVIEW DISABLED
+Explicit request required
+
+The page refused candidate preview because the request is missing one or more controls. Add the preview flag, tenant, candidate, module, operator, reason, and acknowledgement to inspect an inactive packet.
+
+Explicit preview flag is not enabled.
+Operator acknowledgement is required.
+Supported module is required.
+HOME
+21 facts · 47 evidence keys
+
+Default source remains active_tenant_access_layer. Preview source is candidate_context_packet. Runtime eligible: false.
+
+INTELLIGENCE
+21 facts · 47 evidence keys
+
+Default source remains active_tenant_access_layer. Preview source is candidate_context_packet. Runtime eligible: false.
+
+MOVES
+24 facts · 47 evidence keys
+
+Default source remains active_tenant_access_layer. Preview source is candidate_context_packet. Runtime eligible: false.
+
+SOURCE
+24 facts · 47 evidence keys
+
+Default source remains active_tenant_access_layer. Preview source is candidate_context_packet. Runtime eligible: false.
+
+TOWER
+24 facts · 47 evidence keys
+
+Default source remains active_tenant_access_layer. Preview source is candidate_context_packet. Runtime eligible: false.
+
+Guidance
+?

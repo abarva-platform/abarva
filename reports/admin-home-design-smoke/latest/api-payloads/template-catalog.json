@@ -1,0 +1,7 @@
+{
+  "ok": false,
+  "status": 404,
+  "body": {
+    "error": "SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+  }
+}

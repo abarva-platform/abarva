@@ -1,0 +1,92 @@
+{
+  "questions": [
+    {
+      "question": "Explain the selected context in plain English.",
+      "status": 200,
+      "answerStatus": "partial",
+      "scopedToHome": true,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": "Airline Demo's enterprise profile shows Airline across the enterprise. Home should treat this as the opening company profile, not as a final financial filing.\n\nThe profile is useful for sizing the technology estate, comparing operating-company complexity, and deciding which Home dimensions to inspect next.\n\nImportant evidence gap: Known Gaps. 1 entry needs s"
+    },
+    {
+      "question": "What can Home answer about this context?",
+      "status": 200,
+      "answerStatus": "partial",
+      "scopedToHome": true,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": "Airline Demo's enterprise profile shows Airline across the enterprise. Home should treat this as the opening company profile, not as a final financial filing.\n\nThe profile is useful for sizing the technology estate, comparing operating-company complexity, and deciding which Home dimensions to inspect next.\n\nImportant evidence gap: Known Gaps. 1 entry needs s"
+    },
+    {
+      "question": "What gaps exist?",
+      "status": 200,
+      "answerStatus": "partial",
+      "scopedToHome": true,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": "Airline Demo's enterprise profile shows Airline across the enterprise. Home should treat this as the opening company profile, not as a final financial filing.\n\nThe profile is useful for sizing the technology estate, comparing operating-company complexity, and deciding which Home dimensions to inspect next.\n\nImportant evidence gap: Known Gaps. 1 entry needs s"
+    },
+    {
+      "question": "What evidence supports this context?",
+      "status": 422,
+      "answerStatus": null,
+      "scopedToHome": false,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": ""
+    },
+    {
+      "question": "What relationships are known?",
+      "status": 200,
+      "answerStatus": "partial",
+      "scopedToHome": true,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": "Airline Demo's loaded relationships graph edges context shows SUPPORTS, SUPPORTS, SUPPORTS, SUPPORTS, SUPPORTS, BLOCKS, BLOCKS, and BLOCKS. Home can use this as current-state context while keeping confidence and validation boundaries visible.\n\nLoaded detail fields also show Synthetic airline planning-grade substrate, not real Airline Demo production data., E"
+    },
+    {
+      "question": "What should be sent to Intelligence?",
+      "status": 200,
+      "answerStatus": "handoff",
+      "scopedToHome": true,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": "Airline Demo's loaded expert lenses context shows Airline IROPS readiness lens, Core operations modernization lens, Crew legality and work redesign lens, Tower value governance lens, and AI controls and safety lens. Home can use this as current-state context while keeping confidence and validation boundaries visible.\n\nLoaded detail fields also show Synthetic"
+    },
+    {
+      "question": "Is this active Home context or candidate preview?",
+      "status": 200,
+      "answerStatus": "partial",
+      "scopedToHome": true,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": "Airline Demo's enterprise profile shows Airline across the enterprise. Home should treat this as the opening company profile, not as a final financial filing.\n\nThe profile is useful for sizing the technology estate, comparing operating-company complexity, and deciding which Home dimensions to inspect next.\n\nImportant evidence gap: Known Gaps. 1 entry needs s"
+    },
+    {
+      "question": "What is not available yet?",
+      "status": 200,
+      "answerStatus": "partial",
+      "scopedToHome": true,
+      "avoidsActiveTruthClaim": true,
+      "avoidsVersionLanguage": true,
+      "avoidsPromotionClaim": true,
+      "prosePreview": "Airline Demo's enterprise profile shows Airline across the enterprise. Home should treat this as the opening company profile, not as a final financial filing.\n\nThe profile is useful for sizing the technology estate, comparing operating-company complexity, and deciding which Home dimensions to inspect next.\n\nImportant evidence gap: Known Gaps. 1 entry needs s"
+    }
+  ],
+  "totals": {
+    "asked": 8,
+    "status200": 7,
+    "scopedToHome": 7,
+    "avoidsActiveTruthClaim": 8,
+    "avoidsVersionLanguage": 8,
+    "avoidsPromotionClaim": 8
+  }
+}
