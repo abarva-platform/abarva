@@ -1,6 +1,11 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import {
+  buildTenantManifestProjectionAudit,
+  type TenantManifestProjectionAudit,
+} from "@/lib/admin/tenant-manifest-projection-audit";
+
 export type DataJourneySectionId =
   | "overview"
   | "input-files"
@@ -131,6 +136,7 @@ export interface DataLayerExplorerModel {
   qualityChecks: DataJourneyQualityCheck[];
   guardrails: DataJourneyGuardrail[];
   referenceDataAudit: DataLayerExplorerReferenceAudit;
+  manifestProjectionAudit: TenantManifestProjectionAudit;
 }
 
 export interface DataLayerExplorerProofOutput {
@@ -141,6 +147,7 @@ export interface DataLayerExplorerProofOutput {
     qualityChecksPath: string;
     guardrailsPath: string;
     referenceDataAuditPath: string;
+    manifestProjectionAuditPath: string;
     summaryPath: string;
   };
 }
@@ -171,6 +178,7 @@ export function buildAdminDataLayerExplorerModel(
     guardrails,
   );
   const pageMappings = buildPageMappings();
+  const manifestProjectionAudit = buildTenantManifestProjectionAudit();
 
   return {
     generatedFor,
@@ -208,6 +216,7 @@ export function buildAdminDataLayerExplorerModel(
     qualityChecks,
     guardrails,
     referenceDataAudit: buildReferenceDataAudit(),
+    manifestProjectionAudit,
   };
 }
 
@@ -316,8 +325,10 @@ ${notImplemented}
 - Pipeline steps: ${model.pipelineSteps.length}
 - Page mappings: ${model.pageMappings.length}
 - Quality checks: ${model.qualityChecks.length}
-- Guardrails: ${model.guardrails.length}
-- Reference data audit: ${model.referenceDataAudit.status}
+    - Guardrails: ${model.guardrails.length}
+    - Reference data audit: ${model.referenceDataAudit.status}
+    - Manifest projection audit tenants: ${model.manifestProjectionAudit.tenants.length}
+    - Manifest projection blockers: ${model.manifestProjectionAudit.promotionBlockers.length}
 
 ## Section Status
 
@@ -363,6 +374,23 @@ ${model.referenceDataAudit.qualitySignals
       `- ${signal.severity}: ${signal.finding} Recommended action: ${signal.recommendedAction}`,
   )
   .join("\n")}
+
+## Tenant Manifest Completeness And Source Projection
+
+Upload path alignment: ${model.manifestProjectionAudit.uploadPathAlignment.adminUploadAlignment}
+
+${model.manifestProjectionAudit.tenants
+  .map(
+    (tenant) =>
+      `- ${tenant.displayName}: ${tenant.status}; source files ${tenant.sourceFilesDiscovered}; structured rows ${tenant.sourceStructuredRows}; candidate records ${tenant.candidateRecordsGenerated}; blockers ${tenant.blockers.length}`,
+  )
+  .join("\n")}
+
+Excluded tenants:
+
+${model.manifestProjectionAudit.excludedTenants
+  .map((tenant) => `- ${tenant.tenantKey}: ${tenant.reason}`)
+  .join("\n")}
 `;
 }
 
@@ -385,6 +413,10 @@ export function writeAdminDataLayerExplorerProof(args: {
     outputDir,
     "reference-data-audit.json",
   );
+  const manifestProjectionAuditPath = path.join(
+    outputDir,
+    "tenant-manifest-projection-audit.json",
+  );
   const summaryPath = path.join(outputDir, "summary.md");
 
   writeJson(sectionMapPath, buildSectionMap(model));
@@ -392,6 +424,7 @@ export function writeAdminDataLayerExplorerProof(args: {
   writeJson(qualityChecksPath, buildQualityChecksReport(model));
   writeJson(guardrailsPath, buildGuardrailsReport(model));
   writeJson(referenceDataAuditPath, buildReferenceDataAuditReport(model));
+  writeJson(manifestProjectionAuditPath, model.manifestProjectionAudit);
   writeFileSync(summaryPath, buildSummaryMarkdown(model), "utf8");
 
   return {
@@ -402,6 +435,7 @@ export function writeAdminDataLayerExplorerProof(args: {
       qualityChecksPath,
       guardrailsPath,
       referenceDataAuditPath,
+      manifestProjectionAuditPath,
       summaryPath,
     },
   };

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -53,25 +53,6 @@
         "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade.",
         "Domain consistency checks should run before generated rows are treated as operational truth."
       ]
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "generatedOrSyntheticSourceFiles": 12,
-      "narrativeCaveatRequired": true,
-      "status": "watch",
-      "findings": [
-        "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade.",
-        "Domain consistency checks should run before generated rows are treated as operational truth."
-      ]
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
-      "generatedOrSyntheticSourceFiles": 0,
-      "narrativeCaveatRequired": false,
-      "status": "pass",
-      "findings": []
     }
   ]
 }

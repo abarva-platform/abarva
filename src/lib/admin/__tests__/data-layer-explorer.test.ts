@@ -103,8 +103,51 @@ describe("admin data layer explorer model", () => {
     });
   });
 
+  it("surfaces manifest completeness, stranded source, and excluded tenant controls", () => {
+    const audit = model.manifestProjectionAudit;
+    const skyHarbor = audit.tenants.find(
+      (tenant) => tenant.tenantKey === "skyharbor-air",
+    );
+
+    expect(skyHarbor).toBeTruthy();
+    expect(skyHarbor?.status).toBe("blocked");
+    expect(skyHarbor?.sourceStructuredRows).toBeGreaterThan(50_000);
+    expect(skyHarbor?.candidateRecordsGenerated).toBe(53);
+    expect(skyHarbor?.blockers.length).toBeGreaterThan(0);
+    expect(audit.uploadPathAlignment.adminUploadAlignment).toBe(
+      "not_fully_aligned",
+    );
+    expect(audit.excludedTenants).toContainEqual(
+      expect.objectContaining({
+        tenantKey: "northstar-clinical",
+      }),
+    );
+    expect(JSON.stringify(audit.skyHarborRequiredFindings)).toContain(
+      "412-app portfolio",
+    );
+    expect(JSON.stringify(audit.skyHarborRequiredFindings)).toContain(
+      "900-row older app/system estate",
+    );
+    expect(JSON.stringify(audit.skyHarborRequiredFindings)).toContain(
+      "956-row transformed app/system template",
+    );
+    expect(JSON.stringify(audit.skyHarborRequiredFindings)).toContain(
+      "13-row current upgrade candidate app/system file",
+    );
+    expect(audit.guardrails).toEqual({
+      productionTenantDataWritten: false,
+      candidatePromoted: false,
+      activeTenantAccessLayerUpdated: false,
+      moduleRuntimeBehaviorChanged: false,
+      activeTenantTruthChanged: false,
+    });
+  });
+
   it("uses business-facing layer language in the generated model", () => {
-    const serialized = JSON.stringify(model);
+    const serialized = JSON.stringify({
+      ...model,
+      manifestProjectionAudit: undefined,
+    });
     for (const versionNumber of ["4", "6", "7"]) {
       expect(serialized).not.toContain(`V${versionNumber}`);
       expect(serialized).not.toContain(`v${versionNumber}`);

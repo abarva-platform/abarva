@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -109,51 +109,6 @@
       "blockers": [
         "Required packet projection and mapping profile configuration is not available yet.",
         "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
-      ]
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "candidateRecordsGenerated": 0,
-      "targetOperationsPlanned": 0,
-      "candidateCoverageRatio": 0,
-      "coverageStatus": "blocked",
-      "candidateThin": true,
-      "falseGreenRisk": false,
-      "unmappedFields": 3,
-      "quarantinedRecords": 0,
-      "strandedIntelligenceRecords": 4,
-      "missingMappings": [
-        "tenant-packet projection",
-        "source adapter mapping profile",
-        "target writer mapping profile"
-      ],
-      "blockers": [
-        "No Moves artifacts discovered in the repository inventory.",
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
-      ]
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
-      "candidateRecordsGenerated": 0,
-      "targetOperationsPlanned": 0,
-      "candidateCoverageRatio": 0,
-      "coverageStatus": "gap",
-      "candidateThin": true,
-      "falseGreenRisk": false,
-      "unmappedFields": 3,
-      "quarantinedRecords": 0,
-      "strandedIntelligenceRecords": 2,
-      "missingMappings": [
-        "tenant-packet projection",
-        "source adapter mapping profile",
-        "target writer mapping profile"
-      ],
-      "blockers": [
-        "Morgan Street appears as a Lakeshore operating-unit access boundary, not as a standalone candidate packet.",
-        "No standalone Tenant Packet manifest or candidate mapping profile is available yet."
       ]
     }
   ]

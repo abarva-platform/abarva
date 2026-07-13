@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "generatedAt": "2026-07-13T12:43:50.884Z",
   "tenants": [
     {
       "tenantKey": "skyharbor-air",
@@ -64,36 +64,6 @@
     {
       "tenantKey": "apex-retail",
       "tenantDisplayName": "Apex Retail",
-      "modulesEvaluated": 0,
-      "modulesWithEvidence": 0,
-      "modulesWithFactPlan": 0,
-      "modulesWithGraphPlan": 0,
-      "modulesWithDerivedPlan": 0,
-      "runtimeReadyModules": 0,
-      "moduleOverreadinessRisk": false,
-      "status": "gap",
-      "findings": [
-        "No module readiness proof exists for this tenant."
-      ]
-    },
-    {
-      "tenantKey": "northstar",
-      "tenantDisplayName": "Northstar",
-      "modulesEvaluated": 0,
-      "modulesWithEvidence": 0,
-      "modulesWithFactPlan": 0,
-      "modulesWithGraphPlan": 0,
-      "modulesWithDerivedPlan": 0,
-      "runtimeReadyModules": 0,
-      "moduleOverreadinessRisk": false,
-      "status": "gap",
-      "findings": [
-        "No module readiness proof exists for this tenant."
-      ]
-    },
-    {
-      "tenantKey": "morgan-street",
-      "tenantDisplayName": "Morgan Street",
       "modulesEvaluated": 0,
       "modulesWithEvidence": 0,
       "modulesWithFactPlan": 0,

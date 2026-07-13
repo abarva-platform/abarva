@@ -303,6 +303,7 @@ const CSS = `
 const EMPTY_DIMS: BindingDimension[] = [];
 
 type ExplorerTab = "summary" | "data" | "gaps" | "sources" | "relationships";
+type ExplorerTool = "data-quality" | null;
 
 const TECHNICAL_STRING_FIELDS = new Set([
   "id",
@@ -1216,41 +1217,94 @@ function HomeDataQualityPanel({
   );
 }
 
-function SelectedContextQuality({
-  badge,
+function DataQualityExplorerDetail({
   model,
+  candidatePreviewEnabled,
+  areas,
+  overview,
 }: {
-  badge: HomeContextQualityBadge | null;
   model: HomeDataQualityModel | null;
+  candidatePreviewEnabled: boolean;
+  areas: HomeExplorerArea[];
+  overview: {
+    dimensions: HomeV6BrowserPreview[];
+    totalRows: number;
+    totalSources: number;
+    totalGaps: number;
+  };
 }) {
-  if (!badge && !model) return null;
   return (
-    <section className="hx2-contextQuality" data-testid="home-context-quality">
-      <div>
-        <strong>Context quality</strong>
-        <span>
-          {badge
-            ? `${badge.area}: ${badge.answerability}. ${badge.gaps}.`
-            : model?.answerability.rationale}
-        </span>
+    <main className="hx2-detail" data-testid="home-data-quality-detail">
+      <div className="hx2-detailHead">
+        <div>
+          <div className="hx2-crumb">Home · Enterprise Knowledge</div>
+          <h1>Data Quality</h1>
+          <p>
+            Inspect source coverage, evidence strength, relationship coverage,
+            gaps, and answerability only when needed. This keeps the default
+            Home canvas focused on enterprise context.
+          </p>
+        </div>
       </div>
-      <div className="hx2-contextBadges">
-        {badge ? (
-          <>
-            <span>{badge.evidence}</span>
-            <span>{badge.relationships}</span>
-            <span>{badge.gaps}</span>
-            <span>{badge.answerability}</span>
-          </>
-        ) : (
-          <>
-            <span>{model?.answerability.label ?? "Partial"}</span>
-            <span>{model?.relationshipCoverage.status ?? "Relationships"}</span>
-            <span>{model?.evidenceQuality.status ?? "Evidence"}</span>
-          </>
-        )}
-      </div>
-    </section>
+      <HomeDataQualityPanel
+        candidatePreviewEnabled={candidatePreviewEnabled}
+        model={model}
+      />
+      <section className="hx2-section" role="tabpanel">
+        <div className="hx2-summaryGrid">
+          <article>
+            <span>Loaded areas</span>
+            <strong>{areas.length.toLocaleString()}</strong>
+            <p>Context areas currently available in the Home explorer.</p>
+          </article>
+          <article>
+            <span>Source footprint</span>
+            <strong>{overview.totalSources.toLocaleString()} files</strong>
+            <p>Distinct source files represented in active Home context.</p>
+          </article>
+          <article>
+            <span>Validation work</span>
+            <strong>{displayMetric(overview.totalGaps, "evidence gaps")}</strong>
+            <p>Missing fields remain visible before downstream module handoff.</p>
+          </article>
+        </div>
+      </section>
+      <section className="hx2-section">
+        <div className="hx2-tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Explorer area</th>
+                <th>Records</th>
+                <th>Sources</th>
+                <th>Gaps</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {areas.map((area) => {
+                const tone = statusTone(area.gaps, area.rows);
+                return (
+                  <tr key={area.id}>
+                    <td>{area.label}</td>
+                    <td>{area.rows.toLocaleString()}</td>
+                    <td>{area.sources.toLocaleString()}</td>
+                    <td>{area.gaps.toLocaleString()}</td>
+                    <td>
+                      {tone === "green"
+                        ? "Loaded"
+                        : tone === "amber"
+                          ? "Gaps visible"
+                          : "Needs validation"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
   );
 }
 
@@ -1445,7 +1499,6 @@ function ExplorerDetail({
   setupControl,
   areas,
   tenantDisplayName,
-  dataQuality,
   onAsk,
 }: {
   area: HomeExplorerArea | null;
@@ -1455,7 +1508,6 @@ function ExplorerDetail({
   activeTab: ExplorerTab;
   onTabChange: (tab: ExplorerTab) => void;
   setupControl: AdminSetupControlResponse | null;
-  dataQuality: HomeDataQualityModel | null;
   areas: HomeExplorerArea[];
   tenantDisplayName: string;
   onAsk: (question: string) => void;
@@ -1512,7 +1564,6 @@ function ExplorerDetail({
   const selectedName =
     selectedDisplayName ?? selected?.dimension ?? "enterprise context";
   const isOverview = !selected;
-  const selectedBadge = badgeForArea(dataQuality?.contextBadges, selected?.dimension);
 
   return (
     <main className="hx2-detail" data-testid="home-context-detail">
@@ -1557,15 +1608,10 @@ function ExplorerDetail({
 
       {isOverview ? (
         <>
-          <HomeDataQualityPanel
-            candidatePreviewEnabled={dataQuality?.candidatePreview.previewRequested ?? false}
-            model={dataQuality}
-          />
           <KnowledgeOverview areas={areas} model={knowledgeModel} />
         </>
       ) : (
         <>
-          <SelectedContextQuality badge={selectedBadge} model={dataQuality} />
           <div
             className="hx2-tabs"
             role="tablist"
@@ -1820,8 +1866,6 @@ function ExplorerDetail({
 function ExplorerRail({
   selected,
   selectedDisplayName,
-  preview,
-  overview,
   dataQuality,
   onAsk,
   thread,
@@ -1829,20 +1873,12 @@ function ExplorerRail({
 }: {
   selected: BindingDimension | null;
   selectedDisplayName?: string | null;
-  preview: HomeV6BrowserPreview | null;
-  overview: { totalRows: number; totalSources: number; totalGaps: number };
   dataQuality: HomeDataQualityModel | null;
   onAsk: (question: string) => void;
   thread: ChatMessage[];
   isBusy: boolean;
 }) {
   const [draft, setDraft] = useState("");
-  const score = completenessScore({
-    dimension: selected?.dimension,
-    rows: preview?.rowCount ?? overview.totalRows,
-    gaps: preview?.dataThinCells ?? overview.totalGaps,
-    sources: preview?.sourceCount ?? overview.totalSources,
-  });
   const scopeName = selectedDisplayName ?? selected?.dimension ?? "Overview";
   const qualityLimits = dataQuality?.answerability.limits ?? [];
   const suggestions = selected
@@ -1946,34 +1982,6 @@ function ExplorerRail({
           </button>
         </form>
       </div>
-      <div className="hx2-card hx2-visual">
-        <div className="hx2-cardKicker">Context quality</div>
-        <div
-          className="hx2-ring"
-          style={{ "--score": `${score}%` } as React.CSSProperties}
-        >
-          <span>{score}%</span>
-        </div>
-        <div className="hx2-cardTitle">{scopeName}</div>
-        <p>
-          {dataQuality && !preview
-            ? dataQuality.answerability.rationale
-            : preview
-            ? `${shortMetric(preview.rowCount)} records, ${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}, ${displayMetric(preview.dataThinCells, "evidence gaps")} to complete.`
-            : `${shortMetric(overview.totalRows)} records across ${overview.totalSources} source files.`}
-        </p>
-      </div>
-      <div className="hx2-card hx2-miniBars">
-        <div className="hx2-cardKicker">What changed</div>
-        <div className="hx2-miniStatus">
-          <span>On</span>
-          <strong>Active Home context</strong>
-        </div>
-        <div className="hx2-miniStatus muted">
-          <span>Off</span>
-          <strong>Candidate data unless preview is explicit</strong>
-        </div>
-      </div>
     </aside>
   );
 }
@@ -2030,6 +2038,7 @@ export function HomeSurface({
           }))
         : (safePayload?.context ?? EMPTY_DIMS);
   const [dimKey, setDimKey] = useState<string | null>(null);
+  const [selectedTool, setSelectedTool] = useState<ExplorerTool>(null);
   const [activeTab, setActiveTab] = useState<ExplorerTab>("summary");
   const [search, setSearch] = useState("");
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -2057,18 +2066,6 @@ export function HomeSurface({
     (sum, dimension) => sum + dimension.dataThinCells,
     0,
   );
-  const loadedPct =
-    totalRows > 0
-      ? Math.max(
-          0,
-          Math.min(
-            100,
-            Math.round(
-              ((totalRows * 3) / Math.max(totalRows * 3 + totalGaps, 1)) * 100,
-            ),
-          ),
-        )
-      : 0;
   const dataStatusLabel = "Active Home context";
   const candidateState = safeSetupControl?.candidateTenantDataVersion ?? null;
   const candidatePreviewDetail = candidateState?.candidateVersionId
@@ -2220,15 +2217,6 @@ export function HomeSurface({
               </strong>
             </div>
           </div>
-          <div className="hx2-topQuality">
-            <div
-              className="hx2-topRing"
-              style={{ "--score": `${loadedPct}%` } as React.CSSProperties}
-            >
-              <span>{loadedPct}%</span>
-            </div>
-            <div className="hx2-topQualityText">Context loaded & mapped</div>
-          </div>
         </header>
         {candidatePreviewEnabled ? (
           <div className="hx2-candidateBanner" role="status">
@@ -2274,10 +2262,11 @@ export function HomeSurface({
               </span>
             </div>
             <button
-              aria-pressed={!selected}
+              aria-pressed={!selected && selectedTool === null}
               className="hx2-treeBtn"
               onClick={() => {
                 setDimKey(null);
+                setSelectedTool(null);
                 setActiveTab("summary");
               }}
               type="button"
@@ -2290,6 +2279,23 @@ export function HomeSurface({
                 </small>
               </span>
               <em>{shortMetric(totalGaps)} gaps</em>
+            </button>
+            <button
+              aria-pressed={selectedTool === "data-quality"}
+              className="hx2-treeBtn"
+              onClick={() => {
+                setDimKey(null);
+                setSelectedTool("data-quality");
+                setActiveTab("summary");
+              }}
+              type="button"
+            >
+              <i className={`hx2-nodeDot ${totalGaps > 0 ? "amber" : "green"}`} />
+              <span>
+                Data Quality
+                <small>Source coverage, evidence gaps, and answerability</small>
+              </span>
+              <em>{shortMetric(totalSources)} files</em>
             </button>
             {[...groupedAreas.entries()].map(([group, areas]) => (
               <div className="hx2-treeGroup" key={group}>
@@ -2307,6 +2313,7 @@ export function HomeSurface({
                       key={area.id}
                       onClick={() => {
                         setDimKey(area.id);
+                        setSelectedTool(null);
                         setActiveTab("summary");
                       }}
                       type="button"
@@ -2331,36 +2338,45 @@ export function HomeSurface({
             ))}
           </aside>
 
-          <ExplorerDetail
-            activeTab={activeTab}
-            area={selectedArea}
-            areas={explorerAreas}
-            onTabChange={setActiveTab}
-            overview={{
-              dimensions,
-              totalRows,
-              totalSources,
-              totalGaps,
-            }}
-            preview={selectedPreview}
-            selected={selected}
-            selectedDisplayName={selectedArea?.label}
-            setupControl={safeSetupControl}
-            dataQuality={safeDataQuality}
-            tenantDisplayName={displayedTenantName}
-            onAsk={askHomeKnow}
-          />
+          {selectedTool === "data-quality" ? (
+            <DataQualityExplorerDetail
+              areas={explorerAreas}
+              candidatePreviewEnabled={
+                safeDataQuality?.candidatePreview.previewRequested ?? false
+              }
+              model={safeDataQuality}
+              overview={{
+                dimensions,
+                totalRows,
+                totalSources,
+                totalGaps,
+              }}
+            />
+          ) : (
+            <ExplorerDetail
+              activeTab={activeTab}
+              area={selectedArea}
+              areas={explorerAreas}
+              onTabChange={setActiveTab}
+              overview={{
+                dimensions,
+                totalRows,
+                totalSources,
+                totalGaps,
+              }}
+              preview={selectedPreview}
+              selected={selected}
+              selectedDisplayName={selectedArea?.label}
+              setupControl={safeSetupControl}
+              tenantDisplayName={displayedTenantName}
+              onAsk={askHomeKnow}
+            />
+          )}
 
           <ExplorerRail
             isBusy={isBusy}
             onAsk={askHomeKnow}
-            overview={{
-              totalRows,
-              totalSources,
-              totalGaps,
-            }}
             dataQuality={safeDataQuality}
-            preview={selectedPreview}
             selected={selected}
             selectedDisplayName={selectedArea?.label}
             thread={thread}

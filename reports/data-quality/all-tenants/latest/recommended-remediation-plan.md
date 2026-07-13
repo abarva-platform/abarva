@@ -44,19 +44,3 @@ coverage before UI polish or additional promotion surfaces.
 - Sources caveat: 186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.
 - Relationships caveat: Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.
 
-## Northstar
-
-- Status: blocked
-- Next action: Expand Tenant Packet projection and source adapter mappings before more promotion work.
-- Home caveat: Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.
-- Sources caveat: 156 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.
-- Relationships caveat: Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.
-
-## Morgan Street
-
-- Status: blocked
-- Next action: Expand Tenant Packet projection and source adapter mappings before more promotion work.
-- Home caveat: Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.
-- Sources caveat: 0 discovered source files across 0 domains; surface file categories and evidence signals rather than generic source labels.
-- Relationships caveat: Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.
-

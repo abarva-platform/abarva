@@ -1,6 +1,6 @@
 # All-Tenant Data Quality And Coverage Audit
 
-Generated: `2026-07-13T04:51:33.512Z`
+Generated: `2026-07-13T12:43:50.884Z`
 
 This is a read-only audit. It does not write production tenant data, update
 Active Tenant Access, promote candidates, write physical tables, change module
@@ -9,12 +9,12 @@ value.
 
 ## Rollup
 
-- Tenants scanned: 7
-- Source-rich / candidate-thin tenants: 6
+- Tenants scanned: 5
+- Source-rich / candidate-thin tenants: 5
 - False-green risk tenants: 4
-- Relationship gap tenants: 7
-- Promotion-unsafe tenants: 7
-- Generated-data watch tenants: 6
+- Relationship gap tenants: 5
+- Promotion-unsafe tenants: 5
+- Generated-data watch tenants: 5
 - Tenant-isolation failures: 0
 
 ## Tenant Quality Matrix
@@ -26,5 +26,3 @@ value.
 | meridian-health | blocked | 100 | 11226 | 0.0% | 0 | 0 | yes | yes |
 | first-capital | blocked | 70 | 14576 | 0.0% | 0 | 0 | yes | yes |
 | apex-retail | blocked | 100 | 10388 | 0.0% | 0 | 0 | yes | yes |
-| northstar | blocked | 100 | 6032 | 0.0% | 0 | 0 | yes | yes |
-| morgan-street | blocked | 0 | 0 | 0.0% | 0 | 0 | no | yes |

@@ -249,13 +249,13 @@ const TENANT_PROFILES = [
     aliases: ["apex-retail", "apex"],
     expectedSignals: ["retail", "store", "margin"],
   },
-  {
-    tenantKey: "northstar",
-    displayName: "Northstar",
-    aliases: ["northstar", "northstar-clinical"],
-    expectedSignals: ["clinical", "health"],
-  },
 ] as const;
+
+const NON_ACTIVE_DATA_QUALITY_TENANT_KEYS = new Set([
+  "northstar",
+  "northstar-clinical",
+  "morgan-street",
+]);
 
 const DOMAIN_KEYS: SourceDomain[] = [
   "enterprise_profile",
@@ -280,7 +280,13 @@ export async function buildAllTenantDataQualityAudit(
 ): Promise<AllTenantDataQualityAudit> {
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const outputDir = options.outputDir ?? DEFAULT_OUTPUT_DIR;
-  const batch = await readOrBuildBatch(options.repoRoot, generatedAt);
+  const rawBatch = await readOrBuildBatch(options.repoRoot, generatedAt);
+  const batch: AllTenantCandidateBatchReport = {
+    ...rawBatch,
+    tenants: rawBatch.tenants.filter(
+      (tenant) => !NON_ACTIVE_DATA_QUALITY_TENANT_KEYS.has(tenant.tenantKey),
+    ),
+  };
   const sourceEstateCoverage = await Promise.all(
     batch.tenants.map((tenant) => buildSourceEstateCoverage(options.repoRoot, tenant)),
   );
@@ -1213,12 +1219,12 @@ function buildEmbeddedTenantQualityMatrix(): TenantQualityMatrixArtifact {
       realizedValueClaimed: false,
     },
     rollup: {
-      tenantsScanned: 7,
-      sourceRichCandidateThinTenants: 6,
+      tenantsScanned: 5,
+      sourceRichCandidateThinTenants: 5,
       falseGreenRiskTenants: 4,
-      relationshipGapTenants: 7,
-      promotionUnsafeTenants: 7,
-      generatedDataWatchTenants: 6,
+      relationshipGapTenants: 5,
+      promotionUnsafeTenants: 5,
+      generatedDataWatchTenants: 5,
       tenantIsolationFailures: 0,
     },
     tenants: [
@@ -1227,8 +1233,6 @@ function buildEmbeddedTenantQualityMatrix(): TenantQualityMatrixArtifact {
       embeddedTenant("meridian-health", "Meridian Health", 100, 11226, 0, 0, 0, true, true, "watch", "not_available", "gap"),
       embeddedTenant("first-capital", "First Capital", 70, 14576, 0, 0, 0, true, false, "watch", "not_available", "gap"),
       embeddedTenant("apex-retail", "Apex Retail", 100, 10388, 0, 0, 0, true, true, "watch", "not_available", "gap"),
-      embeddedTenant("northstar", "Northstar", 100, 6032, 0, 0, 0, true, false, "watch", "not_available", "gap"),
-      embeddedTenant("morgan-street", "Morgan Street", 0, 0, 0, 0, 0, false, false, "pass", "not_available", "gap"),
     ],
   };
 }

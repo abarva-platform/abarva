@@ -11,6 +11,7 @@ import {
   type DataJourneySection,
   type DataLayerExplorerReferenceAudit,
 } from "@/lib/admin/data-layer-explorer";
+import type { TenantManifestProjectionAudit } from "@/lib/admin/tenant-manifest-projection-audit";
 import {
   readLatestTenantQualityMatrix,
   type TenantQualityMatrixArtifact,
@@ -218,6 +219,8 @@ export default async function AdminDataLayerExplorerPage() {
           <AllTenantQualityPanel matrix={tenantQualityMatrix} />
 
           <ReferenceDataAuditPanel audit={model.referenceDataAudit} />
+
+          <ManifestProjectionPanel audit={model.manifestProjectionAudit} />
 
           <nav
             data-data-journey-left-nav
@@ -634,6 +637,207 @@ function ReferenceDataAuditPanel({
     </section>
   );
 }
+
+function ManifestProjectionPanel({
+  audit,
+}: {
+  audit: TenantManifestProjectionAudit;
+}) {
+  const skyHarborFindings = audit.skyHarborRequiredFindings;
+  const tenantRows = audit.tenants;
+  return (
+    <section
+      data-manifest-projection-audit
+      style={{
+        ...cardStyle,
+        padding: 18,
+        marginBottom: 16,
+        borderColor: "#FCA5A5",
+        background: "#FFF7F7",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 16,
+          alignItems: "start",
+          marginBottom: 14,
+        }}
+      >
+        <div>
+          <p style={{ ...labelStyle, margin: 0, color: "#BE123C" }}>
+            Tenant manifest completeness · source projection
+          </p>
+          <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
+            Rich source must be visible before candidate, Home, or aVa can
+            claim readiness.
+          </h2>
+          <p
+            style={{
+              margin: 0,
+              color: "#7F1D1D",
+              fontSize: 14,
+              lineHeight: 1.55,
+              maxWidth: 1080,
+            }}
+          >
+            This read-only audit compares discovered source files against
+            candidate manifests, adapter and mapping coverage, active Home
+            representation, aVa readability, and promotion blockers. It does
+            not regenerate candidates, promote data, write tenant tables, or
+            change module runtime reads.
+          </p>
+        </div>
+        <StatusPill>{`${audit.promotionBlockers.length} blockers`}</StatusPill>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gap: 10,
+          marginBottom: 14,
+        }}
+      >
+        <QualityMetric label="Tenants" value={String(audit.tenants.length)} />
+        <QualityMetric
+          label="Source files"
+          value={String(audit.sourceFiles.length)}
+        />
+        <QualityMetric
+          label="Excluded"
+          value={String(audit.excludedTenants.length)}
+        />
+        <QualityMetric
+          label="Alignment"
+          value={audit.uploadPathAlignment.adminUploadAlignment}
+        />
+      </div>
+
+      <div
+        style={{
+          border: "1px solid rgba(190, 18, 60, 0.14)",
+          borderRadius: 8,
+          background: "#FFFFFF",
+          padding: 12,
+          marginBottom: 14,
+        }}
+      >
+        <p style={{ ...labelStyle, margin: "0 0 8px", color: "#9F1239" }}>
+          Upload path alignment
+        </p>
+        <p
+          style={{
+            margin: 0,
+            color: "#7F1D1D",
+            fontSize: 13,
+            lineHeight: 1.5,
+          }}
+        >
+          Canonical landing should be{" "}
+          <code>{`${audit.uploadPathAlignment.canonicalLandingContainer}/${audit.uploadPathAlignment.canonicalLandingPrefix}`}</code>.
+          Current loader scan is{" "}
+          <code>{`${audit.uploadPathAlignment.currentLoaderLandingContainer}/${audit.uploadPathAlignment.currentLoaderLandingPrefix}`}</code>.
+          Legacy staging remains <code>{audit.uploadPathAlignment.legacyStagingContainer}</code>.
+          Required correction: {audit.uploadPathAlignment.requiredCorrection}
+        </p>
+      </div>
+
+      <div style={{ overflowX: "auto", marginBottom: 14 }}>
+        <table
+          style={{
+            width: "100%",
+            minWidth: 980,
+            borderCollapse: "collapse",
+            fontSize: 13,
+          }}
+        >
+          <thead>
+            <tr>
+              {[
+                "Tenant",
+                "Status",
+                "Source files",
+                "Structured rows",
+                "Included files",
+                "Candidate rows",
+                "Home rows",
+                "Blockers",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  style={{
+                    ...labelStyle,
+                    textAlign: "left",
+                    borderBottom: "1px solid rgba(190, 18, 60, 0.16)",
+                    padding: "9px 8px",
+                    color: "#9F1239",
+                  }}
+                >
+                  {heading}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tenantRows.map((tenant) => (
+              <tr key={tenant.tenantKey}>
+                <td style={manifestCellStyle}>{tenant.displayName}</td>
+                <td style={manifestCellStyle}>
+                  <StatusPill>{tenant.status}</StatusPill>
+                </td>
+                <td style={manifestCellStyle}>{tenant.sourceFilesDiscovered}</td>
+                <td style={manifestCellStyle}>
+                  {tenant.sourceStructuredRows.toLocaleString()}
+                </td>
+                <td style={manifestCellStyle}>
+                  {tenant.candidateManifestIncludedFiles}
+                </td>
+                <td style={manifestCellStyle}>
+                  {tenant.candidateRecordsGenerated.toLocaleString()}
+                </td>
+                <td style={manifestCellStyle}>
+                  {tenant.activeHomeContextRows.toLocaleString()}
+                </td>
+                <td style={manifestCellStyle}>{tenant.blockers.length}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
+        }}
+      >
+        <AuditList
+          title="SkyHarbor required findings"
+          items={skyHarborFindings.map(
+            (item) =>
+              `${item.label}: accessible ${item.accessible}; manifest included ${item.includedInCandidateManifest}; rows ${item.rowCount ?? "n/a"}; ${item.path}`,
+          )}
+        />
+        <AuditList
+          title="Retired / excluded tenants"
+          items={audit.excludedTenants.map(
+            (tenant) => `${tenant.tenantKey}: ${tenant.reason}`,
+          )}
+        />
+      </div>
+    </section>
+  );
+}
+
+const manifestCellStyle = {
+  padding: "10px 8px",
+  borderBottom: "1px solid rgba(190, 18, 60, 0.10)",
+  color: SHELL.INK_SOFT,
+  verticalAlign: "top" as const,
+};
 
 function AuditList({ title, items }: { title: string; items: string[] }) {
   return (
