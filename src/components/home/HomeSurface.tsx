@@ -26,6 +26,7 @@ import type {
   HomeContextQualityBadge,
   HomeDataQualityModel,
 } from "@/lib/home/home-data-quality";
+import type { HomeEnglishSummary } from "@/lib/home/home-english-summary";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -197,6 +198,31 @@ const CSS = `
 .homex .hx2-detailActions{display:flex;gap:8px}
 .homex .hx2-detailActions button,.homex .hx2-tab,.homex .hx2-suggestions button,.homex .hx2-ask button{border:1px solid #ded8ca;border-radius:8px;background:#fff;color:#13213b;font:inherit;font-weight:700;font-size:12px;padding:9px 11px;cursor:pointer}
 .homex .hx2-detailActions .primary,.homex .hx2-ask button{background:#07162f;color:#fff;border-color:#07162f}
+.homex .hx2-meaning{border:1px solid #d8d1c2;border-radius:10px;background:#fff;padding:18px;margin:0 0 18px;box-shadow:0 1px 0 rgba(20,20,18,.03)}
+.homex .hx2-meaningHead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;margin-bottom:12px}
+.homex .hx2-meaningKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#1f6b3a}
+.homex .hx2-meaning h2{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;line-height:1.1;margin:5px 0 7px;color:#050505}
+.homex .hx2-meaning p{margin:0;color:#374151;font-size:13.5px;line-height:1.55}
+.homex .hx2-meaningStatus{display:inline-flex;align-items:center;border:1px solid #d8d1c2;border-radius:999px;background:#f7f2ea;color:#13213b;font-weight:850;font-size:12px;padding:7px 11px;white-space:nowrap}
+.homex .hx2-meaningStatus.partial,.homex .hx2-meaningStatus.candidate,.homex .hx2-meaningStatus.needs,.homex .hx2-meaningStatus.not{background:#fff8e7;border-color:#ead4a0;color:#6f4f12}
+.homex .hx2-meaningStatus.strong{background:#effaf3;border-color:#bddfc7;color:#126449}
+.homex .hx2-meaningWhy{border-left:3px solid #1f9d6a;background:#f7fff9;border-radius:8px;padding:10px 12px;margin:12px 0;color:#154c39}
+.homex .hx2-meaningGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.homex .hx2-meaningBlock{border:1px solid #eee9dd;border-radius:9px;background:#fbfaf7;padding:12px}
+.homex .hx2-meaningBlock span,.homex .hx2-nextAction span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#7b7a72;margin-bottom:6px}
+.homex .hx2-meaningBlock strong{display:block;font-size:13.5px;color:#111827;line-height:1.45}
+.homex .hx2-meaningLists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.homex .hx2-meaningList{border:1px solid #e7e3da;border-radius:9px;background:#fff;padding:12px}
+.homex .hx2-meaningList h3,.homex .hx2-nextAction h3{font-family:var(--font-fraunces),Georgia,serif;font-size:17px;margin:0 0 8px;color:#07162f}
+.homex .hx2-meaningList ul{display:grid;gap:7px;margin:0;padding:0;list-style:none;color:#334155;font-size:12.5px;line-height:1.35}
+.homex .hx2-meaningList li{position:relative;padding-left:17px}
+.homex .hx2-meaningList.safe li::before{content:"✓";position:absolute;left:0;color:#13835e;font-weight:800}
+.homex .hx2-meaningList.caution li::before{content:"—";position:absolute;left:0;color:#8a6d2f;font-weight:800}
+.homex .hx2-nextAction{border:1px solid #d8d1c2;border-radius:9px;background:#f7f2ea;padding:13px;margin-top:12px}
+.homex .hx2-meaningActions{margin-top:12px}
+.homex .hx2-moduleImpact{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
+.homex .hx2-moduleImpact article{border:1px solid #eee9dd;border-radius:8px;background:#fff;padding:10px;min-width:0}
+.homex .hx2-moduleImpact strong{display:block;color:#07162f;font-size:12.5px;margin-bottom:3px}.homex .hx2-moduleImpact span{display:inline-flex;border-radius:999px;background:#effaf3;color:#126449;font-size:10px;font-weight:800;padding:3px 6px;margin-bottom:6px}.homex .hx2-moduleImpact p{font-size:11.5px;line-height:1.35;color:#536073}
 .homex .hx2-tabs{display:flex;gap:8px;align-items:end;border-bottom:1px solid #e7e3da;margin-top:18px}
 .homex .hx2-tab{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:#626a76;padding:12px 8px 10px}
 .homex .hx2-tab[aria-selected="true"]{color:#07162f;border-bottom-color:#22aeea}
@@ -295,9 +321,9 @@ const CSS = `
 .homex .hx2-turn.user{background:#07162f;color:#fff}
 .homex .hx2-ask{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;margin-top:10px}
 .homex .hx2-ask input{min-width:0;border:1px solid #ded8ca;border-radius:8px;padding:10px;font:inherit;font-size:13px}
-@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}}
+@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}.homex .hx2-moduleImpact{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.homex .hx2-status,.homex .hx2-knowledgeGrid,.homex .hx2-answerability{grid-template-columns:1fr}.homex .hx2-statusActions{justify-content:flex-start;flex-wrap:wrap}}
-@media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
+@media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList,.homex .hx2-meaningHead,.homex .hx2-meaningGrid,.homex .hx2-meaningLists,.homex .hx2-moduleImpact{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
 `;
 
 const EMPTY_DIMS: BindingDimension[] = [];
@@ -1207,7 +1233,7 @@ function HomeDataQualityPanel({
         <div className="hx2-dqGapStrip">
           <strong>Top needs evidence</strong>
           {model.gaps.slice(0, 4).map((gap) => (
-            <span key={`${gap.priority}-${gap.title}`}>
+            <span key={`${gap.priority}-${gap.title}-${gap.detail}`}>
               {gap.priority}: {gap.title}
             </span>
           ))}
@@ -1488,6 +1514,104 @@ function KnowledgeOverview({
   );
 }
 
+function englishStatusClass(label: string): string {
+  if (/strong/i.test(label)) return "strong";
+  if (/candidate/i.test(label)) return "candidate";
+  if (/needs/i.test(label)) return "needs";
+  if (/not ready/i.test(label)) return "not";
+  return "partial";
+}
+
+function WhatThisMeansPanel({
+  summary,
+  onAsk,
+}: {
+  summary: HomeEnglishSummary;
+  onAsk: (question: string) => void;
+}) {
+  return (
+    <section className="hx2-meaning" data-testid="home-english-summary">
+      <div className="hx2-meaningHead">
+        <div>
+          <div className="hx2-meaningKicker">Executive Context Summary</div>
+          <h2>{summary.title}</h2>
+          <p>{summary.currentUnderstanding}</p>
+        </div>
+        <span className={`hx2-meaningStatus ${englishStatusClass(summary.statusLabel)}`}>
+          {summary.statusLabel}
+        </span>
+      </div>
+      <p className="hx2-meaningWhy">
+        <strong>Why this matters: </strong>
+        {summary.whyThisMatters}
+      </p>
+      <div className="hx2-meaningGrid">
+        <article className="hx2-meaningBlock">
+          <span>Completeness</span>
+          <strong>{summary.completenessMeaning}</strong>
+        </article>
+        <article className="hx2-meaningBlock">
+          <span>Evidence posture</span>
+          <strong>{summary.evidencePosture}</strong>
+        </article>
+        <article className="hx2-meaningBlock">
+          <span>Relationship posture</span>
+          <strong>{summary.relationshipPosture}</strong>
+        </article>
+        <article className="hx2-meaningBlock">
+          <span>Answerability</span>
+          <strong>{summary.answerability}</strong>
+        </article>
+      </div>
+      <div className="hx2-meaningLists">
+        <article className="hx2-meaningList safe">
+          <h3>Safe to ask</h3>
+          <ul>
+            {summary.safeToAsk.slice(0, 5).map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
+        <article className="hx2-meaningList caution">
+          <h3>Do not rely on this yet for</h3>
+          <ul>
+            {summary.decisionCautions.slice(0, 5).map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
+      </div>
+      <article className="hx2-nextAction">
+        <span>Next data action</span>
+        <h3>{summary.nextDataAction}</h3>
+      </article>
+      <div className="hx2-moduleImpact" aria-label="Module impact">
+        {summary.moduleImpact.map((impact) => (
+          <article key={impact.module}>
+            <strong>{impact.module}</strong>
+            <span>{impact.status}</span>
+            <p>{impact.explanation}</p>
+          </article>
+        ))}
+      </div>
+      <div className="hx2-detailActions hx2-meaningActions">
+        <button
+          onClick={() => onAsk("Explain this context in plain English.")}
+          type="button"
+        >
+          Ask aVa to explain
+        </button>
+        <button
+          onClick={() => onAsk("What decisions should not rely on this yet?")}
+          type="button"
+        >
+          Ask what not to rely on
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function ExplorerDetail({
   area,
   selected,
@@ -1497,6 +1621,7 @@ function ExplorerDetail({
   onTabChange,
   overview,
   setupControl,
+  englishSummary,
   areas,
   tenantDisplayName,
   onAsk,
@@ -1508,6 +1633,7 @@ function ExplorerDetail({
   activeTab: ExplorerTab;
   onTabChange: (tab: ExplorerTab) => void;
   setupControl: AdminSetupControlResponse | null;
+  englishSummary: HomeEnglishSummary | null;
   areas: HomeExplorerArea[];
   tenantDisplayName: string;
   onAsk: (question: string) => void;
@@ -1608,6 +1734,9 @@ function ExplorerDetail({
 
       {isOverview ? (
         <>
+          {englishSummary ? (
+            <WhatThisMeansPanel summary={englishSummary} onAsk={onAsk} />
+          ) : null}
           <KnowledgeOverview areas={areas} model={knowledgeModel} />
         </>
       ) : (
@@ -1867,6 +1996,7 @@ function ExplorerRail({
   selected,
   selectedDisplayName,
   dataQuality,
+  englishSummary,
   onAsk,
   thread,
   isBusy,
@@ -1874,6 +2004,7 @@ function ExplorerRail({
   selected: BindingDimension | null;
   selectedDisplayName?: string | null;
   dataQuality: HomeDataQualityModel | null;
+  englishSummary: HomeEnglishSummary | null;
   onAsk: (question: string) => void;
   thread: ChatMessage[];
   isBusy: boolean;
@@ -1881,23 +2012,29 @@ function ExplorerRail({
   const [draft, setDraft] = useState("");
   const scopeName = selectedDisplayName ?? selected?.dimension ?? "Overview";
   const qualityLimits = dataQuality?.answerability.limits ?? [];
+  const safeToAsk = englishSummary?.safeToAsk ?? [
+    "what evidence is loaded for this area",
+    "which fields still need client evidence",
+    "where related context should be inspected next",
+  ];
+  const decisionCautions = englishSummary?.decisionCautions ?? [
+    "strategy, use-case design, or advisory synthesis",
+    "facts outside the active Home context",
+  ];
   const suggestions = selected
     ? [
         `Explain ${scopeName.toLowerCase()} in plain English.`,
-        `Show gaps in ${scopeName.toLowerCase()}.`,
-        `What evidence supports ${scopeName.toLowerCase()}?`,
-        `How complete is ${scopeName.toLowerCase()}?`,
-        `What can Home answer about ${scopeName.toLowerCase()}?`,
+        `What can I safely ask about ${scopeName.toLowerCase()}?`,
+        `What is missing in ${scopeName.toLowerCase()}?`,
+        `What should we upload or validate next for ${scopeName.toLowerCase()}?`,
+        `What decisions should not rely on ${scopeName.toLowerCase()} yet?`,
       ]
     : [
-        "What do we know about this context?",
-        "Explain this Home context.",
-        "Show gaps in this Home context.",
-        "What evidence supports this?",
-        "How complete is this context?",
-        "Is this active context or candidate preview?",
-        "What should the client provide next?",
-        "What can Home answer about this context?",
+        "Explain this context in plain English.",
+        "What can I safely ask about this?",
+        "What is missing?",
+        "What should we upload or validate next?",
+        "What decisions should not rely on this yet?",
       ];
   const submit = (question: string) => {
     const text = question.trim();
@@ -1922,9 +2059,9 @@ function ExplorerRail({
         <div className="hx2-answerBox">
           <div>I can answer</div>
           <ul>
-            <li>what evidence is loaded for this area</li>
-            <li>which fields still need client evidence</li>
-            <li>where related context should be inspected next</li>
+            {safeToAsk.slice(0, 3).map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ul>
         </div>
         {qualityLimits.length > 0 ? (
@@ -1940,8 +2077,9 @@ function ExplorerRail({
         <div className="hx2-answerBox warn">
           <div>I won’t answer</div>
           <ul>
-            <li>strategy, use-case design, or advisory synthesis</li>
-            <li>facts outside the active Home context</li>
+            {decisionCautions.slice(0, 3).map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ul>
         </div>
         <div className="hx2-suggestions">
@@ -1992,6 +2130,7 @@ export function HomeSurface({
   v6Browser,
   setupControl,
   dataQuality,
+  englishSummary,
   candidatePreviewEnabled = false,
 }: {
   payload: IntelligenceBindingPayload | null;
@@ -1999,6 +2138,7 @@ export function HomeSurface({
   v6Browser?: HomeV6ContextBrowser | null;
   setupControl?: AdminSetupControlResponse | null;
   dataQuality?: HomeDataQualityModel | null;
+  englishSummary?: HomeEnglishSummary | null;
   candidatePreviewEnabled?: boolean;
 }) {
   const safePayload = useMemo(() => sanitizeVisibleStrings(payload), [payload]);
@@ -2013,6 +2153,10 @@ export function HomeSurface({
   const safeDataQuality = useMemo(
     () => sanitizeVisibleStrings(dataQuality ?? null),
     [dataQuality],
+  );
+  const safeEnglishSummary = useMemo(
+    () => sanitizeVisibleStrings(englishSummary ?? null),
+    [englishSummary],
   );
   const dimensions = Object.values(safeV6Browser?.dimensions ?? {});
   const dims =
@@ -2368,6 +2512,7 @@ export function HomeSurface({
               selected={selected}
               selectedDisplayName={selectedArea?.label}
               setupControl={safeSetupControl}
+              englishSummary={safeEnglishSummary}
               tenantDisplayName={displayedTenantName}
               onAsk={askHomeKnow}
             />
@@ -2377,6 +2522,7 @@ export function HomeSurface({
             isBusy={isBusy}
             onAsk={askHomeKnow}
             dataQuality={safeDataQuality}
+            englishSummary={safeEnglishSummary}
             selected={selected}
             selectedDisplayName={selectedArea?.label}
             thread={thread}

@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-07-13T14:59:22.270Z",
+  "tenants": [
+    {
+      "tenantKey": "skyharbor-air",
+      "tenantDisplayName": "SkyHarbor Air",
+      "decisionCautions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "tenantDisplayName": "Lakeshore Holdings",
+      "decisionCautions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ]
+    },
+    {
+      "tenantKey": "meridian-health",
+      "tenantDisplayName": "Meridian Health",
+      "decisionCautions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ]
+    },
+    {
+      "tenantKey": "first-capital",
+      "tenantDisplayName": "First Capital",
+      "decisionCautions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ]
+    },
+    {
+      "tenantKey": "apex-retail",
+      "tenantDisplayName": "Apex Retail",
+      "decisionCautions": [
+        "Full enterprise estate coverage or application rationalization",
+        "Full enterprise application rationalization",
+        "Enterprise-wide sourcing savings estimates",
+        "Realized value or Tower outcome claims",
+        "Cross-system dependency, vendor, risk, or outcome reasoning"
+      ]
+    }
+  ]
+}
