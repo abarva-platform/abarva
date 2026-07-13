@@ -4,6 +4,7 @@ export type AdminSubSectionId =
   | "overview"
   | "data-loads"
   | "templates"
+  | "data-layer-explorer"
   | "data-trust"
   | "connectors"
   | "outputs"
@@ -66,6 +67,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Templates",
     subtitle: "Dimensions, formats, and owners",
     href: "/admin/templates",
+  },
+  {
+    id: "data-layer-explorer",
+    label: "Data Journey",
+    subtitle: "Input-to-layer map and guardrails",
+    href: "/admin/data-layer-explorer",
   },
   {
     id: "data-trust",
