@@ -38,6 +38,25 @@ export interface AdminTemplateCatalogViewItem extends AdminTemplateCatalogItem {
   matchedSourceFiles: string[];
 }
 
+export interface AdminTemplateFieldDefinition {
+  fieldName: string;
+  description: string;
+  requirement: "required" | "optional";
+  acceptedValues: string;
+  example: string;
+  mappingTarget: string;
+  validationRule: string;
+  moduleImpact: string[];
+}
+
+export interface AdminTemplateArtifact {
+  template: AdminTemplateCatalogItem;
+  fields: AdminTemplateFieldDefinition[];
+  sampleRows: Record<string, string>[];
+  guideId: string;
+  downloadFileName: string;
+}
+
 export interface AdminDataIntakeGuide {
   id: string;
   title: string;
@@ -55,6 +74,22 @@ export interface AdminDataIntakeLibraryView {
 
 const SHARED_FILE_TYPES = ["XLSX", "CSV"];
 const MODULES_ALL = ["Home", "Intelligence", "Moves", "Source", "Tower"];
+
+const TEMPLATE_GUIDE_BY_FAMILY: Record<AdminTemplateCatalogItem["family"], string> = {
+  enterprise: "new-tenant-onboarding",
+  governance: "new-tenant-onboarding",
+  technology: "new-tenant-onboarding",
+  "module-pack": "moves-program-setup",
+};
+
+const TEMPLATE_GUIDE_BY_ID: Record<string, string> = {
+  "source-event-pack": "source-event-setup",
+  "moves-program-pack": "moves-program-setup",
+  "tower-outcome-pack": "tower-outcome-tracking",
+  "vendors-contracts": "contract-optimization",
+  "spend-value": "tower-outcome-tracking",
+  "metric-definitions": "tower-outcome-tracking",
+};
 
 export const ADMIN_TEMPLATE_CATALOG: AdminTemplateCatalogItem[] = [
   {
@@ -815,4 +850,252 @@ export function adminTemplateStatusToControlStatus(
     return "partially-ready";
   }
   return "not-created";
+}
+
+export function getAdminTemplateById(
+  templateId: string,
+): AdminTemplateCatalogItem | undefined {
+  return ADMIN_TEMPLATE_CATALOG.find((template) => template.id === templateId);
+}
+
+export function getAdminGuideById(
+  guideId: string,
+): AdminDataIntakeGuide | undefined {
+  return ADMIN_DATA_INTAKE_GUIDES.find((guide) => guide.id === guideId);
+}
+
+function csvEscape(value: string | number | boolean | null | undefined): string {
+  const text = value == null ? "" : String(value);
+  if (/[",\n\r]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+export function toCsv(rows: Array<Record<string, string | number | boolean>>): string {
+  if (rows.length === 0) return "";
+  const headers = Object.keys(rows[0] ?? {});
+  return [
+    headers.map(csvEscape).join(","),
+    ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(",")),
+  ].join("\n");
+}
+
+function sentenceFromField(fieldName: string, template: AdminTemplateCatalogItem): string {
+  const normalized = fieldName.toLowerCase();
+  if (normalized.includes("evidence")) {
+    return "Named source file, system extract, attestation, or document that supports this row.";
+  }
+  if (normalized.includes("owner") || normalized.includes("role")) {
+    return "Business-readable accountable owner role; named people are optional unless approved.";
+  }
+  if (normalized.includes("currency")) {
+    return "Currency code for any monetary value, such as USD.";
+  }
+  if (normalized.includes("amount") || normalized.includes("budget") || normalized.includes("value") || normalized.includes("spend")) {
+    return "Numeric business value with scale and period clearly labeled.";
+  }
+  if (normalized.includes("company") || normalized.includes("unit") || normalized.includes("enterprise")) {
+    return "Holding company, portfolio company, corporate shared service, or operating unit.";
+  }
+  if (normalized.includes("status") || normalized.includes("stage")) {
+    return "Current business state using the accepted values for this template.";
+  }
+  return `Business-readable ${fieldName} used to populate ${template.mappingTarget}.`;
+}
+
+function acceptedValuesForField(fieldName: string, template: AdminTemplateCatalogItem): string {
+  const normalized = fieldName.toLowerCase();
+  if (normalized.includes("criticality")) return "critical | high | medium | low";
+  if (normalized.includes("status")) return "active | planned | retired | blocked | open | closed";
+  if (normalized.includes("stage")) return "idea | approved | in-flight | launched | measured | closed";
+  if (normalized.includes("currency")) return "ISO currency code, for example USD";
+  if (normalized.includes("sensitivity")) return "public | internal | confidential | restricted";
+  if (normalized.includes("allowed use")) return "home | intelligence | moves | source | tower | restricted";
+  if (normalized.includes("strength")) return "strong | directional | weak | unknown";
+  if (normalized.includes("risk")) return "low | medium | high | critical";
+  if (normalized.includes("date")) return "YYYY-MM-DD";
+  if (normalized.includes("amount") || normalized.includes("budget") || normalized.includes("value") || normalized.includes("spend")) {
+    return "number plus currency/scale in adjacent fields";
+  }
+  return template.acceptedFileTypes.includes("DOCX")
+    ? "business-readable text"
+    : "business-readable text or approved controlled value";
+}
+
+function exampleForField(fieldName: string): string {
+  const normalized = fieldName.toLowerCase();
+  if (normalized.includes("enterprise")) return "Lakeshore Holdings";
+  if (normalized.includes("portfolio company") || normalized.includes("company")) return "Forge & Field";
+  if (normalized.includes("function")) return "Corporate Finance";
+  if (normalized.includes("owner")) return "CFO / Treasurer";
+  if (normalized.includes("application")) return "SAP S/4HANA";
+  if (normalized.includes("vendor")) return "Microsoft";
+  if (normalized.includes("currency")) return "USD";
+  if (normalized.includes("date")) return "2026-09-30";
+  if (normalized.includes("amount") || normalized.includes("budget") || normalized.includes("spend")) return "12500000";
+  if (normalized.includes("value")) return "6200000";
+  if (normalized.includes("evidence")) return "finance-baseline-fy26.xlsx";
+  if (normalized.includes("status")) return "active";
+  if (normalized.includes("criticality")) return "high";
+  if (normalized.includes("risk")) return "medium";
+  return "Client-provided value";
+}
+
+export function buildAdminTemplateFieldDictionary(
+  template: AdminTemplateCatalogItem,
+): AdminTemplateFieldDefinition[] {
+  const fields = [
+    ...template.requiredFields.map((fieldName) => ({
+      fieldName,
+      requirement: "required" as const,
+    })),
+    {
+      fieldName: "Client validation status",
+      requirement: "optional" as const,
+    },
+    {
+      fieldName: "Notes / assumptions",
+      requirement: "optional" as const,
+    },
+  ];
+
+  return fields.map(({ fieldName, requirement }, index) => ({
+    fieldName,
+    requirement,
+    description: sentenceFromField(fieldName, template),
+    acceptedValues: acceptedValuesForField(fieldName, template),
+    example: exampleForField(fieldName),
+    mappingTarget: template.mappingTarget,
+    validationRule:
+      template.validationRules[index % template.validationRules.length] ??
+      "Value must be client-supplied or visibly marked as missing.",
+    moduleImpact: template.moduleImpact,
+  }));
+}
+
+export function buildAdminTemplateArtifact(
+  template: AdminTemplateCatalogItem,
+): AdminTemplateArtifact {
+  const fields = buildAdminTemplateFieldDictionary(template);
+  const sampleRow = Object.fromEntries(
+    fields.map((field) => [field.fieldName, field.example]),
+  ) as Record<string, string>;
+
+  return {
+    template,
+    fields,
+    sampleRows: [
+      sampleRow,
+      Object.fromEntries(
+        fields.map((field) => [
+          field.fieldName,
+          field.requirement === "required"
+            ? `${field.example} - second example`
+            : "",
+        ]),
+      ) as Record<string, string>,
+    ],
+    guideId: TEMPLATE_GUIDE_BY_ID[template.id] ?? TEMPLATE_GUIDE_BY_FAMILY[template.family],
+    downloadFileName: `${template.id}.csv`,
+  };
+}
+
+export function buildAdminTemplateCsv(template: AdminTemplateCatalogItem): string {
+  return toCsv(buildAdminTemplateArtifact(template).sampleRows);
+}
+
+export function buildAdminFieldDictionaryCsv(
+  template: AdminTemplateCatalogItem,
+): string {
+  return toCsv(
+    buildAdminTemplateFieldDictionary(template).map((field) => ({
+      "Field name": field.fieldName,
+      Requirement: field.requirement,
+      Description: field.description,
+      "Accepted values": field.acceptedValues,
+      Example: field.example,
+      "Mapping target": field.mappingTarget,
+      "Validation rule": field.validationRule,
+      "Module impact": field.moduleImpact.join("; "),
+    })),
+  );
+}
+
+export function buildAdminGuideMarkdown(guide: AdminDataIntakeGuide): string {
+  const relatedTemplates = ADMIN_TEMPLATE_CATALOG.filter((template) => {
+    const artifact = buildAdminTemplateArtifact(template);
+    return artifact.guideId === guide.id;
+  });
+
+  return [
+    `# ${guide.title}`,
+    "",
+    guide.detail,
+    "",
+    "## Operating principle",
+    "",
+    "Uploaded evidence is not active tenant truth. Complete the packet, validate it, preview it as inactive candidate data, then promote only with approval and cite-render proof.",
+    "",
+    "## Workflow",
+    "",
+    "1. Choose the setup path and required templates.",
+    "2. Populate business-facing fields with client-owned evidence.",
+    "3. Keep missing values visible instead of inventing them.",
+    "4. Upload and validate in the later dry-run lane.",
+    "5. Inspect candidate preview before any active tenant access changes.",
+    "6. Promote only with approval, rollback, and module proof.",
+    "",
+    "## Related templates",
+    "",
+    ...(relatedTemplates.length
+      ? relatedTemplates.map(
+          (template) =>
+            `- ${template.name}: ${template.purpose} Module impact: ${template.moduleImpact.join(", ")}.`,
+        )
+      : ["- No direct templates are assigned to this guide yet."]),
+    "",
+    "## Guardrails",
+    "",
+    ...ADMIN_DATA_INTAKE_GUARDRAILS.map((guardrail) => `- ${guardrail}`),
+    "",
+  ].join("\n");
+}
+
+export function buildAdminTenantPacketManifest() {
+  return {
+    packetName: "AbarVa Tenant Packet",
+    version: "admin-pr4-read-only-artifacts",
+    generatedFrom: "ADMIN_TEMPLATE_CATALOG",
+    truthSplit: {
+      uploadEnabled: false,
+      validationExecuted: false,
+      candidateCreated: false,
+      candidatePromoted: false,
+      activeTenantAccessUpdated: false,
+      moduleRuntimeConsumptionChanged: false,
+    },
+    templates: ADMIN_TEMPLATE_CATALOG.map((template) => {
+      const artifact = buildAdminTemplateArtifact(template);
+      return {
+        id: template.id,
+        name: template.name,
+        requirement: template.requirement,
+        expectedOwner: template.expectedOwner,
+        acceptedFileTypes: template.acceptedFileTypes,
+        moduleImpact: template.moduleImpact,
+        mappingTarget: template.mappingTarget,
+        templateFile: `templates/${artifact.downloadFileName}`,
+        fieldDictionaryFile: `field-dictionaries/${template.id}-field-dictionary.csv`,
+        guideFile: `guides/${artifact.guideId}.md`,
+      };
+    }),
+    guides: ADMIN_DATA_INTAKE_GUIDES.map((guide) => ({
+      id: guide.id,
+      title: guide.title,
+      stepCount: guide.stepCount,
+      file: `guides/${guide.id}.md`,
+    })),
+    guardrails: ADMIN_DATA_INTAKE_GUARDRAILS,
+  };
 }

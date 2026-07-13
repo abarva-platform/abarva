@@ -141,13 +141,44 @@ describe("AdminSetupExperience", () => {
     expect(screen.getByText("Create candidate preview")).toBeTruthy();
     expect(screen.getByText("Promote with proof")).toBeTruthy();
     expect(screen.getByText("Template contracts and readiness impact")).toBeTruthy();
-    expect(screen.getByText("Applications & Systems")).toBeTruthy();
-    expect(screen.getByText("Source Event Pack")).toBeTruthy();
+    expect(screen.getAllByText("Applications & Systems").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Source Event Pack").length).toBeGreaterThan(0);
     expect(screen.getAllByText("View guide").length).toBeGreaterThan(0);
-    const downloadTemplateButton = screen.getAllByRole("button", {
-      name: "Download template",
+    expect(
+      screen.getByRole("link", { name: "Download full Tenant Packet" }),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByRole("link", { name: "Download template" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("button", { name: "Upload in ADMIN-PR5" }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("opens template details, field dictionary, and guide details without upload actions", () => {
+    renderSetup({ withSetupControl: true });
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Data Intake Library Templates and guides 19/,
+      }),
+    );
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "View template" })[0],
+    );
+    expect(screen.getByText("Fields, rules, mapping, and module impact")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Download selected template" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Download dictionary" })).toBeTruthy();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "View guide" })[0]);
+    expect(screen.getByText("How-to guide")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Download guide" })).toBeTruthy();
+
+    const uploadButton = screen.getAllByRole("button", {
+      name: "Upload in ADMIN-PR5",
     })[0] as HTMLButtonElement;
-    expect(downloadTemplateButton.disabled).toBe(true);
+    expect(uploadButton.disabled).toBe(true);
   });
 
   it("uses setup-control source files for honest template status without making data active", () => {
