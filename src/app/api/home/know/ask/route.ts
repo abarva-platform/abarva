@@ -7,6 +7,7 @@ import type {
 } from "@/lib/home/know/home-know-contract";
 import { sanitizeHomeKnowVisiblePayloadWithAudit } from "@/lib/home/know/home-demo-safe-response";
 import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
+import { applyHomeKnowClaudeSynthesis } from "@/lib/home/know/home-know-claude-synthesis";
 import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
 import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
 import { answerHomeKnowFromV7 } from "@/lib/home/know/v7-home-ask";
@@ -157,7 +158,13 @@ async function buildV7HomeKnowResponse(input: {
     tenantDisplayName: input.tenantDisplayName,
     includeTrace: input.includeTrace,
   });
-  return toHomeKnowResponseFromV7(result, { question: input.question });
+  const response = toHomeKnowResponseFromV7(result, { question: input.question });
+  return applyHomeKnowClaudeSynthesis({
+    response,
+    tenantKey: result.tenant.canonicalKey,
+    tenantDisplayName: result.tenant.displayName,
+    includeTrace: input.includeTrace,
+  });
 }
 
 async function buildV6HomeKnowResponse(input: {

@@ -5,6 +5,7 @@
 // not classify intent, retrieve data, or render Intelligence experts locally.
 
 import { useCallback, useMemo, useState } from "react";
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import type { ChatMessage } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type {
@@ -309,7 +310,8 @@ const CSS = `
 .homex .hx2-relRow strong{font-size:12px;color:#1f6b3a;white-space:nowrap}
 .homex .hx2-empty{border:1px dashed #d8d1c2;border-radius:10px;background:#fff;padding:16px;color:#536073}
 .homex .hx2-rail{position:fixed;right:22px;bottom:92px;z-index:70;width:min(420px,calc(100vw - 34px));max-height:min(760px,calc(100vh - 126px));overflow:auto;border:1px solid #d8d1c2;border-radius:16px;background:#fff;padding:16px;display:grid;align-content:start;gap:14px;box-shadow:0 24px 70px rgba(7,22,47,.22)}
-.homex .hx2-rail.expanded{top:84px;bottom:24px;width:min(720px,calc(100vw - 40px));max-height:none}
+.homex .hx2-rail.expanded{top:78px;bottom:22px;width:min(980px,calc(100vw - 360px));min-width:min(760px,calc(100vw - 40px));max-height:none;padding:20px}
+.homex .hx2-rail.expanded .hx2-card{display:grid;grid-template-rows:auto auto auto auto auto minmax(260px,1fr) auto;min-height:calc(100vh - 142px)}
 .homex .hx2-avaLauncher{position:fixed;right:24px;bottom:22px;z-index:72;display:inline-flex;align-items:center;gap:10px;border:0;border-radius:999px;background:#07162f;color:#fff;padding:12px 18px;box-shadow:0 18px 42px rgba(7,22,47,.24);font:inherit;font-weight:850;cursor:pointer}
 .homex .hx2-avaLauncherMark{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#0d2f63;color:#22aeea;font-family:var(--font-fraunces),Georgia,serif;font-weight:900}
 .homex .hx2-avaControls{margin-left:auto;display:flex;gap:6px}.homex .hx2-avaControls button{width:30px;height:30px;border:1px solid #ded8ca;border-radius:8px;background:#fff;color:#07162f;font:inherit;font-weight:900;cursor:pointer}
@@ -343,11 +345,14 @@ const CSS = `
 .homex .hx2-answerBox li::before{content:"✓";margin-right:7px;color:#13835e;font-weight:800}
 .homex .hx2-answerBox.warn li::before{content:"—";color:#7b7168}
 .homex .hx2-thread{display:grid;gap:8px;margin-top:10px;max-height:160px;overflow:auto}
+.homex .hx2-rail.expanded .hx2-thread{max-height:none;min-height:min(560px,calc(100vh - 360px));align-content:start}
+.homex .hx2-rail.expanded .hx2-turn{font-size:13.5px;line-height:1.55}
+.homex .hx2-rail.expanded .hx2-turn.agent{padding:0;background:transparent;border:0}
 .homex .hx2-turn{border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.4;background:#f6f3ed;color:#111827;white-space:pre-wrap}
 .homex .hx2-turn.user{background:#07162f;color:#fff}
 .homex .hx2-ask{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;margin-top:10px}
 .homex .hx2-ask input{min-width:0;border:1px solid #ded8ca;border-radius:8px;padding:10px;font:inherit;font-size:13px}
-@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}.homex .hx2-moduleImpact{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-profileStats,.homex .hx2-snapshotCards,.homex .hx2-actionGrid,.homex .hx2-contextCards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}.homex .hx2-moduleImpact{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-profileStats,.homex .hx2-snapshotCards,.homex .hx2-actionGrid,.homex .hx2-contextCards{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-rail.expanded{left:20px;right:20px;width:auto;min-width:0}}
 @media(max-width:900px){.homex .hx2-status,.homex .hx2-knowledgeGrid,.homex .hx2-answerability{grid-template-columns:1fr}.homex .hx2-statusActions{justify-content:flex-start;flex-wrap:wrap}}
 @media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList,.homex .hx2-meaningHead,.homex .hx2-meaningGrid,.homex .hx2-meaningLists,.homex .hx2-moduleImpact,.homex .hx2-profileBlockHead,.homex .hx2-profileStats,.homex .hx2-profileCols,.homex .hx2-depthGrid,.homex .hx2-safeGrid,.homex .hx2-snapshotCards,.homex .hx2-actionGrid,.homex .hx2-contextCards{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
 `;
@@ -2434,10 +2439,18 @@ function ExplorerRail({
         <div className="hx2-thread">
           {thread.slice(-2).map((turn) => (
             <div className={`hx2-turn ${turn.role}`} key={turn.id}>
-              {turn.body ||
+              {turn.role === "agent" && turn.agentAnswer ? (
+                <AgentAnswerRenderer
+                  answer={turn.agentAnswer}
+                  showChrome={expanded}
+                  showProse
+                />
+              ) : (
+                turn.body ||
                 (isBusy && turn.role === "agent"
                   ? "Reading loaded context..."
-                  : "")}
+                  : "")
+              )}
             </div>
           ))}
         </div>
@@ -2453,7 +2466,7 @@ function ExplorerRail({
             placeholder="Ask about this context..."
             value={draft}
           />
-          <button disabled={isBusy} type="submit">
+          <button aria-label="Ask aVa" disabled={isBusy} type="submit">
             ↑
           </button>
         </form>

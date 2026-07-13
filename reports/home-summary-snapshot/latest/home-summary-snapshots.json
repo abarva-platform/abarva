@@ -1,18 +1,60 @@
 {
-  "generatedAt": "2026-07-13T20:32:22.126Z",
+  "generatedAt": "2026-07-13T21:32:25.714Z",
   "tenants": [
     {
       "contractVersion": "home_summary_snapshot.v1",
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "skyharbor-air",
-        "displayName": "Airline Demo",
+        "displayName": "SkyHarbor Air",
+        "legalName": "SkyHarbor Air Group",
         "industry": "Airline",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "subIndustry": "Global passenger airline",
+        "headquarters": "Atlanta, GA",
+        "revenue": "$52.1B",
+        "revenueVerified": true,
+        "employees": "95,000",
+        "employeesVerified": true,
+        "businessModel": "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+        "businessSegments": [
+          "Passenger operations",
+          "Loyalty and customer experience",
+          "Operations control",
+          "Crew operations",
+          "Cargo and partner operations",
+          "Technology and data platforms"
+        ],
+        "missionStatement": "Move people and goods safely while protecting customer trust during disruption.",
+        "visionStatement": "Become the most resilient AI-enabled airline operations network in the market.",
+        "leadershipRoles": [
+          "CEO: Elena Vasquez",
+          "CIO: Amala Rao",
+          "CFO: Victor Hale",
+          "COO: Darius King",
+          "CDAO: Priya Nair"
+        ],
+        "strategicPriorities": [
+          "IROPS recovery command",
+          "Mainframe and MQ modernization",
+          "Crew recovery decision support",
+          "Customer reaccommodation assist",
+          "Tower value tracking for operational outcomes"
+        ],
+        "globalLocations": [
+          "United States",
+          "Canada",
+          "Europe",
+          "Latin America",
+          "Asia Pacific",
+          "Global airport operations"
+        ],
+        "sourceAsOfDate": "2026-05-27",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic airline planning-grade substrate; not real SkyHarbor production data",
+          "Client-approved source inventory still required before active promotion",
+          "Revenue and workforce anchors are demo facts, not audited filings"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "active_home_context",
         "activeContextStatus": "Active Home context",
@@ -20,22 +62,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Airline",
+          "SkyHarbor Air Group is Global passenger airline headquartered in Atlanta, GA with $52.1B revenue and 95,000 employees. Its model spans Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+          "Mission: Move people and goods safely while protecting customer trust during disruption.",
+          "Vision: Become the most resilient AI-enabled airline operations network in the market.",
           "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete."
         ],
         "businessModelSignals": [
-          "SkyHarbor Air Group",
-          "SHA-BF-001 - Operations Control Center / IROPS",
-          "SHA-BF-002 - Flight Operations",
-          "SHA-BF-003 - Crew Operations",
-          "SHA-BF-004 - Airport Customer Service"
+          "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+          "Segment: Passenger operations",
+          "Segment: Loyalty and customer experience",
+          "Segment: Operations control",
+          "Segment: Crew operations",
+          "Segment: Cargo and partner operations"
         ],
         "strategicPrioritySignals": [
-          "MET-0001 - Cost-to-Income Ratio",
-          "MET-0002 - Net Promoter Score",
-          "MET-0003 - Employee Attrition Rate",
-          "MET-0004 - Forecast Accuracy",
-          "MET-0005 - EBIT Margin"
+          "IROPS recovery command",
+          "Mainframe and MQ modernization",
+          "Crew recovery decision support",
+          "Customer reaccommodation assist",
+          "Tower value tracking for operational outcomes"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -189,7 +234,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -260,7 +307,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -270,7 +319,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 320,
           "mappedCount": 320,
           "sourceCount": 1,
@@ -326,7 +377,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -336,7 +389,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 2236,
           "mappedCount": 2236,
           "sourceCount": 1,
@@ -392,7 +447,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -402,7 +459,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 2236,
           "mappedCount": 2236,
           "sourceCount": 1,
@@ -458,7 +517,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -535,7 +596,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -613,7 +676,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -690,7 +755,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -700,7 +767,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 489,
           "mappedCount": 489,
           "sourceCount": 1,
@@ -756,7 +825,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -794,7 +865,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -881,9 +954,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "e714a640a550873ca1ebdd36d3a1560224a04fb8263ae2ffa84735014c95ef1c",
+        "inputFingerprint": "42ed00330e1ff46dce9c114e4473529594dd43a9e87cf7abd8997d077fb7fbbc",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -915,12 +988,52 @@
         "tenantId": null,
         "tenantKey": "lakeshore-holdings",
         "displayName": "Lakeshore Holdings",
-        "industry": "Diversified Holdings",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "legalName": "Lakeshore Holdings",
+        "industry": "Diversified private holding company",
+        "subIndustry": "Portfolio-company operator with corporate shared services",
+        "headquarters": "Chicago, IL",
+        "revenue": "$7.12B",
+        "revenueVerified": true,
+        "employees": "11,800",
+        "employeesVerified": true,
+        "businessModel": "Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+        "businessSegments": [
+          "Northline",
+          "Brightmark",
+          "Forge and Field",
+          "Great Lakes Pantry",
+          "Corporate Shared Services",
+          "Innovation IT and Data AI"
+        ],
+        "missionStatement": "Protect operating-company autonomy while using shared intelligence to improve cost, risk, and growth decisions.",
+        "visionStatement": "Turn fragmented portfolio knowledge into a governed enterprise intelligence layer for smarter transformation and sourcing decisions.",
+        "leadershipRoles": [
+          "Founder and CEO: Anand Sundaram",
+          "Group CIO: Maya Iyer",
+          "CFO: Elena Brooks",
+          "Chief Legal Officer: Tomas Reed",
+          "Head of Shared Services: Nina Patel"
+        ],
+        "strategicPriorities": [
+          "Legal contract intake modernization",
+          "Corporate shared-services operating model",
+          "Vendor and consulting spend optimization",
+          "Portfolio data and AI foundation",
+          "Source-to-value governance"
+        ],
+        "globalLocations": [
+          "United States Midwest",
+          "Great Lakes operating companies",
+          "Corporate shared services",
+          "National distribution partners"
+        ],
+        "sourceAsOfDate": "2026-07-01",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic holding-company profile; not a real client filing",
+          "Direct holdco revenue must not be claimed as operating revenue",
+          "Operating-company split still needs final stewardship before board-grade opco reporting"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "active_home_context",
         "activeContextStatus": "Active Home context",
@@ -928,22 +1041,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Diversified Holdings",
+          "Lakeshore Holdings is Portfolio-company operator with corporate shared services headquartered in Chicago, IL with $7.12B revenue and 11,800 employees. Its model spans Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+          "Mission: Protect operating-company autonomy while using shared intelligence to improve cost, risk, and growth decisions.",
+          "Vision: Turn fragmented portfolio knowledge into a governed enterprise intelligence layer for smarter transformation and sourcing decisions.",
           "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
         ],
         "businessModelSignals": [
-          "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-          "LH-FN-FIN - Corporate Finance and Treasury",
-          "LH-FN-HR - Corporate HR and Talent",
-          "LH-FN-LEGAL - Corporate Legal and Compliance",
-          "LH-FN-INVEST - Investments and Portfolio Management"
+          "Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+          "Segment: Northline",
+          "Segment: Brightmark",
+          "Segment: Forge and Field",
+          "Segment: Great Lakes Pantry",
+          "Segment: Corporate Shared Services"
         ],
         "strategicPrioritySignals": [
-          "LH-MET-TOTAL-IT-BUDGET - FY26 direct IT budget",
-          "LH-MET-RUN-BUDGET - FY26 run budget",
-          "LH-MET-CHANGE-BUDGET - FY26 change budget",
-          "LH-MET-SPEND-YTD - FY26 spend to date",
-          "LH-MET-PROGRAM-BUDGET - Program committed budget"
+          "Legal contract intake modernization",
+          "Corporate shared-services operating model",
+          "Vendor and consulting spend optimization",
+          "Portfolio data and AI foundation",
+          "Source-to-value governance"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -1086,7 +1202,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1136,7 +1254,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1146,7 +1266,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 90,
           "mappedCount": 90,
           "sourceCount": 1,
@@ -1181,7 +1303,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1191,7 +1315,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 305,
           "mappedCount": 305,
           "sourceCount": 1,
@@ -1226,7 +1352,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1236,7 +1364,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 305,
           "mappedCount": 305,
           "sourceCount": 1,
@@ -1271,7 +1401,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1322,7 +1454,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1374,7 +1508,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1425,7 +1561,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1435,7 +1573,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 90,
           "mappedCount": 90,
           "sourceCount": 1,
@@ -1470,7 +1610,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1508,7 +1650,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1595,9 +1739,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "7753de10f3c63e873d68069c7249b43f951f9b52da90f2e475edce97771bab2f",
+        "inputFingerprint": "aa09e831db9a503ee250ef3767a31adf132a2cedde8023d5447b71331ac20361",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -1628,13 +1772,56 @@
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "meridian-health",
-        "displayName": "Healthcare Demo",
+        "displayName": "Meridian Health System",
+        "legalName": "Meridian Health System",
         "industry": "Healthcare",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "subIndustry": "Integrated delivery network and health plan",
+        "headquarters": "Sacramento, CA",
+        "revenue": "$16.8B",
+        "revenueVerified": true,
+        "employees": "58,000",
+        "employeesVerified": true,
+        "businessModel": "Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+        "businessSegments": [
+          "Clinical delivery",
+          "Health plan operations",
+          "Pharmacy and claims",
+          "Finance and revenue cycle",
+          "Provider quality",
+          "Enterprise analytics"
+        ],
+        "missionStatement": "Improve care access, quality, and affordability through trusted data and coordinated operations.",
+        "visionStatement": "Build a governed clinical, claims, and finance intelligence layer that makes automation safe and measurable.",
+        "leadershipRoles": [
+          "CEO: Mara Bennett",
+          "CIO: Daniel Cho",
+          "CFO: Priya Shah",
+          "CDAO: Leena Castillo",
+          "CMO: Dr. Rafael Ortiz"
+        ],
+        "strategicPriorities": [
+          "Unified clinical and claims lakehouse",
+          "Governed data foundation for AI automation",
+          "Call center optimization",
+          "Provider quality and performance",
+          "Cost-of-care transparency",
+          "Payment integrity",
+          "Automated close and reporting"
+        ],
+        "globalLocations": [
+          "California",
+          "Nevada",
+          "Pacific Northwest",
+          "Regional health plan service areas",
+          "Virtual care operations"
+        ],
+        "sourceAsOfDate": "2026-07-09",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic PHI-free planning-grade substrate; not real Meridian production data",
+          "AWS Databricks aspiration is not proof that platform foundation is complete",
+          "Formal data governance and security evidence still required"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "active_home_context",
         "activeContextStatus": "Active Home context",
@@ -1642,22 +1829,26 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Healthcare",
+          "Meridian Health System is Integrated delivery network and health plan headquartered in Sacramento, CA with $16.8B revenue and 58,000 employees. Its model spans Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+          "Mission: Improve care access, quality, and affordability through trusted data and coordinated operations.",
+          "Vision: Build a governed clinical, claims, and finance intelligence layer that makes automation safe and measurable.",
           "Meridian Health has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
         ],
         "businessModelSignals": [
-          "Healthcare Demo",
-          "MER-BF-001 - Ambulatory and Primary Care",
-          "MER-BF-002 - Hospital Operations",
-          "MER-BF-003 - Health Plan Operations",
-          "MER-BF-004 - Pharmacy Services"
+          "Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+          "Segment: Clinical delivery",
+          "Segment: Health plan operations",
+          "Segment: Pharmacy and claims",
+          "Segment: Finance and revenue cycle",
+          "Segment: Provider quality"
         ],
         "strategicPrioritySignals": [
-          "MERIDIANHEALTH-MET-0001 - Healthcare Demo benefit realization against committed value metric 1",
-          "MERIDIANHEALTH-MET-0002 - Healthcare Demo elapsed time for target process metric 2",
-          "MERIDIANHEALTH-MET-0003 - Healthcare Demo open control and governance pressure metric 3",
-          "MERIDIANHEALTH-MET-0004 - Healthcare Demo active usage of changed workflow metric 4",
-          "MERIDIANHEALTH-MET-0005 - Healthcare Demo unit cost across served population or customer journey metric 5"
+          "Unified clinical and claims lakehouse",
+          "Governed data foundation for AI automation",
+          "Call center optimization",
+          "Provider quality and performance",
+          "Cost-of-care transparency",
+          "Payment integrity"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -1800,7 +1991,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1850,7 +2043,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1860,7 +2055,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 95,
           "mappedCount": 95,
           "sourceCount": 1,
@@ -1895,7 +2092,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1905,7 +2104,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 360,
           "mappedCount": 360,
           "sourceCount": 1,
@@ -1940,7 +2141,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -1950,7 +2153,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 360,
           "mappedCount": 360,
           "sourceCount": 1,
@@ -1985,7 +2190,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2036,7 +2243,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2088,7 +2297,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2139,7 +2350,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2149,7 +2362,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 190,
           "mappedCount": 190,
           "sourceCount": 1,
@@ -2184,7 +2399,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2222,7 +2439,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2309,9 +2528,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "b095712c5c608831e2992d2310d91e28f45713a36448a7f0f45bc6f8593e0e49",
+        "inputFingerprint": "018961c0e4b932ed7588c13aec948c9780658989e124dcbd0677db7e4b0422b2",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -2342,13 +2561,56 @@
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "first-capital",
-        "displayName": "Financial Services Demo",
-        "industry": "Financial Services",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "displayName": "First Capital",
+        "legalName": "First Capital Financial Services",
+        "industry": "Financial services",
+        "subIndustry": "Consumer and commercial banking",
+        "headquarters": "Charlotte, NC",
+        "revenue": "$52B",
+        "revenueVerified": true,
+        "employees": "65,000",
+        "employeesVerified": true,
+        "businessModel": "Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+        "businessSegments": [
+          "Consumer banking",
+          "Commercial banking",
+          "Cards and payments",
+          "Lending operations",
+          "Wealth management",
+          "Risk and compliance",
+          "Technology platforms"
+        ],
+        "missionStatement": "Help customers and businesses manage money with trusted, efficient, and compliant financial services.",
+        "visionStatement": "Modernize banking operations with governed data, resilient platforms, and measurable AI-enabled decision support.",
+        "leadershipRoles": [
+          "CEO: Charlotte Hayes",
+          "CIO: Nathan Brooks",
+          "CFO: Mira Kapoor",
+          "Chief Risk Officer: Evelyn Chen",
+          "CDAO: Samuel Price"
+        ],
+        "strategicPriorities": [
+          "Digital account-opening modernization",
+          "Fraud and payment integrity analytics",
+          "Core banking modernization sequencing",
+          "Vendor and consulting spend transparency",
+          "Risk and compliance automation"
+        ],
+        "globalLocations": [
+          "United States",
+          "Northeast",
+          "Southeast",
+          "Midwest",
+          "Digital banking operations",
+          "Operations centers"
+        ],
+        "sourceAsOfDate": "2026-06-29",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic banking substrate; not real First Capital production data",
+          "Regulatory and financial claims require verified source evidence",
+          "Core-system modernization facts need owner validation before active promotion"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "active_home_context",
         "activeContextStatus": "Active Home context",
@@ -2356,22 +2618,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Financial Services",
+          "First Capital Financial Services is Consumer and commercial banking headquartered in Charlotte, NC with $52B revenue and 65,000 employees. Its model spans Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+          "Mission: Help customers and businesses manage money with trusted, efficient, and compliant financial services.",
+          "Vision: Modernize banking operations with governed data, resilient platforms, and measurable AI-enabled decision support.",
           "First Capital has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
         ],
         "businessModelSignals": [
-          "Financial Services Demo",
-          "FC-BF-001 - Consumer Banking & Deposits",
-          "FC-BF-002 - Commercial & Corporate Banking",
-          "FC-BF-003 - Cards & Payments",
-          "FC-BF-004 - Wealth & Asset Management"
+          "Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+          "Segment: Consumer banking",
+          "Segment: Commercial banking",
+          "Segment: Cards and payments",
+          "Segment: Lending operations",
+          "Segment: Wealth management"
         ],
         "strategicPrioritySignals": [
-          "FIRSTCAPITAL-MET-0001 - Financial Services Demo benefit realization against committed value metric 1",
-          "FIRSTCAPITAL-MET-0002 - Financial Services Demo elapsed time for target process metric 2",
-          "FIRSTCAPITAL-MET-0003 - Financial Services Demo open control and governance pressure metric 3",
-          "FIRSTCAPITAL-MET-0004 - Financial Services Demo active usage of changed workflow metric 4",
-          "FIRSTCAPITAL-MET-0005 - Financial Services Demo unit cost across served population or customer journey metric 5"
+          "Digital account-opening modernization",
+          "Fraud and payment integrity analytics",
+          "Core banking modernization sequencing",
+          "Vendor and consulting spend transparency",
+          "Risk and compliance automation"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -2514,7 +2779,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2564,7 +2831,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2574,7 +2843,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 120,
           "mappedCount": 120,
           "sourceCount": 1,
@@ -2609,7 +2880,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2619,7 +2892,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 460,
           "mappedCount": 460,
           "sourceCount": 1,
@@ -2654,7 +2929,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2664,7 +2941,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 460,
           "mappedCount": 460,
           "sourceCount": 1,
@@ -2699,7 +2978,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2750,7 +3031,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2802,7 +3085,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2853,7 +3138,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2863,7 +3150,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 294,
           "mappedCount": 294,
           "sourceCount": 1,
@@ -2898,7 +3187,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -2936,7 +3227,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3023,9 +3316,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "c316558d188dd81bb5050aa818c849b36abf9b9d7037a2513ea98a5f926c6146",
+        "inputFingerprint": "02574b5ccdcaa91533958dc230c348171b4670aecd49c0d017c433ff40b58bbd",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -3056,13 +3349,55 @@
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "apex-retail",
-        "displayName": "Retail Demo",
+        "displayName": "Apex Retail",
+        "legalName": "Apex Retail Group",
         "industry": "Retail",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "subIndustry": "Omnichannel specialty and mass-market retail",
+        "headquarters": "Minneapolis, MN",
+        "revenue": "$18.4B",
+        "revenueVerified": true,
+        "employees": "72,000",
+        "employeesVerified": true,
+        "businessModel": "Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+        "businessSegments": [
+          "Stores",
+          "Digital commerce",
+          "Loyalty and marketing",
+          "Merchandising",
+          "Supply chain",
+          "Customer care",
+          "Technology platforms"
+        ],
+        "missionStatement": "Serve customers with convenient, trusted, and value-conscious retail experiences across channels.",
+        "visionStatement": "Make retail operations smarter by connecting customer, inventory, supply-chain, and workforce decisions.",
+        "leadershipRoles": [
+          "CEO: Jordan Blake",
+          "CIO: Renata Silva",
+          "CFO: Marcus Lee",
+          "CMO: Aisha Grant",
+          "Chief Supply Chain Officer: Owen Keller"
+        ],
+        "strategicPriorities": [
+          "CDP and identity resolution",
+          "Inventory and replenishment intelligence",
+          "Contact-center productivity",
+          "Vendor spend optimization",
+          "Store labor and supply-chain modernization"
+        ],
+        "globalLocations": [
+          "United States",
+          "Canada",
+          "Digital commerce operations",
+          "Distribution centers",
+          "Store support centers"
+        ],
+        "sourceAsOfDate": "2026-06-28",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic retail substrate; not real Apex production data",
+          "Revenue and employee anchors are planning-grade",
+          "Customer and margin claims require source evidence before active use"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "active_home_context",
         "activeContextStatus": "Active Home context",
@@ -3070,22 +3405,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Retail",
+          "Apex Retail Group is Omnichannel specialty and mass-market retail headquartered in Minneapolis, MN with $18.4B revenue and 72,000 employees. Its model spans Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+          "Mission: Serve customers with convenient, trusted, and value-conscious retail experiences across channels.",
+          "Vision: Make retail operations smarter by connecting customer, inventory, supply-chain, and workforce decisions.",
           "Apex Retail has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
         ],
         "businessModelSignals": [
-          "Retail Demo",
-          "APX-BF-001 - Store Operations",
-          "APX-BF-002 - Digital Commerce",
-          "APX-BF-003 - Merchandising",
-          "APX-BF-004 - Supply Chain and Fulfillment"
+          "Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+          "Segment: Stores",
+          "Segment: Digital commerce",
+          "Segment: Loyalty and marketing",
+          "Segment: Merchandising",
+          "Segment: Supply chain"
         ],
         "strategicPrioritySignals": [
-          "APEXRETAIL-MET-0001 - Retail Demo benefit realization against committed value metric 1",
-          "APEXRETAIL-MET-0002 - Retail Demo elapsed time for target process metric 2",
-          "APEXRETAIL-MET-0003 - Retail Demo open control and governance pressure metric 3",
-          "APEXRETAIL-MET-0004 - Retail Demo active usage of changed workflow metric 4",
-          "APEXRETAIL-MET-0005 - Retail Demo unit cost across served population or customer journey metric 5"
+          "CDP and identity resolution",
+          "Inventory and replenishment intelligence",
+          "Contact-center productivity",
+          "Vendor spend optimization",
+          "Store labor and supply-chain modernization"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -3228,7 +3566,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3278,7 +3618,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3288,7 +3630,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 100,
           "mappedCount": 100,
           "sourceCount": 1,
@@ -3323,7 +3667,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3333,7 +3679,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 385,
           "mappedCount": 385,
           "sourceCount": 1,
@@ -3368,7 +3716,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3378,7 +3728,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 385,
           "mappedCount": 385,
           "sourceCount": 1,
@@ -3413,7 +3765,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3464,7 +3818,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3516,7 +3872,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3567,7 +3925,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3577,7 +3937,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 206,
           "mappedCount": 206,
           "sourceCount": 1,
@@ -3612,7 +3974,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3650,7 +4014,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -3737,9 +4103,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "646cc7e55c9a3f510a2f3bae357a8ea7f5411124b4c06235eb1a0de51cd653dd",
+        "inputFingerprint": "ab61aa3d692d12618140bbd04eeb7babf072c49ddad1d1adcce1464aa1202266",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -3772,13 +4138,55 @@
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "skyharbor-air",
-        "displayName": "Airline Demo",
+        "displayName": "SkyHarbor Air",
+        "legalName": "SkyHarbor Air Group",
         "industry": "Airline",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "subIndustry": "Global passenger airline",
+        "headquarters": "Atlanta, GA",
+        "revenue": "$52.1B",
+        "revenueVerified": true,
+        "employees": "95,000",
+        "employeesVerified": true,
+        "businessModel": "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+        "businessSegments": [
+          "Passenger operations",
+          "Loyalty and customer experience",
+          "Operations control",
+          "Crew operations",
+          "Cargo and partner operations",
+          "Technology and data platforms"
+        ],
+        "missionStatement": "Move people and goods safely while protecting customer trust during disruption.",
+        "visionStatement": "Become the most resilient AI-enabled airline operations network in the market.",
+        "leadershipRoles": [
+          "CEO: Elena Vasquez",
+          "CIO: Amala Rao",
+          "CFO: Victor Hale",
+          "COO: Darius King",
+          "CDAO: Priya Nair"
+        ],
+        "strategicPriorities": [
+          "IROPS recovery command",
+          "Mainframe and MQ modernization",
+          "Crew recovery decision support",
+          "Customer reaccommodation assist",
+          "Tower value tracking for operational outcomes"
+        ],
+        "globalLocations": [
+          "United States",
+          "Canada",
+          "Europe",
+          "Latin America",
+          "Asia Pacific",
+          "Global airport operations"
+        ],
+        "sourceAsOfDate": "2026-05-27",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic airline planning-grade substrate; not real SkyHarbor production data",
+          "Client-approved source inventory still required before active promotion",
+          "Revenue and workforce anchors are demo facts, not audited filings"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "candidate_preview",
         "activeContextStatus": "Active Home context",
@@ -3786,22 +4194,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Airline",
+          "SkyHarbor Air Group is Global passenger airline headquartered in Atlanta, GA with $52.1B revenue and 95,000 employees. Its model spans Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+          "Mission: Move people and goods safely while protecting customer trust during disruption.",
+          "Vision: Become the most resilient AI-enabled airline operations network in the market.",
           "Airline Demo is being viewed in inactive candidate preview. The richer applications and systems candidate can be inspected, but it is not active tenant truth and should not drive broad enterprise decisions until relationship projection and active-use controls are complete."
         ],
         "businessModelSignals": [
-          "SkyHarbor Air Group",
-          "SHA-BF-001 - Operations Control Center / IROPS",
-          "SHA-BF-002 - Flight Operations",
-          "SHA-BF-003 - Crew Operations",
-          "SHA-BF-004 - Airport Customer Service"
+          "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+          "Segment: Passenger operations",
+          "Segment: Loyalty and customer experience",
+          "Segment: Operations control",
+          "Segment: Crew operations",
+          "Segment: Cargo and partner operations"
         ],
         "strategicPrioritySignals": [
-          "MET-0001 - Cost-to-Income Ratio",
-          "MET-0002 - Net Promoter Score",
-          "MET-0003 - Employee Attrition Rate",
-          "MET-0004 - Forecast Accuracy",
-          "MET-0005 - EBIT Margin"
+          "IROPS recovery command",
+          "Mainframe and MQ modernization",
+          "Crew recovery decision support",
+          "Customer reaccommodation assist",
+          "Tower value tracking for operational outcomes"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -3954,7 +4365,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4025,7 +4438,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4035,7 +4450,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 320,
           "mappedCount": 320,
           "sourceCount": 1,
@@ -4091,7 +4508,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4101,7 +4520,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 2236,
           "mappedCount": 2236,
           "sourceCount": 1,
@@ -4157,7 +4578,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4167,7 +4590,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 2236,
           "mappedCount": 2236,
           "sourceCount": 1,
@@ -4223,7 +4648,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4300,7 +4727,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4378,7 +4807,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4455,7 +4886,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4465,7 +4898,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 489,
           "mappedCount": 489,
           "sourceCount": 1,
@@ -4521,7 +4956,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Close visible evidence gaps for this area."],
+          "nextDataActions": [
+            "Close visible evidence gaps for this area."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4559,7 +4996,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4645,9 +5084,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "6b88fd3123c92d954163d59b20ec52215b3aad3c05818b4dbf5f17465c8f8528",
+        "inputFingerprint": "064d2c48e1c09e88c02d2c5cb3bcde526c09ab4cc879abf401f3b2fc53d20dd9",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -4679,12 +5118,52 @@
         "tenantId": null,
         "tenantKey": "lakeshore-holdings",
         "displayName": "Lakeshore Holdings",
-        "industry": "Diversified Holdings",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "legalName": "Lakeshore Holdings",
+        "industry": "Diversified private holding company",
+        "subIndustry": "Portfolio-company operator with corporate shared services",
+        "headquarters": "Chicago, IL",
+        "revenue": "$7.12B",
+        "revenueVerified": true,
+        "employees": "11,800",
+        "employeesVerified": true,
+        "businessModel": "Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+        "businessSegments": [
+          "Northline",
+          "Brightmark",
+          "Forge and Field",
+          "Great Lakes Pantry",
+          "Corporate Shared Services",
+          "Innovation IT and Data AI"
+        ],
+        "missionStatement": "Protect operating-company autonomy while using shared intelligence to improve cost, risk, and growth decisions.",
+        "visionStatement": "Turn fragmented portfolio knowledge into a governed enterprise intelligence layer for smarter transformation and sourcing decisions.",
+        "leadershipRoles": [
+          "Founder and CEO: Anand Sundaram",
+          "Group CIO: Maya Iyer",
+          "CFO: Elena Brooks",
+          "Chief Legal Officer: Tomas Reed",
+          "Head of Shared Services: Nina Patel"
+        ],
+        "strategicPriorities": [
+          "Legal contract intake modernization",
+          "Corporate shared-services operating model",
+          "Vendor and consulting spend optimization",
+          "Portfolio data and AI foundation",
+          "Source-to-value governance"
+        ],
+        "globalLocations": [
+          "United States Midwest",
+          "Great Lakes operating companies",
+          "Corporate shared services",
+          "National distribution partners"
+        ],
+        "sourceAsOfDate": "2026-07-01",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic holding-company profile; not a real client filing",
+          "Direct holdco revenue must not be claimed as operating revenue",
+          "Operating-company split still needs final stewardship before board-grade opco reporting"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "candidate_preview",
         "activeContextStatus": "Active Home context",
@@ -4692,22 +5171,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Diversified Holdings",
+          "Lakeshore Holdings is Portfolio-company operator with corporate shared services headquartered in Chicago, IL with $7.12B revenue and 11,800 employees. Its model spans Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+          "Mission: Protect operating-company autonomy while using shared intelligence to improve cost, risk, and growth decisions.",
+          "Vision: Turn fragmented portfolio knowledge into a governed enterprise intelligence layer for smarter transformation and sourcing decisions.",
           "Lakeshore Holdings is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth."
         ],
         "businessModelSignals": [
-          "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-          "LH-FN-FIN - Corporate Finance and Treasury",
-          "LH-FN-HR - Corporate HR and Talent",
-          "LH-FN-LEGAL - Corporate Legal and Compliance",
-          "LH-FN-INVEST - Investments and Portfolio Management"
+          "Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
+          "Segment: Northline",
+          "Segment: Brightmark",
+          "Segment: Forge and Field",
+          "Segment: Great Lakes Pantry",
+          "Segment: Corporate Shared Services"
         ],
         "strategicPrioritySignals": [
-          "LH-MET-TOTAL-IT-BUDGET - FY26 direct IT budget",
-          "LH-MET-RUN-BUDGET - FY26 run budget",
-          "LH-MET-CHANGE-BUDGET - FY26 change budget",
-          "LH-MET-SPEND-YTD - FY26 spend to date",
-          "LH-MET-PROGRAM-BUDGET - Program committed budget"
+          "Legal contract intake modernization",
+          "Corporate shared-services operating model",
+          "Vendor and consulting spend optimization",
+          "Portfolio data and AI foundation",
+          "Source-to-value governance"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -4849,7 +5331,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4899,7 +5383,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4909,7 +5395,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 90,
           "mappedCount": 90,
           "sourceCount": 1,
@@ -4944,7 +5432,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4954,7 +5444,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 305,
           "mappedCount": 305,
           "sourceCount": 1,
@@ -4989,7 +5481,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -4999,7 +5493,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 305,
           "mappedCount": 305,
           "sourceCount": 1,
@@ -5034,7 +5530,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5085,7 +5583,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5137,7 +5637,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5188,7 +5690,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5198,7 +5702,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 90,
           "mappedCount": 90,
           "sourceCount": 1,
@@ -5233,7 +5739,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5271,7 +5779,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5357,9 +5867,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "aa62010ab18d53c4230d70d519f6428b738574062ded50bf062e3c98c1309b01",
+        "inputFingerprint": "5b0a34d1f9b28bf1f7c3e06c11409f114441d913a55644efd6ee487abb57ba85",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -5390,13 +5900,56 @@
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "meridian-health",
-        "displayName": "Healthcare Demo",
+        "displayName": "Meridian Health System",
+        "legalName": "Meridian Health System",
         "industry": "Healthcare",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "subIndustry": "Integrated delivery network and health plan",
+        "headquarters": "Sacramento, CA",
+        "revenue": "$16.8B",
+        "revenueVerified": true,
+        "employees": "58,000",
+        "employeesVerified": true,
+        "businessModel": "Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+        "businessSegments": [
+          "Clinical delivery",
+          "Health plan operations",
+          "Pharmacy and claims",
+          "Finance and revenue cycle",
+          "Provider quality",
+          "Enterprise analytics"
+        ],
+        "missionStatement": "Improve care access, quality, and affordability through trusted data and coordinated operations.",
+        "visionStatement": "Build a governed clinical, claims, and finance intelligence layer that makes automation safe and measurable.",
+        "leadershipRoles": [
+          "CEO: Mara Bennett",
+          "CIO: Daniel Cho",
+          "CFO: Priya Shah",
+          "CDAO: Leena Castillo",
+          "CMO: Dr. Rafael Ortiz"
+        ],
+        "strategicPriorities": [
+          "Unified clinical and claims lakehouse",
+          "Governed data foundation for AI automation",
+          "Call center optimization",
+          "Provider quality and performance",
+          "Cost-of-care transparency",
+          "Payment integrity",
+          "Automated close and reporting"
+        ],
+        "globalLocations": [
+          "California",
+          "Nevada",
+          "Pacific Northwest",
+          "Regional health plan service areas",
+          "Virtual care operations"
+        ],
+        "sourceAsOfDate": "2026-07-09",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic PHI-free planning-grade substrate; not real Meridian production data",
+          "AWS Databricks aspiration is not proof that platform foundation is complete",
+          "Formal data governance and security evidence still required"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "candidate_preview",
         "activeContextStatus": "Active Home context",
@@ -5404,22 +5957,26 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Healthcare",
+          "Meridian Health System is Integrated delivery network and health plan headquartered in Sacramento, CA with $16.8B revenue and 58,000 employees. Its model spans Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+          "Mission: Improve care access, quality, and affordability through trusted data and coordinated operations.",
+          "Vision: Build a governed clinical, claims, and finance intelligence layer that makes automation safe and measurable.",
           "Meridian Health is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth."
         ],
         "businessModelSignals": [
-          "Healthcare Demo",
-          "MER-BF-001 - Ambulatory and Primary Care",
-          "MER-BF-002 - Hospital Operations",
-          "MER-BF-003 - Health Plan Operations",
-          "MER-BF-004 - Pharmacy Services"
+          "Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+          "Segment: Clinical delivery",
+          "Segment: Health plan operations",
+          "Segment: Pharmacy and claims",
+          "Segment: Finance and revenue cycle",
+          "Segment: Provider quality"
         ],
         "strategicPrioritySignals": [
-          "MERIDIANHEALTH-MET-0001 - Healthcare Demo benefit realization against committed value metric 1",
-          "MERIDIANHEALTH-MET-0002 - Healthcare Demo elapsed time for target process metric 2",
-          "MERIDIANHEALTH-MET-0003 - Healthcare Demo open control and governance pressure metric 3",
-          "MERIDIANHEALTH-MET-0004 - Healthcare Demo active usage of changed workflow metric 4",
-          "MERIDIANHEALTH-MET-0005 - Healthcare Demo unit cost across served population or customer journey metric 5"
+          "Unified clinical and claims lakehouse",
+          "Governed data foundation for AI automation",
+          "Call center optimization",
+          "Provider quality and performance",
+          "Cost-of-care transparency",
+          "Payment integrity"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -5561,7 +6118,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5611,7 +6170,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5621,7 +6182,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 95,
           "mappedCount": 95,
           "sourceCount": 1,
@@ -5656,7 +6219,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5666,7 +6231,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 360,
           "mappedCount": 360,
           "sourceCount": 1,
@@ -5701,7 +6268,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5711,7 +6280,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 360,
           "mappedCount": 360,
           "sourceCount": 1,
@@ -5746,7 +6317,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5797,7 +6370,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5849,7 +6424,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5900,7 +6477,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5910,7 +6489,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 190,
           "mappedCount": 190,
           "sourceCount": 1,
@@ -5945,7 +6526,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -5983,7 +6566,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6069,9 +6654,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "ace2a2ae9efe36ec46a458a7c6ee710343d3f06dd3436070f4a5a86756cd3b34",
+        "inputFingerprint": "7f5296459127ab43b451259e5aa7b9ebf467548dd025d5c062b2008486da72cf",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -6102,13 +6687,56 @@
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "first-capital",
-        "displayName": "Financial Services Demo",
-        "industry": "Financial Services",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "displayName": "First Capital",
+        "legalName": "First Capital Financial Services",
+        "industry": "Financial services",
+        "subIndustry": "Consumer and commercial banking",
+        "headquarters": "Charlotte, NC",
+        "revenue": "$52B",
+        "revenueVerified": true,
+        "employees": "65,000",
+        "employeesVerified": true,
+        "businessModel": "Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+        "businessSegments": [
+          "Consumer banking",
+          "Commercial banking",
+          "Cards and payments",
+          "Lending operations",
+          "Wealth management",
+          "Risk and compliance",
+          "Technology platforms"
+        ],
+        "missionStatement": "Help customers and businesses manage money with trusted, efficient, and compliant financial services.",
+        "visionStatement": "Modernize banking operations with governed data, resilient platforms, and measurable AI-enabled decision support.",
+        "leadershipRoles": [
+          "CEO: Charlotte Hayes",
+          "CIO: Nathan Brooks",
+          "CFO: Mira Kapoor",
+          "Chief Risk Officer: Evelyn Chen",
+          "CDAO: Samuel Price"
+        ],
+        "strategicPriorities": [
+          "Digital account-opening modernization",
+          "Fraud and payment integrity analytics",
+          "Core banking modernization sequencing",
+          "Vendor and consulting spend transparency",
+          "Risk and compliance automation"
+        ],
+        "globalLocations": [
+          "United States",
+          "Northeast",
+          "Southeast",
+          "Midwest",
+          "Digital banking operations",
+          "Operations centers"
+        ],
+        "sourceAsOfDate": "2026-06-29",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic banking substrate; not real First Capital production data",
+          "Regulatory and financial claims require verified source evidence",
+          "Core-system modernization facts need owner validation before active promotion"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "candidate_preview",
         "activeContextStatus": "Active Home context",
@@ -6116,22 +6744,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Financial Services",
+          "First Capital Financial Services is Consumer and commercial banking headquartered in Charlotte, NC with $52B revenue and 65,000 employees. Its model spans Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+          "Mission: Help customers and businesses manage money with trusted, efficient, and compliant financial services.",
+          "Vision: Modernize banking operations with governed data, resilient platforms, and measurable AI-enabled decision support.",
           "First Capital is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth."
         ],
         "businessModelSignals": [
-          "Financial Services Demo",
-          "FC-BF-001 - Consumer Banking & Deposits",
-          "FC-BF-002 - Commercial & Corporate Banking",
-          "FC-BF-003 - Cards & Payments",
-          "FC-BF-004 - Wealth & Asset Management"
+          "Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
+          "Segment: Consumer banking",
+          "Segment: Commercial banking",
+          "Segment: Cards and payments",
+          "Segment: Lending operations",
+          "Segment: Wealth management"
         ],
         "strategicPrioritySignals": [
-          "FIRSTCAPITAL-MET-0001 - Financial Services Demo benefit realization against committed value metric 1",
-          "FIRSTCAPITAL-MET-0002 - Financial Services Demo elapsed time for target process metric 2",
-          "FIRSTCAPITAL-MET-0003 - Financial Services Demo open control and governance pressure metric 3",
-          "FIRSTCAPITAL-MET-0004 - Financial Services Demo active usage of changed workflow metric 4",
-          "FIRSTCAPITAL-MET-0005 - Financial Services Demo unit cost across served population or customer journey metric 5"
+          "Digital account-opening modernization",
+          "Fraud and payment integrity analytics",
+          "Core banking modernization sequencing",
+          "Vendor and consulting spend transparency",
+          "Risk and compliance automation"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -6273,7 +6904,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6323,7 +6956,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6333,7 +6968,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 120,
           "mappedCount": 120,
           "sourceCount": 1,
@@ -6368,7 +7005,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6378,7 +7017,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 460,
           "mappedCount": 460,
           "sourceCount": 1,
@@ -6413,7 +7054,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6423,7 +7066,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 460,
           "mappedCount": 460,
           "sourceCount": 1,
@@ -6458,7 +7103,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6509,7 +7156,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6561,7 +7210,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6612,7 +7263,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6622,7 +7275,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 294,
           "mappedCount": 294,
           "sourceCount": 1,
@@ -6657,7 +7312,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6695,7 +7352,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -6781,9 +7440,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "4bf9c5942ee5ebbe16645250d5c97238cb085bb11088a3a9a1bc2ff186b77de1",
+        "inputFingerprint": "7bc5c0bfe3e7ce6dad5a2ce694c91557597c2ca39c7f0789831b3358a97112b0",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [
@@ -6814,13 +7473,55 @@
       "tenantProfileHeader": {
         "tenantId": null,
         "tenantKey": "apex-retail",
-        "displayName": "Retail Demo",
+        "displayName": "Apex Retail",
+        "legalName": "Apex Retail Group",
         "industry": "Retail",
-        "headquarters": null,
-        "revenue": null,
-        "revenueVerified": false,
-        "employees": null,
-        "employeesVerified": false,
+        "subIndustry": "Omnichannel specialty and mass-market retail",
+        "headquarters": "Minneapolis, MN",
+        "revenue": "$18.4B",
+        "revenueVerified": true,
+        "employees": "72,000",
+        "employeesVerified": true,
+        "businessModel": "Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+        "businessSegments": [
+          "Stores",
+          "Digital commerce",
+          "Loyalty and marketing",
+          "Merchandising",
+          "Supply chain",
+          "Customer care",
+          "Technology platforms"
+        ],
+        "missionStatement": "Serve customers with convenient, trusted, and value-conscious retail experiences across channels.",
+        "visionStatement": "Make retail operations smarter by connecting customer, inventory, supply-chain, and workforce decisions.",
+        "leadershipRoles": [
+          "CEO: Jordan Blake",
+          "CIO: Renata Silva",
+          "CFO: Marcus Lee",
+          "CMO: Aisha Grant",
+          "Chief Supply Chain Officer: Owen Keller"
+        ],
+        "strategicPriorities": [
+          "CDP and identity resolution",
+          "Inventory and replenishment intelligence",
+          "Contact-center productivity",
+          "Vendor spend optimization",
+          "Store labor and supply-chain modernization"
+        ],
+        "globalLocations": [
+          "United States",
+          "Canada",
+          "Digital commerce operations",
+          "Distribution centers",
+          "Store support centers"
+        ],
+        "sourceAsOfDate": "2026-06-28",
+        "sourceValidationStatus": "synthetic_steward_reviewed",
+        "knownGaps": [
+          "Synthetic retail substrate; not real Apex production data",
+          "Revenue and employee anchors are planning-grade",
+          "Customer and margin claims require source evidence before active use"
+        ],
         "dataOrigin": "Demo-safe",
         "mode": "candidate_preview",
         "activeContextStatus": "Active Home context",
@@ -6828,22 +7529,25 @@
       },
       "executiveProfile": {
         "companySummaryFacts": [
-          "Industry: Retail",
+          "Apex Retail Group is Omnichannel specialty and mass-market retail headquartered in Minneapolis, MN with $18.4B revenue and 72,000 employees. Its model spans Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+          "Mission: Serve customers with convenient, trusted, and value-conscious retail experiences across channels.",
+          "Vision: Make retail operations smarter by connecting customer, inventory, supply-chain, and workforce decisions.",
           "Apex Retail is being viewed in inactive candidate preview. Home can explain what the candidate posture would add, but this is not active tenant truth."
         ],
         "businessModelSignals": [
-          "Retail Demo",
-          "APX-BF-001 - Store Operations",
-          "APX-BF-002 - Digital Commerce",
-          "APX-BF-003 - Merchandising",
-          "APX-BF-004 - Supply Chain and Fulfillment"
+          "Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
+          "Segment: Stores",
+          "Segment: Digital commerce",
+          "Segment: Loyalty and marketing",
+          "Segment: Merchandising",
+          "Segment: Supply chain"
         ],
         "strategicPrioritySignals": [
-          "APEXRETAIL-MET-0001 - Retail Demo benefit realization against committed value metric 1",
-          "APEXRETAIL-MET-0002 - Retail Demo elapsed time for target process metric 2",
-          "APEXRETAIL-MET-0003 - Retail Demo open control and governance pressure metric 3",
-          "APEXRETAIL-MET-0004 - Retail Demo active usage of changed workflow metric 4",
-          "APEXRETAIL-MET-0005 - Retail Demo unit cost across served population or customer journey metric 5"
+          "CDP and identity resolution",
+          "Inventory and replenishment intelligence",
+          "Contact-center productivity",
+          "Vendor spend optimization",
+          "Store labor and supply-chain modernization"
         ],
         "enterpriseSnapshotMetrics": [
           {
@@ -6985,7 +7689,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7035,7 +7741,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7045,7 +7753,9 @@
         {
           "areaKey": "vendors-contracts",
           "displayName": "Vendors & Contracts",
-          "executiveSummaryInputs": ["Vendors and contracts"],
+          "executiveSummaryInputs": [
+            "Vendors and contracts"
+          ],
           "loadedCount": 100,
           "mappedCount": 100,
           "sourceCount": 1,
@@ -7080,7 +7790,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7090,7 +7802,9 @@
         {
           "areaKey": "data-assets",
           "displayName": "Data Assets",
-          "executiveSummaryInputs": ["Data assets and analytics coverage"],
+          "executiveSummaryInputs": [
+            "Data assets and analytics coverage"
+          ],
           "loadedCount": 385,
           "mappedCount": 385,
           "sourceCount": 1,
@@ -7125,7 +7839,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7135,7 +7851,9 @@
         {
           "areaKey": "integrations",
           "displayName": "Integrations",
-          "executiveSummaryInputs": ["Data and integration dependencies"],
+          "executiveSummaryInputs": [
+            "Data and integration dependencies"
+          ],
           "loadedCount": 385,
           "mappedCount": 385,
           "sourceCount": 1,
@@ -7170,7 +7888,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7221,7 +7941,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7273,7 +7995,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7324,7 +8048,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7334,7 +8060,9 @@
         {
           "areaKey": "evidence-sources",
           "displayName": "Evidence Sources",
-          "executiveSummaryInputs": ["Industry corpus patterns"],
+          "executiveSummaryInputs": [
+            "Industry corpus patterns"
+          ],
           "loadedCount": 206,
           "mappedCount": 206,
           "sourceCount": 1,
@@ -7369,7 +8097,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Validate loaded rows with the client owner."],
+          "nextDataActions": [
+            "Validate loaded rows with the client owner."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7407,7 +8137,9 @@
             "Broad advisory synthesis",
             "Cross-domain dependency decisions"
           ],
-          "nextDataActions": ["Load source-backed relationships evidence."],
+          "nextDataActions": [
+            "Load source-backed relationships evidence."
+          ],
           "caveats": [
             "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
             "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -7493,9 +8225,9 @@
         "createsCandidates": false
       },
       "lineage": {
-        "generatedAt": "2026-07-13T20:32:22.126Z",
+        "generatedAt": "2026-07-13T21:32:25.714Z",
         "generatedBy": "home_summary_engine",
-        "inputFingerprint": "20d4ab7955cae199540ceb37f855fdb92fe6e2ca78aeeda1c49f73ef76af2192",
+        "inputFingerprint": "71414d9a9d8a2ca1cb3f70790ccf51f01b853f83545c5d0adfc12b44b9f9585d",
         "tenantDataVersionId": null,
         "candidateVersionId": null,
         "sourceSnapshotIds": [

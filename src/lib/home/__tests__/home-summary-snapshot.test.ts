@@ -132,6 +132,60 @@ describe("HomeSummarySnapshot", () => {
     );
   });
 
+  it("uses the governed Meridian enterprise profile instead of thin Home browser labels", () => {
+    const snapshot = buildHomeSummarySnapshot({
+      tenantKey: "meridian-health",
+      displayName: "Healthcare Demo",
+      industry: "Healthcare",
+      browser: getHomeV6ContextBrowser("meridian"),
+      generatedAt: "2026-07-13T12:00:00.000Z",
+    });
+    const profile = snapshot.tenantProfileHeader;
+    const firstSummaryLine =
+      snapshot.executiveProfile.companySummaryFacts[0] ?? "";
+    const businessSignals = snapshot.executiveProfile.businessModelSignals;
+    const prioritySignals = snapshot.executiveProfile.strategicPrioritySignals;
+
+    expect(profile.displayName).toBe("Meridian Health System");
+    expect(profile.legalName).toBe("Meridian Health System");
+    expect(profile.subIndustry).toBe(
+      "Integrated delivery network and health plan",
+    );
+    expect(profile.headquarters).toBe("Sacramento, CA");
+    expect(profile.revenue).toBe("$16.8B");
+    expect(profile.employees).toBe("58,000");
+    expect(profile.revenueVerified).toBe(true);
+    expect(profile.employeesVerified).toBe(true);
+    expect(profile.businessModel).toMatch(
+      /Integrated provider and payer organization/i,
+    );
+    expect(profile.businessSegments).toEqual(
+      expect.arrayContaining([
+        "Clinical delivery",
+        "Health plan operations",
+        "Enterprise analytics",
+      ]),
+    );
+    expect(profile.strategicPriorities).toEqual(
+      expect.arrayContaining([
+        "Unified clinical and claims lakehouse",
+        "Payment integrity",
+        "Automated close and reporting",
+      ]),
+    );
+    expect(firstSummaryLine).toMatch(/Meridian Health System/i);
+    expect(firstSummaryLine).toMatch(/Sacramento, CA/i);
+    expect(firstSummaryLine).toMatch(/\$16\.8B/i);
+    expect(firstSummaryLine).toMatch(/58,000 employees/i);
+    expect(businessSignals.join(" ")).toMatch(
+      /Integrated provider and payer organization/i,
+    );
+    expect(prioritySignals.join(" ")).toMatch(
+      /Unified clinical and claims lakehouse/i,
+    );
+    expect(new Set(prioritySignals)).not.toEqual(new Set(["Healthcare Demo"]));
+  });
+
   it("keeps Home dimension rollups specific instead of cloning tenant totals", () => {
     const snapshot = buildHomeSummarySnapshot({
       tenantKey: "skyharbor-air",

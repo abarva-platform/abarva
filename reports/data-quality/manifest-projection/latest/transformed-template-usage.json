@@ -6,7 +6,9 @@
     "fileName": "chunk_metadata_schema.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -23,7 +25,9 @@
     "fileName": "chunk_size_guidance.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -40,7 +44,9 @@
     "fileName": "chunk_types.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -57,7 +63,9 @@
     "fileName": "ai_sdlc_opportunity_narrative.template.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -74,7 +82,9 @@
     "fileName": "executive_tension_narrative.template.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -92,6 +102,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": null,
@@ -111,6 +122,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "infrastructure_cloud_estate"
     ],
     "rowCount": null,
@@ -129,7 +141,9 @@
     "fileName": "modernization_event_narrative.template.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -146,7 +160,9 @@
     "fileName": "value_record_narrative.template.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -164,7 +180,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": null,
     "isStructured": false,
@@ -182,7 +199,9 @@
     "fileName": "id_schemes.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -199,7 +218,9 @@
     "fileName": "naming_conventions.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -216,7 +237,9 @@
     "fileName": "slug_rules.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -233,7 +256,9 @@
     "fileName": "versioning_rules.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -250,7 +275,9 @@
     "fileName": "cfos_top_10_questions.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -267,7 +294,9 @@
     "fileName": "cios_top_15_questions.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -284,7 +313,9 @@
     "fileName": "ctos_top_25_questions.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -301,7 +332,9 @@
     "fileName": "expected_answer_patterns.md",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": false,
     "isTransformedTemplate": true,
@@ -319,6 +352,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": null,
@@ -337,7 +371,9 @@
     "fileName": "domain_tags.yaml",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -355,6 +391,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": null,
@@ -373,7 +410,9 @@
     "fileName": "entity_types.yaml",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": null,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -390,7 +429,9 @@
     "fileName": "ai_sdlc_opportunity.schema.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -407,7 +448,9 @@
     "fileName": "aws_native_estate.schema.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -424,7 +467,9 @@
     "fileName": "engineering_productivity.schema.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -442,7 +487,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -460,7 +506,9 @@
     "fileName": "executive_decision_map.schema.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -477,7 +525,9 @@
     "fileName": "gcc_capability.schema.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -494,7 +544,9 @@
     "fileName": "ibm_engagement.schema.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -531,7 +583,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -550,6 +603,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "infrastructure_cloud_estate"
     ],
     "rowCount": 1,
@@ -569,6 +623,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 1,
@@ -588,6 +643,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 1,
@@ -607,6 +663,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "source_event_pack"
     ],
     "rowCount": 1,
@@ -626,6 +683,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 1,
@@ -645,7 +703,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -663,7 +722,9 @@
     "fileName": "V6_GENERATED_MANIFEST.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 16,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -681,7 +742,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -700,7 +762,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 55,
     "isStructured": true,
@@ -719,7 +782,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 66,
     "isStructured": true,
@@ -738,7 +802,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 18,
     "isStructured": true,
@@ -757,7 +822,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 956,
     "isStructured": true,
@@ -777,7 +843,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 2236,
     "isStructured": true,
@@ -796,7 +863,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 320,
     "isStructured": true,
@@ -815,7 +883,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 491,
     "isStructured": true,
@@ -873,6 +942,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 1522,
@@ -892,6 +962,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 7230,
@@ -911,6 +982,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 92,
@@ -930,6 +1002,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 306,
@@ -949,6 +1022,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 489,
@@ -968,6 +1042,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 8,
@@ -986,7 +1061,9 @@
     "fileName": "V6_V7_GENERATED_MANIFEST.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -1004,7 +1081,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -1023,7 +1101,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -1042,7 +1121,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -1061,7 +1141,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -1080,7 +1161,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 13,
     "isStructured": true,
@@ -1100,7 +1182,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 35,
     "isStructured": true,
@@ -1119,7 +1202,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 10,
     "isStructured": true,
@@ -1138,7 +1222,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 10,
     "isStructured": true,
@@ -1196,6 +1281,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 28,
@@ -1215,6 +1301,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 74,
@@ -1234,6 +1321,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 4,
@@ -1253,6 +1341,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 12,
@@ -1272,6 +1361,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 7,
@@ -1291,6 +1381,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 5,
@@ -1311,6 +1402,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "enterprise_profile",
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 1,
@@ -1330,7 +1422,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -1349,7 +1442,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -1368,7 +1462,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -1387,7 +1482,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -1406,7 +1502,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 13,
     "isStructured": true,
@@ -1426,7 +1523,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 35,
     "isStructured": true,
@@ -1445,7 +1543,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 10,
     "isStructured": true,
@@ -1464,7 +1563,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 10,
     "isStructured": true,
@@ -1522,6 +1622,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 28,
@@ -1541,6 +1642,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 74,
@@ -1560,6 +1662,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 4,
@@ -1579,6 +1682,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 12,
@@ -1598,6 +1702,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "benchmark_industry_inputs"
     ],
@@ -1618,6 +1723,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 5,
@@ -1637,7 +1743,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 4,
     "isStructured": true,
@@ -1657,6 +1764,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "vendors_contracts",
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 60,
@@ -1676,6 +1784,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "tower_outcome_pack"
     ],
     "rowCount": 3,
@@ -1695,6 +1804,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 117,
@@ -1714,6 +1824,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "evidence_sources"
     ],
@@ -1734,6 +1845,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 10,
@@ -1753,6 +1865,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 2,
@@ -1772,6 +1885,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "infrastructure_cloud_estate"
     ],
     "rowCount": 5,
@@ -1786,7 +1900,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_01_enterprise_profile.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_01_enterprise_profile.csv",
     "fileName": "V7_01_enterprise_profile.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1805,7 +1919,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_02_business_functions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_02_business_functions.csv",
     "fileName": "V7_02_business_functions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1824,7 +1938,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_03_org_ownership.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_03_org_ownership.csv",
     "fileName": "V7_03_org_ownership.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1843,7 +1957,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_04_workforce_personas.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_04_workforce_personas.csv",
     "fileName": "V7_04_workforce_personas.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1862,7 +1976,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_05_applications_systems.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_05_applications_systems.csv",
     "fileName": "V7_05_applications_systems.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1881,7 +1995,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_06_data_assets_integrations.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_06_data_assets_integrations.csv",
     "fileName": "V7_06_data_assets_integrations.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1901,7 +2015,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_07_vendors_contracts.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_07_vendors_contracts.csv",
     "fileName": "V7_07_vendors_contracts.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1920,7 +2034,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_08_spend_value.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_08_spend_value.csv",
     "fileName": "V7_08_spend_value.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1939,7 +2053,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_09_programs_initiatives_business_priorities.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_09_programs_initiatives_business_priorities.csv",
     "fileName": "V7_09_programs_initiatives_business_priorities.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1958,7 +2072,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_10_ai_initiatives.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_10_ai_initiatives.csv",
     "fileName": "V7_10_ai_initiatives.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1978,7 +2092,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_11_operations_risk_controls.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_11_operations_risk_controls.csv",
     "fileName": "V7_11_operations_risk_controls.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -1997,7 +2111,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_12_relationships_graph_edges.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_12_relationships_graph_edges.csv",
     "fileName": "V7_12_relationships_graph_edges.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2016,7 +2130,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_13_source_evidence_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_13_source_evidence_registry.csv",
     "fileName": "V7_13_source_evidence_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2035,7 +2149,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_14_metric_definitions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_14_metric_definitions.csv",
     "fileName": "V7_14_metric_definitions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2054,7 +2168,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_15_industry_market_knowledge_patterns.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_15_industry_market_knowledge_patterns.csv",
     "fileName": "V7_15_industry_market_knowledge_patterns.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2074,7 +2188,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_16_expert_lenses.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_16_expert_lenses.csv",
     "fileName": "V7_16_expert_lenses.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2093,7 +2207,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_17_client_rate_card_cost_basis.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_17_client_rate_card_cost_basis.csv",
     "fileName": "V7_17_client_rate_card_cost_basis.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2112,7 +2226,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_18_function_system_data_vendor_bridge.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_18_function_system_data_vendor_bridge.csv",
     "fileName": "V7_18_function_system_data_vendor_bridge.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2132,7 +2246,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_19_service_tower_managed_services_scope.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_19_service_tower_managed_services_scope.csv",
     "fileName": "V7_19_service_tower_managed_services_scope.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2151,7 +2265,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_20_chunk_retrieval_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_20_chunk_retrieval_registry.csv",
     "fileName": "V7_20_chunk_retrieval_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2170,7 +2284,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_21_graph_registry_relationship_dictionary.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_21_graph_registry_relationship_dictionary.csv",
     "fileName": "V7_21_graph_registry_relationship_dictionary.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2190,7 +2304,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_22_operational_evidence_process_intelligence.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_22_operational_evidence_process_intelligence.csv",
     "fileName": "V7_22_operational_evidence_process_intelligence.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2209,7 +2323,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_23_external_benchmark_market_corpus.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_23_external_benchmark_market_corpus.csv",
     "fileName": "V7_23_external_benchmark_market_corpus.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2228,7 +2342,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_24_infrastructure_cloud_estate.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_24_infrastructure_cloud_estate.csv",
     "fileName": "V7_24_infrastructure_cloud_estate.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2247,7 +2361,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantName": "Airline Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_SYNTHETIC_MANIFEST.json",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/skyharbor-air/V7_SYNTHETIC_MANIFEST.json",
     "fileName": "V7_SYNTHETIC_MANIFEST.json",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -2268,7 +2382,9 @@
     "fileName": "V6_GENERATED_MANIFEST.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 16,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -2286,7 +2402,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -2305,7 +2422,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 25,
     "isStructured": true,
@@ -2324,7 +2442,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 73,
     "isStructured": true,
@@ -2343,7 +2462,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 14,
     "isStructured": true,
@@ -2362,7 +2482,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 162,
     "isStructured": true,
@@ -2382,7 +2503,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 360,
     "isStructured": true,
@@ -2401,7 +2523,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 95,
     "isStructured": true,
@@ -2420,7 +2543,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 178,
     "isStructured": true,
@@ -2478,6 +2602,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 349,
@@ -2497,6 +2622,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 1551,
@@ -2516,6 +2642,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 14,
@@ -2535,6 +2662,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 116,
@@ -2554,6 +2682,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 190,
@@ -2573,6 +2702,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 5,
@@ -2591,7 +2721,9 @@
     "fileName": "V6_V7_GENERATED_MANIFEST.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 1,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -2609,7 +2741,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -2628,7 +2761,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 7,
     "isStructured": true,
@@ -2647,7 +2781,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 7,
     "isStructured": true,
@@ -2666,7 +2801,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -2685,7 +2821,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 15,
     "isStructured": true,
@@ -2705,7 +2842,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 36,
     "isStructured": true,
@@ -2724,7 +2862,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 7,
     "isStructured": true,
@@ -2743,7 +2882,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 10,
     "isStructured": true,
@@ -2801,6 +2941,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 28,
@@ -2820,6 +2961,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 69,
@@ -2839,6 +2981,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 4,
@@ -2858,6 +3001,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 11,
@@ -2877,6 +3021,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 7,
@@ -2896,6 +3041,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 5,
@@ -2916,6 +3062,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "enterprise_profile",
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 1,
@@ -2935,7 +3082,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -2954,7 +3102,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 7,
     "isStructured": true,
@@ -2973,7 +3122,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 7,
     "isStructured": true,
@@ -2992,7 +3142,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 6,
     "isStructured": true,
@@ -3011,7 +3162,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 15,
     "isStructured": true,
@@ -3031,7 +3183,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 36,
     "isStructured": true,
@@ -3050,7 +3203,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 7,
     "isStructured": true,
@@ -3069,7 +3223,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 10,
     "isStructured": true,
@@ -3127,6 +3282,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 28,
@@ -3146,6 +3302,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 69,
@@ -3165,6 +3322,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 4,
@@ -3184,6 +3342,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 11,
@@ -3203,6 +3362,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "benchmark_industry_inputs"
     ],
@@ -3223,6 +3383,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 5,
@@ -3242,7 +3403,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 4,
     "isStructured": true,
@@ -3262,6 +3424,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "vendors_contracts",
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 60,
@@ -3281,6 +3444,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "tower_outcome_pack"
     ],
     "rowCount": 3,
@@ -3300,6 +3464,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 118,
@@ -3319,6 +3484,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "evidence_sources"
     ],
@@ -3339,6 +3505,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 10,
@@ -3358,6 +3525,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 2,
@@ -3377,6 +3545,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "infrastructure_cloud_estate"
     ],
     "rowCount": 4,
@@ -3391,7 +3560,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_01_enterprise_profile.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_01_enterprise_profile.csv",
     "fileName": "V7_01_enterprise_profile.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3410,7 +3579,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_02_business_functions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_02_business_functions.csv",
     "fileName": "V7_02_business_functions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3429,7 +3598,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_03_org_ownership.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_03_org_ownership.csv",
     "fileName": "V7_03_org_ownership.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3448,7 +3617,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_04_workforce_personas.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_04_workforce_personas.csv",
     "fileName": "V7_04_workforce_personas.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3467,7 +3636,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_05_applications_systems.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_05_applications_systems.csv",
     "fileName": "V7_05_applications_systems.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3486,7 +3655,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_06_data_assets_integrations.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_06_data_assets_integrations.csv",
     "fileName": "V7_06_data_assets_integrations.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3506,7 +3675,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_07_vendors_contracts.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_07_vendors_contracts.csv",
     "fileName": "V7_07_vendors_contracts.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3525,7 +3694,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_08_spend_value.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_08_spend_value.csv",
     "fileName": "V7_08_spend_value.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3544,7 +3713,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_09_programs_initiatives_business_priorities.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_09_programs_initiatives_business_priorities.csv",
     "fileName": "V7_09_programs_initiatives_business_priorities.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3563,7 +3732,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_10_ai_initiatives.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_10_ai_initiatives.csv",
     "fileName": "V7_10_ai_initiatives.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3583,7 +3752,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_11_operations_risk_controls.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_11_operations_risk_controls.csv",
     "fileName": "V7_11_operations_risk_controls.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3602,7 +3771,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_12_relationships_graph_edges.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_12_relationships_graph_edges.csv",
     "fileName": "V7_12_relationships_graph_edges.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3621,7 +3790,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_13_source_evidence_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_13_source_evidence_registry.csv",
     "fileName": "V7_13_source_evidence_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3640,7 +3809,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_14_metric_definitions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_14_metric_definitions.csv",
     "fileName": "V7_14_metric_definitions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3659,7 +3828,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_15_industry_market_knowledge_patterns.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_15_industry_market_knowledge_patterns.csv",
     "fileName": "V7_15_industry_market_knowledge_patterns.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3679,7 +3848,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_16_expert_lenses.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_16_expert_lenses.csv",
     "fileName": "V7_16_expert_lenses.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3698,7 +3867,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_17_client_rate_card_cost_basis.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_17_client_rate_card_cost_basis.csv",
     "fileName": "V7_17_client_rate_card_cost_basis.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3717,7 +3886,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_18_function_system_data_vendor_bridge.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_18_function_system_data_vendor_bridge.csv",
     "fileName": "V7_18_function_system_data_vendor_bridge.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3737,7 +3906,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_19_service_tower_managed_services_scope.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_19_service_tower_managed_services_scope.csv",
     "fileName": "V7_19_service_tower_managed_services_scope.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3756,7 +3925,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_20_chunk_retrieval_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_20_chunk_retrieval_registry.csv",
     "fileName": "V7_20_chunk_retrieval_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3775,7 +3944,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_21_graph_registry_relationship_dictionary.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_21_graph_registry_relationship_dictionary.csv",
     "fileName": "V7_21_graph_registry_relationship_dictionary.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3795,7 +3964,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_22_operational_evidence_process_intelligence.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_22_operational_evidence_process_intelligence.csv",
     "fileName": "V7_22_operational_evidence_process_intelligence.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3814,7 +3983,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_23_external_benchmark_market_corpus.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_23_external_benchmark_market_corpus.csv",
     "fileName": "V7_23_external_benchmark_market_corpus.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3833,7 +4002,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_24_infrastructure_cloud_estate.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_24_infrastructure_cloud_estate.csv",
     "fileName": "V7_24_infrastructure_cloud_estate.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3852,7 +4021,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantName": "Healthcare Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_SYNTHETIC_MANIFEST.json",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/meridian-health/V7_SYNTHETIC_MANIFEST.json",
     "fileName": "V7_SYNTHETIC_MANIFEST.json",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -3874,7 +4043,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 16,
     "isStructured": true,
@@ -3894,7 +4064,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "enterprise_profile",
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -3914,7 +4085,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "business_functions",
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 27,
     "isStructured": true,
@@ -3934,7 +4106,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "organization_ownership",
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 65,
     "isStructured": true,
@@ -3954,7 +4127,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "workforce_personas",
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 16,
     "isStructured": true,
@@ -3974,7 +4148,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "applications_systems",
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 272,
     "isStructured": true,
@@ -3995,7 +4170,8 @@
     "domains": [
       "data_assets_data_products",
       "integrations",
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 460,
     "isStructured": true,
@@ -4015,7 +4191,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "vendors_contracts",
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 120,
     "isStructured": true,
@@ -4034,7 +4211,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 397,
     "isStructured": true,
@@ -4095,6 +4273,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "spend_value",
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 547,
@@ -4115,6 +4294,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "spend_value",
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 2614,
@@ -4135,6 +4315,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "spend_value",
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 42,
@@ -4155,6 +4336,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "spend_value",
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 168,
@@ -4175,6 +4357,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "spend_value",
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 294,
@@ -4195,6 +4378,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "spend_value",
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 5,
@@ -4209,7 +4393,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_01_enterprise_profile.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_01_enterprise_profile.csv",
     "fileName": "V7_01_enterprise_profile.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4229,7 +4413,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_02_business_functions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_02_business_functions.csv",
     "fileName": "V7_02_business_functions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4249,7 +4433,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_03_org_ownership.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_03_org_ownership.csv",
     "fileName": "V7_03_org_ownership.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4269,7 +4453,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_04_workforce_personas.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_04_workforce_personas.csv",
     "fileName": "V7_04_workforce_personas.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4289,7 +4473,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_05_applications_systems.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_05_applications_systems.csv",
     "fileName": "V7_05_applications_systems.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4309,7 +4493,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_06_data_assets_integrations.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_06_data_assets_integrations.csv",
     "fileName": "V7_06_data_assets_integrations.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4330,7 +4514,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_07_vendors_contracts.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_07_vendors_contracts.csv",
     "fileName": "V7_07_vendors_contracts.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4350,7 +4534,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_08_spend_value.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_08_spend_value.csv",
     "fileName": "V7_08_spend_value.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4369,7 +4553,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_09_programs_initiatives_business_priorities.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_09_programs_initiatives_business_priorities.csv",
     "fileName": "V7_09_programs_initiatives_business_priorities.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4389,7 +4573,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_10_ai_initiatives.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_10_ai_initiatives.csv",
     "fileName": "V7_10_ai_initiatives.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4410,7 +4594,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_11_operations_risk_controls.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_11_operations_risk_controls.csv",
     "fileName": "V7_11_operations_risk_controls.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4430,7 +4614,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_12_relationships_graph_edges.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_12_relationships_graph_edges.csv",
     "fileName": "V7_12_relationships_graph_edges.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4450,7 +4634,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_13_source_evidence_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_13_source_evidence_registry.csv",
     "fileName": "V7_13_source_evidence_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4470,7 +4654,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_14_metric_definitions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_14_metric_definitions.csv",
     "fileName": "V7_14_metric_definitions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4490,7 +4674,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_15_industry_market_knowledge_patterns.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_15_industry_market_knowledge_patterns.csv",
     "fileName": "V7_15_industry_market_knowledge_patterns.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4511,7 +4695,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_16_expert_lenses.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_16_expert_lenses.csv",
     "fileName": "V7_16_expert_lenses.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4531,7 +4715,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_17_client_rate_card_cost_basis.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_17_client_rate_card_cost_basis.csv",
     "fileName": "V7_17_client_rate_card_cost_basis.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4550,7 +4734,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_18_function_system_data_vendor_bridge.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_18_function_system_data_vendor_bridge.csv",
     "fileName": "V7_18_function_system_data_vendor_bridge.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4571,7 +4755,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_19_service_tower_managed_services_scope.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_19_service_tower_managed_services_scope.csv",
     "fileName": "V7_19_service_tower_managed_services_scope.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4591,7 +4775,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_20_chunk_retrieval_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_20_chunk_retrieval_registry.csv",
     "fileName": "V7_20_chunk_retrieval_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4611,7 +4795,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_21_graph_registry_relationship_dictionary.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_21_graph_registry_relationship_dictionary.csv",
     "fileName": "V7_21_graph_registry_relationship_dictionary.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4632,7 +4816,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_22_operational_evidence_process_intelligence.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_22_operational_evidence_process_intelligence.csv",
     "fileName": "V7_22_operational_evidence_process_intelligence.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4652,7 +4836,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_23_external_benchmark_market_corpus.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_23_external_benchmark_market_corpus.csv",
     "fileName": "V7_23_external_benchmark_market_corpus.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4672,7 +4856,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_24_infrastructure_cloud_estate.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_24_infrastructure_cloud_estate.csv",
     "fileName": "V7_24_infrastructure_cloud_estate.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4692,7 +4876,7 @@
   {
     "tenantKey": "first-capital",
     "tenantName": "Financial Services Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_SYNTHETIC_MANIFEST.json",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/first-capital-financial/V7_SYNTHETIC_MANIFEST.json",
     "fileName": "V7_SYNTHETIC_MANIFEST.json",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -4715,7 +4899,9 @@
     "fileName": "V6_GENERATED_MANIFEST.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 16,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -4733,7 +4919,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -4752,7 +4939,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 26,
     "isStructured": true,
@@ -4771,7 +4959,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 50,
     "isStructured": true,
@@ -4790,7 +4979,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 12,
     "isStructured": true,
@@ -4809,7 +4999,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 182,
     "isStructured": true,
@@ -4829,7 +5020,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 385,
     "isStructured": true,
@@ -4848,7 +5040,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 100,
     "isStructured": true,
@@ -4867,7 +5060,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 188,
     "isStructured": true,
@@ -4925,6 +5119,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 375,
@@ -4944,6 +5139,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 1605,
@@ -4963,6 +5159,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 14,
@@ -4982,6 +5179,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 126,
@@ -5001,6 +5199,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 206,
@@ -5020,6 +5219,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 5,
@@ -5034,7 +5234,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_01_enterprise_profile.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_01_enterprise_profile.csv",
     "fileName": "V7_01_enterprise_profile.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5053,7 +5253,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_02_business_functions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_02_business_functions.csv",
     "fileName": "V7_02_business_functions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5072,7 +5272,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_03_org_ownership.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_03_org_ownership.csv",
     "fileName": "V7_03_org_ownership.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5091,7 +5291,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_04_workforce_personas.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_04_workforce_personas.csv",
     "fileName": "V7_04_workforce_personas.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5110,7 +5310,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_05_applications_systems.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_05_applications_systems.csv",
     "fileName": "V7_05_applications_systems.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5129,7 +5329,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_06_data_assets_integrations.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_06_data_assets_integrations.csv",
     "fileName": "V7_06_data_assets_integrations.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5149,7 +5349,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_07_vendors_contracts.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_07_vendors_contracts.csv",
     "fileName": "V7_07_vendors_contracts.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5168,7 +5368,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_08_spend_value.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_08_spend_value.csv",
     "fileName": "V7_08_spend_value.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5187,7 +5387,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_09_programs_initiatives_business_priorities.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_09_programs_initiatives_business_priorities.csv",
     "fileName": "V7_09_programs_initiatives_business_priorities.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5206,7 +5406,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_10_ai_initiatives.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_10_ai_initiatives.csv",
     "fileName": "V7_10_ai_initiatives.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5226,7 +5426,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_11_operations_risk_controls.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_11_operations_risk_controls.csv",
     "fileName": "V7_11_operations_risk_controls.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5245,7 +5445,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_12_relationships_graph_edges.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_12_relationships_graph_edges.csv",
     "fileName": "V7_12_relationships_graph_edges.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5264,7 +5464,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_13_source_evidence_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_13_source_evidence_registry.csv",
     "fileName": "V7_13_source_evidence_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5283,7 +5483,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_14_metric_definitions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_14_metric_definitions.csv",
     "fileName": "V7_14_metric_definitions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5302,7 +5502,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_15_industry_market_knowledge_patterns.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_15_industry_market_knowledge_patterns.csv",
     "fileName": "V7_15_industry_market_knowledge_patterns.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5322,7 +5522,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_16_expert_lenses.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_16_expert_lenses.csv",
     "fileName": "V7_16_expert_lenses.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5341,7 +5541,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_17_client_rate_card_cost_basis.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_17_client_rate_card_cost_basis.csv",
     "fileName": "V7_17_client_rate_card_cost_basis.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5360,7 +5560,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_18_function_system_data_vendor_bridge.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_18_function_system_data_vendor_bridge.csv",
     "fileName": "V7_18_function_system_data_vendor_bridge.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5380,7 +5580,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_19_service_tower_managed_services_scope.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_19_service_tower_managed_services_scope.csv",
     "fileName": "V7_19_service_tower_managed_services_scope.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5399,7 +5599,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_20_chunk_retrieval_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_20_chunk_retrieval_registry.csv",
     "fileName": "V7_20_chunk_retrieval_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5418,7 +5618,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_21_graph_registry_relationship_dictionary.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_21_graph_registry_relationship_dictionary.csv",
     "fileName": "V7_21_graph_registry_relationship_dictionary.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5438,7 +5638,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_22_operational_evidence_process_intelligence.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_22_operational_evidence_process_intelligence.csv",
     "fileName": "V7_22_operational_evidence_process_intelligence.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5457,7 +5657,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_23_external_benchmark_market_corpus.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_23_external_benchmark_market_corpus.csv",
     "fileName": "V7_23_external_benchmark_market_corpus.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5476,7 +5676,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_24_infrastructure_cloud_estate.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_24_infrastructure_cloud_estate.csv",
     "fileName": "V7_24_infrastructure_cloud_estate.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5495,7 +5695,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantName": "Retail Demo",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_SYNTHETIC_MANIFEST.json",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/apex-retail/V7_SYNTHETIC_MANIFEST.json",
     "fileName": "V7_SYNTHETIC_MANIFEST.json",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -5516,7 +5716,9 @@
     "fileName": "V6_GENERATED_MANIFEST.json",
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
-    "domains": [],
+    "domains": [
+      "programs_initiatives"
+    ],
     "rowCount": 16,
     "isStructured": true,
     "isTransformedTemplate": true,
@@ -5534,7 +5736,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 1,
     "isStructured": true,
@@ -5553,7 +5756,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 14,
     "isStructured": true,
@@ -5572,7 +5776,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 8,
     "isStructured": true,
@@ -5591,7 +5796,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 10,
     "isStructured": true,
@@ -5610,7 +5816,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 24,
     "isStructured": true,
@@ -5630,7 +5837,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 34,
     "isStructured": true,
@@ -5649,7 +5857,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 19,
     "isStructured": true,
@@ -5668,7 +5877,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 85,
     "isStructured": true,
@@ -5726,6 +5936,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 10,
@@ -5745,6 +5956,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 199,
@@ -5764,6 +5976,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 10,
@@ -5783,6 +5996,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 12,
@@ -5802,6 +6016,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 4,
@@ -5821,6 +6036,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 4,
@@ -5840,7 +6056,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 153,
     "isStructured": true,
@@ -5860,6 +6077,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "enterprise_profile",
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 8,
@@ -5879,7 +6097,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 8,
     "isStructured": true,
@@ -5898,7 +6117,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 96,
     "isStructured": true,
@@ -5917,7 +6137,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 116,
     "isStructured": true,
@@ -5936,7 +6157,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 82,
     "isStructured": true,
@@ -5955,7 +6177,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 152,
     "isStructured": true,
@@ -5975,7 +6198,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 82,
     "isStructured": true,
@@ -5994,7 +6218,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 96,
     "isStructured": true,
@@ -6013,7 +6238,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 57,
     "isStructured": true,
@@ -6071,6 +6297,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 48,
@@ -6090,6 +6317,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 529,
@@ -6109,6 +6337,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 48,
@@ -6128,6 +6357,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 384,
@@ -6147,6 +6377,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "benchmark_industry_inputs"
     ],
@@ -6167,6 +6398,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 18,
@@ -6186,7 +6418,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 54,
     "isStructured": true,
@@ -6206,6 +6439,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "vendors_contracts",
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 510,
@@ -6225,6 +6459,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "tower_outcome_pack"
     ],
     "rowCount": 64,
@@ -6244,6 +6479,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 376,
@@ -6263,6 +6499,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "evidence_sources"
     ],
@@ -6283,6 +6520,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 112,
@@ -6302,6 +6540,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 24,
@@ -6321,6 +6560,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "infrastructure_cloud_estate"
     ],
     "rowCount": 128,
@@ -6341,6 +6581,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "enterprise_profile",
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 0,
@@ -6360,7 +6601,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "enterprise_profile"
+      "enterprise_profile",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6379,7 +6621,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "business_functions"
+      "business_functions",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6398,7 +6641,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "organization_ownership"
+      "organization_ownership",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6417,7 +6661,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "workforce_personas"
+      "workforce_personas",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6436,7 +6681,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "applications_systems"
+      "applications_systems",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6456,7 +6702,8 @@
     "sourceRoot": "datasets",
     "domains": [
       "data_assets_data_products",
-      "integrations"
+      "integrations",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6475,7 +6722,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "vendors_contracts"
+      "vendors_contracts",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6494,7 +6742,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6552,6 +6801,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "risks_controls"
     ],
     "rowCount": 0,
@@ -6571,6 +6821,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 0,
@@ -6590,6 +6841,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 0,
@@ -6609,6 +6861,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "metric_definitions"
     ],
     "rowCount": 0,
@@ -6628,6 +6881,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "benchmark_industry_inputs"
     ],
@@ -6648,6 +6902,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 0,
@@ -6667,7 +6922,8 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
-      "spend_value"
+      "spend_value",
+      "programs_initiatives"
     ],
     "rowCount": 0,
     "isStructured": true,
@@ -6687,6 +6943,7 @@
     "sourceRoot": "datasets",
     "domains": [
       "vendors_contracts",
+      "programs_initiatives",
       "relationships"
     ],
     "rowCount": 0,
@@ -6706,6 +6963,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "tower_outcome_pack"
     ],
     "rowCount": 0,
@@ -6725,6 +6983,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 0,
@@ -6744,6 +7003,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "relationships",
       "evidence_sources"
     ],
@@ -6764,6 +7024,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "evidence_sources"
     ],
     "rowCount": 0,
@@ -6783,6 +7044,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "benchmark_industry_inputs"
     ],
     "rowCount": 0,
@@ -6802,6 +7064,7 @@
     "sourceLocation": "repo",
     "sourceRoot": "datasets",
     "domains": [
+      "programs_initiatives",
       "infrastructure_cloud_estate"
     ],
     "rowCount": 0,
@@ -6816,7 +7079,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_01_enterprise_profile.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_01_enterprise_profile.csv",
     "fileName": "V7_01_enterprise_profile.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6835,7 +7098,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_02_business_functions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_02_business_functions.csv",
     "fileName": "V7_02_business_functions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6854,7 +7117,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_03_org_ownership.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_03_org_ownership.csv",
     "fileName": "V7_03_org_ownership.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6873,7 +7136,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_04_workforce_personas.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_04_workforce_personas.csv",
     "fileName": "V7_04_workforce_personas.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6892,7 +7155,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_05_applications_systems.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_05_applications_systems.csv",
     "fileName": "V7_05_applications_systems.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6911,7 +7174,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_06_data_assets_integrations.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_06_data_assets_integrations.csv",
     "fileName": "V7_06_data_assets_integrations.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6931,7 +7194,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_07_vendors_contracts.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_07_vendors_contracts.csv",
     "fileName": "V7_07_vendors_contracts.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6950,7 +7213,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_08_spend_value.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_08_spend_value.csv",
     "fileName": "V7_08_spend_value.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6969,7 +7232,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_09_programs_initiatives_business_priorities.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_09_programs_initiatives_business_priorities.csv",
     "fileName": "V7_09_programs_initiatives_business_priorities.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -6988,7 +7251,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_10_ai_initiatives.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_10_ai_initiatives.csv",
     "fileName": "V7_10_ai_initiatives.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7008,7 +7271,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_11_operations_risk_controls.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_11_operations_risk_controls.csv",
     "fileName": "V7_11_operations_risk_controls.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7027,7 +7290,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_12_relationships_graph_edges.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_12_relationships_graph_edges.csv",
     "fileName": "V7_12_relationships_graph_edges.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7046,7 +7309,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_13_source_evidence_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_13_source_evidence_registry.csv",
     "fileName": "V7_13_source_evidence_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7065,7 +7328,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_14_metric_definitions.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_14_metric_definitions.csv",
     "fileName": "V7_14_metric_definitions.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7084,7 +7347,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_15_industry_market_knowledge_patterns.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_15_industry_market_knowledge_patterns.csv",
     "fileName": "V7_15_industry_market_knowledge_patterns.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7104,7 +7367,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_16_expert_lenses.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_16_expert_lenses.csv",
     "fileName": "V7_16_expert_lenses.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7123,7 +7386,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_17_client_rate_card_cost_basis.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_17_client_rate_card_cost_basis.csv",
     "fileName": "V7_17_client_rate_card_cost_basis.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7142,7 +7405,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_18_function_system_data_vendor_bridge.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_18_function_system_data_vendor_bridge.csv",
     "fileName": "V7_18_function_system_data_vendor_bridge.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7162,7 +7425,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_19_service_tower_managed_services_scope.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_19_service_tower_managed_services_scope.csv",
     "fileName": "V7_19_service_tower_managed_services_scope.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7181,7 +7444,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_20_chunk_retrieval_registry.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_20_chunk_retrieval_registry.csv",
     "fileName": "V7_20_chunk_retrieval_registry.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7200,7 +7463,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_21_graph_registry_relationship_dictionary.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_21_graph_registry_relationship_dictionary.csv",
     "fileName": "V7_21_graph_registry_relationship_dictionary.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7220,7 +7483,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_22_operational_evidence_process_intelligence.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_22_operational_evidence_process_intelligence.csv",
     "fileName": "V7_22_operational_evidence_process_intelligence.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7239,7 +7502,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_23_external_benchmark_market_corpus.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_23_external_benchmark_market_corpus.csv",
     "fileName": "V7_23_external_benchmark_market_corpus.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7258,7 +7521,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_24_infrastructure_cloud_estate.csv",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_24_infrastructure_cloud_estate.csv",
     "fileName": "V7_24_infrastructure_cloud_estate.csv",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",
@@ -7277,7 +7540,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantName": "Lakeshore Holdings",
-    "filePath": "../../../Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_SYNTHETIC_MANIFEST.json",
+    "filePath": "../../Downloads/abarva-v7-synthetic-client-data-v2-20260703/lakeshore-industries/V7_SYNTHETIC_MANIFEST.json",
     "fileName": "V7_SYNTHETIC_MANIFEST.json",
     "sourceLocation": "downloads",
     "sourceRoot": "/Users/anand/Downloads",

@@ -30,7 +30,7 @@
       {
         "domain": "applications_systems",
         "adapterExists": true,
-        "sourceFilesDiscovered": 11,
+        "sourceFilesDiscovered": 12,
         "status": "available"
       },
       {
@@ -60,7 +60,7 @@
       {
         "domain": "programs_initiatives",
         "adapterExists": true,
-        "sourceFilesDiscovered": 21,
+        "sourceFilesDiscovered": 291,
         "status": "available"
       },
       {
@@ -84,7 +84,7 @@
       {
         "domain": "evidence_sources",
         "adapterExists": true,
-        "sourceFilesDiscovered": 54,
+        "sourceFilesDiscovered": 55,
         "status": "available"
       },
       {
@@ -186,7 +186,7 @@
       {
         "domain": "programs_initiatives",
         "adapterExists": true,
-        "sourceFilesDiscovered": 28,
+        "sourceFilesDiscovered": 347,
         "status": "available"
       },
       {
@@ -312,7 +312,7 @@
       {
         "domain": "programs_initiatives",
         "adapterExists": true,
-        "sourceFilesDiscovered": 18,
+        "sourceFilesDiscovered": 265,
         "status": "available"
       },
       {
@@ -438,7 +438,7 @@
       {
         "domain": "programs_initiatives",
         "adapterExists": true,
-        "sourceFilesDiscovered": 25,
+        "sourceFilesDiscovered": 235,
         "status": "available"
       },
       {
@@ -564,7 +564,7 @@
       {
         "domain": "programs_initiatives",
         "adapterExists": true,
-        "sourceFilesDiscovered": 16,
+        "sourceFilesDiscovered": 220,
         "status": "available"
       },
       {

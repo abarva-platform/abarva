@@ -360,6 +360,68 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.answer.directAnswer).not.toMatch(/data assets integrations|field facts|V7_/i);
   });
 
+  it('uses Meridian enterprise profile foundation for company overview even when current rows are thin', async () => {
+    const session: SessionRunner = async (fn) =>
+      fn(async <R>(sql: string, params: unknown[] = []) => {
+        if (sql.includes('from intelligence_v7.current_tenant_pack_runs') || sql.includes('from intelligence_v7.tenant_pack_runs')) {
+          return [{
+            tenant_key: 'meridian-health',
+            tenant_name: 'Healthcare Demo',
+            contract_version: 'v7.current-pack-test',
+            source_dataset: 'datasets/meridian-health-v6-v7-current-state-v1',
+            row_count: 442,
+            field_count: 11507,
+            graph_node_count: 97,
+            relationship_edge_count: 69,
+            chunk_count: 118,
+            loaded_at: '2026-07-09T18:47:43.212Z',
+          }] as R[];
+        }
+        if (sql.includes('group by source_file')) {
+          return [{ source_file: 'enterprise_profile_foundation.csv', count: 1 }] as R[];
+        }
+        if (sql.includes('from intelligence_v7.business_records')) {
+          expect(params[2]).toBe('v7_01_enterprise_profile');
+          return [
+            {
+              record_name: 'Healthcare Demo',
+              source_file: 'thin-current-row.csv',
+              source_row_number: 2,
+              source_artifact_name: 'thin-current-row.csv',
+              source_validation_status: 'validated',
+              values_json: {
+                company_name: 'Healthcare Demo',
+                industry: 'Healthcare',
+                revenue_usd: 'not_loaded',
+                employee_count: 'not_loaded',
+              },
+            },
+          ] as R[];
+        }
+        return [] as R[];
+      });
+
+    const result = await answerHomeKnowFromV7({
+      tenantKey: 'meridian',
+      tenantDisplayName: 'Healthcare Demo',
+      question: 'Explain this company in plain English.',
+      includeTrace: true,
+      userId: 'user-test',
+      session,
+    });
+
+    expect(result.answer.primaryDimension).toBe('v7_01_enterprise_profile');
+    expect(result.answer.directAnswer).toMatch(/Meridian Health System/i);
+    expect(result.answer.directAnswer).toMatch(/Integrated delivery network and health plan/i);
+    expect(result.answer.directAnswer).toMatch(/Sacramento, CA/i);
+    expect(result.answer.directAnswer).toMatch(/\$16\.8B revenue/i);
+    expect(result.answer.directAnswer).toMatch(/58,000 employees/i);
+    expect(result.answer.directAnswer).toMatch(/Unified clinical and claims lakehouse/i);
+    expect(result.answer.directAnswer).toMatch(/Payment integrity/i);
+    expect(result.answer.directAnswer).not.toMatch(/not_loaded/i);
+    expect(result.answer.directAnswer).not.toMatch(/Healthcare Demo.*Healthcare Demo.*Healthcare Demo/i);
+  });
+
   it('keeps CFO company-profile orientation in Enterprise Profile instead of advisory handoff', async () => {
     const result = await answerHomeKnowFromV7({
       tenantKey: 'lakeshore',

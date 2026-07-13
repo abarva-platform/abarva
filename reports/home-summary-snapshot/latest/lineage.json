@@ -1,11 +1,11 @@
 [
   {
     "tenantKey": "skyharbor-air",
-    "displayName": "Airline Demo",
+    "displayName": "SkyHarbor Air",
     "lineage": {
-      "generatedAt": "2026-07-13T20:32:22.126Z",
+      "generatedAt": "2026-07-13T21:32:25.714Z",
       "generatedBy": "home_summary_engine",
-      "inputFingerprint": "e714a640a550873ca1ebdd36d3a1560224a04fb8263ae2ffa84735014c95ef1c",
+      "inputFingerprint": "42ed00330e1ff46dce9c114e4473529594dd43a9e87cf7abd8997d077fb7fbbc",
       "tenantDataVersionId": null,
       "candidateVersionId": null,
       "sourceSnapshotIds": [
@@ -35,9 +35,9 @@
     "tenantKey": "lakeshore-holdings",
     "displayName": "Lakeshore Holdings",
     "lineage": {
-      "generatedAt": "2026-07-13T20:32:22.126Z",
+      "generatedAt": "2026-07-13T21:32:25.714Z",
       "generatedBy": "home_summary_engine",
-      "inputFingerprint": "7753de10f3c63e873d68069c7249b43f951f9b52da90f2e475edce97771bab2f",
+      "inputFingerprint": "aa09e831db9a503ee250ef3767a31adf132a2cedde8023d5447b71331ac20361",
       "tenantDataVersionId": null,
       "candidateVersionId": null,
       "sourceSnapshotIds": [
@@ -65,11 +65,11 @@
   },
   {
     "tenantKey": "meridian-health",
-    "displayName": "Healthcare Demo",
+    "displayName": "Meridian Health System",
     "lineage": {
-      "generatedAt": "2026-07-13T20:32:22.126Z",
+      "generatedAt": "2026-07-13T21:32:25.714Z",
       "generatedBy": "home_summary_engine",
-      "inputFingerprint": "b095712c5c608831e2992d2310d91e28f45713a36448a7f0f45bc6f8593e0e49",
+      "inputFingerprint": "018961c0e4b932ed7588c13aec948c9780658989e124dcbd0677db7e4b0422b2",
       "tenantDataVersionId": null,
       "candidateVersionId": null,
       "sourceSnapshotIds": [
@@ -97,11 +97,11 @@
   },
   {
     "tenantKey": "first-capital",
-    "displayName": "Financial Services Demo",
+    "displayName": "First Capital",
     "lineage": {
-      "generatedAt": "2026-07-13T20:32:22.126Z",
+      "generatedAt": "2026-07-13T21:32:25.714Z",
       "generatedBy": "home_summary_engine",
-      "inputFingerprint": "c316558d188dd81bb5050aa818c849b36abf9b9d7037a2513ea98a5f926c6146",
+      "inputFingerprint": "02574b5ccdcaa91533958dc230c348171b4670aecd49c0d017c433ff40b58bbd",
       "tenantDataVersionId": null,
       "candidateVersionId": null,
       "sourceSnapshotIds": [
@@ -129,11 +129,11 @@
   },
   {
     "tenantKey": "apex-retail",
-    "displayName": "Retail Demo",
+    "displayName": "Apex Retail",
     "lineage": {
-      "generatedAt": "2026-07-13T20:32:22.126Z",
+      "generatedAt": "2026-07-13T21:32:25.714Z",
       "generatedBy": "home_summary_engine",
-      "inputFingerprint": "646cc7e55c9a3f510a2f3bae357a8ea7f5411124b4c06235eb1a0de51cd653dd",
+      "inputFingerprint": "ab61aa3d692d12618140bbd04eeb7babf072c49ddad1d1adcce1464aa1202266",
       "tenantDataVersionId": null,
       "candidateVersionId": null,
       "sourceSnapshotIds": [
