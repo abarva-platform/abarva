@@ -26,6 +26,7 @@ import type {
   HomeContextQualityBadge,
   HomeDataQualityModel,
 } from "@/lib/home/home-data-quality";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -172,6 +173,7 @@ const CSS = `
 @media(max-width:1180px){.homex .hx2-dqCards,.homex .hx2-dqExplain{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.homex .hx2-dqCards,.homex .hx2-dqExplain,.homex .hx2-dqHead,.homex .hx2-contextQuality{grid-template-columns:1fr}.homex .hx2-contextBadges{justify-content:flex-start}}
 .homex .hx2-shell{min-height:0;display:grid;grid-template-columns:255px minmax(0,1fr) 320px;gap:0;overflow:hidden}
+.homex .hx2-shell.chatCollapsed{grid-template-columns:255px minmax(0,1fr) 68px}
 .homex .hx2-explorer{min-height:0;overflow:auto;border-right:1px solid #e7e3da;background:#f6f3ed;padding:16px}
 .homex .hx2-explorerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .homex .hx2-explorerHead strong{font-family:var(--font-fraunces),Georgia,serif;font-size:18px;color:#111827}
@@ -261,6 +263,10 @@ const CSS = `
 .homex .hx2-relRow strong{font-size:12px;color:#1f6b3a;white-space:nowrap}
 .homex .hx2-empty{border:1px dashed #d8d1c2;border-radius:10px;background:#fff;padding:16px;color:#536073}
 .homex .hx2-rail{min-height:0;overflow:auto;border-left:1px solid #ded8ca;background:#f5f1eb;padding:16px;display:grid;align-content:start;gap:14px}
+.homex .hx2-rail.collapsed{padding:12px 10px;overflow:hidden;align-content:start}
+.homex .hx2-railCollapsedBtn{display:grid;gap:8px;justify-items:center;width:100%;border:1px solid #d8d1c2;border-radius:12px;background:#111827;color:#fff;padding:10px 6px;cursor:pointer;box-shadow:0 10px 28px rgba(17,24,39,.16)}
+.homex .hx2-railCollapsedBtn span{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:850;font-size:12px;letter-spacing:.02em}
+.homex .hx2-railCollapsedBtn:focus-visible,.homex .hx2-avaToggle:focus-visible{outline:2px solid rgba(34,174,234,.55);outline-offset:2px}
 .homex .hx2-visual{text-align:center}
 .homex .hx2-ring{--score:72%;width:116px;height:116px;border-radius:50%;margin:8px auto 12px;display:grid;place-items:center;background:conic-gradient(#22aeea var(--score),#e9e5dc 0)}
 .homex .hx2-ring span{display:grid;place-items:center;width:82px;height:82px;border-radius:50%;background:#fff;font-family:var(--font-fraunces),Georgia,serif;font-size:25px;font-weight:700;color:#07162f}
@@ -278,7 +284,9 @@ const CSS = `
 .homex .hx2-miniStatus.muted span{color:#9c7b3f}
 .homex .hx2-miniStatus.muted strong{color:#6b665f}
 .homex .hx2-avaHead{display:flex;gap:10px;align-items:center;margin-bottom:10px}
-.homex .hx2-avaMark{display:grid;place-items:center;width:36px;height:36px;border-radius:8px;background:#f3ebdb;color:#050505;border:1px solid #d8d1c2;font-family:var(--font-fraunces),Georgia,serif;font-weight:800}
+.homex .hx2-avaHeadText{min-width:0;flex:1}
+.homex .hx2-avaMark{display:grid;place-items:center;width:48px;height:36px;border-radius:8px;background:#111827;border:1px solid #07162f;padding:7px}
+.homex .hx2-avaToggle{border:1px solid #d8d1c2;border-radius:8px;background:#fff;color:#13213b;font:inherit;font-size:12px;font-weight:850;padding:7px 9px;cursor:pointer}
 .homex .hx2-avaHead strong{display:block;color:#111827}
 .homex .hx2-avaHead span,.homex .hx2-scope{display:block;color:#667085;font-size:11.5px;line-height:1.35}
 .homex .hx2-scope{font-family:var(--font-geist-mono),ui-monospace,monospace;text-transform:uppercase;letter-spacing:.12em;color:#6f6a61;border-top:1px solid #ded8ca;border-bottom:1px solid #ded8ca;padding:10px 0;margin-bottom:14px}
@@ -295,7 +303,7 @@ const CSS = `
 .homex .hx2-turn.user{background:#07162f;color:#fff}
 .homex .hx2-ask{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;margin-top:10px}
 .homex .hx2-ask input{min-width:0;border:1px solid #ded8ca;border-radius:8px;padding:10px;font:inherit;font-size:13px}
-@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}}
+@media(max-width:1180px){.homex .hx2-shell,.homex .hx2-shell.chatCollapsed{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}}
 @media(max-width:900px){.homex .hx2-status,.homex .hx2-knowledgeGrid,.homex .hx2-answerability{grid-template-columns:1fr}.homex .hx2-statusActions{justify-content:flex-start;flex-wrap:wrap}}
 @media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
 `;
@@ -443,8 +451,8 @@ function trimCompactNumber(value: number): string {
 function clientFacingFileName(value: string): string {
   return (
     value
-      // Strip the version prefix AND the file ordinal (e.g. "V7_04_") so the
-      // sequence number does not read as a count (e.g. "04 workforce personas").
+      // Strip legacy packet prefixes and file ordinals so sequence numbers do
+      // not read as business counts (e.g. "04 workforce personas").
       .replace(/^v\d+[_-](?:\d+[_-])?/i, "")
       .replace(/\.csv$/i, "")
       .replace(/[_-]+/g, " ")
@@ -1806,6 +1814,8 @@ function ExplorerRail({
   onAsk,
   thread,
   isBusy,
+  collapsed,
+  onToggleCollapsed,
 }: {
   selected: BindingDimension | null;
   selectedDisplayName?: string | null;
@@ -1815,6 +1825,8 @@ function ExplorerRail({
   onAsk: (question: string) => void;
   thread: ChatMessage[];
   isBusy: boolean;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }) {
   const [draft, setDraft] = useState("");
   const score = completenessScore({
@@ -1849,15 +1861,46 @@ function ExplorerRail({
     onAsk(text);
     setDraft("");
   };
+  if (collapsed) {
+    return (
+      <aside
+        aria-label="aVa Home chat collapsed"
+        className="hx2-rail collapsed"
+        data-testid="home-context-rail-collapsed"
+      >
+        <button
+          aria-expanded="false"
+          className="hx2-railCollapsedBtn"
+          onClick={onToggleCollapsed}
+          title="Open aVa"
+          type="button"
+        >
+          <AvaAskMark variant="wordmark-light" style={{ width: 42, minWidth: 42 }} />
+          <span>Ask aVa</span>
+        </button>
+      </aside>
+    );
+  }
   return (
     <aside className="hx2-rail" data-testid="home-context-rail">
       <div className="hx2-card hx2-ava">
         <div className="hx2-avaHead">
-          <div className="hx2-avaMark">a</div>
-          <div>
+          <div className="hx2-avaMark">
+            <AvaAskMark variant="wordmark-light" style={{ width: 42, minWidth: 42 }} />
+          </div>
+          <div className="hx2-avaHeadText">
             <strong>aVa</strong>
             <span>scoped aVa · read-only over evidence</span>
           </div>
+          <button
+            aria-expanded="true"
+            className="hx2-avaToggle"
+            onClick={onToggleCollapsed}
+            title="Collapse aVa"
+            type="button"
+          >
+            ←
+          </button>
         </div>
         <div className="hx2-scope">
           Scope · {scopeName} · reading Active Home context
@@ -2014,6 +2057,7 @@ export function HomeSurface({
   const [search, setSearch] = useState("");
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
   const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
   const displayedTenantName = safeV6Browser?.displayName ?? tenantDisplayName;
@@ -2227,7 +2271,7 @@ export function HomeSurface({
           </div>
         ) : null}
 
-        <div className="hx2-shell">
+        <div className={`hx2-shell ${isChatCollapsed ? "chatCollapsed" : ""}`}>
           <aside className="hx2-explorer" data-testid="home-context-explorer">
             <div className="hx2-explorerHead">
               <strong>Context Explorer</strong>
@@ -2335,7 +2379,9 @@ export function HomeSurface({
           />
 
           <ExplorerRail
+            collapsed={isChatCollapsed}
             isBusy={isBusy}
+            onToggleCollapsed={() => setIsChatCollapsed((value) => !value)}
             onAsk={askHomeKnow}
             overview={{
               totalRows,

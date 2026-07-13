@@ -43,6 +43,44 @@ describe("Home data quality read model", () => {
     );
   });
 
+  it("keeps SkyHarbor quality posture visible when packaged report files are absent", () => {
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "home-dq-no-reports-"));
+    const model = buildHomeDataQualityModel({
+      repoRoot,
+      tenantKey: "skyharbor",
+      tenantDisplayName: "SkyHarbor Air",
+    });
+
+    expect(model.generatedAt).toBe("2026-07-13T04:30:21.622Z");
+    expect(model.sourceCoverage.sourceRichCandidateThin).toBe(true);
+    expect(model.sourceCoverage.domainsAvailable).toEqual(
+      expect.arrayContaining(["Systems estate", "Core platforms", "Data and analytics"]),
+    );
+    expect(model.summaryCards).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "source_coverage",
+          value: "6 files",
+          detail: expect.stringContaining("31,213 source rows"),
+        }),
+        expect.objectContaining({
+          id: "relationship_coverage",
+          value: "0 mapped links",
+          tone: "gap",
+        }),
+      ]),
+    );
+    expect(model.answerability.status).toBe("partial");
+    expect(model.candidatePreview.previewRequested).toBe(false);
+    expect(model.guardrails).toMatchObject({
+      productionTenantDataWritten: false,
+      activeTenantAccessLayerUpdated: false,
+      candidatePromoted: false,
+      moduleRuntimeConsumptionChanged: false,
+      candidateReadByDefault: false,
+    });
+  });
+
   it("keeps candidate preview inactive by default and labeled when explicit", () => {
     const defaultModel = buildHomeDataQualityModel({
       repoRoot: process.cwd(),
