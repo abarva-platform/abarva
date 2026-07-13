@@ -24,8 +24,10 @@ describe("admin data layer explorer route", () => {
     expect(shellConfigSource).toContain("/admin/data-layer-explorer");
   });
 
-  it("renders through the canonical Admin shell as a read-only explorer", () => {
-    expect(pageSource).toContain("AdminCanonShellV2");
+  it("renders as a standalone app-canvas read-only explorer", () => {
+    expect(pageSource).toContain("AppShell");
+    expect(pageSource).not.toContain("AdminCanonShellV2");
+    expect(pageSource).not.toContain("EditorialCanvas");
     expect(pageSource).toContain("resolveAdminTenant");
     expect(pageSource).toContain("buildAdminDataLayerExplorerModel");
     expect(pageSource).toContain("data-admin-data-layer-explorer");
@@ -35,7 +37,8 @@ describe("admin data layer explorer route", () => {
     expect(pageSource).toContain("data-page-layer-map");
     expect(pageSource).toContain("data-quality-checks");
     expect(pageSource).toContain("data-guardrails");
-    expect(pageSource).toContain("No writes");
+    expect(pageSource).toContain("Production writes");
+    expect(pageSource).toContain("Runtime change");
   });
 
   it("exposes the audit command for proof artifact generation", () => {

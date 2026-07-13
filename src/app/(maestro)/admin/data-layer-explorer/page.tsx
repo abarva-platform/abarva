@@ -1,8 +1,6 @@
 import { connection } from "next/server";
 
-import { AdminCanonShellV2 } from "@/components/admin/AdminCanonShellV2";
-import { ContextBar } from "@/components/admin/ContextBar";
-import { EditorialCanvas } from "@/components/admin/EditorialCanvas";
+import { AppShell } from "@/components/shell/AppShell";
 import { resolveAdminTenant } from "@/lib/admin/admin-tenant";
 import {
   buildAdminDataLayerExplorerModel,
@@ -22,20 +20,23 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const cardStyle = {
-  border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+  border: "1px solid rgba(15, 23, 42, 0.10)",
   borderRadius: 8,
-  background: SHELL.CARD_WHITE,
-  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+  background: "#FFFFFF",
+  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.05)",
 } as const;
 
 const labelStyle = {
   fontFamily: SHELL.MONO,
   fontSize: 11,
-  letterSpacing: "0.12em",
+  letterSpacing: 0,
   textTransform: "uppercase",
-  color: SHELL.INK_MUTED,
+  color: "#64748B",
   fontWeight: 800,
 } as const;
+
+const sansStack =
+  'Inter, "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 export default async function AdminDataLayerExplorerPage() {
   await connection();
@@ -43,11 +44,24 @@ export default async function AdminDataLayerExplorerPage() {
   const model = buildAdminDataLayerExplorerModel(tenant.tenantName);
 
   return (
-    <AdminCanonShellV2 tenantName={tenant.tenantName}>
-      <EditorialCanvas
-        eyebrow="Admin / Data Journey"
-        title={model.title}
-        subtitle={model.subtitle}
+    <AppShell
+      surface="setup"
+      topBarProps={{
+        tenantName: tenant.tenantName,
+        context: "Data Journey",
+      }}
+      showProductNav
+    >
+      <main
+        data-admin-data-layer-explorer
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: "auto",
+          background: "#F5F7F8",
+          color: "#0F172A",
+          fontFamily: sansStack,
+        }}
       >
         <style>
           {`
@@ -55,21 +69,18 @@ export default async function AdminDataLayerExplorerPage() {
               scroll-behavior: smooth;
             }
             [data-admin-data-layer-explorer] {
-              --journey-ink: ${SHELL.INK};
-              --journey-muted: ${SHELL.INK_MUTED};
-              --journey-line: ${SHELL.CARD_LINE_SOFT};
+              --journey-ink: #0F172A;
+              --journey-muted: #64748B;
+              --journey-line: rgba(15, 23, 42, 0.10);
             }
             [data-data-journey-left-nav] a {
-              color: ${SHELL.INK_SOFT};
+              color: #334155;
               text-decoration: none;
             }
             [data-data-journey-left-nav] a:hover {
-              color: ${SHELL.INK};
+              color: #0F766E;
             }
             @media (max-width: 1100px) {
-              [data-data-journey-grid] {
-                grid-template-columns: minmax(0, 1fr) !important;
-              }
               [data-data-journey-left-nav] {
                 position: static !important;
                 max-height: none !important;
@@ -77,37 +88,112 @@ export default async function AdminDataLayerExplorerPage() {
             }
           `}
         </style>
-        <ContextBar
-          tenant={tenant.tenantName}
-          mode="Read-only"
-          agent="Steward"
-          data={`${model.sections.length} sections · ${model.inputCategories.length} input categories`}
-          liveStatus="No writes"
-          liveStatusKind="live"
-        />
+        <div
+          style={{
+            maxWidth: 1680,
+            margin: "0 auto",
+            padding: "28px 32px 56px",
+          }}
+        >
+          <section
+            style={{
+              borderRadius: 8,
+              padding: 28,
+              background:
+                "linear-gradient(135deg, #08111F 0%, #0F172A 52%, #123B3A 100%)",
+              color: "#FFFFFF",
+              boxShadow: "0 24px 70px rgba(15, 23, 42, 0.22)",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) auto",
+                gap: 24,
+                alignItems: "start",
+              }}
+            >
+              <div>
+                <p
+                  style={{
+                    ...labelStyle,
+                    margin: 0,
+                    color: "#67E8F9",
+                  }}
+                >
+                  Data Journey · Read-only architecture map
+                </p>
+                <h1
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 46,
+                    lineHeight: 1.05,
+                    fontWeight: 850,
+                    letterSpacing: 0,
+                    color: "#FFFFFF",
+                    fontFamily: sansStack,
+                  }}
+                >
+                  Data Layer Explorer
+                </h1>
+                <p
+                  style={{
+                    margin: "14px 0 0",
+                    maxWidth: 980,
+                    color: "#D8E2EA",
+                    fontSize: 18,
+                    lineHeight: 1.55,
+                    fontWeight: 500,
+                  }}
+                >
+                  {model.subtitle}
+                </p>
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, minmax(130px, 1fr))",
+                  gap: 10,
+                  minWidth: 480,
+                }}
+              >
+                <HeroMetric label="Client" value={tenant.tenantName} />
+                <HeroMetric
+                  label="Evidence source"
+                  value={`${model.sections.length} sections`}
+                />
+                <HeroMetric
+                  label="Input coverage"
+                  value={`${model.inputCategories.length} categories`}
+                />
+              </div>
+            </div>
+          </section>
 
-        <div data-admin-data-layer-explorer>
           <section
             style={{
               ...cardStyle,
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1.2fr) minmax(320px, 0.8fr)",
-              gap: 18,
-              padding: 20,
-              marginBottom: 18,
+              gridTemplateColumns:
+                "minmax(0, 1fr) repeat(4, minmax(150px, 190px))",
+              gap: 14,
+              padding: 16,
+              marginTop: 16,
+              marginBottom: 16,
+              alignItems: "center",
             }}
           >
             <div>
-              <p style={labelStyle}>Truth split</p>
-              <h2 style={{ margin: "8px 0", fontSize: 24, color: SHELL.INK }}>
-                Read-only map, not an execution console.
+              <p style={{ ...labelStyle, margin: 0 }}>Truth split</p>
+              <h2 style={{ margin: "6px 0", fontSize: 20, color: "#0F172A" }}>
+                Read-only architecture map, not an execution console.
               </h2>
               <p
                 style={{
                   margin: 0,
-                  color: SHELL.INK_SOFT,
-                  fontSize: 15,
-                  lineHeight: 1.6,
+                  color: "#475569",
+                  fontSize: 14,
+                  lineHeight: 1.5,
                   maxWidth: 920,
                 }}
               >
@@ -116,106 +202,62 @@ export default async function AdminDataLayerExplorerPage() {
                 which modules are allowed to use each layer.
               </p>
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: 10,
-              }}
-            >
-              {[
-                ["production writes", "false"],
-                ["candidate creation", "false"],
-                ["candidate promotion", "false"],
-                ["runtime change", "false"],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  style={{
-                    border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-                    borderRadius: 8,
-                    padding: 12,
-                    background: "#F7FAF8",
-                  }}
-                >
-                  <p style={{ ...labelStyle, margin: 0 }}>{label}</p>
-                  <p
-                    style={{
-                      margin: "8px 0 0",
-                      fontFamily: SHELL.MONO,
-                      fontSize: 18,
-                      fontWeight: 900,
-                      color: "#0F766E",
-                    }}
-                  >
-                    {value}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <TruthTile label="Production writes" value="false" />
+            <TruthTile label="Candidate creation" value="false" />
+            <TruthTile label="Candidate promotion" value="false" />
+            <TruthTile label="Runtime change" value="false" />
           </section>
 
-          <section
-            data-data-journey-grid
+          <nav
+            data-data-journey-left-nav
+            aria-label="Data journey sections"
             style={{
-              display: "grid",
-              gridTemplateColumns: "260px minmax(0, 1fr)",
-              gap: 20,
-              alignItems: "start",
+              ...cardStyle,
+              position: "sticky",
+              top: 0,
+              zIndex: 4,
+              display: "flex",
+              gap: 6,
+              flexWrap: "wrap",
+              padding: 10,
+              marginBottom: 16,
             }}
           >
-            <nav
-              data-data-journey-left-nav
-              aria-label="Data journey sections"
-              style={{
-                ...cardStyle,
-                position: "sticky",
-                top: 20,
-                maxHeight: "calc(100vh - 104px)",
-                overflow: "auto",
-                padding: 12,
-              }}
-            >
-              <p style={{ ...labelStyle, margin: "4px 8px 10px" }}>Explorer</p>
-              <div style={{ display: "grid", gap: 2 }}>
-                {model.sections.map((section, index) => (
-                  <a
-                    key={section.id}
-                    href={`#${section.id}`}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "26px minmax(0, 1fr)",
-                      gap: 8,
-                      alignItems: "center",
-                      padding: "9px 8px",
-                      borderRadius: 8,
-                      fontSize: 13,
-                      fontWeight: 800,
-                    }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        display: "grid",
-                        placeItems: "center",
-                        width: 22,
-                        height: 22,
-                        borderRadius: 999,
-                        background: index === 0 ? SHELL.INK : "#EAF4F2",
-                        color: index === 0 ? SHELL.CARD_WHITE : "#0F766E",
-                        fontFamily: SHELL.MONO,
-                        fontSize: 10,
-                      }}
-                    >
-                      {index + 1}
-                    </span>
-                    <span>{section.navLabel}</span>
-                  </a>
-                ))}
-              </div>
-            </nav>
+            {model.sections.map((section, index) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                style={{
+                  display: "inline-flex",
+                  gap: 7,
+                  alignItems: "center",
+                  padding: "8px 10px",
+                  borderRadius: 999,
+                  border: "1px solid rgba(15, 23, 42, 0.10)",
+                  background: index === 0 ? "#0F172A" : "#FFFFFF",
+                  color: index === 0 ? "#FFFFFF" : "#334155",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  lineHeight: 1,
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    color: index === 0 ? "#67E8F9" : "#0F766E",
+                  }}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span>{section.navLabel}</span>
+              </a>
+            ))}
+          </nav>
 
-            <div style={{ display: "grid", gap: 18, minWidth: 0 }}>
+          <section data-data-journey-grid>
+            <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
               <FlowPanel
                 steps={model.pipelineSteps.map((step) => step.label)}
               />
@@ -240,8 +282,61 @@ export default async function AdminDataLayerExplorerPage() {
             </div>
           </section>
         </div>
-      </EditorialCanvas>
-    </AdminCanonShellV2>
+      </main>
+    </AppShell>
+  );
+}
+
+function HeroMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(255,255,255,0.16)",
+        borderRadius: 8,
+        padding: 12,
+        background: "rgba(255,255,255,0.08)",
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      <p style={{ ...labelStyle, margin: 0, color: "#A7F3D0" }}>{label}</p>
+      <p
+        style={{
+          margin: "7px 0 0",
+          color: "#FFFFFF",
+          fontSize: 16,
+          lineHeight: 1.25,
+          fontWeight: 850,
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function TruthTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #BFE7DE",
+        borderRadius: 8,
+        padding: "10px 12px",
+        background: "#F0FBF8",
+      }}
+    >
+      <p style={{ ...labelStyle, margin: 0, color: "#0F766E" }}>{label}</p>
+      <p
+        style={{
+          margin: "5px 0 0",
+          fontFamily: SHELL.MONO,
+          fontSize: 18,
+          fontWeight: 900,
+          color: "#0F766E",
+        }}
+      >
+        {value}
+      </p>
+    </div>
   );
 }
 
@@ -736,7 +831,7 @@ function CompactMeta({ label, value }: { label: string; value: string }) {
           color: SHELL.INK_MUTED,
           fontWeight: 900,
           textTransform: "uppercase",
-          letterSpacing: "0.08em",
+          letterSpacing: 0,
           fontSize: 10,
         }}
       >
