@@ -59,6 +59,12 @@ type UploadResult = {
   };
   detail?: string;
   reviewRequired?: boolean;
+  legacyControlledImport?: {
+    legacyControlledImport: boolean;
+    directActiveMutationPossible: boolean;
+    candidateRunwayBypassed: boolean;
+    warning: string;
+  };
 };
 
 type AdminUploadFileFormat =
@@ -450,6 +456,7 @@ export function CsvUploadConnector({
     formData.set("operatorDataAuthorityConfirmed", String(attestationAccepted));
     formData.set("operatorDataUseConfirmed", String(attestationAccepted));
     formData.set("operatorSensitiveDataConfirmed", String(attestationAccepted));
+    formData.set("legacyControlledImportAcknowledged", "true");
     if (attestationNote.trim())
       formData.set("operatorAttestationNote", attestationNote.trim());
     if (sourceRecordIdColumn)
@@ -501,6 +508,23 @@ export function CsvUploadConnector({
             : `Files for ${tenantName} stay in review until the mapping and attestation are approved.`}
         </p>
       </div>
+      <section
+        aria-label="Legacy controlled import notice"
+        style={{
+          border: "1px solid #f1d7a8",
+          borderRadius: 6,
+          background: "#fffaf0",
+          color: "#4d3711",
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          padding: "9px 10px",
+        }}
+      >
+        <strong>Legacy controlled import.</strong> This path is not a
+        candidate-version promotion. New data-control work must still produce a
+        candidate version, proof bundle, preview, and explicit operator
+        promotion before modules treat it as active.
+      </section>
 
       <section
         aria-label="Upload workflow"
@@ -999,6 +1023,11 @@ export function CsvUploadConnector({
                 </span>
               ) : null}
               <span>{result.persistence?.detail}</span>
+              {result.legacyControlledImport?.legacyControlledImport ? (
+                <span style={{ color: "#7a5200", fontWeight: 800 }}>
+                  {result.legacyControlledImport.warning}
+                </span>
+              ) : null}
               {result.evidenceLedger?.rowsRecorded ? (
                 <span>
                   Evidence ledger:{" "}

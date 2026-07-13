@@ -5,11 +5,18 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { validatePilotUploadAttestation } from "@/lib/context-ingestion/upload-attestation";
 import { commitAcceptedProposals } from "@/lib/context-ingestion/loader/commit-adapter";
 import type { MappingProposal } from "@/lib/context-ingestion/loader/contract";
+import { LEGACY_CONTROLLED_IMPORT_WARNING } from "@/lib/admin/setup-control";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const LEGACY_CONTROLLED_IMPORT = {
+  legacyControlledImport: true,
+  directActiveMutationPossible: true,
+  candidateRunwayBypassed: true,
+  warning: LEGACY_CONTROLLED_IMPORT_WARNING,
+} as const;
 
 function parseAcceptedProposals(raw: string | null): MappingProposal[] {
   if (!raw) throw new Error("loader_commit_missing_accepted");
@@ -111,7 +118,20 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { ok: result.ok, mode, result, skippedReviewRequired },
+      {
+        ok: result.ok,
+        mode,
+        result,
+        skippedReviewRequired,
+        legacyControlledImport:
+          mode === "stage_and_process"
+            ? LEGACY_CONTROLLED_IMPORT
+            : {
+                ...LEGACY_CONTROLLED_IMPORT,
+                directActiveMutationPossible: false,
+                candidateRunwayBypassed: false,
+              },
+      },
       { status: mode === "validate_only" ? 202 : 200 },
     );
   } catch (error) {

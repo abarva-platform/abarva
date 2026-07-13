@@ -23,6 +23,7 @@ import { getRateCardTemplateById } from "@/lib/programs/expert-kernel/rate-card/
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
+import { LEGACY_CONTROLLED_IMPORT_WARNING } from "@/lib/admin/setup-control";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +31,12 @@ export const dynamic = "force-dynamic";
 const MAX_BYTES = 5 * 1024 * 1024;
 const DIRECT_CONTEXT_BUCKET = "context-uploads";
 const REVIEW_ONLY_EXTENSIONS = [".xlsx", ".pdf", ".docx", ".pptx", ".zip"];
+const LEGACY_CONTROLLED_IMPORT = {
+  legacyControlledImport: true,
+  directActiveMutationPossible: true,
+  candidateRunwayBypassed: true,
+  warning: LEGACY_CONTROLLED_IMPORT_WARNING,
+} as const;
 
 function formString(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -203,6 +210,11 @@ export async function POST(request: NextRequest) {
             detail:
               "The original file was staged for review; no tenant context rows or facts were committed.",
           },
+          legacyControlledImport: {
+            ...LEGACY_CONTROLLED_IMPORT,
+            directActiveMutationPossible: false,
+            candidateRunwayBypassed: false,
+          },
           sourceBlob: {
             bucket: DIRECT_CONTEXT_BUCKET,
             path: blobPath,
@@ -249,6 +261,11 @@ export async function POST(request: NextRequest) {
             detail: preview.validation.valid
               ? "Rate-card rows validated. Commit to the tenant data plane is blocked until the rate-card commit slice lands."
               : "Rate-card rows were parsed but did not pass validation. Fix the listed errors before commit.",
+          },
+          legacyControlledImport: {
+            ...LEGACY_CONTROLLED_IMPORT,
+            directActiveMutationPossible: false,
+            candidateRunwayBypassed: false,
           },
         },
         { status: 202 },
@@ -340,6 +357,7 @@ export async function POST(request: NextRequest) {
           path: blobPath,
           sha256: fileHash,
         },
+        legacyControlledImport: LEGACY_CONTROLLED_IMPORT,
         refreshEventId: refreshEvent?.id ?? null,
       },
       { status: result.persistence.status === "inserted" ? 200 : 202 },

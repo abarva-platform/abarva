@@ -11,12 +11,19 @@ import {
 } from "@/lib/context-ingestion/bulk-context-upload";
 import { validatePilotUploadAttestation } from "@/lib/context-ingestion/upload-attestation";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { LEGACY_CONTROLLED_IMPORT_WARNING } from "@/lib/admin/setup-control";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_ZIP_BYTES = 25 * 1024 * 1024;
+const LEGACY_CONTROLLED_IMPORT = {
+  legacyControlledImport: true,
+  directActiveMutationPossible: true,
+  candidateRunwayBypassed: true,
+  warning: LEGACY_CONTROLLED_IMPORT_WARNING,
+} as const;
 
 type BulkRouteFile = {
   name: string;
@@ -295,6 +302,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ...result,
+        legacyControlledImport:
+          mode === "stage_and_process"
+            ? LEGACY_CONTROLLED_IMPORT
+            : {
+                ...LEGACY_CONTROLLED_IMPORT,
+                directActiveMutationPossible: false,
+                candidateRunwayBypassed: false,
+              },
         adminNotification: notification,
       },
       {

@@ -6,6 +6,7 @@ import { AdminSetupExperience } from "@/components/admin/AdminSetupExperience";
 import { AppShell } from "@/components/shell/AppShell";
 import { getTenantSourceFiles } from "@/lib/context-ingestion/tenant-context-read-model";
 import { buildLoadStudioView } from "@/lib/admin/setup-load-studio-view";
+import { buildAdminSetupControlReadModel } from "@/lib/admin/setup-control";
 import { getClientOption, isClientKey } from "@/lib/client-config";
 
 export const metadata = { title: "Setup · AbarVa" };
@@ -36,6 +37,13 @@ export default async function AdminSetupPage() {
   const sourceFiles = await getTenantSourceFiles(activeClient?.id ?? "").catch(
     () => [],
   );
+  const setupControl = buildAdminSetupControlReadModel({
+    tenantKey: clientKey,
+    displayName: tenant.tenantName,
+    coverName: getClientOption(clientKey).name,
+    snapshot,
+    sourceFiles,
+  });
 
   return (
     <AppShell
@@ -53,6 +61,7 @@ export default async function AdminSetupPage() {
         tenantKey={clientKey}
         clientId={activeClient?.id ?? ""}
         view={view}
+        setupControl={setupControl}
         sourceFiles={sourceFiles.map((file) => ({
           sourceDoc: file.source_doc,
           chunkCount: file.chunk_count,
