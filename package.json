@@ -239,6 +239,7 @@
     "audit:candidate-module-workbench-preview": "tsx scripts/audit/build-candidate-module-workbench-preview.ts",
     "audit:source-shadow-proof": "tsx scripts/audit/build-source-shadow-proof.ts",
     "audit:all-tenant-candidate-batch": "tsx scripts/audit/build-all-tenant-candidate-batch.ts",
+    "audit:all-tenant-readiness-closure": "tsx scripts/audit/build-all-tenant-readiness-closure.ts",
     "audit:moves-shadow-proof": "tsx scripts/audit/build-moves-shadow-proof.ts",
     "audit:candidate-readiness-control": "tsx scripts/audit/build-candidate-readiness-control.ts",
     "audit:candidate-preview-mode": "tsx scripts/audit/build-candidate-preview-mode.ts",
