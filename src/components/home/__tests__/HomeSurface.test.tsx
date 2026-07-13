@@ -13,6 +13,7 @@ import { HomeSurface } from "@/components/home/HomeSurface";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
 import type { HomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
+import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 
 const payload = {
   tenant: {
@@ -473,6 +474,23 @@ const setupControl = {
   },
 } satisfies AdminSetupControlResponse;
 
+const dataQuality = buildHomeDataQualityModel({
+  repoRoot: process.cwd(),
+  tenantKey: "apexretail",
+  tenantDisplayName: "Retail Demo",
+  browser: v6Browser,
+  setupControl,
+});
+
+const previewDataQuality = buildHomeDataQualityModel({
+  repoRoot: process.cwd(),
+  tenantKey: "apexretail",
+  tenantDisplayName: "Retail Demo",
+  browser: v6Browser,
+  setupControl,
+  candidatePreviewEnabled: true,
+});
+
 describe("HomeSurface — Explorer context browser", () => {
   it("renders Home as an Explorer-first context browser with scoped aVa", () => {
     const { container } = render(
@@ -545,6 +563,7 @@ describe("HomeSurface — Explorer context browser", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
+        dataQuality={dataQuality}
         payload={payload}
         setupControl={setupControl}
         v6Browser={v6Browser}
@@ -558,6 +577,32 @@ describe("HomeSurface — Explorer context browser", () => {
     );
     expect(screen.getByText("Candidate preview")).toBeInTheDocument();
     expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
+  });
+
+  it("renders Home data quality, coverage, and answerability without candidate facts by default", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        dataQuality={dataQuality}
+        payload={payload}
+        setupControl={setupControl}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    expect(screen.getByTestId("home-data-quality-panel")).toBeInTheDocument();
+    expect(screen.getByText("What Home can trust right now")).toBeInTheDocument();
+    expect(screen.getAllByText("Source Coverage").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Candidate Coverage").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Evidence Strength").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Relationship Coverage").length).toBeGreaterThan(0);
+    expect(screen.getByText("Active / Candidate Status")).toBeInTheDocument();
+    expect(screen.getAllByText("Partial").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Candidate preview not active/i)).toBeInTheDocument();
+    expect(screen.getByText(/Default Home does not read candidate-only facts/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Candidate Preview — inactive data/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
+    expect(screen.queryByText("Enterprise Relationship Graph")).not.toBeInTheDocument();
   });
 
   it("shows candidate preview only when explicitly enabled", () => {
@@ -575,6 +620,7 @@ describe("HomeSurface — Explorer context browser", () => {
       <HomeSurface
         candidatePreviewEnabled
         clientKey="apexretail"
+        dataQuality={previewDataQuality}
         payload={payload}
         setupControl={setupControl}
         v6Browser={v6Browser}

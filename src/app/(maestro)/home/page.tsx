@@ -8,6 +8,7 @@ import { buildAdminSetupControlReadModel } from '@/lib/admin/setup-control';
 import { getTenantSourceFiles } from '@/lib/context-ingestion/tenant-context-read-model';
 import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
+import { buildHomeDataQualityModel } from '@/lib/home/home-data-quality';
 import { getHomeV6ContextBrowser } from '@/lib/home/v6-context-browser';
 import { getHomeV7ContextBrowser } from '@/lib/home/v7-context-browser';
 import { getIntelligenceBindingPayload } from '@/lib/intelligence/binding/binding-payload';
@@ -75,6 +76,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           sourceFiles: await getTenantSourceFiles(activeClient.id).catch(() => []),
         })
       : null;
+  const dataQuality = buildHomeDataQualityModel({
+    tenantKey: activeClient?.key ?? homeTenantKey,
+    tenantDisplayName: activeTenantName,
+    candidatePreviewEnabled,
+    setupControl,
+    browser,
+  });
 
   return (
     <AppShell
@@ -92,6 +100,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           clientKey={activeClient?.key ?? homeTenantKey}
           payload={binding}
           setupControl={setupControl}
+          dataQuality={dataQuality}
           v6Browser={browser}
         />
       </main>
