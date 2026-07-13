@@ -8,6 +8,7 @@ import type { TenantPacketFile } from "../contracts/tenant-packet";
 import { CsvSourceAdapter, parseCsv } from "../source-adapters/csv-source-adapter";
 
 type SourceRole = "selected_authoritative" | "supporting" | "excluded";
+type SourceLocationType = "repo_dataset_path" | "repo_supporting_evidence_path";
 type RelationshipType =
   | "business_function_to_system"
   | "system_to_platform"
@@ -19,7 +20,7 @@ export interface SkyHarborSourceSelection {
   sourceId: string;
   label: string;
   path: string;
-  locationType: "repo_dataset_path" | "local_downloads_path";
+  locationType: SourceLocationType;
   role: SourceRole;
   rowCount: number;
   observedFieldCount: number;
@@ -199,8 +200,8 @@ const TENANT_KEY = "skyharbor-air" as const;
 const TENANT_DISPLAY_NAME = "SkyHarbor Air" as const;
 const SELECTED_SOURCE_PATH =
   "datasets/skyharbor-air-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv";
-const DOWNLOADS_412_SOURCE_PATH =
-  "/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv";
+const SUPPORTING_412_SOURCE_PATH =
+  "datasets/skyharbor-air-supporting-evidence/applications-systems/01_Application_Portfolio_InScope_412Apps.csv";
 const TRANSFORMED_956_SOURCE_PATH =
   "datasets/skyharbor-air-synthetic-v6/templates/V6_05_applications_systems.csv";
 const THIN_13_SOURCE_PATH =
@@ -559,18 +560,18 @@ function buildSourceSelection(repoRoot: string): SkyHarborSourceSelection[] {
     }),
     sourceSelectionRow({
       repoRoot,
-      sourceId: "skyharbor-applications-412-download",
-      label: "412-app portfolio CSV from Downloads",
-      sourcePath: DOWNLOADS_412_SOURCE_PATH,
-      locationType: "local_downloads_path",
+      sourceId: "skyharbor-applications-412-supporting",
+      label: "412-app portfolio CSV supporting source",
+      sourcePath: SUPPORTING_412_SOURCE_PATH,
+      locationType: "repo_supporting_evidence_path",
       role: "supporting",
       selectionReason:
-        "Supporting source only. It is a useful in-scope application subset, but it has fewer rows and currently lives outside the canonical repo/blob landing path.",
+        "Supporting source only. It is a useful in-scope application subset, but it has fewer rows than the selected estate and is packaged so deployed proof can evaluate it without a local Downloads dependency.",
       qualityCaveats: [
-        "Local Downloads path must be moved into canonical landing before production data-build use.",
+        "Supporting source is packaged for proof parity; upload landing alignment still remains a separate production data-build follow-up.",
       ],
       provenance:
-        "Operator-provided local evidence upload pack discovered by DATA-PR31.",
+        "Operator-provided evidence upload pack copied into repo-backed supporting evidence for DATA-PR32 runtime parity.",
     }),
     sourceSelectionRow({
       repoRoot,
@@ -611,7 +612,7 @@ function sourceSelectionRow(input: {
   sourceId: string;
   label: string;
   sourcePath: string;
-  locationType: "repo_dataset_path" | "local_downloads_path";
+  locationType: SourceLocationType;
   role: SourceRole;
   selectionReason: string;
   qualityCaveats: string[];

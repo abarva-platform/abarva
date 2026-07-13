@@ -43,19 +43,19 @@
       "provenance": "Repo dataset source estate; used as authoritative for the inactive DATA-PR32 applications/systems candidate only."
     },
     {
-      "sourceId": "skyharbor-applications-412-download",
-      "label": "412-app portfolio CSV from Downloads",
-      "path": "/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv",
-      "locationType": "local_downloads_path",
+      "sourceId": "skyharbor-applications-412-supporting",
+      "label": "412-app portfolio CSV supporting source",
+      "path": "datasets/skyharbor-air-supporting-evidence/applications-systems/01_Application_Portfolio_InScope_412Apps.csv",
+      "locationType": "repo_supporting_evidence_path",
       "role": "supporting",
       "rowCount": 412,
       "observedFieldCount": 14,
       "contentFingerprint": "1144dc2547ac9ad13e08385ccf419a1694d56f487df1fe595b3d80f85553e3ea",
-      "selectionReason": "Supporting source only. It is a useful in-scope application subset, but it has fewer rows and currently lives outside the canonical repo/blob landing path.",
+      "selectionReason": "Supporting source only. It is a useful in-scope application subset, but it has fewer rows than the selected estate and is packaged so deployed proof can evaluate it without a local Downloads dependency.",
       "qualityCaveats": [
-        "Local Downloads path must be moved into canonical landing before production data-build use."
+        "Supporting source is packaged for proof parity; upload landing alignment still remains a separate production data-build follow-up."
       ],
-      "provenance": "Operator-provided local evidence upload pack discovered by DATA-PR31."
+      "provenance": "Operator-provided evidence upload pack copied into repo-backed supporting evidence for DATA-PR32 runtime parity."
     },
     {
       "sourceId": "skyharbor-applications-956-transformed-template",
@@ -2083,7 +2083,7 @@
         "sourceObjectId": "APP-00001",
         "selectedValue": "Security-Custom-Suite-0001",
         "comparedValue": "Reservations Core PSS-01",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2091,7 +2091,7 @@
         "sourceObjectId": "APP-00002",
         "selectedValue": "Disruption-Snowflake-Manager-0002",
         "comparedValue": "Reservations Hub PSS-02",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2099,7 +2099,7 @@
         "sourceObjectId": "APP-00003",
         "selectedValue": "Digital-SITA-Platform-0003",
         "comparedValue": "Reservations Engine PSS-03",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2107,7 +2107,7 @@
         "sourceObjectId": "APP-00004",
         "selectedValue": "Crew-TCS-Hub-0004",
         "comparedValue": "Reservations Suite PSS-04",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2115,7 +2115,7 @@
         "sourceObjectId": "APP-00005",
         "selectedValue": "Corporate-SITA-Service-0005",
         "comparedValue": "Reservations Gateway PSS-05",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2123,7 +2123,7 @@
         "sourceObjectId": "APP-00006",
         "selectedValue": "Airworthiness-ServiceNow-Hub-0006",
         "comparedValue": "Reservations Manager PSS-06",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2131,7 +2131,7 @@
         "sourceObjectId": "APP-00007",
         "selectedValue": "Corporate-Lufthansa Systems-Engine-0007",
         "comparedValue": "Reservations Portal PSS-07",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2139,7 +2139,7 @@
         "sourceObjectId": "APP-00008",
         "selectedValue": "Inventory-Sabre-Suite-0008",
         "comparedValue": "Reservations Platform PSS-08",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2147,7 +2147,7 @@
         "sourceObjectId": "APP-00009",
         "selectedValue": "Customer-ServiceNow-Suite-0009",
         "comparedValue": "Reservations Console PSS-09",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2155,7 +2155,7 @@
         "sourceObjectId": "APP-00010",
         "selectedValue": "Real-Oracle-Service-0010",
         "comparedValue": "Reservations Optimizer PSS-10",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2163,7 +2163,7 @@
         "sourceObjectId": "APP-00011",
         "selectedValue": "Digital-Hexaware-Service-0011",
         "comparedValue": "Reservations Core PSS-11",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2171,7 +2171,7 @@
         "sourceObjectId": "APP-00012",
         "selectedValue": "Treasury-AIMS-Service-0012",
         "comparedValue": "Reservations Hub PSS-12",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2179,7 +2179,7 @@
         "sourceObjectId": "APP-00013",
         "selectedValue": "Irregular-Teradata-Hub-0013",
         "comparedValue": "Reservations Engine PSS-13",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2187,7 +2187,7 @@
         "sourceObjectId": "APP-00014",
         "selectedValue": "Cloud-SITA-Engine-0014",
         "comparedValue": "Reservations Suite PSS-14",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2195,7 +2195,7 @@
         "sourceObjectId": "APP-00015",
         "selectedValue": "Reliability-AIMS-Suite-0015",
         "comparedValue": "Reservations Gateway PSS-15",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2203,7 +2203,7 @@
         "sourceObjectId": "APP-00016",
         "selectedValue": "Ground-Adobe-Manager-0016",
         "comparedValue": "Reservations Manager PSS-16",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2211,7 +2211,7 @@
         "sourceObjectId": "APP-00017",
         "selectedValue": "Lounge-Lufthansa Systems-Manager-0017",
         "comparedValue": "Reservations Portal PSS-17",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2219,7 +2219,7 @@
         "sourceObjectId": "APP-00018",
         "selectedValue": "Loyalty-Amadeus-Service-0018",
         "comparedValue": "Reservations Platform PSS-18",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2227,7 +2227,7 @@
         "sourceObjectId": "APP-00019",
         "selectedValue": "MRO-Snowflake-Manager-0019",
         "comparedValue": "Reservations Console PSS-19",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2235,7 +2235,7 @@
         "sourceObjectId": "APP-00020",
         "selectedValue": "HR-Hexaware-Platform-0020",
         "comparedValue": "Reservations Optimizer PSS-20",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2243,7 +2243,7 @@
         "sourceObjectId": "APP-00021",
         "selectedValue": "Loyalty-Databricks-Platform-0021",
         "comparedValue": "Reservations Core PSS-21",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2251,7 +2251,7 @@
         "sourceObjectId": "APP-00022",
         "selectedValue": "Treasury-Sabre AirVision-Manager-0022",
         "comparedValue": "Reservations Hub PSS-22",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2259,7 +2259,7 @@
         "sourceObjectId": "APP-00023",
         "selectedValue": "Ancillary-Sabre-Hub-0023",
         "comparedValue": "Reservations Engine PSS-23",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2267,7 +2267,7 @@
         "sourceObjectId": "APP-00024",
         "selectedValue": "Procurement-Databricks-Engine-0024",
         "comparedValue": "Reservations Suite PSS-24",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2275,7 +2275,7 @@
         "sourceObjectId": "APP-00025",
         "selectedValue": "Compute-Workday-Suite-0025",
         "comparedValue": "Reservations Gateway PSS-25",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2283,7 +2283,7 @@
         "sourceObjectId": "APP-00026",
         "selectedValue": "Revenue-Databricks-Hub-0026",
         "comparedValue": "Reservations Manager PSS-26",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2291,7 +2291,7 @@
         "sourceObjectId": "APP-00027",
         "selectedValue": "Data-Jeppesen-Engine-0027",
         "comparedValue": "Reservations Portal PSS-27",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2299,7 +2299,7 @@
         "sourceObjectId": "APP-00028",
         "selectedValue": "Maintenance-Teradata-Hub-0028",
         "comparedValue": "Reservations Platform PSS-28",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2307,7 +2307,7 @@
         "sourceObjectId": "APP-00029",
         "selectedValue": "Procurement-Jeppesen-Platform-0029",
         "comparedValue": "Loyalty Core LOY-01",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2315,7 +2315,7 @@
         "sourceObjectId": "APP-00030",
         "selectedValue": "Disruption-Sabre-Platform-0030",
         "comparedValue": "Loyalty Hub LOY-02",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2323,7 +2323,7 @@
         "sourceObjectId": "APP-00031",
         "selectedValue": "Cargo-TCS-Platform-0031",
         "comparedValue": "Loyalty Engine LOY-03",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2331,7 +2331,7 @@
         "sourceObjectId": "APP-00032",
         "selectedValue": "Data-Snowflake-Hub-0032",
         "comparedValue": "Loyalty Suite LOY-04",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2339,7 +2339,7 @@
         "sourceObjectId": "APP-00033",
         "selectedValue": "Inventory-Sabre-Platform-0033",
         "comparedValue": "Loyalty Gateway LOY-05",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2347,7 +2347,7 @@
         "sourceObjectId": "APP-00034",
         "selectedValue": "Flight-Microsoft-Platform-0034",
         "comparedValue": "Loyalty Manager LOY-06",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2355,7 +2355,7 @@
         "sourceObjectId": "APP-00035",
         "selectedValue": "Parts-Salesforce-Manager-0035",
         "comparedValue": "Loyalty Portal LOY-07",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2363,7 +2363,7 @@
         "sourceObjectId": "APP-00036",
         "selectedValue": "Investor-Teradata-Engine-0036",
         "comparedValue": "Loyalty Platform LOY-08",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2371,7 +2371,7 @@
         "sourceObjectId": "APP-00037",
         "selectedValue": "Network-ServiceNow-Hub-0037",
         "comparedValue": "Loyalty Console LOY-09",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2379,7 +2379,7 @@
         "sourceObjectId": "APP-00038",
         "selectedValue": "Baggage-Teradata-Engine-0038",
         "comparedValue": "Loyalty Optimizer LOY-10",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2387,7 +2387,7 @@
         "sourceObjectId": "APP-00039",
         "selectedValue": "Weight-Microsoft-Suite-0039",
         "comparedValue": "Loyalty Core LOY-11",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2395,7 +2395,7 @@
         "sourceObjectId": "APP-00040",
         "selectedValue": "Treasury-ServiceNow-Platform-0040",
         "comparedValue": "Loyalty Hub LOY-12",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2403,7 +2403,7 @@
         "sourceObjectId": "APP-00041",
         "selectedValue": "Disruption-Sabre AirVision-Suite-0041",
         "comparedValue": "Loyalty Engine LOY-13",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2411,7 +2411,7 @@
         "sourceObjectId": "APP-00042",
         "selectedValue": "Storage-Accenture-Suite-0042",
         "comparedValue": "Loyalty Suite LOY-14",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2419,7 +2419,7 @@
         "sourceObjectId": "APP-00043",
         "selectedValue": "Self-Service-SITA-Suite-0043",
         "comparedValue": "Loyalty Gateway LOY-15",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2427,7 +2427,7 @@
         "sourceObjectId": "APP-00044",
         "selectedValue": "HR-SAP-Manager-0044",
         "comparedValue": "Loyalty Manager LOY-16",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2435,7 +2435,7 @@
         "sourceObjectId": "APP-00045",
         "selectedValue": "Gate-Oracle-Hub-0045",
         "comparedValue": "Loyalty Portal LOY-17",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2443,7 +2443,7 @@
         "sourceObjectId": "APP-00046",
         "selectedValue": "Customer-Salesforce-Engine-0046",
         "comparedValue": "Loyalty Platform LOY-18",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2451,7 +2451,7 @@
         "sourceObjectId": "APP-00047",
         "selectedValue": "Slot-Jeppesen-Suite-0047",
         "comparedValue": "Loyalty Console LOY-19",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2459,7 +2459,7 @@
         "sourceObjectId": "APP-00048",
         "selectedValue": "Crew-Workday-Manager-0048",
         "comparedValue": "Loyalty Optimizer LOY-20",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2467,7 +2467,7 @@
         "sourceObjectId": "APP-00049",
         "selectedValue": "Data-Jeppesen-Service-0049",
         "comparedValue": "Loyalty Core LOY-21",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2475,7 +2475,7 @@
         "sourceObjectId": "APP-00050",
         "selectedValue": "Network-Teradata-Hub-0050",
         "comparedValue": "Loyalty Hub LOY-22",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2483,7 +2483,7 @@
         "sourceObjectId": "APP-00051",
         "selectedValue": "Corporate-AIMS-Service-0051",
         "comparedValue": "Loyalty Engine LOY-23",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2491,7 +2491,7 @@
         "sourceObjectId": "APP-00052",
         "selectedValue": "Self-Service-Lufthansa Systems-Suite-0052",
         "comparedValue": "Loyalty Suite LOY-24",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2499,7 +2499,7 @@
         "sourceObjectId": "APP-00053",
         "selectedValue": "Cloud-TCS-Hub-0053",
         "comparedValue": "Cargo Core CGO-01",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2507,7 +2507,7 @@
         "sourceObjectId": "APP-00054",
         "selectedValue": "Maintenance-Sabre AirVision-Service-0054",
         "comparedValue": "Cargo Hub CGO-02",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2515,7 +2515,7 @@
         "sourceObjectId": "APP-00055",
         "selectedValue": "Tax-TCS-Suite-0055",
         "comparedValue": "Cargo Engine CGO-03",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2523,7 +2523,7 @@
         "sourceObjectId": "APP-00056",
         "selectedValue": "Observability-TCS-Suite-0056",
         "comparedValue": "Cargo Suite CGO-04",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2531,7 +2531,7 @@
         "sourceObjectId": "APP-00057",
         "selectedValue": "Irregular-Microsoft-Suite-0057",
         "comparedValue": "Cargo Gateway CGO-05",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2539,7 +2539,7 @@
         "sourceObjectId": "APP-00058",
         "selectedValue": "Contact-AIMS-Suite-0058",
         "comparedValue": "Cargo Manager CGO-06",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2547,7 +2547,7 @@
         "sourceObjectId": "APP-00059",
         "selectedValue": "Data-Accenture-Manager-0059",
         "comparedValue": "Cargo Portal CGO-07",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2555,7 +2555,7 @@
         "sourceObjectId": "APP-00060",
         "selectedValue": "Parts-Oracle-Service-0060",
         "comparedValue": "Cargo Platform CGO-08",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2563,7 +2563,7 @@
         "sourceObjectId": "APP-00061",
         "selectedValue": "Crew-IBM-Hub-0061",
         "comparedValue": "Cargo Console CGO-09",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2571,7 +2571,7 @@
         "sourceObjectId": "APP-00062",
         "selectedValue": "Contact-TCS-Engine-0062",
         "comparedValue": "Cargo Optimizer CGO-10",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2579,7 +2579,7 @@
         "sourceObjectId": "APP-00063",
         "selectedValue": "Network-Sabre AirVision-Suite-0063",
         "comparedValue": "Cargo Core CGO-11",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2587,7 +2587,7 @@
         "sourceObjectId": "APP-00064",
         "selectedValue": "ML-Sabre AirVision-Suite-0064",
         "comparedValue": "Cargo Hub CGO-12",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2595,7 +2595,7 @@
         "sourceObjectId": "APP-00065",
         "selectedValue": "Tax-Custom-Manager-0065",
         "comparedValue": "Cargo Engine CGO-13",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2603,7 +2603,7 @@
         "sourceObjectId": "APP-00066",
         "selectedValue": "Gate-AIMS-Manager-0066",
         "comparedValue": "Cargo Suite CGO-14",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2611,7 +2611,7 @@
         "sourceObjectId": "APP-00067",
         "selectedValue": "Pricing-Teradata-Manager-0067",
         "comparedValue": "Cargo Gateway CGO-15",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2619,7 +2619,7 @@
         "sourceObjectId": "APP-00068",
         "selectedValue": "Investor-Microsoft-Platform-0068",
         "comparedValue": "Cargo Manager CGO-16",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2627,7 +2627,7 @@
         "sourceObjectId": "APP-00069",
         "selectedValue": "Component-Amadeus-Service-0069",
         "comparedValue": "Cargo Portal CGO-17",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2635,7 +2635,7 @@
         "sourceObjectId": "APP-00070",
         "selectedValue": "Disruption-Salesforce-Platform-0070",
         "comparedValue": "Cargo Platform CGO-18",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2643,7 +2643,7 @@
         "sourceObjectId": "APP-00071",
         "selectedValue": "Maintenance-IBM-Service-0071",
         "comparedValue": "Cargo Console CGO-19",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2651,7 +2651,7 @@
         "sourceObjectId": "APP-00072",
         "selectedValue": "Line-SITA-Service-0072",
         "comparedValue": "Cargo Optimizer CGO-20",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2659,7 +2659,7 @@
         "sourceObjectId": "APP-00073",
         "selectedValue": "Real-IBM-Suite-0073",
         "comparedValue": "Cargo Core CGO-21",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2667,7 +2667,7 @@
         "sourceObjectId": "APP-00074",
         "selectedValue": "Slot-Snowflake-Service-0074",
         "comparedValue": "Cargo Hub CGO-22",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2675,7 +2675,7 @@
         "sourceObjectId": "APP-00075",
         "selectedValue": "Disruption-Microsoft-Manager-0075",
         "comparedValue": "Cargo Engine CGO-23",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2683,7 +2683,7 @@
         "sourceObjectId": "APP-00076",
         "selectedValue": "Legal-Adobe-Platform-0076",
         "comparedValue": "Cargo Suite CGO-24",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2691,7 +2691,7 @@
         "sourceObjectId": "APP-00077",
         "selectedValue": "Engine-Databricks-Hub-0077",
         "comparedValue": "Cargo Gateway CGO-25",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2699,7 +2699,7 @@
         "sourceObjectId": "APP-00078",
         "selectedValue": "Ancillary-Amadeus-Engine-0078",
         "comparedValue": "Cargo Manager CGO-26",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2707,7 +2707,7 @@
         "sourceObjectId": "APP-00079",
         "selectedValue": "Parts-AIMS-Platform-0079",
         "comparedValue": "Cargo Portal CGO-27",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2715,7 +2715,7 @@
         "sourceObjectId": "APP-00080",
         "selectedValue": "Data-Snowflake-Engine-0080",
         "comparedValue": "Cargo Platform CGO-28",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2723,7 +2723,7 @@
         "sourceObjectId": "APP-00081",
         "selectedValue": "Network-Databricks-Service-0081",
         "comparedValue": "Cargo Console CGO-29",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2731,7 +2731,7 @@
         "sourceObjectId": "APP-00082",
         "selectedValue": "Network-Workday-Manager-0082",
         "comparedValue": "Cargo Optimizer CGO-30",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2739,7 +2739,7 @@
         "sourceObjectId": "APP-00083",
         "selectedValue": "Master-Amadeus-Platform-0083",
         "comparedValue": "Cargo Core CGO-31",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2747,7 +2747,7 @@
         "sourceObjectId": "APP-00084",
         "selectedValue": "Network-SITA-Manager-0084",
         "comparedValue": "Crew Ops Core CRW-01",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2755,7 +2755,7 @@
         "sourceObjectId": "APP-00085",
         "selectedValue": "Cargo-AIMS-Service-0085",
         "comparedValue": "Crew Ops Hub CRW-02",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2763,7 +2763,7 @@
         "sourceObjectId": "APP-00086",
         "selectedValue": "Component-Jeppesen-Platform-0086",
         "comparedValue": "Crew Ops Engine CRW-03",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2771,7 +2771,7 @@
         "sourceObjectId": "APP-00087",
         "selectedValue": "Container-Snowflake-Service-0087",
         "comparedValue": "Crew Ops Suite CRW-04",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2779,7 +2779,7 @@
         "sourceObjectId": "APP-00088",
         "selectedValue": "Ground-Oracle-Platform-0088",
         "comparedValue": "Crew Ops Gateway CRW-05",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2787,7 +2787,7 @@
         "sourceObjectId": "APP-00089",
         "selectedValue": "HR-Oracle-Manager-0089",
         "comparedValue": "Crew Ops Manager CRW-06",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2795,7 +2795,7 @@
         "sourceObjectId": "APP-00090",
         "selectedValue": "Corporate-Oracle-Hub-0090",
         "comparedValue": "Crew Ops Portal CRW-07",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2803,7 +2803,7 @@
         "sourceObjectId": "APP-00091",
         "selectedValue": "Ancillary-Accenture-Service-0091",
         "comparedValue": "Crew Ops Platform CRW-08",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2811,7 +2811,7 @@
         "sourceObjectId": "APP-00092",
         "selectedValue": "Baggage-Sabre AirVision-Suite-0092",
         "comparedValue": "Crew Ops Console CRW-09",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2819,7 +2819,7 @@
         "sourceObjectId": "APP-00093",
         "selectedValue": "Identity-Databricks-Service-0093",
         "comparedValue": "Crew Ops Optimizer CRW-10",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2827,7 +2827,7 @@
         "sourceObjectId": "APP-00094",
         "selectedValue": "Ground-Hexaware-Engine-0094",
         "comparedValue": "Crew Ops Core CRW-11",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2835,7 +2835,7 @@
         "sourceObjectId": "APP-00095",
         "selectedValue": "Mobile-Teradata-Manager-0095",
         "comparedValue": "Crew Ops Hub CRW-12",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2843,7 +2843,7 @@
         "sourceObjectId": "APP-00096",
         "selectedValue": "Tax-Infosys-Hub-0096",
         "comparedValue": "Crew Ops Engine CRW-13",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2851,7 +2851,7 @@
         "sourceObjectId": "APP-00097",
         "selectedValue": "Cargo-TCS-Manager-0097",
         "comparedValue": "Crew Ops Suite CRW-14",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2859,7 +2859,7 @@
         "sourceObjectId": "APP-00098",
         "selectedValue": "Legal-AIMS-Service-0098",
         "comparedValue": "Crew Ops Gateway CRW-15",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2867,7 +2867,7 @@
         "sourceObjectId": "APP-00099",
         "selectedValue": "Distribution-AIMS-Platform-0099",
         "comparedValue": "Crew Ops Manager CRW-16",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       },
       {
@@ -2875,7 +2875,7 @@
         "sourceObjectId": "APP-00100",
         "selectedValue": "Self-Service-ServiceNow-Platform-0100",
         "comparedValue": "Crew Ops Portal CRW-17",
-        "comparedSource": "412-app portfolio CSV from Downloads",
+        "comparedSource": "412-app portfolio CSV supporting source",
         "action": "reported_not_merged"
       }
     ]

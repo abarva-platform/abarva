@@ -41,6 +41,7 @@ This is not an active data promotion. It does not change default Home, aVa, Inte
 - Adds deterministic reports under `reports/data-remediation/skyharbor-applications/latest/`.
 - Adds Admin Data Layer Explorer section for DATA-PR32 remediation status.
 - Adds focused regression tests for source selection, evidence attachment, relationship planning, guardrails, and Admin visibility.
+- Adds the 412-app supporting portfolio source under repo-backed supporting evidence so deployed Admin fallback proof does not depend on a local Downloads path.
 
 ## QA / Validation
 
@@ -56,9 +57,9 @@ This is not an active data promotion. It does not change default Home, aVa, Inte
 - Pass: `npm run audit:home-ava-representation`
 - Pass: `npm run audit:enterprise-naming`
 - Pass: `npm run audit:architecture-rules`
-- Not run: `npm run release:check` final rerun after this release record update.
-- Not run: TypeScript final compile after this release record update.
-- Not run: `git diff --check` final rerun after this release record update.
+- Pass: `npm run release:check`
+- Pass: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false --incremental false`
+- Pass: `git diff --check`
 
 ## Rollout Plan
 
@@ -89,6 +90,6 @@ Revert the PR and redeploy the previous known-good ACA image through the repo-ow
 
 - This remediates only SkyHarbor applications/systems.
 - It does not remediate all SkyHarbor domains.
-- It does not align Admin upload landing paths; that remains DATA-PR33.
+- It packages the 412-app supporting source for deployed proof parity, but does not fully align Admin upload landing paths; that remains DATA-PR33.
 - It does not promote candidate data.
 - It does not update default Home or runtime module reads.
