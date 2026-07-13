@@ -23,8 +23,10 @@ const requiredFiles = [
   "src/components/admin/AdminSetupExperience.tsx",
   "reports/admin-setup-control/airline-demo/setup-control.json",
   "reports/admin-setup-control/airline-demo/setup-control-summary.md",
+  "reports/admin-setup-control/admin-pr2-overview-readout.md",
   "docs/architecture/admin-data-control-center.md",
   "docs/releases/records/2026-07-12-admin-setup-control.md",
+  "docs/releases/records/2026-07-12-admin-overview-setup-control.md",
 ];
 
 for (const file of requiredFiles) {
@@ -104,6 +106,23 @@ assert(
   adminUi.includes("Data control status") &&
     adminUi.includes("Candidate runway is not active yet"),
   "Admin overview includes compact setup-control status panel",
+);
+assert(
+  adminUi.includes("Tenant setup and data control") &&
+    adminUi.includes("Tenant data control center") &&
+    adminUi.includes("Uploaded is not active. Candidate is not promoted."),
+  "Admin overview is redesigned around setup-control truth split",
+);
+assert(
+  adminUi.includes("Module readiness") &&
+    adminUi.includes("No module becomes ready just because files were uploaded"),
+  "Admin overview exposes module readiness without greenwashing uploaded files",
+);
+assert(
+  adminUi.includes("Production writes: no") &&
+    adminUi.includes("Active access changed: no") &&
+    adminUi.includes("Runtime behavior changed: no"),
+  "Admin overview shows production/write/runtime guardrails",
 );
 
 if (process.exitCode) {

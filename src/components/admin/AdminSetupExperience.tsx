@@ -338,6 +338,200 @@ function DataControlStatus({
   );
 }
 
+function statusLabel(status: string): string {
+  return status.replace(/-/g, " ");
+}
+
+function stateForStatus(
+  status: string,
+): "done" | "active" | "blocked" | "waiting" {
+  if (status === "ready" || status === "preview-ready") return "done";
+  if (status === "partially-ready") return "active";
+  if (status === "blocked" || status === "not-created") return "blocked";
+  return "waiting";
+}
+
+function ControlStage({
+  label,
+  title,
+  detail,
+  state,
+}: {
+  label: string;
+  title: string;
+  detail: string;
+  state: "done" | "active" | "blocked" | "waiting";
+}) {
+  return (
+    <div className="setup-stage-card">
+      <StatusIcon state={state} />
+      <span>{label}</span>
+      <strong>{title}</strong>
+      <small>{detail}</small>
+    </div>
+  );
+}
+
+function ControlSnapshot({
+  setupControl,
+  sourceFiles,
+}: {
+  setupControl?: AdminSetupControlResponse;
+  sourceFiles: LoadedSourceFile[];
+}) {
+  const modules = setupControl ? Object.values(setupControl.moduleReadiness) : [];
+  const partialModules = modules.filter(
+    (module) => module.status === "partially-ready",
+  ).length;
+
+  return (
+    <section className="setup-control-hero" aria-label="Tenant data control snapshot">
+      <div className="setup-control-hero-head">
+        <div>
+          <div className="setup-label">Tenant data control center</div>
+          <h2>Uploaded is not active. Candidate is not promoted.</h2>
+          <p>
+            Admin now shows the control truth: what evidence exists, what is
+            candidate-ready, what is active, and what modules may safely read.
+          </p>
+        </div>
+        <span className="setup-control-badge">Read-only view</span>
+      </div>
+
+      <div className="setup-stage-grid">
+        <ControlStage
+          label="01 · Evidence"
+          title={`${sourceFiles.length.toLocaleString()} files visible`}
+          detail="Files are evidence sources until mapped, validated, and promoted through the candidate runway."
+          state={sourceFiles.length ? "active" : "blocked"}
+        />
+        <ControlStage
+          label="02 · Candidate"
+          title={
+            setupControl?.candidateTenantDataVersion.candidateVersionId ??
+            "No candidate version"
+          }
+          detail={
+            setupControl?.candidateTenantDataVersion.promotionGateStatus
+              ? `Gate is ${statusLabel(setupControl.candidateTenantDataVersion.promotionGateStatus)}.`
+              : "Candidate gate has not run."
+          }
+          state={stateForStatus(
+            setupControl?.candidateTenantDataVersion.status ?? "not-created",
+          )}
+        />
+        <ControlStage
+          label="03 · Active access"
+          title={setupControl?.activeTenantAccess.activeVersionId ?? "Not wired"}
+          detail="Active Tenant Access Layer is unchanged by this Admin view."
+          state={stateForStatus(setupControl?.activeTenantAccess.status ?? "unknown")}
+        />
+        <ControlStage
+          label="04 · Modules"
+          title={`${partialModules} / ${modules.length || 5} partially ready`}
+          detail="Home, Intelligence, Moves, Source, and Tower are not green from files alone."
+          state={partialModules ? "active" : "blocked"}
+        />
+      </div>
+    </section>
+  );
+}
+
+function ControlSummaryGrid({
+  setupControl,
+}: {
+  setupControl?: AdminSetupControlResponse;
+}) {
+  const values = setupControl
+    ? [
+        {
+          label: "Evidence registry",
+          value: setupControl.evidenceRegistry.evidenceSources.toLocaleString(),
+          note: `${setupControl.evidenceRegistry.evidenceItems.toLocaleString()} evidence items, ${setupControl.evidenceRegistry.evidenceGaps.toLocaleString()} gaps`,
+        },
+        {
+          label: "Canonical facts",
+          value: setupControl.canonicalFacts.canonicalObjects.toLocaleString(),
+          note: "Snapshot-backed objects, not promotion proof",
+        },
+        {
+          label: "Relationship graph",
+          value: setupControl.relationshipGraph.graphRelationships.toLocaleString(),
+          note: `${setupControl.relationshipGraph.unresolvedRelationships.toLocaleString()} unresolved relationships`,
+        },
+        {
+          label: "Promotion control",
+          value: setupControl.promotionControl.promotionEnabled ? "Enabled" : "Blocked",
+          note: setupControl.promotionControl.operatorApprovalRequired
+            ? "Operator approval required"
+            : "No approval requirement recorded",
+          tone: "risk" as const,
+        },
+      ]
+    : [
+        {
+          label: "Setup control",
+          value: "Unavailable",
+          note: "Read model not attached to this page.",
+          tone: "risk" as const,
+        },
+      ];
+
+  return (
+    <div className="setup-control-summary-grid">
+      {values.map((item) => (
+        <Metric
+          key={item.label}
+          label={item.label}
+          value={item.value}
+          note={item.note}
+          tone={item.tone ?? "default"}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ModuleReadinessBoard({
+  setupControl,
+}: {
+  setupControl?: AdminSetupControlResponse;
+}) {
+  if (!setupControl) return null;
+  const entries = Object.entries(setupControl.moduleReadiness);
+
+  return (
+    <section className="setup-card setup-module-board">
+      <SectionHeader
+        eyebrow="Module readiness"
+        title="No module becomes ready just because files were uploaded"
+        subtitle="Each module needs candidate preview, active promotion, and cite-render proof before runtime use."
+        compact
+      />
+      <div className="setup-module-grid">
+        {entries.map(([moduleName, module]) => (
+          <div key={moduleName} className="setup-module-tile">
+            <span className={`setup-state-chip setup-state-${module.status}`}>
+              {statusLabel(module.status)}
+            </span>
+            <strong>{moduleName}</strong>
+            <small>
+              {module.candidatePreviewAvailable
+                ? "Candidate preview available"
+                : "No candidate preview yet"}
+            </small>
+            <small>
+              {module.runtimeActiveAvailable
+                ? "Runtime active"
+                : "Runtime access unchanged"}
+            </small>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function DataArea(props: AdminSetupExperienceProps & { initialPane?: DataPane }) {
   const [pane, setPane] = useState<DataPane>(props.initialPane ?? "load");
   const [loadMode, setLoadMode] = useState<LoadMode>("package");
@@ -487,113 +681,102 @@ function Overview(
 ) {
   const { view, tenantName, sourceFiles, openData, openConfirm } = props;
   const loadedDimensions = view.readiness.length;
-  const blockerMetric = view.metrics.find(
-    (metric) => metric.label === "Needs attention",
-  );
-  const recordsMetric = view.metrics.find(
-    (metric) => metric.label === "Records loaded",
-  );
-
-  const progressCards = [
-    {
-      title: "People",
-      detail: "Confirm sponsor, admin, and data owners",
-      state: "done" as const,
-      footer: "Ready to invite more",
-    },
-    {
-      title: "Data",
-      detail: sourceFiles.length
-        ? `${sourceFiles.length} loaded files are available for review`
-        : "Load the first client file",
-      state: sourceFiles.length ? ("active" as const) : ("blocked" as const),
-      footer: sourceFiles.length ? "In progress" : "Needs first upload",
-    },
-    {
-      title: "Answers",
-      detail: "Prove retrieval with cited assistant answers",
-      state: loadedDimensions ? ("active" as const) : ("waiting" as const),
-      footer: loadedDimensions ? "Almost there" : "Waiting on data",
-    },
-    {
-      title: "Production",
-      detail: "Pilot readiness, controls, and rollback evidence",
-      state: "waiting" as const,
-      footer: "Later",
-    },
-  ];
+  const control = props.setupControl;
+  const blockers =
+    control?.promotionControl.blockers.slice(0, 3) ?? [
+      "Setup-control API is not attached to this page.",
+    ];
 
   return (
     <section className="setup-overview">
       <SectionHeader
-        title="Are we ready?"
-        subtitle={`Get ${tenantName} working: people in, data loaded, questions answerable, then keep it running.`}
+        title="Tenant setup and data control"
+        subtitle={`Use this page to get ${tenantName} from uploaded evidence to governed candidate data before any module treats it as active context.`}
       />
 
-      <div className="setup-progress">
-        {progressCards.map((card, index) => (
-          <div key={card.title} className="setup-progress-card">
-            <StatusIcon state={card.state} />
-            {index < progressCards.length - 1 ? (
-              <span className="setup-progress-line" />
-            ) : null}
-            <strong>{card.title}</strong>
-            <p>{card.detail}</p>
-            <footer>{card.footer}</footer>
-          </div>
-        ))}
-      </div>
+      <ControlSnapshot setupControl={control} sourceFiles={sourceFiles} />
 
-      <div className="setup-metrics">
-        <Metric
-          label="Data readiness"
-          value={view.metrics[0]?.value ?? "—"}
-          note="average coverage"
-        />
-        <Metric
-          label="Records"
-          value={recordsMetric?.value ?? "—"}
-          note="loaded context rows"
-        />
-        <Metric
-          label="Needs attention"
-          value={blockerMetric?.value ?? "—"}
-          note="items to review"
-          tone={blockerMetric?.tone === "risk" ? "risk" : "default"}
-        />
-      </div>
+      <ControlSummaryGrid setupControl={control} />
 
       <DataControlStatus setupControl={props.setupControl} />
 
-      <section className="setup-card">
-        <SectionHeader eyebrow="Next steps" title="Finish the setup path" />
-        <div className="setup-rows">
-          <SetupRow
-            state={sourceFiles.length ? "done" : "active"}
-            title="Load the first evidence files"
-            detail="CMDB, vendor contracts, integration topology, financial baseline, or policy documents."
-            action={sourceFiles.length ? "Review" : "Start"}
-            onClick={openData}
+      <div className="setup-overview-columns">
+        <section className="setup-card">
+          <SectionHeader
+            eyebrow="Operator next steps"
+            title="Move data forward without pretending it is active"
+            compact
           />
-          <SetupRow
-            state={sourceFiles.length ? "active" : "waiting"}
-            title="Confirm uncertain mappings"
-            detail="Classify loaded records so their context becomes answerable — they stay in review until confirmed."
-            action="Confirm"
-            onClick={openConfirm}
+          <div className="setup-rows">
+            <SetupRow
+              state={sourceFiles.length ? "done" : "active"}
+              title="Load or review evidence files"
+              detail="CMDB, vendor contracts, integration topology, financial baseline, policy documents, or tenant packets."
+              action={sourceFiles.length ? "Review" : "Start"}
+              onClick={openData}
+            />
+            <SetupRow
+              state={sourceFiles.length ? "active" : "waiting"}
+              title="Confirm mappings and classifications"
+              detail="Loaded records stay in review until an operator confirms how they should be interpreted."
+              action="Confirm"
+              onClick={openConfirm}
+            />
+            <SetupRow
+              state={loadedDimensions ? "active" : "waiting"}
+              title="Generate candidate preview"
+              detail="The next Admin PR creates the dry-run tenant packet flow; this page only shows the control state."
+              action="Next PR"
+            />
+            <SetupRow
+              state="waiting"
+              title="Promote only with proof"
+              detail="Promotion requires operator approval, rollback plan, and module cite-render proof."
+              action="Locked"
+            />
+          </div>
+        </section>
+
+        <section className="setup-card setup-blocker-card">
+          <SectionHeader
+            eyebrow="Promotion blockers"
+            title="Why this tenant is not active-ready yet"
+            compact
           />
-          <SetupRow
-            state={loadedDimensions ? "active" : "waiting"}
-            title="Ask a cited readiness question"
-            detail="Prove the current context is usable before moving into Moves or Source."
-            action="Test"
-          />
-          <SetupRow
-            state="waiting"
-            title="Move from pilot to production"
-            detail="Connector scope, SSO, rollback, monitoring, and approval evidence."
-            action="Later"
-          />
+          <ul className="setup-blocker-list">
+            {blockers.map((blocker) => (
+              <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+          <div className="setup-truth-strip">
+            <span>Production writes: no</span>
+            <span>Active access changed: no</span>
+            <span>Runtime behavior changed: no</span>
+          </div>
+        </section>
+      </div>
+
+      <ModuleReadinessBoard setupControl={control} />
+
+      <section className="setup-card setup-source-truth">
+        <SectionHeader
+          eyebrow="Source of truth"
+          title="What this overview can and cannot claim"
+          compact
+        />
+        <div className="setup-source-grid">
+          <div>
+            <strong>Active source</strong>
+            <span>{control?.sourceOfTruth.activeSource ?? "Not available"}</span>
+          </div>
+          <div>
+            <strong>Candidate source</strong>
+            <span>{control?.sourceOfTruth.candidateSource ?? "Not available"}</span>
+          </div>
+          <div>
+            <strong>Readiness source</strong>
+            <span>{control?.sourceOfTruth.readinessSource ?? "Not available"}</span>
+          </div>
         </div>
       </section>
     </section>
@@ -858,6 +1041,90 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
         .setup-status-active { background: #f0efff; color: ${blue}; }
         .setup-status-blocked { background: #fff3c4; color: ${amber}; }
         .setup-status-waiting { background: #f3f6fb; border: 1px solid var(--setup-line); color: #7d8798; }
+        .setup-control-hero {
+          background: linear-gradient(180deg, #fbfcff 0%, #f7f9fd 100%);
+          border: 1px solid var(--setup-line);
+          border-radius: 10px;
+          margin-bottom: 18px;
+          padding: 20px;
+        }
+        .setup-control-hero-head {
+          align-items: flex-start;
+          display: flex;
+          gap: 16px;
+          justify-content: space-between;
+          margin-bottom: 18px;
+        }
+        .setup-control-hero h2 {
+          font-size: 28px;
+          line-height: 1.12;
+          margin: 6px 0 0;
+        }
+        .setup-control-hero p {
+          color: var(--setup-muted);
+          font-size: 14px;
+          line-height: 1.55;
+          margin: 8px 0 0;
+          max-width: 820px;
+        }
+        .setup-control-badge {
+          background: #e8f7ee;
+          border: 1px solid #bfe8cf;
+          border-radius: 999px;
+          color: #17653a;
+          flex-shrink: 0;
+          font-size: 12px;
+          font-weight: 800;
+          padding: 6px 10px;
+        }
+        .setup-stage-grid {
+          display: grid;
+          gap: 12px;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .setup-stage-card {
+          background: white;
+          border: 1px solid var(--setup-line);
+          border-radius: 9px;
+          min-height: 168px;
+          padding: 14px;
+        }
+        .setup-stage-card .setup-status {
+          height: 28px;
+          width: 28px;
+          font-size: 14px;
+        }
+        .setup-stage-card span {
+          color: #647084;
+          display: block;
+          font-family: ${mono};
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          margin-top: 14px;
+          text-transform: uppercase;
+        }
+        .setup-stage-card strong {
+          display: block;
+          font-size: 16px;
+          line-height: 1.25;
+          margin-top: 8px;
+          word-break: break-word;
+        }
+        .setup-stage-card small {
+          color: var(--setup-muted);
+          display: block;
+          font-size: 12.5px;
+          line-height: 1.45;
+          margin-top: 7px;
+        }
+        .setup-control-summary-grid {
+          border-bottom: 1px solid var(--setup-line);
+          border-top: 1px solid var(--setup-line);
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          margin-bottom: 24px;
+        }
         .setup-metrics {
           border-bottom: 1px solid var(--setup-line);
           border-top: 1px solid var(--setup-line);
@@ -936,6 +1203,118 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           line-height: 1.45;
           margin: 12px 0 0;
           padding-left: 18px;
+        }
+        .setup-overview-columns {
+          display: grid;
+          gap: 16px;
+          grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+        }
+        .setup-blocker-card {
+          background: #fffdf8;
+        }
+        .setup-blocker-list {
+          color: #34415a;
+          display: grid;
+          gap: 10px;
+          font-size: 13px;
+          line-height: 1.45;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .setup-blocker-list li {
+          border-left: 3px solid #d89b28;
+          padding-left: 10px;
+        }
+        .setup-truth-strip {
+          border-top: 1px solid #ead9b8;
+          display: grid;
+          gap: 7px;
+          margin-top: 16px;
+          padding-top: 12px;
+        }
+        .setup-truth-strip span {
+          color: #725210;
+          font-family: ${mono};
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+        .setup-module-grid {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+        .setup-module-tile {
+          background: #fbfcfe;
+          border: 1px solid var(--setup-line);
+          border-radius: 8px;
+          min-height: 124px;
+          padding: 12px;
+        }
+        .setup-module-tile strong {
+          display: block;
+          font-size: 15px;
+          margin-top: 12px;
+          text-transform: capitalize;
+        }
+        .setup-module-tile small {
+          color: var(--setup-muted);
+          display: block;
+          font-size: 12px;
+          line-height: 1.35;
+          margin-top: 5px;
+        }
+        .setup-state-chip {
+          border-radius: 999px;
+          display: inline-flex;
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: 0.05em;
+          padding: 4px 7px;
+          text-transform: uppercase;
+        }
+        .setup-state-ready,
+        .setup-state-preview-ready {
+          background: #e7f7ec;
+          color: #17653a;
+        }
+        .setup-state-partially-ready {
+          background: #fff3d8;
+          color: #7a5200;
+        }
+        .setup-state-blocked,
+        .setup-state-not-created {
+          background: #ffe7e2;
+          color: #9d241a;
+        }
+        .setup-state-unknown {
+          background: #eef2f7;
+          color: #526075;
+        }
+        .setup-source-truth {
+          background: #fbfcfe;
+        }
+        .setup-source-grid {
+          display: grid;
+          gap: 12px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .setup-source-grid div {
+          border-left: 3px solid #a9b5c9;
+          padding-left: 12px;
+        }
+        .setup-source-grid strong {
+          display: block;
+          font-size: 13px;
+        }
+        .setup-source-grid span {
+          color: var(--setup-muted);
+          display: block;
+          font-size: 12.5px;
+          line-height: 1.45;
+          margin-top: 5px;
         }
         .setup-rows { border: 1px solid var(--setup-line); border-radius: 8px; overflow: hidden; }
         .setup-row {
@@ -1097,10 +1476,16 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           .setup-app { grid-template-columns: 1fr; }
           .setup-side { display: none; }
           .setup-main-inner { padding: 24px 18px 60px; }
-          .setup-progress { grid-template-columns: 1fr; }
+          .setup-progress,
+          .setup-stage-grid,
+          .setup-control-summary-grid,
+          .setup-overview-columns,
+          .setup-module-grid,
+          .setup-source-grid { grid-template-columns: 1fr; }
           .setup-progress-line { display: none; }
           .setup-metrics, .setup-mini-grid, .setup-control-grid { grid-template-columns: 1fr; }
           .setup-topline, .setup-section-head { align-items: stretch; flex-direction: column; }
+          .setup-control-hero-head { flex-direction: column; }
           .setup-search { min-width: 0; width: 100%; }
         }
       `}</style>

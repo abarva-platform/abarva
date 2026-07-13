@@ -6,9 +6,9 @@ Admin is the control surface for tenant data-state transitions. It must show
 where files are in the enterprise data runway and prevent upload activity from
 being confused with promoted module-ready truth.
 
-## PR22 Boundary
+## ADMIN-PR1 Boundary
 
-PR22 adds a read-only setup-control contract and labels legacy direct import
+ADMIN-PR1 adds a read-only setup-control contract and labels legacy direct import
 paths. It does not redesign the full Admin UI and it does not promote tenant
 data.
 
@@ -98,8 +98,17 @@ These values describe the setup-control read mode. They must not be used to
 claim live DB proof unless a signed-in proof run and data-layer verification
 actually prove it.
 
-## Next Design Step
+## ADMIN-PR2 Overview
 
-PR23 should redesign the Admin overview using this API as the read source.
-PR23 remains read-only. Candidate creation, promotion, and module cutover belong
-to later PRs.
+ADMIN-PR2 redesigns the Admin overview using setup-control as the read source.
+The first screen is now the Tenant Setup and Data Control Center:
+
+- evidence files are visible but not treated as active facts
+- candidate version state is visible but not created by the overview
+- Active Tenant Access Layer state is shown separately
+- module readiness is shown separately for Home, Intelligence, Moves, Source,
+  and Tower
+- blockers and guardrails are visible before any operator proceeds
+
+ADMIN-PR2 remains read-only. Candidate creation, promotion, and module cutover
+belong to later PRs.
