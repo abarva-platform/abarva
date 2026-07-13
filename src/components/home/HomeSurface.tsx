@@ -857,6 +857,26 @@ function displayMetric(value: number, label: string): string {
   return shortMetric(value);
 }
 
+function formatShortUtcDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unavailable";
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  return `${months[date.getUTCMonth()]} ${date.getUTCDate()}`;
+}
+
 function previewForDimension(
   browser: HomeV6ContextBrowser | null | undefined,
   dimension: string | null,
@@ -2187,10 +2207,7 @@ export function HomeSurface({
               <span>Last checked</span>
               <strong>
                 {safeV6Browser?.generatedAt
-                  ? new Date(safeV6Browser.generatedAt).toLocaleDateString(
-                      "en-US",
-                      { month: "short", day: "numeric" },
-                    )
+                  ? formatShortUtcDate(safeV6Browser.generatedAt)
                   : "Unavailable"}
               </strong>
             </div>
