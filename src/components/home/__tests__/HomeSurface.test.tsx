@@ -500,7 +500,11 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByText("Enterprise Knowledge Snapshot"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Evidence")).toBeInTheDocument();
+    expect(screen.getByText("Evidence Coverage")).toBeInTheDocument();
+    expect(screen.getByText("Answerability")).toBeInTheDocument();
+    expect(screen.getByText("Top Gaps")).toBeInTheDocument();
+    expect(screen.getByText("Ready Areas")).toBeInTheDocument();
+    expect(screen.getByText("Relationship Overview")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Functions/i }),
     ).toBeInTheDocument();
@@ -531,7 +535,7 @@ describe("HomeSurface — Explorer context browser", () => {
       screen.queryByRole("tab", { name: "Questions" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Scoped · read-only over evidence/i),
+      screen.getByText(/scoped aVa · read-only over evidence/i),
     ).toBeInTheDocument();
     expect(screen.getByText("I can answer")).toBeInTheDocument();
     expect(screen.getByText("I won’t answer")).toBeInTheDocument();

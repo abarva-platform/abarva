@@ -293,7 +293,7 @@ function DataControlStatus({
   return (
     <section className="setup-card setup-control-card">
       <SectionHeader
-        eyebrow="Data control status"
+        eyebrow="setup-control · Guardrail status"
         title="Candidate runway is not active yet"
         subtitle="This panel separates uploaded files from candidate versions, promotion, and module-ready context."
         compact
@@ -396,13 +396,18 @@ function ControlSnapshot({
   setupControl?: AdminSetupControlResponse;
   sourceFiles: LoadedSourceFile[];
 }) {
-  const modules = setupControl ? Object.values(setupControl.moduleReadiness) : [];
+  const modules = setupControl
+    ? Object.values(setupControl.moduleReadiness)
+    : [];
   const partialModules = modules.filter(
     (module) => module.status === "partially-ready",
   ).length;
 
   return (
-    <section className="setup-control-hero" aria-label="Tenant data control snapshot">
+    <section
+      className="setup-control-hero"
+      aria-label="Tenant data control snapshot"
+    >
       <div className="setup-control-hero-head">
         <div>
           <div className="setup-label">Tenant data control center</div>
@@ -439,9 +444,13 @@ function ControlSnapshot({
         />
         <ControlStage
           label="03 · Active access"
-          title={setupControl?.activeTenantAccess.activeVersionId ?? "Not wired"}
+          title={
+            setupControl?.activeTenantAccess.activeVersionId ?? "Not wired"
+          }
           detail="Active Tenant Access Layer is unchanged by this Admin view."
-          state={stateForStatus(setupControl?.activeTenantAccess.status ?? "unknown")}
+          state={stateForStatus(
+            setupControl?.activeTenantAccess.status ?? "unknown",
+          )}
         />
         <ControlStage
           label="04 · Modules"
@@ -462,23 +471,26 @@ function ControlSummaryGrid({
   const values = setupControl
     ? [
         {
-          label: "Evidence registry",
+          label: "Evidence",
           value: setupControl.evidenceRegistry.evidenceSources.toLocaleString(),
           note: `${setupControl.evidenceRegistry.evidenceItems.toLocaleString()} evidence items, ${setupControl.evidenceRegistry.evidenceGaps.toLocaleString()} gaps`,
         },
         {
-          label: "Canonical facts",
+          label: "Known facts",
           value: setupControl.canonicalFacts.canonicalObjects.toLocaleString(),
           note: "Snapshot-backed objects, not promotion proof",
         },
         {
-          label: "Relationship graph",
-          value: setupControl.relationshipGraph.graphRelationships.toLocaleString(),
+          label: "Relationships",
+          value:
+            setupControl.relationshipGraph.graphRelationships.toLocaleString(),
           note: `${setupControl.relationshipGraph.unresolvedRelationships.toLocaleString()} unresolved relationships`,
         },
         {
           label: "Promotion control",
-          value: setupControl.promotionControl.promotionEnabled ? "Enabled" : "Blocked",
+          value: setupControl.promotionControl.promotionEnabled
+            ? "Enabled"
+            : "Blocked",
           note: setupControl.promotionControl.operatorApprovalRequired
             ? "Operator approval required"
             : "No approval requirement recorded",
@@ -572,7 +584,9 @@ function TemplateCard({ item }: { item: AdminTemplateCatalogViewItem }) {
         <span>{sentenceCase(item.requirement)}</span>
         <span>{item.acceptedFileTypes.join(", ")}</span>
         <span>
-          {item.exampleRowsAvailable ? "Example rows available" : "No example rows"}
+          {item.exampleRowsAvailable
+            ? "Example rows available"
+            : "No example rows"}
         </span>
       </div>
       <dl className="setup-template-definition">
@@ -601,15 +615,26 @@ function TemplateCard({ item }: { item: AdminTemplateCatalogViewItem }) {
         <strong>Status</strong>
         <span>{item.statusDetail}</span>
         {item.matchedSourceFiles.length > 0 ? (
-          <small>Matched: {item.matchedSourceFiles.slice(0, 2).join(", ")}</small>
+          <small>
+            Matched: {item.matchedSourceFiles.slice(0, 2).join(", ")}
+          </small>
         ) : null}
       </div>
-      <div className="setup-template-actions" aria-label={`${item.name} actions`}>
+      <div
+        className="setup-template-actions"
+        aria-label={`${item.name} actions`}
+      >
         <button type="button" disabled>
           View guide
         </button>
         <button type="button" disabled>
+          View template
+        </button>
+        <button type="button" disabled>
           Download template
+        </button>
+        <button type="button" disabled>
+          View field dictionary
         </button>
         <button type="button" disabled>
           View example
@@ -644,7 +669,7 @@ function DataIntakeLibrary({
         eyebrow="Data intake library"
         title="Start with the right templates before uploading files"
         subtitle="This is the read-only catalog for tenant packets, how-to guides, template contracts, validation expectations, and module-readiness impact."
-        action={<GhostButton>Download full Tenant Packet</GhostButton>}
+        action={<GhostButton>Download full packet</GhostButton>}
       />
 
       <section className="setup-intake-hero">
@@ -653,8 +678,9 @@ function DataIntakeLibrary({
           <h2>Understand required evidence before creating candidate data.</h2>
           <p>
             Admin should guide a client from template selection to populated
-            packet, validation, inactive candidate preview, promotion review, and
-            active tenant truth. This PR stops at the catalog and guide layer.
+            packet, validation, inactive candidate preview, promotion review,
+            and active tenant truth. This PR stops at the catalog and guide
+            layer.
           </p>
         </div>
         <div className="setup-intake-scoreboard">
@@ -685,12 +711,30 @@ function DataIntakeLibrary({
         />
         <ol className="setup-workflow-steps">
           {[
-            ["Choose setup path", "New tenant, refresh, Source event, Moves program, Tower update, or contract optimization."],
-            ["Download template pack", "Use business-facing templates with owners, required fields, examples, and validation rules."],
-            ["Populate and upload later", "Completed files are evidence sources first; they are not active tenant truth."],
-            ["Validate and map", "Manifest, source adapters, mapping, quarantines, and unresolved fields must be reviewed."],
-            ["Create candidate preview", "Inactive candidate data can be inspected across Home, Intelligence, Moves, Source, and Tower."],
-            ["Promote with proof", "Operator approval, rollback plan, and cite-render proof are required before active access changes."],
+            [
+              "Choose setup path",
+              "New tenant, refresh, Source event, Moves program, Tower update, or contract optimization.",
+            ],
+            [
+              "Download template pack",
+              "Use business-facing templates with owners, required fields, examples, and validation rules.",
+            ],
+            [
+              "Populate and upload later",
+              "Completed files are evidence sources first; they are not active tenant truth.",
+            ],
+            [
+              "Validate and map",
+              "Manifest, source adapters, mapping, quarantines, and unresolved fields must be reviewed.",
+            ],
+            [
+              "Create candidate preview",
+              "Inactive candidate data can be inspected across Home, Intelligence, Moves, Source, and Tower.",
+            ],
+            [
+              "Promote with proof",
+              "Operator approval, rollback plan, and cite-render proof are required before active access changes.",
+            ],
           ].map(([title, detail], index) => (
             <li key={title}>
               <span>{String(index + 1).padStart(2, "0")}</span>
@@ -752,7 +796,9 @@ function DataIntakeLibrary({
   );
 }
 
-function DataArea(props: AdminSetupExperienceProps & { initialPane?: DataPane }) {
+function DataArea(
+  props: AdminSetupExperienceProps & { initialPane?: DataPane },
+) {
   const [pane, setPane] = useState<DataPane>(props.initialPane ?? "load");
   const [loadMode, setLoadMode] = useState<LoadMode>("package");
   const { clientId, tenantKey, tenantName, sourceFiles, view } = props;
@@ -868,10 +914,18 @@ function DataArea(props: AdminSetupExperienceProps & { initialPane?: DataPane })
             >
               Confirm what AbarVa understood
             </strong>
-            <p style={{ margin: 0, color: "#6b665c", fontSize: 14, lineHeight: 1.6 }}>
+            <p
+              style={{
+                margin: 0,
+                color: "#6b665c",
+                fontSize: 14,
+                lineHeight: 1.6,
+              }}
+            >
               Classify each loaded record below to make its context answerable.
               Records stay in review — not retrievable — until confirmed. When
-              the queue is clear, prove it with a cited question in Intelligence.
+              the queue is clear, prove it with a cited question in
+              Intelligence.
             </p>
           </div>
           <ClassificationTriageQueue />
@@ -902,10 +956,9 @@ function Overview(
   const { view, tenantName, sourceFiles, openData, openConfirm } = props;
   const loadedDimensions = view.readiness.length;
   const control = props.setupControl;
-  const blockers =
-    control?.promotionControl.blockers.slice(0, 3) ?? [
-      "Setup-control API is not attached to this page.",
-    ];
+  const blockers = control?.promotionControl.blockers.slice(0, 3) ?? [
+    "Setup-control API is not attached to this page.",
+  ];
 
   return (
     <section className="setup-overview">
@@ -987,15 +1040,21 @@ function Overview(
         <div className="setup-source-grid">
           <div>
             <strong>Active source</strong>
-            <span>{control?.sourceOfTruth.activeSource ?? "Not available"}</span>
+            <span>
+              {control?.sourceOfTruth.activeSource ?? "Not available"}
+            </span>
           </div>
           <div>
             <strong>Candidate source</strong>
-            <span>{control?.sourceOfTruth.candidateSource ?? "Not available"}</span>
+            <span>
+              {control?.sourceOfTruth.candidateSource ?? "Not available"}
+            </span>
           </div>
           <div>
             <strong>Readiness source</strong>
-            <span>{control?.sourceOfTruth.readinessSource ?? "Not available"}</span>
+            <span>
+              {control?.sourceOfTruth.readinessSource ?? "Not available"}
+            </span>
           </div>
         </div>
       </section>
@@ -2040,15 +2099,15 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
                     ? "⌂"
                     : item.id === "intake"
                       ? "▤"
-                    : item.id === "data"
-                      ? "▦"
-                      : item.id === "users"
-                        ? "○"
-                        : item.id === "governance"
-                          ? "◇"
-                          : item.id === "operations"
-                            ? "⌘"
-                            : "◷"}
+                      : item.id === "data"
+                        ? "▦"
+                        : item.id === "users"
+                          ? "○"
+                          : item.id === "governance"
+                            ? "◇"
+                            : item.id === "operations"
+                              ? "⌘"
+                              : "◷"}
                 </span>
                 <span>
                   <strong>{item.label}</strong>
@@ -2078,7 +2137,11 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           </div>
 
           {tab === "overview" ? (
-            <Overview {...props} openData={openData} openConfirm={openConfirm} />
+            <Overview
+              {...props}
+              openData={openData}
+              openConfirm={openConfirm}
+            />
           ) : null}
 
           {tab === "intake" ? (

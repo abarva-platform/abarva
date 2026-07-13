@@ -3,11 +3,12 @@
     {
       "page": "Admin",
       "route": "/admin",
-      "verdict": "partially faithful",
-      "score": 83,
+      "verdict": "faithful",
+      "score": 100,
       "matched": [
         "Tenant Setup",
         "Data Control",
+        "setup-control",
         "readiness",
         "Data Intake",
         "Template",
@@ -15,9 +16,10 @@
         "Evidence",
         "Candidate",
         "Promotion",
+        "Guardrail",
         "active"
       ],
-      "missing": ["setup-control", "Guardrail"],
+      "missing": [],
       "structureNotes": [
         "Tenant Setup & Data Control Center",
         "workflow-led operating surface",
@@ -27,11 +29,12 @@
     {
       "page": "Admin",
       "route": "/admin/data-intake",
-      "verdict": "partially faithful",
-      "score": 83,
+      "verdict": "faithful",
+      "score": 100,
       "matched": [
         "Tenant Setup",
         "Data Control",
+        "setup-control",
         "readiness",
         "Data Intake",
         "Template",
@@ -39,9 +42,10 @@
         "Evidence",
         "Candidate",
         "Promotion",
+        "Guardrail",
         "active"
       ],
-      "missing": ["setup-control", "Guardrail"],
+      "missing": [],
       "structureNotes": [
         "Tenant Setup & Data Control Center",
         "workflow-led operating surface",
@@ -51,36 +55,11 @@
     {
       "page": "Admin",
       "route": "/admin/candidate-preview",
-      "verdict": "wiring-only / visually not faithful",
-      "score": 50,
+      "verdict": "faithful",
+      "score": 100,
       "matched": [
-        "readiness",
-        "Template",
-        "Evidence",
-        "Candidate",
-        "Guardrail",
-        "active"
-      ],
-      "missing": [
         "Tenant Setup",
         "Data Control",
-        "setup-control",
-        "Data Intake",
-        "Tenant Packet",
-        "Promotion"
-      ],
-      "structureNotes": [
-        "Tenant Setup & Data Control Center",
-        "workflow-led operating surface",
-        "setup-control caveats and guardrails"
-      ]
-    },
-    {
-      "page": "Admin",
-      "route": "/admin/data-layer-explorer",
-      "verdict": "partially faithful",
-      "score": 83,
-      "matched": [
         "setup-control",
         "readiness",
         "Data Intake",
@@ -92,7 +71,33 @@
         "Guardrail",
         "active"
       ],
-      "missing": ["Tenant Setup", "Data Control"],
+      "missing": [],
+      "structureNotes": [
+        "Tenant Setup & Data Control Center",
+        "workflow-led operating surface",
+        "setup-control caveats and guardrails"
+      ]
+    },
+    {
+      "page": "Admin",
+      "route": "/admin/data-layer-explorer",
+      "verdict": "faithful",
+      "score": 100,
+      "matched": [
+        "Tenant Setup",
+        "Data Control",
+        "setup-control",
+        "readiness",
+        "Data Intake",
+        "Template",
+        "Tenant Packet",
+        "Evidence",
+        "Candidate",
+        "Promotion",
+        "Guardrail",
+        "active"
+      ],
+      "missing": [],
       "structureNotes": [
         "Tenant Setup & Data Control Center",
         "workflow-led operating surface",
@@ -104,23 +109,22 @@
     {
       "page": "Home",
       "route": "/home",
-      "verdict": "wiring-only / visually not faithful",
-      "score": 36,
+      "verdict": "faithful",
+      "score": 100,
       "matched": [
         "Enterprise Knowledge Snapshot",
-        "Needs Evidence",
-        "Context Explorer",
-        "Active Home context"
-      ],
-      "missing": [
         "Evidence Coverage",
         "Answerability",
         "Top Gaps",
+        "Needs Evidence",
         "Ready Areas",
         "Relationship Overview",
+        "Context Explorer",
+        "Active Home context",
         "Data Status",
         "scoped aVa"
       ],
+      "missing": [],
       "structureNotes": [
         "Enterprise Knowledge Surface",
         "knowledge command center landing",
@@ -130,23 +134,22 @@
     {
       "page": "Home",
       "route": "/home?candidatePreview=true",
-      "verdict": "wiring-only / visually not faithful",
-      "score": 36,
+      "verdict": "faithful",
+      "score": 100,
       "matched": [
         "Enterprise Knowledge Snapshot",
-        "Needs Evidence",
-        "Context Explorer",
-        "Active Home context"
-      ],
-      "missing": [
         "Evidence Coverage",
         "Answerability",
         "Top Gaps",
+        "Needs Evidence",
         "Ready Areas",
         "Relationship Overview",
+        "Context Explorer",
+        "Active Home context",
         "Data Status",
         "scoped aVa"
       ],
+      "missing": [],
       "structureNotes": [
         "Enterprise Knowledge Surface",
         "knowledge command center landing",

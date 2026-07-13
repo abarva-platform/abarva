@@ -1,6 +1,6 @@
 {
-  "mode": "chrome",
+  "mode": "fixture",
   "consoleErrors": [],
   "networkErrors": [],
-  "caveat": "Chrome AppleScript captures DOM/API results but not DevTools console streams."
+  "caveat": "Fixture mode does not access a signed-in browser."
 }

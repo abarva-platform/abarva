@@ -1,4 +1,4 @@
-# 2026-07-13-admin-home-design-smoke-pr — Admin/Home Design Smoke Proof
+# 2026-07-13-admin-home-design-smoke-pr — Admin/Home Design Smoke and Corrections
 
 ## Release ID
 
@@ -12,22 +12,28 @@
 
 Adds a repeatable proof harness for Admin and Home design fidelity, click
 coverage, active/candidate separation, data-layer wiring, naming safety, truth
-safety, and scoped Home aVa quality. The harness compares the live pages against
-the approved Admin/Home Claude Design direction and reports mismatches honestly.
+safety, and scoped Home aVa quality. Also fixes the first smoke findings that
+were safe to correct in this slice: missing Home overview sections, inactive
+overview actions, heavier Admin architecture labels, template-action affordance
+labels, and a Home deterministic prose phrase that could trip the visible-answer
+contract.
 
 ## Layer Impact
 
 - `internal-admin`: Adds operator QA/proof scripts and generated report
-  artifacts for Admin/Home readiness.
-- `global-control-lane`: Adds npm script entry points only. No product runtime
-  behavior is changed.
+  artifacts for Admin/Home readiness, and tightens read-only Admin setup-control
+  labels.
+- `global-control-lane`: Updates Home context-browser rendering and scoped Home
+  aVa affordances. No tenant data writes, candidate promotion, Active Tenant
+  Access pointer update, or module runtime behavior change.
 
 ## Client Applicability
 
 - All clients: The harness can be pointed at any signed-in tenant session.
 - Specific clients: The checked-in proof is generated from the active signed-in
   Chrome session when run in `chrome` mode.
-- Internal only: Yes. This is a proof harness and report artifact.
+- Internal only: Partly. The harness is internal; the Home/Admin label and
+  affordance corrections are product UI behavior.
 - Public/demo only: No.
 - Feature flag: None.
 
@@ -37,6 +43,9 @@ the approved Admin/Home Claude Design direction and reports mismatches honestly.
 - `npm run smoke:admin-home-design`
 - `npm run crawl:admin-home-design-proof`
 - `npm run qa:admin-home-ava`
+- `src/components/home/HomeSurface.tsx`
+- `src/components/admin/AdminSetupExperience.tsx`
+- `src/lib/home/know/v7-home-ask.ts`
 - `reports/admin-home-design-smoke/latest/*`
 - `docs/releases/records/2026-07-13-admin-home-design-smoke-pr.md`
 
@@ -64,18 +73,19 @@ Signed-in Chrome result:
 - P1: `24`
 - P2: `0`
 
-Admin/Home are not release-ready by the ADMIN-HOME-DESIGN-SMOKE acceptance bar
-until the P1 findings are addressed or explicitly accepted.
+Follow-up validation after this correction slice must rerun the fixture and
+signed-in Chrome harness before merge/deploy.
 
 ## Rollout Plan
 
-Merge through the normal PR lane. No Azure Container Apps deploy is required for
-the harness to exist in the repository, but future main deploys will include the
-script files. Running the harness is manual/operator-triggered.
+Merge through the normal PR lane after validation. Because this slice changes
+product UI behavior, deploy through the approved Azure Container Apps main lane
+before claiming the Home/Admin corrections are live.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: Not required for the proof harness itself.
+- Repo-owned deploy workflow: Required before claiming product UI corrections
+  are live.
 - Shared runtime mutators: None.
 - Approved image digest: Not applicable.
 - ACA runtime invariant: Not applicable.
@@ -86,9 +96,10 @@ script files. Running the harness is manual/operator-triggered.
 
 ## Rollback Plan
 
-Revert this PR. Rollback removes only the Admin/Home smoke scripts, npm entries,
-and proof report artifacts. No tenant data, candidate version, module runtime,
-or Active Tenant Access pointer changes are involved.
+Revert this PR. Rollback removes the Admin/Home smoke scripts, npm entries,
+proof report artifacts, and the bounded Home/Admin label and affordance
+corrections. No tenant data, candidate version, module runtime, or Active Tenant
+Access pointer changes are involved.
 
 ## Audit Evidence
 

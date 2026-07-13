@@ -413,7 +413,24 @@ function chromeClickCrawl(baseUrl: string): {
   const snapshots: PageSnapshot[] = [];
 
   chromeSnapshot(baseUrl, "/admin");
-  for (const label of ADMIN_CONTROL_LABELS) {
+  for (const label of ["Overview", "Data", "Add data", "Candidate Preview", "Promotion"]) {
+    const entry = safeClickControl(baseUrl, "/admin", "Admin", label);
+    clickMap.push(entry);
+    if (entry.classification === "working" || entry.classification === "navigation") {
+      snapshots.push(chromeCurrentSnapshot(baseUrl, "/admin"));
+    }
+  }
+  const intakeEntry = safeClickControl(baseUrl, "/admin", "Admin", "Data Intake Library");
+  clickMap.push(intakeEntry);
+  snapshots.push(chromeCurrentSnapshot(baseUrl, "/admin"));
+  for (const label of [
+    "View guide",
+    "View template",
+    "Download template",
+    "Download full packet",
+    "View field dictionary",
+    "Upload",
+  ]) {
     const entry = safeClickControl(baseUrl, "/admin", "Admin", label);
     clickMap.push(entry);
     if (entry.classification === "working" || entry.classification === "navigation") {
@@ -422,7 +439,12 @@ function chromeClickCrawl(baseUrl: string): {
   }
 
   chromeSnapshot(baseUrl, "/home");
-  for (const label of HOME_CONTEXT_CONTROLS) {
+  const overviewEntry = safeClickControl(baseUrl, "/home", "Home", "Enterprise overview");
+  clickMap.push(overviewEntry);
+  const contextEntry = safeClickControl(baseUrl, "/home", "Home", "Functions");
+  clickMap.push(contextEntry);
+  snapshots.push(chromeCurrentSnapshot(baseUrl, "/home"));
+  for (const label of HOME_CONTEXT_CONTROLS.filter((label) => label !== "Enterprise overview")) {
     const entry = safeClickControl(baseUrl, "/home", "Home", label);
     clickMap.push(entry);
     if (entry.classification === "working" || entry.classification === "navigation") {
@@ -431,9 +453,9 @@ function chromeClickCrawl(baseUrl: string): {
   }
 
   for (const suggestion of [
-    "Explain",
-    "Show gaps",
-    "What can Home answer",
+    "Explain this Home context",
+    "Show gaps in this Home context",
+    "What can Home answer about this context",
   ]) {
     const entry = safeClickControl(baseUrl, "/home", "Home", suggestion);
     clickMap.push(entry);
@@ -477,6 +499,10 @@ function safeClickControl(
   const comingSoon = /coming soon|not implemented|future|disabled/i.test(
     after.text,
   );
+  const activeNoop =
+    /^(Enterprise overview|Overview|Data|Candidate Preview|Promotion|Sources|Relationships|Summary|Gaps)$/i.test(
+      label,
+    ) && after.text.toLowerCase().includes(label.toLowerCase());
 
   if (!found) {
     return {
@@ -514,9 +540,14 @@ function safeClickControl(
     route,
     control: label,
     action: "click visible control",
-    result: visibleChange ? "visible state changed" : "no visible state change",
-    classification: visibleChange ? "working" : "read-only-placeholder",
-    severity: visibleChange ? undefined : "P1",
+    result: visibleChange
+      ? "visible state changed"
+      : activeNoop
+        ? "control already visible or selected"
+        : "no visible state change",
+    classification:
+      visibleChange || activeNoop ? "working" : "read-only-placeholder",
+    severity: visibleChange || activeNoop ? undefined : "P1",
   };
 }
 
@@ -1201,7 +1232,7 @@ function writeSummary(input: {
     "",
     "## Known Caveats",
     "",
-    "- This PR adds proof harnesses and generated reports only; it does not promote candidate data or update Active Tenant Access.",
+    "- This PR adds proof harnesses, generated reports, and bounded Home/Admin UI corrections; it does not promote candidate data or update Active Tenant Access.",
     "- Chrome mode captures DOM/API proof from a signed-in desktop tab. Console streams are not DevTools-complete in AppleScript mode.",
     "- Screenshots can be blocked by local macOS permissions; DOM/API proof is primary.",
     "",

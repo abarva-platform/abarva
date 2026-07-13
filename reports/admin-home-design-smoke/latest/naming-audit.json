@@ -14,19 +14,19 @@
     },
     {
       "label": "Canonical Fact Store",
-      "visible": true
+      "visible": false
     },
     {
       "label": "Evidence Registry",
-      "visible": true
+      "visible": false
     },
     {
       "label": "Enterprise Relationship Graph",
-      "visible": true
+      "visible": false
     },
     {
       "label": "Derived Intelligence Store",
-      "visible": true
+      "visible": false
     },
     {
       "label": "Target Writer",
@@ -44,7 +44,7 @@
     },
     {
       "label": "Known Facts",
-      "visible": true
+      "visible": false
     },
     {
       "label": "Relationships",
@@ -52,19 +52,19 @@
     },
     {
       "label": "Insights",
-      "visible": true
+      "visible": false
     },
     {
       "label": "Gaps",
-      "visible": false
+      "visible": true
     },
     {
       "label": "Answerability",
-      "visible": false
+      "visible": true
     },
     {
       "label": "Ready Areas",
-      "visible": false
+      "visible": true
     },
     {
       "label": "Candidate Preview",
@@ -76,11 +76,11 @@
     },
     {
       "label": "Data Status",
-      "visible": false
+      "visible": true
     },
     {
       "label": "Promotion Readiness",
-      "visible": true
+      "visible": false
     }
   ]
 }

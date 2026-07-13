@@ -1,7 +1,6 @@
 {
-  "ok": false,
-  "status": 404,
+  "status": 200,
   "body": {
-    "error": "SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+    "templates": []
   }
 }

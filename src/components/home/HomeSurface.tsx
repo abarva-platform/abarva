@@ -1057,7 +1057,7 @@ function KnowledgeOverview({
 
       <section className="hx2-knowledgeBlock">
         <div className="hx2-sectionTitle">
-          <h2>Evidence</h2>
+          <h2>Evidence Coverage</h2>
           <span>What backs it</span>
         </div>
         <div className="hx2-evidenceStrip">
@@ -1107,6 +1107,98 @@ function KnowledgeOverview({
           still need evidence before their answers can be trusted.
         </p>
       </section>
+
+      <section className="hx2-knowledgeBlock">
+        <div className="hx2-sectionTitle">
+          <h2>Answerability</h2>
+          <span>What Home can safely answer</span>
+        </div>
+        <div className="hx2-answerability">
+          <article>
+            <strong>{shortMetric(model.loadedAreas)} areas</strong>
+            <span>
+              Loaded for current-state browsing and source-backed lookup.
+            </span>
+          </article>
+          <article>
+            <strong>{shortMetric(model.totalSources)} sources</strong>
+            <span>Available to support citations and context inspection.</span>
+          </article>
+          <article>
+            <strong>{shortMetric(model.totalGaps)}</strong>
+            <span>
+              Visible evidence gaps that should stay out of advisory claims.
+            </span>
+          </article>
+        </div>
+      </section>
+
+      <section className="hx2-knowledgeBlock">
+        <div className="hx2-sectionTitle">
+          <h2>Top Gaps</h2>
+          <span>Needs Evidence</span>
+        </div>
+        {model.topGaps.length > 0 ? (
+          <div className="hx2-gapList">
+            {model.topGaps.map((gap) => (
+              <div className="hx2-gapItem" key={`${gap.area}-${gap.label}`}>
+                <strong>{gap.area}</strong>
+                <span>
+                  {gap.label}: {displayMetric(gap.count, "evidence gaps")}
+                  {gap.whyItMatters ? ` · ${gap.whyItMatters}` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="hx2-empty">
+            No repeated missing-field pattern is visible across the loaded Home
+            context.
+          </p>
+        )}
+      </section>
+
+      <section className="hx2-knowledgeBlock">
+        <div className="hx2-sectionTitle">
+          <h2>Ready Areas</h2>
+          <span>Source-backed starting points</span>
+        </div>
+        <div className="hx2-pillGrid">
+          {model.readyAreas.map((area) => (
+            <span className="hx2-readinessPill" key={area.label}>
+              <strong>{area.score}%</strong> {area.label} ·{" "}
+              {shortMetric(area.rows)} records
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="hx2-knowledgeBlock">
+        <div className="hx2-sectionTitle">
+          <h2>Relationship Overview</h2>
+          <span>Mapped links</span>
+        </div>
+        {model.relationshipAreas.length > 0 ? (
+          <div className="hx2-relOverview">
+            {model.relationshipAreas.map((area) => (
+              <div key={area.label}>
+                <span>{area.label}</span>
+                <strong>
+                  {shortMetric(area.rows)} links
+                  {area.gaps > 0
+                    ? ` · ${displayMetric(area.gaps, "evidence gaps")}`
+                    : ""}
+                </strong>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="hx2-empty">
+            Relationship-heavy context is not available in the current Home
+            packet.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
@@ -1121,6 +1213,7 @@ function ExplorerDetail({
   setupControl,
   areas,
   tenantDisplayName,
+  onAsk,
 }: {
   selected: BindingDimension | null;
   selectedDisplayName?: string | null;
@@ -1130,6 +1223,7 @@ function ExplorerDetail({
   setupControl: AdminSetupControlResponse | null;
   areas: HomeExplorerArea[];
   tenantDisplayName: string;
+  onAsk: (question: string) => void;
   overview: {
     dimensions: HomeV6BrowserPreview[];
     totalRows: number;
@@ -1189,14 +1283,29 @@ function ExplorerDetail({
               : summary}
           </p>
         </div>
-        {!isOverview ? (
-          <div className="hx2-detailActions">
-            <button type="button">Explain context</button>
-            <button className="primary" type="button">
-              Send to Intelligence
-            </button>
-          </div>
-        ) : null}
+        <div className="hx2-detailActions">
+          <button
+            onClick={() =>
+              onAsk(
+                isOverview
+                  ? "Explain this Home context."
+                  : `Explain ${selectedName.toLowerCase()} in plain English.`,
+              )
+            }
+            type="button"
+          >
+            Explain context
+          </button>
+          <button
+            className="primary"
+            onClick={() => {
+              window.location.assign("/intelligence");
+            }}
+            type="button"
+          >
+            Send to Intelligence
+          </button>
+        </div>
       </div>
 
       {isOverview ? (
@@ -1484,9 +1593,9 @@ function ExplorerRail({
         `What can Home answer about ${scopeName.toLowerCase()}?`,
       ]
     : [
-        "What can you answer with confidence?",
-        "Where is evidence thin?",
-        "Which context should I inspect next?",
+        "Explain this Home context.",
+        "Show gaps in this Home context.",
+        "What can Home answer about this context?",
       ];
   const submit = (question: string) => {
     const text = question.trim();
@@ -1501,7 +1610,7 @@ function ExplorerRail({
           <div className="hx2-avaMark">a</div>
           <div>
             <strong>aVa</strong>
-            <span>Scoped · read-only over evidence</span>
+            <span>scoped aVa · read-only over evidence</span>
           </div>
         </div>
         <div className="hx2-scope">
@@ -1798,7 +1907,7 @@ export function HomeSurface({
           </div>
           <div className="hx2-stats" aria-label="Home data state">
             <div className="hx2-stat">
-              <span>Active data</span>
+              <span>Data Status</span>
               <strong>{dataStatusLabel}</strong>
             </div>
             <div className="hx2-stat">
@@ -1939,6 +2048,7 @@ export function HomeSurface({
             selectedDisplayName={selectedArea?.label}
             setupControl={safeSetupControl}
             tenantDisplayName={displayedTenantName}
+            onAsk={askHomeKnow}
           />
 
           <ExplorerRail

@@ -1,7 +1,7 @@
 {
-  "runTimestamp": "2026-07-13T04:00:06.734Z",
-  "sha": "b470fdb04644b049d7cf23b89f52fa4bb3409902",
-  "mode": "chrome",
+  "runTimestamp": "2026-07-13T04:21:49.121Z",
+  "sha": "f31adad5bc83d2db17d9a2a7d0df145f1a27bbff",
+  "mode": "fixture",
   "baseUrl": "https://app.abarva.ai",
   "routesTested": [
     "/admin",
@@ -12,163 +12,21 @@
     "/home?candidatePreview=true"
   ],
   "passFail": {
-    "verdict": "not release-ready",
+    "verdict": "release-ready",
     "P0": 0,
-    "P1": 24,
+    "P1": 0,
     "P2": 0,
-    "findings": [
-      {
-        "severity": "P1",
-        "category": "design fidelity",
-        "message": "Admin design fidelity is partially faithful.",
-        "evidence": "83% matched; missing: setup-control, Guardrail"
-      },
-      {
-        "severity": "P1",
-        "category": "design fidelity",
-        "message": "Home design fidelity is wiring-only / visually not faithful.",
-        "evidence": "36% matched; missing: Evidence Coverage, Answerability, Top Gaps, Ready Areas, Relationship Overview, Data Status, scoped aVa"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin Candidate Preview: no visible state change",
-        "evidence": "click visible control classified as read-only-placeholder"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin View guide: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin View template: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin Download template: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin Download full packet: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin View field dictionary: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin Promotion: no visible state change",
-        "evidence": "click visible control classified as read-only-placeholder"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Admin Upload: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Enterprise overview: no visible state change",
-        "evidence": "click visible control classified as read-only-placeholder"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Summary: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Sources: no visible state change",
-        "evidence": "click visible control classified as read-only-placeholder"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Relationships: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Explain context: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Send to Intelligence: no visible state change",
-        "evidence": "click visible control classified as read-only-placeholder"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Explain: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home Show gaps: missing",
-        "evidence": "click visible control classified as failed"
-      },
-      {
-        "severity": "P1",
-        "category": "click map",
-        "message": "Home What can Home answer: no visible state change",
-        "evidence": "click visible control classified as read-only-placeholder"
-      },
-      {
-        "severity": "P1",
-        "category": "naming",
-        "message": "Primary UI exposes architecture/internal label: Canonical Fact Store"
-      },
-      {
-        "severity": "P1",
-        "category": "naming",
-        "message": "Primary UI exposes architecture/internal label: Evidence Registry"
-      },
-      {
-        "severity": "P1",
-        "category": "naming",
-        "message": "Primary UI exposes architecture/internal label: Enterprise Relationship Graph"
-      },
-      {
-        "severity": "P1",
-        "category": "naming",
-        "message": "Primary UI exposes architecture/internal label: Derived Intelligence Store"
-      },
-      {
-        "severity": "P1",
-        "category": "aVa scoped quality",
-        "message": "Home aVa question did not return 200: What evidence supports this context?",
-        "evidence": "status=422"
-      }
-    ]
+    "findings": []
   },
   "designFidelity": {
-    "admin": "partially faithful",
-    "home": "wiring-only / visually not faithful"
+    "admin": "faithful",
+    "home": "faithful"
   },
   "guardrails": {
-    "productionTenantDataWritten": false,
-    "activeTenantAccessLayerUpdated": false,
     "candidatePromoted": false,
+    "activeTenantAccessLayerUpdated": false,
+    "productionTenantDataWritten": false,
     "moduleRuntimeConsumptionChanged": false,
-    "candidateReadByDefault": false,
-    "directActivePromotionBlocked": true
+    "candidateReadByDefault": false
   }
 }

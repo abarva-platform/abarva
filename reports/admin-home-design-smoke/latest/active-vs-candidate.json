@@ -11,11 +11,10 @@
     "notActiveTenantTruthVisible": true
   },
   "guardrails": {
-    "productionTenantDataWritten": false,
-    "activeTenantAccessLayerUpdated": false,
     "candidatePromoted": false,
+    "activeTenantAccessLayerUpdated": false,
+    "productionTenantDataWritten": false,
     "moduleRuntimeConsumptionChanged": false,
-    "candidateReadByDefault": false,
-    "directActivePromotionBlocked": true
+    "candidateReadByDefault": false
   }
 }
