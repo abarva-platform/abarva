@@ -13,10 +13,10 @@ This plan is generated from DATA-PR31. It does not mutate data; it identifies wh
 - Integrations: Source domain exists upstream but is not included in the candidate manifest.
 - Vendors / contracts: Source domain exists upstream but is not included in the candidate manifest.
 - Spend / value: Source domain exists upstream but is not included in the candidate manifest.
+- Programs / initiatives: Source domain exists upstream but is not included in the candidate manifest.
 - AI initiatives: Source domain exists upstream but is not included in the candidate manifest.
 - Risks / controls: Source domain exists upstream but is not included in the candidate manifest.
-- Relationships: Source domain exists upstream but is not included in the candidate manifest.
-- 7 additional blockers in promotion-blockers.json.
+- 8 additional blockers in promotion-blockers.json.
 
 Recommended next step: select the authoritative source file per stranded domain, add it to the candidate manifest with an adapter/mapping profile, regenerate an inactive candidate, and re-run the promotion gate.
 

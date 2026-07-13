@@ -227,6 +227,7 @@
     "audit:target-writer-dry-run": "tsx scripts/audit/run-target-writer-dry-run.ts",
     "audit:stranded-intelligence-report": "tsx scripts/audit/build-stranded-intelligence-report.ts",
     "audit:skyharbor-compatibility-snapshot": "tsx scripts/audit/build-skyharbor-compatibility-snapshot.ts",
+    "audit:skyharbor-applications-candidate": "tsx scripts/audit/build-skyharbor-applications-candidate.ts",
     "audit:module-readiness-proof": "tsx scripts/audit/build-module-readiness-proof.ts",
     "audit:candidate-tenant-version": "tsx scripts/audit/build-candidate-tenant-data-version.ts",
     "audit:candidate-promotion-gate": "tsx scripts/audit/run-candidate-promotion-gate.ts",

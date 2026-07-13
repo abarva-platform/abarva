@@ -2,9 +2,9 @@
   {
     "tenantKey": "skyharbor-air",
     "displayName": "Airline Demo",
-    "homeRepresentationScore": 54,
-    "avaRepresentationScore": 54,
-    "activeHomeContextRows": 31316,
+    "homeRepresentationScore": 30,
+    "avaRepresentationScore": 30,
+    "activeHomeContextRows": 17309,
     "domains": [
       {
         "domain": "enterprise_profile",
@@ -82,9 +82,9 @@
         "domain": "programs_initiatives",
         "homeVisible": true,
         "avaReadable": true,
-        "activeHomeRows": 14680,
-        "richestSourceRows": 7230,
-        "warning": null
+        "activeHomeRows": 673,
+        "richestSourceRows": 355,
+        "warning": "Source domain exists upstream but is not included in the candidate manifest."
       },
       {
         "domain": "ai_initiatives",
@@ -171,9 +171,9 @@
   {
     "tenantKey": "meridian-health",
     "displayName": "Healthcare Demo",
-    "homeRepresentationScore": 34,
-    "avaRepresentationScore": 34,
-    "activeHomeContextRows": 7557,
+    "homeRepresentationScore": 19,
+    "avaRepresentationScore": 19,
+    "activeHomeContextRows": 4211,
     "domains": [
       {
         "domain": "enterprise_profile",
@@ -251,8 +251,8 @@
         "domain": "programs_initiatives",
         "homeVisible": true,
         "avaReadable": true,
-        "activeHomeRows": 3662,
-        "richestSourceRows": 5040,
+        "activeHomeRows": 316,
+        "richestSourceRows": 156,
         "warning": "Source domain exists upstream but is not included in the candidate manifest."
       },
       {
@@ -340,9 +340,9 @@
   {
     "tenantKey": "first-capital",
     "displayName": "Financial Services Demo",
-    "homeRepresentationScore": 64,
-    "avaRepresentationScore": 64,
-    "activeHomeContextRows": 16591,
+    "homeRepresentationScore": 45,
+    "avaRepresentationScore": 45,
+    "activeHomeContextRows": 11563,
     "domains": [
       {
         "domain": "enterprise_profile",
@@ -420,8 +420,8 @@
         "domain": "programs_initiatives",
         "homeVisible": true,
         "avaReadable": true,
-        "activeHomeRows": 5609,
-        "richestSourceRows": 2614,
+        "activeHomeRows": 581,
+        "richestSourceRows": 299,
         "warning": "Source domain exists upstream but is not included in the candidate manifest."
       },
       {
@@ -509,9 +509,9 @@
   {
     "tenantKey": "apex-retail",
     "displayName": "Retail Demo",
-    "homeRepresentationScore": 42,
-    "avaRepresentationScore": 42,
-    "activeHomeContextRows": 7404,
+    "homeRepresentationScore": 24,
+    "avaRepresentationScore": 24,
+    "activeHomeContextRows": 4129,
     "domains": [
       {
         "domain": "enterprise_profile",
@@ -589,8 +589,8 @@
         "domain": "programs_initiatives",
         "homeVisible": true,
         "avaReadable": true,
-        "activeHomeRows": 3589,
-        "richestSourceRows": 1605,
+        "activeHomeRows": 314,
+        "richestSourceRows": 159,
         "warning": "Source domain exists upstream but is not included in the candidate manifest."
       },
       {
@@ -678,9 +678,9 @@
   {
     "tenantKey": "lakeshore-holdings",
     "displayName": "Lakeshore Holdings",
-    "homeRepresentationScore": 7,
-    "avaRepresentationScore": 7,
-    "activeHomeContextRows": 1239,
+    "homeRepresentationScore": 4,
+    "avaRepresentationScore": 4,
+    "activeHomeContextRows": 652,
     "domains": [
       {
         "domain": "enterprise_profile",
@@ -758,8 +758,8 @@
         "domain": "programs_initiatives",
         "homeVisible": true,
         "avaReadable": true,
-        "activeHomeRows": 610,
-        "richestSourceRows": 955,
+        "activeHomeRows": 23,
+        "richestSourceRows": 62,
         "warning": "Source domain exists upstream but is not included in the candidate manifest."
       },
       {

@@ -40,10 +40,17 @@ describe("admin data layer explorer route", () => {
     expect(pageSource).toContain("data-all-tenant-data-quality");
     expect(pageSource).toContain("data-reference-data-audit");
     expect(pageSource).toContain("data-manifest-projection-audit");
+    expect(pageSource).toContain("data-skyharbor-applications-remediation");
     expect(pageSource).toContain("readLatestTenantQualityMatrix");
+    expect(pageSource).toContain("readLatestSkyHarborApplicationsRegeneration");
     expect(pageSource).toContain("Source richness, candidate coverage");
     expect(pageSource).toContain("Rich source exists");
     expect(pageSource).toContain("Tenant manifest completeness");
+    expect(pageSource).toContain("SkyHarbor applications/systems remediation");
+    expect(pageSource).toContain("Rich application estate regenerated");
+    expect(pageSource).toContain("Selected source");
+    expect(pageSource).toContain("Relationship candidates");
+    expect(pageSource).toContain("Candidate data leaks into default Home");
     expect(pageSource).toContain("Adapter gaps");
     expect(pageSource).toContain("Mapping gaps");
     expect(pageSource).toContain("Home/aVa representation warnings");
@@ -60,6 +67,7 @@ describe("admin data layer explorer route", () => {
     expect(packageSource).toContain("audit:tenant-manifest-completeness");
     expect(packageSource).toContain("audit:source-projection:all-tenants");
     expect(packageSource).toContain("audit:home-ava-representation");
+    expect(packageSource).toContain("audit:skyharbor-applications-candidate");
     expect(packageSource).toContain(
       "tsx scripts/audit/build-admin-data-layer-explorer.ts",
     );

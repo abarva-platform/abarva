@@ -280,21 +280,21 @@
           "tenantName": "Airline Demo",
           "domain": "programs_initiatives",
           "label": "Programs / initiatives",
-          "sourceFilesDiscovered": 290,
-          "transformedTemplatesDiscovered": 98,
-          "candidateManifestIncluded": true,
+          "sourceFilesDiscovered": 21,
+          "transformedTemplatesDiscovered": 9,
+          "candidateManifestIncluded": false,
           "adapterExists": true,
           "mappingProfileExists": true,
-          "canonicalRecordsGenerated": 14,
-          "evidenceKeysAttached": 14,
+          "canonicalRecordsGenerated": 0,
+          "evidenceKeysAttached": 0,
           "relationshipOperationsPlanned": 0,
           "homeVisible": true,
           "avaReadable": true,
-          "promotionBlocker": false,
-          "status": "complete",
-          "reasonIfExcluded": null,
-          "richestSourceRows": 7230,
-          "activeHomeRows": 14680
+          "promotionBlocker": true,
+          "status": "stranded",
+          "reasonIfExcluded": "Source domain exists upstream but is not included in the candidate manifest.",
+          "richestSourceRows": 355,
+          "activeHomeRows": 673
         },
         {
           "tenantKey": "skyharbor-air",
@@ -706,8 +706,8 @@
           "tenantName": "Healthcare Demo",
           "domain": "programs_initiatives",
           "label": "Programs / initiatives",
-          "sourceFilesDiscovered": 347,
-          "transformedTemplatesDiscovered": 61,
+          "sourceFilesDiscovered": 28,
+          "transformedTemplatesDiscovered": 8,
           "candidateManifestIncluded": false,
           "adapterExists": true,
           "mappingProfileExists": true,
@@ -719,8 +719,8 @@
           "promotionBlocker": true,
           "status": "stranded",
           "reasonIfExcluded": "Source domain exists upstream but is not included in the candidate manifest.",
-          "richestSourceRows": 5040,
-          "activeHomeRows": 3662
+          "richestSourceRows": 156,
+          "activeHomeRows": 316
         },
         {
           "tenantKey": "meridian-health",
@@ -1132,8 +1132,8 @@
           "tenantName": "Financial Services Demo",
           "domain": "programs_initiatives",
           "label": "Programs / initiatives",
-          "sourceFilesDiscovered": 265,
-          "transformedTemplatesDiscovered": 19,
+          "sourceFilesDiscovered": 18,
+          "transformedTemplatesDiscovered": 4,
           "candidateManifestIncluded": false,
           "adapterExists": true,
           "mappingProfileExists": true,
@@ -1145,8 +1145,8 @@
           "promotionBlocker": true,
           "status": "stranded",
           "reasonIfExcluded": "Source domain exists upstream but is not included in the candidate manifest.",
-          "richestSourceRows": 2614,
-          "activeHomeRows": 5609
+          "richestSourceRows": 299,
+          "activeHomeRows": 581
         },
         {
           "tenantKey": "first-capital",
@@ -1558,8 +1558,8 @@
           "tenantName": "Retail Demo",
           "domain": "programs_initiatives",
           "label": "Programs / initiatives",
-          "sourceFilesDiscovered": 235,
-          "transformedTemplatesDiscovered": 19,
+          "sourceFilesDiscovered": 25,
+          "transformedTemplatesDiscovered": 4,
           "candidateManifestIncluded": false,
           "adapterExists": true,
           "mappingProfileExists": true,
@@ -1571,8 +1571,8 @@
           "promotionBlocker": true,
           "status": "stranded",
           "reasonIfExcluded": "Source domain exists upstream but is not included in the candidate manifest.",
-          "richestSourceRows": 1605,
-          "activeHomeRows": 3589
+          "richestSourceRows": 159,
+          "activeHomeRows": 314
         },
         {
           "tenantKey": "apex-retail",
@@ -1984,8 +1984,8 @@
           "tenantName": "Lakeshore Holdings",
           "domain": "programs_initiatives",
           "label": "Programs / initiatives",
-          "sourceFilesDiscovered": 220,
-          "transformedTemplatesDiscovered": 70,
+          "sourceFilesDiscovered": 16,
+          "transformedTemplatesDiscovered": 8,
           "candidateManifestIncluded": false,
           "adapterExists": true,
           "mappingProfileExists": true,
@@ -1997,8 +1997,8 @@
           "promotionBlocker": true,
           "status": "stranded",
           "reasonIfExcluded": "Source domain exists upstream but is not included in the candidate manifest.",
-          "richestSourceRows": 955,
-          "activeHomeRows": 610
+          "richestSourceRows": 62,
+          "activeHomeRows": 23
         },
         {
           "tenantKey": "lakeshore-holdings",

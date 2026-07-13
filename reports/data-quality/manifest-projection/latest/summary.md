@@ -1,6 +1,6 @@
 # DATA-PR31 Tenant Manifest Completeness and Source Projection Audit
 
-Generated: 2026-07-13T12:44:02.989Z
+Generated: 2026-07-13T13:51:55.049Z
 
 ## Truth split
 
@@ -29,11 +29,11 @@ Generated: 2026-07-13T12:44:02.989Z
 
 | Tenant | Status | Source files | Structured rows | Manifest files | Included files | Candidate records | Home rows | Blockers |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Airline Demo | blocked | 392 | 58,236 | 3 | 2 | 53 | 31,316 | 19 |
-| Healthcare Demo | blocked | 401 | 22,184 | 0 | 0 | 0 | 7,557 | 19 |
-| Financial Services Demo | blocked | 339 | 25,961 | 0 | 0 | 0 | 16,591 | 19 |
-| Retail Demo | blocked | 259 | 17,548 | 0 | 0 | 0 | 7,404 | 20 |
-| Lakeshore Holdings | blocked | 283 | 16,617 | 0 | 0 | 0 | 1,239 | 20 |
+| Airline Demo | blocked | 392 | 58,236 | 3 | 2 | 53 | 17,309 | 20 |
+| Healthcare Demo | blocked | 401 | 22,184 | 0 | 0 | 0 | 4,211 | 19 |
+| Financial Services Demo | blocked | 339 | 25,961 | 0 | 0 | 0 | 11,563 | 19 |
+| Retail Demo | blocked | 259 | 17,548 | 0 | 0 | 0 | 4,129 | 20 |
+| Lakeshore Holdings | blocked | 283 | 16,617 | 0 | 0 | 0 | 652 | 20 |
 
 ## Excluded tenants
 
