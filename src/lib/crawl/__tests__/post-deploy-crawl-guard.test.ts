@@ -39,6 +39,25 @@ describe("post-deploy crawl guard", () => {
     expect(personaKeys).toEqual(
       expect.arrayContaining(["agent-meridian", "agent-skyharbor"]),
     );
+    expect(personaKeys).not.toContain("agent-northstar");
+  });
+
+  it("uses active UI display names for tenant identity checks", () => {
+    expect(
+      resolveCrawlPersonas("agent-apexretail").map(
+        (persona) => persona.tenantName,
+      ),
+    ).toEqual(["Retail Demo"]);
+    expect(
+      resolveCrawlPersonas("agent-meridian").map(
+        (persona) => persona.tenantName,
+      ),
+    ).toEqual(["Healthcare Demo"]);
+    expect(
+      resolveCrawlPersonas("agent-firstcapital").map(
+        (persona) => persona.tenantName,
+      ),
+    ).toEqual(["Financial Services Demo"]);
   });
 
   it("includes the Admin Data Layer Explorer as a directly targetable crawl surface", () => {

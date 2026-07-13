@@ -15,7 +15,11 @@ import {
   resolveCrawlSurfaces,
 } from '../../src/lib/crawl/persona-switcher';
 
-assert.ok(CRAWL_PERSONAS.length >= 6);
+assert.equal(CRAWL_PERSONAS.length, 5);
+assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-northstar'), false);
+assert.equal(resolveCrawlPersonas('agent-apexretail')[0]?.tenantName, 'Retail Demo');
+assert.equal(resolveCrawlPersonas('agent-meridian')[0]?.tenantName, 'Healthcare Demo');
+assert.equal(resolveCrawlPersonas('agent-firstcapital')[0]?.tenantName, 'Financial Services Demo');
 assert.ok(PRIMARY_CRAWL_SURFACES.length >= 22);
 assert.equal(POST_DEPLOY_HARD_QUESTIONS.length, 10);
 assert.equal(PHS_MERIDIAN_HARD_QUESTIONS.length, 50);
