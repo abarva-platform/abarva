@@ -5,9 +5,7 @@
 // not classify intent, retrieve data, or render Intelligence experts locally.
 
 import { useCallback, useMemo, useState } from "react";
-import type {
-  ChatMessage,
-} from "@/components/agent/AgentDock";
+import type { ChatMessage } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type {
   HomeKnowCitation,
@@ -114,15 +112,21 @@ const CSS = `
 .homex .hx-gapCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7A5A1F;background:#FFF5DB;border:1px solid #E8D3A2;border-radius:999px;padding:4px 8px;white-space:nowrap}
 .homex .hx-gapCard p{font-size:13px;line-height:1.55;color:#3d3d36;margin:7px 0 0}
 .homex .hx-gapMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#66708a;margin-top:10px}
-.homex .hx2{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);background:#fbfaf7;color:#111827}
-.homex .hx2-enterprise{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:22px;align-items:center;border-bottom:1px solid #e7e3da;background:#fff;padding:18px 24px}
-.homex .hx2-kicker,.homex .hx2-cardKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#1f6b3a}
-.homex .hx2-enterprise h1{font-family:var(--font-fraunces),Georgia,serif;font-size:30px;line-height:1.05;margin:6px 0 4px;font-weight:600;color:#111827}
-.homex .hx2-enterprise p{margin:0;color:#536073;font-size:13px}
-.homex .hx2-stats{display:flex;gap:12px;align-items:stretch}
-.homex .hx2-stat{min-width:98px;border:1px solid #e7e3da;border-radius:8px;background:#fbfaf7;padding:9px 11px}
-.homex .hx2-stat span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7b7a72}
-.homex .hx2-stat strong{display:block;margin-top:3px;font-family:var(--font-fraunces),Georgia,serif;font-size:19px;color:#111827}
+.homex .hx2{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);background:#f5f1eb;color:#111827}
+.homex .hx2-enterprise{display:grid;grid-template-columns:minmax(420px,1fr) minmax(520px,auto) auto;gap:24px;align-items:center;border-bottom:1px solid #ded8ca;background:#f5f1eb;padding:18px 26px}
+.homex .hx2-kicker,.homex .hx2-cardKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#9c7b3f}
+.homex .hx2-enterprise h1{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-fraunces),Georgia,serif;font-size:29px;line-height:1.05;margin:6px 0 4px;font-weight:700;color:#050505}
+.homex .hx2-enterprise p{margin:0;color:#5f5e5a;font-size:13px}
+.homex .hx2-demoBadge{display:inline-flex;align-items:center;border-radius:999px;background:#dcecf8;color:#0c5e96;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px}
+.homex .hx2-stats{display:grid;grid-template-columns:repeat(4,minmax(118px,1fr));align-items:stretch;border:1px solid #d8d1c2;border-radius:10px;overflow:hidden;background:#f7f2ea}
+.homex .hx2-stat{min-width:0;border-right:1px solid #d8d1c2;padding:10px 14px}
+.homex .hx2-stat:last-child{border-right:0}
+.homex .hx2-stat span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#837869}
+.homex .hx2-stat strong{display:block;margin-top:5px;font-family:var(--font-fraunces),Georgia,serif;font-size:16px;color:#050505;white-space:nowrap}
+.homex .hx2-topQuality{display:grid;grid-template-columns:auto auto;gap:12px;align-items:center;justify-content:end}
+.homex .hx2-topRing{--score:78%;width:78px;height:78px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#1f9d6a var(--score),#e4ded2 0)}
+.homex .hx2-topRing span{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:#f5f1eb;font-family:var(--font-fraunces),Georgia,serif;font-size:20px;font-weight:800;color:#07162f}
+.homex .hx2-topQualityText{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#7b7a72;line-height:1.6}
 .homex .hx2-status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;border-bottom:1px solid #e7e3da;background:#fff;padding:14px 24px}
 .homex .hx2-statusText{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:#536073;font-size:12.5px}
 .homex .hx2-statePill{display:inline-flex;align-items:center;gap:7px;border:1px solid #dce8dc;border-radius:999px;background:#f1fbf5;color:#126449;font-weight:800;font-size:11.5px;padding:6px 10px}
@@ -132,7 +136,7 @@ const CSS = `
 .homex .hx2-statusActions .primary{background:#07162f;color:#fff;border-color:#07162f}
 .homex .hx2-candidateBanner{border-bottom:1px solid #e7d7ae;background:#fff8e7;color:#6f4f12;padding:10px 24px;font-size:13px;line-height:1.45}
 .homex .hx2-candidateBanner strong{color:#3f2f0a}
-.homex .hx2-shell{min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 330px;gap:0;overflow:hidden}
+.homex .hx2-shell{min-height:0;display:grid;grid-template-columns:255px minmax(0,1fr) 320px;gap:0;overflow:hidden}
 .homex .hx2-explorer{min-height:0;overflow:auto;border-right:1px solid #e7e3da;background:#f6f3ed;padding:16px}
 .homex .hx2-explorerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .homex .hx2-explorerHead strong{font-family:var(--font-fraunces),Georgia,serif;font-size:18px;color:#111827}
@@ -150,10 +154,10 @@ const CSS = `
 .homex .hx2-treeBtn[aria-pressed="true"]{background:#07162f;color:#fff;border-color:#07162f;box-shadow:0 12px 30px rgba(7,22,47,.12)}
 .homex .hx2-treeBtn small{display:block;color:inherit;opacity:.68;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .homex .hx2-treeBtn em{font-style:normal;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;opacity:.7;white-space:nowrap}
-.homex .hx2-detail{min-width:0;min-height:0;overflow:auto;padding:24px 26px 80px;background:#fbfaf7}
-.homex .hx2-detailHead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start;border-bottom:1px solid #e7e3da;padding-bottom:16px}
+.homex .hx2-detail{min-width:0;min-height:0;overflow:auto;padding:25px 30px 80px;background:#f5f1eb}
+.homex .hx2-detailHead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start;padding-bottom:18px}
 .homex .hx2-crumb{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#1f6b3a}
-.homex .hx2-detail h1{font-family:var(--font-fraunces),Georgia,serif;font-size:32px;line-height:1.08;margin:7px 0 8px;color:#111827}
+.homex .hx2-detail h1{font-family:var(--font-fraunces),Georgia,serif;font-size:30px;line-height:1.08;margin:9px 0 8px;color:#050505}
 .homex .hx2-detailHead p{max-width:76ch;color:#4b5563;line-height:1.55;margin:0}
 .homex .hx2-detailActions{display:flex;gap:8px}
 .homex .hx2-detailActions button,.homex .hx2-tab,.homex .hx2-suggestions button,.homex .hx2-ask button{border:1px solid #ded8ca;border-radius:8px;background:#fff;color:#13213b;font:inherit;font-weight:700;font-size:12px;padding:9px 11px;cursor:pointer}
@@ -172,17 +176,22 @@ const CSS = `
 .homex .hx2-example{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid #eee9dd;padding:10px 0}
 .homex .hx2-example span,.homex .hx2-relRow .node{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#dff5ef;color:#126449;font-weight:800;font-size:12px}
 .homex .hx2-example p{margin:1px 0 0;color:#111827;line-height:1.45}
-.homex .hx2-knowledgeGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:18px}
-.homex .hx2-knowledgeStack{display:grid;gap:14px}
-.homex .hx2-knowledgeCard{border:1px solid #e7e3da;border-radius:12px;background:#fff;padding:16px}
-.homex .hx2-knowledgeCard h2{font-family:var(--font-fraunces),Georgia,serif;font-size:20px;font-weight:600;margin:0 0 8px;color:#111827}
-.homex .hx2-knowledgeCard p{margin:0;color:#4b5563;font-size:13px;line-height:1.55}
-.homex .hx2-snapshotRows{display:grid;gap:9px;margin-top:12px}
-.homex .hx2-snapshotRow{display:grid;grid-template-columns:140px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:12.5px;color:#536073}
-.homex .hx2-snapshotRow span:first-child{font-weight:800;color:#111827}
-.homex .hx2-snapshotRow div{height:8px;border-radius:999px;background:#eee9dd;overflow:hidden}
-.homex .hx2-snapshotRow i{display:block;height:100%;border-radius:999px;background:#1f9d6a}
-.homex .hx2-snapshotRow strong{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;color:#111827}
+.homex .hx2-knowledgeGrid{display:block;margin-top:8px}
+.homex .hx2-knowledgeBlock{border-top:1px solid #d8d1c2;padding-top:18px;margin-top:10px}
+.homex .hx2-sectionTitle{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:12px}
+.homex .hx2-sectionTitle h2{font-family:var(--font-fraunces),Georgia,serif;font-size:22px;font-weight:700;margin:0;color:#050505}
+.homex .hx2-sectionTitle span{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#7b7a72}
+.homex .hx2-snapshotRows{display:grid}
+.homex .hx2-snapshotRow{display:grid;grid-template-columns:minmax(230px,1fr) 92px minmax(260px,1fr);gap:18px;align-items:center;border-top:1px solid #ded8ca;padding:16px 2px;font-size:14px;color:#8a877e}
+.homex .hx2-snapshotRow:last-child{border-bottom:1px solid #ded8ca}
+.homex .hx2-snapshotRow span:first-child{font-weight:500;color:#1f1f1c}
+.homex .hx2-snapshotRow strong{font-family:var(--font-fraunces),Georgia,serif;font-size:27px;line-height:1;color:#050505;text-align:right}
+.homex .hx2-evidenceStrip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid #d8d1c2;border-radius:10px;overflow:hidden;background:#f7f2ea}
+.homex .hx2-evidenceCell{border-right:1px solid #d8d1c2;padding:14px 16px}
+.homex .hx2-evidenceCell:last-child{border-right:0}
+.homex .hx2-evidenceCell span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#7b7a72}
+.homex .hx2-evidenceCell strong{display:block;margin-top:10px;font-family:var(--font-fraunces),Georgia,serif;font-size:24px;color:#050505}
+.homex .hx2-evidenceNote{margin:10px 0 0;color:#6b665f;font-size:12.5px;line-height:1.5}
 .homex .hx2-pillGrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .homex .hx2-readinessPill{border:1px solid #ded8ca;border-radius:999px;background:#fbfaf7;padding:6px 10px;color:#334155;font-size:12px}
 .homex .hx2-readinessPill strong{color:#07162f}
@@ -216,7 +225,7 @@ const CSS = `
 .homex .hx2-relRow .edge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;color:#667085;text-transform:uppercase;letter-spacing:.08em}
 .homex .hx2-relRow strong{font-size:12px;color:#1f6b3a;white-space:nowrap}
 .homex .hx2-empty{border:1px dashed #d8d1c2;border-radius:10px;background:#fff;padding:16px;color:#536073}
-.homex .hx2-rail{min-height:0;overflow:auto;border-left:1px solid #e7e3da;background:#fff;padding:16px;display:grid;align-content:start;gap:14px}
+.homex .hx2-rail{min-height:0;overflow:auto;border-left:1px solid #ded8ca;background:#f5f1eb;padding:16px;display:grid;align-content:start;gap:14px}
 .homex .hx2-visual{text-align:center}
 .homex .hx2-ring{--score:72%;width:116px;height:116px;border-radius:50%;margin:8px auto 12px;display:grid;place-items:center;background:conic-gradient(#22aeea var(--score),#e9e5dc 0)}
 .homex .hx2-ring span{display:grid;place-items:center;width:82px;height:82px;border-radius:50%;background:#fff;font-family:var(--font-fraunces),Georgia,serif;font-size:25px;font-weight:700;color:#07162f}
@@ -227,19 +236,31 @@ const CSS = `
 .homex .hx2-barRow div{height:8px;border-radius:999px;background:#eee9dd;overflow:hidden}
 .homex .hx2-barRow i{display:block;height:100%;border-radius:999px;background:#1f9d6a}
 .homex .hx2-barRow strong{text-align:right;color:#111827}
+.homex .hx2-miniStatus{display:grid;gap:4px;border-top:1px solid #e4ded2;padding-top:10px;color:#111827}
+.homex .hx2-miniStatus:first-of-type{border-top:0;padding-top:0}
+.homex .hx2-miniStatus span{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#1f6b3a}
+.homex .hx2-miniStatus strong{font-size:12.5px;line-height:1.35}
+.homex .hx2-miniStatus.muted span{color:#9c7b3f}
+.homex .hx2-miniStatus.muted strong{color:#6b665f}
 .homex .hx2-avaHead{display:flex;gap:10px;align-items:center;margin-bottom:10px}
-.homex .hx2-avaMark{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#07162f;color:#22aeea;font-family:var(--font-fraunces),Georgia,serif;font-weight:800}
+.homex .hx2-avaMark{display:grid;place-items:center;width:36px;height:36px;border-radius:8px;background:#f3ebdb;color:#050505;border:1px solid #d8d1c2;font-family:var(--font-fraunces),Georgia,serif;font-weight:800}
 .homex .hx2-avaHead strong{display:block;color:#111827}
 .homex .hx2-avaHead span,.homex .hx2-scope{display:block;color:#667085;font-size:11.5px;line-height:1.35}
-.homex .hx2-scope{border-top:1px solid #e7e3da;border-bottom:1px solid #e7e3da;padding:10px 0;margin-bottom:10px}
+.homex .hx2-scope{font-family:var(--font-geist-mono),ui-monospace,monospace;text-transform:uppercase;letter-spacing:.12em;color:#6f6a61;border-top:1px solid #ded8ca;border-bottom:1px solid #ded8ca;padding:10px 0;margin-bottom:14px}
 .homex .hx2-suggestions{display:grid;gap:7px}
 .homex .hx2-suggestions button{text-align:left;font-weight:600;line-height:1.35}
+.homex .hx2-answerBox{border:1px solid #8fdac6;border-radius:8px;background:#dff8ef;color:#154c39;padding:12px 14px;margin-bottom:12px}
+.homex .hx2-answerBox.warn{border-color:#d7cabb;background:#f4efe6;color:#6b6258}
+.homex .hx2-answerBox div{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}
+.homex .hx2-answerBox ul{display:grid;gap:7px;list-style:none;margin:0;padding:0;font-size:12.5px;line-height:1.35}
+.homex .hx2-answerBox li::before{content:"✓";margin-right:7px;color:#13835e;font-weight:800}
+.homex .hx2-answerBox.warn li::before{content:"—";color:#7b7168}
 .homex .hx2-thread{display:grid;gap:8px;margin-top:10px;max-height:160px;overflow:auto}
 .homex .hx2-turn{border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.4;background:#f6f3ed;color:#111827;white-space:pre-wrap}
 .homex .hx2-turn.user{background:#07162f;color:#fff}
 .homex .hx2-ask{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;margin-top:10px}
 .homex .hx2-ask input{min-width:0;border:1px solid #ded8ca;border-radius:8px;padding:10px;font:inherit;font-size:13px}
-@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:260px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{flex-wrap:wrap}}
+@media(max-width:1180px){.homex .hx2-shell{grid-template-columns:255px minmax(0,1fr)}.homex .hx2-rail{display:none}.homex .hx2-enterprise{grid-template-columns:1fr}.homex .hx2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx2-topQuality{justify-content:start}}
 @media(max-width:900px){.homex .hx2-status,.homex .hx2-knowledgeGrid,.homex .hx2-answerability{grid-template-columns:1fr}.homex .hx2-statusActions{justify-content:flex-start;flex-wrap:wrap}}
 @media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
 `;
@@ -314,9 +335,7 @@ function formatPreviewCell(
   }
   if (
     numeric !== null &&
-    /\b(count|employees?|users?|population|records?|volume|number)\b/.test(
-      name,
-    )
+    /\b(count|employees?|users?|population|records?|volume|number)\b/.test(name)
   ) {
     return numeric.toLocaleString();
   }
@@ -387,12 +406,14 @@ function trimCompactNumber(value: number): string {
 }
 
 function clientFacingFileName(value: string): string {
-  return value
-    // Strip the version prefix AND the file ordinal (e.g. "V7_04_") so the
-    // sequence number does not read as a count (e.g. "04 workforce personas").
-    .replace(/^v\d+[_-](?:\d+[_-])?/i, "")
-    .replace(/\.csv$/i, "")
-    .replace(/[_-]+/g, " ");
+  return (
+    value
+      // Strip the version prefix AND the file ordinal (e.g. "V7_04_") so the
+      // sequence number does not read as a count (e.g. "04 workforce personas").
+      .replace(/^v\d+[_-](?:\d+[_-])?/i, "")
+      .replace(/\.csv$/i, "")
+      .replace(/[_-]+/g, " ")
+  );
 }
 
 function isLineageColumn(
@@ -617,6 +638,154 @@ function categoryForDimension(dimension: string): string {
   return "Context";
 }
 
+type HomeExplorerArea = {
+  id: string;
+  label: string;
+  group: "Enterprise" | "Delivery";
+  description: string;
+  rows: number;
+  gaps: number;
+  sources: number;
+  examples: string;
+  primaryDimension: BindingDimension | null;
+  primaryPreview: HomeV6BrowserPreview | null;
+};
+
+const HOME_AREA_DEFINITIONS: Array<{
+  id: string;
+  label: string;
+  group: "Enterprise" | "Delivery";
+  match: RegExp;
+  fallback: RegExp;
+}> = [
+  {
+    id: "functions",
+    label: "Functions",
+    group: "Enterprise",
+    match:
+      /\b(enterprise profile|business functions|org ownership|workforce personas|portfolio company hierarchy)\b/i,
+    fallback: /\b(functions?|org|workforce|portfolio)\b/i,
+  },
+  {
+    id: "applications",
+    label: "Applications & Systems",
+    group: "Enterprise",
+    match:
+      /\b(applications systems|system & business relationships|infrastructure cloud estate)\b/i,
+    fallback: /\b(applications?|systems?|infrastructure|cloud)\b/i,
+  },
+  {
+    id: "vendors",
+    label: "Vendors & Contracts",
+    group: "Enterprise",
+    match:
+      /\b(vendors contracts|spend value|client rate card|service tower managed services)\b/i,
+    fallback: /\b(vendors?|contracts?|spend|rate|tower)\b/i,
+  },
+  {
+    id: "data",
+    label: "Data Assets & Integrations",
+    group: "Enterprise",
+    match: /\b(data assets integrations|ai search coverage)\b/i,
+    fallback: /\b(data|integrations?|search)\b/i,
+  },
+  {
+    id: "programs",
+    label: "Programs & Priorities",
+    group: "Delivery",
+    match: /\b(programs initiatives business priorities|ai initiatives)\b/i,
+    fallback: /\b(programs?|initiatives?|priorities|priority|ai)\b/i,
+  },
+  {
+    id: "risks",
+    label: "Risks & Controls",
+    group: "Delivery",
+    match:
+      /\b(operations risk controls|source documents|operational evidence)\b/i,
+    fallback: /\b(risks?|controls?|evidence|sources?)\b/i,
+  },
+  {
+    id: "metrics",
+    label: "Metrics & Outcomes",
+    group: "Delivery",
+    match:
+      /\b(metric definitions|benefits realization|industry benchmarks|industry & market patterns|expert lenses)\b/i,
+    fallback:
+      /\b(metrics?|outcomes?|benefits?|benchmarks?|patterns?|experts?)\b/i,
+  },
+];
+
+function areaDescription(area: HomeExplorerArea): string {
+  if (area.rows <= 0) return "Needs evidence before Home can browse it";
+  if (area.gaps > 0)
+    return `${shortMetric(area.rows)} records · needs evidence`;
+  return `${shortMetric(area.rows)} records · source-backed`;
+}
+
+function displayAreaExamples(previews: HomeV6BrowserPreview[]): string {
+  const examples = previews
+    .flatMap((preview) => selectedExamples(preview))
+    .filter(Boolean)
+    .slice(0, 2);
+  if (examples.length > 0) return examples.join(", ");
+  return previews
+    .map((preview) => preview.title)
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(", ");
+}
+
+function buildHomeExplorerAreas(
+  dims: BindingDimension[],
+  browser: HomeV6ContextBrowser | null | undefined,
+): HomeExplorerArea[] {
+  return HOME_AREA_DEFINITIONS.map((definition) => {
+    const matches = dims.filter((dimension) =>
+      definition.match.test(dimension.dimension),
+    );
+    const fallbackMatches =
+      matches.length > 0
+        ? matches
+        : dims.filter((dimension) =>
+            definition.fallback.test(dimension.dimension),
+          );
+    const dimensions = fallbackMatches;
+    const previews = dimensions
+      .map((dimension) => previewForDimension(browser, dimension.dimension))
+      .filter((preview): preview is HomeV6BrowserPreview => Boolean(preview));
+    const rows =
+      previews.length > 0
+        ? previews.reduce((sum, preview) => sum + preview.rowCount, 0)
+        : dimensions.reduce((sum, dimension) => sum + dimension.evidence, 0);
+    const gaps = previews.reduce(
+      (sum, preview) => sum + preview.dataThinCells,
+      0,
+    );
+    const sources = new Set(previews.flatMap((preview) => preview.fileNames))
+      .size;
+    const primaryPreview =
+      previews.find((preview) => preview.rowCount > 0) ?? previews[0] ?? null;
+    const primaryDimension =
+      dimensions.find(
+        (dimension) => dimension.dimension === primaryPreview?.dimension,
+      ) ??
+      dimensions[0] ??
+      null;
+    return {
+      id: definition.id,
+      label: definition.label,
+      group: definition.group,
+      description: displayAreaExamples(previews),
+      rows,
+      gaps,
+      sources,
+      examples: displayAreaExamples(previews),
+      primaryDimension,
+      primaryPreview,
+    };
+  });
+}
+
 function statusTone(gaps: number, rows: number): "green" | "amber" | "blue" {
   if (rows <= 0) return "blue";
   if (gaps > rows * 0.2) return "amber";
@@ -652,8 +821,14 @@ function summarizeSelectedContext(args: {
   totalSources: number;
   totalGaps: number;
 }): string {
-  const { dimension, preview, totalDimensions, totalRows, totalSources, totalGaps } =
-    args;
+  const {
+    dimension,
+    preview,
+    totalDimensions,
+    totalRows,
+    totalSources,
+    totalGaps,
+  } = args;
   if (!dimension) {
     return `${totalDimensions.toLocaleString()} context areas are loaded with ${totalRows.toLocaleString()} records across ${totalSources.toLocaleString()} source files. ${totalGaps.toLocaleString()} evidence gaps remain visible so Home stays a context browser, not an unsupported advisory engine.`;
   }
@@ -671,10 +846,14 @@ function selectedExamples(preview: HomeV6BrowserPreview | null): string[] {
     .map((row) =>
       row
         .map((cell, index) => ({ cell, column: preview.columns[index] }))
-        .filter(({ cell, column }) => cell && cell !== "Needs evidence" && column)
+        .filter(
+          ({ cell, column }) => cell && cell !== "Needs evidence" && column,
+        )
         .filter(({ column }) => column && !isLineageColumn(column))
         .slice(0, 2)
-        .map(({ cell, column }) => (column ? formatPreviewCell(cell, column) : cell))
+        .map(({ cell, column }) =>
+          column ? formatPreviewCell(cell, column) : cell,
+        )
         .join(" · "),
     )
     .filter(Boolean)
@@ -701,9 +880,7 @@ function relationshipItems(
         if (/synthetic demo/i.test(value)) return false;
         return true;
       })
-      .map(([label, value]) =>
-        formatPreviewCell(value, { key: label, label }),
-      )
+      .map(([label, value]) => formatPreviewCell(value, { key: label, label }))
       .filter((value) => !/^\d+(?:\.\d+)?$/.test(value));
     return {
       from: values[0] ?? row.label,
@@ -720,16 +897,33 @@ interface EnterpriseKnowledgeModel {
   totalGaps: number;
   loadedAreas: number;
   activeAccess: AdminSetupControlResponse["activeTenantAccess"] | null;
-  candidateVersion: AdminSetupControlResponse["candidateTenantDataVersion"] | null;
+  candidateVersion:
+    | AdminSetupControlResponse["candidateTenantDataVersion"]
+    | null;
   evidenceRegistry: AdminSetupControlResponse["evidenceRegistry"] | null;
   canonicalFacts: AdminSetupControlResponse["canonicalFacts"] | null;
   relationshipGraph: AdminSetupControlResponse["relationshipGraph"] | null;
   derivedIntelligence: AdminSetupControlResponse["derivedIntelligence"] | null;
   moduleReadiness: AdminSetupControlResponse["moduleReadiness"] | null;
   sourceOfTruth: AdminSetupControlResponse["sourceOfTruth"] | null;
-  topCategories: Array<{ label: string; rows: number; gaps: number; areas: number }>;
-  topGaps: Array<{ area: string; label: string; count: number; whyItMatters?: string | null }>;
-  readyAreas: Array<{ label: string; score: number; rows: number; sources: number }>;
+  topCategories: Array<{
+    label: string;
+    rows: number;
+    gaps: number;
+    areas: number;
+  }>;
+  topGaps: Array<{
+    area: string;
+    label: string;
+    count: number;
+    whyItMatters?: string | null;
+  }>;
+  readyAreas: Array<{
+    label: string;
+    score: number;
+    rows: number;
+    sources: number;
+  }>;
   relationshipAreas: Array<{ label: string; rows: number; gaps: number }>;
 }
 
@@ -737,19 +931,34 @@ function buildEnterpriseKnowledgeModel(
   dimensions: HomeV6BrowserPreview[],
   setupControl: AdminSetupControlResponse | null | undefined,
 ): EnterpriseKnowledgeModel {
-  const categoryStats = new Map<string, { rows: number; gaps: number; areas: number }>();
+  const categoryStats = new Map<
+    string,
+    { rows: number; gaps: number; areas: number }
+  >();
   for (const dimension of dimensions) {
     const category = categoryForDimension(dimension.dimension);
-    const current = categoryStats.get(category) ?? { rows: 0, gaps: 0, areas: 0 };
+    const current = categoryStats.get(category) ?? {
+      rows: 0,
+      gaps: 0,
+      areas: 0,
+    };
     current.rows += dimension.rowCount;
     current.gaps += dimension.dataThinCells;
     current.areas += 1;
     categoryStats.set(category, current);
   }
 
-  const totalRows = dimensions.reduce((sum, dimension) => sum + dimension.rowCount, 0);
-  const totalSources = new Set(dimensions.flatMap((dimension) => dimension.fileNames)).size;
-  const totalGaps = dimensions.reduce((sum, dimension) => sum + dimension.dataThinCells, 0);
+  const totalRows = dimensions.reduce(
+    (sum, dimension) => sum + dimension.rowCount,
+    0,
+  );
+  const totalSources = new Set(
+    dimensions.flatMap((dimension) => dimension.fileNames),
+  ).size;
+  const totalGaps = dimensions.reduce(
+    (sum, dimension) => sum + dimension.dataThinCells,
+    0,
+  );
   const topCategories = [...categoryStats.entries()]
     .map(([label, stats]) => ({ label, ...stats }))
     .sort((left, right) => right.rows - left.rows)
@@ -814,177 +1023,89 @@ function buildEnterpriseKnowledgeModel(
   };
 }
 
-function statusLabel(value: string): string {
-  return value.replace(/-/g, " ");
-}
-
-function moduleReadinessRows(
-  readiness: AdminSetupControlResponse["moduleReadiness"] | null,
-) {
-  if (!readiness) return [];
-  return Object.entries(readiness).map(([module, state]) => ({
-    module,
-    status: state.status,
-    runtimeActiveAvailable: state.runtimeActiveAvailable,
-    candidatePreviewAvailable: state.candidatePreviewAvailable,
-  }));
-}
-
-function KnowledgeOverview({ model }: { model: EnterpriseKnowledgeModel }) {
-  const maxCategoryRows = Math.max(1, ...model.topCategories.map((item) => item.rows));
-  const answerableNow = model.readyAreas.filter((area) => area.score >= 70).length;
-  const needsValidation = Math.max(0, model.loadedAreas - answerableNow);
-  const moduleRows = moduleReadinessRows(model.moduleReadiness);
+function KnowledgeOverview({
+  model,
+  areas,
+}: {
+  model: EnterpriseKnowledgeModel;
+  areas: HomeExplorerArea[];
+}) {
+  const unsupportedAreas = areas.filter((area) => area.gaps > 0).length;
+  const relationshipCount =
+    model.relationshipGraph?.graphRelationships ??
+    model.relationshipAreas.reduce((sum, area) => sum + area.rows, 0);
   return (
-    <div className="hx2-knowledgeGrid" data-testid="home-enterprise-knowledge-snapshot">
-      <section className="hx2-knowledgeStack">
-        <article className="hx2-knowledgeCard">
-          <div className="hx2-cardKicker">Enterprise Knowledge Snapshot</div>
-          <h2>What Home knows before work moves downstream</h2>
-          <p>
-            This is the active tenant knowledge layer: known facts, source evidence,
-            gaps, and relationships that downstream modules can inspect before
-            advisory synthesis begins.
-          </p>
-          <div className="hx2-snapshotRows">
-            {model.topCategories.map((item) => (
-              <div className="hx2-snapshotRow" key={item.label}>
-                <span>{item.label}</span>
-                <div aria-hidden>
-                  <i style={{ width: `${Math.max(6, (item.rows / maxCategoryRows) * 100)}%` }} />
-                </div>
-                <strong>{shortMetric(item.rows)} facts</strong>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="hx2-knowledgeCard">
-          <div className="hx2-cardKicker">Evidence Coverage</div>
-          <h2>Source-backed, with gaps visible</h2>
-          <p>
-            Home does not hide thin spots. It shows what is loaded, where source
-            evidence exists, and which fields still need client completion.
-          </p>
-          <div className="hx2-answerability">
-            <article>
-              <strong>
-                {shortMetric(model.canonicalFacts?.canonicalObjects ?? model.totalRows)}
-              </strong>
-              <span>
-                Known facts available for browsing
-                {model.canonicalFacts ? " from setup-control." : "."}
-              </span>
-            </article>
-            <article>
-              <strong>
-                {(model.evidenceRegistry?.evidenceSources ?? model.totalSources).toLocaleString()}
-              </strong>
-              <span>Source files mapped into the evidence view.</span>
-            </article>
-            <article>
-              <strong>
-                {shortMetric(model.evidenceRegistry?.evidenceGaps ?? model.totalGaps)}
-              </strong>
-              <span>Fields still marked as gaps or validation needs.</span>
-            </article>
-          </div>
-        </article>
-
-        <article className="hx2-knowledgeCard">
-          <div className="hx2-cardKicker">Answerability</div>
-          <h2>What this surface should answer</h2>
-          <p>
-            Home answers inventory and evidence questions: what exists, where it
-            came from, what is missing, and which context areas are ready to send
-            to Intelligence, Moves, Source, or Tower.
-          </p>
-          <div className="hx2-pillGrid">
-            <span className="hx2-readinessPill">
-              <strong>{answerableNow}</strong> ready areas
-            </span>
-            <span className="hx2-readinessPill">
-              <strong>{needsValidation}</strong> areas need validation
-            </span>
-            <span className="hx2-readinessPill">
-              <strong>Scoped</strong> aVa context only
-            </span>
-          </div>
-        </article>
+    <div
+      className="hx2-knowledgeGrid"
+      data-testid="home-enterprise-knowledge-snapshot"
+    >
+      <section className="hx2-knowledgeBlock">
+        <div className="hx2-sectionTitle">
+          <h2>Enterprise Knowledge Snapshot</h2>
+          <span>What we hold</span>
+        </div>
+        <div className="hx2-snapshotRows">
+          {areas.map((area) => (
+            <div className="hx2-snapshotRow" key={area.id}>
+              <span>{area.label.replace(" & ", " / ")}</span>
+              <strong>{shortMetric(area.rows)}</strong>
+              <span>{area.examples || areaDescription(area)}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="hx2-knowledgeStack">
-        <article className="hx2-knowledgeCard">
-          <div className="hx2-cardKicker">Top Gaps</div>
-          <h2>What needs client completion</h2>
-          {model.topGaps.length > 0 ? (
-            <div className="hx2-gapList">
-              {model.topGaps.map((gap) => (
-                <div className="hx2-gapItem" key={`${gap.area}-${gap.label}`}>
-                  <strong>{gap.label}</strong>
-                  <span>
-                    {displayMetric(gap.count, `${gap.label} gap`)} missing in{" "}
-                    {gap.area}. {gap.whyItMatters ?? "Complete this before using the area for board-grade conclusions."}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p>No repeated missing-field pattern is visible across loaded areas.</p>
-          )}
-        </article>
-
-        <article className="hx2-knowledgeCard">
-          <div className="hx2-cardKicker">Ready Areas</div>
-          <h2>Ready areas and module posture</h2>
-          <div className="hx2-pillGrid">
-            {model.readyAreas.map((area) => (
-              <span className="hx2-readinessPill" key={area.label}>
-                <strong>{area.score}%</strong> {area.label}
-              </span>
-            ))}
-            {moduleRows.length > 0
-              ? moduleRows.map((row) => (
-                  <span className="hx2-readinessPill" key={row.module}>
-                    <strong>{statusLabel(row.status)}</strong> {row.module}
-                  </span>
-                ))
-              : (
-                  <span className="hx2-readinessPill">
-                    <strong>Not available yet</strong> module readiness
-                  </span>
-                )}
+      <section className="hx2-knowledgeBlock">
+        <div className="hx2-sectionTitle">
+          <h2>Evidence</h2>
+          <span>What backs it</span>
+        </div>
+        <div className="hx2-evidenceStrip">
+          <div className="hx2-evidenceCell">
+            <span>Evidence sources</span>
+            <strong>
+              {shortMetric(
+                model.evidenceRegistry?.evidenceSources ?? model.totalSources,
+              )}
+            </strong>
           </div>
-          {model.sourceOfTruth?.missingSources.length ? (
-            <p style={{ marginTop: 10 }}>
-              Missing sources: {model.sourceOfTruth.missingSources.slice(0, 2).join("; ")}.
-            </p>
-          ) : null}
-        </article>
-
-        <article className="hx2-knowledgeCard">
-          <div className="hx2-cardKicker">Relationships</div>
-          <h2>Where linked context is available</h2>
-          {model.relationshipGraph ? (
-            <p>
-              Setup-control sees {shortMetric(model.relationshipGraph.graphObjects)} objects
-              and {shortMetric(model.relationshipGraph.graphRelationships)} relationships;
-              unresolved links stay visible as gaps.
-            </p>
-          ) : null}
-          {model.relationshipAreas.length > 0 ? (
-            <div className="hx2-relOverview">
-              {model.relationshipAreas.map((area) => (
-                <div key={area.label}>
-                  <span>{area.label}</span>
-                  <strong>{shortMetric(area.rows)} links</strong>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p>No relationship-heavy context area is available in the active packet yet.</p>
-          )}
-        </article>
+          <div className="hx2-evidenceCell">
+            <span>Known facts</span>
+            <strong>
+              {shortMetric(
+                model.canonicalFacts?.canonicalObjects ?? model.totalRows,
+              )}
+            </strong>
+          </div>
+          <div className="hx2-evidenceCell">
+            <span>Relationships</span>
+            <strong>{shortMetric(relationshipCount)}</strong>
+          </div>
+          <div className="hx2-evidenceCell">
+            <span>Insights</span>
+            <strong>
+              {shortMetric(
+                model.derivedIntelligence?.derivedInsights ??
+                  model.readyAreas.length,
+              )}
+            </strong>
+          </div>
+          <div className="hx2-evidenceCell">
+            <span>Unsupported areas</span>
+            <strong>{shortMetric(unsupportedAreas)}</strong>
+          </div>
+          <div className="hx2-evidenceCell">
+            <span>Stale / missing</span>
+            <strong>{shortMetric(model.totalGaps)}</strong>
+          </div>
+        </div>
+        <p className="hx2-evidenceNote">
+          AbarVa won’t answer beyond this evidence.{" "}
+          <strong>
+            {unsupportedAreas} area{unsupportedAreas === 1 ? "" : "s"}
+          </strong>{" "}
+          still need evidence before their answers can be trusted.
+        </p>
       </section>
     </div>
   );
@@ -992,17 +1113,23 @@ function KnowledgeOverview({ model }: { model: EnterpriseKnowledgeModel }) {
 
 function ExplorerDetail({
   selected,
+  selectedDisplayName,
   preview,
   activeTab,
   onTabChange,
   overview,
   setupControl,
+  areas,
+  tenantDisplayName,
 }: {
   selected: BindingDimension | null;
+  selectedDisplayName?: string | null;
   preview: HomeV6BrowserPreview | null;
   activeTab: ExplorerTab;
   onTabChange: (tab: ExplorerTab) => void;
   setupControl: AdminSetupControlResponse | null;
+  areas: HomeExplorerArea[];
+  tenantDisplayName: string;
   overview: {
     dimensions: HomeV6BrowserPreview[];
     totalRows: number;
@@ -1010,8 +1137,12 @@ function ExplorerDetail({
     totalGaps: number;
   };
 }) {
-  const title = selected?.dimension ?? "Enterprise context overview";
-  const knowledgeModel = buildEnterpriseKnowledgeModel(overview.dimensions, setupControl);
+  const title =
+    selectedDisplayName ?? selected?.dimension ?? "What AbarVa knows";
+  const knowledgeModel = buildEnterpriseKnowledgeModel(
+    overview.dimensions,
+    setupControl,
+  );
   const summary = summarizeSelectedContext({
     dimension: selected,
     preview,
@@ -1038,40 +1169,60 @@ function ExplorerDetail({
       : (preview?.columns.map((column, index) => ({ column, index })) ?? []);
   const gaps = preview?.knownGaps ?? [];
   const relationships = relationshipItems(preview);
-  const selectedName = selected?.dimension ?? "enterprise context";
+  const selectedName =
+    selectedDisplayName ?? selected?.dimension ?? "enterprise context";
+  const isOverview = !selected;
 
   return (
     <main className="hx2-detail" data-testid="home-context-detail">
       <div className="hx2-detailHead">
         <div>
-          <div className="hx2-crumb">Home / Context Browser</div>
-          <h1>{title}</h1>
-          <p>{summary}</p>
+          <div className="hx2-crumb">Home · Enterprise Knowledge</div>
+          <h1>
+            {isOverview
+              ? `What AbarVa knows about ${tenantDisplayName}`
+              : title}
+          </h1>
+          <p>
+            {isOverview
+              ? "What’s answerable, what evidence backs it, what’s missing, and which areas are ready to run — for this tenant’s active data."
+              : summary}
+          </p>
         </div>
-        <div className="hx2-detailActions">
-          <button type="button">Explain context</button>
-          <button className="primary" type="button">
-            Send to Intelligence
-          </button>
-        </div>
+        {!isOverview ? (
+          <div className="hx2-detailActions">
+            <button type="button">Explain context</button>
+            <button className="primary" type="button">
+              Send to Intelligence
+            </button>
+          </div>
+        ) : null}
       </div>
 
-      <div className="hx2-tabs" role="tablist" aria-label="Selected context views">
-        {tabs.map(([id, label]) => (
-          <button
-            aria-selected={activeTab === id}
-            className="hx2-tab"
-            key={id}
-            onClick={() => onTabChange(id)}
-            role="tab"
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {isOverview ? (
+        <KnowledgeOverview areas={areas} model={knowledgeModel} />
+      ) : (
+        <div
+          className="hx2-tabs"
+          role="tablist"
+          aria-label="Selected context views"
+        >
+          {tabs.map(([id, label]) => (
+            <button
+              aria-selected={activeTab === id}
+              className="hx2-tab"
+              key={id}
+              onClick={() => onTabChange(id)}
+              role="tab"
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {activeTab === "summary" ? (
+      {!isOverview && activeTab === "summary" ? (
         <section className="hx2-section" role="tabpanel">
           <div className="hx2-summaryGrid">
             <article>
@@ -1090,19 +1241,26 @@ function ExplorerDetail({
             <article>
               <span>What can be trusted</span>
               <strong>
-                {preview ? `${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}` : `${overview.totalSources} files`}
+                {preview
+                  ? `${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}`
+                  : `${overview.totalSources} files`}
               </strong>
-              <p>Home shows source-backed context and keeps missing evidence visible.</p>
+              <p>
+                Home shows source-backed context and keeps missing evidence
+                visible.
+              </p>
             </article>
             <article>
               <span>What needs work</span>
               <strong>
-                {displayMetric(preview?.dataThinCells ?? overview.totalGaps, "evidence gaps")}
+                {displayMetric(
+                  preview?.dataThinCells ?? overview.totalGaps,
+                  "evidence gaps",
+                )}
               </strong>
               <p>Gaps are client-to-complete fields, not confidence theater.</p>
             </article>
           </div>
-          {!selected ? <KnowledgeOverview model={knowledgeModel} /> : null}
           {examples.length > 0 ? (
             <div className="hx2-examples">
               <h2>Representative loaded rows</h2>
@@ -1122,14 +1280,20 @@ function ExplorerDetail({
           {preview ? (
             <>
               <p className="hx2-tabIntro">
-                <strong>Plain English:</strong> this is the loaded business data for{" "}
-                {selectedName}. Values are formatted for reading; missing fields stay
-                visible as evidence gaps instead of being hidden.
+                <strong>Plain English:</strong> this is the loaded business data
+                for {selectedName}. Values are formatted for reading; missing
+                fields stay visible as evidence gaps instead of being hidden.
               </p>
               <div className="hx2-tableMeta">
                 <span>{preview.rowCount.toLocaleString()} rows loaded</span>
-                <span>{preview.sourceCount.toLocaleString()} source file{preview.sourceCount === 1 ? "" : "s"}</span>
-                <span>{displayMetric(preview.dataThinCells, "evidence gaps")} to complete</span>
+                <span>
+                  {preview.sourceCount.toLocaleString()} source file
+                  {preview.sourceCount === 1 ? "" : "s"}
+                </span>
+                <span>
+                  {displayMetric(preview.dataThinCells, "evidence gaps")} to
+                  complete
+                </span>
               </div>
               <div className="hx2-tableWrap">
                 <table>
@@ -1146,7 +1310,9 @@ function ExplorerDetail({
                         {tableColumns.map(({ column, index }) => {
                           const cell = row[index] ?? "";
                           return (
-                            <td key={`${preview.dimension}-${rowIndex}-${column.key}`}>
+                            <td
+                              key={`${preview.dimension}-${rowIndex}-${column.key}`}
+                            >
                               {cell === "Needs evidence" ? (
                                 <span className="hx2-gapPill">{cell}</span>
                               ) : (
@@ -1191,17 +1357,19 @@ function ExplorerDetail({
       {activeTab === "gaps" ? (
         <section className="hx2-section" role="tabpanel">
           <p className="hx2-tabIntro">
-            <strong>Plain English:</strong> gaps are client-to-complete fields in
-            the loaded context. They are not a confidence score by themselves; they
-            tell the team what should be validated before this area supports
-            board-grade or downstream advisory work.
+            <strong>Plain English:</strong> gaps are client-to-complete fields
+            in the loaded context. They are not a confidence score by
+            themselves; they tell the team what should be validated before this
+            area supports board-grade or downstream advisory work.
           </p>
           {gaps.length > 0 ? (
             <div className="hx2-gapGrid">
               {gaps.map((gap) => (
                 <article className="hx2-gapCard" key={gap.label}>
                   <strong>{gap.label}</strong>
-                  <span>{displayMetric(gap.count, `${gap.label} gap`)} missing</span>
+                  <span>
+                    {displayMetric(gap.count, `${gap.label} gap`)} missing
+                  </span>
                   <p>
                     {gap.whyItMatters ??
                       `${gap.label} needs client evidence before this area should support final decisions.`}
@@ -1210,7 +1378,9 @@ function ExplorerDetail({
               ))}
             </div>
           ) : (
-            <p className="hx2-empty">No repeated missing-field pattern is visible for this selection.</p>
+            <p className="hx2-empty">
+              No repeated missing-field pattern is visible for this selection.
+            </p>
           )}
         </section>
       ) : null}
@@ -1219,17 +1389,27 @@ function ExplorerDetail({
         <section className="hx2-section" role="tabpanel">
           <p className="hx2-tabIntro">
             <strong>Plain English:</strong> sources show where this context came
-            from. Home keeps the source trail available for audit, while the main
-            views keep file paths and internal row IDs out of the executive read.
+            from. Home keeps the source trail available for audit, while the
+            main views keep file paths and internal row IDs out of the executive
+            read.
           </p>
           <div className="hx2-sourceList">
-            {(preview ? preview.fileNames : overview.dimensions.flatMap((d) => d.fileNames))
+            {(preview
+              ? preview.fileNames
+              : overview.dimensions.flatMap((d) => d.fileNames)
+            )
               .slice(0, 12)
               .map((fileName, index) => (
                 <article key={`${fileName}-${index}`}>
                   <span>{clientFacingFileName(fileName)}</span>
-                  <strong>{preview ? preview.rowCount.toLocaleString() : "Loaded"} rows</strong>
-                  <p>Mapped into the context browser with source lineage preserved.</p>
+                  <strong>
+                    {preview ? preview.rowCount.toLocaleString() : "Loaded"}{" "}
+                    rows
+                  </strong>
+                  <p>
+                    Mapped into the context browser with source lineage
+                    preserved.
+                  </p>
                 </article>
               ))}
           </div>
@@ -1239,16 +1419,19 @@ function ExplorerDetail({
       {activeTab === "relationships" ? (
         <section className="hx2-section" role="tabpanel">
           <p className="hx2-tabIntro">
-            <strong>Plain English:</strong> relationships are mapped links between
-            business objects, such as systems to vendors, applications to data, or
-            initiatives to owners. If this selected area is only a profile anchor,
-            use relationship-heavy areas like Systems, Data, Vendors, or the
-            Relationships reference.
+            <strong>Plain English:</strong> relationships are mapped links
+            between business objects, such as systems to vendors, applications
+            to data, or initiatives to owners. If this selected area is only a
+            profile anchor, use relationship-heavy areas like Systems, Data,
+            Vendors, or the Relationships reference.
           </p>
           {relationships.length > 0 ? (
             <div className="hx2-relMap">
               {relationships.map((item, index) => (
-                <div className="hx2-relRow" key={`${item.from}-${item.to}-${index}`}>
+                <div
+                  className="hx2-relRow"
+                  key={`${item.from}-${item.to}-${index}`}
+                >
                   <span className="node">{index + 1}</span>
                   <p>{item.from}</p>
                   <span className="edge">{item.relation}</span>
@@ -1259,8 +1442,8 @@ function ExplorerDetail({
             </div>
           ) : (
             <p className="hx2-empty">
-              Select a relationship-heavy context area, such as Applications, Data,
-              Vendors, or Relationships, to inspect mapped links.
+              Select a relationship-heavy context area, such as Applications,
+              Data, Vendors, or Relationships, to inspect mapped links.
             </p>
           )}
         </section>
@@ -1271,6 +1454,7 @@ function ExplorerDetail({
 
 function ExplorerRail({
   selected,
+  selectedDisplayName,
   preview,
   overview,
   onAsk,
@@ -1278,6 +1462,7 @@ function ExplorerRail({
   isBusy,
 }: {
   selected: BindingDimension | null;
+  selectedDisplayName?: string | null;
   preview: HomeV6BrowserPreview | null;
   overview: { totalRows: number; totalSources: number; totalGaps: number };
   onAsk: (question: string) => void;
@@ -1291,16 +1476,17 @@ function ExplorerRail({
     gaps: preview?.dataThinCells ?? overview.totalGaps,
     sources: preview?.sourceCount ?? overview.totalSources,
   });
+  const scopeName = selectedDisplayName ?? selected?.dimension ?? "Overview";
   const suggestions = selected
     ? [
-        `Explain ${selected.dimension.toLowerCase()} in plain English.`,
-        `Show gaps in ${selected.dimension.toLowerCase()}.`,
-        `What can Home answer about ${selected.dimension.toLowerCase()}?`,
+        `Explain ${scopeName.toLowerCase()} in plain English.`,
+        `Show gaps in ${scopeName.toLowerCase()}.`,
+        `What can Home answer about ${scopeName.toLowerCase()}?`,
       ]
     : [
-        "What context is loaded, and what can we trust?",
-        "Which areas are strongest and thinnest?",
-        "What should I inspect next?",
+        "What can you answer with confidence?",
+        "Where is evidence thin?",
+        "Which context should I inspect next?",
       ];
   const submit = (question: string) => {
     const text = question.trim();
@@ -1310,55 +1496,39 @@ function ExplorerRail({
   };
   return (
     <aside className="hx2-rail" data-testid="home-context-rail">
-      <div className="hx2-card hx2-visual">
-        <div className="hx2-cardKicker">Context quality</div>
-        <div className="hx2-ring" style={{ "--score": `${score}%` } as React.CSSProperties}>
-          <span>{score}%</span>
-        </div>
-        <div className="hx2-cardTitle">{selected?.dimension ?? "Enterprise context"}</div>
-        <p>
-          {preview
-            ? `${shortMetric(preview.rowCount)} records, ${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}, ${displayMetric(preview.dataThinCells, "evidence gaps")} to complete.`
-            : `${shortMetric(overview.totalRows)} records across ${overview.totalSources} source files.`}
-        </p>
-      </div>
-      <div className="hx2-card hx2-miniBars">
-        <div className="hx2-cardKicker">Data rendering</div>
-        {[
-          ["Loaded rows", preview?.rowCount ?? overview.totalRows],
-          ["Source files", preview?.sourceCount ?? overview.totalSources],
-          ["Evidence gaps", preview?.dataThinCells ?? overview.totalGaps],
-        ].map(([label, raw]) => {
-          const value = Number(raw);
-          const max =
-            label === "Evidence gaps"
-              ? Math.max(1, (preview?.rowCount ?? overview.totalRows) * 5)
-              : Math.max(1, preview?.rowCount ?? overview.totalRows);
-          return (
-            <div className="hx2-barRow" key={label}>
-              <span>{label}</span>
-              <div>
-                <i style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
-              </div>
-              <strong>{displayMetric(value, String(label))}</strong>
-            </div>
-          );
-        })}
-      </div>
       <div className="hx2-card hx2-ava">
         <div className="hx2-avaHead">
           <div className="hx2-avaMark">a</div>
           <div>
             <strong>aVa</strong>
-            <span>Scoped to selected context</span>
+            <span>Scoped · read-only over evidence</span>
           </div>
         </div>
         <div className="hx2-scope">
-          Scope: <strong>{selected?.dimension ?? "Overview"}</strong>. Home answers from loaded context; advisory synthesis belongs in Intelligence.
+          Scope · {scopeName} · reading active Home context
+        </div>
+        <div className="hx2-answerBox">
+          <div>I can answer</div>
+          <ul>
+            <li>what evidence is loaded for this area</li>
+            <li>which fields still need client evidence</li>
+            <li>where related context should be inspected next</li>
+          </ul>
+        </div>
+        <div className="hx2-answerBox warn">
+          <div>I won’t answer</div>
+          <ul>
+            <li>strategy, use-case design, or advisory synthesis</li>
+            <li>facts outside the active Home context</li>
+          </ul>
         </div>
         <div className="hx2-suggestions">
           {suggestions.map((question) => (
-            <button key={question} onClick={() => submit(question)} type="button">
+            <button
+              key={question}
+              onClick={() => submit(question)}
+              type="button"
+            >
               {question}
             </button>
           ))}
@@ -1366,7 +1536,10 @@ function ExplorerRail({
         <div className="hx2-thread">
           {thread.slice(-2).map((turn) => (
             <div className={`hx2-turn ${turn.role}`} key={turn.id}>
-              {turn.body || (isBusy && turn.role === "agent" ? "Reading loaded context..." : "")}
+              {turn.body ||
+                (isBusy && turn.role === "agent"
+                  ? "Reading loaded context..."
+                  : "")}
             </div>
           ))}
         </div>
@@ -1386,6 +1559,32 @@ function ExplorerRail({
             ↑
           </button>
         </form>
+      </div>
+      <div className="hx2-card hx2-visual">
+        <div className="hx2-cardKicker">Context quality</div>
+        <div
+          className="hx2-ring"
+          style={{ "--score": `${score}%` } as React.CSSProperties}
+        >
+          <span>{score}%</span>
+        </div>
+        <div className="hx2-cardTitle">{scopeName}</div>
+        <p>
+          {preview
+            ? `${shortMetric(preview.rowCount)} records, ${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}, ${displayMetric(preview.dataThinCells, "evidence gaps")} to complete.`
+            : `${shortMetric(overview.totalRows)} records across ${overview.totalSources} source files.`}
+        </p>
+      </div>
+      <div className="hx2-card hx2-miniBars">
+        <div className="hx2-cardKicker">What changed</div>
+        <div className="hx2-miniStatus">
+          <span>On</span>
+          <strong>Active Home context</strong>
+        </div>
+        <div className="hx2-miniStatus muted">
+          <span>Off</span>
+          <strong>Candidate data unless preview is explicit</strong>
+        </div>
       </div>
     </aside>
   );
@@ -1413,7 +1612,29 @@ export function HomeSurface({
     () => sanitizeVisibleStrings(setupControl ?? null),
     [setupControl],
   );
-  const dims = safeV6Browser?.bindingContext ?? safePayload?.context ?? EMPTY_DIMS;
+  const dimensions = Object.values(safeV6Browser?.dimensions ?? {});
+  const dims =
+    safeV6Browser?.bindingContext && safeV6Browser.bindingContext.length > 0
+      ? safeV6Browser.bindingContext
+      : dimensions.length > 0
+        ? dimensions.map((dimension) => ({
+            dimension: dimension.dimension,
+            status: "LOADED",
+            description: `${dimension.title} records with source-backed Home context.`,
+            evidence: dimension.rowCount,
+            sources: dimension.sourceCount,
+            trust: completenessScore({
+              dimension: dimension.dimension,
+              rows: dimension.rowCount,
+              gaps: dimension.dataThinCells,
+              sources: dimension.sourceCount,
+            }),
+            flag:
+              dimension.dataThinCells > 0
+                ? "Needs supporting evidence"
+                : undefined,
+          }))
+        : (safePayload?.context ?? EMPTY_DIMS);
   const [dimKey, setDimKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ExplorerTab>("summary");
   const [search, setSearch] = useState("");
@@ -1421,13 +1642,23 @@ export function HomeSurface({
   const [isBusy, setIsBusy] = useState(false);
   const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
   const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
-  const selected = dimKey
-    ? (dims.find((d) => d.dimension === dimKey) ?? null)
+  const displayedTenantName = safeV6Browser?.displayName ?? tenantDisplayName;
+  const isDemoContext = /demo|synthetic/i.test(
+    `${displayedTenantName} ${safeSetupControl?.tenant.realOrSyntheticStatus ?? ""}`,
+  );
+  const explorerAreas = buildHomeExplorerAreas(dims, safeV6Browser);
+  const selectedArea = dimKey
+    ? (explorerAreas.find((area) => area.id === dimKey) ?? null)
     : null;
-  const selectedPreview = previewForDimension(safeV6Browser, selected?.dimension ?? null);
-  const dimensions = Object.values(safeV6Browser?.dimensions ?? {});
-  const totalRows = dimensions.reduce((sum, dimension) => sum + dimension.rowCount, 0);
-  const totalSources = new Set(dimensions.flatMap((dimension) => dimension.fileNames)).size;
+  const selected = selectedArea?.primaryDimension ?? null;
+  const selectedPreview = selectedArea?.primaryPreview ?? null;
+  const totalRows = dimensions.reduce(
+    (sum, dimension) => sum + dimension.rowCount,
+    0,
+  );
+  const totalSources = new Set(
+    dimensions.flatMap((dimension) => dimension.fileNames),
+  ).size;
   const totalGaps = dimensions.reduce(
     (sum, dimension) => sum + dimension.dataThinCells,
     0,
@@ -1436,61 +1667,41 @@ export function HomeSurface({
     totalRows > 0
       ? Math.max(
           0,
-          Math.min(100, Math.round(((totalRows * 3) / Math.max(totalRows * 3 + totalGaps, 1)) * 100)),
+          Math.min(
+            100,
+            Math.round(
+              ((totalRows * 3) / Math.max(totalRows * 3 + totalGaps, 1)) * 100,
+            ),
+          ),
         )
       : 0;
-  const activeAccess = safeSetupControl?.activeTenantAccess ?? null;
-  const activeAccessReady = Boolean(activeAccess?.activeVersionId);
-  const dataStatusLabel = activeAccessReady
-    ? "Active tenant truth"
-    : "Active Home context";
-  const dataStatusDetail = activeAccessReady
-    ? `Active tenant access version ${activeAccess?.activeVersionId} is available.`
-    : activeAccess?.source
-      ? `Active tenant access pointer: ${activeAccess.source}.`
-      : "Active tenant access pointer: Not available yet.";
+  const dataStatusLabel = "Active Home context";
   const candidateState = safeSetupControl?.candidateTenantDataVersion ?? null;
   const candidatePreviewDetail = candidateState?.candidateVersionId
     ? `Candidate ${candidateState.candidateVersionId} is preview-only and not active tenant truth.`
     : "Candidate preview was requested, but no inactive candidate tenant version is available through setup-control yet.";
-  const explorerItems = dims
-    .map((dimension) => {
-      const preview = previewForDimension(safeV6Browser, dimension.dimension);
-      return {
-        dimension,
-        preview,
-        category: categoryForDimension(dimension.dimension),
-      };
-    })
-    .filter((item) => {
-      const needle = search.trim().toLowerCase();
-      if (!needle) return true;
-      return [
-        item.dimension.dimension,
-        item.dimension.description,
-        item.category,
-        ...(item.preview?.fileNames ?? []),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle);
-    });
-  const groupedItems = explorerItems.reduce(
-    (groups, item) => {
-      const entries = groups.get(item.category) ?? [];
-      entries.push(item);
-      groups.set(item.category, entries);
-      return groups;
-    },
-    new Map<
-      string,
-      Array<{
-        dimension: BindingDimension;
-        preview: HomeV6BrowserPreview | null;
-        category: string;
-      }>
-    >(),
-  );
+  const filteredAreas = explorerAreas.filter((area) => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return true;
+    return [
+      area.label,
+      area.group,
+      area.description,
+      area.examples,
+      area.primaryDimension?.description,
+      area.primaryPreview?.fileNames.join(" "),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(needle);
+  });
+  const groupedAreas = filteredAreas.reduce((groups, area) => {
+    const entries = groups.get(area.group) ?? [];
+    entries.push(area);
+    groups.set(area.group, entries);
+    return groups;
+  }, new Map<HomeExplorerArea["group"], HomeExplorerArea[]>());
 
   const askHomeKnow = useCallback(
     async (text: string) => {
@@ -1573,56 +1784,67 @@ export function HomeSurface({
         <header className="hx2-enterprise">
           <div>
             <div className="hx2-kicker">Home · Enterprise Knowledge</div>
-            <h1>{safeV6Browser?.displayName ?? tenantDisplayName}</h1>
+            <h1>
+              {displayedTenantName}
+              <span className="hx2-demoBadge">
+                {isDemoContext ? "Demo" : "Active"}
+              </span>
+            </h1>
             <p>
               Browse known facts, source-backed evidence, evidence gaps, and
-              relationships before sending work to Intelligence, Moves, Source, or Tower.
+              relationships before sending work to Intelligence, Moves, Source,
+              or Tower.
             </p>
           </div>
-          <div className="hx2-stats" aria-label="Home context totals">
+          <div className="hx2-stats" aria-label="Home data state">
             <div className="hx2-stat">
-              <span>Context areas</span>
-              <strong>{dims.length.toLocaleString()}</strong>
+              <span>Active data</span>
+              <strong>{dataStatusLabel}</strong>
             </div>
             <div className="hx2-stat">
-              <span>Records</span>
-              <strong>{shortMetric(totalRows)}</strong>
+              <span>Candidate preview</span>
+              <strong>
+                {candidatePreviewEnabled && candidateState?.candidateVersionId
+                  ? "Preview on"
+                  : "Not active"}
+              </strong>
             </div>
             <div className="hx2-stat">
-              <span>Source files</span>
-              <strong>{totalSources.toLocaleString()}</strong>
+              <span>Last checked</span>
+              <strong>
+                {safeV6Browser?.generatedAt
+                  ? new Date(safeV6Browser.generatedAt).toLocaleDateString(
+                      "en-US",
+                      { month: "short", day: "numeric" },
+                    )
+                  : "Unavailable"}
+              </strong>
             </div>
             <div className="hx2-stat">
-              <span>Gaps</span>
-              <strong>{shortMetric(totalGaps)}</strong>
+              <span>Data origin</span>
+              <strong>
+                {safeSetupControl?.tenant.realOrSyntheticStatus
+                  ? "Demo-safe"
+                  : "Source-backed"}
+              </strong>
             </div>
+          </div>
+          <div className="hx2-topQuality">
+            <div
+              className="hx2-topRing"
+              style={{ "--score": `${loadedPct}%` } as React.CSSProperties}
+            >
+              <span>{loadedPct}%</span>
+            </div>
+            <div className="hx2-topQualityText">Context loaded & mapped</div>
           </div>
         </header>
-        <section className="hx2-status" aria-label="Home data status">
-          <div className="hx2-statusText">
-            <span className="hx2-statePill">
-              <i aria-hidden />
-              {dataStatusLabel}
-            </span>
-            <span>
-              {loadedPct}% of browsed fields are loaded across{" "}
-              {dims.length.toLocaleString()} context areas; gaps stay visible for
-              review. {dataStatusDetail}
-            </span>
-          </div>
-          <div className="hx2-statusActions">
-            <button type="button">Explain context</button>
-            <a className="primary" href="/intelligence">
-              Send to Intelligence
-            </a>
-          </div>
-        </section>
         {candidatePreviewEnabled ? (
           <div className="hx2-candidateBanner" role="status">
-            <strong>Candidate Preview — inactive data.</strong> Home is showing an
-            explicit preview state only. {candidatePreviewDetail} It is not active
-            tenant truth. Candidate data is not used by modules unless an approved
-            promotion later changes the active access layer.
+            <strong>Candidate Preview — inactive data.</strong> Home is showing
+            an explicit preview state only. {candidatePreviewDetail} It is not
+            active tenant truth. Candidate data is not used by modules unless an
+            approved promotion later changes the active access layer.
           </div>
         ) : null}
 
@@ -1630,7 +1852,7 @@ export function HomeSurface({
           <aside className="hx2-explorer" data-testid="home-context-explorer">
             <div className="hx2-explorerHead">
               <strong>Context Explorer</strong>
-              <span>{dims.length} areas</span>
+              <span>{explorerAreas.length} areas</span>
             </div>
             <label className="hx2-search">
               <span>⌕</span>
@@ -1642,9 +1864,18 @@ export function HomeSurface({
               />
             </label>
             <div className="hx2-legend" aria-label="Context status legend">
-              <span><i className="green" />Loaded</span>
-              <span><i className="amber" />Gaps</span>
-              <span><i className="blue" />Needs validation</span>
+              <span>
+                <i className="green" />
+                Source-backed
+              </span>
+              <span>
+                <i className="blue" />
+                Needs evidence
+              </span>
+              <span>
+                <i className="amber" />
+                Gap
+              </span>
             </div>
             <button
               aria-pressed={!selected}
@@ -1658,34 +1889,34 @@ export function HomeSurface({
               <i className="hx2-nodeDot green" />
               <span>
                 Enterprise overview
-                <small>{totalRows.toLocaleString()} records across all context areas</small>
+                <small>
+                  {shortMetric(totalRows)} records across all context areas
+                </small>
               </span>
               <em>{shortMetric(totalGaps)} gaps</em>
             </button>
-            {[...groupedItems.entries()].map(([category, items]) => (
-              <div className="hx2-treeGroup" key={category}>
-                <div className="hx2-treeGroupTitle">{category}</div>
-                {items.map(({ dimension, preview }) => {
-                  const gaps = preview?.dataThinCells ?? 0;
-                  const rows = preview?.rowCount ?? dimension.evidence;
-                  const tone = statusTone(gaps, rows);
+            {[...groupedAreas.entries()].map(([group, areas]) => (
+              <div className="hx2-treeGroup" key={group}>
+                <div className="hx2-treeGroupTitle">{group}</div>
+                {areas.map((area) => {
+                  const tone = statusTone(area.gaps, area.rows);
                   return (
                     <button
-                      aria-pressed={selected?.dimension === dimension.dimension}
+                      aria-pressed={selectedArea?.id === area.id}
                       className="hx2-treeBtn"
-                      key={dimension.dimension}
+                      key={area.id}
                       onClick={() => {
-                        setDimKey(dimension.dimension);
+                        setDimKey(area.id);
                         setActiveTab("summary");
                       }}
                       type="button"
                     >
                       <i className={`hx2-nodeDot ${tone}`} />
                       <span>
-                        {dimension.dimension}
-                        <small>{dimension.description}</small>
+                        {area.label}
+                        <small>{areaDescription(area)}</small>
                       </span>
-                      <em>{shortMetric(rows)}</em>
+                      <em>{shortMetric(area.rows)}</em>
                     </button>
                   );
                 })}
@@ -1695,6 +1926,7 @@ export function HomeSurface({
 
           <ExplorerDetail
             activeTab={activeTab}
+            areas={explorerAreas}
             onTabChange={setActiveTab}
             overview={{
               dimensions,
@@ -1704,7 +1936,9 @@ export function HomeSurface({
             }}
             preview={selectedPreview}
             selected={selected}
+            selectedDisplayName={selectedArea?.label}
             setupControl={safeSetupControl}
+            tenantDisplayName={displayedTenantName}
           />
 
           <ExplorerRail
@@ -1717,6 +1951,7 @@ export function HomeSurface({
             }}
             preview={selectedPreview}
             selected={selected}
+            selectedDisplayName={selectedArea?.label}
             thread={thread}
           />
         </div>
