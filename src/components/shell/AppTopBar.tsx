@@ -203,7 +203,7 @@ export function AppTopBar({
               aria-hidden="true"
               style={{
                 width: 1,
-                height: 16,
+                height: 24,
                 background: BRAND.hair,
                 marginLeft: 4,
               }}
@@ -212,17 +212,18 @@ export function AppTopBar({
               title={resolvedTenantName}
               aria-label={`Active client ${resolvedTenantName}`}
               style={{
-                display: "inline-block",
-                maxWidth: 210,
+                display: "inline-flex",
+                alignItems: "center",
+                maxWidth: 220,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                fontFamily: "Newsreader, Georgia, 'Times New Roman', serif",
+                fontFamily: "Inter, system-ui, sans-serif",
                 fontSize: 13,
-                fontStyle: "italic",
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.82)",
-                letterSpacing: "0.01em",
+                fontWeight: 650,
+                color: "rgba(255,255,255,0.94)",
+                letterSpacing: "0.005em",
+                lineHeight: 1,
               }}
             >
               {resolvedTenantName}
