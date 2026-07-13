@@ -17,6 +17,7 @@ import {
   buildDefaultPhaseSuccessRuntimeTruth,
   buildPhaseSuccessPackages,
   type PhaseSuccessPackageArtifact,
+  type PhaseSuccessPackageStatus,
 } from "./core";
 
 export interface GeneratePhaseSuccessPackagesResult {
@@ -107,7 +108,7 @@ export async function generatePhaseSuccessPackages(
       fileName: pkg.fileName,
       fileFormat: "md",
       body: pkg.body,
-      status: pkg.status,
+      status: moveArtifactStatusForPackage(pkg.status),
       sourceBasis: "phase_success_package_orchestrator",
       confidence: "medium",
       citationReady: false,
@@ -149,6 +150,12 @@ function findDuplicateCurrentArtifact(
 function normalizePhase(phase: number | null | undefined): number {
   if (typeof phase !== "number" || !Number.isFinite(phase)) return 1;
   return Math.max(0, Math.min(5, Math.trunc(phase)));
+}
+
+function moveArtifactStatusForPackage(status: PhaseSuccessPackageStatus): string {
+  if (status === "approved") return "approved";
+  if (status === "superseded") return "superseded";
+  return "draft";
 }
 
 function resolveSessionOverrides(
