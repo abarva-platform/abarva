@@ -4,11 +4,17 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
 import { ClassificationTriageQueue } from "@/components/admin/context-layer/ClassificationTriageQueue";
+import {
+  buildAdminDataIntakeLibraryView,
+  type AdminDataIntakeLibraryView,
+  type AdminTemplateCatalogViewItem,
+} from "@/lib/admin/data-intake-library";
 import type { LoadStudioView } from "@/lib/admin/setup-load-studio-view";
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 
 type AdminSetupTab =
   | "overview"
+  | "intake"
   | "data"
   | "users"
   | "governance"
@@ -52,6 +58,12 @@ const navItems: Array<{
   count?: (props: AdminSetupExperienceProps) => string | null;
 }> = [
   { id: "overview", label: "Overview", detail: "Readiness and next steps" },
+  {
+    id: "intake",
+    label: "Data Intake Library",
+    detail: "Templates and guides",
+    count: () => "19",
+  },
   {
     id: "data",
     label: "Data",
@@ -342,6 +354,11 @@ function statusLabel(status: string): string {
   return status.replace(/-/g, " ");
 }
 
+function sentenceCase(value: string): string {
+  const label = statusLabel(value);
+  return `${label.slice(0, 1).toUpperCase()}${label.slice(1)}`;
+}
+
 function stateForStatus(
   status: string,
 ): "done" | "active" | "blocked" | "waiting" {
@@ -528,6 +545,209 @@ function ModuleReadinessBoard({
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function TemplateStatusChip({ status }: { status: string }) {
+  return (
+    <span className={`setup-template-status setup-template-status-${status}`}>
+      {sentenceCase(status)}
+    </span>
+  );
+}
+
+function TemplateCard({ item }: { item: AdminTemplateCatalogViewItem }) {
+  return (
+    <article className="setup-template-card">
+      <div className="setup-template-card-head">
+        <div>
+          <div className="setup-label">{item.family.replace(/-/g, " ")}</div>
+          <h3>{item.name}</h3>
+        </div>
+        <TemplateStatusChip status={item.status} />
+      </div>
+      <p>{item.purpose}</p>
+      <div className="setup-template-meta">
+        <span>{sentenceCase(item.requirement)}</span>
+        <span>{item.acceptedFileTypes.join(", ")}</span>
+        <span>
+          {item.exampleRowsAvailable ? "Example rows available" : "No example rows"}
+        </span>
+      </div>
+      <dl className="setup-template-definition">
+        <div>
+          <dt>Usually completed by</dt>
+          <dd>{item.expectedOwner}</dd>
+        </div>
+        <div>
+          <dt>Maps to</dt>
+          <dd>{item.mappingTarget}</dd>
+        </div>
+        <div>
+          <dt>Readiness impact</dt>
+          <dd>{item.readinessImpact}</dd>
+        </div>
+      </dl>
+      <div className="setup-template-fields">
+        <strong>Required fields</strong>
+        <ul>
+          {item.requiredFields.slice(0, 6).map((field) => (
+            <li key={field}>{field}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="setup-template-status-detail">
+        <strong>Status</strong>
+        <span>{item.statusDetail}</span>
+        {item.matchedSourceFiles.length > 0 ? (
+          <small>Matched: {item.matchedSourceFiles.slice(0, 2).join(", ")}</small>
+        ) : null}
+      </div>
+      <div className="setup-template-actions" aria-label={`${item.name} actions`}>
+        <button type="button" disabled>
+          View guide
+        </button>
+        <button type="button" disabled>
+          Download template
+        </button>
+        <button type="button" disabled>
+          View example
+        </button>
+        <button type="button" disabled>
+          Upload later
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function DataIntakeLibrary({
+  intakeLibrary,
+}: {
+  intakeLibrary: AdminDataIntakeLibraryView;
+}) {
+  const uploadedLike =
+    intakeLibrary.statusCounts.uploaded +
+    intakeLibrary.statusCounts.parsed +
+    intakeLibrary.statusCounts.mapped +
+    intakeLibrary.statusCounts.validated +
+    intakeLibrary.statusCounts["candidate-ready"] +
+    intakeLibrary.statusCounts.active;
+  const requiredTemplates = intakeLibrary.catalog.filter(
+    (item) => item.requirement === "required",
+  ).length;
+
+  return (
+    <section className="setup-intake">
+      <SectionHeader
+        eyebrow="Data intake library"
+        title="Start with the right templates before uploading files"
+        subtitle="This is the read-only catalog for tenant packets, how-to guides, template contracts, validation expectations, and module-readiness impact."
+        action={<GhostButton>Download full Tenant Packet</GhostButton>}
+      />
+
+      <section className="setup-intake-hero">
+        <div>
+          <div className="setup-label">Tenant packet builder</div>
+          <h2>Understand required evidence before creating candidate data.</h2>
+          <p>
+            Admin should guide a client from template selection to populated
+            packet, validation, inactive candidate preview, promotion review, and
+            active tenant truth. This PR stops at the catalog and guide layer.
+          </p>
+        </div>
+        <div className="setup-intake-scoreboard">
+          <ControlMetric
+            label="Templates"
+            value={intakeLibrary.catalog.length}
+            note={`${requiredTemplates} required contracts`}
+          />
+          <ControlMetric
+            label="Evidence matched"
+            value={uploadedLike}
+            note="from setup-control source files"
+          />
+          <ControlMetric
+            label="Promotions"
+            value="0"
+            note="read-only catalog"
+          />
+        </div>
+      </section>
+
+      <section className="setup-card setup-workflow-card">
+        <SectionHeader
+          eyebrow="Workflow"
+          title="The operating path is guided, gated, and read-only here"
+          subtitle="This is the Stripe-like setup motion: pick the packet, populate templates, validate, preview, then promote only when proof exists."
+          compact
+        />
+        <ol className="setup-workflow-steps">
+          {[
+            ["Choose setup path", "New tenant, refresh, Source event, Moves program, Tower update, or contract optimization."],
+            ["Download template pack", "Use business-facing templates with owners, required fields, examples, and validation rules."],
+            ["Populate and upload later", "Completed files are evidence sources first; they are not active tenant truth."],
+            ["Validate and map", "Manifest, source adapters, mapping, quarantines, and unresolved fields must be reviewed."],
+            ["Create candidate preview", "Inactive candidate data can be inspected across Home, Intelligence, Moves, Source, and Tower."],
+            ["Promote with proof", "Operator approval, rollback plan, and cite-render proof are required before active access changes."],
+          ].map(([title, detail], index) => (
+            <li key={title}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{title}</strong>
+              <p>{detail}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div className="setup-guardrail-strip setup-intake-guardrails">
+        {intakeLibrary.guardrails.map((guardrail) => (
+          <span key={guardrail} className="is-safe">
+            {guardrail}
+          </span>
+        ))}
+      </div>
+
+      <section className="setup-card setup-guide-card">
+        <SectionHeader
+          eyebrow="How-to guides"
+          title="Choose the setup path before collecting evidence"
+          subtitle="These entry points explain what to populate and which proof gates will matter later."
+          compact
+        />
+        <div className="setup-guide-grid">
+          {intakeLibrary.guides.map((guide) => (
+            <article key={guide.id} className="setup-guide-tile">
+              <span>{guide.stepCount} steps</span>
+              <strong>{guide.title}</strong>
+              <p>{guide.detail}</p>
+              <button type="button">{guide.entryPoint}</button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="setup-card setup-template-catalog">
+        <SectionHeader
+          eyebrow="Template catalog"
+          title="Template contracts and readiness impact"
+          subtitle="Downloadable files are not generated in this slice. Where a file is not available, the UI says so instead of pretending the template is ready."
+          compact
+        />
+        <div className="setup-template-summary">
+          <span>{intakeLibrary.statusCounts["not-uploaded"]} not uploaded</span>
+          <span>{intakeLibrary.statusCounts.uploaded} uploaded</span>
+          <span>{intakeLibrary.statusCounts.parsed} parsed</span>
+          <span>{intakeLibrary.statusCounts.mapped} mapped</span>
+          <span>{intakeLibrary.statusCounts.validated} validated</span>
+        </div>
+        <div className="setup-template-grid">
+          {intakeLibrary.catalog.map((item) => (
+            <TemplateCard key={item.id} item={item} />
+          ))}
+        </div>
+      </section>
     </section>
   );
 }
@@ -829,6 +1049,19 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
   const activeNav = useMemo(
     () => navItems.find((item) => item.id === tab),
     [tab],
+  );
+  const intakeLibrary = useMemo(
+    () =>
+      buildAdminDataIntakeLibraryView({
+        setupControl: props.setupControl,
+        sourceFiles: props.sourceFiles.map((file) => ({
+          source_doc: file.sourceDoc,
+          chunk_count: file.chunkCount,
+          first_loaded_at: file.firstLoadedAt,
+          sample_chunk_id: file.sampleChunkId,
+        })),
+      }),
+    [props.setupControl, props.sourceFiles],
   );
 
   return (
@@ -1316,6 +1549,293 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           line-height: 1.45;
           margin-top: 5px;
         }
+        .setup-intake-hero {
+          background: linear-gradient(180deg, #fbfcff 0%, #f7f9fd 100%);
+          border: 1px solid var(--setup-line);
+          border-radius: 10px;
+          display: grid;
+          gap: 22px;
+          grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+          margin-bottom: 18px;
+          padding: 20px;
+        }
+        .setup-intake-hero h2 {
+          font-size: 28px;
+          line-height: 1.12;
+          margin: 6px 0 0;
+          max-width: 760px;
+        }
+        .setup-intake-hero p {
+          color: var(--setup-muted);
+          font-size: 14px;
+          line-height: 1.55;
+          margin: 8px 0 0;
+          max-width: 820px;
+        }
+        .setup-intake-scoreboard {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: 1fr;
+        }
+        .setup-workflow-card {
+          background: #fffdf8;
+          margin-bottom: 16px;
+        }
+        .setup-workflow-steps {
+          counter-reset: none;
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .setup-workflow-steps li {
+          background: white;
+          border: 1px solid #ead9b8;
+          border-radius: 8px;
+          min-height: 158px;
+          padding: 12px;
+        }
+        .setup-workflow-steps span {
+          color: #7a5200;
+          display: block;
+          font-family: ${mono};
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: 0.1em;
+          margin-bottom: 12px;
+        }
+        .setup-workflow-steps strong {
+          display: block;
+          font-size: 13.5px;
+          line-height: 1.25;
+        }
+        .setup-workflow-steps p {
+          color: var(--setup-muted);
+          font-size: 12px;
+          line-height: 1.4;
+          margin: 7px 0 0;
+        }
+        .setup-intake-guardrails {
+          margin: 0 0 6px;
+        }
+        .setup-guide-grid {
+          display: grid;
+          gap: 12px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .setup-guide-tile {
+          background: #fbfcfe;
+          border: 1px solid var(--setup-line);
+          border-radius: 8px;
+          min-height: 170px;
+          padding: 14px;
+        }
+        .setup-guide-tile span {
+          color: #647084;
+          display: block;
+          font-family: ${mono};
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .setup-guide-tile strong {
+          display: block;
+          font-size: 15px;
+          line-height: 1.3;
+          margin-top: 10px;
+        }
+        .setup-guide-tile p {
+          color: var(--setup-muted);
+          font-size: 12.5px;
+          line-height: 1.45;
+          margin: 7px 0 14px;
+        }
+        .setup-guide-tile button {
+          background: white;
+          border: 1px solid var(--setup-line);
+          border-radius: 999px;
+          color: #20304b;
+          font-size: 12px;
+          font-weight: 750;
+          padding: 5px 8px;
+        }
+        .setup-template-summary {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        .setup-template-summary span {
+          background: #f7f9fc;
+          border: 1px solid var(--setup-line);
+          border-radius: 999px;
+          color: #34415a;
+          font-size: 12px;
+          font-weight: 700;
+          padding: 5px 8px;
+        }
+        .setup-template-grid {
+          display: grid;
+          gap: 14px;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .setup-template-card {
+          border: 1px solid var(--setup-line);
+          border-radius: 9px;
+          display: grid;
+          gap: 12px;
+          padding: 15px;
+        }
+        .setup-template-card-head {
+          align-items: flex-start;
+          display: flex;
+          gap: 12px;
+          justify-content: space-between;
+        }
+        .setup-template-card h3 {
+          font-size: 17px;
+          line-height: 1.25;
+          margin: 5px 0 0;
+        }
+        .setup-template-card p {
+          color: var(--setup-muted);
+          font-size: 13px;
+          line-height: 1.5;
+          margin: 0;
+        }
+        .setup-template-status {
+          border-radius: 999px;
+          display: inline-flex;
+          flex-shrink: 0;
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: 0.05em;
+          padding: 5px 7px;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .setup-template-status-not-uploaded {
+          background: #eef2f7;
+          color: #526075;
+        }
+        .setup-template-status-uploaded,
+        .setup-template-status-parsed,
+        .setup-template-status-mapped {
+          background: #fff3d8;
+          color: #7a5200;
+        }
+        .setup-template-status-validated,
+        .setup-template-status-candidate-ready,
+        .setup-template-status-active {
+          background: #e7f7ec;
+          color: #17653a;
+        }
+        .setup-template-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .setup-template-meta span {
+          background: #f7f9fc;
+          border: 1px solid var(--setup-line);
+          border-radius: 999px;
+          color: #34415a;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 4px 7px;
+        }
+        .setup-template-definition {
+          border-top: 1px solid #edf1f6;
+          display: grid;
+          gap: 10px;
+          margin: 0;
+          padding-top: 12px;
+        }
+        .setup-template-definition div {
+          display: grid;
+          gap: 3px;
+          grid-template-columns: 140px minmax(0, 1fr);
+        }
+        .setup-template-definition dt {
+          color: #647084;
+          font-family: ${mono};
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .setup-template-definition dd {
+          color: #34415a;
+          font-size: 12.5px;
+          line-height: 1.4;
+          margin: 0;
+        }
+        .setup-template-fields {
+          background: #fbfcfe;
+          border: 1px solid #edf1f6;
+          border-radius: 8px;
+          padding: 10px;
+        }
+        .setup-template-fields strong,
+        .setup-template-status-detail strong {
+          display: block;
+          font-size: 12px;
+          margin-bottom: 6px;
+        }
+        .setup-template-fields ul {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .setup-template-fields li {
+          background: white;
+          border: 1px solid var(--setup-line);
+          border-radius: 999px;
+          color: #34415a;
+          font-size: 11px;
+          padding: 3px 6px;
+        }
+        .setup-template-status-detail {
+          border-left: 3px solid #a9b5c9;
+          padding-left: 10px;
+        }
+        .setup-template-status-detail span,
+        .setup-template-status-detail small {
+          color: var(--setup-muted);
+          display: block;
+          font-size: 12.5px;
+          line-height: 1.4;
+        }
+        .setup-template-status-detail small {
+          margin-top: 4px;
+        }
+        .setup-template-actions {
+          border-top: 1px solid #edf1f6;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding-top: 12px;
+        }
+        .setup-template-actions button {
+          background: white;
+          border: 1px solid var(--setup-line);
+          border-radius: 7px;
+          color: #20304b;
+          font-size: 12px;
+          font-weight: 750;
+          padding: 6px 8px;
+        }
+        .setup-template-actions button:disabled {
+          color: #7d8798;
+          cursor: not-allowed;
+          opacity: 0.76;
+        }
         .setup-rows { border: 1px solid var(--setup-line); border-radius: 8px; overflow: hidden; }
         .setup-row {
           align-items: center;
@@ -1478,6 +1998,10 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           .setup-main-inner { padding: 24px 18px 60px; }
           .setup-progress,
           .setup-stage-grid,
+          .setup-intake-hero,
+          .setup-workflow-steps,
+          .setup-guide-grid,
+          .setup-template-grid,
           .setup-control-summary-grid,
           .setup-overview-columns,
           .setup-module-grid,
@@ -1514,6 +2038,8 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
                 <span aria-hidden>
                   {item.id === "overview"
                     ? "⌂"
+                    : item.id === "intake"
+                      ? "▤"
                     : item.id === "data"
                       ? "▦"
                       : item.id === "users"
@@ -1553,6 +2079,10 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
 
           {tab === "overview" ? (
             <Overview {...props} openData={openData} openConfirm={openConfirm} />
+          ) : null}
+
+          {tab === "intake" ? (
+            <DataIntakeLibrary intakeLibrary={intakeLibrary} />
           ) : null}
 
           {tab === "data" ? (
