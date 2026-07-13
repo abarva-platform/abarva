@@ -3,6 +3,7 @@ import {
   buildGuardrailsReport,
   buildPageLayerMap,
   buildQualityChecksReport,
+  buildReferenceDataAuditReport,
   buildSectionMap,
 } from "@/lib/admin/data-layer-explorer";
 
@@ -73,6 +74,33 @@ describe("admin data layer explorer model", () => {
     expect(buildSectionMap(model).sectionCount).toBe(18);
     expect(buildQualityChecksReport(model).qualityCheckCount).toBe(14);
     expect(buildGuardrailsReport(model).guardrailCount).toBe(9);
+  });
+
+  it("surfaces SkyHarbor source richness and candidate coverage gaps", () => {
+    const audit = buildReferenceDataAuditReport(model);
+
+    expect(audit.audit.tenantKey).toBe("skyharbor-air");
+    expect(audit.audit.status).toBe("review_required");
+    expect(JSON.stringify(audit.audit.sourceRichness)).toContain(
+      "900 structured rows",
+    );
+    expect(JSON.stringify(audit.audit.sourceRichness)).toContain(
+      "Teradata Vantage on AWS",
+    );
+    expect(JSON.stringify(audit.audit.sourceRichness)).toContain("IBM Z");
+    expect(JSON.stringify(audit.audit.candidateCoverage)).toContain(
+      "2 declared files",
+    );
+    expect(JSON.stringify(audit.audit.candidateCoverage)).toContain(
+      "0 relationship operations planned",
+    );
+    expect(audit.hardRuntimeBooleans).toEqual({
+      productionTenantDataWritten: false,
+      candidateCreated: false,
+      candidatePromoted: false,
+      activeTenantAccessLayerUpdated: false,
+      moduleRuntimeConsumptionChanged: false,
+    });
   });
 
   it("uses business-facing layer language in the generated model", () => {

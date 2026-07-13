@@ -37,6 +37,7 @@ Not implemented:
 - Page mappings: 9
 - Quality checks: 14
 - Guardrails: 9
+- Reference data audit: review_required
 
 ## Section Status
 
@@ -79,3 +80,30 @@ Not implemented:
 - activeTenantAccessLayerUpdated: false
 - moduleRuntimeConsumptionChanged: false
 - moduleReadsCandidateByDefault: false
+
+## Reference Data Audit
+
+Tenant: SkyHarbor Air
+
+Source richness:
+
+- Applications and systems: 900 structured rows (F05_applications-systems.csv)
+- Data products: 420 structured rows (F09_data-analytics-estate.csv)
+- Integrations and interfaces: 1,800 structured rows (F10_integrations-interfaces.csv)
+- Platform volumetrics: 79 metric rows, including EDW tables, scheduled workloads, SAS, DataStage, Informatica, and Tableau metrics (F08_platform-volumetrics.csv)
+- Mainframe and SAP estate: IBM Z, CICS, COBOL, DB2, IMS, MQ, CA7, Control-M, RACF, Connect:Direct, and SAP finance/reporting evidence (SkyHarbor_Mainframe_and_SAP_Current_State_SYNTHETIC.md)
+- Teradata and analytics estate: Teradata Vantage on AWS, SAS, DataStage, Informatica, Tableau, BusinessObjects, AWS data lake, and event streams (SkyHarbor_Teradata_AWS_Data_Estate_SYNTHETIC.md)
+
+Candidate coverage:
+
+- Candidate manifest files: 2 declared files — gap (reports/tenant-candidate-generation/skyharbor/packet/tenant-manifest.yaml)
+- Canonical records: 53 candidate records — review_required (reports/candidate-tenant-data-versions/skyharbor/candidate-version-record.json)
+- Relationship plan: 0 relationship operations planned — gap (reports/candidate-tenant-data-versions/skyharbor/candidate-version-record.json)
+- Rich source pack projection: Applications, data products, integrations, volumetrics, mainframe/SAP, and Teradata evidence are not represented in the current candidate manifest — gap (source pack inventory versus PR10 candidate packet)
+
+Quality signals:
+
+- high: Candidate proof is structurally green but materially thin for SkyHarbor because it only processes the minimal enterprise profile and evidence registry. Recommended action: Expand the SkyHarbor candidate packet and mapping profiles to include systems, data estate, integrations, platform volumetrics, source documents, Moves artifacts, Source events, and Tower outcomes before any active promotion.
+- high: The current relationship plan does not represent the dependency graph expected for a rich existing tenant. Recommended action: Add relationship mappings for system-to-owner, system-to-data-product, integration-to-system, vendor-to-system, program-to-outcome, and evidence-to-claim edges.
+- medium: Some structured inventory rows look generated rather than operationally curated. Recommended action: Run a domain consistency validator before candidate promotion and quarantine rows whose vendor, category, deployment, owner, and source evidence do not agree.
+- medium: The narrative source documents carry better current-state truth than the current candidate projection. Recommended action: Promote narrative-derived facts only after mapping them to canonical objects with citations and confidence, not as loose summary text.

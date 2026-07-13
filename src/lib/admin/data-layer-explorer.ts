@@ -92,6 +92,29 @@ export interface DataJourneyInsightPolicy {
   cannotClaim: string[];
 }
 
+export interface DataLayerExplorerReferenceAudit {
+  tenantKey: string;
+  tenantDisplayName: string;
+  status: "review_required" | "pass";
+  sourceRichness: {
+    label: string;
+    value: string;
+    evidence: string;
+  }[];
+  candidateCoverage: {
+    label: string;
+    value: string;
+    evidence: string;
+    status: "covered" | "gap" | "review_required";
+  }[];
+  qualitySignals: {
+    severity: "high" | "medium" | "low";
+    finding: string;
+    evidence: string;
+    recommendedAction: string;
+  }[];
+}
+
 export interface DataLayerExplorerModel {
   generatedFor: string;
   title: string;
@@ -107,6 +130,7 @@ export interface DataLayerExplorerModel {
   insightPolicy: DataJourneyInsightPolicy;
   qualityChecks: DataJourneyQualityCheck[];
   guardrails: DataJourneyGuardrail[];
+  referenceDataAudit: DataLayerExplorerReferenceAudit;
 }
 
 export interface DataLayerExplorerProofOutput {
@@ -116,6 +140,7 @@ export interface DataLayerExplorerProofOutput {
     pageLayerMapPath: string;
     qualityChecksPath: string;
     guardrailsPath: string;
+    referenceDataAuditPath: string;
     summaryPath: string;
   };
 }
@@ -182,6 +207,7 @@ export function buildAdminDataLayerExplorerModel(
     insightPolicy,
     qualityChecks,
     guardrails,
+    referenceDataAudit: buildReferenceDataAudit(),
   };
 }
 
@@ -239,6 +265,20 @@ export function buildGuardrailsReport(model: DataLayerExplorerModel) {
   };
 }
 
+export function buildReferenceDataAuditReport(model: DataLayerExplorerModel) {
+  return {
+    generatedFor: model.generatedFor,
+    audit: model.referenceDataAudit,
+    hardRuntimeBooleans: {
+      productionTenantDataWritten: false,
+      candidateCreated: false,
+      candidatePromoted: false,
+      activeTenantAccessLayerUpdated: false,
+      moduleRuntimeConsumptionChanged: false,
+    },
+  };
+}
+
 export function buildSummaryMarkdown(model: DataLayerExplorerModel): string {
   const implemented = model.truthSplit.implemented
     .map((item) => `- ${item}`)
@@ -277,6 +317,7 @@ ${notImplemented}
 - Page mappings: ${model.pageMappings.length}
 - Quality checks: ${model.qualityChecks.length}
 - Guardrails: ${model.guardrails.length}
+- Reference data audit: ${model.referenceDataAudit.status}
 
 ## Section Status
 
@@ -294,6 +335,34 @@ ${pages}
 - activeTenantAccessLayerUpdated: false
 - moduleRuntimeConsumptionChanged: false
 - moduleReadsCandidateByDefault: false
+
+## Reference Data Audit
+
+Tenant: ${model.referenceDataAudit.tenantDisplayName}
+
+Source richness:
+
+${model.referenceDataAudit.sourceRichness
+  .map((item) => `- ${item.label}: ${item.value} (${item.evidence})`)
+  .join("\n")}
+
+Candidate coverage:
+
+${model.referenceDataAudit.candidateCoverage
+  .map(
+    (item) =>
+      `- ${item.label}: ${item.value} — ${item.status} (${item.evidence})`,
+  )
+  .join("\n")}
+
+Quality signals:
+
+${model.referenceDataAudit.qualitySignals
+  .map(
+    (signal) =>
+      `- ${signal.severity}: ${signal.finding} Recommended action: ${signal.recommendedAction}`,
+  )
+  .join("\n")}
 `;
 }
 
@@ -312,12 +381,17 @@ export function writeAdminDataLayerExplorerProof(args: {
   const pageLayerMapPath = path.join(outputDir, "page-layer-map.json");
   const qualityChecksPath = path.join(outputDir, "quality-checks.json");
   const guardrailsPath = path.join(outputDir, "guardrails.json");
+  const referenceDataAuditPath = path.join(
+    outputDir,
+    "reference-data-audit.json",
+  );
   const summaryPath = path.join(outputDir, "summary.md");
 
   writeJson(sectionMapPath, buildSectionMap(model));
   writeJson(pageLayerMapPath, buildPageLayerMap(model));
   writeJson(qualityChecksPath, buildQualityChecksReport(model));
   writeJson(guardrailsPath, buildGuardrailsReport(model));
+  writeJson(referenceDataAuditPath, buildReferenceDataAuditReport(model));
   writeFileSync(summaryPath, buildSummaryMarkdown(model), "utf8");
 
   return {
@@ -327,8 +401,120 @@ export function writeAdminDataLayerExplorerProof(args: {
       pageLayerMapPath,
       qualityChecksPath,
       guardrailsPath,
+      referenceDataAuditPath,
       summaryPath,
     },
+  };
+}
+
+function buildReferenceDataAudit(): DataLayerExplorerReferenceAudit {
+  return {
+    tenantKey: "skyharbor-air",
+    tenantDisplayName: "SkyHarbor Air",
+    status: "review_required",
+    sourceRichness: [
+      {
+        label: "Applications and systems",
+        value: "900 structured rows",
+        evidence: "F05_applications-systems.csv",
+      },
+      {
+        label: "Data products",
+        value: "420 structured rows",
+        evidence: "F09_data-analytics-estate.csv",
+      },
+      {
+        label: "Integrations and interfaces",
+        value: "1,800 structured rows",
+        evidence: "F10_integrations-interfaces.csv",
+      },
+      {
+        label: "Platform volumetrics",
+        value:
+          "79 metric rows, including EDW tables, scheduled workloads, SAS, DataStage, Informatica, and Tableau metrics",
+        evidence: "F08_platform-volumetrics.csv",
+      },
+      {
+        label: "Mainframe and SAP estate",
+        value:
+          "IBM Z, CICS, COBOL, DB2, IMS, MQ, CA7, Control-M, RACF, Connect:Direct, and SAP finance/reporting evidence",
+        evidence: "SkyHarbor_Mainframe_and_SAP_Current_State_SYNTHETIC.md",
+      },
+      {
+        label: "Teradata and analytics estate",
+        value:
+          "Teradata Vantage on AWS, SAS, DataStage, Informatica, Tableau, BusinessObjects, AWS data lake, and event streams",
+        evidence: "SkyHarbor_Teradata_AWS_Data_Estate_SYNTHETIC.md",
+      },
+    ],
+    candidateCoverage: [
+      {
+        label: "Candidate manifest files",
+        value: "2 declared files",
+        evidence:
+          "reports/tenant-candidate-generation/skyharbor/packet/tenant-manifest.yaml",
+        status: "gap",
+      },
+      {
+        label: "Canonical records",
+        value: "53 candidate records",
+        evidence:
+          "reports/candidate-tenant-data-versions/skyharbor/candidate-version-record.json",
+        status: "review_required",
+      },
+      {
+        label: "Relationship plan",
+        value: "0 relationship operations planned",
+        evidence:
+          "reports/candidate-tenant-data-versions/skyharbor/candidate-version-record.json",
+        status: "gap",
+      },
+      {
+        label: "Rich source pack projection",
+        value:
+          "Applications, data products, integrations, volumetrics, mainframe/SAP, and Teradata evidence are not represented in the current candidate manifest",
+        evidence: "source pack inventory versus PR10 candidate packet",
+        status: "gap",
+      },
+    ],
+    qualitySignals: [
+      {
+        severity: "high",
+        finding:
+          "Candidate proof is structurally green but materially thin for SkyHarbor because it only processes the minimal enterprise profile and evidence registry.",
+        evidence:
+          "file-to-canonical-stage reports 2 files and 53 canonical records while source inventory contains 900 systems, 420 data products, and 1,800 integrations.",
+        recommendedAction:
+          "Expand the SkyHarbor candidate packet and mapping profiles to include systems, data estate, integrations, platform volumetrics, source documents, Moves artifacts, Source events, and Tower outcomes before any active promotion.",
+      },
+      {
+        severity: "high",
+        finding:
+          "The current relationship plan does not represent the dependency graph expected for a rich existing tenant.",
+        evidence:
+          "Candidate version record reports 0 relationship operations planned despite system, data-product, integration, vendor, and outcome evidence existing in the source pack.",
+        recommendedAction:
+          "Add relationship mappings for system-to-owner, system-to-data-product, integration-to-system, vendor-to-system, program-to-outcome, and evidence-to-claim edges.",
+      },
+      {
+        severity: "medium",
+        finding:
+          "Some structured inventory rows look generated rather than operationally curated.",
+        evidence:
+          "Examples include cloud/data-platform vendor labels combined with mainframe deployment or legacy-mainframe category assignments.",
+        recommendedAction:
+          "Run a domain consistency validator before candidate promotion and quarantine rows whose vendor, category, deployment, owner, and source evidence do not agree.",
+      },
+      {
+        severity: "medium",
+        finding:
+          "The narrative source documents carry better current-state truth than the current candidate projection.",
+        evidence:
+          "Derived enterprise reads explicitly name Teradata Vantage on AWS, SAS, DataStage, Informatica, Tableau, BusinessObjects, IBM Z, CICS, DB2, MQ, and SAP flows.",
+        recommendedAction:
+          "Promote narrative-derived facts only after mapping them to canonical objects with citations and confidence, not as loose summary text.",
+      },
+    ],
   };
 }
 

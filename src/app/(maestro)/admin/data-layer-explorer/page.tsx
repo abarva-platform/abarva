@@ -9,6 +9,7 @@ import {
   type DataJourneyPageMapping,
   type DataJourneyQualityCheck,
   type DataJourneySection,
+  type DataLayerExplorerReferenceAudit,
 } from "@/lib/admin/data-layer-explorer";
 import { SHELL } from "@/lib/shell/shell-tokens";
 
@@ -208,6 +209,8 @@ export default async function AdminDataLayerExplorerPage() {
             <TruthTile label="Runtime change" value="false" />
           </section>
 
+          <ReferenceDataAuditPanel audit={model.referenceDataAudit} />
+
           <nav
             data-data-journey-left-nav
             aria-label="Data journey sections"
@@ -284,6 +287,120 @@ export default async function AdminDataLayerExplorerPage() {
         </div>
       </main>
     </AppShell>
+  );
+}
+
+function ReferenceDataAuditPanel({
+  audit,
+}: {
+  audit: DataLayerExplorerReferenceAudit;
+}) {
+  return (
+    <section
+      data-reference-data-audit
+      style={{
+        ...cardStyle,
+        padding: 18,
+        marginBottom: 16,
+        borderColor: "#F7C948",
+        background: "#FFFDF4",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 16,
+          alignItems: "start",
+          marginBottom: 14,
+        }}
+      >
+        <div>
+          <p style={{ ...labelStyle, margin: 0, color: "#92400E" }}>
+            Reference tenant audit · {audit.tenantDisplayName}
+          </p>
+          <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
+            Rich source exists, but candidate coverage needs review.
+          </h2>
+          <p
+            style={{
+              margin: 0,
+              color: "#6B5B21",
+              fontSize: 14,
+              lineHeight: 1.55,
+              maxWidth: 980,
+            }}
+          >
+            The SkyHarbor source pack contains mainframe, Teradata, SAP, BI,
+            integration, and platform volumetric evidence. The current candidate
+            proof only covers a minimal slice, so this page marks it as
+            review-required before any active promotion.
+          </p>
+        </div>
+        <StatusPill>{audit.status.replace(/_/g, " ")}</StatusPill>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 12,
+        }}
+      >
+        <AuditList
+          title="Source richness found"
+          items={audit.sourceRichness.map(
+            (item) => `${item.label}: ${item.value} · ${item.evidence}`,
+          )}
+        />
+        <AuditList
+          title="Candidate coverage"
+          items={audit.candidateCoverage.map(
+            (item) =>
+              `${item.label}: ${item.value} · ${item.status} · ${item.evidence}`,
+          )}
+        />
+        <AuditList
+          title="Data quality signals"
+          items={audit.qualitySignals.map(
+            (signal) =>
+              `${signal.severity}: ${signal.finding} Action: ${signal.recommendedAction}`,
+          )}
+        />
+      </div>
+    </section>
+  );
+}
+
+function AuditList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(146, 64, 14, 0.18)",
+        borderRadius: 8,
+        padding: 14,
+        background: "#FFFFFF",
+        minWidth: 0,
+      }}
+    >
+      <p style={{ ...labelStyle, margin: "0 0 10px", color: "#92400E" }}>
+        {title}
+      </p>
+      <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8 }}>
+        {items.map((item) => (
+          <li
+            key={item}
+            style={{
+              color: SHELL.INK_SOFT,
+              fontSize: 13,
+              lineHeight: 1.45,
+            }}
+          >
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
