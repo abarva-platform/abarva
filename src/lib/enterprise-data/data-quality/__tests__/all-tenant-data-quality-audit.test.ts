@@ -2,6 +2,7 @@ import {
   assertCandidateCoverageAudit,
   assertTenantIsolationAudit,
   buildAllTenantDataQualityAudit,
+  readLatestTenantQualityMatrix,
 } from "../all-tenant-data-quality-audit";
 
 describe("all-tenant data quality audit", () => {
@@ -82,5 +83,15 @@ describe("all-tenant data quality audit", () => {
   it("checks tenant isolation without cross-tenant candidate leakage", () => {
     expect(() => assertTenantIsolationAudit(report)).not.toThrow();
     expect(report.rollup.tenantIsolationFailures).toBe(0);
+  });
+
+  it("returns an embedded matrix when report files are absent from the runtime image", async () => {
+    const matrix = await readLatestTenantQualityMatrix("/tmp/no-report-root");
+    expect(matrix?.rollup.sourceRichCandidateThinTenants).toBe(6);
+    expect(matrix?.tenants.find((row) => row.tenantKey === "skyharbor-air")).toMatchObject({
+      candidateRecordsGenerated: 53,
+      relationshipOperationCount: 0,
+      sourceRichCandidateThin: true,
+    });
   });
 });

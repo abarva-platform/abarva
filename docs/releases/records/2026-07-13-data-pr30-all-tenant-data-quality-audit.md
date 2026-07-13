@@ -110,3 +110,12 @@ rollback does not require data migration or tenant data repair.
 - This release does not update Active Tenant Access.
 - This release does not promote any candidate data.
 - This release does not make modules read candidate data by default.
+
+## Runtime Fallback Addendum
+
+Post-deploy browser proof showed that `reports/` is intentionally excluded from
+the production image by `.dockerignore`, so `/admin/data-layer-explorer` could
+not read the generated latest matrix at runtime. The follow-up hotfix keeps the
+report bundle as release evidence and adds an embedded generated matrix fallback
+for the Admin panel. The fallback remains read-only and preserves all
+non-destructive guardrails.

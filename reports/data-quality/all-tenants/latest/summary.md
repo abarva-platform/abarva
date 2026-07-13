@@ -1,6 +1,6 @@
 # All-Tenant Data Quality And Coverage Audit
 
-Generated: `2026-07-13T04:30:21.622Z`
+Generated: `2026-07-13T04:51:33.512Z`
 
 This is a read-only audit. It does not write production tenant data, update
 Active Tenant Access, promote candidates, write physical tables, change module
