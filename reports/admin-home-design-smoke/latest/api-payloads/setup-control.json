@@ -1,0 +1,14 @@
+{
+  "body": {
+    "tenant": {
+      "tenantKey": "fixture"
+    },
+    "guardrails": {
+      "candidatePromoted": false,
+      "activeTenantAccessLayerUpdated": false,
+      "productionTenantDataWritten": false,
+      "moduleRuntimeConsumptionChanged": false,
+      "candidateReadByDefault": false
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "runTimestamp": "2026-07-13T04:21:49.121Z",
+  "sha": "f31adad5bc83d2db17d9a2a7d0df145f1a27bbff",
+  "mode": "fixture",
+  "baseUrl": "https://app.abarva.ai",
+  "routesTested": [
+    "/admin",
+    "/admin/data-intake",
+    "/admin/candidate-preview",
+    "/admin/data-layer-explorer",
+    "/home",
+    "/home?candidatePreview=true"
+  ],
+  "passFail": {
+    "verdict": "release-ready",
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "findings": []
+  },
+  "designFidelity": {
+    "admin": "faithful",
+    "home": "faithful"
+  },
+  "guardrails": {
+    "candidatePromoted": false,
+    "activeTenantAccessLayerUpdated": false,
+    "productionTenantDataWritten": false,
+    "moduleRuntimeConsumptionChanged": false,
+    "candidateReadByDefault": false
+  }
+}
