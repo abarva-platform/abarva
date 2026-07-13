@@ -47,6 +47,7 @@ export interface CrawlRun {
   commitSha?: string;
   createdAt: string;
   observations: CrawlPageObservation[];
+  candidatePreview?: unknown;
 }
 
 export interface CrawlBaselinePage {
@@ -71,6 +72,13 @@ export interface CrawlComparison {
   p1: number;
   p2: number;
   findings: CrawlFinding[];
+  candidatePreview?: {
+    runId: string;
+    p0: number;
+    p1: number;
+    p2: number;
+    findings: CrawlFinding[];
+  };
 }
 
 export const FORBIDDEN_TENANT_REFERENCES = ["Heliara", "Arcturus"] as const;

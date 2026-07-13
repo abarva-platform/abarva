@@ -56,23 +56,12 @@ jobs:
           if [ -n "$CRAWL_SURFACE" ]; then args+=(--surface "$CRAWL_SURFACE"); fi
           if [ -n "$CRAWL_QUESTION_SET" ]; then args+=(--question-set "$CRAWL_QUESTION_SET"); fi
           npm run crawl:post-deploy -- "${args[@]}"
-      - name: Run candidate preview focused crawl
-        run: |
-          npm run crawl:candidate-preview -- \
-            --base-url "$CRAWL_BASE_URL" \
-            --output-dir audit-artifacts/candidate-preview-crawl
       - name: Upload crawl artifacts
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: post-deploy-crawl
           path: audit-artifacts/post-deploy-crawl
-      - name: Upload candidate preview crawl artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: candidate-preview-crawl
-          path: audit-artifacts/candidate-preview-crawl
       - name: Roll back on P0 when explicitly enabled
         if: failure()
         run: npm run crawl:auto-rollback -- --result audit-artifacts/post-deploy-crawl/latest.json

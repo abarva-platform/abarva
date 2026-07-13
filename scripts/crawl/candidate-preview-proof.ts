@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { chromium, type BrowserContext, type Page } from "@playwright/test";
 
@@ -14,14 +15,14 @@ import {
 } from "../../src/lib/crawl/persona-switcher";
 import type { CrawlFinding, CrawlSeverity } from "../../src/lib/crawl/baseline-compare";
 
-interface Args {
+export interface CandidatePreviewProofArgs {
   baseUrl: string;
   outputDir: string;
   module: CandidatePreviewModule;
   persona: string;
 }
 
-interface CandidatePreviewProof {
+export interface CandidatePreviewProof {
   runId: string;
   baseUrl: string;
   targetPath: string;
@@ -64,7 +65,7 @@ interface CandidatePreviewProof {
   };
 }
 
-interface CandidatePreviewComparison {
+export interface CandidatePreviewComparison {
   runId: string;
   p0: number;
   p1: number;
@@ -82,8 +83,33 @@ const REQUIRED_FALSE_GUARDRAILS = [
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  const { comparison, runDir, proof } = await runCandidatePreviewProof(args);
+  console.log(
+    `Candidate preview crawl complete: ${comparison.p0} P0, ${comparison.p1} P1, ${comparison.p2} P2`,
+  );
+  console.log(`candidate_preview_route_status:${JSON.stringify(proof.routeStatus)}`);
+  console.log(`Artifacts: ${runDir}`);
+
+  if (comparison.p0 > 0) {
+    process.exitCode = 2;
+  }
+}
+
+export async function runCandidatePreviewProof(
+  args: CandidatePreviewProofArgs,
+  options: {
+    runId?: string;
+    runDir?: string;
+    writeLatest?: boolean;
+  } = {},
+): Promise<{
+  proof: CandidatePreviewProof;
+  comparison: CandidatePreviewComparison;
+  runDir: string;
+}> {
   const runId = `${new Date().toISOString().replace(/[:.]/g, "-")}-${process.env.GITHUB_SHA?.slice(0, 8) ?? "local"}`;
-  const runDir = path.resolve(args.outputDir, runId);
+  const effectiveRunId = options.runId ?? runId;
+  const runDir = options.runDir ?? path.resolve(args.outputDir, effectiveRunId);
   await fs.mkdir(runDir, { recursive: true });
 
   const targetPath = buildTargetPath(args);
@@ -111,7 +137,7 @@ async function main() {
     );
 
     const proof: CandidatePreviewProof = {
-      runId,
+      runId: effectiveRunId,
       baseUrl: args.baseUrl,
       targetPath,
       targetUrl,
@@ -139,23 +165,21 @@ async function main() {
     };
     const comparison = compareCandidatePreviewProof(proof);
 
-    await writeProofArtifacts(args.outputDir, runDir, proof, comparison);
-    console.log(
-      `Candidate preview crawl complete: ${comparison.p0} P0, ${comparison.p1} P1, ${comparison.p2} P2`,
+    await writeProofArtifacts(
+      args.outputDir,
+      runDir,
+      proof,
+      comparison,
+      options.writeLatest ?? true,
     );
-    console.log(`candidate_preview_route_status:${JSON.stringify(proof.routeStatus)}`);
-    console.log(`Artifacts: ${runDir}`);
-
-    if (comparison.p0 > 0) {
-      process.exitCode = 2;
-    }
+    return { proof, comparison, runDir };
   } finally {
     await signedInContext?.close().catch(() => undefined);
     await browser.close().catch(() => undefined);
   }
 }
 
-function buildTargetPath(args: Args): string {
+function buildTargetPath(args: CandidatePreviewProofArgs): string {
   const params = new URLSearchParams({
     preview: "enabled",
     tenantKey: SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.tenantKey,
@@ -208,7 +232,7 @@ async function proveSignedInPreviewPage(
   page: Page,
   targetUrl: string,
   targetPath: string,
-  args: Args,
+  args: CandidatePreviewProofArgs,
   runDir: string,
 ): Promise<{
   finalPathname: string;
@@ -369,6 +393,7 @@ async function writeProofArtifacts(
   runDir: string,
   proof: CandidatePreviewProof,
   comparison: CandidatePreviewComparison,
+  writeLatest: boolean,
 ): Promise<void> {
   await fs.writeFile(
     path.join(runDir, "candidate-preview-proof.json"),
@@ -378,10 +403,12 @@ async function writeProofArtifacts(
     path.join(runDir, "comparison.json"),
     JSON.stringify(comparison, null, 2),
   );
-  await fs.writeFile(
-    path.resolve(outputDir, "latest.json"),
-    JSON.stringify({ proof, comparison }, null, 2),
-  );
+  if (writeLatest) {
+    await fs.writeFile(
+      path.resolve(outputDir, "latest.json"),
+      JSON.stringify({ proof, comparison }, null, 2),
+    );
+  }
   await fs.writeFile(
     path.join(runDir, "summary.md"),
     renderSummary(proof, comparison),
@@ -412,8 +439,8 @@ function renderSummary(
   ].join("\n");
 }
 
-function parseArgs(argv: string[]): Args {
-  const args: Args = {
+function parseArgs(argv: string[]): CandidatePreviewProofArgs {
+  const args: CandidatePreviewProofArgs = {
     baseUrl: process.env.CRAWL_BASE_URL ?? "https://app.abarva.ai",
     outputDir: "audit-artifacts/candidate-preview-crawl",
     module: "home",
@@ -446,7 +473,9 @@ function isCandidatePreviewModule(
   );
 }
 
-void main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

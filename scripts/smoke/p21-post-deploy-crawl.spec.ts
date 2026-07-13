@@ -29,11 +29,13 @@ assert.deepEqual(
   ['meridian-agent@abarva.example.com'],
 );
 const postDeployWorkflow = fs.readFileSync('.github/workflows/post-deploy-crawl.yml', 'utf8');
+const postDeployHarness = fs.readFileSync('scripts/crawl/post-deploy-harness.ts', 'utf8');
 assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
 assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
-assert.match(postDeployWorkflow, /Run candidate preview focused crawl/);
-assert.match(postDeployWorkflow, /candidate-preview-crawl/);
-assert.match(postDeployWorkflow, /npm run crawl:candidate-preview/);
+assert.doesNotMatch(postDeployWorkflow, /Run candidate preview focused crawl/);
+assert.doesNotMatch(postDeployWorkflow, /candidate-preview-crawl/);
+assert.match(postDeployHarness, /runCandidatePreviewProof/);
+assert.match(postDeployHarness, /candidatePreview/);
 
 const run: CrawlRun = {
   runId: 'smoke',
@@ -62,6 +64,26 @@ const comparison = compareCrawlToBaseline(run, null);
 assert.equal(comparison.p0, 1);
 assert.match(summarizeComparison(comparison), /1 P0/);
 assert.equal(comparison.findings[0]?.dimension, 'tenant-leakage');
+
+const runWithCandidatePreview: CrawlRun = {
+  ...run,
+  candidatePreview: {
+    routeStatus: {
+      signedInNavigatedDirectlyToTarget: true,
+      signedInFinalPathname: '/admin/candidate-preview',
+    },
+    guardrails: {
+      candidatePromoted: false,
+      activeTenantAccessLayerUpdated: false,
+      productionTenantDataWritten: false,
+      moduleRuntimeConsumptionChanged: false,
+    },
+  },
+};
+const candidatePreview = runWithCandidatePreview.candidatePreview as {
+  guardrails: { candidatePromoted: boolean };
+};
+assert.equal(candidatePreview.guardrails.candidatePromoted, false);
 
 const renderedWithClerkCorsNoise: CrawlRun = {
   ...run,
