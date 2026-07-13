@@ -198,6 +198,107 @@ describe("generatePhaseSuccessPackages", () => {
     expect(firstSave.metadata.findingIds).toEqual([]);
   });
 
+  it("reuses current packages when only the generated timestamp changes", async () => {
+    listMoveArtifacts.mockResolvedValueOnce([]);
+    saveMoveArtifact.mockImplementation((_ctx, input) => {
+      const suffix =
+        input.artifactType === "p2_phase_execution_package"
+          ? "execution"
+          : "readiness";
+      return Promise.resolve({
+        artifactId: `new-${suffix}`,
+        version: 1,
+        blobPath: `blob/${suffix}`,
+        blobStored: true,
+      });
+    });
+
+    await generatePhaseSuccessPackages(ctx, {
+      move,
+      phase: 2,
+      generatedAt: "2026-07-13T12:00:00.000Z",
+    });
+
+    const firstExecutionSave = saveMoveArtifact.mock.calls[0][1];
+    const firstReadinessSave = saveMoveArtifact.mock.calls[1][1];
+    listMoveArtifacts.mockResolvedValueOnce([
+      {
+        artifact_id: "new-execution",
+        move_id: move.id,
+        phase: 2,
+        artifact_type: "p2_phase_execution_package",
+        artifact_family: "session_artifact",
+        title: firstExecutionSave.title,
+        file_name: firstExecutionSave.fileName,
+        file_format: "md",
+        blob_container: "context-drops",
+        blob_path: "blob/execution",
+        file_size: 100,
+        version: 1,
+        status: "draft",
+        generated_by: "phase-success-package",
+        generated_at: "2026-07-13T12:00:00.000Z",
+        quality_score: null,
+        unsupported_claims_count: 0,
+        lifecycle_state: "current",
+        created_at: "2026-07-13T12:00:00.000Z",
+        metadata: {
+          storage: "azure_blob",
+          phaseSuccessContentFingerprint:
+            firstExecutionSave.metadata.phaseSuccessContentFingerprint,
+        },
+      },
+      {
+        artifact_id: "new-readiness",
+        move_id: move.id,
+        phase: 2,
+        artifact_type: "p2_next_phase_readiness_package",
+        artifact_family: "session_artifact",
+        title: firstReadinessSave.title,
+        file_name: firstReadinessSave.fileName,
+        file_format: "md",
+        blob_container: "context-drops",
+        blob_path: "blob/readiness",
+        file_size: 100,
+        version: 1,
+        status: "draft",
+        generated_by: "phase-success-package",
+        generated_at: "2026-07-13T12:00:00.000Z",
+        quality_score: null,
+        unsupported_claims_count: 0,
+        lifecycle_state: "current",
+        created_at: "2026-07-13T12:00:00.000Z",
+        metadata: {
+          storage: "azure_blob",
+          phaseSuccessContentFingerprint:
+            firstReadinessSave.metadata.phaseSuccessContentFingerprint,
+        },
+      },
+    ]);
+
+    const second = await generatePhaseSuccessPackages(ctx, {
+      move,
+      phase: 2,
+      generatedAt: "2026-07-13T12:01:00.000Z",
+    });
+
+    expect(saveMoveArtifact).toHaveBeenCalledTimes(2);
+    expect(second.packages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          artifactId: "new-execution",
+          reusedExisting: true,
+          version: 1,
+        }),
+        expect.objectContaining({
+          artifactId: "new-readiness",
+          reusedExisting: true,
+          version: 1,
+        }),
+      ]),
+    );
+  });
+
   it("blocks regeneration when the current package is approved", async () => {
     listMoveArtifacts.mockResolvedValue([
       {
