@@ -180,6 +180,39 @@ const REQUIRED_CONTEXT_AREAS = [
   ["relationships", "Relationships"],
 ] as const;
 
+const CONTEXT_AREA_DIMENSIONS: Record<string, Set<string>> = {
+  "Business Functions": new Set([
+    "Business & Operating Model",
+    "Workforce & Personas",
+    "Capabilities & Value Streams",
+  ]),
+  "Applications & Systems": new Set([
+    "Applications & Core Systems",
+    "Infrastructure & Cloud",
+  ]),
+  "Vendors & Contracts": new Set(["Vendors & Contracts"]),
+  "Data Assets": new Set(["Data & Analytics Estate"]),
+  Integrations: new Set(["Integrations & Interfaces"]),
+  "Programs & Initiatives": new Set([
+    "AI & Automation Footprint",
+    "Initiatives & Roadmap",
+    "AI Governance & Policy",
+  ]),
+  "Risks & Controls": new Set([
+    "Security & Compliance",
+    "Risk & RAID Log",
+    "Operations & Service",
+    "AI Governance & Policy",
+  ]),
+  "Metrics / KPIs": new Set([
+    "Business Metrics",
+    "IT Budget & Financials",
+    "Benefits Realization",
+  ]),
+  "Evidence Sources": new Set(["Industry Benchmarks"]),
+  Relationships: new Set([]),
+};
+
 export function buildHomeSummarySnapshot(
   options: HomeSummarySnapshotBuildOptions,
 ): HomeSummarySnapshot {
@@ -393,18 +426,12 @@ function buildContextAreas(args: {
     const matches = args.dimensions.filter((dimension) =>
       areaMatches(displayName, dimension.dimension),
     );
-    const loadedCount = sum(matches.map((dimension) => dimension.rowCount));
+    const loadedCount = sumByUniqueSourceFile(matches, "rowCount");
+    const dataThinCount = sumByUniqueSourceFile(matches, "dataThinCells");
     const sourceCount = new Set(
       matches.flatMap((dimension) => dimension.fileNames),
     ).size;
-    const topGaps = matches
-      .flatMap((dimension) =>
-        dimension.knownGaps.map((gap) => ({
-          label: gap.label,
-          count: gap.count,
-          whyItMatters: gap.whyItMatters ?? null,
-        })),
-      )
+    const topGaps = aggregateKnownGapsByUniqueSourceFile(matches)
       .sort((left, right) => right.count - left.count)
       .slice(0, 5);
     const examples = matches
@@ -463,7 +490,7 @@ function buildContextAreas(args: {
       nextDataActions:
         loadedCount > 0
           ? [
-              gapCount > 0
+              dataThinCount > 0 || gapCount > 0
                 ? "Close visible evidence gaps for this area."
                 : "Validate loaded rows with the client owner.",
             ]
@@ -493,6 +520,64 @@ function buildDataQualitySummary(
     promotionBlockers: dataQuality.candidatePreview.promotionBlockers,
     answerabilityPosture: dataQuality.answerability.rationale,
   };
+}
+
+function sumByUniqueSourceFile(
+  dimensions: HomeV6BrowserPreview[],
+  field: "rowCount" | "dataThinCells",
+): number {
+  const byFile = new Map<string, number>();
+  for (const dimension of dimensions) {
+    const files = dimension.fileNames.length
+      ? dimension.fileNames
+      : [dimension.dimension];
+    const value = dimension[field];
+    for (const file of files) {
+      byFile.set(file, Math.max(byFile.get(file) ?? 0, value));
+    }
+  }
+  return sum([...byFile.values()]);
+}
+
+function aggregateKnownGapsByUniqueSourceFile(
+  dimensions: HomeV6BrowserPreview[],
+): Array<{ label: string; count: number; whyItMatters: string | null }> {
+  const byFileAndLabel = new Map<
+    string,
+    { label: string; count: number; whyItMatters: string | null }
+  >();
+  for (const dimension of dimensions) {
+    const files = dimension.fileNames.length
+      ? dimension.fileNames
+      : [dimension.dimension];
+    for (const file of files) {
+      for (const gap of dimension.knownGaps) {
+        const key = `${file}:${gap.label}`;
+        const current = byFileAndLabel.get(key);
+        if (!current || gap.count > current.count) {
+          byFileAndLabel.set(key, {
+            label: gap.label,
+            count: gap.count,
+            whyItMatters: gap.whyItMatters ?? null,
+          });
+        }
+      }
+    }
+  }
+
+  const byLabel = new Map<
+    string,
+    { label: string; count: number; whyItMatters: string | null }
+  >();
+  for (const gap of byFileAndLabel.values()) {
+    const current = byLabel.get(gap.label);
+    byLabel.set(gap.label, {
+      label: gap.label,
+      count: (current?.count ?? 0) + gap.count,
+      whyItMatters: current?.whyItMatters ?? gap.whyItMatters,
+    });
+  }
+  return [...byLabel.values()];
 }
 
 function buildAvaScope(args: {
@@ -625,28 +710,7 @@ function snapshotStatus(
 }
 
 function areaMatches(area: string, dimension: string): boolean {
-  const normalized = `${area} ${dimension}`.toLowerCase();
-  if (area === "Business Functions")
-    return /business|function/.test(normalized);
-  if (area === "Applications & Systems")
-    return /application|system|infrastructure|cloud/.test(normalized);
-  if (area === "Vendors & Contracts")
-    return /vendor|contract|sourcing/.test(normalized);
-  if (area === "Data Assets")
-    return /data asset|analytics|data/.test(normalized);
-  if (area === "Integrations")
-    return /integration|interface|bridge/.test(normalized);
-  if (area === "Programs & Initiatives")
-    return /program|initiative|priority|roadmap/.test(normalized);
-  if (area === "Risks & Controls")
-    return /risk|control|compliance|security/.test(normalized);
-  if (area === "Metrics / KPIs")
-    return /metric|kpi|outcome|value/.test(normalized);
-  if (area === "Evidence Sources")
-    return /evidence|source|document/.test(normalized);
-  if (area === "Relationships")
-    return /relationship|graph|dependency|bridge/.test(normalized);
-  return false;
+  return CONTEXT_AREA_DIMENSIONS[area]?.has(dimension) ?? false;
 }
 
 function firstValue(

@@ -135,27 +135,24 @@
       "areaKey": "business-functions",
       "displayName": "Business Functions",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
         "Business functions",
         "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Capabilities by business function"
       ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "loadedCount": 28,
+      "mappedCount": 28,
+      "sourceCount": 2,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
         "LH-FN-FIN - Corporate Finance and Treasury",
         "LH-FN-HR - Corporate HR and Talent",
         "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-PER-CORP-FIN - Corporate finance analyst",
+        "LH-PER-HR - Corporate HR operations specialist"
       ],
       "topGaps": [],
-      "evidencePosture": "Business Functions has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Business Functions has 28 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -189,27 +186,23 @@
       "areaKey": "applications-systems",
       "displayName": "Applications & Systems",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Application and system inventory",
+        "Infrastructure-related system coverage"
       ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "loadedCount": 141,
+      "mappedCount": 141,
+      "sourceCount": 1,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-SYS-WORKDAY - Workday HCM and Finance",
+        "LH-SYS-ORACLE - Oracle Fusion ERP",
+        "LH-SYS-KYRIBA - Kyriba Treasury",
+        "LH-SYS-WORKDAY - Workday HCM and Finance",
+        "LH-SYS-ORACLE - Oracle Fusion ERP"
       ],
       "topGaps": [],
-      "evidencePosture": "Applications & Systems has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Applications & Systems has 141 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -242,28 +235,19 @@
     {
       "areaKey": "vendors-contracts",
       "displayName": "Vendors & Contracts",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Vendors and contracts"],
+      "loadedCount": 90,
+      "mappedCount": 90,
+      "sourceCount": 1,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-VDR-WORKDAY - Workday",
+        "LH-VDR-ORACLE - Oracle",
+        "LH-VDR-KYRIBA - Kyriba"
       ],
       "topGaps": [],
-      "evidencePosture": "Vendors & Contracts has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Vendors & Contracts has 90 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -296,28 +280,19 @@
     {
       "areaKey": "data-assets",
       "displayName": "Data Assets",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Data assets and analytics coverage"],
+      "loadedCount": 305,
+      "mappedCount": 305,
+      "sourceCount": 1,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-DATA-EMPLOYEE - Enterprise workforce master",
+        "LH-DATA-GL - Corporate GL and cost-center actuals",
+        "LH-DATA-CASH - Treasury cash position"
       ],
       "topGaps": [],
-      "evidencePosture": "Data Assets has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Data Assets has 305 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -350,28 +325,19 @@
     {
       "areaKey": "integrations",
       "displayName": "Integrations",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Data and integration dependencies"],
+      "loadedCount": 305,
+      "mappedCount": 305,
+      "sourceCount": 1,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-DATA-EMPLOYEE - Enterprise workforce master",
+        "LH-DATA-GL - Corporate GL and cost-center actuals",
+        "LH-DATA-CASH - Treasury cash position"
       ],
       "topGaps": [],
-      "evidencePosture": "Integrations has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Integrations has 305 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -405,27 +371,24 @@
       "areaKey": "programs-initiatives",
       "displayName": "Programs & Initiatives",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "AI initiatives and automation footprint",
+        "Programs and initiatives",
+        "AI governance and metric boundaries"
       ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "loadedCount": 252,
+      "mappedCount": 252,
+      "sourceCount": 2,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-AI-001 - Portfolio KPI narrative assistant",
+        "LH-AI-002 - Treasury cash anomaly monitor",
+        "LH-AI-003 - Northline dispatch exception assistant",
+        "LH-PGM-CORP-ERP - Corporate ERP and HCM controls modernization",
+        "LH-PGM-TREASURY - Treasury cash visibility standardization"
       ],
       "topGaps": [],
-      "evidencePosture": "Programs & Initiatives has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Programs & Initiatives has 252 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -459,27 +422,25 @@
       "areaKey": "risks-controls",
       "displayName": "Risks & Controls",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Risk, control, and compliance coverage",
+        "Risks and constraints",
+        "Operations and service evidence",
+        "AI governance and metric boundaries"
       ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "loadedCount": 205,
+      "mappedCount": 205,
+      "sourceCount": 2,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-RISK-001 - close and consolidation",
+        "LH-RISK-002 - bank connectivity",
+        "LH-RISK-003 - contract renewal visibility",
+        "LH-RISK-001 - close and consolidation",
+        "LH-RISK-002 - bank connectivity"
       ],
       "topGaps": [],
-      "evidencePosture": "Risks & Controls has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Risks & Controls has 205 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -513,27 +474,24 @@
       "areaKey": "metrics-kpis",
       "displayName": "Metrics / KPIs",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
         "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Spend and value records",
+        "Value and benefit evidence"
       ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "loadedCount": 178,
+      "mappedCount": 178,
+      "sourceCount": 2,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-MET-TOTAL-IT-BUDGET - FY26 direct IT budget",
+        "LH-MET-RUN-BUDGET - FY26 run budget",
+        "LH-MET-CHANGE-BUDGET - FY26 change budget",
+        "LH-SPEND-LH-CORP-BUDGET - Corporate Shared Services IT FY26 annual IT budget",
+        "LH-SPEND-LH-CORP-RUN - Corporate Shared Services IT FY26 run budget"
       ],
       "topGaps": [],
-      "evidencePosture": "Metrics / KPIs has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Metrics / KPIs has 178 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -566,28 +524,19 @@
     {
       "areaKey": "evidence-sources",
       "displayName": "Evidence Sources",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Industry corpus patterns"],
+      "loadedCount": 90,
+      "mappedCount": 90,
+      "sourceCount": 1,
       "evidenceCount": 0,
       "relationshipCount": 0,
       "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
+        "LH-PAT-HOLDCO-IT-01 - Holding-company IT rollup",
+        "LH-PAT-SS-01 - Shared-services platform modernization",
+        "LH-PAT-AI-01 - Central innovation IT with local operating data"
       ],
       "topGaps": [],
-      "evidencePosture": "Evidence Sources has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Evidence Sources has 90 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_from_loaded_context",
       "safeQuestions": [
@@ -620,30 +569,17 @@
     {
       "areaKey": "relationships",
       "displayName": "Relationships",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 2054,
-      "mappedCount": 2054,
-      "sourceCount": 12,
+      "executiveSummaryInputs": [],
+      "loadedCount": 0,
+      "mappedCount": 0,
+      "sourceCount": 0,
       "evidenceCount": 0,
       "relationshipCount": 0,
-      "examples": [
-        "LH-ENT-001 - Lakeshore Holdings enterprise profile",
-        "LH-FN-FIN - Corporate Finance and Treasury",
-        "LH-FN-HR - Corporate HR and Talent",
-        "LH-FN-LEGAL - Corporate Legal and Compliance",
-        "LH-PER-CORP-FIN - Corporate finance analyst"
-      ],
+      "examples": [],
       "topGaps": [],
-      "evidencePosture": "Relationships has 2,054 loaded records from 12 source files.",
+      "evidencePosture": "Relationships is not represented in the current Home snapshot.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-      "answerability": "answerable_from_loaded_context",
+      "answerability": "not_available_yet",
       "safeQuestions": [
         "Loaded facts in the active Home context",
         "Evidence gaps",
@@ -656,15 +592,12 @@
         "Enterprise-wide sourcing savings estimates",
         "Realized value or Tower outcome claims"
       ],
-      "decisionsSupported": [
-        "Source-backed context browsing",
-        "Evidence inspection"
-      ],
+      "decisionsSupported": [],
       "decisionsNotReady": [
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Validate loaded rows with the client owner."],
+      "nextDataActions": ["Load source-backed relationships evidence."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
         "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
@@ -751,9 +684,9 @@
     "createsCandidates": false
   },
   "lineage": {
-    "generatedAt": "2026-07-13T16:54:07.407Z",
+    "generatedAt": "2026-07-13T20:32:22.126Z",
     "generatedBy": "home_summary_engine",
-    "inputFingerprint": "c259cee4eeba1db0c1f9c107e56e0bc71ebbeee3c281cd07b4192f5e2042077f",
+    "inputFingerprint": "7753de10f3c63e873d68069c7249b43f951f9b52da90f2e475edce97771bab2f",
     "tenantDataVersionId": null,
     "candidateVersionId": null,
     "sourceSnapshotIds": [
@@ -770,9 +703,9 @@
       "V6_10_ai_initiatives.csv",
       "V6_09_programs_initiatives.csv",
       "V6_15_industry_corpus_patterns.csv",
-      "2026-07-13T16:46:29.019Z"
+      "2026-07-13T13:51:54.625Z"
     ],
-    "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+    "dataQualitySnapshotId": "2026-07-13T13:51:54.625Z",
     "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
     "answerabilitySnapshotId": "partial",
     "mode": "active_home_context",

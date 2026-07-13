@@ -135,53 +135,35 @@
       "areaKey": "business-functions",
       "displayName": "Business Functions",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
         "Business functions",
         "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Capabilities by business function"
       ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "loadedCount": 73,
+      "mappedCount": 73,
+      "sourceCount": 2,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
         "SHA-BF-001 - Operations Control Center / IROPS",
         "SHA-BF-002 - Flight Operations",
         "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "SHA-PER-001 - IROPS duty manager",
+        "SHA-PER-002 - Dispatcher"
       ],
       "topGaps": [
         {
           "label": "Source Owner Missing",
-          "count": 2220,
+          "count": 53,
           "whyItMatters": null
         },
         {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Data Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "System Of Record Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
+          "label": "Primary Kpis Missing",
+          "count": 20,
           "whyItMatters": null
         }
       ],
-      "evidencePosture": "Business Functions has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Business Functions has 73 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -207,7 +189,7 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
@@ -215,53 +197,44 @@
       "areaKey": "applications-systems",
       "displayName": "Applications & Systems",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Application and system inventory",
+        "Infrastructure-related system coverage"
       ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "loadedCount": 956,
+      "mappedCount": 956,
+      "sourceCount": 1,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "SHA-INF-001 - ibm z",
+        "SHA-INF-002 - ibm z",
+        "SHA-INF-003 - aws org",
+        "SHA-SYS-CTO-001 - Operations Control Center Platform",
+        "SHA-SYS-CTO-002 - Disruption Management Application"
       ],
       "topGaps": [
         {
-          "label": "Source Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Data Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "System Of Record Missing",
-          "count": 2220,
+          "label": "Vendor Id Missing",
+          "count": 944,
           "whyItMatters": null
         },
         {
           "label": "Source Owner Missing",
-          "count": 2220,
+          "count": 900,
+          "whyItMatters": null
+        },
+        {
+          "label": "Source Owner Missing|Data Thin:Business Capability Missing|Data Thin:System Owner Missing|Data Thin:Lifecycle Status Missing|Data Thin:Vendor Id Missing|Data Thin:Annual Cost Missing|Data Thin:Data Dependencies Missing|Data Thin:Ai Relevance Missing",
+          "count": 900,
+          "whyItMatters": null
+        },
+        {
+          "label": "Business Capability Missing",
+          "count": 900,
           "whyItMatters": null
         }
       ],
-      "evidencePosture": "Applications & Systems has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Applications & Systems has 956 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -287,61 +260,47 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
     {
       "areaKey": "vendors-contracts",
       "displayName": "Vendors & Contracts",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Vendors and contracts"],
+      "loadedCount": 320,
+      "mappedCount": 320,
+      "sourceCount": 1,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "CON-00001 - SAP",
+        "CON-00002 - Infosys",
+        "CON-00003 - Informatica"
       ],
       "topGaps": [
         {
           "label": "Source Owner Missing",
-          "count": 2220,
+          "count": 320,
           "whyItMatters": null
         },
         {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
+          "label": "Source Owner Missing|Data Thin:Service Missing|Data Thin:Annual Cost Missing|Data Thin:Owning Function Missing|Data Thin:Linked Systems Missing|Data Thin:Contract Risk Missing|Data Thin:Pricing Basis Missing",
+          "count": 320,
           "whyItMatters": null
         },
         {
-          "label": "Data Owner Missing",
-          "count": 2220,
+          "label": "Service Missing",
+          "count": 320,
           "whyItMatters": null
         },
         {
-          "label": "System Of Record Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
+          "label": "Annual Cost Missing",
+          "count": 320,
           "whyItMatters": null
         }
       ],
-      "evidencePosture": "Vendors & Contracts has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Vendors & Contracts has 320 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -367,32 +326,23 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
     {
       "areaKey": "data-assets",
       "displayName": "Data Assets",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Data assets and analytics coverage"],
+      "loadedCount": 2236,
+      "mappedCount": 2236,
+      "sourceCount": 1,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "SHA-DATA-CTO-001 - Flight Status Feed",
+        "SHA-DATA-CTO-002 - Aircraft Tail Assignment",
+        "SHA-DATA-CTO-003 - Crew Legality Feed"
       ],
       "topGaps": [
         {
@@ -414,14 +364,9 @@
           "label": "System Of Record Missing",
           "count": 2220,
           "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
         }
       ],
-      "evidencePosture": "Data Assets has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Data Assets has 2,236 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -447,32 +392,23 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
     {
       "areaKey": "integrations",
       "displayName": "Integrations",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Data and integration dependencies"],
+      "loadedCount": 2236,
+      "mappedCount": 2236,
+      "sourceCount": 1,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "SHA-DATA-CTO-001 - Flight Status Feed",
+        "SHA-DATA-CTO-002 - Aircraft Tail Assignment",
+        "SHA-DATA-CTO-003 - Crew Legality Feed"
       ],
       "topGaps": [
         {
@@ -494,14 +430,9 @@
           "label": "System Of Record Missing",
           "count": 2220,
           "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
         }
       ],
-      "evidencePosture": "Integrations has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Integrations has 2,236 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -527,7 +458,7 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
@@ -535,53 +466,50 @@
       "areaKey": "programs-initiatives",
       "displayName": "Programs & Initiatives",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "AI initiatives and automation footprint",
+        "Programs and initiatives",
+        "AI governance and metric boundaries"
       ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "loadedCount": 663,
+      "mappedCount": 663,
+      "sourceCount": 2,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "SHA-AI-CTO-001 - IROPS Decision Assistant",
+        "SHA-AI-CTO-002 - Crew Recovery Copilot",
+        "SHA-AI-CTO-003 - Passenger Reaccommodation Agent",
+        "SHA-PROG-CTO-001 - OCC Modernization",
+        "SHA-PROG-CTO-002 - IROPS Data Foundation"
       ],
       "topGaps": [
         {
-          "label": "Source Owner Missing",
-          "count": 2220,
+          "label": "Budget Missing",
+          "count": 300,
           "whyItMatters": null
         },
         {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Data Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "System Of Record Missing",
-          "count": 2220,
+          "label": "User Group Missing",
+          "count": 292,
           "whyItMatters": null
         },
         {
           "label": "Source Owner Missing",
-          "count": 2220,
+          "count": 283,
+          "whyItMatters": null
+        },
+        {
+          "label": "Business Owner Missing",
+          "count": 270,
+          "whyItMatters": null
+        },
+        {
+          "label": "Technology Owner Missing",
+          "count": 270,
           "whyItMatters": null
         }
       ],
-      "evidencePosture": "Programs & Initiatives has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Programs & Initiatives has 663 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -607,7 +535,7 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
@@ -615,53 +543,51 @@
       "areaKey": "risks-controls",
       "displayName": "Risks & Controls",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Risk, control, and compliance coverage",
+        "Risks and constraints",
+        "Operations and service evidence",
+        "AI governance and metric boundaries"
       ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "loadedCount": 1877,
+      "mappedCount": 1877,
+      "sourceCount": 2,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "INIT-0001 - operations risk control record",
+        "INIT-0001 - operations risk control record",
+        "INIT-0001 - operations risk control record",
+        "SHA-RISK-CTO-001 - Stale crew legality feed blocks autonomous crew recovery",
+        "SHA-RISK-CTO-002 - IROPS event store pilot coverage is not enterprise certified"
       ],
       "topGaps": [
         {
-          "label": "Source Owner Missing",
-          "count": 2220,
+          "label": "Affected Systems Missing",
+          "count": 1166,
           "whyItMatters": null
         },
         {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
+          "label": "Business Impact Missing",
+          "count": 1055,
           "whyItMatters": null
         },
         {
-          "label": "Data Owner Missing",
-          "count": 2220,
+          "label": "Affected Systems Missing|Data Thin:Business Impact Missing",
+          "count": 900,
           "whyItMatters": null
         },
         {
-          "label": "System Of Record Missing",
-          "count": 2220,
+          "label": "Severity Missing",
+          "count": 455,
           "whyItMatters": null
         },
         {
-          "label": "Source Owner Missing",
-          "count": 2220,
+          "label": "User Group Missing",
+          "count": 292,
           "whyItMatters": null
         }
       ],
-      "evidencePosture": "Risks & Controls has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Risks & Controls has 1,877 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -687,7 +613,7 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
@@ -695,53 +621,50 @@
       "areaKey": "metrics-kpis",
       "displayName": "Metrics / KPIs",
       "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
         "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
+        "Spend and value records",
+        "Value and benefit evidence"
       ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "loadedCount": 797,
+      "mappedCount": 797,
+      "sourceCount": 2,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "MET-0001 - Cost-to-Income Ratio",
+        "MET-0002 - Net Promoter Score",
+        "MET-0003 - Employee Attrition Rate",
+        "BEN-00001 - spend value record",
+        "BEN-00002 - spend value record"
       ],
       "topGaps": [
         {
+          "label": "Vendor Id Missing",
+          "count": 483,
+          "whyItMatters": null
+        },
+        {
+          "label": "System Id Missing",
+          "count": 470,
+          "whyItMatters": null
+        },
+        {
+          "label": "Vendor Id Missing|Data Thin:System Id Missing|Data Thin:Renewal Or Gate Date Missing",
+          "count": 320,
+          "whyItMatters": null
+        },
+        {
+          "label": "Renewal Or Gate Date Missing",
+          "count": 320,
+          "whyItMatters": null
+        },
+        {
           "label": "Source Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Data Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "System Of Record Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
+          "count": 306,
           "whyItMatters": null
         }
       ],
-      "evidencePosture": "Metrics / KPIs has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Metrics / KPIs has 797 loaded records from 2 source files.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -767,61 +690,47 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
     {
       "areaKey": "evidence-sources",
       "displayName": "Evidence Sources",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
+      "executiveSummaryInputs": ["Industry corpus patterns"],
+      "loadedCount": 489,
+      "mappedCount": 489,
+      "sourceCount": 1,
       "evidenceCount": 53,
       "relationshipCount": 0,
       "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
+        "sha-irops-agentic-readiness - IROPS agentic readiness gate",
+        "sha-mainframe-modernization-sequencing - Mainframe modernization sequencing",
+        "sha-cdp-identity-value-gate - Customer identity/CDP value gate"
       ],
       "topGaps": [
         {
           "label": "Source Owner Missing",
-          "count": 2220,
+          "count": 489,
           "whyItMatters": null
         },
         {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
+          "label": "Source Owner Missing|Data Thin:When To Apply Missing|Data Thin:Signals Missing",
+          "count": 180,
           "whyItMatters": null
         },
         {
-          "label": "Data Owner Missing",
-          "count": 2220,
+          "label": "When To Apply Missing",
+          "count": 180,
           "whyItMatters": null
         },
         {
-          "label": "System Of Record Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
+          "label": "Signals Missing",
+          "count": 180,
           "whyItMatters": null
         }
       ],
-      "evidencePosture": "Evidence Sources has 14,194 loaded records from 12 source files.",
+      "evidencePosture": "Evidence Sources has 489 loaded records from 1 source file.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
       "answerability": "answerable_with_caveats",
       "safeQuestions": [
@@ -847,63 +756,24 @@
       "nextDataActions": ["Close visible evidence gaps for this area."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     },
     {
       "areaKey": "relationships",
       "displayName": "Relationships",
-      "executiveSummaryInputs": [
-        "Enterprise profile rows",
-        "Business functions",
-        "Workforce personas",
-        "Metric definitions",
-        "Capabilities by business function",
-        "Application and system inventory"
-      ],
-      "loadedCount": 14194,
-      "mappedCount": 14194,
-      "sourceCount": 12,
-      "evidenceCount": 53,
+      "executiveSummaryInputs": [],
+      "loadedCount": 0,
+      "mappedCount": 0,
+      "sourceCount": 0,
+      "evidenceCount": 0,
       "relationshipCount": 0,
-      "examples": [
-        "SkyHarbor Air Group",
-        "SHA-BF-001 - Operations Control Center / IROPS",
-        "SHA-BF-002 - Flight Operations",
-        "SHA-BF-003 - Crew Operations",
-        "SHA-PER-001 - IROPS duty manager"
-      ],
-      "topGaps": [
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Data Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "System Of Record Missing",
-          "count": 2220,
-          "whyItMatters": null
-        },
-        {
-          "label": "Source Owner Missing",
-          "count": 2220,
-          "whyItMatters": null
-        }
-      ],
-      "evidencePosture": "Relationships has 14,194 loaded records from 12 source files.",
+      "examples": [],
+      "topGaps": [],
+      "evidencePosture": "Relationships is not represented in the current Home snapshot.",
       "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-      "answerability": "answerable_with_caveats",
+      "answerability": "not_available_yet",
       "safeQuestions": [
         "Loaded facts in the active Home context",
         "Evidence gaps",
@@ -916,18 +786,15 @@
         "Enterprise-wide sourcing savings estimates",
         "Realized value or Tower outcome claims"
       ],
-      "decisionsSupported": [
-        "Source-backed context browsing",
-        "Evidence inspection"
-      ],
+      "decisionsSupported": [],
       "decisionsNotReady": [
         "Broad advisory synthesis",
         "Cross-domain dependency decisions"
       ],
-      "nextDataActions": ["Close visible evidence gaps for this area."],
+      "nextDataActions": ["Load source-backed relationships evidence."],
       "caveats": [
         "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
         "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
       ]
     }
@@ -970,7 +837,7 @@
       "Airline Demo has a rich source estate, but the active Home view is still partial relative to the upstream estate. Applications and systems remediation has an inactive candidate path, but broader enterprise decisions should wait until relationship projection and active-use controls are complete.",
       "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated.",
       "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-      "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+      "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
       "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
       "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation."
     ],
@@ -993,7 +860,7 @@
   },
   "caveats": [
     "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-    "284 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+    "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
     "Relationship panel should state that relationship projection are not yet planned despite dependency-rich source evidence.",
     "This context includes generated or synthetic planning-grade records; do not treat it as client-certified evidence without validation.",
     "Active tenant access pointer is not wired here; Home displays active Home context, not promoted active tenant truth."
@@ -1011,9 +878,9 @@
     "createsCandidates": false
   },
   "lineage": {
-    "generatedAt": "2026-07-13T16:54:07.407Z",
+    "generatedAt": "2026-07-13T20:32:22.126Z",
     "generatedBy": "home_summary_engine",
-    "inputFingerprint": "8e38849c01ad8eb9fdf9021ef7852154ab22770390528740c6700adc0fe575f9",
+    "inputFingerprint": "e714a640a550873ca1ebdd36d3a1560224a04fb8263ae2ffa84735014c95ef1c",
     "tenantDataVersionId": null,
     "candidateVersionId": null,
     "sourceSnapshotIds": [
@@ -1030,9 +897,9 @@
       "V6_10_ai_initiatives.csv",
       "V6_09_programs_initiatives.csv",
       "V6_15_industry_corpus_patterns.csv",
-      "2026-07-13T16:46:29.019Z"
+      "2026-07-13T13:51:54.625Z"
     ],
-    "dataQualitySnapshotId": "2026-07-13T16:46:29.019Z",
+    "dataQualitySnapshotId": "2026-07-13T13:51:54.625Z",
     "manifestProjectionSnapshotId": "reports/data-quality/manifest-projection/latest",
     "answerabilitySnapshotId": "partial",
     "mode": "active_home_context",
