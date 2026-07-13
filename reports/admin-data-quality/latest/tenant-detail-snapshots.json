@@ -1,0 +1,1877 @@
+{
+  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "tenants": [
+    {
+      "tenantKey": "skyharbor-air",
+      "tenantDisplayName": "SkyHarbor Air",
+      "matrix": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "overallStatus": "blocked",
+        "sourceRichnessScore": 100,
+        "sourceStructuredRows": 31213,
+        "candidateCoverageRatio": 0.0017,
+        "candidateRecordsGenerated": 53,
+        "relationshipOperationCount": 0,
+        "evidenceOperationCount": 53,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "generatedDataRisk": "watch",
+        "tenantIsolationStatus": "pass",
+        "moduleReadinessStatus": "watch",
+        "promotionReadinessStatus": "blocked",
+        "promotionUnsafe": true,
+        "recommendedNextAction": "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      },
+      "sourceEstate": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "sourcePackCount": 12,
+        "fileCount": 283,
+        "structuredRowCount": 31213,
+        "domainCount": 12,
+        "sourceRichnessScore": 100,
+        "sourceRichnessStatus": "pass",
+        "sourceRichCandidateThin": true,
+        "domains": {
+          "enterprise_profile": 0,
+          "systems_estate": 25,
+          "mainframe_and_core": 144,
+          "data_and_analytics": 12,
+          "integration_estate": 40,
+          "vendors_contracts": 25,
+          "financial_value": 6,
+          "moves_execution": 1,
+          "source_events": 0,
+          "tower_outcomes": 0,
+          "risk_controls": 1,
+          "relationships": 22,
+          "benchmarks": 1,
+          "workforce": 1,
+          "documents": 5
+        },
+        "evidenceSignals": [
+          "analytics-toolchain",
+          "domain-consistency-risk",
+          "healthcare-claims-operations",
+          "mainframe-core",
+          "sap-estate",
+          "sourcing-commercial",
+          "synthetic-planning-grade",
+          "teradata-estate"
+        ],
+        "representativeFiles": [
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "mainframe_and_core",
+            "rowCount": 7230,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "data_and_analytics",
+            "rowCount": 2236,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / family-3-data-connectivity / F10_integrations-interfaces.csv",
+            "domain": "integration_estate",
+            "rowCount": 1800,
+            "evidenceSignals": [
+              "analytics-toolchain",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / family-2-technology-estate / F05_applications-systems.csv",
+            "domain": "systems_estate",
+            "rowCount": 900,
+            "evidenceSignals": [
+              "domain-consistency-risk",
+              "mainframe-core",
+              "sap-estate",
+              "sourcing-commercial",
+              "synthetic-planning-grade",
+              "teradata-estate"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / family-7-outcome-intelligence / O01_business-metrics.csv",
+            "domain": "financial_value",
+            "rowCount": 180,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / family-7-outcome-intelligence / O02_industry-benchmarks.csv",
+            "domain": "vendors_contracts",
+            "rowCount": 180,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-legacy-pack / legacy-pack / legacy-pack.csv",
+            "domain": "relationships",
+            "rowCount": 74,
+            "evidenceSignals": [
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / csv / ai-tooling.csv",
+            "domain": "risk_controls",
+            "rowCount": 40,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / csv / dora-baseline.csv",
+            "domain": "workforce",
+            "rowCount": 40,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / 10-initiatives / initiatives-closed.csv",
+            "domain": "moves_execution",
+            "rowCount": 0,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / azure_load_artifacts / ai_egress_audit_baseline.csv",
+            "domain": "documents",
+            "rowCount": 0,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "skyharbor-air-planning-legacy-pack / embeddings / embeddings_manifest.md",
+            "domain": "benchmarks",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          }
+        ]
+      },
+      "candidateCoverage": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "candidateRecordsGenerated": 53,
+        "targetOperationsPlanned": 106,
+        "candidateCoverageRatio": 0.0017,
+        "coverageStatus": "blocked",
+        "candidateThin": true,
+        "falseGreenRisk": true,
+        "unmappedFields": 0,
+        "quarantinedRecords": 0,
+        "strandedIntelligenceRecords": 53,
+        "missingMappings": [],
+        "blockers": [
+          "Promotion execution is disabled by default in PR9.",
+          "Operator approval has not been requested or granted.",
+          "Active Tenant Access Layer pointer update remains unavailable in this release.",
+          "Module runtime consumption remains unchanged and disabled for candidate data.",
+          "No module reads candidate data by default."
+        ]
+      },
+      "canonicalFactQuality": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "factOperationCount": 53,
+        "canonicalRecordCount": 53,
+        "sourceStructuredRows": 31213,
+        "status": "gap",
+        "findings": [
+          "Canonical candidate records cover only a small fraction of discovered structured source rows."
+        ]
+      },
+      "evidenceQuality": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "evidenceOperationCount": 53,
+        "sourceDocumentCount": 5,
+        "evidenceRatio": 1,
+        "status": "pass",
+        "findings": []
+      },
+      "relationshipQuality": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "relationshipOperationCount": 0,
+        "relationshipSourceFiles": 22,
+        "integrationSourceFiles": 40,
+        "graphPlanAvailableForAllModules": false,
+        "status": "gap",
+        "findings": [
+          "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+          "At least one module lacks graph-plan readiness."
+        ]
+      },
+      "generatedDataRisk": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "generatedOrSyntheticSourceFiles": 12,
+        "narrativeCaveatRequired": true,
+        "status": "watch",
+        "findings": [
+          "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade.",
+          "Domain consistency checks should run before generated rows are treated as operational truth."
+        ]
+      },
+      "moduleReadiness": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "modulesEvaluated": 5,
+        "modulesWithEvidence": 5,
+        "modulesWithFactPlan": 5,
+        "modulesWithGraphPlan": 0,
+        "modulesWithDerivedPlan": 3,
+        "runtimeReadyModules": 0,
+        "moduleOverreadinessRisk": false,
+        "status": "watch",
+        "findings": [
+          "Graph-plan readiness is missing for one or more modules."
+        ]
+      },
+      "promotionReadiness": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": true,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Promotion execution is disabled by default in PR9.",
+          "Operator approval has not been requested or granted.",
+          "Active Tenant Access Layer pointer update remains unavailable in this release.",
+          "Module runtime consumption remains unchanged and disabled for candidate data.",
+          "No module reads candidate data by default."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "adminHomeCaveat": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
+        "sourcesCaveat": "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      },
+      "sourceVsCandidateCoverage": {
+        "sourceStructuredRows": 31213,
+        "candidateRecordsGenerated": 53,
+        "candidateCoverageRatio": 0.0017,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "summary": "31,213 source rows exist, but only 53 candidate records are generated (0.17% coverage). Treat this as source-rich and candidate-thin."
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "warnings": [
+        "Source-rich / candidate-thin: do not promote until candidate coverage expands.",
+        "False-green risk: candidate state may look eligible while coverage is thin.",
+        "Zero relationship operations: relationships are not ready for module use.",
+        "Generated or synthetic source material requires planning-grade caveats.",
+        "Known-fact coverage is incomplete.",
+        "Promotion is unsafe until blockers and required-before-active items are closed."
+      ],
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "tenantDisplayName": "Lakeshore Holdings",
+      "matrix": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "overallStatus": "blocked",
+        "sourceRichnessScore": 82,
+        "sourceStructuredRows": 8721,
+        "candidateCoverageRatio": 0,
+        "candidateRecordsGenerated": 0,
+        "relationshipOperationCount": 0,
+        "evidenceOperationCount": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "generatedDataRisk": "watch",
+        "tenantIsolationStatus": "not_available",
+        "moduleReadinessStatus": "gap",
+        "promotionReadinessStatus": "blocked",
+        "promotionUnsafe": true,
+        "recommendedNextAction": "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      },
+      "sourceEstate": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "sourcePackCount": 12,
+        "fileCount": 211,
+        "structuredRowCount": 8721,
+        "domainCount": 7,
+        "sourceRichnessScore": 82,
+        "sourceRichnessStatus": "pass",
+        "sourceRichCandidateThin": true,
+        "domains": {
+          "enterprise_profile": 0,
+          "systems_estate": 24,
+          "mainframe_and_core": 77,
+          "data_and_analytics": 14,
+          "integration_estate": 52,
+          "vendors_contracts": 26,
+          "financial_value": 6,
+          "moves_execution": 0,
+          "source_events": 0,
+          "tower_outcomes": 0,
+          "risk_controls": 0,
+          "relationships": 12,
+          "benchmarks": 0,
+          "workforce": 0,
+          "documents": 0
+        },
+        "evidenceSignals": [
+          "analytics-toolchain",
+          "healthcare-claims-operations",
+          "healthcare-core-systems",
+          "mainframe-core",
+          "sap-estate",
+          "sourcing-commercial",
+          "synthetic-planning-grade"
+        ],
+        "representativeFiles": [
+          {
+            "fileLabel": "lakeshore-industries-planning-legacy-pack / family-8-semantic-enrichment / F25_context-node-dictionary.csv",
+            "domain": "mainframe_and_core",
+            "rowCount": 955,
+            "evidenceSignals": [
+              "sap-estate",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "lakeshore-industries-planning-legacy-pack / field_catalog / legacy-pack.csv",
+            "domain": "vendors_contracts",
+            "rowCount": 690,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "lakeshore-industries-planning-legacy-pack / legacy-pack.csv",
+            "domain": "relationships",
+            "rowCount": 529,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "lakeshore-industries-planning-legacy-pack / legacy-pack.csv",
+            "domain": "data_and_analytics",
+            "rowCount": 510,
+            "evidenceSignals": [
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "lakeshore-industries-planning-legacy-pack / legacy-pack.csv",
+            "domain": "systems_estate",
+            "rowCount": 384,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "lakeshore-industries-planning-legacy-pack / legacy-pack.csv",
+            "domain": "integration_estate",
+            "rowCount": 376,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "lakeshore-holdings-planning-legacy-pack / family-7-outcome-intelligence / O06_ai-governance.csv",
+            "domain": "financial_value",
+            "rowCount": 40,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          }
+        ]
+      },
+      "candidateCoverage": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "candidateRecordsGenerated": 0,
+        "targetOperationsPlanned": 0,
+        "candidateCoverageRatio": 0,
+        "coverageStatus": "blocked",
+        "candidateThin": true,
+        "falseGreenRisk": true,
+        "unmappedFields": 3,
+        "quarantinedRecords": 0,
+        "strandedIntelligenceRecords": 12,
+        "missingMappings": [
+          "tenant-packet projection",
+          "source adapter mapping profile",
+          "target writer mapping profile"
+        ],
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ]
+      },
+      "canonicalFactQuality": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "factOperationCount": 0,
+        "canonicalRecordCount": 0,
+        "sourceStructuredRows": 8721,
+        "status": "blocked",
+        "findings": [
+          "No canonical candidate records were generated for this tenant.",
+          "Canonical candidate records cover only a small fraction of discovered structured source rows."
+        ]
+      },
+      "evidenceQuality": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "evidenceOperationCount": 0,
+        "sourceDocumentCount": 0,
+        "evidenceRatio": 0,
+        "status": "pass",
+        "findings": []
+      },
+      "relationshipQuality": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "relationshipOperationCount": 0,
+        "relationshipSourceFiles": 12,
+        "integrationSourceFiles": 52,
+        "graphPlanAvailableForAllModules": false,
+        "status": "gap",
+        "findings": [
+          "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+          "At least one module lacks graph-plan readiness."
+        ]
+      },
+      "generatedDataRisk": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "generatedOrSyntheticSourceFiles": 7,
+        "narrativeCaveatRequired": true,
+        "status": "watch",
+        "findings": [
+          "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade."
+        ]
+      },
+      "moduleReadiness": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "modulesEvaluated": 0,
+        "modulesWithEvidence": 0,
+        "modulesWithFactPlan": 0,
+        "modulesWithGraphPlan": 0,
+        "modulesWithDerivedPlan": 0,
+        "runtimeReadyModules": 0,
+        "moduleOverreadinessRisk": false,
+        "status": "gap",
+        "findings": [
+          "No module readiness proof exists for this tenant."
+        ]
+      },
+      "promotionReadiness": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "adminHomeCaveat": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
+        "sourcesCaveat": "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
+        "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      },
+      "sourceVsCandidateCoverage": {
+        "sourceStructuredRows": 8721,
+        "candidateRecordsGenerated": 0,
+        "candidateCoverageRatio": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "summary": "8,721 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "warnings": [
+        "Source-rich / candidate-thin: do not promote until candidate coverage expands.",
+        "False-green risk: candidate state may look eligible while coverage is thin.",
+        "Zero relationship operations: relationships are not ready for module use.",
+        "Generated or synthetic source material requires planning-grade caveats.",
+        "Known-fact coverage is incomplete.",
+        "Promotion is unsafe until blockers and required-before-active items are closed."
+      ],
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "meridian-health",
+      "tenantDisplayName": "Meridian Health",
+      "matrix": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "overallStatus": "blocked",
+        "sourceRichnessScore": 100,
+        "sourceStructuredRows": 11226,
+        "candidateCoverageRatio": 0,
+        "candidateRecordsGenerated": 0,
+        "relationshipOperationCount": 0,
+        "evidenceOperationCount": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "generatedDataRisk": "watch",
+        "tenantIsolationStatus": "not_available",
+        "moduleReadinessStatus": "gap",
+        "promotionReadinessStatus": "blocked",
+        "promotionUnsafe": true,
+        "recommendedNextAction": "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      },
+      "sourceEstate": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "sourcePackCount": 12,
+        "fileCount": 271,
+        "structuredRowCount": 11226,
+        "domainCount": 11,
+        "sourceRichnessScore": 100,
+        "sourceRichnessStatus": "pass",
+        "sourceRichCandidateThin": true,
+        "domains": {
+          "enterprise_profile": 0,
+          "systems_estate": 52,
+          "mainframe_and_core": 128,
+          "data_and_analytics": 12,
+          "integration_estate": 35,
+          "vendors_contracts": 13,
+          "financial_value": 12,
+          "moves_execution": 1,
+          "source_events": 0,
+          "tower_outcomes": 0,
+          "risk_controls": 2,
+          "relationships": 8,
+          "benchmarks": 0,
+          "workforce": 4,
+          "documents": 4
+        },
+        "evidenceSignals": [
+          "analytics-toolchain",
+          "healthcare-claims-operations",
+          "healthcare-core-systems",
+          "mainframe-core",
+          "sap-estate",
+          "sourcing-commercial",
+          "synthetic-planning-grade",
+          "teradata-estate"
+        ],
+        "representativeFiles": [
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / 03-org / roles.csv",
+            "domain": "vendors_contracts",
+            "rowCount": 1650,
+            "evidenceSignals": [
+              "healthcare-core-systems",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "mainframe_and_core",
+            "rowCount": 1551,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "data_and_analytics",
+            "rowCount": 360,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "healthcare-core-systems",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / family-3-data-connectivity / F10_integrations-interfaces.csv",
+            "domain": "integration_estate",
+            "rowCount": 240,
+            "evidenceSignals": [
+              "analytics-toolchain",
+              "healthcare-claims-operations",
+              "healthcare-core-systems",
+              "mainframe-core",
+              "synthetic-planning-grade",
+              "teradata-estate"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / family-2-technology-estate / F05_applications-systems.csv",
+            "domain": "systems_estate",
+            "rowCount": 150,
+            "evidenceSignals": [
+              "analytics-toolchain",
+              "healthcare-claims-operations",
+              "healthcare-core-systems",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade",
+              "teradata-estate"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / 02-financial / initiative-commitments.csv",
+            "domain": "financial_value",
+            "rowCount": 112,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / 07-ai-tools / ai-usage-telemetry.csv",
+            "domain": "documents",
+            "rowCount": 108,
+            "evidenceSignals": [
+              "healthcare-core-systems",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-legacy-pack / legacy-pack / legacy-pack.csv",
+            "domain": "relationships",
+            "rowCount": 69,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "healthcare-core-systems",
+              "mainframe-core",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / 17-upload-templates / clinical-ai-model-inventory.csv",
+            "domain": "risk_controls",
+            "rowCount": 2,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / 17-upload-templates / dora-baseline.csv",
+            "domain": "workforce",
+            "rowCount": 2,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "meridian-health-planning-legacy-pack / 08-sponsor-signal / sponsor-pulse.jsonl",
+            "domain": "moves_execution",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          }
+        ]
+      },
+      "candidateCoverage": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "candidateRecordsGenerated": 0,
+        "targetOperationsPlanned": 0,
+        "candidateCoverageRatio": 0,
+        "coverageStatus": "blocked",
+        "candidateThin": true,
+        "falseGreenRisk": true,
+        "unmappedFields": 3,
+        "quarantinedRecords": 0,
+        "strandedIntelligenceRecords": 12,
+        "missingMappings": [
+          "tenant-packet projection",
+          "source adapter mapping profile",
+          "target writer mapping profile"
+        ],
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ]
+      },
+      "canonicalFactQuality": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "factOperationCount": 0,
+        "canonicalRecordCount": 0,
+        "sourceStructuredRows": 11226,
+        "status": "blocked",
+        "findings": [
+          "No canonical candidate records were generated for this tenant.",
+          "Canonical candidate records cover only a small fraction of discovered structured source rows."
+        ]
+      },
+      "evidenceQuality": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "evidenceOperationCount": 0,
+        "sourceDocumentCount": 4,
+        "evidenceRatio": 0,
+        "status": "gap",
+        "findings": [
+          "Narrative/source documents exist but are not represented in evidence operations.",
+          "Only a thin subset of discovered source documents is represented as evidence."
+        ]
+      },
+      "relationshipQuality": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "relationshipOperationCount": 0,
+        "relationshipSourceFiles": 8,
+        "integrationSourceFiles": 35,
+        "graphPlanAvailableForAllModules": false,
+        "status": "gap",
+        "findings": [
+          "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+          "At least one module lacks graph-plan readiness."
+        ]
+      },
+      "generatedDataRisk": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "generatedOrSyntheticSourceFiles": 11,
+        "narrativeCaveatRequired": true,
+        "status": "watch",
+        "findings": [
+          "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade."
+        ]
+      },
+      "moduleReadiness": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "modulesEvaluated": 0,
+        "modulesWithEvidence": 0,
+        "modulesWithFactPlan": 0,
+        "modulesWithGraphPlan": 0,
+        "modulesWithDerivedPlan": 0,
+        "runtimeReadyModules": 0,
+        "moduleOverreadinessRisk": false,
+        "status": "gap",
+        "findings": [
+          "No module readiness proof exists for this tenant."
+        ]
+      },
+      "promotionReadiness": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "adminHomeCaveat": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
+        "sourcesCaveat": "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
+        "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      },
+      "sourceVsCandidateCoverage": {
+        "sourceStructuredRows": 11226,
+        "candidateRecordsGenerated": 0,
+        "candidateCoverageRatio": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "summary": "11,226 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "warnings": [
+        "Source-rich / candidate-thin: do not promote until candidate coverage expands.",
+        "False-green risk: candidate state may look eligible while coverage is thin.",
+        "Zero relationship operations: relationships are not ready for module use.",
+        "Evidence linkage is incomplete or thin.",
+        "Generated or synthetic source material requires planning-grade caveats.",
+        "Known-fact coverage is incomplete.",
+        "Promotion is unsafe until blockers and required-before-active items are closed."
+      ],
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "first-capital",
+      "tenantDisplayName": "First Capital",
+      "matrix": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "overallStatus": "blocked",
+        "sourceRichnessScore": 70,
+        "sourceStructuredRows": 14576,
+        "candidateCoverageRatio": 0,
+        "candidateRecordsGenerated": 0,
+        "relationshipOperationCount": 0,
+        "evidenceOperationCount": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": false,
+        "generatedDataRisk": "watch",
+        "tenantIsolationStatus": "not_available",
+        "moduleReadinessStatus": "gap",
+        "promotionReadinessStatus": "blocked",
+        "promotionUnsafe": true,
+        "recommendedNextAction": "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      },
+      "sourceEstate": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "sourcePackCount": 12,
+        "fileCount": 229,
+        "structuredRowCount": 14576,
+        "domainCount": 5,
+        "sourceRichnessScore": 70,
+        "sourceRichnessStatus": "pass",
+        "sourceRichCandidateThin": true,
+        "domains": {
+          "enterprise_profile": 0,
+          "systems_estate": 3,
+          "mainframe_and_core": 84,
+          "data_and_analytics": 4,
+          "integration_estate": 136,
+          "vendors_contracts": 0,
+          "financial_value": 0,
+          "moves_execution": 0,
+          "source_events": 0,
+          "tower_outcomes": 0,
+          "risk_controls": 0,
+          "relationships": 2,
+          "benchmarks": 0,
+          "workforce": 0,
+          "documents": 0
+        },
+        "evidenceSignals": [
+          "analytics-toolchain",
+          "domain-consistency-risk",
+          "healthcare-claims-operations",
+          "mainframe-core",
+          "sap-estate",
+          "sourcing-commercial",
+          "synthetic-planning-grade"
+        ],
+        "representativeFiles": [
+          {
+            "fileLabel": "first-capital-financial-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "mainframe_and_core",
+            "rowCount": 2614,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "first-capital-financial-planning-legacy-pack / 03-org / roles.csv",
+            "domain": "integration_estate",
+            "rowCount": 1650,
+            "evidenceSignals": [
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "first-capital-financial-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "data_and_analytics",
+            "rowCount": 460,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "first-capital-financial-planning-legacy-pack / family-2-technology-estate / F05_applications-systems.csv",
+            "domain": "systems_estate",
+            "rowCount": 260,
+            "evidenceSignals": [
+              "domain-consistency-risk",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "first-capital-financial-planning-legacy-pack / graph / context-relationships.jsonl",
+            "domain": "relationships",
+            "rowCount": null,
+            "evidenceSignals": [
+              "sap-estate",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          }
+        ]
+      },
+      "candidateCoverage": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "candidateRecordsGenerated": 0,
+        "targetOperationsPlanned": 0,
+        "candidateCoverageRatio": 0,
+        "coverageStatus": "blocked",
+        "candidateThin": true,
+        "falseGreenRisk": false,
+        "unmappedFields": 3,
+        "quarantinedRecords": 0,
+        "strandedIntelligenceRecords": 12,
+        "missingMappings": [
+          "tenant-packet projection",
+          "source adapter mapping profile",
+          "target writer mapping profile"
+        ],
+        "blockers": [
+          "No Moves artifacts discovered in the repository inventory.",
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ]
+      },
+      "canonicalFactQuality": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "factOperationCount": 0,
+        "canonicalRecordCount": 0,
+        "sourceStructuredRows": 14576,
+        "status": "blocked",
+        "findings": [
+          "No canonical candidate records were generated for this tenant.",
+          "Canonical candidate records cover only a small fraction of discovered structured source rows."
+        ]
+      },
+      "evidenceQuality": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "evidenceOperationCount": 0,
+        "sourceDocumentCount": 0,
+        "evidenceRatio": 0,
+        "status": "pass",
+        "findings": []
+      },
+      "relationshipQuality": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "relationshipOperationCount": 0,
+        "relationshipSourceFiles": 2,
+        "integrationSourceFiles": 136,
+        "graphPlanAvailableForAllModules": false,
+        "status": "gap",
+        "findings": [
+          "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+          "At least one module lacks graph-plan readiness."
+        ]
+      },
+      "generatedDataRisk": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "generatedOrSyntheticSourceFiles": 5,
+        "narrativeCaveatRequired": true,
+        "status": "watch",
+        "findings": [
+          "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade.",
+          "Domain consistency checks should run before generated rows are treated as operational truth."
+        ]
+      },
+      "moduleReadiness": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "modulesEvaluated": 0,
+        "modulesWithEvidence": 0,
+        "modulesWithFactPlan": 0,
+        "modulesWithGraphPlan": 0,
+        "modulesWithDerivedPlan": 0,
+        "runtimeReadyModules": 0,
+        "moduleOverreadinessRisk": false,
+        "status": "gap",
+        "findings": [
+          "No module readiness proof exists for this tenant."
+        ]
+      },
+      "promotionReadiness": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "No Moves artifacts discovered in the repository inventory.",
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "adminHomeCaveat": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
+        "sourcesCaveat": "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
+        "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      },
+      "sourceVsCandidateCoverage": {
+        "sourceStructuredRows": 14576,
+        "candidateRecordsGenerated": 0,
+        "candidateCoverageRatio": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": false,
+        "summary": "14,576 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "warnings": [
+        "Source-rich / candidate-thin: do not promote until candidate coverage expands.",
+        "Zero relationship operations: relationships are not ready for module use.",
+        "Generated or synthetic source material requires planning-grade caveats.",
+        "Known-fact coverage is incomplete.",
+        "Promotion is unsafe until blockers and required-before-active items are closed."
+      ],
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "apex-retail",
+      "tenantDisplayName": "Apex Retail",
+      "matrix": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "overallStatus": "blocked",
+        "sourceRichnessScore": 100,
+        "sourceStructuredRows": 10388,
+        "candidateCoverageRatio": 0,
+        "candidateRecordsGenerated": 0,
+        "relationshipOperationCount": 0,
+        "evidenceOperationCount": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "generatedDataRisk": "watch",
+        "tenantIsolationStatus": "not_available",
+        "moduleReadinessStatus": "gap",
+        "promotionReadinessStatus": "blocked",
+        "promotionUnsafe": true,
+        "recommendedNextAction": "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      },
+      "sourceEstate": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "sourcePackCount": 12,
+        "fileCount": 186,
+        "structuredRowCount": 10388,
+        "domainCount": 10,
+        "sourceRichnessScore": 100,
+        "sourceRichnessStatus": "pass",
+        "sourceRichCandidateThin": true,
+        "domains": {
+          "enterprise_profile": 0,
+          "systems_estate": 12,
+          "mainframe_and_core": 65,
+          "data_and_analytics": 15,
+          "integration_estate": 29,
+          "vendors_contracts": 45,
+          "financial_value": 9,
+          "moves_execution": 0,
+          "source_events": 0,
+          "tower_outcomes": 0,
+          "risk_controls": 1,
+          "relationships": 5,
+          "benchmarks": 0,
+          "workforce": 1,
+          "documents": 4
+        },
+        "evidenceSignals": [
+          "analytics-toolchain",
+          "domain-consistency-risk",
+          "healthcare-claims-operations",
+          "mainframe-core",
+          "sap-estate",
+          "sourcing-commercial",
+          "synthetic-planning-grade"
+        ],
+        "representativeFiles": [
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "mainframe_and_core",
+            "rowCount": 1605,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / templates / legacy-pack.csv",
+            "domain": "data_and_analytics",
+            "rowCount": 385,
+            "evidenceSignals": [
+              "healthcare-claims-operations",
+              "mainframe-core",
+              "sourcing-commercial",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / family-3-data-connectivity / F10_integrations-interfaces.csv",
+            "domain": "integration_estate",
+            "rowCount": 260,
+            "evidenceSignals": [
+              "sap-estate",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / family-2-technology-estate / F05_applications-systems.csv",
+            "domain": "systems_estate",
+            "rowCount": 170,
+            "evidenceSignals": [
+              "sap-estate",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / family-7-outcome-intelligence / O01_business-metrics.csv",
+            "domain": "financial_value",
+            "rowCount": 100,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / family-7-outcome-intelligence / O02_industry-benchmarks.csv",
+            "domain": "vendors_contracts",
+            "rowCount": 100,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / 07-ai-tools / ai-tool-footprint.csv",
+            "domain": "documents",
+            "rowCount": 3,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / 07-ai-tools / ai-tool-cost-ledger.csv",
+            "domain": "relationships",
+            "rowCount": 3,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / 03-org / leadership-bench.json",
+            "domain": "risk_controls",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "apex-retail-planning-legacy-pack / 06-devex / devex-survey-2026q1.json",
+            "domain": "workforce",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          }
+        ]
+      },
+      "candidateCoverage": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "candidateRecordsGenerated": 0,
+        "targetOperationsPlanned": 0,
+        "candidateCoverageRatio": 0,
+        "coverageStatus": "blocked",
+        "candidateThin": true,
+        "falseGreenRisk": true,
+        "unmappedFields": 3,
+        "quarantinedRecords": 0,
+        "strandedIntelligenceRecords": 12,
+        "missingMappings": [
+          "tenant-packet projection",
+          "source adapter mapping profile",
+          "target writer mapping profile"
+        ],
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ]
+      },
+      "canonicalFactQuality": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "factOperationCount": 0,
+        "canonicalRecordCount": 0,
+        "sourceStructuredRows": 10388,
+        "status": "blocked",
+        "findings": [
+          "No canonical candidate records were generated for this tenant.",
+          "Canonical candidate records cover only a small fraction of discovered structured source rows."
+        ]
+      },
+      "evidenceQuality": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "evidenceOperationCount": 0,
+        "sourceDocumentCount": 4,
+        "evidenceRatio": 0,
+        "status": "gap",
+        "findings": [
+          "Narrative/source documents exist but are not represented in evidence operations.",
+          "Only a thin subset of discovered source documents is represented as evidence."
+        ]
+      },
+      "relationshipQuality": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "relationshipOperationCount": 0,
+        "relationshipSourceFiles": 5,
+        "integrationSourceFiles": 29,
+        "graphPlanAvailableForAllModules": false,
+        "status": "gap",
+        "findings": [
+          "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+          "At least one module lacks graph-plan readiness."
+        ]
+      },
+      "generatedDataRisk": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "generatedOrSyntheticSourceFiles": 10,
+        "narrativeCaveatRequired": true,
+        "status": "watch",
+        "findings": [
+          "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade.",
+          "Domain consistency checks should run before generated rows are treated as operational truth."
+        ]
+      },
+      "moduleReadiness": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "modulesEvaluated": 0,
+        "modulesWithEvidence": 0,
+        "modulesWithFactPlan": 0,
+        "modulesWithGraphPlan": 0,
+        "modulesWithDerivedPlan": 0,
+        "runtimeReadyModules": 0,
+        "moduleOverreadinessRisk": false,
+        "status": "gap",
+        "findings": [
+          "No module readiness proof exists for this tenant."
+        ]
+      },
+      "promotionReadiness": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "adminHomeCaveat": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
+        "sourcesCaveat": "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
+        "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      },
+      "sourceVsCandidateCoverage": {
+        "sourceStructuredRows": 10388,
+        "candidateRecordsGenerated": 0,
+        "candidateCoverageRatio": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": true,
+        "summary": "10,388 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "warnings": [
+        "Source-rich / candidate-thin: do not promote until candidate coverage expands.",
+        "False-green risk: candidate state may look eligible while coverage is thin.",
+        "Zero relationship operations: relationships are not ready for module use.",
+        "Evidence linkage is incomplete or thin.",
+        "Generated or synthetic source material requires planning-grade caveats.",
+        "Known-fact coverage is incomplete.",
+        "Promotion is unsafe until blockers and required-before-active items are closed."
+      ],
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "northstar",
+      "tenantDisplayName": "Northstar",
+      "matrix": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "overallStatus": "blocked",
+        "sourceRichnessScore": 100,
+        "sourceStructuredRows": 6032,
+        "candidateCoverageRatio": 0,
+        "candidateRecordsGenerated": 0,
+        "relationshipOperationCount": 0,
+        "evidenceOperationCount": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": false,
+        "generatedDataRisk": "watch",
+        "tenantIsolationStatus": "not_available",
+        "moduleReadinessStatus": "gap",
+        "promotionReadinessStatus": "blocked",
+        "promotionUnsafe": true,
+        "recommendedNextAction": "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      },
+      "sourceEstate": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "sourcePackCount": 4,
+        "fileCount": 156,
+        "structuredRowCount": 6032,
+        "domainCount": 12,
+        "sourceRichnessScore": 100,
+        "sourceRichnessStatus": "pass",
+        "sourceRichCandidateThin": true,
+        "domains": {
+          "enterprise_profile": 1,
+          "systems_estate": 14,
+          "mainframe_and_core": 22,
+          "data_and_analytics": 1,
+          "integration_estate": 5,
+          "vendors_contracts": 85,
+          "financial_value": 2,
+          "moves_execution": 0,
+          "source_events": 0,
+          "tower_outcomes": 0,
+          "risk_controls": 2,
+          "relationships": 8,
+          "benchmarks": 3,
+          "workforce": 3,
+          "documents": 10
+        },
+        "evidenceSignals": [
+          "analytics-toolchain",
+          "domain-consistency-risk",
+          "healthcare-claims-operations",
+          "healthcare-core-systems",
+          "mainframe-core",
+          "sap-estate",
+          "sourcing-commercial",
+          "synthetic-planning-grade"
+        ],
+        "representativeFiles": [
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 11-org-roles / org-roles.csv",
+            "domain": "systems_estate",
+            "rowCount": 3400,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 04-product-portfolio / sku-product-groups.csv",
+            "domain": "financial_value",
+            "rowCount": 1200,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 12-delivery-devex / dora-baseline.csv",
+            "domain": "workforce",
+            "rowCount": 224,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 06-erp-landscape / erp-landscape-workbook.csv",
+            "domain": "mainframe_and_core",
+            "rowCount": 152,
+            "evidenceSignals": [
+              "mainframe-core",
+              "sap-estate",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 13-regulatory-qms / qms-events.csv",
+            "domain": "risk_controls",
+            "rowCount": 120,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 02-strategy / board-priorities.csv",
+            "domain": "data_and_analytics",
+            "rowCount": 3,
+            "evidenceSignals": [
+              "analytics-toolchain",
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 00-profile / README.md",
+            "domain": "benchmarks",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 08-integration-topology / integration-topology.json",
+            "domain": "integration_estate",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 11-org-roles / org-chart-summary.md",
+            "domain": "relationships",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 16-market-corpus / source-files / NST-SRC-001.md",
+            "domain": "vendors_contracts",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 17-upload-templates / ai-tool-footprint.csv",
+            "domain": "documents",
+            "rowCount": 0,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          },
+          {
+            "fileLabel": "northstar-clinical-tech-planning-legacy-pack / 17-upload-templates / enterprise-profile.yaml",
+            "domain": "enterprise_profile",
+            "rowCount": null,
+            "evidenceSignals": [
+              "synthetic-planning-grade"
+            ]
+          }
+        ]
+      },
+      "candidateCoverage": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "candidateRecordsGenerated": 0,
+        "targetOperationsPlanned": 0,
+        "candidateCoverageRatio": 0,
+        "coverageStatus": "blocked",
+        "candidateThin": true,
+        "falseGreenRisk": false,
+        "unmappedFields": 3,
+        "quarantinedRecords": 0,
+        "strandedIntelligenceRecords": 4,
+        "missingMappings": [
+          "tenant-packet projection",
+          "source adapter mapping profile",
+          "target writer mapping profile"
+        ],
+        "blockers": [
+          "No Moves artifacts discovered in the repository inventory.",
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ]
+      },
+      "canonicalFactQuality": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "factOperationCount": 0,
+        "canonicalRecordCount": 0,
+        "sourceStructuredRows": 6032,
+        "status": "blocked",
+        "findings": [
+          "No canonical candidate records were generated for this tenant.",
+          "Canonical candidate records cover only a small fraction of discovered structured source rows."
+        ]
+      },
+      "evidenceQuality": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "evidenceOperationCount": 0,
+        "sourceDocumentCount": 10,
+        "evidenceRatio": 0,
+        "status": "gap",
+        "findings": [
+          "Narrative/source documents exist but are not represented in evidence operations.",
+          "Only a thin subset of discovered source documents is represented as evidence."
+        ]
+      },
+      "relationshipQuality": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "relationshipOperationCount": 0,
+        "relationshipSourceFiles": 8,
+        "integrationSourceFiles": 5,
+        "graphPlanAvailableForAllModules": false,
+        "status": "gap",
+        "findings": [
+          "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
+          "At least one module lacks graph-plan readiness."
+        ]
+      },
+      "generatedDataRisk": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "generatedOrSyntheticSourceFiles": 12,
+        "narrativeCaveatRequired": true,
+        "status": "watch",
+        "findings": [
+          "Some discovered source evidence is synthetic or generated and must be labeled as planning-grade.",
+          "Domain consistency checks should run before generated rows are treated as operational truth."
+        ]
+      },
+      "moduleReadiness": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "modulesEvaluated": 0,
+        "modulesWithEvidence": 0,
+        "modulesWithFactPlan": 0,
+        "modulesWithGraphPlan": 0,
+        "modulesWithDerivedPlan": 0,
+        "runtimeReadyModules": 0,
+        "moduleOverreadinessRisk": false,
+        "status": "gap",
+        "findings": [
+          "No module readiness proof exists for this tenant."
+        ]
+      },
+      "promotionReadiness": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "No Moves artifacts discovered in the repository inventory.",
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "adminHomeCaveat": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
+        "sourcesCaveat": "156 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
+        "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      },
+      "sourceVsCandidateCoverage": {
+        "sourceStructuredRows": 6032,
+        "candidateRecordsGenerated": 0,
+        "candidateCoverageRatio": 0,
+        "sourceRichCandidateThin": true,
+        "falseGreenRisk": false,
+        "summary": "6,032 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "warnings": [
+        "Source-rich / candidate-thin: do not promote until candidate coverage expands.",
+        "Zero relationship operations: relationships are not ready for module use.",
+        "Evidence linkage is incomplete or thin.",
+        "Generated or synthetic source material requires planning-grade caveats.",
+        "Known-fact coverage is incomplete.",
+        "Promotion is unsafe until blockers and required-before-active items are closed."
+      ],
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "morgan-street",
+      "tenantDisplayName": "Morgan Street",
+      "matrix": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "overallStatus": "blocked",
+        "sourceRichnessScore": 0,
+        "sourceStructuredRows": 0,
+        "candidateCoverageRatio": 0,
+        "candidateRecordsGenerated": 0,
+        "relationshipOperationCount": 0,
+        "evidenceOperationCount": 0,
+        "sourceRichCandidateThin": false,
+        "falseGreenRisk": false,
+        "generatedDataRisk": "pass",
+        "tenantIsolationStatus": "not_available",
+        "moduleReadinessStatus": "gap",
+        "promotionReadinessStatus": "blocked",
+        "promotionUnsafe": true,
+        "recommendedNextAction": "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      },
+      "sourceEstate": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "sourcePackCount": 2,
+        "fileCount": 0,
+        "structuredRowCount": 0,
+        "domainCount": 0,
+        "sourceRichnessScore": 0,
+        "sourceRichnessStatus": "gap",
+        "sourceRichCandidateThin": false,
+        "domains": {
+          "enterprise_profile": 0,
+          "systems_estate": 0,
+          "mainframe_and_core": 0,
+          "data_and_analytics": 0,
+          "integration_estate": 0,
+          "vendors_contracts": 0,
+          "financial_value": 0,
+          "moves_execution": 0,
+          "source_events": 0,
+          "tower_outcomes": 0,
+          "risk_controls": 0,
+          "relationships": 0,
+          "benchmarks": 0,
+          "workforce": 0,
+          "documents": 0
+        },
+        "evidenceSignals": [],
+        "representativeFiles": []
+      },
+      "candidateCoverage": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "candidateRecordsGenerated": 0,
+        "targetOperationsPlanned": 0,
+        "candidateCoverageRatio": 0,
+        "coverageStatus": "gap",
+        "candidateThin": true,
+        "falseGreenRisk": false,
+        "unmappedFields": 3,
+        "quarantinedRecords": 0,
+        "strandedIntelligenceRecords": 2,
+        "missingMappings": [
+          "tenant-packet projection",
+          "source adapter mapping profile",
+          "target writer mapping profile"
+        ],
+        "blockers": [
+          "Morgan Street appears as a Lakeshore operating-unit access boundary, not as a standalone candidate packet.",
+          "No standalone Tenant Packet manifest or candidate mapping profile is available yet."
+        ]
+      },
+      "canonicalFactQuality": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "factOperationCount": 0,
+        "canonicalRecordCount": 0,
+        "sourceStructuredRows": 0,
+        "status": "blocked",
+        "findings": [
+          "No canonical candidate records were generated for this tenant."
+        ]
+      },
+      "evidenceQuality": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "evidenceOperationCount": 0,
+        "sourceDocumentCount": 0,
+        "evidenceRatio": 0,
+        "status": "pass",
+        "findings": []
+      },
+      "relationshipQuality": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "relationshipOperationCount": 0,
+        "relationshipSourceFiles": 0,
+        "integrationSourceFiles": 0,
+        "graphPlanAvailableForAllModules": false,
+        "status": "gap",
+        "findings": [
+          "At least one module lacks graph-plan readiness."
+        ]
+      },
+      "generatedDataRisk": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "generatedOrSyntheticSourceFiles": 0,
+        "narrativeCaveatRequired": false,
+        "status": "pass",
+        "findings": []
+      },
+      "moduleReadiness": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "modulesEvaluated": 0,
+        "modulesWithEvidence": 0,
+        "modulesWithFactPlan": 0,
+        "modulesWithGraphPlan": 0,
+        "modulesWithDerivedPlan": 0,
+        "runtimeReadyModules": 0,
+        "moduleOverreadinessRisk": false,
+        "status": "gap",
+        "findings": [
+          "No module readiness proof exists for this tenant."
+        ]
+      },
+      "promotionReadiness": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Morgan Street appears as a Lakeshore operating-unit access boundary, not as a standalone candidate packet.",
+          "No standalone Tenant Packet manifest or candidate mapping profile is available yet."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "adminHomeCaveat": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "homeSummaryCaveat": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
+        "gapsCaveat": "Gaps should be derived from source estate coverage, missing mappings, stranded intelligence, relationship coverage, and module readiness, not hand-written placeholders.",
+        "sourcesCaveat": "0 discovered source files across 0 domains; surface file categories and evidence signals rather than generic source labels.",
+        "relationshipsCaveat": "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+      },
+      "sourceVsCandidateCoverage": {
+        "sourceStructuredRows": 0,
+        "candidateRecordsGenerated": 0,
+        "candidateCoverageRatio": 0,
+        "sourceRichCandidateThin": false,
+        "falseGreenRisk": false,
+        "summary": "0 source rows and 0 candidate records are visible in the latest read-only audit (0.00% coverage)."
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "warnings": [
+        "Zero relationship operations: relationships are not ready for module use.",
+        "Known-fact coverage is incomplete.",
+        "Promotion is unsafe until blockers and required-before-active items are closed."
+      ],
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "tenants": [
+    {
+      "tenantKey": "skyharbor-air",
+      "tenantDisplayName": "SkyHarbor Air",
+      "promotionReadiness": {
+        "tenantKey": "skyharbor-air",
+        "tenantDisplayName": "SkyHarbor Air",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": true,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Promotion execution is disabled by default in PR9.",
+          "Operator approval has not been requested or granted.",
+          "Active Tenant Access Layer pointer update remains unavailable in this release.",
+          "Module runtime consumption remains unchanged and disabled for candidate data.",
+          "No module reads candidate data by default."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "tenantDisplayName": "Lakeshore Holdings",
+      "promotionReadiness": {
+        "tenantKey": "lakeshore-holdings",
+        "tenantDisplayName": "Lakeshore Holdings",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "meridian-health",
+      "tenantDisplayName": "Meridian Health",
+      "promotionReadiness": {
+        "tenantKey": "meridian-health",
+        "tenantDisplayName": "Meridian Health",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "first-capital",
+      "tenantDisplayName": "First Capital",
+      "promotionReadiness": {
+        "tenantKey": "first-capital",
+        "tenantDisplayName": "First Capital",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "No Moves artifacts discovered in the repository inventory.",
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "apex-retail",
+      "tenantDisplayName": "Apex Retail",
+      "promotionReadiness": {
+        "tenantKey": "apex-retail",
+        "tenantDisplayName": "Apex Retail",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "northstar",
+      "tenantDisplayName": "Northstar",
+      "promotionReadiness": {
+        "tenantKey": "northstar",
+        "tenantDisplayName": "Northstar",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "No Moves artifacts discovered in the repository inventory.",
+          "Required packet projection and mapping profile configuration is not available yet.",
+          "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Map discovered evidence signals into candidate records with citations.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Map discovered evidence signals into candidate records with citations.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    },
+    {
+      "tenantKey": "morgan-street",
+      "tenantDisplayName": "Morgan Street",
+      "promotionReadiness": {
+        "tenantKey": "morgan-street",
+        "tenantDisplayName": "Morgan Street",
+        "promotionGateStatus": "blocked",
+        "activeAccessMetadataPresent": false,
+        "promotionUnsafe": true,
+        "blockers": [
+          "Morgan Street appears as a Lakeshore operating-unit access boundary, not as a standalone candidate packet.",
+          "No standalone Tenant Packet manifest or candidate mapping profile is available yet."
+        ],
+        "requiredBeforeActiveTruth": [
+          "Expand candidate packet so canonical records materially cover the discovered source estate.",
+          "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+          "Clear promotion-gate blockers and capture operator approval."
+        ]
+      },
+      "topBlocker": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "recommendedNextAction": "Expand candidate packet so canonical records materially cover the discovered source estate.",
+      "remediationActions": [
+        "Expand candidate packet so canonical records materially cover the discovered source estate.",
+        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
+        "Clear promotion-gate blockers and capture operator approval.",
+        "Expand Tenant Packet projection and source adapter mappings before more promotion work."
+      ]
+    }
+  ]
+}

@@ -7,17 +7,16 @@ describe("/admin home page source", () => {
     "utf8",
   );
 
-  it("keeps Home as a read-only system review page", () => {
-    expect(source).toContain("system review");
-    expect(source).toContain("Read-only view of what AbarVa currently knows");
-    expect(source).toContain("What is in the system");
-    expect(source).toContain("Review queue");
+  it("renders the current setup-control Admin overview", () => {
+    expect(source).toContain("AdminSetupExperience");
+    expect(source).toContain("buildAdminSetupControlReadModel");
+    expect(source).toContain("getTenantSourceFiles");
+    expect(source).toContain("setupControl");
   });
 
-  it("routes operators to Data Loads instead of embedding upload controls on Home", () => {
-    expect(source).toContain('href="/admin/setup"');
-    expect(source).toContain("Open Data Loads");
+  it("keeps upload execution out of the Admin overview page source", () => {
     expect(source).not.toContain("CsvUploadConnector");
     expect(source).not.toContain("/api/admin/context-layer/csv-upload");
+    expect(source).not.toContain("Confirm & load");
   });
 });

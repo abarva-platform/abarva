@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "guardrails": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "candidatePromoted": false,
+    "writesPhysicalTables": false,
+    "moduleRuntimeConsumptionChanged": false,
+    "moduleReadsCandidateByDefault": false,
+    "realizedValueClaimed": false
+  },
+  "p0": [],
+  "p1": [],
+  "p2": []
+}
