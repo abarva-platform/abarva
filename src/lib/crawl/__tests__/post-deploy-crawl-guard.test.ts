@@ -1,5 +1,8 @@
 import { comparePage, type CrawlPageObservation } from "../baseline-compare";
-import { resolveCrawlPersonas } from "../persona-switcher";
+import {
+  resolveCrawlPersonas,
+  resolveCrawlSurfaces,
+} from "../persona-switcher";
 
 function observation(
   overrides: Partial<CrawlPageObservation> = {},
@@ -36,6 +39,15 @@ describe("post-deploy crawl guard", () => {
     expect(personaKeys).toEqual(
       expect.arrayContaining(["agent-meridian", "agent-skyharbor"]),
     );
+  });
+
+  it("includes the Admin Data Layer Explorer as a directly targetable crawl surface", () => {
+    expect(resolveCrawlSurfaces("admin-data-layer-explorer")).toEqual([
+      expect.objectContaining({
+        id: "admin-data-layer-explorer",
+        path: "/admin/data-layer-explorer",
+      }),
+    ]);
   });
 
   it("flags the known Meridian healthcare bleed terms as P0 only for SkyHarbor", () => {
