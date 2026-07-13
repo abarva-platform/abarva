@@ -645,6 +645,33 @@ function ManifestProjectionPanel({
 }) {
   const skyHarborFindings = audit.skyHarborRequiredFindings;
   const tenantRows = audit.tenants;
+  const adapterGapItems = formatDomainGapItems(
+    audit,
+    (domain) => domain.sourceFilesDiscovered > 0 && !domain.adapterExists,
+    (tenant, domain) =>
+      `${tenant.displayName} · ${domain.label}: adapter missing for ${domain.sourceFilesDiscovered} discovered source files.`,
+  );
+  const mappingGapItems = formatDomainGapItems(
+    audit,
+    (domain) => domain.sourceFilesDiscovered > 0 && !domain.mappingProfileExists,
+    (tenant, domain) =>
+      `${tenant.displayName} · ${domain.label}: mapping missing; manifest included ${domain.candidateManifestIncluded}; Home rows ${domain.activeHomeRows.toLocaleString()}.`,
+  );
+  const homeAvaWarningItems = formatDomainGapItems(
+    audit,
+    (domain) =>
+      domain.sourceFilesDiscovered > 0 &&
+      (!domain.homeVisible ||
+        !domain.avaReadable ||
+        domain.richestSourceRows > domain.activeHomeRows ||
+        domain.reasonIfExcluded !== null),
+    (tenant, domain) =>
+      `${tenant.displayName} · ${domain.label}: Home visible ${domain.homeVisible}; aVa readable ${domain.avaReadable}; Home rows ${domain.activeHomeRows.toLocaleString()} vs richest source rows ${domain.richestSourceRows.toLocaleString()}${domain.reasonIfExcluded ? `; ${domain.reasonIfExcluded}` : ""}.`,
+  );
+  const promotionBlockerItems = audit.promotionBlockers
+    .slice(0, 12)
+    .map((blocker) => `${blocker.tenantName}: ${blocker.blocker}`);
+
   return (
     <section
       data-manifest-projection-audit
@@ -812,6 +839,58 @@ function ManifestProjectionPanel({
           display: "grid",
           gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
           gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <AuditList
+          title="Adapter gaps"
+          items={
+            adapterGapItems.length
+              ? adapterGapItems
+              : ["No adapter gaps detected for discovered source domains."]
+          }
+        />
+        <AuditList
+          title="Mapping gaps"
+          items={
+            mappingGapItems.length
+              ? mappingGapItems
+              : ["No mapping gaps detected for discovered source domains."]
+          }
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <AuditList
+          title="Home/aVa representation warnings"
+          items={
+            homeAvaWarningItems.length
+              ? homeAvaWarningItems
+              : ["No Home/aVa representation warnings detected."]
+          }
+        />
+        <AuditList
+          title="Promotion blockers"
+          items={
+            promotionBlockerItems.length
+              ? promotionBlockerItems
+              : ["No promotion blockers detected by this audit."]
+          }
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
         }}
       >
         <AuditList
@@ -830,6 +909,26 @@ function ManifestProjectionPanel({
       </div>
     </section>
   );
+}
+
+function formatDomainGapItems(
+  audit: TenantManifestProjectionAudit,
+  predicate: (
+    domain: TenantManifestProjectionAudit["tenants"][number]["domains"][number],
+    tenant: TenantManifestProjectionAudit["tenants"][number],
+  ) => boolean,
+  format: (
+    tenant: TenantManifestProjectionAudit["tenants"][number],
+    domain: TenantManifestProjectionAudit["tenants"][number]["domains"][number],
+  ) => string,
+) {
+  return audit.tenants
+    .flatMap((tenant) =>
+      tenant.domains
+        .filter((domain) => predicate(domain, tenant))
+        .map((domain) => format(tenant, domain)),
+    )
+    .slice(0, 12);
 }
 
 const manifestCellStyle = {
