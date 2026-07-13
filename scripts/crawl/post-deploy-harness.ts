@@ -15,6 +15,11 @@ import {
   type CrawlPageObservation,
   type CrawlRun,
 } from '../../src/lib/crawl/baseline-compare';
+import {
+  runCandidatePreviewProof,
+  type CandidatePreviewComparison,
+  type CandidatePreviewProof,
+} from './candidate-preview-proof';
 
 interface Args {
   baseUrl: string;
@@ -35,8 +40,11 @@ async function main() {
   await fs.mkdir(path.join(out, 'screenshots'), { recursive: true });
   await fs.mkdir(path.join(out, 'html'), { recursive: true });
   await fs.mkdir(path.join(out, 'transcripts'), { recursive: true });
+  await fs.mkdir(path.join(out, 'candidate-preview'), { recursive: true });
 
   const observations: CrawlPageObservation[] = [];
+  let candidatePreviewProof: CandidatePreviewProof | undefined;
+  let candidatePreviewComparison: CandidatePreviewComparison | undefined;
   const personas = resolveCrawlPersonas(args.persona);
   const surfaces = resolveCrawlSurfaces(args.surface);
   const questions = resolveCrawlQuestions(args.questionSet);
@@ -46,13 +54,52 @@ async function main() {
   );
   const baseline = args.baseline ? await readBaseline(args.baseline) : null;
   const persistProgress = async (complete: boolean) => {
-    const run = buildCrawlRun(args.baseUrl, runId, observations);
-    const comparison = buildCrawlComparison(run, baseline, complete, plannedObservationCount);
+    const run = buildCrawlRun(args.baseUrl, runId, observations, candidatePreviewProof);
+    const comparison = buildCrawlComparison(
+      run,
+      baseline,
+      complete,
+      plannedObservationCount,
+      candidatePreviewComparison,
+    );
     await writeCrawlArtifacts(args.outputDir, out, run, comparison);
   };
 
   let fatalError: unknown = null;
   try {
+    if (!args.noAuth) {
+      try {
+        console.log("crawl_candidate_preview_start:agent-skyharbor:/admin/candidate-preview");
+        const previewResult = await runCandidatePreviewProof(
+          {
+            baseUrl: args.baseUrl,
+            outputDir: args.outputDir,
+            module: "home",
+            persona: "agent-skyharbor",
+          },
+          {
+            runId,
+            runDir: path.join(out, "candidate-preview"),
+            writeLatest: false,
+          },
+        );
+        candidatePreviewProof = previewResult.proof;
+        candidatePreviewComparison = previewResult.comparison;
+        await persistProgress(false);
+        console.log(
+          `crawl_candidate_preview_complete:${candidatePreviewComparison.p0}/${candidatePreviewComparison.p1}/${candidatePreviewComparison.p2}`,
+        );
+      } catch (error) {
+        candidatePreviewComparison = buildCandidatePreviewFailureComparison(
+          runId,
+          error,
+        );
+        await persistProgress(false);
+        console.warn(
+          `crawl_candidate_preview_failed:${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
     for (const persona of personas) {
       console.log(`crawl_persona_start:${persona.key}:${persona.tenantKey}`);
       const browser = await launchCrawlBrowser();
@@ -95,7 +142,7 @@ async function main() {
     fatalError = error;
   }
 
-  const run = buildCrawlRun(args.baseUrl, runId, observations);
+  const run = buildCrawlRun(args.baseUrl, runId, observations, candidatePreviewProof);
 
   if (fatalError) {
     const comparison: CrawlComparison = {
@@ -112,11 +159,19 @@ async function main() {
         message: fatalError instanceof Error ? fatalError.message : String(fatalError),
       }],
     };
+    mergeCandidatePreviewComparison(comparison, candidatePreviewComparison);
+    recountComparison(comparison);
     await writeCrawlArtifacts(args.outputDir, out, run, comparison);
     throw fatalError;
   }
 
-  const comparison = buildCrawlComparison(run, baseline, true, plannedObservationCount);
+  const comparison = buildCrawlComparison(
+    run,
+    baseline,
+    true,
+    plannedObservationCount,
+    candidatePreviewComparison,
+  );
   await writeCrawlArtifacts(args.outputDir, out, run, comparison);
 
   console.log(`Post-deploy crawl complete: ${comparison.p0} P0, ${comparison.p1} P1, ${comparison.p2} P2`);
@@ -160,13 +215,19 @@ function buildAuthBootstrapObservation(
   };
 }
 
-function buildCrawlRun(baseUrl: string, runId: string, observations: CrawlPageObservation[]): CrawlRun {
+function buildCrawlRun(
+  baseUrl: string,
+  runId: string,
+  observations: CrawlPageObservation[],
+  candidatePreview?: CandidatePreviewProof,
+): CrawlRun {
   return {
     runId,
     baseUrl,
     commitSha: process.env.VERCEL_GIT_COMMIT_SHA,
     createdAt: new Date().toISOString(),
     observations,
+    candidatePreview,
   };
 }
 
@@ -175,8 +236,10 @@ function buildCrawlComparison(
   baseline: CrawlBaseline | null,
   complete: boolean,
   plannedObservationCount: number,
+  candidatePreviewComparison?: CandidatePreviewComparison,
 ): CrawlComparison {
   const comparison = compareCrawlToBaseline(run, baseline);
+  mergeCandidatePreviewComparison(comparison, candidatePreviewComparison);
   if (!complete) {
     comparison.findings.push({
       severity: 'P1',
@@ -190,9 +253,49 @@ function buildCrawlComparison(
         plannedObservationCount,
       },
     });
-    comparison.p1 += 1;
   }
+  return recountComparison(comparison);
+}
+
+function mergeCandidatePreviewComparison(
+  comparison: CrawlComparison,
+  candidatePreviewComparison: CandidatePreviewComparison | undefined,
+): void {
+  if (!candidatePreviewComparison) return;
+  comparison.candidatePreview = candidatePreviewComparison;
+  comparison.findings.push(...candidatePreviewComparison.findings);
+}
+
+function recountComparison(comparison: CrawlComparison): CrawlComparison {
+  comparison.p0 = comparison.findings.filter((finding) => finding.severity === 'P0').length;
+  comparison.p1 = comparison.findings.filter((finding) => finding.severity === 'P1').length;
+  comparison.p2 = comparison.findings.filter((finding) => finding.severity === 'P2').length;
   return comparison;
+}
+
+function buildCandidatePreviewFailureComparison(
+  runId: string,
+  error: unknown,
+): CandidatePreviewComparison {
+  return {
+    runId,
+    p0: 1,
+    p1: 0,
+    p2: 0,
+    findings: [
+      {
+        severity: 'P0',
+        tenantKey: 'skyharbor-air',
+        personaKey: 'agent-skyharbor',
+        surfaceId: 'admin-candidate-preview',
+        dimension: 'candidate-preview-execution',
+        message:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
+    ],
+  };
 }
 
 async function writeCrawlArtifacts(
