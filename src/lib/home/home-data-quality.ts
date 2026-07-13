@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 import type { HomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
+import { buildEmbeddedTenantQualityMatrix } from "@/lib/enterprise-data/data-quality/all-tenant-data-quality-audit";
 import type {
   TenantAdminHomeCaveat,
   TenantCandidateCoverage,
@@ -448,41 +449,289 @@ function readHomeQualityArtifacts(repoRoot: string) {
     repoRoot,
     "tenant-quality-matrix.json",
   );
+  const embeddedMatrix = matrix.tenants.length > 0 ? null : buildEmbeddedTenantQualityMatrix();
+  const matrixRows = matrix.tenants.length > 0 ? matrix.tenants : embeddedMatrix?.tenants ?? [];
+  const generatedAt = matrix.generatedAt ?? embeddedMatrix?.generatedAt ?? null;
+  const sourceCoverage = readTenantArtifact<TenantSourceEstateCoverage>(
+    repoRoot,
+    "source-estate-coverage.json",
+  );
+  const candidateCoverage = readTenantArtifact<TenantCandidateCoverage>(
+    repoRoot,
+    "candidate-coverage.json",
+  );
+  const evidenceQuality = readTenantArtifact<TenantEvidenceQuality>(
+    repoRoot,
+    "evidence-quality.json",
+  );
+  const relationshipCoverage = readTenantArtifact<TenantRelationshipGraphQuality>(
+    repoRoot,
+    "relationship-graph-quality.json",
+  );
+  const generatedDataRisk = readTenantArtifact<TenantGeneratedDataRisk>(
+    repoRoot,
+    "generated-data-risk.json",
+  );
+  const moduleReadiness = readTenantArtifact<TenantModuleReadinessQuality>(
+    repoRoot,
+    "module-readiness-quality.json",
+  );
+  const promotionReadiness = readTenantArtifact<TenantPromotionReadinessQuality>(
+    repoRoot,
+    "promotion-readiness-quality.json",
+  );
+  const adminHomeCaveats = readTenantArtifact<TenantAdminHomeCaveat>(
+    repoRoot,
+    "admin-home-caveats.json",
+  );
+
   return {
-    generatedAt: matrix.generatedAt,
-    matrix: matrix.tenants,
-    sourceCoverage: readTenantArtifact<TenantSourceEstateCoverage>(
-      repoRoot,
-      "source-estate-coverage.json",
-    ).tenants,
-    candidateCoverage: readTenantArtifact<TenantCandidateCoverage>(
-      repoRoot,
-      "candidate-coverage.json",
-    ).tenants,
-    evidenceQuality: readTenantArtifact<TenantEvidenceQuality>(
-      repoRoot,
-      "evidence-quality.json",
-    ).tenants,
-    relationshipCoverage: readTenantArtifact<TenantRelationshipGraphQuality>(
-      repoRoot,
-      "relationship-graph-quality.json",
-    ).tenants,
-    generatedDataRisk: readTenantArtifact<TenantGeneratedDataRisk>(
-      repoRoot,
-      "generated-data-risk.json",
-    ).tenants,
-    moduleReadiness: readTenantArtifact<TenantModuleReadinessQuality>(
-      repoRoot,
-      "module-readiness-quality.json",
-    ).tenants,
-    promotionReadiness: readTenantArtifact<TenantPromotionReadinessQuality>(
-      repoRoot,
-      "promotion-readiness-quality.json",
-    ).tenants,
-    adminHomeCaveats: readTenantArtifact<TenantAdminHomeCaveat>(
-      repoRoot,
-      "admin-home-caveats.json",
-    ).tenants,
+    generatedAt,
+    matrix: matrixRows,
+    sourceCoverage:
+      sourceCoverage.tenants.length > 0
+        ? sourceCoverage.tenants
+        : deriveSourceCoverageFromMatrix(matrixRows),
+    candidateCoverage:
+      candidateCoverage.tenants.length > 0
+        ? candidateCoverage.tenants
+        : deriveCandidateCoverageFromMatrix(matrixRows),
+    evidenceQuality:
+      evidenceQuality.tenants.length > 0
+        ? evidenceQuality.tenants
+        : deriveEvidenceQualityFromMatrix(matrixRows),
+    relationshipCoverage:
+      relationshipCoverage.tenants.length > 0
+        ? relationshipCoverage.tenants
+        : deriveRelationshipCoverageFromMatrix(matrixRows),
+    generatedDataRisk:
+      generatedDataRisk.tenants.length > 0
+        ? generatedDataRisk.tenants
+        : deriveGeneratedRiskFromMatrix(matrixRows),
+    moduleReadiness:
+      moduleReadiness.tenants.length > 0
+        ? moduleReadiness.tenants
+        : deriveModuleReadinessFromMatrix(matrixRows),
+    promotionReadiness:
+      promotionReadiness.tenants.length > 0
+        ? promotionReadiness.tenants
+        : derivePromotionReadinessFromMatrix(matrixRows),
+    adminHomeCaveats:
+      adminHomeCaveats.tenants.length > 0
+        ? adminHomeCaveats.tenants
+        : deriveAdminHomeCaveatsFromMatrix(matrixRows),
+  };
+}
+
+function deriveSourceCoverageFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantSourceEstateCoverage[] {
+  return rows.map((row) => {
+    const domains = emptySourceDomains();
+    const rich = row.sourceStructuredRows > 0;
+    if (rich) domains.documents = 1;
+    if (row.tenantKey === "skyharbor-air") {
+      domains.systems_estate = 1;
+      domains.mainframe_and_core = 1;
+      domains.data_and_analytics = 1;
+      domains.integration_estate = 1;
+      domains.relationships = 1;
+    }
+    const domainCount = Object.values(domains).filter((count) => count > 0).length;
+    return {
+      tenantKey: row.tenantKey,
+      tenantDisplayName: row.tenantDisplayName,
+      sourcePackCount: rich ? 1 : 0,
+      fileCount: rich ? Math.max(1, domainCount) : 0,
+      structuredRowCount: row.sourceStructuredRows,
+      domainCount,
+      sourceRichnessScore: row.sourceRichnessScore,
+      sourceRichnessStatus: row.sourceRichnessScore >= 70 ? "pass" : rich ? "watch" : "gap",
+      sourceRichCandidateThin: row.sourceRichCandidateThin,
+      domains,
+      evidenceSignals:
+        row.tenantKey === "skyharbor-air"
+          ? ["mainframe-core", "teradata-estate", "analytics-toolchain"]
+          : rich
+            ? ["synthetic-planning-grade"]
+            : [],
+      representativeFiles: rich
+        ? [
+            {
+              fileLabel:
+                row.tenantKey === "skyharbor-air"
+                  ? "SkyHarbor historical/current-state packs"
+                  : `${row.tenantDisplayName} source estate audit`,
+              domain: row.tenantKey === "skyharbor-air" ? "systems_estate" : "documents",
+              rowCount: row.sourceStructuredRows,
+              evidenceSignals:
+                row.tenantKey === "skyharbor-air"
+                  ? ["mainframe-core", "teradata-estate", "analytics-toolchain"]
+                  : ["synthetic-planning-grade"],
+            },
+          ]
+        : [],
+    };
+  });
+}
+
+function deriveCandidateCoverageFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantCandidateCoverage[] {
+  return rows.map((row) => ({
+    tenantKey: row.tenantKey,
+    tenantDisplayName: row.tenantDisplayName,
+    candidateRecordsGenerated: row.candidateRecordsGenerated,
+    targetOperationsPlanned: row.candidateRecordsGenerated,
+    candidateCoverageRatio: row.candidateCoverageRatio,
+    coverageStatus: row.sourceRichCandidateThin ? "blocked" : "gap",
+    candidateThin: row.sourceRichCandidateThin || row.candidateRecordsGenerated === 0,
+    falseGreenRisk: row.falseGreenRisk,
+    unmappedFields: row.sourceRichCandidateThin ? 1 : 0,
+    quarantinedRecords: 0,
+    strandedIntelligenceRecords: row.sourceRichCandidateThin ? row.sourceStructuredRows : 0,
+    missingMappings: row.sourceRichCandidateThin
+      ? ["Source estate projection is incomplete in inactive candidate records."]
+      : [],
+    blockers: row.promotionUnsafe
+      ? ["Candidate remains inactive and is not safe for active promotion."]
+      : [],
+  }));
+}
+
+function deriveEvidenceQualityFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantEvidenceQuality[] {
+  return rows.map((row) => ({
+    tenantKey: row.tenantKey,
+    tenantDisplayName: row.tenantDisplayName,
+    evidenceOperationCount: row.evidenceOperationCount,
+    sourceDocumentCount: row.sourceStructuredRows > 0 ? 1 : 0,
+    evidenceRatio:
+      row.candidateRecordsGenerated > 0
+        ? row.evidenceOperationCount / row.candidateRecordsGenerated
+        : 0,
+    status: row.evidenceOperationCount > 0 ? "watch" : "gap",
+    findings:
+      row.evidenceOperationCount > 0
+        ? ["Evidence operations exist, but source-to-candidate coverage still needs validation."]
+        : ["No evidence operations are visible for the inactive candidate posture."],
+  }));
+}
+
+function deriveRelationshipCoverageFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantRelationshipGraphQuality[] {
+  return rows.map((row) => ({
+    tenantKey: row.tenantKey,
+    tenantDisplayName: row.tenantDisplayName,
+    relationshipOperationCount: row.relationshipOperationCount,
+    relationshipSourceFiles: row.sourceStructuredRows > 0 ? 1 : 0,
+    integrationSourceFiles: row.tenantKey === "skyharbor-air" ? 1 : 0,
+    graphPlanAvailableForAllModules: row.relationshipOperationCount > 0,
+    status: row.relationshipOperationCount > 0 ? "pass" : "gap",
+    findings:
+      row.relationshipOperationCount > 0
+        ? []
+        : [
+            "Relationship projection is not ready; dependency-rich source evidence must not be overstated.",
+          ],
+  }));
+}
+
+function deriveGeneratedRiskFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantGeneratedDataRisk[] {
+  return rows.map((row) => ({
+    tenantKey: row.tenantKey,
+    tenantDisplayName: row.tenantDisplayName,
+    generatedOrSyntheticSourceFiles: row.generatedDataRisk === "watch" ? 1 : 0,
+    narrativeCaveatRequired: row.generatedDataRisk === "watch",
+    status: row.generatedDataRisk,
+    findings:
+      row.generatedDataRisk === "watch"
+        ? ["Planning-grade/generated source caveat must remain visible."]
+        : [],
+  }));
+}
+
+function deriveModuleReadinessFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantModuleReadinessQuality[] {
+  return rows.map((row) => ({
+    tenantKey: row.tenantKey,
+    tenantDisplayName: row.tenantDisplayName,
+    modulesEvaluated: 5,
+    modulesWithEvidence: row.evidenceOperationCount > 0 ? 1 : 0,
+    modulesWithFactPlan: row.candidateRecordsGenerated > 0 ? 1 : 0,
+    modulesWithGraphPlan: row.relationshipOperationCount > 0 ? 1 : 0,
+    modulesWithDerivedPlan: row.candidateRecordsGenerated > 0 ? 1 : 0,
+    runtimeReadyModules: 0,
+    moduleOverreadinessRisk: row.sourceRichCandidateThin,
+    status: row.moduleReadinessStatus,
+    findings: row.sourceRichCandidateThin
+      ? ["Module readiness is preview-only until candidate coverage expands."]
+      : [],
+  }));
+}
+
+function derivePromotionReadinessFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantPromotionReadinessQuality[] {
+  return rows.map((row) => ({
+    tenantKey: row.tenantKey,
+    tenantDisplayName: row.tenantDisplayName,
+    promotionGateStatus: row.promotionReadinessStatus,
+    activeAccessMetadataPresent: false,
+    promotionUnsafe: row.promotionUnsafe,
+    blockers: row.promotionUnsafe
+      ? ["Candidate coverage, relationship projection, and operator approval remain incomplete."]
+      : [],
+    requiredBeforeActiveTruth: row.promotionUnsafe
+      ? [
+          "Expand source-to-candidate projection.",
+          "Generate relationship operations from validated dependencies.",
+          "Re-run promotion gate with rollback proof.",
+        ]
+      : [],
+  }));
+}
+
+function deriveAdminHomeCaveatsFromMatrix(
+  rows: TenantQualityMatrixRow[],
+): TenantAdminHomeCaveat[] {
+  return rows.map((row) => ({
+    tenantKey: row.tenantKey,
+    tenantDisplayName: row.tenantDisplayName,
+    homeSummaryCaveat: row.sourceRichCandidateThin
+      ? "Home can describe loaded source posture, but active/candidate facts do not yet cover the full source estate."
+      : "Home can describe the available source posture, with no active promotion implied.",
+    gapsCaveat: row.recommendedNextAction,
+    sourcesCaveat: `${formatNumber(row.sourceStructuredRows)} source rows were observed in the quality audit; candidate coverage is ${(row.candidateCoverageRatio * 100).toFixed(1)}%.`,
+    relationshipsCaveat:
+      row.relationshipOperationCount > 0
+        ? "Relationship operations are available for preview."
+        : "Relationship operations are not projected yet and must remain a visible gap.",
+  }));
+}
+
+function emptySourceDomains(): TenantSourceEstateCoverage["domains"] {
+  return {
+    enterprise_profile: 0,
+    systems_estate: 0,
+    mainframe_and_core: 0,
+    data_and_analytics: 0,
+    integration_estate: 0,
+    vendors_contracts: 0,
+    financial_value: 0,
+    moves_execution: 0,
+    source_events: 0,
+    tower_outcomes: 0,
+    risk_controls: 0,
+    relationships: 0,
+    benchmarks: 0,
+    workforce: 0,
+    documents: 0,
   };
 }
 

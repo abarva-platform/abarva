@@ -1199,7 +1199,7 @@ function validateAuditGuardrails(report: AllTenantDataQualityAudit): void {
   assertTenantIsolationAudit(report);
 }
 
-function buildEmbeddedTenantQualityMatrix(): TenantQualityMatrixArtifact {
+export function buildEmbeddedTenantQualityMatrix(): TenantQualityMatrixArtifact {
   return {
     generatedAt: "2026-07-13T04:30:21.622Z",
     guardrails: {
