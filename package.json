@@ -245,6 +245,7 @@
     "audit:candidate-preview-mode": "tsx scripts/audit/build-candidate-preview-mode.ts",
     "audit:operator-promotion-workflow": "tsx scripts/audit/build-operator-promotion-workflow.ts",
     "audit:promotion-execution-dry-run": "tsx scripts/audit/build-promotion-execution-dry-run.ts",
+    "audit:active-tenant-access-promotion": "tsx scripts/audit/build-active-tenant-access-promotion.ts",
     "audit:candidate-preview-enablement": "tsx scripts/audit/build-candidate-preview-enablement.ts",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
