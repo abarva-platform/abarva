@@ -360,13 +360,7 @@ async function crawlSurface(
     await proveContextDemoVectorPath(page, persona, safeName, out);
   }
   if (surface.id === "home") {
-    await proveHomeAvaRail(page, persona, safeName, out).catch((error) => {
-      console.warn(
-        `crawl_home_ava_proof_failed:${safeName}:${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    });
+    await proveHomeAvaRail(page, persona, safeName, out);
   }
 
   const html = await page.content();
@@ -431,9 +425,23 @@ async function proveHomeAvaRail(
     await drawer.getByPlaceholder(/ask about this context/i).fill(prompt);
     await drawer.getByRole("button", { name: /ask|send|submit/i }).last().click();
   }
-  await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => undefined);
-  await page.waitForTimeout(2_000);
+  await page.waitForFunction(
+    () => {
+      const panel = document.querySelector('[data-testid="home-ava-drawer"]');
+      const text = panel?.textContent ?? "";
+      const promptSubmitted = text.includes("Explain this company in plain English.");
+      const stillLoading = text.includes("Reading loaded context...");
+      const hasEnterpriseAnswer =
+        /headquarters|revenue|employees|business model|industry|mission|vision|strategic priorit/i.test(text) ||
+        /\$[0-9][0-9.,]*(?:[BMK])?\b/.test(text);
+      return promptSubmitted && !stillLoading && hasEnterpriseAnswer;
+    },
+    { timeout: 60_000 },
+  );
   const text = await drawer.innerText({ timeout: 10_000 }).catch(() => "");
+  if (text.includes("Reading loaded context...")) {
+    throw new Error("Home aVa response did not finish before transcript capture");
+  }
   await fs.writeFile(
     path.join(out, "transcripts", `${safeName}__home-ava.txt`),
     [
