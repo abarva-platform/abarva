@@ -1,0 +1,30 @@
+{
+  "url": "https://app.abarva.ai/home",
+  "title": "Home · Enterprise Knowledge | AbarVa",
+  "ready": "complete",
+  "text": "Airline Demo\nHome\nIntelligence\nMoves\nSource\nTower\nLearn\nAS\nAnand Sundaram · Airline Demo\nSign out\nHOME · ENTERPRISE KNOWLEDGE\nAirline Demo\nDEMO\n\nBrowse known facts, source-backed evidence, evidence gaps, and relationships before sending work to Intelligence, Moves, Source, or Tower.\n\nACTIVE DATA\nActive Home context\nCANDIDATE PREVIEW\nNot active\nLAST CHECKED\nJul 9\nDATA ORIGIN\nDemo-safe\n100%\nCONTEXT LOADED & MAPPED\nContext Explorer\n7 AREAS\n⌕\nSource-backed\nNeeds evidence\nGap\nEnterprise overview\n446 records across all context areas\n0 gaps\nENTERPRISE\nFunctions\n20 records · source-backed\n20\nApplications & Systems\n92 records · source-backed\n92\nVendors & Contracts\n27 records · source-backed\n27\nData Assets & Integrations\n152 records · source-backed\n152\nDELIVERY\nPrograms & Priorities\n10 records · source-backed\n10\nRisks & Controls\n42 records · source-backed\n42\nMetrics & Outcomes\n26 records · source-backed\n26\nHOME · ENTERPRISE KNOWLEDGE\nFunctions\n\nPortfolio Company Hierarchy has 1 loaded records from 1 source file. No repeated evidence-gap pattern is visible in this area.\n\nExplain context\nSend to Intelligence\nSummary\nData\nGaps\nSources\nRelationships\nWHAT IS LOADED\n1 records\n\nPortfolio Company Hierarchy loaded records with source-backed values and readable fields.\n\nWHAT CAN BE TRUSTED\n1 source file\n\nHome shows source-backed context and keeps missing evidence visible.\n\nWHAT NEEDS WORK\n0 fields\n\nGaps are client-to-complete fields, not confidence theater.\n\nRepresentative loaded rows\n1\n\nAirline Demo · enterprise\n\na\naVa\nScoped · read-only over evidence\nSCOPE · FUNCTIONS · READING ACTIVE HOME CONTEXT\nI CAN ANSWER\nwhat evidence is loaded for this area\nwhich fields still need client evidence\nwhere related context should be inspected next\nI WON’T ANSWER\nstrategy, use-case design, or advisory synthesis\nfacts outside the active Home context\nExplain functions in plain English.\nShow gaps in functions.\nWhat can Home answer about functions?\n↑\nCONTEXT QUALITY\n51%\nFunctions\n\n1 records, 1 source file, 0 fields to complete.\n\nWHAT CHANGED\nON\nActive Home context\nOFF\nCandidate data unless preview is explicit",
+  "headings": ["Airline Demo\nDEMO", "Functions", "Representative loaded rows"],
+  "buttons": [
+    "Sign out",
+    "Enterprise overview\n446 records across all context areas\n0 gaps",
+    "Functions\n20 records · source-backed\n20",
+    "Applications & Systems\n92 records · source-backed\n92",
+    "Vendors & Contracts\n27 records · source-backed\n27",
+    "Data Assets & Integrations\n152 records · source-backed\n152",
+    "Programs & Priorities\n10 records · source-backed\n10",
+    "Risks & Controls\n42 records · source-backed\n42",
+    "Metrics & Outcomes\n26 records · source-backed\n26",
+    "Explain context",
+    "Send to Intelligence",
+    "Summary",
+    "Data",
+    "Gaps",
+    "Sources",
+    "Relationships",
+    "Explain functions in plain English.",
+    "Show gaps in functions.",
+    "What can Home answer about functions?",
+    "↑"
+  ],
+  "links": ["", "Home", "Intelligence", "Moves", "Source", "Tower", "Learn"]
+}

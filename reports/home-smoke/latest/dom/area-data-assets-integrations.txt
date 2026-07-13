@@ -1,0 +1,128 @@
+Airline Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Airline Demo
+Sign out
+HOME · ENTERPRISE KNOWLEDGE
+Airline Demo
+DEMO
+
+Browse known facts, source-backed evidence, evidence gaps, and relationships before sending work to Intelligence, Moves, Source, or Tower.
+
+ACTIVE DATA
+Active Home context
+CANDIDATE PREVIEW
+Not active
+LAST CHECKED
+Jul 9
+DATA ORIGIN
+Demo-safe
+100%
+CONTEXT LOADED & MAPPED
+Context Explorer
+7 AREAS
+⌕
+Source-backed
+Needs evidence
+Gap
+Enterprise overview
+446 records across all context areas
+0 gaps
+ENTERPRISE
+Functions
+20 records · source-backed
+20
+Applications & Systems
+92 records · source-backed
+92
+Vendors & Contracts
+27 records · source-backed
+27
+Data Assets & Integrations
+152 records · source-backed
+152
+DELIVERY
+Programs & Priorities
+10 records · source-backed
+10
+Risks & Controls
+42 records · source-backed
+42
+Metrics & Outcomes
+26 records · source-backed
+26
+HOME · ENTERPRISE KNOWLEDGE
+Data Assets & Integrations
+
+Data Assets Integrations has 35 loaded records from 1 source file. No repeated evidence-gap pattern is visible in this area.
+
+Explain context
+Send to Intelligence
+Summary
+Data
+Gaps
+Sources
+Relationships
+WHAT IS LOADED
+35 records
+
+Data Assets Integrations loaded records with source-backed values and readable fields.
+
+WHAT CAN BE TRUSTED
+1 source file
+
+Home shows source-backed context and keeps missing evidence visible.
+
+WHAT NEEDS WORK
+0 fields
+
+Gaps are client-to-complete fields, not confidence theater.
+
+Representative loaded rows
+1
+
+Airline Demo · IROPS AI Recovery Cockpit: disruption events
+
+2
+
+Airline Demo · IROPS AI Recovery Cockpit: flight status
+
+3
+
+Airline Demo · IROPS AI Recovery Cockpit: crew legality
+
+4
+
+Airline Demo · IROPS AI Recovery Cockpit: customer reaccommodation
+
+a
+aVa
+Scoped · read-only over evidence
+SCOPE · DATA ASSETS & INTEGRATIONS · READING ACTIVE HOME CONTEXT
+I CAN ANSWER
+what evidence is loaded for this area
+which fields still need client evidence
+where related context should be inspected next
+I WON’T ANSWER
+strategy, use-case design, or advisory synthesis
+facts outside the active Home context
+Explain data assets & integrations in plain English.
+Show gaps in data assets & integrations.
+What can Home answer about data assets & integrations?
+↑
+CONTEXT QUALITY
+74%
+Data Assets & Integrations
+
+35 records, 1 source file, 0 fields to complete.
+
+WHAT CHANGED
+ON
+Active Home context
+OFF
+Candidate data unless preview is explicit

@@ -1,0 +1,22 @@
+{
+  "activeDefault": {
+    "route": "/home",
+    "activeHomeContextVisible": true,
+    "candidateBannerVisible": false,
+    "activeTenantTruthVisible": false
+  },
+  "candidatePreview": {
+    "route": "/home?candidatePreview=true",
+    "inactiveCandidateBannerVisible": true,
+    "notActiveTenantTruthVisible": true,
+    "candidatePromotedClaimVisible": false
+  },
+  "setupControlGuardrails": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "candidatePromoted": false,
+    "moduleRuntimeConsumptionChanged": false,
+    "candidateReadByDefault": false,
+    "directActivePromotionBlocked": true
+  }
+}

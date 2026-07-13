@@ -415,7 +415,10 @@
     "v7:skyharbor:candidate-load-job": "node scripts/qa/skyharbor-v7-upgrade-proof-job.mjs --mode candidate-load",
     "v7:skyharbor:promote-job": "node scripts/qa/skyharbor-v7-upgrade-proof-job.mjs --mode promote",
     "v7:skyharbor:live-proof": "node scripts/qa/skyharbor-v7-upgrade-live-proof.mjs",
-    "v7:moat:verify": "node scripts/v7/verify-intelligence-moat-foundation.mjs"
+    "v7:moat:verify": "node scripts/v7/verify-intelligence-moat-foundation.mjs",
+    "smoke:home": "npx tsx scripts/qa/home-e2e-smoke-proof.ts --mode=fixture",
+    "crawl:home-proof": "npx tsx scripts/qa/home-e2e-smoke-proof.ts --mode=chrome",
+    "qa:home-ava": "npx tsx scripts/qa/home-e2e-smoke-proof.ts --mode=chrome"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

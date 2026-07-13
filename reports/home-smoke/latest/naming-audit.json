@@ -1,0 +1,62 @@
+{
+  "blockedPrimaryLabels": [
+    {
+      "label": "V4",
+      "visible": false
+    },
+    {
+      "label": "V6",
+      "visible": false
+    },
+    {
+      "label": "V7",
+      "visible": false
+    },
+    {
+      "label": "Canonical Fact Store",
+      "visible": false
+    },
+    {
+      "label": "Evidence Registry",
+      "visible": false
+    },
+    {
+      "label": "Enterprise Relationship Graph",
+      "visible": false
+    },
+    {
+      "label": "Derived Intelligence Store",
+      "visible": false
+    },
+    {
+      "label": "Target Writer",
+      "visible": false
+    },
+    {
+      "label": "Promotion Gate",
+      "visible": false
+    }
+  ],
+  "businessFacingLabels": [
+    {
+      "label": "Active Home context",
+      "visible": true
+    },
+    {
+      "label": "Evidence",
+      "visible": true
+    },
+    {
+      "label": "Relationships",
+      "visible": false
+    },
+    {
+      "label": "Gaps",
+      "visible": false
+    },
+    {
+      "label": "Candidate Preview",
+      "visible": true
+    }
+  ]
+}

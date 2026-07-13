@@ -1,0 +1,30 @@
+{
+  "url": "https://app.abarva.ai/home",
+  "title": "Home · Enterprise Knowledge | AbarVa",
+  "ready": "complete",
+  "text": "Airline Demo\nHome\nIntelligence\nMoves\nSource\nTower\nLearn\nAS\nAnand Sundaram · Airline Demo\nSign out\nHOME · ENTERPRISE KNOWLEDGE\nAirline Demo\nDEMO\n\nBrowse known facts, source-backed evidence, evidence gaps, and relationships before sending work to Intelligence, Moves, Source, or Tower.\n\nACTIVE DATA\nActive Home context\nCANDIDATE PREVIEW\nNot active\nLAST CHECKED\nJul 9\nDATA ORIGIN\nDemo-safe\n100%\nCONTEXT LOADED & MAPPED\nContext Explorer\n7 AREAS\n⌕\nSource-backed\nNeeds evidence\nGap\nEnterprise overview\n446 records across all context areas\n0 gaps\nENTERPRISE\nFunctions\n20 records · source-backed\n20\nApplications & Systems\n92 records · source-backed\n92\nVendors & Contracts\n27 records · source-backed\n27\nData Assets & Integrations\n152 records · source-backed\n152\nDELIVERY\nPrograms & Priorities\n10 records · source-backed\n10\nRisks & Controls\n42 records · source-backed\n42\nMetrics & Outcomes\n26 records · source-backed\n26\nHOME · ENTERPRISE KNOWLEDGE\nMetrics & Outcomes\n\nMetric Definitions has 12 loaded records from 1 source file. No repeated evidence-gap pattern is visible in this area.\n\nExplain context\nSend to Intelligence\nSummary\nData\nGaps\nSources\nRelationships\n\nPlain English: relationships are mapped links between business objects, such as systems to vendors, applications to data, or initiatives to owners. If this selected area is only a profile anchor, use relationship-heavy areas like Systems, Data, Vendors, or the Relationships reference.\n\nSelect a relationship-heavy context area, such as Applications, Data, Vendors, or Relationships, to inspect mapped links.\n\na\naVa\nScoped · read-only over evidence\nSCOPE · METRICS & OUTCOMES · READING ACTIVE HOME CONTEXT\nI CAN ANSWER\nwhat evidence is loaded for this area\nwhich fields still need client evidence\nwhere related context should be inspected next\nI WON’T ANSWER\nstrategy, use-case design, or advisory synthesis\nfacts outside the active Home context\nExplain metrics & outcomes in plain English.\nShow gaps in metrics & outcomes.\nWhat can Home answer about metrics & outcomes?\nWhat can Home answer about metrics & outcomes?\nAirline Demo's loaded metric definitions context shows IROPS recovery cycle time, Crew legality resolution time, Passenger reaccommodation SLA, Disruption cost baseline, Operational AI control evidence, IROPS AI recovery cockpit baseline readiness, Crew recovery decision support baseline readiness, and Customer reaccommodation and notification assist baseline readiness. Home can use this as current-state context while keeping confidence and validation boundaries visible.\n\nLoaded detail fields also show Synthetic airline planning-grade substrate, not real Airline Demo production data., Existing tenant upgrade candidate, do not treat as active until promotion proof passes., No client-approved system inventory, contract economics, or operational baseline is loaded., and No production IROPS AI.\n\nImportant source gap: Known Gaps. 12 entries need stronger client evidence for this field.\n\nDetails available: 1 table.\n\nOpen gaps: 12 entries need stronger client evidence for this field. Confirm known gaps from the client source owner or source file..\n↑\nCONTEXT QUALITY\n66%\nMetrics & Outcomes\n\n12 records, 1 source file, 0 fields to complete.\n\nWHAT CHANGED\nON\nActive Home context\nOFF\nCandidate data unless preview is explicit",
+  "headings": ["Airline Demo\nDEMO", "Metrics & Outcomes"],
+  "buttons": [
+    "Sign out",
+    "Enterprise overview\n446 records across all context areas\n0 gaps",
+    "Functions\n20 records · source-backed\n20",
+    "Applications & Systems\n92 records · source-backed\n92",
+    "Vendors & Contracts\n27 records · source-backed\n27",
+    "Data Assets & Integrations\n152 records · source-backed\n152",
+    "Programs & Priorities\n10 records · source-backed\n10",
+    "Risks & Controls\n42 records · source-backed\n42",
+    "Metrics & Outcomes\n26 records · source-backed\n26",
+    "Explain context",
+    "Send to Intelligence",
+    "Summary",
+    "Data",
+    "Gaps",
+    "Sources",
+    "Relationships",
+    "Explain metrics & outcomes in plain English.",
+    "Show gaps in metrics & outcomes.",
+    "What can Home answer about metrics & outcomes?",
+    "↑"
+  ],
+  "links": ["", "Home", "Intelligence", "Moves", "Source", "Tower", "Learn"]
+}

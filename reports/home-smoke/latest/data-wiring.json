@@ -1,0 +1,26 @@
+{
+  "mode": "DOM plus setup-control API",
+  "renderedValues": {
+    "hasContextExplorer": true,
+    "hasEnterpriseKnowledgeSnapshot": true,
+    "hasEvidence": true,
+    "areas": [
+      "Functions",
+      "Applications & Systems",
+      "Vendors & Contracts",
+      "Data Assets & Integrations",
+      "Programs & Priorities",
+      "Risks & Controls",
+      "Metrics & Outcomes"
+    ]
+  },
+  "setupControlAvailable": true,
+  "setupControlTenant": {
+    "tenantKey": "skyharbor",
+    "displayName": "Airline Demo",
+    "coverName": "Airline Demo",
+    "mode": "setup",
+    "realOrSyntheticStatus": "demo_safe_synthetic"
+  },
+  "caveat": "Home context payload is server-rendered into the page; setup-control is captured separately through its read-only API."
+}

@@ -1,0 +1,128 @@
+Airline Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Airline Demo
+Sign out
+HOME · ENTERPRISE KNOWLEDGE
+Airline Demo
+DEMO
+
+Browse known facts, source-backed evidence, evidence gaps, and relationships before sending work to Intelligence, Moves, Source, or Tower.
+
+ACTIVE DATA
+Active Home context
+CANDIDATE PREVIEW
+Not active
+LAST CHECKED
+Jul 9
+DATA ORIGIN
+Demo-safe
+100%
+CONTEXT LOADED & MAPPED
+Context Explorer
+7 AREAS
+⌕
+Source-backed
+Needs evidence
+Gap
+Enterprise overview
+446 records across all context areas
+0 gaps
+ENTERPRISE
+Functions
+20 records · source-backed
+20
+Applications & Systems
+92 records · source-backed
+92
+Vendors & Contracts
+27 records · source-backed
+27
+Data Assets & Integrations
+152 records · source-backed
+152
+DELIVERY
+Programs & Priorities
+10 records · source-backed
+10
+Risks & Controls
+42 records · source-backed
+42
+Metrics & Outcomes
+26 records · source-backed
+26
+HOME · ENTERPRISE KNOWLEDGE
+Applications & Systems
+
+Applications Systems has 13 loaded records from 1 source file. No repeated evidence-gap pattern is visible in this area.
+
+Explain context
+Send to Intelligence
+Summary
+Data
+Gaps
+Sources
+Relationships
+WHAT IS LOADED
+13 records
+
+Applications Systems loaded records with source-backed values and readable fields.
+
+WHAT CAN BE TRUSTED
+1 source file
+
+Home shows source-backed context and keeps missing evidence visible.
+
+WHAT NEEDS WORK
+0 fields
+
+Gaps are client-to-complete fields, not confidence theater.
+
+Representative loaded rows
+1
+
+Airline Demo · OCC disruption management console
+
+2
+
+Airline Demo · Flight operations dispatch platform
+
+3
+
+Airline Demo · Crew scheduling and legality platform
+
+4
+
+Airline Demo · Passenger service system
+
+a
+aVa
+Scoped · read-only over evidence
+SCOPE · APPLICATIONS & SYSTEMS · READING ACTIVE HOME CONTEXT
+I CAN ANSWER
+what evidence is loaded for this area
+which fields still need client evidence
+where related context should be inspected next
+I WON’T ANSWER
+strategy, use-case design, or advisory synthesis
+facts outside the active Home context
+Explain applications & systems in plain English.
+Show gaps in applications & systems.
+What can Home answer about applications & systems?
+↑
+CONTEXT QUALITY
+67%
+Applications & Systems
+
+13 records, 1 source file, 0 fields to complete.
+
+WHAT CHANGED
+ON
+Active Home context
+OFF
+Candidate data unless preview is explicit
