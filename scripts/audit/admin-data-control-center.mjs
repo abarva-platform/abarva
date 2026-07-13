@@ -26,10 +26,13 @@ const requiredFiles = [
   "reports/admin-setup-control/admin-pr2-overview-readout.md",
   "reports/admin-data-intake-library/latest/admin-data-intake-library.json",
   "reports/admin-data-intake-library/latest/admin-data-intake-library-summary.md",
+  "reports/admin-tenant-packet-artifacts/latest/admin-tenant-packet-artifacts.json",
+  "reports/admin-tenant-packet-artifacts/latest/admin-tenant-packet-artifacts-summary.md",
   "docs/architecture/admin-data-control-center.md",
   "docs/releases/records/2026-07-12-admin-setup-control.md",
   "docs/releases/records/2026-07-12-admin-overview-setup-control.md",
   "docs/releases/records/2026-07-12-admin-data-intake-library.md",
+  "docs/releases/records/2026-07-12-admin-tenant-packet-artifacts.md",
 ];
 
 for (const file of requiredFiles) {
@@ -49,6 +52,9 @@ const proof = JSON.parse(
 );
 const intakeProof = JSON.parse(
   read("reports/admin-data-intake-library/latest/admin-data-intake-library.json"),
+);
+const artifactProof = JSON.parse(
+  read("reports/admin-tenant-packet-artifacts/latest/admin-tenant-packet-artifacts.json"),
 );
 
 const requiredSections = [
@@ -160,10 +166,38 @@ assert(
   "Admin UI distinguishes template contracts from uploaded evidence and active truth",
 );
 assert(
-  adminUi.includes("<button type=\"button\" disabled>") &&
+  adminUi.includes("/api/admin/data-intake/tenant-packet") &&
+    adminUi.includes("/api/admin/data-intake/templates/") &&
+    adminUi.includes("/field-dictionary") &&
+    adminUi.includes("/api/admin/data-intake/guides/"),
+  "ADMIN-PR4 exposes generated packet, template, dictionary, and guide artifacts",
+);
+assert(
+  adminUi.includes("Upload in ADMIN-PR5") &&
     adminUi.includes("Download template") &&
-    adminUi.includes("Upload later"),
-  "Data Intake Library actions are honest disabled placeholders in ADMIN-PR3",
+    adminUi.includes("Download selected template") &&
+    adminUi.includes("Download dictionary") &&
+    adminUi.includes("Download guide"),
+  "ADMIN-PR4 replaces download placeholders while keeping upload out of scope",
+);
+assert(
+  intakeLibrary.includes("buildAdminTenantPacketManifest") &&
+    intakeLibrary.includes("buildAdminTemplateCsv") &&
+    intakeLibrary.includes("buildAdminFieldDictionaryCsv") &&
+    intakeLibrary.includes("buildAdminGuideMarkdown"),
+  "Data Intake Library can generate artifacts from the catalog contract",
+);
+assert(
+  artifactProof.templateCount === 19 &&
+    artifactProof.guideCount === 6 &&
+    artifactProof.generatedArtifacts.includes("tenant-packet-zip") &&
+    artifactProof.generatedArtifacts.includes("template-csv") &&
+    artifactProof.generatedArtifacts.includes("field-dictionary-csv") &&
+    artifactProof.generatedArtifacts.includes("guide-markdown") &&
+    artifactProof.truthSplit.uploadEnabled === false &&
+    artifactProof.truthSplit.candidatePromoted === false &&
+    artifactProof.truthSplit.activeTenantAccessUpdated === false,
+  "ADMIN-PR4 proof preserves read-only artifact truth split",
 );
 
 if (process.exitCode) {

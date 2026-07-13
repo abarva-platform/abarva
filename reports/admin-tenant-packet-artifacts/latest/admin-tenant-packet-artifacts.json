@@ -1,0 +1,52 @@
+{
+  "releaseId": "ADMIN-PR4",
+  "title": "Tenant Packet Builder and Template/Guide Artifacts",
+  "templateCount": 19,
+  "guideCount": 6,
+  "generatedArtifacts": [
+    "tenant-packet-zip",
+    "template-csv",
+    "field-dictionary-csv",
+    "guide-markdown"
+  ],
+  "uiProofTargets": [
+    "Data Intake Library",
+    "Tenant Packet Builder",
+    "Packet selection",
+    "Template detail",
+    "Field dictionary",
+    "How-to guide",
+    "Download full Tenant Packet",
+    "Download selected template",
+    "Download dictionary",
+    "Download guide",
+    "Upload in ADMIN-PR5"
+  ],
+  "truthSplit": {
+    "uploadEnabled": false,
+    "parsingExecuted": false,
+    "validationExecuted": false,
+    "candidateCreated": false,
+    "candidatePromoted": false,
+    "productionTenantDataWritten": false,
+    "activeTenantAccessUpdated": false,
+    "moduleRuntimeConsumptionChanged": false
+  },
+  "apiRoutes": [
+    "/api/admin/data-intake/tenant-packet",
+    "/api/admin/data-intake/templates/[templateId]/download",
+    "/api/admin/data-intake/templates/[templateId]/field-dictionary",
+    "/api/admin/data-intake/guides/[guideId]"
+  ],
+  "validation": {
+    "focusedJest": "pass",
+    "adminAudit": "pass",
+    "enterpriseNamingAudit": "pass",
+    "architectureRules": "pass",
+    "releaseCheck": "pass",
+    "typescript": "pass",
+    "eslint": "pass",
+    "gitDiffCheck": "pass",
+    "signedInProof": "not-run"
+  }
+}

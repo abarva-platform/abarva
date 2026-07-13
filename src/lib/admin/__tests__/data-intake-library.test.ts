@@ -1,6 +1,11 @@
 import {
   ADMIN_TEMPLATE_CATALOG,
+  buildAdminFieldDictionaryCsv,
   buildAdminDataIntakeLibraryView,
+  buildAdminGuideMarkdown,
+  buildAdminTemplateArtifact,
+  buildAdminTemplateCsv,
+  buildAdminTenantPacketManifest,
 } from "@/lib/admin/data-intake-library";
 import { buildAdminSetupControlReadModel } from "@/lib/admin/setup-control";
 
@@ -81,5 +86,38 @@ describe("admin data intake library", () => {
           "Template contract defined - downloadable file not yet generated.",
       }),
     );
+  });
+
+  it("generates read-only template, dictionary, guide, and tenant packet artifacts", () => {
+    const template = ADMIN_TEMPLATE_CATALOG.find(
+      (item) => item.id === "applications-systems",
+    );
+    expect(template).toBeTruthy();
+
+    const artifact = buildAdminTemplateArtifact(template!);
+    const templateCsv = buildAdminTemplateCsv(template!);
+    const dictionaryCsv = buildAdminFieldDictionaryCsv(template!);
+    const guideMarkdown = buildAdminGuideMarkdown({
+      id: "new-tenant-onboarding",
+      title: "New tenant onboarding guide",
+      detail: "Start with enterprise context.",
+      stepCount: 15,
+      entryPoint: "Download full Tenant Packet",
+    });
+    const manifest = buildAdminTenantPacketManifest();
+
+    expect(artifact.downloadFileName).toBe("applications-systems.csv");
+    expect(artifact.fields.map((field) => field.fieldName)).toContain(
+      "Application name",
+    );
+    expect(templateCsv).toContain("Application name");
+    expect(templateCsv).toContain("SAP S/4HANA");
+    expect(dictionaryCsv).toContain("Field name,Requirement,Description");
+    expect(dictionaryCsv).toContain("Module impact");
+    expect(guideMarkdown).toContain("Uploaded evidence is not active tenant truth");
+    expect(manifest.truthSplit.uploadEnabled).toBe(false);
+    expect(manifest.truthSplit.candidatePromoted).toBe(false);
+    expect(manifest.templates).toHaveLength(19);
+    expect(manifest.guides).toHaveLength(6);
   });
 });

@@ -5,8 +5,13 @@ import { useMemo, useState, type ReactNode } from "react";
 import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
 import { ClassificationTriageQueue } from "@/components/admin/context-layer/ClassificationTriageQueue";
 import {
+  buildAdminGuideMarkdown,
+  buildAdminTemplateArtifact,
+  buildAdminTemplateFieldDictionary,
   buildAdminDataIntakeLibraryView,
   type AdminDataIntakeLibraryView,
+  type AdminDataIntakeGuide,
+  type AdminTemplateCatalogItem,
   type AdminTemplateCatalogViewItem,
 } from "@/lib/admin/data-intake-library";
 import type { LoadStudioView } from "@/lib/admin/setup-load-studio-view";
@@ -557,7 +562,20 @@ function TemplateStatusChip({ status }: { status: string }) {
   );
 }
 
-function TemplateCard({ item }: { item: AdminTemplateCatalogViewItem }) {
+function TemplateCard({
+  item,
+  isSelected,
+  onToggle,
+  onViewTemplate,
+  onViewGuide,
+}: {
+  item: AdminTemplateCatalogViewItem;
+  isSelected: boolean;
+  onToggle: () => void;
+  onViewTemplate: () => void;
+  onViewGuide: () => void;
+}) {
+  const artifact = buildAdminTemplateArtifact(item);
   return (
     <article className="setup-template-card">
       <div className="setup-template-card-head">
@@ -575,6 +593,10 @@ function TemplateCard({ item }: { item: AdminTemplateCatalogViewItem }) {
           {item.exampleRowsAvailable ? "Example rows available" : "No example rows"}
         </span>
       </div>
+      <label className="setup-template-select">
+        <input type="checkbox" checked={isSelected} onChange={onToggle} />
+        <span>Include in packet view</span>
+      </label>
       <dl className="setup-template-definition">
         <div>
           <dt>Usually completed by</dt>
@@ -605,20 +627,166 @@ function TemplateCard({ item }: { item: AdminTemplateCatalogViewItem }) {
         ) : null}
       </div>
       <div className="setup-template-actions" aria-label={`${item.name} actions`}>
-        <button type="button" disabled>
+        <button type="button" onClick={onViewGuide}>
           View guide
         </button>
-        <button type="button" disabled>
+        <a href={`/api/admin/data-intake/templates/${item.id}/download`} download>
           Download template
+        </a>
+        <button type="button" onClick={onViewTemplate}>
+          View template
         </button>
+        <a
+          href={`/api/admin/data-intake/templates/${item.id}/field-dictionary`}
+          download
+        >
+          Field dictionary
+        </a>
         <button type="button" disabled>
-          View example
-        </button>
-        <button type="button" disabled>
-          Upload later
+          Upload in ADMIN-PR5
         </button>
       </div>
+      <small className="setup-template-file-note">
+        Artifact: {artifact.downloadFileName}; generated from the governed
+        template contract.
+      </small>
     </article>
+  );
+}
+
+function TemplateDetail({
+  template,
+}: {
+  template: AdminTemplateCatalogItem;
+}) {
+  const artifact = buildAdminTemplateArtifact(template);
+  const fields = buildAdminTemplateFieldDictionary(template);
+
+  return (
+    <section className="setup-card setup-template-detail" aria-live="polite">
+      <SectionHeader
+        eyebrow="Template detail"
+        title={template.name}
+        subtitle={template.purpose}
+        action={
+          <a
+            className="setup-button setup-button-primary"
+            href={`/api/admin/data-intake/templates/${template.id}/download`}
+            download
+          >
+            Download selected template
+          </a>
+        }
+        compact
+      />
+      <div className="setup-detail-grid">
+        <ControlMetric
+          label="Owner"
+          value={template.expectedOwner}
+          note="Expected client contributor"
+        />
+        <ControlMetric
+          label="Accepted files"
+          value={template.acceptedFileTypes.join(", ")}
+          note="Download is CSV in this PR"
+        />
+        <ControlMetric
+          label="Maps to"
+          value={template.mappingTarget}
+          note="Read-only contract"
+        />
+      </div>
+      <div className="setup-template-sample">
+        <strong>Sample row</strong>
+        <div>
+          {Object.entries(artifact.sampleRows[0] ?? {})
+            .slice(0, 6)
+            .map(([field, value]) => (
+              <span key={field}>
+                <b>{field}</b>
+                {value}
+              </span>
+            ))}
+        </div>
+      </div>
+      <div className="setup-field-dictionary-head">
+        <div>
+          <div className="setup-label">Field dictionary</div>
+          <h3>Fields, rules, mapping, and module impact</h3>
+        </div>
+        <a
+          href={`/api/admin/data-intake/templates/${template.id}/field-dictionary`}
+          download
+        >
+          Download dictionary
+        </a>
+      </div>
+      <table className="setup-table setup-field-dictionary">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Use</th>
+            <th>Accepted values</th>
+            <th>Validation</th>
+            <th>Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          {fields.map((field) => (
+            <tr key={field.fieldName}>
+              <td>
+                <strong>{field.fieldName}</strong>
+                <small>{field.requirement}</small>
+              </td>
+              <td>{field.description}</td>
+              <td>{field.acceptedValues}</td>
+              <td>{field.validationRule}</td>
+              <td>{field.moduleImpact.join(", ")}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function GuideDetail({ guide }: { guide: AdminDataIntakeGuide }) {
+  const markdown = buildAdminGuideMarkdown(guide);
+  const lines = markdown
+    .split("\n")
+    .filter((line) => line.trim().length > 0 && !line.startsWith("#"))
+    .slice(0, 10);
+
+  return (
+    <section className="setup-card setup-guide-detail" aria-live="polite">
+      <SectionHeader
+        eyebrow="How-to guide"
+        title={guide.title}
+        subtitle={guide.detail}
+        action={
+          <a
+            className="setup-button setup-button-ghost"
+            href={`/api/admin/data-intake/guides/${guide.id}`}
+            download
+          >
+            Download guide
+          </a>
+        }
+        compact
+      />
+      <ol>
+        {lines
+          .filter((line) => /^\d+\./.test(line))
+          .map((line) => (
+            <li key={line}>{line.replace(/^\d+\.\s*/, "")}</li>
+          ))}
+      </ol>
+      <p>
+        This guide is generated from the catalog contract and keeps the same
+        guardrails: uploaded evidence is not active truth, candidate preview is
+        inactive, and promotion requires proof.
+      </p>
+    </section>
   );
 }
 
@@ -627,6 +795,20 @@ function DataIntakeLibrary({
 }: {
   intakeLibrary: AdminDataIntakeLibraryView;
 }) {
+  const defaultSelected = useMemo(
+    () =>
+      intakeLibrary.catalog
+        .filter((item) => item.requirement === "required")
+        .map((item) => item.id),
+    [intakeLibrary.catalog],
+  );
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>(defaultSelected);
+  const [activeTemplateId, setActiveTemplateId] = useState(
+    intakeLibrary.catalog[0]?.id ?? "",
+  );
+  const [activeGuideId, setActiveGuideId] = useState(
+    intakeLibrary.guides[0]?.id ?? "",
+  );
   const uploadedLike =
     intakeLibrary.statusCounts.uploaded +
     intakeLibrary.statusCounts.parsed +
@@ -637,24 +819,47 @@ function DataIntakeLibrary({
   const requiredTemplates = intakeLibrary.catalog.filter(
     (item) => item.requirement === "required",
   ).length;
+  const activeTemplate =
+    intakeLibrary.catalog.find((item) => item.id === activeTemplateId) ??
+    intakeLibrary.catalog[0];
+  const activeGuide =
+    intakeLibrary.guides.find((guide) => guide.id === activeGuideId) ??
+    intakeLibrary.guides[0];
+
+  function toggleTemplate(templateId: string) {
+    setSelectedTemplateIds((current) =>
+      current.includes(templateId)
+        ? current.filter((id) => id !== templateId)
+        : [...current, templateId],
+    );
+  }
 
   return (
     <section className="setup-intake">
       <SectionHeader
         eyebrow="Data intake library"
         title="Start with the right templates before uploading files"
-        subtitle="This is the read-only catalog for tenant packets, how-to guides, template contracts, validation expectations, and module-readiness impact."
-        action={<GhostButton>Download full Tenant Packet</GhostButton>}
+        subtitle="This read-only builder exposes tenant-packet templates, how-to guides, field dictionaries, validation expectations, and module-readiness impact."
+        action={
+          <a
+            className="setup-button setup-button-ghost"
+            href="/api/admin/data-intake/tenant-packet"
+            download
+          >
+            Download full Tenant Packet
+          </a>
+        }
       />
 
       <section className="setup-intake-hero">
         <div>
           <div className="setup-label">Tenant packet builder</div>
-          <h2>Understand required evidence before creating candidate data.</h2>
+          <h2>Build the evidence packet before any upload or promotion.</h2>
           <p>
             Admin should guide a client from template selection to populated
             packet, validation, inactive candidate preview, promotion review, and
-            active tenant truth. This PR stops at the catalog and guide layer.
+            active tenant truth. This PR makes templates and guides actionable,
+            but it still does not upload, validate, or promote data.
           </p>
         </div>
         <div className="setup-intake-scoreboard">
@@ -662,6 +867,11 @@ function DataIntakeLibrary({
             label="Templates"
             value={intakeLibrary.catalog.length}
             note={`${requiredTemplates} required contracts`}
+          />
+          <ControlMetric
+            label="Selected"
+            value={selectedTemplateIds.length}
+            note="for packet planning"
           />
           <ControlMetric
             label="Evidence matched"
@@ -701,6 +911,28 @@ function DataIntakeLibrary({
         </ol>
       </section>
 
+      <section className="setup-card setup-builder-card">
+        <SectionHeader
+          eyebrow="Packet selection"
+          title="Choose the templates this setup path needs"
+          subtitle="Selection is planning-only in ADMIN-PR4. It helps the operator understand what to collect before ADMIN-PR5 upload."
+          compact
+        />
+        <div className="setup-selected-templates">
+          {intakeLibrary.catalog.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={selectedTemplateIds.includes(item.id) ? "is-selected" : ""}
+              onClick={() => toggleTemplate(item.id)}
+            >
+              <span>{item.requirement}</span>
+              {item.name}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <div className="setup-guardrail-strip setup-intake-guardrails">
         {intakeLibrary.guardrails.map((guardrail) => (
           <span key={guardrail} className="is-safe">
@@ -722,17 +954,22 @@ function DataIntakeLibrary({
               <span>{guide.stepCount} steps</span>
               <strong>{guide.title}</strong>
               <p>{guide.detail}</p>
-              <button type="button">{guide.entryPoint}</button>
+              <button type="button" onClick={() => setActiveGuideId(guide.id)}>
+                {guide.entryPoint}
+              </button>
             </article>
           ))}
         </div>
       </section>
 
+      {activeGuide ? <GuideDetail guide={activeGuide} /> : null}
+      {activeTemplate ? <TemplateDetail template={activeTemplate} /> : null}
+
       <section className="setup-card setup-template-catalog">
         <SectionHeader
           eyebrow="Template catalog"
           title="Template contracts and readiness impact"
-          subtitle="Downloadable files are not generated in this slice. Where a file is not available, the UI says so instead of pretending the template is ready."
+          subtitle="Templates, field dictionaries, sample rows, and guides are generated from the same catalog contract shown here."
           compact
         />
         <div className="setup-template-summary">
@@ -744,7 +981,16 @@ function DataIntakeLibrary({
         </div>
         <div className="setup-template-grid">
           {intakeLibrary.catalog.map((item) => (
-            <TemplateCard key={item.id} item={item} />
+            <TemplateCard
+              key={item.id}
+              item={item}
+              isSelected={selectedTemplateIds.includes(item.id)}
+              onToggle={() => toggleTemplate(item.id)}
+              onViewTemplate={() => setActiveTemplateId(item.id)}
+              onViewGuide={() =>
+                setActiveGuideId(buildAdminTemplateArtifact(item).guideId)
+              }
+            />
           ))}
         </div>
       </section>
@@ -1211,9 +1457,12 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
         .setup-button {
           border-radius: 7px;
           cursor: pointer;
+          display: inline-flex;
           font-size: 13px;
           font-weight: 700;
+          line-height: 1;
           padding: 8px 12px;
+          text-decoration: none;
         }
         .setup-button-primary {
           background: ${blue};
@@ -1581,6 +1830,37 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           background: #fffdf8;
           margin-bottom: 16px;
         }
+        .setup-builder-card {
+          background: #fbfcfe;
+        }
+        .setup-selected-templates {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .setup-selected-templates button {
+          background: white;
+          border: 1px solid var(--setup-line);
+          border-radius: 999px;
+          color: #20304b;
+          font-size: 12px;
+          font-weight: 750;
+          padding: 7px 10px;
+        }
+        .setup-selected-templates button.is-selected {
+          background: #eef2ff;
+          border-color: ${blue};
+          box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.08);
+        }
+        .setup-selected-templates span {
+          color: #647084;
+          font-family: ${mono};
+          font-size: 9px;
+          font-weight: 850;
+          letter-spacing: 0.08em;
+          margin-right: 6px;
+          text-transform: uppercase;
+        }
         .setup-workflow-steps {
           counter-reset: none;
           display: grid;
@@ -1747,6 +2027,17 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           font-weight: 700;
           padding: 4px 7px;
         }
+        .setup-template-select {
+          align-items: center;
+          color: #34415a;
+          display: inline-flex;
+          font-size: 12px;
+          font-weight: 750;
+          gap: 7px;
+        }
+        .setup-template-select input {
+          accent-color: ${blue};
+        }
         .setup-template-definition {
           border-top: 1px solid #edf1f6;
           display: grid;
@@ -1822,7 +2113,8 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           gap: 8px;
           padding-top: 12px;
         }
-        .setup-template-actions button {
+        .setup-template-actions button,
+        .setup-template-actions a {
           background: white;
           border: 1px solid var(--setup-line);
           border-radius: 7px;
@@ -1830,11 +2122,104 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           font-size: 12px;
           font-weight: 750;
           padding: 6px 8px;
+          text-decoration: none;
         }
         .setup-template-actions button:disabled {
           color: #7d8798;
           cursor: not-allowed;
           opacity: 0.76;
+        }
+        .setup-template-file-note {
+          color: #647084;
+          display: block;
+          font-size: 11.5px;
+          line-height: 1.35;
+        }
+        .setup-template-detail,
+        .setup-guide-detail {
+          background: #fbfcfe;
+        }
+        .setup-detail-grid {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          margin-bottom: 14px;
+        }
+        .setup-template-sample {
+          background: white;
+          border: 1px solid var(--setup-line);
+          border-radius: 8px;
+          margin-bottom: 16px;
+          padding: 12px;
+        }
+        .setup-template-sample strong {
+          display: block;
+          font-size: 13px;
+          margin-bottom: 10px;
+        }
+        .setup-template-sample div {
+          display: grid;
+          gap: 8px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .setup-template-sample span {
+          background: #f7f9fc;
+          border: 1px solid #edf1f6;
+          border-radius: 7px;
+          color: #34415a;
+          font-size: 12px;
+          line-height: 1.35;
+          padding: 8px;
+        }
+        .setup-template-sample b {
+          color: #647084;
+          display: block;
+          font-family: ${mono};
+          font-size: 9px;
+          letter-spacing: 0.06em;
+          margin-bottom: 5px;
+          text-transform: uppercase;
+        }
+        .setup-field-dictionary-head {
+          align-items: flex-end;
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 10px;
+        }
+        .setup-field-dictionary-head h3 {
+          font-size: 18px;
+          margin: 4px 0 0;
+        }
+        .setup-field-dictionary-head a {
+          color: ${blue};
+          font-size: 13px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .setup-field-dictionary td {
+          vertical-align: top;
+        }
+        .setup-field-dictionary small {
+          color: #647084;
+          display: block;
+          font-size: 11px;
+          margin-top: 3px;
+        }
+        .setup-guide-detail ol {
+          color: #34415a;
+          display: grid;
+          gap: 8px;
+          line-height: 1.45;
+          margin: 0;
+          padding-left: 20px;
+        }
+        .setup-guide-detail p {
+          border-top: 1px solid var(--setup-line);
+          color: var(--setup-muted);
+          font-size: 13px;
+          line-height: 1.5;
+          margin: 16px 0 0;
+          padding-top: 12px;
         }
         .setup-rows { border: 1px solid var(--setup-line); border-radius: 8px; overflow: hidden; }
         .setup-row {
