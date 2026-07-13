@@ -113,7 +113,10 @@ export async function generatePhaseSuccessPackages(
       confidence: "medium",
       citationReady: false,
       generatedBy: "phase-success-package",
-      metadata: pkg.metadata,
+      metadata: {
+        ...pkg.metadata,
+        phaseSuccessContentFingerprint: phaseSuccessContentFingerprint(pkg),
+      },
     });
     saved.push({
       ...pkg,
@@ -139,12 +142,36 @@ function findDuplicateCurrentArtifact(
   pkg: PhaseSuccessPackageArtifact,
 ) {
   const sha256 = createHash("sha256").update(pkg.body).digest("hex");
+  const contentFingerprint = phaseSuccessContentFingerprint(pkg);
   return artifacts.find(
     (artifact) =>
       artifact.artifact_type === pkg.artifactType &&
       artifact.lifecycle_state === "current" &&
-      artifact.metadata?.sha256 === sha256,
+      (artifact.metadata?.sha256 === sha256 ||
+        artifact.metadata?.phaseSuccessContentFingerprint === contentFingerprint),
   );
+}
+
+function phaseSuccessContentFingerprint(pkg: PhaseSuccessPackageArtifact): string {
+  const normalizedBody = pkg.body
+    .replace(/^- Generated at: .+$/m, "- Generated at: <ignored>")
+    .replace(/^- Evidence cutoff: .+$/m, "- Evidence cutoff: <ignored>");
+  const stableMetadata = Object.fromEntries(
+    Object.entries(pkg.metadata).filter(
+      ([key]) => key !== "generatedAt" && key !== "evidenceCutoffAt",
+    ),
+  );
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        artifactType: pkg.artifactType,
+        kind: pkg.kind,
+        status: pkg.status,
+        metadata: stableMetadata,
+        body: normalizedBody,
+      }),
+    )
+    .digest("hex");
 }
 
 function normalizePhase(phase: number | null | undefined): number {
