@@ -37,6 +37,8 @@ describe("admin data layer explorer route", () => {
     expect(pageSource).toContain("data-page-layer-map");
     expect(pageSource).toContain("data-quality-checks");
     expect(pageSource).toContain("data-guardrails");
+    expect(pageSource).toContain("data-reference-data-audit");
+    expect(pageSource).toContain("Rich source exists");
     expect(pageSource).toContain("Production writes");
     expect(pageSource).toContain("Runtime change");
   });
