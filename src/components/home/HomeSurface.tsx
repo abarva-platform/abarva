@@ -649,6 +649,7 @@ type HomeExplorerArea = {
   examples: string;
   primaryDimension: BindingDimension | null;
   primaryPreview: HomeV6BrowserPreview | null;
+  previews: HomeV6BrowserPreview[];
 };
 
 const HOME_AREA_DEFINITIONS: Array<{
@@ -657,6 +658,7 @@ const HOME_AREA_DEFINITIONS: Array<{
   group: "Enterprise" | "Delivery";
   match: RegExp;
   fallback: RegExp;
+  preferred: RegExp;
 }> = [
   {
     id: "functions",
@@ -665,6 +667,7 @@ const HOME_AREA_DEFINITIONS: Array<{
     match:
       /\b(enterprise profile|business functions|org ownership|workforce personas|portfolio company hierarchy)\b/i,
     fallback: /\b(functions?|org|workforce|portfolio)\b/i,
+    preferred: /\bbusiness functions\b/i,
   },
   {
     id: "applications",
@@ -673,6 +676,7 @@ const HOME_AREA_DEFINITIONS: Array<{
     match:
       /\b(applications systems|system & business relationships|infrastructure cloud estate)\b/i,
     fallback: /\b(applications?|systems?|infrastructure|cloud)\b/i,
+    preferred: /\bapplications systems\b/i,
   },
   {
     id: "vendors",
@@ -681,6 +685,7 @@ const HOME_AREA_DEFINITIONS: Array<{
     match:
       /\b(vendors contracts|spend value|client rate card|service tower managed services)\b/i,
     fallback: /\b(vendors?|contracts?|spend|rate|tower)\b/i,
+    preferred: /\bvendors contracts\b/i,
   },
   {
     id: "data",
@@ -688,6 +693,7 @@ const HOME_AREA_DEFINITIONS: Array<{
     group: "Enterprise",
     match: /\b(data assets integrations|ai search coverage)\b/i,
     fallback: /\b(data|integrations?|search)\b/i,
+    preferred: /\bdata assets integrations\b/i,
   },
   {
     id: "programs",
@@ -695,6 +701,7 @@ const HOME_AREA_DEFINITIONS: Array<{
     group: "Delivery",
     match: /\b(programs initiatives business priorities|ai initiatives)\b/i,
     fallback: /\b(programs?|initiatives?|priorities|priority|ai)\b/i,
+    preferred: /\bprograms initiatives business priorities\b/i,
   },
   {
     id: "risks",
@@ -703,6 +710,7 @@ const HOME_AREA_DEFINITIONS: Array<{
     match:
       /\b(operations risk controls|source documents|operational evidence)\b/i,
     fallback: /\b(risks?|controls?|evidence|sources?)\b/i,
+    preferred: /\boperations risk controls\b/i,
   },
   {
     id: "metrics",
@@ -712,6 +720,7 @@ const HOME_AREA_DEFINITIONS: Array<{
       /\b(metric definitions|benefits realization|industry benchmarks|industry & market patterns|expert lenses)\b/i,
     fallback:
       /\b(metrics?|outcomes?|benefits?|benchmarks?|patterns?|experts?)\b/i,
+    preferred: /\bmetric definitions\b/i,
   },
 ];
 
@@ -753,6 +762,11 @@ function buildHomeExplorerAreas(
     const previews = dimensions
       .map((dimension) => previewForDimension(browser, dimension.dimension))
       .filter((preview): preview is HomeV6BrowserPreview => Boolean(preview));
+    const rankedPreviews = [...previews].sort((left, right) => {
+      const leftPreferred = definition.preferred.test(left.dimension) ? 1 : 0;
+      const rightPreferred = definition.preferred.test(right.dimension) ? 1 : 0;
+      return rightPreferred - leftPreferred || right.rowCount - left.rowCount;
+    });
     const rows =
       previews.length > 0
         ? previews.reduce((sum, preview) => sum + preview.rowCount, 0)
@@ -764,7 +778,9 @@ function buildHomeExplorerAreas(
     const sources = new Set(previews.flatMap((preview) => preview.fileNames))
       .size;
     const primaryPreview =
-      previews.find((preview) => preview.rowCount > 0) ?? previews[0] ?? null;
+      rankedPreviews.find((preview) => preview.rowCount > 0) ??
+      rankedPreviews[0] ??
+      null;
     const primaryDimension =
       dimensions.find(
         (dimension) => dimension.dimension === primaryPreview?.dimension,
@@ -782,6 +798,7 @@ function buildHomeExplorerAreas(
       examples: displayAreaExamples(previews),
       primaryDimension,
       primaryPreview,
+      previews,
     };
   });
 }
@@ -1204,6 +1221,7 @@ function KnowledgeOverview({
 }
 
 function ExplorerDetail({
+  area,
   selected,
   selectedDisplayName,
   preview,
@@ -1215,6 +1233,7 @@ function ExplorerDetail({
   tenantDisplayName,
   onAsk,
 }: {
+  area: HomeExplorerArea | null;
   selected: BindingDimension | null;
   selectedDisplayName?: string | null;
   preview: HomeV6BrowserPreview | null;
@@ -1245,7 +1264,18 @@ function ExplorerDetail({
     totalSources: overview.totalSources,
     totalGaps: overview.totalGaps,
   });
-  const examples = selectedExamples(preview);
+  const areaSummary = area
+    ? `${area.label} has ${area.rows.toLocaleString()} loaded records from ${area.sources.toLocaleString()} source file${area.sources === 1 ? "" : "s"}. ${
+        area.gaps > 0
+          ? `${displayMetric(area.gaps, "evidence gaps")} remain.`
+          : "No repeated evidence-gap pattern is visible in this area."
+      }`
+    : summary;
+  const examples = area
+    ? area.previews
+        .flatMap((areaPreview) => selectedExamples(areaPreview))
+        .slice(0, 4)
+    : selectedExamples(preview);
   const tabs: Array<[ExplorerTab, string]> = [
     ["summary", "Summary"],
     ["data", "Data"],
@@ -1280,7 +1310,7 @@ function ExplorerDetail({
           <p>
             {isOverview
               ? "What’s answerable, what evidence backs it, what’s missing, and which areas are ready to run — for this tenant’s active data."
-              : summary}
+              : areaSummary}
           </p>
         </div>
         <div className="hx2-detailActions">
@@ -1343,7 +1373,7 @@ function ExplorerDetail({
               </strong>
               <p>
                 {preview
-                  ? `${preview.title} with source-backed values and readable fields.`
+                  ? `${selectedName} records with source-backed values and readable fields.`
                   : "The tenant context pack is available for inspection by context area."}
               </p>
             </article>
@@ -2035,6 +2065,7 @@ export function HomeSurface({
 
           <ExplorerDetail
             activeTab={activeTab}
+            area={selectedArea}
             areas={explorerAreas}
             onTabChange={setActiveTab}
             overview={{

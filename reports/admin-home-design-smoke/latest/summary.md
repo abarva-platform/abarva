@@ -1,7 +1,7 @@
 # ADMIN-HOME-DESIGN-SMOKE-PR — Design Fidelity and Smoke Proof
 
-- Test run timestamp: 2026-07-13T04:21:49.121Z
-- SHA tested: `f31adad5bc83d2db17d9a2a7d0df145f1a27bbff`
+- Test run timestamp: 2026-07-13T04:56:36.601Z
+- SHA tested: `73579d156a05b430096b1c55dd199d9ea5ea10a9`
 - Revision tested: captured from ACA deploy evidence when run post-deploy; not mutated by this harness.
 - Image digest: captured from ACA deploy evidence when run post-deploy; not mutated by this harness.
 - Traffic %: read-only harness; does not shift traffic.

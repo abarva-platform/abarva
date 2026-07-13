@@ -1285,6 +1285,7 @@ function runOsascript(script: string, args: string[]): string {
     input: script,
     encoding: "utf8",
     maxBuffer: 20 * 1024 * 1024,
+    timeout: 30000,
   }).trim();
 }
 
