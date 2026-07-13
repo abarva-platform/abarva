@@ -57,6 +57,8 @@ export async function generatePhaseSuccessPackages(
         title: artifact.title,
         artifactType: artifact.artifact_type,
         status: artifact.status,
+        createdAt: artifact.created_at,
+        generatedAt: artifact.generated_at,
       })),
   });
   const packages = buildPhaseSuccessPackages({

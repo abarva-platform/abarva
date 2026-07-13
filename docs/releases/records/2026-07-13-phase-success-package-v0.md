@@ -17,6 +17,7 @@ Adds a V0 Moves capability to generate two governed artifacts from the active Mo
 - Global-control-lane: Adds a Move-scoped API route and UI action that writes generated package artifacts into the existing Move Artifact Vault.
 - Product UI: Adds a `Generate Execution & Readiness` action beside the existing session-pack generation action in the Moves session panel.
 - Artifact governance: Uses existing artifact versioning, phase-specific artifact types for V0, duplicate-current-artifact reuse, approved-package overwrite blocking, provenance metadata, and generated-package exclusion from future evidence cutoffs.
+- Truth metadata correction: Follow-up candidate ensures `evidenceCutoffAt` reflects the latest included source artifact timestamp when source evidence exists, and leaves `findingIds` empty until persisted finding records are available instead of borrowing linked-evidence IDs.
 
 ## Client Applicability
 
@@ -35,12 +36,27 @@ Adds a V0 Moves capability to generate two governed artifacts from the active Mo
 - `src/app/api/v1/programs/[programId]/phase-success-package/route.ts`
 - `src/components/strategic-moves/SessionPlaybookPanel.tsx`
 
+Follow-up truth-metadata correction:
+
+- `src/lib/programs/phase-success-package/core.ts`
+- `src/lib/programs/phase-success-package/generate.ts`
+- `src/lib/programs/phase-success-package/__tests__/core.test.ts`
+- `src/lib/programs/phase-success-package/__tests__/generate.test.ts`
+- `docs/releases/records/2026-07-13-phase-success-package-v0.md`
+
 ## QA / Validation
 
 - `npx jest src/lib/programs/phase-success-package/__tests__/core.test.ts src/lib/programs/phase-success-package/__tests__/generate.test.ts --runInBand` — Pass. Jest emitted pre-existing duplicate manual mock warnings for markdown-related mocks.
 - `npx eslint src/lib/programs/phase-success-package/core.ts src/lib/programs/phase-success-package/generate.ts 'src/app/api/v1/programs/[programId]/phase-success-package/route.ts' src/components/strategic-moves/SessionPlaybookPanel.tsx src/lib/programs/phase-success-package/__tests__/core.test.ts src/lib/programs/phase-success-package/__tests__/generate.test.ts` — Pass.
 - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` — Pass.
 - `npm run release:check` — Pass.
+- `git diff --check` — Pass.
+
+Follow-up truth-metadata correction:
+
+- `npx jest src/lib/programs/phase-success-package/__tests__/core.test.ts src/lib/programs/phase-success-package/__tests__/generate.test.ts --runInBand` — Pass. Jest emitted pre-existing duplicate manual mock warnings for markdown-related mocks.
+- `npx eslint src/lib/programs/phase-success-package/core.ts src/lib/programs/phase-success-package/generate.ts src/lib/programs/phase-success-package/__tests__/core.test.ts src/lib/programs/phase-success-package/__tests__/generate.test.ts` — Pass.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` — Pass.
 - `git diff --check` — Pass.
 
 ## Rollout Plan

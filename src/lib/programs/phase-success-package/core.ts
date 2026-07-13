@@ -456,7 +456,14 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
   generatedAt: string;
   generatedBy: string;
   phasePack?: PhasePack | null;
-  sourceArtifacts?: Array<{ id: string; title: string; artifactType: string; status: string }>;
+  sourceArtifacts?: Array<{
+    id: string;
+    title: string;
+    artifactType: string;
+    status: string;
+    createdAt?: string | null;
+    generatedAt?: string | null;
+  }>;
 }): PhaseSuccessRuntimeTruth {
   const openGates = args.move.gateCriteria.filter((criterion) => !criterion.completed);
   const missingRequirements = (args.phasePack?.evidence_requirements ?? []).map(
@@ -470,6 +477,7 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
   const targetPhase = args.phase >= 5 ? "TOWER" : args.phase + 1;
   const sourceArtifacts = args.sourceArtifacts ?? [];
   const sourceArtifactIds = sourceArtifacts.map((artifact) => artifact.id);
+  const evidenceCutoffAt = latestArtifactTimestamp(sourceArtifacts) ?? args.generatedAt;
   const evidenceReceived = sourceArtifacts.map((artifact) => ({
     id: artifact.id,
     label: artifact.title,
@@ -481,11 +489,11 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
   return {
     generatedAt: args.generatedAt,
     generatedBy: args.generatedBy,
-    evidenceCutoffAt: args.generatedAt,
+    evidenceCutoffAt,
     sourcePhase: args.phase,
     targetPhase,
     sourceArtifactIds,
-    findingIds: args.move.linkedEvidence?.map((item) => item.id) ?? [],
+    findingIds: [],
     missingInputIds: [
       ...missingRequirements.map((requirement) => requirement.id),
       ...openGates.map((criterion) => criterion.id),
@@ -557,6 +565,24 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
       ...openGates.map((criterion) => `Close gate criterion: ${criterion.label}`),
     ],
   };
+}
+
+function latestArtifactTimestamp(
+  artifacts: NonNullable<
+    Parameters<typeof buildDefaultPhaseSuccessRuntimeTruth>[0]["sourceArtifacts"]
+  >,
+): string | null {
+  let latest: { value: string; epochMs: number } | null = null;
+  for (const artifact of artifacts) {
+    const candidate = artifact.generatedAt ?? artifact.createdAt;
+    if (!candidate) continue;
+    const epochMs = Date.parse(candidate);
+    if (Number.isNaN(epochMs)) continue;
+    if (!latest || epochMs > latest.epochMs) {
+      latest = { value: candidate, epochMs };
+    }
+  }
+  return latest?.value ?? null;
 }
 
 function valueBasis(
