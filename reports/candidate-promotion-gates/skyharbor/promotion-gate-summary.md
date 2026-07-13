@@ -57,4 +57,4 @@ data, update the Active Tenant Access Layer, or change module runtime behavior.
 
 ## Rollback Plan
 
-Preserve skyharbor-air:active-access-layer:current before any active pointer change. Preserve the prior active tenant data version for 30 days and keep this candidate version inactive until an explicit promotion gate changes the active pointer. If promotion is later rejected or rolled back, restore the prior active pointer and keep this candidate inactive for audit review.
+Preserve skyharbor-air:active-runtime-truth:unchanged before any active pointer change. Preserve the prior active tenant data version for 30 days and keep this candidate version inactive until an explicit promotion gate changes the active pointer. If promotion is later rejected or rolled back, restore the prior active pointer and keep this candidate inactive for audit review.
