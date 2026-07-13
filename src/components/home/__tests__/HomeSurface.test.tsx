@@ -119,7 +119,9 @@ const v6Browser = {
         { key: "annual_revenue_usd", label: "Revenue" },
         { key: "employee_count", label: "Employees" },
       ],
-      rows: [["Lakeshore Holdings", "Industrial holdco", "7120000000", "11800"]],
+      rows: [
+        ["Lakeshore Holdings", "Industrial holdco", "7120000000", "11800"],
+      ],
       sourceRows: [
         sourceRow(
           "V7_01_enterprise_profile.csv",
@@ -399,35 +401,45 @@ const setupControl = {
       status: "partially-ready",
       candidatePreviewAvailable: false,
       runtimeActiveAvailable: false,
-      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      missingEvidence: [
+        "Module cite-render proof is not attached to setup-control yet.",
+      ],
       lastProof: null,
     },
     intelligence: {
       status: "blocked",
       candidatePreviewAvailable: false,
       runtimeActiveAvailable: false,
-      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      missingEvidence: [
+        "Module cite-render proof is not attached to setup-control yet.",
+      ],
       lastProof: null,
     },
     moves: {
       status: "blocked",
       candidatePreviewAvailable: false,
       runtimeActiveAvailable: false,
-      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      missingEvidence: [
+        "Module cite-render proof is not attached to setup-control yet.",
+      ],
       lastProof: null,
     },
     source: {
       status: "blocked",
       candidatePreviewAvailable: false,
       runtimeActiveAvailable: false,
-      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      missingEvidence: [
+        "Module cite-render proof is not attached to setup-control yet.",
+      ],
       lastProof: null,
     },
     tower: {
       status: "blocked",
       candidatePreviewAvailable: false,
       runtimeActiveAvailable: false,
-      missingEvidence: ["Module cite-render proof is not attached to setup-control yet."],
+      missingEvidence: [
+        "Module cite-render proof is not attached to setup-control yet.",
+      ],
       lastProof: null,
     },
   },
@@ -451,8 +463,13 @@ const setupControl = {
     activeSource: "not yet wired to active tenant access layer",
     candidateSource: "not yet wired to candidate tenant data versions",
     readinessSource: "setup inventory snapshot plus source-document inventory",
-    missingSources: ["candidate tenant data versions", "active tenant access layer version pointer"],
-    caveats: ["Uploaded/source files are not treated as active facts by setup-control."],
+    missingSources: [
+      "candidate tenant data versions",
+      "active tenant access layer version pointer",
+    ],
+    caveats: [
+      "Uploaded/source files are not treated as active facts by setup-control.",
+    ],
   },
 } satisfies AdminSetupControlResponse;
 
@@ -471,27 +488,53 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByTestId("home-context-rail")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-dock-panel")).not.toBeInTheDocument();
     expect(screen.getByText("Context Explorer")).toBeInTheDocument();
-    expect(screen.getByText("Home · Enterprise Knowledge")).toBeInTheDocument();
-    expect(screen.getByText("Active Home context")).toBeInTheDocument();
-    expect(screen.getByText("Enterprise overview")).toBeInTheDocument();
-    expect(screen.queryByText("Context loaded and mapped")).not.toBeInTheDocument();
-    expect(screen.getByTestId("home-enterprise-knowledge-snapshot")).toBeInTheDocument();
-    expect(screen.getByText("Enterprise Knowledge Snapshot")).toBeInTheDocument();
-    expect(screen.getByText("Evidence Coverage")).toBeInTheDocument();
-    expect(screen.getByText("Answerability")).toBeInTheDocument();
-    expect(screen.getByText("Top Gaps")).toBeInTheDocument();
-    expect(screen.getByText("Ready Areas")).toBeInTheDocument();
-    expect(container.querySelectorAll(".hx2-ring")).toHaveLength(1);
-    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
-      "aria-selected",
-      "true",
+    expect(screen.getAllByText("Home · Enterprise Knowledge")).toHaveLength(2);
+    expect(screen.getAllByText("Active Home context").length).toBeGreaterThan(
+      0,
     );
-    expect(screen.getByRole("tab", { name: "Data" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Gaps" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Sources" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Relationships" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Questions" })).not.toBeInTheDocument();
-    expect(screen.getByText(/Home answers from loaded context/)).toBeInTheDocument();
+    expect(screen.getByText("Enterprise overview")).toBeInTheDocument();
+    expect(screen.getByText("Context loaded & mapped")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("home-enterprise-knowledge-snapshot"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Enterprise Knowledge Snapshot"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Evidence")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Functions/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Applications & Systems/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Vendors & Contracts/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Data Assets & Integrations/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Programs & Priorities/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Risks & Controls/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Metrics & Outcomes/i }),
+    ).toBeInTheDocument();
+    expect(container.querySelectorAll(".hx2-ring")).toHaveLength(1);
+    expect(
+      screen.queryByRole("tab", { name: "Summary" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Data" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Questions" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Scoped · read-only over evidence/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("I can answer")).toBeInTheDocument();
+    expect(screen.getByText("I won’t answer")).toBeInTheDocument();
   });
 
   it("binds Home status panels to setup-control when supplied", () => {
@@ -504,13 +547,12 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    expect(
-      screen.getByText(/active tenant access layer version pointer is not wired in PR22/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Demo-safe")).toBeInTheDocument();
     expect(screen.getByText("512")).toBeInTheDocument();
-    expect(screen.getByText("63")).toBeInTheDocument();
-    expect(screen.getByText(/partially ready/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/active tenant access layer version pointer/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Active Home context").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getByText("Candidate preview")).toBeInTheDocument();
     expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
   });
 
@@ -535,9 +577,13 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    expect(screen.getByText(/Candidate Preview — inactive data/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Candidate Preview — inactive data/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/not active tenant truth/i)).toBeInTheDocument();
-    expect(screen.getByText(/no inactive candidate tenant version is available/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/no inactive candidate tenant version is available/i),
+    ).toBeInTheDocument();
   });
 
   it("selects a context area from the Explorer tree and defaults the detail view to Summary", () => {
@@ -549,9 +595,13 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Vendors & Contracts/i }),
+    );
 
-    expect(screen.getByRole("heading", { name: "Vendors & Contracts", level: 1 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Vendors & Contracts", level: 1 }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -571,15 +621,19 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Vendors & Contracts/i }),
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
 
     expect(screen.getByText("90 rows loaded")).toBeInTheDocument();
     expect(screen.getByText("Kyriba")).toBeInTheDocument();
     expect(screen.getByText("Treasury")).toBeInTheDocument();
-    expect(screen.getByText("Needs evidence")).toBeInTheDocument();
+    expect(screen.getAllByText("Needs evidence").length).toBeGreaterThan(0);
     expect(screen.queryByText("VND-001 - Kyriba")).not.toBeInTheDocument();
-    expect(screen.queryByText("apex/vendors-contracts.csv")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("apex/vendors-contracts.csv"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("synthetic demo")).not.toBeInTheDocument();
   });
 
@@ -592,15 +646,21 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Vendors & Contracts/i }),
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /IT systems landscape/i }));
-    expect(screen.getByRole("heading", { name: "IT systems landscape", level: 1 })).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Applications & Systems/i }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Applications & Systems", level: 1 }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -631,7 +691,9 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Benefits Realization/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Metrics & Outcomes/i }),
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
 
     expect(screen.getByText("$1M")).toBeInTheDocument();
@@ -647,7 +709,9 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Vendors & Contracts/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Vendors & Contracts/i }),
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
     expect(screen.getByText("vendors contracts")).toBeInTheDocument();
     expect(screen.queryByText("07 vendors contracts")).not.toBeInTheDocument();
@@ -666,26 +730,36 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Enterprise Profile/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Functions/i }));
 
     expect(screen.getByText("88%")).toBeInTheDocument();
     expect(screen.getByText(/1 field to complete/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
-    expect(screen.getByText(/this is the loaded business data for Enterprise Profile/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/this is the loaded business data for Functions/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("$7.12B")).toBeInTheDocument();
     expect(screen.getByText("11,800")).toBeInTheDocument();
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Gaps" }));
-    expect(screen.getByText(/gaps are client-to-complete fields/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/gaps are client-to-complete fields/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("1 field missing")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
-    expect(screen.getByText(/sources show where this context came from/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/sources show where this context came from/i),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
-    expect(screen.getByText(/relationships are mapped links between business objects/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /relationships are mapped links between business objects/i,
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText(/only a profile anchor/i)).toBeInTheDocument();
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
     expect(screen.queryByText("11800")).not.toBeInTheDocument();
@@ -704,7 +778,11 @@ describe("HomeSurface — Explorer context browser", () => {
       target: { value: "vendor" },
     });
 
-    expect(screen.getByRole("button", { name: /Vendors & Contracts/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /IT systems landscape/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Vendors & Contracts/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Applications & Systems/i }),
+    ).not.toBeInTheDocument();
   });
 });
