@@ -230,12 +230,18 @@ async function proveSignedInPreviewPage(
   return {
     finalPathname: finalUrl.pathname,
     pageStatus: {
-      rendered: bodyText.includes("Candidate Preview Mode"),
-      bannerVisible: bodyText.includes(CANDIDATE_PREVIEW_BANNER),
-      explicitRequestAcceptedVisible: bodyText.includes("Explicit request accepted"),
-      selectedModuleVisible: bodyText.includes(`${args.module} preview packet`),
+      rendered: includesText(bodyText, "Candidate Preview Mode"),
+      bannerVisible: includesText(bodyText, CANDIDATE_PREVIEW_BANNER),
+      explicitRequestAcceptedVisible: includesText(
+        bodyText,
+        "Explicit request accepted",
+      ),
+      selectedModuleVisible: includesText(
+        bodyText,
+        `${args.module} preview packet`,
+      ),
       guardrailIndicatorsVisible: REQUIRED_FALSE_GUARDRAILS.every((label) =>
-        bodyText.includes(label),
+        includesText(bodyText, label),
       ),
     },
     guardrails,
@@ -249,21 +255,12 @@ async function proveSignedInPreviewPage(
 async function readGuardrailIndicators(
   page: Page,
 ): Promise<CandidatePreviewProof["guardrails"]> {
-  const values = await page.evaluate((labels) => {
-    const output: Record<string, boolean | null> = {};
-    for (const label of labels) {
-      const node = document.querySelector(
-        `[data-candidate-preview-guardrail="${label}"]`,
-      );
-      const text = node?.textContent ?? "";
-      output[label] = /\bfalse\b/i.test(text)
-        ? false
-        : /\btrue\b/i.test(text)
-          ? true
-          : null;
-    }
-    return output;
-  }, REQUIRED_FALSE_GUARDRAILS);
+  const bodyText = await page.locator("body").innerText({ timeout: 15_000 });
+  const values: Record<string, boolean | null> = {};
+
+  for (const label of REQUIRED_FALSE_GUARDRAILS) {
+    values[label] = readVisibleBooleanForLabel(bodyText, label);
+  }
 
   return {
     candidatePromoted: values.candidatePromoted ?? null,
@@ -275,6 +272,24 @@ async function readGuardrailIndicators(
     moduleReadsCandidateByDefault:
       values.moduleReadsCandidateByDefault ?? null,
   };
+}
+
+function includesText(haystack: string, needle: string): boolean {
+  return haystack.toLowerCase().includes(needle.toLowerCase());
+}
+
+function readVisibleBooleanForLabel(
+  bodyText: string,
+  label: string,
+): boolean | null {
+  const escaped = escapeRegExp(label);
+  const match = bodyText.match(new RegExp(`${escaped}\\s+(true|false)`, "i"));
+  if (!match?.[1]) return null;
+  return match[1].toLowerCase() === "true";
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function compareCandidatePreviewProof(

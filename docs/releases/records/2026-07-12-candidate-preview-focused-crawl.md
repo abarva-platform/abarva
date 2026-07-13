@@ -46,6 +46,10 @@ update the Active Tenant Access Layer, or change default module runtime reads.
   `src/app/(maestro)/admin/candidate-preview/page.tsx`.
 - Extends `scripts/smoke/p21-post-deploy-crawl.spec.ts` to require the focused
   workflow step.
+- Follow-up: tightens `scripts/crawl/candidate-preview-proof.ts` to read
+  visible rendered text case-insensitively after the first live focused proof
+  showed the page rendered correctly but `data-*` selectors were not reliable
+  in the hydrated Next.js route.
 
 ## QA / Validation
 
@@ -57,6 +61,10 @@ update the Active Tenant Access Layer, or change default module runtime reads.
 - Pass: `npm run release:check`
 - Pending after merge: ACA deploy, runtime invariant, health, broad signed-in
   crawl, and focused candidate-preview crawl artifact.
+- Live follow-up evidence: focused run `29214259265` proved direct route/auth
+  preservation and browser rendering, then failed because the proof script
+  relied on selector lookup instead of visible guardrail text. This follow-up
+  corrects the proof harness; no promotion/data behavior changes.
 
 ## Rollout Plan
 
