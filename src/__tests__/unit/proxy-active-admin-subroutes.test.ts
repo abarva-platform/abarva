@@ -21,6 +21,16 @@ describe("proxy active admin subroutes", () => {
     expect(isAuthRequiredRoute(request)).toBe(true);
     expect(isPublicRoute(request)).toBe(false);
     expect(isActiveAdminSubroute(request.nextUrl.pathname)).toBe(true);
+  });
+
+  it("allows the Data Layer Explorer to render instead of collapsing to setup", () => {
+    const request = new NextRequest(
+      "https://app.abarva.ai/admin/data-layer-explorer",
+    );
+
+    expect(isAuthRequiredRoute(request)).toBe(true);
+    expect(isPublicRoute(request)).toBe(false);
+    expect(isActiveAdminSubroute(request.nextUrl.pathname)).toBe(true);
     expect(isActiveAdminSubroute("/admin/data-loads")).toBe(false);
   });
 });
