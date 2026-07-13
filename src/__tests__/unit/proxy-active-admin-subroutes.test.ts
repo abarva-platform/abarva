@@ -33,4 +33,12 @@ describe("proxy active admin subroutes", () => {
     expect(isActiveAdminSubroute(request.nextUrl.pathname)).toBe(true);
     expect(isActiveAdminSubroute("/admin/data-loads")).toBe(false);
   });
+
+  it("allows the Data Quality control center to render instead of collapsing to setup", () => {
+    const request = new NextRequest("https://app.abarva.ai/admin/data-quality");
+
+    expect(isAuthRequiredRoute(request)).toBe(true);
+    expect(isPublicRoute(request)).toBe(false);
+    expect(isActiveAdminSubroute(request.nextUrl.pathname)).toBe(true);
+  });
 });

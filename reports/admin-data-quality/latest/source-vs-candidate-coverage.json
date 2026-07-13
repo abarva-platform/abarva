@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-07-13T04:51:33.512Z",
+  "tenants": [
+    {
+      "tenantKey": "skyharbor-air",
+      "tenantDisplayName": "SkyHarbor Air",
+      "sourceStructuredRows": 31213,
+      "candidateRecordsGenerated": 53,
+      "candidateCoverageRatio": 0.0017,
+      "sourceRichCandidateThin": true,
+      "falseGreenRisk": true,
+      "summary": "31,213 source rows exist, but only 53 candidate records are generated (0.17% coverage). Treat this as source-rich and candidate-thin."
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "tenantDisplayName": "Lakeshore Holdings",
+      "sourceStructuredRows": 8721,
+      "candidateRecordsGenerated": 0,
+      "candidateCoverageRatio": 0,
+      "sourceRichCandidateThin": true,
+      "falseGreenRisk": true,
+      "summary": "8,721 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+    },
+    {
+      "tenantKey": "meridian-health",
+      "tenantDisplayName": "Meridian Health",
+      "sourceStructuredRows": 11226,
+      "candidateRecordsGenerated": 0,
+      "candidateCoverageRatio": 0,
+      "sourceRichCandidateThin": true,
+      "falseGreenRisk": true,
+      "summary": "11,226 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+    },
+    {
+      "tenantKey": "first-capital",
+      "tenantDisplayName": "First Capital",
+      "sourceStructuredRows": 14576,
+      "candidateRecordsGenerated": 0,
+      "candidateCoverageRatio": 0,
+      "sourceRichCandidateThin": true,
+      "falseGreenRisk": false,
+      "summary": "14,576 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+    },
+    {
+      "tenantKey": "apex-retail",
+      "tenantDisplayName": "Apex Retail",
+      "sourceStructuredRows": 10388,
+      "candidateRecordsGenerated": 0,
+      "candidateCoverageRatio": 0,
+      "sourceRichCandidateThin": true,
+      "falseGreenRisk": true,
+      "summary": "10,388 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+    },
+    {
+      "tenantKey": "northstar",
+      "tenantDisplayName": "Northstar",
+      "sourceStructuredRows": 6032,
+      "candidateRecordsGenerated": 0,
+      "candidateCoverageRatio": 0,
+      "sourceRichCandidateThin": true,
+      "falseGreenRisk": false,
+      "summary": "6,032 source rows exist, but only 0 candidate records are generated (0.00% coverage). Treat this as source-rich and candidate-thin."
+    },
+    {
+      "tenantKey": "morgan-street",
+      "tenantDisplayName": "Morgan Street",
+      "sourceStructuredRows": 0,
+      "candidateRecordsGenerated": 0,
+      "candidateCoverageRatio": 0,
+      "sourceRichCandidateThin": false,
+      "falseGreenRisk": false,
+      "summary": "0 source rows and 0 candidate records are visible in the latest read-only audit (0.00% coverage)."
+    }
+  ]
+}
