@@ -131,4 +131,31 @@ describe("HomeSummarySnapshot", () => {
       `${snapshot.tenantProfileHeader.tenantKey}:${snapshot.lineage.mode}`,
     );
   });
+
+  it("keeps Home dimension rollups specific instead of cloning tenant totals", () => {
+    const snapshot = buildHomeSummarySnapshot({
+      tenantKey: "skyharbor-air",
+      displayName: "Airline Demo",
+      industry: "Airline",
+      browser: getHomeV6ContextBrowser("skyharbor"),
+      generatedAt: "2026-07-13T12:00:00.000Z",
+    });
+    const area = (displayName: string) =>
+      snapshot.contextAreas.find((entry) => entry.displayName === displayName);
+    const loadedSignatures = new Set(
+      snapshot.contextAreas
+        .filter((entry) => entry.loadedCount > 0)
+        .map(
+          (entry) =>
+            `${entry.loadedCount}:${entry.sourceCount}:${entry.evidenceCount}`,
+        ),
+    );
+
+    expect(area("Applications & Systems")?.loadedCount).toBe(956);
+    expect(area("Vendors & Contracts")?.loadedCount).toBe(320);
+    expect(area("Integrations")?.loadedCount).toBe(2236);
+    expect(area("Metrics / KPIs")?.loadedCount).toBe(797);
+    expect(area("Relationships")?.loadedCount).toBe(0);
+    expect(loadedSignatures.size).toBeGreaterThan(5);
+  });
 });

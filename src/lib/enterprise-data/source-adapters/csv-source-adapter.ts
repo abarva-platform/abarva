@@ -297,6 +297,7 @@ export function isMissingSourceValue(value: string | undefined): boolean {
     normalized === "" ||
     normalized === "not_loaded" ||
     normalized === "unknown" ||
+    // dom-integrity-ignore-line: validator intentionally rejects placeholder input tokens.
     normalized === "tbd" ||
     normalized === "to_be_determined" ||
     normalized === "n_a" ||
