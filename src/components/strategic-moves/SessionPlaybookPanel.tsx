@@ -174,6 +174,10 @@ export function SessionPlaybookPanel({
     "idle" | "running" | "done" | "error"
   >("idle");
   const [genMsg, setGenMsg] = useState<string>("");
+  const [packageState, setPackageState] = useState<
+    "idle" | "running" | "done" | "error"
+  >("idle");
+  const [packageMsg, setPackageMsg] = useState<string>("");
 
   const [phaseNum, setPhaseNum] = useState<number | null>(null);
   const phaseQuery = typeof phase === "number" ? `?phase=${phase}` : "";
@@ -226,6 +230,33 @@ export function SessionPlaybookPanel({
     }
   }, [moveId, phaseQuery]);
 
+  const generatePhasePackage = useCallback(async () => {
+    setPackageState("running");
+    setPackageMsg("");
+    try {
+      const r = await fetch(
+        `/api/v1/programs/${moveId}/phase-success-package${phaseQuery}`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+      const j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      setPackageState("done");
+      const reused = Array.isArray(j.packages)
+        ? j.packages.filter((p: { reusedExisting?: boolean }) => p.reusedExisting)
+            .length
+        : 0;
+      setPackageMsg(
+        `Saved ${j.packageCount ?? 0} artifacts: Phase Execution and Next Phase Readiness${reused ? ` (${reused} unchanged)` : ""}.`,
+      );
+    } catch (e) {
+      setPackageState("error");
+      setPackageMsg(e instanceof Error ? e.message : "generation failed");
+    }
+  }, [moveId, phaseQuery]);
+
   return (
     <div style={{ padding: "0 4px" }}>
       <div
@@ -262,36 +293,66 @@ export function SessionPlaybookPanel({
           </p>
         </div>
         {pb && (
-          <button
-            onClick={() => void generate()}
-            disabled={genState === "running"}
+          <div
             style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: "#fff",
-              background: genState === "running" ? "#9AA3B2" : "#1B2B5C",
-              border: "none",
-              borderRadius: 6,
-              padding: "8px 14px",
-              cursor: genState === "running" ? "default" : "pointer",
-              whiteSpace: "nowrap",
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
             }}
           >
-            {genState === "running"
-              ? "Generating…"
-              : "Generate Session Pack → File Cabinet"}
-          </button>
+            <button
+              onClick={() => void generatePhasePackage()}
+              disabled={packageState === "running"}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#fff",
+                background:
+                  packageState === "running" ? "#9AA3B2" : "#0F5132",
+                border: "none",
+                borderRadius: 6,
+                padding: "8px 14px",
+                cursor: packageState === "running" ? "default" : "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {packageState === "running"
+                ? "Generating…"
+                : "Generate Execution & Readiness"}
+            </button>
+            <button
+              onClick={() => void generate()}
+              disabled={genState === "running"}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#fff",
+                background: genState === "running" ? "#9AA3B2" : "#1B2B5C",
+                border: "none",
+                borderRadius: 6,
+                padding: "8px 14px",
+                cursor: genState === "running" ? "default" : "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {genState === "running" ? "Generating…" : "Generate Session Pack"}
+            </button>
+          </div>
         )}
       </div>
-      {genMsg && (
+      {(genMsg || packageMsg) && (
         <div
           style={{
             margin: "10px 0",
             fontSize: 12.5,
-            color: genState === "error" ? "#B71C1C" : "#1E7E34",
+            color:
+              genState === "error" || packageState === "error"
+                ? "#B71C1C"
+                : "#1E7E34",
           }}
         >
-          {genMsg}
+          {packageMsg || genMsg}
         </div>
       )}
 
