@@ -452,6 +452,7 @@
     "test:home-data-quality": "jest --runTestsByPath src/lib/home/__tests__/home-data-quality.test.ts src/components/home/__tests__/HomeSurface.test.tsx --runInBand",
     "smoke:home:full": "npx tsx scripts/qa/home-full-smoke-quality.ts --mode=full",
     "audit:home:content-quality": "npx tsx scripts/qa/home-full-smoke-quality.ts --mode=server",
+    "audit:home:claude-story-report": "npx tsx scripts/qa/home-claude-story-report.ts",
     "qa:home:ava-quality": "npx tsx scripts/qa/home-full-smoke-quality.ts --mode=ava"
   },
   "dependencies": {
